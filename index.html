@@ -355,7 +355,7 @@
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             position: relative;
             cursor: pointer;
-            transition: background-color 0.2s ease;
+            transition: all 0.2s ease;
         }
         .stroke-visibility-item input {
             margin-right: 8px;
@@ -367,10 +367,14 @@
         }
         .stroke-visibility-item:hover {
             background-color: #f0f8ff;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.15);
         }
         .stroke-visibility-item[data-selected="true"] {
-            background-color: #e6f2ff;
-            border: 1px solid #4CAF50;
+            background-color: #e6f7ff;
+            border-left: 3px solid #4CAF50;
+            transform: translateY(-1px);
+            box-shadow: 0 3px 6px rgba(76, 175, 80, 0.2);
         }
         .stroke-label-container {
             display: flex;
@@ -529,6 +533,36 @@
             border-top: 1px solid #ddd;
             margin: 15px 0;
         }
+        /* Drawing mode toggle styling */
+        #drawingModeToggle {
+            display: flex;
+            align-items: center;
+            padding: 8px 15px;
+            font-weight: bold;
+            position: relative;
+            border: 1px solid #4CAF50;
+            background-color: white;
+            color: #4CAF50;
+            transition: all 0.2s ease;
+        }
+        #drawingModeToggle:hover {
+            background-color: #f0fff0;
+        }
+        #drawingModeToggle::before {
+            content: "";
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            margin-right: 8px;
+            background-color: #4CAF50;
+            border-radius: 50%;
+        }
+        #drawingModeToggle.straight-mode {
+            background-color: #e8f5e9;
+        }
+        #drawingModeToggle.straight-mode::before {
+            border-radius: 0;
+        }
     </style>
 </head>
 <body>
@@ -571,11 +605,12 @@
                     <button class="color-btn" data-color="#34a853" style="background-color: #34a853;"></button>
                     <button class="color-btn" data-color="#ea4335" style="background-color: #ea4335;"></button>
                     <button class="color-btn" data-color="#fbbc04" style="background-color: #fbbc04;"></button>
-                    <button class="color-btn" data-color="#4285f4" style="background-color: #4285f4;"></button>
-                    <button class="color-btn" data-color="#5f6368" style="background-color: #5f6368;"></button>
                     <button class="color-btn" data-color="#9c27b0" style="background-color: #9c27b0;"></button>
+                    <button class="color-btn" data-color="#e67c00" style="background-color: #e67c00;"></button>
+                    <button class="color-btn" data-color="#00796b" style="background-color: #00796b;"></button>
                     <button class="color-btn" data-color="#000000" style="background-color: #000000;"></button>
                 </div>
+                <button id="drawingModeToggle">Freehand</button>
                 <input type="color" id="colorPicker" value="#1a73e8" style="display:none;">
                 <input type="range" id="brushSize" min="1" max="50" value="5">
                 <button id="save">Save</button>
