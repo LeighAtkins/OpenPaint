@@ -192,6 +192,10 @@
             margin-bottom: 15px;
             display: flex;
             justify-content: center;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
         .project-name {
             display: flex;
@@ -237,6 +241,26 @@
         .unit-label {
             font-size: 14px;
             color: #666;
+        }
+        .project-buttons {
+            display: flex;
+            gap: 8px;
+            margin-left: 15px;
+        }
+        .project-buttons button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+        .project-buttons button:hover {
+            background-color: #45a049;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
         .color-palette {
             display: flex;
@@ -595,6 +619,11 @@
                         </div>
                     </div>
                 </div>
+                <!-- Project Save/Load Buttons -->
+                <div class="project-buttons">
+                    <button id="saveProject" title="Save project as ZIP file">Save Project</button>
+                    <button id="loadProject" title="Load project from ZIP file">Load Project</button>
+                </div>
             </div>
         </div>
         <div class="main-content">
@@ -660,6 +689,14 @@
             <div id="imageList"></div>
         </div>
     </div>
+    
+    <!-- Status message element for notifications -->
+    <div id="statusMessage"></div>
+    
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="public/js/project-manager.js"></script>
     <script src="public/js/paint.js"></script>
 </body>
 </html>

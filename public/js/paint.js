@@ -1,3 +1,16 @@
+// Define global variables for use by project-manager.js
+window.IMAGE_LABELS = ['front', 'side', 'back', 'cushion'];
+window.currentImageLabel = 'front';
+window.vectorStrokesByImage = {};
+window.strokeVisibilityByImage = {};
+window.strokeLabelVisibility = {};
+window.strokeMeasurements = {};
+window.imageScaleByLabel = {};
+window.imagePositionByLabel = {};
+window.lineStrokesByImage = {};
+window.labelsByImage = {};
+window.originalImages = {};
+
 document.addEventListener('DOMContentLoaded', () => {
     // Initialize unit selectors
     const unitSelector = document.getElementById('unitSelector');
@@ -49,9 +62,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         inchFraction.value = closestFraction;
+        
+        // Show inch inputs, hide cm inputs
+        document.getElementById('inchInputs').style.display = 'flex';
+        document.getElementById('cmInputs').style.display = 'none';
     });
     
     const canvas = document.getElementById('canvas');
+    // Expose canvas globally for project management
+    window.canvas = canvas;
     const ctx = canvas.getContext('2d');
     const colorPicker = document.getElementById('colorPicker');
     const brushSize = document.getElementById('brushSize');
@@ -114,6 +133,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let currentImageLabel = IMAGE_LABELS[0]; // Start with 'front'
 
+    // Make addImageToSidebar available globally for the project manager
+    window.addImageToSidebar = addImageToSidebar;
     function addImageToSidebar(imageUrl, label) {
         const container = document.createElement('div');
         container.className = 'image-container';
@@ -179,7 +200,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
 
     // Store the original images for each view
-    const originalImages = {};
+    window.originalImages = window.originalImages || {};
     
     function pasteImageFromUrl(url) {
         console.log(`Pasting image for ${currentImageLabel}: ${url.substring(0, 30)}...`);
@@ -187,7 +208,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const img = new Image();
         img.onload = () => {
             // Store the original image for this view
-            originalImages[currentImageLabel] = url;
+            window.originalImages[currentImageLabel] = url;
             
             // Store original dimensions for scaling
             originalImageDimensions[currentImageLabel] = {
@@ -242,7 +263,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             console.log(`State saved for ${currentImageLabel}`);
             console.log(`Current image states: ${Object.keys(imageStates).join(', ')}`);
-            console.log(`Current original images: ${Object.keys(originalImages).join(', ')}`);
+            console.log(`Current original images: ${Object.keys(window.originalImages).join(', ')}`);
         };
         img.src = url;
     }
@@ -257,6 +278,8 @@ document.addEventListener('DOMContentLoaded', () => {
         return letter + number;
     }
 
+    // Make updateStrokeCounter available globally
+    window.updateStrokeCounter = updateStrokeCounter;
     function updateStrokeCounter() {
         const strokeCount = lineStrokesByImage[currentImageLabel]?.length || 0;
         strokeCounter.textContent = `Lines: ${strokeCount}`;
@@ -362,19 +385,26 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Find closest fraction
             const fractionPart = inches - Math.floor(inches);
-            const fractions = [0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875];
-            let closestFraction = 0;
-            let minDiff = 1;
+            const fractions = [
+                {value: '0', text: '0'},
+                {value: '0.125', text: '1/8'},
+                {value: '0.25', text: '1/4'},
+                {value: '0.375', text: '3/8'},
+                {value: '0.5', text: '1/2'},
+                {value: '0.625', text: '5/8'},
+                {value: '0.75', text: '3/4'},
+                {value: '0.875', text: '7/8'}
+            ];
             
-            for (const fraction of fractions) {
-                const diff = Math.abs(fractionPart - fraction);
-                if (diff < minDiff) {
-                    minDiff = diff;
-                    closestFraction = fraction;
+            fractions.forEach(f => {
+                const option = document.createElement('option');
+                option.value = f.value;
+                option.textContent = f.text;
+                if (parseFloat(f.value) === fractionPart) {
+                    option.selected = true;
                 }
-            }
-            
-            inchFraction.value = closestFraction;
+                inchFraction.appendChild(option);
+            });
             
             // Show inch inputs, hide cm inputs
             document.getElementById('inchInputs').style.display = 'flex';
@@ -399,8 +429,10 @@ document.addEventListener('DOMContentLoaded', () => {
         // Redraw the canvas with updated measurement format in labels
         redrawCanvasWithVisibility();
     }
-    
+
     // Function to update stroke visibility controls
+    // Make updateStrokeVisibilityControls available globally
+    window.updateStrokeVisibilityControls = updateStrokeVisibilityControls;
     function updateStrokeVisibilityControls() {
         const controlsContainer = document.getElementById('strokeVisibilityControls');
         controlsContainer.innerHTML = ''; // Clear existing controls
@@ -1092,6 +1124,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 const action = undoStackByImage[currentImageLabel][i];
                 if (action.label === oldName && action.color) {
                     strokeColor = action.color;
+                    // Try to determine stroke type from action
+                    if (action.type === 'line') {
+                        strokeType = 'straight';
+                    }
                     break;
                 }
             }
@@ -1230,23 +1266,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     };
                 }
             }
-        }
-        
-        // Redraw canvas with updated visibility
-        redrawCanvasWithVisibility();
-    }
-    
-    // Store vector stroke data for each stroke
-    let vectorStrokesByImage = {};
-    
-    // Initialize vector stroke storage for each image label
-    IMAGE_LABELS.forEach(label => {
-        vectorStrokesByImage[label] = {};
-    });
-    
-    // Store for stroke measurement labels visibility
-    let strokeLabelVisibility = {};
-    
+        };
+    };         
     // Store for currently selected stroke in each image
     let selectedStrokeByImage = {};
     
@@ -1280,7 +1301,14 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentStrokePaths = [];
     
     // Function to redraw canvas respecting stroke visibility
+    // Make redrawCanvasWithVisibility available globally
+    window.redrawCanvasWithVisibility = redrawCanvasWithVisibility;
     function redrawCanvasWithVisibility() {
+        console.log(`--- redrawCanvasWithVisibility called for: ${currentImageLabel} ---`);
+        console.log(`  Image available: ${!!window.originalImages[currentImageLabel]}`);
+        const strokesForLog = vectorStrokesByImage[currentImageLabel] || {}; // Use a different name for logging clarity
+        console.log(`  Strokes available: ${Object.keys(strokesForLog).length}`);
+        
         // Reset label positions and stroke paths for this redraw
         currentLabelPositions = [];
         currentStrokePaths = [];
@@ -1292,9 +1320,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const strokes = lineStrokesByImage[currentImageLabel] || [];
         
         // Start with a blank canvas or the original image if available
-        if (originalImages && originalImages[currentImageLabel]) {
+        if (window.originalImages && window.originalImages[currentImageLabel]) {
             // Check if we already have this image in the cache
-            const imageUrl = originalImages[currentImageLabel];
+            const imageUrl = window.originalImages[currentImageLabel];
             
             if (imageCache[imageUrl]) {
                 // Use cached image immediately
@@ -1313,12 +1341,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (img.complete) {
                     imageCache[imageUrl] = img;
                     drawImageAndStrokes(img);
+                } else {
+                    // If the image isn't immediately available,
+                    // still draw the strokes on a blank canvas so they don't disappear
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    
+                    // Use default scale (1) and center position when no image is available yet
+                    const canvasCenterX = canvas.width / 2;
+                    const canvasCenterY = canvas.height / 2;
+                    applyVisibleStrokes(1, canvasCenterX, canvasCenterY);
                 }
             }
         } else {
             // Otherwise start with a blank canvas
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            applyVisibleStrokes(1, 0, 0);
+            
+            // Use default scale (1) and center position when no image
+            const canvasCenterX = canvas.width / 2;
+            const canvasCenterY = canvas.height / 2;
+            applyVisibleStrokes(1, canvasCenterX, canvasCenterY);
         }
         
         function drawImageAndStrokes(img) {
@@ -1351,18 +1392,22 @@ document.addEventListener('DOMContentLoaded', () => {
         
         function applyVisibleStrokes(scale, imageX, imageY) {
             // Apply each visible stroke using vector data if available
-            strokes.forEach(strokeLabel => {
-                const isVisible = strokeVisibilityByImage[currentImageLabel][strokeLabel];
-                if (!isVisible) return;
+            const strokes = vectorStrokesByImage[currentImageLabel] || {};
+            const strokeOrder = lineStrokesByImage[currentImageLabel] || [];
+            const visibility = strokeVisibilityByImage[currentImageLabel] || {};
+            
+            // Retrieve the correct stroke data for the current image
+            strokeOrder.forEach(strokeLabel => {
+                const isVisible = visibility[strokeLabel];
+                if (!isVisible) return; // Skip invisible strokes
                 
                 const isSelected = selectedStrokeByImage[currentImageLabel] === strokeLabel;
                 
                 // Check if we have vector data for this stroke
-                if (vectorStrokesByImage[currentImageLabel] && 
-                    vectorStrokesByImage[currentImageLabel][strokeLabel]) {
+                if (strokes[strokeLabel]) {
                     
                     // Get the vector data for this stroke
-                    const vectorData = vectorStrokesByImage[currentImageLabel][strokeLabel];
+                    const vectorData = strokes[strokeLabel];
                     const strokeColor = vectorData.color || "#000000";
                     const strokeWidth = vectorData.width || 5;
                     
@@ -1370,15 +1415,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (vectorData.points && vectorData.points.length > 0) {
                         // If the stroke is selected, draw a glowing effect first
                         if (isSelected) {
-                        ctx.beginPath();
-                        
-                        // Transform the first point
-                        const firstPoint = vectorData.points[0];
-                        const transformedFirstX = imageX + (firstPoint.x * scale);
-                        const transformedFirstY = imageY + (firstPoint.y * scale);
-                        
-                        ctx.moveTo(transformedFirstX, transformedFirstY);
-                        
+                            ctx.beginPath();
+                            
+                            // Transform the first point
+                            const firstPoint = vectorData.points[0];
+                            const transformedFirstX = imageX + (firstPoint.x * scale);
+                            const transformedFirstY = imageY + (firstPoint.y * scale);
+                            
+                            ctx.moveTo(transformedFirstX, transformedFirstY);
+                            
                             // Check if this is a straight line
                             const isStraightLine = vectorData.type === 'straight' || 
                                 (vectorData.points.length === 2 && !vectorData.type);
@@ -1392,26 +1437,15 @@ document.addEventListener('DOMContentLoaded', () => {
                                 // Draw stroke with proper width
                                 ctx.lineTo(transformedLastX, transformedLastY);
                             } else {
-                                // Draw curves through the rest of the points (same path as the main stroke)
+                                // For freehand drawing, draw straight lines between all points
+                                // This avoids any curve calculation issues
                                 for (let i = 1; i < vectorData.points.length; i++) {
                                     const point = vectorData.points[i];
                                     // Transform the point coordinates based on image scale and position
                                     const transformedX = imageX + (point.x * scale);
                                     const transformedY = imageY + (point.y * scale);
                                     
-                                    if (i === 1 || !vectorData.points[i-1]) {
-                                        ctx.lineTo(transformedX, transformedY);
-                                    } else {
-                                        const prev = vectorData.points[i-1];
-                                        const transformedPrevX = imageX + (prev.x * scale);
-                                        const transformedPrevY = imageY + (prev.y * scale);
-                                        
-                                        const mid = {
-                                            x: (transformedPrevX + transformedX) / 2,
-                                            y: (transformedPrevY + transformedY) / 2
-                                        };
-                                        ctx.quadraticCurveTo(transformedPrevX, transformedPrevY, mid.x, mid.y);
-                                    }
+                                    ctx.lineTo(transformedX, transformedY);
                                 }
                             }
                             
@@ -1437,24 +1471,13 @@ document.addEventListener('DOMContentLoaded', () => {
                                 // Draw stroke with proper width
                                 ctx.lineTo(transformedLastX, transformedLastY);
                             } else {
+                                // For freehand drawing, draw straight lines between all points
                                 for (let i = 1; i < vectorData.points.length; i++) {
                                     const point = vectorData.points[i];
                                     const transformedX = imageX + (point.x * scale);
                                     const transformedY = imageY + (point.y * scale);
                                     
-                                    if (i === 1 || !vectorData.points[i-1]) {
-                                        ctx.lineTo(transformedX, transformedY);
-                                    } else {
-                                        const prev = vectorData.points[i-1];
-                                        const transformedPrevX = imageX + (prev.x * scale);
-                                        const transformedPrevY = imageY + (prev.y * scale);
-                                        
-                                        const mid = {
-                                            x: (transformedPrevX + transformedX) / 2,
-                                            y: (transformedPrevY + transformedY) / 2
-                                        };
-                                        ctx.quadraticCurveTo(transformedPrevX, transformedPrevY, mid.x, mid.y);
-                                    }
+                                    ctx.lineTo(transformedX, transformedY);
                                 }
                             }
                             
@@ -1503,33 +1526,19 @@ document.addEventListener('DOMContentLoaded', () => {
                             // Update stroke path for label placement
                             strokePath.push({x: transformedLastX, y: transformedLastY});
                         } else {
-                            // Draw curves through the rest of the points for freehand drawing
-                        let lastDrawnPoint = {x: transformedFirstX, y: transformedFirstY};
-                        
-                        for (let i = 1; i < vectorData.points.length; i++) {
-                            const point = vectorData.points[i];
-                            // Transform the point coordinates based on image scale and position
-                            const transformedX = imageX + (point.x * scale);
-                            const transformedY = imageY + (point.y * scale);
-                            
-                            if (i === 1 || !vectorData.points[i-1]) {
-                                ctx.lineTo(transformedX, transformedY);
-                                    strokePath.push({x: transformedX, y: transformedY});
-                            } else {
-                                const prev = vectorData.points[i-1];
-                                const transformedPrevX = imageX + (prev.x * scale);
-                                const transformedPrevY = imageY + (prev.y * scale);
+                            // Draw straight lines through the rest of the points for freehand drawing
+                            // We're deliberately not using curves to maintain consistency with the draw function
+                            for (let i = 1; i < vectorData.points.length; i++) {
+                                const point = vectorData.points[i];
+                                // Transform the point coordinates based on image scale and position
+                                const transformedX = imageX + (point.x * scale);
+                                const transformedY = imageY + (point.y * scale);
                                 
-                                const mid = {
-                                    x: (transformedPrevX + transformedX) / 2,
-                                    y: (transformedPrevY + transformedY) / 2
-                                };
-                                ctx.quadraticCurveTo(transformedPrevX, transformedPrevY, mid.x, mid.y);
-                                    strokePath.push({x: transformedPrevX, y: transformedPrevY});
-                                    strokePath.push({x: mid.x, y: mid.y});
-                            }
-                            
-                            lastDrawnPoint = {x: transformedX, y: transformedY};
+                                // Draw a straight line to this point
+                                ctx.lineTo(transformedX, transformedY);
+                                
+                                // Record the point for label placement
+                                strokePath.push({x: transformedX, y: transformedY});
                             }
                         }
                         
@@ -2014,28 +2023,46 @@ document.addEventListener('DOMContentLoaded', () => {
             strokeDataByImage[currentImageLabel] = {};
             
             // Reset label counter
-            labelsByImage[currentImageLabel] = 'A1';
+            labelsByImage[currentImageLabel] = 'A1';  // Reset to A1
             
             if (initialState && initialState.state) {
                 imageStates[currentImageLabel] = cloneImageData(initialState.state);
                 restoreCanvasState(initialState.state);
                 currentStroke = cloneImageData(initialState.state);
-            } else if (originalImages[currentImageLabel]) {
+            } else if (window.originalImages[currentImageLabel]) {
                 // If we have the original image, redraw it
                 console.log('Redrawing from original image');
                 const img = new Image();
                 img.onload = () => {
+                    // Clear the canvas first
                     ctx.clearRect(0, 0, canvas.width, canvas.height);
-                    const x = (canvas.width - img.width) / 2;
-                    const y = (canvas.height - img.height) / 2;
-                    ctx.drawImage(img, x, y);
                     
-                    // Save this new state
+                    // Get the current scale
+                    const scale = imageScaleByLabel[currentImageLabel];
+                    const scaledWidth = img.width * scale;
+                    const scaledHeight = img.height * scale;
+                    
+                    // Calculate base position (center of canvas)
+                    const centerX = (canvas.width - scaledWidth) / 2;
+                    const centerY = (canvas.height - scaledHeight) / 2;
+                    
+                    // Apply position offset
+                    const offsetX = imagePositionByLabel[currentImageLabel].x;
+                    const offsetY = imagePositionByLabel[currentImageLabel].y;
+                    
+                    // Calculate final position
+                    const x = centerX + offsetX;
+                    const y = centerY + offsetY;
+                    
+                    // Draw the original image with scale and position
+                    ctx.drawImage(img, x, y, scaledWidth, scaledHeight);
+                    
+                    // Save this as the new state
                     const newState = getCanvasState();
                     imageStates[currentImageLabel] = cloneImageData(newState);
                     currentStroke = cloneImageData(newState);
                 };
-                img.src = originalImages[currentImageLabel];
+                img.src = window.originalImages[currentImageLabel];
             }
             
             updateStrokeCounter();
@@ -2055,16 +2082,6 @@ document.addEventListener('DOMContentLoaded', () => {
             // Get the action to redo
             const actionToRedo = redoStack.pop();
             console.log(`Redoing action of type: ${actionToRedo.type}, label: ${actionToRedo.label || 'none'}`);
-            
-            // Skip certain state types when redoing
-            if (actionToRedo.type === 'pre-stroke' || actionToRedo.type === 'snapshot') {
-                console.log(`Skipping ${actionToRedo.type} state`);
-                // Skip these types and continue to next redo action if possible
-                if (redoStack.length > 0) {
-                    return redo();
-                }
-                return;
-            }
             
             // Add back to undo stack
             undoStackByImage[currentImageLabel].push(actionToRedo);
@@ -2186,28 +2203,43 @@ document.addEventListener('DOMContentLoaded', () => {
                 currentStroke = cloneImageData(oldState);
             } catch (e) {
                 // If that fails, redraw from original image
-                if (originalImages[currentImageLabel]) {
+                if (window.originalImages[currentImageLabel]) {
                     const img = new Image();
                     img.onload = () => {
+                        // Clear the canvas first
                         ctx.clearRect(0, 0, canvas.width, canvas.height);
-                        const x = (canvas.width - img.width) / 2;
-                        const y = (canvas.height - img.height) / 2;
-                        ctx.drawImage(img, x, y);
                         
-                        // Redraw any strokes if needed
-                        // This would require storing stroke data separately
+                        // Get the current scale
+                        const scale = imageScaleByLabel[currentImageLabel];
+                        const scaledWidth = img.width * scale;
+                        const scaledHeight = img.height * scale;
                         
-                        // Save this new state
+                        // Calculate base position (center of canvas)
+                        const centerX = (canvas.width - scaledWidth) / 2;
+                        const centerY = (canvas.height - scaledHeight) / 2;
+                        
+                        // Apply position offset
+                        const offsetX = imagePositionByLabel[currentImageLabel].x;
+                        const offsetY = imagePositionByLabel[currentImageLabel].y;
+                        
+                        // Calculate final position
+                        const x = centerX + offsetX;
+                        const y = centerY + offsetY;
+                        
+                        // Draw the original image with scale and position
+                        ctx.drawImage(img, x, y, scaledWidth, scaledHeight);
+                        
+                        // Save this as the new state
                         const newState = getCanvasState();
                         imageStates[currentImageLabel] = cloneImageData(newState);
                         currentStroke = cloneImageData(newState);
                     };
-                    img.src = originalImages[currentImageLabel];
+                    img.src = window.originalImages[currentImageLabel];
+                } else if (!currentStroke) {
+                    // Initialize blank state if needed
+                    currentStroke = getCanvasState();
                 }
             }
-        } else if (!currentStroke) {
-            // Initialize blank state if needed
-            currentStroke = getCanvasState();
         }
     }
     resizeCanvas();
@@ -2225,39 +2257,58 @@ document.addEventListener('DOMContentLoaded', () => {
     let straightLineStart = null; // For straight line mode - start point
     let lastDrawnPoint = null;
 
-    function interpolatePoints(p1, p2) {
-        const dx = p2.x - p1.x;
-        const dy = p2.y - p1.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        const numPoints = Math.max(Math.ceil(distance / 2), 1); // More frequent interpolation
-        
-        const points = [];
-        for (let i = 0; i <= numPoints; i++) {
-            points.push({
-                x: p1.x + (dx * i) / numPoints,
-                y: p1.y + (dy * i) / numPoints,
-                time: p1.time + ((p2.time - p1.time) * i) / numPoints
-            });
+    // Helper function to get transformed coordinates (image space from canvas space)
+    function getTransformedCoords(canvasX, canvasY) {
+        const scale = imageScaleByLabel[currentImageLabel] || 1;
+        const position = imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
+        // Ensure scale is not zero to avoid division by zero
+        if (scale === 0) {
+            console.error("Image scale is zero, cannot transform coordinates.");
+            return { x: canvasX, y: canvasY }; // Return untransformed coords as fallback
         }
-        return points;
+        return {
+            x: (canvasX - position.x) / scale,
+            y: (canvasY - position.y) / scale
+        };
+    }
+
+    // Helper function to get canvas coordinates from image coordinates
+    function getCanvasCoords(imageX, imageY) {
+        const scale = imageScaleByLabel[currentImageLabel] || 1;
+        const position = imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
+        return {
+            x: (imageX * scale) + position.x,
+            y: (imageY * scale) + position.y
+        };
     }
 
     // Drawing function for freehand mode
     function draw(e) {
         if (!isDrawing) return;
         
+        // Get raw canvas coordinates for drawing operations
+        const canvasX = e.offsetX;
+        const canvasY = e.offsetY;
+        // Get image coordinates for storing in the points array and calculating velocity
+        const { x: imgX, y: imgY } = getTransformedCoords(canvasX, canvasY);
+
         // Calculate time delta for velocity
         const currentPoint = {
-            x: e.offsetX,
-            y: e.offsetY,
+            x: imgX,    // Store image X
+            y: imgY,    // Store image Y
+            canvasX: canvasX, // Store canvas X for drawing
+            canvasY: canvasY, // Store canvas Y for drawing
             time: Date.now()
         };
-        const prevPoint = points[points.length - 1] || { x: lastX, y: lastY, time: currentPoint.time - 10 };
+        
+        // Use the correct previous point for time delta calculations
+        const prevPoint = points.length > 0 ? points[points.length - 1] : 
+                          { x: imgX, y: imgY, canvasX: lastX, canvasY: lastY, time: currentPoint.time - 10 };
         const timeDelta = currentPoint.time - prevPoint.time || 1;
 
         // Calculate velocity (pixels per millisecond)
         const distance = Math.sqrt(
-            Math.pow(currentPoint.x - prevPoint.x, 2) +
+            Math.pow(currentPoint.x - prevPoint.x, 2) + 
             Math.pow(currentPoint.y - prevPoint.y, 2)
         );
         const velocity = distance / timeDelta;
@@ -2276,31 +2327,19 @@ document.addEventListener('DOMContentLoaded', () => {
         // Add point to array
         points.push(currentPoint);
 
-        // Always start from the last drawn point
+        // Always start from the last drawn point in canvas coordinates
         ctx.beginPath();
-        if (lastDrawnPoint) {
-            ctx.moveTo(lastDrawnPoint.x, lastDrawnPoint.y);
+        
+        // Use canvas coordinates directly for drawing
+        if (points.length === 1) {
+            // This is the first point after mousedown, draw from lastX/lastY
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(canvasX, canvasY);
         } else {
-            ctx.moveTo(prevPoint.x, prevPoint.y);
+            // We have multiple points
+            ctx.moveTo(prevPoint.canvasX, prevPoint.canvasY);
+            ctx.lineTo(canvasX, canvasY);
         }
-
-        // Draw the line segments
-        for (let i = Math.max(0, points.length - 3); i < points.length; i++) {
-            const point = points[i];
-            if (i === 0 || !points[i - 1]) {
-                ctx.lineTo(point.x, point.y);
-            } else {
-                const prev = points[i - 1];
-                const mid = {
-                    x: (prev.x + point.x) / 2,
-                    y: (prev.y + point.y) / 2
-                };
-                ctx.quadraticCurveTo(prev.x, prev.y, mid.x, mid.y);
-            }
-        }
-
-        // Connect to the current point
-        ctx.lineTo(currentPoint.x, currentPoint.y);
 
         // Set drawing styles
         ctx.strokeStyle = colorPicker.value;
@@ -2309,7 +2348,9 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.lineJoin = 'round';
         ctx.stroke();
 
-        lastDrawnPoint = currentPoint;
+        // Update the last drawn point coordinates
+        lastX = canvasX;
+        lastY = canvasY;
         
         // Store vector data for the freehand stroke
         const currentStrokeLabel = labelsByImage[currentImageLabel];
@@ -2329,6 +2370,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const imageY = centerY + offsetY;
         
         // Convert the points to image-relative coordinates
+        // We only need to store the image space coordinates for persistence
         const relativePoints = points.map(point => ({
             x: (point.x - imageX) / scale,
             y: (point.y - imageY) / scale,
@@ -2459,35 +2501,63 @@ document.addEventListener('DOMContentLoaded', () => {
         // Try to detect if user clicked on a stroke directly, rather than its label
         const strokeData = checkForStrokeAtPoint(x, y);
         if (strokeData) {
-            const strokeLabel = strokeData.label;
-            const isCurrentlySelected = selectedStrokeByImage[currentImageLabel] === strokeLabel;
+            // Draw a white connector circle to anchor the start point instead of selecting the line
+            // Save the state before starting a new stroke
+            if (!strokeInProgress) {
+                const currentState = getCanvasState();
+                currentStroke = cloneImageData(currentState);
+                // Save the state before we start drawing
+                undoStackByImage[currentImageLabel].push({
+                    state: cloneImageData(currentState),
+                    type: 'pre-stroke',
+                    label: null
+                });
+            }
             
-            // Update selection state
-            if (isCurrentlySelected) {
-                // Deselect if already selected
-                selectedStrokeByImage[currentImageLabel] = null;
+            // Start drawing
+            isDrawing = true;
+            isDrawingOrPasting = true;
+            strokeInProgress = true;
+            points = [];
+            lastVelocity = 0;
+            lastDrawnPoint = null;
+            [lastX, lastY] = [x, y];
+            
+            // Draw a glowing white connector circle at the start point
+            ctx.beginPath();
+            ctx.arc(x, y, parseInt(brushSize.value) / 2 + 5, 0, Math.PI * 2);
+            
+            // Create a white glow effect with a radial gradient
+            const gradient = ctx.createRadialGradient(
+                x, y, parseInt(brushSize.value) / 4,
+                x, y, parseInt(brushSize.value) / 2 + 5
+            );
+            gradient.addColorStop(0, 'white');
+            gradient.addColorStop(0.7, 'rgba(255, 255, 255, 0.8)');
+            gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+            
+            ctx.fillStyle = gradient;
+            ctx.fill();
+            
+            // Then draw the colored dot for the actual start point
+            ctx.beginPath();
+            ctx.arc(x, y, parseInt(brushSize.value) / 2, 0, Math.PI * 2);
+            ctx.fillStyle = colorPicker.value;
+            ctx.fill();
+            
+            if (drawingMode === 'straight') {
+                // For straight line, store the start point
+                straightLineStart = { x: x, y: y };
             } else {
-                // Select if not already selected
-                selectedStrokeByImage[currentImageLabel] = strokeLabel;
+                // For freehand, add first point
+                const firstPoint = {
+                    x: x,
+                    y: y,
+                    time: Date.now()
+                };
+                points.push(firstPoint);
+                lastDrawnPoint = firstPoint;
             }
-            
-            // ALWAYS ensure that the stroke remains visible regardless of selection state
-            if (strokeVisibilityByImage[currentImageLabel] === undefined) {
-                strokeVisibilityByImage[currentImageLabel] = {};
-            }
-            strokeVisibilityByImage[currentImageLabel][strokeLabel] = true;
-            
-            // Update the checkbox in the sidebar
-            const checkbox = document.getElementById(`visibility-${strokeLabel}`);
-            if (checkbox) {
-                checkbox.checked = true;
-            }
-            
-            // Update the sidebar to show selection
-            updateStrokeVisibilityControls();
-            
-            // Redraw canvas to reflect selection
-            redrawCanvasWithVisibility();
             return;
         }
         
@@ -2527,19 +2597,21 @@ document.addEventListener('DOMContentLoaded', () => {
             straightLineStart = { x: e.offsetX, y: e.offsetY };
         } else {
             // For freehand, add first point
-        const firstPoint = {
-            x: e.offsetX,
-            y: e.offsetY,
-            time: Date.now()
-        };
-        points.push(firstPoint);
-        lastDrawnPoint = firstPoint;
+            const { x: imgX, y: imgY } = getTransformedCoords(e.offsetX, e.offsetY);
+            const firstPoint = {
+                x: imgX,             // Image space X
+                y: imgY,             // Image space Y
+                canvasX: e.offsetX,  // Canvas space X
+                canvasY: e.offsetY,  // Canvas space Y
+                time: Date.now()
+            };
+            points.push(firstPoint);
         
-        // Draw a dot at the start point (important for single clicks)
-        ctx.beginPath();
-        ctx.arc(e.offsetX, e.offsetY, parseInt(brushSize.value) / 2, 0, Math.PI * 2);
-        ctx.fillStyle = colorPicker.value;
-        ctx.fill();
+            // Draw a dot at the start point (important for single clicks)
+            ctx.beginPath();
+            ctx.arc(e.offsetX, e.offsetY, parseInt(brushSize.value) / 2, 0, Math.PI * 2);
+            ctx.fillStyle = colorPicker.value;
+            ctx.fill();
         }
     });
     
@@ -2646,6 +2718,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (Math.abs(straightLineStart.x - endPoint.x) > 2 || 
                     Math.abs(straightLineStart.y - endPoint.y) > 2) {
                     
+                    // Check if end point is on another stroke
+                    const endPointStrokeData = checkForStrokeAtPoint(endPoint.x, endPoint.y);
+                    
                     // Save the vector data for the straight line
                     const newStrokeLabel = labelsByImage[currentImageLabel];
                     const strokeColor = colorPicker.value;
@@ -2657,13 +2732,24 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     
                     // Get the current image position and scale
-                    const scale = imageScaleByLabel[currentImageLabel] || 1.0;
+                    const scale = imageScaleByLabel[currentImageLabel];
                     const offsetX = imagePositionByLabel[currentImageLabel]?.x || 0;
                     const offsetY = imagePositionByLabel[currentImageLabel]?.y || 0;
-                    const centerX = (canvas.width - (originalImageDimensions[currentImageLabel]?.width || 0) * scale) / 2;
-                    const centerY = (canvas.height - (originalImageDimensions[currentImageLabel]?.height || 0) * scale) / 2;
-                    const imageX = centerX + offsetX;
-                    const imageY = centerY + offsetY;
+                    
+                    let imageX, imageY;
+                    
+                    // If we have an image, calculate coordinates relative to it
+                    if (window.originalImages && window.originalImages[currentImageLabel] && 
+                        originalImageDimensions[currentImageLabel]?.width) {
+                        const centerX = (canvas.width - (originalImageDimensions[currentImageLabel].width || 0) * scale) / 2;
+                        const centerY = (canvas.height - (originalImageDimensions[currentImageLabel].height || 0) * scale) / 2;
+                        imageX = centerX + offsetX;
+                        imageY = centerY + offsetY;
+                    } else {
+                        // Without an image, use canvas center as reference point
+                        imageX = canvas.width / 2;
+                        imageY = canvas.height / 2;
+                    }
                     
                     // Convert from canvas coordinates to image-relative coordinates
                     const relativeStartX = (straightLineStart.x - imageX) / scale;
@@ -2698,6 +2784,31 @@ document.addEventListener('DOMContentLoaded', () => {
                     
                     // Draw the final line
                     drawStraightLinePreview(straightLineStart, endPoint);
+                    
+                    // If end point overlaps with another line, draw a glowing circle
+                    if (endPointStrokeData) {
+                        // Draw a glowing white connector circle at the end point
+                        ctx.beginPath();
+                        ctx.arc(endPoint.x, endPoint.y, parseInt(brushSize.value) / 2 + 5, 0, Math.PI * 2);
+                        
+                        // Create a white glow effect with a radial gradient
+                        const gradient = ctx.createRadialGradient(
+                            endPoint.x, endPoint.y, parseInt(brushSize.value) / 4,
+                            endPoint.x, endPoint.y, parseInt(brushSize.value) / 2 + 5
+                        );
+                        gradient.addColorStop(0, 'white');
+                        gradient.addColorStop(0.7, 'rgba(255, 255, 255, 0.8)');
+                        gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+                        
+                        ctx.fillStyle = gradient;
+                        ctx.fill();
+                        
+                        // Then draw the colored dot for the actual end point
+                        ctx.beginPath();
+                        ctx.arc(endPoint.x, endPoint.y, parseInt(brushSize.value) / 2, 0, Math.PI * 2);
+                        ctx.fillStyle = strokeColor;
+                        ctx.fill();
+                    }
                 }
                 
                 // Reset straight line start
@@ -2716,13 +2827,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Only add the stroke if it has valid points
                 if (points.length > 1) {
                     // Get the current image position and scale
-                    const scale = imageScaleByLabel[currentImageLabel] || 1.0;
+                    const scale = imageScaleByLabel[currentImageLabel];
                     const offsetX = imagePositionByLabel[currentImageLabel]?.x || 0;
                     const offsetY = imagePositionByLabel[currentImageLabel]?.y || 0;
-                    const centerX = (canvas.width - (originalImageDimensions[currentImageLabel]?.width || 0) * scale) / 2;
-                    const centerY = (canvas.height - (originalImageDimensions[currentImageLabel]?.height || 0) * scale) / 2;
-                    const imageX = centerX + offsetX;
-                    const imageY = centerY + offsetY;
+                    
+                    let imageX, imageY;
+                    
+                    // If we have an image, calculate coordinates relative to it
+                    if (window.originalImages && window.originalImages[currentImageLabel] && 
+                        originalImageDimensions[currentImageLabel]?.width) {
+                        const centerX = (canvas.width - (originalImageDimensions[currentImageLabel].width || 0) * scale) / 2;
+                        const centerY = (canvas.height - (originalImageDimensions[currentImageLabel].height || 0) * scale) / 2;
+                        imageX = centerX + offsetX;
+                        imageY = centerY + offsetY;
+                    } else {
+                        // Without an image, use canvas center as reference point
+                        imageX = canvas.width / 2;
+                        imageY = canvas.height / 2;
+                    }
                     
                     // Convert all points from canvas coordinates to image-relative coordinates
                     const relativePoints = points.map(point => ({
@@ -2752,6 +2874,37 @@ document.addEventListener('DOMContentLoaded', () => {
                     strokeLabelVisibility[currentImageLabel] = strokeLabelVisibility[currentImageLabel] || {};
                     strokeLabelVisibility[currentImageLabel][newStrokeLabel] = true;
                 }
+                
+                    // Check if the last point of the freehand stroke is on another stroke
+                    if (points.length > 0) {
+                        const lastPoint = points[points.length - 1];
+                        const endPointStrokeData = checkForStrokeAtPoint(lastPoint.x, lastPoint.y);
+                        
+                        // If end point overlaps with another line, draw a glowing circle
+                        if (endPointStrokeData) {
+                            // Draw a glowing white connector circle at the end point
+                            ctx.beginPath();
+                            ctx.arc(lastPoint.x, lastPoint.y, parseInt(brushSize.value) / 2 + 5, 0, Math.PI * 2);
+                            
+                            // Create a white glow effect with a radial gradient
+                            const gradient = ctx.createRadialGradient(
+                                lastPoint.x, lastPoint.y, parseInt(brushSize.value) / 4,
+                                lastPoint.x, lastPoint.y, parseInt(brushSize.value) / 2 + 5
+                            );
+                            gradient.addColorStop(0, 'white');
+                            gradient.addColorStop(0.7, 'rgba(255, 255, 255, 0.8)');
+                            gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+                            
+                            ctx.fillStyle = gradient;
+                            ctx.fill();
+                            
+                            // Then draw the colored dot for the actual end point
+                            ctx.beginPath();
+                            ctx.arc(lastPoint.x, lastPoint.y, parseInt(brushSize.value) / 2, 0, Math.PI * 2);
+                            ctx.fillStyle = colorPicker.value;
+                            ctx.fill();
+                        }
+                    }
                 
                 // Reset points array for next stroke
                 points = [];
@@ -2833,6 +2986,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     
     // Function to switch to a different image
+    // Make switchToImage available globally
+    window.switchToImage = switchToImage;
     function switchToImage(label) {
         if (currentImageLabel === label) return;
         
@@ -2855,10 +3010,10 @@ document.addEventListener('DOMContentLoaded', () => {
         // Restore state for the new image
         if (imageStates[label]) {
             restoreCanvasState(imageStates[label]);
-        } else if (originalImages[label]) {
+        } else if (window.originalImages[label]) {
             // If no state exists but we have the original image, paste it
             console.log(`No state exists for ${label}, pasting original image`);
-            pasteImageFromUrl(originalImages[label]);
+            pasteImageFromUrl(window.originalImages[label]);
         } else {
             // Clear canvas if no state or original image exists
             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -2982,7 +3137,7 @@ document.addEventListener('DOMContentLoaded', () => {
         selectedStrokeByImage[currentImageLabel] = null;
         
         // Instead of just clearing the canvas, redraw the original image if available
-        if (originalImages[currentImageLabel]) {
+        if (window.originalImages[currentImageLabel]) {
             const img = new Image();
             img.onload = () => {
                 // Clear the canvas first
@@ -3084,7 +3239,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             // If no matching keywords, find next available label
             for (const label of IMAGE_LABELS) {
-                if (!originalImages[label]) {
+                if (!window.originalImages[label]) {
                     return label;
                 }
             }
@@ -3146,7 +3301,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!pastedImages.includes(url)) {
                     pastedImages.push(url);
                 }
-                originalImages[label] = url;
+                window.originalImages[label] = url;
                 
                 // Clear any previous state for this label
                 imageStates[label] = null;
@@ -3210,7 +3365,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Assign to the first available label
                 let label;
                 for (const availableLabel of IMAGE_LABELS) {
-                    if (!originalImages[availableLabel]) {
+                    if (!window.originalImages[availableLabel]) {
                         label = availableLabel;
                         break;
                     }
@@ -3233,7 +3388,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!pastedImages.includes(url)) {
                     pastedImages.push(url);
                 }
-                originalImages[label] = url;
+                window.originalImages[label] = url;
                 
                 // Switch to this image and paste it
                 currentImageLabel = label;
@@ -3252,7 +3407,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 updateSidebarStrokeCounts();
                 updateActiveImageInSidebar();
                 updateStrokeVisibilityControls();
-                break;
             }
         }
     });
@@ -3294,9 +3448,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function updateImageScale(newScale) {
-        if (!originalImages[currentImageLabel]) {
+        if (!window.originalImages[currentImageLabel]) {
             console.log('No image to scale');
-            return;
+            return; // No image to scale
         }
         
         // Update scale for current image
@@ -3306,7 +3460,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Redraw the image with the new scale
         const img = new Image();
         img.onload = () => {
-            // Save the current state before redrawing
+            // Save current state before redrawing
             const previousState = getCanvasState();
             undoStackByImage[currentImageLabel].push({
                 state: cloneImageData(previousState),
@@ -3314,14 +3468,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 label: null
             });
             
-            // Clear the canvas
+            // Clear canvas
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            // Calculate the scaled dimensions
-            const originalWidth = originalImageDimensions[currentImageLabel].width;
-            const originalHeight = originalImageDimensions[currentImageLabel].height;
-            const scaledWidth = originalWidth * newScale;
-            const scaledHeight = originalHeight * newScale;
+            // Apply scale
+            const scale = imageScaleByLabel[currentImageLabel];
+            const scaledWidth = img.width * scale;
+            const scaledHeight = img.height * scale;
             
             // Calculate base position (center of canvas)
             const centerX = (canvas.width - scaledWidth) / 2;
@@ -3344,7 +3497,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Update the scale display in the sidebar
             const scaleElement = document.getElementById(`scale-${currentImageLabel}`);
             if (scaleElement) {
-                scaleElement.textContent = `Scale: ${Math.round(newScale * 100)}%`;
+                scaleElement.textContent = `Scale: ${Math.round(scale * 100)}%`;
             }
             
             // Update UI
@@ -3386,7 +3539,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Function to move the image and its strokes
     function moveImage(deltaX, deltaY) {
-        if (!originalImages[currentImageLabel]) {
+        if (!window.originalImages[currentImageLabel]) {
             return; // No image to move
         }
         
@@ -3811,20 +3964,30 @@ document.addEventListener('DOMContentLoaded', () => {
         // Calculate image position for coordinate transforms
         let imageWidth = canvas.width;
         let imageHeight = canvas.height;
+        let imageX, imageY;
         
         // Try to get original image dimensions if available
-        if (originalImages[currentImageLabel]) {
-            const cachedImg = imageCache[originalImages[currentImageLabel]];
+        if (window.originalImages && window.originalImages[currentImageLabel]) {
+            const cachedImg = imageCache[window.originalImages[currentImageLabel]];
             if (cachedImg) {
                 imageWidth = cachedImg.width;
                 imageHeight = cachedImg.height;
+                
+                // Calculate position based on image dimensions
+                imageX = (canvas.width - imageWidth * scale) / 2 + 
+                        (imagePositionByLabel[currentImageLabel]?.x || 0);
+                imageY = (canvas.height - imageHeight * scale) / 2 + 
+                        (imagePositionByLabel[currentImageLabel]?.y || 0);
+            } else {
+                // Image not yet loaded, use canvas center as reference
+                imageX = canvas.width / 2 + (imagePositionByLabel[currentImageLabel]?.x || 0);
+                imageY = canvas.height / 2 + (imagePositionByLabel[currentImageLabel]?.y || 0);
             }
+        } else {
+            // No image, use canvas center as reference point
+            imageX = canvas.width / 2 + (imagePositionByLabel[currentImageLabel]?.x || 0);
+            imageY = canvas.height / 2 + (imagePositionByLabel[currentImageLabel]?.y || 0);
         }
-        
-        const imageX = (canvas.width - imageWidth * scale) / 2 + 
-                       (imagePositionByLabel[currentImageLabel]?.x || 0);
-        const imageY = (canvas.height - imageHeight * scale) / 2 + 
-                       (imagePositionByLabel[currentImageLabel]?.y || 0);
         
         // Adjust max distance based on scale
         const baseMaxDistance = 10; // Base distance in pixels for hit detection
@@ -3923,8 +4086,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const projX = x1 + (projection * dx) / len;
         const projY = y1 + (projection * dy) / len;
         const distance = Math.sqrt((px - projX) * (px - projX) + (py - projY) * (py - projY));
-        
         return distance;
     }
-
-});
+    
+    // Expose necessary functions globally for project-manager.js to use
+    window.addImageToSidebar = addImageToSidebar;
+    window.switchToImage = switchToImage;
+    window.updateStrokeCounter = updateStrokeCounter;
+    window.updateStrokeVisibilityControls = updateStrokeVisibilityControls;
+    window.redrawCanvasWithVisibility = redrawCanvasWithVisibility;
+    window.updateScaleUI = updateScaleUI;
+})

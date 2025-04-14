@@ -1,0 +1,565 @@
+// Project Manager for OpenPaint
+// Handles saving and loading projects using ZIP format
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Get reference to save and load buttons
+    const saveProjectBtn = document.getElementById('saveProject');
+    const loadProjectBtn = document.getElementById('loadProject');
+    
+    // Add event listeners
+    if (saveProjectBtn) {
+        saveProjectBtn.addEventListener('click', saveProject);
+    }
+    
+    if (loadProjectBtn) {
+        loadProjectBtn.addEventListener('click', loadProject);
+    }
+    
+    // Function to save project as ZIP file
+    function saveProject() {
+        try {
+            // Show status message
+            showStatusMessage('Preparing project for download...', 'info');
+            
+            // Create a new JSZip instance
+            const zip = new JSZip();
+            
+            // Get project name with fallback
+            const projectName = document.getElementById('projectName').value || 'OpenPaint Project';
+            
+            // Create project metadata
+            const projectData = {
+                name: projectName,
+                created: new Date().toISOString(),
+                version: '1.0',
+                imageLabels: window.IMAGE_LABELS || ['front', 'side', 'back', 'cushion'],
+                currentImageLabel: window.currentImageLabel || 'front',
+                // Create empty containers for all data
+                strokes: {},
+                strokeVisibility: {},
+                strokeLabelVisibility: {},
+                strokeMeasurements: {},
+                imageScales: {},
+                imagePositions: {},
+                strokeSequence: {},
+                nextLabels: {}
+            };
+            
+            // Add stroke data for each image
+            for (const label of projectData.imageLabels) {
+                console.log(`Processing strokes for ${label}...`);
+                
+                // Get vector strokes data - ensure we have data for each label
+                if (window.vectorStrokesByImage && window.vectorStrokesByImage[label]) {
+                    projectData.strokes[label] = JSON.parse(JSON.stringify(window.vectorStrokesByImage[label]));
+                } else {
+                    projectData.strokes[label] = {};
+                }
+                
+                // Add stroke visibility settings
+                if (window.strokeVisibilityByImage && window.strokeVisibilityByImage[label]) {
+                    projectData.strokeVisibility[label] = window.strokeVisibilityByImage[label];
+                } else {
+                    projectData.strokeVisibility[label] = {};
+                }
+                
+                // Add stroke label visibility settings
+                if (window.strokeLabelVisibility && window.strokeLabelVisibility[label]) {
+                    projectData.strokeLabelVisibility[label] = window.strokeLabelVisibility[label];
+                } else {
+                    projectData.strokeLabelVisibility[label] = {};
+                }
+                
+                // Add stroke measurements
+                if (window.strokeMeasurements && window.strokeMeasurements[label]) {
+                    projectData.strokeMeasurements[label] = window.strokeMeasurements[label];
+                } else {
+                    projectData.strokeMeasurements[label] = {};
+                }
+                
+                // Add image scaling and position
+                if (window.imageScaleByLabel && window.imageScaleByLabel[label] !== undefined) {
+                    projectData.imageScales[label] = window.imageScaleByLabel[label];
+                } else {
+                    projectData.imageScales[label] = 1.0; // Default to 100% scale
+                }
+                
+                if (window.imagePositionByLabel && window.imagePositionByLabel[label]) {
+                    projectData.imagePositions[label] = window.imagePositionByLabel[label];
+                } else {
+                    projectData.imagePositions[label] = { x: 0, y: 0 }; // Default position
+                }
+                
+                // Add stroke sequence
+                if (window.lineStrokesByImage && window.lineStrokesByImage[label]) {
+                    projectData.strokeSequence[label] = window.lineStrokesByImage[label];
+                } else {
+                    projectData.strokeSequence[label] = [];
+                }
+                
+                // Add next label counter
+                if (window.labelsByImage && window.labelsByImage[label]) {
+                    projectData.nextLabels[label] = window.labelsByImage[label];
+                } else {
+                    projectData.nextLabels[label] = 'A1'; // Default starting label
+                }
+            }
+            
+            // Add project.json to the zip
+            zip.file("project.json", JSON.stringify(projectData, null, 2));
+            
+            // Add image files
+            const imagePromises = [];
+            
+            for (const label of projectData.imageLabels) {
+                if (window.originalImages && window.originalImages[label]) {
+                    const imageUrl = window.originalImages[label];
+                    
+                    if (imageUrl && imageUrl.startsWith('data:')) {
+                        // It's a base64 data URL
+                        const extension = imageUrl.match(/data:image\/(\w+);base64,/)?.[1] || 'png';
+                        const base64Data = imageUrl.split(',')[1];
+                        
+                        // Ensure consistent file naming for images
+                        const safeLabel = label.toLowerCase();
+                        zip.file(`${safeLabel}.${extension}`, base64Data, {base64: true});
+                    } else if (imageUrl) {
+                        // It's a URL, need to fetch it
+                        const promise = fetch(imageUrl)
+                            .then(response => {
+                                if (!response.ok) {
+                                    throw new Error(`Failed to fetch image: ${response.status} ${response.statusText}`);
+                                }
+                                return response.blob();
+                            })
+                            .then(blob => {
+                                const extension = blob.type.split('/')[1] || 'png';
+                                
+                                // Ensure consistent file naming for images
+                                const safeLabel = label.toLowerCase();
+                                zip.file(`${safeLabel}.${extension}`, blob);
+                            })
+                            .catch(err => {
+                                console.error(`Error fetching image for ${label}:`, err);
+                                showStatusMessage(`Error processing image for ${label}`, 'error');
+                            });
+                            
+                        imagePromises.push(promise);
+                    }
+                } else {
+                    // Try to capture the current canvas state for this view if no original image exists
+                    console.log(`No original image found for ${label}, trying to capture canvas state`);
+                    
+                    // If this is the current view, grab the canvas directly
+                    if (label === window.currentImageLabel && window.canvas) {
+                        try {
+                            const dataUrl = window.canvas.toDataURL('image/png');
+                            const base64Data = dataUrl.split(',')[1];
+                            
+                            // Ensure consistent file naming for images
+                            const safeLabel = label.toLowerCase();
+                            zip.file(`${safeLabel}.png`, base64Data, {base64: true});
+                        } catch (err) {
+                            console.error(`Error capturing canvas for ${label}:`, err);
+                            showStatusMessage(`Error capturing canvas for ${label}`, 'error');
+                        }
+                    }
+                }
+            }
+            
+            // Add a special spinner or indicator while saving
+            const saveIndicator = document.createElement('div');
+            saveIndicator.id = 'saveIndicator';
+            saveIndicator.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: rgba(0, 0, 0, 0.7);
+                color: white;
+                padding: 20px;
+                border-radius: 10px;
+                z-index: 10000;
+                text-align: center;
+            `;
+            saveIndicator.innerHTML = `
+                <div style="margin-bottom: 10px;">Saving project...</div>
+                <div class="spinner" style="border: 5px solid #f3f3f3; border-top: 5px solid #3498db; border-radius: 50%; width: 30px; height: 30px; animation: spin 2s linear infinite; margin: 0 auto;"></div>
+                <style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>
+            `;
+            document.body.appendChild(saveIndicator);
+            
+            // Wait for all image fetches to complete
+            Promise.all(imagePromises)
+                .then(() => {
+                    // Generate the zip file
+                    return zip.generateAsync({
+                        type: 'blob',
+                        compression: 'DEFLATE',
+                        compressionOptions: { level: 6 }
+                    });
+                })
+                .then(content => {
+                    // Remove the save indicator
+                    if (saveIndicator.parentNode) {
+                        saveIndicator.parentNode.removeChild(saveIndicator);
+                    }
+                    
+                    // Create download link
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(content);
+                    
+                    // Generate a filename based on project name and date
+                    const safeProjectName = projectName.replace(/[^\w\s]/gi, '').replace(/\s+/g, '_');
+                    const dateString = new Date().toISOString().split('T')[0];
+                    link.download = `${safeProjectName}_${dateString}.zip`;
+                    
+                    // Trigger download
+                    link.click();
+                    
+                    // Clean up the URL object
+                    setTimeout(() => URL.revokeObjectURL(link.href), 100);
+                    
+                    // Show success message
+                    showStatusMessage('Project saved successfully!', 'success');
+                })
+                .catch(err => {
+                    // Remove the save indicator
+                    if (saveIndicator.parentNode) {
+                        saveIndicator.parentNode.removeChild(saveIndicator);
+                    }
+                    
+                    console.error('Error creating ZIP file:', err);
+                    showStatusMessage('Error saving project. See console for details.', 'error');
+                });
+        } catch (err) {
+            console.error('Error in saveProject:', err);
+            showStatusMessage('Error saving project. See console for details.', 'error');
+        }
+    }
+    
+    // Function to load project from a ZIP file
+    function loadProject() {
+        // Create a file input element
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.zip';
+        
+        // Handle file selection
+        input.onchange = function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            showStatusMessage('Loading project...', 'info');
+            
+            // Create loading indicator
+            const loadingIndicator = document.createElement('div');
+            loadingIndicator.id = 'loadingIndicator';
+            loadingIndicator.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: rgba(0, 0, 0, 0.7);
+                color: white;
+                padding: 20px;
+                border-radius: 10px;
+                z-index: 10000;
+                text-align: center;
+            `;
+            loadingIndicator.innerHTML = `
+                <div style="margin-bottom: 10px;">Loading project...</div>
+                <div class="spinner" style="border: 5px solid #f3f3f3; border-top: 5px solid #3498db; border-radius: 50%; width: 30px; height: 30px; animation: spin 2s linear infinite; margin: 0 auto;"></div>
+                <style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>
+            `;
+            document.body.appendChild(loadingIndicator);
+            
+            // Read the selected file
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = e.target.result;
+                
+                // Load the zip file
+                JSZip.loadAsync(data)
+                    .then(zip => {
+                        console.log("ZIP file loaded. Contents:", Object.keys(zip.files));
+                        
+                        // First get the project.json file
+                        const projectJsonFile = zip.file("project.json");
+                        if (!projectJsonFile) {
+                            throw new Error("Missing project.json");
+                        }
+                        
+                        return projectJsonFile.async("string")
+                            .then(jsonContent => {
+                                console.log("Project data loaded:", jsonContent.substring(0, 100) + "...");
+                                const projectData = JSON.parse(jsonContent);
+                                
+                                // Set project name
+                                document.getElementById('projectName').value = projectData.name || 'OpenPaint Project';
+                                
+                                // Clear existing image list in sidebar
+                                const imageList = document.getElementById('imageList');
+                                if (imageList) {
+                                    imageList.innerHTML = '';
+                                }
+                                
+                                // Process image files and load project data
+                                const imagePromises = [];
+                                
+                                // Reset global variables to start with a clean slate
+                                window.vectorStrokesByImage = {};
+                                window.strokeVisibilityByImage = {};
+                                window.strokeLabelVisibility = {};
+                                window.strokeMeasurements = {};
+                                window.imageScaleByLabel = {};
+                                window.imagePositionByLabel = {};
+                                window.lineStrokesByImage = {};
+                                window.labelsByImage = {};
+                                window.originalImages = {};
+                                
+                                // Process each image label
+                                for (const label of projectData.imageLabels) {
+                                    console.log(`Processing label: ${label}`);
+                                    
+                                    // Find any file starting with this label name
+                                    // Use lowercase version of the label for consistency with saving
+                                    const safeLabel = label.toLowerCase();
+                                    const imageFiles = Object.keys(zip.files).filter(
+                                        filename => filename.startsWith(`${safeLabel}.`) && 
+                                        !filename.endsWith('/') && 
+                                        filename !== 'project.json'
+                                    );
+                                    
+                                    if (imageFiles.length > 0) {
+                                        const imageFile = imageFiles[0];
+                                        console.log(`Processing image file: ${imageFile}`);
+                                        
+                                        const promise = zip.file(imageFile).async("blob")
+                                            .then(blob => {
+                                                console.log(`Image blob loaded for ${label}, size:`, blob.size);
+                                                // Convert blob to data URL
+                                                return new Promise((resolve, reject) => {
+                                                    const reader = new FileReader();
+                                                    reader.onload = e => resolve(e.target.result);
+                                                    reader.onerror = reject;
+                                                    reader.readAsDataURL(blob);
+                                                });
+                                            })
+                                            .then(dataUrl => {
+                                                console.log(`Data URL created for ${label}, length:`, dataUrl.length);
+                                                // Store the image data
+                                                window.originalImages[label] = dataUrl;
+                                                
+                                                // Update the sidebar
+                                                if (typeof window.addImageToSidebar === 'function') {
+                                                    console.log(`Adding image to sidebar for ${label}`);
+                                                    window.addImageToSidebar(dataUrl, label);
+                                                } else {
+                                                    console.error(`addImageToSidebar function not found for ${label}`);
+                                                    throw new Error(`Function addImageToSidebar not found. The paint.js file may not be properly loaded.`);
+                                                }
+                                            })
+                                            .catch(err => {
+                                                console.error(`Error processing image for ${label}:`, err);
+                                                showStatusMessage(`Error loading image for ${label}`, 'error');
+                                            });
+                                            
+                                        imagePromises.push(promise);
+                                    } else {
+                                        console.log(`No image file found for ${label}`);
+                                    }
+                                    
+                                    // Load stroke data
+                                    if (projectData.strokes && projectData.strokes[label]) {
+                                        window.vectorStrokesByImage[label] = JSON.parse(JSON.stringify(projectData.strokes[label]));
+                                    } else {
+                                        window.vectorStrokesByImage[label] = {};
+                                    }
+                                    
+                                    // Load stroke visibility
+                                    if (projectData.strokeVisibility && projectData.strokeVisibility[label]) {
+                                        window.strokeVisibilityByImage[label] = projectData.strokeVisibility[label];
+                                    } else {
+                                        window.strokeVisibilityByImage[label] = {};
+                                    }
+                                    
+                                    // Load stroke label visibility
+                                    if (projectData.strokeLabelVisibility && projectData.strokeLabelVisibility[label]) {
+                                        window.strokeLabelVisibility[label] = projectData.strokeLabelVisibility[label];
+                                    } else {
+                                        window.strokeLabelVisibility[label] = {};
+                                    }
+                                    
+                                    // Load stroke measurements
+                                    if (projectData.strokeMeasurements && projectData.strokeMeasurements[label]) {
+                                        window.strokeMeasurements[label] = projectData.strokeMeasurements[label];
+                                    } else {
+                                        window.strokeMeasurements[label] = {};
+                                    }
+                                    
+                                    // Load image scales
+                                    if (projectData.imageScales && projectData.imageScales[label] !== undefined) {
+                                        window.imageScaleByLabel[label] = projectData.imageScales[label];
+                                    } else {
+                                        window.imageScaleByLabel[label] = 1.0; // Default scale
+                                    }
+                                    
+                                    // Load image positions
+                                    if (projectData.imagePositions && projectData.imagePositions[label]) {
+                                        window.imagePositionByLabel[label] = projectData.imagePositions[label];
+                                    } else {
+                                        window.imagePositionByLabel[label] = { x: 0, y: 0 }; // Default position
+                                    }
+                                    
+                                    // Load stroke sequence
+                                    if (projectData.strokeSequence && projectData.strokeSequence[label]) {
+                                        window.lineStrokesByImage[label] = Array.isArray(projectData.strokeSequence[label]) ? 
+                                            projectData.strokeSequence[label].slice() : [];
+                                    } else {
+                                        window.lineStrokesByImage[label] = [];
+                                    }
+                                    
+                                    // Load next label counters
+                                    if (projectData.nextLabels && projectData.nextLabels[label]) {
+                                        window.labelsByImage[label] = projectData.nextLabels[label];
+                                    } else {
+                                        window.labelsByImage[label] = 'A1'; // Default starting label
+                                    }
+                                }
+                                
+                                // Wait for all images to load
+                                return Promise.all(imagePromises);
+                            })
+                            .then(() => {
+                                console.log('All images loaded. Available images:', Object.keys(window.originalImages));
+                                
+                                // Update all UI components with a slight delay to ensure DOM is updated
+                                setTimeout(() => {
+                                    try {
+                                        // Remove loading indicator
+                                        if (loadingIndicator.parentNode) {
+                                            loadingIndicator.parentNode.removeChild(loadingIndicator);
+                                        }
+                                        
+                                        // Switch to the current image label from the project
+                                        if (typeof window.switchToImage === 'function' && projectData.currentImageLabel) {
+                                            console.log(`Switching to image: ${projectData.currentImageLabel}`);
+                                            window.switchToImage(projectData.currentImageLabel);
+                                        }
+                                        
+                                        // Update UI components if functions exist
+                                        if (typeof window.updateStrokeCounter === 'function') {
+                                            window.updateStrokeCounter();
+                                        }
+                                        
+                                        if (typeof window.updateStrokeVisibilityControls === 'function') {
+                                            window.updateStrokeVisibilityControls();
+                                        }
+                                        
+                                        if (typeof window.updateScaleUI === 'function') {
+                                            window.updateScaleUI();
+                                        }
+                                        
+                                        // This is the most critical function - it redraws the canvas with all strokes
+                                        if (typeof window.redrawCanvasWithVisibility === 'function') {
+                                            console.log('Redrawing canvas with visibility');
+                                            window.redrawCanvasWithVisibility();
+                                        } else {
+                                            console.error('redrawCanvasWithVisibility function not found');
+                                            throw new Error('Critical function redrawCanvasWithVisibility not found');
+                                        }
+                                        
+                                        // Show success message
+                                        showStatusMessage('Project loaded successfully!', 'success');
+                                    } catch (err) {
+                                        console.error('Error updating UI after loading project:', err);
+                                        showStatusMessage('Error rendering project. Try refreshing the page.', 'error');
+                                    }
+                                }, 500);
+                            });
+                    })
+                    .catch(err => {
+                        // Remove loading indicator
+                        if (loadingIndicator.parentNode) {
+                            loadingIndicator.parentNode.removeChild(loadingIndicator);
+                        }
+                        
+                        console.error('Error loading project from ZIP:', err);
+                        showStatusMessage(`Error loading project: ${err.message}`, 'error');
+                    });
+            };
+            reader.onerror = function(e) {
+                // Remove loading indicator
+                if (loadingIndicator.parentNode) {
+                    loadingIndicator.parentNode.removeChild(loadingIndicator);
+                }
+                
+                console.error('Error reading file:', e);
+                showStatusMessage('Error reading file', 'error');
+            };
+            reader.readAsArrayBuffer(file);
+        };
+        
+        // Trigger file selection
+        input.click();
+    }
+    
+    // Function to show status message
+    function showStatusMessage(message, type = 'info') {
+        // Get or create status element
+        let statusElement = document.getElementById('statusMessage');
+        if (!statusElement) {
+            statusElement = document.createElement('div');
+            statusElement.id = 'statusMessage';
+            statusElement.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                padding: 12px 24px;
+                border-radius: 4px;
+                color: white;
+                font-weight: bold;
+                z-index: 9999;
+                opacity: 0;
+                transition: opacity 0.3s ease;
+                max-width: 80%;
+                text-align: center;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            `;
+            document.body.appendChild(statusElement);
+        }
+        
+        // Set message and type
+        statusElement.textContent = message;
+        statusElement.style.opacity = '1';
+        
+        // Set color based on message type
+        switch (type) {
+            case 'success':
+                statusElement.style.backgroundColor = '#4CAF50';
+                break;
+            case 'error':
+                statusElement.style.backgroundColor = '#F44336';
+                break;
+            case 'info':
+            default:
+                statusElement.style.backgroundColor = '#2196F3';
+                break;
+        }
+        
+        // Hide after a timeout
+        clearTimeout(statusElement.timer);
+        statusElement.timer = setTimeout(() => {
+            statusElement.style.opacity = '0';
+        }, 3000);
+    }
+    
+    // Make these functions available globally if needed
+    window.projectManager = {
+        saveProject,
+        loadProject,
+        showStatusMessage
+    };
+});
