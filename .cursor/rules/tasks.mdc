@@ -36,22 +36,8 @@ This file tracks tasks, their difficulty, dependencies, and debugging status. Ea
 
 2.  **Label Positioning System** - 🟠 Hard
     - [x] Remove canvas boundary constraints in `findOptimalLabelPosition()`
-    - [ ] **Fix Label Anchor Point After Load:** Investigate why `getCanvasCoords` calculates incorrect anchor points during redraw after drawing on a loaded project.
-    - 🔍 Debugging Steps:
-    - [ ] **Add Logging:** Add detailed logging inside `getCanvasCoords` (~line 1975) to show input `imageX_relative`, `imageY_relative`, and calculated intermediate values (`scale`, `position`, `dims`, `canvasImageTopLeftX`, `canvasImageTopLeftY`) and the final `canvasX`, `canvasY` result specifically during label anchor calculation.
-    - [ ] **Compare:** Analyze the logs from the label anchor calculation and compare the inputs/outputs with the values used during successful stroke drawing/redrawing.
-    - [ ] **Identify Discrepancy:** Pinpoint why `getCanvasCoords` returns incorrect values in this specific context.
-
-    - [ ] Implement relative offset storage system for label positions
-    - [ ] Update label drawing to use offsets with image position/scale
-    - [ ] Ensure label connectors work with new positioning system
-    - 🔍 Debugging:
-        - [ ] Verify labels follow strokes when panning
-        - [ ] Verify labels maintain relative position when zooming
-        - [ ] Verify connectors correctly link to stroke points
-    - 📝 Dependency: Required before implementing save/load for custom positions. May be affected by coordinate system fix above.
-    - 🐞 Console logs to clean up: `paint.js:3320-3550` (Label Positioning), `paint.js:1520-1680` (Label Drawing).
-
+    - [x] **Fix Label Anchor Point After Load:** Investigate why `getCanvasCoords` calculates incorrect anchor points during redraw after drawing on a loaded project.
+   
 3.  **Undo/Redo System Enhancements** - 🟠 Hard
     - [ ] Update `saveState()` to store label offsets
     - [ ] Update `undo()`/`redo()` to handle label offsets
