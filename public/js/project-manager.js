@@ -1,6 +1,8 @@
 // Project Manager for OpenPaint
 // Handles saving and loading projects using ZIP format
 
+console.log('PROJECT-MANAGER.JS LOADED - Version ' + new Date().toISOString());
+
 document.addEventListener('DOMContentLoaded', () => {
     // Get reference to save and load buttons
     const saveProjectBtn = document.getElementById('saveProject');
@@ -14,6 +16,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (loadProjectBtn) {
         loadProjectBtn.addEventListener('click', loadProject);
     }
+    
+    // Add this BEFORE the loadProject function
+    // Global variable to store project data across async operations
+    window.loadedProjectDataGlobal = null;
     
     // Function to save project as ZIP file
     function saveProject() {
@@ -42,7 +48,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 imageScales: {},
                 imagePositions: {},
                 strokeSequence: {},
-                nextLabels: {}
+                nextLabels: {},
+                originalImageDimensions: {}
             };
             
             // Add stroke data for each image
@@ -102,6 +109,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     projectData.nextLabels[label] = window.labelsByImage[label];
                 } else {
                     projectData.nextLabels[label] = 'A1'; // Default starting label
+                }
+                
+                // Add original image dimensions
+                if (window.originalImageDimensions && window.originalImageDimensions[label]) {
+                    projectData.originalImageDimensions[label] = window.originalImageDimensions[label];
+                } else {
+                    projectData.originalImageDimensions[label] = { width: 0, height: 0 }; // Default dimensions
                 }
             }
             
@@ -294,6 +308,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             .then(jsonContent => {
                                 console.log("Project data loaded:", jsonContent.substring(0, 100) + "...");
                                 const projectData = JSON.parse(jsonContent);
+                                window.loadedProjectDataGlobal = projectData; // Store in global for timeout access
                                 
                                 // Set project name
                                 document.getElementById('projectName').value = projectData.name || 'OpenPaint Project';
@@ -317,6 +332,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 window.lineStrokesByImage = {};
                                 window.labelsByImage = {};
                                 window.originalImages = {};
+                                window.originalImageDimensions = {};
                                 
                                 // Process each image label
                                 for (const label of projectData.imageLabels) {
@@ -351,7 +367,24 @@ document.addEventListener('DOMContentLoaded', () => {
                                                 // Store the image data
                                                 window.originalImages[label] = dataUrl;
                                                 
-                                                // Update the sidebar
+                                                // --- Create a promise specifically for dimension loading ---
+                                                const dimensionPromise = new Promise((resolveDim) => {
+                                                    const img = new Image();
+                                                    img.onload = () => {
+                                                        window.originalImageDimensions[label] = { width: img.width, height: img.height };
+                                                        console.log(`   Dimensions set for ${label}: ${img.width}x${img.height}`);
+                                                        resolveDim(); // Resolve when dimensions are set
+                                                    };
+                                                    img.onerror = () => {
+                                                        console.error(`Failed to load image for dimension check: ${label}`);
+                                                        window.originalImageDimensions[label] = { width: 0, height: 0 }; // Set default on error
+                                                        resolveDim(); // Still resolve so Promise.all doesn't hang
+                                                    };
+                                                    img.src = dataUrl;
+                                                });
+                                                // ----------------------------------------------------------
+
+                                                // Update the sidebar (can happen immediately)
                                                 if (typeof window.addImageToSidebar === 'function') {
                                                     console.log(`Adding image to sidebar for ${label}`);
                                                     window.addImageToSidebar(dataUrl, label);
@@ -359,15 +392,23 @@ document.addEventListener('DOMContentLoaded', () => {
                                                     console.error(`addImageToSidebar function not found for ${label}`);
                                                     throw new Error(`Function addImageToSidebar not found. The paint.js file may not be properly loaded.`);
                                                 }
+                                                
+                                                // Return the dimension promise to be awaited later
+                                                return dimensionPromise;
                                             })
                                             .catch(err => {
                                                 console.error(`Error processing image for ${label}:`, err);
                                                 showStatusMessage(`Error loading image for ${label}`, 'error');
+                                                return Promise.resolve(); // Resolve even on error to not break Promise.all
                                             });
                                             
                                         imagePromises.push(promise);
                                     } else {
                                         console.log(`No image file found for ${label}`);
+                                        // If no image, ensure default dimensions are set
+                                        if (!window.originalImageDimensions[label]) {
+                                           window.originalImageDimensions[label] = { width: 0, height: 0 };
+                                        }
                                     }
                                     
                                     // Load stroke data
@@ -428,24 +469,72 @@ document.addEventListener('DOMContentLoaded', () => {
                                     }
                                 }
                                 
-                                // Wait for all images to load
-                                return Promise.all(imagePromises);
+                                // Wait for all images AND THEIR DIMENSIONS to load
+                                return Promise.all(imagePromises).then(() => {
+                                    // Now we are sure all dimension onload events have fired
+                                    console.log('All images and dimensions loading initiated. Final check before UI update.');
+                                    // Ensure dimensions are set for all labels (redundant check, but safe)
+                                    projectData.imageLabels.forEach(label => {
+                                        if (!window.originalImageDimensions[label] || window.originalImageDimensions[label].width === 0) {
+                                            console.warn(`Dimensions for ${label} still not set or zero after loading promises.`);
+                                             if (!window.originalImageDimensions[label]) {
+                                                 window.originalImageDimensions[label] = { width: 0, height: 0 };
+                                             }
+                                        }
+                                    });
+                                    return true; // Indicate completion
+                                });
                             })
                             .then(() => {
-                                console.log('All images loaded. Available images:', Object.keys(window.originalImages));
+                                console.log('All promises resolved. Available images:', Object.keys(window.originalImages));
+                                console.log('Final Dimensions:', JSON.stringify(window.originalImageDimensions));
                                 
                                 // Update all UI components with a slight delay to ensure DOM is updated
                                 setTimeout(() => {
                                     try {
+                                        console.log('>>> INSIDE TIMEOUT - Using global var:', window.loadedProjectDataGlobal ? 'AVAILABLE' : 'MISSING');
+                                        
                                         // Remove loading indicator
                                         if (loadingIndicator.parentNode) {
                                             loadingIndicator.parentNode.removeChild(loadingIndicator);
                                         }
                                         
                                         // Switch to the current image label from the project
-                                        if (typeof window.switchToImage === 'function' && projectData.currentImageLabel) {
-                                            console.log(`Switching to image: ${projectData.currentImageLabel}`);
-                                            window.switchToImage(projectData.currentImageLabel);
+                                        if (typeof window.switchToImage === 'function' && window.loadedProjectDataGlobal && window.loadedProjectDataGlobal.currentImageLabel) {
+                                            console.log(`Switching to image: ${window.loadedProjectDataGlobal.currentImageLabel}`);
+                                            window.switchToImage(window.loadedProjectDataGlobal.currentImageLabel);
+                                            
+                                            // IMPORTANT: After switching to the image, we need to ensure the image position
+                                            // is correctly set to match what was saved in the project
+                                            setTimeout(() => {
+                                                // Get current image label
+                                                const currentLabel = window.currentImageLabel;
+                                                if (currentLabel) {
+                                                    console.log(`*** FIX: Resetting image position and scale for ${currentLabel} after loading ***`);
+                                                    
+                                                    // Force the canvas to use the position and scale from the loaded project
+                                                    // This ensures stroke positions are correct relative to the image
+                                                    if (window.imagePositionByLabel && window.imagePositionByLabel[currentLabel]) {
+                                                        const savedPosition = window.imagePositionByLabel[currentLabel];
+                                                        console.log(`    Setting position to saved values: ${JSON.stringify(savedPosition)}`);
+                                                        
+                                                        // If redrawCanvasWithVisibility exists, force a redraw with the correct position
+                                                        if (typeof window.redrawCanvasWithVisibility === 'function') {
+                                                            console.log('    Forcing redraw with correct position...');
+                                                            window.redrawCanvasWithVisibility();
+                                                        }
+                                                    }
+                                                }
+                                            }, 100); // Short delay to ensure switchToImage has completed
+                                        } else {
+                                            // Fallback: Try to find any image
+                                            const availableImages = Object.keys(window.originalImages);
+                                            if (availableImages.length > 0 && typeof window.switchToImage === 'function') {
+                                                console.log(`No valid current image label. Switching to first available: ${availableImages[0]}`);
+                                                window.switchToImage(availableImages[0]);
+                                            } else {
+                                                console.error('Cannot switch to any image - none available or switchToImage is missing');
+                                            }
                                         }
                                         
                                         // Update UI components if functions exist
@@ -464,6 +553,11 @@ document.addEventListener('DOMContentLoaded', () => {
                                         // This is the most critical function - it redraws the canvas with all strokes
                                         if (typeof window.redrawCanvasWithVisibility === 'function') {
                                             console.log('Redrawing canvas with visibility');
+                                            console.log(`<<< Project Manager: State BEFORE final redraw for ${window.currentImageLabel} >>>`);
+                                            const preRedrawScale = window.imageScaleByLabel[window.currentImageLabel];
+                                            const preRedrawPos = window.imagePositionByLabel[window.currentImageLabel];
+                                            console.log(`   Scale: ${preRedrawScale}`);
+                                            console.log(`   Position: ${JSON.stringify(preRedrawPos)}`);
                                             window.redrawCanvasWithVisibility();
                                         } else {
                                             console.error('redrawCanvasWithVisibility function not found');

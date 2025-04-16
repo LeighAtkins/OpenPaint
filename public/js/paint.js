@@ -71,7 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const canvas = document.getElementById('canvas');
     // Expose canvas globally for project management
     window.canvas = canvas;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true }); // Add willReadFrequently hint
     const colorPicker = document.getElementById('colorPicker');
     const brushSize = document.getElementById('brushSize');
     const clearButton = document.getElementById('clear');
@@ -106,6 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let originalImageDimensions = {}; // Store original image dimensions for scaling
     let imagePositionByLabel = {}; // Track position offset for each image
     let isShiftPressed = false; // Track if Shift key is pressed for image movement
+    let calculatedLabelOffsets = {}; // Store automatically calculated label offsets
 
     // Initialize states for default images
     IMAGE_LABELS.forEach(label => {
@@ -1267,7 +1268,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         };
-    };         
+
+        // *** Add redraw call here ***
+        redrawCanvasWithVisibility();
+    }
+    
     // Store for currently selected stroke in each image
     let selectedStrokeByImage = {};
     
@@ -1355,11 +1360,22 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             // Otherwise start with a blank canvas
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'white'; // Add white background fill
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
             
             // Use default scale (1) and center position when no image
             const canvasCenterX = canvas.width / 2;
             const canvasCenterY = canvas.height / 2;
-            applyVisibleStrokes(1, canvasCenterX, canvasCenterY);
+            
+            // Get the current scale and position for the blank canvas state
+            const scale = imageScaleByLabel[currentImageLabel] || 1.0;
+            const position = imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
+            
+            // The imageX, imageY for a blank canvas should be the center + offset
+            const imageX = canvasCenterX + position.x;
+            const imageY = canvasCenterY + position.y;
+            
+            applyVisibleStrokes(scale, imageX, imageY);
         }
         
         function drawImageAndStrokes(img) {
@@ -1376,12 +1392,19 @@ document.addEventListener('DOMContentLoaded', () => {
             const centerY = (canvas.height - scaledHeight) / 2;
             
             // Apply position offset
-            const offsetX = imagePositionByLabel[currentImageLabel].x;
-            const offsetY = imagePositionByLabel[currentImageLabel].y;
+            const positionOffset = imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 }; // Ensure offset exists
+            const offsetX = positionOffset.x;
+            const offsetY = positionOffset.y;
             
             // Calculate final position
             const x = centerX + offsetX;
             const y = centerY + offsetY;
+
+            // *** ADDED LOGGING ***
+            console.log(`drawImageAndStrokes Calculation:
+  canvas.width=${canvas.width}, img.width=${img.width}, scaledWidth=${scaledWidth}
+  scale=${scale}, centerX=${centerX}, offsetX=${offsetX}, final imageX (passed to applyVisibleStrokes)=${x}`);
+            // *** END LOGGING ***
             
             // Draw the image with scaling and positioning
             ctx.drawImage(img, x, y, scaledWidth, scaledHeight);
@@ -1391,85 +1414,69 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         function applyVisibleStrokes(scale, imageX, imageY) {
+            console.log(`\nApplying strokes with scale=${scale}, imageX=${imageX}, imageY=${imageY}`);
             // Apply each visible stroke using vector data if available
             const strokes = vectorStrokesByImage[currentImageLabel] || {};
             const strokeOrder = lineStrokesByImage[currentImageLabel] || [];
             const visibility = strokeVisibilityByImage[currentImageLabel] || {};
+
+            // Get the current image dimensions and scale
+            let imageWidth = canvas.width;
+            let imageHeight = canvas.height;
+            
+            // Try to get original image dimensions if available
+            if (window.originalImages && window.originalImages[currentImageLabel]) {
+                const cachedImg = imageCache[window.originalImages[currentImageLabel]];
+                if (cachedImg) {
+                    imageWidth = cachedImg.width;
+                    imageHeight = cachedImg.height;
+                    console.log(`Original image dimensions: ${imageWidth}x${imageHeight}`);
+                }
+            }
             
             // Retrieve the correct stroke data for the current image
-            strokeOrder.forEach(strokeLabel => {
+            strokeOrder.forEach((strokeLabel) => {
                 const isVisible = visibility[strokeLabel];
                 if (!isVisible) return; // Skip invisible strokes
                 
-                const isSelected = selectedStrokeByImage[currentImageLabel] === strokeLabel;
-                
-                // Check if we have vector data for this stroke
-                if (strokes[strokeLabel]) {
-                    
-                    // Get the vector data for this stroke
                     const vectorData = strokes[strokeLabel];
-                    const strokeColor = vectorData.color || "#000000";
-                    const strokeWidth = vectorData.width || 5;
-                    
-                    // Draw using vector points
-                    if (vectorData.points && vectorData.points.length > 0) {
-                        // If the stroke is selected, draw a glowing effect first
-                        if (isSelected) {
-                            ctx.beginPath();
+                if (!vectorData || !vectorData.points || vectorData.points.length === 0) return;
+                
+                console.log(`\nDrawing stroke ${strokeLabel}:`);
+                console.log('Original points (relative to image):', JSON.stringify(vectorData.points));
+                console.log(`Using scale: ${scale}, imageX: ${imageX}, imageY: ${imageY}`);
                             
                             // Transform the first point
                             const firstPoint = vectorData.points[0];
                             const transformedFirstX = imageX + (firstPoint.x * scale);
                             const transformedFirstY = imageY + (firstPoint.y * scale);
                             
+                console.log(`First point transformation:
+                    Original (relative to image): (${firstPoint.x}, ${firstPoint.y})
+                    Scaled: (${firstPoint.x * scale}, ${firstPoint.y * scale})
+                    Final (canvas position): (${transformedFirstX}, ${transformedFirstY})`);
+                
+                const strokePath = [];
+                ctx.beginPath();
                             ctx.moveTo(transformedFirstX, transformedFirstY);
+                strokePath.push({x: transformedFirstX, y: transformedFirstY});
                             
                             // Check if this is a straight line
                             const isStraightLine = vectorData.type === 'straight' || 
                                 (vectorData.points.length === 2 && !vectorData.type);
                             
                             if (isStraightLine && vectorData.points.length >= 2) {
-                                // For straight lines, just draw a line from first to last point
                                 const lastPoint = vectorData.points[vectorData.points.length - 1];
                                 const transformedLastX = imageX + (lastPoint.x * scale);
                                 const transformedLastY = imageY + (lastPoint.y * scale);
                                 
-                                // Draw stroke with proper width
+                    console.log(`Last point transformation:
+                        Original (relative to image): (${lastPoint.x}, ${lastPoint.y})
+                        Scaled: (${lastPoint.x * scale}, ${lastPoint.y * scale})
+                        Final (canvas position): (${transformedLastX}, ${transformedLastY})`);
+                    
                                 ctx.lineTo(transformedLastX, transformedLastY);
-                            } else {
-                                // For freehand drawing, draw straight lines between all points
-                                // This avoids any curve calculation issues
-                                for (let i = 1; i < vectorData.points.length; i++) {
-                                    const point = vectorData.points[i];
-                                    // Transform the point coordinates based on image scale and position
-                                    const transformedX = imageX + (point.x * scale);
-                                    const transformedY = imageY + (point.y * scale);
-                                    
-                                    ctx.lineTo(transformedX, transformedY);
-                                }
-                            }
-                            
-                            // Draw the glow effect
-                            ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';  // White glow
-                            ctx.lineWidth = (strokeWidth + 6) * scale;  // Wider than the main stroke
-                            ctx.lineCap = 'round';
-                            ctx.lineJoin = 'round';
-                            ctx.stroke();
-                            
-                            // Add a colored glow closer to the stroke
-                            ctx.beginPath();
-                            
-                            // Redraw the same path
-                            ctx.moveTo(transformedFirstX, transformedFirstY);
-                            
-                            if (isStraightLine && vectorData.points.length >= 2) {
-                                // For straight lines, just draw a line from first to last point
-                                const lastPoint = vectorData.points[vectorData.points.length - 1];
-                                const transformedLastX = imageX + (lastPoint.x * scale);
-                                const transformedLastY = imageY + (lastPoint.y * scale);
-                                
-                                // Draw stroke with proper width
-                                ctx.lineTo(transformedLastX, transformedLastY);
+                    strokePath.push({x: transformedLastX, y: transformedLastY});
                             } else {
                                 // For freehand drawing, draw straight lines between all points
                                 for (let i = 1; i < vectorData.points.length; i++) {
@@ -1477,67 +1484,14 @@ document.addEventListener('DOMContentLoaded', () => {
                                     const transformedX = imageX + (point.x * scale);
                                     const transformedY = imageY + (point.y * scale);
                                     
-                                    ctx.lineTo(transformedX, transformedY);
-                                }
-                            }
-                            
-                            // Create a color glow based on the stroke color
-                            const rgbMatch = strokeColor.match(/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i);
-                            let glowColor = strokeColor;
-                            if (rgbMatch) {
-                                const r = parseInt(rgbMatch[1], 16);
-                                const g = parseInt(rgbMatch[2], 16);
-                                const b = parseInt(rgbMatch[3], 16);
-                                glowColor = `rgba(${r}, ${g}, ${b}, 0.5)`;
-                            }
-                            
-                            ctx.strokeStyle = glowColor;
-                            ctx.lineWidth = (strokeWidth + 3) * scale;  // Slightly wider than the main stroke
-                            ctx.stroke();
+                        if (i === vectorData.points.length - 1) {
+                            console.log(`Last point transformation (freehand):
+                                Original (relative to image): (${point.x}, ${point.y})
+                                Scaled: (${point.x * scale}, ${point.y * scale})
+                                Final (canvas position): (${transformedX}, ${transformedY})`);
                         }
                         
-                        // Draw the main stroke
-                        ctx.beginPath();
-                        
-                        // Transform the first point
-                        const firstPoint = vectorData.points[0];
-                        const transformedFirstX = imageX + (firstPoint.x * scale);
-                        const transformedFirstY = imageY + (firstPoint.y * scale);
-                        
-                        ctx.moveTo(transformedFirstX, transformedFirstY);
-                        
-                        // Store stroke path for label placement
-                        const strokePath = [];
-                        strokePath.push({x: transformedFirstX, y: transformedFirstY});
-                        
-                        // Check if this is a straight line (just 2 points) or it has 'type: straight'
-                        const isStraightLine = vectorData.type === 'straight' || 
-                            (vectorData.points.length === 2 && !vectorData.type);
-                        
-                        if (isStraightLine && vectorData.points.length >= 2) {
-                            // For straight lines, just draw a line from first to last point
-                            const lastPoint = vectorData.points[vectorData.points.length - 1];
-                            const transformedLastX = imageX + (lastPoint.x * scale);
-                            const transformedLastY = imageY + (lastPoint.y * scale);
-                            
-                            // Draw stroke with proper width
-                            ctx.lineTo(transformedLastX, transformedLastY);
-                            
-                            // Update stroke path for label placement
-                            strokePath.push({x: transformedLastX, y: transformedLastY});
-                        } else {
-                            // Draw straight lines through the rest of the points for freehand drawing
-                            // We're deliberately not using curves to maintain consistency with the draw function
-                            for (let i = 1; i < vectorData.points.length; i++) {
-                                const point = vectorData.points[i];
-                                // Transform the point coordinates based on image scale and position
-                                const transformedX = imageX + (point.x * scale);
-                                const transformedY = imageY + (point.y * scale);
-                                
-                                // Draw a straight line to this point
                                 ctx.lineTo(transformedX, transformedY);
-                                
-                                // Record the point for label placement
                                 strokePath.push({x: transformedX, y: transformedY});
                             }
                         }
@@ -1546,233 +1500,191 @@ document.addEventListener('DOMContentLoaded', () => {
                         currentStrokePaths.push({
                             label: strokeLabel,
                             path: strokePath,
-                            width: strokeWidth * scale,
-                            color: strokeColor
+                    width: (vectorData.width || 5) * scale,
+                    color: vectorData.color
                         });
                         
                         // Set stroke style
-                        ctx.strokeStyle = strokeColor;
-                        ctx.lineWidth = strokeWidth * scale; // Scale line width
+                ctx.strokeStyle = vectorData.color;
+                ctx.lineWidth = (vectorData.width || 5) * scale;
                         ctx.lineCap = 'round';
                         ctx.lineJoin = 'round';
-                        ctx.stroke();
                         
-                        // Draw a dot for a single point
-                        if (vectorData.points.length === 1) {
-                            // Draw glow for selected dot
+                // --- Add Glow Effect for Selected Stroke ---
+                const isSelected = selectedStrokeByImage[currentImageLabel] === strokeLabel;
                             if (isSelected) {
-                                ctx.beginPath();
-                                ctx.arc(transformedFirstX, transformedFirstY, ((strokeWidth/2) + 3) * scale, 0, Math.PI * 2);
-                                ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-                                ctx.fill();
-                                
-                                // Create a color glow based on the stroke color
-                                const rgbMatch = strokeColor.match(/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i);
-                                let glowColor = strokeColor;
-                                if (rgbMatch) {
-                                    const r = parseInt(rgbMatch[1], 16);
-                                    const g = parseInt(rgbMatch[2], 16);
-                                    const b = parseInt(rgbMatch[3], 16);
-                                    glowColor = `rgba(${r}, ${g}, ${b}, 0.5)`;
-                                }
-                                
-                                ctx.beginPath();
-                                ctx.arc(transformedFirstX, transformedFirstY, ((strokeWidth/2) + 1.5) * scale, 0, Math.PI * 2);
-                                ctx.fillStyle = glowColor;
-                                ctx.fill();
-                                
-                                // If it's a straight line, also draw glow around the end point
-                                if (isStraightLine && vectorData.points.length >= 2) {
-                                    const lastPoint = vectorData.points[vectorData.points.length - 1];
-                                    const transformedLastX = imageX + (lastPoint.x * scale);
-                                    const transformedLastY = imageY + (lastPoint.y * scale);
-                                    
-                                    ctx.beginPath();
-                                    ctx.arc(transformedLastX, transformedLastY, ((strokeWidth/2) + 3) * scale, 0, Math.PI * 2);
-                                    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-                                    ctx.fill();
-                                    
-                                    ctx.beginPath();
-                                    ctx.arc(transformedLastX, transformedLastY, ((strokeWidth/2) + 1.5) * scale, 0, Math.PI * 2);
-                                    ctx.fillStyle = glowColor;
-                                    ctx.fill();
-                                }
+                    ctx.save(); // Save context state before applying shadow
+                    ctx.shadowColor = '#ffffff'; // White glow
+                    ctx.shadowBlur = 15; // Adjust blur amount as needed
+                    ctx.shadowOffsetX = 0;
+                    ctx.shadowOffsetY = 0;
+                    console.log(`    Applying glow to selected stroke: ${strokeLabel}`);
+                }
+                // --- End Glow Effect ---
+
+                ctx.stroke();
+
+                // --- Reset Glow Effect ---
+                if (isSelected) {
+                    ctx.restore(); // Restore context state to remove shadow
+                }
+                // --- End Reset Glow Effect ---
+            });
+            
+            // --- Start of Label Drawing Logic (Add inside applyVisibleStrokes, after strokes are drawn) ---
+            console.log(`--- Redraw: Drawing Labels for ${currentImageLabel} ---`);
+
+            // Keep track of label positions to avoid overlap in this redraw cycle
+            currentLabelPositions = [];
+            const usedCustomPositions = {}; // Track which custom positions were applied
+
+            strokeOrder.forEach((strokeLabel) => {
+                const isStrokeVisible = visibility[strokeLabel];
+
+                // Ensure strokeLabelVisibility is initialized for the image
+                if (!strokeLabelVisibility[currentImageLabel]) {
+                    strokeLabelVisibility[currentImageLabel] = {};
+                }
+                // Default label visibility to true if not set
+                const isLabelVisible = strokeLabelVisibility[currentImageLabel][strokeLabel] !== undefined
+                    ? strokeLabelVisibility[currentImageLabel][strokeLabel]
+                    : true; // Default to true if the key doesn't exist yet
+
+                const vectorData = strokes[strokeLabel];
+
+                console.log(`  Label Check for ${strokeLabel}: StrokeVisible=${!!isStrokeVisible}, LabelVisible=${!!isLabelVisible}, HasVectorData=${!!vectorData}`);
+
+                // Only draw labels for strokes that are visible AND have their labels set to visible
+                if (isStrokeVisible && isLabelVisible && vectorData && vectorData.points.length > 0) {
+                    console.log(`    Attempting to draw label for ${strokeLabel}`);
+                    const measurement = getMeasurementString(strokeLabel);
+                    const labelText = measurement ? `${strokeLabel}=${measurement}` : strokeLabel;
+
+                    // Determine anchor point (e.g., middle of the stroke)
+                    let anchorPoint = { x: 0, y: 0 };
+                    if (vectorData.points.length > 0) {
+                        // Use the middle point of the stroke as the default anchor
+                        const midIndex = Math.floor(vectorData.points.length / 2);
+                        const midPointRelative = vectorData.points[midIndex];
+                        // Convert relative image coordinates back to canvas coordinates
+                        try {
+                            anchorPoint = getCanvasCoords(midPointRelative.x, midPointRelative.y);
+                            if (!anchorPoint || isNaN(anchorPoint.x) || isNaN(anchorPoint.y)) {
+                                 console.error(`      Error getting canvas coords for label anchor for ${strokeLabel}. Relative point:`, midPointRelative);
+                                 anchorPoint = { x: canvas.width / 2, y: canvas.height / 2 }; // Fallback
                             }
-                            
-                            // Draw the main dot
-                            ctx.beginPath();
-                            ctx.arc(transformedFirstX, transformedFirstY, (strokeWidth/2) * scale, 0, Math.PI * 2);
-                            ctx.fillStyle = strokeColor;
-                            ctx.fill();
+                        } catch (err) {
+                             console.error(`      Error in getCanvasCoords for ${strokeLabel}:`, err);
+                             anchorPoint = { x: canvas.width / 2, y: canvas.height / 2 }; // Fallback
                         }
-                        
-                        // Draw label near the stroke if enabled
-                        if (strokeLabelVisibility[currentImageLabel][strokeLabel]) {
-                            // Find a good position for the label that's near the stroke
-                            const strokeInfo = currentStrokePaths.find(p => p.label === strokeLabel);
-                            
-                            if (!strokeInfo || !strokeInfo.path.length) {
-                                return; // Skip if we can't find the path
-                            }
-                            
-                            // Find the best point to place the label (prefer middle of the stroke)
-                            let bestPoint;
-                            if (strokeInfo.path.length >= 3) {
-                                // Use a point near the middle of the path for longer strokes
-                                const middleIndex = Math.floor(strokeInfo.path.length / 2);
-                                bestPoint = strokeInfo.path[middleIndex];
-                            } else {
-                                // Use the first point for shorter strokes, with a small offset
-                                bestPoint = {
-                                    x: strokeInfo.path[0].x + 5,
-                                    y: strokeInfo.path[0].y - 5
-                                };
-                            }
-                            
-                            // Create label text and measure it
-                            const measurement = getMeasurementString(strokeLabel);
-                            const labelText = `${strokeLabel}${measurement ? ` = ${measurement}` : ''}`;
-                            
-                            // Set a larger font size (200% larger)
-                            const fontSize = 24; // Original was 12px
-                            ctx.font = `${fontSize}px Arial`;
-                            
-                            // Measure text for background
-                            const textWidth = ctx.measureText(labelText).width;
-                            const textHeight = fontSize * 1.2; // Approximate text height
-                            
-                            // Determine initial position (offset slightly from the best point)
-                            const padding = 4;
-                            const initialX = bestPoint.x + 10;  // Initial offset
-                            const initialY = bestPoint.y - 15;  // Initial offset
-                            
-                            // Create initial label rectangle
+                    }
+                    console.log(`    Anchor Point (Canvas Coords): { x: ${anchorPoint.x.toFixed(1)}, y: ${anchorPoint.y.toFixed(1)} }`);
+
+                    // Set label style
+                    ctx.font = '28px Arial'; // Increased font size (200% of 14px)
+                    const labelColor = vectorData.color || '#000'; // Use stroke color for label
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'bottom';
+
+                    // Calculate label dimensions (adjust based on new font size if needed, measureText handles this)
+                    const metrics = ctx.measureText(labelText);
+                    const labelWidth = metrics.width + 12; // Add slightly more padding
+                    const labelHeight = 48; // Adjust height for larger font
                             const labelRect = {
-                                x: initialX,
-                                y: initialY - textHeight,
-                                width: textWidth + (padding * 2),
-                                height: textHeight + (padding * 2),
-                                strokeLabel: strokeLabel
-                            };
-                            
-                            // Check if there's a custom position for this label
-                            let finalLabelRect;
-                            if (customLabelPositions[currentImageLabel] && 
-                                customLabelPositions[currentImageLabel][strokeLabel]) {
-                                // Use custom position while respecting canvas boundaries
-                                const customPos = customLabelPositions[currentImageLabel][strokeLabel];
-                                finalLabelRect = {
-                                    ...labelRect,
-                                    x: Math.max(10, Math.min(canvas.width - labelRect.width - 10, customPos.x)),
-                                    y: Math.max(10, Math.min(canvas.height - labelRect.height - 10, customPos.y))
-                                };
-                                
-                                // Mark this custom position as used
-                                usedCustomPositions[strokeLabel] = true;
+                        width: labelWidth,
+                        height: labelHeight,
+                        x: anchorPoint.x - labelWidth / 2, // Initial position centered
+                        y: anchorPoint.y - labelHeight - 15, // Initial position above anchor
+                        strokeLabel: strokeLabel // Keep track of which label this is
+                    };
+
+                    // Check for custom user-defined position first
+                    let finalPosition;
+                    let offset = null; // Store the relative offset
+
+                    if (customLabelPositions[currentImageLabel]?.[strokeLabel]) {
+                        // 1. Use custom (user-dragged) offset
+                        offset = customLabelPositions[currentImageLabel][strokeLabel];
+                        finalPosition = { x: anchorPoint.x + offset.x, y: anchorPoint.y + offset.y };
+                        console.log(`    Using custom offset for ${strokeLabel}:`, offset);
+                    } else if (calculatedLabelOffsets[currentImageLabel]?.[strokeLabel]) {
+                        // 2. Use previously calculated offset
+                        offset = calculatedLabelOffsets[currentImageLabel][strokeLabel];
+                        finalPosition = { x: anchorPoint.x + offset.x, y: anchorPoint.y + offset.y };
+                        console.log(`    Using calculated offset for ${strokeLabel}:`, offset);
                             } else {
-                                // Check for direct overlaps with existing labels
-                                let overlappingLabels = [];
-                                let overlapWithLines = false;
+                        // 3. Calculate optimal position for the first time
+                         if (typeof findOptimalLabelPosition !== 'function') {
+                             console.error("     findOptimalLabelPosition function is not defined! Using default position.");
+                             finalPosition = { x: labelRect.x, y: labelRect.y }; // Fallback
+                             offset = { x: finalPosition.x - anchorPoint.x, y: finalPosition.y - anchorPoint.y }; // Calculate fallback offset
+                         } else {
+                             try {
+                                const strokePathInfo = currentStrokePaths.find(p => p.label === strokeLabel);
+                                const initialGuessRect = { ...labelRect, x: anchorPoint.x - labelRect.width / 2, y: anchorPoint.y - labelRect.height - 15 };
+                                const optimalRect = findOptimalLabelPosition(initialGuessRect, anchorPoint, { label: strokeLabel, path: strokePathInfo?.path || [], width: strokePathInfo?.width || (vectorData.width || 5) * scale });
                                 
-                                // Initial position
-                                const initialRect = {
-                                    ...labelRect,
-                                    x: Math.max(10, Math.min(canvas.width - labelRect.width - 10, initialX)),
-                                    y: Math.max(10, Math.min(canvas.height - labelRect.height - 10, initialY - textHeight))
+                                // Calculate the offset relative to the anchor point
+                                offset = {
+                                    x: optimalRect.x - anchorPoint.x,
+                                    y: optimalRect.y - anchorPoint.y
                                 };
-                                
-                                // Check for overlaps with existing labels
-                                for (const existingLabel of currentLabelPositions) {
-                                    if (rectsOverlap(initialRect, existingLabel)) {
-                                        overlappingLabels.push(existingLabel);
-                                    }
-                                }
-                                
-                                // Check for overlaps with stroke lines
-                                for (const path of currentStrokePaths) {
-                                    if (path.label !== strokeLabel) { // Don't check against our own path
-                                        for (let i = 1; i < path.path.length; i++) {
-                                            const p1 = path.path[i-1];
-                                            const p2 = path.path[i];
-                                            if (rectIntersectsLine(initialRect, p1, p2, path.width)) {
-                                                overlapWithLines = true;
-                                                break;
-                                            }
-                                        }
-                                    }
-                                    if (overlapWithLines) break;
-                                }
-                                
-                                // Determine if we need to find a new position
-                                if (overlappingLabels.length > 0 || overlapWithLines) {
-                                    // Find a position that doesn't overlap
-                                    finalLabelRect = findOptimalLabelPosition(labelRect, bestPoint, strokeInfo);
-                                } else {
-                                    // Use the initial position if no overlaps
-                                    finalLabelRect = initialRect;
-                                }
-                            }
-                            
-                            // Add important information to the label rect for interaction
-                            finalLabelRect.strokeLabel = strokeLabel;
-                            finalLabelRect.strokeInfo = strokeInfo;
-                            finalLabelRect.anchorPoint = bestPoint;
-                            
-                            // Draw background with glow for selected stroke
-                            ctx.fillStyle = isSelected ? 'rgba(255, 255, 200, 0.9)' : 'white';
-                            ctx.fillRect(finalLabelRect.x, finalLabelRect.y, finalLabelRect.width, finalLabelRect.height);
-                            
-                            // Draw border in stroke color with different style for selected
-                            ctx.strokeStyle = strokeColor;
-                            ctx.lineWidth = isSelected ? 2 : 1;
-                            ctx.strokeRect(finalLabelRect.x, finalLabelRect.y, finalLabelRect.width, finalLabelRect.height);
-                            
-                            // Draw text in stroke color
-                            ctx.fillStyle = strokeColor;
-                            ctx.fillText(labelText, finalLabelRect.x + padding, finalLabelRect.y + textHeight);
-                            
-                            // Draw a connection line from the label to the stroke
-                            drawLabelConnector(finalLabelRect, bestPoint, strokeColor);
-                            
-                            // Store the label position to avoid overlaps
-                            currentLabelPositions.push(finalLabelRect);
-                        }
+
+                                // Store the calculated offset
+                                if (!calculatedLabelOffsets[currentImageLabel]) calculatedLabelOffsets[currentImageLabel] = {};
+                                calculatedLabelOffsets[currentImageLabel][strokeLabel] = offset;
+                                console.log(`    Calculated and stored offset for ${strokeLabel}:`, offset);
+
+                                finalPosition = { x: optimalRect.x, y: optimalRect.y };
+                             } catch(err) {
+                                console.error(`      Error in findOptimalLabelPosition for ${strokeLabel}:`, err);
+                                finalPosition = { x: labelRect.x, y: labelRect.y }; // Fallback
+                                offset = { x: finalPosition.x - anchorPoint.x, y: finalPosition.y - anchorPoint.y }; // Calculate fallback offset
+                             }
+                         }
+                         // Store the calculated offset (even if fallback)
+                         if (!calculatedLabelOffsets[currentImageLabel]) calculatedLabelOffsets[currentImageLabel] = {};
+                         calculatedLabelOffsets[currentImageLabel][strokeLabel] = offset;
                     }
-                } 
-                // Fallback to pixel data if vector data is not available
-                else if (strokeDataByImage[currentImageLabel] && 
-                         strokeDataByImage[currentImageLabel][strokeLabel]) {
-                    // This is legacy code for strokes created before the vector system
-                    const strokeData = strokeDataByImage[currentImageLabel][strokeLabel];
-                    
-                    if (strokeData.preState && strokeData.postState) {
-                        // Get the difference between pre and post states
-                        const preData = strokeData.preState.data;
-                        const postData = strokeData.postState.data;
-                        
-                        // Draw over the current state
-                        for (let i = 0; i < preData.length; i += 4) {
-                            // If the pixel changed between pre and post states, apply it
-                            if (preData[i] !== postData[i] || 
-                                preData[i + 1] !== postData[i + 1] || 
-                                preData[i + 2] !== postData[i + 2] || 
-                                preData[i + 3] !== postData[i + 3] &&
-                                postData[i + 3] > 0) { // Only if it has alpha
-                                
-                                // Calculate position for this pixel
-                                const pixelX = i % (canvas.width * 4) / 4;
-                                const pixelY = Math.floor(i / (canvas.width * 4));
-                                
-                                // Draw the pixel directly
-                                if (postData[i + 3] > 0) { // Only if visible
-                                    ctx.fillStyle = `rgba(${postData[i]}, ${postData[i+1]}, ${postData[i+2]}, ${postData[i+3]/255})`;
-                                    ctx.fillRect(pixelX, pixelY, 1, 1);
-                                }
-                            }
-                        }
-                    }
+
+                    // Store the final calculated position for overlap checks in *this* redraw cycle
+                    // Make sure to add the strokeLabel here
+                    currentLabelPositions.push({ ...labelRect, x: finalPosition.x, y: finalPosition.y, strokeLabel: strokeLabel });
+
+
+                    // Draw label background
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)'; // Semi-transparent white
+                    ctx.fillRect(finalPosition.x, finalPosition.y, labelWidth, labelHeight);
+
+                    // Draw label border with stroke color
+                    ctx.strokeStyle = labelColor; // Use the stroke's color for the border
+                    ctx.lineWidth = 1; // Set border thickness
+                    ctx.strokeRect(finalPosition.x, finalPosition.y, labelWidth, labelHeight);
+
+                    // Draw label text
+                    ctx.fillStyle = labelColor; // Stroke color
+                    const textX = finalPosition.x + labelWidth / 2;
+                    const textY = finalPosition.y + labelHeight - 7; // Adjust baseline slightly for larger font
+                    console.log(`    Drawing text "${labelText}" at Canvas(${textX.toFixed(1)}, ${textY.toFixed(1)})`);
+                    ctx.fillText(labelText, textX, textY);
+
+                    // Optionally draw connector line
+                     if (typeof drawLabelConnector === 'function') {
+                         try {
+                            drawLabelConnector({ ...labelRect, x: finalPosition.x, y: finalPosition.y }, anchorPoint, labelColor);
+                         } catch(err) {
+                            console.error(`      Error in drawLabelConnector for ${strokeLabel}:`, err);
+                         }
+                     } else {
+                         console.warn("     drawLabelConnector function is not defined!");
+                     }
+
+                } else {
+                    console.log(`    Skipping label for ${strokeLabel} (StrokeVisible: ${!!isStrokeVisible}, LabelVisible: ${!!isLabelVisible}, HasVectorData: ${!!vectorData})`);
                 }
             });
+            console.log(`--- Redraw: Finished Drawing Labels ---`);
+            // --- End of Label Drawing Logic ---
             
             // Save the now-combined state
             const newState = getCanvasState();
@@ -2261,45 +2173,101 @@ document.addEventListener('DOMContentLoaded', () => {
     function getTransformedCoords(canvasX, canvasY) {
         const scale = imageScaleByLabel[currentImageLabel] || 1;
         const position = imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
-        // Ensure scale is not zero to avoid division by zero
-        if (scale === 0) {
-            console.error("Image scale is zero, cannot transform coordinates.");
-            return { x: canvasX, y: canvasY }; // Return untransformed coords as fallback
+        
+        // Calculate the image position on canvas (CORRECTED LOGIC)
+        let imageX, imageY;
+        
+        // *** ADDED DETAILED LOGGING ***
+        console.log(`getTransformedCoords START for ${currentImageLabel}`);
+        console.log(`  All Dimensions:`, JSON.stringify(window.originalImageDimensions));
+        // Explicitly use the window property to avoid scope issues
+        const dims = window.originalImageDimensions[currentImageLabel]; 
+        console.log(`  Current Dim Check: dims =`, dims);
+        // *** END DETAILED LOGGING ***
+
+        // Use loaded dimensions if available, otherwise fallback to canvas center
+        if (dims && dims.width > 0 && dims.height > 0) {
+            const centerX = (canvas.width - dims.width * scale) / 2;
+            const centerY = (canvas.height - dims.height * scale) / 2;
+            imageX = centerX + position.x;
+            imageY = centerY + position.y;
+            console.log(`getTransformedCoords: Using image dims ${dims.width}x${dims.height}. Calculated imageX=${imageX}, imageY=${imageY}`);
+        } else {
+            // Fallback if dimensions aren't loaded (should ideally not happen after load)
+            imageX = canvas.width / 2 + position.x;
+            imageY = canvas.height / 2 + position.y;
+            console.warn(`getTransformedCoords: Dimensions not found for ${currentImageLabel}. Falling back to canvas center calculation. imageX=${imageX}, imageY=${imageY}`);
         }
-        return {
-            x: (canvasX - position.x) / scale,
-            y: (canvasY - position.y) / scale
-        };
+        
+        // Transform from canvas coordinates to image-relative coordinates
+        const imgX = (canvasX - imageX) / scale;
+        const imgY = (canvasY - imageY) / scale;
+        
+        return { x: imgX, y: imgY };
     }
 
     // Helper function to get canvas coordinates from image coordinates
-    function getCanvasCoords(imageX, imageY) {
+    function getCanvasCoords(imageX_relative, imageY_relative) {
+        // *** ADDED DETAILED LOGGING ***
+        console.log(`--- getCanvasCoords Called (Label Anchor?) ---`);
+        console.log(`  Input Relative Coords: x=${imageX_relative}, y=${imageY_relative}`);
+        
         const scale = imageScaleByLabel[currentImageLabel] || 1;
         const position = imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
-        return {
-            x: (imageX * scale) + position.x,
-            y: (imageY * scale) + position.y
-        };
+        console.log(`  Using: scale=${scale}, position=`, position);
+        
+        // Calculate the image position on canvas (TOP-LEFT CORNER)
+        let canvasImageTopLeftX, canvasImageTopLeftY;
+        const dims = window.originalImageDimensions[currentImageLabel]; // Use window property
+        console.log(`  Checking Dimensions: dims =`, dims);
+
+        if (dims && dims.width > 0 && dims.height > 0) {
+            const centerX = (canvas.width - dims.width * scale) / 2;
+            const centerY = (canvas.height - dims.height * scale) / 2;
+            canvasImageTopLeftX = centerX + position.x;
+            canvasImageTopLeftY = centerY + position.y;
+            console.log(`  Calculated TopLeft: x=${canvasImageTopLeftX}, y=${canvasImageTopLeftY} (Using Dims)`);
+        } else {
+            // Fallback (should not happen after load ideally)
+            canvasImageTopLeftX = canvas.width / 2 + position.x;
+            canvasImageTopLeftY = canvas.height / 2 + position.y;
+            console.warn(`getCanvasCoords: Dimensions not found for ${currentImageLabel}. Falling back. TopLeft: x=${canvasImageTopLeftX}, y=${canvasImageTopLeftY}`);
+        }
+
+        // Transform from image-relative coordinates to canvas coordinates
+        const canvasX = (imageX_relative * scale) + canvasImageTopLeftX;
+        const canvasY = (imageY_relative * scale) + canvasImageTopLeftY;
+        console.log(`  Final Canvas Coords: x=${canvasX}, y=${canvasY}`);
+        console.log(`---------------------------------------------`);
+        // *** END DETAILED LOGGING ***
+
+        return { x: canvasX, y: canvasY };
     }
 
     // Drawing function for freehand mode
     function draw(e) {
         if (!isDrawing) return;
         
-        // Get raw canvas coordinates for drawing operations
         const canvasX = e.offsetX;
         const canvasY = e.offsetY;
-        // Get image coordinates for storing in the points array and calculating velocity
+
+        // Get image coordinates for storing in the points array
+        // This transforms from canvas coordinates to image-relative coordinates
         const { x: imgX, y: imgY } = getTransformedCoords(canvasX, canvasY);
+
+        // *** Add Log Here ***
+        console.log(`Draw Move: Canvas(${canvasX}, ${canvasY}) -> Image(${imgX.toFixed(1)}, ${imgY.toFixed(1)})`);
 
         // Calculate time delta for velocity
         const currentPoint = {
-            x: imgX,    // Store image X
-            y: imgY,    // Store image Y
+            x: imgX,    // Store image-relative X
+            y: imgY,    // Store image-relative Y
             canvasX: canvasX, // Store canvas X for drawing
             canvasY: canvasY, // Store canvas Y for drawing
             time: Date.now()
         };
+        
+        console.log(`Adding point at canvas: (${canvasX}, ${canvasY}), image-relative: (${imgX}, ${imgY})`);
         
         // Use the correct previous point for time delta calculations
         const prevPoint = points.length > 0 ? points[points.length - 1] : 
@@ -2322,7 +2290,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Faster = thinner, slower = thicker, with limits
         const baseWidth = parseInt(brushSize.value);
         const velocityFactor = Math.max(0.4, Math.min(1.2, 1 - smoothedVelocity * 0.1));
-        const dynamicWidth = baseWidth * velocityFactor;
+        const scale = imageScaleByLabel[currentImageLabel] || 1.0;
+        const dynamicWidth = baseWidth * velocityFactor * scale;
 
         // Add point to array
         points.push(currentPoint);
@@ -2360,20 +2329,12 @@ document.addEventListener('DOMContentLoaded', () => {
             vectorStrokesByImage[currentImageLabel] = {};
         }
         
-        // Get the current image position and scale for converting to relative coordinates
-        const scale = imageScaleByLabel[currentImageLabel] || 1.0;
-        const offsetX = imagePositionByLabel[currentImageLabel]?.x || 0;
-        const offsetY = imagePositionByLabel[currentImageLabel]?.y || 0;
-        const centerX = (canvas.width - (originalImageDimensions[currentImageLabel]?.width || 0) * scale) / 2;
-        const centerY = (canvas.height - (originalImageDimensions[currentImageLabel]?.height || 0) * scale) / 2;
-        const imageX = centerX + offsetX;
-        const imageY = centerY + offsetY;
-        
-        // Convert the points to image-relative coordinates
-        // We only need to store the image space coordinates for persistence
+        // We already have image-relative coordinates from the getTransformedCoords call above
+        // Just use the current points array directly to build the vector data
+        // We only need the x, y coordinates (which are already image-relative)
         const relativePoints = points.map(point => ({
-            x: (point.x - imageX) / scale,
-            y: (point.y - imageY) / scale,
+            x: point.x,  // Already image-relative X
+            y: point.y,  // Already image-relative Y
             time: point.time
         }));
         
@@ -2382,7 +2343,7 @@ document.addEventListener('DOMContentLoaded', () => {
             vectorStrokesByImage[currentImageLabel][currentStrokeLabel] = {
                 points: relativePoints,
                 color: colorPicker.value,
-                width: baseWidth,
+                width: baseWidth, // Store the base width without scaling
                 type: 'freehand'
             };
         } else {
@@ -2405,15 +2366,16 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Set drawing styles
         ctx.strokeStyle = colorPicker.value;
-        ctx.lineWidth = parseInt(brushSize.value);
+        const scale = imageScaleByLabel[currentImageLabel] || 1.0;
+        ctx.lineWidth = parseInt(brushSize.value) * scale;
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
         ctx.stroke();
         
         // Draw a single small circle at each endpoint (but don't make them separate strokes)
         ctx.beginPath();
-        ctx.arc(startPoint.x, startPoint.y, parseInt(brushSize.value) / 2, 0, Math.PI * 2);
-        ctx.arc(endPoint.x, endPoint.y, parseInt(brushSize.value) / 2, 0, Math.PI * 2);
+        ctx.arc(startPoint.x, startPoint.y, parseInt(brushSize.value) * scale / 2, 0, Math.PI * 2);
+        ctx.arc(endPoint.x, endPoint.y, parseInt(brushSize.value) * scale / 2, 0, Math.PI * 2);
         ctx.fillStyle = colorPicker.value;
         ctx.fill();
         
@@ -2483,10 +2445,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (selectedStrokeByImage[currentImageLabel] === strokeLabel) {
                 isDraggingLabel = true;
                 draggedLabelStroke = strokeLabel;
-                dragStartX = x;
+                dragStartX = x; // Store initial canvas click coords
                 dragStartY = y;
                 
-                // Set cursor to indicate dragging
+                // We will calculate/update the offset in mousemove
                 canvas.style.cursor = 'grabbing';
             }
             
@@ -2524,13 +2486,19 @@ document.addEventListener('DOMContentLoaded', () => {
             [lastX, lastY] = [x, y];
             
             // Draw a glowing white connector circle at the start point
+            const scale = imageScaleByLabel[currentImageLabel] || 1.0; // Get scale
+            const baseRadius = parseInt(brushSize.value) / 2;
+            const scaledRadius = baseRadius * scale;
+            const glowPadding = 5; // Keep glow padding fixed for now
+
             ctx.beginPath();
-            ctx.arc(x, y, parseInt(brushSize.value) / 2 + 5, 0, Math.PI * 2);
+            // Use scaled radius + fixed padding for glow circle
+            ctx.arc(x, y, scaledRadius + glowPadding, 0, Math.PI * 2);
             
-            // Create a white glow effect with a radial gradient
+            // Create a white glow effect with a radial gradient using scaled radii
             const gradient = ctx.createRadialGradient(
-                x, y, parseInt(brushSize.value) / 4,
-                x, y, parseInt(brushSize.value) / 2 + 5
+                x, y, scaledRadius / 2, // Inner radius of gradient (scaled)
+                x, y, scaledRadius + glowPadding // Outer radius of gradient (scaled + fixed padding)
             );
             gradient.addColorStop(0, 'white');
             gradient.addColorStop(0.7, 'rgba(255, 255, 255, 0.8)');
@@ -2541,7 +2509,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Then draw the colored dot for the actual start point
             ctx.beginPath();
-            ctx.arc(x, y, parseInt(brushSize.value) / 2, 0, Math.PI * 2);
+            ctx.arc(x, y, scaledRadius, 0, Math.PI * 2); // Use scaled radius
             ctx.fillStyle = colorPicker.value;
             ctx.fill();
             
@@ -2549,16 +2517,32 @@ document.addEventListener('DOMContentLoaded', () => {
                 // For straight line, store the start point
                 straightLineStart = { x: x, y: y };
             } else {
-                // For freehand, add first point
+                // For freehand, add the first point using image-relative coordinates
+                const { x: imgX, y: imgY } = getTransformedCoords(x, y);
                 const firstPoint = {
-                    x: x,
-                    y: y,
+                    x: imgX,             // Image space X
+                    y: imgY,             // Image space Y
+                    canvasX: x,          // Canvas space X
+                    canvasY: y,          // Canvas space Y
                     time: Date.now()
                 };
                 points.push(firstPoint);
-                lastDrawnPoint = firstPoint;
+                console.log("Mousedown: Added first point:", JSON.stringify(firstPoint));
+
+                // Store the very first point in vector data immediately
+                const currentStrokeLabel = labelsByImage[currentImageLabel];
+                if (!vectorStrokesByImage[currentImageLabel]) {
+                    vectorStrokesByImage[currentImageLabel] = {};
+                }
+                vectorStrokesByImage[currentImageLabel][currentStrokeLabel] = {
+                    points: [{ x: imgX, y: imgY, time: firstPoint.time }], // Store only image coords
+                    color: colorPicker.value,
+                    width: parseInt(brushSize.value), // Store base width without scaling
+                    type: 'freehand'
+                };
+                console.log(`Mousedown: Initial vector data for ${currentStrokeLabel}:`, JSON.stringify(vectorStrokesByImage[currentImageLabel][currentStrokeLabel]));
             }
-            return;
+            return; // Return early as we started drawing from the connector
         }
         
         // Handle image dragging with Shift key
@@ -2609,7 +2593,9 @@ document.addEventListener('DOMContentLoaded', () => {
         
             // Draw a dot at the start point (important for single clicks)
             ctx.beginPath();
-            ctx.arc(e.offsetX, e.offsetY, parseInt(brushSize.value) / 2, 0, Math.PI * 2);
+            const scale = imageScaleByLabel[currentImageLabel] || 1.0;
+            const dotRadius = parseInt(brushSize.value) * scale / 2;
+            ctx.arc(e.offsetX, e.offsetY, dotRadius, 0, Math.PI * 2);
             ctx.fillStyle = colorPicker.value;
             ctx.fill();
         }
@@ -2627,43 +2613,67 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Handle label dragging
         if (isDraggingLabel) {
-            // Calculate movement delta
-            const deltaX = x - dragStartX;
-            const deltaY = y - dragStartY;
+            const currentX = e.offsetX;
+            const currentY = e.offsetY;
+
+            // Calculate canvas delta from the last position
+            const deltaX = currentX - dragStartX;
+            const deltaY = currentY - dragStartY;
             
-            // Update drag start position for next move
-            dragStartX = x;
-            dragStartY = y;
+            // Update start position for next move event
+            dragStartX = currentX;
+            dragStartY = currentY;
             
-            // Ensure we have a position record for this label
-            if (!customLabelPositions[currentImageLabel]) {
-                customLabelPositions[currentImageLabel] = {};
-            }
+            // Ensure customLabelPositions structure exists
+            if (!customLabelPositions[currentImageLabel]) customLabelPositions[currentImageLabel] = {};
             
-            // Find the current label position
-            const labelToMove = currentLabelPositions.find(l => l.strokeLabel === draggedLabelStroke);
-            if (labelToMove) {
-                // Create or update the custom position
-                if (!customLabelPositions[currentImageLabel][draggedLabelStroke]) {
-                    customLabelPositions[currentImageLabel][draggedLabelStroke] = {
-                        x: labelToMove.x,
-                        y: labelToMove.y
-                    };
+            // Get the anchor point for the dragged label's stroke (current canvas coords)
+            const vectorData = vectorStrokesByImage[currentImageLabel]?.[draggedLabelStroke];
+            if (vectorData && vectorData.points.length > 0) {
+                const midIndex = Math.floor(vectorData.points.length / 2);
+                const midPointRelative = vectorData.points[midIndex];
+                const anchorPoint = getCanvasCoords(midPointRelative.x, midPointRelative.y);
+
+                // Get the current offset (custom or calculated) or calculate if first time dragging
+                let currentOffset = customLabelPositions[currentImageLabel][draggedLabelStroke] || 
+                                    calculatedLabelOffsets[currentImageLabel]?.[draggedLabelStroke];
+
+                if (!currentOffset) {
+                    // Calculate initial offset based on current drawn position if neither exists
+                    const currentLabelRect = currentLabelPositions.find(l => l.strokeLabel === draggedLabelStroke);
+                    if (currentLabelRect) {
+                        currentOffset = {
+                            x: currentLabelRect.x - anchorPoint.x,
+                            y: currentLabelRect.y - anchorPoint.y
+                        };
+                         console.log(`Initialized drag offset from current rect for ${draggedLabelStroke}:`, currentOffset);
+                    } else {
+                        // Fallback if label wasn't found in current positions (shouldn't happen)
+                        currentOffset = { x: 0, y: 0 }; 
+                        console.warn(`Could not find current rect for ${draggedLabelStroke} during drag start.`);
+                    }
+                } else {
+                    // Clone the offset object if it came from calculatedLabelOffsets 
+                    // to avoid modifying the original calculated offset
+                    currentOffset = { ...currentOffset };
                 }
+
+                // Update the relative offset by the canvas delta
+                currentOffset.x += deltaX;
+                currentOffset.y += deltaY;
                 
-                // Update the position with the movement delta
-                const pos = customLabelPositions[currentImageLabel][draggedLabelStroke];
-                pos.x += deltaX;
-                pos.y += deltaY;
-                
-                // Ensure the label stays within canvas bounds
-                pos.x = Math.max(10, Math.min(canvas.width - labelToMove.width - 10, pos.x));
-                pos.y = Math.max(10, Math.min(canvas.height - labelToMove.height - 10, pos.y));
+                // Store the updated offset in customLabelPositions (always overwrites calculated)
+                customLabelPositions[currentImageLabel][draggedLabelStroke] = currentOffset;
+                 console.log(`Storing updated custom offset for ${draggedLabelStroke}:`, currentOffset);
+
+                // Remove canvas boundary clamping
+                // pos.x = Math.max(10, Math.min(canvas.width - labelToMove.width - 10, pos.x));
+                // pos.y = Math.max(10, Math.min(canvas.height - labelToMove.height - 10, pos.y));
                 
                 // Redraw with the new position
                 redrawCanvasWithVisibility();
             }
-            return;
+            return; // Return early as we handled label dragging
         }
         
         if (isDraggingImage) {
@@ -2788,13 +2798,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     // If end point overlaps with another line, draw a glowing circle
                     if (endPointStrokeData) {
                         // Draw a glowing white connector circle at the end point
-                        ctx.beginPath();
-                        ctx.arc(endPoint.x, endPoint.y, parseInt(brushSize.value) / 2 + 5, 0, Math.PI * 2);
+                        const scale = imageScaleByLabel[currentImageLabel] || 1.0;
+                        const baseRadius = parseInt(brushSize.value) / 2;
+                        const scaledRadius = baseRadius * scale;
+                        const glowPadding = 5; // Keep glow padding fixed
                         
-                        // Create a white glow effect with a radial gradient
+                        ctx.beginPath();
+                        // Use scaled radius + padding for glow circle
+                        ctx.arc(endPoint.x, endPoint.y, scaledRadius + glowPadding, 0, Math.PI * 2);
+                        
+                        // Create a white glow effect with a radial gradient using scaled radii
                         const gradient = ctx.createRadialGradient(
-                            endPoint.x, endPoint.y, parseInt(brushSize.value) / 4,
-                            endPoint.x, endPoint.y, parseInt(brushSize.value) / 2 + 5
+                            endPoint.x, endPoint.y, scaledRadius / 2, // Inner radius (scaled)
+                            endPoint.x, endPoint.y, scaledRadius + glowPadding // Outer radius (scaled + padding)
                         );
                         gradient.addColorStop(0, 'white');
                         gradient.addColorStop(0.7, 'rgba(255, 255, 255, 0.8)');
@@ -2805,7 +2821,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         
                         // Then draw the colored dot for the actual end point
                         ctx.beginPath();
-                        ctx.arc(endPoint.x, endPoint.y, parseInt(brushSize.value) / 2, 0, Math.PI * 2);
+                        ctx.arc(endPoint.x, endPoint.y, scaledRadius, 0, Math.PI * 2);
                         ctx.fillStyle = strokeColor;
                         ctx.fill();
                     }
@@ -2826,38 +2842,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // Only add the stroke if it has valid points
                 if (points.length > 1) {
-                    // Get the current image position and scale
-                    const scale = imageScaleByLabel[currentImageLabel];
-                    const offsetX = imagePositionByLabel[currentImageLabel]?.x || 0;
-                    const offsetY = imagePositionByLabel[currentImageLabel]?.y || 0;
-                    
-                    let imageX, imageY;
-                    
-                    // If we have an image, calculate coordinates relative to it
-                    if (window.originalImages && window.originalImages[currentImageLabel] && 
-                        originalImageDimensions[currentImageLabel]?.width) {
-                        const centerX = (canvas.width - (originalImageDimensions[currentImageLabel].width || 0) * scale) / 2;
-                        const centerY = (canvas.height - (originalImageDimensions[currentImageLabel].height || 0) * scale) / 2;
-                        imageX = centerX + offsetX;
-                        imageY = centerY + offsetY;
-                    } else {
-                        // Without an image, use canvas center as reference point
-                        imageX = canvas.width / 2;
-                        imageY = canvas.height / 2;
-                    }
-                    
-                    // Convert all points from canvas coordinates to image-relative coordinates
+                    // We already have image-relative coordinates from the getTransformedCoords calls
+                    // during drawing. Just use the points array directly.
                     const relativePoints = points.map(point => ({
-                        x: (point.x - imageX) / scale,
-                        y: (point.y - imageY) / scale,
+                        x: point.x,  // Already image-relative X
+                        y: point.y,  // Already image-relative Y
                         time: point.time
                     }));
+                    
+                    console.log(`Completing stroke with ${relativePoints.length} points`);
+                    console.log(`First point: (${relativePoints[0].x}, ${relativePoints[0].y})`);
+                    console.log(`Last point: (${relativePoints[relativePoints.length-1].x}, ${relativePoints[relativePoints.length-1].y})`);
                     
                     // Ensure the vector data is properly stored with image-relative coordinates
                     vectorStrokesByImage[currentImageLabel][newStrokeLabel] = {
                         points: relativePoints,
                         color: strokeColor,
-                        width: strokeWidth,
+                        width: strokeWidth, // Store base width without scaling
                         type: 'freehand'
                     };
                     
@@ -2883,13 +2884,19 @@ document.addEventListener('DOMContentLoaded', () => {
                         // If end point overlaps with another line, draw a glowing circle
                         if (endPointStrokeData) {
                             // Draw a glowing white connector circle at the end point
-                            ctx.beginPath();
-                            ctx.arc(lastPoint.x, lastPoint.y, parseInt(brushSize.value) / 2 + 5, 0, Math.PI * 2);
+                            const scale = imageScaleByLabel[currentImageLabel] || 1.0;
+                            const baseRadius = parseInt(brushSize.value) / 2;
+                            const scaledRadius = baseRadius * scale;
+                            const glowPadding = 5; // Keep glow padding fixed
                             
-                            // Create a white glow effect with a radial gradient
+                            ctx.beginPath();
+                            // Use scaled radius + padding for glow circle
+                            ctx.arc(lastPoint.x, lastPoint.y, scaledRadius + glowPadding, 0, Math.PI * 2);
+                            
+                            // Create a white glow effect with a radial gradient using scaled radii
                             const gradient = ctx.createRadialGradient(
-                                lastPoint.x, lastPoint.y, parseInt(brushSize.value) / 4,
-                                lastPoint.x, lastPoint.y, parseInt(brushSize.value) / 2 + 5
+                                lastPoint.x, lastPoint.y, scaledRadius / 2, // Inner radius (scaled)
+                                lastPoint.x, lastPoint.y, scaledRadius + glowPadding // Outer radius (scaled + padding)
                             );
                             gradient.addColorStop(0, 'white');
                             gradient.addColorStop(0.7, 'rgba(255, 255, 255, 0.8)');
@@ -2900,7 +2907,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             
                             // Then draw the colored dot for the actual end point
                             ctx.beginPath();
-                            ctx.arc(lastPoint.x, lastPoint.y, parseInt(brushSize.value) / 2, 0, Math.PI * 2);
+                            ctx.arc(lastPoint.x, lastPoint.y, scaledRadius, 0, Math.PI * 2);
                             ctx.fillStyle = colorPicker.value;
                             ctx.fill();
                         }
@@ -3176,15 +3183,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 strokeVisibilityByImage[currentImageLabel] = {};
                 strokeDataByImage[currentImageLabel] = {};
                 
+                // Clear label position offsets
+                if (customLabelPositions[currentImageLabel]) {
+                    delete customLabelPositions[currentImageLabel];
+                }
+                if (calculatedLabelOffsets[currentImageLabel]) {
+                    delete calculatedLabelOffsets[currentImageLabel];
+                }
+                
                 // Update UI
                 updateStrokeCounter();
-                updateStrokeVisibilityControls();
-                
-                // Make sure scale indicator stays up to date
-                const scaleElement = document.getElementById(`scale-${currentImageLabel}`);
-                if (scaleElement) {
-                    scaleElement.textContent = `Scale: ${Math.round(scale * 100)}%`;
-                }
             };
             img.src = originalImages[currentImageLabel];
         } else {
@@ -3202,9 +3210,16 @@ document.addEventListener('DOMContentLoaded', () => {
             strokeVisibilityByImage[currentImageLabel] = {};
             strokeDataByImage[currentImageLabel] = {};
             
+            // Clear label position offsets
+            if (customLabelPositions[currentImageLabel]) {
+                delete customLabelPositions[currentImageLabel];
+            }
+            if (calculatedLabelOffsets[currentImageLabel]) {
+                delete calculatedLabelOffsets[currentImageLabel];
+            }
+            
             // Update UI
             updateStrokeCounter();
-            updateStrokeVisibilityControls();
         }
     });
     
@@ -3448,18 +3463,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function updateImageScale(newScale) {
-        if (!window.originalImages[currentImageLabel]) {
-            console.log('No image to scale');
-            return; // No image to scale
-        }
-        
         // Update scale for current image
         const oldScale = imageScaleByLabel[currentImageLabel];
         imageScaleByLabel[currentImageLabel] = newScale;
         
-        // Redraw the image with the new scale
-        const img = new Image();
-        img.onload = () => {
             // Save current state before redrawing
             const previousState = getCanvasState();
             undoStackByImage[currentImageLabel].push({
@@ -3468,42 +3475,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 label: null
             });
             
-            // Clear canvas
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            // Apply scale
-            const scale = imageScaleByLabel[currentImageLabel];
-            const scaledWidth = img.width * scale;
-            const scaledHeight = img.height * scale;
-            
-            // Calculate base position (center of canvas)
-            const centerX = (canvas.width - scaledWidth) / 2;
-            const centerY = (canvas.height - scaledHeight) / 2;
-            
-            // Apply position offset
-            const offsetX = imagePositionByLabel[currentImageLabel].x;
-            const offsetY = imagePositionByLabel[currentImageLabel].y;
-            
-            // Calculate final position
-            const x = centerX + offsetX;
-            const y = centerY + offsetY;
-            
-            // Draw the image with scaling and positioning
-            ctx.drawImage(img, x, y, scaledWidth, scaledHeight);
-            
-            // Redraw all strokes using vector data with proper scaling and positioning
+        // Redraw the canvas (image and/or strokes) with the new scale
             redrawCanvasWithVisibility();
             
-            // Update the scale display in the sidebar
+        // Update the scale display in the sidebar (if the element exists)
             const scaleElement = document.getElementById(`scale-${currentImageLabel}`);
             if (scaleElement) {
-                scaleElement.textContent = `Scale: ${Math.round(scale * 100)}%`;
+            scaleElement.textContent = `Scale: ${Math.round(newScale * 100)}%`;
             }
             
             // Update UI
             updateScaleButtonsActiveState();
-        };
-        img.src = originalImages[currentImageLabel];
     }
     
     // Initialize scale option click handlers
@@ -3539,17 +3521,13 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Function to move the image and its strokes
     function moveImage(deltaX, deltaY) {
-        if (!window.originalImages[currentImageLabel]) {
-            return; // No image to move
-        }
-        
         // Update position offset
+        if (!imagePositionByLabel[currentImageLabel]) {
+            imagePositionByLabel[currentImageLabel] = { x: 0, y: 0 };
+        }
         imagePositionByLabel[currentImageLabel].x += deltaX;
         imagePositionByLabel[currentImageLabel].y += deltaY;
         
-        // Redraw the image with updated position
-        const img = new Image();
-        img.onload = () => {
             // Save current state before moving
             const currentState = getCanvasState();
             undoStackByImage[currentImageLabel].push({
@@ -3558,33 +3536,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 label: null
             });
             
-            // Clear canvas
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            // Apply scale
-            const scale = imageScaleByLabel[currentImageLabel];
-            const scaledWidth = img.width * scale;
-            const scaledHeight = img.height * scale;
-            
-            // Calculate base position (center of canvas)
-            const centerX = (canvas.width - scaledWidth) / 2;
-            const centerY = (canvas.height - scaledHeight) / 2;
-            
-            // Apply position offset
-            const offsetX = imagePositionByLabel[currentImageLabel].x;
-            const offsetY = imagePositionByLabel[currentImageLabel].y;
-            
-            // Calculate final position
-            const x = centerX + offsetX;
-            const y = centerY + offsetY;
-            
-            // Draw the image with updated position
-            ctx.drawImage(img, x, y, scaledWidth, scaledHeight);
-            
-            // Redraw all strokes using vector data with proper positioning
+        // Redraw the canvas (image and/or strokes) with updated position
             redrawCanvasWithVisibility();
-        };
-        img.src = originalImages[currentImageLabel];
     }
     
     // Handle WASD and zoom keyboard controls
@@ -3754,8 +3707,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 };
                 
                 // Ensure the label stays within canvas bounds
-                candidateRect.x = Math.max(10, Math.min(canvas.width - labelRect.width - 10, candidateRect.x));
-                candidateRect.y = Math.max(10, Math.min(canvas.height - labelRect.height - 10, candidateRect.y));
+                // candidateRect.x = Math.max(10, Math.min(canvas.width - labelRect.width - 10, candidateRect.x));
+                // candidateRect.y = Math.max(10, Math.min(canvas.height - labelRect.height - 10, candidateRect.y));
                 
                 // Count how many existing labels this position would overlap with
                 let impactCount = 0;

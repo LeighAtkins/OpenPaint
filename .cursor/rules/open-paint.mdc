@@ -1,5 +1,10 @@
 ---
-description: Gives context for the project
+description: 
+globs: 
+alwaysApply: true
+---
+---
+description: This is a paint tool designed for email communication of measurements
 globs: *.js
 alwaysApply: false
 ---

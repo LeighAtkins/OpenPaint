@@ -1,0 +1,152 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Your rule content
+
+- [paint.js](mdc:public/js/paint.js) [project-manager.js](mdc:public/js/project-manager.js)
+
+# OpenPaint Task Management System
+
+This file tracks tasks, their difficulty, dependencies, and debugging status. Each task includes:
+- `[ ]`/`[x]` Checkbox to mark completion
+- 🔍 Debugging steps checklist
+- 📝 Notes on ambiguities or dependencies
+- 🐞 Console log statements to remove when complete
+
+## Difficulty Rating
+- 🟢 Easy: 1-2 hours
+- 🟡 Medium: 3-6 hours
+- 🟠 Hard: 6+ hours, requires careful planning
+- 🔴 Complex: Should be broken down into smaller tasks
+
+## Current Development Focus
+
+### Core Drawing Functionality
+1.  **Line Thickness Consistency Across Zoom Levels** - 🟡 Medium
+    - [x] Fix line width scaling in `draw()` function
+    - [x] Fix line width scaling in `drawStraightLinePreview()` function
+    - [ ] Test line width consistency when redrawing saved projects
+    - 🔍 Debugging:
+        - [ ] Verify thickness remains consistent when panning
+        - [ ] Verify thickness remains consistent after undo/redo
+        - [ ] Verify thickness remains consistent after save/load
+    - 🐞 Console logs to clean up: `paint.js:2085-2095` (Check exact lines if needed)
+
+2.  **Label Positioning System** - 🟠 Hard
+    - [x] Remove canvas boundary constraints in `findOptimalLabelPosition()`
+    - [ ] **Fix Label Anchor Point After Load:** Investigate why `getCanvasCoords` calculates incorrect anchor points during redraw after drawing on a loaded project.
+    - 🔍 Debugging Steps:
+    - [ ] **Add Logging:** Add detailed logging inside `getCanvasCoords` (~line 1975) to show input `imageX_relative`, `imageY_relative`, and calculated intermediate values (`scale`, `position`, `dims`, `canvasImageTopLeftX`, `canvasImageTopLeftY`) and the final `canvasX`, `canvasY` result specifically during label anchor calculation.
+    - [ ] **Compare:** Analyze the logs from the label anchor calculation and compare the inputs/outputs with the values used during successful stroke drawing/redrawing.
+    - [ ] **Identify Discrepancy:** Pinpoint why `getCanvasCoords` returns incorrect values in this specific context.
+
+    - [ ] Implement relative offset storage system for label positions
+    - [ ] Update label drawing to use offsets with image position/scale
+    - [ ] Ensure label connectors work with new positioning system
+    - 🔍 Debugging:
+        - [ ] Verify labels follow strokes when panning
+        - [ ] Verify labels maintain relative position when zooming
+        - [ ] Verify connectors correctly link to stroke points
+    - 📝 Dependency: Required before implementing save/load for custom positions. May be affected by coordinate system fix above.
+    - 🐞 Console logs to clean up: `paint.js:3320-3550` (Label Positioning), `paint.js:1520-1680` (Label Drawing).
+
+3.  **Undo/Redo System Enhancements** - 🟠 Hard
+    - [ ] Update `saveState()` to store label offsets
+    - [ ] Update `undo()`/`redo()` to handle label offsets
+    - [ ] Ensure state restoration includes label positions
+    - 🔍 Debugging:
+        - [ ] Verify undo/redo maintains correct label positions
+        - [ ] Verify undo history doesn't grow too large (performance)
+        - [ ] Verify no memory leaks from storing state objects
+    - 📝 Dependency: Requires label positioning system to be complete first
+    - 🐞 Console logs to clean up: `paint.js:1780-2040` (Undo/Redo).
+
+## Upcoming Tasks
+
+### Project Management
+1.  **Save/Load Enhancements** - 🟠 Hard
+    - [ ] Add support for saving custom label positions
+    - [ ] Add support for loading custom label positions
+    - [ ] Improve error handling for broken/incomplete projects
+    - 🔍 Debugging:
+        - [ ] Verify saved label positions load correctly
+        - [ ] Test loading of older project files (backward compatibility)
+        - [ ] Test error recovery when loading corrupt files
+    - 📝 Ambiguity: Need to decide format for storing offsets in project files
+    - 📝 Dependency: Requires label positioning and undo/redo systems first
+    - 🐞 Console logs to clean up: `project-manager.js:255-450` (Loading Logic).
+
+### UI Improvements
+1.  **Dynamic UI Layout** - 🟡 Medium
+    - [ ] Make canvas responsive to window resizing
+    - [ ] Improve sidebar layout on smaller screens
+    - [ ] Add collapsible panels for tools
+    - 🔍 Debugging:
+        - [ ] Test on multiple screen sizes
+        - [ ] Verify canvas properly resizes
+        - [ ] Check for overflow issues
+    - 📝 Ambiguity: Need design mockups for mobile layout
+
+2.  **Improved Stroke Selection** - 🟡 Medium
+    - [ ] Highlight strokes on hover
+    - [ ] Add visual indicator for selected stroke
+    - [ ] Implement keyboard shortcuts for stroke navigation
+    - 🔍 Debugging:
+        - [ ] Verify highlighting doesn't affect redraw performance
+        - [ ] Test keyboard shortcuts on different browsers
+    - 🐞 Console logs to clean up: `paint.js:3555-3650` (Selection Logic), `paint.js:500-600` (Sidebar Interaction).
+
+### Technical Debt
+1.  **Performance Optimization** - 🔴 Complex
+    - [ ] Optimize canvas redrawing algorithm - 🟡 Medium
+        - [ ] Implement dirty region tracking
+        - [ ] Reduce unnecessary redraws
+    - [ ] Optimize stroke data storage - 🟡 Medium
+        - [ ] Simplify vector points storage format
+        - [ ] Implement stroke simplification algorithm
+    - [ ] Memory management - 🟡 Medium
+        - [ ] Implement image caching system
+        - [ ] Properly dispose of unused resources
+    - 🔍 Debugging:
+        - [ ] Measure and compare redraw times before/after
+        - [ ] Monitor memory usage for leaks
+    - 📝 Dependency: Address after core functionality is stable
+
+2.  **Code Refactoring** - 🟡 Medium
+    - [ ] Move related functions into modules/classes
+    - [ ] Standardize function parameter patterns
+    - [ ] Remove duplicate code
+    - 🔍 Debugging:
+        - [ ] Verify all features work after refactoring
+        - [ ] Check for regression issues
+    - 📝 Dependency: Complete core functionality first
+
+### Testing
+1.  **Automated Testing** - 🟠 Hard
+    - [ ] Set up testing framework - 🟢 Easy
+    - [ ] Write unit tests for core drawing functions - 🟡 Medium
+    - [ ] Write integration tests for user interactions - 🟡 Medium
+    - [ ] Implement visual regression testing - 🟠 Hard
+    - 🔍 Debugging:
+        - [ ] Verify tests cover critical functionality
+        - [ ] Check test performance
+    - 📝 Ambiguity: Need to decide on testing framework/approach
+
+## Completed Tasks
+- [x] Fixed line width scaling in `draw()` function
+- [x] Fixed line width scaling in `drawStraightLinePreview()` function
+- [x] Commented out canvas boundary constraints in `findOptimalLabelPosition()`
+- [x] **Stroke Position Offset After Project Load** - 🟠 Hard (High Priority)
+- [x] **Investigate Coordinate Mismatch:** Determined why `getTransformedCoords` (drawing) and `redrawCanvasWithVisibility` (displaying) used different reference points (`imageX`/`imageY`) after loading.
+- [x] **Ensure Consistent Coordinate System:** Refactored drawing and redrawing logic to use the *same* reference point (likely the calculated top-left corner of the scaled image) for all transformations.
+- [x] **Verify Dimension Availability:** Ensured `originalImageDimensions` are reliably calculated and available *before* the first drawing attempt after loading.
+- [x] **Test Drawing After Load:** Verified strokes appear correctly without jumping immediately after drawing on a loaded project.
+- 🐞 Console logs cleaned up: `paint.js:1955-1970` (Coord Transforms), `paint.js:1410-1450` (Redraw Transforms), `project-manager.js:450-470` (Dimension Loading).
+
+## Notes for Task Management
+- When adding new console logs for debugging, document them in this file
+- When marking a task complete, review associated console logs for removal
+- Tasks may be reprioritized based on development progress
+- If a task proves more complex than expected, it should be broken down further
