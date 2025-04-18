@@ -7,9 +7,10 @@ window.strokeLabelVisibility = {};
 window.strokeMeasurements = {};
 window.imageScaleByLabel = {};
 window.imagePositionByLabel = {};
-window.lineStrokesByImage = {};
-window.labelsByImage = {};
+lineStrokesByImage = {}; // <--- NOTE: This should now be global due to previous fix
+labelsByImage = {};      // <--- NOTE: This should now be global due to previous fix
 window.originalImages = {};
+window.isLoadingProject = false; // <-- Re-adding this line
 
 document.addEventListener('DOMContentLoaded', () => {
     // Initialize unit selectors
@@ -92,10 +93,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const IMAGE_LABELS = ['front', 'side', 'back', 'cushion'];
     let currentImageIndex = 0;
     let imageStates = {}; // Store states for each image
-    let lineStrokesByImage = {}; // Track strokes for each image
+    lineStrokesByImage = {}; // Track strokes for each image
     let strokeVisibilityByImage = {}; // Track visibility of each stroke
     let strokeDataByImage = {}; // Store additional data for each stroke
-    let labelsByImage = {}; // Track current label for each image
+    labelsByImage = {}; // Track current label for each image
     let undoStackByImage = {}; // Separate undo stack for each image
     let redoStackByImage = {}; // Separate redo stack for each image
     let pastedImages = [];  // Store all pasted images
@@ -137,6 +138,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Make addImageToSidebar available globally for the project manager
     window.addImageToSidebar = addImageToSidebar;
     function addImageToSidebar(imageUrl, label) {
+        // *** ADDED LOG ***
+        console.log(`[addImageToSidebar] Called for label: ${label}, imageUrl: ${imageUrl ? imageUrl.substring(0,30) + '...' : 'null'}`);
+
         const container = document.createElement('div');
         container.className = 'image-container';
         container.dataset.label = label;
@@ -166,10 +170,7 @@ document.addEventListener('DOMContentLoaded', () => {
         container.appendChild(scaleElement);
         
         container.onclick = () => {
-            // Don't do anything if already on this view
-            if (currentImageLabel === label) {
-                return;
-            }
+            // ... rest of the handler
             
             console.log(`Switching from ${currentImageLabel} to ${label}`);
             
@@ -196,32 +197,51 @@ document.addEventListener('DOMContentLoaded', () => {
             switchToImage(label);
         };
         
-        imageList.appendChild(container);
+        // *** ADDED LOGS ***
+        const imageListElement = document.getElementById('imageList');
+        if (!imageListElement) {
+            console.error('[addImageToSidebar] Cannot find #imageList element!');
+            return; // Stop if the target doesn't exist
+        }
+        console.log(`[addImageToSidebar] About to append container for ${label} to #imageList.`);
+        imageListElement.appendChild(container);
+        console.log(`[addImageToSidebar] Successfully appended container for ${label}. #imageList children: ${imageListElement.childElementCount}`);
     }
     
 
     // Store the original images for each view
     window.originalImages = window.originalImages || {};
     
-    function pasteImageFromUrl(url) {
-        console.log(`Pasting image for ${currentImageLabel}: ${url.substring(0, 30)}...`);
+    // --- MODIFIED Function Signature and Logic --- 
+    function pasteImageFromUrl(url, label) {
+        // Wrap in a Promise
+        return new Promise((resolve, reject) => {
+            console.log(`[pasteImageFromUrl] Pasting image for ${label}: ${url.substring(0, 30)}...`);
         
         const img = new Image();
         img.onload = () => {
             // Store the original image for this view
-            window.originalImages[currentImageLabel] = url;
+                window.originalImages[label] = url;
+                
+                // Ensure the object exists before setting properties
+                if (!window.originalImageDimensions) {
+                    window.originalImageDimensions = {};
+                }
             
             // Store original dimensions for scaling
-            originalImageDimensions[currentImageLabel] = {
+                window.originalImageDimensions[label] = {
                 width: img.width,
                 height: img.height
             };
+                
+                // Log dimensions for debugging
+                console.log(`[pasteImageFromUrl] Stored dimensions for ${label}: ${img.width}x${img.height}`);
             
             // Clear the canvas first
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
             // Apply current scale factor
-            const scale = imageScaleByLabel[currentImageLabel];
+                const scale = imageScaleByLabel[label] || 1.0; // Use passed-in label
             const scaledWidth = img.width * scale;
             const scaledHeight = img.height * scale;
             
@@ -230,44 +250,62 @@ document.addEventListener('DOMContentLoaded', () => {
             const centerY = (canvas.height - scaledHeight) / 2;
             
             // Apply position offset
-            const offsetX = imagePositionByLabel[currentImageLabel].x;
-            const offsetY = imagePositionByLabel[currentImageLabel].y;
+                const position = imagePositionByLabel[label] || { x: 0, y: 0 }; // Use passed-in label
+                const offsetX = position.x;
+                const offsetY = position.y;
             
             // Calculate final position
             const x = centerX + offsetX;
             const y = centerY + offsetY;
             
             // Draw the image with scaling and positioning
+                console.log(`[pasteImageFromUrl] Drawing image for ${label} at Canvas(${x.toFixed(1)}, ${y.toFixed(1)}) Scale: ${scale * 100}%`);
             ctx.drawImage(img, x, y, scaledWidth, scaledHeight);
-            console.log(`Image drawn for ${currentImageLabel} at scale ${scale * 100}%`);
             
             // Update the scale display in the sidebar
-            const scaleElement = document.getElementById(`scale-${currentImageLabel}`);
+                const scaleElement = document.getElementById(`scale-${label}`);
             if (scaleElement) {
                 scaleElement.textContent = `Scale: ${Math.round(scale * 100)}%`;
             }
             
             // Save this as the base state for this image
             const newState = getCanvasState();
-            imageStates[currentImageLabel] = cloneImageData(newState);
+                imageStates[label] = cloneImageData(newState); // Use passed-in label
+                console.log(`[pasteImageFromUrl] State saved into imageStates[${label}]`);
+                
+                // If this is the currently active label, update currentStroke
+                if (label === currentImageLabel) {
             currentStroke = cloneImageData(newState);
+                }
             
-            // Initialize the undo stack
-            undoStackByImage[currentImageLabel] = [{
+                // Initialize the undo stack if needed
+                if (!undoStackByImage[label] || undoStackByImage[label].length === 0) {
+                    undoStackByImage[label] = [{
                 state: cloneImageData(newState),
                 type: 'initial',
                 label: null
             }];
+                    console.log(`[pasteImageFromUrl] Initialized undo stack for ${label}`);
+                }
             
-            // Update the scale buttons to show active state
+                // Update the scale buttons to show active state if this is the current view
+                if (label === currentImageLabel) {
             updateScaleButtonsActiveState();
+                }
+                
+                console.log(`[pasteImageFromUrl] Image loaded and state saved for ${label}`);
+                resolve(); // Resolve the promise
+            };
             
-            console.log(`State saved for ${currentImageLabel}`);
-            console.log(`Current image states: ${Object.keys(imageStates).join(', ')}`);
-            console.log(`Current original images: ${Object.keys(window.originalImages).join(', ')}`);
-        };
+            img.onerror = (err) => {
+                console.error(`[pasteImageFromUrl] Error loading image for ${label}:`, err);
+                reject(err); // Reject the promise on error
+            };
+            
         img.src = url;
+        });
     }
+    // --- END MODIFIED Function ---
 
     function getNextLabel(imageLabel) {
         const currentLabel = labelsByImage[imageLabel];
@@ -1310,9 +1348,25 @@ document.addEventListener('DOMContentLoaded', () => {
     window.redrawCanvasWithVisibility = redrawCanvasWithVisibility;
     function redrawCanvasWithVisibility() {
         console.log(`--- redrawCanvasWithVisibility called for: ${currentImageLabel} ---`);
-        // console.log(`  Image available: ${!!window.originalImages[currentImageLabel]}`);
-        const strokesForLog = vectorStrokesByImage[currentImageLabel] || {}; // Use a different name for logging clarity
-        // console.log(`  Strokes available: ${Object.keys(strokesForLog).length}`);
+        
+        // ADDED: Ensure originalImageDimensions exists and has an entry for this label
+        if (!window.originalImageDimensions) {
+            window.originalImageDimensions = {};
+        }
+        
+        // ADDED: If we don't have dimensions for this label but we're trying to draw strokes,
+        // create default dimensions based on the canvas size to prevent coordinates from being lost
+        if (!window.originalImageDimensions[currentImageLabel] && 
+            vectorStrokesByImage[currentImageLabel] && 
+            Object.keys(vectorStrokesByImage[currentImageLabel]).length > 0) {
+            
+            console.log(`Creating default dimensions for ${currentImageLabel} to preserve strokes`);
+            window.originalImageDimensions[currentImageLabel] = {
+                width: canvas.width,
+                height: canvas.height
+            };
+            console.log(`Set dimensions to match canvas: ${canvas.width}x${canvas.height}`);
+        }
         
         // Reset label positions and stroke paths for this redraw
         currentLabelPositions = [];
@@ -1414,7 +1468,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         function applyVisibleStrokes(scale, imageX, imageY) {
-            // console.log(`\nApplying strokes with scale=${scale}, imageX=${imageX}, imageY=${imageY}`);
+            console.log(`\nApplying strokes with scale=${scale}, imageX=${imageX}, imageY=${imageY}`);
             // Apply each visible stroke using vector data if available
             const strokes = vectorStrokesByImage[currentImageLabel] || {};
             const strokeOrder = lineStrokesByImage[currentImageLabel] || [];
@@ -1430,9 +1484,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (cachedImg) {
                     imageWidth = cachedImg.width;
                     imageHeight = cachedImg.height;
-                    // console.log(`Original image dimensions: ${imageWidth}x${imageHeight}`);
+                    console.log(`Original image dimensions: ${imageWidth}x${imageHeight}`);
                 }
             }
+            
+            // Check if this is a blank canvas (no image, using canvas dimensions)
+            const dims = window.originalImageDimensions ? window.originalImageDimensions[currentImageLabel] : undefined;
+            const isBlankCanvas = !window.originalImages || !window.originalImages[currentImageLabel] || 
+                                 (dims && dims.width === canvas.width && dims.height === canvas.height);
+            
+            if (isBlankCanvas) {
+                console.log(`Applying strokes in BLANK CANVAS MODE`);
+            }
+            
+            // Calculate canvas center for scaling in blank canvas mode
+            const canvasCenter = {
+                x: canvas.width / 2,
+                y: canvas.height / 2
+            };
             
             // Retrieve the correct stroke data for the current image
             strokeOrder.forEach((strokeLabel) => {
@@ -1442,24 +1511,38 @@ document.addEventListener('DOMContentLoaded', () => {
                     const vectorData = strokes[strokeLabel];
                 if (!vectorData || !vectorData.points || vectorData.points.length === 0) return;
                 
-                // console.log(`\nDrawing stroke ${strokeLabel}:`);
+                console.log(`\nDrawing stroke ${strokeLabel}:`);
                 // console.log('Original points (relative to image):', JSON.stringify(vectorData.points));
-                // console.log(`Using scale: ${scale}, imageX: ${imageX}, imageY: ${imageY}`);
+                console.log(`Using scale: ${scale}, imageX: ${imageX}, imageY: ${imageY}`);
                             
                             // Transform the first point
                             const firstPoint = vectorData.points[0];
-                            const transformedFirstX = imageX + (firstPoint.x * scale);
-                            const transformedFirstY = imageY + (firstPoint.y * scale);
-                            
-                // console.log(`First point transformation:
-                //     Original (relative to image): (${firstPoint.x}, ${firstPoint.y})
-                //     Scaled: (${firstPoint.x * scale}, ${firstPoint.y * scale})
-                //     Final (canvas position): (${transformedFirstX}, ${transformedFirstY})`);
+                // In blank canvas mode, the points are already in canvas coordinates
+                let transformedFirstX, transformedFirstY;
+                
+                if (isBlankCanvas) {
+                    // Apply both scaling and position offset in blank canvas mode
+                    const position = imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
+                    // Scale from canvas center
+                    const scaledX = (firstPoint.x - canvasCenter.x) * scale + canvasCenter.x;
+                    const scaledY = (firstPoint.y - canvasCenter.y) * scale + canvasCenter.y;
+                    // Then apply position offset
+                    transformedFirstX = scaledX + position.x;
+                    transformedFirstY = scaledY + position.y;
+                    console.log(`BLANK CANVAS: Using scaled and adjusted coordinates for first point: (${transformedFirstX}, ${transformedFirstY})`);
+                } else {
+                    transformedFirstX = imageX + (firstPoint.x * scale);
+                    transformedFirstY = imageY + (firstPoint.y * scale);
+                    console.log(`First point transformation:
+                        Original (relative to image): (${firstPoint.x}, ${firstPoint.y})
+                        Scaled: (${firstPoint.x * scale}, ${firstPoint.y * scale})
+                        Final (canvas position): (${transformedFirstX}, ${transformedFirstY})`);
+                }
                 
                 const strokePath = [];
-                ctx.beginPath();
+                            ctx.beginPath();
                             ctx.moveTo(transformedFirstX, transformedFirstY);
-                strokePath.push({x: transformedFirstX, y: transformedFirstY});
+                        strokePath.push({x: transformedFirstX, y: transformedFirstY});
                             
                             // Check if this is a straight line
                             const isStraightLine = vectorData.type === 'straight' || 
@@ -1467,30 +1550,49 @@ document.addEventListener('DOMContentLoaded', () => {
                             
                             if (isStraightLine && vectorData.points.length >= 2) {
                                 const lastPoint = vectorData.points[vectorData.points.length - 1];
-                                const transformedLastX = imageX + (lastPoint.x * scale);
-                                const transformedLastY = imageY + (lastPoint.y * scale);
-                                
-                    // console.log(`Last point transformation:
-                    //     Original (relative to image): (${lastPoint.x}, ${lastPoint.y})
-                    //     Scaled: (${lastPoint.x * scale}, ${lastPoint.y * scale})
-                    //     Final (canvas position): (${transformedLastX}, ${transformedLastY})`);
-                    
+                            let transformedLastX, transformedLastY;
+                            
+                            if (isBlankCanvas) {
+                                // Apply both scaling and position offset in blank canvas mode
+                                const position = imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
+                                // Scale from canvas center
+                                const scaledX = (lastPoint.x - canvasCenter.x) * scale + canvasCenter.x;
+                                const scaledY = (lastPoint.y - canvasCenter.y) * scale + canvasCenter.y;
+                                // Then apply position offset
+                                transformedLastX = scaledX + position.x;
+                                transformedLastY = scaledY + position.y;
+                                console.log(`BLANK CANVAS: Using scaled and adjusted coordinates for last point: (${transformedLastX}, ${transformedLastY})`);
+                            } else {
+                                transformedLastX = imageX + (lastPoint.x * scale);
+                                transformedLastY = imageY + (lastPoint.y * scale);
+                                console.log(`Last point transformation:
+                                    Original (relative to image): (${lastPoint.x}, ${lastPoint.y})
+                                    Scaled: (${lastPoint.x * scale}, ${lastPoint.y * scale})
+                                    Final (canvas position): (${transformedLastX}, ${transformedLastY})`);
+                            }
+                            
                                 ctx.lineTo(transformedLastX, transformedLastY);
-                    strokePath.push({x: transformedLastX, y: transformedLastY});
+                            strokePath.push({x: transformedLastX, y: transformedLastY});
                             } else {
                                 // For freehand drawing, draw straight lines between all points
                                 for (let i = 1; i < vectorData.points.length; i++) {
                                     const point = vectorData.points[i];
-                                    const transformedX = imageX + (point.x * scale);
-                                    const transformedY = imageY + (point.y * scale);
-                                    
-                        // if (i === vectorData.points.length - 1) {
-                        //     console.log(`Last point transformation (freehand):
-                        //         Original (relative to image): (${point.x}, ${point.y})
-                        //         Scaled: (${point.x * scale}, ${point.y * scale})
-                        //         Final (canvas position): (${transformedX}, ${transformedY})`);
-                        // }
-                        
+                                let transformedX, transformedY;
+                                
+                                if (isBlankCanvas) {
+                                    // Apply both scaling and position offset in blank canvas mode
+                                    const position = imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
+                                    // Scale from canvas center
+                                    const scaledX = (point.x - canvasCenter.x) * scale + canvasCenter.x;
+                                    const scaledY = (point.y - canvasCenter.y) * scale + canvasCenter.y;
+                                    // Then apply position offset
+                                    transformedX = scaledX + position.x;
+                                    transformedY = scaledY + position.y;
+                                } else {
+                                    transformedX = imageX + (point.x * scale);
+                                    transformedY = imageY + (point.y * scale);
+                                }
+                                
                                 ctx.lineTo(transformedX, transformedY);
                                 strokePath.push({x: transformedX, y: transformedY});
                             }
@@ -1700,7 +1802,10 @@ document.addEventListener('DOMContentLoaded', () => {
         );
     }
 
-    function saveState(force = false, incrementLabel = true) {
+    function saveState(force = false, incrementLabel = true, updateStrokeList = true) {
+        // *** ADDED LOG ***
+        console.log(`[Save State Called] force=${force}, incrementLabel=${incrementLabel}, updateStrokeList=${updateStrokeList}, isDrawingOrPasting=${isDrawingOrPasting}, strokeInProgress=${strokeInProgress}`);
+
         // Get current state
         const currentState = getCanvasState();
 
@@ -1739,15 +1844,34 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // For line strokes, assign the next label before saving
         let strokeLabel = null;
-        if (!isDrawingOrPasting && !strokeInProgress && incrementLabel) {
+        if (!isDrawingOrPasting && !strokeInProgress && incrementLabel && updateStrokeList) {
+            // *** ADDED DETAILED LOGS ***
+            console.log(`[Save State] Entering stroke update block.`);
+            
             strokeLabel = labelsByImage[currentImageLabel];
+            console.log(`[Save State] Assigned strokeLabel = "${strokeLabel}" from labelsByImage[${currentImageLabel}]`);
             
             // Always increment the label after a successful stroke
-            labelsByImage[currentImageLabel] = getNextLabel(currentImageLabel);
+            const nextLabel = getNextLabel(currentImageLabel);
+            labelsByImage[currentImageLabel] = nextLabel;
+            console.log(`[Save State] Incremented labelsByImage[${currentImageLabel}] to "${nextLabel}"`);
             
             // Only add to strokes list if it's not already there
-            if (!lineStrokesByImage[currentImageLabel].includes(strokeLabel)) {
+            if (!lineStrokesByImage[currentImageLabel]) {
+                console.log(`[Save State] Initializing lineStrokesByImage[${currentImageLabel}] as []`);
+                lineStrokesByImage[currentImageLabel] = []; // Initialize if it doesn't exist
+            }
+            
+            // Check if stroke label already exists before pushing
+            const labelAlreadyExists = lineStrokesByImage[currentImageLabel].includes(strokeLabel);
+            
+            console.log(`[Save State] BEFORE push: lineStrokesByImage[${currentImageLabel}] =`, JSON.parse(JSON.stringify(lineStrokesByImage[currentImageLabel])));
+            
+            if (!labelAlreadyExists && updateStrokeList) {
             lineStrokesByImage[currentImageLabel].push(strokeLabel);
+                console.log(`[Save State] AFTER push: lineStrokesByImage[${currentImageLabel}] =`, JSON.parse(JSON.stringify(lineStrokesByImage[currentImageLabel]))); // Moved this log
+            } else {
+                console.log(`[Save State] Stroke label "${strokeLabel}" already exists in lineStrokesByImage[${currentImageLabel}], not pushing again.`);
             }
             
             // Initialize visibility for this stroke (default to visible)
@@ -2086,7 +2210,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Save initial blank state
-    saveState();
+//    saveState();
 
     // Set canvas size
     function resizeCanvas() {
@@ -2178,14 +2302,41 @@ document.addEventListener('DOMContentLoaded', () => {
         let imageX, imageY;
         
         // *** ADDED DETAILED LOGGING ***
-        // console.log(`getTransformedCoords START for ${currentImageLabel}`);
+        console.log(`getTransformedCoords START for ${currentImageLabel}`);
         // Explicitly use the window property to avoid scope issues
         // *** MODIFIED CHECK ***
         const dimensionsObject = window.originalImageDimensions;
         // console.log(`  All Dimensions:`, JSON.stringify(dimensionsObject));
         const dims = dimensionsObject ? dimensionsObject[currentImageLabel] : undefined;
-        // console.log(`  Current Dim Check: dims =`, dims);
+        console.log(`  Current Dim Check: dims =`, dims);
         // *** END MODIFIED CHECK ***
+
+        // Check if this is a blank canvas without an image
+        const noImageLoaded = !window.originalImages || !window.originalImages[currentImageLabel];
+        
+        // For blank canvas drawing, need to convert canvas coordinates to "image" coordinates
+        // by undoing scaling and position offset
+        if (noImageLoaded || (dims && dims.width === canvas.width && dims.height === canvas.height)) {
+            console.log(`getTransformedCoords: BLANK CANVAS MODE - Applying inverse scaling and offset`);
+            // Calculate canvas center for scaling
+            const canvasCenter = {
+                x: canvas.width / 2,
+                y: canvas.height / 2
+            };
+            
+            // First remove position offset
+            const positionAdjustedX = canvasX - position.x;
+            const positionAdjustedY = canvasY - position.y;
+            
+            // Then apply inverse scaling from center
+            const imgX = ((positionAdjustedX - canvasCenter.x) / scale) + canvasCenter.x;
+            const imgY = ((positionAdjustedY - canvasCenter.y) / scale) + canvasCenter.y;
+            
+            console.log(`  Removing offset: (${positionAdjustedX}, ${positionAdjustedY})`);
+            console.log(`  Inverse scaling: (${imgX}, ${imgY})`);
+            
+            return { x: imgX, y: imgY };
+        }
 
         // Use loaded dimensions if available, otherwise fallback to canvas center
         if (dims && dims.width > 0 && dims.height > 0) {
@@ -2193,39 +2344,63 @@ document.addEventListener('DOMContentLoaded', () => {
             const centerY = (canvas.height - dims.height * scale) / 2;
             imageX = centerX + position.x;
             imageY = centerY + position.y;
-            // console.log(`getTransformedCoords: Using image dims ${dims.width}x${dims.height}. Calculated imageX=${imageX}, imageY=${imageY}`);
+            console.log(`getTransformedCoords: Using image dims ${dims.width}x${dims.height}. Calculated imageX=${imageX}, imageY=${imageY}`);
         } else {
             // Fallback if dimensions aren't loaded (should ideally not happen after load)
             imageX = canvas.width / 2 + position.x;
             imageY = canvas.height / 2 + position.y;
-            // console.warn(`getTransformedCoords: Dimensions not found for ${currentImageLabel}. Falling back to canvas center calculation. imageX=${imageX}, imageY=${imageY}`);
+            console.warn(`getTransformedCoords: Dimensions not found for ${currentImageLabel}. Falling back to canvas center calculation. imageX=${imageX}, imageY=${imageY}`);
         }
         
         // Transform from canvas coordinates to image-relative coordinates
         const imgX = (canvasX - imageX) / scale;
         const imgY = (canvasY - imageY) / scale;
         
+        console.log(`getTransformedCoords RESULT: Canvas(${canvasX}, ${canvasY}) -> Image(${imgX.toFixed(1)}, ${imgY.toFixed(1)})`);
         return { x: imgX, y: imgY };
     }
 
     // Helper function to get canvas coordinates from image coordinates
     function getCanvasCoords(imageX_relative, imageY_relative) {
         // *** ADDED DETAILED LOGGING ***
-        // console.log(`--- getCanvasCoords Called (Label Anchor?) ---`);
-        // console.log(`  Input Relative Coords: x=${imageX_relative}, y=${imageY_relative}`);
+        console.log(`--- getCanvasCoords Called (Label Anchor?) ---`);
+        console.log(`  Input Relative Coords: x=${imageX_relative}, y=${imageY_relative}`);
 
         const scale = imageScaleByLabel[currentImageLabel] || 1;
         const position = imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
-        // console.log(`  Using: scale=${scale}, position=`, position);
+        console.log(`  Using: scale=${scale}, position=`, position);
 
+        // Check if this is a blank canvas without an image
+        const noImageLoaded = !window.originalImages || !window.originalImages[currentImageLabel];
+        
         // Calculate the image position on canvas (TOP-LEFT CORNER)
-        let canvasImageTopLeftX, canvasImageTopLeftY;
         // *** MODIFIED CHECK ***
         const dimensionsObject = window.originalImageDimensions; // Use window property
-        // console.log(`  Checking Dimensions: dims object =`, dimensionsObject);
+        console.log(`  Checking Dimensions: dims object =`, dimensionsObject);
         const dims = dimensionsObject ? dimensionsObject[currentImageLabel] : undefined;
-        // console.log(`  Checking Dimensions: dims for ${currentImageLabel} =`, dims);
+        console.log(`  Checking Dimensions: dims for ${currentImageLabel} =`, dims);
         // *** END MODIFIED CHECK ***
+        
+        // For blank canvas drawing, use the canvas coordinates directly but apply the offset
+        if (noImageLoaded || (dims && dims.width === canvas.width && dims.height === canvas.height)) {
+            console.log(`getCanvasCoords: BLANK CANVAS MODE - Applying scale and offset to coordinates`);
+            // Apply both scaling and position offset in blank canvas mode
+            const canvasCenter = {
+                x: canvas.width / 2,
+                y: canvas.height / 2
+            };
+            // Scale from center and add position offset
+            const scaledX = (imageX_relative - canvasCenter.x) * scale + canvasCenter.x;
+            const scaledY = (imageY_relative - canvasCenter.y) * scale + canvasCenter.y;
+            const finalX = scaledX + position.x;
+            const finalY = scaledY + position.y;
+            console.log(`  Scaled Coords: x=${scaledX}, y=${scaledY}`);
+            console.log(`  Final Canvas Coords: x=${finalX}, y=${finalY}`);
+            console.log(`---------------------------------------------`);
+            return { x: finalX, y: finalY };
+        }
+
+        let canvasImageTopLeftX, canvasImageTopLeftY;
 
         if (dims && dims.width > 0 && dims.height > 0) {
             const centerX = (canvas.width - dims.width * scale) / 2;
@@ -2522,6 +2697,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (drawingMode === 'straight') {
                 // For straight line, store the start point
                 straightLineStart = { x: x, y: y };
+                
+                // Also store the transformed coordinates for later consistency checks
+                const transformed = getTransformedCoords(x, y);
+                console.log(`Straight line start at canvas (${x}, ${y}) -> image (${transformed.x}, ${transformed.y})`);
             } else {
                 // For freehand, add the first point using image-relative coordinates
                 const { x: imgX, y: imgY } = getTransformedCoords(x, y);
@@ -2749,36 +2928,21 @@ document.addEventListener('DOMContentLoaded', () => {
                     
                     // Get the current image position and scale
                     const scale = imageScaleByLabel[currentImageLabel];
-                    const offsetX = imagePositionByLabel[currentImageLabel]?.x || 0;
-                    const offsetY = imagePositionByLabel[currentImageLabel]?.y || 0;
                     
-                    let imageX, imageY;
+                    // REPLACED: Manual coordinate calculation with getTransformedCoords
+                    // Use the same function for coordinate transformation that's used for freehand
+                    const startTransformed = getTransformedCoords(straightLineStart.x, straightLineStart.y);
+                    const endTransformed = getTransformedCoords(endPoint.x, endPoint.y);
                     
-                    // If we have an image, calculate coordinates relative to it
-                    if (window.originalImages && window.originalImages[currentImageLabel] && 
-                        originalImageDimensions[currentImageLabel]?.width) {
-                        const centerX = (canvas.width - (originalImageDimensions[currentImageLabel].width || 0) * scale) / 2;
-                        const centerY = (canvas.height - (originalImageDimensions[currentImageLabel].height || 0) * scale) / 2;
-                        imageX = centerX + offsetX;
-                        imageY = centerY + offsetY;
-                    } else {
-                        // Without an image, use canvas center as reference point
-                        imageX = canvas.width / 2;
-                        imageY = canvas.height / 2;
-                    }
-                    
-                    // Convert from canvas coordinates to image-relative coordinates
-                    const relativeStartX = (straightLineStart.x - imageX) / scale;
-                    const relativeStartY = (straightLineStart.y - imageY) / scale;
-                    const relativeEndX = (endPoint.x - imageX) / scale;
-                    const relativeEndY = (endPoint.y - imageY) / scale;
+                    console.log(`Straight line from canvas (${straightLineStart.x}, ${straightLineStart.y}) -> image (${startTransformed.x}, ${startTransformed.y})`);
+                    console.log(`Straight line to canvas (${endPoint.x}, ${endPoint.y}) -> image (${endTransformed.x}, ${endTransformed.y})`);
                     
                     // Create a vector representation of the straight line with just start and end points
                     // Store coordinates relative to the image, not absolute canvas coordinates
                     vectorStrokesByImage[currentImageLabel][newStrokeLabel] = {
                         points: [
-                            { x: relativeStartX, y: relativeStartY },
-                            { x: relativeEndX, y: relativeEndY }
+                            { x: startTransformed.x, y: startTransformed.y },
+                            { x: endTransformed.x, y: endTransformed.y }
                         ],
                         color: strokeColor,
                         width: strokeWidth,
@@ -2868,10 +3032,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         type: 'freehand'
                     };
                     
-                    // Ensure the stroke is added to the list of strokes
-                    if (!lineStrokesByImage[currentImageLabel].includes(newStrokeLabel)) {
-                        lineStrokesByImage[currentImageLabel].push(newStrokeLabel);
-                    }
+                    // The stroke will be added to lineStrokesByImage by saveState
+                    // Don't add it here to avoid duplicates
                     
                     // Make sure visibility is set
                     strokeVisibilityByImage[currentImageLabel] = strokeVisibilityByImage[currentImageLabel] || {};
@@ -3023,13 +3185,19 @@ document.addEventListener('DOMContentLoaded', () => {
         // Restore state for the new image
         if (imageStates[label]) {
             restoreCanvasState(imageStates[label]);
+            console.log(`Restored cached state for ${label}`);
+            // Ensure we redraw with visibility to show strokes and labels correctly
+            redrawCanvasWithVisibility();
         } else if (window.originalImages[label]) {
             // If no state exists but we have the original image, paste it
-            console.log(`No state exists for ${label}, pasting original image`);
-            pasteImageFromUrl(window.originalImages[label]);
+            console.log(`No state exists for ${label}, pasting original image: ${window.originalImages[label].substring(0, 30)}...`);
+            pasteImageFromUrl(window.originalImages[label], label);
         } else {
             // Clear canvas if no state or original image exists
+            console.log(`No state or image found for ${label}, clearing canvas`);
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // Still do a redraw to ensure any strokes are shown
+            redrawCanvasWithVisibility();
         }
         
         // Update UI
@@ -3333,7 +3501,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // If this is the first image, switch to it and paste it
                 if (pastedImages.length === 1 || label === 'front') {
                     currentImageLabel = label;
-                    pasteImageFromUrl(url);
+                    pasteImageFromUrl(url, label);
                 }
             }
         });
@@ -3421,7 +3589,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 labelsByImage[label] = 'A1';
                 
                 // Paste the image
-                pasteImageFromUrl(url);
+                pasteImageFromUrl(url, label);
                 
                 // Update UI
                 updateStrokeCounter();
@@ -4055,4 +4223,10 @@ document.addEventListener('DOMContentLoaded', () => {
     window.updateStrokeVisibilityControls = updateStrokeVisibilityControls;
     window.redrawCanvasWithVisibility = redrawCanvasWithVisibility;
     window.updateScaleUI = updateScaleUI;
-})
+    
+    // *** ADDED: Expose function globally ***
+    window.pasteImageFromUrl = pasteImageFromUrl;
+    
+    // Initial saveState call that won't increment labels or add to stroke list
+    saveState(false, false, false);
+});

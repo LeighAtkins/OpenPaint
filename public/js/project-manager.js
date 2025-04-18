@@ -52,6 +52,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 originalImageDimensions: {}
             };
             
+            // *** ADDED LOGGING BEFORE LOOP ***
+            console.log('[Save Project] State before saving loop:');
+            console.log('  window.lineStrokesByImage:', JSON.parse(JSON.stringify(window.lineStrokesByImage)));
+            console.log('  window.labelsByImage:', JSON.parse(JSON.stringify(window.labelsByImage)));
+            // *** END ADDED LOGGING ***
+            
             // Add stroke data for each image
             for (const label of projectData.imageLabels) {
                 console.log(`Processing strokes for ${label}...`);
@@ -99,7 +105,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // Add stroke sequence
                 if (window.lineStrokesByImage && window.lineStrokesByImage[label]) {
-                    projectData.strokeSequence[label] = window.lineStrokesByImage[label];
+                    projectData.strokeSequence[label] = window.lineStrokesByImage[label].slice();
                 } else {
                     projectData.strokeSequence[label] = [];
                 }
@@ -264,6 +270,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const file = e.target.files[0];
             if (!file) return;
             
+            // *** SET LOADING FLAG ***
+            window.isLoadingProject = true; 
+            console.log('[Load Project] Set isLoadingProject = true');
+            
             showStatusMessage('Loading project...', 'info');
             
             // Create loading indicator
@@ -414,8 +424,10 @@ document.addEventListener('DOMContentLoaded', () => {
                                     // Load stroke data
                                     if (projectData.strokes && projectData.strokes[label]) {
                                         window.vectorStrokesByImage[label] = JSON.parse(JSON.stringify(projectData.strokes[label]));
+                                        console.log(`Loaded ${Object.keys(window.vectorStrokesByImage[label]).length} vector strokes for ${label}`);
                                     } else {
                                         window.vectorStrokesByImage[label] = {};
+                                        console.log(`No vector strokes found for ${label} in project data.`);
                                     }
                                     
                                     // Load stroke visibility
@@ -449,16 +461,20 @@ document.addEventListener('DOMContentLoaded', () => {
                                     // Load image positions
                                     if (projectData.imagePositions && projectData.imagePositions[label]) {
                                         window.imagePositionByLabel[label] = projectData.imagePositions[label];
+                                        console.log(`Loaded position for ${label}: x=${projectData.imagePositions[label].x}, y=${projectData.imagePositions[label].y}`);
                                     } else {
                                         window.imagePositionByLabel[label] = { x: 0, y: 0 }; // Default position
+                                        console.log(`Using default position for ${label}: x=0, y=0`);
                                     }
                                     
                                     // Load stroke sequence
                                     if (projectData.strokeSequence && projectData.strokeSequence[label]) {
                                         window.lineStrokesByImage[label] = Array.isArray(projectData.strokeSequence[label]) ? 
                                             projectData.strokeSequence[label].slice() : [];
+                                        console.log(`Loaded stroke sequence for ${label}:`, window.lineStrokesByImage[label]);
                                     } else {
                                         window.lineStrokesByImage[label] = [];
+                                        console.log(`No stroke sequence found for ${label} in project data.`);
                                     }
                                     
                                     // Load next label counters
@@ -550,30 +566,153 @@ document.addEventListener('DOMContentLoaded', () => {
                                             window.updateScaleUI();
                                         }
                                         
-                                        // This is the most critical function - it redraws the canvas with all strokes
+                                        // --- REPLACED forceLoadImages LOGIC --- 
+                                        // Add an additional check to force loading all images in sequence
+                                        console.log('[Load Project] Starting explicit image pre-load...');
+                                        const forceLoadImages = async () => {
+                                            const projectData = window.loadedProjectDataGlobal;
+                                            if (!projectData || !projectData.imageLabels) {
+                                                console.warn('[Pre-Load] No project data or image labels found.');
+                                                return;
+                                            }
+
+                                            // *** ADDED LOG ***
+                                            console.log('[Pre-Load] Checking window.originalImages before loop:', JSON.stringify(Object.keys(window.originalImages)));
+
+                                            // First pass: Apply saved scales and positions to ensure they're set before loading images
+                                            for (const label of projectData.imageLabels) {
+                                                // Set saved scale
+                                                if (projectData.imageScales && projectData.imageScales[label] !== undefined) {
+                                                    window.imageScaleByLabel[label] = projectData.imageScales[label];
+                                                    console.log(`[Pre-Load] Pre-setting scale for ${label} to ${projectData.imageScales[label]}`);
+                                                }
+                                                
+                                                // Set saved position
+                                                if (projectData.imagePositions && projectData.imagePositions[label]) {
+                                                    window.imagePositionByLabel[label] = projectData.imagePositions[label];
+                                                    console.log(`[Pre-Load] Pre-setting position for ${label} to x=${projectData.imagePositions[label].x}, y=${projectData.imagePositions[label].y}`);
+                                                }
+                                            }
+
+                                            // Second pass: Load images with the correct scale and position
+                                            for (const label of projectData.imageLabels) {
+                                                const imageUrl = window.originalImages[label];
+                                                // *** ADDED LOG ***
+                                                console.log(`[Pre-Load] For label '${label}', imageUrl:`, imageUrl ? imageUrl.substring(0, 50) + '...' : imageUrl);
+
+                                                if (imageUrl && typeof window.pasteImageFromUrl === 'function') {
+                                                    console.log(`[Pre-Load] Starting paste for ${label}`);
+                                                    try {
+                                                        await window.pasteImageFromUrl(imageUrl, label);
+                                                        console.log(`[Pre-Load] Completed paste for ${label}`);
+                                                    } catch (error) {
+                                                        console.error(`[Pre-Load] Error pasting image for ${label}:`, error);
+                                                        // Decide if you want to continue or stop loading on error
+                                                    }
+                                                } else {
+                                                    console.log(`[Pre-Load] Skipping ${label} - No image URL or paste function unavailable.`);
+                                                }
+                                            }
+
+                                            // After pre-loading all images, switch to the target image
+                                            const targetLabel = projectData.currentImageLabel;
+                                            console.log(`[Pre-Load] Pre-loading complete. Switching to final image: ${targetLabel}`);
+                                            
+                                            // Ensure all saved scales are applied to each image
+                                            for (const label of projectData.imageLabels) {
+                                                if (projectData.imageScales && projectData.imageScales[label] !== undefined) {
+                                                    // Ensure scale is applied to each image
+                                                    window.imageScaleByLabel[label] = projectData.imageScales[label];
+                                                    console.log(`[Pre-Load] Applied saved scale ${projectData.imageScales[label]} to ${label}`);
+                                                }
+                                            }
+                                            
+                                            // Now switch to the target image with the correct scale
+                                            if (typeof window.switchToImage === 'function') {
+                                                window.switchToImage(targetLabel);
+                                                
+                                                // Apply the saved scale explicitly and redraw
+                                                if (projectData.imageScales && projectData.imageScales[targetLabel] !== undefined) {
+                                                    const savedScale = projectData.imageScales[targetLabel];
+                                                    console.log(`[Pre-Load] Ensuring correct scale ${savedScale} for ${targetLabel} after switch`);
+                                                    
+                                                    // Force a redraw with the saved scale
                                         if (typeof window.redrawCanvasWithVisibility === 'function') {
-                                            console.log('Redrawing canvas with visibility');
-                                            console.log(`<<< Project Manager: State BEFORE final redraw for ${window.currentImageLabel} >>>`);
-                                            const preRedrawScale = window.imageScaleByLabel[window.currentImageLabel];
-                                            const preRedrawPos = window.imagePositionByLabel[window.currentImageLabel];
-                                            console.log(`   Scale: ${preRedrawScale}`);
-                                            console.log(`   Position: ${JSON.stringify(preRedrawPos)}`);
                                             window.redrawCanvasWithVisibility();
+                                                    }
+                                                    
+                                                    // Update the scale UI to show the correct value
+                                                    if (typeof window.updateScaleUI === 'function') {
+                                                        window.updateScaleUI();
+                                                    }
+                                                }
+                                            } else {
+                                                console.error('[Pre-Load] switchToImage function not found!');
+                                            }
+                                            
+                                            // *** DELAYED: Re-populate sidebar after everything else is done (Diagnostic) ***
+                                            setTimeout(() => {
+                                                console.log('[Load Project] Re-populating sidebar (delayed)...');
+                                                const imageList = document.getElementById('imageList');
+                                                if (imageList) {
+                                                    imageList.innerHTML = ''; // Clear existing items first
+                                                    for (const label of projectData.imageLabels) {
+                                                        const imageUrl = window.originalImages[label];
+                                                        if (imageUrl && typeof window.addImageToSidebar === 'function') {
+                                                            console.log(`[Load Project] Re-adding ${label} to sidebar (delayed).`);
+                                                            window.addImageToSidebar(imageUrl, label);
+                                                        } else {
+                                                            console.log(`[Load Project] Skipping re-add for ${label} - no URL or function (delayed).`);
+                                                        }
+                                                    }
+                                                    // Ensure the active class is set correctly after re-adding
+                                                    if (typeof window.updateActiveImageInSidebar === 'function') {
+                                                        window.updateActiveImageInSidebar(); 
+                                                    }
                                         } else {
-                                            console.error('redrawCanvasWithVisibility function not found');
-                                            throw new Error('Critical function redrawCanvasWithVisibility not found');
-                                        }
+                                                    console.warn('[Load Project] Could not find #imageList to re-populate (delayed).');
+                                                }
+                                                
+                                                // Finally, clear the loading flag AFTER the delayed sidebar update
+                                                window.isLoadingProject = false;
+                                                console.log('[Load Project] Set isLoadingProject = false (End of Delayed Sidebar Update)');
+                                            }, 100); // 100ms delay
+                                            // *** END Delayed Re-populate sidebar ***
+                                            
+                                            // NOTE: isLoadingProject is now cleared inside the setTimeout
+                                            // window.isLoadingProject = false;
+                                            // console.log('[Load Project] Set isLoadingProject = false (End of Pre-load)');
+                                        };
+
+                                        // Start the asynchronous pre-loading process
+                                        forceLoadImages(); 
+                                        // NOTE: We no longer set isLoadingProject = false immediately here.
+                                        // It's set inside forceLoadImages after the final switch.
                                         
-                                        // Show success message
-                                        showStatusMessage('Project loaded successfully!', 'success');
-                                    } catch (err) {
-                                        console.error('Error updating UI after loading project:', err);
-                                        showStatusMessage('Error rendering project. Try refreshing the page.', 'error');
+                                        /* // OLD TIMEOUT LOGIC - Removed
+                                        // Start force loading images after a short delay
+                                        setTimeout(forceLoadImages, 500);
+
+                                        // *** CLEAR LOADING FLAG (Success Path) ***
+                                        window.isLoadingProject = false;
+                                        console.log('[Load Project] Set isLoadingProject = false (Success)');
+                                        */
+
+                                    } catch (error) {
+                                        console.error('Error updating UI after project load:', error);
+                                        showStatusMessage(`Error loading project: ${error.message}`, 'error');
+                                        // Make sure flag is false even on error
+                                        window.isLoadingProject = false;
+                                        console.log('[Load Project] Set isLoadingProject = false (UI Update Error)');
                                     }
-                                }, 500);
-                            });
-                    })
+                                }, 200); // Timeout for UI updates
+                            }); // End of Promise.all().then()
+                    }) // End of projectJsonFile.async().then()
                     .catch(err => {
+                        // *** CLEAR LOADING FLAG (Catch Block) ***
+                        window.isLoadingProject = false;
+                        console.log('[Load Project] Set isLoadingProject = false (Catch Block)');
+
                         // Remove loading indicator
                         if (loadingIndicator.parentNode) {
                             loadingIndicator.parentNode.removeChild(loadingIndicator);
@@ -584,6 +723,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
             };
             reader.onerror = function(e) {
+                // *** CLEAR LOADING FLAG (Reader Error) ***
+                window.isLoadingProject = false;
+                console.log('[Load Project] Set isLoadingProject = false (Reader Error)');
+
                 // Remove loading indicator
                 if (loadingIndicator.parentNode) {
                     loadingIndicator.parentNode.removeChild(loadingIndicator);

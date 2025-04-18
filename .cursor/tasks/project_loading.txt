@@ -1,0 +1,38 @@
+# Project Loading Functionality
+
+## Current Issues
+- [x] Basic loading of project files works (ZIP extraction)
+- [x] Image thumbnails appear in the sidebar correctly
+- [x] Switching between images doesn't display the correct image in the drawing area
+- [ ] Strokes are not always rendered after loading
+- [ ] Position and scale settings aren't consistently applied
+
+## Debugging Steps
+1. [x] Confirm all images are properly loaded into memory (thumbnails show correctly)
+2. [x] Fix image switching after load to ensure the correct image is displayed
+3. [x] Ensure pasteImageFromUrl is called correctly for each image
+4. [x] Verify that originalImages and originalImageDimensions are correctly populated
+5. [x] Add debugging to redrawCanvasWithVisibility when switching images
+6. [ ] Ensure vector strokes are loaded and drawn correctly
+
+## Implementation Plan
+1. [x] Fix the switchToImage function to properly display the selected image
+   - Added redrawCanvasWithVisibility call in the code path where we restore state
+   - Added proper logging to track image changes
+2. [x] Add a verification step after loading to ensure all images are accessible
+   - Added a forceLoadImages function that cycles through all images before displaying the selected one
+   - This ensures all images are actually loaded and cached, not just their thumbnails
+3. [ ] Improve error handling and logging for image loading failures
+4. [ ] Add a visual loading indicator during project loading process
+
+## Testing Scenarios
+- [x] Load project with multiple images and verify all images display correctly
+- [ ] Verify strokes are displayed on the correct images
+- [ ] Test with various image sizes and counts
+- [ ] Verify that switching between images maintains correct position and scale
+
+## Notes
+- Fixed issue where switchToImage wasn't causing the image to be displayed properly
+- Added a sequential loading mechanism in project-manager.js to ensure all images are loaded
+- Added redrawCanvasWithVisibility call after state restoration to ensure strokes are visible
+- The fix forces each image to be loaded in sequence which ensures the browser caches them properly 

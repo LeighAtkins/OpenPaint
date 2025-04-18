@@ -1,0 +1,39 @@
+# Blank Canvas Drawing Debugging
+
+**Roadmap Item:** [tasks.mdc](mdc:.cursor/rules/tasks.mdc) #1 (Drawing Engine)
+
+## Observed Behavior
+- When drawing on the initial blank canvas (no image loaded):
+    - The first stroke visually appears correct.
+    - The label for the first stroke is misplaced.
+    - Subsequent strokes and their labels are misplaced.
+- Console logs indicate coordinate mismatches during drawing and label placement.
+- There might still be an issue with the initial `saveState` call adding "A1" prematurely.
+
+## Debugging Plan
+1.  **Verify `saveState` Fix:**
+    *   **Goal:** Ensure the initial `saveState(false, false, false)` call on page load *does not* add "A1" to `lineStrokesByImage`.
+    *   **Action:** Manually verify/re-apply the changes from the previous session to `paint.js`:
+        *   Function definition: `function saveState(force = false, incrementLabel = true, updateStrokeList = true)`
+        *   `if` condition: `if (!isDrawingOrPasting && !strokeInProgress && incrementLabel && updateStrokeList)`
+        *   Initial call: `saveState(false, false, false);` (must be uncommented).
+    *   **Test:** Hard refresh, draw one stroke. Check console logs after mouseup. Expect *not* to see `Stroke label "A1" already exists...`. Expect `BEFORE push: []` and `AFTER push: ["A1"]`.
+2.  **Debug Coordinate Transformation (`getCanvasCoords` & Label Logic):**
+    *   **Goal:** Pinpoint where the coordinate mismatch occurs when drawing labels on a blank canvas.
+    *   **Action:** Add detailed logging inside `redrawCanvasWithVisibility` in `paint.js` (within the label drawing loop):
+        *   Log `midPointRelative` (the anchor point in image-relative space).
+        *   Log `anchorPoint` (the result of `getCanvasCoords(midPointRelative.x, midPointRelative.y)`).
+        *   Log the initial `labelRect` coordinates calculated from `anchorPoint`.
+        *   Log the `optimalRect` coordinates returned by `findOptimalLabelPosition`.
+        *   Log the final `textX`, `textY` used for `ctx.fillText`.
+    *   **Test:** Hard refresh, draw one stroke. Analyze the logged coordinates. Do the `getCanvasCoords` results seem correct relative to where you clicked? Does `findOptimalLabelPosition` drastically shift the label?
+3.  **Analyze `findOptimalLabelPosition` Behavior:**
+    *   **Goal:** Determine if the label positioning algorithm behaves unexpectedly on a blank canvas.
+    *   **Action:** Based on logs from step 2, temporarily simplify `findOptimalLabelPosition` (e.g., make it return the initial guess `labelRect` without trying other positions) to isolate its impact.
+    *   **Test:** Hard refresh, draw strokes. Observe label placement with the simplified function.
+4.  **Refine Coordinate Fallbacks (If Necessary):**
+    *   **Goal:** Ensure the coordinate system origin assumption (canvas center) used in `getTransformedCoords` and `getCanvasCoords` for the blank canvas state is correct and consistently applied.
+    *   **Action:** Review the fallback logic in both functions. If inconsistencies are found, adjust the calculations or consider using `(0,0)` as the origin (requires changes in both functions).
+
+## Code Locations
+- `paint.js`: `saveState`, `getTransformedCoords`, `getCanvasCoords`, `redrawCanvasWithVisibility` (label drawing section), `findOptimalLabelPosition`. 

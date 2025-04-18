@@ -1,0 +1,90 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Function Tracking Log
+
+## public/js/paint.js
+
+### redrawCanvasWithVisibility()
+**Status**: Modified
+**Connection**: Called after image moves, zooms, and on project load
+**Changes**: Updated to properly handle label positioning with the new offset system
+**Notes**: If label positions are still offset after reloading, check the getCanvasCoords function
+**Test**: Need to verify offset behavior on both loaded images and blank canvas
+
+### getCanvasCoords(imageX_relative, imageY_relative)
+**Status**: Modified
+**Connection**: Used to transform image coordinates to canvas coordinates
+**Changes**: Updated to apply position offsets in blank canvas mode
+**Notes**: Critical for proper stroke rendering after load and during panning
+
+### applyVisibleStrokes()
+**Status**: Modified
+**Connection**: Used by redrawCanvasWithVisibility to apply strokes to canvas
+**Changes**: Updated to apply position offsets for all types of strokes in blank canvas mode
+**Notes**: Handles both vector and freehand strokes
+
+### findOptimalLabelPosition()
+**Status**: Modified
+**Connection**: Called when creating new labels or redrawing canvas
+**Changes**: Removed canvas boundary constraints (commented out)
+**Notes**: Now labels can move freely with strokes when panning, even off-screen
+
+### draw()
+**Status**: Modified
+**Connection**: Core drawing function used during mouse move
+**Changes**: Fixed line width scaling to account for image scale
+**Notes**: Ensures consistent stroke width regardless of zoom level
+
+### drawStraightLinePreview()
+**Status**: Modified
+**Connection**: Used for straight line tool preview
+**Changes**: Fixed line width and endpoint radius scaling
+**Notes**: Ensures consistent stroke appearance across zoom levels
+
+### saveState()
+**Status**: Unchanged
+**Connection**: Called after drawing or image manipulation
+**Notes**: Manages undo/redo history and stroke labeling
+
+### moveImage(deltaX, deltaY)
+**Status**: Unchanged
+**Connection**: Called when panning image with mouse or keyboard
+**Notes**: Updates position offsets which affect stroke rendering
+
+## public/js/project-manager.js
+
+### saveProject()
+**Status**: Unchanged
+**Connection**: Called when saving project data
+**Notes**: Serializes all canvas data including strokes, scales, and offsets
+
+### loadProject(projectData)
+**Status**: Modified
+**Connection**: Called when loading project data
+**Changes**: Added console logs to verify stroke data loading
+**Notes**: Responsible for restoring project state including stroke data
+
+### exportCanvasToImage()
+**Status**: Unchanged
+**Connection**: Called when exporting canvas as image
+**Notes**: Creates visual output of the project
+
+## public/js/app.js
+
+### initCanvas()
+**Status**: Unchanged
+**Connection**: Called on application startup
+**Notes**: Sets up canvas and initial event listeners
+
+### setupTools()
+**Status**: Unchanged
+**Connection**: Called during initialization
+**Notes**: Configures drawing tools and their behaviors
+
+### setupEventListeners()
+**Status**: Unchanged
+**Connection**: Called during initialization
+**Notes**: Sets up UI interaction events 

@@ -1,0 +1,32 @@
+# Stroke Loading Functionality
+
+**Roadmap Item:** [tasks.mdc](mdc:.cursor/rules/tasks.mdc) #2 (Project Management)
+
+## Current Status
+- [ ] Strokes are not consistently rendered after loading a project.
+- [ ] Issue seems related to how stroke data (`vectorStrokesByImage`, `lineStrokesByImage`) is processed and drawn during/after project load.
+
+## Debugging Steps
+1. [ ] Verify `vectorStrokesByImage` and `lineStrokesByImage` are correctly populated from the loaded `project.json` data in `project-manager.js`. Add logs.
+2. [ ] Check the `redrawCanvasWithVisibility` and `applyVisibleStrokes` functions in `paint.js` to ensure they correctly iterate through the loaded stroke data.
+3. [ ] Confirm that coordinate transformations in `applyVisibleStrokes` are using the correct image dimensions, scale, and position *after* the project has loaded.
+4. [ ] Investigate if there are timing issues (e.g., redraw happening before stroke data is fully loaded/processed).
+5. [ ] Test loading projects with different numbers/types of strokes (freehand vs. straight).
+
+## Implementation Plan
+1. [ ] Add robust logging within `loadProject` (project-manager.js) to track the state of stroke-related variables.
+2. [ ] Add detailed logging within `applyVisibleStrokes` (paint.js) to trace how loaded strokes are processed and drawn.
+3. [ ] Correct any discrepancies found in data loading or drawing logic.
+4. [ ] Ensure `redrawCanvasWithVisibility` is called at the correct time after all data (images, dimensions, strokes) is loaded.
+
+## Dependencies
+- Relies on **Project Loading** (`.cursor/tasks/project_loading.txt`) being mostly functional (images load).
+- Related to **Saving Enhancements** (Roadmap Item #2) as the saving format impacts loading.
+
+## Notes
+- Previous issues involved coordinate system inconsistencies between drawing and redrawing, especially after loading. Ensure these are not re-emerging.
+- Check if stroke visibility flags (`strokeVisibilityByImage`) are being loaded and applied correctly.
+
+## Console Logs to Clean Up
+- `project-manager.js` (stroke data loading section)
+- `paint.js` (`applyVisibleStrokes`) 

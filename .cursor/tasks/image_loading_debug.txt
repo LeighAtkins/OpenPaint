@@ -1,0 +1,45 @@
+ # Image Loading Debugging (Follow-up to Stroke Loading)
+
+**Roadmap Item:** [tasks.mdc](mdc:.cursor/rules/tasks.mdc) #2 (Project Management)
+
+## Observed Behavior (2025-04-17 Session End)
+- Stroke saving/loading appears fixed (`lineStrokesByImage` is saved/loaded).
+- The initially selected image view (defined in `project.json`) loads correctly with its background image and strokes.
+- Other image views (e.g., 'side', 'back'), although processed during the `forceLoadImages` loop, appear blank when manually selected after loading finishes.
+- The `isLoadingProject` flag successfully prevents unwanted view switches caused by sidebar interactions during loading.
+
+## Hypothesis
+- The `imageStates` object (holding canvas pixel data) is not being reliably populated for non-initial views during the current `forceLoadImages` loop.
+- `switchToImage` relies on restoring potentially stale/blank data from `imageStates` for these views.
+- `redrawCanvasWithVisibility`, when called during the rapid switching, might not be drawing the background image correctly due to timing or reliance on `imageCache` vs. the restored (potentially blank) `imageStates`.
+
+## Debugging Plan (Next Session)
+1.  **Modify `forceLoadImages` Logic (`project-manager.js`):**
+    -   **Goal:** Explicitly pre-load and draw each image *before* the final switch.
+    -   **Steps:**
+        -   Locate the `forceLoadImages` function within `loadProject`.
+        -   *Remove* the existing loop that calls `switchToImage` repeatedly.
+        -   *After* the initial project data (JSON, strokes, scales, positions, etc.) is loaded into the `window` variables, but *before* the final `switchToImage(projectData.currentImageLabel)` call.
+        -   Add a *new* asynchronous loop (using `async/await` with a `for...of` loop, or `Promise.all` with `.map`):
+            -   Iterate through `projectData.imageLabels`.
+            -   For each `label`, check if `window.originalImages[label]` exists.
+            -   If it exists, `await` a call to a slightly modified `pasteImageFromUrl` (or a new helper function) that specifically takes a `label` and `imageUrl`, loads the image, draws it, *and ensures `imageStates[label]` is populated correctly*. We might need `pasteImageFromUrl` to return a Promise that resolves when the `img.onload` completes.
+        -   Add logging: `console.log('[Pre-Load] Pasting image for', label);` and `console.log('[Pre-Load] Completed pasting for', label);`.
+    -   **Ensure Completion:** Make sure this entire pre-loading loop finishes before the final `switchToImage(projectData.currentImageLabel)` call is made.
+2.  **Add Logging to `pasteImageFromUrl` (`paint.js`):**
+    -   Confirm it's called during the new pre-load loop.
+    -   Log image dimensions used.
+    -   Log after `ctx.drawImage`.
+    -   Log after state is saved to `imageStates[label]`.
+3.  **Test:**
+    -   Load project.
+    -   Verify initial view loads correctly.
+    -   Verify console logs show the pre-load sequence running for all images.
+    -   Manually switch to other views and confirm their background images appear.
+
+## Potential Simplifications
+- If pre-loading works, `switchToImage` might no longer need its fallback logic (`else if (window.originalImages[label])`).
+
+## Code Locations
+- `project-manager.js`: `loadProject`, `forceLoadImages` (or its replacement logic).
+- `paint.js`: `pasteImageFromUrl`, `switchToImage`, `imageStates`.
