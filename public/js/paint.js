@@ -1848,47 +1848,75 @@ document.addEventListener('DOMContentLoaded', () => {
             // *** ADDED DETAILED LOGS ***
             console.log(`[Save State] Entering stroke update block.`);
             
-            strokeLabel = labelsByImage[currentImageLabel];
-            console.log(`[Save State] Assigned strokeLabel = "${strokeLabel}" from labelsByImage[${currentImageLabel}]`);
+            // Get the suggested next label
+            const suggestedLabel = labelsByImage[currentImageLabel];
+            console.log(`[Save State] Suggested next label = "${suggestedLabel}" from labelsByImage[${currentImageLabel}]`);
             
-            // Always increment the label after a successful stroke
-            const nextLabel = getNextLabel(currentImageLabel);
+            // *** FIX: Ensure the new stroke gets a UNIQUE label ***
+            strokeLabel = generateUniqueStrokeName(suggestedLabel);
+            console.log(`[Save State] Assigned UNIQUE strokeLabel = "${strokeLabel}"`);
+            
+            // Always increment the label counter based on the original suggested label for the next stroke
+            const nextLabel = getNextLabel(currentImageLabel); // Uses the value in labelsByImage
             labelsByImage[currentImageLabel] = nextLabel;
             console.log(`[Save State] Incremented labelsByImage[${currentImageLabel}] to "${nextLabel}"`);
             
-            // Only add to strokes list if it's not already there
+            // Only add the *unique* stroke label to the strokes list
             if (!lineStrokesByImage[currentImageLabel]) {
                 console.log(`[Save State] Initializing lineStrokesByImage[${currentImageLabel}] as []`);
                 lineStrokesByImage[currentImageLabel] = []; // Initialize if it doesn't exist
             }
             
-            // Check if stroke label already exists before pushing
+            // Check if unique stroke label already exists before pushing (shouldn't happen with generateUniqueStrokeName)
             const labelAlreadyExists = lineStrokesByImage[currentImageLabel].includes(strokeLabel);
             
             console.log(`[Save State] BEFORE push: lineStrokesByImage[${currentImageLabel}] =`, JSON.parse(JSON.stringify(lineStrokesByImage[currentImageLabel])));
             
             if (!labelAlreadyExists && updateStrokeList) {
-            lineStrokesByImage[currentImageLabel].push(strokeLabel);
-                console.log(`[Save State] AFTER push: lineStrokesByImage[${currentImageLabel}] =`, JSON.parse(JSON.stringify(lineStrokesByImage[currentImageLabel]))); // Moved this log
+                lineStrokesByImage[currentImageLabel].push(strokeLabel); // Push the unique label
+                console.log(`[Save State] AFTER push: lineStrokesByImage[${currentImageLabel}] =`, JSON.parse(JSON.stringify(lineStrokesByImage[currentImageLabel])));
             } else {
-                console.log(`[Save State] Stroke label "${strokeLabel}" already exists in lineStrokesByImage[${currentImageLabel}], not pushing again.`);
+                // This case should ideally not be reached if generateUniqueStrokeName works correctly
+                console.warn(`[Save State] Generated unique stroke label "${strokeLabel}" already exists? Not pushing again.`);
             }
             
-            // Initialize visibility for this stroke (default to visible)
+            // Initialize visibility, data etc. using the unique strokeLabel
             strokeVisibilityByImage[currentImageLabel] = strokeVisibilityByImage[currentImageLabel] || {};
             strokeVisibilityByImage[currentImageLabel][strokeLabel] = true;
             
-            // Initialize label visibility for the stroke (default to visible)
             strokeLabelVisibility[currentImageLabel] = strokeLabelVisibility[currentImageLabel] || {};
             strokeLabelVisibility[currentImageLabel][strokeLabel] = true;
             
-            // Initialize data for this stroke
             strokeDataByImage[currentImageLabel] = strokeDataByImage[currentImageLabel] || {};
             strokeDataByImage[currentImageLabel][strokeLabel] = {
                 preState: currentStroke ? cloneImageData(currentStroke) : null,
                 postState: cloneImageData(currentState)
             };
         }
+
+        // --- FIX: Handle temporary vector data --- 
+        const tempStrokeKey = '_drawingStroke';
+        let drawnVectorData = null;
+        if (strokeLabel && vectorStrokesByImage[currentImageLabel] && vectorStrokesByImage[currentImageLabel][tempStrokeKey]) {
+            drawnVectorData = JSON.parse(JSON.stringify(vectorStrokesByImage[currentImageLabel][tempStrokeKey]));
+            // Assign the drawn data to the final unique stroke label
+            vectorStrokesByImage[currentImageLabel][strokeLabel] = drawnVectorData;
+            // Remove the temporary data
+            delete vectorStrokesByImage[currentImageLabel][tempStrokeKey];
+            console.log(`[Save State] Moved vector data from ${tempStrokeKey} to ${strokeLabel}`);
+        } else if (strokeLabel) {
+            console.warn(`[Save State] No temporary vector data found at ${tempStrokeKey} for stroke ${strokeLabel}`);
+            // Attempt to find vector data if it somehow got assigned to the suggested label during draw (fallback)
+            const suggestedLabel = labelsByImage[currentImageLabel]; // Get the label *before* incrementing
+             if (vectorStrokesByImage[currentImageLabel] && vectorStrokesByImage[currentImageLabel][suggestedLabel]) {
+                console.log(`[Save State] Fallback: Found data under suggested label ${suggestedLabel}`);
+                drawnVectorData = JSON.parse(JSON.stringify(vectorStrokesByImage[currentImageLabel][suggestedLabel]));
+                vectorStrokesByImage[currentImageLabel][strokeLabel] = drawnVectorData;
+                // Optionally delete the data under suggestedLabel if it shouldn't be there
+                // delete vectorStrokesByImage[currentImageLabel][suggestedLabel]; 
+            }
+        }
+        // --- END FIX ---
 
         // Save new state and add to undo stack
         imageStates[currentImageLabel] = cloneImageData(currentState);
@@ -1899,12 +1927,11 @@ document.addEventListener('DOMContentLoaded', () => {
             strokeType = 'stroke';
             
             // Check for vector data to determine if it's a freehand or straight line
-            if (vectorStrokesByImage[currentImageLabel] && 
-                vectorStrokesByImage[currentImageLabel][strokeLabel]) {
-                const vectorData = vectorStrokesByImage[currentImageLabel][strokeLabel];
-                if (vectorData.type === 'straight') {
+            // Use the vector data we just potentially moved
+            if (drawnVectorData) { 
+                if (drawnVectorData.type === 'straight') {
                     strokeType = 'line';
-                } else if (vectorData.type === 'freehand') {
+                } else if (drawnVectorData.type === 'freehand') {
                     strokeType = 'stroke';
                 }
             }
@@ -1914,15 +1941,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const undoAction = {
             state: cloneImageData(currentState),
             type: strokeType,
-            label: strokeLabel,
-            color: colorPicker.value, // Store the current color
-            width: parseInt(brushSize.value) // Store the current brush width
+            label: strokeLabel, // Use the unique label
+            color: colorPicker.value, 
+            width: parseInt(brushSize.value) 
         };
         
         // Store vector data with the undo action if available
-        if (strokeLabel && vectorStrokesByImage[currentImageLabel] && 
-            vectorStrokesByImage[currentImageLabel][strokeLabel]) {
-            undoAction.vectorData = JSON.parse(JSON.stringify(vectorStrokesByImage[currentImageLabel][strokeLabel]));
+        // Use the data retrieved from the temporary key
+        if (drawnVectorData) {
+            undoAction.vectorData = drawnVectorData; 
         }
         
         undoStackByImage[currentImageLabel].push(undoAction);
@@ -2503,7 +2530,8 @@ document.addEventListener('DOMContentLoaded', () => {
         lastY = canvasY;
         
         // Store vector data for the freehand stroke
-        const currentStrokeLabel = labelsByImage[currentImageLabel];
+        // --- FIX: Use a temporary key for the stroke being drawn --- 
+        const tempStrokeKey = '_drawingStroke';
         
         // Initialize if needed
         if (!vectorStrokesByImage[currentImageLabel]) {
@@ -2519,9 +2547,9 @@ document.addEventListener('DOMContentLoaded', () => {
             time: point.time
         }));
         
-        // Create or update the vector representation with image-relative coordinates
-        if (!vectorStrokesByImage[currentImageLabel][currentStrokeLabel]) {
-            vectorStrokesByImage[currentImageLabel][currentStrokeLabel] = {
+        // Create or update the vector representation under the temporary key
+        if (!vectorStrokesByImage[currentImageLabel][tempStrokeKey]) {
+            vectorStrokesByImage[currentImageLabel][tempStrokeKey] = {
                 points: relativePoints,
                 color: colorPicker.value,
                 width: baseWidth, // Store the base width without scaling
@@ -2529,7 +2557,7 @@ document.addEventListener('DOMContentLoaded', () => {
             };
         } else {
             // Just update the points if the vector data already exists
-            vectorStrokesByImage[currentImageLabel][currentStrokeLabel].points = relativePoints;
+            vectorStrokesByImage[currentImageLabel][tempStrokeKey].points = relativePoints;
         }
     }
     
@@ -2761,6 +2789,14 @@ document.addEventListener('DOMContentLoaded', () => {
         lastDrawnPoint = null;
         [lastX, lastY] = [e.offsetX, e.offsetY];
         
+        // --- FIX: Clear temporary drawing data --- 
+        const tempStrokeKey = '_drawingStroke';
+        if (vectorStrokesByImage[currentImageLabel] && vectorStrokesByImage[currentImageLabel][tempStrokeKey]) {
+            delete vectorStrokesByImage[currentImageLabel][tempStrokeKey];
+            console.log("Cleared temporary drawing data for key:", tempStrokeKey);
+        }
+        // --- END FIX ---
+        
         if (drawingMode === 'straight') {
             // For straight line, just store the start point
             straightLineStart = { x: e.offsetX, y: e.offsetY };
@@ -2908,38 +2944,33 @@ document.addEventListener('DOMContentLoaded', () => {
             // For straight line, finalize the line
             if (drawingMode === 'straight' && straightLineStart) {
                 const endPoint = { x: e.offsetX, y: e.offsetY };
-                
+
                 // Only save the line if the start and end points are different
-                if (Math.abs(straightLineStart.x - endPoint.x) > 2 || 
+                if (Math.abs(straightLineStart.x - endPoint.x) > 2 ||
                     Math.abs(straightLineStart.y - endPoint.y) > 2) {
-                    
+
                     // Check if end point is on another stroke
                     const endPointStrokeData = checkForStrokeAtPoint(endPoint.x, endPoint.y);
-                    
-                    // Save the vector data for the straight line
-                    const newStrokeLabel = labelsByImage[currentImageLabel];
+
+                    // --- MODIFIED: Store vector data temporarily ---
+                    const tempStrokeKey = '_drawingStroke';
                     const strokeColor = colorPicker.value;
                     const strokeWidth = parseInt(brushSize.value);
-                    
+
                     // Initialize if needed
                     if (!vectorStrokesByImage[currentImageLabel]) {
                         vectorStrokesByImage[currentImageLabel] = {};
                     }
-                    
-                    // Get the current image position and scale
-                    const scale = imageScaleByLabel[currentImageLabel];
-                    
-                    // REPLACED: Manual coordinate calculation with getTransformedCoords
-                    // Use the same function for coordinate transformation that's used for freehand
+
+                    // Get transformed coordinates
                     const startTransformed = getTransformedCoords(straightLineStart.x, straightLineStart.y);
                     const endTransformed = getTransformedCoords(endPoint.x, endPoint.y);
-                    
+
                     console.log(`Straight line from canvas (${straightLineStart.x}, ${straightLineStart.y}) -> image (${startTransformed.x}, ${startTransformed.y})`);
                     console.log(`Straight line to canvas (${endPoint.x}, ${endPoint.y}) -> image (${endTransformed.x}, ${endTransformed.y})`);
-                    
-                    // Create a vector representation of the straight line with just start and end points
-                    // Store coordinates relative to the image, not absolute canvas coordinates
-                    vectorStrokesByImage[currentImageLabel][newStrokeLabel] = {
+
+                    // Create a vector representation under the temporary key
+                    vectorStrokesByImage[currentImageLabel][tempStrokeKey] = {
                         points: [
                             { x: startTransformed.x, y: startTransformed.y },
                             { x: endTransformed.x, y: endTransformed.y }
@@ -2948,35 +2979,26 @@ document.addEventListener('DOMContentLoaded', () => {
                         width: strokeWidth,
                         type: 'straight'
                     };
-                    
-                    // Ensure the stroke is added to the list of strokes
-                    if (!lineStrokesByImage[currentImageLabel].includes(newStrokeLabel)) {
-                        lineStrokesByImage[currentImageLabel].push(newStrokeLabel);
-                    }
-                    
-                    // Make sure visibility is set
-                    strokeVisibilityByImage[currentImageLabel] = strokeVisibilityByImage[currentImageLabel] || {};
-                    strokeVisibilityByImage[currentImageLabel][newStrokeLabel] = true;
-                    
-                    // Ensure label visibility is set
-                    strokeLabelVisibility[currentImageLabel] = strokeLabelVisibility[currentImageLabel] || {};
-                    strokeLabelVisibility[currentImageLabel][newStrokeLabel] = true;
-                    
+                    console.log(`Stored straight line data temporarily under ${tempStrokeKey}`);
+                    // --- END MODIFICATION ---
+
+
+                    // // --- REMOVED: Direct assignment using potentially non-unique label ---
+                    // const newStrokeLabel = labelsByImage[currentImageLabel]; // <<< PROBLEM
+                    // vectorStrokesByImage[currentImageLabel][newStrokeLabel] = { ... };
+                    // --- END REMOVAL ---
+
+
                     // Draw the final line
                     drawStraightLinePreview(straightLineStart, endPoint);
-                    
+
                     // If end point overlaps with another line, draw a glowing circle
                     if (endPointStrokeData) {
-                        // Draw a glowing white connector circle at the end point
-                        const scale = imageScaleByLabel[currentImageLabel] || 1.0;
-                        const baseRadius = parseInt(brushSize.value) / 2;
-                        const scaledRadius = baseRadius * scale;
-                        const glowPadding = 5; // Keep glow padding fixed
-                        
+                       // ... (glowing circle drawing code remains the same) ...
                         ctx.beginPath();
-                        // Use scaled radius + padding for glow circle
+                        // Use scaled radius + fixed padding for glow circle
                         ctx.arc(endPoint.x, endPoint.y, scaledRadius + glowPadding, 0, Math.PI * 2);
-                        
+
                         // Create a white glow effect with a radial gradient using scaled radii
                         const gradient = ctx.createRadialGradient(
                             endPoint.x, endPoint.y, scaledRadius / 2, // Inner radius (scaled)
@@ -2985,10 +3007,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         gradient.addColorStop(0, 'white');
                         gradient.addColorStop(0.7, 'rgba(255, 255, 255, 0.8)');
                         gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
-                        
+
                         ctx.fillStyle = gradient;
                         ctx.fill();
-                        
+
                         // Then draw the colored dot for the actual end point
                         ctx.beginPath();
                         ctx.arc(endPoint.x, endPoint.y, scaledRadius, 0, Math.PI * 2);
@@ -2996,110 +3018,105 @@ document.addEventListener('DOMContentLoaded', () => {
                         ctx.fill();
                     }
                 }
-                
+
                 // Reset straight line start
                 straightLineStart = null;
             } else if (drawingMode === 'freehand' && points.length > 0) {
                 // Handle freehand drawing completion
-                const newStrokeLabel = labelsByImage[currentImageLabel];
+
+                // --- REMOVED: Direct assignment using potentially non-unique label ---
+                // Ensure the final point data is in _drawingStroke (usually handled by last mousemove draw call)
+                // but don't assign it directly to a final label here.
+                /*
+                const newStrokeLabel = labelsByImage[currentImageLabel]; // <<< PROBLEM
                 const strokeColor = colorPicker.value;
                 const strokeWidth = parseInt(brushSize.value);
-                
-                // Make sure the vector data is finalized
+
                 if (!vectorStrokesByImage[currentImageLabel]) {
                     vectorStrokesByImage[currentImageLabel] = {};
                 }
-                
-                // Only add the stroke if it has valid points
+
                 if (points.length > 1) {
-                    // We already have image-relative coordinates from the getTransformedCoords calls
-                    // during drawing. Just use the points array directly.
                     const relativePoints = points.map(point => ({
-                        x: point.x,  // Already image-relative X
-                        y: point.y,  // Already image-relative Y
+                        x: point.x,
+                        y: point.y,
                         time: point.time
                     }));
-                    
+
                     console.log(`Completing stroke with ${relativePoints.length} points`);
                     console.log(`First point: (${relativePoints[0].x}, ${relativePoints[0].y})`);
                     console.log(`Last point: (${relativePoints[relativePoints.length-1].x}, ${relativePoints[relativePoints.length-1].y})`);
-                    
-                    // Ensure the vector data is properly stored with image-relative coordinates
+
+                    // This was overwriting existing strokes:
                     vectorStrokesByImage[currentImageLabel][newStrokeLabel] = {
                         points: relativePoints,
                         color: strokeColor,
                         width: strokeWidth, // Store base width without scaling
                         type: 'freehand'
                     };
-                    
-                    // The stroke will be added to lineStrokesByImage by saveState
-                    // Don't add it here to avoid duplicates
-                    
-                    // Make sure visibility is set
-                    strokeVisibilityByImage[currentImageLabel] = strokeVisibilityByImage[currentImageLabel] || {};
-                    strokeVisibilityByImage[currentImageLabel][newStrokeLabel] = true;
-                    
-                    // Ensure label visibility is set
-                    strokeLabelVisibility[currentImageLabel] = strokeLabelVisibility[currentImageLabel] || {};
-                    strokeLabelVisibility[currentImageLabel][newStrokeLabel] = true;
+                    // Stroke list and visibility are handled later by saveState
                 }
-                
-                    // Check if the last point of the freehand stroke is on another stroke
-                    if (points.length > 0) {
-                        const lastPoint = points[points.length - 1];
-                        const endPointStrokeData = checkForStrokeAtPoint(lastPoint.x, lastPoint.y);
-                        
-                        // If end point overlaps with another line, draw a glowing circle
-                        if (endPointStrokeData) {
-                            // Draw a glowing white connector circle at the end point
-                            const scale = imageScaleByLabel[currentImageLabel] || 1.0;
-                            const baseRadius = parseInt(brushSize.value) / 2;
-                            const scaledRadius = baseRadius * scale;
-                            const glowPadding = 5; // Keep glow padding fixed
-                            
-                            ctx.beginPath();
-                            // Use scaled radius + padding for glow circle
-                            ctx.arc(lastPoint.x, lastPoint.y, scaledRadius + glowPadding, 0, Math.PI * 2);
-                            
-                            // Create a white glow effect with a radial gradient using scaled radii
-                            const gradient = ctx.createRadialGradient(
-                                lastPoint.x, lastPoint.y, scaledRadius / 2, // Inner radius (scaled)
-                                lastPoint.x, lastPoint.y, scaledRadius + glowPadding // Outer radius (scaled + padding)
-                            );
-                            gradient.addColorStop(0, 'white');
-                            gradient.addColorStop(0.7, 'rgba(255, 255, 255, 0.8)');
-                            gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
-                            
-                            ctx.fillStyle = gradient;
-                            ctx.fill();
-                            
-                            // Then draw the colored dot for the actual end point
-                            ctx.beginPath();
-                            ctx.arc(lastPoint.x, lastPoint.y, scaledRadius, 0, Math.PI * 2);
-                            ctx.fillStyle = colorPicker.value;
-                            ctx.fill();
-                        }
+                */
+                // --- END REMOVAL ---
+
+                // Check if the last point of the freehand stroke is on another stroke
+                if (points.length > 0) {
+                   // ... (glowing circle drawing code remains the same) ...
+                    const lastPoint = points[points.length - 1];
+                    // Need canvas coords for check
+                    const endPointStrokeData = checkForStrokeAtPoint(lastPoint.canvasX, lastPoint.canvasY);
+
+                    // If end point overlaps with another line, draw a glowing circle
+                    if (endPointStrokeData) {
+                        const scale = imageScaleByLabel[currentImageLabel] || 1.0;
+                        const baseRadius = parseInt(brushSize.value) / 2;
+                        const scaledRadius = baseRadius * scale;
+                        const glowPadding = 5; // Keep glow padding fixed
+
+                        ctx.beginPath();
+                        // Use scaled radius + padding for glow circle
+                        ctx.arc(lastPoint.canvasX, lastPoint.canvasY, scaledRadius + glowPadding, 0, Math.PI * 2);
+
+                        // Create a white glow effect with a radial gradient using scaled radii
+                        const gradient = ctx.createRadialGradient(
+                            lastPoint.canvasX, lastPoint.canvasY, scaledRadius / 2, // Inner radius (scaled)
+                            lastPoint.canvasX, lastPoint.canvasY, scaledRadius + glowPadding // Outer radius (scaled + padding)
+                        );
+                        gradient.addColorStop(0, 'white');
+                        gradient.addColorStop(0.7, 'rgba(255, 255, 255, 0.8)');
+                        gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+
+                        ctx.fillStyle = gradient;
+                        ctx.fill();
+
+                        // Then draw the colored dot for the actual end point
+                        ctx.beginPath();
+                        ctx.arc(lastPoint.canvasX, lastPoint.canvasY, scaledRadius, 0, Math.PI * 2);
+                        ctx.fillStyle = colorPicker.value;
+                        ctx.fill();
                     }
-                
+                }
+
                 // Reset points array for next stroke
                 points = [];
                 lastVelocity = 0;
                 lastDrawnPoint = null;
             }
-            
+
             isDrawing = false;
             isDrawingOrPasting = false;
             strokeInProgress = false;
-            
+
             // Make sure the current state is captured
             const finalState = getCanvasState();
-            
+
             // Save state immediately after stroke completion and increment label
+            // saveState will handle moving data from _drawingStroke to the correct unique label
             saveState(true, true);
-            
+
             // Update the sidebar visibility controls
             updateStrokeVisibilityControls();
-            
+
             // Force redraw to show labels immediately
             redrawCanvasWithVisibility();
         }
