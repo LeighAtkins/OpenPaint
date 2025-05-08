@@ -1,18 +1,25 @@
+/**
+ * Main application server for OpenPaint
+ * Handles file operations, static file serving, and API endpoints
+ */
+
 const express = require('express');
 const path = require('path');
 const multer = require('multer');
 const fs = require('fs');
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
+
+// Ensure uploads directory exists
+const uploadDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+    console.log('Created uploads directory');
+}
 
 // Set up multer for handling file uploads
 const storage = multer.diskStorage({
     destination: function(req, file, cb) {
-        const uploadDir = path.join(__dirname, 'uploads');
-        // Create directory if it doesn't exist
-        if (!fs.existsSync(uploadDir)) {
-            fs.mkdirSync(uploadDir, { recursive: true });
-        }
         cb(null, uploadDir);
     },
     filename: function(req, file, cb) {
@@ -26,18 +33,24 @@ const upload = multer({
     limits: { fileSize: 50 * 1024 * 1024 } // 50MB limit
 });
 
+// Middleware setup
 // Serve static files from public directory
 app.use(express.static('public'));
 // Serve static files from root directory
 app.use(express.static('./'));
+// Parse JSON request bodies
 app.use(express.json());
 
+// Route handlers
 // Serve the main page
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// API endpoint for uploading project files
+/**
+ * API endpoint for uploading project files
+ * Accepts a project ZIP file and stores it in the uploads directory
+ */
 app.post('/api/upload-project', upload.single('projectFile'), (req, res) => {
     try {
         if (!req.file) {
@@ -62,6 +75,7 @@ app.use((err, req, res, next) => {
     res.status(500).json({ success: false, message: 'Server error' });
 });
 
+// Start the server
 app.listen(port, () => {
     console.log(`OpenPaint app listening at http://localhost:${port}`);
 });

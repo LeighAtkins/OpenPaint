@@ -1,0 +1,105 @@
+# OpenPaint Project Requirements Document
+
+## Project Overview
+
+OpenPaint is an image annotation tool designed for email communication of measurements. It allows users to draw lines, add labels, and specify measurements for accurate communication of dimensions in images. The application focuses on simplicity and usability while maintaining powerful functionality.
+
+### Key Use Cases
+- Annotate images with measurement lines and labels
+- Organize multiple related images (e.g., cushion designs from different angles)
+- Save and load annotation projects
+- Export annotated images for sharing via email
+- Support various measurement units (inches, cm)
+
+## Current State and Challenges
+
+The application currently has the following limitations:
+- Limited to 4 predefined image categories (front, side, back, cushion)
+- No concept of folders or image organization beyond the 4 categories
+- Single flat sidebar for all images
+- Some issues with label positioning and scaling
+- Measurement editing functionality is duplicated across multiple similar functions
+
+## Core Requirements
+
+### 1. Folder Structure Support
+- Add hierarchical folder support to organize images by type (Accent Cushion, Back Cushion, etc.)
+- Preserve folder structure when loading images from the file system
+- Allow unlimited number of images in the project
+- Support folder navigation with breadcrumbs
+- Add collapsible folder UI in the sidebar
+- Allow folder creation, renaming, and management
+
+### 2. Drawing and Annotation Enhancements
+- Improve label positioning to work with different zoom levels
+- Combine duplicate measurement editing dialogs into a unified approach
+- Fix coordinate handling for strokes when images are scaled or moved
+- Ensure labels remain associated with strokes when canvas is manipulated
+- Support freehand and straight line drawing modes
+
+### 3. Project Management
+- Save and load projects including full folder structure
+- Maintain backward compatibility with existing project files
+- Ensure all measurements and annotations are preserved when saving/loading
+- Support image scaling and positioning preferences per image
+
+### 4. UI/UX Improvements
+- Add breadcrumb navigation for folder structure
+- Improve drag-and-drop support for images
+- Add folder navigation controls
+- Enhance sidebar with expandable/collapsible folder sections
+- Ensure consistent label and measurement display
+
+### 5. Performance Optimization
+- Implement lazy loading for images to improve memory usage
+- Add image caching to improve performance with many images
+- Optimize redrawing and canvas operations
+
+## Technical Requirements
+
+### Backend
+- Node.js with Express.js framework
+- RESTful API endpoints for server operations
+
+### Frontend
+- Vanilla JavaScript (no frameworks) for client-side logic
+- Canvas API for drawing operations
+- Modern CSS for styling
+- JSZip for project file handling
+- FileSaver.js for saving files
+
+### Data Storage
+- Local project files (ZIP format with JSON metadata)
+- Browser storage for temporary data
+
+## Implementation Priorities
+
+1. Fix critical bugs in existing functionality (scaling, measurements, coordinates)
+2. Implement folder structure support to remove 4-image limitation
+3. Consolidate duplicate code (measurement dialogs, label positioning)
+4. Enhance project save/load to support folder structure
+5. Add UI enhancements for folder navigation
+6. Optimize performance for large projects
+
+## Development Phases
+
+### Phase 1: Foundation
+- Implement core data structures for folder hierarchy
+- Update project save/load to include folder data
+- Add basic folder display in sidebar
+
+### Phase 2: UI Enhancement
+- Implement collapsible folder UI
+- Add folder navigation and breadcrumbs
+- Update image adding workflow to support folders
+
+### Phase 3: Advanced Features
+- Implement lazy loading for memory optimization
+- Add folder management capabilities
+- Improve drag-and-drop support for folders
+
+### Phase 4: Testing & Refinement
+- Test with large folder structures
+- Optimize performance
+- Fix edge cases
+- Ensure backward compatibility 

@@ -4,7 +4,7 @@
 - [x] Basic loading of project files works (ZIP extraction)
 - [x] Image thumbnails appear in the sidebar correctly
 - [x] Switching between images doesn't display the correct image in the drawing area
-- [ ] Strokes are not always rendered after loading
+- [x] Strokes are not always rendered after loading
 - [ ] Position and scale settings aren't consistently applied
 
 ## Debugging Steps

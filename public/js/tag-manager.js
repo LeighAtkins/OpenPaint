@@ -1,0 +1,917 @@
+// Tag Manager for OpenPaint
+// Handles the furniture/sofa tagging system
+
+console.log('TAG-MANAGER.JS LOADED - Version ' + new Date().toISOString());
+
+// Define the tag hierarchy and conditions
+window.TAG_MODEL = {
+    // Category 0: Furniture Type (always shown)
+    furnitureType: {
+        id: 'furnitureType',
+        name: 'Furniture Type',
+        required: true, // At least one selection required
+        type: 'checkbox', // MODIFIED: Allow multiple selections
+        condition: null, // Always shown
+        options: [
+            { id: 'sofa', name: 'Sofa' },
+            { id: 'ottoman', name: 'Ottoman' },
+            { id: 'chaise', name: 'Chaise' },
+            { id: 'cushionOnly', name: 'Cushion Only' },
+            { id: 'diningChair', name: 'Dining Chair' }
+        ]
+    },
+    
+    // Category 1: View Type (always shown)
+    viewType: {
+        id: 'viewType',
+        name: 'View Type',
+        required: true, // At least one selection required
+        type: 'radio', // Only one selection allowed
+        condition: null, // Always shown
+        options: [
+            { id: 'front', name: 'Front' },
+            { id: 'back', name: 'Back' },
+            { id: 'side', name: 'Side' },
+            { id: 'arm', name: 'Arm' },
+            { id: 'ear', name: 'Ear' },
+            { id: 'top', name: 'Top' },
+            { id: 'angle', name: 'Angle' },
+            { id: 'seatBack', name: 'Seat Back' }
+        ]
+    },
+    
+    // Category 2: Cushion Type (MODIFIED condition and options)
+    cushionType: {
+        id: 'cushionType',
+        name: 'Cushion Type',
+        required: false,
+        type: 'radio',
+        condition: { category: 'furnitureType', value: 'cushionOnly', type: 'checkbox' }, // MODIFIED
+        options: [
+            { id: 'rectangleSquare', name: 'Rectangle/Square' }, // MODIFIED: Replaced 'boxed'
+            { id: 'lShaped', name: 'L-Shaped' },
+            { id: 'tShaped', name: 'T-Shaped' }
+        ]
+    },
+    
+    // Category 3: Arm Type (MODIFIED condition for Sofa->Side)
+    armType: {
+        id: 'armType',
+        name: 'Arm Type',
+        required: false,
+        type: 'radio',
+        condition: { // MODIFIED: Sofa AND Side view
+            conjunction: 'AND',
+            conditions: [
+                { category: 'furnitureType', value: 'sofa', type: 'checkbox' }, // furnitureType is now checkbox
+                { category: 'viewType', value: 'side' }
+            ]
+        },
+        options: [
+            { id: 'armless', name: 'Armless' },
+            { id: 'barrel', name: 'Barrel' },
+            { id: 'belgianRolled', name: 'Belgian Rolled' },
+            { id: 'bullet', name: 'Bullet' },
+            { id: 'englishRolled', name: 'English Rolled' },
+            { id: 'finSlope', name: 'Fin Slope' },
+            { id: 'flare', name: 'Flare' },
+            { id: 'key', name: 'Key' },
+            { id: 'nose', name: 'Nose' },
+            { id: 'round', name: 'Round' },
+            { id: 'roundedCorner', name: 'Rounded Corner' },
+            { id: 'slope', name: 'Slope' },
+            { id: 'square', name: 'Square' },
+            { id: 'thinKnifeEdge', name: 'Thin (Knife Edge)' },
+            { id: 'trackSlope', name: 'Track Slope' },
+            { id: 'wedge', name: 'Wedge' },
+            { id: 'squareArm', name: 'Square Arm' }
+        ]
+    },
+    
+    // Category 4: Back Type (shown only if Back is selected in viewType)
+    backType: {
+        id: 'backType',
+        name: 'Back Type',
+        required: false,
+        type: 'radio',
+        condition: { category: 'viewType', value: 'back' },
+        options: [
+            { id: 'armless', name: 'Armless' },
+            { id: 'barrel', name: 'Barrel' },
+            { id: 'high', name: 'High' },
+            { id: 'roll', name: 'Roll' },
+            { id: 'round', name: 'Round' },
+            { id: 'sectional', name: 'Sectional' },
+            { id: 'short', name: 'Short' },
+            { id: 'thinKnifeEdge', name: 'Thin (Knife Edge)' },
+            { id: 'wing', name: 'Wing' }
+        ]
+    },
+    
+    // Category 5: Seat Back Type (shown only if Seat Back is selected in viewType)
+    seatBackType: {
+        id: 'seatBackType',
+        name: 'Seat Back Type',
+        required: false,
+        type: 'radio',
+        condition: { category: 'viewType', value: 'seatBack' },
+        options: [
+            { id: 'curved', name: 'Curved' },
+            { id: 'straight', name: 'Straight' },
+            { id: 'wedged', name: 'Wedged' }
+        ]
+    },
+    
+    // Category 6: Cushion Style (shown only if Cushion is selected in viewType)
+    cushionStyle: {
+        id: 'cushionStyle',
+        name: 'Cushion Style',
+        required: false,
+        type: 'radio',
+        condition: { category: 'furnitureType', value: 'cushionOnly' },
+        options: [
+            { id: 'bolster', name: 'Bolster' },
+            { id: 'boxed', name: 'Boxed' },
+            { id: 'cornerCushion', name: 'Corner Cushion' },
+            { id: 'halfKnife', name: 'Half Knife' },
+            { id: 'halfWedge', name: 'Half Wedge' },
+            { id: 'hexagon', name: 'Hexagon' },
+            { id: 'knife', name: 'Knife' },
+            { id: 'oval', name: 'Oval' },
+            { id: 'round', name: 'Round' },
+            { id: 'rounded', name: 'Rounded' },
+            { id: 'wedge', name: 'Wedge' }
+        ]
+    },
+    
+    // Category 7: Ottoman Style (shown only if Ottoman is selected in furnitureType)
+    ottomanStyle: {
+        id: 'ottomanStyle',
+        name: 'Ottoman Style',
+        required: false,
+        type: 'radio',
+        condition: { category: 'furnitureType', value: 'ottoman' },
+        options: [
+            { id: 'onePieceSnug', name: '1-piece Snug' },
+            { id: 'twoPieceSkirt', name: '2-piece Skirt' },
+            { id: 'longSkirt', name: 'Long Skirt' },
+            { id: 'round', name: 'Round' }
+        ]
+    },
+    
+    // Category 8: Dining Chair Style (shown only if Dining Chair is selected in furnitureType)
+    diningChairStyle: {
+        id: 'diningChairStyle',
+        name: 'Dining Chair Style',
+        required: false,
+        type: 'radio',
+        condition: { category: 'furnitureType', value: 'diningChair' },
+        options: [
+            { id: 'cornerPleats', name: 'Corner Pleats' },
+            { id: 'midSkirt', name: 'Mid-skirt' },
+            { id: 'snug', name: 'Snug' },
+            { id: 'squareArm', name: 'Square Arm' }
+        ]
+    },
+
+    // NEW Category: Cushion Detail
+    cushionDetail: {
+        id: 'cushionDetail',
+        name: 'Cushion Detail',
+        required: false,
+        type: 'radio',
+        condition: {
+            conjunction: 'AND',
+            conditions: [
+                { category: 'furnitureType', value: 'cushionOnly', type: 'checkbox' },
+                { category: 'cushionUse', value: 'seat', type: 'checkbox' }
+            ]
+        },
+        options: [
+            { id: 'big', name: 'Big' },
+            { id: 'medium', name: 'Medium' },
+            { id: 'small', name: 'Small' }
+        ]
+    },
+
+    // NEW Category: Cushion Use
+    cushionUse: {
+        id: 'cushionUse',
+        name: 'Cushion Use',
+        required: false,
+        type: 'checkbox', // Allow multiple selections
+        condition: { category: 'furnitureType', value: 'cushionOnly', type: 'checkbox' }, // MODIFIED
+        options: [
+            { id: 'seat', name: 'Seat' },
+            { id: 'back', name: 'Back' },
+            { id: 'accent', name: 'Accent' }
+        ]
+    }
+};
+
+// Order of categories to display
+window.TAG_CATEGORY_ORDER = [
+    'furnitureType',
+    'cushionUse',
+    'viewType',
+    'ottomanStyle',
+    'diningChairStyle',
+    'armType',
+    'backType',
+    'seatBackType',
+    'cushionType',
+    'cushionStyle',
+    'cushionDetail'
+];
+
+// Initialize the global image tags object if it doesn't exist
+window.imageTags = window.imageTags || {};
+
+// Function to get visible categories based on current selections
+function getVisibleCategories(selections) {
+    if (!selections) return ['furnitureType', 'viewType']; // Default categories
+    
+    // Always show furniture type and view type
+    const visibleCategories = ['furnitureType', 'viewType'];
+    
+    // Check each category to see if its condition is met
+    for (const categoryId of window.TAG_CATEGORY_ORDER.slice(2)) { // Skip the first two (always visible)
+        const category = window.TAG_MODEL[categoryId];
+        if (!category) continue; // Should not happen if TAG_MODEL and TAG_CATEGORY_ORDER are in sync
+
+        let conditionMet = !category.condition; // If no condition, it's met
+
+        if (category.condition) {
+            if (category.condition.conjunction === 'AND') {
+                conditionMet = true; // Assume true, set to false if any sub-condition fails
+                for (const subCondition of category.condition.conditions) {
+                    const selectedValue = selections[subCondition.category];
+                    if (subCondition.type === 'checkbox') {
+                        // For checkboxes, selectedValue must be an array including the condition value
+                        if (!Array.isArray(selectedValue) || !selectedValue.includes(subCondition.value)) {
+                            conditionMet = false;
+                            break;
+                        }
+                    } else {
+                        // For radio/select, selectedValue must match exactly
+                        if (selectedValue !== subCondition.value) {
+                            conditionMet = false;
+                            break;
+                        }
+                    }
+                }
+            } else {
+                // Original single condition logic (radio/select based)
+                const selectedValue = selections[category.condition.category];
+                if (category.condition.type === 'checkbox') { // Though single conditions for checkboxes are less common now
+                    conditionMet = Array.isArray(selectedValue) && selectedValue.includes(category.condition.value);
+                } else {
+                    conditionMet = selectedValue === category.condition.value;
+                }
+            }
+        }
+        
+        if (conditionMet) {
+            visibleCategories.push(categoryId);
+        }
+    }
+    
+    return visibleCategories;
+}
+
+// Function to generate filename from tags
+function generateFilenameFromTags(originalFilename, tags) {
+    if (!tags || Object.keys(tags).length === 0) {
+        return originalFilename; // No tags, return original filename
+    }
+    
+    // Start with furniture type if available
+    let parts = [];
+    
+    // Extract base name without extension
+    const baseNameMatch = originalFilename.match(/^(.*?)(?:\.[^.]*)?$/);
+    const baseName = baseNameMatch ? baseNameMatch[1] : originalFilename;
+    
+    // Extract extension if any
+    const extensionMatch = originalFilename.match(/(\.[^.]*)$/);
+    const extension = extensionMatch ? extensionMatch[1] : '';
+    
+    // Add furniture type
+    if (tags.furnitureType) {
+        parts.push(window.TAG_MODEL.furnitureType.options.find(opt => opt.id === tags.furnitureType)?.name || tags.furnitureType);
+    }
+    
+    // Add view type
+    if (tags.viewType) {
+        parts.push(window.TAG_MODEL.viewType.options.find(opt => opt.id === tags.viewType)?.name || tags.viewType);
+    }
+    
+    // Add conditional categories if they exist
+    for (const categoryId of window.TAG_CATEGORY_ORDER.slice(2)) { // Skip furniture type and view type
+        if (tags[categoryId]) {
+            const category = window.TAG_MODEL[categoryId];
+            const option = category.options.find(opt => opt.id === tags[categoryId]);
+            if (option) {
+                parts.push(option.name);
+            }
+        }
+    }
+    
+    // Combine parts with underscores and add original name
+    const tagPrefix = parts.join('_');
+    
+    // Only add original name if it's not just a number (likely an auto-generated name)
+    const finalName = /^\d+$/.test(baseName) ? tagPrefix : `${tagPrefix}_${baseName}`;
+    
+    return finalName + extension;
+}
+
+// Export functions to the window object for use in other scripts
+window.getVisibleCategories = getVisibleCategories;
+window.generateFilenameFromTags = generateFilenameFromTags;
+
+// Function to get a readable tag name
+window.getTagDisplayName = function(categoryId, tagId) {
+    if (!window.TAG_MODEL[categoryId]) return tagId;
+    
+    const option = window.TAG_MODEL[categoryId].options.find(opt => opt.id === tagId);
+    return option ? option.name : tagId;
+};
+
+// Function to create a tag selection dialog
+window.createTagSelectionDialog = function(imageLabel, existingTags, onSave) {
+    // Create overlay div to block interactions with the rest of the page
+    const overlay = document.createElement('div');
+    overlay.className = 'tag-dialog-overlay';
+    document.body.appendChild(overlay);
+    
+    // Create base dialog
+    const dialog = document.createElement('div');
+    dialog.className = 'tag-dialog';
+    dialog.innerHTML = `
+        <div class="tag-dialog-header">
+            <h3>Image Tags for ${imageLabel}</h3>
+            <button class="tag-dialog-close">✖</button>
+        </div>
+        <div class="tag-dialog-content">
+            <div class="tag-categories"></div>
+        </div>
+        <div class="tag-dialog-footer">
+            <button class="tag-dialog-save">Save Tags</button>
+            <button class="tag-dialog-cancel">Cancel</button>
+            <button class="tag-dialog-clear-all">Clear All Tags</button>
+        </div>
+    `;
+    document.body.appendChild(dialog);
+    
+    // Get content container
+    const categoriesContainer = dialog.querySelector('.tag-categories');
+    
+    // Close button handler
+    const closeButton = dialog.querySelector('.tag-dialog-close');
+    const cancelButton = dialog.querySelector('.tag-dialog-cancel');
+    const clearAllButton = dialog.querySelector('.tag-dialog-clear-all');
+    closeButton.addEventListener('click', closeDialog);
+    cancelButton.addEventListener('click', closeDialog);
+    clearAllButton.addEventListener('click', () => {
+        for (const key in selections) {
+            delete selections[key];
+        }
+        console.log('[Tag Dialog] Cleared all selections.');
+        renderCategories();
+    });
+    
+    // Save button
+    const saveButton = dialog.querySelector('.tag-dialog-save');
+    
+    // Clone existing tags or create new ones
+    const selections = existingTags ? JSON.parse(JSON.stringify(existingTags)) : {};
+    
+    // Get initial visible categories
+    const visibleCategories = getVisibleCategories(selections);
+    
+    // Function to render tag categories
+    function renderCategories() {
+        // Clear container
+        categoriesContainer.innerHTML = '';
+        
+        // Get updated visible categories based on current selections
+        const visibleCategories = window.getVisibleCategories(selections);
+        
+        // Create form groups for each visible category
+        for (const categoryId of window.TAG_CATEGORY_ORDER) {
+            const category = window.TAG_MODEL[categoryId];
+            
+            // Skip non-visible categories
+            if (!visibleCategories.includes(categoryId)) continue;
+            
+            // Create category container
+            const categoryContainer = document.createElement('div');
+            categoryContainer.className = 'tag-category';
+            categoryContainer.innerHTML = `
+                <div class="tag-category-header">
+                    <h4>${category.name}</h4>
+                    ${category.required ? '<span class="required">*</span>' : ''}
+                </div>
+                <div class="tag-category-options" data-category="${categoryId}"></div>
+            `;
+            
+            // Add to main container
+            categoriesContainer.appendChild(categoryContainer);
+            
+            // Get options container
+            const optionsContainer = categoryContainer.querySelector('.tag-category-options');
+            
+            // MODIFICATION: Filter viewType options if 'Cushion Only' is selected for furnitureType
+            let currentOptions = category.options;
+            if (categoryId === 'viewType' && Array.isArray(selections.furnitureType) && selections.furnitureType.includes('cushionOnly')) {
+                const allowedViewTypes = ['top', 'angle', 'side'];
+                currentOptions = category.options.filter(opt => allowedViewTypes.includes(opt.id));
+            }
+            // END MODIFICATION
+
+            // Render options based on type
+            if (category.type === 'radio') {
+                // For radio buttons (single selection)
+                currentOptions.forEach(option => {
+                    const optionContainer = document.createElement('div');
+                    optionContainer.className = 'tag-option';
+                    
+                    const radioId = `${categoryId}-${option.id}`;
+                    
+                    optionContainer.innerHTML = `
+                        <input type="radio" id="${radioId}" name="${categoryId}" value="${option.id}" 
+                            ${selections[categoryId] === option.id ? 'checked' : ''}>
+                        <label for="${radioId}">${option.name}</label>
+                    `;
+                    
+                    // Add to options
+                    optionsContainer.appendChild(optionContainer);
+                    
+                    // Add change listener
+                    const radioInput = optionContainer.querySelector('input');
+                    radioInput.addEventListener('change', function() {
+                        if (this.checked) {
+                            selections[categoryId] = option.id;
+                            console.log(`[Tag Dialog] Selected ${category.name}: ${option.name}`);
+                            
+                            // Re-render categories for conditional logic
+                            renderCategories();
+                        }
+                    });
+                });
+            } else if (category.type === 'checkbox') {
+                // For checkboxes (multiple selection)
+                currentOptions.forEach(option => {
+                    const optionContainer = document.createElement('div');
+                    optionContainer.className = 'tag-option';
+                    
+                    const checkboxId = `${categoryId}-${option.id}`;
+                    const isChecked = Array.isArray(selections[categoryId]) && 
+                                     selections[categoryId].includes(option.id);
+                    
+                    optionContainer.innerHTML = `
+                        <input type="checkbox" id="${checkboxId}" name="${categoryId}" value="${option.id}" 
+                            ${isChecked ? 'checked' : ''}>
+                        <label for="${checkboxId}">${option.name}</label>
+                    `;
+                    
+                    // Add to options
+                    optionsContainer.appendChild(optionContainer);
+                    
+                    // Add change listener
+                    const checkboxInput = optionContainer.querySelector('input');
+                    checkboxInput.addEventListener('change', function() {
+                        // Initialize as array if needed
+                        if (!selections[categoryId] || !Array.isArray(selections[categoryId])) {
+                            selections[categoryId] = [];
+                        }
+                        
+                        if (this.checked) {
+                            // Add to selections if not already there
+                            if (!selections[categoryId].includes(option.id)) {
+                                selections[categoryId].push(option.id);
+                            }
+                        } else {
+                            // Remove from selections
+                            selections[categoryId] = selections[categoryId].filter(id => id !== option.id);
+                            // If the array becomes empty, delete the key to reflect no selection for this category
+                            if (selections[categoryId].length === 0) {
+                                delete selections[categoryId];
+                            }
+                        }
+                        
+                        console.log(`[Tag Dialog] Updated ${category.name}:`, selections[categoryId]);
+                        
+                        // Re-render categories for conditional logic
+                        renderCategories();
+                    });
+                });
+            } else {
+                // Default to simple select
+                const selectElement = document.createElement('select');
+                selectElement.className = 'tag-select';
+                selectElement.name = categoryId;
+                
+                // Add placeholder option if not required
+                if (!category.required) {
+                    const placeholderOption = document.createElement('option');
+                    placeholderOption.value = '';
+                    placeholderOption.textContent = 'Select...';
+                    placeholderOption.selected = !selections[categoryId];
+                    selectElement.appendChild(placeholderOption);
+                }
+                
+                // Add options
+                currentOptions.forEach(option => {
+                    const optionElement = document.createElement('option');
+                    optionElement.value = option.id;
+                    optionElement.textContent = option.name;
+                    optionElement.selected = selections[categoryId] === option.id;
+                    selectElement.appendChild(optionElement);
+                });
+                
+                // Add to container
+                optionsContainer.appendChild(selectElement);
+                
+                // Add change listener
+                selectElement.addEventListener('change', function() {
+                    if (this.value) {
+                        selections[categoryId] = this.value;
+                    } else {
+                        delete selections[categoryId];
+                    }
+                    console.log(`[Tag Dialog] Selected ${category.name}: ${this.options[this.selectedIndex].text}`);
+                    
+                    // Re-render categories for conditional logic
+                    renderCategories();
+                });
+            }
+        }
+    }
+    
+    // Handle save button click
+    saveButton.addEventListener('click', () => {
+        // Validate that required selections are made
+        let isValid = true;
+        let missingCategories = [];
+        
+        // Get the currently visible categories based on the current selections
+        const visibleCategories = window.getVisibleCategories(selections);
+        
+        for (const categoryId of window.TAG_CATEGORY_ORDER) {
+            const category = window.TAG_MODEL[categoryId];
+            // Skip non-visible categories
+            if (!visibleCategories.includes(categoryId)) continue;
+            
+            // Check if required selection is missing
+            if (category.required && !selections[categoryId]) {
+                isValid = false;
+                missingCategories.push(category.name);
+            }
+        }
+        
+        if (!isValid) {
+            alert(`Please select required fields: ${missingCategories.join(', ')}`);
+            return;
+        }
+        
+        // Save selections
+        console.log(`[Tag Dialog] Saving tags for ${imageLabel}:`, selections);
+        
+        // Run callback with selections
+        if (typeof onSave === 'function') {
+            onSave(selections);
+        }
+        
+        // Close dialog
+        closeDialog();
+    });
+    
+    function closeDialog() {
+        document.body.removeChild(dialog);
+        document.body.removeChild(overlay);
+    }
+    
+    // Initial render of categories
+    renderCategories();
+    
+    // Return dialog for external manipulation if needed
+    return {
+        dialog,
+        overlay,
+        close: closeDialog
+    };
+};
+
+// Function to show tag dialog from sidebar
+window.showTagDialogForImage = function(imageLabel) {
+    // Get existing tags or default
+    const existingTags = window.imageTags[imageLabel] || {};
+    
+    // Create dialog
+    window.createTagSelectionDialog(imageLabel, existingTags, (newTags) => {
+        // Save tags
+        window.imageTags[imageLabel] = newTags;
+        
+        // Update display name in sidebar
+        const displayName = window.getTagBasedFilename(imageLabel);
+        const labelElement = document.querySelector(`.image-container[data-label="${imageLabel}"] .image-label`);
+        if (labelElement) {
+            const filename = getTagBasedFilename(imageLabel, imageLabel.split('_')[0]); // Get updated filename
+            const newText = filename ? filename.charAt(0).toUpperCase() + filename.slice(1) : imageLabel;
+            console.log(`[updateTagsDisplay] Found labelElement for ${imageLabel}. Current text: "${labelElement.textContent}". Attempting to set text to: "${newText}"`);
+            labelElement.textContent = newText; // Update text
+            console.log(`[updateTagsDisplay] Updated labelElement text for ${imageLabel} to: ${labelElement.textContent}`);
+        } else {
+            console.warn(`[updateTagsDisplay] Could not find labelElement for label: ${imageLabel}`);
+        }
+        
+        // Update tags display
+        const tagsContainer = document.querySelector(`.image-container[data-label="${imageLabel}"] .image-tags`);
+        if (tagsContainer) {
+            tagsContainer.innerHTML = '';
+            
+            // Add visible tag badges
+            const visibleTags = [];
+            
+            // Get primary tag (furniture type)
+            if (newTags.furnitureType) {
+                const furnitureType = window.TAG_MODEL.furnitureType.options.find(opt => opt.id === newTags.furnitureType);
+                if (furnitureType) {
+                    visibleTags.push(furnitureType.name);
+                }
+            }
+            
+            // Get view type
+            if (newTags.viewType) {
+                const viewType = window.TAG_MODEL.viewType.options.find(opt => opt.id === newTags.viewType);
+                if (viewType) {
+                    visibleTags.push(viewType.name);
+                }
+            }
+            
+            // Add badges
+            if (visibleTags.length > 0) {
+                visibleTags.forEach(tag => {
+                    const badge = document.createElement('span');
+                    badge.className = 'tag-badge';
+                    badge.textContent = tag;
+                    tagsContainer.appendChild(badge);
+                });
+            } else {
+                tagsContainer.innerHTML = '<span class="no-tags">No tags</span>';
+            }
+        }
+    });
+};
+
+// Initialize tags for standard images
+document.addEventListener('DOMContentLoaded', () => {
+    function initializeCoreTagData() {
+        // Ensure critical global variables from paint.js are ready
+        if (typeof window.IMAGE_LABELS === 'undefined' || 
+            typeof window.imageTags === 'undefined' || 
+            typeof window.currentImageLabel === 'undefined') {
+            console.warn('[TAG-MANAGER] Core paint.js globals (IMAGE_LABELS, imageTags, currentImageLabel) not ready, retrying in 100ms...');
+            setTimeout(initializeCoreTagData, 100);
+            return;
+        }
+        console.log('[TAG-MANAGER] Core paint.js globals are ready.');
+
+        // Initialize with default tags if none exist for the standard labels
+        window.IMAGE_LABELS.forEach(label => {
+            if (!window.imageTags[label]) {
+                window.imageTags[label] = {
+                    furnitureType: 'sofa', // Default to sofa
+                    viewType: label // Use the label as the view type
+                };
+            }
+        });
+        console.log('[TAG-MANAGER] Default tags initialized for standard labels.');
+
+        // Now that core data is ready, set up UI-dependent parts
+        initializeTagUI();
+    }
+
+    function initializeTagUI() {
+        // Add tag button functionality
+        const addTagsButton = document.getElementById('addTags');
+        if (addTagsButton) {
+            addTagsButton.addEventListener('click', () => {
+                const currentLabel = window.currentImageLabel;
+                if (!currentLabel) {
+                    console.error("[TAG-MANAGER] currentImageLabel is not defined when trying to add tags.");
+                    return;
+                }
+                const existingTags = window.imageTags[currentLabel] || {};
+                window.createTagSelectionDialog(currentLabel, existingTags, (newTags) => {
+                    window.imageTags[currentLabel] = newTags;
+                    updateTagsDisplay(currentLabel); // This function also needs to be robust
+                    console.log(`[TAG-MANAGER] Updated tags for ${currentLabel}:`, newTags);
+                });
+            });
+        } else {
+            console.warn('[TAG-MANAGER] addTags button not found.');
+        }
+
+        // Attempt to hook into addImageToSidebar from paint.js
+        attemptHookToAddImageToSidebar();
+        // Initial call to display tags for any images already loaded by paint.js
+        addTagButtonsToImages(); 
+    }
+
+    function addTagButtonsToImages() {
+        if (typeof window.IMAGE_LABELS === 'undefined') { // Redundant check, but safe
+            console.warn('[TAG-MANAGER] addTagButtonsToImages: window.IMAGE_LABELS not ready, deferring.');
+            setTimeout(addTagButtonsToImages, 200);
+            return;
+        }
+        const imageContainers = document.querySelectorAll('.image-container');
+        imageContainers.forEach(container => {
+            const label = container.dataset.label;
+            if (!label) return;
+            if (!container.querySelector('.image-tags')) {
+                const tagsContainer = document.createElement('div');
+                tagsContainer.className = 'image-tags';
+                tagsContainer.dataset.label = label;
+                container.appendChild(tagsContainer);
+            }
+            updateTagsDisplay(label);
+        });
+    }
+
+    function updateTagsDisplay(label) {
+        if (typeof window.TAG_MODEL === 'undefined' || 
+            typeof window.imageTags === 'undefined' || 
+            !window.imageTags[label] || // Ensure tags for this specific label exist
+            typeof window.getVisibleCategories === 'undefined' || 
+            typeof window.getTagDisplayName === 'undefined') {
+            console.warn(`[TAG-MANAGER] updateTagsDisplay: Critical objects not ready for label ${label}, deferring.`);
+            setTimeout(() => updateTagsDisplay(label), 200);
+            return;
+        }
+
+        const tagsContainer = document.querySelector(`.image-container[data-label="${label}"] .image-tags`);
+        if (!tagsContainer) {
+            return; 
+        }
+        
+        const tags = window.imageTags[label] || {};
+        tagsContainer.innerHTML = ''; // Clear current tags
+        
+        const visibleCategories = window.getVisibleCategories(tags); 
+        let tagsAdded = 0;
+
+        visibleCategories.forEach(categoryId => {
+            const categoryTags = tags[categoryId];
+            if (categoryTags) {
+                // Handle both single (string) and multiple (array) tag selections
+                const tagIds = Array.isArray(categoryTags) ? categoryTags : [categoryTags];
+
+                tagIds.forEach(tagId => {
+                    const tagName = window.getTagDisplayName(categoryId, tagId);
+                    const tagElement = document.createElement('span');
+                    tagElement.className = 'image-tag tag-badge'; 
+                    tagElement.textContent = tagName;
+                    tagElement.title = `${window.TAG_MODEL[categoryId].name}: ${tagName}`;
+                    tagsContainer.appendChild(tagElement);
+                    tagsAdded++;
+                });
+            }
+        });
+
+        if (tagsAdded === 0) {
+            tagsContainer.innerHTML = '<span class="no-tags">No tags</span>';
+        }
+    }
+
+    function attemptHookToAddImageToSidebar() {
+        if (typeof window.addImageToSidebar === 'function') {
+            const originalAddImageToSidebar = window.addImageToSidebar;
+            if (originalAddImageToSidebar.isHookedByTagManager) {
+                console.log('[TAG-MANAGER] addImageToSidebar already hooked.');
+                return;
+            }
+            window.addImageToSidebar = function(imageUrl, label, filename) {
+                originalAddImageToSidebar(imageUrl, label, filename);
+                setTimeout(() => {
+                    // Ensure imageTags for the new label is initialized before updating display
+                    if (!window.imageTags[label]) {
+                        const baseLabel = label.split('_')[0];
+                        window.imageTags[label] = {
+                            furnitureType: 'sofa', 
+                            viewType: baseLabel 
+                        };
+                         console.log(`[TAG-MANAGER hooked addImageToSidebar] Initialized tags for new image ${label}`);
+                    }
+                    updateTagsDisplay(label);
+                }, 150); 
+            };
+            window.addImageToSidebar.isHookedByTagManager = true; // Mark as hooked
+            console.log('[TAG-MANAGER] Successfully hooked into window.addImageToSidebar.');
+            
+            // After hooking, refresh tags for any images that might have been added before the hook was ready
+            setTimeout(() => {
+                console.log('[TAG-MANAGER] Post-hook refresh of tags for existing images.');
+                addTagButtonsToImages();
+            }, 600);
+        } else {
+            console.warn('[TAG-MANAGER] window.addImageToSidebar not ready for hooking, retrying...');
+            setTimeout(attemptHookToAddImageToSidebar, 200);
+        }
+    }
+
+    initializeCoreTagData(); // Start the initialization chain
+});
+
+// Function to generate a filename from tags
+window.getTagBasedFilename = function(imageLabel, fallbackName) {
+    // Get the tags for this image
+    const tags = window.imageTags[imageLabel];
+    
+    // If no tags, use fallback
+    if (!tags || Object.keys(tags).length === 0) {
+        return fallbackName || imageLabel;
+    }
+    
+    // Start building filename parts
+    const parts = [];
+    
+    // Add furniture type if present
+    if (tags.furnitureType) {
+        const furnitureTypeIds = Array.isArray(tags.furnitureType) ? tags.furnitureType : [tags.furnitureType];
+        const furnitureTypeNames = furnitureTypeIds.map(id => {
+            const option = window.TAG_MODEL.furnitureType.options.find(opt => opt.id === id);
+            return option ? option.name : id;
+        }).filter(name => name); // Filter out any undefined names if an ID wasn't found
+
+        if (furnitureTypeNames.length > 0) {
+            parts.push(furnitureTypeNames.join(', '));
+        }
+    }
+    
+    // Add view type if present
+    if (tags.viewType) {
+        const viewType = window.TAG_MODEL.viewType.options.find(opt => opt.id === tags.viewType);
+        if (viewType) {
+            parts.push(viewType.name);
+        }
+    }
+    
+    // Add cushion type if present
+    if (tags.cushionType) {
+        const cushionType = window.TAG_MODEL.cushionType.options.find(opt => opt.id === tags.cushionType);
+        if (cushionType) {
+            parts.push(cushionType.name + ' Cushion');
+        }
+    }
+    
+    // Add arm type if present
+    if (tags.armType) {
+        const armType = window.TAG_MODEL.armType.options.find(opt => opt.id === tags.armType);
+        if (armType) {
+            parts.push(armType.name + ' Arm');
+        }
+    }
+    
+    // Add back type if present
+    if (tags.backType) {
+        const backType = window.TAG_MODEL.backType.options.find(opt => opt.id === tags.backType);
+        if (backType) {
+            parts.push(backType.name + ' Back');
+        }
+    }
+    
+    // Add seat back type if present
+    if (tags.seatBackType) {
+        const seatBackType = window.TAG_MODEL.seatBackType.options.find(opt => opt.id === tags.seatBackType);
+        if (seatBackType) {
+            parts.push(seatBackType.name + ' Seat Back');
+        }
+    }
+    
+    // Add dining chair type if present
+    if (tags.diningChairType) {
+        const diningChairType = window.TAG_MODEL.diningChairType.options.find(opt => opt.id === tags.diningChairType);
+        if (diningChairType) {
+            parts.push(diningChairType.name);
+        }
+    }
+    
+    // Add ottoman type if present
+    if (tags.ottomanType) {
+        const ottomanType = window.TAG_MODEL.ottomanType.options.find(opt => opt.id === tags.ottomanType);
+        if (ottomanType) {
+            parts.push(ottomanType.name);
+        }
+    }
+    
+    // If we have parts, join them and return
+    if (parts.length > 0) {
+        return parts.join(' - ');
+    }
+    
+    // Fallback to the base name if no tags were used
+    return fallbackName || imageLabel;
+}; 

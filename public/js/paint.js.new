@@ -1,0 +1,62 @@
+// Make switchToImage available globally
+window.switchToImage = switchToImage;
+function switchToImage(label) {
+    if (currentImageLabel === label) return;
+    
+    console.log(`Switching from ${currentImageLabel} to ${label}`);
+    
+    // Save current state before switching
+    const currentStrokes = [...(lineStrokesByImage[currentImageLabel] || [])];
+    const currentState = getCanvasState();
+    
+    // Create a snapshot state that includes the strokes list
+    undoStackByImage[currentImageLabel].push({
+        state: cloneImageData(currentState),
+        type: 'snapshot',
+        strokes: currentStrokes
+    });
+    
+    // Update current image label
+    currentImageLabel = label;
+    
+    // Ensure we have properly initialized position and scale for this label
+    if (window.imageScaleByLabel[label] === undefined) {
+        console.log(`[switchToImage] No scale found for ${label}, initializing to default scale (1.0)`);
+        window.imageScaleByLabel[label] = 1.0; // Default scale
+    } else {
+        console.log(`[switchToImage] Using scale ${window.imageScaleByLabel[label]} for ${label}`);
+    }
+    
+    if (!window.imagePositionByLabel[label]) {
+        console.log(`[switchToImage] No position found for ${label}, initializing to default position (0,0)`);
+        window.imagePositionByLabel[label] = { x: 0, y: 0 }; // Default position
+    } else {
+        console.log(`[switchToImage] Using position (${window.imagePositionByLabel[label].x}, ${window.imagePositionByLabel[label].y}) for ${label}`);
+    }
+    
+    // Restore state for the new image
+    if (imageStates[label]) {
+        restoreCanvasState(imageStates[label]);
+        console.log(`Restored cached state for ${label}`);
+        // Ensure we redraw with visibility to show strokes and labels correctly
+        redrawCanvasWithVisibility();
+    } else if (window.originalImages[label]) {
+        // If no state exists but we have the original image, paste it
+        console.log(`No state exists for ${label}, pasting original image: ${window.originalImages[label].substring(0, 30)}...`);
+        pasteImageFromUrl(window.originalImages[label], label);
+    } else {
+        // Clear canvas if no state or original image exists
+        console.log(`No state or image found for ${label}, clearing canvas`);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        // Still do a redraw to ensure any strokes are shown
+        redrawCanvasWithVisibility();
+    }
+    
+    // Update UI
+    updateActiveImageInSidebar();
+    updateStrokeCounter();
+    updateStrokeVisibilityControls();
+    
+    // Update scale UI to reflect the current image's scale
+    updateScaleUI();
+} 

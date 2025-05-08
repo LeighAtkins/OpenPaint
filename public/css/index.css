@@ -1,0 +1,251 @@
+/* Custom styles that can't be easily replaced by Tailwind */
+.image-container {
+    position: relative;
+    margin-bottom: 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: white;
+    border: 2px solid transparent;
+}
+.image-container.active {
+    border-color: #4CAF50;
+    box-shadow: 0 2px 8px rgba(76, 175, 80, 0.2);
+}
+.pasted-image {
+    width: 100%;
+    height: auto;
+    border-radius: 4px;
+    display: block;
+}
+.image-label {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+.image-strokes {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    padding: 3px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    max-width: 45%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.image-scale {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    padding: 3px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    max-width: 45%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.image-container:hover {
+    transform: scale(1.02);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+}
+#canvas {
+    background-color: white;
+    cursor: crosshair;
+    transition: all 0.3s ease;
+}
+#canvas.drag-over {
+    border: 2px dashed #4CAF50;
+    box-shadow: 0 0 10px rgba(76, 175, 80, 0.4);
+    background-color: rgba(76, 175, 80, 0.05);
+}
+
+/* Color palette and buttons */
+.color-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 2px solid #ddd;
+    cursor: pointer;
+    padding: 0;
+    margin: 0;
+}
+.color-btn.active {
+    border-color: #333;
+    box-shadow: 0 0 0 2px white, 0 0 0 4px #666;
+}
+
+/* Stroke visibility controls */
+.stroke-visibility-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+    padding: 8px;
+    background-color: white;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    position: relative;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.stroke-visibility-item:hover {
+    background-color: #f0f8ff;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+}
+.stroke-visibility-item[data-selected="true"] {
+    background-color: #e6f7ff;
+    border-left: 3px solid #4CAF50;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 6px rgba(76, 175, 80, 0.2);
+}
+
+/* Sidebars */
+.stroke-sidebar {
+    width: 220px;
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background: #f5f5f5;
+    padding: 0;
+    border-radius: 4px;
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    cursor: move;
+    z-index: 100;
+}
+.image-sidebar {
+    width: 220px;
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: #f5f5f5;
+    padding: 0;
+    border-radius: 4px;
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    cursor: move;
+    z-index: 100;
+}
+
+/* Drawing mode toggle styling */
+#drawingModeToggle.straight-mode {
+    background-color: #e8f5e9;
+}
+#drawingModeToggle.straight-mode::before {
+    border-radius: 0;
+}
+
+/* Dropdown styles that need to remain */
+.scale-dropdown:hover .dropdown-content {
+    display: block;
+}
+.scale-option.active {
+    background-color: #4CAF50;
+    color: white;
+}
+
+/* Measurement dialog styles */
+.measurement-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.measurement-dialog {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    width: 400px;
+    max-width: 90%;
+}
+
+.measurement-dialog h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 18px;
+    color: #333;
+}
+
+.measurement-dialog-inputs {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.inch-container, .cm-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.inch-inputs {
+    display: flex;
+    gap: 5px;
+}
+
+.button-container {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.button-container button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.button-container button:first-child {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.button-container button:last-child {
+    background-color: #f1f1f1;
+    color: #333;
+}
+
+/* Status message styling */
+#statusMessage {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 12px 20px;
+    background-color: rgba(0, 0, 0, 0.8);
+    color: white;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+#statusMessage.visible {
+    opacity: 1;
+} 

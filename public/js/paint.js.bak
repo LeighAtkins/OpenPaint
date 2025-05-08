@@ -4,30 +4,13 @@ window.currentImageLabel = 'front';
 window.vectorStrokesByImage = {};
 window.strokeVisibilityByImage = {};
 window.strokeLabelVisibility = {};
-window.strokeMeasurements = {}; // This variable should be accessible globally
+window.strokeMeasurements = {};
 window.imageScaleByLabel = {};
 window.imagePositionByLabel = {};
-window.lineStrokesByImage = {}; // <--- NOTE: This should now be global due to previous fix
-window.labelsByImage = {};      // <--- NOTE: This should now be global due to previous fix
+lineStrokesByImage = {}; // <--- NOTE: This should now be global due to previous fix
+labelsByImage = {};      // <--- NOTE: This should now be global due to previous fix
 window.originalImages = {};
-window.imageTags = {};          // <--- NEW: Store image tags
 window.isLoadingProject = false; // <-- Re-adding this line
-window.folderStructure = {      // <--- NEW: Add folder structure support
-    "root": {
-        id: "root",
-        name: "Root",
-        type: "folder",
-        parentId: null,
-        children: []
-    }
-};
-// Add counters for each image label type to ensure uniqueness
-window.labelCounters = {
-    front: 0,
-    side: 0,
-    back: 0,
-    cushion: 0
-};
 
 document.addEventListener('DOMContentLoaded', () => {
     // Initialize unit selectors
@@ -120,6 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let isDrawingOrPasting = false;  // Flag to prevent saving states while drawing
     let strokeInProgress = false;  // Track if we're in the middle of a stroke
     let currentStroke = null;  // Store the state before current stroke
+    let imageScaleByLabel = {}; // Track scale factor for each image (default 1.0 = 100%)
     let originalImageDimensions = {}; // Store original image dimensions for scaling
     let imagePositionByLabel = {}; // Track position offset for each image
     let isShiftPressed = false; // Track if Shift key is pressed for image movement
@@ -135,7 +119,7 @@ document.addEventListener('DOMContentLoaded', () => {
         redoStackByImage[label] = [];  // Initialize redo stack
         imageStates[label] = null;
         // Initialize scale to 100% (1.0)
-        window.imageScaleByLabel[label] = 1.0;
+        imageScaleByLabel[label] = 1.0;
         originalImageDimensions[label] = { width: 0, height: 0 };
         // Initialize position offset to center (0, 0)
         imagePositionByLabel[label] = { x: 0, y: 0 };
@@ -153,7 +137,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Make addImageToSidebar available globally for the project manager
     window.addImageToSidebar = addImageToSidebar;
-    function addImageToSidebar(imageUrl, label, filename) {
+    function addImageToSidebar(imageUrl, label) {
         // *** ADDED LOG ***
         console.log(`[addImageToSidebar] Called for label: ${label}, imageUrl: ${imageUrl ? imageUrl.substring(0,30) + '...' : 'null'}`);
 
@@ -162,92 +146,66 @@ document.addEventListener('DOMContentLoaded', () => {
         container.dataset.label = label;
         container.dataset.originalImageUrl = imageUrl; // Store the original image URL for later restoration
         
-        // Display the tag-based filename if available, otherwise display the label
-        // MODIFIED: Use getTagBasedFilename immediately if available
-        let displayName = label.split('_')[0]; // Default fallback
-        // if (typeof window.getTagBasedFilename === 'function') {
-        //     const tagBasedName = window.getTagBasedFilename(label, displayName); // Use default as fallback
-        //     if (tagBasedName) {
-        //         displayName = tagBasedName;
-        //     }
-        // }
-        
-        // Create image label (name display)
         const labelElement = document.createElement('div');
         labelElement.className = 'image-label';
-        labelElement.textContent = displayName.charAt(0).toUpperCase() + displayName.slice(1);
+        labelElement.textContent = label.charAt(0).toUpperCase() + label.slice(1);
         
-        // Create tags container
-        const tagsContainer = document.createElement('div');
-        tagsContainer.className = 'image-tags';
-        tagsContainer.dataset.label = label;
-        
-        // Add edit tags button
-        const editTagsButton = document.createElement('button');
-        editTagsButton.className = 'edit-tags-button';
-        editTagsButton.textContent = 'Edit Tags';
-        editTagsButton.addEventListener('click', (e) => {
-            e.stopPropagation(); // Prevent container click
-            
-            // Show tag dialog
-            if (window.showTagDialogForImage) {
-                window.showTagDialogForImage(label);
-            } else {
-                console.error('[addImageToSidebar] showTagDialogForImage function not found!');
-            }
-        });
-        
-        // Add click handler to tags container to edit tags
-        tagsContainer.addEventListener('click', (e) => {
-            e.stopPropagation(); // Prevent container click
-            
-            // Show tag dialog
-            if (window.showTagDialogForImage) {
-                window.showTagDialogForImage(label);
-            } else {
-                console.error('[addImageToSidebar] showTagDialogForImage function not found!');
-            }
-        });
-        
-        // Create stroke count display
         const strokesElement = document.createElement('div');
         strokesElement.className = 'image-strokes';
         strokesElement.textContent = 'Strokes: 0';
         
-        // Create scale display
         const scaleElement = document.createElement('div');
         scaleElement.className = 'image-scale';
+        scaleElement.textContent = `Scale: ${Math.round(imageScaleByLabel[label] * 100)}%`;
         scaleElement.id = `scale-${label}`;
         
-        // Create the image element
         const img = document.createElement('img');
         img.src = imageUrl;
         img.className = 'pasted-image';
         img.alt = `${label} view`;
         
-        // Add all elements to container
         container.appendChild(img);
         container.appendChild(labelElement);
-        container.appendChild(tagsContainer); // Add tags container
         container.appendChild(strokesElement);
         container.appendChild(scaleElement);
-        container.appendChild(editTagsButton); // Add edit tags button
         
-        // Set up click handler for switching images
         container.onclick = () => {
-            // Store current state before switching
-            saveState();
+            // ... rest of the handler
+            
+            console.log(`Switching from ${currentImageLabel} to ${label}`);
+            
+            // Ensure we have undo stacks for both workspaces
+            undoStackByImage[currentImageLabel] = undoStackByImage[currentImageLabel] || [];
+            undoStackByImage[label] = undoStackByImage[label] || [];
+            
+            // Ensure we have redo stacks for both workspaces
+            redoStackByImage[currentImageLabel] = redoStackByImage[currentImageLabel] || [];
+            redoStackByImage[label] = redoStackByImage[label] || [];
+            
+            // Ensure we have stroke lists for both workspaces
+            lineStrokesByImage[currentImageLabel] = lineStrokesByImage[currentImageLabel] || [];
+            lineStrokesByImage[label] = lineStrokesByImage[label] || [];
+            
+            // Ensure we have stroke visibility for both workspaces
+            strokeVisibilityByImage[currentImageLabel] = strokeVisibilityByImage[currentImageLabel] || {};
+            strokeVisibilityByImage[label] = strokeVisibilityByImage[label] || {};
+            
+            // Save current state before switching
+            saveState(true, false);
             
             // Switch to the new image
             switchToImage(label);
         };
         
-        // Finally add to the sidebar
-        document.getElementById('imageList').appendChild(container);
-        console.log(`[addImageToSidebar] Successfully appended container for ${label}. #imageList children: ${document.getElementById('imageList').children.length}`);
-        
-        // Update the stroke count
-        updateSidebarStrokeCounts();
+        // *** ADDED LOGS ***
+        const imageListElement = document.getElementById('imageList');
+        if (!imageListElement) {
+            console.error('[addImageToSidebar] Cannot find #imageList element!');
+            return; // Stop if the target doesn't exist
+        }
+        console.log(`[addImageToSidebar] About to append container for ${label} to #imageList.`);
+        imageListElement.appendChild(container);
+        console.log(`[addImageToSidebar] Successfully appended container for ${label}. #imageList children: ${imageListElement.childElementCount}`);
     }
     
 
@@ -283,7 +241,7 @@ document.addEventListener('DOMContentLoaded', () => {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
             // Apply current scale factor
-                const scale = window.imageScaleByLabel[label] || 1.0; // Use passed-in label
+                const scale = imageScaleByLabel[label] || 1.0; // Use passed-in label
             const scaledWidth = img.width * scale;
             const scaledHeight = img.height * scale;
             
@@ -396,34 +354,20 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.putImageData(state, 0, 0);
     }
     
+    // Measurement data for strokes
+    let strokeMeasurements = {};
+    
     // Initialize measurement data store
     IMAGE_LABELS.forEach(label => {
-        if (!window.strokeMeasurements[label]) {
-            window.strokeMeasurements[label] = {};
-        }
+        strokeMeasurements[label] = {};
     });
     
     // Function to get formatted measurement string
     function getMeasurementString(strokeLabel) {
-        // Add detailed logging
-        console.log(`[getMeasurementString] Called for ${strokeLabel} in ${currentImageLabel} view`);
-        
-        // Check if we have measurements for this image
-        if (!window.strokeMeasurements[currentImageLabel]) {
-            console.log(`[getMeasurementString] No measurements found for ${currentImageLabel}`);
-            return '';
-        }
-        
-        const measurement = window.strokeMeasurements[currentImageLabel][strokeLabel];
-        console.log(`[getMeasurementString] Measurement data for ${strokeLabel}:`, measurement);
-        
-        if (!measurement) {
-            console.log(`[getMeasurementString] No measurement found for ${strokeLabel}`);
-            return '';
-        }
+        const measurement = strokeMeasurements[currentImageLabel]?.[strokeLabel];
+        if (!measurement) return '';
         
         const unit = document.getElementById('unitSelector').value;
-        console.log(`[getMeasurementString] Current unit: ${unit}`);
         
         if (unit === 'inch') {
             const whole = measurement.inchWhole || 0;
@@ -444,14 +388,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 fractionStr = ' ' + fractionMap[fraction];
             }
             
-            const result = `${whole}${fractionStr}"`;
-            console.log(`[getMeasurementString] Returning inch format: ${result}`);
-            return result;
+            return `${whole}${fractionStr}"`;
         } else {
             // CM with one decimal
-            const result = `${measurement.cm.toFixed(1)} cm`;
-            console.log(`[getMeasurementString] Returning cm format: ${result}`);
-            return result;
+            return `${measurement.cm.toFixed(1)} cm`;
         }
     }
     
@@ -533,10 +473,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Make updateStrokeVisibilityControls available globally
     window.updateStrokeVisibilityControls = updateStrokeVisibilityControls;
     function updateStrokeVisibilityControls() {
-        // IMPORTANT: Debug the current state of measurements
-        console.log('[updateStrokeVisibilityControls] START - Current window.strokeMeasurements:',
-            JSON.stringify(window.strokeMeasurements[currentImageLabel]));
-        
         const controlsContainer = document.getElementById('strokeVisibilityControls');
         controlsContainer.innerHTML = ''; // Clear existing controls
         
@@ -570,10 +506,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // Current unit
         const unit = document.getElementById('unitSelector').value;
         
-        // Preserve existing stroke measurements before processing strokes
-        const existingMeasurements = window.strokeMeasurements[currentImageLabel] || {};
-        console.log('[updateStrokeVisibilityControls] Existing measurements:', JSON.stringify(existingMeasurements));
-        
         // Create visibility toggle for each stroke
         strokes.forEach(strokeLabel => {
             // Initialize visibility if not set
@@ -593,44 +525,15 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             // Initialize measurement if not set
-            if (window.strokeMeasurements[currentImageLabel] === undefined) {
-                window.strokeMeasurements[currentImageLabel] = {};
-                console.log(`[updateStrokeVisibilityControls] Initializing empty measurements for ${currentImageLabel}`);
+            if (strokeMeasurements[currentImageLabel] === undefined) {
+                strokeMeasurements[currentImageLabel] = {};
             }
-            
-            // ENHANCED preservation code: Check if measurement exists in the existing measurements
-            if (existingMeasurements[strokeLabel]) {
-                const existingMeasurement = existingMeasurements[strokeLabel];
-                // More detailed check for valid measurement data
-                if (existingMeasurement.inchWhole !== undefined || 
-                    existingMeasurement.inchFraction !== undefined || 
-                    existingMeasurement.cm !== undefined) {
-                    
-                    // Use the existing measurement from before this function was called
-                    console.log(`[updateStrokeVisibilityControls] PRESERVING existing measurement for ${strokeLabel}:`, 
-                        JSON.stringify(existingMeasurement));
-                    
-                    // Ensure we're not losing data by making a deep copy
-                    window.strokeMeasurements[currentImageLabel][strokeLabel] = JSON.parse(JSON.stringify(existingMeasurement));
-                    
-                    // Log successful preservation
-                    console.log(`[updateStrokeVisibilityControls] ✓ Successfully preserved measurement for ${strokeLabel}`);
-                } else {
-                    console.log(`[updateStrokeVisibilityControls] Found incomplete measurement for ${strokeLabel}:`, 
-                        JSON.stringify(existingMeasurement));
-                }
-            }
-            // Only set default if no measurement exists at all
-            else if (window.strokeMeasurements[currentImageLabel][strokeLabel] === undefined) {
-                window.strokeMeasurements[currentImageLabel][strokeLabel] = {
+            if (strokeMeasurements[currentImageLabel][strokeLabel] === undefined) {
+                strokeMeasurements[currentImageLabel][strokeLabel] = {
                     inchWhole: 0,
                     inchFraction: 0,
                     cm: 0.0
                 };
-                console.log(`[updateStrokeVisibilityControls] Setting default measurement for ${strokeLabel}`);
-            } else {
-                console.log(`[updateStrokeVisibilityControls] Using existing measurement for ${strokeLabel}:`, 
-                    JSON.stringify(window.strokeMeasurements[currentImageLabel][strokeLabel]));
             }
             
             const isVisible = strokeVisibilityByImage[currentImageLabel][strokeLabel];
@@ -767,7 +670,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const measureText = document.createElement('span');
             measureText.className = 'stroke-measurement';
             measureText.textContent = measurement ? `= ${measurement}` : '';
-            console.log(`[updateStrokeVisibilityControls] Setting measurement text for ${strokeLabel}: "${measureText.textContent}"`);
             
             // Create edit button
             const editBtn = document.createElement('button');
@@ -776,23 +678,7 @@ document.addEventListener('DOMContentLoaded', () => {
             editBtn.title = 'Edit Stroke';
             editBtn.onclick = (e) => {
                 e.stopPropagation(); // Prevent triggering the item's click event
-                showStrokeEditDialog(strokeLabel, {
-                    showNameField: true,
-                    title: `Edit Stroke ${strokeLabel}`
-                });
-            };
-            
-            // Create measurement button 
-            const measureBtn = document.createElement('button');
-            measureBtn.className = 'stroke-measure-btn';
-            measureBtn.innerHTML = '📏';
-            measureBtn.title = 'Edit Measurement';
-            measureBtn.onclick = (e) => {
-                e.stopPropagation(); // Prevent triggering the item's click event
-                showStrokeEditDialog(strokeLabel, {
-                    showNameField: false,
-                    title: `Edit Measurement for ${strokeLabel}`
-                });
+                showEditDialog(strokeLabel);
             };
             
             // Create label toggle button
@@ -810,7 +696,6 @@ document.addEventListener('DOMContentLoaded', () => {
             labelContainer.appendChild(strokeName);
             labelContainer.appendChild(measureText);
             labelContainer.appendChild(labelToggleBtn);
-            labelContainer.appendChild(measureBtn); // Add the new measurement button
             labelContainer.appendChild(editBtn);
             
             // Build the complete item
@@ -853,18 +738,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const dialog = document.createElement('div');
         dialog.className = 'measurement-dialog';
         
-        console.log(`[showMeasurementDialog] Opening for ${strokeLabel} in ${currentImageLabel} view`);
-        console.log(`[showMeasurementDialog] Current window.strokeMeasurements:`, 
-            JSON.stringify(window.strokeMeasurements[currentImageLabel]));
-        
         // Get current measurement
-        const measurement = window.strokeMeasurements[currentImageLabel]?.[strokeLabel] || {
+        const measurement = strokeMeasurements[currentImageLabel][strokeLabel] || {
             inchWhole: 0,
             inchFraction: 0,
             cm: 0.0
         };
-        
-        console.log(`[showMeasurementDialog] Using measurement:`, measurement);
         
         // Title
         const title = document.createElement('h3');
@@ -969,37 +848,24 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             // Update the measurement
-            if (window.strokeMeasurements[currentImageLabel] === undefined) {
-                window.strokeMeasurements[currentImageLabel] = {};
+            if (strokeMeasurements[currentImageLabel] === undefined) {
+                strokeMeasurements[currentImageLabel] = {};
             }
             
-            // Add debug log before saving the measurement
-            console.log(`[showMeasurementDialog] Saving measurement for ${strokeLabel} in ${currentImageLabel}:`, {
-                inchWhole: finalInchWhole,
-                inchFraction: finalInchFraction,
-                cm: finalCmValue
-            });
-            
-            // Save only to window.strokeMeasurements
-            window.strokeMeasurements[currentImageLabel][strokeLabel] = {
+            strokeMeasurements[currentImageLabel][strokeLabel] = {
                 inchWhole: finalInchWhole,
                 inchFraction: finalInchFraction,
                 cm: finalCmValue
             };
             
-            // Add debug log to verify global state after saving
-            console.log(`[showMeasurementDialog] Verification - window.strokeMeasurements[${currentImageLabel}]:`, 
-                JSON.stringify(window.strokeMeasurements[currentImageLabel]));
-            
             // Close dialog
             document.body.removeChild(overlay);
             
-            // Update the UI to reflect changes
-            redrawCanvasWithVisibility();
+            // Update the UI
             updateStrokeVisibilityControls();
             
-            // Save state to ensure measurement is preserved (important!)
-            saveState(true, false, true);
+            // Redraw with the new measurement
+            redrawCanvasWithVisibility();
         };
         
         const cancelButton = document.createElement('button');
@@ -1032,16 +898,8 @@ document.addEventListener('DOMContentLoaded', () => {
         return closestFraction;
     }
     
-    // Unified function that combines measurement and stroke name editing
-    function showStrokeEditDialog(strokeLabel, options = {}) {
-        // Default options
-        const config = {
-            showNameField: true,
-            title: `Edit Stroke ${strokeLabel}`,
-            onSave: null,  // Optional callback
-            ...options
-        };
-        
+    // Function to show edit dialog for a stroke
+    function showEditDialog(strokeLabel) {
         // Create a modal overlay
         const overlay = document.createElement('div');
         overlay.className = 'measurement-overlay';
@@ -1052,24 +910,18 @@ document.addEventListener('DOMContentLoaded', () => {
         dialog.className = 'measurement-dialog';
         
         // Get current measurements
-        const measurement = window.strokeMeasurements[currentImageLabel]?.[strokeLabel] || {
+        const measurement = strokeMeasurements[currentImageLabel][strokeLabel] || {
             inchWhole: 0,
             inchFraction: 0,
             cm: 0.0
         };
         
-        console.log(`[showStrokeEditDialog] Opening for ${strokeLabel} in ${currentImageLabel} view`);
-        console.log(`[showStrokeEditDialog] Current window.strokeMeasurements:`, 
-            JSON.stringify(window.strokeMeasurements[currentImageLabel]));
-        
         // Title
         const title = document.createElement('h3');
-        title.textContent = config.title;
+        title.textContent = `Edit Stroke ${strokeLabel}`;
         dialog.appendChild(title);
         
-        // Create name edit field (if enabled)
-        let nameInput = null;
-        if (config.showNameField) {
+        // Create name edit field
         const nameContainer = document.createElement('div');
         nameContainer.className = 'name-container';
         
@@ -1077,14 +929,13 @@ document.addEventListener('DOMContentLoaded', () => {
         nameLabel.textContent = 'Label:';
         nameContainer.appendChild(nameLabel);
         
-            nameInput = document.createElement('input');
+        const nameInput = document.createElement('input');
         nameInput.type = 'text';
         nameInput.value = strokeLabel;
         nameInput.placeholder = 'Label';
         nameContainer.appendChild(nameInput);
         
         dialog.appendChild(nameContainer);
-        }
         
         // Measurement inputs
         const inputsContainer = document.createElement('div');
@@ -1188,30 +1039,14 @@ document.addEventListener('DOMContentLoaded', () => {
         saveButton.textContent = 'Save';
         saveButton.onclick = () => {
             // Get values
-            const newName = nameInput ? nameInput.value.trim() : strokeLabel;
+            const newName = nameInput.value.trim();
             const wholeValue = parseInt(wholeInput.value) || 0;
             const fractionValue = parseFloat(fractionSelect.value) || 0;
             const cmValue = parseFloat(cmInput.value) || 0;
             
-            // Determine which unit was changed last and use that value
-            const currentUnit = document.getElementById('unitSelector').value;
-            let finalCmValue, finalInchWhole, finalInchFraction;
-            
-            if (currentUnit === 'inch') {
-                finalInchWhole = wholeValue;
-                finalInchFraction = fractionValue;
-                finalCmValue = convertUnits('inch', wholeValue + fractionValue);
-            } else {
-                finalCmValue = cmValue;
-                // Calculate inch equivalent
-                const inches = convertUnits('cm', cmValue);
-                finalInchWhole = Math.floor(inches);
-                finalInchFraction = findClosestFraction(inches - finalInchWhole);
-            }
-            
-            // Update name if changed and name field is shown
+            // Update name if changed
             let finalName = strokeLabel;
-            if (config.showNameField && newName !== strokeLabel && newName !== '') {
+            if (newName !== strokeLabel && newName !== '') {
                 // The unique name generation is handled inside renameStroke
                 finalName = renameStroke(strokeLabel, newName);
                 
@@ -1241,35 +1076,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
             
-            // Ensure window.strokeMeasurements is properly initialized
-            if (!window.strokeMeasurements[currentImageLabel]) {
-                window.strokeMeasurements[currentImageLabel] = {};
-            }
-            
-            // Save measurements
-            window.strokeMeasurements[currentImageLabel][finalName] = {
-                inchWhole: finalInchWhole,
-                inchFraction: finalInchFraction,
-                cm: finalCmValue
+            // Always save both units
+            strokeMeasurements[currentImageLabel][finalName] = {
+                inchWhole: wholeValue,
+                inchFraction: fractionValue,
+                cm: cmValue
             };
-            
-            console.log(`[showStrokeEditDialog] Saved measurement for ${finalName}:`, 
-                window.strokeMeasurements[currentImageLabel][finalName]);
-            
-            // Call optional callback
-            if (typeof config.onSave === 'function') {
-                config.onSave(finalName);
-            }
             
             // Close dialog
             document.body.removeChild(overlay);
             
-            // Update UI and redraw
+            // Update UI
             updateStrokeVisibilityControls();
-            redrawCanvasWithVisibility();
             
-            // Save state to ensure measurements are preserved
-            saveState(true, false, true);
+            // Redraw to show updated measurements
+            redrawCanvasWithVisibility();
         };
         
         const cancelButton = document.createElement('button');
@@ -1283,24 +1104,6 @@ document.addEventListener('DOMContentLoaded', () => {
         dialog.appendChild(buttonContainer);
         
         overlay.appendChild(dialog);
-    }
-    
-    // Function to show edit dialog for a stroke (DEPRECATED - use showStrokeEditDialog)
-    function showEditDialog(strokeLabel) {
-        console.log('[DEPRECATED] showEditDialog is deprecated, use showStrokeEditDialog instead');
-        return showStrokeEditDialog(strokeLabel, {
-            showNameField: true,
-            title: `Edit Stroke ${strokeLabel}`
-        });
-    }
-    
-    // Function to display a measurement edit dialog (DEPRECATED - use showStrokeEditDialog)
-    function showMeasurementDialog(strokeLabel) {
-        console.log('[DEPRECATED] showMeasurementDialog is deprecated, use showStrokeEditDialog instead');
-        return showStrokeEditDialog(strokeLabel, {
-            showNameField: false,
-            title: `Edit Measurement for ${strokeLabel}`
-        });
     }
     
     // Function to generate a unique stroke name
@@ -1572,29 +1375,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // Create a copy of custom label positions for tracking which ones were actually used
         const usedCustomPositions = {};
         
-        // Get current scale and position from stored values
-        const scale = window.imageScaleByLabel[currentImageLabel] || 1.0;
-        console.log(`[redrawCanvasWithVisibility] Using scale=${scale} for ${currentImageLabel}`);
-        
-        // Double-check scale against UI for consistency
-        const scaleEl = document.getElementById('scaleButton');
-        if (scaleEl) {
-            const scaleText = scaleEl.textContent;
-            const scaleMatch = scaleText.match(/Scale: (\d+)%/);
-            if (scaleMatch && scaleMatch[1]) {
-                const uiScale = parseInt(scaleMatch[1]) / 100;
-                console.log(`[redrawCanvasWithVisibility] UI shows scale=${uiScale} for ${currentImageLabel}`);
-                if (uiScale !== scale) {
-                    console.warn(`[redrawCanvasWithVisibility] WARNING: Scale mismatch! Variable: ${scale}, UI: ${uiScale}`);
-                    // Don't automatically update as that would create infinite loop with updateScale
-                    // Just warn about the inconsistency
-                }
-            }
-        }
-        
-        const position = imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
-        console.log(`[redrawCanvasWithVisibility] Using position: x=${position.x}, y=${position.y} for ${currentImageLabel}`);
-        
         // We need to rebuild the canvas from scratch using individual stroke data
         const strokes = lineStrokesByImage[currentImageLabel] || [];
         
@@ -1605,58 +1385,30 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (imageCache[imageUrl]) {
                 // Use cached image immediately
-                const img = imageCache[imageUrl];
-                
-                // Calculate center of canvas for positioning
-                const centerX = (canvas.width - img.width * scale) / 2;
-                const centerY = (canvas.height - img.height * scale) / 2;
-                
-                // Get final position with offset
-                const imageX = centerX + position.x;
-                const imageY = centerY + position.y;
-                
-                drawImageAndStrokes(img, scale, imageX, imageY);
+                drawImageAndStrokes(imageCache[imageUrl]);
             } else {
                 // Load the image and cache it
                 const img = new Image();
                 img.onload = () => {
                     // Add to cache
                     imageCache[imageUrl] = img;
-                    
-                    // Calculate center of canvas for positioning
-                    const centerX = (canvas.width - img.width * scale) / 2;
-                    const centerY = (canvas.height - img.height * scale) / 2;
-                    
-                    // Get final position with offset
-                    const imageX = centerX + position.x;
-                    const imageY = centerY + position.y;
-                    
-                    drawImageAndStrokes(img, scale, imageX, imageY);
+                    drawImageAndStrokes(img);
                 };
                 img.src = imageUrl;
                 
                 // If the image is already cached in the browser, it might be immediately available
                 if (img.complete) {
                     imageCache[imageUrl] = img;
-                    
-                    // Calculate center of canvas for positioning
-                    const centerX = (canvas.width - img.width * scale) / 2;
-                    const centerY = (canvas.height - img.height * scale) / 2;
-                    
-                    // Get final position with offset
-                    const imageX = centerX + position.x;
-                    const imageY = centerY + position.y;
-                    
-                    drawImageAndStrokes(img, scale, imageX, imageY);
+                    drawImageAndStrokes(img);
                 } else {
                     // If the image isn't immediately available,
                     // still draw the strokes on a blank canvas so they don't disappear
                     ctx.clearRect(0, 0, canvas.width, canvas.height);
                     
-                    // Use default scale and center position when no image is available yet
+                    // Use default scale (1) and center position when no image is available yet
                     const canvasCenterX = canvas.width / 2;
                     const canvasCenterY = canvas.height / 2;
-                    applyVisibleStrokes(scale, canvasCenterX + position.x, canvasCenterY + position.y);
+                    applyVisibleStrokes(1, canvasCenterX, canvasCenterY);
                 }
             }
         } else {
@@ -1665,77 +1417,62 @@ document.addEventListener('DOMContentLoaded', () => {
             ctx.fillStyle = 'white'; // Add white background fill
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             
-            // Use default scale and center position when no image
+            // Use default scale (1) and center position when no image
             const canvasCenterX = canvas.width / 2;
             const canvasCenterY = canvas.height / 2;
             
-            // Apply the position offset to the center coordinates
+            // Get the current scale and position for the blank canvas state
+            const scale = imageScaleByLabel[currentImageLabel] || 1.0;
+            const position = imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
+            
+            // The imageX, imageY for a blank canvas should be the center + offset
             const imageX = canvasCenterX + position.x;
             const imageY = canvasCenterY + position.y;
             
             applyVisibleStrokes(scale, imageX, imageY);
         }
-    }
         
-    // Function to draw the image and apply strokes
-    function drawImageAndStrokes(img, scale, imageX, imageY) {
-        console.log(`[drawImageAndStrokes] Called with scale=${scale}`);
-        console.log(`[drawImageAndStrokes] Current window.imageScaleByLabel[${currentImageLabel}] = ${window.imageScaleByLabel[currentImageLabel]}`);
-        
-        // CRITICAL FIX: Ensure scale parameter matches the global scale value
-        if (scale !== window.imageScaleByLabel[currentImageLabel]) {
-            console.error(`[drawImageAndStrokes] CRITICAL SCALE MISMATCH! Parameter scale=${scale} but global scale=${window.imageScaleByLabel[currentImageLabel]}. Fixing...`);
-            scale = window.imageScaleByLabel[currentImageLabel]; // Use the global scale value always
+        function drawImageAndStrokes(img) {
+            // Clear only once
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            // Recalculate image position based on correct scale
-            const centerX = (canvas.width - img.width * scale) / 2;
-            const centerY = (canvas.height - img.height * scale) / 2;
-            const position = imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
-            imageX = centerX + position.x;
-            imageY = centerY + position.y;
-        }
-        
-        // Clear the canvas
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
-        // Get dimensions
-        const imgWidth = img.width;
-        const imgHeight = img.height;
-        
-        // Calculate scaled dimensions
-        const scaledWidth = imgWidth * scale;
-        const scaledHeight = imgHeight * scale;
+            // Apply scale
+            const scale = imageScaleByLabel[currentImageLabel];
+            const scaledWidth = img.width * scale;
+            const scaledHeight = img.height * scale;
+            
+            // Calculate base position (center of canvas)
+            const centerX = (canvas.width - scaledWidth) / 2;
+            const centerY = (canvas.height - scaledHeight) / 2;
+            
+            // Apply position offset
+            const positionOffset = imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 }; // Ensure offset exists
+            const offsetX = positionOffset.x;
+            const offsetY = positionOffset.y;
+            
+            // Calculate final position
+            const x = centerX + offsetX;
+            const y = centerY + offsetY;
+
+            // *** ADDED LOGGING ***
+            // console.log(`drawImageAndStrokes Calculation:
+            //   canvas.width=${canvas.width}, img.width=${img.width}, scaledWidth=${scaledWidth}
+            //   scale=${scale}, centerX=${centerX}, offsetX=${offsetX}, final imageX (passed to applyVisibleStrokes)=${x}`);
+            // *** END LOGGING ***
             
             // Draw the image with scaling and positioning
-        ctx.drawImage(img, imageX, imageY, scaledWidth, scaledHeight);
+            ctx.drawImage(img, x, y, scaledWidth, scaledHeight);
             
-        // Apply visible strokes
-        applyVisibleStrokes(scale, imageX, imageY);
+            // Then apply visible strokes
+            applyVisibleStrokes(scale, x, y);
         }
         
-    // Function to apply visible strokes - moved outside redrawCanvasWithVisibility to be globally accessible
         function applyVisibleStrokes(scale, imageX, imageY) {
-            console.log(`\n--- applyVisibleStrokes ---`); // ADDED LOG
-            console.log(`  Target Label: ${currentImageLabel}`); // ADDED LOG
-            console.log(`  Scale: ${scale}, ImageX: ${imageX}, ImageY: ${imageY}`); // ADDED LOG
-        console.log(`[applyVisibleStrokes] Current window.imageScaleByLabel[${currentImageLabel}] = ${window.imageScaleByLabel[currentImageLabel]}`);
-        
-        // CRITICAL FIX: Ensure scale parameter matches the global scale value
-        if (scale !== window.imageScaleByLabel[currentImageLabel]) {
-            console.error(`[applyVisibleStrokes] CRITICAL SCALE MISMATCH! Parameter scale=${scale} but global scale=${window.imageScaleByLabel[currentImageLabel]}. Fixing...`);
-            scale = window.imageScaleByLabel[currentImageLabel]; // Use the global scale value always
-        }
-        
+            console.log(`\nApplying strokes with scale=${scale}, imageX=${imageX}, imageY=${imageY}`);
             // Apply each visible stroke using vector data if available
             const strokes = vectorStrokesByImage[currentImageLabel] || {};
             const strokeOrder = lineStrokesByImage[currentImageLabel] || [];
             const visibility = strokeVisibilityByImage[currentImageLabel] || {};
-
-            // *** ADDED LOGGING ***
-            console.log(`  Stroke Order (${strokeOrder.length}): [${strokeOrder.join(', ')}]`);
-            console.log(`  Vector Strokes Available (${Object.keys(strokes).length}):`, Object.keys(strokes));
-            console.log(`  Visibility States:`, JSON.stringify(visibility));
-            // *** END LOGGING ***
 
             // Get the current image dimensions and scale
             let imageWidth = canvas.width;
@@ -1769,27 +1506,13 @@ document.addEventListener('DOMContentLoaded', () => {
             // Retrieve the correct stroke data for the current image
             strokeOrder.forEach((strokeLabel) => {
                 const isVisible = visibility[strokeLabel];
-                // *** ADDED LOGGING ***
-                console.log(`\n  Processing Stroke: ${strokeLabel}`);
-                console.log(`    Is Visible? ${isVisible}`);
-                // *** END LOGGING ***
-
                 if (!isVisible) return; // Skip invisible strokes
                 
                     const vectorData = strokes[strokeLabel];
-                // *** ADDED LOGGING ***
-                if (!vectorData) {
-                    console.warn(`    Vector data MISSING for ${strokeLabel}! Skipping draw.`);
-                    return;
-                } 
-                if (!vectorData.points || vectorData.points.length === 0) {
-                    console.warn(`    Vector data for ${strokeLabel} has NO POINTS! Skipping draw.`);
-                    return;
-                }
-                console.log(`    Vector Data Found: ${vectorData.points.length} points, type: ${vectorData.type}, color: ${vectorData.color}, width: ${vectorData.width}`);
-                // *** END LOGGING ***
-
+                if (!vectorData || !vectorData.points || vectorData.points.length === 0) return;
+                
                 console.log(`\nDrawing stroke ${strokeLabel}:`);
+                // console.log('Original points (relative to image):', JSON.stringify(vectorData.points));
                 console.log(`Using scale: ${scale}, imageX: ${imageX}, imageY: ${imageY}`);
                             
                             // Transform the first point
@@ -2068,6 +1791,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Save the now-combined state
             const newState = getCanvasState();
             imageStates[currentImageLabel] = cloneImageData(newState);
+        }
     }
 
     function cloneImageData(imageData) {
@@ -2078,25 +1802,9 @@ document.addEventListener('DOMContentLoaded', () => {
         );
     }
 
-    function saveState(force = false, incrementLabel = true, updateStrokeList = true, isDrawingOrPasting = false, strokeInProgress = false) {
-        console.log('[Save State Called]', 'force='+force, 'incrementLabel='+incrementLabel, 'updateStrokeList='+updateStrokeList, 'isDrawingOrPasting='+isDrawingOrPasting, 'strokeInProgress='+strokeInProgress);
-        
-        // Log current state of measurements to verify they're captured
-        console.log(`[saveState] Current strokeMeasurements for ${currentImageLabel}:`, 
-            JSON.stringify(window.strokeMeasurements[currentImageLabel]));
-            
-        // Track current scale and position to ensure they're preserved
-        if (window.imageScaleByLabel && window.imageScaleByLabel[currentImageLabel] !== undefined) {
-            console.log(`[saveState] Current scale for ${currentImageLabel}: ${window.imageScaleByLabel[currentImageLabel]}`);
-        } else {
-            console.warn(`[saveState] No scale found for ${currentImageLabel}!`);
-        }
-        
-        if (window.imagePositionByLabel && window.imagePositionByLabel[currentImageLabel]) {
-            console.log(`[saveState] Current position for ${currentImageLabel}: x=${window.imagePositionByLabel[currentImageLabel].x}, y=${window.imagePositionByLabel[currentImageLabel].y}`);
-        } else {
-            console.warn(`[saveState] No position found for ${currentImageLabel}!`);
-        }
+    function saveState(force = false, incrementLabel = true, updateStrokeList = true) {
+        // *** ADDED LOG ***
+        console.log(`[Save State Called] force=${force}, incrementLabel=${incrementLabel}, updateStrokeList=${updateStrokeList}, isDrawingOrPasting=${isDrawingOrPasting}, strokeInProgress=${strokeInProgress}`);
 
         // Get current state
         const currentState = getCanvasState();
@@ -2393,7 +2101,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     ctx.clearRect(0, 0, canvas.width, canvas.height);
                     
                     // Get the current scale
-                    const scale = window.imageScaleByLabel[currentImageLabel];
+                    const scale = imageScaleByLabel[currentImageLabel];
                     const scaledWidth = img.width * scale;
                     const scaledHeight = img.height * scale;
                     
@@ -2565,7 +2273,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         ctx.clearRect(0, 0, canvas.width, canvas.height);
                         
                         // Get the current scale
-                        const scale = window.imageScaleByLabel[currentImageLabel];
+                        const scale = imageScaleByLabel[currentImageLabel];
                         const scaledWidth = img.width * scale;
                         const scaledHeight = img.height * scale;
                         
@@ -2614,7 +2322,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Helper function to get transformed coordinates (image space from canvas space)
     function getTransformedCoords(canvasX, canvasY) {
-        const scale = window.imageScaleByLabel[currentImageLabel] || 1;
+        const scale = imageScaleByLabel[currentImageLabel] || 1;
         const position = imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
         
         // Calculate the image position on canvas (CORRECTED LOGIC)
@@ -2685,7 +2393,7 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log(`--- getCanvasCoords Called (Label Anchor?) ---`);
         console.log(`  Input Relative Coords: x=${imageX_relative}, y=${imageY_relative}`);
 
-        const scale = window.imageScaleByLabel[currentImageLabel] || 1;
+        const scale = imageScaleByLabel[currentImageLabel] || 1;
         const position = imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
         console.log(`  Using: scale=${scale}, position=`, position);
 
@@ -2745,33 +2453,34 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Drawing function for freehand mode
-    function draw(e) {
+    function draw(e, canvasX, canvasY) {
         if (!isDrawing) return;
         
-        const canvasX = e.offsetX;
-        const canvasY = e.offsetY;
+        // Use the provided coordinates or fall back to e.offsetX/Y if using older event handling
+        const x = canvasX !== undefined ? canvasX : e.offsetX;
+        const y = canvasY !== undefined ? canvasY : e.offsetY;
 
         // Get image coordinates for storing in the points array
         // This transforms from canvas coordinates to image-relative coordinates
-        const { x: imgX, y: imgY } = getTransformedCoords(canvasX, canvasY);
+        const { x: imgX, y: imgY } = getTransformedCoords(x, y);
 
         // *** Add Log Here ***
-        console.log(`Draw Move: Canvas(${canvasX}, ${canvasY}) -> Image(${imgX.toFixed(1)}, ${imgY.toFixed(1)})`);
+        console.log(`Draw Move: Canvas(${x}, ${y}) -> Image(${imgX.toFixed(1)}, ${imgY.toFixed(1)})`);
 
         // Calculate time delta for velocity
         const currentPoint = {
             x: imgX,    // Store image-relative X
             y: imgY,    // Store image-relative Y
-            canvasX: canvasX, // Store canvas X for drawing
-            canvasY: canvasY, // Store canvas Y for drawing
+            canvasX: x, // Store canvas X for drawing
+            canvasY: y, // Store canvas Y for drawing
             time: Date.now()
         };
         
-        console.log(`Adding point at canvas: (${canvasX}, ${canvasY}), image-relative: (${imgX}, ${imgY})`);
+        console.log(`Adding point at canvas: (${x}, ${y}), image-relative: (${imgX}, ${imgY})`);
         
         // Use the correct previous point for time delta calculations
         const prevPoint = points.length > 0 ? points[points.length - 1] : 
-                          { x: imgX, y: imgY, canvasX: lastX, canvasY: lastY, time: currentPoint.time - 10 };
+                        { x: imgX, y: imgY, canvasX: lastX, canvasY: lastY, time: currentPoint.time - 10 };
         const timeDelta = currentPoint.time - prevPoint.time || 1;
 
         // Calculate velocity (pixels per millisecond)
@@ -2789,40 +2498,31 @@ document.addEventListener('DOMContentLoaded', () => {
         // Calculate dynamic width based on velocity
         // Faster = thinner, slower = thicker, with limits
         const baseWidth = parseInt(brushSize.value);
-        const velocityFactor = Math.max(0.4, Math.min(1.2, 1 - smoothedVelocity * 0.1));
-        const scale = window.imageScaleByLabel[currentImageLabel] || 1.0;
-        const dynamicWidth = baseWidth * velocityFactor * scale;
-
-        // Add point to array
-        points.push(currentPoint);
-
-        // Always start from the last drawn point in canvas coordinates
-        ctx.beginPath();
         
-        // Use canvas coordinates directly for drawing
-        if (points.length === 1) {
-            // This is the first point after mousedown, draw from lastX/lastY
-            ctx.moveTo(lastX, lastY);
-            ctx.lineTo(canvasX, canvasY);
-        } else {
-            // We have multiple points
-            ctx.moveTo(prevPoint.canvasX, prevPoint.canvasY);
-            ctx.lineTo(canvasX, canvasY);
-        }
+        // Get the current scale to adjust width properly
+        const scale = imageScaleByLabel[currentImageLabel] || 1.0;
+        
+        // Scale the width by the image scale
+        const dynamicWidth = (baseWidth * scale) * (1 - smoothedVelocity * 1.5);
+        const minWidth = Math.max(1, baseWidth * scale * 0.5);
+        const maxWidth = baseWidth * scale * 1.2;
+        const finalWidth = Math.min(maxWidth, Math.max(minWidth, dynamicWidth));
 
-        // Set drawing styles
         ctx.strokeStyle = colorPicker.value;
-        ctx.lineWidth = dynamicWidth;
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        ctx.stroke();
-
-        // Update the last drawn point coordinates
-        lastX = canvasX;
-        lastY = canvasY;
+        ctx.lineWidth = finalWidth;
         
-        // Store vector data for the freehand stroke
-        // --- FIX: Use a temporary key for the stroke being drawn --- 
+        // Start a new path for this segment
+        ctx.beginPath();
+        ctx.moveTo(prevPoint.canvasX, prevPoint.canvasY);
+        ctx.lineTo(x, y);
+        ctx.stroke();
+        
+        // Save the point with transformed coordinates
+        points.push(currentPoint);
+        lastX = x;
+        lastY = y;
+
+        // ----- IMPROVEMENT: Store vector data continuously in _drawingStroke -----
         const tempStrokeKey = '_drawingStroke';
         
         // Initialize if needed
@@ -2830,27 +2530,22 @@ document.addEventListener('DOMContentLoaded', () => {
             vectorStrokesByImage[currentImageLabel] = {};
         }
         
-        // We already have image-relative coordinates from the getTransformedCoords call above
-        // Just use the current points array directly to build the vector data
-        // We only need the x, y coordinates (which are already image-relative)
-        const relativePoints = points.map(point => ({
-            x: point.x,  // Already image-relative X
-            y: point.y,  // Already image-relative Y
-            time: point.time
-        }));
-        
-        // Create or update the vector representation under the temporary key
         if (!vectorStrokesByImage[currentImageLabel][tempStrokeKey]) {
             vectorStrokesByImage[currentImageLabel][tempStrokeKey] = {
-                points: relativePoints,
+                points: [],
                 color: colorPicker.value,
-                width: baseWidth, // Store the base width without scaling
+                width: baseWidth, // Store base width without scaling
                 type: 'freehand'
             };
-        } else {
-            // Just update the points if the vector data already exists
-            vectorStrokesByImage[currentImageLabel][tempStrokeKey].points = relativePoints;
         }
+        
+        // Add the point to the vector data
+        vectorStrokesByImage[currentImageLabel][tempStrokeKey].points.push({
+            x: imgX,
+            y: imgY,
+            time: currentPoint.time
+        });
+        // ----- END IMPROVEMENT -----
     }
     
     // Function to draw straight line preview
@@ -2867,7 +2562,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Set drawing styles
         ctx.strokeStyle = colorPicker.value;
-        const scale = window.imageScaleByLabel[currentImageLabel] || 1.0;
+        const scale = imageScaleByLabel[currentImageLabel] || 1.0;
         ctx.lineWidth = parseInt(brushSize.value) * scale;
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
@@ -2917,8 +2612,10 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Mouse event listeners
     canvas.addEventListener('mousedown', (e) => {
-        const x = e.offsetX;
-        const y = e.offsetY;
+        // Get correct mouse coordinates relative to canvas with Tailwind styling
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
         
         // Check if clicked on a label
         const clickedLabel = findLabelAtPoint(x, y);
@@ -2987,7 +2684,7 @@ document.addEventListener('DOMContentLoaded', () => {
             [lastX, lastY] = [x, y];
             
             // Draw a glowing white connector circle at the start point
-            const scale = window.imageScaleByLabel[currentImageLabel] || 1.0; // Get scale
+            const scale = imageScaleByLabel[currentImageLabel] || 1.0; // Get scale
             const baseRadius = parseInt(brushSize.value) / 2;
             const scaledRadius = baseRadius * scale;
             const glowPadding = 5; // Keep glow padding fixed for now
@@ -3053,8 +2750,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Handle image dragging with Shift key
         if (isShiftPressed) {
             isDraggingImage = true;
-            lastMouseX = e.offsetX;
-            lastMouseY = e.offsetY;
+            lastMouseX = x;
+            lastMouseY = y;
             canvas.style.cursor = 'grabbing';
             return;
         }
@@ -3079,7 +2776,7 @@ document.addEventListener('DOMContentLoaded', () => {
         points = [];
         lastVelocity = 0;
         lastDrawnPoint = null;
-        [lastX, lastY] = [e.offsetX, e.offsetY];
+        [lastX, lastY] = [x, y];
         
         // --- FIX: Clear temporary drawing data --- 
         const tempStrokeKey = '_drawingStroke';
@@ -3091,32 +2788,34 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (drawingMode === 'straight') {
             // For straight line, just store the start point
-            straightLineStart = { x: e.offsetX, y: e.offsetY };
+            straightLineStart = { x: x, y: y };
         } else {
             // For freehand, add first point
-            const { x: imgX, y: imgY } = getTransformedCoords(e.offsetX, e.offsetY);
+            const { x: imgX, y: imgY } = getTransformedCoords(x, y);
             const firstPoint = {
                 x: imgX,             // Image space X
                 y: imgY,             // Image space Y
-                canvasX: e.offsetX,  // Canvas space X
-                canvasY: e.offsetY,  // Canvas space Y
+                canvasX: x,          // Canvas space X
+                canvasY: y,          // Canvas space Y
                 time: Date.now()
             };
             points.push(firstPoint);
         
             // Draw a dot at the start point (important for single clicks)
             ctx.beginPath();
-            const scale = window.imageScaleByLabel[currentImageLabel] || 1.0;
+            const scale = imageScaleByLabel[currentImageLabel] || 1.0;
             const dotRadius = parseInt(brushSize.value) * scale / 2;
-            ctx.arc(e.offsetX, e.offsetY, dotRadius, 0, Math.PI * 2);
+            ctx.arc(x, y, dotRadius, 0, Math.PI * 2);
             ctx.fillStyle = colorPicker.value;
             ctx.fill();
         }
-    });
+    }
     
-    canvas.addEventListener('mousemove', (e) => {
-        const x = e.offsetX;
-        const y = e.offsetY;
+    canvas.addEventListener('mousemove', function(e) {
+        // Get correct mouse coordinates relative to canvas with Tailwind styling
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
         
         // Change cursor when hovering over labels
         if (!isDraggingLabel && !isDraggingImage && !isDrawing) {
@@ -3126,8 +2825,8 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Handle label dragging
         if (isDraggingLabel) {
-            const currentX = e.offsetX;
-            const currentY = e.offsetY;
+            const currentX = x;
+            const currentY = y;
 
             // Calculate canvas delta from the last position
             const deltaX = currentX - dragStartX;
@@ -3190,34 +2889,31 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         if (isDraggingImage) {
-            // Calculate the distance moved
-            const deltaX = e.offsetX - lastMouseX;
-            const deltaY = e.offsetY - lastMouseY;
+            const deltaX = x - lastMouseX;
+            const deltaY = y - lastMouseY;
+            lastMouseX = x;
+            lastMouseY = y;
             
-            // Update last positions
-            lastMouseX = e.offsetX;
-            lastMouseY = e.offsetY;
-            
-            // Move the image
             moveImage(deltaX, deltaY);
             return;
         }
         
-        // Handle drawing based on mode
-        if (isDrawing) {
-            if (drawingMode === 'straight') {
-                // For straight line, just draw a preview
-                if (straightLineStart) {
-                    const endPoint = { x: e.offsetX, y: e.offsetY };
-                    drawStraightLinePreview(straightLineStart, endPoint);
-                }
-            } else {
-                // Normal freehand drawing
-            draw(e);
+        if (!isDrawing) return;
+        
+        if (drawingMode === 'straight' && straightLineStart) {
+            // Handle straight line preview
+            // restore the original state
+            if (currentStroke) {
+                restoreCanvasState(currentStroke);
             }
+            // draw the preview line
+            drawStraightLinePreview(straightLineStart, { x: x, y: y });
+        } else if (drawingMode === 'freehand') {
+            // Handle freehand drawing
+            draw(e, x, y);
         }
     });
-    
+
     canvas.addEventListener('mouseup', (e) => {
         if (isDraggingLabel) {
             isDraggingLabel = false;
@@ -3236,24 +2932,24 @@ document.addEventListener('DOMContentLoaded', () => {
             // For straight line, finalize the line
             if (drawingMode === 'straight' && straightLineStart) {
                 const endPoint = { x: e.offsetX, y: e.offsetY };
-
+                
                 // Only save the line if the start and end points are different
-                if (Math.abs(straightLineStart.x - endPoint.x) > 2 ||
+                if (Math.abs(straightLineStart.x - endPoint.x) > 2 || 
                     Math.abs(straightLineStart.y - endPoint.y) > 2) {
-
+                    
                     // Check if end point is on another stroke
                     const endPointStrokeData = checkForStrokeAtPoint(endPoint.x, endPoint.y);
-
+                    
                     // --- MODIFIED: Store vector data temporarily ---
                     const tempStrokeKey = '_drawingStroke';
                     const strokeColor = colorPicker.value;
                     const strokeWidth = parseInt(brushSize.value);
-
+                    
                     // Initialize if needed
                     if (!vectorStrokesByImage[currentImageLabel]) {
                         vectorStrokesByImage[currentImageLabel] = {};
                     }
-
+                    
                     // Get transformed coordinates
                     const startTransformed = getTransformedCoords(straightLineStart.x, straightLineStart.y);
                     const endTransformed = getTransformedCoords(endPoint.x, endPoint.y);
@@ -3280,17 +2976,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     // vectorStrokesByImage[currentImageLabel][newStrokeLabel] = { ... };
                     // --- END REMOVAL ---
 
-
+                    
                     // Draw the final line
                     drawStraightLinePreview(straightLineStart, endPoint);
-
+                    
                     // If end point overlaps with another line, draw a glowing circle
                     if (endPointStrokeData) {
                        // ... (glowing circle drawing code remains the same) ...
                         ctx.beginPath();
                         // Use scaled radius + fixed padding for glow circle
                         ctx.arc(endPoint.x, endPoint.y, scaledRadius + glowPadding, 0, Math.PI * 2);
-
+                        
                         // Create a white glow effect with a radial gradient using scaled radii
                         const gradient = ctx.createRadialGradient(
                             endPoint.x, endPoint.y, scaledRadius / 2, // Inner radius (scaled)
@@ -3299,10 +2995,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         gradient.addColorStop(0, 'white');
                         gradient.addColorStop(0.7, 'rgba(255, 255, 255, 0.8)');
                         gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
-
+                        
                         ctx.fillStyle = gradient;
                         ctx.fill();
-
+                        
                         // Then draw the colored dot for the actual end point
                         ctx.beginPath();
                         ctx.arc(endPoint.x, endPoint.y, scaledRadius, 0, Math.PI * 2);
@@ -3310,7 +3006,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         ctx.fill();
                     }
                 }
-
+                
                 // Reset straight line start
                 straightLineStart = null;
             } else if (drawingMode === 'freehand' && points.length > 0) {
@@ -3323,18 +3019,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 const newStrokeLabel = labelsByImage[currentImageLabel]; // <<< PROBLEM
                 const strokeColor = colorPicker.value;
                 const strokeWidth = parseInt(brushSize.value);
-
+                
                 if (!vectorStrokesByImage[currentImageLabel]) {
                     vectorStrokesByImage[currentImageLabel] = {};
                 }
-
+                
                 if (points.length > 1) {
                     const relativePoints = points.map(point => ({
                         x: point.x,
                         y: point.y,
                         time: point.time
                     }));
-
+                    
                     console.log(`Completing stroke with ${relativePoints.length} points`);
                     console.log(`First point: (${relativePoints[0].x}, ${relativePoints[0].y})`);
                     console.log(`Last point: (${relativePoints[relativePoints.length-1].x}, ${relativePoints[relativePoints.length-1].y})`);
@@ -3350,65 +3046,65 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 */
                 // --- END REMOVAL ---
-
-                // Check if the last point of the freehand stroke is on another stroke
-                if (points.length > 0) {
+                
+                    // Check if the last point of the freehand stroke is on another stroke
+                    if (points.length > 0) {
                    // ... (glowing circle drawing code remains the same) ...
-                    const lastPoint = points[points.length - 1];
+                        const lastPoint = points[points.length - 1];
                     // Need canvas coords for check
                     const endPointStrokeData = checkForStrokeAtPoint(lastPoint.canvasX, lastPoint.canvasY);
-
-                    // If end point overlaps with another line, draw a glowing circle
-                    if (endPointStrokeData) {
-                        const scale = window.imageScaleByLabel[currentImageLabel] || 1.0;
+                        
+                        // If end point overlaps with another line, draw a glowing circle
+                        if (endPointStrokeData) {
+                        const scale = imageScaleByLabel[currentImageLabel] || 1.0;
                         const baseRadius = parseInt(brushSize.value) / 2;
                         const scaledRadius = baseRadius * scale;
                         const glowPadding = 5; // Keep glow padding fixed
 
-                        ctx.beginPath();
+                            ctx.beginPath();
                         // Use scaled radius + padding for glow circle
                         ctx.arc(lastPoint.canvasX, lastPoint.canvasY, scaledRadius + glowPadding, 0, Math.PI * 2);
-
+                            
                         // Create a white glow effect with a radial gradient using scaled radii
-                        const gradient = ctx.createRadialGradient(
+                            const gradient = ctx.createRadialGradient(
                             lastPoint.canvasX, lastPoint.canvasY, scaledRadius / 2, // Inner radius (scaled)
                             lastPoint.canvasX, lastPoint.canvasY, scaledRadius + glowPadding // Outer radius (scaled + padding)
-                        );
-                        gradient.addColorStop(0, 'white');
-                        gradient.addColorStop(0.7, 'rgba(255, 255, 255, 0.8)');
-                        gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
-
-                        ctx.fillStyle = gradient;
-                        ctx.fill();
-
-                        // Then draw the colored dot for the actual end point
-                        ctx.beginPath();
+                            );
+                            gradient.addColorStop(0, 'white');
+                            gradient.addColorStop(0.7, 'rgba(255, 255, 255, 0.8)');
+                            gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+                            
+                            ctx.fillStyle = gradient;
+                            ctx.fill();
+                            
+                            // Then draw the colored dot for the actual end point
+                            ctx.beginPath();
                         ctx.arc(lastPoint.canvasX, lastPoint.canvasY, scaledRadius, 0, Math.PI * 2);
-                        ctx.fillStyle = colorPicker.value;
-                        ctx.fill();
+                            ctx.fillStyle = colorPicker.value;
+                            ctx.fill();
+                        }
                     }
-                }
-
+                
                 // Reset points array for next stroke
                 points = [];
                 lastVelocity = 0;
                 lastDrawnPoint = null;
             }
-
+            
             isDrawing = false;
             isDrawingOrPasting = false;
             strokeInProgress = false;
-
+            
             // Make sure the current state is captured
             const finalState = getCanvasState();
-
+            
             // Save state immediately after stroke completion and increment label
             // saveState will handle moving data from _drawingStroke to the correct unique label
             saveState(true, true);
-
+            
             // Update the sidebar visibility controls
             updateStrokeVisibilityControls();
-
+            
             // Force redraw to show labels immediately
             redrawCanvasWithVisibility();
         }
@@ -3473,103 +3169,49 @@ document.addEventListener('DOMContentLoaded', () => {
     // Make switchToImage available globally
     window.switchToImage = switchToImage;
     function switchToImage(label) {
-        if (currentImageLabel === label && !window.isLoadingProject) { // Allow forcing a switch during project load
-            console.log(`[switchToImage] Already on ${label}, no switch needed unless loading project.`);
-            // Even if not switching, ensure UI is consistent if forced by project load
-            if (window.isLoadingProject) {
-                updateActiveImageInSidebar();
-                updateStrokeCounter();
-                updateStrokeVisibilityControls();
-                updateScaleUI();
-                redrawCanvasWithVisibility(); // Explicit redraw might be needed
-            }
-            return;
-        }
+        if (currentImageLabel === label) return;
         
         console.log(`Switching from ${currentImageLabel} to ${label}`);
         
-        // Save current state before switching (if not loading, during load state is managed by project-manager)
-        if (!window.isLoadingProject) {
-            const currentStrokes = [...(lineStrokesByImage[currentImageLabel] || [])];
-            const currentState = getCanvasState();
-            undoStackByImage[currentImageLabel].push({
-                state: cloneImageData(currentState),
-                type: 'snapshot',
-                strokes: currentStrokes
-            });
-        }
+        // Save current state before switching
+        const currentStrokes = [...(lineStrokesByImage[currentImageLabel] || [])];
+        const currentState = getCanvasState();
+        
+        // Create a snapshot state that includes the strokes list
+        undoStackByImage[currentImageLabel].push({
+            state: cloneImageData(currentState),
+            type: 'snapshot',
+            strokes: currentStrokes
+        });
         
         // Update current image label
         currentImageLabel = label;
         
-        // Ensure we have properly initialized position and scale for this label
-        if (window.imageScaleByLabel[label] === undefined) {
-            console.log(`[switchToImage] No scale found for ${label}, initializing to default scale (1.0)`);
-            window.imageScaleByLabel[label] = 1.0; // Default scale
-        } else {
-            console.log(`[switchToImage] Using scale ${window.imageScaleByLabel[label]} for ${label}`);
-        }
-        
-        if (!imagePositionByLabel[label]) {
-            console.log(`[switchToImage] No position found for ${label}, initializing to default position (0,0)`);
-            imagePositionByLabel[label] = { x: 0, y: 0 }; // Default position
-        } else {
-            console.log(`[switchToImage] Using position (${imagePositionByLabel[label].x}, ${imagePositionByLabel[label].y}) for ${label}`);
-        }
-        
         // Restore state for the new image
         if (imageStates[label]) {
-            // *** MODIFICATION START: Revert to simple state restoration ***
-            console.log(`[switchToImage] Found existing state for ${label}, restoring directly.`);
             restoreCanvasState(imageStates[label]);
-            
-            // UI Updates after restoring state
-            updateActiveImageInSidebar();
-            updateStrokeCounter();
-            updateStrokeVisibilityControls(); 
-            updateScaleUI();
-            // Explicit redraw AFTER restoring state and UI updates
-            console.log(`[switchToImage] Explicitly calling redraw after restoring state for ${label}`);
+            console.log(`Restored cached state for ${label}`);
+            // Ensure we redraw with visibility to show strokes and labels correctly
             redrawCanvasWithVisibility();
-            // *** MODIFICATION END ***
-
         } else if (window.originalImages[label]) {
+            // If no state exists but we have the original image, paste it
             console.log(`No state exists for ${label}, pasting original image: ${window.originalImages[label].substring(0, 30)}...`);
-            pasteImageFromUrl(window.originalImages[label], label)
-                .then(() => {
-                    console.log(`[switchToImage] pasteImageFromUrl COMPLETED for ${label}. Now updating UI.`);
-                    // Update UI elements first
-                    updateActiveImageInSidebar();
-                    updateStrokeCounter();
-                    updateStrokeVisibilityControls();
-                    updateScaleUI(); 
-                    // Explicitly redraw AFTER all UI updates and state changes triggered by them
-                    console.log(`[switchToImage] Explicitly calling final redraw for ${label}`);
-                    redrawCanvasWithVisibility(); 
-                })
-                .catch(err => {
-                    console.error(`[switchToImage] Error during pasteImageFromUrl for ${label}:`, err);
-                    // Fallback UI updates even on error
-                    updateActiveImageInSidebar();
-                    updateStrokeCounter();
-                    updateStrokeVisibilityControls();
-                    updateScaleUI();
-                });
+            pasteImageFromUrl(window.originalImages[label], label);
         } else {
+            // Clear canvas if no state or original image exists
             console.log(`No state or image found for ${label}, clearing canvas`);
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            // UI Updates for blank canvas
-            updateActiveImageInSidebar();
-            updateStrokeCounter();
-            updateStrokeVisibilityControls();
-            updateScaleUI(); // This calls redrawCanvasWithVisibility (will draw strokes on blank)
+            // Still do a redraw to ensure any strokes are shown
+            redrawCanvasWithVisibility();
         }
         
-        // REMOVED: General UI updates at the end, as they are now handled in each branch.
-        // updateActiveImageInSidebar();
-        // updateStrokeCounter();
-        // updateStrokeVisibilityControls();
-        // updateScaleUI();
+        // Update UI
+        updateActiveImageInSidebar();
+        updateStrokeCounter();
+        updateStrokeVisibilityControls();
+        
+        // Update scale UI to reflect the current image's scale
+        updateScaleUI();
     }
     
     function updateActiveImageInSidebar() {
@@ -3688,7 +3330,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 
                 // Get the current scale
-                const scale = window.imageScaleByLabel[currentImageLabel];
+                const scale = imageScaleByLabel[currentImageLabel];
                 const scaledWidth = img.width * scale;
                 const scaledHeight = img.height * scale;
                 
@@ -3768,11 +3410,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Create filename using project name, view, and unit
         // Replace spaces with underscores
         const sanitizedName = projectName.replace(/\s+/g, '_');
-        
-        // Get the base label without the unique identifier for a friendlier filename
-        const baseLabel = currentImageLabel.split('_')[0];
-        
-        const filename = `${sanitizedName}_${baseLabel}_${unit}.png`;
+        const filename = `${sanitizedName}_${currentImageLabel}_${unit}.png`;
         
         const link = document.createElement('a');
         link.download = filename;
@@ -3783,114 +3421,189 @@ document.addEventListener('DOMContentLoaded', () => {
     // Determine the best label for an image based on its filename
     function getLabelFromFilename(filename) {
         filename = filename.toLowerCase();
-        let baseLabel = '';
         
         if (filename.includes('front')) {
-            baseLabel = 'front';
+            return 'front';
         } else if (filename.includes('side')) {
-            baseLabel = 'side';
+            return 'side';
         } else if (filename.includes('back')) {
-            baseLabel = 'back';
+            return 'back';
         } else if (filename.includes('cushion')) {
-            baseLabel = 'cushion';
+            return 'cushion';
         } else {
             // If no matching keywords, find next available label
             for (const label of IMAGE_LABELS) {
-                baseLabel = label;
-                break;
+                if (!window.originalImages[label]) {
+                    return label;
+                }
             }
-            if (!baseLabel) baseLabel = IMAGE_LABELS[0]; // Default to front if all are taken
+            return IMAGE_LABELS[0]; // Default to front if all are taken
         }
-        
-        // Increment the counter for this label type
-        window.labelCounters[baseLabel] = (window.labelCounters[baseLabel] || 0) + 1;
-        
-        // Create a unique label by appending the counter
-        const uniqueLabel = `${baseLabel}_${window.labelCounters[baseLabel]}`;
-        console.log(`Created unique label: ${uniqueLabel} from filename: ${filename}`);
-        
-        return uniqueLabel;
     }
     
     // Handle file drop
     const handleFiles = (files) => {
-        console.log('[handleFiles] Processing files:', files); // Add log
+        // Convert FileList to Array for easier manipulation
         const fileArray = Array.from(files);
+        
+        // Sort files to prioritize ones with matching keywords
         const sortedFiles = fileArray.sort((a, b) => {
             const aName = a.name.toLowerCase();
             const bName = b.name.toLowerCase();
+            
+            // Define priority order for keywords
             const keywordOrder = ['front', 'side', 'back', 'cushion'];
+            
+            // Find the first keyword that matches for each file
             const aKeyword = keywordOrder.find(keyword => aName.includes(keyword)) || '';
             const bKeyword = keywordOrder.find(keyword => bName.includes(keyword)) || '';
+            
+            // Get the index of each keyword
             const aIndex = keywordOrder.indexOf(aKeyword);
             const bIndex = keywordOrder.indexOf(bKeyword);
-            if (aIndex >= 0 && bIndex >= 0) return aIndex - bIndex;
+            
+            // Sort by keyword index (if both have matching keywords)
+            if (aIndex >= 0 && bIndex >= 0) {
+                return aIndex - bIndex;
+            }
+            
+            // Prioritize files with matching keywords
             if (aIndex >= 0) return -1;
             if (bIndex >= 0) return 1;
+            
+            // Sort alphabetically for files without matching keywords
             return aName.localeCompare(bName);
         });
         
-        let firstImageLabel = null;
-        const loadPromises = [];
-
-        sortedFiles.forEach((file, index) => {
+        // Process each file
+        sortedFiles.forEach(file => {
             if (file.type.indexOf('image') !== -1) {
-                console.log(`[handleFiles] Processing image file: ${file.name}`); // Add log
                 const url = URL.createObjectURL(file);
-                const label = getLabelFromFilename(file.name); // This now generates unique labels like 'front_1', 'front_2'
-                const filename = file.name.replace(/\.[^/.]+$/, "");
-
-                if (index === 0) {
-                    firstImageLabel = label; 
+                const label = getLabelFromFilename(file.name);
+                
+                console.log(`Processing file ${file.name} as ${label}`);
+                
+                // Add to sidebar (replace existing if the label is already taken)
+                const existingContainer = document.querySelector(`.image-container[data-label="${label}"]`);
+                if (existingContainer) {
+                    existingContainer.remove();
                 }
-
-                // Initialize structures for the new unique label
-                initializeNewImageStructures(label); // Ensures all necessary states are ready
-
-                let displayName = filename;
-                if (window.getTagBasedFilename && typeof window.getTagBasedFilename === 'function') {
-                    displayName = window.getTagBasedFilename(label, filename);
+                
+                addImageToSidebar(url, label);
+                
+                // Store the image URL
+                if (!pastedImages.includes(url)) {
+                    pastedImages.push(url);
                 }
-                console.log(`[handleFiles] Adding to sidebar: URL created for ${file.name}, label=${label}, displayName=${displayName}`);
-
-                addImageToSidebar(url, label, displayName);
-                if (!pastedImages.includes(url)) pastedImages.push(url);
                 window.originalImages[label] = url;
                 
-                // No need to initialize imageStates, undoStackByImage etc. here as initializeNewImageStructures handles it
-
-                const promise = pasteImageFromUrl(url, label)
-                    .catch(err => {
-                        console.error(`[handleFiles] Error loading image ${label} via pasteImageFromUrl:`, err);
-                    });
-                loadPromises.push(promise);
-            } else {
-                console.log(`[handleFiles] Skipping non-image file: ${file.name}`);
+                // Clear any previous state for this label
+                imageStates[label] = null;
+                undoStackByImage[label] = [];
+                lineStrokesByImage[label] = [];
+                labelsByImage[label] = 'A1';
+                
+                // If this is the first image, switch to it and paste it
+                if (pastedImages.length === 1 || label === 'front') {
+                    currentImageLabel = label;
+                    pasteImageFromUrl(url, label);
+                }
             }
         });
-
-        Promise.all(loadPromises)
-            .then(() => {
-                console.log('[handleFiles] All image processing promises resolved.');
-                if (firstImageLabel) {
-                    console.log(`[handleFiles] Switching to first image: ${firstImageLabel}`);
-                    // REMOVED: currentImageLabel = firstImageLabel; 
-                    switchToImage(firstImageLabel); // switchToImage will handle setting currentImageLabel
-                } else {
-                    console.log('[handleFiles] No first image label identified, or no image files were processed.');
-                    // If no images were processed, still ensure UI is consistent
-                    redrawCanvasWithVisibility();
+        
+        // Update UI
         updateStrokeCounter();
         updateSidebarStrokeCounts();
         updateActiveImageInSidebar();
         updateStrokeVisibilityControls();
-                    updateScaleUI();
-                }
-            })
-            .catch(err => {
-                console.error('[handleFiles] Error processing one or more images:', err);
+    };
+    
+    // Set up drag and drop events
+    const setupDragAndDrop = () => {
+        const dropZone = canvas;
+        
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dropZone.classList.add('drag-over');
+        });
+        
+        dropZone.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dropZone.classList.remove('drag-over');
+        });
+        
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dropZone.classList.remove('drag-over');
+            
+            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                handleFiles(e.dataTransfer.files);
+            }
         });
     };
+    
+    // Initialize drag and drop
+    setupDragAndDrop();
+    
+    // Handle paste from clipboard
+    document.addEventListener('paste', (e) => {
+        const items = e.clipboardData.items;
+        for (let item of items) {
+            if (item.type.indexOf('image') !== -1) {
+                const blob = item.getAsFile();
+                const url = URL.createObjectURL(blob);
+                
+                // Assign to the first available label
+                let label;
+                for (const availableLabel of IMAGE_LABELS) {
+                    if (!window.originalImages[availableLabel]) {
+                        label = availableLabel;
+                        break;
+                    }
+                }
+                
+                // If all labels are taken, use the current label
+                if (!label) {
+                    label = currentImageLabel;
+                }
+                
+                // Add to sidebar
+                const existingContainer = document.querySelector(`.image-container[data-label="${label}"]`);
+                if (existingContainer) {
+                    existingContainer.remove();
+                }
+                
+                addImageToSidebar(url, label);
+                
+                // Store the image URL
+                if (!pastedImages.includes(url)) {
+                    pastedImages.push(url);
+                }
+                window.originalImages[label] = url;
+                
+                // Switch to this image and paste it
+                currentImageLabel = label;
+                
+                // Clear any previous state for this label
+                imageStates[label] = null;
+                undoStackByImage[label] = [];
+                lineStrokesByImage[label] = [];
+                labelsByImage[label] = 'A1';
+                
+                // Paste the image
+                pasteImageFromUrl(url, label);
+                
+                // Update UI
+                updateStrokeCounter();
+                updateSidebarStrokeCounts();
+                updateActiveImageInSidebar();
+                updateStrokeVisibilityControls();
+            }
+        }
+    });
     
     // Handle paste button click
     pasteButton.addEventListener('click', () => {
@@ -3921,7 +3634,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         
         // Add active class to the current scale button
-        const currentScale = window.imageScaleByLabel[currentImageLabel];
+        const currentScale = imageScaleByLabel[currentImageLabel];
         const activeButton = document.querySelector(`.scale-btn[data-scale="${currentScale}"]`);
         if (activeButton) {
             activeButton.classList.add('active');
@@ -3930,31 +3643,28 @@ document.addEventListener('DOMContentLoaded', () => {
     
     function updateImageScale(newScale) {
         // Update scale for current image
-        const oldScale = window.imageScaleByLabel[currentImageLabel];
-        console.log(`[updateImageScale] Changing scale for ${currentImageLabel} from ${oldScale} to ${newScale}`);
-        
-        // Store the old scale for potential restoration on error
-        const previousScale = oldScale;
-        
-        // Update the scale in the global tracking object
-        window.imageScaleByLabel[currentImageLabel] = newScale;
-        
-        // Update UI to reflect the new scale BEFORE redrawing
-        updateScaleUI();
+        const oldScale = imageScaleByLabel[currentImageLabel];
+        imageScaleByLabel[currentImageLabel] = newScale;
         
             // Save current state before redrawing
-        saveState(true, false, false);
-        
-        // Redraw the canvas (image and/or strokes)
-        try {
-            redrawCanvasWithVisibility();
-        } catch (error) {
-            console.error('[updateImageScale] Error during redraw:', error);
+            const previousState = getCanvasState();
+            undoStackByImage[currentImageLabel].push({
+                state: cloneImageData(previousState),
+                type: 'scale',
+                label: null
+            });
             
-            // Restore previous scale on error
-            window.imageScaleByLabel[currentImageLabel] = previousScale;
-            updateScaleUI();
-        }
+        // Redraw the canvas (image and/or strokes) with the new scale
+            redrawCanvasWithVisibility();
+            
+        // Update the scale display in the sidebar (if the element exists)
+            const scaleElement = document.getElementById(`scale-${currentImageLabel}`);
+            if (scaleElement) {
+            scaleElement.textContent = `Scale: ${Math.round(newScale * 100)}%`;
+            }
+            
+            // Update UI
+            updateScaleButtonsActiveState();
     }
     
     // Initialize scale option click handlers
@@ -3963,7 +3673,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const scale = parseFloat(option.dataset.scale);
             if (!isNaN(scale)) {
                 updateImageScale(scale);
-                // No need to update button text here as it's handled by updateScaleUI in updateImageScale
+                // Update dropdown button text
+                const scaleButton = document.getElementById('scaleButton');
+                if (scaleButton) {
+                    scaleButton.textContent = `Scale: ${Math.round(scale * 100)}% ▼`;
+                }
             }
         });
     });
@@ -3993,8 +3707,13 @@ document.addEventListener('DOMContentLoaded', () => {
         imagePositionByLabel[currentImageLabel].x += deltaX;
         imagePositionByLabel[currentImageLabel].y += deltaY;
         
-        // Save current state before redrawing, using same pattern as updateImageScale
-        saveState(true, false, false);
+            // Save current state before moving
+            const currentState = getCanvasState();
+            undoStackByImage[currentImageLabel].push({
+                state: cloneImageData(currentState),
+                type: 'move',
+                label: null
+            });
             
         // Redraw the canvas (image and/or strokes) with updated position
             redrawCanvasWithVisibility();
@@ -4010,7 +3729,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Zoom controls
         if (e.key === 'q' || e.key === 'Q') {
             // Zoom out - find the next smaller scale
-            const currentScale = window.imageScaleByLabel[currentImageLabel];
+            const currentScale = imageScaleByLabel[currentImageLabel];
             const scales = [0.1, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 2];
             let nextScale = 0.1; // Minimum scale
             
@@ -4022,10 +3741,13 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             updateImageScale(nextScale);
-            // UI is now updated by updateImageScale
+            const scaleButton = document.getElementById('scaleButton');
+            if (scaleButton) {
+                scaleButton.textContent = `Scale: ${Math.round(nextScale * 100)}% ▼`;
+            }
         } else if (e.key === 'e' || e.key === 'E') {
             // Zoom in - find the next larger scale
-            const currentScale = window.imageScaleByLabel[currentImageLabel];
+            const currentScale = imageScaleByLabel[currentImageLabel];
             const scales = [0.1, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 2];
             let nextScale = 2; // Maximum scale
             
@@ -4037,7 +3759,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             updateImageScale(nextScale);
-            // UI is now updated by updateImageScale
+            const scaleButton = document.getElementById('scaleButton');
+            if (scaleButton) {
+                scaleButton.textContent = `Scale: ${Math.round(nextScale * 100)}% ▼`;
+            }
         }
         
         // Movement controls with inverted W/S as requested
@@ -4059,17 +3784,10 @@ document.addEventListener('DOMContentLoaded', () => {
         updateScaleButtonsActiveState();
         
         // Update dropdown button text
-        const scale = window.imageScaleByLabel[currentImageLabel] || 1.0;
+        const scale = imageScaleByLabel[currentImageLabel];
         const scaleButton = document.getElementById('scaleButton');
         if (scaleButton) {
             scaleButton.textContent = `Scale: ${Math.round(scale * 100)}% ▼`;
-        }
-        
-        // ADDED: Update the sidebar thumbnail scale display for the current image
-        const sidebarScaleElement = document.getElementById(`scale-${currentImageLabel}`);
-        if (sidebarScaleElement) {
-            sidebarScaleElement.textContent = `Scale: ${Math.round(scale * 100)}%`;
-            console.log(`[updateScaleUI] Updated sidebar scale display for ${currentImageLabel} to ${Math.round(scale * 100)}%`);
         }
     }
     
@@ -4118,58 +3836,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Make both sidebars draggable
     makeDraggable(strokeSidebar, strokeSidebarHeader);
     makeDraggable(imageSidebar, imageSidebarHeader);
-    
-    // DRAG AND DROP SETUP - MODIFIED TO USE DOCUMENT LISTENERS
-    function setupDragAndDrop() {
-        const docBody = document.body; // Target body or document for broader event capture
-
-        docBody.addEventListener('dragover', (e) => {
-            // Check if the target is the canvas or related to our app area
-            if (e.target === canvas || canvas.contains(e.target)) {
-                e.preventDefault();
-                e.stopPropagation();
-                canvas.classList.add('drag-over');
-                 console.log('[Drag and Drop] dragover event on canvas target.');
-            } else {
-                // If dragging over other parts of the document, ensure default is not prevented
-                // unless we specifically want to handle drops elsewhere. For now, only canvas.
-                canvas.classList.remove('drag-over'); // Ensure it's removed if not over canvas
-            }
-        });
-
-        docBody.addEventListener('dragleave', (e) => {
-            // Check if leaving the canvas area or a related child
-            if (e.target === canvas || canvas.contains(e.target) || !document.body.contains(e.relatedTarget) || !canvas.contains(e.relatedTarget)) {
-                e.preventDefault();
-                e.stopPropagation();
-                canvas.classList.remove('drag-over');
-                console.log('[Drag and Drop] dragleave event.');
-            }
-        });
-
-        docBody.addEventListener('drop', (e) => {
-            if (e.target === canvas || canvas.contains(e.target)) {
-                e.preventDefault();
-                e.stopPropagation();
-                canvas.classList.remove('drag-over');
-                console.log('[Drag and Drop] drop event on canvas target.');
-                
-                const files = e.dataTransfer.files;
-                if (files && files.length > 0) {
-                    console.log(`[Drag and Drop] ${files.length} files dropped.`);
-                    handleFiles(files);
-                } else {
-                    console.log('[Drag and Drop] No files found in drop event.');
-                }
-            } else {
-                 console.log('[Drag and Drop] drop event on non-canvas target, ignoring.');
-            }
-        });
-        console.log('[setupDragAndDrop] Drag and drop listeners initialized on document body, targeting canvas.');
-    }
-
-    // Call setupDragAndDrop on DOMContentLoaded
-    setupDragAndDrop();
     
     // Adjust canvas size when window resizes to account for sidebars
     window.addEventListener('resize', () => {
@@ -4425,7 +4091,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const strokes = lineStrokesByImage[currentImageLabel] || [];
         
         // Get current image scale and position for coordinate transforms
-        const scale = window.imageScaleByLabel[currentImageLabel] || 1;
+        const scale = imageScaleByLabel[currentImageLabel] || 1;
         
         // Calculate image position for coordinate transforms
         let imageWidth = canvas.width;
@@ -4568,150 +4234,4 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Initial saveState call that won't increment labels or add to stroke list
     saveState(false, false, false);
-
-    // IMPORTANT: We need to ensure the local strokeMeasurements is the same as window.strokeMeasurements
-    console.log('[DOMContentLoaded] Checking initial window.strokeMeasurements:', window.strokeMeasurements);
-    
-    // THIS IS THE FIX: Instead of creating a new variable, we're just referencing the window object
-    // There was a previous change to set strokeMeasurements = window.strokeMeasurements
-    // But it seems that code was not applied correctly
-    
-    // CHECK: Log the current values to verify they're equal
-    console.log('[DOMContentLoaded] Current window.strokeMeasurements keys:', 
-        Object.keys(window.strokeMeasurements));
-    
-    // Ensure all IMAGE_LABELS have an entry in strokeMeasurements
-    IMAGE_LABELS.forEach(label => {
-        if (!window.strokeMeasurements[label]) {
-            window.strokeMeasurements[label] = {};
-            console.log(`[DOMContentLoaded] Initialized empty measurements for ${label}`);
-        } else {
-            console.log(`[DOMContentLoaded] Found existing measurements for ${label}:`, 
-                JSON.stringify(window.strokeMeasurements[label]));
-        }
-    });
-
-    // Handle paste from clipboard
-    document.addEventListener('paste', (e) => {
-        console.log('[Paste Handler] Paste event triggered on document.'); // Log trigger
-        const items = e.clipboardData.items;
-        let imageFoundAndProcessed = false; // Flag to track if any image was processed in this event
-
-        for (let i = 0; i < items.length; i++) {
-            const item = items[i];
-            if (item.type.indexOf('image') !== -1) {
-                console.log(`[Paste Handler] Image item found at index ${i}. Type: ${item.type}`);
-                e.preventDefault(); 
-                e.stopPropagation();
-
-                const blob = item.getAsFile();
-                if (!blob) {
-                    console.error('[Paste Handler] Could not get file from clipboard item.');
-                    continue; 
-                }
-                const url = URL.createObjectURL(blob);
-                
-                // Generate a unique label for the new image
-                const baseLabelForPasted = currentImageLabel.split('_')[0] || 'image'; // Use current view's base
-                window.labelCounters[baseLabelForPasted] = (window.labelCounters[baseLabelForPasted] || 0) + 1;
-                const newImageLabel = `${baseLabelForPasted}_paste_${window.labelCounters[baseLabelForPasted]}`;
-                
-                console.log(`[Paste Handler] Assigned new unique label: ${newImageLabel}`);
-                
-                // Initialize all necessary structures for this new image
-                initializeNewImageStructures(newImageLabel);
-
-                let displayName = `Pasted ${baseLabelForPasted}`;
-                if (window.getTagBasedFilename && typeof window.getTagBasedFilename === 'function') {
-                    displayName = window.getTagBasedFilename(newImageLabel, displayName);
-                }
-                console.log(`[Paste Handler] Display name for ${newImageLabel}: ${displayName}`);
-                
-                addImageToSidebar(url, newImageLabel, displayName);
-                
-                if (!pastedImages.includes(url)) pastedImages.push(url);
-                window.originalImages[newImageLabel] = url;
-                
-                // pasteImageFromUrl will handle setting imageStates, undoStack, etc.
-                // and also drawing the image.
-                pasteImageFromUrl(url, newImageLabel).then(() => {
-                    console.log(`[Paste Handler] Successfully processed and displayed pasted image: ${newImageLabel}`);
-                    // It's important to switch to the newly pasted image if we want it to be active.
-                    // However, if pasting multiple, we might only want to switch to the first one.
-                    // For now, let's switch to each as it's processed.
-                    currentImageLabel = newImageLabel; 
-                    switchToImage(newImageLabel); // This will also update UI elements
-                }).catch(err => {
-                    console.error(`[Paste Handler] Error in pasteImageFromUrl for ${newImageLabel}:`, err);
-                });
-                
-                imageFoundAndProcessed = true;
-                // REMOVED THE BREAK STATEMENT TO ALLOW MULTIPLE IMAGE PASTING
-            }
-        }
-
-        if (!imageFoundAndProcessed) {
-            console.log('[Paste Handler] No image data found in clipboard items or failed to process.');
-        }
-    });
-
-    // Initialize new image structures for default labels
-    IMAGE_LABELS.forEach(label => {
-        initializeNewImageStructures(label);
-    });
-
-    // Initialize new image structures
-    function initializeNewImageStructures(label) {
-        // THIS FUNCTION NEEDS TO BE ROBUST
-        console.log(`[initializeNewImageStructures] Initializing for new label: ${label}`);
-        if (!window.imageScaleByLabel) window.imageScaleByLabel = {};
-        if (!window.imagePositionByLabel) window.imagePositionByLabel = {};
-        if (!window.lineStrokesByImage) window.lineStrokesByImage = {};
-        if (!window.vectorStrokesByImage) window.vectorStrokesByImage = {};
-        if (!window.strokeVisibilityByImage) window.strokeVisibilityByImage = {};
-        if (!window.strokeLabelVisibility) window.strokeLabelVisibility = {};
-        if (!window.labelsByImage) window.labelsByImage = {};
-        if (!window.undoStackByImage) window.undoStackByImage = {};
-        if (!window.redoStackByImage) window.redoStackByImage = {};
-        if (!window.imageStates) window.imageStates = {};
-        if (!window.originalImageDimensions) window.originalImageDimensions = {};
-        if (!window.imageTags) window.imageTags = {};
-        if (!window.customLabelPositions) window.customLabelPositions = {}; // Ensure this is initialized
-        if (!window.calculatedLabelOffsets) window.calculatedLabelOffsets = {}; // Ensure this is initialized
-
-        window.imageScaleByLabel[label] = 1.0;
-        window.imagePositionByLabel[label] = { x: 0, y: 0 };
-        window.lineStrokesByImage[label] = [];
-        window.vectorStrokesByImage[label] = {};
-        window.strokeVisibilityByImage[label] = {};
-        window.strokeLabelVisibility[label] = {};
-        window.labelsByImage[label] = 'A1'; // Default initial stroke label for a new image
-        window.undoStackByImage[label] = [];
-        window.redoStackByImage[label] = [];
-        window.imageStates[label] = null;
-        window.originalImageDimensions[label] = { width: 0, height: 0 };
-        window.customLabelPositions[label] = {}; // Initialize for the new label
-        window.calculatedLabelOffsets[label] = {}; // Initialize for the new label
-
-        // Initialize with default tags, robustly checking for TAG_MODEL
-        const baseViewType = label.split('_')[0]; // e.g., 'front' from 'front_1' or 'front' itself
-        let defaultViewTagId = 'front'; // Fallback default view type ID
-
-        if (window.TAG_MODEL && window.TAG_MODEL.viewType && window.TAG_MODEL.viewType.options && Array.isArray(window.TAG_MODEL.viewType.options)) {
-            const foundOption = window.TAG_MODEL.viewType.options.find(opt => opt.id === baseViewType || (opt.name && opt.name.toLowerCase() === baseViewType));
-            if (foundOption && foundOption.id) {
-                defaultViewTagId = foundOption.id;
-            } else {
-                console.warn(`[initializeNewImageStructures] Could not find a matching viewType ID for base '${baseViewType}' in TAG_MODEL. Defaulting to '${defaultViewTagId}'.`);
-            }
-        } else {
-            console.warn('[initializeNewImageStructures] window.TAG_MODEL.viewType.options not fully available for default tag initialization. Using basic defaults for viewType.');
-        }
-
-        window.imageTags[label] = {
-            furnitureType: 'sofa', // Default furniture type ID
-            viewType: defaultViewTagId
-        };
-        console.log(`[initializeNewImageStructures] Initialized tags for ${label}:`, JSON.stringify(window.imageTags[label]));
-    }
 });

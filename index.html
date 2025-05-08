@@ -305,7 +305,7 @@
             padding: 8px 12px;
             background-color: #4CAF50;
             color: white;
-            border: 1px solid #45a049;
+            border: 1px solid #43A047;
             border-radius: 4px;
             cursor: pointer;
             min-width: 110px;
@@ -587,6 +587,146 @@
         #drawingModeToggle.straight-mode::before {
             border-radius: 0;
         }
+        .tag-dialog {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #fff;
+            padding: 20px;
+            width: 80%;
+            max-width: 600px;
+            max-height: 80vh;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .tag-dialog-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+        }
+        .tag-dialog-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .tag-dialog-header h3 {
+            margin: 0;
+        }
+        .tag-dialog-close {
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+        }
+        .tag-dialog-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px 0;
+        }
+        .tag-dialog-footer {
+            padding-top: 10px;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        .tag-category {
+            margin-bottom: 20px;
+        }
+        .tag-category-header {
+            margin-bottom: 8px;
+        }
+        .tag-category-header h4 {
+            margin: 0;
+            display: inline-block;
+        }
+        .tag-category-header .required {
+            color: red;
+            margin-left: 5px;
+        }
+        .tag-category-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .tag-option {
+            margin-bottom: 5px;
+        }
+        .tag-select {
+            width: 100%;
+            padding: 5px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+        .tag-dialog-save, 
+        .tag-dialog-cancel {
+            padding: 8px 15px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            background: #f8f8f8;
+            cursor: pointer;
+        }
+        .tag-dialog-save {
+            background: #4CAF50;
+            color: white;
+            border-color: #43A047;
+        }
+        .tag-dialog-cancel {
+            background-color: #F44336;
+            color: white;
+            border-color: #D32F2F;
+        }
+        .tag-dialog-cancel:hover {
+            background-color: #D32F2F;
+            border-color: #C62828;
+        }
+        .image-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-top: 4px;
+            cursor: pointer;
+        }
+        .tag-badge {
+            font-size: 10px;
+            background: #e0e0e0;
+            color: #333;
+            padding: 2px 6px;
+            border-radius: 10px;
+        }
+        .edit-tags-button {
+            width: 100%;
+            margin-top: 5px;
+            font-size: 11px;
+            padding: 2px 0;
+            background: #4CAF50;
+            border: 1px solid #43A047;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .edit-tags-button:hover {
+            background: #38813a;
+        }
+        .no-tags {
+            color: #999;
+            font-size: 10px;
+            font-style: italic;
+        }
+        /* Additional margin for consistency */
+        #strokeCounter {
+            margin-left: 10px;
+        }
     </style>
 </head>
 <body>
@@ -684,9 +824,13 @@
         <div class="image-sidebar" id="imageSidebar">
             <div class="sidebar-header" id="imageSidebarHeader">
                 <h3>Pasted Images</h3>
-                <span class="drag-handle">☰</span>
+                <div class="drag-handle">⋮⋮</div>
             </div>
             <div id="imageList"></div>
+            <hr>
+            <div class="sidebar-buttons">
+                <button id="addTags" class="tag-button">Add Tags</button>
+            </div>
         </div>
     </div>
     
@@ -696,7 +840,8 @@
     <!-- Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-    <script src="public/js/project-manager.js"></script>
-    <script src="public/js/paint.js"></script>
+    <script src="js/paint.js"></script>
+    <script src="js/project-manager.js"></script>
+    <script src="js/tag-manager.js"></script>
 </body>
 </html>
