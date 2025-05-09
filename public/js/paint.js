@@ -468,70 +468,108 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Function to update all measurements when unit changes
     function updateMeasurementDisplay() {
-        const unit = document.getElementById('unitSelector').value;
-        const inchWhole = document.getElementById('inchWhole');
-        const inchFraction = document.getElementById('inchFraction');
-        const cmValue = document.getElementById('cmValue');
-        
-        // Convert values when switching between units
-        if (unit === 'inch') {
-            // Converting from cm to inches
-            const cm = parseFloat(cmValue.value) || 0;
-            const inches = cm / 2.54;
-            
-            // Update inch values
-            inchWhole.value = Math.floor(inches);
-            
-            // Find closest fraction
-            const fractionPart = inches - Math.floor(inches);
-            const fractions = [
-                {value: '0', text: '0'},
-                {value: '0.125', text: '1/8'},
-                {value: '0.25', text: '1/4'},
-                {value: '0.375', text: '3/8'},
-                {value: '0.5', text: '1/2'},
-                {value: '0.625', text: '5/8'},
-                {value: '0.75', text: '3/4'},
-                {value: '0.875', text: '7/8'}
-            ];
-            
-            fractions.forEach(f => {
-                const option = document.createElement('option');
-                option.value = f.value;
-                option.textContent = f.text;
-                if (parseFloat(f.value) === fractionPart) {
-                    option.selected = true;
-                }
-                inchFraction.appendChild(option);
-            });
-            
-            // Show inch inputs, hide cm inputs
-            document.getElementById('inchInputs').style.display = 'flex';
-            document.getElementById('cmInputs').style.display = 'none';
-        } else {
-            // Converting from inches to cm
-            const whole = parseInt(inchWhole.value) || 0;
-            const fraction = parseFloat(inchFraction.value) || 0;
-            const totalInches = whole + fraction;
-            
-            // Update cm value with one decimal point
-            cmValue.value = (totalInches * 2.54).toFixed(1);
-            
-            // Show cm inputs, hide inch inputs
-            document.getElementById('inchInputs').style.display = 'none';
-            document.getElementById('cmInputs').style.display = 'flex';
-        }
-        
-        // Update the stroke visibility display to show new units
-        updateStrokeVisibilityControls();
-        
-        // Redraw the canvas with updated measurement format in labels
-        redrawCanvasWithVisibility();
+        window.currentUnit = document.getElementById('unitSelector').value;
+        console.log(`[updateMeasurementDisplay] Unit changed to: ${window.currentUnit}`);
+        updateStrokeVisibilityControls(); // Update the list to show new units
+        redrawCanvasWithVisibility(); // Redraw canvas labels with new units
     }
 
     // Function to update stroke visibility controls
     // Make updateStrokeVisibilityControls available globally
     window.updateStrokeVisibilityControls = updateStrokeVisibilityControls;
+            
+    // *** NEW HELPER FUNCTION for creating and configuring measureText ***
+    function createEditableMeasureText(strokeLabel, isSelected, parentItem) {
+        const measureText = document.createElement('span');
+        measureText.className = 'stroke-measurement';
+
+        const currentFormattedMeasurement = getMeasurementString(strokeLabel) || '';
+        measureText.textContent = currentFormattedMeasurement;
+        console.log(`[createEditableMeasureText] Initial for ${strokeLabel}: "${currentFormattedMeasurement}"`);
+
+        if (isSelected) {
+            measureText.contentEditable = "true";
+            measureText.dataset.originalMeasurementString = currentFormattedMeasurement;
+            setTimeout(() => {
+                // DOM Guard: Only proceed if measureText is still in the document
+                if (document.body.contains(measureText)) {
+                    console.log(`[createEditableMeasureText focus timeout] Attempting to focus measureText for ${strokeLabel}. IsSelected: ${isSelected}`); // ADDED LOG
+                    measureText.focus();
+                    const selection = window.getSelection();
+                    if (selection) {
+                        const range = document.createRange();
+                        range.selectNodeContents(measureText);
+                        selection.removeAllRanges();
+                        selection.addRange(range);
+                    }
+        } else {
+                    console.warn("[createEditableMeasureText focus timeout] measureText no longer in DOM. Skipping focus/select.");
+                }
+            }, 0);
+        } else {
+            measureText.contentEditable = "false";
+        }
+
+        measureText.addEventListener('keydown', (event) => {
+            if (measureText.contentEditable !== 'true') return;
+
+            if (event.key === 'Enter' && !event.ctrlKey && !event.shiftKey) {
+                event.preventDefault();
+                measureText.blur();
+            } else if (event.key === 'Escape') {
+                event.preventDefault();
+                measureText.textContent = measureText.dataset.originalMeasurementString || '';
+                measureText.dataset.escapeReverted = 'true'; // Flag for blur handler
+                measureText.blur();
+            } else if ((event.ctrlKey || event.shiftKey) && event.key === 'Enter') {
+                event.preventDefault(); // Disallow newlines
+            }
+        });
+
+        measureText.addEventListener('blur', () => {
+            const wasEditable = measureText.dataset.originalMeasurementString !== undefined;
+            measureText.contentEditable = "false"; // Always make it non-editable on blur
+
+            if (wasEditable) {
+                if (measureText.dataset.escapeReverted === 'true') {
+                    measureText.removeAttribute('data-escape-reverted');
+                    console.log(`[measureText blur - ESCAPE] Reverted ${strokeLabel} to: \"${measureText.dataset.originalMeasurementString}\".`);
+                    // Text content is already visually reverted by keydown. No further action needed here.
+                } else {
+                    const newText = measureText.textContent;
+                    const originalText = measureText.dataset.originalMeasurementString || '';
+                    
+                    if (newText !== originalText) {
+                        console.log(`[measureText blur - CHANGED] For ${strokeLabel}. Old: \"${originalText}\", New: \"${newText}\". Parsing.`);
+                        const parseSuccess = parseAndSaveMeasurement(strokeLabel, newText);
+                        if (parseSuccess) {
+                            measureText.textContent = getMeasurementString(strokeLabel) || '';
+                            console.log(`[measureText blur - PARSE SUCCESS] ${strokeLabel} updated to: "${measureText.textContent}".`);
+                            // Calls to update UI are now here, after successful parse and visual update of measureText
+        updateStrokeVisibilityControls();
+                            setTimeout(() => { // Defer canvas redraw to next tick
+        redrawCanvasWithVisibility();
+                            }, 0);
+                        } else {
+                            // Parse failed, revert to original text
+                            measureText.textContent = measureText.dataset.originalMeasurementString || '';
+                            console.warn(`[measureText blur - PARSE FAILED] For ${strokeLabel} with \"${newText}\". Reverting to \"${originalText}\".`);
+                        }
+                    } else {
+                        console.log(`[measureText blur - UNCHANGED] For ${strokeLabel}. Value: \"${newText}\".`);
+                    }
+                }
+            }
+            measureText.removeAttribute('data-original-measurement-string');
+
+            // DO NOT CALL updateStrokeVisibilityControls() or redrawCanvasWithVisibility() here.
+            // The click handler on the new item (if any) or other actions will trigger the necessary redraws.
+            // This specific blur event should only finalize the edit of *this* item.
+        });
+        return measureText;
+    }
+    // *** END NEW HELPER FUNCTION ***
+
     function updateStrokeVisibilityControls() {
         // IMPORTANT: Debug the current state of measurements
         console.log('[updateStrokeVisibilityControls] START - Current window.strokeMeasurements:',
@@ -650,37 +688,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
                 
-                // Toggle selection (if already selected, deselect it)
                 const isCurrentlySelected = selectedStrokeByImage[currentImageLabel] === strokeLabel;
                 
-                // Clear previous selection from UI
-                document.querySelectorAll('.stroke-visibility-item').forEach(el => {
-                    el.dataset.selected = 'false';
-                });
-                
                 if (isCurrentlySelected) {
-                    // Deselect if already selected
-                    selectedStrokeByImage[currentImageLabel] = null;
-                    item.dataset.selected = 'false';
+                    selectedStrokeByImage[currentImageLabel] = null; // Deselect
                 } else {
-                    // Select if not already selected
-                    selectedStrokeByImage[currentImageLabel] = strokeLabel;
-                    item.dataset.selected = 'true';
-                
-                // Update the measurement input with the selected stroke's measurement
-                    if (typeof updateMeasurementInputWithStroke === 'function') {
-                    updateMeasurementInputWithStroke(strokeLabel);
-                }
+                    selectedStrokeByImage[currentImageLabel] = strokeLabel; // Select
                 }
                 
-                // Make sure stroke is visible when selected
-                if (selectedStrokeByImage[currentImageLabel] === strokeLabel) {
-                    // Ensure the stroke is visible when selected
-                    strokeVisibilityByImage[currentImageLabel][strokeLabel] = true;
-                    checkbox.checked = true;
-                }
-                
-                // Redraw the canvas to show the selected stroke with glow effect
+                // Refresh the UI to reflect the new selection state
+                // updateStrokeVisibilityControls will handle making the correct measureText editable
+                updateStrokeVisibilityControls();
                 redrawCanvasWithVisibility();
             });
             
@@ -722,6 +740,47 @@ document.addEventListener('DOMContentLoaded', () => {
             strokeName.textContent = strokeLabel;
             strokeName.style.borderColor = strokeColor;
             strokeName.style.color = strokeColor;
+            strokeName.setAttribute('data-original-name', strokeLabel); // Store original name
+
+            // Make strokeName editable
+            strokeName.contentEditable = "false"; // Initially not editable
+            strokeName.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent item selection click
+                if (strokeName.contentEditable === "true") return; // Already editing
+                strokeName.contentEditable = "true";
+                strokeName.setAttribute('data-original-name', strokeName.textContent); // Update before editing
+                strokeName.focus();
+                document.execCommand('selectAll', false, null); // Select all text for easy replacement
+            });
+
+            strokeName.addEventListener('blur', (e) => {
+                if (strokeName.contentEditable === "true") {
+                    const originalName = strokeName.getAttribute('data-original-name');
+                    const newName = strokeName.textContent.trim();
+                    strokeName.contentEditable = "false";
+                    if (newName && newName !== originalName) {
+                        const actualNewName = renameStroke(originalName, newName);
+                        // renameStroke updates global structures, updateStrokeVisibilityControls will redraw with actual name
+                        saveState(true, false, true);
+                        updateStrokeVisibilityControls(); // This will re-render the list
+                        redrawCanvasWithVisibility();
+                    } else {
+                        strokeName.textContent = originalName; // Revert if empty or unchanged
+                    }
+                }
+            });
+
+            strokeName.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault(); // Prevent newline
+                    strokeName.blur(); // Trigger blur to save
+                }
+                if (e.key === 'Escape') {
+                    strokeName.textContent = strokeName.getAttribute('data-original-name');
+                    strokeName.contentEditable = "false";
+                    strokeName.blur(); // Remove focus
+                }
+            });
             
             // Add a small icon to indicate stroke type (optional)
             if (strokeType === 'straight') {
@@ -734,40 +793,27 @@ document.addEventListener('DOMContentLoaded', () => {
             strokeName.addEventListener('click', (e) => {
                 e.stopPropagation(); // Prevent double handling with the item click
                 
-                // Toggle selection 
+                // If already editing name, do nothing here (blur will handle save)
+                if (strokeName.contentEditable === "true") return; 
+
                 const isCurrentlySelected = selectedStrokeByImage[currentImageLabel] === strokeLabel;
                 
-                // Clear previous selection from UI
-                document.querySelectorAll('.stroke-visibility-item').forEach(el => {
-                    el.dataset.selected = 'false';
-                });
-                
                 if (isCurrentlySelected) {
-                    // Deselect if already selected
-                    selectedStrokeByImage[currentImageLabel] = null;
-                    item.dataset.selected = 'false';
+                    // If it's already selected, and we are clicking the name, 
+                    // it means we want to edit the name (handled by separate blur/keydown on strokeName)
+                    // or just re-affirm selection. For now, let selection logic be primary.
+                    // If measurement was active, this click doesn't change that.
                 } else {
-                    // Select if not already selected
-                    selectedStrokeByImage[currentImageLabel] = strokeLabel;
-                    item.dataset.selected = 'true';
+                    selectedStrokeByImage[currentImageLabel] = strokeLabel; // Select
                 }
                 
-                // Make sure stroke is visible when selected
-                if (selectedStrokeByImage[currentImageLabel] === strokeLabel) {
-                    // Ensure the stroke is visible when selected
-                    strokeVisibilityByImage[currentImageLabel][strokeLabel] = true;
-                    checkbox.checked = true;
-                }
-                
-                // Redraw the canvas to show the selected stroke with glow effect
+                // Refresh the UI to reflect the new selection state
+                updateStrokeVisibilityControls();
                 redrawCanvasWithVisibility();
             });
             
             // Create measurement text
-            const measureText = document.createElement('span');
-            measureText.className = 'stroke-measurement';
-            measureText.textContent = measurement ? `= ${measurement}` : '';
-            console.log(`[updateStrokeVisibilityControls] Setting measurement text for ${strokeLabel}: "${measureText.textContent}"`);
+            const measureText = createEditableMeasureText(strokeLabel, isSelected);
             
             // Create edit button
             const editBtn = document.createElement('button');
@@ -782,36 +828,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             };
             
-            // Create measurement button 
-            const measureBtn = document.createElement('button');
-            measureBtn.className = 'stroke-measure-btn';
-            measureBtn.innerHTML = '📏';
-            measureBtn.title = 'Edit Measurement';
-            measureBtn.onclick = (e) => {
-                e.stopPropagation(); // Prevent triggering the item's click event
-                showStrokeEditDialog(strokeLabel, {
-                    showNameField: false,
-                    title: `Edit Measurement for ${strokeLabel}`
-                });
-            };
-            
             // Create label toggle button
             const labelToggleBtn = document.createElement('button');
-            labelToggleBtn.className = 'stroke-label-toggle';
-            labelToggleBtn.classList.toggle('active', isLabelVisible);
-            labelToggleBtn.innerHTML = isLabelVisible ? '👁️' : '👁️‍🗨️';
-            labelToggleBtn.title = isLabelVisible ? 'Hide Label on Canvas' : 'Show Label on Canvas';
+            labelToggleBtn.className = 'stroke-label-toggle-btn';
+            labelToggleBtn.innerHTML = isLabelVisible ? '🏷️' : '<s>🏷️</s>'; // Show label icon, strikethrough if hidden
+            labelToggleBtn.title = isLabelVisible ? 'Hide Label' : 'Show Label';
             labelToggleBtn.onclick = (e) => {
-                e.stopPropagation(); // Prevent triggering the item's click event
+                e.stopPropagation();
                 toggleLabelVisibility(strokeLabel);
             };
             
-            // Add elements to container
-            labelContainer.appendChild(strokeName);
-            labelContainer.appendChild(measureText);
+            labelContainer.appendChild(strokeName); // Add stroke name first
             labelContainer.appendChild(labelToggleBtn);
-            labelContainer.appendChild(measureBtn); // Add the new measurement button
-            labelContainer.appendChild(editBtn);
+
+            // Correctly use the helper function for measureText
+            const measureTextElement = createEditableMeasureText(strokeLabel, isSelected, item);
+            labelContainer.appendChild(measureTextElement);
             
             // Build the complete item
             item.appendChild(checkbox);
@@ -831,8 +863,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const toggleBtn = document.querySelector(`.stroke-visibility-item[data-stroke="${strokeLabel}"] .stroke-label-toggle`);
         if (toggleBtn) {
             const isLabelVisible = strokeLabelVisibility[currentImageLabel][strokeLabel];
-            toggleBtn.innerHTML = isLabelVisible ? '👁️' : '👁️‍🗨️';
-            toggleBtn.title = isLabelVisible ? 'Hide Label on Canvas' : 'Show Label on Canvas';
+            toggleBtn.innerHTML = isLabelVisible ? '🏷️' : '<s>🏷️</s>'; // Show label icon, strikethrough if hidden
+            toggleBtn.title = isLabelVisible ? 'Hide Label' : 'Show Label';
             toggleBtn.classList.toggle('active', isLabelVisible);
         }
         
@@ -1681,7 +1713,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function drawImageAndStrokes(img, scale, imageX, imageY) {
         console.log(`[drawImageAndStrokes] Called with scale=${scale}`);
         console.log(`[drawImageAndStrokes] Current window.imageScaleByLabel[${currentImageLabel}] = ${window.imageScaleByLabel[currentImageLabel]}`);
-        
+            
         // CRITICAL FIX: Ensure scale parameter matches the global scale value
         if (scale !== window.imageScaleByLabel[currentImageLabel]) {
             console.error(`[drawImageAndStrokes] CRITICAL SCALE MISMATCH! Parameter scale=${scale} but global scale=${window.imageScaleByLabel[currentImageLabel]}. Fixing...`);
@@ -1697,7 +1729,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Clear the canvas
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
+
         // Get dimensions
         const imgWidth = img.width;
         const imgHeight = img.height;
@@ -1788,7 +1820,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 console.log(`    Vector Data Found: ${vectorData.points.length} points, type: ${vectorData.type}, color: ${vectorData.color}, width: ${vectorData.width}`);
                 // *** END LOGGING ***
-
+                
                 console.log(`\nDrawing stroke ${strokeLabel}:`);
                 console.log(`Using scale: ${scale}, imageX: ${imageX}, imageY: ${imageY}`);
                             
@@ -3490,13 +3522,13 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Save current state before switching (if not loading, during load state is managed by project-manager)
         if (!window.isLoadingProject) {
-            const currentStrokes = [...(lineStrokesByImage[currentImageLabel] || [])];
-            const currentState = getCanvasState();
-            undoStackByImage[currentImageLabel].push({
-                state: cloneImageData(currentState),
-                type: 'snapshot',
-                strokes: currentStrokes
-            });
+        const currentStrokes = [...(lineStrokesByImage[currentImageLabel] || [])];
+        const currentState = getCanvasState();
+        undoStackByImage[currentImageLabel].push({
+            state: cloneImageData(currentState),
+            type: 'snapshot',
+            strokes: currentStrokes
+        });
         }
         
         // Update current image label
@@ -3559,9 +3591,9 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log(`No state or image found for ${label}, clearing canvas`);
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             // UI Updates for blank canvas
-            updateActiveImageInSidebar();
-            updateStrokeCounter();
-            updateStrokeVisibilityControls();
+        updateActiveImageInSidebar();
+        updateStrokeCounter();
+        updateStrokeVisibilityControls();
             updateScaleUI(); // This calls redrawCanvasWithVisibility (will draw strokes on blank)
         }
         
@@ -3570,6 +3602,13 @@ document.addEventListener('DOMContentLoaded', () => {
         // updateStrokeCounter();
         // updateStrokeVisibilityControls();
         // updateScaleUI();
+
+        // *** ADDED: Clear selection in the new/target image view ***
+        if (selectedStrokeByImage[currentImageLabel] !== undefined) {
+            console.log(`[switchToImage] Clearing selection for new image: ${currentImageLabel}`);
+            selectedStrokeByImage[currentImageLabel] = null;
+        }
+        // *** END ADDED ***
     }
     
     function updateActiveImageInSidebar() {
@@ -3852,7 +3891,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     displayName = window.getTagBasedFilename(label, filename);
                 }
                 console.log(`[handleFiles] Adding to sidebar: URL created for ${file.name}, label=${label}, displayName=${displayName}`);
-
+                
                 addImageToSidebar(url, label, displayName);
                 if (!pastedImages.includes(url)) pastedImages.push(url);
                 window.originalImages[label] = url;
@@ -3944,7 +3983,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
             // Save current state before redrawing
         saveState(true, false, false);
-        
+            
         // Redraw the canvas (image and/or strokes)
         try {
             redrawCanvasWithVisibility();
@@ -4713,5 +4752,170 @@ document.addEventListener('DOMContentLoaded', () => {
             viewType: defaultViewTagId
         };
         console.log(`[initializeNewImageStructures] Initialized tags for ${label}:`, JSON.stringify(window.imageTags[label]));
+    }
+
+    // *** NEW FUNCTION: Parse and save measurement string ***
+    function parseAndSaveMeasurement(strokeLabel, newString) {
+        console.log(`[parseAndSaveMeasurement] For ${strokeLabel}, received: \"${newString}\". Unit selector value: ${document.getElementById('unitSelector').value}`);
+        let successfullyParsedAndSaved = false; // Flag to indicate if an update happened
+
+        if (!newString && newString !== "0") { // Allow "0" to clear/reset measurement
+            console.warn("[parseAndSaveMeasurement] Empty string received (and not '0'), attempting to clear measurement.");
+            if (window.strokeMeasurements[currentImageLabel] && window.strokeMeasurements[currentImageLabel][strokeLabel]) {
+                // Clear the specific measurement
+                delete window.strokeMeasurements[currentImageLabel][strokeLabel]; 
+                // Or reset to default if preferred:
+                // window.strokeMeasurements[currentImageLabel][strokeLabel] = { inchWhole: 0, inchFraction: 0, cm: 0.0 };
+                successfullyParsedAndSaved = true;
+                console.log(`[parseAndSaveMeasurement] Cleared measurement for ${strokeLabel}.`);
+            } else {
+                console.log(`[parseAndSaveMeasurement] No existing measurement to clear for ${strokeLabel}.`);
+                // No actual change, so UI refresh might not be strictly needed from here
+                // but the blur handler will call updateStrokeVisibilityControls anyway.
+                return false; // Indicate no save occurred
+            }
+        } else {
+            // ... (rest of the parsing logic from the previous version) ...
+            let totalInches = null;
+            let totalCm = null;
+            let explicitUnitMatched = false;
+
+            // Try to parse as cm first - UNIT MUST BE PRESENT
+            const cmRegex = /^\s*([\d.]+)\s*(cm|centimeter|centimeters)\s*$/i;
+            const cmMatch = newString.match(cmRegex);
+            if (cmMatch && cmMatch[1]) {
+                totalCm = parseFloat(cmMatch[1]);
+                if (!isNaN(totalCm)) {
+                    totalInches = totalCm / 2.54;
+                    explicitUnitMatched = true; // Unit was present
+                    console.log(`[parseAndSaveMeasurement] Parsed as CM: ${totalCm}cm -> ${totalInches} inches. Explicit unit: ${explicitUnitMatched}`);
+                }
+            }
+
+            if (totalInches === null) { // Only proceed if not parsed as CM yet
+                // UNIT MUST BE PRESENT for these too
+                const meterRegex = /^\s*([\d.]+)\s*(m|meter|meters)\s*$/i;
+                const mmRegex = /^\s*([\d.]+)\s*(mm|millimeter|millimeters)\s*$/i;
+                // Feet regex: number, optional space, then ft, foot, feet, or '. Allow optional space before unit.
+                const feetRegex = /^\s*([\d.]+)\s*(ft|foot|feet|')\s*$/i;
+                const yardRegex = /^\s*([\d.]+)\s*(yd|yard|yards)\s*$/i;
+                
+                // Inch regex: covers various forms like 12, 12.5, 12 1/2, 12", 12.5", 12 1/2", 12in, 12 inch
+                // It should try to identify if an inch-specific marker (", in, inch, inches, or a fraction indicating inches) is present.
+                const inchRegex = /^\s*(\d+)?(?:\s*(\d+\/\d+|[.\d]+))?\s*(\"|in|inch|inches)\s*$/i; // Requires inch marker
+                const inchFractionOnlyRegex = /^\s*(\d+)\s+(\d+)\s*\/\s*(\d+)\s*$/i; // e.g. "12 3/4" (no unit marker, implies inches if currentUnit is inch)
+                const inchDecimalOnlyRegex = /^\s*(\d+\.\d+)\s*$/i; // e.g. "12.5" (no unit marker)
+                const inchWholeOnlyRegex = /^\s*(\d+)\s*$/i; // e.g. "12" (no unit marker) - this is the ambiguous one
+
+                const meterMatch = newString.match(meterRegex);
+                const mmMatch = newString.match(mmRegex);
+                const feetMatch = newString.match(feetRegex);
+                const yardMatch = newString.match(yardRegex);
+                const inchMatchWithMarker = newString.match(inchRegex);
+
+                if (meterMatch && meterMatch[1]) {
+                    totalInches = parseFloat(meterMatch[1]) * 39.3701;
+                    explicitUnitMatched = true;
+                    console.log(`[parseAndSaveMeasurement] Parsed as Meters: ${meterMatch[1]}m -> ${totalInches} inches`);
+                } else if (mmMatch && mmMatch[1]) {
+                    totalInches = parseFloat(mmMatch[1]) / 25.4;
+                    explicitUnitMatched = true;
+                    console.log(`[parseAndSaveMeasurement] Parsed as Millimeters: ${mmMatch[1]}mm -> ${totalInches} inches`);
+                } else if (feetMatch && feetMatch[1]) {
+                    totalInches = parseFloat(feetMatch[1]) * 12;
+                    explicitUnitMatched = true;
+                    console.log(`[parseAndSaveMeasurement] Parsed as Feet: ${feetMatch[1]}${feetMatch[2]} -> ${totalInches} inches`);
+                } else if (yardMatch && yardMatch[1]) {
+                    totalInches = parseFloat(yardMatch[1]) * 36;
+                    explicitUnitMatched = true;
+                    console.log(`[parseAndSaveMeasurement] Parsed as Yards: ${yardMatch[1]}${yardMatch[2]} -> ${totalInches} inches`);
+                } else if (inchMatchWithMarker && (inchMatchWithMarker[1] || inchMatchWithMarker[2])) {
+                    explicitUnitMatched = true; // Inch marker was present
+                    let wholeInches = 0;
+                    let fractionalPart = 0;
+                    if (inchMatchWithMarker[1]) { wholeInches = parseInt(inchMatchWithMarker[1], 10); }
+                    if (inchMatchWithMarker[2]) {
+                        if (inchMatchWithMarker[2].includes('/')) {
+                            const parts = inchMatchWithMarker[2].split('/');
+                            if (parts.length === 2 && !isNaN(parseInt(parts[0],10)) && parseInt(parts[1],10) !== 0) {
+                                fractionalPart = parseInt(parts[0], 10) / parseInt(parts[1], 10);
+                            } else { totalInches = NaN; /* Mark as invalid */ }
+                        } else {
+                            fractionalPart = parseFloat(inchMatchWithMarker[2]);
+                        }
+                    }
+                    if (!isNaN(totalInches)) { // if not marked invalid by bad fraction
+                        totalInches = wholeInches + fractionalPart;
+                        console.log(`[parseAndSaveMeasurement] Parsed as Inches (with marker): ${newString} -> ${totalInches}\"`);
+                    }
+                }
+            }
+
+            // Fallback: if no explicit unit marker was found and still not parsed, try to parse as a plain number (current unit sensitive)
+            if (totalInches === null && !explicitUnitMatched) { 
+                const plainNumber = parseFloat(newString);
+                if (!isNaN(plainNumber)) {
+                    const currentUnit = document.getElementById('unitSelector').value;
+                    if (currentUnit === 'inch') {
+                        totalInches = plainNumber;
+                        console.log(`[parseAndSaveMeasurement] Parsed as plain number (inches): ${totalInches}\"`);
+                    } else { // cm
+                        totalCm = plainNumber;
+                        totalInches = totalCm / 2.54;
+                        console.log(`[parseAndSaveMeasurement] Parsed as plain number (cm): ${totalCm}cm -> ${totalInches} inches`);
+                    }
+                }
+            }
+
+            // If parsing failed, or totalInches is NaN or negative, revert or do nothing
+            if (totalInches === null || isNaN(totalInches) || totalInches < 0) {
+                console.warn(`[parseAndSaveMeasurement] Failed to parse \"${newString}\" or result is invalid. No update.`);
+                // The blur handler will call updateStrokeVisibilityControls to revert visual text if needed.
+                return false; // Indicate no save
+            }
+
+            // Convert totalInches to whole and fractional part for storage
+            const inchWhole = Math.floor(totalInches);
+            const inchFractionDecimal = totalInches - inchWhole;
+            const inchFraction = findClosestFraction(inchFractionDecimal);
+            const finalCm = totalInches * 2.54;
+
+            if (!window.strokeMeasurements[currentImageLabel]) {
+                window.strokeMeasurements[currentImageLabel] = {};
+            }
+            window.strokeMeasurements[currentImageLabel][strokeLabel] = {
+                inchWhole: inchWhole,
+                inchFraction: inchFraction,
+                cm: parseFloat(finalCm.toFixed(4)) // Store cm with precision
+            };
+            successfullyParsedAndSaved = true;
+            console.log(`[parseAndSaveMeasurement] Updated measurement for ${strokeLabel}:`, 
+                JSON.stringify(window.strokeMeasurements[currentImageLabel][strokeLabel]));
+        }
+
+        if (successfullyParsedAndSaved) {
+            // REMOVED: saveState(true, false, false); 
+            // REMOVED: updateStrokeVisibilityControls(); 
+            // REMOVED: redrawCanvasWithVisibility();
+            return true; // Indicate successful save
+        } 
+        return false; // Indicate no save or failed parse
+    }
+
+    // Helper function to find the closest fraction
+    function findClosestFraction(fractionPart) {
+        const fractions = [0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875];
+        let closestFraction = 0;
+        let minDiff = 1;
+        
+        for (const fraction of fractions) {
+            const diff = Math.abs(fractionPart - fraction);
+            if (diff < minDiff) {
+                minDiff = diff;
+                closestFraction = fraction;
+            }
+        }
+        
+        return closestFraction;
     }
 });
