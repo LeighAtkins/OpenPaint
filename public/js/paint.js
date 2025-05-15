@@ -487,13 +487,78 @@ document.addEventListener('DOMContentLoaded', () => {
         measureText.textContent = currentFormattedMeasurement;
         console.log(`[createEditableMeasureText] Initial for ${strokeLabel}: "${currentFormattedMeasurement}"`);
 
+        // SAFETY CHECK: Make sure we don't append to parentItem if it's undefined
+        if (isSelected && parentItem === undefined) {
+            console.warn(`[createEditableMeasureText] WARNING: parentItem is undefined for selected stroke ${strokeLabel}. Will not try to append directly.`);
+        }
+
+        // Check if this is the newly created stroke
+        const isNewlyCreated = window.newlyCreatedStroke && 
+                               window.newlyCreatedStroke.label === strokeLabel && 
+                               window.newlyCreatedStroke.image === currentImageLabel &&
+                               (Date.now() - window.newlyCreatedStroke.timestamp) < 2000; // Within last 2 seconds
+        
+        if (isNewlyCreated) {
+            console.log(`[createEditableMeasureText] This is the newly created stroke ${strokeLabel} - will focus`);
+            // Clear the flag so we don't focus multiple times
+            window.newlyCreatedStroke = null;
+            // Force selection to be true
+            isSelected = true;
+        }
+
         if (isSelected) {
             measureText.contentEditable = "true";
             measureText.dataset.originalMeasurementString = currentFormattedMeasurement;
+            
+            // Set a data attribute for easy selection
+            measureText.dataset.selectedMeasurement = "true";
+            
+            // Set a data attribute to mark this as needing focus
+            if (isNewlyCreated && parentItem) {
+                measureText.dataset.needsFocus = "true";
+                
+                // Only append to parent if parentItem is defined
+                if (parentItem) {
+                    parentItem.appendChild(measureText);
+                    
+                    // Focus immediately - often works better than setTimeout
+                    measureText.focus();
+                    const selection = window.getSelection();
+                    if (selection) {
+                        const range = document.createRange();
+                        range.selectNodeContents(measureText);
+                        selection.removeAllRanges();
+                        selection.addRange(range);
+                    }
+                    
+                    // Also use a setTimeout as a fallback
+                    setTimeout(() => {
+                        // DOM Guard: Only proceed if measureText is still in the document
+                        if (document.body.contains(measureText) && measureText.dataset.needsFocus === "true") {
+                            console.log(`[createEditableMeasureText focus timeout] Focusing NEW stroke ${strokeLabel}`);
+                            measureText.focus();
+                            const selection = window.getSelection();
+                            if (selection) {
+                                const range = document.createRange();
+                                range.selectNodeContents(measureText);
+                                selection.removeAllRanges();
+                                selection.addRange(range);
+                            }
+                            // Remove the needs focus flag
+                            delete measureText.dataset.needsFocus;
+                        }
+                    }, 100);
+                    
+                    // Return early since we already added to parent
+                    return measureText;
+                }
+            }
+            
+            // For normal selected items (not newly created)
             setTimeout(() => {
                 // DOM Guard: Only proceed if measureText is still in the document
                 if (document.body.contains(measureText)) {
-                    console.log(`[createEditableMeasureText focus timeout] Attempting to focus measureText for ${strokeLabel}. IsSelected: ${isSelected}`); // ADDED LOG
+                    console.log(`[createEditableMeasureText focus timeout] Attempting to focus measureText for ${strokeLabel}. IsSelected: ${isSelected}`);
                     measureText.focus();
                     const selection = window.getSelection();
                     if (selection) {
@@ -505,7 +570,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
                     console.warn("[createEditableMeasureText focus timeout] measureText no longer in DOM. Skipping focus/select.");
                 }
-            }, 0);
+            }, 50); // Increased a bit for better reliability
         } else {
             measureText.contentEditable = "false";
         }
@@ -574,6 +639,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // IMPORTANT: Debug the current state of measurements
         console.log('[updateStrokeVisibilityControls] START - Current window.strokeMeasurements:',
             JSON.stringify(window.strokeMeasurements[currentImageLabel]));
+        
+        // Log the currently selected stroke
+        console.log(`[updateStrokeVisibilityControls] Current selected stroke: ${selectedStrokeByImage[currentImageLabel]}`);
         
         const controlsContainer = document.getElementById('strokeVisibilityControls');
         controlsContainer.innerHTML = ''; // Clear existing controls
@@ -842,8 +910,48 @@ document.addEventListener('DOMContentLoaded', () => {
             labelContainer.appendChild(labelToggleBtn);
 
             // Correctly use the helper function for measureText
-            const measureTextElement = createEditableMeasureText(strokeLabel, isSelected, item);
-            labelContainer.appendChild(measureTextElement);
+            const measureTextElement = createEditableMeasureText(strokeLabel, isSelected, labelContainer);
+            
+            // Make sure we only append if not already appended (which happens in createEditableMeasureText for newly created strokes)
+            if (!measureTextElement.parentNode) {
+                labelContainer.appendChild(measureTextElement);
+            }
+            
+            // If this is the selected stroke or newly created stroke, focus on it
+            // Check if this is the newly created stroke
+            const isNewlyCreated = window.newlyCreatedStroke && 
+                                  window.newlyCreatedStroke.label === strokeLabel && 
+                                  window.newlyCreatedStroke.image === currentImageLabel &&
+                                  (Date.now() - window.newlyCreatedStroke.timestamp) < 2000; // Within last 2 seconds
+            
+            if (isSelected || isNewlyCreated) {
+                if (isNewlyCreated) {
+                    console.log(`[updateStrokeVisibilityControls] Found newly created stroke ${strokeLabel}, will focus on it`);
+                    // Clear the flag so we don't focus multiple times in other functions
+                    window.newlyCreatedStroke = null;
+                } else {
+                    console.log(`[updateStrokeVisibilityControls] Found selected stroke ${strokeLabel}, will focus on it`);
+                }
+                
+                // Use setTimeout to ensure the DOM has been updated
+                setTimeout(() => {
+                    if (document.body.contains(measureTextElement)) {
+                        console.log(`[updateStrokeVisibilityControls] Focusing on ${strokeLabel}`);
+                        measureTextElement.contentEditable = "true";
+                        measureTextElement.dataset.originalMeasurementString = measureTextElement.textContent || '';
+                        measureTextElement.focus();
+                        
+                        // Select all text
+                        const selection = window.getSelection();
+                        if (selection) {
+                            const range = document.createRange();
+                            range.selectNodeContents(measureTextElement);
+                            selection.removeAllRanges();
+                            selection.addRange(range);
+                        }
+                    }
+                }, 0);
+            }
             
             // Build the complete item
             item.appendChild(checkbox);
@@ -2185,6 +2293,17 @@ document.addEventListener('DOMContentLoaded', () => {
             labelsByImage[currentImageLabel] = nextLabel;
             console.log(`[Save State] Incremented labelsByImage[${currentImageLabel}] to "${nextLabel}"`);
             
+            // Auto-select the newly created stroke to ensure it gets focus
+            selectedStrokeByImage[currentImageLabel] = strokeLabel;
+            console.log(`[Save State] Auto-selected newly created stroke: ${strokeLabel}`);
+            
+            // Set the newly created stroke flag for focus handling
+            window.newlyCreatedStroke = {
+                label: strokeLabel,
+                image: currentImageLabel,
+                timestamp: Date.now()
+            };
+            
             // Only add the *unique* stroke label to the strokes list
             if (!lineStrokesByImage[currentImageLabel]) {
                 console.log(`[Save State] Initializing lineStrokesByImage[${currentImageLabel}] as []`);
@@ -3443,6 +3562,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Force redraw to show labels immediately
             redrawCanvasWithVisibility();
+            
+            // The focus will happen automatically in updateStrokeVisibilityControls and createEditableMeasureText
+            // because we've set selectedStrokeByImage[currentImageLabel] and window.newlyCreatedStroke in saveState
         }
     });
     
@@ -4046,6 +4168,13 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         
+        // Don't process if user is editing a stroke name or measurement
+        if (e.target.isContentEditable || 
+            e.target.classList.contains('stroke-name') || 
+            e.target.classList.contains('stroke-measurement')) {
+            return;
+        }
+        
         // Zoom controls
         if (e.key === 'q' || e.key === 'Q') {
             // Zoom out - find the next smaller scale
@@ -4415,6 +4544,10 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Function to draw a connector line between the label and the stroke
     function drawLabelConnector(labelRect, anchorPoint, strokeColor) {
+        // Don't use the provided anchorPoint - we'll find the best one based on the stroke
+        // Just keep it as a fallback if we can't find the stroke info
+        const originalAnchorPoint = anchorPoint;
+        
         // Find the closest point on the label to connect to
         const labelCenter = {
             x: labelRect.x + labelRect.width / 2,
@@ -4437,6 +4570,130 @@ document.addEventListener('DOMContentLoaded', () => {
             exitPoint = {x, y};
         }
         
+        // For the stroke side, use three possible anchor points and find the closest
+        // This requires stroke info which we can get from currentStrokePaths
+        const strokeLabel = labelRect.strokeLabel;
+        const strokePathInfo = currentStrokePaths.find(p => p.label === strokeLabel);
+        
+        if (strokePathInfo && strokePathInfo.path && strokePathInfo.path.length > 1) {
+            // Debug the path structure to see all points
+            console.log(`[drawLabelConnector] PathInfo for ${strokeLabel}:`, 
+                        JSON.stringify({
+                            length: strokePathInfo.path.length,
+                            first: strokePathInfo.path[0],
+                            last: strokePathInfo.path[strokePathInfo.path.length - 1]
+                        }));
+            
+            // Use start, middle, and end points of the stroke
+            const startPoint = strokePathInfo.path[0]; // First point
+            const endPoint = strokePathInfo.path[strokePathInfo.path.length - 1]; // Last point
+            
+            // For straight lines or freehand strokes, calculate a true midpoint
+            let middlePoint;
+            
+            if (strokePathInfo.path.length === 2) {
+                // For straight lines, we need to make the midpoint very clearly defined
+                
+                // Step 1: Calculate the geometric midpoint
+                middlePoint = {
+                    x: (startPoint.x + endPoint.x) / 2,
+                    y: (startPoint.y + endPoint.y) / 2
+                };
+                
+                // For straight lines, we'll use the exact geometric midpoint
+                // without any offset to ensure accuracy
+                const lineLength = Math.sqrt(
+                    Math.pow(endPoint.x - startPoint.x, 2) + 
+                    Math.pow(endPoint.y - startPoint.y, 2)
+                );
+                
+                console.log(`[drawLabelConnector] Using calculated midpoint for straight line: (${middlePoint.x}, ${middlePoint.y})`);
+            } else {
+                // For freehand, calculate the true geometric midpoint based on path length
+                // First, calculate the total path length
+                let totalLength = 0;
+                let segmentLengths = [];
+                
+                for (let i = 1; i < strokePathInfo.path.length; i++) {
+                    const p1 = strokePathInfo.path[i-1];
+                    const p2 = strokePathInfo.path[i];
+                    const segmentLength = Math.sqrt(
+                        Math.pow(p2.x - p1.x, 2) + 
+                        Math.pow(p2.y - p1.y, 2)
+                    );
+                    segmentLengths.push(segmentLength);
+                    totalLength += segmentLength;
+                }
+                
+                // Find the midpoint by distance (not by index)
+                let currentLength = 0;
+                let midpointIdx = 0;
+                let midpointFraction = 0;
+                
+                // Find the segment that contains the midpoint
+                for (let i = 0; i < segmentLengths.length; i++) {
+                    if (currentLength + segmentLengths[i] >= totalLength / 2) {
+                        midpointIdx = i;
+                        midpointFraction = (totalLength / 2 - currentLength) / segmentLengths[i];
+                        break;
+                    }
+                    currentLength += segmentLengths[i];
+                }
+                
+                // Calculate the actual midpoint by interpolating between points
+                const p1 = strokePathInfo.path[midpointIdx];
+                const p2 = strokePathInfo.path[midpointIdx + 1];
+                
+                middlePoint = {
+                    x: p1.x + (p2.x - p1.x) * midpointFraction,
+                    y: p1.y + (p2.y - p1.y) * midpointFraction
+                };
+                
+                console.log(`[drawLabelConnector] Using true geometric midpoint for freehand: (${middlePoint.x.toFixed(1)}, ${middlePoint.y.toFixed(1)})`);
+            }
+            
+            // Calculate distances to each point
+            const distToStart = Math.sqrt(
+                Math.pow(exitPoint.x - startPoint.x, 2) + 
+                Math.pow(exitPoint.y - startPoint.y, 2)
+            );
+            const distToMiddle = Math.sqrt(
+                Math.pow(exitPoint.x - middlePoint.x, 2) + 
+                Math.pow(exitPoint.y - middlePoint.y, 2)
+            );
+            const distToEnd = Math.sqrt(
+                Math.pow(exitPoint.x - endPoint.x, 2) + 
+                Math.pow(exitPoint.y - endPoint.y, 2)
+            );
+            
+            console.log(`[drawLabelConnector] Distances for ${strokeLabel} - Start: ${distToStart.toFixed(2)}, Middle: ${distToMiddle.toFixed(2)}, End: ${distToEnd.toFixed(2)}`);
+            
+            // Find the closest point
+            let closestPoint = middlePoint;
+            let minDist = distToMiddle;
+            let anchorType = "middle";
+            
+            if (distToStart < minDist) {
+                closestPoint = startPoint;
+                minDist = distToStart;
+                anchorType = "start";
+            }
+            
+            if (distToEnd < minDist) {
+                closestPoint = endPoint;
+                anchorType = "end";
+            }
+            
+            console.log(`[drawLabelConnector] Using ${anchorType} anchor for ${strokeLabel} at: (${closestPoint.x}, ${closestPoint.y})`);
+            
+            // Use the closest point instead of the original anchor
+            anchorPoint = closestPoint;
+        } else {
+            console.log(`[drawLabelConnector] No path info found for ${strokeLabel}, using original anchor: (${originalAnchorPoint.x}, ${originalAnchorPoint.y})`);
+            // Use the original point since we don't have path info
+            anchorPoint = originalAnchorPoint;
+        }
+        
         // Draw the connecting line
         ctx.beginPath();
         ctx.moveTo(exitPoint.x, exitPoint.y);
@@ -4446,6 +4703,48 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.setLineDash([3, 3]); // Dotted line
         ctx.stroke();
         ctx.setLineDash([]); // Reset to solid line
+        
+        // If we're using a midpoint anchor, draw a small circle to indicate the connection point
+        if (strokePathInfo && strokePathInfo.path && strokePathInfo.path.length > 1) {
+            const startPoint = strokePathInfo.path[0];
+            const endPoint = strokePathInfo.path[strokePathInfo.path.length - 1];
+            
+            // Determine which point is being used as anchor
+            let anchorType = "unknown";
+            if (Math.abs(anchorPoint.x - startPoint.x) < 0.01 && Math.abs(anchorPoint.y - startPoint.y) < 0.01) {
+                anchorType = "start";
+            } else if (Math.abs(anchorPoint.x - endPoint.x) < 0.01 && Math.abs(anchorPoint.y - endPoint.y) < 0.01) {
+                anchorType = "end";
+            } else {
+                anchorType = "middle";
+            }
+            
+            console.log(`[drawLabelConnector] Anchor type: ${anchorType} for ${strokeLabel}`);
+            
+            // For midpoints, draw a more prominent indicator
+            if (anchorType === "middle") {
+                // Draw a small filled circle for the midpoint
+                const radius = 3;
+                ctx.beginPath();
+                ctx.arc(anchorPoint.x, anchorPoint.y, radius, 0, Math.PI * 2);
+                ctx.fillStyle = strokeColor;
+                ctx.fill();
+                
+                // Add a white halo for better visibility
+                ctx.beginPath();
+                ctx.arc(anchorPoint.x, anchorPoint.y, size + 2, 0, Math.PI * 2);
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // Then add a colored border
+                ctx.beginPath();
+                ctx.arc(anchorPoint.x, anchorPoint.y, size + 2, 0, Math.PI * 2);
+                ctx.strokeStyle = strokeColor;
+                ctx.lineWidth = 1;
+                ctx.stroke();
+            }
+        }
     }
     
     // Helper function to check if two rectangles overlap
