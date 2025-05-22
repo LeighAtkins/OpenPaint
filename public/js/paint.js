@@ -593,11 +593,34 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateStrokeVisibilityControls() {
         // IMPORTANT: Debug the current state of measurements
         console.log('[updateStrokeVisibilityControls] START - Current window.strokeMeasurements:',
-            JSON.stringify(window.strokeMeasurements[currentImageLabel]));
+            window.strokeMeasurements[currentImageLabel] ? JSON.stringify(window.strokeMeasurements[currentImageLabel]) : 'undefined');
         
         // Log the currently selected stroke and edit mode
-        console.log(`[updateStrokeVisibilityControls] Current selected stroke: ${selectedStrokeByImage[currentImageLabel]}, Edit mode: ${window.selectedStrokeInEditMode}`);
-        
+        console.log(`[updateStrokeVisibilityControls] Initial state - selectedStroke: ${selectedStrokeByImage[currentImageLabel]}, multipleSelected: ${multipleSelectedStrokesByImage[currentImageLabel] ? JSON.stringify(multipleSelectedStrokesByImage[currentImageLabel]) : 'undefined'}, Edit mode: ${window.selectedStrokeInEditMode}`);
+
+        // --- Synchronization Logic --- 
+        const currentSelectionArray = multipleSelectedStrokesByImage[currentImageLabel] || [];
+        if (currentSelectionArray.length === 1) {
+            if (selectedStrokeByImage[currentImageLabel] !== currentSelectionArray[0]) {
+                console.warn(`[updateStrokeVisibilityControls] Correcting selectedStrokeByImage. Was: ${selectedStrokeByImage[currentImageLabel]}, multiple was: ${JSON.stringify(currentSelectionArray)}. Setting to: ${currentSelectionArray[0]}`);
+                selectedStrokeByImage[currentImageLabel] = currentSelectionArray[0];
+            }
+        } else if (currentSelectionArray.length > 1) {
+            // If multiple are selected, ensure selectedStrokeByImage is one of them (e.g., the first) or null.
+            // For simplicity, if it's not in the array, set it to the first element.
+            if (!currentSelectionArray.includes(selectedStrokeByImage[currentImageLabel])) {
+                console.warn(`[updateStrokeVisibilityControls] Correcting selectedStrokeByImage for multi-select. Was: ${selectedStrokeByImage[currentImageLabel]}, multiple was: ${JSON.stringify(currentSelectionArray)}. Setting to: ${currentSelectionArray[0] || null}`);
+                selectedStrokeByImage[currentImageLabel] = currentSelectionArray[0] || null;
+            }
+        } else { // 0 selected in multipleSelectedStrokesByImage
+            if (selectedStrokeByImage[currentImageLabel] !== null) {
+                console.warn(`[updateStrokeVisibilityControls] Correcting selectedStrokeByImage. Was: ${selectedStrokeByImage[currentImageLabel]}, multiple was empty. Setting to: null`);
+                selectedStrokeByImage[currentImageLabel] = null;
+            }
+        }
+        console.log(`[updateStrokeVisibilityControls] State AFTER sync - selectedStroke: ${selectedStrokeByImage[currentImageLabel]}, multipleSelected: ${multipleSelectedStrokesByImage[currentImageLabel] ? JSON.stringify(multipleSelectedStrokesByImage[currentImageLabel]) : 'undefined'}`);
+        // --- End Synchronization Logic ---
+
         const controlsContainer = document.getElementById('strokeVisibilityControls');
         controlsContainer.innerHTML = ''; // Clear existing controls
         
@@ -3507,20 +3530,34 @@ document.addEventListener('DOMContentLoaded', () => {
         window.lastClickedCanvasLabel = hoveredLabel ? hoveredLabel.strokeLabel : null;
 
         if (hoveredLabel) {
-            console.log(`Canvas Mousedown: Clicked on canvas label: ${hoveredLabel.strokeLabel}`);
-            // Focus/Select the stroke associated with the clicked canvas label
+            // This is a single click on a label, not a double click (double click is handled above and returns)
+            const currentlyHoveredStroke = hoveredLabel.strokeLabel;
+            console.log(`Canvas Mousedown: Single click on canvas label: ${currentlyHoveredStroke}.`);
+            console.log(`Canvas Mousedown: Selection BEFORE update for ${window.currentImageLabel}:`, window.multipleSelectedStrokesByImage[window.currentImageLabel] ? JSON.parse(JSON.stringify(window.multipleSelectedStrokesByImage[window.currentImageLabel])) : 'undefined');
+
             if (window.selectedStrokeByImage && window.multipleSelectedStrokesByImage) {
-                window.selectedStrokeByImage[window.currentImageLabel] = hoveredLabel.strokeLabel;
-                window.multipleSelectedStrokesByImage[window.currentImageLabel] = [hoveredLabel.strokeLabel];
-                console.log(`Canvas Mousedown: Focused stroke ${hoveredLabel.strokeLabel}`);
+                // Ensure the array for the current image exists
+                if (!window.multipleSelectedStrokesByImage[window.currentImageLabel]) {
+                    window.multipleSelectedStrokesByImage[window.currentImageLabel] = [];
+                }
+
+                // Explicitly clear the existing selection for the current image to ensure exclusivity
+                window.multipleSelectedStrokesByImage[window.currentImageLabel] = []; 
+                
+                // Add only the newly clicked stroke
+                window.multipleSelectedStrokesByImage[window.currentImageLabel].push(currentlyHoveredStroke);
+                
+                // Update the primary selected stroke variable
+                window.selectedStrokeByImage[window.currentImageLabel] = currentlyHoveredStroke;
+
+                console.log(`Canvas Mousedown: Selection AFTER update for ${window.currentImageLabel}:`, JSON.parse(JSON.stringify(window.multipleSelectedStrokesByImage[window.currentImageLabel])));
+                console.log(`Canvas Mousedown: Focused/Selected stroke is now ${currentlyHoveredStroke}`);
 
                 // If NOT already in edit mode for this stroke, do not enter it on single click.
                 // Only select it. Edit mode for canvas labels will be via double-click (handled above).
-                if (window.selectedStrokeInEditMode === hoveredLabel.strokeLabel) {
+                if (window.selectedStrokeInEditMode === currentlyHoveredStroke) {
                     // If it was already in edit mode, clicking it again (single) might keep it or exit.
                     // For now, let's say a single click on an already-in-edit-mode label keeps it selected.
-                    // Or, if we want single click to exit edit mode for that label:
-                    // window.selectedStrokeInEditMode = null;
                 } else {
                      window.selectedStrokeInEditMode = null; // Ensure single click on a label does not *enter* edit mode for other strokes
                 }
@@ -3531,11 +3568,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (typeof window.updateStrokeVisibilityControls === 'function') {
                     window.updateStrokeVisibilityControls();
                 }
+                 if (typeof updateSelectionActionsPanel === 'function') updateSelectionActionsPanel();
             }
             
             // Then, allow label dragging to proceed
             isDraggingLabel = true;
-            draggedLabelStroke = hoveredLabel;
+            draggedLabelStroke = hoveredLabel; // Store the whole hoveredLabel object
             dragStartX = e.offsetX;
             dragStartY = e.offsetY;
             canvas.style.cursor = 'grabbing'; // Cursor for dragging
