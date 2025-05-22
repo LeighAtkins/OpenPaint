@@ -21,6 +21,8 @@ window.folderStructure = {      // <--- NEW: Add folder structure support
         children: []
     }
 };
+window.selectedStrokeByImage = {}; // Single stroke selection (kept for backward compatibility)
+window.multipleSelectedStrokesByImage = {}; // NEW: Multiple stroke selection support
 // Add counters for each image label type to ensure uniqueness
 window.labelCounters = {
     front: 0,
@@ -28,6 +30,20 @@ window.labelCounters = {
     back: 0,
     cushion: 0
 };
+
+// Global variables and initialization
+window.vectorStrokesByImage = {};
+window.lineStrokesByImage = {};
+window.selectedStrokeByImage = {};
+window.multipleSelectedStrokesByImage = {};
+window.customLabelPositions = {};
+window.calculatedLabelOffsets = {};
+window.strokeVisibilityByImage = {};
+window.strokeLabelVisibility = {};
+window.selectedStrokeInEditMode = null; // Track which stroke is in edit mode
+window.lastClickTime = 0; // For tracking double-clicks
+window.lastCanvasClickTime = 0; // For tracking double-clicks on canvas
+window.clickDelay = 300; // Milliseconds to wait for double-click
 
 document.addEventListener('DOMContentLoaded', () => {
     // Initialize unit selectors
@@ -492,73 +508,14 @@ document.addEventListener('DOMContentLoaded', () => {
             console.warn(`[createEditableMeasureText] WARNING: parentItem is undefined for selected stroke ${strokeLabel}. Will not try to append directly.`);
         }
 
-        // Check if this is the newly created stroke
-        const isNewlyCreated = window.newlyCreatedStroke && 
-                               window.newlyCreatedStroke.label === strokeLabel && 
-                               window.newlyCreatedStroke.image === currentImageLabel &&
-                               (Date.now() - window.newlyCreatedStroke.timestamp) < 2000; // Within last 2 seconds
-        
-        if (isNewlyCreated) {
-            console.log(`[createEditableMeasureText] This is the newly created stroke ${strokeLabel} - will focus`);
-            // Clear the flag so we don't focus multiple times
-            window.newlyCreatedStroke = null;
-            // Force selection to be true
-            isSelected = true;
-        }
-
         if (isSelected) {
             measureText.contentEditable = "true";
             measureText.dataset.originalMeasurementString = currentFormattedMeasurement;
-            
-            // Set a data attribute for easy selection
             measureText.dataset.selectedMeasurement = "true";
-            
-            // Set a data attribute to mark this as needing focus
-            if (isNewlyCreated && parentItem) {
-                measureText.dataset.needsFocus = "true";
-                
-                // Only append to parent if parentItem is defined
-                if (parentItem) {
-                    parentItem.appendChild(measureText);
-                    
-                    // Focus immediately - often works better than setTimeout
-                    measureText.focus();
-                    const selection = window.getSelection();
-                    if (selection) {
-                        const range = document.createRange();
-                        range.selectNodeContents(measureText);
-                        selection.removeAllRanges();
-                        selection.addRange(range);
-                    }
-                    
-                    // Also use a setTimeout as a fallback
-                    setTimeout(() => {
-                        // DOM Guard: Only proceed if measureText is still in the document
-                        if (document.body.contains(measureText) && measureText.dataset.needsFocus === "true") {
-                            console.log(`[createEditableMeasureText focus timeout] Focusing NEW stroke ${strokeLabel}`);
-                            measureText.focus();
-                            const selection = window.getSelection();
-                            if (selection) {
-                                const range = document.createRange();
-                                range.selectNodeContents(measureText);
-                                selection.removeAllRanges();
-                                selection.addRange(range);
-                            }
-                            // Remove the needs focus flag
-                            delete measureText.dataset.needsFocus;
-                        }
-                    }, 100);
-                    
-                    // Return early since we already added to parent
-                    return measureText;
-                }
-            }
-            
-            // For normal selected items (not newly created)
+
+            // Always focus and select all text for any selected stroke (new or sidebar)
             setTimeout(() => {
-                // DOM Guard: Only proceed if measureText is still in the document
                 if (document.body.contains(measureText)) {
-                    console.log(`[createEditableMeasureText focus timeout] Attempting to focus measureText for ${strokeLabel}. IsSelected: ${isSelected}`);
                     measureText.focus();
                     const selection = window.getSelection();
                     if (selection) {
@@ -567,10 +524,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         selection.removeAllRanges();
                         selection.addRange(range);
                     }
-        } else {
-                    console.warn("[createEditableMeasureText focus timeout] measureText no longer in DOM. Skipping focus/select.");
                 }
-            }, 50); // Increased a bit for better reliability
+            }, 0);
         } else {
             measureText.contentEditable = "false";
         }
@@ -640,8 +595,8 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('[updateStrokeVisibilityControls] START - Current window.strokeMeasurements:',
             JSON.stringify(window.strokeMeasurements[currentImageLabel]));
         
-        // Log the currently selected stroke
-        console.log(`[updateStrokeVisibilityControls] Current selected stroke: ${selectedStrokeByImage[currentImageLabel]}`);
+        // Log the currently selected stroke and edit mode
+        console.log(`[updateStrokeVisibilityControls] Current selected stroke: ${selectedStrokeByImage[currentImageLabel]}, Edit mode: ${window.selectedStrokeInEditMode}`);
         
         const controlsContainer = document.getElementById('strokeVisibilityControls');
         controlsContainer.innerHTML = ''; // Clear existing controls
@@ -668,6 +623,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Get strokes for current image
         const strokes = lineStrokesByImage[currentImageLabel] || [];
         
+        // Create a sorted array of stroke labels we can use for index-based operations
+        const sortedStrokeLabels = Object.keys(lineStrokesByImage[currentImageLabel] || {});
+        
         if (strokes.length === 0) {
             strokesList.innerHTML = '<p>No strokes to display</p>';
             return;
@@ -679,6 +637,25 @@ document.addEventListener('DOMContentLoaded', () => {
         // Preserve existing stroke measurements before processing strokes
         const existingMeasurements = window.strokeMeasurements[currentImageLabel] || {};
         console.log('[updateStrokeVisibilityControls] Existing measurements:', JSON.stringify(existingMeasurements));
+        
+        // Initialize multi-selection array if needed
+        if (!multipleSelectedStrokesByImage[currentImageLabel]) {
+            multipleSelectedStrokesByImage[currentImageLabel] = [];
+        }
+        
+        // Add stroke actions panel if any strokes are selected
+        const selectedCount = multipleSelectedStrokesByImage[currentImageLabel].length;
+        if (selectedCount > 0) {
+            const actionsPanel = document.createElement('div');
+            actionsPanel.className = 'stroke-actions-panel';
+            
+            // Empty action buttons container - we now use direct interaction with strokes
+            const buttonsContainer = document.createElement('div');
+            buttonsContainer.className = 'stroke-actions-buttons';
+            
+            actionsPanel.appendChild(buttonsContainer);
+            strokesList.appendChild(actionsPanel);
+        }
         
         // Create visibility toggle for each stroke
         strokes.forEach(strokeLabel => {
@@ -742,12 +719,37 @@ document.addEventListener('DOMContentLoaded', () => {
             const isVisible = strokeVisibilityByImage[currentImageLabel][strokeLabel];
             const isLabelVisible = strokeLabelVisibility[currentImageLabel][strokeLabel];
             const measurement = getMeasurementString(strokeLabel);
-            const isSelected = selectedStrokeByImage[currentImageLabel] === strokeLabel;
+            
+            // Check if this stroke is selected in the multi-selection array
+            const isMultiSelected = multipleSelectedStrokesByImage[currentImageLabel].includes(strokeLabel);
+            // Also check the legacy single selection for backward compatibility
+            const isSingleSelected = selectedStrokeByImage[currentImageLabel] === strokeLabel;
+            // Combined selection state
+            const isSelected = isMultiSelected || isSingleSelected;
+            
+            // Check if this stroke is in edit mode
+            const isInEditMode = window.selectedStrokeInEditMode === strokeLabel;
             
             const item = document.createElement('div');
             item.className = 'stroke-visibility-item';
             item.dataset.stroke = strokeLabel;
             item.dataset.selected = isSelected ? 'true' : 'false';
+            item.dataset.editMode = isInEditMode ? 'true' : 'false';
+            
+            // Apply/Remove visual styling for edit mode
+            if (isInEditMode) {
+                console.log(`Styling item ${strokeLabel} for edit mode.`);
+                item.style.backgroundColor = '#FFF3E0';
+                item.style.borderLeft = '5px solid #FF9800';
+                item.style.boxShadow = '0 3px 8px rgba(255, 152, 0, 0.3)';
+                
+                // Remove edit mode indicator creation
+            } else {
+                item.style.removeProperty('background-color');
+                item.style.removeProperty('border-left');
+                item.style.removeProperty('box-shadow');
+                // Remove edit mode indicator removal
+            }
             
             // Make all parts of the item selectable (except checkbox and buttons)
             item.addEventListener('click', (e) => {
@@ -756,18 +758,138 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
                 
-                const isCurrentlySelected = selectedStrokeByImage[currentImageLabel] === strokeLabel;
+                const now = Date.now();
+                const timeSinceLastClick = now - window.lastClickTime;
+                const clickedLabel = strokeLabel; // Store for timeout use
                 
-                if (isCurrentlySelected) {
-                    selectedStrokeByImage[currentImageLabel] = null; // Deselect
+                // Check if this is a double-click
+                if (timeSinceLastClick < window.clickDelay && selectedStrokeByImage[currentImageLabel] === clickedLabel) {
+                    // Double-click detected
+                    console.log('Double-click on stroke item:', clickedLabel);
+                    if (window.singleClickTimeout) {
+                        clearTimeout(window.singleClickTimeout); // Cancel single-click action
+                        window.singleClickTimeout = null;
+                    }
+                    
+                    window.selectedStrokeInEditMode = clickedLabel;
+                    
+                    // Make sure the item stays selected when entering edit mode
+                    multipleSelectedStrokesByImage[currentImageLabel] = [clickedLabel];
+                    selectedStrokeByImage[currentImageLabel] = clickedLabel;
+                    
+                    // Update UI for all items by refreshing the list
+                    // This will correctly apply edit mode styling and focus
+                    updateStrokeVisibilityControls(); 
+                    
+                    console.log('Entered edit mode for stroke:', clickedLabel);
+                    
+                    hideSelectionActionsPanel(); 
+                    redrawCanvasWithVisibility();
                 } else {
-                    selectedStrokeByImage[currentImageLabel] = strokeLabel; // Select
+                    // Single-click or click on a different item
+                    // Delay single-click action to allow for double-click
+                    if (window.singleClickTimeout) {
+                        clearTimeout(window.singleClickTimeout);
+                    }
+                    window.singleClickTimeout = setTimeout(() => {
+                        console.log('Single-click action for stroke item:', clickedLabel);
+                        // Clear edit mode if a different item is single-clicked
+                        if (window.selectedStrokeInEditMode && window.selectedStrokeInEditMode !== clickedLabel) {
+                            const prevEditItem = document.querySelector(`.stroke-visibility-item[data-stroke="${window.selectedStrokeInEditMode}"]`);
+                            if (prevEditItem) {
+                                prevEditItem.dataset.editMode = 'false';
+                                prevEditItem.style.removeProperty('background-color');
+                                prevEditItem.style.removeProperty('border-left');
+                                prevEditItem.style.removeProperty('box-shadow');
+                                // Remove edit mode indicator removal
+                            }
+                            window.selectedStrokeInEditMode = null;
+                        }
+
+                        // Standard single-click selection logic (multi-select aware)
+                        const isCtrlPressed = e.ctrlKey || e.metaKey;
+                        const isShiftPressed = e.shiftKey;
+                        let currentSelection = multipleSelectedStrokesByImage[currentImageLabel] || [];
+                        const itemIndex = sortedStrokeLabels.indexOf(clickedLabel);
+
+                        if (isShiftPressed && lastSelectedStrokeIndex !== -1 && itemIndex !== -1) {
+                            // Range selection
+                            const start = Math.min(lastSelectedStrokeIndex, itemIndex);
+                            const end = Math.max(lastSelectedStrokeIndex, itemIndex);
+                            const rangeSelection = sortedStrokeLabels.slice(start, end + 1);
+                            
+                            if (isCtrlPressed) {
+                                // Add range to current selection (toggle if already present)
+                                rangeSelection.forEach(strokeId => {
+                                    if (currentSelection.includes(strokeId)) {
+                                        currentSelection = currentSelection.filter(id => id !== strokeId);
+                                    } else {
+                                        currentSelection.push(strokeId);
+                                    }
+                                });
+                            } else {
+                                // Replace selection with range
+                                currentSelection = rangeSelection;
+                            }
+                        } else if (isCtrlPressed) {
+                            // Toggle selection for the clicked item
+                            if (currentSelection.includes(clickedLabel)) {
+                                currentSelection = currentSelection.filter(id => id !== clickedLabel);
+                            } else {
+                                currentSelection.push(clickedLabel);
+                            }
+                            lastSelectedStrokeIndex = itemIndex;
+                        } else {
+                            // Single item selection (replace)
+                            if (currentSelection.includes(clickedLabel) && currentSelection.length === 1) {
+                                // Deselect if clicking the only selected item
+                                // currentSelection = []; 
+                                // window.selectedStrokeInEditMode = null; // Also exit edit mode
+                            } else {
+                                currentSelection = [clickedLabel];
+                                // window.selectedStrokeInEditMode = null; // Exit edit mode on new single selection
+                            }
+                            lastSelectedStrokeIndex = itemIndex;
+                        }
+
+                        multipleSelectedStrokesByImage[currentImageLabel] = currentSelection;
+                        selectedStrokeByImage[currentImageLabel] = currentSelection.length === 1 ? currentSelection[0] : null;
+                        
+                        // Update UI to reflect selection (and remove edit mode if it was on this item)
+                        document.querySelectorAll('.stroke-visibility-item').forEach(el => {
+                            const sLabel = el.dataset.stroke;
+                            if (currentSelection.includes(sLabel)) {
+                                el.dataset.selected = 'true';
+                                if (window.selectedStrokeInEditMode === sLabel && currentSelection.length > 1) {
+                                   // If it was in edit mode but now part of multi-select, exit edit mode
+                                   el.dataset.editMode = 'false';
+                                   window.selectedStrokeInEditMode = null;
+                                } else if (window.selectedStrokeInEditMode === sLabel && currentSelection.length === 1 && !isCtrlPressed && !isShiftPressed) {
+                                    // If it was in edit mode, and it's still the only selected, keep edit mode
+                                     el.dataset.editMode = 'true';
+                                } else {
+                                     el.dataset.editMode = 'false'; // Default to not edit mode
+                                }
+
+                            } else {
+                                el.dataset.selected = 'false';
+                                el.dataset.editMode = 'false'; // Ensure not in edit mode if not selected
+                            }
+                        });
+
+                        if (selectedStrokeByImage[currentImageLabel] && !window.selectedStrokeInEditMode) {
+                             // If single selected and NOT in edit mode, ensure edit mode is false
+                             const selectedItem = document.querySelector(`.stroke-visibility-item[data-stroke="${selectedStrokeByImage[currentImageLabel]}"]`);
+                             if (selectedItem) selectedItem.dataset.editMode = 'false';
+                        }
+
+
+                        updateSelectionActionsPanel();
+                        redrawCanvasWithVisibility();
+                        window.singleClickTimeout = null;
+                    }, window.clickDelay);
                 }
-                
-                // Refresh the UI to reflect the new selection state
-                // updateStrokeVisibilityControls will handle making the correct measureText editable
-                updateStrokeVisibilityControls();
-                redrawCanvasWithVisibility();
+                window.lastClickTime = now;
             });
             
             const checkbox = document.createElement('input');
@@ -896,10 +1018,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             };
             
+            // Create delete button (x)
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'stroke-delete-btn';
+            deleteBtn.innerHTML = '&times;';
+            deleteBtn.title = 'Delete this stroke';
+            deleteBtn.onclick = (e) => {
+                e.stopPropagation(); // Prevent triggering the item's click event
+                deleteStroke(strokeLabel);
+            };
+            
             // Create label toggle button
             const labelToggleBtn = document.createElement('button');
             labelToggleBtn.className = 'stroke-label-toggle-btn';
-            labelToggleBtn.innerHTML = isLabelVisible ? '🏷️' : '<s>🏷️</s>'; // Show label icon, strikethrough if hidden
+            labelToggleBtn.innerHTML = isLabelVisible ? '🏷️' : ' 🏷️ '; // Show label icon, strikethrough if hidden
             labelToggleBtn.title = isLabelVisible ? 'Hide Label' : 'Show Label';
             labelToggleBtn.onclick = (e) => {
                 e.stopPropagation();
@@ -956,6 +1088,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Build the complete item
             item.appendChild(checkbox);
             item.appendChild(labelContainer);
+            item.appendChild(deleteBtn);
             
             // Add to stroke list
             strokesList.appendChild(item);
@@ -971,7 +1104,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const toggleBtn = document.querySelector(`.stroke-visibility-item[data-stroke="${strokeLabel}"] .stroke-label-toggle`);
         if (toggleBtn) {
             const isLabelVisible = strokeLabelVisibility[currentImageLabel][strokeLabel];
-            toggleBtn.innerHTML = isLabelVisible ? '🏷️' : '<s>🏷️</s>'; // Show label icon, strikethrough if hidden
+            toggleBtn.innerHTML = isLabelVisible ? '🏷️' : ' 🏷️ '; // Show label icon, strikethrough if hidden
             toggleBtn.title = isLabelVisible ? 'Hide Label' : 'Show Label';
             toggleBtn.classList.toggle('active', isLabelVisible);
         }
@@ -2071,126 +2204,191 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const vectorData = strokes[strokeLabel];
 
-                // console.log(`  Label Check for ${strokeLabel}: StrokeVisible=${!!isStrokeVisible}, LabelVisible=${!!isLabelVisible}, HasVectorData=${!!vectorData}`);
-
-                // Only draw labels for strokes that are visible AND have their labels set to visible
                 if (isStrokeVisible && isLabelVisible && vectorData && vectorData.points.length > 0) {
-                    // console.log(`    Attempting to draw label for ${strokeLabel}`);
                     const measurement = getMeasurementString(strokeLabel);
                     const labelText = measurement ? `${strokeLabel}=${measurement}` : strokeLabel;
 
-                    // Determine anchor point (e.g., middle of the stroke)
-                    let anchorPoint = { x: 0, y: 0 };
+                    let anchorPointCanvas; // Anchor point in canvas coordinates
+                    let anchorPointImage;  // Anchor point in image coordinates
+
                     if (vectorData.points.length > 0) {
-                        // Use the middle point of the stroke as the default anchor
                         const midIndex = Math.floor(vectorData.points.length / 2);
-                        const midPointRelative = vectorData.points[midIndex];
-                        // Convert relative image coordinates back to canvas coordinates
+                        const midPointRelative = vectorData.points[midIndex]; // This is in image coordinates
+                        anchorPointImage = { x: midPointRelative.x, y: midPointRelative.y };
+                        
                         try {
-                            anchorPoint = getCanvasCoords(midPointRelative.x, midPointRelative.y);
-                            if (!anchorPoint || isNaN(anchorPoint.x) || isNaN(anchorPoint.y)) {
-                                 console.error(`      Error getting canvas coords for label anchor for ${strokeLabel}. Relative point:`, midPointRelative);
-                                 anchorPoint = { x: canvas.width / 2, y: canvas.height / 2 }; // Fallback
+                            // Convert image anchor to canvas anchor for routines that need canvas coords (e.g., initial optimal placement)
+                            anchorPointCanvas = { 
+                                x: (anchorPointImage.x * scale) + imageX, 
+                                y: (anchorPointImage.y * scale) + imageY 
+                            };
+                            if (!anchorPointCanvas || isNaN(anchorPointCanvas.x) || isNaN(anchorPointCanvas.y)) {
+                                 console.error(`      Error calculating canvas coords for label anchor for ${strokeLabel}. Image anchor:`, anchorPointImage);
+                                 anchorPointCanvas = { x: canvas.width / 2, y: canvas.height / 2 }; // Fallback
                             }
                         } catch (err) {
-                             console.error(`      Error in getCanvasCoords for ${strokeLabel}:`, err);
-                             anchorPoint = { x: canvas.width / 2, y: canvas.height / 2 }; // Fallback
+                             console.error(`      Error in converting image anchor to canvas for ${strokeLabel}:`, err);
+                             anchorPointCanvas = { x: canvas.width / 2, y: canvas.height / 2 }; // Fallback
                         }
+                    } else {
+                        // Fallback if no points, though the earlier check should prevent this
+                        anchorPointImage = { x: 0, y: 0}; 
+                        anchorPointCanvas = { x: canvas.width / 2, y: canvas.height / 2 };
                     }
-                    // console.log(`    Anchor Point (Canvas Coords): { x: ${anchorPoint.x.toFixed(1)}, y: ${anchorPoint.y.toFixed(1)} }`);
 
-                    // Set label style
-                    ctx.font = '28px Arial'; // Increased font size (200% of 14px)
-                    const labelColor = vectorData.color || '#000'; // Use stroke color for label
+                    ctx.font = '28px Arial';
+                    const labelColor = vectorData.color || '#000';
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'bottom';
 
-                    // Calculate label dimensions (adjust based on new font size if needed, measureText handles this)
                     const metrics = ctx.measureText(labelText);
-                    const labelWidth = metrics.width + 12; // Add slightly more padding
-                    const labelHeight = 48; // Adjust height for larger font
-                            const labelRect = {
+                    const labelWidth = metrics.width + 12; 
+                    const labelHeight = 48; 
+                    
+                    // Initial labelRect definition (using canvas anchor for width/height context)
+                    // This rect's x,y might be adjusted by optimal placement or stored offsets.
+                    const labelRectForSizing = {
                         width: labelWidth,
                         height: labelHeight,
-                        x: anchorPoint.x - labelWidth / 2, // Initial position centered
-                        y: anchorPoint.y - labelHeight - 15, // Initial position above anchor
-                        strokeLabel: strokeLabel // Keep track of which label this is
+                        // x, y will be determined by finalPosition
+                        strokeLabel: strokeLabel
                     };
 
-                    // Check for custom user-defined position first
-                    let finalPosition;
-                    let offset = null; // Store the relative offset
+                    let finalPositionCanvas; // This will be the top-left of the label in CANVAS coordinates
+                    let imageSpaceOffset; // This will store the {x, y} offset in IMAGE SPACE
 
                     if (customLabelPositions[currentImageLabel]?.[strokeLabel]) {
-                        // 1. Use custom (user-dragged) offset
-                        offset = customLabelPositions[currentImageLabel][strokeLabel];
-                        finalPosition = { x: anchorPoint.x + offset.x, y: anchorPoint.y + offset.y };
-                        // console.log(`    Using custom offset for ${strokeLabel}:`, offset);
+                        imageSpaceOffset = customLabelPositions[currentImageLabel][strokeLabel]; // Already in image space
+                        // console.log(`    Using custom image-space offset for ${strokeLabel}:`, imageSpaceOffset);
                     } else if (calculatedLabelOffsets[currentImageLabel]?.[strokeLabel]) {
-                        // 2. Use previously calculated offset
-                        offset = calculatedLabelOffsets[currentImageLabel][strokeLabel];
-                        finalPosition = { x: anchorPoint.x + offset.x, y: anchorPoint.y + offset.y };
-                        // console.log(`    Using calculated offset for ${strokeLabel}:`, offset);
+                        imageSpaceOffset = calculatedLabelOffsets[currentImageLabel][strokeLabel]; // Already in image space
+                        // console.log(`    Using calculated image-space offset for ${strokeLabel}:`, imageSpaceOffset);
                             } else {
-                        // 3. Calculate optimal position for the first time
+                        // console.log(`    Calculating new optimal position for ${strokeLabel}`);
                          if (typeof findOptimalLabelPosition !== 'function') {
                              console.error("     findOptimalLabelPosition function is not defined! Using default position.");
-                             finalPosition = { x: labelRect.x, y: labelRect.y }; // Fallback
-                             offset = { x: finalPosition.x - anchorPoint.x, y: finalPosition.y - anchorPoint.y }; // Calculate fallback offset
+                            // Fallback canvas offset (relative to canvas anchor)
+                            const fallbackCanvasX = anchorPointCanvas.x - labelWidth / 2;
+                            const fallbackCanvasY = anchorPointCanvas.y - labelHeight - 15;
+                            const canvasSpaceFallbackOffset = { 
+                                x: fallbackCanvasX - anchorPointCanvas.x, 
+                                y: fallbackCanvasY - anchorPointCanvas.y 
+                            };
+                            // Convert canvas offset to image space for storage
+                            imageSpaceOffset = { 
+                                x: canvasSpaceFallbackOffset.x / scale, 
+                                y: canvasSpaceFallbackOffset.y / scale 
+                            };
                          } else {
                              try {
                                 const strokePathInfo = currentStrokePaths.find(p => p.label === strokeLabel);
-                                const initialGuessRect = { ...labelRect, x: anchorPoint.x - labelRect.width / 2, y: anchorPoint.y - labelRect.height - 15 };
-                                const optimalRect = findOptimalLabelPosition(initialGuessRect, anchorPoint, { label: strokeLabel, path: strokePathInfo?.path || [], width: strokePathInfo?.width || (vectorData.width || 5) * scale });
-                                
-                                // Calculate the offset relative to the anchor point
-                                offset = {
-                                    x: optimalRect.x - anchorPoint.x,
-                                    y: optimalRect.y - anchorPoint.y
+                                // Use the start of the actual drawn path on canvas as anchor for initial guess
+                                let initialLabelAnchorCanvas;
+                                if (strokePathInfo && strokePathInfo.path && strokePathInfo.path.length > 0) {
+                                    // Calculate a better representative point for the stroke
+                                    // For freehand strokes, use the midpoint of the path
+                                    const path = strokePathInfo.path;
+                                    if (path.length > 1) {
+                                        // Find the geometric midpoint of the path
+                                        let midpointIndex = Math.floor(path.length / 2);
+                                        initialLabelAnchorCanvas = { 
+                                            x: path[midpointIndex].x, 
+                                            y: path[midpointIndex].y 
+                                        };
+                                        
+                                        // For straight lines, can also consider using the midpoint between first and last points
+                                        if (vectorData.type === 'straight' && path.length >= 2) {
+                                            initialLabelAnchorCanvas = {
+                                                x: (path[0].x + path[path.length - 1].x) / 2,
+                                                y: (path[0].y + path[path.length - 1].y) / 2
+                                            };
+                                        }
+                                    } else {
+                                        // Fall back to the first point if only one point exists
+                                        initialLabelAnchorCanvas = { x: path[0].x, y: path[0].y };
+                                    }
+                                } else {
+                                    // Fallback to the calculated anchorPointCanvas if no path info
+                                    initialLabelAnchorCanvas = anchorPointCanvas;
+                                }
+
+                                // Initial guess based on where the stroke actually appears on canvas
+                                // Position above or to the side of the stroke point
+                                const initialGuessRectCanvas = { 
+                                    ...labelRectForSizing, 
+                                    x: initialLabelAnchorCanvas.x - labelRectForSizing.width / 2, 
+                                    y: initialLabelAnchorCanvas.y - labelRectForSizing.height - 10 // Reduced vertical offset
                                 };
 
-                                // Store the calculated offset
-                                if (!calculatedLabelOffsets[currentImageLabel]) calculatedLabelOffsets[currentImageLabel] = {};
-                                calculatedLabelOffsets[currentImageLabel][strokeLabel] = offset;
-                                // console.log(`    Calculated and stored offset for ${strokeLabel}:`, offset);
+                                // findOptimalLabelPosition should search relative to the stroke's actual canvas position
+                                const optimalRectCanvas = findOptimalLabelPosition(
+                                    initialGuessRectCanvas, 
+                                    initialLabelAnchorCanvas, // <<< KEY CHANGE HERE
+                                    { 
+                                        label: strokeLabel, 
+                                        path: strokePathInfo?.path || [], 
+                                        width: strokePathInfo?.width || (vectorData.width || 5) * scale 
+                                    }
+                                );
+                                
+                                // The offset derived from optimalRect is in canvas space
+                                const canvasSpaceOptimalOffset = {
+                                    x: optimalRectCanvas.x - anchorPointCanvas.x,
+                                    y: optimalRectCanvas.y - anchorPointCanvas.y
+                                };
 
-                                finalPosition = { x: optimalRect.x, y: optimalRect.y };
+                                // Convert canvas-space offset to image-space for storage
+                                imageSpaceOffset = {
+                                    x: canvasSpaceOptimalOffset.x / scale,
+                                    y: canvasSpaceOptimalOffset.y / scale
+                                };
+                                // console.log(`    Calculated optimal canvas offset for ${strokeLabel}:`, canvasSpaceOptimalOffset, `-> image offset:`, imageSpaceOffset);
                              } catch(err) {
                                 console.error(`      Error in findOptimalLabelPosition for ${strokeLabel}:`, err);
-                                finalPosition = { x: labelRect.x, y: labelRect.y }; // Fallback
-                                offset = { x: finalPosition.x - anchorPoint.x, y: finalPosition.y - anchorPoint.y }; // Calculate fallback offset
-                             }
-                         }
-                         // Store the calculated offset (even if fallback)
+                                const fallbackCanvasX = anchorPointCanvas.x - labelWidth / 2;
+                                const fallbackCanvasY = anchorPointCanvas.y - labelHeight - 15;
+                                const canvasSpaceFallbackOffset = { 
+                                    x: fallbackCanvasX - anchorPointCanvas.x, 
+                                    y: fallbackCanvasY - anchorPointCanvas.y 
+                                };
+                                imageSpaceOffset = { 
+                                    x: canvasSpaceFallbackOffset.x / scale, 
+                                    y: canvasSpaceFallbackOffset.y / scale 
+                                };
+                            }
+                        }
+                        // Store the newly calculated (or fallback) image-space offset
                          if (!calculatedLabelOffsets[currentImageLabel]) calculatedLabelOffsets[currentImageLabel] = {};
-                         calculatedLabelOffsets[currentImageLabel][strokeLabel] = offset;
+                        calculatedLabelOffsets[currentImageLabel][strokeLabel] = imageSpaceOffset;
+                        // console.log(`    Stored calculated image-space offset for ${strokeLabel}:`, imageSpaceOffset);
                     }
 
-                    // Store the final calculated position for overlap checks in *this* redraw cycle
-                    // Make sure to add the strokeLabel here
-                    currentLabelPositions.push({ ...labelRect, x: finalPosition.x, y: finalPosition.y, strokeLabel: strokeLabel });
+                    // Now, calculate the final canvas position for drawing using the image-space anchor and image-space offset
+                    const finalLabelImageX = anchorPointImage.x + imageSpaceOffset.x;
+                    const finalLabelImageY = anchorPointImage.y + imageSpaceOffset.y;
 
+                    finalPositionCanvas = {
+                        x: (finalLabelImageX * scale) + imageX,
+                        y: (finalLabelImageY * scale) + imageY
+                    };
+                    // console.log(`    Final Canvas Position for ${strokeLabel}:`, finalPositionCanvas, `(from ImagePos: ${finalLabelImageX.toFixed(1)},${finalLabelImageY.toFixed(1)})`);
 
-                    // Draw label background
-                    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)'; // Semi-transparent white
-                    ctx.fillRect(finalPosition.x, finalPosition.y, labelWidth, labelHeight);
+                    currentLabelPositions.push({ 
+                        ...labelRectForSizing, 
+                        x: finalPositionCanvas.x, 
+                        y: finalPositionCanvas.y, 
+                        strokeLabel: strokeLabel 
+                    });
 
-                    // Draw label border with stroke color
-                    ctx.strokeStyle = labelColor; // Use the stroke's color for the border
-                    ctx.lineWidth = 1; // Set border thickness
-                    ctx.strokeRect(finalPosition.x, finalPosition.y, labelWidth, labelHeight);
-
-                    // Draw label text
-                    ctx.fillStyle = labelColor; // Stroke color
-                    const textX = finalPosition.x + labelWidth / 2;
-                    const textY = finalPosition.y + labelHeight - 7; // Adjust baseline slightly for larger font
-                    // console.log(`    Drawing text "${labelText}" at Canvas(${textX.toFixed(1)}, ${textY.toFixed(1)})`);
-                    ctx.fillText(labelText, textX, textY);
-
-                    // Optionally draw connector line
+                    // Draw the connector line FIRST, so it's behind the label
                      if (typeof drawLabelConnector === 'function') {
                          try {
-                            drawLabelConnector({ ...labelRect, x: finalPosition.x, y: finalPosition.y }, anchorPoint, labelColor);
+                            // drawLabelConnector expects the labelRect and anchorPoint in canvas coordinates
+                           drawLabelConnector(
+                               { ...labelRectForSizing, x: finalPositionCanvas.x, y: finalPositionCanvas.y }, 
+                               anchorPointCanvas, // Use the canvas anchor for visual connection
+                               labelColor
+                           );
                          } catch(err) {
                             console.error(`      Error in drawLabelConnector for ${strokeLabel}:`, err);
                          }
@@ -2198,8 +2396,19 @@ document.addEventListener('DOMContentLoaded', () => {
                          console.warn("     drawLabelConnector function is not defined!");
                      }
 
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                    ctx.fillRect(finalPositionCanvas.x, finalPositionCanvas.y, labelWidth, labelHeight);
+
+                    ctx.strokeStyle = labelColor;
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(finalPositionCanvas.x, finalPositionCanvas.y, labelWidth, labelHeight);
+
+                    ctx.fillStyle = labelColor;
+                    const textX = finalPositionCanvas.x + labelWidth / 2;
+                    const textY = finalPositionCanvas.y + labelHeight - 7; 
+                    ctx.fillText(labelText, textX, textY);
                 } else {
-                    // console.log(`    Skipping label for ${strokeLabel} (StrokeVisible: ${!!isStrokeVisible}, LabelVisible: ${!!isLabelVisible}, HasVectorData: ${!!vectorData})`);
+                    // ... existing code ...
                 }
             });
             // console.log(`--- Redraw: Finished Drawing Labels ---`);
@@ -2297,6 +2506,13 @@ document.addEventListener('DOMContentLoaded', () => {
             selectedStrokeByImage[currentImageLabel] = strokeLabel;
             console.log(`[Save State] Auto-selected newly created stroke: ${strokeLabel}`);
             
+            // Also add to multi-selection array for action panel
+            if (!multipleSelectedStrokesByImage[currentImageLabel]) {
+                multipleSelectedStrokesByImage[currentImageLabel] = [];
+            }
+            // Clear any previous selections and add only this stroke
+            multipleSelectedStrokesByImage[currentImageLabel] = [strokeLabel];
+            
             // Set the newly created stroke flag for focus handling
             window.newlyCreatedStroke = {
                 label: strokeLabel,
@@ -2386,7 +2602,10 @@ document.addEventListener('DOMContentLoaded', () => {
             type: strokeType,
             label: strokeLabel, // Use the unique label
             color: colorPicker.value, 
-            width: parseInt(brushSize.value) 
+            width: parseInt(brushSize.value),
+            // Store deep copies of label offset data for the current image
+            customLabelPositions: customLabelPositions[currentImageLabel] ? JSON.parse(JSON.stringify(customLabelPositions[currentImageLabel])) : {},
+            calculatedLabelOffsets: calculatedLabelOffsets[currentImageLabel] ? JSON.parse(JSON.stringify(calculatedLabelOffsets[currentImageLabel])) : {}
         };
         
         // Store vector data with the undo action if available
@@ -2496,6 +2715,102 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
             
+            // Handle delete-strokes action
+            if (lastAction.type === 'delete-strokes') {
+                // Create a local map of the current visibility state to preserve it
+                const currentVisibility = {};
+                if (strokeVisibilityByImage[lastAction.image]) {
+                    // Save current visibility state of all existing strokes
+                    Object.keys(strokeVisibilityByImage[lastAction.image]).forEach(strokeId => {
+                        currentVisibility[strokeId] = strokeVisibilityByImage[lastAction.image][strokeId];
+                    });
+                }
+
+                // Restore the exact, full order of strokes as it was before the deletion
+                if (lastAction.strokes) { // lastAction.strokes is now preDeleteStrokeOrder
+                    lineStrokesByImage[lastAction.image] = [...lastAction.strokes];
+                } else {
+                    // Fallback if preDeleteStrokeOrder wasn't captured (should not happen ideally)
+                    lineStrokesByImage[lastAction.image] = [];
+                }
+
+                // Ensure strokeVisibilityByImage exists for this image
+                if (!strokeVisibilityByImage[lastAction.image]) {
+                    strokeVisibilityByImage[lastAction.image] = {};
+                }
+
+                // First, preserve visibility for all non-deleted strokes
+                lineStrokesByImage[lastAction.image].forEach(strokeLabel => {
+                    // If it wasn't one of the deleted strokes and has current visibility, preserve it
+                    if (lastAction.deletedStrokeLabels && !lastAction.deletedStrokeLabels.includes(strokeLabel)) {
+                        if (currentVisibility[strokeLabel] !== undefined) {
+                            strokeVisibilityByImage[lastAction.image][strokeLabel] = currentVisibility[strokeLabel];
+                        } else {
+                            // If not in current visibility map, default to visible
+                            strokeVisibilityByImage[lastAction.image][strokeLabel] = true;
+                        }
+                    }
+                });
+
+                // Now restore data ONLY for the strokes that were part of this specific delete action
+                if (lastAction.deletedStrokeLabels) {
+                    lastAction.deletedStrokeLabels.forEach(strokeLabel => {
+                        // Restore vector data
+                        if (lastAction.vectorData && lastAction.vectorData[strokeLabel]) {
+                            if (!vectorStrokesByImage[lastAction.image]) {
+                                vectorStrokesByImage[lastAction.image] = {};
+                            }
+                            vectorStrokesByImage[lastAction.image][strokeLabel] = JSON.parse(JSON.stringify(lastAction.vectorData[strokeLabel]));
+                        }
+                        
+                        // Restore visibility - explicitly ensuring it's set to visible
+                        if (!strokeVisibilityByImage[lastAction.image]) {
+                            strokeVisibilityByImage[lastAction.image] = {};
+                        }
+                        // Use the saved visibility if available, otherwise default to visible
+                        strokeVisibilityByImage[lastAction.image][strokeLabel] = 
+                            (lastAction.visibility && lastAction.visibility[strokeLabel] !== undefined) 
+                            ? lastAction.visibility[strokeLabel] 
+                            : true;
+                        
+                        // Restore label visibility with similar logic
+                        if (!strokeLabelVisibility[lastAction.image]) {
+                            strokeLabelVisibility[lastAction.image] = {};
+                        }
+                        strokeLabelVisibility[lastAction.image][strokeLabel] = 
+                            (lastAction.labelVisibility && lastAction.labelVisibility[strokeLabel] !== undefined)
+                            ? lastAction.labelVisibility[strokeLabel]
+                            : true;
+                        
+                        // Restore measurements
+                        if (lastAction.measurements && lastAction.measurements[strokeLabel]) {
+                            if (!strokeMeasurements[lastAction.image]) {
+                                strokeMeasurements[lastAction.image] = {};
+                            }
+                            strokeMeasurements[lastAction.image][strokeLabel] = JSON.parse(JSON.stringify(lastAction.measurements[strokeLabel]));
+                        }
+                    });
+                }
+                
+                // Restore selection to the previously selected (and now restored) strokes
+                if (lastAction.deletedStrokeLabels && lastAction.deletedStrokeLabels.length > 0) {
+                    multipleSelectedStrokesByImage[lastAction.image] = [...lastAction.deletedStrokeLabels];
+                    if (lastAction.deletedStrokeLabels.length === 1) {
+                        selectedStrokeByImage[lastAction.image] = lastAction.deletedStrokeLabels[0];
+                    } else {
+                        selectedStrokeByImage[lastAction.image] = null; 
+                    }
+                } else {
+                    multipleSelectedStrokesByImage[lastAction.image] = [];
+                    selectedStrokeByImage[lastAction.image] = null;
+                }
+                
+                // Set current image to the image the strokes belong to if different
+                if (currentImageLabel !== lastAction.image) {
+                    switchToImage(lastAction.image);
+                }
+            }
+            
             // Ensure we have a valid previous state
             if (previousState && previousState.state) {
                 // Restore the canvas state
@@ -2504,6 +2819,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 restoreCanvasState(stateToRestore);
                 currentStroke = cloneImageData(stateToRestore);
                 console.log('Canvas state restored');
+
+                // Restore label positions if they exist in the state
+                if (previousState.customLabelPositions) {
+                    customLabelPositions[currentImageLabel] = JSON.parse(JSON.stringify(previousState.customLabelPositions));
+                } else {
+                    // If not in state, ensure it's at least an empty object to prevent errors
+                    customLabelPositions[currentImageLabel] = {}; 
+                }
+                if (previousState.calculatedLabelOffsets) {
+                    calculatedLabelOffsets[currentImageLabel] = JSON.parse(JSON.stringify(previousState.calculatedLabelOffsets));
+                } else {
+                    calculatedLabelOffsets[currentImageLabel] = {};
+                }
+
             } else {
                 console.log('Warning: No valid previous state found');
                 // Create a blank state if needed
@@ -2516,6 +2845,14 @@ document.addEventListener('DOMContentLoaded', () => {
             updateStrokeCounter();
             updateStrokeVisibilityControls();
             updateSidebarStrokeCounts();
+            
+            // For delete-stroke undo operations, ensure a complete redraw to avoid visual glitches
+            if (lastAction && lastAction.type === 'delete-strokes') {
+                // Short delay to ensure all state is updated before final redraw
+                setTimeout(() => {
+                    redrawCanvasWithVisibility();
+                }, 50);
+            }
         } else if (currentStack && currentStack.length === 1) {
             // We're at the initial state
             console.log('At initial state, resetting workspace');
@@ -2535,6 +2872,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 imageStates[currentImageLabel] = cloneImageData(initialState.state);
                 restoreCanvasState(initialState.state);
                 currentStroke = cloneImageData(initialState.state);
+
+                // Restore label positions if they exist in the initial state
+                if (initialState.customLabelPositions) {
+                    customLabelPositions[currentImageLabel] = JSON.parse(JSON.stringify(initialState.customLabelPositions));
+                } else {
+                    customLabelPositions[currentImageLabel] = {};
+                }
+                if (initialState.calculatedLabelOffsets) {
+                    calculatedLabelOffsets[currentImageLabel] = JSON.parse(JSON.stringify(initialState.calculatedLabelOffsets));
+                } else {
+                    calculatedLabelOffsets[currentImageLabel] = {};
+                }
+
             } else if (window.originalImages[currentImageLabel]) {
                 // If we have the original image, redraw it
                 console.log('Redrawing from original image');
@@ -2592,8 +2942,42 @@ document.addEventListener('DOMContentLoaded', () => {
             // Add back to undo stack
             undoStackByImage[currentImageLabel].push(actionToRedo);
             
+            // Handle delete-strokes action
+            if (actionToRedo.type === 'delete-strokes') {
+                // Delete strokes again
+                actionToRedo.strokes.forEach(strokeLabel => {
+                    // Remove from vector data
+                    if (vectorStrokesByImage[actionToRedo.image] && vectorStrokesByImage[actionToRedo.image][strokeLabel]) {
+                        delete vectorStrokesByImage[actionToRedo.image][strokeLabel];
+                    }
+                    
+                    // Remove from visibility tracking
+                    if (strokeVisibilityByImage[actionToRedo.image] && strokeVisibilityByImage[actionToRedo.image][strokeLabel]) {
+                        delete strokeVisibilityByImage[actionToRedo.image][strokeLabel];
+                    }
+                    
+                    // Remove from label visibility tracking
+                    if (strokeLabelVisibility[actionToRedo.image] && strokeLabelVisibility[actionToRedo.image][strokeLabel]) {
+                        delete strokeLabelVisibility[actionToRedo.image][strokeLabel];
+                    }
+                    
+                    // Remove from measurements
+                    if (strokeMeasurements[actionToRedo.image] && strokeMeasurements[actionToRedo.image][strokeLabel]) {
+                        delete strokeMeasurements[actionToRedo.image][strokeLabel];
+                    }
+                    
+                    // Remove from line strokes
+                    if (lineStrokesByImage[actionToRedo.image]) {
+                        lineStrokesByImage[actionToRedo.image] = lineStrokesByImage[actionToRedo.image].filter(label => label !== strokeLabel);
+                    }
+                });
+                
+                // Clear selection
+                multipleSelectedStrokesByImage[actionToRedo.image] = [];
+                selectedStrokeByImage[actionToRedo.image] = null;
+            }
             // Handle stroke type actions (both freehand strokes and straight lines)
-            if ((actionToRedo.type === 'line' || actionToRedo.type === 'stroke') && actionToRedo.label) {
+            else if ((actionToRedo.type === 'line' || actionToRedo.type === 'stroke') && actionToRedo.label) {
                 // Add the stroke back to the list
                 lineStrokesByImage[currentImageLabel] = lineStrokesByImage[currentImageLabel] || [];
                 lineStrokesByImage[currentImageLabel].push(actionToRedo.label);
@@ -2665,6 +3049,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 restoreCanvasState(stateToRestore);
                 currentStroke = cloneImageData(stateToRestore);
                 console.log('Canvas state restored for redo');
+
+                // Restore label positions if they exist in the action
+                if (actionToRedo.customLabelPositions) {
+                    customLabelPositions[currentImageLabel] = JSON.parse(JSON.stringify(actionToRedo.customLabelPositions));
+                } else {
+                     // If not in state, ensure it's at least an empty object to prevent errors
+                    customLabelPositions[currentImageLabel] = {};
+                }
+                if (actionToRedo.calculatedLabelOffsets) {
+                    calculatedLabelOffsets[currentImageLabel] = JSON.parse(JSON.stringify(actionToRedo.calculatedLabelOffsets));
+                } else {
+                    calculatedLabelOffsets[currentImageLabel] = {};
+                }
             }
             
             // Update all UI elements
@@ -3054,6 +3451,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let isDraggingImage = false;
     let lastMouseX = 0;
     let lastMouseY = 0;
+    let hoveredCanvasLabelInfo = null; // NEW: To store info about the label currently hovered on canvas
     
     // Helper function to find if a point is inside a label
     function findLabelAtPoint(x, y) {
@@ -3068,146 +3466,101 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Mouse event listeners
     canvas.addEventListener('mousedown', (e) => {
-        const x = e.offsetX;
-        const y = e.offsetY;
-        
-        // Check if clicked on a label
-        const clickedLabel = findLabelAtPoint(x, y);
-        if (clickedLabel) {
-            // Toggle selection of the corresponding stroke
-            const strokeLabel = clickedLabel.strokeLabel;
-            const isCurrentlySelected = selectedStrokeByImage[currentImageLabel] === strokeLabel;
-            
-            // Update selection state
-            if (isCurrentlySelected) {
-                // Deselect if already selected
-                selectedStrokeByImage[currentImageLabel] = null;
-            } else {
-                // Select if not already selected
-                selectedStrokeByImage[currentImageLabel] = strokeLabel;
-                
-                // When selecting a stroke, ensure it's visible
-                if (strokeVisibilityByImage[currentImageLabel] === undefined) {
-                    strokeVisibilityByImage[currentImageLabel] = {};
-                }
-                strokeVisibilityByImage[currentImageLabel][strokeLabel] = true;
-            }
-            
-            // Start dragging the label if it's selected
-            if (selectedStrokeByImage[currentImageLabel] === strokeLabel) {
-                isDraggingLabel = true;
-                draggedLabelStroke = strokeLabel;
-                dragStartX = x; // Store initial canvas click coords
-                dragStartY = y;
-                
-                // We will calculate/update the offset in mousemove
-                canvas.style.cursor = 'grabbing';
-            }
-            
-            // Update the sidebar to show selection
-            updateStrokeVisibilityControls();
-            
-            // Redraw canvas to reflect selection
-            redrawCanvasWithVisibility();
-            return;
-        }
-        
-        // Try to detect if user clicked on a stroke directly, rather than its label
-        const strokeData = checkForStrokeAtPoint(x, y);
-        if (strokeData) {
-            // Draw a white connector circle to anchor the start point instead of selecting the line
-            // Save the state before starting a new stroke
-            if (!strokeInProgress) {
-                const currentState = getCanvasState();
-                currentStroke = cloneImageData(currentState);
-                // Save the state before we start drawing
-                undoStackByImage[currentImageLabel].push({
-                    state: cloneImageData(currentState),
-                    type: 'pre-stroke',
-                    label: null
-                });
-            }
-            
-            // Start drawing
-            isDrawing = true;
-            isDrawingOrPasting = true;
-            strokeInProgress = true;
-            points = [];
-            lastVelocity = 0;
-            lastDrawnPoint = null;
-            [lastX, lastY] = [x, y];
-            
-            // Draw a glowing white connector circle at the start point
-            const scale = window.imageScaleByLabel[currentImageLabel] || 1.0; // Get scale
-            const baseRadius = parseInt(brushSize.value) / 2;
-            const scaledRadius = baseRadius * scale;
-            const glowPadding = 5; // Keep glow padding fixed for now
-
-            ctx.beginPath();
-            // Use scaled radius + fixed padding for glow circle
-            ctx.arc(x, y, scaledRadius + glowPadding, 0, Math.PI * 2);
-            
-            // Create a white glow effect with a radial gradient using scaled radii
-            const gradient = ctx.createRadialGradient(
-                x, y, scaledRadius / 2, // Inner radius of gradient (scaled)
-                x, y, scaledRadius + glowPadding // Outer radius of gradient (scaled + fixed padding)
-            );
-            gradient.addColorStop(0, 'white');
-            gradient.addColorStop(0.7, 'rgba(255, 255, 255, 0.8)');
-            gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
-            
-            ctx.fillStyle = gradient;
-            ctx.fill();
-            
-            // Then draw the colored dot for the actual start point
-            ctx.beginPath();
-            ctx.arc(x, y, scaledRadius, 0, Math.PI * 2); // Use scaled radius
-            ctx.fillStyle = colorPicker.value;
-            ctx.fill();
-            
-            if (drawingMode === 'straight') {
-                // For straight line, store the start point
-                straightLineStart = { x: x, y: y };
-                
-                // Also store the transformed coordinates for later consistency checks
-                const transformed = getTransformedCoords(x, y);
-                console.log(`Straight line start at canvas (${x}, ${y}) -> image (${transformed.x}, ${transformed.y})`);
-            } else {
-                // For freehand, add the first point using image-relative coordinates
-                const { x: imgX, y: imgY } = getTransformedCoords(x, y);
-                const firstPoint = {
-                    x: imgX,             // Image space X
-                    y: imgY,             // Image space Y
-                    canvasX: x,          // Canvas space X
-                    canvasY: y,          // Canvas space Y
-                    time: Date.now()
-                };
-                points.push(firstPoint);
-                console.log("Mousedown: Added first point:", JSON.stringify(firstPoint));
-
-                // Store the very first point in vector data immediately
-                const currentStrokeLabel = labelsByImage[currentImageLabel];
-                if (!vectorStrokesByImage[currentImageLabel]) {
-                    vectorStrokesByImage[currentImageLabel] = {};
-                }
-                vectorStrokesByImage[currentImageLabel][currentStrokeLabel] = {
-                    points: [{ x: imgX, y: imgY, time: firstPoint.time }], // Store only image coords
-                    color: colorPicker.value,
-                    width: parseInt(brushSize.value), // Store base width without scaling
-                    type: 'freehand'
-                };
-                console.log(`Mousedown: Initial vector data for ${currentStrokeLabel}:`, JSON.stringify(vectorStrokesByImage[currentImageLabel][currentStrokeLabel]));
-            }
-            return; // Return early as we started drawing from the connector
-        }
-        
-        // Handle image dragging with Shift key
+        // First, check if we should be dragging the image (shift key pressed)
         if (isShiftPressed) {
             isDraggingImage = true;
             lastMouseX = e.offsetX;
             lastMouseY = e.offsetY;
             canvas.style.cursor = 'grabbing';
             return;
+        }
+
+        // Check for double-click on stroke on canvas (for entering edit mode)
+        // This needs to be before general label click handling if we want double-click on label to have a special meaning
+        const now = Date.now();
+        if (now - window.lastCanvasClickTime < window.clickDelay) {
+            const clickedLabelForDoubleClick = findLabelAtPoint(e.offsetX, e.offsetY);
+            if (clickedLabelForDoubleClick && window.lastClickedCanvasLabel === clickedLabelForDoubleClick.strokeLabel) {
+                console.log(`Canvas Mousedown: Double-click detected on label ${clickedLabelForDoubleClick.strokeLabel}`);
+                window.selectedStrokeInEditMode = clickedLabelForDoubleClick.strokeLabel;
+                
+                // Ensure it's also selected in the normal selection models
+                window.selectedStrokeByImage[window.currentImageLabel] = clickedLabelForDoubleClick.strokeLabel;
+                if (window.multipleSelectedStrokesByImage && window.multipleSelectedStrokesByImage[window.currentImageLabel]) {
+                    window.multipleSelectedStrokesByImage[window.currentImageLabel] = [clickedLabelForDoubleClick.strokeLabel];
+                }
+
+                if (typeof window.updateStrokeVisibilityControls === 'function') window.updateStrokeVisibilityControls();
+                if (typeof window.redrawCanvasWithVisibility === 'function') window.redrawCanvasWithVisibility();
+                
+                window.lastCanvasClickTime = 0; // Reset for next double click
+                window.lastClickedCanvasLabel = null;
+                e.preventDefault(); // Prevent other mousedown actions like starting a drag or new stroke
+                return;
+            }
+        }
+        window.lastCanvasClickTime = now;
+        
+
+        // First, check if we're clicking on a label
+        const hoveredLabel = findLabelAtPoint(e.offsetX, e.offsetY);
+        window.lastClickedCanvasLabel = hoveredLabel ? hoveredLabel.strokeLabel : null;
+
+        if (hoveredLabel) {
+            console.log(`Canvas Mousedown: Clicked on canvas label: ${hoveredLabel.strokeLabel}`);
+            // Focus/Select the stroke associated with the clicked canvas label
+            if (window.selectedStrokeByImage && window.multipleSelectedStrokesByImage) {
+                window.selectedStrokeByImage[window.currentImageLabel] = hoveredLabel.strokeLabel;
+                window.multipleSelectedStrokesByImage[window.currentImageLabel] = [hoveredLabel.strokeLabel];
+                console.log(`Canvas Mousedown: Focused stroke ${hoveredLabel.strokeLabel}`);
+
+                // If NOT already in edit mode for this stroke, do not enter it on single click.
+                // Only select it. Edit mode for canvas labels will be via double-click (handled above).
+                if (window.selectedStrokeInEditMode === hoveredLabel.strokeLabel) {
+                    // If it was already in edit mode, clicking it again (single) might keep it or exit.
+                    // For now, let's say a single click on an already-in-edit-mode label keeps it selected.
+                    // Or, if we want single click to exit edit mode for that label:
+                    // window.selectedStrokeInEditMode = null;
+                } else {
+                     window.selectedStrokeInEditMode = null; // Ensure single click on a label does not *enter* edit mode for other strokes
+                }
+
+                if (typeof window.redrawCanvasWithVisibility === 'function') {
+                    window.redrawCanvasWithVisibility();
+                }
+                if (typeof window.updateStrokeVisibilityControls === 'function') {
+                    window.updateStrokeVisibilityControls();
+                }
+            }
+            
+            // Then, allow label dragging to proceed
+            isDraggingLabel = true;
+            draggedLabelStroke = hoveredLabel;
+            dragStartX = e.offsetX;
+            dragStartY = e.offsetY;
+            canvas.style.cursor = 'grabbing'; // Cursor for dragging
+            e.preventDefault(); // Prevent drawing from starting if a label is clicked
+            return; // Important to return after handling label click + potential drag start
+        }
+        
+        // If edit mode is active AND the click was NOT on the label of the stroke in edit mode, clear edit mode.
+        if (window.selectedStrokeInEditMode && (!hoveredLabel || window.selectedStrokeInEditMode !== hoveredLabel.strokeLabel)) { 
+            const prevEditStrokeLabel = window.selectedStrokeInEditMode;
+            window.selectedStrokeInEditMode = null;
+            // Optionally clear selection too, or just exit edit mode visuals
+            // window.multipleSelectedStrokesByImage[window.currentImageLabel] = [];
+            // window.selectedStrokeByImage[window.currentImageLabel] = null;
+            
+            hideSelectionActionsPanel(); 
+            if (typeof window.redrawCanvasWithVisibility === 'function') window.redrawCanvasWithVisibility();
+            if (typeof window.updateStrokeVisibilityControls === 'function') window.updateStrokeVisibilityControls();
+            console.log(`Canvas Mousedown: Clicked outside, exited edit mode for stroke: ${prevEditStrokeLabel}`);
+        }
+
+        // Allow drawing even if clicking on an existing stroke (unlike before where we would select the stroke)
+        // Prepare the vector stroke object
+            if (!vectorStrokesByImage[currentImageLabel]) {
+                vectorStrokesByImage[currentImageLabel] = {};
         }
     
         // Handle drawing (default when Shift is not pressed)
@@ -3268,11 +3621,41 @@ document.addEventListener('DOMContentLoaded', () => {
     canvas.addEventListener('mousemove', (e) => {
         const x = e.offsetX;
         const y = e.offsetY;
+
+        let newHoveredLabelInfo = null;
+        if (!isDrawing && !isDraggingImage && !isDraggingLabel) {
+            newHoveredLabelInfo = findLabelAtPoint(x, y);
+        }
+
+        // Update cursor and visual hover state only if hovered label changed
+        if ((hoveredCanvasLabelInfo?.strokeLabel !== newHoveredLabelInfo?.strokeLabel) || 
+            (!hoveredCanvasLabelInfo && newHoveredLabelInfo) || 
+            (hoveredCanvasLabelInfo && !newHoveredLabelInfo)) {
+            
+            hoveredCanvasLabelInfo = newHoveredLabelInfo;
+
+            if (hoveredCanvasLabelInfo) {
+                canvas.style.cursor = 'pointer'; // Pointer to indicate clickability for focus
+                 console.log(`Canvas Mousemove: Hovering over label ${hoveredCanvasLabelInfo.strokeLabel}`);
+                // Optional: Trigger a redraw if you want to visually highlight the label on hover
+                // This requires redrawCanvasWithVisibility to check for hoveredCanvasLabelInfo
+                // For now, cursor change is the primary feedback.
+                // window.redrawCanvasWithVisibility(); 
+            } else if (!isDrawing && !isDraggingImage && !isDraggingLabel) {
+                canvas.style.cursor = isShiftPressed ? 'grab' : 'crosshair';
+                // Optional: If exiting a hover, redraw to remove highlight
+                // window.redrawCanvasWithVisibility();
+            }
+        }
         
-        // Change cursor when hovering over labels
+        // Change cursor when hovering over labels (this part might be redundant if covered above but acts as fallback)
         if (!isDraggingLabel && !isDraggingImage && !isDrawing) {
-            const hoveredLabel = findLabelAtPoint(x, y);
-            canvas.style.cursor = hoveredLabel ? 'grab' : (isShiftPressed ? 'grab' : 'crosshair');
+            const currentHover = findLabelAtPoint(x, y); // Re-check for safety, though newHoveredLabelInfo is better
+            if (currentHover) {
+                if(canvas.style.cursor !== 'pointer' && canvas.style.cursor !== 'grabbing') canvas.style.cursor = 'pointer';
+            } else {
+                 if(canvas.style.cursor === 'pointer') canvas.style.cursor = isShiftPressed ? 'grab' : 'crosshair';
+            }
         }
         
         // Handle label dragging
@@ -3292,29 +3675,31 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!customLabelPositions[currentImageLabel]) customLabelPositions[currentImageLabel] = {};
             
             // Get the anchor point for the dragged label's stroke (current canvas coords)
-            const vectorData = vectorStrokesByImage[currentImageLabel]?.[draggedLabelStroke];
+            const strokeName = draggedLabelStroke.strokeLabel; // Use the actual stroke name (string)
+            const vectorData = vectorStrokesByImage[currentImageLabel]?.[strokeName];
+
             if (vectorData && vectorData.points.length > 0) {
                 const midIndex = Math.floor(vectorData.points.length / 2);
                 const midPointRelative = vectorData.points[midIndex];
                 const anchorPoint = getCanvasCoords(midPointRelative.x, midPointRelative.y);
 
                 // Get the current offset (custom or calculated) or calculate if first time dragging
-                let currentOffset = customLabelPositions[currentImageLabel][draggedLabelStroke] || 
-                                    calculatedLabelOffsets[currentImageLabel]?.[draggedLabelStroke];
+                let currentOffset = customLabelPositions[currentImageLabel][strokeName] || 
+                                    calculatedLabelOffsets[currentImageLabel]?.[strokeName];
 
                 if (!currentOffset) {
                     // Calculate initial offset based on current drawn position if neither exists
-                    const currentLabelRect = currentLabelPositions.find(l => l.strokeLabel === draggedLabelStroke);
+                    const currentLabelRect = currentLabelPositions.find(l => l.strokeLabel === strokeName);
                     if (currentLabelRect) {
                         currentOffset = {
                             x: currentLabelRect.x - anchorPoint.x,
                             y: currentLabelRect.y - anchorPoint.y
                         };
-                         console.log(`Initialized drag offset from current rect for ${draggedLabelStroke}:`, currentOffset);
+                         console.log(`Initialized drag offset from current rect for ${strokeName}:`, currentOffset);
                     } else {
                         // Fallback if label wasn't found in current positions (shouldn't happen)
                         currentOffset = { x: 0, y: 0 }; 
-                        console.warn(`Could not find current rect for ${draggedLabelStroke} during drag start.`);
+                        console.warn(`Could not find current rect for ${strokeName} during drag start.`);
                     }
                 } else {
                     // Clone the offset object if it came from calculatedLabelOffsets 
@@ -3323,12 +3708,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 // Update the relative offset by the canvas delta
-                currentOffset.x += deltaX;
-                currentOffset.y += deltaY;
+                // Convert canvas delta to image space delta
+                const scale = window.imageScaleByLabel[currentImageLabel] || 1.0;
+                const imageDeltaX = deltaX / scale;
+                const imageDeltaY = deltaY / scale;
+
+                currentOffset.x += imageDeltaX;
+                currentOffset.y += imageDeltaY;
                 
                 // Store the updated offset in customLabelPositions (always overwrites calculated)
-                customLabelPositions[currentImageLabel][draggedLabelStroke] = currentOffset;
-                 console.log(`Storing updated custom offset for ${draggedLabelStroke}:`, currentOffset);
+                customLabelPositions[currentImageLabel][strokeName] = currentOffset;
+                 console.log(`Storing updated custom offset for ${strokeName}:`, currentOffset);
 
                 // Remove canvas boundary clamping
                 // pos.x = Math.max(10, Math.min(canvas.width - labelToMove.width - 10, pos.x));
@@ -3392,7 +3782,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (Math.abs(straightLineStart.x - endPoint.x) > 2 ||
                     Math.abs(straightLineStart.y - endPoint.y) > 2) {
 
-                    // Check if end point is on another stroke
+                    // Check if end point is on another stroke - but don't stop drawing
                     const endPointStrokeData = checkForStrokeAtPoint(endPoint.x, endPoint.y);
 
                     // --- MODIFIED: Store vector data temporarily ---
@@ -3425,19 +3815,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.log(`Stored straight line data temporarily under ${tempStrokeKey}`);
                     // --- END MODIFICATION ---
 
-
-                    // // --- REMOVED: Direct assignment using potentially non-unique label ---
-                    // const newStrokeLabel = labelsByImage[currentImageLabel]; // <<< PROBLEM
-                    // vectorStrokesByImage[currentImageLabel][newStrokeLabel] = { ... };
-                    // --- END REMOVAL ---
-
-
                     // Draw the final line
                     drawStraightLinePreview(straightLineStart, endPoint);
 
                     // If end point overlaps with another line, draw a glowing circle
                     if (endPointStrokeData) {
-                       // ... (glowing circle drawing code remains the same) ...
+                        const scale = window.imageScaleByLabel[currentImageLabel] || 1.0;
+                        const baseRadius = parseInt(brushSize.value) / 2;
+                        const scaledRadius = baseRadius * scale;
+                        const glowPadding = 5; // Keep glow padding fixed
+
                         ctx.beginPath();
                         // Use scaled radius + fixed padding for glow circle
                         ctx.arc(endPoint.x, endPoint.y, scaledRadius + glowPadding, 0, Math.PI * 2);
@@ -3467,44 +3854,8 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (drawingMode === 'freehand' && points.length > 0) {
                 // Handle freehand drawing completion
 
-                // --- REMOVED: Direct assignment using potentially non-unique label ---
-                // Ensure the final point data is in _drawingStroke (usually handled by last mousemove draw call)
-                // but don't assign it directly to a final label here.
-                /*
-                const newStrokeLabel = labelsByImage[currentImageLabel]; // <<< PROBLEM
-                const strokeColor = colorPicker.value;
-                const strokeWidth = parseInt(brushSize.value);
-
-                if (!vectorStrokesByImage[currentImageLabel]) {
-                    vectorStrokesByImage[currentImageLabel] = {};
-                }
-
-                if (points.length > 1) {
-                    const relativePoints = points.map(point => ({
-                        x: point.x,
-                        y: point.y,
-                        time: point.time
-                    }));
-
-                    console.log(`Completing stroke with ${relativePoints.length} points`);
-                    console.log(`First point: (${relativePoints[0].x}, ${relativePoints[0].y})`);
-                    console.log(`Last point: (${relativePoints[relativePoints.length-1].x}, ${relativePoints[relativePoints.length-1].y})`);
-
-                    // This was overwriting existing strokes:
-                    vectorStrokesByImage[currentImageLabel][newStrokeLabel] = {
-                        points: relativePoints,
-                        color: strokeColor,
-                        width: strokeWidth, // Store base width without scaling
-                        type: 'freehand'
-                    };
-                    // Stroke list and visibility are handled later by saveState
-                }
-                */
-                // --- END REMOVAL ---
-
                 // Check if the last point of the freehand stroke is on another stroke
                 if (points.length > 0) {
-                   // ... (glowing circle drawing code remains the same) ...
                     const lastPoint = points[points.length - 1];
                     // Need canvas coords for check
                     const endPointStrokeData = checkForStrokeAtPoint(lastPoint.canvasX, lastPoint.canvasY);
@@ -3838,8 +4189,14 @@ document.addEventListener('DOMContentLoaded', () => {
             label: null
         });
         
-        // Clear the selected stroke
+        // Clear the selected stroke and edit mode
         selectedStrokeByImage[currentImageLabel] = null;
+        window.selectedStrokeInEditMode = null;
+        
+        // Reset edit mode in the UI
+        document.querySelectorAll('.stroke-visibility-item').forEach(el => {
+            el.dataset.editMode = 'false';
+        });
         
         // Instead of just clearing the canvas, redraw the original image if available
         if (window.originalImages[currentImageLabel]) {
@@ -4142,7 +4499,115 @@ document.addEventListener('DOMContentLoaded', () => {
             // Set the drawing color
             const color = button.dataset.color;
             colorPicker.value = color;
+            
+            // Check if we have a stroke in edit mode
+            if (window.selectedStrokeInEditMode) {
+                const strokeLabel = window.selectedStrokeInEditMode;
+                
+                if (vectorStrokesByImage[currentImageLabel] && vectorStrokesByImage[currentImageLabel][strokeLabel]) {
+                    // Only change if different
+                    if (vectorStrokesByImage[currentImageLabel][strokeLabel].color !== color) {
+                        vectorStrokesByImage[currentImageLabel][strokeLabel].color = color;
+                        
+                        // Push a single undo state for the color change
+                        saveState(true, false, false);
+                        redrawCanvasWithVisibility();
+                        updateStrokeVisibilityControls();
+                        
+                        // Ensure the edit mode is still visible after updateStrokeVisibilityControls
+                        const editItem = document.querySelector(`.stroke-visibility-item[data-stroke="${strokeLabel}"]`);
+                        if (editItem) {
+                            editItem.dataset.editMode = 'true';
+                            editItem.setAttribute('data-edit-mode', 'true');
+                            
+                            // Apply the orange styling directly to make it very visible
+                            editItem.style.backgroundColor = '#FFF3E0';
+                            editItem.style.borderLeft = '5px solid #FF9800';
+                            editItem.style.boxShadow = '0 3px 8px rgba(255, 152, 0, 0.3)';
+                            
+                            // Remove edit mode indicator removal
+                        }
+                        
+                        console.log(`Changed color of stroke ${strokeLabel} to ${color}`);
+                    }
+                }
+                    } else if (selectedStrokeByImage[currentImageLabel]) {
+            // If there's a selected stroke but not in edit mode, show a message to the user
+            console.log("Double-click a stroke to enter edit mode before changing colors");
+            
+            // Show a status message to the user
+            const statusMessage = document.getElementById('statusMessage');
+            if (statusMessage) {
+                statusMessage.textContent = "Double-click a stroke to enter edit mode first";
+                statusMessage.classList.add('visible');
+                // Hide message after a few seconds
+                setTimeout(() => {
+                    statusMessage.classList.remove('visible');
+                }, 3000);
+            }
+            }
+            // If no stroke is in edit mode, the color is just set for new strokes
         });
+    });
+    
+    // Add brush size input event listener
+    brushSize.addEventListener('input', () => {
+        const size = parseInt(brushSize.value);
+        
+        // Check if we have a stroke in edit mode
+        if (window.selectedStrokeInEditMode) {
+            const strokeLabel = window.selectedStrokeInEditMode;
+            
+            if (vectorStrokesByImage[currentImageLabel] && vectorStrokesByImage[currentImageLabel][strokeLabel]) {
+                // Only change if different
+                if (vectorStrokesByImage[currentImageLabel][strokeLabel].width !== size) {
+                    vectorStrokesByImage[currentImageLabel][strokeLabel].width = size;
+                    
+                    // Push a single undo state for the thickness change
+                    saveState(true, false, false);
+                    redrawCanvasWithVisibility();
+                    updateStrokeVisibilityControls();
+                    
+                    // Ensure the edit mode is still visible after updateStrokeVisibilityControls
+                    const editItem = document.querySelector(`.stroke-visibility-item[data-stroke="${strokeLabel}"]`);
+                    if (editItem) {
+                        editItem.dataset.editMode = 'true';
+                        editItem.setAttribute('data-edit-mode', 'true');
+                        
+                        // Remove edit mode indicator removal
+                        if (!editItem.querySelector('.edit-mode-indicator')) {
+                            const editIndicator = document.createElement('div');
+                            editIndicator.className = 'edit-mode-indicator';
+                            editIndicator.innerHTML = '✏️ Edit Mode';
+                            editIndicator.style.position = 'absolute';
+                            editIndicator.style.top = '3px';
+                            editIndicator.style.right = '26px';
+                            editIndicator.style.fontSize = '10px';
+                            editIndicator.style.color = '#ff6600';
+                            editIndicator.style.fontWeight = 'bold';
+                            editItem.appendChild(editIndicator);
+                        }
+                    }
+                    
+                    console.log(`Changed thickness of stroke ${strokeLabel} to ${size}`);
+                }
+            }
+        } else if (selectedStrokeByImage[currentImageLabel]) {
+            // If there's a selected stroke but not in edit mode, show a message to the user
+            console.log("Double-click a stroke to enter edit mode before changing thickness");
+            
+            // Show a status message to the user
+            const statusMessage = document.getElementById('statusMessage');
+            if (statusMessage) {
+                statusMessage.textContent = "Double-click a stroke to enter edit mode first";
+                statusMessage.classList.add('visible');
+                // Hide message after a few seconds
+                setTimeout(() => {
+                    statusMessage.classList.remove('visible');
+                }, 3000);
+            }
+        }
+        // If no stroke is in edit mode, the thickness is just set for new strokes
     });
     
     // Function to move the image and its strokes
@@ -4151,11 +4616,22 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!imagePositionByLabel[currentImageLabel]) {
             imagePositionByLabel[currentImageLabel] = { x: 0, y: 0 };
         }
+        
+        // Store the old position (for debugging)
+        const oldPos = { x: imagePositionByLabel[currentImageLabel].x, y: imagePositionByLabel[currentImageLabel].y };
+        
+        // Update the position
         imagePositionByLabel[currentImageLabel].x += deltaX;
         imagePositionByLabel[currentImageLabel].y += deltaY;
         
+        console.log(`[moveImage] Moving image ${currentImageLabel} by (${deltaX}, ${deltaY})`);
+        console.log(`[moveImage] Position was (${oldPos.x}, ${oldPos.y}), now is (${imagePositionByLabel[currentImageLabel].x}, ${imagePositionByLabel[currentImageLabel].y})`);
+        
         // Save current state before redrawing, using same pattern as updateImageScale
+        // But don't save for small movements to avoid spamming undo stack during continuous dragging
+        if (Math.abs(deltaX) > 20 || Math.abs(deltaY) > 20) {
         saveState(true, false, false);
+        }
             
         // Redraw the canvas (image and/or strokes) with updated position
             redrawCanvasWithVisibility();
@@ -4345,18 +4821,23 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Check if sidebars are overlapping canvas and adjust if needed
         const canvasRect = canvas.getBoundingClientRect();
-        const imageSidebarRect = imageSidebar.getBoundingClientRect();
-        const strokeSidebarRect = strokeSidebar.getBoundingClientRect();
-        
-        // If image sidebar is overlapping canvas on the right
-        if (imageSidebarRect.left < canvasRect.right) {
-            imageSidebar.style.left = 'auto';
-            imageSidebar.style.right = '20px';
-        }
-        
-        // If stroke sidebar is overlapping canvas on the left
-        if (strokeSidebarRect.right > canvasRect.left) {
-            strokeSidebar.style.left = '20px';
+        const imageSidebar = document.getElementById('imageSidebar'); // Get elements directly
+        const strokeSidebar = document.getElementById('strokeSidebar');
+
+        if (imageSidebar && strokeSidebar) { // Check if elements exist
+            const imageSidebarRect = imageSidebar.getBoundingClientRect();
+            const strokeSidebarRect = strokeSidebar.getBoundingClientRect();
+            
+            // If image sidebar is overlapping canvas on the right
+            if (imageSidebarRect.left < canvasRect.right && imageSidebarRect.right > canvasRect.left) { // Added check for actual overlap
+                imageSidebar.style.left = 'auto'; // Reset left
+                imageSidebar.style.right = '20px';
+            }
+            
+            // If stroke sidebar is overlapping canvas on the left
+            if (strokeSidebarRect.right > canvasRect.left && strokeSidebarRect.left < canvasRect.right) { // Added check for actual overlap
+                strokeSidebar.style.left = '20px';
+            }
         }
     });
 
@@ -4373,6 +4854,21 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Keep track of how many other labels each position would impact
         let bestImpactCount = Infinity;
+        
+        // Check if the stroke is a horizontal line (for straight line strokes)
+        let isHorizontalLine = false;
+        if (strokeInfo && strokeInfo.path && strokeInfo.path.length >= 2) {
+            const p1 = strokeInfo.path[0];
+            const p2 = strokeInfo.path[strokeInfo.path.length - 1];
+            
+            // Calculate angle of the line
+            const dx = p2.x - p1.x;
+            const dy = p2.y - p1.y;
+            const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+            
+            // Check if it's approximately horizontal (within 15 degrees)
+            isHorizontalLine = Math.abs(angle) < 15 || Math.abs(angle) > 165;
+        }
         
         // Try different positions in a radial pattern
         for (let angle = 0; angle < 360; angle += 30) {
@@ -4400,7 +4896,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 
                 // Score this position
-                const score = evaluateLabelPosition(candidateRect, anchorPoint, strokeInfo);
+                let score = evaluateLabelPosition(candidateRect, anchorPoint, strokeInfo);
+                
+                // For horizontal lines, boost the score for bottom-center positions (180 degrees)
+                if (isHorizontalLine && angle === 180) {
+                    score += 0.3; // Significant boost for bottom-center position
+                }
                 
                 // Prioritize positions with minimal impact on other labels
                 if (impactCount < bestImpactCount || 
@@ -4412,6 +4913,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // If we found a position that affects no other labels and has a good score, prioritize it
                 if (impactCount === 0 && score > 0.6) {
+                    // For horizontal lines, if this is the bottom-center position and it's good, immediately return it
+                    if (isHorizontalLine && angle === 180 && score > 0.8) {
+                        return candidateRect;
+                    }
                     return bestRect;
                 }
             }
@@ -4554,21 +5059,40 @@ document.addEventListener('DOMContentLoaded', () => {
             y: labelRect.y + labelRect.height / 2
         };
         
-        // Determine the exit point from the label (closest edge to the anchor)
-        let exitPoint;
+        // Determine the exit point from the label using 9-point anchoring
+        // Define all 9 possible anchor points on the label
+        const anchorPoints = [
+            // Top row
+            { x: labelRect.x, y: labelRect.y }, // Top-left
+            { x: labelCenter.x, y: labelRect.y }, // Top-center
+            { x: labelRect.x + labelRect.width, y: labelRect.y }, // Top-right
+            
+            // Middle row
+            { x: labelRect.x, y: labelCenter.y }, // Middle-left
+            { x: labelCenter.x, y: labelCenter.y }, // Center
+            { x: labelRect.x + labelRect.width, y: labelCenter.y }, // Middle-right
+            
+            // Bottom row
+            { x: labelRect.x, y: labelRect.y + labelRect.height }, // Bottom-left
+            { x: labelCenter.x, y: labelRect.y + labelRect.height }, // Bottom-center
+            { x: labelRect.x + labelRect.width, y: labelRect.y + labelRect.height } // Bottom-right
+        ];
         
-        // Try to exit from the nearest edge to create a shorter, cleaner line
-        if (Math.abs(labelCenter.x - anchorPoint.x) > Math.abs(labelCenter.y - anchorPoint.y)) {
-            // Exit from left or right side
-            const x = (anchorPoint.x < labelCenter.x) ? labelRect.x : (labelRect.x + labelRect.width);
-            const y = labelCenter.y;
-            exitPoint = {x, y};
-        } else {
-            // Exit from top or bottom side
-            const x = labelCenter.x;
-            const y = (anchorPoint.y < labelCenter.y) ? labelRect.y : (labelRect.y + labelRect.height);
-            exitPoint = {x, y};
-        }
+        // Find closest anchor point to the stroke anchor point
+        let closestDist = Infinity;
+        let exitPoint = anchorPoints[0];
+        
+        anchorPoints.forEach(point => {
+            const dist = Math.sqrt(
+                Math.pow(point.x - anchorPoint.x, 2) + 
+                Math.pow(point.y - anchorPoint.y, 2)
+            );
+            
+            if (dist < closestDist) {
+                closestDist = dist;
+                exitPoint = point;
+            }
+        });
         
         // For the stroke side, use three possible anchor points and find the closest
         // This requires stroke info which we can get from currentStrokePaths
@@ -4608,7 +5132,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 );
                 
                 console.log(`[drawLabelConnector] Using calculated midpoint for straight line: (${middlePoint.x}, ${middlePoint.y})`);
-            } else {
+        } else {
                 // For freehand, calculate the true geometric midpoint based on path length
                 // First, calculate the total path length
                 let totalLength = 0;
@@ -4732,14 +5256,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // Add a white halo for better visibility
                 ctx.beginPath();
-                ctx.arc(anchorPoint.x, anchorPoint.y, size + 2, 0, Math.PI * 2);
+                ctx.arc(anchorPoint.x, anchorPoint.y, radius + 2, 0, Math.PI * 2);
                 ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
                 ctx.lineWidth = 2;
                 ctx.stroke();
                 
                 // Then add a colored border
                 ctx.beginPath();
-                ctx.arc(anchorPoint.x, anchorPoint.y, size + 2, 0, Math.PI * 2);
+                ctx.arc(anchorPoint.x, anchorPoint.y, radius + 2, 0, Math.PI * 2);
                 ctx.strokeStyle = strokeColor;
                 ctx.lineWidth = 1;
                 ctx.stroke();
@@ -5217,4 +5741,151 @@ document.addEventListener('DOMContentLoaded', () => {
         
         return closestFraction;
     }
-});
+
+    // Function to delete selected strokes with undo capability
+    function deleteSelectedStrokes() {
+        const currentSelectedStrokesArray = multipleSelectedStrokesByImage[currentImageLabel] || [];
+        if (currentSelectedStrokesArray.length === 0) return;
+
+        // Store the full stroke order BEFORE deletion for undo
+        const preDeleteStrokeOrder = lineStrokesByImage[currentImageLabel] ? [...lineStrokesByImage[currentImageLabel]] : [];
+
+        // Store original state for the specific strokes being deleted
+        const deletedStrokeLabels = JSON.parse(JSON.stringify(currentSelectedStrokesArray)); // These are the ones being actively deleted
+        const originalVectorData = {};
+        const originalVisibility = {};
+        const originalLabelVisibility = {};
+        const originalMeasurements = {};
+
+        // Save original data for potential undo (for the deleted strokes)
+        deletedStrokeLabels.forEach(strokeLabel => {
+            if (vectorStrokesByImage[currentImageLabel] && vectorStrokesByImage[currentImageLabel][strokeLabel]) {
+                originalVectorData[strokeLabel] = JSON.parse(JSON.stringify(vectorStrokesByImage[currentImageLabel][strokeLabel]));
+            }
+            if (strokeVisibilityByImage[currentImageLabel]) {
+                originalVisibility[strokeLabel] = strokeVisibilityByImage[currentImageLabel][strokeLabel];
+            }
+            if (strokeLabelVisibility[currentImageLabel]) {
+                originalLabelVisibility[strokeLabel] = strokeLabelVisibility[currentImageLabel][strokeLabel];
+            }
+            if (strokeMeasurements[currentImageLabel]) {
+                originalMeasurements[strokeLabel] = JSON.parse(JSON.stringify(strokeMeasurements[currentImageLabel][strokeLabel] || {}));
+            }
+        });
+
+        // Remove strokes from all data structures
+        deletedStrokeLabels.forEach(strokeLabel => {
+            // Remove from vector data
+            if (vectorStrokesByImage[currentImageLabel] && vectorStrokesByImage[currentImageLabel][strokeLabel]) {
+                delete vectorStrokesByImage[currentImageLabel][strokeLabel];
+            }
+            
+            // Remove from visibility tracking
+            if (strokeVisibilityByImage[currentImageLabel] && strokeVisibilityByImage[currentImageLabel][strokeLabel]) {
+                delete strokeVisibilityByImage[currentImageLabel][strokeLabel];
+            }
+            
+            // Remove from label visibility tracking
+            if (strokeLabelVisibility[currentImageLabel] && strokeLabelVisibility[currentImageLabel][strokeLabel]) {
+                delete strokeLabelVisibility[currentImageLabel][strokeLabel];
+            }
+            
+            // Remove from measurements
+            if (strokeMeasurements[currentImageLabel] && strokeMeasurements[currentImageLabel][strokeLabel]) {
+                delete strokeMeasurements[currentImageLabel][strokeLabel];
+            }
+            
+            // Remove from line strokes
+            if (lineStrokesByImage[currentImageLabel]) {
+                lineStrokesByImage[currentImageLabel] = lineStrokesByImage[currentImageLabel].filter(label => label !== strokeLabel);
+            }
+        });
+        
+        // Clear selection
+        multipleSelectedStrokesByImage[currentImageLabel] = [];
+        selectedStrokeByImage[currentImageLabel] = null;
+
+        // Create undo state
+        const deleteAction = {
+            type: 'delete-strokes',
+            strokes: preDeleteStrokeOrder, // This is the full order before deletion
+            deletedStrokeLabels: deletedStrokeLabels, // These are the specific strokes that were deleted
+            vectorData: originalVectorData,
+            visibility: originalVisibility,
+            labelVisibility: originalLabelVisibility,
+            measurements: originalMeasurements,
+            image: currentImageLabel
+        };
+        
+        // Push to undo stack
+        undoStackByImage[currentImageLabel] = undoStackByImage[currentImageLabel] || [];
+        undoStackByImage[currentImageLabel].push(deleteAction);
+        
+        // Clear redo stack
+        redoStackByImage[currentImageLabel] = [];
+
+        // Update canvas and sidebar
+        // REMOVE: saveState(true, false, false); // This was causing a double state for delete undo
+        redrawCanvasWithVisibility();
+        updateStrokeVisibilityControls();
+        
+        // showStatusMessage(`Deleted ${originalStrokes.length} stroke${originalStrokes.length > 1 ? 's' : ''}`, 2000);
+    }
+
+    // Function to delete a single stroke by label
+    function deleteStroke(strokeLabel) {
+        // Select only this stroke
+        multipleSelectedStrokesByImage[currentImageLabel] = [strokeLabel];
+        selectedStrokeByImage[currentImageLabel] = strokeLabel;
+        
+        // Use the common delete function
+        deleteSelectedStrokes();
+    }
+
+    // Helper functions for selection actions panel
+    function updateSelectionActionsPanel() {
+        const selectedStrokes = multipleSelectedStrokesByImage[currentImageLabel] || [];
+        const actionsPanel = document.querySelector('.stroke-actions-panel');
+        
+        if (selectedStrokes.length > 0) {
+            // Create panel if it doesn't exist
+            if (!actionsPanel) {
+                const strokesList = document.getElementById('strokesList');
+                if (strokesList) {
+                    const newPanel = document.createElement('div');
+                    newPanel.className = 'stroke-actions-panel';
+                    
+                    // Empty action buttons container
+                    const buttonsContainer = document.createElement('div');
+                    buttonsContainer.className = 'stroke-actions-buttons';
+                    
+                    newPanel.appendChild(buttonsContainer);
+                    strokesList.prepend(newPanel); // Add to top of strokes list
+                }
+            } else {
+                // Update existing panel
+                // Remove update to selection count display
+            }
+        } else {
+            // Hide panel if no strokes are selected
+            hideSelectionActionsPanel();
+        }
+    }
+
+    function hideSelectionActionsPanel() {
+        const actionsPanel = document.querySelector('.stroke-actions-panel');
+        if (actionsPanel) {
+            actionsPanel.remove();
+        }
+    }
+
+    // Helper function to enter edit mode for a stroke
+    function enterEditMode(strokeLabel) {
+        console.log(`Entering edit mode for stroke: ${strokeLabel}`);
+        
+        // Set the global edit mode variable
+        window.selectedStrokeInEditMode = strokeLabel;
+        
+        // Update UI to show edit mode
+    }
+}); // Correctly close DOMContentLoaded

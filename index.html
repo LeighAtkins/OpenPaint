@@ -161,7 +161,11 @@
             box-shadow: 0 0 10px rgba(76, 175, 80, 0.4);
             background-color: rgba(76, 175, 80, 0.05);
         }
-        button {
+        /* Only apply these styles to top-level buttons, not to our custom buttons in sidebars */
+        .toolbar button, 
+        .canvas-controls button,
+        .project-buttons button,
+        .button-container button {
             padding: 8px 15px;
             margin: 0 5px;
             border: none;
@@ -170,7 +174,10 @@
             color: white;
             cursor: pointer;
         }
-        button:hover {
+        .toolbar button:hover, 
+        .canvas-controls button:hover,
+        .project-buttons button:hover,
+        .button-container button:hover {
             background-color: #45a049;
         }
         .canvas-controls {
@@ -399,6 +406,14 @@
             border-left: 3px solid #4CAF50;
             transform: translateY(-1px);
             box-shadow: 0 3px 6px rgba(76, 175, 80, 0.2);
+        }
+        /* Edit mode styling */
+        .stroke-visibility-item[data-edit-mode="true"],
+        .stroke-visibility-item[data-editmode="true"] {
+            background-color: #fff3e0 !important;
+            border-left: 3px solid #FF9800 !important;
+            transform: translateY(-1px);
+            box-shadow: 0 3px 6px rgba(255, 152, 0, 0.2) !important;
         }
         .stroke-label-container {
             display: flex;
@@ -726,6 +741,10 @@
         /* Additional margin for consistency */
         #strokeCounter {
             margin-left: 10px;
+        }
+        .stroke-actions-panel {
+            position: absolute;
+            left: 3px; /* Align with the icon */
         }
     </style>
 </head>

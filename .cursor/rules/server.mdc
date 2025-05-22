@@ -1,0 +1,27 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# Server Operation Guidelines
+
+- **Never Run the Server Automatically**
+  - Always assume the user is already running the server on localhost:3000
+  - If code changes require server restart, ask the user to restart their server
+  - Only run the server when explicitly requested by the user
+  - Before running the server, ask if the user wants you to run it
+
+- **Port Usage**
+  - Default port is 3000 (configured in app.js)
+  - Only suggest changing ports if the user specifically requests it
+  - If port conflicts occur, first ask the user if they're running the server already
+
+- **Server Control**
+  - Let the user control when to start and stop the server
+  - Provide commands for them to copy/paste rather than executing directly
+  - Example: "You can start the server with `npm start`"
+
+- **Troubleshooting**
+  - If server-related issues occur, first check if the server is already running
+  - Ask "Are you currently running the server?" before suggesting solutions
+  - Look for EADDRINUSE errors which indicate the port is already in use

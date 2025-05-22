@@ -742,48 +742,260 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateTagsDisplay(label) {
-        if (typeof window.TAG_MODEL === 'undefined' || 
+        // Check if core objects are ready
+        if (
             typeof window.imageTags === 'undefined' || 
-            !window.imageTags[label] || // Ensure tags for this specific label exist
-            typeof window.getVisibleCategories === 'undefined' || 
-            typeof window.getTagDisplayName === 'undefined') {
+            !window.imageTags[label] // Ensure tags for this specific label exist
+        ) {
             console.warn(`[TAG-MANAGER] updateTagsDisplay: Critical objects not ready for label ${label}, deferring.`);
             setTimeout(() => updateTagsDisplay(label), 200);
             return;
         }
 
-        const tagsContainer = document.querySelector(`.image-container[data-label="${label}"] .image-tags`);
-        if (!tagsContainer) {
+        console.log(`[updateTagsDisplay] Looking for label element and tags container with selector: .image-container[data-label="${label}"]`);
+        
+        // Find the label element in the sidebar
+        const container = document.querySelector(`.image-container[data-label="${label}"]`);
+        
+        if (!container) {
+            console.warn(`[updateTagsDisplay] Could not find container for label: ${label}`);
             return; 
         }
         
-        const tags = window.imageTags[label] || {};
-        tagsContainer.innerHTML = ''; // Clear current tags
-        
-        const visibleCategories = window.getVisibleCategories(tags); 
-        let tagsAdded = 0;
+        // Find or create the tag controls container
+        let controlsContainer = container.querySelector('.tag-controls');
+        if (!controlsContainer) {
+            controlsContainer = document.createElement('div');
+            controlsContainer.className = 'tag-controls';
+            // Insert controls after the image-label and before image-tags if possible, or append
+            const imageLabelDiv = container.querySelector('.image-label');
+            if (imageLabelDiv && imageLabelDiv.nextSibling) {
+                container.insertBefore(controlsContainer, imageLabelDiv.nextSibling);
+            } else {
+                container.appendChild(controlsContainer);
+            }
+        }
 
-        visibleCategories.forEach(categoryId => {
-            const categoryTags = tags[categoryId];
-            if (categoryTags) {
-                // Handle both single (string) and multiple (array) tag selections
-                const tagIds = Array.isArray(categoryTags) ? categoryTags : [categoryTags];
+        // Clear existing controls
+        controlsContainer.innerHTML = '';
 
-                tagIds.forEach(tagId => {
-                    const tagName = window.getTagDisplayName(categoryId, tagId);
-                    const tagElement = document.createElement('span');
-                    tagElement.className = 'image-tag tag-badge'; 
-                    tagElement.textContent = tagName;
-                    tagElement.title = `${window.TAG_MODEL[categoryId].name}: ${tagName}`;
-                    tagsContainer.appendChild(tagElement);
-                    tagsAdded++;
-                });
+        // Add edit button
+        const editButton = document.createElement('button');
+        editButton.className = 'tag-edit-button';
+        editButton.title = 'Edit tags';
+        editButton.innerHTML = '✏️';
+        editButton.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent triggering the container click event
+            console.log(`[editButton] Edit button clicked for ${label}`);
+            showEditDialog(label);
+        });
+        controlsContainer.appendChild(editButton);
+
+        // Add focus button
+        const focusButton = document.createElement('button');
+        focusButton.className = 'tag-focus-button'; // Ensure this class matches CSS if specific styling is needed
+        focusButton.title = 'Focus all strokes on this image';
+        focusButton.innerHTML = '🔍'; // Focus icon
+        focusButton.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent triggering the container click event
+            console.log(`[focusButton] Focus button clicked for ${label}`);
+            // Toggle focus mode
+            if (window.preFocusState && window.preFocusState.focusedImageLabel === label) {
+                exitFocusMode(); // If already focused on this image, exit focus mode
+            } else {
+                enterFocusMode(label);
             }
         });
+        controlsContainer.appendChild(focusButton);
 
-        if (tagsAdded === 0) {
-            tagsContainer.innerHTML = '<span class="no-tags">No tags</span>';
+        // Update the label text
+        const labelElement = container.querySelector('.image-label');
+        if (labelElement) {
+            const tagText = generateFilenameFromTags(label, window.imageTags[label]);
+            labelElement.textContent = tagText;
+            console.log(`[updateTagsDisplay] Updated label text for ${label} to: ${tagText}`);
+        } else {
+            console.warn(`[updateTagsDisplay] Could not find label element for ${label}`);
         }
+    }
+
+    function showEditDialog(label) {
+        console.log(`[showEditDialog] Showing edit dialog for ${label}`);
+        
+        // Show tag dialog if it exists
+        if (window.showTagDialogForImage) {
+            window.showTagDialogForImage(label);
+        } else {
+            console.error('[showEditDialog] showTagDialogForImage function not found!');
+            alert('Tag editing functionality is not available.');
+        }
+    }
+
+    function enterFocusMode(label) {
+        console.log(`[enterFocusMode] Entering focus mode for label: ${label}`);
+
+        const imageLabelBeforeSwitch = window.currentImageLabel;
+        let selectionOfTargetImageBeforeFocus = [];
+
+        // Store the selection of the image that is *about to be focused* if it's already loaded
+        // This is so we can restore its specific selection later.
+        if (typeof window.multipleSelectedStrokesByImage === 'object' && window.multipleSelectedStrokesByImage[label]) {
+            selectionOfTargetImageBeforeFocus = [...window.multipleSelectedStrokesByImage[label]];
+        }
+
+        window.preFocusState = {
+            imageLabelToRestoreTo: imageLabelBeforeSwitch,      // The image that was active *before* focus mode started on 'label'
+            selectionToRestoreOnTarget: selectionOfTargetImageBeforeFocus, // The selection 'label' had *before* we selected all its strokes
+            focusedImageLabel: label                            // The image that is now in focus
+        };
+        console.log(`[enterFocusMode] Stored preFocusState:`, JSON.parse(JSON.stringify(window.preFocusState)));
+
+        // Switch to the clicked image (if not already active)
+        if (typeof window.switchToImage === 'function' && window.currentImageLabel !== label) {
+            console.log(`[enterFocusMode] Switching to image: ${label}`);
+            window.switchToImage(label); // This sets window.currentImageLabel to label
+        } else if (window.currentImageLabel !== label) {
+            console.warn(`[enterFocusMode] window.switchToImage is not a function, cannot switch to image: ${label}. Focus may not work as expected.`);
+            return; 
+        }
+        // At this point, window.currentImageLabel should be === label
+
+        // Select all strokes for the target image `label`
+        if (typeof window.lineStrokesByImage === 'object' && window.lineStrokesByImage[label]) {
+            const strokesToSelect = [...window.lineStrokesByImage[label]];
+            if (typeof window.multipleSelectedStrokesByImage === 'object') {
+                window.multipleSelectedStrokesByImage[label] = strokesToSelect;
+                console.log(`[enterFocusMode] Set multipleSelectedStrokesByImage for ${label} to:`, strokesToSelect);
+            }
+            if (typeof window.selectedStrokeByImage === 'object') {
+                window.selectedStrokeByImage[label] = strokesToSelect.length === 1 ? strokesToSelect[0] : null;
+            }
+            if (typeof window.selectedStrokeInEditMode !== 'undefined') {
+                window.selectedStrokeInEditMode = null; // Exit any stroke-specific edit mode
+            }
+        } else {
+            console.warn(`[enterFocusMode] lineStrokesByImage not available for label: ${label}. Clearing selection.`);
+            if (typeof window.multipleSelectedStrokesByImage === 'object') window.multipleSelectedStrokesByImage[label] = [];
+            if (typeof window.selectedStrokeByImage === 'object') window.selectedStrokeByImage[label] = null;
+        }
+
+        // Trigger UI Update in paint.js
+        if (typeof window.redrawCanvasWithVisibility === 'function') {
+            console.log(`[enterFocusMode] Calling redrawCanvasWithVisibility for ${label}`);
+            window.redrawCanvasWithVisibility();
+        } else {
+            console.warn('[enterFocusMode] window.redrawCanvasWithVisibility is not a function.');
+        }
+        if (typeof window.updateStrokeVisibilityControls === 'function') {
+            console.log(`[enterFocusMode] Calling updateStrokeVisibilityControls for ${label}`);
+            window.updateStrokeVisibilityControls();
+        } else {
+            console.warn('[enterFocusMode] window.updateStrokeVisibilityControls is not a function.');
+        }
+        
+        // Add a focus mode indicator to the UI
+        const existingIndicator = document.querySelector('.focus-mode-indicator');
+        if (existingIndicator) {
+            existingIndicator.remove();
+        }
+        
+        const focusIndicator = document.createElement('div');
+        focusIndicator.className = 'focus-mode-indicator';
+        focusIndicator.innerHTML = `
+            <div style="position: fixed; top: 10px; right: 10px; background: rgba(0,0,0,0.7); color: white; padding: 8px; border-radius: 4px; z-index: 1000">
+                Focus Mode: ${label} (ESC to exit)
+            </div>
+        `;
+        document.body.appendChild(focusIndicator);
+        console.log(`[enterFocusMode] Added focus mode indicator to the DOM`);
+        
+        // Add ESC key handler for exiting focus mode
+        const escHandler = (e) => {
+            if (e.key === 'Escape') {
+                console.log('[enterFocusMode] ESC key pressed, exiting focus mode');
+                exitFocusMode();
+                document.removeEventListener('keydown', escHandler);
+            }
+        };
+        document.addEventListener('keydown', escHandler);
+    }
+
+    function exitFocusMode() {
+        console.log('[exitFocusMode] Exiting focus mode');
+        
+        const indicator = document.querySelector('.focus-mode-indicator');
+        if (indicator) {
+            indicator.remove();
+            console.log('[exitFocusMode] Removed focus mode indicator');
+        } else {
+            console.warn('[exitFocusMode] Focus mode indicator not found');
+        }
+
+        const state = window.preFocusState;
+        if (!state) {
+            console.warn('[exitFocusMode] No pre-focus state found.');
+            // Minimal cleanup if something went wrong: ensure current image selection is cleared if it was somehow marked as focused
+            const currentLabel = window.currentImageLabel;
+            if (typeof window.multipleSelectedStrokesByImage === 'object' && window.multipleSelectedStrokesByImage[currentLabel]) {
+                 // Assuming focus mode means all strokes were selected, so on exit, clear this.
+                window.multipleSelectedStrokesByImage[currentLabel] = [];
+            }
+            if (typeof window.selectedStrokeByImage === 'object') {
+                window.selectedStrokeByImage[currentLabel] = null;
+            }
+            if (typeof window.redrawCanvasWithVisibility === 'function') window.redrawCanvasWithVisibility();
+            if (typeof window.updateStrokeVisibilityControls === 'function') window.updateStrokeVisibilityControls();
+            return;
+        }
+
+        const focusedLabel = state.focusedImageLabel; // The image that was in focus (e.g., 'front_1')
+        const originalSelectionOnFocusedImage = state.selectionToRestoreOnTarget; // The selection 'front_1' had *before* focus
+        const imageToSwitchBackTo = state.imageLabelToRestoreTo; // The image that was active *before* 'front_1' was focused
+
+        // 1. Restore original selection on the image that WAS focused.
+        // This should happen whether we switch back to another image or if 'focusedLabel' was already 'imageToSwitchBackTo'.
+        if (typeof window.multipleSelectedStrokesByImage === 'object') {
+            window.multipleSelectedStrokesByImage[focusedLabel] = originalSelectionOnFocusedImage ? [...originalSelectionOnFocusedImage] : [];
+        }
+        if (typeof window.selectedStrokeByImage === 'object') {
+            window.selectedStrokeByImage[focusedLabel] = (originalSelectionOnFocusedImage && originalSelectionOnFocusedImage.length === 1) ? originalSelectionOnFocusedImage[0] : null;
+        }
+        console.log(`[exitFocusMode] Restored selection on previously focused image ${focusedLabel} to:`, originalSelectionOnFocusedImage);
+
+        // 2. Switch back to the image that was active before focus mode began, if it's different from the one that was focused.
+        //    And if the one that was focused is still the current one.
+        if (typeof window.switchToImage === 'function' && window.currentImageLabel === focusedLabel && focusedLabel !== imageToSwitchBackTo) {
+            console.log(`[exitFocusMode] Switching back to originally active image: ${imageToSwitchBackTo}`);
+            window.switchToImage(imageToSwitchBackTo);
+            // After switchToImage, window.currentImageLabel is imageToSwitchBackTo.
+            // Its selection state should be inherently correct from its own history or how switchToImage loads it.
+        } else if (window.currentImageLabel !== focusedLabel && window.currentImageLabel !== imageToSwitchBackTo) {
+             // This means the user manually switched away from the focused image.
+             // We should still switch back to the *original* image before focus mode started.
+            if (typeof window.switchToImage === 'function' && window.currentImageLabel !== imageToSwitchBackTo) {
+                console.log(`[exitFocusMode] User manually switched. Switching back to original image: ${imageToSwitchBackTo}`);
+                window.switchToImage(imageToSwitchBackTo);
+            }
+        }
+        // If focusedLabel === imageToSwitchBackTo, no switch is needed. The selection on it has been restored.
+        // If switchToImage is not a function, we can't switch, selection on focusedLabel is restored.
+
+        window.preFocusState = null;
+
+        // Trigger UI Update (will apply to the now window.currentImageLabel)
+        if (typeof window.redrawCanvasWithVisibility === 'function') {
+            window.redrawCanvasWithVisibility();
+        } else {
+            console.warn('[exitFocusMode] window.redrawCanvasWithVisibility is not a function.');
+        }
+        if (typeof window.updateStrokeVisibilityControls === 'function') {
+            window.updateStrokeVisibilityControls();
+        } else {
+            console.warn('[exitFocusMode] window.updateStrokeVisibilityControls is not a function.');
+        }
+        
+        // The escHandler should have removed itself.
+        console.log('[exitFocusMode] Focus mode exited.');
     }
 
     function attemptHookToAddImageToSidebar() {
