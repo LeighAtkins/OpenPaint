@@ -12,6 +12,10 @@ window.labelsByImage = {};      // <--- NOTE: This should now be global due to p
 window.originalImages = {};
 window.imageTags = {};          // <--- NEW: Store image tags
 window.isLoadingProject = false; // <-- Re-adding this line
+
+// Control point dragging variables
+let isDraggingControlPoint = false;
+let draggedControlPointInfo = null; // { strokeLabel, pointIndex, startPos }
 window.folderStructure = {      // <--- NEW: Add folder structure support
     "root": {
         id: "root",
@@ -503,9 +507,9 @@ document.addEventListener('DOMContentLoaded', () => {
         measureText.textContent = currentFormattedMeasurement;
         console.log(`[createEditableMeasureText] Initial for ${strokeLabel}: "${currentFormattedMeasurement}"`);
 
-        // SAFETY CHECK: Make sure we don't append to parentItem if it's undefined
-        if (isSelected && parentItem === undefined) {
-            console.warn(`[createEditableMeasureText] WARNING: parentItem is undefined for selected stroke ${strokeLabel}. Will not try to append directly.`);
+        // SAFETY CHECK: Make sure we don't append to parentItem if it's undefined or null
+        if (isSelected && (parentItem === undefined || parentItem === null)) {
+            console.log(`[createEditableMeasureText] INFO: parentItem is null/undefined for stroke ${strokeLabel}. Caller will handle DOM insertion.`);
         }
 
         if (isSelected) {
@@ -1026,7 +1030,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             
             // Create measurement text
-            const measureText = createEditableMeasureText(strokeLabel, isSelected);
+            const measureText = createEditableMeasureText(strokeLabel, isSelected, null);
             
             // Create edit button
             const editBtn = document.createElement('button');
@@ -2121,6 +2125,9 @@ document.addEventListener('DOMContentLoaded', () => {
                             const isStraightLine = vectorData.type === 'straight' || 
                                 (vectorData.points.length === 2 && !vectorData.type);
                             
+                            // Check if this is a curved line
+                            const isCurvedLine = vectorData.type === 'curved';
+                            
                             if (isStraightLine && vectorData.points.length >= 2) {
                                 const lastPoint = vectorData.points[vectorData.points.length - 1];
                             let transformedLastX, transformedLastY;
@@ -2146,6 +2153,31 @@ document.addEventListener('DOMContentLoaded', () => {
                             
                                 ctx.lineTo(transformedLastX, transformedLastY);
                             strokePath.push({x: transformedLastX, y: transformedLastY});
+                            } else if (isCurvedLine) {
+                                // For curved lines, draw smooth spline using stored interpolated points
+                                console.log(`Drawing curved line with ${vectorData.points.length} interpolated points`);
+                                
+                                for (let i = 1; i < vectorData.points.length; i++) {
+                                    const point = vectorData.points[i];
+                                    let transformedX, transformedY;
+                                    
+                                    if (isBlankCanvas) {
+                                        // Apply both scaling and position offset in blank canvas mode
+                                        const position = imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
+                                        // Scale from canvas center
+                                        const scaledX = (point.x - canvasCenter.x) * scale + canvasCenter.x;
+                                        const scaledY = (point.y - canvasCenter.y) * scale + canvasCenter.y;
+                                        // Then apply position offset
+                                        transformedX = scaledX + position.x;
+                                        transformedY = scaledY + position.y;
+                                    } else {
+                                        transformedX = imageX + (point.x * scale);
+                                        transformedY = imageY + (point.y * scale);
+                                    }
+                                    
+                                    ctx.lineTo(transformedX, transformedY);
+                                    strokePath.push({x: transformedX, y: transformedY});
+                                }
                             } else {
                                 // For freehand drawing, draw straight lines between all points
                                 for (let i = 1; i < vectorData.points.length; i++) {
@@ -2204,6 +2236,56 @@ document.addEventListener('DOMContentLoaded', () => {
                     ctx.restore(); // Restore context state to remove shadow
                 }
                 // --- End Reset Glow Effect ---
+                
+                // --- Draw Control Point Indicators for Curved Lines (ONLY in Edit Mode) ---
+                if (isCurvedLine && vectorData.controlPoints && vectorData.controlPoints.length > 0 && 
+                    window.selectedStrokeInEditMode === strokeLabel) {
+                    console.log(`Drawing control point indicators for curved line ${strokeLabel} (IN EDIT MODE)`);
+                    
+                    // Draw small circles at each original control point
+                    vectorData.controlPoints.forEach((controlPoint, index) => {
+                        let transformedX, transformedY;
+                        
+                        if (isBlankCanvas) {
+                            // Apply both scaling and position offset in blank canvas mode
+                            const position = imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
+                            // Scale from canvas center
+                            const scaledX = (controlPoint.x - canvasCenter.x) * scale + canvasCenter.x;
+                            const scaledY = (controlPoint.y - canvasCenter.y) * scale + canvasCenter.y;
+                            // Then apply position offset
+                            transformedX = scaledX + position.x;
+                            transformedY = scaledY + position.y;
+                        } else {
+                            transformedX = imageX + (controlPoint.x * scale);
+                            transformedY = imageY + (controlPoint.y * scale);
+                        }
+                        
+                        // Draw control point indicator (enhanced for edit mode)
+                        ctx.save();
+                        ctx.beginPath();
+                        
+                        // Enhanced appearance for control points in edit mode
+                        let pointRadius = 8 * scale;
+                        let fillColor = '#ffffff';
+                        let strokeColor = vectorData.color;
+                        let lineWidth = 3;
+                        
+                        // Add a subtle glow effect for control points in edit mode
+                        ctx.shadowColor = vectorData.color;
+                        ctx.shadowBlur = 8;
+                        ctx.shadowOffsetX = 0;
+                        ctx.shadowOffsetY = 0;
+                        
+                        ctx.arc(transformedX, transformedY, pointRadius, 0, Math.PI * 2);
+                        ctx.fillStyle = fillColor;
+                        ctx.fill();
+                        ctx.strokeStyle = strokeColor;
+                        ctx.lineWidth = lineWidth;
+                        ctx.stroke();
+                        ctx.restore();
+                    });
+                }
+                // --- End Control Point Indicators ---
             });
             
             // --- Start of Label Drawing Logic (Add inside applyVisibleStrokes, after strokes are drawn) ---
@@ -2608,13 +2690,15 @@ document.addEventListener('DOMContentLoaded', () => {
         if (force && strokeLabel) {
             strokeType = 'stroke';
             
-            // Check for vector data to determine if it's a freehand or straight line
+            // Check for vector data to determine if it's a freehand, straight line, or curved line
             // Use the vector data we just potentially moved
             if (drawnVectorData) { 
                 if (drawnVectorData.type === 'straight') {
                     strokeType = 'line';
                 } else if (drawnVectorData.type === 'freehand') {
                     strokeType = 'stroke';
+                } else if (drawnVectorData.type === 'curved') {
+                    strokeType = 'curve';
                 }
             }
         }
@@ -2694,7 +2778,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Get the state we're going back to
             const previousState = currentStack[currentStack.length - 1];
             
-            if (lastAction.type === 'line' || lastAction.type === 'stroke') {
+            if (lastAction.type === 'line' || lastAction.type === 'stroke' || lastAction.type === 'curve') {
                 // Remove the last stroke and its label
                 if (lineStrokesByImage[currentImageLabel] && lineStrokesByImage[currentImageLabel].length > 0) {
                     const removedStroke = lineStrokesByImage[currentImageLabel].pop();
@@ -2715,6 +2799,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Also remove from stroke data tracking
                     if (strokeDataByImage[currentImageLabel] && strokeDataByImage[currentImageLabel][removedStroke]) {
                         delete strokeDataByImage[currentImageLabel][removedStroke];
+                    }
+                    
+                    // Remove measurements tracking
+                    if (strokeMeasurements[currentImageLabel] && strokeMeasurements[currentImageLabel][removedStroke]) {
+                        // Save measurement data in lastAction for possible redo
+                        lastAction.measurementData = strokeMeasurements[currentImageLabel][removedStroke];
+                        delete strokeMeasurements[currentImageLabel][removedStroke];
+                        console.log(`Removed measurement data for stroke: ${removedStroke}`);
                     }
                     
                     // Remove vector stroke data
@@ -2869,6 +2961,9 @@ document.addEventListener('DOMContentLoaded', () => {
             updateStrokeVisibilityControls();
             updateSidebarStrokeCounts();
             
+            // Force redraw after any undo operation to ensure visual consistency
+            redrawCanvasWithVisibility();
+            
             // For delete-stroke undo operations, ensure a complete redraw to avoid visual glitches
             if (lastAction && lastAction.type === 'delete-strokes') {
                 // Short delay to ensure all state is updated before final redraw
@@ -2947,6 +3042,9 @@ document.addEventListener('DOMContentLoaded', () => {
             updateStrokeCounter();
             updateStrokeVisibilityControls();
             updateSidebarStrokeCounts();
+            
+            // Force redraw to ensure visual consistency
+            redrawCanvasWithVisibility();
         } else {
             console.log('No undo history available for this workspace');
         }
@@ -2999,8 +3097,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 multipleSelectedStrokesByImage[actionToRedo.image] = [];
                 selectedStrokeByImage[actionToRedo.image] = null;
             }
-            // Handle stroke type actions (both freehand strokes and straight lines)
-            else if ((actionToRedo.type === 'line' || actionToRedo.type === 'stroke') && actionToRedo.label) {
+            // Handle stroke type actions (freehand strokes, straight lines, and curved lines)
+            else if ((actionToRedo.type === 'line' || actionToRedo.type === 'stroke' || actionToRedo.type === 'curve') && actionToRedo.label) {
                 // Add the stroke back to the list
                 lineStrokesByImage[currentImageLabel] = lineStrokesByImage[currentImageLabel] || [];
                 lineStrokesByImage[currentImageLabel].push(actionToRedo.label);
@@ -3021,11 +3119,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     vectorStrokesByImage[currentImageLabel] = vectorStrokesByImage[currentImageLabel] || {};
                     vectorStrokesByImage[currentImageLabel][actionToRedo.label] = actionToRedo.vectorData;
                     
-                    // If no vector data saved in the action, but we're redoing a line/stroke,
+                    // If no vector data saved in the action, but we're redoing a line/stroke/curve,
                     // try to recreate basic vector data to ensure label display
                     if (!actionToRedo.vectorData && 
-                        (actionToRedo.type === 'line' || actionToRedo.type === 'stroke')) {
+                        (actionToRedo.type === 'line' || actionToRedo.type === 'stroke' || actionToRedo.type === 'curve')) {
                         // Create minimal vector data to ensure label display
+                        let strokeType = 'freehand';
+                        if (actionToRedo.type === 'line') strokeType = 'straight';
+                        else if (actionToRedo.type === 'curve') strokeType = 'curved';
+                        
                         vectorStrokesByImage[currentImageLabel][actionToRedo.label] = {
                             points: [
                                 { x: canvas.width/2 - 50, y: canvas.height/2 }, // Dummy points
@@ -3033,7 +3135,12 @@ document.addEventListener('DOMContentLoaded', () => {
                             ],
                             color: actionToRedo.color || "#000000",
                             width: 5,
-                            type: actionToRedo.type === 'line' ? 'straight' : 'freehand'
+                            type: strokeType,
+                            // For curved lines, add dummy control points
+                            controlPoints: strokeType === 'curved' ? [
+                                { x: canvas.width/2 - 50, y: canvas.height/2 },
+                                { x: canvas.width/2 + 50, y: canvas.height/2 }
+                            ] : undefined
                         };
                     }
                 }
@@ -3046,6 +3153,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Default to visible for new strokes and redone strokes without saved value
                     strokeLabelVisibility[currentImageLabel] = strokeLabelVisibility[currentImageLabel] || {};
                     strokeLabelVisibility[currentImageLabel][actionToRedo.label] = true;
+                }
+                
+                // Restore measurement data if we have it
+                if (actionToRedo.measurementData) {
+                    strokeMeasurements[currentImageLabel] = strokeMeasurements[currentImageLabel] || {};
+                    strokeMeasurements[currentImageLabel][actionToRedo.label] = actionToRedo.measurementData;
+                    console.log(`Restored measurement data for stroke: ${actionToRedo.label}`);
                 }
                 
                 // Update the next label - make sure it's one higher than the redone label
@@ -3634,9 +3748,19 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Check for double-click on stroke on canvas (for entering edit mode)
-        // This needs to be before general label click handling if we want double-click on label to have a special meaning
+        // BUT FIRST: If we're in curved drawing mode with control points, prioritize curve finalization
         const now = Date.now();
         if (now - window.lastCanvasClickTime < window.clickDelay) {
+            // Priority 1: If in curved mode with control points, finalize the curve (don't enter edit mode)
+            if (drawingMode === 'curved' && curvedLinePoints.length >= 2) {
+                console.log('Canvas Mousedown: Double-click detected while drawing curve - will finalize curve via dblclick handler');
+                window.lastCanvasClickTime = 0; // Reset to prevent edit mode logic
+                window.lastClickedCanvasLabel = null;
+                // Let the dblclick handler manage curve finalization
+                return;
+            }
+            
+            // Priority 2: Normal edit mode logic (only if not finalizing a curve)
             const clickedLabelForDoubleClick = findLabelAtPoint(e.offsetX, e.offsetY);
             if (clickedLabelForDoubleClick && window.lastClickedCanvasLabel === clickedLabelForDoubleClick.strokeLabel) {
                 console.log(`Canvas Mousedown: Double-click detected on label ${clickedLabelForDoubleClick.strokeLabel}`);
@@ -3660,7 +3784,29 @@ document.addEventListener('DOMContentLoaded', () => {
         window.lastCanvasClickTime = now;
         
 
-        // First, check if we're clicking on a label
+        // First, check if we're clicking on a control point (ONLY if in edit mode)
+        if (window.selectedStrokeInEditMode) {
+            const controlPointAtClick = findControlPointAtPosition(e.offsetX, e.offsetY);
+            if (controlPointAtClick && controlPointAtClick.strokeLabel === window.selectedStrokeInEditMode) {
+                console.log(`Canvas Mousedown: Clicked on control point ${controlPointAtClick.pointIndex} of stroke ${controlPointAtClick.strokeLabel} (IN EDIT MODE)`);
+                
+                // Start dragging the control point
+                isDraggingControlPoint = true;
+                draggedControlPointInfo = {
+                    strokeLabel: controlPointAtClick.strokeLabel,
+                    pointIndex: controlPointAtClick.pointIndex,
+                    startCanvasX: e.offsetX,
+                    startCanvasY: e.offsetY,
+                    startImageCoords: { ...vectorStrokesByImage[currentImageLabel][controlPointAtClick.strokeLabel].controlPoints[controlPointAtClick.pointIndex] }
+                };
+                
+                canvas.style.cursor = 'grabbing';
+                e.preventDefault();
+                return;
+            }
+        }
+
+        // Second, check if we're clicking on a label
         const hoveredLabel = findLabelAtPoint(e.offsetX, e.offsetY);
         window.lastClickedCanvasLabel = hoveredLabel ? hoveredLabel.strokeLabel : null;
 
@@ -3669,6 +3815,16 @@ document.addEventListener('DOMContentLoaded', () => {
             const currentlyHoveredStroke = hoveredLabel.strokeLabel;
             console.log(`Canvas Mousedown: Single click on canvas label: ${currentlyHoveredStroke}.`);
             console.log(`Canvas Mousedown: Selection BEFORE update for ${window.currentImageLabel}:`, window.multipleSelectedStrokesByImage[window.currentImageLabel] ? JSON.parse(JSON.stringify(window.multipleSelectedStrokesByImage[window.currentImageLabel])) : 'undefined');
+
+            // Clear curved line preview state if we're selecting a label while in curved mode
+            if (drawingMode === 'curved' && curvedLinePoints.length > 0) {
+                console.log('Canvas Mousedown: Clearing curved line preview state due to label selection');
+                curvedLinePoints = [];
+                // Redraw to clear any lingering preview
+                if (typeof window.redrawCanvasWithVisibility === 'function') {
+                    window.redrawCanvasWithVisibility();
+                }
+            }
 
             if (window.selectedStrokeByImage && window.multipleSelectedStrokesByImage) {
                 // Ensure the array for the current image exists
@@ -3716,6 +3872,62 @@ document.addEventListener('DOMContentLoaded', () => {
             return; // Important to return after handling label click + potential drag start
         }
         
+        // Check if we clicked directly on a stroke (not a label)
+        if (!hoveredLabel) {
+            const strokeAtPoint = checkForStrokeAtPoint(e.offsetX, e.offsetY);
+            if (strokeAtPoint) {
+                console.log(`Canvas Mousedown: Clicked on stroke ${strokeAtPoint.label} (type: ${strokeAtPoint.type})`);
+                
+                // Only clear curved line preview state if we're not actively building a curve
+                // This allows curved lines to connect to existing strokes
+                if (drawingMode === 'curved' && curvedLinePoints.length > 0) {
+                    console.log('Canvas Mousedown: Preserving curved line state for potential stroke connection');
+                    // Don't clear curvedLinePoints - let the curved line logic handle stroke snapping
+                } else if (drawingMode === 'curved') {
+                    console.log('Canvas Mousedown: Clearing curved line preview state due to stroke selection');
+                    curvedLinePoints = [];
+                    // Redraw to clear any lingering preview
+                    if (typeof window.redrawCanvasWithVisibility === 'function') {
+                        window.redrawCanvasWithVisibility();
+                    }
+                }
+                
+                // Only update selection if NOT in drawing mode AND not actively creating a curved line
+                if (!isDrawing && !strokeInProgress && !(drawingMode === 'curved' && curvedLinePoints.length > 0)) {
+                    if (window.selectedStrokeByImage && window.multipleSelectedStrokesByImage) {
+                        // Clear existing selection for this image
+                        if (!window.multipleSelectedStrokesByImage[window.currentImageLabel]) {
+                            window.multipleSelectedStrokesByImage[window.currentImageLabel] = [];
+                        }
+                        window.multipleSelectedStrokesByImage[window.currentImageLabel] = [strokeAtPoint.label];
+                        window.selectedStrokeByImage[window.currentImageLabel] = strokeAtPoint.label;
+                        console.log(`Canvas Mousedown: Selected stroke ${strokeAtPoint.label} by clicking on it`);
+                        // Update UI
+                        if (typeof window.redrawCanvasWithVisibility === 'function') {
+                            window.redrawCanvasWithVisibility();
+                        }
+                        if (typeof window.updateStrokeVisibilityControls === 'function') {
+                            window.updateStrokeVisibilityControls();
+                        }
+                        if (typeof updateSelectionActionsPanel === 'function') {
+                            updateSelectionActionsPanel();
+                        }
+                    }
+                } else {
+                    // In drawing mode or curved line creation: do NOT update selection, just allow drawing to start from this point
+                    console.log(`Canvas Mousedown: Drawing mode active or curved line in progress, not updating selection. Allowing drawing to start from stroke ${strokeAtPoint.label}`);
+                }
+                // IMPORTANT: Allow drawing to start from this stroke
+                // Only prevent drawing if we're in edit mode for THIS specific stroke
+                if (window.selectedStrokeInEditMode === strokeAtPoint.label) {
+                    console.log(`Canvas Mousedown: Preventing drawing - stroke ${strokeAtPoint.label} is in edit mode`);
+                    e.preventDefault();
+                    return;
+                }
+                // If not in edit mode, fall through to allow drawing to start
+            }
+        }
+        
         // If edit mode is active AND the click was NOT on the label of the stroke in edit mode, clear edit mode.
         if (window.selectedStrokeInEditMode && (!hoveredLabel || window.selectedStrokeInEditMode !== hoveredLabel.strokeLabel)) { 
             const prevEditStrokeLabel = window.selectedStrokeInEditMode;
@@ -3736,18 +3948,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 vectorStrokesByImage[currentImageLabel] = {};
         }
 
-        // SPECIAL CASE: Check for double-click in curved mode BEFORE any stroke setup
-        if (drawingMode === 'curved') {
-            const currentTime = Date.now();
-            const timeSinceLastClick = currentTime - (window.lastMouseDownTime || 0);
-            window.lastMouseDownTime = currentTime;
-            
-            // Skip this entire mousedown if it's part of a double-click sequence
-            if (timeSinceLastClick < 300 && curvedLinePoints.length >= 2) {
-                console.log('Skipping entire mousedown - likely double-click sequence');
-                return; // Skip this entire mousedown event before any state is modified
-            }
-        }
+        // Note: Double-click detection for curved line finalization is now handled above in the general double-click logic
     
         // Handle drawing (default when Shift is not pressed)
         // Save the state before starting a new stroke
@@ -3863,14 +4064,63 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         
-        // Change cursor when hovering over labels (this part might be redundant if covered above but acts as fallback)
-        if (!isDraggingLabel && !isDraggingImage && !isDrawing) {
+        // Change cursor when hovering over labels or control points (this part might be redundant if covered above but acts as fallback)
+        if (!isDraggingLabel && !isDraggingImage && !isDrawing && !isDraggingControlPoint) {
             const currentHover = findLabelAtPoint(x, y); // Re-check for safety, though newHoveredLabelInfo is better
-            if (currentHover) {
+            const controlPointHover = findControlPointAtPosition(x, y);
+            
+            if (controlPointHover) {
+                if(canvas.style.cursor !== 'grab' && canvas.style.cursor !== 'grabbing') canvas.style.cursor = 'grab';
+            } else if (currentHover) {
                 if(canvas.style.cursor !== 'pointer' && canvas.style.cursor !== 'grabbing') canvas.style.cursor = 'pointer';
             } else {
-                 if(canvas.style.cursor === 'pointer') canvas.style.cursor = isShiftPressed ? 'grab' : 'crosshair';
+                 if(canvas.style.cursor === 'pointer' || canvas.style.cursor === 'grab') canvas.style.cursor = isShiftPressed ? 'grab' : 'crosshair';
             }
+        }
+        
+        // Handle control point dragging
+        if (isDraggingControlPoint && draggedControlPointInfo) {
+            const deltaX = e.offsetX - draggedControlPointInfo.startCanvasX;
+            const deltaY = e.offsetY - draggedControlPointInfo.startCanvasY;
+            
+            // Convert delta to image space
+            const scale = window.imageScaleByLabel[currentImageLabel] || 1;
+            const deltaImageX = deltaX / scale;
+            const deltaImageY = deltaY / scale;
+            
+            // Update the control point position
+            const vectorData = vectorStrokesByImage[currentImageLabel][draggedControlPointInfo.strokeLabel];
+            if (vectorData && vectorData.controlPoints) {
+                const controlPoint = vectorData.controlPoints[draggedControlPointInfo.pointIndex];
+                
+                // Update image space coordinates
+                controlPoint.x = draggedControlPointInfo.startImageCoords.x + deltaImageX;
+                controlPoint.y = draggedControlPointInfo.startImageCoords.y + deltaImageY;
+                
+                // CRITICAL FIX: Update canvas space coordinates directly from current mouse position
+                // Since we're dragging, the mouse position IS the correct canvas coordinate
+                controlPoint.canvasX = e.offsetX;
+                controlPoint.canvasY = e.offsetY;
+                
+                // Regenerate the curved line with updated control points
+                const newSplinePoints = generateCatmullRomSpline(vectorData.controlPoints, 50);
+                
+                // CRITICAL FIX: Convert spline canvas coordinates to image coordinates for storage
+                vectorData.points = newSplinePoints.map(splinePoint => {
+                    const { x: imgX, y: imgY } = getTransformedCoords(splinePoint.x, splinePoint.y);
+                    return {
+                        x: imgX,  // Image coordinate
+                        y: imgY,  // Image coordinate
+                        time: Date.now()
+                    };
+                });
+                
+                console.log(`Updated control point ${draggedControlPointInfo.pointIndex} to image:(${controlPoint.x.toFixed(1)}, ${controlPoint.y.toFixed(1)}) canvas:(${controlPoint.canvasX.toFixed(1)}, ${controlPoint.canvasY.toFixed(1)})`);
+                
+                // Redraw immediately to show the updated curve
+                redrawCanvasWithVisibility();
+            }
+            return;
         }
         
         // Handle label dragging
@@ -3981,6 +4231,20 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     
     canvas.addEventListener('mouseup', (e) => {
+        if (isDraggingControlPoint) {
+            isDraggingControlPoint = false;
+            
+            // Save state to enable undo/redo
+            if (draggedControlPointInfo) {
+                saveState(true, false); // Save without incrementing label
+                console.log(`Finished dragging control point ${draggedControlPointInfo.pointIndex} of stroke ${draggedControlPointInfo.strokeLabel}`);
+            }
+            
+            draggedControlPointInfo = null;
+            canvas.style.cursor = 'pointer';
+            return;
+        }
+        
         if (isDraggingLabel) {
             isDraggingLabel = false;
             draggedLabelStroke = null;
@@ -4141,6 +4405,20 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     
     canvas.addEventListener('mouseout', () => {
+        if (isDraggingControlPoint) {
+            isDraggingControlPoint = false;
+            
+            // Save state when leaving canvas
+            if (draggedControlPointInfo) {
+                saveState(true, false);
+                console.log(`Control point dragging interrupted (mouse left canvas) for stroke ${draggedControlPointInfo.strokeLabel}`);
+            }
+            
+            draggedControlPointInfo = null;
+            canvas.style.cursor = 'crosshair';
+            return;
+        }
+        
         if (isDraggingLabel) {
             isDraggingLabel = false;
             draggedLabelStroke = null;
@@ -4872,7 +5150,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         
-        // Zoom controls
+        // Zoom controls (work during curved line creation too)
         if (e.key === 'q' || e.key === 'Q') {
             // Zoom out - find the next smaller scale
             const currentScale = window.imageScaleByLabel[currentImageLabel];
@@ -4886,7 +5164,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
             
+            // When in curved line creation mode, preserve control points after zoom
+            const isCurvedLineInProgress = drawingMode === 'curved' && curvedLinePoints.length > 0;
+            console.log(`[Zoom Out] Current mode: ${drawingMode}, points: ${curvedLinePoints.length}, in progress: ${isCurvedLineInProgress}`);
+            
             updateImageScale(nextScale);
+            
+            // After zoom, the control points are automatically preserved since they're stored in image coordinates
+            if (isCurvedLineInProgress) {
+                console.log('[Zoom Out] Curved line creation in progress - control points preserved during zoom');
+            }
             // UI is now updated by updateImageScale
         } else if (e.key === 'e' || e.key === 'E') {
             // Zoom in - find the next larger scale
@@ -4901,7 +5188,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
             
+            // When in curved line creation mode, preserve control points after zoom
+            const isCurvedLineInProgress = drawingMode === 'curved' && curvedLinePoints.length > 0;
+            console.log(`[Zoom In] Current mode: ${drawingMode}, points: ${curvedLinePoints.length}, in progress: ${isCurvedLineInProgress}`);
+            
             updateImageScale(nextScale);
+            
+            // After zoom, the control points are automatically preserved since they're stored in image coordinates
+            if (isCurvedLineInProgress) {
+                console.log('[Zoom In] Curved line creation in progress - control points preserved during zoom');
+            }
             // UI is now updated by updateImageScale
         }
         
@@ -5581,6 +5877,27 @@ document.addEventListener('DOMContentLoaded', () => {
                         closestDistance = distance;
                         closestMatch = { label: strokeLabel, type: 'straight', distance };
                     }
+                } else if (vectorData.type === 'curved') {
+                    // For curved lines, check each segment of the interpolated curve
+                    for (let i = 1; i < vectorData.points.length; i++) {
+                        const p1 = vectorData.points[i-1];
+                        const p2 = vectorData.points[i];
+                        
+                        // Transform the coordinates based on image scale and position
+                        const x1 = imageX + (p1.x * scale);
+                        const y1 = imageY + (p1.y * scale);
+                        const x2 = imageX + (p2.x * scale);
+                        const y2 = imageY + (p2.y * scale);
+                        
+                        // Calculate distance to this curve segment
+                        const distance = pointDistanceToLine(x, y, x1, y1, x2, y2);
+                        
+                        // If this is closer than our previous closest segment, update
+                        if (distance <= maxDistance && distance < closestDistance) {
+                            closestDistance = distance;
+                            closestMatch = { label: strokeLabel, type: 'curved', distance };
+                        }
+                    }
                 } else {
                     // For freehand, check each segment
                     for (let i = 1; i < vectorData.points.length; i++) {
@@ -5636,6 +5953,76 @@ document.addEventListener('DOMContentLoaded', () => {
         const projY = y1 + (projection * dy) / len;
         const distance = Math.sqrt((px - projX) * (px - projX) + (py - projY) * (py - projY));
         return distance;
+    }
+
+    // Helper function to check if a point is near a control point
+    function findControlPointAtPosition(x, y) {
+        // Only check for selected curved lines
+        const selectedStroke = selectedStrokeByImage[currentImageLabel];
+        if (!selectedStroke) return null;
+        
+        const vectorData = vectorStrokesByImage[currentImageLabel]?.[selectedStroke];
+        if (!vectorData || vectorData.type !== 'curved' || !vectorData.controlPoints) return null;
+        
+        // Get current scale and position for coordinate transforms
+        const scale = window.imageScaleByLabel[currentImageLabel] || 1;
+        
+        // Calculate image position for coordinate transforms
+        let imageX, imageY;
+        const isBlankCanvas = !window.originalImages || !window.originalImages[currentImageLabel];
+        
+        if (isBlankCanvas) {
+            const canvasCenter = { x: canvas.width / 2, y: canvas.height / 2 };
+            const position = imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
+            imageX = canvasCenter.x + position.x;
+            imageY = canvasCenter.y + position.y;
+        } else {
+            const cachedImg = imageCache[window.originalImages[currentImageLabel]];
+            if (cachedImg) {
+                const imageWidth = cachedImg.width;
+                const imageHeight = cachedImg.height;
+                imageX = (canvas.width - imageWidth * scale) / 2 + 
+                        (imagePositionByLabel[currentImageLabel]?.x || 0);
+                imageY = (canvas.height - imageHeight * scale) / 2 + 
+                        (imagePositionByLabel[currentImageLabel]?.y || 0);
+            } else {
+                imageX = canvas.width / 2 + (imagePositionByLabel[currentImageLabel]?.x || 0);
+                imageY = canvas.height / 2 + (imagePositionByLabel[currentImageLabel]?.y || 0);
+            }
+        }
+        
+        // Check each control point
+        for (let i = 0; i < vectorData.controlPoints.length; i++) {
+            const controlPoint = vectorData.controlPoints[i];
+            let transformedX, transformedY;
+            
+            if (isBlankCanvas) {
+                const canvasCenter = { x: canvas.width / 2, y: canvas.height / 2 };
+                const position = imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
+                const scaledX = (controlPoint.x - canvasCenter.x) * scale + canvasCenter.x;
+                const scaledY = (controlPoint.y - canvasCenter.y) * scale + canvasCenter.y;
+                transformedX = scaledX + position.x;
+                transformedY = scaledY + position.y;
+            } else {
+                transformedX = imageX + (controlPoint.x * scale);
+                transformedY = imageY + (controlPoint.y * scale);
+            }
+            
+            // Check if click is within control point radius
+            const pointRadius = 6 * scale; // Use the larger radius for selected control points
+            const distance = Math.sqrt((x - transformedX) ** 2 + (y - transformedY) ** 2);
+            
+            if (distance <= pointRadius + 5) { // Add 5px padding for easier selection
+                return {
+                    strokeLabel: selectedStroke,
+                    pointIndex: i,
+                    canvasX: transformedX,
+                    canvasY: transformedY
+                };
+            }
+        }
+        
+        return null;
     }
     
     // Expose necessary functions globally for project-manager.js to use
@@ -6116,6 +6503,120 @@ document.addEventListener('DOMContentLoaded', () => {
         drawCurvedLinePreview(curvedLinePoints, mousePos);
     }
 
+    // Helper function to find the nearest point on a stroke to a given coordinate
+    function findNearestPointOnStroke(canvasX, canvasY, strokeLabel) {
+        const vectorData = vectorStrokesByImage[currentImageLabel]?.[strokeLabel];
+        if (!vectorData || !vectorData.points || vectorData.points.length === 0) {
+            return null;
+        }
+        
+        // Get current scale and position for coordinate transforms (MATCH checkForStrokeAtPoint exactly)
+        const scale = window.imageScaleByLabel[currentImageLabel] || 1;
+        
+        // Calculate image position for coordinate transforms
+        let imageWidth = canvas.width;
+        let imageHeight = canvas.height;
+        let imageX, imageY;
+        
+        // Try to get original image dimensions if available (MATCH checkForStrokeAtPoint exactly)
+        if (window.originalImages && window.originalImages[currentImageLabel]) {
+            const cachedImg = imageCache[window.originalImages[currentImageLabel]];
+            if (cachedImg) {
+                imageWidth = cachedImg.width;
+                imageHeight = cachedImg.height;
+                
+                // Calculate position based on image dimensions
+                imageX = (canvas.width - imageWidth * scale) / 2 + 
+                        (imagePositionByLabel[currentImageLabel]?.x || 0);
+                imageY = (canvas.height - imageHeight * scale) / 2 + 
+                        (imagePositionByLabel[currentImageLabel]?.y || 0);
+            } else {
+                // Image not yet loaded, use canvas center as reference
+                imageX = canvas.width / 2 + (imagePositionByLabel[currentImageLabel]?.x || 0);
+                imageY = canvas.height / 2 + (imagePositionByLabel[currentImageLabel]?.y || 0);
+            }
+        } else {
+            // No image, use canvas center as reference point
+            imageX = canvas.width / 2 + (imagePositionByLabel[currentImageLabel]?.x || 0);
+            imageY = canvas.height / 2 + (imagePositionByLabel[currentImageLabel]?.y || 0);
+        }
+        
+        let nearestPoint = null;
+        let minDistance = Number.MAX_VALUE;
+        
+        // Check each segment of the stroke
+        for (let i = 0; i < vectorData.points.length; i++) {
+            const point = vectorData.points[i];
+            
+            // Transform point to canvas coordinates
+            const pointCanvasX = imageX + (point.x * scale);
+            const pointCanvasY = imageY + (point.y * scale);
+            
+            // Calculate distance to this point
+            const distance = Math.sqrt(
+                Math.pow(canvasX - pointCanvasX, 2) + 
+                Math.pow(canvasY - pointCanvasY, 2)
+            );
+            
+            if (distance < minDistance) {
+                minDistance = distance;
+                nearestPoint = {
+                    x: point.x, // Image space coordinates
+                    y: point.y,
+                    canvasX: pointCanvasX, // Canvas space coordinates
+                    canvasY: pointCanvasY,
+                    distance: distance
+                };
+            }
+            
+            // Also check line segments between points
+            if (i > 0) {
+                const prevPoint = vectorData.points[i - 1];
+                const prevCanvasX = imageX + (prevPoint.x * scale);
+                const prevCanvasY = imageY + (prevPoint.y * scale);
+                
+                // Find closest point on line segment
+                const segmentLength = Math.sqrt(
+                    Math.pow(pointCanvasX - prevCanvasX, 2) + 
+                    Math.pow(pointCanvasY - prevCanvasY, 2)
+                );
+                
+                if (segmentLength > 0) {
+                    // Calculate projection of click point onto line segment
+                    const t = Math.max(0, Math.min(1, 
+                        ((canvasX - prevCanvasX) * (pointCanvasX - prevCanvasX) + 
+                         (canvasY - prevCanvasY) * (pointCanvasY - prevCanvasY)) / 
+                        (segmentLength * segmentLength)
+                    ));
+                    
+                    const projCanvasX = prevCanvasX + t * (pointCanvasX - prevCanvasX);
+                    const projCanvasY = prevCanvasY + t * (pointCanvasY - prevCanvasY);
+                    
+                    const projDistance = Math.sqrt(
+                        Math.pow(canvasX - projCanvasX, 2) + 
+                        Math.pow(canvasY - projCanvasY, 2)
+                    );
+                    
+                    if (projDistance < minDistance) {
+                        minDistance = projDistance;
+                        // Convert back to image space
+                        const projImageX = (projCanvasX - imageX) / scale;
+                        const projImageY = (projCanvasY - imageY) / scale;
+                        nearestPoint = {
+                            x: projImageX,
+                            y: projImageY,
+                            canvasX: projCanvasX,
+                            canvasY: projCanvasY,
+                            distance: projDistance
+                        };
+                    }
+                }
+            }
+        }
+        
+        return nearestPoint;
+    }
+
     // Double-click handler for finalizing curved lines
     canvas.addEventListener('dblclick', (e) => {
         e.preventDefault(); // Prevent default double-click behavior
@@ -6123,13 +6624,47 @@ document.addEventListener('DOMContentLoaded', () => {
         if (drawingMode === 'curved' && curvedLinePoints.length >= 2) {
             console.log(`Finalizing curve with ${curvedLinePoints.length} control points`);
             
-            // Generate spline points using Catmull-Rom algorithm
-            const splinePoints = generateCatmullRomSpline(curvedLinePoints, 50);
+            // Check if the double-click is on another stroke for snapping
+            const strokeAtPoint = checkForStrokeAtPoint(e.offsetX, e.offsetY);
+            let finalControlPoints = [...curvedLinePoints];
+            
+            if (strokeAtPoint) {
+                console.log(`Double-click detected on stroke ${strokeAtPoint.label}, attempting to snap curve endpoint`);
+                console.log(`Double-click coordinates: (${e.offsetX}, ${e.offsetY})`);
+                
+                // Find the nearest point on the target stroke
+                const nearestPoint = findNearestPointOnStroke(e.offsetX, e.offsetY, strokeAtPoint.label);
+                
+                if (nearestPoint) {
+                    console.log(`Nearest point found: distance ${nearestPoint.distance.toFixed(2)}px, imageSpace: (${nearestPoint.x.toFixed(2)}, ${nearestPoint.y.toFixed(2)}), canvasSpace: (${nearestPoint.canvasX.toFixed(2)}, ${nearestPoint.canvasY.toFixed(2)})`);
+                    
+                    if (nearestPoint.distance <= 20) { // 20 pixel snap tolerance
+                        console.log(`✅ Snapping curve endpoint to stroke ${strokeAtPoint.label} at distance ${nearestPoint.distance.toFixed(2)}px`);
+                        
+                        // Replace the last control point with the snapped point
+                        finalControlPoints[finalControlPoints.length - 1] = {
+                            x: nearestPoint.x,
+                            y: nearestPoint.y,
+                            canvasX: nearestPoint.canvasX,
+                            canvasY: nearestPoint.canvasY,
+                            time: Date.now(),
+                            snappedTo: strokeAtPoint.label // Mark this point as snapped
+                        };
+                    } else {
+                        console.log(`❌ Stroke detected but too far for snapping (distance: ${nearestPoint.distance.toFixed(2)}px > 20px tolerance)`);
+                    }
+                } else {
+                    console.log(`❌ Could not find nearest point on stroke ${strokeAtPoint.label}`);
+                }
+            }
+            
+            // Generate spline points using Catmull-Rom algorithm with final control points
+            const splinePoints = generateCatmullRomSpline(finalControlPoints, 50);
             
             let finalPoints;
             if (splinePoints.length < 2) {
                 console.warn('Not enough spline points generated, falling back to control points');
-                finalPoints = curvedLinePoints.map(cp => ({
+                finalPoints = finalControlPoints.map(cp => ({
                     x: cp.x, y: cp.y, canvasX: cp.canvasX, canvasY: cp.canvasY, time: cp.time || Date.now()
                 }));
             } else {
@@ -6159,7 +6694,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 color: strokeColor,
                 width: strokeWidth,
                 type: 'curved', // Mark as curved line type
-                controlPoints: [...curvedLinePoints], // Store original control points for potential editing
+                controlPoints: [...finalControlPoints], // Store final control points (with potential snapping)
                 timestamp: Date.now()
             };
             
@@ -6170,7 +6705,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Save the completed curved stroke
             saveState(true, true);
             
-            // Update UI
+            // Update UI and clear any preview state
             updateStrokeVisibilityControls();
             redrawCanvasWithVisibility();
             
