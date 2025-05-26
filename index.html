@@ -602,6 +602,27 @@
         #drawingModeToggle.straight-mode::before {
             border-radius: 0;
         }
+        #drawingModeToggle.curved-mode {
+            background-color: #fff3e0;
+            color: #ff9800;
+            border-color: #ff9800;
+        }
+        #drawingModeToggle.curved-mode::before {
+            background: none;
+            border: none;
+            background-image: 
+                radial-gradient(circle at 25% 50%, #ff9800 1px, transparent 1px),
+                radial-gradient(circle at 75% 50%, #ff9800 1px, transparent 1px);
+            background-size: 4px 4px, 4px 4px;
+            background-position: 0 2px, 0 -2px;
+            background-repeat: repeat-x, repeat-x;
+            width: 14px;
+            height: 6px;
+            border-radius: 0;
+        }
+        #drawingModeToggle.curved-mode:hover {
+            background-color: #fff8f0;
+        }
         .tag-dialog {
             position: fixed;
             top: 50%;

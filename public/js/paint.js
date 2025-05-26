@@ -3179,8 +3179,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let lastVelocity = 0;
 
     // Drawing mode state
-    let drawingMode = 'freehand'; // Options: 'freehand', 'straight'
+    let drawingMode = 'freehand'; // Options: 'freehand', 'straight', 'curved'
     let straightLineStart = null; // For straight line mode - start point
+    let curvedLinePoints = []; // For curved line mode - array of control points
     let lastDrawnPoint = null;
 
     // Helper function to get transformed coordinates (image space from canvas space)
@@ -3444,16 +3445,139 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.lineJoin = 'round';
         ctx.stroke();
         
-        // Draw a single small circle at each endpoint (but don't make them separate strokes)
+        // Draw a small circle at the end point
         ctx.beginPath();
-        ctx.arc(startPoint.x, startPoint.y, parseInt(brushSize.value) * scale / 2, 0, Math.PI * 2);
-        ctx.arc(endPoint.x, endPoint.y, parseInt(brushSize.value) * scale / 2, 0, Math.PI * 2);
+        const endRadius = parseInt(brushSize.value) * scale / 2;
+        ctx.arc(endPoint.x, endPoint.y, endRadius, 0, Math.PI * 2);
         ctx.fillStyle = colorPicker.value;
         ctx.fill();
+    }
+    
+    // Catmull-Rom spline algorithm for smooth curves
+    function generateCatmullRomSpline(controlPoints, resolution = 50) {
+        if (controlPoints.length < 2) return [];
+        if (controlPoints.length === 2) {
+            // Linear interpolation for 2 points
+            const result = [];
+            for (let i = 0; i <= resolution; i++) {
+                const t = i / resolution;
+                const x = controlPoints[0].canvasX + t * (controlPoints[1].canvasX - controlPoints[0].canvasX);
+                const y = controlPoints[0].canvasY + t * (controlPoints[1].canvasY - controlPoints[0].canvasY);
+                result.push({ x, y });
+            }
+            return result;
+        }
+
+        const splinePoints = [];
         
-        // For final line (not just preview), ensure we save this state
-        if (!isDrawing) {
-            currentState = getCanvasState();
+        // Create phantom points for proper curve behavior
+        const points = [...controlPoints];
+        const firstPoint = { ...points[0] };
+        const lastPoint = { ...points[points.length - 1] };
+        points.unshift(firstPoint); // Add phantom start point
+        points.push(lastPoint);     // Add phantom end point
+
+        // Generate curve segments between each pair of control points
+        for (let i = 1; i < points.length - 2; i++) {
+            const p0 = points[i - 1];
+            const p1 = points[i];
+            const p2 = points[i + 1];
+            const p3 = points[i + 2];
+
+            // Generate points along this segment
+            for (let j = 0; j <= resolution; j++) {
+                const t = j / resolution;
+                const t2 = t * t;
+                const t3 = t2 * t;
+
+                // Catmull-Rom basis functions
+                const x = 0.5 * (
+                    (2 * p1.canvasX) +
+                    (-p0.canvasX + p2.canvasX) * t +
+                    (2 * p0.canvasX - 5 * p1.canvasX + 4 * p2.canvasX - p3.canvasX) * t2 +
+                    (-p0.canvasX + 3 * p1.canvasX - 3 * p2.canvasX + p3.canvasX) * t3
+                );
+
+                const y = 0.5 * (
+                    (2 * p1.canvasY) +
+                    (-p0.canvasY + p2.canvasY) * t +
+                    (2 * p0.canvasY - 5 * p1.canvasY + 4 * p2.canvasY - p3.canvasY) * t2 +
+                    (-p0.canvasY + 3 * p1.canvasY - 3 * p2.canvasY + p3.canvasY) * t3
+                );
+
+                splinePoints.push({ x, y });
+            }
+        }
+
+        return splinePoints;
+    }
+
+    // Function to draw curved line preview
+    function drawCurvedLinePreview(controlPoints, mousePos = null) {
+        if (controlPoints.length === 0) return;
+
+        // Clear the canvas to the last saved state
+        if (currentStroke) {
+            restoreCanvasState(currentStroke);
+        }
+
+        const scale = window.imageScaleByLabel[currentImageLabel] || 1.0;
+        
+        // Create preview points (include mouse position if provided)
+        let previewPoints = [...controlPoints];
+        if (mousePos && controlPoints.length > 0) {
+            const { x: imgX, y: imgY } = getTransformedCoords(mousePos.x, mousePos.y);
+            previewPoints.push({
+                x: imgX,
+                y: imgY,
+                canvasX: mousePos.x,
+                canvasY: mousePos.y,
+                time: Date.now()
+            });
+        }
+
+        // Draw control points as small circles (no connecting lines)
+        controlPoints.forEach(cp => {
+            ctx.beginPath();
+            const pointRadius = 4 * scale;
+            ctx.arc(cp.canvasX, cp.canvasY, pointRadius, 0, Math.PI * 2);
+            ctx.fillStyle = colorPicker.value;
+            ctx.fill();
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        });
+
+        if (previewPoints.length === 1) {
+            // Just one point - draw a thin white line to mouse if mouse position provided
+            if (mousePos) {
+                ctx.beginPath();
+                ctx.moveTo(previewPoints[0].canvasX, previewPoints[0].canvasY);
+                ctx.lineTo(mousePos.x, mousePos.y);
+                ctx.strokeStyle = 'rgba(240, 240, 240, 0.7)'; // Near white with transparency
+                ctx.lineWidth = Math.max(1, parseInt(brushSize.value) * scale * 0.6); // Thinner than regular
+                ctx.lineCap = 'round';
+                ctx.stroke();
+            }
+        } else {
+            // Generate and draw the spline curve
+            const splinePoints = generateCatmullRomSpline(previewPoints, 30);
+            
+            if (splinePoints.length > 1) {
+                ctx.beginPath();
+                ctx.moveTo(splinePoints[0].x, splinePoints[0].y);
+                
+                for (let i = 1; i < splinePoints.length; i++) {
+                    ctx.lineTo(splinePoints[i].x, splinePoints[i].y);
+                }
+                
+                // Use near-white with transparency and thinner line for preview
+                ctx.strokeStyle = 'rgba(240, 240, 240, 0.7)'; // Near white with 70% opacity
+                ctx.lineWidth = Math.max(1, parseInt(brushSize.value) * scale * 0.6); // 60% of regular thickness
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.stroke();
+            }
         }
     }
     
@@ -3462,12 +3586,23 @@ document.addEventListener('DOMContentLoaded', () => {
         if (drawingMode === 'freehand') {
             drawingMode = 'straight';
             drawingModeToggle.textContent = 'Straight Line';
+            drawingModeToggle.classList.remove('curved-mode');
             drawingModeToggle.classList.add('straight-mode');
+        } else if (drawingMode === 'straight') {
+            drawingMode = 'curved';
+            drawingModeToggle.textContent = 'Curved Line';
+            drawingModeToggle.classList.remove('straight-mode');
+            drawingModeToggle.classList.add('curved-mode');
         } else {
             drawingMode = 'freehand';
             drawingModeToggle.textContent = 'Freehand';
-            drawingModeToggle.classList.remove('straight-mode');
+            drawingModeToggle.classList.remove('curved-mode', 'straight-mode');
         }
+        
+        // Clear any temporary drawing state when switching modes
+        straightLineStart = null;
+        curvedLinePoints = [];
+        console.log(`Drawing mode changed to: ${drawingMode}`);
     });
 
     // Mouse drag variables for image movement
@@ -3600,6 +3735,19 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!vectorStrokesByImage[currentImageLabel]) {
                 vectorStrokesByImage[currentImageLabel] = {};
         }
+
+        // SPECIAL CASE: Check for double-click in curved mode BEFORE any stroke setup
+        if (drawingMode === 'curved') {
+            const currentTime = Date.now();
+            const timeSinceLastClick = currentTime - (window.lastMouseDownTime || 0);
+            window.lastMouseDownTime = currentTime;
+            
+            // Skip this entire mousedown if it's part of a double-click sequence
+            if (timeSinceLastClick < 300 && curvedLinePoints.length >= 2) {
+                console.log('Skipping entire mousedown - likely double-click sequence');
+                return; // Skip this entire mousedown event before any state is modified
+            }
+        }
     
         // Handle drawing (default when Shift is not pressed)
         // Save the state before starting a new stroke
@@ -3634,6 +3782,35 @@ document.addEventListener('DOMContentLoaded', () => {
         if (drawingMode === 'straight') {
             // For straight line, just store the start point
             straightLineStart = { x: e.offsetX, y: e.offsetY };
+        } else if (drawingMode === 'curved') {
+            // For curved line, collect control points
+            const { x: imgX, y: imgY } = getTransformedCoords(e.offsetX, e.offsetY);
+            const controlPoint = {
+                x: imgX,             // Image space X
+                y: imgY,             // Image space Y
+                canvasX: e.offsetX,  // Canvas space X
+                canvasY: e.offsetY,  // Canvas space Y
+                time: Date.now()
+            };
+            
+            curvedLinePoints.push(controlPoint);
+            console.log(`Added control point ${curvedLinePoints.length} at (${e.offsetX}, ${e.offsetY})`);
+            
+            // Draw a visual indicator for the control point
+            ctx.beginPath();
+            const scale = window.imageScaleByLabel[currentImageLabel] || 1.0;
+            const pointRadius = 4 * scale;
+            ctx.arc(e.offsetX, e.offsetY, pointRadius, 0, Math.PI * 2);
+            ctx.fillStyle = colorPicker.value;
+            ctx.fill();
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // Prevent normal drawing mode from activating
+            isDrawing = false;
+            isDrawingOrPasting = false;
+            strokeInProgress = false;
         } else {
             // For freehand, add first point
             const { x: imgX, y: imgY } = getTransformedCoords(e.offsetX, e.offsetY);
@@ -3794,6 +3971,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Normal freehand drawing
             draw(e);
             }
+        }
+        
+        // Handle curved line preview when not actively drawing but have control points
+        if (!isDrawing && !isDraggingImage && !isDraggingLabel && drawingMode === 'curved' && curvedLinePoints.length > 0) {
+            const mousePos = { x: e.offsetX, y: e.offsetY };
+            drawCurvedLinePreview(curvedLinePoints, mousePos);
         }
     });
     
@@ -5926,4 +6109,74 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Update UI to show edit mode
     }
+
+    // Handle curved line preview when not actively drawing but have control points
+    if (!isDrawing && !isDraggingImage && !isDraggingLabel && drawingMode === 'curved' && curvedLinePoints.length > 0) {
+        const mousePos = { x: e.offsetX, y: e.offsetY };
+        drawCurvedLinePreview(curvedLinePoints, mousePos);
+    }
+
+    // Double-click handler for finalizing curved lines
+    canvas.addEventListener('dblclick', (e) => {
+        e.preventDefault(); // Prevent default double-click behavior
+        
+        if (drawingMode === 'curved' && curvedLinePoints.length >= 2) {
+            console.log(`Finalizing curve with ${curvedLinePoints.length} control points`);
+            
+            // Generate spline points using Catmull-Rom algorithm
+            const splinePoints = generateCatmullRomSpline(curvedLinePoints, 50);
+            
+            let finalPoints;
+            if (splinePoints.length < 2) {
+                console.warn('Not enough spline points generated, falling back to control points');
+                finalPoints = curvedLinePoints.map(cp => ({
+                    x: cp.x, y: cp.y, canvasX: cp.canvasX, canvasY: cp.canvasY, time: cp.time || Date.now()
+                }));
+            } else {
+                finalPoints = splinePoints.map((sp, index) => {
+                    const { x: imgX, y: imgY } = getTransformedCoords(sp.x, sp.y);
+                    return {
+                        x: imgX, y: imgY, canvasX: sp.x, canvasY: sp.y, time: Date.now() + index
+                    };
+                });
+            }
+            
+            console.log(`Generated ${finalPoints.length} interpolated points for smooth curve`);
+            
+            // Create a stroke from the interpolated points
+            const tempStrokeKey = '_drawingStroke';
+            const strokeColor = colorPicker.value;
+            const strokeWidth = parseInt(brushSize.value);
+            
+            // Initialize if needed
+            if (!vectorStrokesByImage[currentImageLabel]) {
+                vectorStrokesByImage[currentImageLabel] = {};
+            }
+            
+            // Store the curved line as vector data using interpolated spline points
+            vectorStrokesByImage[currentImageLabel][tempStrokeKey] = {
+                points: finalPoints, // Use interpolated spline points, not control points
+                color: strokeColor,
+                width: strokeWidth,
+                type: 'curved', // Mark as curved line type
+                controlPoints: [...curvedLinePoints], // Store original control points for potential editing
+                timestamp: Date.now()
+            };
+            
+            // Clear the control points for next curve
+            curvedLinePoints = [];
+            console.log('Cleared control points for next curve');
+            
+            // Save the completed curved stroke
+            saveState(true, true);
+            
+            // Update UI
+            updateStrokeVisibilityControls();
+            redrawCanvasWithVisibility();
+            
+            console.log('Curved line finalized and saved');
+        } else if (drawingMode === 'curved') {
+            console.log('Double-click in curved mode, but need at least 2 control points to create a curve');
+        }
+    });
 }); // Correctly close DOMContentLoaded
