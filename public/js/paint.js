@@ -5716,6 +5716,9 @@ document.addEventListener('DOMContentLoaded', () => {
             
             updateImageScale(nextScale);
             
+            // Deselect all strokes when zooming
+            deselectAllStrokes();
+            
             // After zoom, the control points are automatically preserved since they're stored in image coordinates
             if (isCurvedLineInProgress) {
                 console.log('[Zoom Out] Curved line creation in progress - control points preserved during zoom');
@@ -5739,6 +5742,9 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log(`[Zoom In] Current mode: ${drawingMode}, points: ${curvedLinePoints.length}, in progress: ${isCurvedLineInProgress}`);
             
             updateImageScale(nextScale);
+            
+            // Deselect all strokes when zooming
+            deselectAllStrokes();
             
             // After zoom, the control points are automatically preserved since they're stored in image coordinates
             if (isCurvedLineInProgress) {
