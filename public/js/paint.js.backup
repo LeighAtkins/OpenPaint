@@ -517,54 +517,25 @@ document.addEventListener('DOMContentLoaded', () => {
             measureText.dataset.originalMeasurementString = currentFormattedMeasurement;
             measureText.dataset.selectedMeasurement = "true";
 
-            // Check if this is a newly created stroke that should auto-focus
-            const isNewlyCreated = window.newlyCreatedStroke &&
-                window.newlyCreatedStroke.label === strokeLabel &&
-                window.newlyCreatedStroke.image === currentImageLabel &&
-                (Date.now() - window.newlyCreatedStroke.timestamp) < 2000; // Within last 2 seconds
-
-            // Auto-focus for newly created strokes OR when explicitly requested (but not during zoom/scale operations)
-            // Also check if the document has an active focused element that is a measurement field to avoid interrupting user interactions
-            const hasActiveMeasurementFocus = document.activeElement && 
-                document.activeElement.classList && 
-                document.activeElement.classList.contains('stroke-measurement');
-                
-            const shouldAutoFocus = isNewlyCreated || (isSelected && !window.isScalingOrZooming && !hasActiveMeasurementFocus);
-
-            console.log(`[createEditableMeasureText] Focus logic for ${strokeLabel}: isNewlyCreated=${isNewlyCreated}, isSelected=${isSelected}, isScalingOrZooming=${!!window.isScalingOrZooming}, hasActiveMeasurementFocus=${hasActiveMeasurementFocus}, shouldAutoFocus=${shouldAutoFocus}`);
-
-            if (shouldAutoFocus) {
-                // Focus and select all text for newly created or explicitly selected strokes
-                setTimeout(() => {
-                    if (document.body.contains(measureText)) {
-                        measureText.focus();
-                        const selection = window.getSelection();
-                        if (selection) {
-                            const range = document.createRange();
-                            range.selectNodeContents(measureText);
-                            selection.removeAllRanges();
-                            selection.addRange(range);
-                        }
+            // Always focus and select all text for any selected stroke (new or sidebar)
+            setTimeout(() => {
+                if (document.body.contains(measureText)) {
+                    measureText.focus();
+                    const selection = window.getSelection();
+                    if (selection) {
+                        const range = document.createRange();
+                        range.selectNodeContents(measureText);
+                        selection.removeAllRanges();
+                        selection.addRange(range);
                     }
-                }, 0);
-            }
+                }
+            }, 0);
         } else {
             measureText.contentEditable = "false";
         }
 
         measureText.addEventListener('keydown', (event) => {
             if (measureText.contentEditable !== 'true') return;
-
-            // Handle navigation keys when editing measurements
-            if (document.activeElement === measureText) {
-                const navigationKeys = ['w', 'a', 's', 'd', 'q', 'e', 'W', 'A', 'S', 'D', 'Q', 'E'];
-                
-                if (navigationKeys.includes(event.key)) {
-                    event.stopPropagation(); // Prevent the key from reaching global handlers
-                    event.preventDefault(); // Prevent default behavior
-                    return;
-                }
-            }
 
             if (event.key === 'Enter' && !event.ctrlKey && !event.shiftKey) {
                 event.preventDefault();
@@ -576,32 +547,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 measureText.blur();
             } else if ((event.ctrlKey || event.shiftKey) && event.key === 'Enter') {
                 event.preventDefault(); // Disallow newlines
-            }
-        });
-
-        // Add input filtering to prevent WASD/QE interference when editing measurements
-        measureText.addEventListener('input', (event) => {
-            if (measureText.contentEditable !== 'true') return;
-            
-            // Only filter when this specific element has focus to avoid blocking global shortcuts
-            if (document.activeElement === measureText) {
-                // Only allow numbers, fractions, spaces, and basic punctuation
-                const allowedPattern = /^[0-9\s\.\-\/'"]*$/;
-                const currentText = measureText.textContent;
-                
-                if (!allowedPattern.test(currentText)) {
-                    // Remove any invalid characters
-                    const filteredText = currentText.replace(/[^0-9\s\.\-\/'"]/g, '');
-                    measureText.textContent = filteredText;
-                    
-                    // Restore cursor position to end
-                    const selection = window.getSelection();
-                    const range = document.createRange();
-                    range.selectNodeContents(measureText);
-                    range.collapse(false);
-                    selection.removeAllRanges();
-                    selection.addRange(range);
-                }
             }
         });
 
@@ -925,12 +870,11 @@ document.addEventListener('DOMContentLoaded', () => {
                             // Single item selection (replace)
                             if (currentSelection.includes(clickedLabel) && currentSelection.length === 1) {
                                 // Deselect if clicking the only selected item
-                                console.log('Deselecting stroke:', clickedLabel);
-                                currentSelection = []; 
-                                window.selectedStrokeInEditMode = null; // Also exit edit mode
+                                // currentSelection = []; 
+                                // window.selectedStrokeInEditMode = null; // Also exit edit mode
                             } else {
                                 currentSelection = [clickedLabel];
-                                window.selectedStrokeInEditMode = null; // Exit edit mode on new single selection
+                                // window.selectedStrokeInEditMode = null; // Exit edit mode on new single selection
                             }
                             lastSelectedStrokeIndex = itemIndex;
                         }
@@ -1139,11 +1083,14 @@ document.addEventListener('DOMContentLoaded', () => {
                                   window.newlyCreatedStroke.image === currentImageLabel &&
                                   (Date.now() - window.newlyCreatedStroke.timestamp) < 2000; // Within last 2 seconds
             
-            // Only auto-focus for newly created strokes, not for existing selected strokes
-            if (isNewlyCreated) {
-                console.log(`[updateStrokeVisibilityControls] Found newly created stroke ${strokeLabel}, will focus on it`);
-                // Clear the flag so we don't focus multiple times in other functions
-                window.newlyCreatedStroke = null;
+            if (isSelected || isNewlyCreated) {
+                if (isNewlyCreated) {
+                    console.log(`[updateStrokeVisibilityControls] Found newly created stroke ${strokeLabel}, will focus on it`);
+                    // Clear the flag so we don't focus multiple times in other functions
+                    window.newlyCreatedStroke = null;
+                } else {
+                    console.log(`[updateStrokeVisibilityControls] Found selected stroke ${strokeLabel}, will focus on it`);
+                }
                 
                 // Use setTimeout to ensure the DOM has been updated
                 setTimeout(() => {
@@ -2178,9 +2125,6 @@ document.addEventListener('DOMContentLoaded', () => {
                             const isStraightLine = vectorData.type === 'straight' || 
                                 (vectorData.points.length === 2 && !vectorData.type);
                             
-                            // Check if this is an arrow line
-                            const isArrowLine = vectorData.type === 'arrow';
-                            
                             // Check if this is a curved line
                             const isCurvedLine = vectorData.type === 'curved';
                             
@@ -2209,27 +2153,6 @@ document.addEventListener('DOMContentLoaded', () => {
                             
                                 ctx.lineTo(transformedLastX, transformedLastY);
                             strokePath.push({x: transformedLastX, y: transformedLastY});
-                            } else if (isArrowLine && vectorData.points.length >= 2) {
-                                // For arrow lines, draw the line and then add arrowheads
-                                const lastPoint = vectorData.points[vectorData.points.length - 1];
-                                let transformedLastX, transformedLastY;
-                                
-                                if (isBlankCanvas) {
-                                    // Apply both scaling and position offset in blank canvas mode
-                                    const position = imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
-                                    // Scale from canvas center
-                                    const scaledX = (lastPoint.x - canvasCenter.x) * scale + canvasCenter.x;
-                                    const scaledY = (lastPoint.y - canvasCenter.y) * scale + canvasCenter.y;
-                                    // Then apply position offset
-                                    transformedLastX = scaledX + position.x;
-                                    transformedLastY = scaledY + position.y;
-                                } else {
-                                    transformedLastX = imageX + (lastPoint.x * scale);
-                                    transformedLastY = imageY + (lastPoint.y * scale);
-                                }
-                                
-                                ctx.lineTo(transformedLastX, transformedLastY);
-                                strokePath.push({x: transformedLastX, y: transformedLastY});
                             } else if (isCurvedLine) {
                                 // For curved lines, draw smooth spline using stored interpolated points
                                 console.log(`Drawing curved line with ${vectorData.points.length} interpolated points`);
@@ -2313,75 +2236,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     ctx.restore(); // Restore context state to remove shadow
                 }
                 // --- End Reset Glow Effect ---
-                
-                                 // --- Draw Arrowheads for Arrow Lines ---
-                 if (isArrowLine && vectorData.arrowSettings && strokePath.length >= 2) {
-                     const startPoint = strokePath[0];
-                     const endPoint = strokePath[strokePath.length - 1];
-                     
-                     // Create a temporary settings object with brush size-aware scaling
-                     const brushSizeForStroke = vectorData.width || 5;
-                     const baseArrowSize = Math.max(vectorData.arrowSettings.arrowSize || 15, brushSizeForStroke * 2);
-                     
-                     const scaledArrowSettings = {
-                         ...vectorData.arrowSettings,
-                         arrowSize: baseArrowSize // Let drawArrowhead handle the final scaling
-                     };
-                     
-                     // Draw arrowheads using the transformed coordinates and stroke color
-                     drawArrowhead(startPoint, endPoint, scaledArrowSettings, vectorData.color);
-                 }
-                // --- End Arrowheads ---
-                
-                // --- Draw Control Point Indicators for Arrows (ONLY in Edit Mode) ---
-                if (isArrowLine && vectorData.points.length >= 2 && 
-                    window.selectedStrokeInEditMode === strokeLabel) {
-                    console.log(`Drawing arrow endpoint indicators for ${strokeLabel} (IN EDIT MODE)`);
-                    
-                    // Draw control points at start and end of arrow
-                    const startPoint = vectorData.points[0];
-                    const endPoint = vectorData.points[vectorData.points.length - 1];
-                    
-                    [startPoint, endPoint].forEach((point, index) => {
-                        let transformedX, transformedY;
-                        
-                        if (isBlankCanvas) {
-                            const position = imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
-                            const scaledX = (point.x - canvasCenter.x) * scale + canvasCenter.x;
-                            const scaledY = (point.y - canvasCenter.y) * scale + canvasCenter.y;
-                            transformedX = scaledX + position.x;
-                            transformedY = scaledY + position.y;
-                        } else {
-                            transformedX = imageX + (point.x * scale);
-                            transformedY = imageY + (point.y * scale);
-                        }
-                        
-                        // Draw arrow endpoint control indicator
-                        ctx.save();
-                        ctx.beginPath();
-                        
-                        let pointRadius = 8 * scale;
-                        let fillColor = '#ffffff';
-                        let strokeColor = vectorData.color;
-                        let lineWidth = 3;
-                        
-                        // Add glow effect for arrow endpoints in edit mode
-                        ctx.shadowColor = vectorData.color;
-                        ctx.shadowBlur = 8;
-                        ctx.shadowOffsetX = 0;
-                        ctx.shadowOffsetY = 0;
-                        
-                        // Make endpoints square to distinguish from curved line control points
-                        const halfSize = pointRadius / 2;
-                        ctx.rect(transformedX - halfSize, transformedY - halfSize, pointRadius, pointRadius);
-                        ctx.fillStyle = fillColor;
-                        ctx.fill();
-                        ctx.strokeStyle = strokeColor;
-                        ctx.lineWidth = lineWidth;
-                        ctx.stroke();
-                        ctx.restore();
-                    });
-                }
                 
                 // --- Draw Control Point Indicators for Curved Lines (ONLY in Edit Mode) ---
                 if (isCurvedLine && vectorData.controlPoints && vectorData.controlPoints.length > 0 && 
@@ -3437,25 +3291,11 @@ document.addEventListener('DOMContentLoaded', () => {
     let lastY = 0;
     let points = [];
     let lastVelocity = 0;
-    
-    // Click vs drag detection
-    let mouseDownPosition = null;
-    const MINIMUM_DRAG_DISTANCE = 3; // pixels
-    
-    // Curved line defocus tracking
-    let curveJustCompleted = false;
 
     // Drawing mode state
-    let drawingMode = 'freehand'; // Options: 'freehand', 'straight', 'curved', 'arrow'
+    let drawingMode = 'freehand'; // Options: 'freehand', 'straight', 'curved'
     let straightLineStart = null; // For straight line mode - start point
     let curvedLinePoints = []; // For curved line mode - array of control points
-    let arrowLineStart = null; // For arrow line mode - start point
-    let arrowSettings = { // Arrow customization settings
-        startArrow: false,
-        endArrow: true,
-        arrowSize: 15,
-        arrowStyle: 'triangular' // Options: 'triangular', 'filled', 'curved'
-    };
     let lastDrawnPoint = null;
 
     // Helper function to get transformed coordinates (image space from canvas space)
@@ -3523,91 +3363,6 @@ document.addEventListener('DOMContentLoaded', () => {
         
         console.log(`getTransformedCoords RESULT: Canvas(${canvasX}, ${canvasY}) -> Image(${imgX.toFixed(1)}, ${imgY.toFixed(1)})`);
         return { x: imgX, y: imgY };
-    }
-
-    // Helper function to deselect all strokes and clear edit mode
-    function deselectAllStrokes() {
-        console.log('Deselecting all strokes');
-        
-        // Clear selection state
-        if (window.selectedStrokeByImage && window.currentImageLabel) {
-            window.selectedStrokeByImage[window.currentImageLabel] = null;
-        }
-        
-        if (window.multipleSelectedStrokesByImage && window.currentImageLabel) {
-            window.multipleSelectedStrokesByImage[window.currentImageLabel] = [];
-        }
-        
-        // Clear edit mode
-        window.selectedStrokeInEditMode = null;
-        
-        // Defocus any active measurement inputs
-        const measureTextElements = document.querySelectorAll('.stroke-measurement');
-        measureTextElements.forEach(element => {
-            if (element.contentEditable === 'true') {
-                element.blur();
-            }
-        });
-        
-        // Update UI to reflect deselection
-        updateStrokeVisibilityControls();
-        redrawCanvasWithVisibility();
-    }
-
-    // Helper function to handle defocus clicks (single clicks that don't create strokes)
-    function handleDefocusClick() {
-        console.log('Single click detected - defocusing measurements');
-        
-        // Handle curve completion defocus
-        if (curveJustCompleted) {
-            console.log('First click after curve completion - clearing flag');
-            curveJustCompleted = false;
-            redrawCanvasWithVisibility();
-            return; // Just clear the flag and exit
-        }
-        
-        // For curved lines, handle special defocus behavior
-        if (drawingMode === 'curved' && curvedLinePoints.length > 0) {
-            console.log('Curved line in progress - clearing curved line state');
-            curvedLinePoints = [];
-            redrawCanvasWithVisibility();
-            return; // First click after curved line just clears the curve state
-        }
-        
-        // Defocus any active measurement inputs (including stroke visibility items)
-        const activeElement = document.activeElement;
-        if (activeElement && (
-            (activeElement.classList && activeElement.classList.contains('measure-text')) ||
-            activeElement.contentEditable === 'true' ||
-            activeElement.tagName === 'INPUT' ||
-            activeElement.tagName === 'TEXTAREA'
-        )) {
-            console.log('Defocusing active input element:', activeElement.className || activeElement.tagName);
-            activeElement.blur();
-        }
-        
-        // Also defocus any selected stroke measurements that might be focused
-        const allMeasureTexts = document.querySelectorAll('.measure-text[contenteditable="true"]');
-        allMeasureTexts.forEach(element => {
-            if (element !== activeElement) {
-                console.log('Defocusing additional measurement element');
-                element.blur();
-            }
-        });
-        
-        // Clear any drawing artifacts (like dots from incomplete freehand strokes)
-        redrawCanvasWithVisibility();
-        
-        // Optionally clear selections (but keep them for now to maintain selection state)
-        // This can be uncommented if you want clicks to also clear selections:
-        // if (window.selectedStrokeByImage && window.currentImageLabel) {
-        //     window.selectedStrokeByImage[window.currentImageLabel] = null;
-        //     if (window.multipleSelectedStrokesByImage) {
-        //         window.multipleSelectedStrokesByImage[window.currentImageLabel] = [];
-        //     }
-        //     updateStrokeVisibilityControls();
-        //     redrawCanvasWithVisibility();
-        // }
     }
 
     // Helper function to get canvas coordinates from image coordinates
@@ -3784,109 +3539,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     } // End of draw function
     
-         // Function to draw arrow line preview
-     function drawArrowLinePreview(startPoint, endPoint) {
-         if (!startPoint || !endPoint) return;
-         
-         // Clear canvas and redraw everything
-         redrawCanvasWithVisibility();
-         
-         // Draw the line
-         ctx.save();
-         ctx.strokeStyle = colorPicker.value;
-         ctx.lineWidth = parseInt(brushSize.value) * (window.imageScaleByLabel[currentImageLabel] || 1);
-         ctx.lineCap = 'round';
-         ctx.lineJoin = 'round';
-         
-         ctx.beginPath();
-         ctx.moveTo(startPoint.x, startPoint.y);
-         ctx.lineTo(endPoint.x, endPoint.y);
-         ctx.stroke();
-         
-         // Draw arrowheads
-         drawArrowhead(startPoint, endPoint, arrowSettings);
-         
-         ctx.restore();
-     }
-    
-         // Function to calculate and draw arrowheads
-     function drawArrowhead(startPoint, endPoint, settings, strokeColor = null) {
-         const { startArrow, endArrow, arrowSize, arrowStyle } = settings;
-         const scale = window.imageScaleByLabel[currentImageLabel] || 1;
-         const brushSize = parseInt(document.getElementById('brushSize').value) || 5;
-         
-         // Scale arrowhead with both zoom and brush size for better visibility
-         const baseArrowSize = Math.max(arrowSize, brushSize * 2); // Ensure minimum size relative to brush
-         const scaledArrowSize = baseArrowSize * scale;
-        
-        // Calculate line angle
-        const dx = endPoint.x - startPoint.x;
-        const dy = endPoint.y - startPoint.y;
-        const angle = Math.atan2(dy, dx);
-        
-                 ctx.save();
-         // Use provided stroke color or fall back to current color picker value
-         const arrowColor = strokeColor || colorPicker.value;
-         ctx.fillStyle = arrowColor;
-         ctx.strokeStyle = arrowColor;
-         ctx.lineWidth = parseInt(brushSize.value) * scale;
-        
-        // Draw start arrow if enabled
-        if (startArrow) {
-            drawSingleArrowhead(startPoint.x, startPoint.y, angle + Math.PI, scaledArrowSize, arrowStyle);
-        }
-        
-        // Draw end arrow if enabled
-        if (endArrow) {
-            drawSingleArrowhead(endPoint.x, endPoint.y, angle, scaledArrowSize, arrowStyle);
-        }
-        
-        ctx.restore();
-    }
-    
-         // Function to draw a single arrowhead
-     function drawSingleArrowhead(x, y, angle, size, style) {
-         const arrowAngle = Math.PI / 6; // 30 degrees
-         
-         ctx.save();
-         ctx.translate(x, y);
-         ctx.rotate(angle);
-         
-         // Always use filled arrowheads with fixed outline thickness
-         ctx.lineWidth = 1; // Fixed thin outline
-         
-         if (style === 'triangular') {
-             // Filled triangular arrowhead with thin outline
-             ctx.beginPath();
-             ctx.moveTo(0, 0);
-             ctx.lineTo(-size, -size * Math.tan(arrowAngle));
-             ctx.lineTo(-size, size * Math.tan(arrowAngle));
-             ctx.closePath();
-             ctx.fill();
-             ctx.stroke();
-         } else if (style === 'filled') {
-             // Solid filled triangular arrowhead (no outline)
-             ctx.beginPath();
-             ctx.moveTo(0, 0);
-             ctx.lineTo(-size, -size * Math.tan(arrowAngle));
-             ctx.lineTo(-size, size * Math.tan(arrowAngle));
-             ctx.closePath();
-             ctx.fill();
-         } else if (style === 'curved') {
-             // Curved arrowhead with fixed thickness
-             const curveSize = size * 0.7;
-             ctx.lineWidth = 2; // Fixed thickness for curved style
-             ctx.beginPath();
-             ctx.moveTo(0, 0);
-             ctx.quadraticCurveTo(-curveSize, -curveSize * 0.5, -size, -size * Math.tan(arrowAngle));
-             ctx.moveTo(0, 0);
-             ctx.quadraticCurveTo(-curveSize, curveSize * 0.5, -size, size * Math.tan(arrowAngle));
-             ctx.stroke();
-         }
-         
-         ctx.restore();
-     }
-    
     // Function to draw straight line preview
     function drawStraightLinePreview(startPoint, endPoint) {
         // Clear the canvas to the last saved state
@@ -4043,54 +3695,28 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-    // Get arrow control elements
-    const arrowControls = document.getElementById('arrowControls');
-    const startArrowCheckbox = document.getElementById('startArrow');
-    const endArrowCheckbox = document.getElementById('endArrow');
-    
     // Drawing mode toggle event listener
     drawingModeToggle.addEventListener('click', () => {
         if (drawingMode === 'freehand') {
             drawingMode = 'straight';
             drawingModeToggle.textContent = 'Straight Line';
-            drawingModeToggle.classList.remove('curved-mode', 'arrow-mode');
+            drawingModeToggle.classList.remove('curved-mode');
             drawingModeToggle.classList.add('straight-mode');
-            arrowControls.style.display = 'none';
         } else if (drawingMode === 'straight') {
             drawingMode = 'curved';
             drawingModeToggle.textContent = 'Curved Line';
-            drawingModeToggle.classList.remove('straight-mode', 'arrow-mode');
+            drawingModeToggle.classList.remove('straight-mode');
             drawingModeToggle.classList.add('curved-mode');
-            arrowControls.style.display = 'none';
-        } else if (drawingMode === 'curved') {
-            drawingMode = 'arrow';
-            drawingModeToggle.textContent = 'Arrow Line';
-            drawingModeToggle.classList.remove('curved-mode', 'straight-mode');
-            drawingModeToggle.classList.add('arrow-mode');
-            arrowControls.style.display = 'flex';
         } else {
             drawingMode = 'freehand';
             drawingModeToggle.textContent = 'Freehand';
-            drawingModeToggle.classList.remove('curved-mode', 'straight-mode', 'arrow-mode');
-            arrowControls.style.display = 'none';
+            drawingModeToggle.classList.remove('curved-mode', 'straight-mode');
         }
         
         // Clear any temporary drawing state when switching modes
         straightLineStart = null;
         curvedLinePoints = [];
-        arrowLineStart = null; // Clear arrow line state
         console.log(`Drawing mode changed to: ${drawingMode}`);
-    });
-    
-    // Arrow control event listeners
-    startArrowCheckbox.addEventListener('change', () => {
-        arrowSettings.startArrow = startArrowCheckbox.checked;
-        console.log(`Start arrow: ${arrowSettings.startArrow}`);
-    });
-    
-    endArrowCheckbox.addEventListener('change', () => {
-        arrowSettings.endArrow = endArrowCheckbox.checked;
-        console.log(`End arrow: ${arrowSettings.endArrow}`);
     });
 
     // Mouse drag variables for image movement
@@ -4164,35 +3790,15 @@ document.addEventListener('DOMContentLoaded', () => {
             if (controlPointAtClick && controlPointAtClick.strokeLabel === window.selectedStrokeInEditMode) {
                 console.log(`Canvas Mousedown: Clicked on control point ${controlPointAtClick.pointIndex} of stroke ${controlPointAtClick.strokeLabel} (IN EDIT MODE)`);
                 
-                // Start dragging the control point or arrow endpoint
+                // Start dragging the control point
                 isDraggingControlPoint = true;
-                
-                if (controlPointAtClick.type === 'arrow') {
-                    // For arrow endpoints, store initial position differently
-                    const vectorData = vectorStrokesByImage[currentImageLabel][controlPointAtClick.strokeLabel];
-                    const isStart = controlPointAtClick.pointIndex === 'start';
-                    const pointIndex = isStart ? 0 : vectorData.points.length - 1;
-                    
-                    draggedControlPointInfo = {
-                        strokeLabel: controlPointAtClick.strokeLabel,
-                        pointIndex: controlPointAtClick.pointIndex,
-                        arrayIndex: pointIndex,
-                        startCanvasX: e.offsetX,
-                        startCanvasY: e.offsetY,
-                        startImageCoords: { ...vectorData.points[pointIndex] },
-                        type: 'arrow'
-                    };
-                } else {
-                    // For curved line control points
-                    draggedControlPointInfo = {
-                        strokeLabel: controlPointAtClick.strokeLabel,
-                        pointIndex: controlPointAtClick.pointIndex,
-                        startCanvasX: e.offsetX,
-                        startCanvasY: e.offsetY,
-                        startImageCoords: { ...vectorStrokesByImage[currentImageLabel][controlPointAtClick.strokeLabel].controlPoints[controlPointAtClick.pointIndex] },
-                        type: 'curved'
-                    };
-                }
+                draggedControlPointInfo = {
+                    strokeLabel: controlPointAtClick.strokeLabel,
+                    pointIndex: controlPointAtClick.pointIndex,
+                    startCanvasX: e.offsetX,
+                    startCanvasY: e.offsetY,
+                    startImageCoords: { ...vectorStrokesByImage[currentImageLabel][controlPointAtClick.strokeLabel].controlPoints[controlPointAtClick.pointIndex] }
+                };
                 
                 canvas.style.cursor = 'grabbing';
                 e.preventDefault();
@@ -4366,9 +3972,6 @@ document.addEventListener('DOMContentLoaded', () => {
         lastDrawnPoint = null;
         [lastX, lastY] = [e.offsetX, e.offsetY];
         
-        // Store mousedown position for click vs drag detection
-        mouseDownPosition = { x: e.offsetX, y: e.offsetY };
-        
         // --- FIX: Clear temporary drawing data --- 
         const tempStrokeKey = '_drawingStroke';
         if (vectorStrokesByImage[currentImageLabel] && vectorStrokesByImage[currentImageLabel][tempStrokeKey]) {
@@ -4380,9 +3983,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (drawingMode === 'straight') {
             // For straight line, just store the start point
             straightLineStart = { x: e.offsetX, y: e.offsetY };
-        } else if (drawingMode === 'arrow') {
-            // For arrow line, just store the start point
-            arrowLineStart = { x: e.offsetX, y: e.offsetY };
         } else if (drawingMode === 'curved') {
             // For curved line, collect control points
             const { x: imgX, y: imgY } = getTransformedCoords(e.offsetX, e.offsetY);
@@ -4488,23 +4088,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const deltaImageX = deltaX / scale;
             const deltaImageY = deltaY / scale;
             
+            // Update the control point position
             const vectorData = vectorStrokesByImage[currentImageLabel][draggedControlPointInfo.strokeLabel];
-            
-            if (draggedControlPointInfo.type === 'arrow' && vectorData) {
-                // Handle arrow endpoint dragging
-                const endpointIndex = draggedControlPointInfo.arrayIndex;
-                const endpoint = vectorData.points[endpointIndex];
-                
-                // Update endpoint position
-                endpoint.x = draggedControlPointInfo.startImageCoords.x + deltaImageX;
-                endpoint.y = draggedControlPointInfo.startImageCoords.y + deltaImageY;
-                
-                console.log(`Updated arrow endpoint ${draggedControlPointInfo.pointIndex} to image:(${endpoint.x.toFixed(1)}, ${endpoint.y.toFixed(1)})`);
-                
-                // Redraw immediately to show the updated arrow
-                redrawCanvasWithVisibility();
-            } else if (draggedControlPointInfo.type === 'curved' && vectorData && vectorData.controlPoints) {
-                // Handle curved line control point dragging
+            if (vectorData && vectorData.controlPoints) {
                 const controlPoint = vectorData.controlPoints[draggedControlPointInfo.pointIndex];
                 
                 // Update image space coordinates
@@ -4631,12 +4217,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     const endPoint = { x: e.offsetX, y: e.offsetY };
                     drawStraightLinePreview(straightLineStart, endPoint);
                 }
-            } else if (drawingMode === 'arrow') {
-                // For arrow line, draw a preview with arrowheads
-                if (arrowLineStart) {
-                    const endPoint = { x: e.offsetX, y: e.offsetY };
-                    drawArrowLinePreview(arrowLineStart, endPoint);
-                }
             } else {
                 // Normal freehand drawing
             draw(e);
@@ -4651,9 +4231,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     
     canvas.addEventListener('mouseup', (e) => {
-        // Check if we were drawing when mouseup occurred
-        const wasDrawing = isDrawing;
-        
         if (isDraggingControlPoint) {
             isDraggingControlPoint = false;
             
@@ -4678,28 +4255,17 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isDraggingImage) {
             isDraggingImage = false;
             canvas.style.cursor = isShiftPressed ? 'grab' : 'crosshair';
-            
-            // Deselect all strokes when shift-drag ends
-            console.log('Shift-drag canvas completed - deselecting all strokes');
-            deselectAllStrokes();
-            
             return;
         }
         
         if (isDrawing) {
-            let strokeWasCreated = false;
-            
             // For straight line, finalize the line
             if (drawingMode === 'straight' && straightLineStart) {
                 const endPoint = { x: e.offsetX, y: e.offsetY };
-                
-                // Calculate movement distance from mousedown
-                const dragDistance = mouseDownPosition ? 
-                    Math.sqrt(Math.pow(endPoint.x - mouseDownPosition.x, 2) + Math.pow(endPoint.y - mouseDownPosition.y, 2)) : 0;
 
-                // Only save the line if user actually dragged (not just clicked)
-                if (dragDistance > MINIMUM_DRAG_DISTANCE) {
-                    strokeWasCreated = true;
+                // Only save the line if the start and end points are different
+                if (Math.abs(straightLineStart.x - endPoint.x) > 2 ||
+                    Math.abs(straightLineStart.y - endPoint.y) > 2) {
 
                     // Check if end point is on another stroke - but don't stop drawing
                     const endPointStrokeData = checkForStrokeAtPoint(endPoint.x, endPoint.y);
@@ -4766,77 +4332,34 @@ document.addEventListener('DOMContentLoaded', () => {
                         ctx.fillStyle = strokeColor;
                         ctx.fill();
                     }
-                    
-                    // Save state after straight line completion
-                    saveState(true, true);
-                    
-                    // Update UI
-                    updateStrokeVisibilityControls();
-                    redrawCanvasWithVisibility();
                 }
 
                 // Reset straight line start
                 straightLineStart = null;
-            } else if (drawingMode === 'arrow' && arrowLineStart) {
-                const endPoint = { x: e.offsetX, y: e.offsetY };
-                
-                // Calculate movement distance from mousedown
-                const dragDistance = mouseDownPosition ? 
-                    Math.sqrt(Math.pow(endPoint.x - mouseDownPosition.x, 2) + Math.pow(endPoint.y - mouseDownPosition.y, 2)) : 0;
+            } else if (drawingMode === 'freehand' && points.length > 0) {
+                // Handle freehand drawing completion
 
-                // Only save the arrow if user actually dragged (not just clicked)
-                if (dragDistance > MINIMUM_DRAG_DISTANCE) {
-                    strokeWasCreated = true;
-
-                    // Check if end point is on another stroke
-                    const endPointStrokeData = checkForStrokeAtPoint(endPoint.x, endPoint.y);
-
-                    // Store vector data temporarily
-                    const tempStrokeKey = '_drawingStroke';
-                    const strokeColor = colorPicker.value;
-                    const strokeWidth = parseInt(brushSize.value);
-
-                    // Initialize if needed
-                    if (!vectorStrokesByImage[currentImageLabel]) {
-                        vectorStrokesByImage[currentImageLabel] = {};
-                    }
-
-                    // Get transformed coordinates
-                    const startTransformed = getTransformedCoords(arrowLineStart.x, arrowLineStart.y);
-                    const endTransformed = getTransformedCoords(endPoint.x, endPoint.y);
-
-                    console.log(`Arrow line from canvas (${arrowLineStart.x}, ${arrowLineStart.y}) -> image (${startTransformed.x}, ${startTransformed.y})`);
-                    console.log(`Arrow line to canvas (${endPoint.x}, ${endPoint.y}) -> image (${endTransformed.x}, ${endTransformed.y})`);
-
-                    // Create a vector representation under the temporary key
-                    vectorStrokesByImage[currentImageLabel][tempStrokeKey] = {
-                        points: [
-                            { x: startTransformed.x, y: startTransformed.y },
-                            { x: endTransformed.x, y: endTransformed.y }
-                        ],
-                        color: strokeColor,
-                        width: strokeWidth,
-                        type: 'arrow',
-                        arrowSettings: { ...arrowSettings } // Store arrow settings
-                    };
-                    console.log(`Stored arrow line data temporarily under ${tempStrokeKey}`);
-
-                    // Draw the final arrow
-                    drawArrowLinePreview(arrowLineStart, endPoint);
+                // Check if the last point of the freehand stroke is on another stroke
+                if (points.length > 0) {
+                    const lastPoint = points[points.length - 1];
+                    // Need canvas coords for check
+                    const endPointStrokeData = checkForStrokeAtPoint(lastPoint.canvasX, lastPoint.canvasY);
 
                     // If end point overlaps with another line, draw a glowing circle
                     if (endPointStrokeData) {
                         const scale = window.imageScaleByLabel[currentImageLabel] || 1.0;
                         const baseRadius = parseInt(brushSize.value) / 2;
                         const scaledRadius = baseRadius * scale;
-                        const glowPadding = 5;
+                        const glowPadding = 5; // Keep glow padding fixed
 
                         ctx.beginPath();
-                        ctx.arc(endPoint.x, endPoint.y, scaledRadius + glowPadding, 0, Math.PI * 2);
+                        // Use scaled radius + padding for glow circle
+                        ctx.arc(lastPoint.canvasX, lastPoint.canvasY, scaledRadius + glowPadding, 0, Math.PI * 2);
 
+                        // Create a white glow effect with a radial gradient using scaled radii
                         const gradient = ctx.createRadialGradient(
-                            endPoint.x, endPoint.y, scaledRadius / 2,
-                            endPoint.x, endPoint.y, scaledRadius + glowPadding
+                            lastPoint.canvasX, lastPoint.canvasY, scaledRadius / 2, // Inner radius (scaled)
+                            lastPoint.canvasX, lastPoint.canvasY, scaledRadius + glowPadding // Outer radius (scaled + padding)
                         );
                         gradient.addColorStop(0, 'white');
                         gradient.addColorStop(0.7, 'rgba(255, 255, 255, 0.8)');
@@ -4847,101 +4370,38 @@ document.addEventListener('DOMContentLoaded', () => {
 
                         // Then draw the colored dot for the actual end point
                         ctx.beginPath();
-                        ctx.arc(endPoint.x, endPoint.y, scaledRadius, 0, Math.PI * 2);
-                        ctx.fillStyle = strokeColor;
+                        ctx.arc(lastPoint.canvasX, lastPoint.canvasY, scaledRadius, 0, Math.PI * 2);
+                        ctx.fillStyle = colorPicker.value;
                         ctx.fill();
                     }
-                    
-                    // Save state after arrow completion
-                    saveState(true, true);
-                    
-                    // Update UI
-                    updateStrokeVisibilityControls();
-                    redrawCanvasWithVisibility();
                 }
 
-                // Reset arrow line start
-                arrowLineStart = null;
-            } else if (drawingMode === 'freehand' && points.length > 0) {
-                // Handle freehand drawing completion
-                
-                // Calculate movement distance from mousedown
-                const currentPos = { x: e.offsetX, y: e.offsetY };
-                const dragDistance = mouseDownPosition ? 
-                    Math.sqrt(Math.pow(currentPos.x - mouseDownPosition.x, 2) + Math.pow(currentPos.y - mouseDownPosition.y, 2)) : 0;
-
-                // Only save freehand strokes if user actually dragged (not just clicked)
-                if (dragDistance > MINIMUM_DRAG_DISTANCE && points.length > 0) {
-                    strokeWasCreated = true;
-                    
-                    // Check if the last point of the freehand stroke is on another stroke
-                    if (points.length > 0) {
-                        const lastPoint = points[points.length - 1];
-                        // Need canvas coords for check
-                        const endPointStrokeData = checkForStrokeAtPoint(lastPoint.canvasX, lastPoint.canvasY);
-
-                        // If end point overlaps with another line, draw a glowing circle
-                        if (endPointStrokeData) {
-                            const scale = window.imageScaleByLabel[currentImageLabel] || 1.0;
-                            const baseRadius = parseInt(brushSize.value) / 2;
-                            const scaledRadius = baseRadius * scale;
-                            const glowPadding = 5; // Keep glow padding fixed
-
-                            ctx.beginPath();
-                            // Use scaled radius + padding for glow circle
-                            ctx.arc(lastPoint.canvasX, lastPoint.canvasY, scaledRadius + glowPadding, 0, Math.PI * 2);
-
-                            // Create a white glow effect with a radial gradient using scaled radii
-                            const gradient = ctx.createRadialGradient(
-                                lastPoint.canvasX, lastPoint.canvasY, scaledRadius / 2, // Inner radius (scaled)
-                                lastPoint.canvasX, lastPoint.canvasY, scaledRadius + glowPadding // Outer radius (scaled + padding)
-                            );
-                            gradient.addColorStop(0, 'white');
-                            gradient.addColorStop(0.7, 'rgba(255, 255, 255, 0.8)');
-                            gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
-
-                            ctx.fillStyle = gradient;
-                            ctx.fill();
-
-                            // Then draw the colored dot for the actual end point
-                            ctx.beginPath();
-                            ctx.arc(lastPoint.canvasX, lastPoint.canvasY, scaledRadius, 0, Math.PI * 2);
-                            ctx.fillStyle = colorPicker.value;
-                            ctx.fill();
-                        }
-                    }
-                    
-                    // Save state after freehand stroke completion
-                    saveState(true, true);
-
-                    // Update the sidebar visibility controls
-                    updateStrokeVisibilityControls();
-
-                    // Force redraw to show labels immediately
-                    redrawCanvasWithVisibility();
-                    
-                    // The focus will happen automatically in updateStrokeVisibilityControls and createEditableMeasureText
-                    // because we've set selectedStrokeByImage[currentImageLabel] and window.newlyCreatedStroke in saveState
-                }
-
-                // Reset points array for next stroke (always do this)
+                // Reset points array for next stroke
                 points = [];
                 lastVelocity = 0;
                 lastDrawnPoint = null;
             }
 
-            // If no stroke was created, handle defocus
-            if (!strokeWasCreated) {
-                console.log('Single click detected - calling handleDefocusClick()');
-                handleDefocusClick();
-            }
+            isDrawing = false;
+            isDrawingOrPasting = false;
+            strokeInProgress = false;
+
+            // Make sure the current state is captured
+            const finalState = getCanvasState();
+
+            // Save state immediately after stroke completion and increment label
+            // saveState will handle moving data from _drawingStroke to the correct unique label
+            saveState(true, true);
+
+            // Update the sidebar visibility controls
+            updateStrokeVisibilityControls();
+
+            // Force redraw to show labels immediately
+            redrawCanvasWithVisibility();
+            
+            // The focus will happen automatically in updateStrokeVisibilityControls and createEditableMeasureText
+            // because we've set selectedStrokeByImage[currentImageLabel] and window.newlyCreatedStroke in saveState
         }
-    
-        // Reset drawing state
-        isDrawing = false;
-        isDrawingOrPasting = false;
-        strokeInProgress = false;
-        mouseDownPosition = null;
     });
     
     canvas.addEventListener('mouseout', () => {
@@ -5502,9 +4962,6 @@ document.addEventListener('DOMContentLoaded', () => {
             // Save current state before redrawing
         saveState(true, false, false);
             
-        // Set flag to prevent auto-focus during zoom operations
-        window.isScalingOrZooming = true;
-            
         // Redraw the canvas (image and/or strokes)
         try {
             redrawCanvasWithVisibility();
@@ -5514,9 +4971,6 @@ document.addEventListener('DOMContentLoaded', () => {
             // Restore previous scale on error
             window.imageScaleByLabel[currentImageLabel] = previousScale;
             updateScaleUI();
-        } finally {
-            // Clear the flag after redraw completes
-            window.isScalingOrZooming = false;
         }
     }
     
@@ -6503,27 +5957,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Helper function to check if a point is near a control point
     function findControlPointAtPosition(x, y) {
-        // Only check for selected strokes in edit mode
-        if (!window.selectedStrokeInEditMode) return null;
+        // Only check for selected curved lines
+        const selectedStroke = selectedStrokeByImage[currentImageLabel];
+        if (!selectedStroke) return null;
         
-        const vectorData = vectorStrokesByImage[currentImageLabel]?.[window.selectedStrokeInEditMode];
-        if (!vectorData) return null;
-        
-        // Check for curved line control points
-        if (vectorData.type === 'curved' && vectorData.controlPoints) {
-            return findCurvedControlPoint(x, y, vectorData);
-        }
-        
-        // Check for arrow endpoints
-        if (vectorData.type === 'arrow' && vectorData.points && vectorData.points.length >= 2) {
-            return findArrowEndpoint(x, y, vectorData);
-        }
-        
-        return null;
-    }
-
-    // Helper function to find curved line control points
-    function findCurvedControlPoint(x, y, vectorData) {
+        const vectorData = vectorStrokesByImage[currentImageLabel]?.[selectedStroke];
+        if (!vectorData || vectorData.type !== 'curved' || !vectorData.controlPoints) return null;
         
         // Get current scale and position for coordinate transforms
         const scale = window.imageScaleByLabel[currentImageLabel] || 1;
@@ -6575,81 +6014,10 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (distance <= pointRadius + 5) { // Add 5px padding for easier selection
                 return {
-                    strokeLabel: window.selectedStrokeInEditMode,
+                    strokeLabel: selectedStroke,
                     pointIndex: i,
                     canvasX: transformedX,
-                    canvasY: transformedY,
-                    type: 'curved'
-                };
-            }
-        }
-        
-        return null;
-    }
-
-    // Helper function to find arrow endpoints
-    function findArrowEndpoint(x, y, vectorData) {
-        
-        // Get current scale and position for coordinate transforms
-        const scale = window.imageScaleByLabel[currentImageLabel] || 1;
-        
-        // Calculate image position for coordinate transforms
-        let imageX, imageY;
-        const isBlankCanvas = !window.originalImages || !window.originalImages[currentImageLabel];
-        
-        if (isBlankCanvas) {
-            const canvasCenter = { x: canvas.width / 2, y: canvas.height / 2 };
-            const position = imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
-            imageX = canvasCenter.x + position.x;
-            imageY = canvasCenter.y + position.y;
-        } else {
-            const cachedImg = imageCache[window.originalImages[currentImageLabel]];
-            if (cachedImg) {
-                const imageWidth = cachedImg.width;
-                const imageHeight = cachedImg.height;
-                imageX = (canvas.width - imageWidth * scale) / 2 + 
-                        (imagePositionByLabel[currentImageLabel]?.x || 0);
-                imageY = (canvas.height - imageHeight * scale) / 2 + 
-                        (imagePositionByLabel[currentImageLabel]?.y || 0);
-            } else {
-                imageX = canvas.width / 2 + (imagePositionByLabel[currentImageLabel]?.x || 0);
-                imageY = canvas.height / 2 + (imagePositionByLabel[currentImageLabel]?.y || 0);
-            }
-        }
-        
-        // Check arrow start and end points
-        const startPoint = vectorData.points[0];
-        const endPoint = vectorData.points[vectorData.points.length - 1];
-        const endpoints = [startPoint, endPoint];
-        
-        for (let i = 0; i < endpoints.length; i++) {
-            const point = endpoints[i];
-            let transformedX, transformedY;
-            
-            if (isBlankCanvas) {
-                const canvasCenter = { x: canvas.width / 2, y: canvas.height / 2 };
-                const position = imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
-                const scaledX = (point.x - canvasCenter.x) * scale + canvasCenter.x;
-                const scaledY = (point.y - canvasCenter.y) * scale + canvasCenter.y;
-                transformedX = scaledX + position.x;
-                transformedY = scaledY + position.y;
-            } else {
-                transformedX = imageX + (point.x * scale);
-                transformedY = imageY + (point.y * scale);
-            }
-            
-            // Check if click is within endpoint radius (using square hit area)
-            const pointRadius = 8 * scale;
-            const halfSize = pointRadius / 2;
-            
-            if (x >= transformedX - halfSize && x <= transformedX + halfSize &&
-                y >= transformedY - halfSize && y <= transformedY + halfSize) {
-                return {
-                    strokeLabel: window.selectedStrokeInEditMode,
-                    pointIndex: i === 0 ? 'start' : 'end',
-                    canvasX: transformedX,
-                    canvasY: transformedY,
-                    type: 'arrow'
+                    canvasY: transformedY
                 };
             }
         }
@@ -7333,10 +6701,6 @@ document.addEventListener('DOMContentLoaded', () => {
             // Clear the control points for next curve
             curvedLinePoints = [];
             console.log('Cleared control points for next curve');
-            
-            // Mark that a curve was just completed (needs one defocus click)
-            curveJustCompleted = true;
-            console.log('Set curveJustCompleted flag - next single click will defocus');
             
             // Save the completed curved stroke
             saveState(true, true);

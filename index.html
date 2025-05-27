@@ -623,6 +623,24 @@
         #drawingModeToggle.curved-mode:hover {
             background-color: #fff8f0;
         }
+        #drawingModeToggle.arrow-mode {
+            background-color: #ffebee;
+            color: #f44336;
+            border-color: #f44336;
+        }
+        #drawingModeToggle.arrow-mode::before {
+            background: none;
+            border: none;
+            content: "➤";
+            color: #f44336;
+            font-size: 12px;
+            width: auto;
+            height: auto;
+            margin-right: 6px;
+        }
+        #drawingModeToggle.arrow-mode:hover {
+            background-color: #ffcdd2;
+        }
         .tag-dialog {
             position: fixed;
             top: 50%;
@@ -820,6 +838,14 @@
                     <button class="color-btn" data-color="#000000" style="background-color: #000000;"></button>
                 </div>
                 <button id="drawingModeToggle">Freehand</button>
+                <div id="arrowControls" style="display: none; align-items: center; gap: 5px;">
+                    <label style="font-size: 12px; margin: 0;">
+                        <input type="checkbox" id="startArrow" style="margin: 0 3px 0 0;"> Start
+                    </label>
+                    <label style="font-size: 12px; margin: 0;">
+                        <input type="checkbox" id="endArrow" checked style="margin: 0 3px 0 0;"> End
+                    </label>
+                </div>
                 <input type="color" id="colorPicker" value="#1a73e8" style="display:none;">
                 <input type="range" id="brushSize" min="1" max="50" value="5">
                 <button id="save">Save</button>
