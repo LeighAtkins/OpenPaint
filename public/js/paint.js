@@ -529,9 +529,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.activeElement.classList && 
                 document.activeElement.classList.contains('stroke-measurement');
                 
-            const shouldAutoFocus = isNewlyCreated || (isSelected && !window.isScalingOrZooming && !hasActiveMeasurementFocus);
+            const shouldAutoFocus = isNewlyCreated || (isSelected && !window.isScalingOrZooming && !window.isMovingImage && !hasActiveMeasurementFocus);
 
-            console.log(`[createEditableMeasureText] Focus logic for ${strokeLabel}: isNewlyCreated=${isNewlyCreated}, isSelected=${isSelected}, isScalingOrZooming=${!!window.isScalingOrZooming}, hasActiveMeasurementFocus=${hasActiveMeasurementFocus}, shouldAutoFocus=${shouldAutoFocus}`);
+            console.log(`[createEditableMeasureText] Focus logic for ${strokeLabel}: isNewlyCreated=${isNewlyCreated}, isSelected=${isSelected}, isScalingOrZooming=${!!window.isScalingOrZooming}, isMovingImage=${!!window.isMovingImage}, hasActiveMeasurementFocus=${hasActiveMeasurementFocus}, shouldAutoFocus=${shouldAutoFocus}`);
 
             if (shouldAutoFocus) {
                 // Focus and select all text for newly created or explicitly selected strokes
@@ -1899,6 +1899,9 @@ document.addEventListener('DOMContentLoaded', () => {
     function redrawCanvasWithVisibility() {
         console.log(`--- redrawCanvasWithVisibility called for: ${currentImageLabel} ---`);
         
+        // Clear performance cache for new render cycle
+        ARROW_PERFORMANCE_CACHE.clearCache();
+        
         // ADDED: Ensure originalImageDimensions exists and has an entry for this label
         if (!window.originalImageDimensions) {
             window.originalImageDimensions = {};
@@ -2169,17 +2172,64 @@ document.addEventListener('DOMContentLoaded', () => {
                         Final (canvas position): (${transformedFirstX}, ${transformedFirstY})`);
                 }
                 
+                // Check if this is an arrow line and pre-calculate adjusted points
+                const isArrowLine = vectorData.type === 'arrow';
+                let actualStartX = transformedFirstX;
+                let actualStartY = transformedFirstY;
+                let originalStartPoint = {x: transformedFirstX, y: transformedFirstY};
+                let originalEndPoint = null;
+                
+                if (isArrowLine && vectorData.points.length >= 2) {
+                    // Calculate the transformed end point first
+                    const lastPoint = vectorData.points[vectorData.points.length - 1];
+                    let transformedLastX, transformedLastY;
+                    
+                    if (isBlankCanvas) {
+                        const position = imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
+                        const scaledX = (lastPoint.x - canvasCenter.x) * scale + canvasCenter.x;
+                        const scaledY = (lastPoint.y - canvasCenter.y) * scale + canvasCenter.y;
+                        transformedLastX = scaledX + position.x;
+                        transformedLastY = scaledY + position.y;
+                    } else {
+                        transformedLastX = imageX + (lastPoint.x * scale);
+                        transformedLastY = imageY + (lastPoint.y * scale);
+                    }
+                    
+                    originalEndPoint = {x: transformedLastX, y: transformedLastY};
+                    
+                    // Calculate adjusted start and end points for the line shaft
+                    if (vectorData.arrowSettings) {
+                        const brushSizeForStroke = vectorData.width || 5;
+                        const baseArrowSize = Math.max(vectorData.arrowSettings.arrowSize || 15, brushSizeForStroke * 2);
+                        const scaledArrowSize = baseArrowSize * scale;
+                        
+                        // Calculate line direction
+                        const dx = originalEndPoint.x - originalStartPoint.x;
+                        const dy = originalEndPoint.y - originalStartPoint.y;
+                        const lineLength = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (lineLength > 0) {
+                            const unitX = dx / lineLength;
+                            const unitY = dy / lineLength;
+                            const shortening = scaledArrowSize * 0.8; // How much to shorten from each end
+                            
+                            // Adjust start point if start arrow is enabled
+                            if (vectorData.arrowSettings.startArrow) {
+                                actualStartX = originalStartPoint.x + shortening * unitX;
+                                actualStartY = originalStartPoint.y + shortening * unitY;
+                            }
+                        }
+                    }
+                }
+                
                 const strokePath = [];
-                            ctx.beginPath();
-                            ctx.moveTo(transformedFirstX, transformedFirstY);
-                        strokePath.push({x: transformedFirstX, y: transformedFirstY});
+                ctx.beginPath();
+                ctx.moveTo(actualStartX, actualStartY);
+                strokePath.push({x: actualStartX, y: actualStartY});
                             
                             // Check if this is a straight line
                             const isStraightLine = vectorData.type === 'straight' || 
                                 (vectorData.points.length === 2 && !vectorData.type);
-                            
-                            // Check if this is an arrow line
-                            const isArrowLine = vectorData.type === 'arrow';
                             
                             // Check if this is a curved line
                             const isCurvedLine = vectorData.type === 'curved';
@@ -2210,26 +2260,41 @@ document.addEventListener('DOMContentLoaded', () => {
                                 ctx.lineTo(transformedLastX, transformedLastY);
                             strokePath.push({x: transformedLastX, y: transformedLastY});
                             } else if (isArrowLine && vectorData.points.length >= 2) {
-                                // For arrow lines, draw the line and then add arrowheads
-                                const lastPoint = vectorData.points[vectorData.points.length - 1];
-                                let transformedLastX, transformedLastY;
+                                // For arrow lines, use the pre-calculated original end point and calculate adjusted end point
+                                let adjustedEndX = originalEndPoint.x;
+                                let adjustedEndY = originalEndPoint.y;
                                 
-                                if (isBlankCanvas) {
-                                    // Apply both scaling and position offset in blank canvas mode
-                                    const position = imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
-                                    // Scale from canvas center
-                                    const scaledX = (lastPoint.x - canvasCenter.x) * scale + canvasCenter.x;
-                                    const scaledY = (lastPoint.y - canvasCenter.y) * scale + canvasCenter.y;
-                                    // Then apply position offset
-                                    transformedLastX = scaledX + position.x;
-                                    transformedLastY = scaledY + position.y;
-                                } else {
-                                    transformedLastX = imageX + (lastPoint.x * scale);
-                                    transformedLastY = imageY + (lastPoint.y * scale);
+                                if (vectorData.arrowSettings) {
+                                    // Get arrow settings to calculate end point adjustment
+                                    const brushSizeForStroke = vectorData.width || 5;
+                                    const baseArrowSize = Math.max(vectorData.arrowSettings.arrowSize || 15, brushSizeForStroke * 2);
+                                    const scaledArrowSize = baseArrowSize * scale;
+                                    
+                                    // Calculate line direction
+                                    const dx = originalEndPoint.x - originalStartPoint.x;
+                                    const dy = originalEndPoint.y - originalStartPoint.y;
+                                    const lineLength = Math.sqrt(dx * dx + dy * dy);
+                                    
+                                    if (lineLength > 0) {
+                                        const unitX = dx / lineLength;
+                                        const unitY = dy / lineLength;
+                                        const shortening = scaledArrowSize * 0.8; // How much to shorten from each end
+                                        
+                                        // Shorten line from end if end arrow is enabled
+                                        if (vectorData.arrowSettings.endArrow) {
+                                            adjustedEndX = originalEndPoint.x - shortening * unitX;
+                                            adjustedEndY = originalEndPoint.y - shortening * unitY;
+                                        }
+                                    }
                                 }
                                 
-                                ctx.lineTo(transformedLastX, transformedLastY);
-                                strokePath.push({x: transformedLastX, y: transformedLastY});
+                                // Draw line to adjusted end point
+                                ctx.lineTo(adjustedEndX, adjustedEndY);
+                                strokePath.push({x: adjustedEndX, y: adjustedEndY});
+                                
+                                // Store the original endpoints for arrowhead drawing
+                                strokePath.originalStart = originalStartPoint;
+                                strokePath.originalEnd = originalEndPoint;
                             } else if (isCurvedLine) {
                                 // For curved lines, draw smooth spline using stored interpolated points
                                 console.log(`Drawing curved line with ${vectorData.points.length} interpolated points`);
@@ -2316,8 +2381,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                                  // --- Draw Arrowheads for Arrow Lines ---
                  if (isArrowLine && vectorData.arrowSettings && strokePath.length >= 2) {
-                     const startPoint = strokePath[0];
-                     const endPoint = strokePath[strokePath.length - 1];
+                     const startPoint = strokePath.originalStart;
+                     const endPoint = strokePath.originalEnd;
                      
                      // Create a temporary settings object with brush size-aware scaling
                      const brushSizeForStroke = vectorData.width || 5;
@@ -2360,12 +2425,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         ctx.save();
                         ctx.beginPath();
                         
+                        // Enhanced appearance for control points in edit mode
                         let pointRadius = 8 * scale;
                         let fillColor = '#ffffff';
                         let strokeColor = vectorData.color;
                         let lineWidth = 3;
                         
-                        // Add glow effect for arrow endpoints in edit mode
+                        // Add a subtle glow effect for control points in edit mode
                         ctx.shadowColor = vectorData.color;
                         ctx.shadowBlur = 8;
                         ctx.shadowOffsetX = 0;
@@ -3456,6 +3522,34 @@ document.addEventListener('DOMContentLoaded', () => {
         arrowSize: 15,
         arrowStyle: 'triangular' // Options: 'triangular', 'filled', 'curved'
     };
+    
+    // Performance optimization constants for arrow rendering
+    const ARROW_PERFORMANCE_CACHE = {
+        // Pre-calculated trigonometry for 30-degree arrowheads
+        ARROW_TAN_30: Math.tan(Math.PI / 6), // ~0.577
+        
+        // Cached values updated during render cycles
+        lastBrushSize: null,
+        lastScale: null,
+        cachedScaledArrowSize: null,
+        cachedBrushSize: null,
+        
+        // Update cache when scale or brush size changes
+        updateCache: function(brushSize, scale, baseArrowSize) {
+            if (this.lastBrushSize !== brushSize || this.lastScale !== scale) {
+                this.lastBrushSize = brushSize;
+                this.lastScale = scale;
+                this.cachedScaledArrowSize = Math.max(baseArrowSize, brushSize * 2) * scale;
+            }
+            return this.cachedScaledArrowSize;
+        },
+        
+        // Clear cache at start of new render cycle
+        clearCache: function() {
+            this.cachedBrushSize = null;
+        }
+    };
+    
     let lastDrawnPoint = null;
 
     // Helper function to get transformed coordinates (image space from canvas space)
@@ -3791,57 +3885,120 @@ document.addEventListener('DOMContentLoaded', () => {
          // Clear canvas and redraw everything
          redrawCanvasWithVisibility();
          
-         // Draw the line
+         // Calculate adjusted endpoints for the line (same logic as final rendering)
+         const scale = window.imageScaleByLabel[currentImageLabel] || 1;
+         const brushSizeValue = parseInt(brushSize.value) || 5;
+         const baseArrowSize = Math.max(arrowSettings.arrowSize || 15, brushSizeValue * 2);
+         const scaledArrowSize = baseArrowSize * scale;
+         
+         // Calculate line direction
+         const dx = endPoint.x - startPoint.x;
+         const dy = endPoint.y - startPoint.y;
+         const lineLength = Math.sqrt(dx * dx + dy * dy);
+         
+         let adjustedStartX = startPoint.x;
+         let adjustedStartY = startPoint.y;
+         let adjustedEndX = endPoint.x;
+         let adjustedEndY = endPoint.y;
+         
+         if (lineLength > 0) {
+             const unitX = dx / lineLength;
+             const unitY = dy / lineLength;
+             const shortening = scaledArrowSize * 0.8; // Same shortening as final render
+             
+             // Adjust start point if start arrow is enabled
+             if (arrowSettings.startArrow) {
+                 adjustedStartX = startPoint.x + shortening * unitX;
+                 adjustedStartY = startPoint.y + shortening * unitY;
+             }
+             
+             // Adjust end point if end arrow is enabled
+             if (arrowSettings.endArrow) {
+                 adjustedEndX = endPoint.x - shortening * unitX;
+                 adjustedEndY = endPoint.y - shortening * unitY;
+             }
+         }
+         
+         // Draw the arrow line shaft with adjusted endpoints
          ctx.save();
          ctx.strokeStyle = colorPicker.value;
-         ctx.lineWidth = parseInt(brushSize.value) * (window.imageScaleByLabel[currentImageLabel] || 1);
+         ctx.lineWidth = parseInt(brushSize.value) * scale;
          ctx.lineCap = 'round';
-         ctx.lineJoin = 'round';
+         ctx.setLineDash([]);
          
          ctx.beginPath();
-         ctx.moveTo(startPoint.x, startPoint.y);
-         ctx.lineTo(endPoint.x, endPoint.y);
+         ctx.moveTo(adjustedStartX, adjustedStartY);
+         ctx.lineTo(adjustedEndX, adjustedEndY);
          ctx.stroke();
          
-         // Draw arrowheads
-         drawArrowhead(startPoint, endPoint, arrowSettings);
+         // Draw arrowheads at original endpoints (not adjusted)
+         drawArrowhead(startPoint, endPoint, arrowSettings, colorPicker.value);
          
          ctx.restore();
      }
     
-         // Function to calculate and draw arrowheads
+         // Function to calculate and draw arrowheads (optimized for performance)
      function drawArrowhead(startPoint, endPoint, settings, strokeColor = null) {
          const { startArrow, endArrow, arrowSize, arrowStyle } = settings;
          const scale = window.imageScaleByLabel[currentImageLabel] || 1;
-         const brushSize = parseInt(document.getElementById('brushSize').value) || 5;
          
-         // Scale arrowhead with both zoom and brush size for better visibility
-         const baseArrowSize = Math.max(arrowSize, brushSize * 2); // Ensure minimum size relative to brush
-         const scaledArrowSize = baseArrowSize * scale;
+         // Cache DOM query result - only query once per render cycle
+         const brushSize = ARROW_PERFORMANCE_CACHE.cachedBrushSize || 
+                          (ARROW_PERFORMANCE_CACHE.cachedBrushSize = parseInt(document.getElementById('brushSize').value) || 5);
+         
+         // Use performance cache to avoid redundant calculations
+         const scaledArrowSize = ARROW_PERFORMANCE_CACHE.updateCache(brushSize, scale, arrowSize);
         
-        // Calculate line angle
+        // Calculate line angle and direction
         const dx = endPoint.x - startPoint.x;
         const dy = endPoint.y - startPoint.y;
+        const lineLength = Math.sqrt(dx * dx + dy * dy);
         const angle = Math.atan2(dy, dx);
         
-                 ctx.save();
-         // Use provided stroke color or fall back to current color picker value
-         const arrowColor = strokeColor || colorPicker.value;
-         ctx.fillStyle = arrowColor;
-         ctx.strokeStyle = arrowColor;
-         ctx.lineWidth = parseInt(brushSize.value) * scale;
+        // Calculate shortened line endpoints so arrowheads become the true endpoints
+        let adjustedStartPoint = { ...startPoint };
+        let adjustedEndPoint = { ...endPoint };
         
-        // Draw start arrow if enabled
+        if (lineLength > 0) {
+            const unitX = dx / lineLength;
+            const unitY = dy / lineLength;
+            
+            // Shorten line from start if start arrow is enabled
+            if (startArrow) {
+                adjustedStartPoint.x = startPoint.x + (scaledArrowSize * 0.8) * unitX;
+                adjustedStartPoint.y = startPoint.y + (scaledArrowSize * 0.8) * unitY;
+            }
+            
+            // Shorten line from end if end arrow is enabled  
+            if (endArrow) {
+                adjustedEndPoint.x = endPoint.x - (scaledArrowSize * 0.8) * unitX;
+                adjustedEndPoint.y = endPoint.y - (scaledArrowSize * 0.8) * unitY;
+            }
+        }
+        
+        // Set context properties once for all arrowheads
+        ctx.save();
+        const arrowColor = strokeColor || colorPicker.value;
+        ctx.fillStyle = arrowColor;
+        ctx.strokeStyle = arrowColor;
+        ctx.lineWidth = brushSize * scale;
+        
+        // Draw arrowheads without redundant context operations
         if (startArrow) {
             drawSingleArrowhead(startPoint.x, startPoint.y, angle + Math.PI, scaledArrowSize, arrowStyle);
         }
         
-        // Draw end arrow if enabled
         if (endArrow) {
             drawSingleArrowhead(endPoint.x, endPoint.y, angle, scaledArrowSize, arrowStyle);
         }
         
         ctx.restore();
+        
+        // Return the adjusted endpoints so the line can be drawn to the arrowhead bases
+        return {
+            adjustedStartPoint,
+            adjustedEndPoint
+        };
     }
     
          // Function to draw a single arrowhead
@@ -3859,8 +4016,8 @@ document.addEventListener('DOMContentLoaded', () => {
              // Filled triangular arrowhead with thin outline
              ctx.beginPath();
              ctx.moveTo(0, 0);
-             ctx.lineTo(-size, -size * Math.tan(arrowAngle));
-             ctx.lineTo(-size, size * Math.tan(arrowAngle));
+             ctx.lineTo(-size, -size * ARROW_PERFORMANCE_CACHE.ARROW_TAN_30);
+             ctx.lineTo(-size, size * ARROW_PERFORMANCE_CACHE.ARROW_TAN_30);
              ctx.closePath();
              ctx.fill();
              ctx.stroke();
@@ -3868,8 +4025,8 @@ document.addEventListener('DOMContentLoaded', () => {
              // Solid filled triangular arrowhead (no outline)
              ctx.beginPath();
              ctx.moveTo(0, 0);
-             ctx.lineTo(-size, -size * Math.tan(arrowAngle));
-             ctx.lineTo(-size, size * Math.tan(arrowAngle));
+             ctx.lineTo(-size, -size * ARROW_PERFORMANCE_CACHE.ARROW_TAN_30);
+             ctx.lineTo(-size, size * ARROW_PERFORMANCE_CACHE.ARROW_TAN_30);
              ctx.closePath();
              ctx.fill();
          } else if (style === 'curved') {
@@ -3878,9 +4035,9 @@ document.addEventListener('DOMContentLoaded', () => {
              ctx.lineWidth = 2; // Fixed thickness for curved style
              ctx.beginPath();
              ctx.moveTo(0, 0);
-             ctx.quadraticCurveTo(-curveSize, -curveSize * 0.5, -size, -size * Math.tan(arrowAngle));
+             ctx.quadraticCurveTo(-curveSize, -curveSize * 0.5, -size, -size * ARROW_PERFORMANCE_CACHE.ARROW_TAN_30);
              ctx.moveTo(0, 0);
-             ctx.quadraticCurveTo(-curveSize, curveSize * 0.5, -size, size * Math.tan(arrowAngle));
+             ctx.quadraticCurveTo(-curveSize, curveSize * 0.5, -size, size * ARROW_PERFORMANCE_CACHE.ARROW_TAN_30);
              ctx.stroke();
          }
          
@@ -5109,12 +5266,6 @@ document.addEventListener('DOMContentLoaded', () => {
             updateScaleUI(); // This calls redrawCanvasWithVisibility (will draw strokes on blank)
         }
         
-        // REMOVED: General UI updates at the end, as they are now handled in each branch.
-        // updateActiveImageInSidebar();
-        // updateStrokeCounter();
-        // updateStrokeVisibilityControls();
-        // updateScaleUI();
-
         // *** ADDED: Clear selection in the new/target image view ***
         if (selectedStrokeByImage[currentImageLabel] !== undefined) {
             console.log(`[switchToImage] Clearing selection for new image: ${currentImageLabel}`);
@@ -5517,6 +5668,9 @@ document.addEventListener('DOMContentLoaded', () => {
         } finally {
             // Clear the flag after redraw completes
             window.isScalingOrZooming = false;
+            
+            // Deselect all strokes after zoom operation
+            deselectAllStrokes();
         }
     }
     
@@ -5678,8 +5832,19 @@ document.addEventListener('DOMContentLoaded', () => {
         saveState(true, false, false);
         }
             
-        // Redraw the canvas (image and/or strokes) with updated position
+        // Set flag to prevent auto-focus during move operations
+        window.isMovingImage = true;
+            
+        try {
+            // Redraw the canvas (image and/or strokes) with updated position
             redrawCanvasWithVisibility();
+        } finally {
+            // Clear the flag after redraw completes
+            window.isMovingImage = false;
+            
+            // Deselect all strokes after move operation
+            deselectAllStrokes();
+        }
     }
     
     // Handle WASD and zoom keyboard controls
@@ -6742,11 +6907,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // pasteImageFromUrl will handle setting imageStates, undoStack, etc.
                 // and also drawing the image.
+                // It's important to switch to the newly pasted image if we want it to be active.
+                // However, if pasting multiple, we might only want to switch to the first one.
+                // For now, let's switch to each as it's processed.
                 pasteImageFromUrl(url, newImageLabel).then(() => {
                     console.log(`[Paste Handler] Successfully processed and displayed pasted image: ${newImageLabel}`);
-                    // It's important to switch to the newly pasted image if we want it to be active.
-                    // However, if pasting multiple, we might only want to switch to the first one.
-                    // For now, let's switch to each as it's processed.
                     currentImageLabel = newImageLabel; 
                     switchToImage(newImageLabel); // This will also update UI elements
                 }).catch(err => {
