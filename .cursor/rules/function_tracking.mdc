@@ -54,6 +54,15 @@ alwaysApply: false
 **Connection**: Called when panning image with mouse or keyboard
 **Notes**: Updates position offsets which affect stroke rendering
 
+### Curved Arrow Rendering (Final & Preview)
+*   **Status:** Fixed (Direction logic corrected). Start arrows point backward along tangent, end arrows point forward along tangent.
+*   **Location:** Final rendering ~2511-2518, Preview rendering ~4551-4556, Single point preview ~4518
+*   **Connections:** Calls `Math.atan2`, `drawSingleArrowhead`, `calculateTangentFromSplinePoints`
+*   **Change History (This Session):**
+    *   [Previous Turn] - Added `+ Math.PI` to all curved arrow angle calculations to fix direction.
+    *   [Previous Turn] - CORRECTED: Removed `Math.PI` addition - arrows should point in same direction as tangent, not opposite. Also improved canvas clearing in preview to prevent arrow artifacts.
+    *   [This Turn] - FINAL FIX: Applied correct tangent orientations: Start arrow uses `Math.atan2(-startTangent.y, -startTangent.x)` (backward), End arrow uses `Math.atan2(endTangent.y, endTangent.x)` (forward). Arrows now point outward from curve as expected.
+
 ## public/js/project-manager.js
 
 ### saveProject()

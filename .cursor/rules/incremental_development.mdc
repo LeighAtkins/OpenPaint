@@ -3,55 +3,127 @@ description:
 globs:
 alwaysApply: false
 ---
-# Incremental Development Approach
+# Incremental Development Rules
 
-- **Start Small, Verify Often**
-  - Begin with minimal changes to address the core issue
-  - Test each change before proceeding to the next modification
-  - Build complexity incrementally only when simpler approaches fail
+## **Change Size Limits**
+- **Maximum 50 lines changed per edit** - Break larger changes into multiple smaller edits
+- **Maximum 3 functions modified per edit** - Focus on specific, targeted improvements
+- **One logical change per edit** - Each edit should accomplish a single, clear objective
 
-- **Targeted Fixes Over Rewrites**
-  - Focus on fixing the specific issue rather than rewriting large sections of code
-  - Make surgical changes to problematic areas instead of refactoring entire systems
-  - Preserve existing behavior for unrelated functionality
+## **Code Addition Guidelines**
+- **Never implement large code blocks intended for later deletion**
+- **Avoid "placeholder" or "temporary" implementations > 10 lines**
+- **Don't add extensive scaffolding that will be removed**
+- **Implement only what is immediately needed and tested**
 
-- **Debugging Best Practices**
-  - Add strategic logging to understand the flow of execution
-  - Trace the problem to its root cause before implementing a fix
-  - Verify assumptions with console logs before making changes
+## **Implementation Strategy**
 
-- **Examples of Effective Incremental Development:**
-  ```javascript
-  // ✅ DO: Make targeted changes to fix specific issues
-  function createEditableMeasureText(strokeLabel, isSelected) {
-    // Add a focused check without changing existing logic
-    const isNewlyCreated = window.newlyCreatedStroke && 
-                          window.newlyCreatedStroke.label === strokeLabel;
+### ✅ **DO: Small Iterative Changes**
+```javascript
+// ✅ GOOD: Small, focused function addition
+function calculateTangentFromSplinePoints(splinePoints, position) {
+    if (splinePoints.length < 2) return { x: 1, y: 0 };
     
-    if (isSelected || isNewlyCreated) {
-      // Apply focus behavior
+    if (position === 'start') {
+        const p1 = splinePoints[0];
+        const p2 = splinePoints[1];
+        return normalizeVector({ x: p2.x - p1.x, y: p2.y - p1.y });
     }
-  }
-  
-  // ❌ DON'T: Rewrite the entire function
-  function createEditableMeasureText(strokeLabel) {
-    // Complete rewrite that might introduce new bugs
-  }
-  ```
+    // ... rest of function
+}
+```
 
-- **Implementation Strategy**
-  - Identify the minimal set of changes needed to fix the issue
-  - Make changes in isolation to better understand their impact
-  - Maintain existing patterns and conventions when possible
-  - Add new functionality only after the core issue is resolved
+### ❌ **DON'T: Large Multi-Function Changes**
+```javascript
+// ❌ BAD: Adding 100+ lines of complex logic in one edit
+function massiveRefactorWithTemporaryCode() {
+    // 50+ lines of temporary implementation
+    // Multiple responsibilities
+    // Will need extensive revision later
+}
+```
 
-- **When to Consider Larger Refactors**
-  - After the immediate issue has been fixed with minimal changes
-  - When multiple similar issues point to a fundamental design problem
-  - When the incremental approach would lead to excessive complexity
-  - As a separate, planned task rather than during bug fixing
+## **Change Management Process**
 
-- **Documentation and Communication**
-  - Document the specific changes made and why they were necessary
-  - Explain the rationale for choosing an incremental approach
-  - Highlight any areas that might benefit from future refactoring
+### **Step 1: Plan Before Implementing**
+- Identify the exact lines/functions to modify
+- Break changes into 3-5 small edits maximum
+- Document the specific change in each edit
+
+### **Step 2: Implement Incrementally**
+- **Edit 1**: Add new utility function (≤20 lines)
+- **Edit 2**: Update call site to use new function (≤10 lines)
+- **Edit 3**: Remove old implementation (≤15 lines)
+- **Edit 4**: Test and refine (≤10 lines)
+
+### **Step 3: Validate Each Step**
+- Test functionality after each edit
+- Fix any linter errors immediately
+- Ensure the application still runs properly
+
+## **Linter Error Prevention**
+
+### **Immediate Error Handling**
+- **Fix linter errors within the same edit when possible**
+- **Never exceed 3 iterations of linter fixes on the same file**
+- **If errors persist after 3 attempts, ask user for guidance**
+
+### **Error Prevention Strategies**
+- Import statements added with function implementation
+- Proper variable declarations and scope management
+- Consistent code formatting and style
+
+## **File-Specific Guidelines**
+
+### **For Large Files (>1000 lines)**
+- Maximum 25 lines changed per edit
+- Focus on single function or logical block
+- Document the specific area being modified
+
+### **For Complex Logic Areas**
+- Maximum 15 lines changed per edit in critical functions
+- Add detailed comments for any algorithmic changes
+- Test immediately after each modification
+
+## **Emergency Exceptions**
+
+### **When Larger Changes Are Necessary**
+- **Critical bug fixes**: May exceed limits if safety-critical
+- **Security patches**: Take precedence over line limits
+- **Build failures**: Fix immediately regardless of size
+
+### **Exception Process**
+1. Document why the exception is needed
+2. Break into smallest possible chunks
+3. Test extensively after implementation
+4. Follow up with refactoring if needed
+
+## **Code Review Checkpoints**
+
+### **Before Each Edit**
+- [ ] Change is ≤50 lines
+- [ ] Single logical purpose
+- [ ] No temporary/placeholder code
+- [ ] Required imports included
+
+### **After Each Edit**
+- [ ] Application still runs
+- [ ] No new linter errors
+- [ ] Functionality works as expected
+- [ ] Ready for next incremental change
+
+## **Integration with TaskMaster**
+
+### **Subtask Breakdown**
+- Each TaskMaster subtask should require ≤50 lines of changes
+- Use `update_subtask` to log progress after each small edit
+- Mark subtasks complete only when fully tested and working
+
+### **Progress Tracking**
+- Log each incremental change in subtask details
+- Document what worked and what didn't
+- Build knowledge base for future similar changes
+
+---
+
+**Remember**: Small, frequent, tested changes lead to higher quality code and fewer integration issues than large, infrequent changes.

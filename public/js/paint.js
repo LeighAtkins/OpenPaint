@@ -2232,7 +2232,10 @@ document.addEventListener('DOMContentLoaded', () => {
                                 (vectorData.points.length === 2 && !vectorData.type);
                             
                             // Check if this is a curved line
-                            const isCurvedLine = vectorData.type === 'curved';
+                            const isCurvedLine = vectorData.type === 'curved' || vectorData.type === 'curved-arrow';
+                            
+                            // Check if this is a curved arrow specifically
+                            const isCurvedArrow = vectorData.type === 'curved-arrow';
                             
                             if (isStraightLine && vectorData.points.length >= 2) {
                                 const lastPoint = vectorData.points[vectorData.points.length - 1];
@@ -2299,17 +2302,72 @@ document.addEventListener('DOMContentLoaded', () => {
                                 // For curved lines, draw smooth spline using stored interpolated points
                                 console.log(`Drawing curved line with ${vectorData.points.length} interpolated points`);
                                 
-                                for (let i = 1; i < vectorData.points.length; i++) {
+                                // Calculate curve shortening for arrows if this is a curved arrow
+                                let startIndex = 0;
+                                let endIndex = vectorData.points.length - 1;
+                                
+                                if (isCurvedArrow && vectorData.arrowSettings && vectorData.points.length >= 2) {
+                                    const brushSizeForStroke = vectorData.width || 5;
+                                    const baseArrowSize = Math.max(vectorData.arrowSettings.arrowSize || 15, brushSizeForStroke * 2);
+                                    const scale = window.imageScaleByLabel[currentImageLabel] || 1;
+                                    const scaledArrowSize = baseArrowSize * scale;
+                                    
+                                    // Calculate shortening distance (80% of arrow size for clean appearance)
+                                    const shorteningDistance = scaledArrowSize * 0.8;
+                                    
+                                    // Find how many points to skip from start for start arrow
+                                    if (vectorData.arrowSettings.startArrow) {
+                                        let accumulatedDistance = 0;
+                                        for (let i = 1; i < vectorData.points.length && accumulatedDistance < shorteningDistance; i++) {
+                                            const prevPoint = vectorData.points[i - 1];
+                                            const currentPoint = vectorData.points[i];
+                                            
+                                            // Calculate distance between consecutive points in image space
+                                            const dx = currentPoint.x - prevPoint.x;
+                                            const dy = currentPoint.y - prevPoint.y;
+                                            const segmentDistance = Math.sqrt(dx * dx + dy * dy) * scale;
+                                            
+                                            accumulatedDistance += segmentDistance;
+                                            if (accumulatedDistance >= shorteningDistance) {
+                                                startIndex = i - 1;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    
+                                    // Find how many points to skip from end for end arrow
+                                    if (vectorData.arrowSettings.endArrow) {
+                                        let accumulatedDistance = 0;
+                                        for (let i = vectorData.points.length - 2; i >= 0 && accumulatedDistance < shorteningDistance; i--) {
+                                            const currentPoint = vectorData.points[i];
+                                            const nextPoint = vectorData.points[i + 1];
+                                            
+                                            // Calculate distance between consecutive points in image space
+                                            const dx = nextPoint.x - currentPoint.x;
+                                            const dy = nextPoint.y - currentPoint.y;
+                                            const segmentDistance = Math.sqrt(dx * dx + dy * dy) * scale;
+                                            
+                                            accumulatedDistance += segmentDistance;
+                                            if (accumulatedDistance >= shorteningDistance) {
+                                                endIndex = i + 1;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    
+                                    console.log(`Curve shortening: startIndex=${startIndex}, endIndex=${endIndex}, total points=${vectorData.points.length}`);
+                                }
+                                
+                                // Draw the curve using the calculated start and end indices
+                                let isFirstPoint = true;
+                                for (let i = startIndex; i <= endIndex; i++) {
                                     const point = vectorData.points[i];
                                     let transformedX, transformedY;
                                     
                                     if (isBlankCanvas) {
-                                        // Apply both scaling and position offset in blank canvas mode
                                         const position = imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
-                                        // Scale from canvas center
                                         const scaledX = (point.x - canvasCenter.x) * scale + canvasCenter.x;
                                         const scaledY = (point.y - canvasCenter.y) * scale + canvasCenter.y;
-                                        // Then apply position offset
                                         transformedX = scaledX + position.x;
                                         transformedY = scaledY + position.y;
                                     } else {
@@ -2317,8 +2375,14 @@ document.addEventListener('DOMContentLoaded', () => {
                                         transformedY = imageY + (point.y * scale);
                                     }
                                     
-                                    ctx.lineTo(transformedX, transformedY);
-                                    strokePath.push({x: transformedX, y: transformedY});
+                                    if (isFirstPoint) {
+                                        ctx.moveTo(transformedX, transformedY);
+                                        strokePath.push({x: transformedX, y: transformedY});
+                                        isFirstPoint = false;
+                                    } else {
+                                        ctx.lineTo(transformedX, transformedY);
+                                        strokePath.push({x: transformedX, y: transformedY});
+                                    }
                                 }
                             } else {
                                 // For freehand drawing, draw straight lines between all points
@@ -2398,6 +2462,129 @@ document.addEventListener('DOMContentLoaded', () => {
                  }
                 // --- End Arrowheads ---
                 
+                // --- Draw Arrowheads for Curved Arrows ---
+                if (isCurvedArrow && vectorData.arrowSettings && vectorData.points.length >= 2) {
+                    const brushSizeForStroke = vectorData.width || 5;
+                    const baseArrowSize = Math.max(vectorData.arrowSettings.arrowSize || 15, brushSizeForStroke * 2);
+                    const scale = window.imageScaleByLabel[currentImageLabel] || 1;
+                    const scaledArrowSize = baseArrowSize * scale;
+                    
+                    // Calculate proper tangent directions from the curve points
+                    let startTangent = null;
+                    let endTangent = null;
+                    let startPoint = null;
+                    let endPoint = null;
+                    
+                    // Calculate start tangent (direction from first to second point)
+                    if (vectorData.points.length >= 2) {
+                        const firstPoint = vectorData.points[0];
+                        const secondPoint = vectorData.points[1];
+                        
+                        // Transform first point to canvas coordinates
+                        let startX, startY;
+                        if (isBlankCanvas) {
+                            const position = imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
+                            const scaledX = (firstPoint.x - canvasCenter.x) * scale + canvasCenter.x;
+                            const scaledY = (firstPoint.y - canvasCenter.y) * scale + canvasCenter.y;
+                            startX = scaledX + position.x;
+                            startY = scaledY + position.y;
+                        } else {
+                            startX = imageX + (firstPoint.x * scale);
+                            startY = imageY + (firstPoint.y * scale);
+                        }
+                        
+                        // Transform second point to canvas coordinates
+                        let secondX, secondY;
+                        if (isBlankCanvas) {
+                            const position = imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
+                            const scaledX = (secondPoint.x - canvasCenter.x) * scale + canvasCenter.x;
+                            const scaledY = (secondPoint.y - canvasCenter.y) * scale + canvasCenter.y;
+                            secondX = scaledX + position.x;
+                            secondY = scaledY + position.y;
+                        } else {
+                            secondX = imageX + (secondPoint.x * scale);
+                            secondY = imageY + (secondPoint.y * scale);
+                        }
+                        
+                        // Calculate start tangent: second - first (forward direction)
+                        const dx = secondX - startX;
+                        const dy = secondY - startY;
+                        const length = Math.sqrt(dx * dx + dy * dy);
+                        if (length > 0) {
+                            startTangent = { x: dx / length, y: dy / length };
+                        }
+                        startPoint = { x: startX, y: startY };
+                    }
+                    
+                    // Calculate end tangent (direction from second-to-last to last point)
+                    if (vectorData.points.length >= 2) {
+                        const lastPoint = vectorData.points[vectorData.points.length - 1];
+                        const secondLastPoint = vectorData.points[vectorData.points.length - 2];
+                        
+                        // Transform last point to canvas coordinates
+                        let endX, endY;
+                        if (isBlankCanvas) {
+                            const position = imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
+                            const scaledX = (lastPoint.x - canvasCenter.x) * scale + canvasCenter.x;
+                            const scaledY = (lastPoint.y - canvasCenter.y) * scale + canvasCenter.y;
+                            endX = scaledX + position.x;
+                            endY = scaledY + position.y;
+                        } else {
+                            endX = imageX + (lastPoint.x * scale);
+                            endY = imageY + (lastPoint.y * scale);
+                        }
+                        
+                        // Transform second-to-last point to canvas coordinates
+                        let secondLastX, secondLastY;
+                        if (isBlankCanvas) {
+                            const position = imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
+                            const scaledX = (secondLastPoint.x - canvasCenter.x) * scale + canvasCenter.x;
+                            const scaledY = (secondLastPoint.y - canvasCenter.y) * scale + canvasCenter.y;
+                            secondLastX = scaledX + position.x;
+                            secondLastY = scaledY + position.y;
+                        } else {
+                            secondLastX = imageX + (secondLastPoint.x * scale);
+                            secondLastY = imageY + (secondLastPoint.y * scale);
+                        }
+                        
+                        // Calculate end tangent: last - second-to-last (forward direction)
+                        const dx = endX - secondLastX;
+                        const dy = endY - secondLastY;
+                        const length = Math.sqrt(dx * dx + dy * dy);
+                        if (length > 0) {
+                            endTangent = { x: dx / length, y: dy / length };
+                        }
+                        endPoint = { x: endX, y: endY };
+                        
+                        console.log(`End tangent calculation for curved arrow:`, { 
+                            endTangent, 
+                            endPoint: { x: endX, y: endY },
+                            secondLastPoint: { x: secondLastX, y: secondLastY },
+                            dx, dy, length 
+                        });
+                    }
+                    
+                    // Draw arrowheads using calculated tangents
+                    ctx.save();
+                    ctx.fillStyle = vectorData.color;
+                    ctx.strokeStyle = vectorData.color;
+                    
+                    if (vectorData.arrowSettings.startArrow && startTangent && startPoint) {
+                        // Start arrow points backward (opposite to tangent direction)
+                        const startAngle = Math.atan2(-startTangent.y, -startTangent.x);
+                        drawSingleArrowhead(startPoint.x, startPoint.y, startAngle, scaledArrowSize, vectorData.arrowSettings.arrowStyle);
+                    }
+                    
+                    if (vectorData.arrowSettings.endArrow && endTangent && endPoint) {
+                        // End arrow points forward (same as tangent direction)
+                        const endAngle = Math.atan2(endTangent.y, endTangent.x);
+                        drawSingleArrowhead(endPoint.x, endPoint.y, endAngle, scaledArrowSize, vectorData.arrowSettings.arrowStyle);
+                    }
+                    
+                    ctx.restore();
+                }
+                // --- End Curved Arrow Arrowheads ---
+
                 // --- Draw Control Point Indicators for Arrows (ONLY in Edit Mode) ---
                 if (isArrowLine && vectorData.points.length >= 2 && 
                     window.selectedStrokeInEditMode === strokeLabel) {
@@ -4218,7 +4405,7 @@ document.addEventListener('DOMContentLoaded', () => {
             drawingModeToggle.textContent = 'Curved Line';
             drawingModeToggle.classList.remove('straight-mode', 'arrow-mode');
             drawingModeToggle.classList.add('curved-mode');
-            arrowControls.style.display = 'none';
+            arrowControls.style.display = 'flex'; // Show arrow controls in curved mode
         } else if (drawingMode === 'curved') {
             drawingMode = 'arrow';
             drawingModeToggle.textContent = 'Arrow Line';
@@ -7496,8 +7683,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 points: finalPoints, // Use interpolated spline points, not control points
                 color: strokeColor,
                 width: strokeWidth,
-                type: 'curved', // Mark as curved line type
+                type: (arrowSettings.startArrow || arrowSettings.endArrow) ? 'curved-arrow' : 'curved', // Create curved arrow if arrows are enabled
                 controlPoints: [...finalControlPoints], // Store final control points (with potential snapping)
+                arrowSettings: (arrowSettings.startArrow || arrowSettings.endArrow) ? { ...arrowSettings } : undefined, // Include arrow settings if arrows are enabled
                 timestamp: Date.now()
             };
             

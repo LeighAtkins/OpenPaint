@@ -1,0 +1,164 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# TaskMaster + Incremental Development Workflow
+
+## **Subtask Implementation Rules**
+
+### **Before Starting Any Subtask**
+1. **Check subtask scope** - Use `get_task --id=X.Y` to understand exact requirements
+2. **Plan incremental steps** - Break subtask into 2-4 code edits maximum
+3. **Identify target functions/lines** - Be specific about what will change
+
+### **During Subtask Implementation**
+
+#### **Small Edit Cycle (Repeat 2-4 times per subtask)**
+```markdown
+1. **Edit Code** (≤50 lines)
+   - Make one focused change
+   - Add imports/dependencies immediately
+   - Fix obvious linter errors in same edit
+
+2. **Test Change**
+   - Verify application still runs
+   - Test specific functionality
+   - Check for console errors
+
+3. **Log Progress**
+   - Use `update_subtask --id=X.Y --prompt="Progress update"`
+   - Document what worked/failed
+   - Note any discoveries or issues
+
+4. **Iterate or Complete**
+   - If more changes needed: Repeat cycle
+   - If complete: Mark subtask done
+```
+
+## **OpenPaint-Specific Guidelines**
+
+### **For paint.js Modifications**
+- **Target specific functions** - Don't modify multiple drawing functions in one edit
+- **Preserve existing behavior** - Only change what's necessary for the subtask
+- **Test drawing immediately** - Verify basic drawing still works after each edit
+
+### **Common OpenPaint Function Areas**
+```javascript
+// ✅ GOOD: Small, focused changes
+// Edit 1: Add new utility function
+function calculateSplineTangent(points, position) {
+    // 15-20 lines of implementation
+}
+
+// Edit 2: Update preview to use new function
+function drawCurvedLinePreview(controlPoints, mousePos) {
+    // Modify 5-10 lines to call new function
+    const tangent = calculateSplineTangent(splinePoints, 'start');
+    // ... rest unchanged
+}
+
+// Edit 3: Update final rendering
+function applyVisibleStrokes() {
+    // Modify 5-10 lines in curved arrow section
+    // ... similar pattern
+}
+```
+
+### **Coordinate System Changes**
+- **Never modify getTransformedCoords() and getCanvasCoords() simultaneously**
+- **Test coordinate accuracy after each function modification**
+- **Verify zoom/pan behavior immediately**
+
+## **TaskMaster Integration Commands**
+
+### **Starting a Subtask**
+```bash
+# Get subtask details
+task-master show 37.1
+
+# Plan the changes (mental or in comments)
+# Identify 2-4 small edits needed
+```
+
+### **During Implementation**
+```bash
+# After each small edit (≤50 lines)
+task-master update-subtask --id=37.1 --prompt="
+Completed edit 1/3: Added calculateSplineTangent function
+- 18 lines added to paint.js around line 4400
+- Function handles start/end tangent calculation
+- Tested: Returns normalized vectors correctly
+Next: Update preview rendering to use new function
+"
+
+# Continue pattern for each edit...
+```
+
+### **Completing a Subtask**
+```bash
+# Mark complete only when fully working
+task-master set-status --id=37.1 --status=done
+
+# Move to next subtask
+task-master show 37.2
+```
+
+## **Error Recovery Procedures**
+
+### **When Linter Errors Occur**
+1. **Attempt 1**: Fix in same edit if <5 lines of changes
+2. **Attempt 2**: Make separate 5-10 line edit for linter fixes
+3. **Attempt 3**: Ask user for guidance if errors persist
+
+### **When Functionality Breaks**
+1. **Immediate rollback**: Undo the last edit manually
+2. **Log the issue**: Update subtask with what failed
+3. **Smaller approach**: Break the change into even smaller pieces
+
+### **When Edit Exceeds 50 Lines**
+1. **Stop immediately**: Don't apply the large edit
+2. **Break into pieces**: Identify 2-3 smaller edits
+3. **Apply incrementally**: Make first small edit, test, continue
+
+## **Quality Checkpoints**
+
+### **After Each Edit**
+- [ ] ≤50 lines changed
+- [ ] Application starts without errors
+- [ ] Target functionality still works
+- [ ] No new console errors
+- [ ] Linter passes or errors are addressed
+
+### **After Each Subtask**
+- [ ] Subtask objective fully met
+- [ ] All related functionality tested
+- [ ] Progress logged in subtask details
+- [ ] Ready for next subtask
+
+### **Code Quality Markers**
+```javascript
+// ✅ GOOD: Small, focused function
+function calculateTangent(points) {
+    // Single purpose, clear logic
+    // Well-tested edge cases
+    return normalizedVector;
+}
+
+// ❌ BAD: Large multi-purpose change
+function massiveRefactorEverything() {
+    // 100+ lines
+    // Multiple responsibilities  
+    // Will need later cleanup
+}
+```
+
+## **Integration with Existing Rules**
+
+- **Follows** [incremental_development.mdc](mdc:.cursor/rules/incremental_development.mdc)
+- **Respects** [open-paint.mdc](mdc:.cursor/rules/open-paint.mdc) project structure
+- **Uses** [dev_workflow.mdc](mdc:.cursor/rules/dev_workflow.mdc) TaskMaster patterns
+
+---
+
+**Success Pattern**: Small edit → Test → Log → Repeat → Complete subtask → Next subtask

@@ -3,7 +3,6 @@ description: Guidelines for creating and maintaining Cursor rules to ensure cons
 globs: .cursor/rules/*.mdc
 alwaysApply: true
 ---
-
 - **Required Rule Structure:**
   ```markdown
   ---
@@ -16,6 +15,12 @@ alwaysApply: true
     - Sub-points with details
     - Examples and explanations
   ```
+
+- **CRITICAL: Follow Incremental Development**
+  - **ALWAYS follow [incremental_development.mdc](mdc:.cursor/rules/incremental_development.mdc) for ALL code changes**
+  - **Maximum 50 lines changed per edit**
+  - **Never implement large code blocks intended for deletion**
+  - **Test after each small change**
 
 - **File References:**
   - Use `[filename](mdc:path/to/file)` ([filename](mdc:filename)) to reference files
