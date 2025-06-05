@@ -49,6 +49,21 @@ window.lastClickTime = 0; // For tracking double-clicks
 window.lastCanvasClickTime = 0; // For tracking double-clicks on canvas
 window.clickDelay = 300; // Milliseconds to wait for double-click
 
+// Arrow settings - shared between straight and curved lines (unified system)
+let arrowSettings = { // Arrow customization settings
+    startArrow: false,  // Off by default (Priority 1 requirement)
+    endArrow: false,    // Off by default (Priority 1 requirement)
+    arrowSize: 15,
+    arrowStyle: 'triangular' // Options: 'triangular', 'filled', 'curved'
+};
+
+// Curved line anchor dragging state
+let draggingAnchor = false;
+let dragCurveStroke = null; // The stroke being modified
+let dragAnchorIndex = -1;   // Which control point is being dragged
+const ANCHOR_SIZE = 4;
+const CLICK_AREA = 10;
+
 document.addEventListener('DOMContentLoaded', () => {
     // Initialize unit selectors
     const unitSelector = document.getElementById('unitSelector');
@@ -2613,10 +2628,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         ctx.beginPath();
                         
                         // Enhanced appearance for control points in edit mode
-                        let pointRadius = 8 * scale;
+                        let pointRadius = Math.max(6, 8 * Math.min(scale, 1)); // Scale down only, minimum size
                         let fillColor = '#ffffff';
                         let strokeColor = vectorData.color;
-                        let lineWidth = 3;
+                        let lineWidth = Math.max(2, 3 * Math.min(scale, 1)); // Scale line width too
                         
                         // Add a subtle glow effect for control points in edit mode
                         ctx.shadowColor = vectorData.color;
@@ -2636,53 +2651,133 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                 }
                 
-                // --- Draw Control Point Indicators for Curved Lines (ONLY in Edit Mode) ---
-                if (isCurvedLine && vectorData.controlPoints && vectorData.controlPoints.length > 0 && 
-                    window.selectedStrokeInEditMode === strokeLabel) {
-                    console.log(`Drawing control point indicators for curved line ${strokeLabel} (IN EDIT MODE)`);
+                // --- Draw Control Point Indicators for Curved Lines ---
+                if (isCurvedLine && vectorData.controlPoints && vectorData.controlPoints.length > 0) {
+                    // Only show control points for selected strokes or strokes in edit mode
+                    const shouldShowControlPoints = (window.selectedStrokeByImage[currentImageLabel] === strokeLabel || 
+                                                   window.selectedStrokeInEditMode === strokeLabel);
                     
-                    // Draw small circles at each original control point
-                    vectorData.controlPoints.forEach((controlPoint, index) => {
-                        let transformedX, transformedY;
+                    if (shouldShowControlPoints) {
+                        console.log(`Drawing control point indicators for curved line ${strokeLabel}`);
                         
-                        if (isBlankCanvas) {
-                            // Apply both scaling and position offset in blank canvas mode
-                            const position = imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
-                            // Scale from canvas center
-                            const scaledX = (controlPoint.x - canvasCenter.x) * scale + canvasCenter.x;
-                            const scaledY = (controlPoint.y - canvasCenter.y) * scale + canvasCenter.y;
-                            // Then apply position offset
-                            transformedX = scaledX + position.x;
-                            transformedY = scaledY + position.y;
-                        } else {
-                            transformedX = imageX + (controlPoint.x * scale);
-                            transformedY = imageY + (controlPoint.y * scale);
-                        }
+                        // Draw small circles at each original control point
+                        vectorData.controlPoints.forEach((controlPoint, index) => {
+                            // Use the same transformation logic as the stroke rendering for consistency
+                            let transformedX, transformedY;
+                            
+                            if (isBlankCanvas) {
+                                // Apply both scaling and position offset in blank canvas mode
+                                const position = imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
+                                // Scale from canvas center
+                                const scaledX = (controlPoint.x - canvasCenter.x) * scale + canvasCenter.x;
+                                const scaledY = (controlPoint.y - canvasCenter.y) * scale + canvasCenter.y;
+                                // Then apply position offset
+                                transformedX = scaledX + position.x;
+                                transformedY = scaledY + position.y;
+                            } else {
+                                transformedX = imageX + (controlPoint.x * scale);
+                                transformedY = imageY + (controlPoint.y * scale);
+                            }
+                            
+                            // Draw control point indicator (enhanced for draggability)
+                            ctx.save();
+                            ctx.beginPath();
+                            
+                            // Enhanced appearance for control points
+                            let pointRadius = Math.max(6, (ANCHOR_SIZE || 8) * Math.min(scale, 1)); // Scale down only, minimum size
+                            let fillColor, strokeColor, lineWidth;
+                            
+                            // Check if this is the anchor being dragged
+                            if (draggingAnchor && dragCurveStroke === strokeLabel && dragAnchorIndex === index) {
+                                fillColor = '#ff0000'; // Red when dragging
+                                strokeColor = '#ffffff';
+                                lineWidth = 2;
+                                pointRadius = pointRadius + 2; // Make it slightly larger when dragging
+                            } else if (window.selectedStrokeInEditMode === strokeLabel) {
+                                fillColor = '#00ff00'; // Green when in edit mode
+                                strokeColor = '#ffffff';
+                                lineWidth = 2;
+                            } else {
+                                fillColor = '#4CAF50'; // Brighter green when just selected
+                                strokeColor = '#ffffff';
+                                lineWidth = 1;
+                            }
+                            
+                            ctx.arc(transformedX, transformedY, pointRadius, 0, Math.PI * 2);
+                            ctx.fillStyle = fillColor;
+                            ctx.fill();
+                            ctx.strokeStyle = strokeColor;
+                            ctx.lineWidth = lineWidth;
+                            ctx.stroke();
+                            ctx.restore();
+                        });
+                    }
+                }
+                
+                // --- Draw Control Point Indicators for Straight Lines ---
+                if (isStraightLine && vectorData.points && vectorData.points.length >= 2) {
+                    // Only show control points for selected strokes or strokes in edit mode
+                    const shouldShowControlPoints = (window.selectedStrokeByImage[currentImageLabel] === strokeLabel || 
+                                                   window.selectedStrokeInEditMode === strokeLabel);
+                    
+                    if (shouldShowControlPoints) {
+                        console.log(`Drawing anchor point indicators for straight line ${strokeLabel}`);
                         
-                        // Draw control point indicator (enhanced for edit mode)
-                        ctx.save();
-                        ctx.beginPath();
+                        // Draw anchor points at start and end of straight line
+                        const startPoint = vectorData.points[0];
+                        const endPoint = vectorData.points[vectorData.points.length - 1];
                         
-                        // Enhanced appearance for control points in edit mode
-                        let pointRadius = 8 * scale;
-                        let fillColor = '#ffffff';
-                        let strokeColor = vectorData.color;
-                        let lineWidth = 3;
-                        
-                        // Add a subtle glow effect for control points in edit mode
-                        ctx.shadowColor = vectorData.color;
-                        ctx.shadowBlur = 8;
-                        ctx.shadowOffsetX = 0;
-                        ctx.shadowOffsetY = 0;
-                        
-                        ctx.arc(transformedX, transformedY, pointRadius, 0, Math.PI * 2);
-                        ctx.fillStyle = fillColor;
-                        ctx.fill();
-                        ctx.strokeStyle = strokeColor;
-                        ctx.lineWidth = lineWidth;
-                        ctx.stroke();
-                        ctx.restore();
-                    });
+                        [startPoint, endPoint].forEach((point, index) => {
+                            let transformedX, transformedY;
+                            
+                            if (isBlankCanvas) {
+                                const position = imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
+                                const scaledX = (point.x - canvasCenter.x) * scale + canvasCenter.x;
+                                const scaledY = (point.y - canvasCenter.y) * scale + canvasCenter.y;
+                                transformedX = scaledX + position.x;
+                                transformedY = scaledY + position.y;
+                            } else {
+                                transformedX = imageX + (point.x * scale);
+                                transformedY = imageY + (point.y * scale);
+                            }
+                            
+                            // Draw anchor point indicator
+                            ctx.save();
+                            ctx.beginPath();
+                            
+                            // Enhanced appearance for anchor points
+                            let pointRadius = Math.max(6, (ANCHOR_SIZE || 8) * Math.min(scale, 1)); // Scale down only, minimum size
+                            let fillColor, strokeColor, lineWidth;
+                            
+                            // Check if this is the anchor being dragged
+                            if (isDraggingControlPoint && draggedControlPointInfo && 
+                                draggedControlPointInfo.strokeLabel === strokeLabel && 
+                                draggedControlPointInfo.pointIndex === (index === 0 ? 'start' : 'end')) {
+                                fillColor = '#ff0000'; // Red when dragging
+                                strokeColor = '#ffffff';
+                                lineWidth = 2;
+                                pointRadius = pointRadius + 2; // Make it slightly larger when dragging
+                            } else if (window.selectedStrokeInEditMode === strokeLabel) {
+                                fillColor = '#2196F3'; // Blue when in edit mode
+                                strokeColor = '#ffffff';
+                                lineWidth = 2;
+                            } else {
+                                fillColor = '#2196F3'; // Blue for straight line anchors
+                                strokeColor = '#ffffff';
+                                lineWidth = 1;
+                            }
+                            
+                            // Make straight line anchors square to distinguish from curved line control points
+                            const halfSize = pointRadius / 2;
+                            ctx.rect(transformedX - halfSize, transformedY - halfSize, pointRadius, pointRadius);
+                            ctx.fillStyle = fillColor;
+                            ctx.fill();
+                            ctx.strokeStyle = strokeColor;
+                            ctx.lineWidth = lineWidth;
+                            ctx.stroke();
+                            ctx.restore();
+                        });
+                    }
                 }
                 // --- End Control Point Indicators ---
             });
@@ -3111,7 +3206,9 @@ document.addEventListener('DOMContentLoaded', () => {
             width: parseInt(brushSize.value),
             // Store deep copies of label offset data for the current image
             customLabelPositions: customLabelPositions[currentImageLabel] ? JSON.parse(JSON.stringify(customLabelPositions[currentImageLabel])) : {},
-            calculatedLabelOffsets: calculatedLabelOffsets[currentImageLabel] ? JSON.parse(JSON.stringify(calculatedLabelOffsets[currentImageLabel])) : {}
+            calculatedLabelOffsets: calculatedLabelOffsets[currentImageLabel] ? JSON.parse(JSON.stringify(calculatedLabelOffsets[currentImageLabel])) : {},
+            // CRITICAL FIX: Store complete vector data for all strokes to enable undo of control point modifications
+            allVectorData: vectorStrokesByImage[currentImageLabel] ? JSON.parse(JSON.stringify(vectorStrokesByImage[currentImageLabel])) : {}
         };
         
         // Store vector data with the undo action if available
@@ -3327,6 +3424,12 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Ensure we have a valid previous state
             if (previousState && previousState.state) {
+                // CRITICAL FIX: Restore vector data for control point undo functionality
+                if (previousState.allVectorData) {
+                    vectorStrokesByImage[currentImageLabel] = JSON.parse(JSON.stringify(previousState.allVectorData));
+                    console.log('Vector data restored for undo');
+                }
+                
                 // Restore the canvas state
                 const stateToRestore = cloneImageData(previousState.state);
                 imageStates[currentImageLabel] = stateToRestore;
@@ -3634,7 +3737,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
         
-        // Restore the image after resize
+        // Restore the image after resizing
         if (oldState) {
             // Try to restore from saved state first
             try {
@@ -3702,13 +3805,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let drawingMode = 'freehand'; // Options: 'freehand', 'straight', 'curved', 'arrow'
     let straightLineStart = null; // For straight line mode - start point
     let curvedLinePoints = []; // For curved line mode - array of control points
-    let arrowLineStart = null; // For arrow line mode - start point
-    let arrowSettings = { // Arrow customization settings
-        startArrow: false,
-        endArrow: true,
-        arrowSize: 15,
-        arrowStyle: 'triangular' // Options: 'triangular', 'filled', 'curved'
-    };
+
     
     // Performance optimization constants for arrow rendering
     const ARROW_PERFORMANCE_CACHE = {
@@ -3739,7 +3836,101 @@ document.addEventListener('DOMContentLoaded', () => {
     
     let lastDrawnPoint = null;
 
-    // Helper function to get transformed coordinates (image space from canvas space)
+    // F3: Centralized coordinate transform utilities
+    function toCanvas(imagePoint, imgLabel = currentImageLabel) {
+        const scale = window.imageScaleByLabel[imgLabel] || 1.0;
+        const position = imagePositionByLabel[imgLabel] || { x: 0, y: 0 };
+        const dimensionsObject = window.originalImageDimensions;
+        const dims = dimensionsObject ? dimensionsObject[imgLabel] : undefined;
+        const noImageLoaded = !window.originalImages || !window.originalImages[imgLabel];
+        
+        // console.log(`[toCanvas] INPUT: imagePoint(${imagePoint.x}, ${imagePoint.y}), imgLabel=${imgLabel}`);
+        // console.log(`[toCanvas] scale=${scale}, position=(${position.x}, ${position.y})`);
+        // console.log(`[toCanvas] dims=`, dims, `noImageLoaded=${noImageLoaded}`);
+        
+        if (noImageLoaded || (dims && dims.width === canvas.width && dims.height === canvas.height)) {
+            // For blank canvas, use canvas center as origin with offset and scale
+            const canvasCenter = { x: canvas.width / 2, y: canvas.height / 2 };
+            const result = {
+                x: (imagePoint.x - canvasCenter.x) * scale + canvasCenter.x + position.x,
+                y: (imagePoint.y - canvasCenter.y) * scale + canvasCenter.y + position.y
+            };
+            // console.log(`[toCanvas] BLANK CANVAS mode: result=(${result.x}, ${result.y})`);
+            return result;
+        } else {
+            // For images, calculate canvas position considering scale and pan
+            // CRITICAL FIX: Use the exact same logic as redrawCanvasWithVisibility
+            let imageX, imageY;
+            
+            // Try to get the actual cached image to use its dimensions
+            const imageUrl = window.originalImages[imgLabel];
+            const cachedImg = imageUrl ? imageCache[imageUrl] : null;
+            
+            if (cachedImg) {
+                // Use the same logic as redrawCanvasWithVisibility
+                const centerX = (canvas.width - cachedImg.width * scale) / 2;
+                const centerY = (canvas.height - cachedImg.height * scale) / 2;
+                imageX = centerX + position.x;
+                imageY = centerY + position.y;
+                // console.log(`[toCanvas] Using cached image dims (${cachedImg.width}x${cachedImg.height}): centerX=${centerX}, centerY=${centerY}, imageX=${imageX}, imageY=${imageY}`);
+            } else if (dims && dims.width > 0 && dims.height > 0) {
+                // Fallback to stored dimensions
+                const centerX = (canvas.width - dims.width * scale) / 2;
+                const centerY = (canvas.height - dims.height * scale) / 2;
+                imageX = centerX + position.x;
+                imageY = centerY + position.y;
+                // console.log(`[toCanvas] Using stored dims (${dims.width}x${dims.height}): centerX=${centerX}, centerY=${centerY}, imageX=${imageX}, imageY=${imageY}`);
+            } else {
+                imageX = canvas.width / 2 + position.x;
+                imageY = canvas.height / 2 + position.y;
+                // console.log(`[toCanvas] Fallback dims: imageX=${imageX}, imageY=${imageY}`);
+            }
+            
+            const result = {
+                x: imageX + (imagePoint.x * scale),
+                y: imageY + (imagePoint.y * scale)
+            };
+            // console.log(`[toCanvas] IMAGE mode: result=(${result.x}, ${result.y})`);
+            return result;
+        }
+    }
+    
+    function toImage(canvasPoint, imgLabel = currentImageLabel) {
+        const scale = window.imageScaleByLabel[imgLabel] || 1.0;
+        const position = imagePositionByLabel[imgLabel] || { x: 0, y: 0 };
+        const dimensionsObject = window.originalImageDimensions;
+        const dims = dimensionsObject ? dimensionsObject[imgLabel] : undefined;
+        const noImageLoaded = !window.originalImages || !window.originalImages[imgLabel];
+        
+        if (noImageLoaded || (dims && dims.width === canvas.width && dims.height === canvas.height)) {
+            // For blank canvas, use canvas center as origin with offset and scale
+            const canvasCenter = { x: canvas.width / 2, y: canvas.height / 2 };
+            const positionAdjustedX = canvasPoint.x - position.x;
+            const positionAdjustedY = canvasPoint.y - position.y;
+            return {
+                x: ((positionAdjustedX - canvasCenter.x) / scale) + canvasCenter.x,
+                y: ((positionAdjustedY - canvasCenter.y) / scale) + canvasCenter.y
+            };
+        } else {
+            // For images, calculate position considering scale and pan
+            let imageX, imageY;
+            if (dims && dims.width > 0 && dims.height > 0) {
+                const centerX = (canvas.width - dims.width * scale) / 2;
+                const centerY = (canvas.height - dims.height * scale) / 2;
+                imageX = centerX + position.x;
+                imageY = centerY + position.y;
+            } else {
+                imageX = canvas.width / 2 + position.x;
+                imageY = canvas.height / 2 + position.y;
+            }
+            
+            const relativeX = (canvasPoint.x - imageX) / scale;
+            const relativeY = (canvasPoint.y - imageY) / scale;
+            return { x: relativeX, y: relativeY };
+        }
+    }
+
+    // Helper function to get transformed coordinates (image space from canvas space) - LEGACY WRAPPER
     function getTransformedCoords(canvasX, canvasY) {
         const scale = window.imageScaleByLabel[currentImageLabel] || 1;
         const position = imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
@@ -3833,6 +4024,26 @@ document.addEventListener('DOMContentLoaded', () => {
         // Update UI to reflect deselection
         updateStrokeVisibilityControls();
         redrawCanvasWithVisibility();
+    }
+
+    // Function to intelligently restore cursor based on current mouse position
+    function restoreCursorAfterDrag(x, y) {
+        // Check if we're hovering over a control point
+        const controlPointAtPosition = findControlPointAtPosition(x, y);
+        if (controlPointAtPosition && window.selectedStrokeInEditMode === controlPointAtPosition.strokeLabel) {
+            canvas.style.cursor = 'grab';
+            return;
+        }
+        
+        // Check if we're hovering over a label
+        const labelAtPosition = findLabelAtPoint(x, y);
+        if (labelAtPosition) {
+            canvas.style.cursor = 'pointer';
+            return;
+        }
+        
+        // Default cursor based on mode
+        canvas.style.cursor = isShiftPressed ? 'grab' : 'crosshair';
     }
 
     // Helper function to handle defocus clicks (single clicks that don't create strokes)
@@ -4251,14 +4462,98 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.lineJoin = 'round';
         ctx.stroke();
         
-        // Draw a small circle at the end point
-        ctx.beginPath();
-        const endRadius = parseInt(brushSize.value) * scale / 2;
-        ctx.arc(endPoint.x, endPoint.y, endRadius, 0, Math.PI * 2);
-        ctx.fillStyle = colorPicker.value;
-        ctx.fill();
+        // Draw arrows if enabled (for straight line mode)
+        if (arrowSettings && arrowSettings.startArrow) {
+            // Calculate angle from start to end for start arrow
+            const startAngle = Math.atan2(endPoint.y - startPoint.y, endPoint.x - startPoint.x);
+            const arrowSize = Math.max(parseInt(brushSize.value) * 2, 15) * scale;
+            ctx.fillStyle = colorPicker.value;
+            ctx.strokeStyle = colorPicker.value;
+            drawSingleArrowhead(startPoint.x, startPoint.y, startAngle, arrowSize, 'triangular');
+        }
+        if (arrowSettings && arrowSettings.endArrow) {
+            // Calculate angle from end to start for end arrow (reversed)
+            const endAngle = Math.atan2(startPoint.y - endPoint.y, startPoint.x - endPoint.x);
+            const arrowSize = Math.max(parseInt(brushSize.value) * 2, 15) * scale;
+            ctx.fillStyle = colorPicker.value;
+            ctx.strokeStyle = colorPicker.value;
+            drawSingleArrowhead(endPoint.x, endPoint.y, endAngle, arrowSize, 'triangular');
+        }
     }
     
+    // Helper function to ensure control points have fresh canvas coordinates
+    function refreshControlPointCanvasCoords(controlPoints, imgLabel = currentImageLabel) {
+        return controlPoints.map(cp => {
+            const canvasCoords = toCanvas({ x: cp.x, y: cp.y }, imgLabel);
+            return {
+                ...cp,
+                canvasX: canvasCoords.x,
+                canvasY: canvasCoords.y
+            };
+        });
+    }
+
+    // Helper function to establish the same transformation context as applyVisibleStrokes
+    function getTransformationContext(imgLabel = currentImageLabel) {
+        const scale = window.imageScaleByLabel[imgLabel] || 1.0;
+        const position = imagePositionByLabel[imgLabel] || { x: 0, y: 0 };
+        
+        // Determine if this is blank canvas mode
+        const dims = window.originalImageDimensions ? window.originalImageDimensions[imgLabel] : undefined;
+        const noImageLoaded = !window.originalImages || !window.originalImages[imgLabel];
+        const isBlankCanvas = noImageLoaded || (dims && dims.width === canvas.width && dims.height === canvas.height);
+        
+        let imageX, imageY;
+        
+        if (isBlankCanvas) {
+            // For blank canvas mode - use canvas center + position offset
+            imageX = canvas.width / 2 + position.x;
+            imageY = canvas.height / 2 + position.y;
+        } else {
+            // For actual images - use the same logic as redrawCanvasWithVisibility
+            const imageUrl = window.originalImages[imgLabel];
+            const cachedImg = imageUrl ? imageCache[imageUrl] : null;
+            
+            if (cachedImg) {
+                const centerX = (canvas.width - cachedImg.width * scale) / 2;
+                const centerY = (canvas.height - cachedImg.height * scale) / 2;
+                imageX = centerX + position.x;
+                imageY = centerY + position.y;
+            } else if (dims && dims.width > 0 && dims.height > 0) {
+                const centerX = (canvas.width - dims.width * scale) / 2;
+                const centerY = (canvas.height - dims.height * scale) / 2;
+                imageX = centerX + position.x;
+                imageY = centerY + position.y;
+            } else {
+                imageX = canvas.width / 2 + position.x;
+                imageY = canvas.height / 2 + position.y;
+            }
+        }
+        
+        return { scale, imageX, imageY, isBlankCanvas, canvasCenter: { x: canvas.width / 2, y: canvas.height / 2 } };
+    }
+
+    // Helper function to transform image-space point to canvas-space using the same logic as applyVisibleStrokes
+    function transformImagePointToCanvas(imagePoint, transformContext) {
+        const { scale, imageX, imageY, isBlankCanvas, canvasCenter } = transformContext;
+        const position = imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
+        
+        if (isBlankCanvas) {
+            // Apply both scaling and position offset in blank canvas mode
+            const scaledX = (imagePoint.x - canvasCenter.x) * scale + canvasCenter.x;
+            const scaledY = (imagePoint.y - canvasCenter.y) * scale + canvasCenter.y;
+            return {
+                x: scaledX + position.x,
+                y: scaledY + position.y
+            };
+        } else {
+            return {
+                x: imageX + (imagePoint.x * scale),
+                y: imageY + (imagePoint.y * scale)
+            };
+        }
+    }
+
     // Catmull-Rom spline algorithm for smooth curves
     function generateCatmullRomSpline(controlPoints, resolution = 50) {
         if (controlPoints.length < 2) return [];
@@ -4330,7 +4625,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const scale = window.imageScaleByLabel[currentImageLabel] || 1.0;
         
         // Create preview points (include mouse position if provided)
-        let previewPoints = [...controlPoints];
+        // First, refresh all existing control points to have current canvas coordinates
+        let previewPoints = refreshControlPointCanvasCoords(controlPoints);
         if (mousePos && controlPoints.length > 0) {
             const { x: imgX, y: imgY } = getTransformedCoords(mousePos.x, mousePos.y);
             previewPoints.push({
@@ -4346,7 +4642,9 @@ document.addEventListener('DOMContentLoaded', () => {
         controlPoints.forEach(cp => {
             ctx.beginPath();
             const pointRadius = 4 * scale;
-            ctx.arc(cp.canvasX, cp.canvasY, pointRadius, 0, Math.PI * 2);
+            // Use current canvas coordinates for drawing, recalculated from image coordinates
+            const canvasCoords = toCanvas({ x: cp.x, y: cp.y }, currentImageLabel);
+            ctx.arc(canvasCoords.x, canvasCoords.y, pointRadius, 0, Math.PI * 2);
             ctx.fillStyle = colorPicker.value;
             ctx.fill();
             ctx.strokeStyle = '#ffffff';
@@ -4358,7 +4656,9 @@ document.addEventListener('DOMContentLoaded', () => {
             // Just one point - draw a thin white line to mouse if mouse position provided
             if (mousePos) {
                 ctx.beginPath();
-                ctx.moveTo(previewPoints[0].canvasX, previewPoints[0].canvasY);
+                // Use current canvas coordinates for drawing, recalculated from image coordinates
+                const startCanvasCoords = toCanvas({ x: previewPoints[0].x, y: previewPoints[0].y }, currentImageLabel);
+                ctx.moveTo(startCanvasCoords.x, startCanvasCoords.y);
                 ctx.lineTo(mousePos.x, mousePos.y);
                 ctx.strokeStyle = 'rgba(240, 240, 240, 0.7)'; // Near white with transparency
                 ctx.lineWidth = Math.max(1, parseInt(brushSize.value) * scale * 0.6); // Thinner than regular
@@ -4397,32 +4697,25 @@ document.addEventListener('DOMContentLoaded', () => {
         if (drawingMode === 'freehand') {
             drawingMode = 'straight';
             drawingModeToggle.textContent = 'Straight Line';
-            drawingModeToggle.classList.remove('curved-mode', 'arrow-mode');
+            drawingModeToggle.classList.remove('curved-mode');
             drawingModeToggle.classList.add('straight-mode');
-            arrowControls.style.display = 'none';
+            arrowControls.style.display = 'flex'; // Show arrow controls for straight lines
         } else if (drawingMode === 'straight') {
             drawingMode = 'curved';
             drawingModeToggle.textContent = 'Curved Line';
-            drawingModeToggle.classList.remove('straight-mode', 'arrow-mode');
+            drawingModeToggle.classList.remove('straight-mode');
             drawingModeToggle.classList.add('curved-mode');
             arrowControls.style.display = 'flex'; // Show arrow controls in curved mode
         } else if (drawingMode === 'curved') {
-            drawingMode = 'arrow';
-            drawingModeToggle.textContent = 'Arrow Line';
-            drawingModeToggle.classList.remove('curved-mode', 'straight-mode');
-            drawingModeToggle.classList.add('arrow-mode');
-            arrowControls.style.display = 'flex';
-        } else {
             drawingMode = 'freehand';
             drawingModeToggle.textContent = 'Freehand';
-            drawingModeToggle.classList.remove('curved-mode', 'straight-mode', 'arrow-mode');
+            drawingModeToggle.classList.remove('curved-mode', 'straight-mode');
             arrowControls.style.display = 'none';
         }
         
         // Clear any temporary drawing state when switching modes
         straightLineStart = null;
         curvedLinePoints = [];
-        arrowLineStart = null; // Clear arrow line state
         console.log(`Drawing mode changed to: ${drawingMode}`);
     });
     
@@ -4462,6 +4755,9 @@ document.addEventListener('DOMContentLoaded', () => {
             lastMouseX = e.offsetX;
             lastMouseY = e.offsetY;
             canvas.style.cursor = 'grabbing';
+            
+            // CRITICAL FIX: Don't exit edit mode when panning - preserve the edit state
+            console.log('Canvas Mousedown: Starting image drag (shift+click) - preserving edit mode');
             return;
         }
 
@@ -4526,16 +4822,37 @@ document.addEventListener('DOMContentLoaded', () => {
                         startImageCoords: { ...vectorData.points[pointIndex] },
                         type: 'arrow'
                     };
-                } else {
-                    // For curved line control points
+                } else if (controlPointAtClick.type === 'straight') {
+                    // For straight line endpoints
+                    const vectorData = vectorStrokesByImage[currentImageLabel][controlPointAtClick.strokeLabel];
+                    const isStart = controlPointAtClick.pointIndex === 'start';
+                    const pointIndex = isStart ? 0 : vectorData.points.length - 1;
+                    
+                    draggedControlPointInfo = {
+                        strokeLabel: controlPointAtClick.strokeLabel,
+                        pointIndex: controlPointAtClick.pointIndex,
+                        arrayIndex: pointIndex,
+                        startCanvasX: e.offsetX,
+                        startCanvasY: e.offsetY,
+                        startImageCoords: { ...vectorData.points[pointIndex] },
+                        type: 'straight'
+                    };
+                } else if (controlPointAtClick.type === 'curved') {
+                    // For curved line control points - FIXED: use the unified system
+                    const vectorData = vectorStrokesByImage[currentImageLabel][controlPointAtClick.strokeLabel];
                     draggedControlPointInfo = {
                         strokeLabel: controlPointAtClick.strokeLabel,
                         pointIndex: controlPointAtClick.pointIndex,
                         startCanvasX: e.offsetX,
                         startCanvasY: e.offsetY,
-                        startImageCoords: { ...vectorStrokesByImage[currentImageLabel][controlPointAtClick.strokeLabel].controlPoints[controlPointAtClick.pointIndex] },
+                        startImageCoords: { ...vectorData.controlPoints[controlPointAtClick.pointIndex] },
                         type: 'curved'
                     };
+                    
+                    // CRITICAL FIX: Also set the old curved line variables for compatibility
+                    draggingAnchor = true;
+                    dragCurveStroke = controlPointAtClick.strokeLabel;
+                    dragAnchorIndex = controlPointAtClick.pointIndex;
                 }
                 
                 canvas.style.cursor = 'grabbing';
@@ -4667,10 +4984,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         // If edit mode is active AND the click was NOT on the label of the stroke in edit mode, clear edit mode.
-        if (window.selectedStrokeInEditMode && (!hoveredLabel || window.selectedStrokeInEditMode !== hoveredLabel.strokeLabel)) { 
+        // CRITICAL FIX: Do NOT exit edit mode during shift+click panning
+        if (window.selectedStrokeInEditMode && !isShiftPressed && (!hoveredLabel || window.selectedStrokeInEditMode !== hoveredLabel.strokeLabel)) { 
             const prevEditStrokeLabel = window.selectedStrokeInEditMode;
             window.selectedStrokeInEditMode = null;
-            // Optionally clear selection too, or just exit edit mode visuals
+            // Optionally clear selection too, or just exit edit mode
             // window.multipleSelectedStrokesByImage[window.currentImageLabel] = [];
             // window.selectedStrokeByImage[window.currentImageLabel] = null;
             
@@ -4678,6 +4996,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (typeof window.redrawCanvasWithVisibility === 'function') window.redrawCanvasWithVisibility();
             if (typeof window.updateStrokeVisibilityControls === 'function') window.updateStrokeVisibilityControls();
             console.log(`Canvas Mousedown: Clicked outside, exited edit mode for stroke: ${prevEditStrokeLabel}`);
+            
+            // CRITICAL FIX: Prevent drawing from starting when exiting edit mode
+            e.preventDefault();
+            return;
         }
 
         // Allow drawing even if clicking on an existing stroke (unlike before where we would select the stroke)
@@ -4722,11 +5044,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // --- END FIX ---
         
         if (drawingMode === 'straight') {
-            // For straight line, just store the start point
+            // For straight line (now using arrow line implementation), store the start point
             straightLineStart = { x: e.offsetX, y: e.offsetY };
-        } else if (drawingMode === 'arrow') {
-            // For arrow line, just store the start point
-            arrowLineStart = { x: e.offsetX, y: e.offsetY };
         } else if (drawingMode === 'curved') {
             // For curved line, collect control points
             const { x: imgX, y: imgY } = getTransformedCoords(e.offsetX, e.offsetY);
@@ -4782,6 +5101,41 @@ document.addEventListener('DOMContentLoaded', () => {
         const x = e.offsetX;
         const y = e.offsetY;
 
+        // Handle curved line anchor dragging (LEGACY SYSTEM - FIXED)
+        if (draggingAnchor && dragCurveStroke && dragAnchorIndex >= 0) {
+            const vectorData = vectorStrokesByImage[currentImageLabel][dragCurveStroke];
+            if (vectorData && vectorData.controlPoints && vectorData.controlPoints[dragAnchorIndex]) {
+                const controlPoint = vectorData.controlPoints[dragAnchorIndex];
+                
+                // Update the control point position in image space - this is the source of truth
+                const { x: imgX, y: imgY } = getTransformedCoords(x, y);
+                controlPoint.x = imgX;
+                controlPoint.y = imgY;
+                
+                // Note: No longer storing canvas coordinates as they become stale after pan/scale
+                
+                // Regenerate curve if we have the function
+                if (typeof generateCatmullRomSpline === 'function') {
+                    const refreshedControlPoints = refreshControlPointCanvasCoords(vectorData.controlPoints);
+                    const newSplinePoints = generateCatmullRomSpline(refreshedControlPoints, 50);
+                    
+                    // CRITICAL FIX: Convert spline canvas coordinates to image coordinates for storage
+                    vectorData.points = newSplinePoints.map(splinePoint => {
+                        const { x: imgX, y: imgY } = getTransformedCoords(splinePoint.x, splinePoint.y);
+                        return {
+                            x: imgX,  // Image coordinate
+                            y: imgY,  // Image coordinate
+                            time: Date.now()
+                        };
+                    });
+                }
+                
+                // Redraw the canvas
+                redrawCanvasWithVisibility();
+            }
+            return;
+        }
+
         let newHoveredLabelInfo = null;
         if (!isDrawing && !isDraggingImage && !isDraggingLabel) {
             newHoveredLabelInfo = findLabelAtPoint(x, y);
@@ -4795,14 +5149,14 @@ document.addEventListener('DOMContentLoaded', () => {
             hoveredCanvasLabelInfo = newHoveredLabelInfo;
 
             if (hoveredCanvasLabelInfo) {
-                canvas.style.cursor = 'pointer'; // Pointer to indicate clickability for focus
+                updateCursor('pointer', `hovering label ${hoveredCanvasLabelInfo.strokeLabel}`);
                  console.log(`Canvas Mousemove: Hovering over label ${hoveredCanvasLabelInfo.strokeLabel}`);
                 // Optional: Trigger a redraw if you want to visually highlight the label on hover
                 // This requires redrawCanvasWithVisibility to check for hoveredCanvasLabelInfo
                 // For now, cursor change is the primary feedback.
                 // window.redrawCanvasWithVisibility(); 
             } else if (!isDrawing && !isDraggingImage && !isDraggingLabel) {
-                canvas.style.cursor = isShiftPressed ? 'grab' : 'crosshair';
+                updateCursor('default', 'canvas default');
                 // Optional: If exiting a hover, redraw to remove highlight
                 // window.redrawCanvasWithVisibility();
             }
@@ -4813,12 +5167,37 @@ document.addEventListener('DOMContentLoaded', () => {
             const currentHover = findLabelAtPoint(x, y); // Re-check for safety, though newHoveredLabelInfo is better
             const controlPointHover = findControlPointAtPosition(x, y);
             
+            // DEBUG: Log control point detection for curved lines
+            if (window.selectedStrokeInEditMode) {
+                const strokeData = vectorStrokesByImage[currentImageLabel]?.[window.selectedStrokeInEditMode];
+                if (strokeData?.type === 'curved') {
+                    console.log(`=== CURVED LINE ANCHOR DEBUG ===`);
+                    console.log(`Edit mode stroke: ${window.selectedStrokeInEditMode}`);
+                    console.log(`Mouse position: (${x}, ${y})`);
+                    console.log(`Control point detected:`, controlPointHover);
+                    console.log(`Stroke type: ${strokeData.type}`);
+                    console.log(`Control points count: ${strokeData.controlPoints?.length || 0}`);
+                    if (strokeData.controlPoints) {
+                        strokeData.controlPoints.forEach((cp, i) => {
+                            console.log(`  CP ${i}: image(${cp.x}, ${cp.y})`);
+                        });
+                    }
+                }
+            }
+            
             if (controlPointHover) {
-                if(canvas.style.cursor !== 'grab' && canvas.style.cursor !== 'grabbing') canvas.style.cursor = 'grab';
+                if(canvas.style.cursor !== 'grab' && canvas.style.cursor !== 'grabbing') {
+                    updateCursor('grab', `control point ${controlPointHover.type} ${controlPointHover.pointIndex}`);
+                }
+                console.log(`Setting cursor to grab for control point: ${controlPointHover.type} ${controlPointHover.pointIndex}`);
             } else if (currentHover) {
-                if(canvas.style.cursor !== 'pointer' && canvas.style.cursor !== 'grabbing') canvas.style.cursor = 'pointer';
+                if(canvas.style.cursor !== 'pointer' && canvas.style.cursor !== 'grabbing') {
+                    updateCursor('pointer', 'label hover');
+                }
             } else {
-                 if(canvas.style.cursor === 'pointer' || canvas.style.cursor === 'grab') canvas.style.cursor = isShiftPressed ? 'grab' : 'crosshair';
+                 if(canvas.style.cursor === 'pointer' || canvas.style.cursor === 'grab') {
+                     updateCursor('default', 'default hover');
+                 }
             }
         }
         
@@ -4847,21 +5226,32 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // Redraw immediately to show the updated arrow
                 redrawCanvasWithVisibility();
+            } else if (draggedControlPointInfo.type === 'straight' && vectorData) {
+                // Handle straight line endpoint dragging
+                const endpointIndex = draggedControlPointInfo.arrayIndex;
+                const endpoint = vectorData.points[endpointIndex];
+                
+                // Update endpoint position
+                endpoint.x = draggedControlPointInfo.startImageCoords.x + deltaImageX;
+                endpoint.y = draggedControlPointInfo.startImageCoords.y + deltaImageY;
+                
+                console.log(`Updated straight line endpoint ${draggedControlPointInfo.pointIndex} to image:(${endpoint.x.toFixed(1)}, ${endpoint.y.toFixed(1)})`);
+                
+                // Redraw immediately to show the updated line
+                redrawCanvasWithVisibility();
             } else if (draggedControlPointInfo.type === 'curved' && vectorData && vectorData.controlPoints) {
                 // Handle curved line control point dragging
                 const controlPoint = vectorData.controlPoints[draggedControlPointInfo.pointIndex];
                 
-                // Update image space coordinates
+                // Update image space coordinates - this is the source of truth
                 controlPoint.x = draggedControlPointInfo.startImageCoords.x + deltaImageX;
                 controlPoint.y = draggedControlPointInfo.startImageCoords.y + deltaImageY;
                 
-                // CRITICAL FIX: Update canvas space coordinates directly from current mouse position
-                // Since we're dragging, the mouse position IS the correct canvas coordinate
-                controlPoint.canvasX = e.offsetX;
-                controlPoint.canvasY = e.offsetY;
+                // Note: No longer storing canvas coordinates as they become stale after pan/scale
                 
                 // Regenerate the curved line with updated control points
-                const newSplinePoints = generateCatmullRomSpline(vectorData.controlPoints, 50);
+                const refreshedControlPoints = refreshControlPointCanvasCoords(vectorData.controlPoints);
+                const newSplinePoints = generateCatmullRomSpline(refreshedControlPoints, 50);
                 
                 // CRITICAL FIX: Convert spline canvas coordinates to image coordinates for storage
                 vectorData.points = newSplinePoints.map(splinePoint => {
@@ -4873,7 +5263,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     };
                 });
                 
-                console.log(`Updated control point ${draggedControlPointInfo.pointIndex} to image:(${controlPoint.x.toFixed(1)}, ${controlPoint.y.toFixed(1)}) canvas:(${controlPoint.canvasX.toFixed(1)}, ${controlPoint.canvasY.toFixed(1)})`);
+                console.log(`Updated control point ${draggedControlPointInfo.pointIndex} to image:(${controlPoint.x.toFixed(1)}, ${controlPoint.y.toFixed(1)})`);
                 
                 // Redraw immediately to show the updated curve
                 redrawCanvasWithVisibility();
@@ -4886,7 +5276,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const currentX = e.offsetX;
             const currentY = e.offsetY;
 
-            // Calculate canvas delta from the last position
+            // Calculate the canvas delta from the last position
             const deltaX = currentX - dragStartX;
             const deltaY = currentY - dragStartY;
             
@@ -4970,16 +5360,10 @@ document.addEventListener('DOMContentLoaded', () => {
         // Handle drawing based on mode
         if (isDrawing) {
             if (drawingMode === 'straight') {
-                // For straight line, just draw a preview
+                // For straight line (using arrow line implementation), draw a preview with optional arrowheads
                 if (straightLineStart) {
                     const endPoint = { x: e.offsetX, y: e.offsetY };
-                    drawStraightLinePreview(straightLineStart, endPoint);
-                }
-            } else if (drawingMode === 'arrow') {
-                // For arrow line, draw a preview with arrowheads
-                if (arrowLineStart) {
-                    const endPoint = { x: e.offsetX, y: e.offsetY };
-                    drawArrowLinePreview(arrowLineStart, endPoint);
+                    drawArrowLinePreview(straightLineStart, endPoint);
                 }
             } else {
                 // Normal freehand drawing
@@ -4998,6 +5382,22 @@ document.addEventListener('DOMContentLoaded', () => {
         // Check if we were drawing when mouseup occurred
         const wasDrawing = isDrawing;
         
+        // Handle curved line anchor dragging cleanup
+        if (draggingAnchor) {
+            draggingAnchor = false;
+            if (dragCurveStroke) {
+                console.log(`Finished dragging anchor ${dragAnchorIndex} of curve ${dragCurveStroke}`);
+                // Save state for undo/redo
+                saveState(true, false); // Save without incrementing label
+            }
+            dragCurveStroke = null;
+            dragAnchorIndex = -1;
+            
+            // CRITICAL FIX: Restore cursor intelligently based on current mouse position
+            restoreCursorAfterDrag(e.offsetX, e.offsetY);
+            return;
+        }
+        
         if (isDraggingControlPoint) {
             isDraggingControlPoint = false;
             
@@ -5008,14 +5408,18 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             draggedControlPointInfo = null;
-            canvas.style.cursor = 'pointer';
+            
+            // CRITICAL FIX: Restore cursor intelligently based on current mouse position
+            restoreCursorAfterDrag(e.offsetX, e.offsetY);
             return;
         }
         
         if (isDraggingLabel) {
             isDraggingLabel = false;
             draggedLabelStroke = null;
-            canvas.style.cursor = 'grab';
+            
+            // IMPROVED: Restore cursor intelligently based on current mouse position
+            restoreCursorAfterDrag(e.offsetX, e.offsetY);
             return;
         }
         
@@ -5073,7 +5477,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         ],
                         color: strokeColor,
                         width: strokeWidth,
-                        type: 'straight'
+                        type: 'straight',
+                        arrowSettings: { ...arrowSettings } // Store arrow settings (unified with arrow line)
                     };
                     console.log(`Stored straight line data temporarily under ${tempStrokeKey}`);
                     // --- END MODIFICATION ---
@@ -5121,91 +5526,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Reset straight line start
                 straightLineStart = null;
-            } else if (drawingMode === 'arrow' && arrowLineStart) {
-                const endPoint = { x: e.offsetX, y: e.offsetY };
-                
-                // Calculate movement distance from mousedown
-                const dragDistance = mouseDownPosition ? 
-                    Math.sqrt(Math.pow(endPoint.x - mouseDownPosition.x, 2) + Math.pow(endPoint.y - mouseDownPosition.y, 2)) : 0;
-
-                // Only save the arrow if user actually dragged (not just clicked)
-                if (dragDistance > MINIMUM_DRAG_DISTANCE) {
-                    strokeWasCreated = true;
-
-                    // Check if end point is on another stroke
-                    const endPointStrokeData = checkForStrokeAtPoint(endPoint.x, endPoint.y);
-
-                    // Store vector data temporarily
-                    const tempStrokeKey = '_drawingStroke';
-                    const strokeColor = colorPicker.value;
-                    const strokeWidth = parseInt(brushSize.value);
-
-                    // Initialize if needed
-                    if (!vectorStrokesByImage[currentImageLabel]) {
-                        vectorStrokesByImage[currentImageLabel] = {};
-                    }
-
-                    // Get transformed coordinates
-                    const startTransformed = getTransformedCoords(arrowLineStart.x, arrowLineStart.y);
-                    const endTransformed = getTransformedCoords(endPoint.x, endPoint.y);
-
-                    console.log(`Arrow line from canvas (${arrowLineStart.x}, ${arrowLineStart.y}) -> image (${startTransformed.x}, ${startTransformed.y})`);
-                    console.log(`Arrow line to canvas (${endPoint.x}, ${endPoint.y}) -> image (${endTransformed.x}, ${endTransformed.y})`);
-
-                    // Create a vector representation under the temporary key
-                    vectorStrokesByImage[currentImageLabel][tempStrokeKey] = {
-                        points: [
-                            { x: startTransformed.x, y: startTransformed.y },
-                            { x: endTransformed.x, y: endTransformed.y }
-                        ],
-                        color: strokeColor,
-                        width: strokeWidth,
-                        type: 'arrow',
-                        arrowSettings: { ...arrowSettings } // Store arrow settings
-                    };
-                    console.log(`Stored arrow line data temporarily under ${tempStrokeKey}`);
-
-                    // Draw the final arrow
-                    drawArrowLinePreview(arrowLineStart, endPoint);
-
-                    // If end point overlaps with another line, draw a glowing circle
-                    if (endPointStrokeData) {
-                        const scale = window.imageScaleByLabel[currentImageLabel] || 1.0;
-                        const baseRadius = parseInt(brushSize.value) / 2;
-                        const scaledRadius = baseRadius * scale;
-                        const glowPadding = 5;
-
-                        ctx.beginPath();
-                        ctx.arc(endPoint.x, endPoint.y, scaledRadius + glowPadding, 0, Math.PI * 2);
-
-                        const gradient = ctx.createRadialGradient(
-                            endPoint.x, endPoint.y, scaledRadius / 2,
-                            endPoint.x, endPoint.y, scaledRadius + glowPadding
-                        );
-                        gradient.addColorStop(0, 'white');
-                        gradient.addColorStop(0.7, 'rgba(255, 255, 255, 0.8)');
-                        gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
-
-                        ctx.fillStyle = gradient;
-                        ctx.fill();
-
-                        // Then draw the colored dot for the actual end point
-                        ctx.beginPath();
-                        ctx.arc(endPoint.x, endPoint.y, scaledRadius, 0, Math.PI * 2);
-                        ctx.fillStyle = strokeColor;
-                        ctx.fill();
-                    }
-                    
-                    // Save state after arrow completion
-                    saveState(true, true);
-                    
-                    // Update UI
-                    updateStrokeVisibilityControls();
-                    redrawCanvasWithVisibility();
-                }
-
-                // Reset arrow line start
-                arrowLineStart = null;
             } else if (drawingMode === 'freehand' && points.length > 0) {
                 // Handle freehand drawing completion
                 
@@ -5289,17 +5609,11 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     
     canvas.addEventListener('mouseout', () => {
+        // CRITICAL FIX: Do NOT interrupt control point dragging when mouse leaves canvas
+        // Allow the drag to continue until mouseup occurs, enabling dragging outside canvas bounds
         if (isDraggingControlPoint) {
-            isDraggingControlPoint = false;
-            
-            // Save state when leaving canvas
-            if (draggedControlPointInfo) {
-                saveState(true, false);
-                console.log(`Control point dragging interrupted (mouse left canvas) for stroke ${draggedControlPointInfo.strokeLabel}`);
-            }
-            
-            draggedControlPointInfo = null;
-            canvas.style.cursor = 'crosshair';
+            console.log(`Control point dragging continues outside canvas bounds for stroke ${draggedControlPointInfo?.strokeLabel}`);
+            // Don't interrupt the drag - let it continue until mouseup
             return;
         }
         
@@ -5338,12 +5652,187 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     
+    // F1 & F2: Enhanced Window-Level Event Handling with Centralized Cursor Management
+    
+    // Centralized cursor management (F2)
+    function updateCursor(state, context = '') {
+        console.log(`[Cursor] Setting cursor to '${state}' (context: ${context})`);
+        
+        switch (state) {
+            case 'grab':
+                document.body.style.cursor = 'grab';
+                canvas.style.cursor = 'grab';
+                break;
+            case 'grabbing':
+                document.body.style.cursor = 'grabbing';
+                canvas.style.cursor = 'grabbing';
+                break;
+            case 'pointer':
+                document.body.style.cursor = 'pointer';
+                canvas.style.cursor = 'pointer';
+                break;
+            case 'crosshair':
+                document.body.style.cursor = 'crosshair';
+                canvas.style.cursor = 'crosshair';
+                break;
+            case 'default':
+            default:
+                document.body.style.cursor = 'default';
+                canvas.style.cursor = isShiftPressed ? 'grab' : 'crosshair';
+                break;
+        }
+    }
+
+    // F1: Window-level drag handlers with improved event handling
+    window.addEventListener('mousemove', (e) => {
+        // Continue control point dragging even when mouse is outside canvas
+        if (isDraggingControlPoint && draggedControlPointInfo) {
+            // Get canvas bounding rect to convert page coordinates to canvas coordinates
+            const rect = canvas.getBoundingClientRect();
+            const canvasX = e.clientX - rect.left;
+            const canvasY = e.clientY - rect.top;
+            
+            // F2: Use centralized cursor management
+            updateCursor('grabbing', 'window drag');
+            
+            // Continue the drag operation using the same logic as the canvas mousemove handler
+            const vectorData = vectorStrokesByImage[currentImageLabel][draggedControlPointInfo.strokeLabel];
+            if (vectorData && vectorData.controlPoints && vectorData.controlPoints[draggedControlPointInfo.pointIndex]) {
+                // Update the control point position in image space
+                const { x: imgX, y: imgY } = getTransformedCoords(canvasX, canvasY);
+                vectorData.controlPoints[draggedControlPointInfo.pointIndex].x = imgX;
+                vectorData.controlPoints[draggedControlPointInfo.pointIndex].y = imgY;
+                
+                // Regenerate curve if we have the function
+                if (typeof generateCatmullRomSpline === 'function') {
+                    // CRITICAL FIX: Use refreshed control points with current canvas coordinates
+                    const refreshedControlPoints = refreshControlPointCanvasCoords(vectorData.controlPoints);
+                    const newSplinePoints = generateCatmullRomSpline(refreshedControlPoints, 50);
+                    
+                    // CRITICAL FIX: Convert spline canvas coordinates to image coordinates for storage
+                    vectorData.points = newSplinePoints.map(splinePoint => {
+                        const { x: imgX, y: imgY } = getTransformedCoords(splinePoint.x, splinePoint.y);
+                        return {
+                            x: imgX,  // Image coordinate
+                            y: imgY,  // Image coordinate
+                            time: Date.now()
+                        };
+                    });
+                }
+                
+                // Live preview update
+                redrawCanvasWithVisibility();
+            }
+            return;
+        }
+        
+        // Continue legacy curved line anchor dragging even when mouse is outside canvas
+        if (draggingAnchor && dragCurveStroke && dragAnchorIndex >= 0) {
+            // Get canvas bounding rect to convert page coordinates to canvas coordinates
+            const rect = canvas.getBoundingClientRect();
+            const canvasX = e.clientX - rect.left;
+            const canvasY = e.clientY - rect.top;
+            
+            // F2: Use centralized cursor management
+            updateCursor('grabbing', 'legacy drag');
+            
+            // Continue the drag operation using the same logic as the canvas mousemove handler
+            const vectorData = vectorStrokesByImage[currentImageLabel][dragCurveStroke];
+            if (vectorData && vectorData.controlPoints && vectorData.controlPoints[dragAnchorIndex]) {
+                // Update the control point position in image space
+                const { x: imgX, y: imgY } = getTransformedCoords(canvasX, canvasY);
+                vectorData.controlPoints[dragAnchorIndex].x = imgX;
+                vectorData.controlPoints[dragAnchorIndex].y = imgY;
+                
+                // Regenerate curve if we have the function
+                if (typeof generateCatmullRomSpline === 'function') {
+                    // CRITICAL FIX: Use refreshed control points with current canvas coordinates
+                    const refreshedControlPoints = refreshControlPointCanvasCoords(vectorData.controlPoints);
+                    const newSplinePoints = generateCatmullRomSpline(refreshedControlPoints, 50);
+                    
+                    // CRITICAL FIX: Convert spline canvas coordinates to image coordinates for storage
+                    vectorData.points = newSplinePoints.map(splinePoint => {
+                        const { x: imgX, y: imgY } = getTransformedCoords(splinePoint.x, splinePoint.y);
+                        return {
+                            x: imgX,  // Image coordinate
+                            y: imgY,  // Image coordinate
+                            time: Date.now()
+                        };
+                    });
+                }
+                
+                // Live preview update
+                redrawCanvasWithVisibility();
+            }
+            return;
+        }
+    });
+
+    window.addEventListener('mouseup', (e) => {
+        // F1: Handle control point dragging completed anywhere on window
+        if (isDraggingControlPoint) {
+            isDraggingControlPoint = false;
+            
+            // Save state to enable undo/redo
+            if (draggedControlPointInfo) {
+                saveState(true, false); // Save without incrementing label
+                console.log(`Completed control point drag for stroke ${draggedControlPointInfo.strokeLabel}`);
+            }
+            
+            draggedControlPointInfo = null;
+            
+            // F1 & F2: Use canvas bounds to decide cursor restoration
+            const rect = canvas.getBoundingClientRect();
+            const canvasX = e.clientX - rect.left;
+            const canvasY = e.clientY - rect.top;
+            const isOverCanvas = (canvasX >= 0 && canvasX <= canvas.width && canvasY >= 0 && canvasY <= canvas.height);
+            
+            if (isOverCanvas) {
+                // Use restoreCursorAfterDrag for proper cursor restoration
+                restoreCursorAfterDrag(canvasX, canvasY);
+            } else {
+                // Outside canvas - set cursor based on shift state
+                canvas.style.cursor = isShiftPressed ? 'grab' : 'crosshair';
+                document.body.style.cursor = 'default';
+            }
+            return;
+        }
+        
+        // F1: Handle legacy curved line anchor dragging completed anywhere on window
+        if (draggingAnchor) {
+            draggingAnchor = false;
+            if (dragCurveStroke) {
+                console.log(`Completed curved line anchor drag for ${dragCurveStroke}`);
+                // Save state for undo/redo
+                saveState(true, false); // Save without incrementing label
+            }
+            dragCurveStroke = null;
+            dragAnchorIndex = -1;
+            
+            // F1 & F2: Use canvas bounds to decide cursor restoration
+            const rect = canvas.getBoundingClientRect();
+            const canvasX = e.clientX - rect.left;
+            const canvasY = e.clientY - rect.top;
+            const isOverCanvas = (canvasX >= 0 && canvasX <= canvas.width && canvasY >= 0 && canvasY <= canvas.height);
+            
+            if (isOverCanvas) {
+                // Use restoreCursorAfterDrag for proper cursor restoration
+                restoreCursorAfterDrag(canvasX, canvasY);
+            } else {
+                // Outside canvas - set cursor based on shift state
+                canvas.style.cursor = isShiftPressed ? 'grab' : 'crosshair';
+                document.body.style.cursor = 'default';
+            }
+            return;
+        }
+    });
+    
     // Track shift key for image movement
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Shift') {
             isShiftPressed = true;
             if (!isDrawing && !isDraggingImage) {
-                canvas.style.cursor = 'grab';
+                updateCursor('grab', 'shift pressed');
             }
         }
     });
@@ -5352,8 +5841,20 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.key === 'Shift') {
             isShiftPressed = false;
             if (!isDrawing && !isDraggingImage) {
-                canvas.style.cursor = 'crosshair';
+                updateCursor('crosshair', 'shift released');
             }
+        }
+    });
+
+    // F4: Listen for scale change events to update anchor visibility immediately
+    canvas.addEventListener('scalechange', (e) => {
+        const { newScale, oldScale, imageLabel } = e.detail;
+        console.log(`[F4 Scale Event] Scale changed from ${oldScale} to ${newScale} for ${imageLabel}`);
+        
+        // Force immediate anchor position recalculation if we're in edit mode
+        if (window.selectedStrokeInEditMode) {
+            console.log(`[F4 Scale Event] Updating anchor positions for edit mode stroke: ${window.selectedStrokeInEditMode}`);
+            // Anchor positions will be recalculated during the next redraw
         }
     });
     
@@ -5840,8 +6341,19 @@ document.addEventListener('DOMContentLoaded', () => {
             // Save current state before redrawing
         saveState(true, false, false);
             
-        // Set flag to prevent auto-focus during zoom operations
+        // F6: Set flag BEFORE any operations to prevent measurement span mutation
         window.isScalingOrZooming = true;
+        console.log('[F6] Set isScalingOrZooming = true before zoom operations');
+        
+        // F4: Emit scale change event for anchor redraw
+        const scaleChangeEvent = new CustomEvent('scalechange', {
+            detail: { 
+                newScale, 
+                oldScale: previousScale,
+                imageLabel: currentImageLabel 
+            }
+        });
+        canvas.dispatchEvent(scaleChangeEvent);
             
         // Redraw the canvas (image and/or strokes)
         try {
@@ -5853,11 +6365,18 @@ document.addEventListener('DOMContentLoaded', () => {
             window.imageScaleByLabel[currentImageLabel] = previousScale;
             updateScaleUI();
         } finally {
-            // Clear the flag after redraw completes
+            // F6: Clear the flag LAST after all operations complete
+            console.log('[F6] Clearing isScalingOrZooming flag after zoom operations');
             window.isScalingOrZooming = false;
             
+            // CRITICAL FIX: Don't deselect strokes during curved line creation
+            const isCurvedLineInProgress = drawingMode === 'curved' && curvedLinePoints.length > 0;
+            if (!isCurvedLineInProgress) {
             // Deselect all strokes after zoom operation
             deselectAllStrokes();
+            } else {
+                console.log('[updateImageScale] Curved line creation in progress - preserving state, not deselecting');
+            }
         }
     }
     
@@ -6048,8 +6567,29 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         
-        // Zoom controls (work during curved line creation too)
+        // F5: Enhanced zoom controls with refined stroke-in-progress guards
         if (e.key === 'q' || e.key === 'Q') {
+            e.preventDefault(); // Prevent any default browser behavior
+            
+            // F5: Refined guards - only block if stroke creation has actually progressed
+            let shouldBlockZoom = false;
+            
+            if (drawingMode === 'freehand') {
+                // Block only if mouse is down AND we have points (actual drawing has started)
+                shouldBlockZoom = isDrawing && (points && points.length > 0);
+            } else if (drawingMode === 'straight' || drawingMode === 'arrow') {
+                // Block only if first point is placed AND actively positioning second point
+                shouldBlockZoom = straightLineStart !== null && isDrawing;
+            } else if (drawingMode === 'curved') {
+                // Block if at least one control point is placed (positioning subsequent points)
+                shouldBlockZoom = curvedLinePoints && curvedLinePoints.length > 0;
+            }
+                
+            if (shouldBlockZoom) {
+                console.log(`[F5 Zoom Guard] Blocking zoom during active stroke creation - mode: ${drawingMode}, drawing: ${isDrawing}, progress detected`);
+                return; // Block zoom during active stroke creation
+            }
+            
             // Zoom out - find the next smaller scale
             const currentScale = window.imageScaleByLabel[currentImageLabel];
             const scales = [0.1, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 2];
@@ -6062,21 +6602,31 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
             
-            // When in curved line creation mode, preserve control points after zoom
-            const isCurvedLineInProgress = drawingMode === 'curved' && curvedLinePoints.length > 0;
-            console.log(`[Zoom Out] Current mode: ${drawingMode}, points: ${curvedLinePoints.length}, in progress: ${isCurvedLineInProgress}`);
-            
+            console.log(`[Zoom Out] Applying zoom from ${currentScale} to ${nextScale}`);
             updateImageScale(nextScale);
             
-            // Deselect all strokes when zooming
-            deselectAllStrokes();
-            
-            // After zoom, the control points are automatically preserved since they're stored in image coordinates
-            if (isCurvedLineInProgress) {
-                console.log('[Zoom Out] Curved line creation in progress - control points preserved during zoom');
-            }
-            // UI is now updated by updateImageScale
         } else if (e.key === 'e' || e.key === 'E') {
+            e.preventDefault(); // Prevent any default browser behavior
+            
+            // F5: Refined guards - only block if stroke creation has actually progressed
+            let shouldBlockZoom = false;
+            
+            if (drawingMode === 'freehand') {
+                // Block only if mouse is down AND we have points (actual drawing has started)
+                shouldBlockZoom = isDrawing && (points && points.length > 0);
+            } else if (drawingMode === 'straight' || drawingMode === 'arrow') {
+                // Block only if first point is placed AND actively positioning second point
+                shouldBlockZoom = straightLineStart !== null && isDrawing;
+            } else if (drawingMode === 'curved') {
+                // Block if at least one control point is placed (positioning subsequent points)
+                shouldBlockZoom = curvedLinePoints && curvedLinePoints.length > 0;
+            }
+                
+            if (shouldBlockZoom) {
+                console.log(`[F5 Zoom Guard] Blocking zoom during active stroke creation - mode: ${drawingMode}, drawing: ${isDrawing}, progress detected`);
+                return; // Block zoom during active stroke creation
+            }
+            
             // Zoom in - find the next larger scale
             const currentScale = window.imageScaleByLabel[currentImageLabel];
             const scales = [0.1, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 2];
@@ -6089,20 +6639,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
             
-            // When in curved line creation mode, preserve control points after zoom
-            const isCurvedLineInProgress = drawingMode === 'curved' && curvedLinePoints.length > 0;
-            console.log(`[Zoom In] Current mode: ${drawingMode}, points: ${curvedLinePoints.length}, in progress: ${isCurvedLineInProgress}`);
-            
+            console.log(`[Zoom In] Applying zoom from ${currentScale} to ${nextScale}`);
             updateImageScale(nextScale);
-            
-            // Deselect all strokes when zooming
-            deselectAllStrokes();
-            
-            // After zoom, the control points are automatically preserved since they're stored in image coordinates
-            if (isCurvedLineInProgress) {
-                console.log('[Zoom In] Curved line creation in progress - control points preserved during zoom');
-            }
-            // UI is now updated by updateImageScale
         }
         
         // Movement controls with inverted W/S as requested
@@ -6861,10 +7399,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Helper function to check if a point is near a control point
     function findControlPointAtPosition(x, y) {
-        // Only check for selected strokes in edit mode
-        if (!window.selectedStrokeInEditMode) return null;
+        // Check for selected strokes or strokes in edit mode
+        const selectedStroke = window.selectedStrokeByImage[currentImageLabel];
+        const editModeStroke = window.selectedStrokeInEditMode;
         
-        const vectorData = vectorStrokesByImage[currentImageLabel]?.[window.selectedStrokeInEditMode];
+        // Priority: edit mode stroke first, then selected stroke
+        const strokeToCheck = editModeStroke || selectedStroke;
+        if (!strokeToCheck) return null;
+        
+        const vectorData = vectorStrokesByImage[currentImageLabel]?.[strokeToCheck];
         if (!vectorData) return null;
         
         // Check for curved line control points
@@ -6877,12 +7420,62 @@ document.addEventListener('DOMContentLoaded', () => {
             return findArrowEndpoint(x, y, vectorData);
         }
         
+        // Check for straight line endpoints
+        if (vectorData.type === 'straight' && vectorData.points && vectorData.points.length >= 2) {
+            return findStraightLineEndpoint(x, y, vectorData);
+        }
+        
         return null;
     }
 
     // Helper function to find curved line control points
     function findCurvedControlPoint(x, y, vectorData) {
+        console.log(`=== CURVED CONTROL POINT DETECTION ===`);
+        console.log(`Mouse position: (${x}, ${y})`);
+        console.log(`Control points count: ${vectorData.controlPoints?.length || 0}`);
         
+        // Get the same transformation context as applyVisibleStrokes
+        const transformContext = getTransformationContext(currentImageLabel);
+        console.log(`Transform context: scale=${transformContext.scale}, imageX=${transformContext.imageX}, imageY=${transformContext.imageY}, isBlankCanvas=${transformContext.isBlankCanvas}`);
+        
+        // Check each control point
+        for (let i = 0; i < vectorData.controlPoints.length; i++) {
+            const controlPoint = vectorData.controlPoints[i];
+            
+            // Transform using the same logic as applyVisibleStrokes
+            const canvasCoords = transformImagePointToCanvas({ x: controlPoint.x, y: controlPoint.y }, transformContext);
+            const canvasX = canvasCoords.x;
+            const canvasY = canvasCoords.y;
+            console.log(`CP ${i}: Computed current canvas coords (${canvasX}, ${canvasY}) from image (${controlPoint.x}, ${controlPoint.y})`);
+            
+            // Check if click is within control point radius (SCALE-AWARE)
+            const scale = transformContext.scale;
+            const baseRadius = 8; // Base radius
+            const scaledRadius = Math.max(8, baseRadius * scale); // Never smaller than 8px
+            const distance = Math.sqrt((x - canvasX) ** 2 + (y - canvasY) ** 2);
+            
+            console.log(`CP ${i}: Distance ${distance.toFixed(1)}, scaled radius ${scaledRadius.toFixed(1)} (scale: ${scale})`);
+            
+            if (distance <= scaledRadius + 5) { // Add 5px padding for easier selection
+                const strokeToCheck = window.selectedStrokeInEditMode || window.selectedStrokeByImage[currentImageLabel];
+                console.log(`=== CONTROL POINT HIT DETECTED ===`);
+                console.log(`Stroke: ${strokeToCheck}, Point index: ${i}`);
+                return {
+                    strokeLabel: strokeToCheck,
+                    pointIndex: i,
+                    canvasX: canvasX,
+                    canvasY: canvasY,
+                    type: 'curved'
+                };
+            }
+        }
+        
+        console.log(`No control point hit detected`);
+        return null;
+    }
+
+    // Helper function to find straight line endpoints
+    function findStraightLineEndpoint(x, y, vectorData) {
         // Get current scale and position for coordinate transforms
         const scale = window.imageScaleByLabel[currentImageLabel] || 1;
         
@@ -6910,34 +7503,43 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         
-        // Check each control point
-        for (let i = 0; i < vectorData.controlPoints.length; i++) {
-            const controlPoint = vectorData.controlPoints[i];
+        // Check start and end points
+        const startPoint = vectorData.points[0];
+        const endPoint = vectorData.points[vectorData.points.length - 1];
+        
+        const endpoints = [
+            { point: startPoint, index: 'start' },
+            { point: endPoint, index: 'end' }
+        ];
+        
+        for (const { point, index } of endpoints) {
             let transformedX, transformedY;
             
             if (isBlankCanvas) {
                 const canvasCenter = { x: canvas.width / 2, y: canvas.height / 2 };
                 const position = imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
-                const scaledX = (controlPoint.x - canvasCenter.x) * scale + canvasCenter.x;
-                const scaledY = (controlPoint.y - canvasCenter.y) * scale + canvasCenter.y;
+                const scaledX = (point.x - canvasCenter.x) * scale + canvasCenter.x;
+                const scaledY = (point.y - canvasCenter.y) * scale + canvasCenter.y;
                 transformedX = scaledX + position.x;
                 transformedY = scaledY + position.y;
             } else {
-                transformedX = imageX + (controlPoint.x * scale);
-                transformedY = imageY + (controlPoint.y * scale);
+                transformedX = imageX + (point.x * scale);
+                transformedY = imageY + (point.y * scale);
             }
             
-            // Check if click is within control point radius
-            const pointRadius = 6 * scale; // Use the larger radius for selected control points
+            // Check if click is within endpoint radius (SCALE-AWARE)
+            const baseRadius = ANCHOR_SIZE || 8;
+            const scaledRadius = Math.max(8, baseRadius * scale); // Never smaller than 8px
             const distance = Math.sqrt((x - transformedX) ** 2 + (y - transformedY) ** 2);
             
-            if (distance <= pointRadius + 5) { // Add 5px padding for easier selection
+            if (distance <= scaledRadius + 5) { // Add 5px padding for easier selection
+                const strokeToCheck = window.selectedStrokeInEditMode || window.selectedStrokeByImage[currentImageLabel];
                 return {
-                    strokeLabel: window.selectedStrokeInEditMode,
-                    pointIndex: i,
+                    strokeLabel: strokeToCheck,
+                    pointIndex: index,
                     canvasX: transformedX,
                     canvasY: transformedY,
-                    type: 'curved'
+                    type: 'straight'
                 };
             }
         }
@@ -7649,7 +8251,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             // Generate spline points using Catmull-Rom algorithm with final control points
-            const splinePoints = generateCatmullRomSpline(finalControlPoints, 50);
+            const refreshedFinalControlPoints = refreshControlPointCanvasCoords(finalControlPoints);
+            const splinePoints = generateCatmullRomSpline(refreshedFinalControlPoints, 50);
             
             let finalPoints;
             if (splinePoints.length < 2) {
