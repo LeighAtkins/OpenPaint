@@ -231,6 +231,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
             
+            // Add image order for sidebar persistence
+            if (window.orderedImageLabels && window.orderedImageLabels.length > 0) {
+                projectData.imageOrder = [...window.orderedImageLabels];
+                console.log('[Save Project] Saving image order:', JSON.stringify(projectData.imageOrder));
+            } else {
+                // Fallback to actual image labels for backward compatibility
+                projectData.imageOrder = [...actualImageLabels];
+                console.log('[Save Project] No orderedImageLabels found, using actualImageLabels as order:', JSON.stringify(projectData.imageOrder));
+            }
+            
             // Add project.json to the zip
             zip.file("project.json", JSON.stringify(projectData, null, 2));
             
@@ -435,8 +445,32 @@ document.addEventListener('DOMContentLoaded', () => {
                                     window.folderStructure = { "root": { id: "root", name: "Root", type: "folder", parentId: null, children: [] } };
                                 }
 
+                                // Determine the order for processing images
+                                const imageOrder = parsedProjectData.imageOrder || [];
+                                let labelsToProcess = [];
+                                
+                                if (imageOrder.length > 0) {
+                                    // Filter imageOrder to only include labels that actually exist in the project
+                                    labelsToProcess = imageOrder.filter(label => parsedProjectData.imageLabels.includes(label));
+                                    
+                                    // Add any images present in imageLabels but missing from imageOrder (for backward compatibility)
+                                    parsedProjectData.imageLabels.forEach(label => {
+                                        if (!labelsToProcess.includes(label)) {
+                                            labelsToProcess.push(label);
+                                        }
+                                    });
+                                } else {
+                                    // Fallback for older projects without imageOrder
+                                    labelsToProcess = [...parsedProjectData.imageLabels];
+                                }
+                                
+                                console.log('[Project Load] Processing images in order:', JSON.stringify(labelsToProcess));
+                                
+                                // Initialize paint.js's ordered list with the loaded order
+                                window.orderedImageLabels = [...labelsToProcess];
+
                                 const imagePromises = [];
-                                for (const label of parsedProjectData.imageLabels) {
+                                for (const label of labelsToProcess) {
                                     const safeLabel = label.toLowerCase();
                                     const imageFiles = Object.keys(zip.files).filter(
                                         filename => filename.toLowerCase().startsWith(`${safeLabel}.`) && 

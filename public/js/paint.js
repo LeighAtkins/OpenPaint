@@ -48,6 +48,8 @@ window.selectedStrokeInEditMode = null; // Track which stroke is in edit mode
 window.lastClickTime = 0; // For tracking double-clicks
 window.lastCanvasClickTime = 0; // For tracking double-clicks on canvas
 window.clickDelay = 300; // Milliseconds to wait for double-click
+let draggedImageItem = null; // For image drag-and-drop reordering
+window.orderedImageLabels = []; // Track the current visual order of images in sidebar
 
 // Arrow settings - shared between straight and curved lines (unified system)
 let arrowSettings = { // Arrow customization settings
@@ -139,6 +141,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const imageSidebar = document.getElementById('imageSidebar');
     const strokeSidebarHeader = document.getElementById('strokeSidebarHeader');
     const imageSidebarHeader = document.getElementById('imageSidebarHeader');
+    
+    // Set up drag-and-drop for the image list container
+    imageList.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+    });
+    
+    imageList.addEventListener('drop', (e) => {
+        e.preventDefault();
+        
+        // If dropped on the imageList itself (not on a specific container), append to end
+        if (draggedImageItem && e.target === imageList) {
+            imageList.appendChild(draggedImageItem);
+        }
+    });
 
     // Undo/Redo functionality
     const MAX_HISTORY = 50;  // Maximum number of states to store
@@ -196,6 +213,7 @@ document.addEventListener('DOMContentLoaded', () => {
         container.className = 'image-container';
         container.dataset.label = label;
         container.dataset.originalImageUrl = imageUrl; // Store the original image URL for later restoration
+        container.draggable = true; // Enable drag-and-drop
         
         // Display the tag-based filename if available, otherwise display the label
         // MODIFIED: Use getTagBasedFilename immediately if available
@@ -260,6 +278,56 @@ document.addEventListener('DOMContentLoaded', () => {
         img.className = 'pasted-image';
         img.alt = `${label} view`;
         
+        // Create delete button
+        const deleteButton = document.createElement('button');
+        deleteButton.className = 'delete-image-btn';
+        deleteButton.innerHTML = '×';
+        deleteButton.title = 'Delete image';
+        deleteButton.style.cssText = `
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid #ccc;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            color: #666;
+        `;
+        
+        // Delete button hover effect
+        deleteButton.addEventListener('mouseenter', () => {
+            deleteButton.style.background = '#ff4444';
+            deleteButton.style.color = 'white';
+            deleteButton.style.borderColor = '#ff4444';
+        });
+        
+        deleteButton.addEventListener('mouseleave', () => {
+            deleteButton.style.background = 'rgba(255, 255, 255, 0.9)';
+            deleteButton.style.color = '#666';
+            deleteButton.style.borderColor = '#ccc';
+        });
+        
+        // Delete button click handler
+        deleteButton.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent container click (switchToImage)
+            
+            const confirmMsg = `Are you sure you want to delete image "${label}" and all its associated strokes and data? This action cannot be undone directly through the undo stack for image deletion.`;
+            if (!confirm(confirmMsg)) {
+                return;
+            }
+            
+            // Perform deletion
+            deleteImage(label, container);
+        });
+        
         // Add all elements to container
         container.appendChild(img);
         container.appendChild(labelElement);
@@ -267,6 +335,7 @@ document.addEventListener('DOMContentLoaded', () => {
         container.appendChild(strokesElement);
         container.appendChild(scaleElement);
         container.appendChild(editTagsButton); // Add edit tags button
+        container.appendChild(deleteButton); // Add delete button
         
         // Set up click handler for switching images
         container.onclick = () => {
@@ -277,14 +346,163 @@ document.addEventListener('DOMContentLoaded', () => {
             switchToImage(label);
         };
         
+        // Add drag-and-drop event listeners
+        container.addEventListener('dragstart', (e) => {
+            draggedImageItem = container;
+            e.dataTransfer.setData('text/plain', label);
+            e.dataTransfer.effectAllowed = 'move';
+            container.classList.add('dragging');
+        });
+        
+        container.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            
+            if (draggedImageItem && draggedImageItem !== container) {
+                // Determine if we should insert before or after based on mouse position
+                const rect = container.getBoundingClientRect();
+                const midpoint = rect.top + rect.height / 2;
+                
+                // Remove any existing drag-over classes
+                container.classList.remove('drag-over-before', 'drag-over-after');
+                
+                if (e.clientY < midpoint) {
+                    container.classList.add('drag-over-before');
+                } else {
+                    container.classList.add('drag-over-after');
+                }
+            }
+        });
+        
+        container.addEventListener('dragleave', (e) => {
+            container.classList.remove('drag-over-before', 'drag-over-after');
+        });
+        
+        container.addEventListener('drop', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            container.classList.remove('drag-over-before', 'drag-over-after');
+            
+            if (draggedImageItem && draggedImageItem !== container) {
+                const imageList = document.getElementById('imageList');
+                const rect = container.getBoundingClientRect();
+                const midpoint = rect.top + rect.height / 2;
+                
+                if (e.clientY < midpoint) {
+                    // Insert before this container
+                    imageList.insertBefore(draggedImageItem, container);
+                } else {
+                    // Insert after this container
+                    imageList.insertBefore(draggedImageItem, container.nextSibling);
+                }
+            }
+        });
+        
+        container.addEventListener('dragend', (e) => {
+            container.classList.remove('dragging');
+            document.querySelectorAll('.image-container').forEach(el => {
+                el.classList.remove('drag-over-before', 'drag-over-after');
+            });
+            draggedImageItem = null;
+            
+            // Update the ordered image labels array after reordering
+            updateOrderedImageLabelsArray();
+        });
+        
         // Finally add to the sidebar
         document.getElementById('imageList').appendChild(container);
         console.log(`[addImageToSidebar] Successfully appended container for ${label}. #imageList children: ${document.getElementById('imageList').children.length}`);
+        
+        // Update the ordered image labels array
+        updateOrderedImageLabelsArray();
         
         // Update the stroke count
         updateSidebarStrokeCounts();
     }
     
+    // Function to delete an image and clean up all associated data
+    function deleteImage(label, container) {
+        console.log(`[deleteImage] Deleting image: ${label}`);
+        
+        // Remove from DOM
+        container.remove();
+        
+        // Update the ordered image labels array after deletion
+        updateOrderedImageLabelsArray();
+        
+        // Clean up data structures
+        delete window.imageScaleByLabel[label];
+        delete window.imagePositionByLabel[label];
+        delete window.lineStrokesByImage[label];
+        delete window.vectorStrokesByImage[label];
+        delete window.strokeVisibilityByImage[label];
+        delete window.strokeLabelVisibility[label];
+        delete window.strokeMeasurements[label];
+        delete window.labelsByImage[label];
+        delete window.undoStackByImage[label];
+        delete window.redoStackByImage[label];
+        delete window.imageStates[label];
+        delete window.originalImages[label];
+        delete window.originalImageDimensions[label];
+        delete window.imageTags[label];
+        delete window.customLabelPositions[label];
+        delete window.calculatedLabelOffsets[label];
+        delete window.selectedStrokeByImage[label];
+        delete window.multipleSelectedStrokesByImage[label];
+        
+        // Remove from pastedImages array if present
+        const originalImageUrl = container.dataset.originalImageUrl;
+        if (originalImageUrl) {
+            pastedImages = pastedImages.filter(url => url !== originalImageUrl);
+        }
+        
+        // Handle currentImageLabel if it was the deleted image
+        if (currentImageLabel === label) {
+            const imageListEl = document.getElementById('imageList');
+            let nextLabelToSwitch = null;
+            
+            if (imageListEl.children.length > 0) {
+                // Switch to the first available image
+                nextLabelToSwitch = imageListEl.children[0].dataset.label;
+            }
+            
+            if (nextLabelToSwitch) {
+                switchToImage(nextLabelToSwitch);
+            } else {
+                // No images left
+                currentImageLabel = null;
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                updateStrokeCounter(); // Will show 0
+                updateStrokeVisibilityControls(); // Will show "no strokes"
+                updateActiveImageInSidebar();
+            }
+        }
+        
+        // Exit edit mode if the deleted image had a stroke in edit mode
+        if (window.selectedStrokeInEditMode) {
+            const editModeImageLabel = window.selectedStrokeInEditMode.split('_')[0];
+            if (editModeImageLabel === label) {
+                window.selectedStrokeInEditMode = null;
+            }
+        }
+        
+        // Update UI
+        updateSidebarStrokeCounts();
+        
+        console.log(`[deleteImage] Successfully deleted image: ${label}`);
+    }
+    
+    // Function to update the ordered image labels array based on current DOM order
+    function updateOrderedImageLabelsArray() {
+        const imageListEl = document.getElementById('imageList');
+        if (imageListEl) {
+            window.orderedImageLabels = Array.from(imageListEl.children)
+                .map(container => container.dataset.label)
+                .filter(label => label); // Ensure only valid labels are included
+            console.log('[paint.js] Updated orderedImageLabels:', JSON.stringify(window.orderedImageLabels));
+        }
+    }
 
     // Store the original images for each view
     window.originalImages = window.originalImages || {};
@@ -6344,6 +6562,10 @@ document.addEventListener('DOMContentLoaded', () => {
         Promise.all(loadPromises)
             .then(() => {
                 console.log('[handleFiles] All image processing promises resolved.');
+                
+                // Update the ordered image labels array after initial load
+                updateOrderedImageLabelsArray();
+                
                 if (firstImageLabel) {
                     console.log(`[handleFiles] Switching to first image: ${firstImageLabel}`);
                     // REMOVED: currentImageLabel = firstImageLabel; 

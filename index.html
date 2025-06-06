@@ -785,6 +785,29 @@
             position: absolute;
             left: 3px; /* Align with the icon */
         }
+        
+        /* Drag-and-drop styles for image reordering */
+        .image-container.dragging {
+            opacity: 0.5;
+            border: 2px dashed #ccc;
+            transform: scale(0.95);
+        }
+        
+        .image-container.drag-over-before {
+            border-top: 3px solid #4CAF50;
+        }
+        
+        .image-container.drag-over-after {
+            border-bottom: 3px solid #4CAF50;
+        }
+        
+        .delete-image-btn {
+            transition: all 0.2s ease;
+        }
+        
+        .delete-image-btn:hover {
+            transform: scale(1.1);
+        }
     </style>
 </head>
 <body>
