@@ -4050,23 +4050,24 @@ document.addEventListener('DOMContentLoaded', () => {
     function handleDefocusClick() {
         console.log('Single click detected - defocusing measurements');
         
-        // Handle curve completion defocus
+        // Ensure newly created stroke flag is cleared to prevent re-focus
+        // from a previous stroke creation when updateStrokeVisibilityControls is called.
+        window.newlyCreatedStroke = null;
+
+        // Handle curve completion defocus: first click after curve finalization
         if (curveJustCompleted) {
-            console.log('First click after curve completion - clearing flag');
+            console.log('First click after curve completion - clearing flag and deselecting.');
             curveJustCompleted = false;
-            redrawCanvasWithVisibility();
-            return; // Just clear the flag and exit
+            deselectAllStrokes(); // Handles UI updates (including redraw) and clears selection.
+            return; 
         }
         
-        // For curved lines, handle special defocus behavior
-        if (drawingMode === 'curved' && curvedLinePoints.length > 0) {
-            console.log('Curved line in progress - clearing curved line state');
-            curvedLinePoints = [];
-            redrawCanvasWithVisibility();
-            return; // First click after curved line just clears the curve state
-        }
+        // For any other single click on the canvas that doesn't start a new stroke,
+        // ensure everything is deselected.
+        console.log('General defocus click - deselecting all strokes.');
         
         // Defocus any active measurement inputs (including stroke visibility items)
+        // This is generally good practice before wider UI updates.
         const activeElement = document.activeElement;
         if (activeElement && (
             (activeElement.classList && activeElement.classList.contains('measure-text')) ||
@@ -4079,27 +4080,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         // Also defocus any selected stroke measurements that might be focused
-        const allMeasureTexts = document.querySelectorAll('.measure-text[contenteditable="true"]');
+        // (though deselectAllStrokes should also handle this by making them non-editable)
+        const allMeasureTexts = document.querySelectorAll('.stroke-measurement[contenteditable="true"]');
         allMeasureTexts.forEach(element => {
             if (element !== activeElement) {
                 console.log('Defocusing additional measurement element');
                 element.blur();
             }
         });
-        
-        // Clear any drawing artifacts (like dots from incomplete freehand strokes)
-        redrawCanvasWithVisibility();
-        
-        // Optionally clear selections (but keep them for now to maintain selection state)
-        // This can be uncommented if you want clicks to also clear selections:
-        // if (window.selectedStrokeByImage && window.currentImageLabel) {
-        //     window.selectedStrokeByImage[window.currentImageLabel] = null;
-        //     if (window.multipleSelectedStrokesByImage) {
-        //         window.multipleSelectedStrokesByImage[window.currentImageLabel] = [];
-        //     }
-        //     updateStrokeVisibilityControls();
-        //     redrawCanvasWithVisibility();
-        // }
+
+        deselectAllStrokes(); // This handles clearing all selections, edit mode, 
+                              // and triggers UI updates (updateStrokeVisibilityControls and redrawCanvasWithVisibility).
     }
 
     // Helper function to get canvas coordinates from image coordinates
@@ -5239,7 +5230,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // Redraw immediately to show the updated line
                 redrawCanvasWithVisibility();
-            } else if (draggedControlPointInfo.type === 'curved' && vectorData && vectorData.controlPoints) {
+            } else if ((draggedControlPointInfo.type === 'curved' || draggedControlPointInfo.type === 'curved-arrow') && vectorData && vectorData.controlPoints) {
                 // Handle curved line control point dragging
                 const controlPoint = vectorData.controlPoints[draggedControlPointInfo.pointIndex];
                 
@@ -6365,18 +6356,19 @@ document.addEventListener('DOMContentLoaded', () => {
             window.imageScaleByLabel[currentImageLabel] = previousScale;
             updateScaleUI();
         } finally {
-            // F6: Clear the flag LAST after all operations complete
-            console.log('[F6] Clearing isScalingOrZooming flag after zoom operations');
-            window.isScalingOrZooming = false;
-            
             // CRITICAL FIX: Don't deselect strokes during curved line creation
             const isCurvedLineInProgress = drawingMode === 'curved' && curvedLinePoints.length > 0;
             if (!isCurvedLineInProgress) {
-            // Deselect all strokes after zoom operation
-            deselectAllStrokes();
+                // Deselect all strokes BEFORE clearing the isScalingOrZooming flag
+                // This ensures auto-focus logic in createEditableMeasureText is suppressed
+                deselectAllStrokes();
             } else {
                 console.log('[updateImageScale] Curved line creation in progress - preserving state, not deselecting');
             }
+            
+            // F6: Clear the flag LAST after all operations complete, including deselection
+            console.log('[F6] Clearing isScalingOrZooming flag after zoom operations AND deselection.');
+            window.isScalingOrZooming = false;
         }
     }
     
@@ -7410,8 +7402,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const vectorData = vectorStrokesByImage[currentImageLabel]?.[strokeToCheck];
         if (!vectorData) return null;
         
-        // Check for curved line control points
-        if (vectorData.type === 'curved' && vectorData.controlPoints) {
+        // Check for curved line control points (including curved arrows)
+        if ((vectorData.type === 'curved' || vectorData.type === 'curved-arrow') && vectorData.controlPoints) {
             return findCurvedControlPoint(x, y, vectorData);
         }
         
