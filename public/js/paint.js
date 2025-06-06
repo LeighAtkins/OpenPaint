@@ -2188,7 +2188,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 
                 // Check if this is an arrow line and pre-calculate adjusted points
-                const isArrowLine = vectorData.type === 'arrow';
+                const isArrowLine = vectorData.type === 'arrow' || (vectorData.type === 'straight' && vectorData.arrowSettings && (vectorData.arrowSettings.startArrow || vectorData.arrowSettings.endArrow));
                 let actualStartX = transformedFirstX;
                 let actualStartY = transformedFirstY;
                 let originalStartPoint = {x: transformedFirstX, y: transformedFirstY};
@@ -2252,32 +2252,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             // Check if this is a curved arrow specifically
                             const isCurvedArrow = vectorData.type === 'curved-arrow';
                             
-                            if (isStraightLine && vectorData.points.length >= 2) {
-                                const lastPoint = vectorData.points[vectorData.points.length - 1];
-                            let transformedLastX, transformedLastY;
-                            
-                            if (isBlankCanvas) {
-                                // Apply both scaling and position offset in blank canvas mode
-                                const position = imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
-                                // Scale from canvas center
-                                const scaledX = (lastPoint.x - canvasCenter.x) * scale + canvasCenter.x;
-                                const scaledY = (lastPoint.y - canvasCenter.y) * scale + canvasCenter.y;
-                                // Then apply position offset
-                                transformedLastX = scaledX + position.x;
-                                transformedLastY = scaledY + position.y;
-                                console.log(`BLANK CANVAS: Using scaled and adjusted coordinates for last point: (${transformedLastX}, ${transformedLastY})`);
-                            } else {
-                                transformedLastX = imageX + (lastPoint.x * scale);
-                                transformedLastY = imageY + (lastPoint.y * scale);
-                                console.log(`Last point transformation:
-                                    Original (relative to image): (${lastPoint.x}, ${lastPoint.y})
-                                    Scaled: (${lastPoint.x * scale}, ${lastPoint.y * scale})
-                                    Final (canvas position): (${transformedLastX}, ${transformedLastY})`);
-                            }
-                            
-                                ctx.lineTo(transformedLastX, transformedLastY);
-                            strokePath.push({x: transformedLastX, y: transformedLastY});
-                            } else if (isArrowLine && vectorData.points.length >= 2) {
+                            if (isArrowLine && vectorData.points.length >= 2) {
                                 // For arrow lines, use the pre-calculated original end point and calculate adjusted end point
                                 let adjustedEndX = originalEndPoint.x;
                                 let adjustedEndY = originalEndPoint.y;
@@ -2310,9 +2285,11 @@ document.addEventListener('DOMContentLoaded', () => {
                                 ctx.lineTo(adjustedEndX, adjustedEndY);
                                 strokePath.push({x: adjustedEndX, y: adjustedEndY});
                                 
-                                // Store the original endpoints for arrowhead drawing
-                                strokePath.originalStart = originalStartPoint;
-                                strokePath.originalEnd = originalEndPoint;
+                                // Store the original endpoints for arrowhead drawing (with safety check)
+                                if (originalStartPoint && originalEndPoint) {
+                                    strokePath.originalStart = originalStartPoint;
+                                    strokePath.originalEnd = originalEndPoint;
+                                }
                             } else if (isCurvedLine) {
                                 // For curved lines, draw smooth spline using stored interpolated points
                                 console.log(`Drawing curved line with ${vectorData.points.length} interpolated points`);
@@ -2463,17 +2440,22 @@ document.addEventListener('DOMContentLoaded', () => {
                      const startPoint = strokePath.originalStart;
                      const endPoint = strokePath.originalEnd;
                      
-                     // Create a temporary settings object with brush size-aware scaling
-                     const brushSizeForStroke = vectorData.width || 5;
-                     const baseArrowSize = Math.max(vectorData.arrowSettings.arrowSize || 15, brushSizeForStroke * 2);
-                     
-                     const scaledArrowSettings = {
-                         ...vectorData.arrowSettings,
-                         arrowSize: baseArrowSize // Let drawArrowhead handle the final scaling
-                     };
-                     
-                     // Draw arrowheads using the transformed coordinates and stroke color
-                     drawArrowhead(startPoint, endPoint, scaledArrowSettings, vectorData.color);
+                     // Safety check: ensure both points are valid before drawing arrowheads
+                     if (startPoint && endPoint && startPoint.x !== undefined && endPoint.x !== undefined) {
+                         // Create a temporary settings object with brush size-aware scaling
+                         const brushSizeForStroke = vectorData.width || 5;
+                         const baseArrowSize = Math.max(vectorData.arrowSettings.arrowSize || 15, brushSizeForStroke * 2);
+                         
+                         const scaledArrowSettings = {
+                             ...vectorData.arrowSettings,
+                             arrowSize: baseArrowSize // Let drawArrowhead handle the final scaling
+                         };
+                         
+                         // Draw arrowheads using the transformed coordinates and stroke color
+                         drawArrowhead(startPoint, endPoint, scaledArrowSettings, vectorData.color);
+                     } else {
+                         console.warn(`Skipping arrowheads for ${strokeLabel}: invalid points`, { startPoint, endPoint });
+                     }
                  }
                 // --- End Arrowheads ---
                 
@@ -6302,9 +6284,12 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Handle image scaling
     function updateScaleButtonsActiveState() {
-        // Remove active class from all scale buttons
+        // Remove active class from all scale buttons and dropdown options
         document.querySelectorAll('.scale-btn').forEach(btn => {
             btn.classList.remove('active');
+        });
+        document.querySelectorAll('.scale-option').forEach(option => {
+            option.classList.remove('active');
         });
         
         // Add active class to the current scale button
@@ -6312,6 +6297,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const activeButton = document.querySelector(`.scale-btn[data-scale="${currentScale}"]`);
         if (activeButton) {
             activeButton.classList.add('active');
+        }
+        
+        // Add active class to the current scale dropdown option
+        const activeOption = document.querySelector(`.scale-option[data-scale="${currentScale}"]`);
+        if (activeOption) {
+            activeOption.classList.add('active');
         }
     }
     
@@ -6584,7 +6575,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Zoom out - find the next smaller scale
             const currentScale = window.imageScaleByLabel[currentImageLabel];
-            const scales = [0.1, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 2];
+            const scales = [0.1, 0.15, 0.2, 0.25, 0.33, 0.5, 0.67, 0.75, 0.8, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4, 5];
             let nextScale = 0.1; // Minimum scale
             
             for (let i = scales.length - 1; i >= 0; i--) {
@@ -6621,8 +6612,8 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Zoom in - find the next larger scale
             const currentScale = window.imageScaleByLabel[currentImageLabel];
-            const scales = [0.1, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 2];
-            let nextScale = 2; // Maximum scale
+            const scales = [0.1, 0.15, 0.2, 0.25, 0.33, 0.5, 0.67, 0.75, 0.8, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4, 5];
+            let nextScale = 5; // Maximum scale
             
             for (let i = 0; i < scales.length; i++) {
                 if (scales[i] > currentScale) {
@@ -6765,6 +6756,83 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Call setupDragAndDrop on DOMContentLoaded
     setupDragAndDrop();
+    
+    // MOUSE WHEEL ZOOM FUNCTIONALITY
+    canvas.addEventListener('wheel', (e) => {
+        e.preventDefault(); // Prevent page scrolling
+        e.stopPropagation(); // Prevent event bubbling
+        
+        // Guard against zooming during stroke creation (same as Q/E key guards)
+        let shouldBlockZoom = false;
+        
+        if (drawingMode === 'freehand') {
+            shouldBlockZoom = isDrawing && (points && points.length > 0);
+        } else if (drawingMode === 'straight' || drawingMode === 'arrow') {
+            shouldBlockZoom = straightLineStart !== null && isDrawing;
+        } else if (drawingMode === 'curved') {
+            shouldBlockZoom = curvedLinePoints && curvedLinePoints.length > 0;
+        }
+        
+        if (shouldBlockZoom) {
+            console.log(`[Mouse Wheel Zoom Guard] Blocking zoom during active stroke creation.`);
+            return;
+        }
+        
+        // Get mouse position for zoom centering
+        const mouseX = e.offsetX;
+        const mouseY = e.offsetY;
+        
+        // Convert mouse position to image coordinates before zoom
+        const imagePointBeforeZoom = toImage({ x: mouseX, y: mouseY });
+        
+        // Determine zoom direction and find next scale
+        const currentScale = window.imageScaleByLabel[currentImageLabel];
+        const scales = [0.1, 0.15, 0.2, 0.25, 0.33, 0.5, 0.67, 0.75, 0.8, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4, 5];
+        let nextScale = currentScale;
+        
+        if (e.deltaY < 0) {
+            // Zoom in (mouse wheel up/forward)
+            for (let i = 0; i < scales.length; i++) {
+                if (scales[i] > currentScale) {
+                    nextScale = scales[i];
+                    break;
+                }
+            }
+        } else if (e.deltaY > 0) {
+            // Zoom out (mouse wheel down/backward)
+            for (let i = scales.length - 1; i >= 0; i--) {
+                if (scales[i] < currentScale) {
+                    nextScale = scales[i];
+                    break;
+                }
+            }
+        }
+        
+        // Only proceed if we found a different scale
+        if (nextScale !== currentScale) {
+            console.log(`[Mouse Wheel Zoom] Zooming from ${currentScale} to ${nextScale} centered at (${mouseX}, ${mouseY})`);
+            
+            // Apply the new scale
+            updateImageScale(nextScale);
+            
+            // Calculate zoom centering adjustment
+            const canvasPointAfterZoomTarget = toCanvas(imagePointBeforeZoom);
+            const deltaX = mouseX - canvasPointAfterZoomTarget.x;
+            const deltaY = mouseY - canvasPointAfterZoomTarget.y;
+            
+            // Initialize image position if not set
+            if (!imagePositionByLabel[currentImageLabel]) {
+                imagePositionByLabel[currentImageLabel] = { x: 0, y: 0 };
+            }
+            
+            // Adjust image position to keep the same image point under the cursor
+            imagePositionByLabel[currentImageLabel].x += deltaX;
+            imagePositionByLabel[currentImageLabel].y += deltaY;
+            
+            // Redraw with the corrected position
+            redrawCanvasWithVisibility();
+        }
+    });
     
     // Adjust canvas size when window resizes to account for sidebars
     window.addEventListener('resize', () => {
