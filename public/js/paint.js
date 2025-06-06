@@ -1180,6 +1180,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 }, 0);
             }
             
+
+
             // Build the complete item
             item.appendChild(checkbox);
             item.appendChild(labelContainer);
@@ -1188,6 +1190,21 @@ document.addEventListener('DOMContentLoaded', () => {
             // Add to stroke list
             strokesList.appendChild(item);
         });
+    }
+    
+    // Helper function to update stroke type based on arrow settings
+    function updateStrokeTypeBasedOnArrows(vectorData) {
+        const hasArrows = vectorData.arrowSettings && (vectorData.arrowSettings.startArrow || vectorData.arrowSettings.endArrow);
+        
+        if (vectorData.type === 'straight' && hasArrows) {
+            vectorData.type = 'arrow';
+        } else if (vectorData.type === 'arrow' && !hasArrows) {
+            vectorData.type = 'straight';
+        } else if (vectorData.type === 'curved' && hasArrows) {
+            vectorData.type = 'curved-arrow';
+        } else if (vectorData.type === 'curved-arrow' && !hasArrows) {
+            vectorData.type = 'curved';
+        }
     }
     
     // Function to toggle label visibility on canvas
@@ -4662,8 +4679,23 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Get arrow control elements
     const arrowControls = document.getElementById('arrowControls');
-    const startArrowCheckbox = document.getElementById('startArrow');
-    const endArrowCheckbox = document.getElementById('endArrow');
+    const startArrowToggle = document.getElementById('startArrow');
+    const endArrowToggle = document.getElementById('endArrow');
+    
+    // Helper function to update toggle button visual state
+    function updateArrowToggleState(toggle, isEnabled) {
+        if (isEnabled) {
+            toggle.style.backgroundColor = '#4CAF50';
+            toggle.style.color = 'white';
+        } else {
+            toggle.style.backgroundColor = '#f0f0f0';
+            toggle.style.color = '#666';
+        }
+    }
+    
+    // Initialize toolbar arrow toggle states
+    updateArrowToggleState(startArrowToggle, arrowSettings.startArrow);
+    updateArrowToggleState(endArrowToggle, arrowSettings.endArrow);
     
     // Drawing mode toggle event listener
     drawingModeToggle.addEventListener('click', () => {
@@ -4692,15 +4724,86 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log(`Drawing mode changed to: ${drawingMode}`);
     });
     
-    // Arrow control event listeners
-    startArrowCheckbox.addEventListener('change', () => {
-        arrowSettings.startArrow = startArrowCheckbox.checked;
-        console.log(`Start arrow: ${arrowSettings.startArrow}`);
+    // Add hover effects to toolbar arrow toggles
+    [startArrowToggle, endArrowToggle].forEach(toggle => {
+        toggle.addEventListener('mouseenter', () => {
+            if (toggle.style.backgroundColor === 'rgb(76, 175, 80)') {
+                toggle.style.backgroundColor = '#45a049';
+            } else {
+                toggle.style.backgroundColor = '#e0e0e0';
+            }
+        });
+        
+        toggle.addEventListener('mouseleave', () => {
+            const isStart = toggle === startArrowToggle;
+            const isEnabled = isStart ? arrowSettings.startArrow : arrowSettings.endArrow;
+            updateArrowToggleState(toggle, isEnabled);
+        });
     });
     
-    endArrowCheckbox.addEventListener('change', () => {
-        arrowSettings.endArrow = endArrowCheckbox.checked;
+    // Arrow control event listeners
+    startArrowToggle.addEventListener('click', () => {
+        arrowSettings.startArrow = !arrowSettings.startArrow;
+        updateArrowToggleState(startArrowToggle, arrowSettings.startArrow);
+        console.log(`Start arrow: ${arrowSettings.startArrow}`);
+        
+        // If a stroke is in edit mode, also update that stroke
+        if (window.selectedStrokeInEditMode && vectorStrokesByImage[currentImageLabel] && vectorStrokesByImage[currentImageLabel][window.selectedStrokeInEditMode]) {
+            const vectorData = vectorStrokesByImage[currentImageLabel][window.selectedStrokeInEditMode];
+            const supportsArrows = vectorData.type === 'straight' || vectorData.type === 'arrow' || 
+                                 vectorData.type === 'curved' || vectorData.type === 'curved-arrow';
+            
+            if (supportsArrows) {
+                // Ensure arrowSettings exists
+                if (!vectorData.arrowSettings) {
+                    vectorData.arrowSettings = { arrowSize: arrowSettings.arrowSize, arrowStyle: arrowSettings.arrowStyle, startArrow: false, endArrow: false };
+                }
+                
+                // Update the stroke's arrow setting
+                vectorData.arrowSettings.startArrow = arrowSettings.startArrow;
+                
+                // Update stroke type
+                updateStrokeTypeBasedOnArrows(vectorData);
+                
+                // Save state and redraw
+                saveState(true, false, false);
+                redrawCanvasWithVisibility();
+                
+                console.log(`Updated start arrow for edited stroke ${window.selectedStrokeInEditMode}:`, vectorData.arrowSettings.startArrow);
+            }
+        }
+    });
+    
+    endArrowToggle.addEventListener('click', () => {
+        arrowSettings.endArrow = !arrowSettings.endArrow;
+        updateArrowToggleState(endArrowToggle, arrowSettings.endArrow);
         console.log(`End arrow: ${arrowSettings.endArrow}`);
+        
+        // If a stroke is in edit mode, also update that stroke
+        if (window.selectedStrokeInEditMode && vectorStrokesByImage[currentImageLabel] && vectorStrokesByImage[currentImageLabel][window.selectedStrokeInEditMode]) {
+            const vectorData = vectorStrokesByImage[currentImageLabel][window.selectedStrokeInEditMode];
+            const supportsArrows = vectorData.type === 'straight' || vectorData.type === 'arrow' || 
+                                 vectorData.type === 'curved' || vectorData.type === 'curved-arrow';
+            
+            if (supportsArrows) {
+                // Ensure arrowSettings exists
+                if (!vectorData.arrowSettings) {
+                    vectorData.arrowSettings = { arrowSize: arrowSettings.arrowSize, arrowStyle: arrowSettings.arrowStyle, startArrow: false, endArrow: false };
+                }
+                
+                // Update the stroke's arrow setting
+                vectorData.arrowSettings.endArrow = arrowSettings.endArrow;
+                
+                // Update stroke type
+                updateStrokeTypeBasedOnArrows(vectorData);
+                
+                // Save state and redraw
+                saveState(true, false, false);
+                redrawCanvasWithVisibility();
+                
+                console.log(`Updated end arrow for edited stroke ${window.selectedStrokeInEditMode}:`, vectorData.arrowSettings.endArrow);
+            }
+        }
     });
 
     // Mouse drag variables for image movement

@@ -839,12 +839,8 @@
                 </div>
                 <button id="drawingModeToggle">Freehand</button>
                 <div id="arrowControls" style="display: none; align-items: center; gap: 5px;">
-                    <label style="font-size: 12px; margin: 0;">
-                        <input type="checkbox" id="startArrow" style="margin: 0 3px 0 0;"> Start
-                    </label>
-                    <label style="font-size: 12px; margin: 0;">
-                        <input type="checkbox" id="endArrow" style="margin: 0 3px 0 0;"> End
-                    </label>
+                    <span id="startArrow" style="font-size: 16px; cursor: pointer; padding: 4px 6px; border-radius: 4px; user-select: none; background-color: #f0f0f0; color: #666;" title="Toggle start arrow">◀</span>
+                    <span id="endArrow" style="font-size: 16px; cursor: pointer; padding: 4px 6px; border-radius: 4px; user-select: none; background-color: #f0f0f0; color: #666;" title="Toggle end arrow">▶</span>
                 </div>
                 <input type="color" id="colorPicker" value="#1a73e8" style="display:none;">
                 <input type="range" id="brushSize" min="1" max="50" value="5">
