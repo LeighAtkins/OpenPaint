@@ -4016,7 +4016,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const MINIMUM_DRAG_DISTANCE = 3; // pixels
     
     // Curved line defocus tracking
-    let curveJustCompleted = false;
+    let curveJustCompleted = false; // CURVE_DEFOCUS_FIX_1: True if a curve was just finalized by double-click
 
     // Drawing mode state
     let drawingMode = 'freehand'; // Options: 'freehand', 'straight', 'curved', 'arrow'
@@ -4271,17 +4271,22 @@ document.addEventListener('DOMContentLoaded', () => {
         // from a previous stroke creation when updateStrokeVisibilityControls is called.
         window.newlyCreatedStroke = null;
 
-        // Handle curve completion defocus: first click after curve finalization
+        // CURVE_DEFOCUS_FIX_3: Handle curve completion defocus: first click after curve finalization
         if (curveJustCompleted) {
             console.log('First click after curve completion - clearing flag and deselecting.');
-            curveJustCompleted = false;
-            deselectAllStrokes(); // Handles UI updates (including redraw) and clears selection.
-            return; 
+            curveJustCompleted = false; // Clear the flag
+            deselectAllStrokes(); // Deselect the just-completed curve (and any other selections)
+            // If this function was called from mousedown because curveJustCompleted was true,
+            // the mousedown handler will see that handleDefocusClick processed it and will return,
+            // preventing a new stroke from starting.
+            return; // Indicate that the click was consumed by this specific defocus logic.
         }
         
         // For any other single click on the canvas that doesn't start a new stroke,
+        // (e.g., called from mouseup when a drag wasn't long enough to create a stroke,
+        // AND curveJustCompleted was already false)
         // ensure everything is deselected.
-        console.log('General defocus click - deselecting all strokes.');
+        console.log('General defocus click (not related to immediate curve completion) - deselecting all strokes.');
         
         // Defocus any active measurement inputs (including stroke visibility items)
         // This is generally good practice before wider UI updates.
@@ -5053,6 +5058,16 @@ document.addEventListener('DOMContentLoaded', () => {
             // CRITICAL FIX: Don't exit edit mode when panning - preserve the edit state
             console.log('Canvas Mousedown: Starting image drag (shift+click) - preserving edit mode');
             return;
+        }
+
+        // CURVE_DEFOCUS_FIX_2: Handle defocus click immediately if a curve was just completed
+        // This ensures the first single click after curve finalization only deselects
+        // and does not start a new drawing operation.
+        if (curveJustCompleted) {
+            console.log('Canvas Mousedown: `curveJustCompleted` is true. Handling as defocus click.');
+            handleDefocusClick(); // This will set curveJustCompleted to false and deselect.
+            e.preventDefault();   // Prevent any further mousedown processing (like starting a new stroke).
+            return;               // Stop further execution of this mousedown handler.
         }
 
         // Check for double-click on stroke on canvas (for entering edit mode)
@@ -5889,9 +5904,16 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // If no stroke was created, handle defocus
-            if (!strokeWasCreated) {
-                console.log('Single click detected - calling handleDefocusClick()');
-                handleDefocusClick();
+            // CURVE_DEFOCUS_FIX_5: Only call handleDefocusClick if curveJustCompleted wasn't true
+            // (when mousedown was called) because if it was, mousedown already handled the defocus.
+            // The curveJustCompleted flag would have been cleared by handleDefocusClick if it was true during mousedown.
+            // So, if wasDrawing is true but strokeWasCreated is false, it means it was a click/short drag.
+            // If curveJustCompleted is *still* true here, it means something unusual happened,
+            // but the primary check in mousedown should cover the intended scenario.
+            // We rely on `wasDrawing` to indicate that `mousedown` intended to start a drawing operation.
+            if (!strokeWasCreated && wasDrawing) { // Check if it was an attempt to draw that didn't result in a stroke
+                console.log('Short click/drag on mouseup, and not a curve defocus handled by mousedown - calling handleDefocusClick() from mouseup');
+                handleDefocusClick(); // This will now handle general defocus if curveJustCompleted is false
             }
         }
     
@@ -8681,7 +8703,7 @@ document.addEventListener('DOMContentLoaded', () => {
             curvedLinePoints = [];
             console.log('Cleared control points for next curve');
             
-            // Mark that a curve was just completed (needs one defocus click)
+            // CURVE_DEFOCUS_FIX_4: Mark that a curve was just completed (needs one defocus click)
             curveJustCompleted = true;
             console.log('Set curveJustCompleted flag - next single click will defocus');
             
