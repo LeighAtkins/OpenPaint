@@ -12,6 +12,7 @@ window.labelsByImage = {};      // <--- NOTE: This should now be global due to p
 window.originalImages = {};
 window.imageTags = {};          // <--- NEW: Store image tags
 window.isLoadingProject = false; // <-- Re-adding this line
+window.isDefocusingOperationInProgress = false; // <-- NEW: Flag to prevent re-focusing during defocus
 
 // Control point dragging variables
 let isDraggingControlPoint = false;
@@ -762,9 +763,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.activeElement.classList && 
                 document.activeElement.classList.contains('stroke-measurement');
                 
-            const shouldAutoFocus = isNewlyCreated || (isSelected && !window.isScalingOrZooming && !window.isMovingImage && !hasActiveMeasurementFocus);
+            const shouldAutoFocus = isNewlyCreated || (!window.isDefocusingOperationInProgress && isSelected && !window.isScalingOrZooming && !window.isMovingImage && !hasActiveMeasurementFocus);
 
-            console.log(`[createEditableMeasureText] Focus logic for ${strokeLabel}: isNewlyCreated=${isNewlyCreated}, isSelected=${isSelected}, isScalingOrZooming=${!!window.isScalingOrZooming}, isMovingImage=${!!window.isMovingImage}, hasActiveMeasurementFocus=${hasActiveMeasurementFocus}, shouldAutoFocus=${shouldAutoFocus}`);
+            console.log(`[createEditableMeasureText] Focus logic for ${strokeLabel}: isNewlyCreated=${isNewlyCreated}, isSelected=${isSelected}, isScalingOrZooming=${!!window.isScalingOrZooming}, isMovingImage=${!!window.isMovingImage}, hasActiveMeasurementFocus=${hasActiveMeasurementFocus}, isDefocusingOperationInProgress=${!!window.isDefocusingOperationInProgress}, shouldAutoFocus=${shouldAutoFocus}`);
 
             if (shouldAutoFocus) {
                 // Focus and select all text for newly created or explicitly selected strokes
@@ -4275,7 +4276,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (curveJustCompleted) {
             console.log('First click after curve completion - clearing flag and deselecting.');
             curveJustCompleted = false; // Clear the flag
-            deselectAllStrokes(); // Deselect the just-completed curve (and any other selections)
+            // Set flag to prevent re-focusing during defocus operation
+            window.isDefocusingOperationInProgress = true;
+            try {
+                deselectAllStrokes(); // Deselect the just-completed curve (and any other selections)
+            } finally {
+                window.isDefocusingOperationInProgress = false;
+            }
             // If this function was called from mousedown because curveJustCompleted was true,
             // the mousedown handler will see that handleDefocusClick processed it and will return,
             // preventing a new stroke from starting.
@@ -4311,8 +4318,14 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        deselectAllStrokes(); // This handles clearing all selections, edit mode, 
-                              // and triggers UI updates (updateStrokeVisibilityControls and redrawCanvasWithVisibility).
+        // Set flag to prevent re-focusing during defocus operation
+        window.isDefocusingOperationInProgress = true;
+        try {
+            deselectAllStrokes(); // This handles clearing all selections, edit mode, 
+                                  // and triggers UI updates (updateStrokeVisibilityControls and redrawCanvasWithVisibility).
+        } finally {
+            window.isDefocusingOperationInProgress = false;
+        }
     }
 
     // Helper function to get canvas coordinates from image coordinates
@@ -5066,7 +5079,16 @@ document.addEventListener('DOMContentLoaded', () => {
         if (curveJustCompleted) {
             console.log('Canvas Mousedown: `curveJustCompleted` is true. Handling as defocus click.');
             handleDefocusClick(); // This will set curveJustCompleted to false and deselect.
+            
+            // ROBUST_FIX: Set multiple flags to definitively prevent any drawing logic from executing
+            isDrawing = false;
+            isDrawingOrPasting = false;
+            strokeInProgress = false;
+            
             e.preventDefault();   // Prevent any further mousedown processing (like starting a new stroke).
+            e.stopPropagation();  // Stop event from bubbling up
+            e.stopImmediatePropagation(); // Stop any other event handlers on the same element
+            console.log('Canvas Mousedown: CURVE_DEFOCUS_FIX - Definitively stopped all drawing flags and event propagation');
             return;               // Stop further execution of this mousedown handler.
         }
 
@@ -5332,6 +5354,14 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
+        // CURVE_DEFOCUS_FIX_GUARD: Add a definitive check before starting any drawing logic
+        // If curveJustCompleted was true at the start of this mousedown, it should have been handled and cleared
+        // but we add this as an extra safety check
+        if (curveJustCompleted) {
+            console.log('Canvas Mousedown: CURVE_DEFOCUS_FIX_GUARD - curveJustCompleted is STILL true, this should not happen. Aborting drawing.');
+            return;
+        }
+        
         // Start drawing
         isDrawing = true;
         isDrawingOrPasting = true;
