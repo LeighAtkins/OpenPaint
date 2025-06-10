@@ -2150,6 +2150,9 @@ document.addEventListener('DOMContentLoaded', () => {
     function redrawCanvasWithVisibility() {
         console.log(`--- redrawCanvasWithVisibility called for: ${currentImageLabel} ---`);
         
+        // PERFORMANCE: Invalidate interactive element cache before redraw
+        invalidateInteractiveElementCache();
+        
         // Clear performance cache for new render cycle
         ARROW_PERFORMANCE_CACHE.clearCache();
         
@@ -5024,6 +5027,211 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // PERFORMANCE OPTIMIZATIONS: Add caching and throttling variables
+    let mouseMoveThrottled = false;
+    let cachedControlPoints = new Map(); // Cache for transformed control point coordinates
+    let cachedLabelPositions = new Map(); // Cache for transformed label positions
+    let cacheInvalidated = true; // Flag to track when cache needs updating
+
+    // PERFORMANCE: Cache invalidation helper - call when view changes (pan/zoom) or strokes change
+    function invalidateInteractiveElementCache() {
+        cacheInvalidated = true;
+        cachedControlPoints.clear();
+        cachedLabelPositions.clear();
+        console.log('[PERF] Interactive element cache invalidated');
+    }
+
+    // PERFORMANCE: Optimized throttled mousemove handler
+    function handleMouseMoveThrottled(x, y) {
+        // Early exit if dragging - these operations don't need expensive hover detection
+        if (isDraggingImage || isDraggingLabel || isDraggingControlPoint || isDrawing) {
+            return;
+        }
+
+        // PERFORMANCE: Update cached coordinates only when needed
+        if (cacheInvalidated) {
+            updateInteractiveElementCache();
+            cacheInvalidated = false;
+        }
+
+        // PERFORMANCE: Use cached positions for faster hover detection
+        const newHoveredLabelInfo = findLabelAtPointOptimized(x, y);
+        
+        // Update cursor and visual hover state only if hovered label changed
+        if ((hoveredCanvasLabelInfo?.strokeLabel !== newHoveredLabelInfo?.strokeLabel) || 
+            (!hoveredCanvasLabelInfo && newHoveredLabelInfo) || 
+            (hoveredCanvasLabelInfo && !newHoveredLabelInfo)) {
+            
+            hoveredCanvasLabelInfo = newHoveredLabelInfo;
+
+            if (hoveredCanvasLabelInfo) {
+                updateCursor('pointer', `hovering label ${hoveredCanvasLabelInfo.strokeLabel}`);
+            } else {
+                updateCursor('default', 'canvas default');
+            }
+        }
+        
+        // PERFORMANCE: Only check control points if in edit mode (avoid expensive calculations when not needed)
+        if (window.selectedStrokeInEditMode) {
+            const controlPointHover = findControlPointAtPositionOptimized(x, y);
+            
+            if (controlPointHover) {
+                if(canvas.style.cursor !== 'grab' && canvas.style.cursor !== 'grabbing') {
+                    updateCursor('grab', `control point ${controlPointHover.type} ${controlPointHover.pointIndex}`);
+                }
+            }
+        }
+    }
+
+    // PERFORMANCE: Update cache for interactive elements
+    function updateInteractiveElementCache() {
+        const startTime = performance.now();
+        
+        // Update cached label positions
+        cachedLabelPositions.clear();
+        if (currentLabelPositions && currentLabelPositions.length > 0) {
+            for (const label of currentLabelPositions) {
+                cachedLabelPositions.set(label.strokeLabel, {
+                    x: label.x,
+                    y: label.y,
+                    width: label.width,
+                    height: label.height,
+                    strokeLabel: label.strokeLabel
+                });
+            }
+        }
+
+        // Update cached control points for selected/edit mode strokes
+        cachedControlPoints.clear();
+        const strokeToCheck = window.selectedStrokeInEditMode || window.selectedStrokeByImage[currentImageLabel];
+        if (strokeToCheck) {
+            const vectorData = vectorStrokesByImage[currentImageLabel]?.[strokeToCheck];
+            if (vectorData) {
+                if ((vectorData.type === 'curved' || vectorData.type === 'curved-arrow') && vectorData.controlPoints) {
+                    cacheControlPointsForStroke(strokeToCheck, vectorData);
+                } else if ((vectorData.type === 'straight' || vectorData.type === 'arrow') && vectorData.points?.length >= 2) {
+                    cacheEndpointsForStroke(strokeToCheck, vectorData);
+                }
+            }
+        }
+        
+        const endTime = performance.now();
+        console.log(`[PERF] Cache update took ${(endTime - startTime).toFixed(2)}ms`);
+    }
+
+    // PERFORMANCE: Cache control points for curved strokes
+    function cacheControlPointsForStroke(strokeLabel, vectorData) {
+        const transformContext = getTransformationContext(currentImageLabel);
+        
+        for (let i = 0; i < vectorData.controlPoints.length; i++) {
+            const controlPoint = vectorData.controlPoints[i];
+            const canvasCoords = transformImagePointToCanvas({ x: controlPoint.x, y: controlPoint.y }, transformContext);
+            
+            const scale = transformContext.scale;
+            const baseRadius = 8;
+            const scaledRadius = Math.max(8, baseRadius * scale) + 5; // Add 5px padding
+            
+            cachedControlPoints.set(`${strokeLabel}_${i}`, {
+                x: canvasCoords.x,
+                y: canvasCoords.y,
+                radius: scaledRadius,
+                strokeLabel: strokeLabel,
+                pointIndex: i,
+                type: 'curved'
+            });
+        }
+    }
+
+    // PERFORMANCE: Cache endpoints for straight/arrow strokes
+    function cacheEndpointsForStroke(strokeLabel, vectorData) {
+        const scale = window.imageScaleByLabel[currentImageLabel] || 1;
+        
+        // Calculate image position for coordinate transforms
+        let imageX, imageY;
+        const isBlankCanvas = !window.originalImages || !window.originalImages[currentImageLabel];
+        
+        if (isBlankCanvas) {
+            const canvasCenter = { x: canvas.width / 2, y: canvas.height / 2 };
+            const position = imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
+            imageX = canvasCenter.x + position.x;
+            imageY = canvasCenter.y + position.y;
+        } else {
+            const cachedImg = imageCache[window.originalImages[currentImageLabel]];
+            if (cachedImg) {
+                const imageWidth = cachedImg.width;
+                const imageHeight = cachedImg.height;
+                imageX = (canvas.width - imageWidth * scale) / 2 + 
+                        (imagePositionByLabel[currentImageLabel]?.x || 0);
+                imageY = (canvas.height - imageHeight * scale) / 2 + 
+                        (imagePositionByLabel[currentImageLabel]?.y || 0);
+            } else {
+                imageX = canvas.width / 2 + (imagePositionByLabel[currentImageLabel]?.x || 0);
+                imageY = canvas.height / 2 + (imagePositionByLabel[currentImageLabel]?.y || 0);
+            }
+        }
+        
+        const endpoints = [
+            { point: vectorData.points[0], index: 'start' },
+            { point: vectorData.points[vectorData.points.length - 1], index: 'end' }
+        ];
+        
+        for (const { point, index } of endpoints) {
+            let transformedX, transformedY;
+            
+            if (isBlankCanvas) {
+                const canvasCenter = { x: canvas.width / 2, y: canvas.height / 2 };
+                const position = imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
+                const scaledX = (point.x - canvasCenter.x) * scale + canvasCenter.x;
+                const scaledY = (point.y - canvasCenter.y) * scale + canvasCenter.y;
+                transformedX = scaledX + position.x;
+                transformedY = scaledY + position.y;
+            } else {
+                transformedX = imageX + (point.x * scale);
+                transformedY = imageY + (point.y * scale);
+            }
+            
+            const baseRadius = ANCHOR_SIZE || 8;
+            const scaledRadius = Math.max(8, baseRadius * scale) + 5; // Add 5px padding
+            
+            cachedControlPoints.set(`${strokeLabel}_${index}`, {
+                x: transformedX,
+                y: transformedY,
+                radius: scaledRadius,
+                strokeLabel: strokeLabel,
+                pointIndex: index,
+                type: vectorData.type
+            });
+        }
+    }
+
+    // PERFORMANCE: Optimized label detection using cached positions
+    function findLabelAtPointOptimized(x, y) {
+        for (const [strokeLabel, labelInfo] of cachedLabelPositions) {
+            if (x >= labelInfo.x && x <= labelInfo.x + labelInfo.width &&
+                y >= labelInfo.y && y <= labelInfo.y + labelInfo.height) {
+                return labelInfo;
+            }
+        }
+        return null;
+    }
+
+    // PERFORMANCE: Optimized control point detection using cached positions
+    function findControlPointAtPositionOptimized(x, y) {
+        for (const [key, controlPoint] of cachedControlPoints) {
+            const distance = Math.sqrt((x - controlPoint.x) ** 2 + (y - controlPoint.y) ** 2);
+            if (distance <= controlPoint.radius) {
+                return {
+                    strokeLabel: controlPoint.strokeLabel,
+                    pointIndex: controlPoint.pointIndex,
+                    canvasX: controlPoint.x,
+                    canvasY: controlPoint.y,
+                    type: controlPoint.type
+                };
+            }
+        }
+        return null;
+    }
+
     // Mouse drag variables for image movement
     let isDraggingImage = false;
     let lastMouseX = 0;
@@ -5418,108 +5626,55 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     
+    // PERFORMANCE: Throttled mousemove event handler using requestAnimationFrame
     canvas.addEventListener('mousemove', (e) => {
         const x = e.offsetX;
         const y = e.offsetY;
 
-        // Handle curved line anchor dragging (LEGACY SYSTEM - FIXED)
-        if (draggingAnchor && dragCurveStroke && dragAnchorIndex >= 0) {
-            const vectorData = vectorStrokesByImage[currentImageLabel][dragCurveStroke];
-            if (vectorData && vectorData.controlPoints && vectorData.controlPoints[dragAnchorIndex]) {
-                const controlPoint = vectorData.controlPoints[dragAnchorIndex];
+        // PERFORMANCE: Throttle mousemove events using requestAnimationFrame
+        if (!mouseMoveThrottled) {
+            mouseMoveThrottled = true;
+            requestAnimationFrame(() => {
+                mouseMoveThrottled = false;
                 
-                // Update the control point position in image space - this is the source of truth
-                const { x: imgX, y: imgY } = getTransformedCoords(x, y);
-                controlPoint.x = imgX;
-                controlPoint.y = imgY;
-                
-                // Note: No longer storing canvas coordinates as they become stale after pan/scale
-                
-                // Regenerate curve if we have the function
-                if (typeof generateCatmullRomSpline === 'function') {
-                    const refreshedControlPoints = refreshControlPointCanvasCoords(vectorData.controlPoints);
-                    const newSplinePoints = generateCatmullRomSpline(refreshedControlPoints, 50);
-                    
-                    // CRITICAL FIX: Convert spline canvas coordinates to image coordinates for storage
-                    vectorData.points = newSplinePoints.map(splinePoint => {
-                        const { x: imgX, y: imgY } = getTransformedCoords(splinePoint.x, splinePoint.y);
-                        return {
-                            x: imgX,  // Image coordinate
-                            y: imgY,  // Image coordinate
-                            time: Date.now()
-                        };
-                    });
-                }
-                
-                // Redraw the canvas
-                redrawCanvasWithVisibility();
-            }
-            return;
-        }
-
-        let newHoveredLabelInfo = null;
-        if (!isDrawing && !isDraggingImage && !isDraggingLabel) {
-            newHoveredLabelInfo = findLabelAtPoint(x, y);
-        }
-
-        // Update cursor and visual hover state only if hovered label changed
-        if ((hoveredCanvasLabelInfo?.strokeLabel !== newHoveredLabelInfo?.strokeLabel) || 
-            (!hoveredCanvasLabelInfo && newHoveredLabelInfo) || 
-            (hoveredCanvasLabelInfo && !newHoveredLabelInfo)) {
-            
-            hoveredCanvasLabelInfo = newHoveredLabelInfo;
-
-            if (hoveredCanvasLabelInfo) {
-                updateCursor('pointer', `hovering label ${hoveredCanvasLabelInfo.strokeLabel}`);
-                 console.log(`Canvas Mousemove: Hovering over label ${hoveredCanvasLabelInfo.strokeLabel}`);
-                // Optional: Trigger a redraw if you want to visually highlight the label on hover
-                // This requires redrawCanvasWithVisibility to check for hoveredCanvasLabelInfo
-                // For now, cursor change is the primary feedback.
-                // window.redrawCanvasWithVisibility(); 
-            } else if (!isDrawing && !isDraggingImage && !isDraggingLabel) {
-                updateCursor('default', 'canvas default');
-                // Optional: If exiting a hover, redraw to remove highlight
-                // window.redrawCanvasWithVisibility();
-            }
-        }
-        
-        // Change cursor when hovering over labels or control points (this part might be redundant if covered above but acts as fallback)
-        if (!isDraggingLabel && !isDraggingImage && !isDrawing && !isDraggingControlPoint) {
-            const currentHover = findLabelAtPoint(x, y); // Re-check for safety, though newHoveredLabelInfo is better
-            const controlPointHover = findControlPointAtPosition(x, y);
-            
-            // DEBUG: Log control point detection for curved lines
-            if (window.selectedStrokeInEditMode) {
-                const strokeData = vectorStrokesByImage[currentImageLabel]?.[window.selectedStrokeInEditMode];
-                if (strokeData?.type === 'curved') {
-                    console.log(`=== CURVED LINE ANCHOR DEBUG ===`);
-                    console.log(`Edit mode stroke: ${window.selectedStrokeInEditMode}`);
-                    console.log(`Mouse position: (${x}, ${y})`);
-                    console.log(`Control point detected:`, controlPointHover);
-                    console.log(`Stroke type: ${strokeData.type}`);
-                    console.log(`Control points count: ${strokeData.controlPoints?.length || 0}`);
-                    if (strokeData.controlPoints) {
-                        strokeData.controlPoints.forEach((cp, i) => {
-                            console.log(`  CP ${i}: image(${cp.x}, ${cp.y})`);
-                        });
+                // Handle curved line anchor dragging (LEGACY SYSTEM - FIXED)
+                if (draggingAnchor && dragCurveStroke && dragAnchorIndex >= 0) {
+                    const vectorData = vectorStrokesByImage[currentImageLabel][dragCurveStroke];
+                    if (vectorData && vectorData.controlPoints && vectorData.controlPoints[dragAnchorIndex]) {
+                        const controlPoint = vectorData.controlPoints[dragAnchorIndex];
+                        
+                        // Update the control point position in image space - this is the source of truth
+                        const { x: imgX, y: imgY } = getTransformedCoords(x, y);
+                        controlPoint.x = imgX;
+                        controlPoint.y = imgY;
+                        
+                        // Regenerate curve if we have the function
+                        if (typeof generateCatmullRomSpline === 'function') {
+                            const refreshedControlPoints = refreshControlPointCanvasCoords(vectorData.controlPoints);
+                            const newSplinePoints = generateCatmullRomSpline(refreshedControlPoints, 50);
+                            
+                            // CRITICAL FIX: Convert spline canvas coordinates to image coordinates for storage
+                            vectorData.points = newSplinePoints.map(splinePoint => {
+                                const { x: imgX, y: imgY } = getTransformedCoords(splinePoint.x, splinePoint.y);
+                                return {
+                                    x: imgX,  // Image coordinate
+                                    y: imgY,  // Image coordinate
+                                    time: Date.now()
+                                };
+                            });
+                        }
+                        
+                        // Redraw the canvas
+                        redrawCanvasWithVisibility();
+                        // PERFORMANCE: Invalidate cache after control point drag
+                        invalidateInteractiveElementCache();
                     }
+                    return;
                 }
-            }
-            
-            if (controlPointHover) {
-                if(canvas.style.cursor !== 'grab' && canvas.style.cursor !== 'grabbing') {
-                    updateCursor('grab', `control point ${controlPointHover.type} ${controlPointHover.pointIndex}`);
-                }
-                console.log(`Setting cursor to grab for control point: ${controlPointHover.type} ${controlPointHover.pointIndex}`);
-            } else if (currentHover) {
-                if(canvas.style.cursor !== 'pointer' && canvas.style.cursor !== 'grabbing') {
-                    updateCursor('pointer', 'label hover');
-                }
-            } else {
-                 if(canvas.style.cursor === 'pointer' || canvas.style.cursor === 'grab') {
-                     updateCursor('default', 'default hover');
-                 }
-            }
+
+                // PERFORMANCE: Use optimized hover detection
+                handleMouseMoveThrottled(x, y);
+            });
         }
         
         // Handle control point dragging
@@ -6676,6 +6831,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Update the scale in the global tracking object
         window.imageScaleByLabel[currentImageLabel] = newScale;
         
+        // PERFORMANCE: Invalidate cache when scale changes
+        invalidateInteractiveElementCache();
+        
         // Update UI to reflect the new scale BEFORE redrawing
         updateScaleUI();
         
@@ -6870,6 +7028,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Update the position
         imagePositionByLabel[currentImageLabel].x += deltaX;
         imagePositionByLabel[currentImageLabel].y += deltaY;
+        
+        // PERFORMANCE: Invalidate cache when position changes
+        invalidateInteractiveElementCache();
         
         console.log(`[moveImage] Moving image ${currentImageLabel} by (${deltaX}, ${deltaY})`);
         console.log(`[moveImage] Position was (${oldPos.x}, ${oldPos.y}), now is (${imagePositionByLabel[currentImageLabel].x}, ${imagePositionByLabel[currentImageLabel].y})`);
