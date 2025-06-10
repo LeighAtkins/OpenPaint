@@ -2688,7 +2688,7 @@ document.addEventListener('DOMContentLoaded', () => {
                          };
                          
                          // Draw arrowheads using the transformed coordinates and stroke color
-                         drawArrowhead(startPoint, endPoint, scaledArrowSettings, vectorData.color);
+                         drawArrowhead(startPoint, endPoint, scaledArrowSettings, vectorData.width || 5, vectorData.color);
                      } else {
                          console.warn(`Skipping arrowheads for ${strokeLabel}: invalid points`, { startPoint, endPoint });
                      }
@@ -4030,25 +4030,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Pre-calculated trigonometry for 30-degree arrowheads
         ARROW_TAN_30: Math.tan(Math.PI / 6), // ~0.577
         
-        // Cached values updated during render cycles
-        lastBrushSize: null,
-        lastScale: null,
-        cachedScaledArrowSize: null,
-        cachedBrushSize: null,
-        
-        // Update cache when scale or brush size changes
-        updateCache: function(brushSize, scale, baseArrowSize) {
-            if (this.lastBrushSize !== brushSize || this.lastScale !== scale) {
-                this.lastBrushSize = brushSize;
-                this.lastScale = scale;
-                this.cachedScaledArrowSize = Math.max(baseArrowSize, brushSize * 2) * scale;
-            }
-            return this.cachedScaledArrowSize;
-        },
-        
-        // Clear cache at start of new render cycle
+        // Clear cache at start of new render cycle (kept for compatibility)
         clearCache: function() {
-            this.cachedBrushSize = null;
+            // No longer needed but kept for compatibility
         }
     };
     
@@ -4556,22 +4540,20 @@ document.addEventListener('DOMContentLoaded', () => {
          ctx.stroke();
          
          // Draw arrowheads at original endpoints (not adjusted)
-         drawArrowhead(startPoint, endPoint, arrowSettings, colorPicker.value);
+         const currentBrushSize = parseInt(brushSize.value) || 5;
+         drawArrowhead(startPoint, endPoint, arrowSettings, currentBrushSize, colorPicker.value);
          
          ctx.restore();
      }
     
          // Function to calculate and draw arrowheads (optimized for performance)
-     function drawArrowhead(startPoint, endPoint, settings, strokeColor = null) {
+     function drawArrowhead(startPoint, endPoint, settings, strokeActualWidth, strokeColor = null) {
          const { startArrow, endArrow, arrowSize, arrowStyle } = settings;
          const scale = window.imageScaleByLabel[currentImageLabel] || 1;
          
-         // Cache DOM query result - only query once per render cycle
-         const brushSize = ARROW_PERFORMANCE_CACHE.cachedBrushSize || 
-                          (ARROW_PERFORMANCE_CACHE.cachedBrushSize = parseInt(document.getElementById('brushSize').value) || 5);
-         
-         // Use performance cache to avoid redundant calculations
-         const scaledArrowSize = ARROW_PERFORMANCE_CACHE.updateCache(brushSize, scale, arrowSize);
+         // Calculate the effective arrow size based on the stroke's own width and arrowSize setting
+         const effectiveBaseSize = Math.max(arrowSize, strokeActualWidth * 2);
+         const scaledArrowSize = effectiveBaseSize * scale;
         
         // Calculate line angle and direction
         const dx = endPoint.x - startPoint.x;
@@ -4605,7 +4587,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const arrowColor = strokeColor || colorPicker.value;
         ctx.fillStyle = arrowColor;
         ctx.strokeStyle = arrowColor;
-        ctx.lineWidth = brushSize * scale;
+        ctx.lineWidth = strokeActualWidth * scale;
         
         // Draw arrowheads without redundant context operations
         if (startArrow) {
