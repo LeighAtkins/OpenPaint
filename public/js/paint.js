@@ -1,23 +1,36 @@
-// Define global variables for use by project-manager.js
-window.IMAGE_LABELS = ['front', 'side', 'back', 'cushion'];
-window.currentImageLabel = 'front';
-window.vectorStrokesByImage = {};
-window.strokeVisibilityByImage = {};
-window.strokeLabelVisibility = {};
-window.strokeMeasurements = {}; // This variable should be accessible globally
-window.imageScaleByLabel = {};
-window.imagePositionByLabel = {};
-window.lineStrokesByImage = {}; // <--- NOTE: This should now be global due to previous fix
-window.labelsByImage = {};      // <--- NOTE: This should now be global due to previous fix
-window.originalImages = {};
-window.imageTags = {};          // <--- NEW: Store image tags
-window.isLoadingProject = false; // <-- Re-adding this line
-window.isDefocusingOperationInProgress = false; // <-- NEW: Flag to prevent re-focusing during defocus
-
-// Control point dragging variables
-let isDraggingControlPoint = false;
-let draggedControlPointInfo = null; // { strokeLabel, pointIndex, startPos }
-window.folderStructure = {      // <--- NEW: Add folder structure support
+// Define core application structure for better state management
+window.paintApp = {
+    config: {
+        IMAGE_LABELS: ['front', 'side', 'back', 'cushion'],
+        MAX_HISTORY: 50,  // Maximum number of states to store
+        ANCHOR_SIZE: 4,
+        CLICK_AREA: 10,
+        clickDelay: 300, // Milliseconds to wait for double-click
+        defaultScale: 1.0,
+        defaultPosition: { x: 0, y: 0 },
+        INCHES_TO_CM: 2.54, // Conversion factor from inches to centimeters
+        DEFAULT_LABEL_START: 'A1', // Starting label for strokes
+        FRACTION_VALUES: [0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875], // Common fractions for inch display
+        MINIMUM_DRAG_DISTANCE: 3 // pixels - minimum distance to detect drag vs click
+    },
+    state: {
+        currentImageLabel: 'front',
+        vectorStrokesByImage: {},
+        strokeVisibilityByImage: {},
+        strokeLabelVisibility: {},
+        strokeMeasurements: {},
+        imageScaleByLabel: {},
+        imagePositionByLabel: {},
+        lineStrokesByImage: {},
+        labelsByImage: {},
+        originalImages: {},
+        originalImageDimensions: {},
+        imageTags: {},
+        isLoadingProject: false,
+        isDefocusingOperationInProgress: false,
+        // DOM element references for centralized access
+        domElements: {},
+        folderStructure: {
     "root": {
         id: "root",
         name: "Root",
@@ -25,47 +38,100 @@ window.folderStructure = {      // <--- NEW: Add folder structure support
         parentId: null,
         children: []
     }
-};
-window.selectedStrokeByImage = {}; // Single stroke selection (kept for backward compatibility)
-window.multipleSelectedStrokesByImage = {}; // NEW: Multiple stroke selection support
-// Add counters for each image label type to ensure uniqueness
-window.labelCounters = {
+        },
+        selectedStrokeByImage: {},
+        multipleSelectedStrokesByImage: {},
+        labelCounters: {
     front: 0,
     side: 0,
     back: 0,
     cushion: 0
+        },
+        customLabelPositions: {},
+        calculatedLabelOffsets: {},
+        selectedStrokeInEditMode: null,
+        lastClickTime: 0,
+        lastCanvasClickTime: 0,
+        orderedImageLabels: []
+    },
+    uiState: {
+        // Control point dragging
+        isDraggingControlPoint: false,
+        draggedControlPointInfo: null, // { strokeLabel, pointIndex, startPos }
+        // Image drag and drop
+        draggedImageItem: null,
+        // Keyboard state
+        isShiftPressed: false,
+        // Drawing state variables
+        isDrawing: false,
+        lastX: 0,
+        lastY: 0,
+        points: [],
+        lastVelocity: 0,
+        mouseDownPosition: null,
+        curveJustCompleted: false,
+        drawingMode: 'freehand', // Options: 'freehand', 'straight', 'curved', 'arrow'
+        straightLineStart: null,
+        curvedLinePoints: [],
+        lastDrawnPoint: null
+    }
 };
 
-// Global variables and initialization
-window.vectorStrokesByImage = {};
-window.lineStrokesByImage = {};
-window.selectedStrokeByImage = {};
-window.multipleSelectedStrokesByImage = {};
-window.customLabelPositions = {};
-window.calculatedLabelOffsets = {};
-window.strokeVisibilityByImage = {};
-window.strokeLabelVisibility = {};
-window.selectedStrokeInEditMode = null; // Track which stroke is in edit mode
-window.lastClickTime = 0; // For tracking double-clicks
-window.lastCanvasClickTime = 0; // For tracking double-clicks on canvas
-window.clickDelay = 300; // Milliseconds to wait for double-click
-let draggedImageItem = null; // For image drag-and-drop reordering
-window.orderedImageLabels = []; // Track the current visual order of images in sidebar
+// Maintain backward compatibility by keeping global references
+// These will be gradually migrated to use the paintApp structure
+window.IMAGE_LABELS = window.paintApp.config.IMAGE_LABELS;
+window.currentImageLabel = window.paintApp.state.currentImageLabel;
+window.vectorStrokesByImage = window.paintApp.state.vectorStrokesByImage;
+window.strokeVisibilityByImage = window.paintApp.state.strokeVisibilityByImage;
+window.strokeLabelVisibility = window.paintApp.state.strokeLabelVisibility;
+window.strokeMeasurements = window.paintApp.state.strokeMeasurements;
+window.imageScaleByLabel = window.paintApp.state.imageScaleByLabel;
+window.imagePositionByLabel = window.paintApp.state.imagePositionByLabel;
+window.lineStrokesByImage = window.paintApp.state.lineStrokesByImage;
+window.labelsByImage = window.paintApp.state.labelsByImage;
+window.originalImages = window.paintApp.state.originalImages;
+window.originalImageDimensions = window.paintApp.state.originalImageDimensions;
+window.imageTags = window.paintApp.state.imageTags;
+window.isLoadingProject = window.paintApp.state.isLoadingProject;
+window.isDefocusingOperationInProgress = window.paintApp.state.isDefocusingOperationInProgress;
+window.folderStructure = window.paintApp.state.folderStructure;
+window.selectedStrokeByImage = window.paintApp.state.selectedStrokeByImage;
+window.multipleSelectedStrokesByImage = window.paintApp.state.multipleSelectedStrokesByImage;
+window.labelCounters = window.paintApp.state.labelCounters;
 
-// Arrow settings - shared between straight and curved lines (unified system)
-let arrowSettings = { // Arrow customization settings
+// Control point dragging variables (to be migrated)
+let isDraggingControlPoint = window.paintApp.uiState.isDraggingControlPoint;
+let draggedControlPointInfo = window.paintApp.uiState.draggedControlPointInfo;
+
+// Additional backward compatibility references
+window.customLabelPositions = window.paintApp.state.customLabelPositions;
+window.calculatedLabelOffsets = window.paintApp.state.calculatedLabelOffsets;
+window.selectedStrokeInEditMode = window.paintApp.state.selectedStrokeInEditMode;
+window.lastClickTime = window.paintApp.state.lastClickTime;
+window.lastCanvasClickTime = window.paintApp.state.lastCanvasClickTime;
+window.clickDelay = window.paintApp.config.clickDelay;
+let draggedImageItem = window.paintApp.uiState.draggedImageItem;
+window.orderedImageLabels = window.paintApp.state.orderedImageLabels;
+
+// Add arrow settings and curved line state to the UI state structure
+window.paintApp.uiState.arrowSettings = {
     startArrow: false,  // Off by default (Priority 1 requirement)
     endArrow: false,    // Off by default (Priority 1 requirement)
     arrowSize: 15,
     arrowStyle: 'triangular' // Options: 'triangular', 'filled', 'curved'
 };
 
-// Curved line anchor dragging state
-let draggingAnchor = false;
-let dragCurveStroke = null; // The stroke being modified
-let dragAnchorIndex = -1;   // Which control point is being dragged
-const ANCHOR_SIZE = 4;
-const CLICK_AREA = 10;
+window.paintApp.uiState.draggingAnchor = false;
+window.paintApp.uiState.dragCurveStroke = null; // The stroke being modified
+window.paintApp.uiState.dragAnchorIndex = -1;   // Which control point is being dragged
+
+// Backward compatibility references
+let arrowSettings = window.paintApp.uiState.arrowSettings;
+let draggingAnchor = window.paintApp.uiState.draggingAnchor;
+let dragCurveStroke = window.paintApp.uiState.dragCurveStroke;
+let dragAnchorIndex = window.paintApp.uiState.dragAnchorIndex;
+const ANCHOR_SIZE = window.paintApp.config.ANCHOR_SIZE;
+const CLICK_AREA = window.paintApp.config.CLICK_AREA;
 
 document.addEventListener('DOMContentLoaded', () => {
     // Initialize unit selectors
@@ -84,7 +150,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const totalInches = whole + fraction;
         
         // Update cm value
-        cmValue.value = (totalInches * 2.54).toFixed(1);
+        cmValue.value = (totalInches * window.paintApp.config.INCHES_TO_CM).toFixed(1);
     });
     
     inchFraction.addEventListener('change', () => {
@@ -93,19 +159,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const totalInches = whole + fraction;
         
         // Update cm value
-        cmValue.value = (totalInches * 2.54).toFixed(1);
+        cmValue.value = (totalInches * window.paintApp.config.INCHES_TO_CM).toFixed(1);
     });
     
     cmValue.addEventListener('change', () => {
         const cm = parseFloat(cmValue.value) || 0;
-        const inches = cm / 2.54;
+        const inches = cm / window.paintApp.config.INCHES_TO_CM;
         
         // Update inch values
         inchWhole.value = Math.floor(inches);
         
         // Find closest fraction
         const fractionPart = inches - Math.floor(inches);
-        const fractions = [0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875];
+        const fractions = window.paintApp.config.FRACTION_VALUES;
         let closestFraction = 0;
         let minDiff = 1;
         
@@ -124,24 +190,40 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('cmInputs').style.display = 'none';
     });
     
-    const canvas = document.getElementById('canvas');
+    // Initialize DOM elements in state object for centralized access
+    window.paintApp.state.domElements.canvas = document.getElementById('canvas');
+    window.paintApp.state.domElements.ctx = window.paintApp.state.domElements.canvas.getContext('2d', { willReadFrequently: true });
+    window.paintApp.state.domElements.colorPicker = document.getElementById('colorPicker');
+    window.paintApp.state.domElements.brushSize = document.getElementById('brushSize');
+    window.paintApp.state.domElements.clearButton = document.getElementById('clear');
+    window.paintApp.state.domElements.saveButton = document.getElementById('save');
+    window.paintApp.state.domElements.pasteButton = document.getElementById('paste');
+    window.paintApp.state.domElements.strokeCounter = document.getElementById('strokeCounter');
+    window.paintApp.state.domElements.imageList = document.getElementById('imageList');
+    window.paintApp.state.domElements.drawingModeToggle = document.getElementById('drawingModeToggle');
+    window.paintApp.state.domElements.strokeSidebar = document.getElementById('strokeSidebar');
+    window.paintApp.state.domElements.imageSidebar = document.getElementById('imageSidebar');
+    window.paintApp.state.domElements.strokeSidebarHeader = document.getElementById('strokeSidebarHeader');
+    window.paintApp.state.domElements.imageSidebarHeader = document.getElementById('imageSidebarHeader');
+    
+    // Create backward compatibility references
+    const canvas = window.paintApp.state.domElements.canvas;
+    const ctx = window.paintApp.state.domElements.ctx;
+    const colorPicker = window.paintApp.state.domElements.colorPicker;
+    const brushSize = window.paintApp.state.domElements.brushSize;
+    const clearButton = window.paintApp.state.domElements.clearButton;
+    const saveButton = window.paintApp.state.domElements.saveButton;
+    const pasteButton = window.paintApp.state.domElements.pasteButton;
+    const strokeCounter = window.paintApp.state.domElements.strokeCounter;
+    const imageList = window.paintApp.state.domElements.imageList;
+    const drawingModeToggle = window.paintApp.state.domElements.drawingModeToggle;
+    const strokeSidebar = window.paintApp.state.domElements.strokeSidebar;
+    const imageSidebar = window.paintApp.state.domElements.imageSidebar;
+    const strokeSidebarHeader = window.paintApp.state.domElements.strokeSidebarHeader;
+    const imageSidebarHeader = window.paintApp.state.domElements.imageSidebarHeader;
+    
     // Expose canvas globally for project management
     window.canvas = canvas;
-    const ctx = canvas.getContext('2d', { willReadFrequently: true }); // Add willReadFrequently hint
-    const colorPicker = document.getElementById('colorPicker');
-    const brushSize = document.getElementById('brushSize');
-    const clearButton = document.getElementById('clear');
-    const saveButton = document.getElementById('save');
-    const pasteButton = document.getElementById('paste');
-    const strokeCounter = document.getElementById('strokeCounter');
-    const imageList = document.getElementById('imageList');
-    const drawingModeToggle = document.getElementById('drawingModeToggle');
-    
-    // Draggable sidebars
-    const strokeSidebar = document.getElementById('strokeSidebar');
-    const imageSidebar = document.getElementById('imageSidebar');
-    const strokeSidebarHeader = document.getElementById('strokeSidebarHeader');
-    const imageSidebarHeader = document.getElementById('imageSidebarHeader');
     
     // Set up drag-and-drop for the image list container
     imageList.addEventListener('dragover', (e) => {
@@ -158,32 +240,42 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Undo/Redo functionality
-    const MAX_HISTORY = 50;  // Maximum number of states to store
-    const IMAGE_LABELS = ['front', 'side', 'back', 'cushion'];
-    let currentImageIndex = 0;
-    let imageStates = {}; // Store states for each image
-    lineStrokesByImage = {}; // Track strokes for each image
-    let strokeVisibilityByImage = {}; // Track visibility of each stroke
-    let strokeDataByImage = {}; // Store additional data for each stroke
-    labelsByImage = {}; // Track current label for each image
-    let undoStackByImage = {}; // Separate undo stack for each image
-    let redoStackByImage = {}; // Separate redo stack for each image
-    let pastedImages = [];  // Store all pasted images
-    let isDrawingOrPasting = false;  // Flag to prevent saving states while drawing
-    let strokeInProgress = false;  // Track if we're in the middle of a stroke
-    let currentStroke = null;  // Store the state before current stroke
-    let originalImageDimensions = {}; // Store original image dimensions for scaling
-    let imagePositionByLabel = {}; // Track position offset for each image
-    let isShiftPressed = false; // Track if Shift key is pressed for image movement
-    let calculatedLabelOffsets = {}; // Store automatically calculated label offsets
+    // Undo/Redo functionality - use values from paintApp structure
+    const MAX_HISTORY = window.paintApp.config.MAX_HISTORY;
+    const IMAGE_LABELS = window.paintApp.config.IMAGE_LABELS;
+    
+    // Add missing state variables to paintApp.state and use references
+    window.paintApp.state.currentImageIndex = 0;
+    window.paintApp.state.imageStates = {};
+    window.paintApp.state.undoStackByImage = {};
+    window.paintApp.state.redoStackByImage = {};
+    window.paintApp.state.pastedImages = [];
+    window.paintApp.state.isDrawingOrPasting = false;
+    window.paintApp.state.strokeInProgress = false;
+    window.paintApp.state.currentStroke = null;
+    window.paintApp.state.strokeDataByImage = {};
+    
+    // Use references to the paintApp state instead of shadowing variables
+    let currentImageIndex = window.paintApp.state.currentImageIndex;
+    let imageStates = window.paintApp.state.imageStates;
+    let undoStackByImage = window.paintApp.state.undoStackByImage;
+    let redoStackByImage = window.paintApp.state.redoStackByImage;
+    let pastedImages = window.paintApp.state.pastedImages;
+    let isDrawingOrPasting = window.paintApp.state.isDrawingOrPasting;
+    let strokeInProgress = window.paintApp.state.strokeInProgress;
+    let currentStroke = window.paintApp.state.currentStroke;
+    let strokeDataByImage = window.paintApp.state.strokeDataByImage;
+    
+    // Add UI state variables to paintApp.uiState
+    window.paintApp.uiState.isShiftPressed = false;
+    let isShiftPressed = window.paintApp.uiState.isShiftPressed;
 
     // Initialize states for default images
     IMAGE_LABELS.forEach(label => {
         lineStrokesByImage[label] = [];
         strokeVisibilityByImage[label] = {}; // Initialize stroke visibility
         strokeDataByImage[label] = {}; // Initialize stroke data
-        labelsByImage[label] = 'A1';  // Start from A1 instead of A0
+        labelsByImage[label] = window.paintApp.config.DEFAULT_LABEL_START;  // Start from A1 instead of A0
         undoStackByImage[label] = [];
         redoStackByImage[label] = [];  // Initialize redo stack
         imageStates[label] = null;
@@ -202,7 +294,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    let currentImageLabel = IMAGE_LABELS[0]; // Start with 'front'
+    // Use the currentImageLabel from paintApp.state instead of redeclaring
+    window.paintApp.state.currentImageLabel = IMAGE_LABELS[0]; // Start with 'front'
+    let currentImageLabel = window.paintApp.state.currentImageLabel;
 
     // Make addImageToSidebar available globally for the project manager
     window.addImageToSidebar = addImageToSidebar;
@@ -407,6 +501,9 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             draggedImageItem = null;
             
+            // Update ordered image labels after drag-and-drop reordering
+            updateOrderedImageLabelsArray();
+            
             // Update the ordered image labels array after reordering
             updateOrderedImageLabelsArray();
         });
@@ -498,10 +595,17 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateOrderedImageLabelsArray() {
         const imageListEl = document.getElementById('imageList');
         if (imageListEl) {
+            const currentOrder = window.orderedImageLabels ? [...window.orderedImageLabels] : [];
             window.orderedImageLabels = Array.from(imageListEl.children)
                 .map(container => container.dataset.label)
                 .filter(label => label); // Ensure only valid labels are included
-            console.log('[paint.js] Updated orderedImageLabels:', JSON.stringify(window.orderedImageLabels));
+            
+            // Log for debugging image order discrepancies
+            if (JSON.stringify(currentOrder) !== JSON.stringify(window.orderedImageLabels)) {
+                console.log('[updateOrderedImageLabelsArray] Order changed from:', currentOrder, 'to:', window.orderedImageLabels);
+            }
+        } else {
+            console.warn('[updateOrderedImageLabelsArray] imageList element not found!');
         }
     }
 
@@ -616,7 +720,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Make updateStrokeCounter available globally
     window.updateStrokeCounter = updateStrokeCounter;
     function updateStrokeCounter() {
-        const strokeCount = lineStrokesByImage[currentImageLabel]?.length || 0;
+        const strokeCount = window.paintApp.state.lineStrokesByImage[window.paintApp.state.currentImageLabel]?.length || 0;
         strokeCounter.textContent = `Lines: ${strokeCount}`;
         
         // Update visibility controls
@@ -713,10 +817,10 @@ document.addEventListener('DOMContentLoaded', () => {
     function convertUnits(from, value) {
         if (from === 'inch') {
             // Convert inch to cm
-            return value * 2.54;
+            return value * window.paintApp.config.INCHES_TO_CM;
         } else {
             // Convert cm to inch
-            return value / 2.54;
+            return value / window.paintApp.config.INCHES_TO_CM;
         }
     }
     
@@ -883,98 +987,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     // *** END NEW HELPER FUNCTION ***
 
-    function updateStrokeVisibilityControls() {
-        // IMPORTANT: Debug the current state of measurements
-        console.log('[updateStrokeVisibilityControls] START - Current window.strokeMeasurements:',
-            window.strokeMeasurements[currentImageLabel] ? JSON.stringify(window.strokeMeasurements[currentImageLabel]) : 'undefined');
+    // Helper function to create individual stroke visibility control elements
+    function createStrokeVisibilityControl(strokeLabel, context) {
+        const { unit, sortedStrokeLabels, existingMeasurements, strokesList } = context;
         
-        // Log the currently selected stroke and edit mode
-        console.log(`[updateStrokeVisibilityControls] Initial state - selectedStroke: ${selectedStrokeByImage[currentImageLabel]}, multipleSelected: ${multipleSelectedStrokesByImage[currentImageLabel] ? JSON.stringify(multipleSelectedStrokesByImage[currentImageLabel]) : 'undefined'}, Edit mode: ${window.selectedStrokeInEditMode}`);
-
-        // --- Synchronization Logic --- 
-        const currentSelectionArray = multipleSelectedStrokesByImage[currentImageLabel] || [];
-        if (currentSelectionArray.length === 1) {
-            if (selectedStrokeByImage[currentImageLabel] !== currentSelectionArray[0]) {
-                console.warn(`[updateStrokeVisibilityControls] Correcting selectedStrokeByImage. Was: ${selectedStrokeByImage[currentImageLabel]}, multiple was: ${JSON.stringify(currentSelectionArray)}. Setting to: ${currentSelectionArray[0]}`);
-                selectedStrokeByImage[currentImageLabel] = currentSelectionArray[0];
-            }
-        } else if (currentSelectionArray.length > 1) {
-            // If multiple are selected, ensure selectedStrokeByImage is one of them (e.g., the first) or null.
-            // For simplicity, if it's not in the array, set it to the first element.
-            if (!currentSelectionArray.includes(selectedStrokeByImage[currentImageLabel])) {
-                console.warn(`[updateStrokeVisibilityControls] Correcting selectedStrokeByImage for multi-select. Was: ${selectedStrokeByImage[currentImageLabel]}, multiple was: ${JSON.stringify(currentSelectionArray)}. Setting to: ${currentSelectionArray[0] || null}`);
-                selectedStrokeByImage[currentImageLabel] = currentSelectionArray[0] || null;
-            }
-        } else { // 0 selected in multipleSelectedStrokesByImage
-            if (selectedStrokeByImage[currentImageLabel] !== null) {
-                console.warn(`[updateStrokeVisibilityControls] Correcting selectedStrokeByImage. Was: ${selectedStrokeByImage[currentImageLabel]}, multiple was empty. Setting to: null`);
-                selectedStrokeByImage[currentImageLabel] = null;
-            }
-        }
-        console.log(`[updateStrokeVisibilityControls] State AFTER sync - selectedStroke: ${selectedStrokeByImage[currentImageLabel]}, multipleSelected: ${multipleSelectedStrokesByImage[currentImageLabel] ? JSON.stringify(multipleSelectedStrokesByImage[currentImageLabel]) : 'undefined'}`);
-        // --- End Synchronization Logic ---
-
-        const controlsContainer = document.getElementById('strokeVisibilityControls');
-        controlsContainer.innerHTML = ''; // Clear existing controls
-        
-        // Add a separator at the top
-        const topSeparator = document.createElement('hr');
-        controlsContainer.appendChild(topSeparator);
-        
-        // Display current unit
-        const unitDisplay = document.createElement('div');
-        unitDisplay.className = 'current-unit-display';
-        unitDisplay.textContent = `Current Unit: ${document.getElementById('unitSelector').value === 'inch' ? 'Inches' : 'Centimeters'}`;
-        controlsContainer.appendChild(unitDisplay);
-        
-        // Add another separator
-        const separator = document.createElement('hr');
-        controlsContainer.appendChild(separator);
-        
-        // Create strokes list
-        const strokesList = document.createElement('div');
-        strokesList.id = 'strokesList';
-        controlsContainer.appendChild(strokesList);
-        
-        // Get strokes for current image
-        const strokes = lineStrokesByImage[currentImageLabel] || [];
-        
-        // Create a sorted array of stroke labels we can use for index-based operations
-        const sortedStrokeLabels = Object.keys(lineStrokesByImage[currentImageLabel] || {});
-        
-        if (strokes.length === 0) {
-            strokesList.innerHTML = '<p>No strokes to display</p>';
-            return;
-        }
-        
-        // Current unit
-        const unit = document.getElementById('unitSelector').value;
-        
-        // Preserve existing stroke measurements before processing strokes
-        const existingMeasurements = window.strokeMeasurements[currentImageLabel] || {};
-        console.log('[updateStrokeVisibilityControls] Existing measurements:', JSON.stringify(existingMeasurements));
-        
-        // Initialize multi-selection array if needed
-        if (!multipleSelectedStrokesByImage[currentImageLabel]) {
-            multipleSelectedStrokesByImage[currentImageLabel] = [];
-        }
-        
-        // Add stroke actions panel if any strokes are selected
-        const selectedCount = multipleSelectedStrokesByImage[currentImageLabel].length;
-        if (selectedCount > 0) {
-            const actionsPanel = document.createElement('div');
-            actionsPanel.className = 'stroke-actions-panel';
-            
-            // Empty action buttons container - we now use direct interaction with strokes
-            const buttonsContainer = document.createElement('div');
-            buttonsContainer.className = 'stroke-actions-buttons';
-            
-            actionsPanel.appendChild(buttonsContainer);
-            strokesList.appendChild(actionsPanel);
-        }
-        
-        // Create visibility toggle for each stroke
-        strokes.forEach(strokeLabel => {
             // Initialize visibility if not set
             if (strokeVisibilityByImage[currentImageLabel] === undefined) {
                 strokeVisibilityByImage[currentImageLabel] = {};
@@ -994,7 +1010,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Initialize measurement if not set
             if (window.strokeMeasurements[currentImageLabel] === undefined) {
                 window.strokeMeasurements[currentImageLabel] = {};
-                console.log(`[updateStrokeVisibilityControls] Initializing empty measurements for ${currentImageLabel}`);
+            console.log(`[createStrokeVisibilityControl] Initializing empty measurements for ${currentImageLabel}`);
             }
             
             // ENHANCED preservation code: Check if measurement exists in the existing measurements
@@ -1006,16 +1022,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     existingMeasurement.cm !== undefined) {
                     
                     // Use the existing measurement from before this function was called
-                    console.log(`[updateStrokeVisibilityControls] PRESERVING existing measurement for ${strokeLabel}:`, 
+                console.log(`[createStrokeVisibilityControl] PRESERVING existing measurement for ${strokeLabel}:`, 
                         JSON.stringify(existingMeasurement));
                     
                     // Ensure we're not losing data by making a deep copy
                     window.strokeMeasurements[currentImageLabel][strokeLabel] = JSON.parse(JSON.stringify(existingMeasurement));
                     
                     // Log successful preservation
-                    console.log(`[updateStrokeVisibilityControls] ✓ Successfully preserved measurement for ${strokeLabel}`);
+                console.log(`[createStrokeVisibilityControl] ✓ Successfully preserved measurement for ${strokeLabel}`);
                 } else {
-                    console.log(`[updateStrokeVisibilityControls] Found incomplete measurement for ${strokeLabel}:`, 
+                console.log(`[createStrokeVisibilityControl] Found incomplete measurement for ${strokeLabel}:`, 
                         JSON.stringify(existingMeasurement));
                 }
             }
@@ -1026,9 +1042,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     inchFraction: 0,
                     cm: 0.0
                 };
-                console.log(`[updateStrokeVisibilityControls] Setting default measurement for ${strokeLabel}`);
+            console.log(`[createStrokeVisibilityControl] Setting default measurement for ${strokeLabel}`);
             } else {
-                console.log(`[updateStrokeVisibilityControls] Using existing measurement for ${strokeLabel}:`, 
+            console.log(`[createStrokeVisibilityControl] Using existing measurement for ${strokeLabel}:`, 
                     JSON.stringify(window.strokeMeasurements[currentImageLabel][strokeLabel]));
             }
             
@@ -1058,13 +1074,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 item.style.backgroundColor = '#FFF3E0';
                 item.style.borderLeft = '5px solid #FF9800';
                 item.style.boxShadow = '0 3px 8px rgba(255, 152, 0, 0.3)';
-                
-                // Remove edit mode indicator creation
             } else {
                 item.style.removeProperty('background-color');
                 item.style.removeProperty('border-left');
                 item.style.removeProperty('box-shadow');
-                // Remove edit mode indicator removal
             }
             
             // Make all parts of the item selectable (except checkbox and buttons)
@@ -1094,7 +1107,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     selectedStrokeByImage[currentImageLabel] = clickedLabel;
                     
                     // Update UI for all items by refreshing the list
-                    // This will correctly apply edit mode styling and focus
                     updateStrokeVisibilityControls(); 
                     
                     console.log('Entered edit mode for stroke:', clickedLabel);
@@ -1117,7 +1129,6 @@ document.addEventListener('DOMContentLoaded', () => {
                                 prevEditItem.style.removeProperty('background-color');
                                 prevEditItem.style.removeProperty('border-left');
                                 prevEditItem.style.removeProperty('box-shadow');
-                                // Remove edit mode indicator removal
                             }
                             window.selectedStrokeInEditMode = null;
                         }
@@ -1199,7 +1210,6 @@ document.addEventListener('DOMContentLoaded', () => {
                              const selectedItem = document.querySelector(`.stroke-visibility-item[data-stroke="${selectedStrokeByImage[currentImageLabel]}"]`);
                              if (selectedItem) selectedItem.dataset.editMode = 'false';
                         }
-
 
                         updateSelectionActionsPanel();
                         redrawCanvasWithVisibility();
@@ -1375,14 +1385,14 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Only auto-focus for newly created strokes, not for existing selected strokes
             if (isNewlyCreated) {
-                console.log(`[updateStrokeVisibilityControls] Found newly created stroke ${strokeLabel}, will focus on it`);
+            console.log(`[createStrokeVisibilityControl] Found newly created stroke ${strokeLabel}, will focus on it`);
                 // Clear the flag so we don't focus multiple times in other functions
                 window.newlyCreatedStroke = null;
                 
                 // Use setTimeout to ensure the DOM has been updated
                 setTimeout(() => {
                     if (document.body.contains(measureTextElement)) {
-                        console.log(`[updateStrokeVisibilityControls] Focusing on ${strokeLabel}`);
+                    console.log(`[createStrokeVisibilityControl] Focusing on ${strokeLabel}`);
                         measureTextElement.contentEditable = "true";
                         measureTextElement.dataset.originalMeasurementString = measureTextElement.textContent || '';
                         measureTextElement.focus();
@@ -1398,8 +1408,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }, 0);
             }
-            
-
 
             // Build the complete item
             item.appendChild(checkbox);
@@ -1408,6 +1416,110 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Add to stroke list
             strokesList.appendChild(item);
+        
+        return item;
+    }
+
+    function updateStrokeVisibilityControls() {
+        // IMPORTANT: Debug the current state of measurements
+        console.log('[updateStrokeVisibilityControls] START - Current window.strokeMeasurements:',
+            window.strokeMeasurements[currentImageLabel] ? JSON.stringify(window.strokeMeasurements[currentImageLabel]) : 'undefined');
+        
+        // Log the currently selected stroke and edit mode
+        console.log(`[updateStrokeVisibilityControls] Initial state - selectedStroke: ${selectedStrokeByImage[currentImageLabel]}, multipleSelected: ${multipleSelectedStrokesByImage[currentImageLabel] ? JSON.stringify(multipleSelectedStrokesByImage[currentImageLabel]) : 'undefined'}, Edit mode: ${window.selectedStrokeInEditMode}`);
+
+        // --- Synchronization Logic --- 
+        const currentSelectionArray = multipleSelectedStrokesByImage[currentImageLabel] || [];
+        if (currentSelectionArray.length === 1) {
+            if (selectedStrokeByImage[currentImageLabel] !== currentSelectionArray[0]) {
+                console.warn(`[updateStrokeVisibilityControls] Correcting selectedStrokeByImage. Was: ${selectedStrokeByImage[currentImageLabel]}, multiple was: ${JSON.stringify(currentSelectionArray)}. Setting to: ${currentSelectionArray[0]}`);
+                selectedStrokeByImage[currentImageLabel] = currentSelectionArray[0];
+            }
+        } else if (currentSelectionArray.length > 1) {
+            // If multiple are selected, ensure selectedStrokeByImage is one of them (e.g., the first) or null.
+            // For simplicity, if it's not in the array, set it to the first element.
+            if (!currentSelectionArray.includes(selectedStrokeByImage[currentImageLabel])) {
+                console.warn(`[updateStrokeVisibilityControls] Correcting selectedStrokeByImage for multi-select. Was: ${selectedStrokeByImage[currentImageLabel]}, multiple was: ${JSON.stringify(currentSelectionArray)}. Setting to: ${currentSelectionArray[0] || null}`);
+                selectedStrokeByImage[currentImageLabel] = currentSelectionArray[0] || null;
+            }
+        } else { // 0 selected in multipleSelectedStrokesByImage
+            if (selectedStrokeByImage[currentImageLabel] !== null) {
+                console.warn(`[updateStrokeVisibilityControls] Correcting selectedStrokeByImage. Was: ${selectedStrokeByImage[currentImageLabel]}, multiple was empty. Setting to: null`);
+                selectedStrokeByImage[currentImageLabel] = null;
+            }
+        }
+        console.log(`[updateStrokeVisibilityControls] State AFTER sync - selectedStroke: ${selectedStrokeByImage[currentImageLabel]}, multipleSelected: ${multipleSelectedStrokesByImage[currentImageLabel] ? JSON.stringify(multipleSelectedStrokesByImage[currentImageLabel]) : 'undefined'}`);
+        // --- End Synchronization Logic ---
+
+        const controlsContainer = document.getElementById('strokeVisibilityControls');
+        controlsContainer.innerHTML = ''; // Clear existing controls
+        
+        // Add a separator at the top
+        const topSeparator = document.createElement('hr');
+        controlsContainer.appendChild(topSeparator);
+        
+        // Display current unit
+        const unitDisplay = document.createElement('div');
+        unitDisplay.className = 'current-unit-display';
+        unitDisplay.textContent = `Current Unit: ${document.getElementById('unitSelector').value === 'inch' ? 'Inches' : 'Centimeters'}`;
+        controlsContainer.appendChild(unitDisplay);
+        
+        // Add another separator
+        const separator = document.createElement('hr');
+        controlsContainer.appendChild(separator);
+        
+        // Create strokes list
+        const strokesList = document.createElement('div');
+        strokesList.id = 'strokesList';
+        controlsContainer.appendChild(strokesList);
+        
+        // Get strokes for current image
+        const strokes = lineStrokesByImage[currentImageLabel] || [];
+        
+        // Create a sorted array of stroke labels we can use for index-based operations
+        const sortedStrokeLabels = Object.keys(lineStrokesByImage[currentImageLabel] || {});
+        
+        if (strokes.length === 0) {
+            strokesList.innerHTML = '<p>No strokes to display</p>';
+            return;
+        }
+        
+        // Current unit
+        const unit = document.getElementById('unitSelector').value;
+        
+        // Preserve existing stroke measurements before processing strokes
+        const existingMeasurements = window.strokeMeasurements[currentImageLabel] || {};
+        console.log('[updateStrokeVisibilityControls] Existing measurements:', JSON.stringify(existingMeasurements));
+        
+        // Initialize multi-selection array if needed
+        if (!multipleSelectedStrokesByImage[currentImageLabel]) {
+            multipleSelectedStrokesByImage[currentImageLabel] = [];
+        }
+        
+        // Add stroke actions panel if any strokes are selected
+        const selectedCount = multipleSelectedStrokesByImage[currentImageLabel].length;
+        if (selectedCount > 0) {
+            const actionsPanel = document.createElement('div');
+            actionsPanel.className = 'stroke-actions-panel';
+            
+            // Empty action buttons container - we now use direct interaction with strokes
+            const buttonsContainer = document.createElement('div');
+            buttonsContainer.className = 'stroke-actions-buttons';
+            
+            actionsPanel.appendChild(buttonsContainer);
+            strokesList.appendChild(actionsPanel);
+        }
+        
+        // Create visibility toggle for each stroke using the extracted helper function
+        const context = {
+            unit,
+            sortedStrokeLabels,
+            existingMeasurements,
+            strokesList
+        };
+        
+        strokes.forEach(strokeLabel => {
+            createStrokeVisibilityControl(strokeLabel, context);
         });
     }
     
@@ -2324,7 +2436,611 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
     // Function to apply visible strokes - moved outside redrawCanvasWithVisibility to be globally accessible
-        function applyVisibleStrokes(scale, imageX, imageY) {
+        function drawSingleStroke(ctx, strokeLabel, vectorData, scale, imageX, imageY, currentImageLabel, isBlankCanvas, canvasCenter) {
+            console.log(`\nDrawing stroke ${strokeLabel}:`);
+            console.log(`Using scale: ${scale}, imageX: ${imageX}, imageY: ${imageY}`);
+            
+            // Transform the first point
+            const firstPoint = vectorData.points[0];
+            // In blank canvas mode, the points are already in canvas coordinates
+            let transformedFirstX, transformedFirstY;
+            
+            if (isBlankCanvas) {
+                // Apply both scaling and position offset in blank canvas mode
+                const position = window.paintApp.state.imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
+                // Scale from canvas center
+                const scaledX = (firstPoint.x - canvasCenter.x) * scale + canvasCenter.x;
+                const scaledY = (firstPoint.y - canvasCenter.y) * scale + canvasCenter.y;
+                // Then apply position offset
+                transformedFirstX = scaledX + position.x;
+                transformedFirstY = scaledY + position.y;
+                console.log(`BLANK CANVAS: Using scaled and adjusted coordinates for first point: (${transformedFirstX}, ${transformedFirstY})`);
+            } else {
+                transformedFirstX = imageX + (firstPoint.x * scale);
+                transformedFirstY = imageY + (firstPoint.y * scale);
+                console.log(`First point transformation:
+                    Original (relative to image): (${firstPoint.x}, ${firstPoint.y})
+                    Scaled: (${firstPoint.x * scale}, ${firstPoint.y * scale})
+                    Final (canvas position): (${transformedFirstX}, ${transformedFirstY})`);
+            }
+            
+            // Check if this is an arrow line and pre-calculate adjusted points
+            const isArrowLine = vectorData.type === 'arrow' || (vectorData.type === 'straight' && vectorData.arrowSettings && (vectorData.arrowSettings.startArrow || vectorData.arrowSettings.endArrow));
+            let actualStartX = transformedFirstX;
+            let actualStartY = transformedFirstY;
+            let originalStartPoint = {x: transformedFirstX, y: transformedFirstY};
+            let originalEndPoint = null;
+            
+            if (isArrowLine && vectorData.points.length >= 2) {
+                // Calculate the transformed end point first
+                const lastPoint = vectorData.points[vectorData.points.length - 1];
+                let transformedLastX, transformedLastY;
+                
+                if (isBlankCanvas) {
+                    const position = window.paintApp.state.imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
+                    const scaledX = (lastPoint.x - canvasCenter.x) * scale + canvasCenter.x;
+                    const scaledY = (lastPoint.y - canvasCenter.y) * scale + canvasCenter.y;
+                    transformedLastX = scaledX + position.x;
+                    transformedLastY = scaledY + position.y;
+                } else {
+                    transformedLastX = imageX + (lastPoint.x * scale);
+                    transformedLastY = imageY + (lastPoint.y * scale);
+                }
+                
+                originalEndPoint = {x: transformedLastX, y: transformedLastY};
+                
+                // Calculate adjusted start and end points for the line shaft
+                if (vectorData.arrowSettings) {
+                    const brushSizeForStroke = vectorData.width || 5;
+                    const baseArrowSize = Math.max(vectorData.arrowSettings.arrowSize || 15, brushSizeForStroke * 2);
+                    const scaledArrowSize = baseArrowSize * scale;
+                    
+                    // Calculate line direction
+                    const dx = originalEndPoint.x - originalStartPoint.x;
+                    const dy = originalEndPoint.y - originalStartPoint.y;
+                    const lineLength = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (lineLength > 0) {
+                        const unitX = dx / lineLength;
+                        const unitY = dy / lineLength;
+                        const shortening = scaledArrowSize * 0.8; // How much to shorten from each end
+                        
+                        // Adjust start point if start arrow is enabled
+                        if (vectorData.arrowSettings.startArrow) {
+                            actualStartX = originalStartPoint.x + shortening * unitX;
+                            actualStartY = originalStartPoint.y + shortening * unitY;
+                        }
+                    }
+                }
+            }
+            
+            const strokePath = [];
+            ctx.beginPath();
+            ctx.moveTo(actualStartX, actualStartY);
+            strokePath.push({x: actualStartX, y: actualStartY});
+            
+            // Check if this is a straight line
+            const isStraightLine = vectorData.type === 'straight' || 
+                (vectorData.points.length === 2 && !vectorData.type);
+            
+            // Check if this is a curved line
+            const isCurvedLine = vectorData.type === 'curved' || vectorData.type === 'curved-arrow';
+            
+            // Check if this is a curved arrow specifically
+            const isCurvedArrow = vectorData.type === 'curved-arrow';
+            
+            if (isArrowLine && vectorData.points.length >= 2) {
+                // For arrow lines, use the pre-calculated original end point and calculate adjusted end point
+                let adjustedEndX = originalEndPoint.x;
+                let adjustedEndY = originalEndPoint.y;
+                
+                if (vectorData.arrowSettings) {
+                    // Get arrow settings to calculate end point adjustment
+                    const brushSizeForStroke = vectorData.width || 5;
+                    const baseArrowSize = Math.max(vectorData.arrowSettings.arrowSize || 15, brushSizeForStroke * 2);
+                    const scaledArrowSize = baseArrowSize * scale;
+                    
+                    // Calculate line direction
+                    const dx = originalEndPoint.x - originalStartPoint.x;
+                    const dy = originalEndPoint.y - originalStartPoint.y;
+                    const lineLength = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (lineLength > 0) {
+                        const unitX = dx / lineLength;
+                        const unitY = dy / lineLength;
+                        const shortening = scaledArrowSize * 0.8; // How much to shorten from each end
+                        
+                        // Shorten line from end if end arrow is enabled
+                        if (vectorData.arrowSettings.endArrow) {
+                            adjustedEndX = originalEndPoint.x - shortening * unitX;
+                            adjustedEndY = originalEndPoint.y - shortening * unitY;
+                        }
+                    }
+                }
+                
+                // Draw line to adjusted end point
+                ctx.lineTo(adjustedEndX, adjustedEndY);
+                strokePath.push({x: adjustedEndX, y: adjustedEndY});
+                
+                // Store the original endpoints for arrowhead drawing (with safety check)
+                if (originalStartPoint && originalEndPoint) {
+                    strokePath.originalStart = originalStartPoint;
+                    strokePath.originalEnd = originalEndPoint;
+                }
+            } else if (isCurvedLine) {
+                // For curved lines, draw smooth spline using stored interpolated points
+                console.log(`Drawing curved line with ${vectorData.points.length} interpolated points`);
+                
+                // Calculate curve shortening for arrows if this is a curved arrow
+                let startIndex = 0;
+                let endIndex = vectorData.points.length - 1;
+                
+                if (isCurvedArrow && vectorData.arrowSettings && vectorData.points.length >= 2) {
+                    const brushSizeForStroke = vectorData.width || 5;
+                    const baseArrowSize = Math.max(vectorData.arrowSettings.arrowSize || 15, brushSizeForStroke * 2);
+                    const scale = window.paintApp.state.imageScaleByLabel[currentImageLabel] || 1;
+                    const scaledArrowSize = baseArrowSize * scale;
+                    
+                    // Calculate shortening distance (80% of arrow size for clean appearance)
+                    const shorteningDistance = scaledArrowSize * 0.8;
+                    
+                    // Find how many points to skip from start for start arrow
+                    if (vectorData.arrowSettings.startArrow) {
+                        let accumulatedDistance = 0;
+                        for (let i = 1; i < vectorData.points.length && accumulatedDistance < shorteningDistance; i++) {
+                            const prevPoint = vectorData.points[i - 1];
+                            const currentPoint = vectorData.points[i];
+                            
+                            // Calculate distance between consecutive points in image space
+                            const dx = currentPoint.x - prevPoint.x;
+                            const dy = currentPoint.y - prevPoint.y;
+                            const segmentDistance = Math.sqrt(dx * dx + dy * dy) * scale;
+                            
+                            accumulatedDistance += segmentDistance;
+                            if (accumulatedDistance >= shorteningDistance) {
+                                startIndex = i - 1;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    // Find how many points to skip from end for end arrow
+                    if (vectorData.arrowSettings.endArrow) {
+                        let accumulatedDistance = 0;
+                        for (let i = vectorData.points.length - 2; i >= 0 && accumulatedDistance < shorteningDistance; i--) {
+                            const currentPoint = vectorData.points[i];
+                            const nextPoint = vectorData.points[i + 1];
+                            
+                            // Calculate distance between consecutive points in image space
+                            const dx = nextPoint.x - currentPoint.x;
+                            const dy = nextPoint.y - currentPoint.y;
+                            const segmentDistance = Math.sqrt(dx * dx + dy * dy) * scale;
+                            
+                            accumulatedDistance += segmentDistance;
+                            if (accumulatedDistance >= shorteningDistance) {
+                                endIndex = i + 1;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    console.log(`Curve shortening: startIndex=${startIndex}, endIndex=${endIndex}, total points=${vectorData.points.length}`);
+                }
+                
+                // Draw the curve using the calculated start and end indices
+                let isFirstPoint = true;
+                for (let i = startIndex; i <= endIndex; i++) {
+                    const point = vectorData.points[i];
+                    let transformedX, transformedY;
+                    
+                    if (isBlankCanvas) {
+                        const position = window.paintApp.state.imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
+                        const scaledX = (point.x - canvasCenter.x) * scale + canvasCenter.x;
+                        const scaledY = (point.y - canvasCenter.y) * scale + canvasCenter.y;
+                        transformedX = scaledX + position.x;
+                        transformedY = scaledY + position.y;
+                    } else {
+                        transformedX = imageX + (point.x * scale);
+                        transformedY = imageY + (point.y * scale);
+                    }
+                    
+                    if (isFirstPoint) {
+                        ctx.moveTo(transformedX, transformedY);
+                        strokePath.push({x: transformedX, y: transformedY});
+                        isFirstPoint = false;
+                    } else {
+                        ctx.lineTo(transformedX, transformedY);
+                        strokePath.push({x: transformedX, y: transformedY});
+                    }
+                }
+            } else {
+                // For freehand drawing, draw straight lines between all points
+                for (let i = 1; i < vectorData.points.length; i++) {
+                    const point = vectorData.points[i];
+                    let transformedX, transformedY;
+                    
+                    if (isBlankCanvas) {
+                        // Apply both scaling and position offset in blank canvas mode
+                        const position = window.paintApp.state.imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
+                        // Scale from canvas center
+                        const scaledX = (point.x - canvasCenter.x) * scale + canvasCenter.x;
+                        const scaledY = (point.y - canvasCenter.y) * scale + canvasCenter.y;
+                        // Then apply position offset
+                        transformedX = scaledX + position.x;
+                        transformedY = scaledY + position.y;
+                    } else {
+                        transformedX = imageX + (point.x * scale);
+                        transformedY = imageY + (point.y * scale);
+                    }
+                    
+                    ctx.lineTo(transformedX, transformedY);
+                    strokePath.push({x: transformedX, y: transformedY});
+                }
+            }
+            
+            // Set stroke style
+            ctx.strokeStyle = vectorData.color;
+            ctx.lineWidth = (vectorData.width || 5) * scale;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            
+            // --- Add Glow Effect for Selected Stroke ---
+            const isSelected = window.paintApp.state.selectedStrokeByImage[currentImageLabel] === strokeLabel;
+            if (isSelected) {
+                ctx.save(); // Save context state before applying shadow
+                ctx.shadowColor = '#ffffff'; // White glow
+                ctx.shadowBlur = 15; // Adjust blur amount as needed
+                ctx.shadowOffsetX = 0;
+                ctx.shadowOffsetY = 0;
+                // console.log(`    Applying glow to selected stroke: ${strokeLabel}`);
+            }
+            // --- End Glow Effect ---
+
+            ctx.stroke();
+
+            // --- Reset Glow Effect ---
+            if (isSelected) {
+                ctx.restore(); // Restore context state to remove shadow
+            }
+            // --- End Reset Glow Effect ---
+            
+            // Draw decorations and control points
+            drawStrokeDecorations(ctx, strokeLabel, vectorData, strokePath, isArrowLine, isCurvedArrow, isCurvedLine, isStraightLine, isBlankCanvas, canvasCenter, scale, imageX, imageY, currentImageLabel);
+            
+                         return strokePath;
+         }
+
+         function drawStrokeDecorations(ctx, strokeLabel, vectorData, strokePath, isArrowLine, isCurvedArrow, isCurvedLine, isStraightLine, isBlankCanvas, canvasCenter, scale, imageX, imageY, currentImageLabel) {
+             // --- Draw Arrowheads for Arrow Lines ---
+             if (isArrowLine && vectorData.arrowSettings && strokePath.length >= 2) {
+                 const startPoint = strokePath.originalStart;
+                 const endPoint = strokePath.originalEnd;
+                 
+                 // Safety check: ensure both points are valid before drawing arrowheads
+                 if (startPoint && endPoint && startPoint.x !== undefined && endPoint.x !== undefined) {
+                     // Create a temporary settings object with brush size-aware scaling
+                     const brushSizeForStroke = vectorData.width || 5;
+                     const baseArrowSize = Math.max(vectorData.arrowSettings.arrowSize || 15, brushSizeForStroke * 2);
+                     
+                     const scaledArrowSettings = {
+                         ...vectorData.arrowSettings,
+                         arrowSize: baseArrowSize // Let drawArrowhead handle the final scaling
+                     };
+                     
+                     // Draw arrowheads using the transformed coordinates and stroke color
+                     drawArrowhead(startPoint, endPoint, scaledArrowSettings, vectorData.width || 5, vectorData.color);
+                 } else {
+                     console.warn(`Skipping arrowheads for ${strokeLabel}: invalid points`, { startPoint, endPoint });
+                 }
+             }
+             // --- End Arrowheads ---
+             
+             // --- Draw Arrowheads for Curved Arrows ---
+             if (isCurvedArrow && vectorData.arrowSettings && vectorData.points.length >= 2) {
+                 const brushSizeForStroke = vectorData.width || 5;
+                 const baseArrowSize = Math.max(vectorData.arrowSettings.arrowSize || 15, brushSizeForStroke * 2);
+                 const scale = window.paintApp.state.imageScaleByLabel[currentImageLabel] || 1;
+                 const scaledArrowSize = baseArrowSize * scale;
+                 
+                 // Calculate proper tangent directions from the curve points
+                 let startTangent = null;
+                 let endTangent = null;
+                 let startPoint = null;
+                 let endPoint = null;
+                 
+                 // Calculate start tangent (direction from first to second point)
+                 if (vectorData.points.length >= 2) {
+                     const firstPoint = vectorData.points[0];
+                     const secondPoint = vectorData.points[1];
+                     
+                     // Transform first point to canvas coordinates
+                     let startX, startY;
+                     if (isBlankCanvas) {
+                         const position = window.paintApp.state.imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
+                         const scaledX = (firstPoint.x - canvasCenter.x) * scale + canvasCenter.x;
+                         const scaledY = (firstPoint.y - canvasCenter.y) * scale + canvasCenter.y;
+                         startX = scaledX + position.x;
+                         startY = scaledY + position.y;
+                     } else {
+                         startX = imageX + (firstPoint.x * scale);
+                         startY = imageY + (firstPoint.y * scale);
+                     }
+                     
+                     // Transform second point to canvas coordinates
+                     let secondX, secondY;
+                     if (isBlankCanvas) {
+                         const position = window.paintApp.state.imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
+                         const scaledX = (secondPoint.x - canvasCenter.x) * scale + canvasCenter.x;
+                         const scaledY = (secondPoint.y - canvasCenter.y) * scale + canvasCenter.y;
+                         secondX = scaledX + position.x;
+                         secondY = scaledY + position.y;
+                     } else {
+                         secondX = imageX + (secondPoint.x * scale);
+                         secondY = imageY + (secondPoint.y * scale);
+                     }
+                     
+                     // Calculate start tangent: second - first (forward direction)
+                     const dx = secondX - startX;
+                     const dy = secondY - startY;
+                     const length = Math.sqrt(dx * dx + dy * dy);
+                     if (length > 0) {
+                         startTangent = { x: dx / length, y: dy / length };
+                     }
+                     startPoint = { x: startX, y: startY };
+                 }
+                 
+                 // Calculate end tangent (direction from second-to-last to last point)
+                 if (vectorData.points.length >= 2) {
+                     const lastPoint = vectorData.points[vectorData.points.length - 1];
+                     const secondLastPoint = vectorData.points[vectorData.points.length - 2];
+                     
+                     // Transform last point to canvas coordinates
+                     let endX, endY;
+                     if (isBlankCanvas) {
+                         const position = window.paintApp.state.imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
+                         const scaledX = (lastPoint.x - canvasCenter.x) * scale + canvasCenter.x;
+                         const scaledY = (lastPoint.y - canvasCenter.y) * scale + canvasCenter.y;
+                         endX = scaledX + position.x;
+                         endY = scaledY + position.y;
+                     } else {
+                         endX = imageX + (lastPoint.x * scale);
+                         endY = imageY + (lastPoint.y * scale);
+                     }
+                     
+                     // Transform second-to-last point to canvas coordinates
+                     let secondLastX, secondLastY;
+                     if (isBlankCanvas) {
+                         const position = window.paintApp.state.imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
+                         const scaledX = (secondLastPoint.x - canvasCenter.x) * scale + canvasCenter.x;
+                         const scaledY = (secondLastPoint.y - canvasCenter.y) * scale + canvasCenter.y;
+                         secondLastX = scaledX + position.x;
+                         secondLastY = scaledY + position.y;
+                     } else {
+                         secondLastX = imageX + (secondLastPoint.x * scale);
+                         secondLastY = imageY + (secondLastPoint.y * scale);
+                     }
+                     
+                     // Calculate end tangent: last - second-to-last (forward direction)
+                     const dx = endX - secondLastX;
+                     const dy = endY - secondLastY;
+                     const length = Math.sqrt(dx * dx + dy * dy);
+                     if (length > 0) {
+                         endTangent = { x: dx / length, y: dy / length };
+                     }
+                     endPoint = { x: endX, y: endY };
+                     
+                     console.log(`End tangent calculation for curved arrow:`, { 
+                         endTangent, 
+                         endPoint: { x: endX, y: endY },
+                         secondLastPoint: { x: secondLastX, y: secondLastY },
+                         dx, dy, length 
+                     });
+                 }
+                 
+                 // Draw arrowheads using calculated tangents
+                 ctx.save();
+                 ctx.fillStyle = vectorData.color;
+                 ctx.strokeStyle = vectorData.color;
+                 
+                 if (vectorData.arrowSettings.startArrow && startTangent && startPoint) {
+                     // Start arrow points backward (opposite to tangent direction)
+                     const startAngle = Math.atan2(-startTangent.y, -startTangent.x);
+                     drawSingleArrowhead(startPoint.x, startPoint.y, startAngle, scaledArrowSize, vectorData.arrowSettings.arrowStyle);
+                 }
+                 
+                 if (vectorData.arrowSettings.endArrow && endTangent && endPoint) {
+                     // End arrow points forward (same as tangent direction)
+                     const endAngle = Math.atan2(endTangent.y, endTangent.x);
+                     drawSingleArrowhead(endPoint.x, endPoint.y, endAngle, scaledArrowSize, vectorData.arrowSettings.arrowStyle);
+                 }
+                 
+                 ctx.restore();
+             }
+             // --- End Curved Arrow Arrowheads ---
+
+             // --- Draw Control Point Indicators for Arrows (ONLY in Edit Mode) ---
+             if (isArrowLine && vectorData.points.length >= 2 && 
+                 window.selectedStrokeInEditMode === strokeLabel) {
+                 console.log(`Drawing arrow endpoint indicators for ${strokeLabel} (IN EDIT MODE)`);
+                 
+                 // Draw control points at start and end of arrow
+                 const startPoint = vectorData.points[0];
+                 const endPoint = vectorData.points[vectorData.points.length - 1];
+                 
+                 [startPoint, endPoint].forEach((point, index) => {
+                     let transformedX, transformedY;
+                     
+                     if (isBlankCanvas) {
+                         const position = window.paintApp.state.imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
+                         const scaledX = (point.x - canvasCenter.x) * scale + canvasCenter.x;
+                         const scaledY = (point.y - canvasCenter.y) * scale + canvasCenter.y;
+                         transformedX = scaledX + position.x;
+                         transformedY = scaledY + position.y;
+                     } else {
+                         transformedX = imageX + (point.x * scale);
+                         transformedY = imageY + (point.y * scale);
+                     }
+                     
+                     // Draw arrow endpoint control indicator
+                     ctx.save();
+                     ctx.beginPath();
+                     
+                     // Enhanced appearance for control points in edit mode
+                     let pointRadius = Math.max(6, 8 * Math.min(scale, 1)); // Scale down only, minimum size
+                     let fillColor = '#ffffff';
+                     let strokeColor = vectorData.color;
+                     let lineWidth = Math.max(2, 3 * Math.min(scale, 1)); // Scale line width too
+                     
+                     // Add a subtle glow effect for control points in edit mode
+                     ctx.shadowColor = vectorData.color;
+                     ctx.shadowBlur = 8;
+                     ctx.shadowOffsetX = 0;
+                     ctx.shadowOffsetY = 0;
+                     
+                     // Make endpoints square to distinguish from curved line control points
+                     const halfSize = pointRadius / 2;
+                     ctx.rect(transformedX - halfSize, transformedY - halfSize, pointRadius, pointRadius);
+                     ctx.fillStyle = fillColor;
+                     ctx.fill();
+                     ctx.strokeStyle = strokeColor;
+                     ctx.lineWidth = lineWidth;
+                     ctx.stroke();
+                     ctx.restore();
+                 });
+             }
+             
+             // --- Draw Control Point Indicators for Curved Lines ---
+             if (isCurvedLine && vectorData.controlPoints && vectorData.controlPoints.length > 0) {
+                 // Only show control points for selected strokes or strokes in edit mode
+                 const shouldShowControlPoints = (window.paintApp.state.selectedStrokeByImage[currentImageLabel] === strokeLabel || 
+                                                window.selectedStrokeInEditMode === strokeLabel);
+                 
+                 if (shouldShowControlPoints) {
+                     console.log(`Drawing control point indicators for curved line ${strokeLabel}`);
+                     
+                     // Draw small circles at each original control point
+                     vectorData.controlPoints.forEach((controlPoint, index) => {
+                         // Use the same transformation logic as the stroke rendering for consistency
+                         let transformedX, transformedY;
+                         
+                         if (isBlankCanvas) {
+                             // Apply both scaling and position offset in blank canvas mode
+                             const position = window.paintApp.state.imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
+                             // Scale from canvas center
+                             const scaledX = (controlPoint.x - canvasCenter.x) * scale + canvasCenter.x;
+                             const scaledY = (controlPoint.y - canvasCenter.y) * scale + canvasCenter.y;
+                             // Then apply position offset
+                             transformedX = scaledX + position.x;
+                             transformedY = scaledY + position.y;
+                         } else {
+                             transformedX = imageX + (controlPoint.x * scale);
+                             transformedY = imageY + (controlPoint.y * scale);
+                         }
+                         
+                         // Draw control point indicator (enhanced for draggability)
+                         ctx.save();
+                         ctx.beginPath();
+                         
+                         // Enhanced appearance for control points
+                         let pointRadius = Math.max(6, (window.paintApp.config.ANCHOR_SIZE || 8) * Math.min(scale, 1)); // Scale down only, minimum size
+                         let fillColor, strokeColor, lineWidth;
+                         
+                         // Check if this is the anchor being dragged
+                         if (draggingAnchor && dragCurveStroke === strokeLabel && dragAnchorIndex === index) {
+                             fillColor = '#ff0000'; // Red when dragging
+                             strokeColor = '#ffffff';
+                             lineWidth = 2;
+                             pointRadius = pointRadius + 2; // Make it slightly larger when dragging
+                         } else if (window.selectedStrokeInEditMode === strokeLabel) {
+                             fillColor = '#00ff00'; // Green when in edit mode
+                             strokeColor = '#ffffff';
+                             lineWidth = 2;
+                         } else {
+                             fillColor = '#4CAF50'; // Brighter green when just selected
+                             strokeColor = '#ffffff';
+                             lineWidth = 1;
+                         }
+                         
+                         ctx.arc(transformedX, transformedY, pointRadius, 0, Math.PI * 2);
+                         ctx.fillStyle = fillColor;
+                         ctx.fill();
+                         ctx.strokeStyle = strokeColor;
+                         ctx.lineWidth = lineWidth;
+                         ctx.stroke();
+                         ctx.restore();
+                     });
+                 }
+             }
+             
+             // --- Draw Control Point Indicators for Straight Lines ---
+             if (isStraightLine && vectorData.points && vectorData.points.length >= 2) {
+                 // Only show control points for selected strokes or strokes in edit mode
+                 const shouldShowControlPoints = (window.paintApp.state.selectedStrokeByImage[currentImageLabel] === strokeLabel || 
+                                                window.selectedStrokeInEditMode === strokeLabel);
+                 
+                 if (shouldShowControlPoints) {
+                     console.log(`Drawing anchor point indicators for straight line ${strokeLabel}`);
+                     
+                     // Draw anchor points at start and end of straight line
+                     const startPoint = vectorData.points[0];
+                     const endPoint = vectorData.points[vectorData.points.length - 1];
+                     
+                     [startPoint, endPoint].forEach((point, index) => {
+                         let transformedX, transformedY;
+                         
+                         if (isBlankCanvas) {
+                             const position = window.paintApp.state.imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
+                             const scaledX = (point.x - canvasCenter.x) * scale + canvasCenter.x;
+                             const scaledY = (point.y - canvasCenter.y) * scale + canvasCenter.y;
+                             transformedX = scaledX + position.x;
+                             transformedY = scaledY + position.y;
+                         } else {
+                             transformedX = imageX + (point.x * scale);
+                             transformedY = imageY + (point.y * scale);
+                         }
+                         
+                         // Draw anchor point indicator
+                         ctx.save();
+                         ctx.beginPath();
+                         
+                         // Enhanced appearance for anchor points
+                         let pointRadius = Math.max(6, (window.paintApp.config.ANCHOR_SIZE || 8) * Math.min(scale, 1)); // Scale down only, minimum size
+                         let fillColor, strokeColor, lineWidth;
+                         
+                         // Check if this is the anchor being dragged
+                         if (isDraggingControlPoint && draggedControlPointInfo && 
+                             draggedControlPointInfo.strokeLabel === strokeLabel && 
+                             draggedControlPointInfo.pointIndex === (index === 0 ? 'start' : 'end')) {
+                             fillColor = '#ff0000'; // Red when dragging
+                             strokeColor = '#ffffff';
+                             lineWidth = 2;
+                             pointRadius = pointRadius + 2; // Make it slightly larger when dragging
+                         } else if (window.selectedStrokeInEditMode === strokeLabel) {
+                             fillColor = '#2196F3'; // Blue when in edit mode
+                             strokeColor = '#ffffff';
+                             lineWidth = 2;
+                         } else {
+                             fillColor = '#2196F3'; // Blue for straight line anchors
+                             strokeColor = '#ffffff';
+                             lineWidth = 1;
+                         }
+                         
+                         // Make straight line anchors square to distinguish from curved line control points
+                         const halfSize = pointRadius / 2;
+                         ctx.rect(transformedX - halfSize, transformedY - halfSize, pointRadius, pointRadius);
+                         ctx.fillStyle = fillColor;
+                         ctx.fill();
+                         ctx.strokeStyle = strokeColor;
+                         ctx.lineWidth = lineWidth;
+                         ctx.stroke();
+                         ctx.restore();
+                     });
+                 }
+             }
+             // --- End Control Point Indicators ---
+         }
+
+         function applyVisibleStrokes(scale, imageX, imageY) {
             console.log(`\n--- applyVisibleStrokes ---`); // ADDED LOG
             console.log(`  Target Label: ${currentImageLabel}`); // ADDED LOG
             console.log(`  Scale: ${scale}, ImageX: ${imageX}, ImageY: ${imageY}`); // ADDED LOG
@@ -2337,6 +3053,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
             // Apply each visible stroke using vector data if available
+            // SAFETY CHECK: Ensure vectorStrokesByImage is properly initialized
+            if (!vectorStrokesByImage[currentImageLabel]) {
+                console.warn(`[applyVisibleStrokes] vectorStrokesByImage[${currentImageLabel}] was undefined, initializing...`);
+                vectorStrokesByImage[currentImageLabel] = {};
+            }
+            
             const strokes = vectorStrokesByImage[currentImageLabel] || {};
             const strokeOrder = lineStrokesByImage[currentImageLabel] || [];
             const visibility = strokeVisibilityByImage[currentImageLabel] || {};
@@ -2376,7 +3098,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 y: canvas.height / 2
             };
             
-            // Retrieve the correct stroke data for the current image
+            // Draw strokes using the dedicated stroke rendering function
             strokeOrder.forEach((strokeLabel) => {
                 const isVisible = visibility[strokeLabel];
                 // *** ADDED LOGGING ***
@@ -2399,608 +3121,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log(`    Vector Data Found: ${vectorData.points.length} points, type: ${vectorData.type}, color: ${vectorData.color}, width: ${vectorData.width}`);
                 // *** END LOGGING ***
                 
-                console.log(`\nDrawing stroke ${strokeLabel}:`);
-                console.log(`Using scale: ${scale}, imageX: ${imageX}, imageY: ${imageY}`);
-                            
-                            // Transform the first point
-                            const firstPoint = vectorData.points[0];
-                // In blank canvas mode, the points are already in canvas coordinates
-                let transformedFirstX, transformedFirstY;
-                
-                if (isBlankCanvas) {
-                    // Apply both scaling and position offset in blank canvas mode
-                    const position = imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
-                    // Scale from canvas center
-                    const scaledX = (firstPoint.x - canvasCenter.x) * scale + canvasCenter.x;
-                    const scaledY = (firstPoint.y - canvasCenter.y) * scale + canvasCenter.y;
-                    // Then apply position offset
-                    transformedFirstX = scaledX + position.x;
-                    transformedFirstY = scaledY + position.y;
-                    console.log(`BLANK CANVAS: Using scaled and adjusted coordinates for first point: (${transformedFirstX}, ${transformedFirstY})`);
-                } else {
-                    transformedFirstX = imageX + (firstPoint.x * scale);
-                    transformedFirstY = imageY + (firstPoint.y * scale);
-                    console.log(`First point transformation:
-                        Original (relative to image): (${firstPoint.x}, ${firstPoint.y})
-                        Scaled: (${firstPoint.x * scale}, ${firstPoint.y * scale})
-                        Final (canvas position): (${transformedFirstX}, ${transformedFirstY})`);
-                }
-                
-                // Check if this is an arrow line and pre-calculate adjusted points
-                const isArrowLine = vectorData.type === 'arrow' || (vectorData.type === 'straight' && vectorData.arrowSettings && (vectorData.arrowSettings.startArrow || vectorData.arrowSettings.endArrow));
-                let actualStartX = transformedFirstX;
-                let actualStartY = transformedFirstY;
-                let originalStartPoint = {x: transformedFirstX, y: transformedFirstY};
-                let originalEndPoint = null;
-                
-                if (isArrowLine && vectorData.points.length >= 2) {
-                    // Calculate the transformed end point first
-                    const lastPoint = vectorData.points[vectorData.points.length - 1];
-                    let transformedLastX, transformedLastY;
-                    
-                    if (isBlankCanvas) {
-                        const position = imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
-                        const scaledX = (lastPoint.x - canvasCenter.x) * scale + canvasCenter.x;
-                        const scaledY = (lastPoint.y - canvasCenter.y) * scale + canvasCenter.y;
-                        transformedLastX = scaledX + position.x;
-                        transformedLastY = scaledY + position.y;
-                    } else {
-                        transformedLastX = imageX + (lastPoint.x * scale);
-                        transformedLastY = imageY + (lastPoint.y * scale);
-                    }
-                    
-                    originalEndPoint = {x: transformedLastX, y: transformedLastY};
-                    
-                    // Calculate adjusted start and end points for the line shaft
-                    if (vectorData.arrowSettings) {
-                        const brushSizeForStroke = vectorData.width || 5;
-                        const baseArrowSize = Math.max(vectorData.arrowSettings.arrowSize || 15, brushSizeForStroke * 2);
-                        const scaledArrowSize = baseArrowSize * scale;
-                        
-                        // Calculate line direction
-                        const dx = originalEndPoint.x - originalStartPoint.x;
-                        const dy = originalEndPoint.y - originalStartPoint.y;
-                        const lineLength = Math.sqrt(dx * dx + dy * dy);
-                        
-                        if (lineLength > 0) {
-                            const unitX = dx / lineLength;
-                            const unitY = dy / lineLength;
-                            const shortening = scaledArrowSize * 0.8; // How much to shorten from each end
-                            
-                            // Adjust start point if start arrow is enabled
-                            if (vectorData.arrowSettings.startArrow) {
-                                actualStartX = originalStartPoint.x + shortening * unitX;
-                                actualStartY = originalStartPoint.y + shortening * unitY;
-                            }
-                        }
-                    }
-                }
-                
-                const strokePath = [];
-                ctx.beginPath();
-                ctx.moveTo(actualStartX, actualStartY);
-                strokePath.push({x: actualStartX, y: actualStartY});
-                            
-                            // Check if this is a straight line
-                            const isStraightLine = vectorData.type === 'straight' || 
-                                (vectorData.points.length === 2 && !vectorData.type);
-                            
-                            // Check if this is a curved line
-                            const isCurvedLine = vectorData.type === 'curved' || vectorData.type === 'curved-arrow';
-                            
-                            // Check if this is a curved arrow specifically
-                            const isCurvedArrow = vectorData.type === 'curved-arrow';
-                            
-                            if (isArrowLine && vectorData.points.length >= 2) {
-                                // For arrow lines, use the pre-calculated original end point and calculate adjusted end point
-                                let adjustedEndX = originalEndPoint.x;
-                                let adjustedEndY = originalEndPoint.y;
-                                
-                                if (vectorData.arrowSettings) {
-                                    // Get arrow settings to calculate end point adjustment
-                                    const brushSizeForStroke = vectorData.width || 5;
-                                    const baseArrowSize = Math.max(vectorData.arrowSettings.arrowSize || 15, brushSizeForStroke * 2);
-                                    const scaledArrowSize = baseArrowSize * scale;
-                                    
-                                    // Calculate line direction
-                                    const dx = originalEndPoint.x - originalStartPoint.x;
-                                    const dy = originalEndPoint.y - originalStartPoint.y;
-                                    const lineLength = Math.sqrt(dx * dx + dy * dy);
-                                    
-                                    if (lineLength > 0) {
-                                        const unitX = dx / lineLength;
-                                        const unitY = dy / lineLength;
-                                        const shortening = scaledArrowSize * 0.8; // How much to shorten from each end
-                                        
-                                        // Shorten line from end if end arrow is enabled
-                                        if (vectorData.arrowSettings.endArrow) {
-                                            adjustedEndX = originalEndPoint.x - shortening * unitX;
-                                            adjustedEndY = originalEndPoint.y - shortening * unitY;
-                                        }
-                                    }
-                                }
-                                
-                                // Draw line to adjusted end point
-                                ctx.lineTo(adjustedEndX, adjustedEndY);
-                                strokePath.push({x: adjustedEndX, y: adjustedEndY});
-                                
-                                // Store the original endpoints for arrowhead drawing (with safety check)
-                                if (originalStartPoint && originalEndPoint) {
-                                    strokePath.originalStart = originalStartPoint;
-                                    strokePath.originalEnd = originalEndPoint;
-                                }
-                            } else if (isCurvedLine) {
-                                // For curved lines, draw smooth spline using stored interpolated points
-                                console.log(`Drawing curved line with ${vectorData.points.length} interpolated points`);
-                                
-                                // Calculate curve shortening for arrows if this is a curved arrow
-                                let startIndex = 0;
-                                let endIndex = vectorData.points.length - 1;
-                                
-                                if (isCurvedArrow && vectorData.arrowSettings && vectorData.points.length >= 2) {
-                                    const brushSizeForStroke = vectorData.width || 5;
-                                    const baseArrowSize = Math.max(vectorData.arrowSettings.arrowSize || 15, brushSizeForStroke * 2);
-                                    const scale = window.imageScaleByLabel[currentImageLabel] || 1;
-                                    const scaledArrowSize = baseArrowSize * scale;
-                                    
-                                    // Calculate shortening distance (80% of arrow size for clean appearance)
-                                    const shorteningDistance = scaledArrowSize * 0.8;
-                                    
-                                    // Find how many points to skip from start for start arrow
-                                    if (vectorData.arrowSettings.startArrow) {
-                                        let accumulatedDistance = 0;
-                                        for (let i = 1; i < vectorData.points.length && accumulatedDistance < shorteningDistance; i++) {
-                                            const prevPoint = vectorData.points[i - 1];
-                                            const currentPoint = vectorData.points[i];
-                                            
-                                            // Calculate distance between consecutive points in image space
-                                            const dx = currentPoint.x - prevPoint.x;
-                                            const dy = currentPoint.y - prevPoint.y;
-                                            const segmentDistance = Math.sqrt(dx * dx + dy * dy) * scale;
-                                            
-                                            accumulatedDistance += segmentDistance;
-                                            if (accumulatedDistance >= shorteningDistance) {
-                                                startIndex = i - 1;
-                                                break;
-                                            }
-                                        }
-                                    }
-                                    
-                                    // Find how many points to skip from end for end arrow
-                                    if (vectorData.arrowSettings.endArrow) {
-                                        let accumulatedDistance = 0;
-                                        for (let i = vectorData.points.length - 2; i >= 0 && accumulatedDistance < shorteningDistance; i--) {
-                                            const currentPoint = vectorData.points[i];
-                                            const nextPoint = vectorData.points[i + 1];
-                                            
-                                            // Calculate distance between consecutive points in image space
-                                            const dx = nextPoint.x - currentPoint.x;
-                                            const dy = nextPoint.y - currentPoint.y;
-                                            const segmentDistance = Math.sqrt(dx * dx + dy * dy) * scale;
-                                            
-                                            accumulatedDistance += segmentDistance;
-                                            if (accumulatedDistance >= shorteningDistance) {
-                                                endIndex = i + 1;
-                                                break;
-                                            }
-                                        }
-                                    }
-                                    
-                                    console.log(`Curve shortening: startIndex=${startIndex}, endIndex=${endIndex}, total points=${vectorData.points.length}`);
-                                }
-                                
-                                // Draw the curve using the calculated start and end indices
-                                let isFirstPoint = true;
-                                for (let i = startIndex; i <= endIndex; i++) {
-                                    const point = vectorData.points[i];
-                                    let transformedX, transformedY;
-                                    
-                                    if (isBlankCanvas) {
-                                        const position = imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
-                                        const scaledX = (point.x - canvasCenter.x) * scale + canvasCenter.x;
-                                        const scaledY = (point.y - canvasCenter.y) * scale + canvasCenter.y;
-                                        transformedX = scaledX + position.x;
-                                        transformedY = scaledY + position.y;
-                                    } else {
-                                        transformedX = imageX + (point.x * scale);
-                                        transformedY = imageY + (point.y * scale);
-                                    }
-                                    
-                                    if (isFirstPoint) {
-                                        ctx.moveTo(transformedX, transformedY);
-                                        strokePath.push({x: transformedX, y: transformedY});
-                                        isFirstPoint = false;
-                                    } else {
-                                        ctx.lineTo(transformedX, transformedY);
-                                        strokePath.push({x: transformedX, y: transformedY});
-                                    }
-                                }
-                            } else {
-                                // For freehand drawing, draw straight lines between all points
-                                for (let i = 1; i < vectorData.points.length; i++) {
-                                    const point = vectorData.points[i];
-                                let transformedX, transformedY;
-                                
-                                if (isBlankCanvas) {
-                                    // Apply both scaling and position offset in blank canvas mode
-                                    const position = imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
-                                    // Scale from canvas center
-                                    const scaledX = (point.x - canvasCenter.x) * scale + canvasCenter.x;
-                                    const scaledY = (point.y - canvasCenter.y) * scale + canvasCenter.y;
-                                    // Then apply position offset
-                                    transformedX = scaledX + position.x;
-                                    transformedY = scaledY + position.y;
-                                } else {
-                                    transformedX = imageX + (point.x * scale);
-                                    transformedY = imageY + (point.y * scale);
-                                }
-                                
-                                ctx.lineTo(transformedX, transformedY);
-                                strokePath.push({x: transformedX, y: transformedY});
-                            }
-                        }
+                // Use the existing drawSingleStroke function
+                const strokePath = drawSingleStroke(ctx, strokeLabel, vectorData, scale, imageX, imageY, currentImageLabel, isBlankCanvas, canvasCenter);
                         
                         // Store the path for this stroke (for label positioning)
+                if (strokePath) {
                         currentStrokePaths.push({
                             label: strokeLabel,
                             path: strokePath,
                     width: (vectorData.width || 5) * scale,
                     color: vectorData.color
                         });
-                        
-                        // Set stroke style
-                ctx.strokeStyle = vectorData.color;
-                ctx.lineWidth = (vectorData.width || 5) * scale;
-                        ctx.lineCap = 'round';
-                        ctx.lineJoin = 'round';
-                        
-                // --- Add Glow Effect for Selected Stroke ---
-                const isSelected = selectedStrokeByImage[currentImageLabel] === strokeLabel;
-                            if (isSelected) {
-                    ctx.save(); // Save context state before applying shadow
-                    ctx.shadowColor = '#ffffff'; // White glow
-                    ctx.shadowBlur = 15; // Adjust blur amount as needed
-                    ctx.shadowOffsetX = 0;
-                    ctx.shadowOffsetY = 0;
-                    // console.log(`    Applying glow to selected stroke: ${strokeLabel}`);
                 }
-                // --- End Glow Effect ---
-
-                ctx.stroke();
-
-                // --- Reset Glow Effect ---
-                if (isSelected) {
-                    ctx.restore(); // Restore context state to remove shadow
-                }
-                // --- End Reset Glow Effect ---
-                
-                                 // --- Draw Arrowheads for Arrow Lines ---
-                 if (isArrowLine && vectorData.arrowSettings && strokePath.length >= 2) {
-                     const startPoint = strokePath.originalStart;
-                     const endPoint = strokePath.originalEnd;
-                     
-                     // Safety check: ensure both points are valid before drawing arrowheads
-                     if (startPoint && endPoint && startPoint.x !== undefined && endPoint.x !== undefined) {
-                         // Create a temporary settings object with brush size-aware scaling
-                         const brushSizeForStroke = vectorData.width || 5;
-                         const baseArrowSize = Math.max(vectorData.arrowSettings.arrowSize || 15, brushSizeForStroke * 2);
-                         
-                         const scaledArrowSettings = {
-                             ...vectorData.arrowSettings,
-                             arrowSize: baseArrowSize // Let drawArrowhead handle the final scaling
-                         };
-                         
-                         // Draw arrowheads using the transformed coordinates and stroke color
-                         drawArrowhead(startPoint, endPoint, scaledArrowSettings, vectorData.width || 5, vectorData.color);
-                     } else {
-                         console.warn(`Skipping arrowheads for ${strokeLabel}: invalid points`, { startPoint, endPoint });
-                     }
-                 }
-                // --- End Arrowheads ---
-                
-                // --- Draw Arrowheads for Curved Arrows ---
-                if (isCurvedArrow && vectorData.arrowSettings && vectorData.points.length >= 2) {
-                    const brushSizeForStroke = vectorData.width || 5;
-                    const baseArrowSize = Math.max(vectorData.arrowSettings.arrowSize || 15, brushSizeForStroke * 2);
-                    const scale = window.imageScaleByLabel[currentImageLabel] || 1;
-                    const scaledArrowSize = baseArrowSize * scale;
-                    
-                    // Calculate proper tangent directions from the curve points
-                    let startTangent = null;
-                    let endTangent = null;
-                    let startPoint = null;
-                    let endPoint = null;
-                    
-                    // Calculate start tangent (direction from first to second point)
-                    if (vectorData.points.length >= 2) {
-                        const firstPoint = vectorData.points[0];
-                        const secondPoint = vectorData.points[1];
-                        
-                        // Transform first point to canvas coordinates
-                        let startX, startY;
-                        if (isBlankCanvas) {
-                            const position = imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
-                            const scaledX = (firstPoint.x - canvasCenter.x) * scale + canvasCenter.x;
-                            const scaledY = (firstPoint.y - canvasCenter.y) * scale + canvasCenter.y;
-                            startX = scaledX + position.x;
-                            startY = scaledY + position.y;
-                        } else {
-                            startX = imageX + (firstPoint.x * scale);
-                            startY = imageY + (firstPoint.y * scale);
-                        }
-                        
-                        // Transform second point to canvas coordinates
-                        let secondX, secondY;
-                        if (isBlankCanvas) {
-                            const position = imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
-                            const scaledX = (secondPoint.x - canvasCenter.x) * scale + canvasCenter.x;
-                            const scaledY = (secondPoint.y - canvasCenter.y) * scale + canvasCenter.y;
-                            secondX = scaledX + position.x;
-                            secondY = scaledY + position.y;
-                        } else {
-                            secondX = imageX + (secondPoint.x * scale);
-                            secondY = imageY + (secondPoint.y * scale);
-                        }
-                        
-                        // Calculate start tangent: second - first (forward direction)
-                        const dx = secondX - startX;
-                        const dy = secondY - startY;
-                        const length = Math.sqrt(dx * dx + dy * dy);
-                        if (length > 0) {
-                            startTangent = { x: dx / length, y: dy / length };
-                        }
-                        startPoint = { x: startX, y: startY };
-                    }
-                    
-                    // Calculate end tangent (direction from second-to-last to last point)
-                    if (vectorData.points.length >= 2) {
-                        const lastPoint = vectorData.points[vectorData.points.length - 1];
-                        const secondLastPoint = vectorData.points[vectorData.points.length - 2];
-                        
-                        // Transform last point to canvas coordinates
-                        let endX, endY;
-                        if (isBlankCanvas) {
-                            const position = imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
-                            const scaledX = (lastPoint.x - canvasCenter.x) * scale + canvasCenter.x;
-                            const scaledY = (lastPoint.y - canvasCenter.y) * scale + canvasCenter.y;
-                            endX = scaledX + position.x;
-                            endY = scaledY + position.y;
-                        } else {
-                            endX = imageX + (lastPoint.x * scale);
-                            endY = imageY + (lastPoint.y * scale);
-                        }
-                        
-                        // Transform second-to-last point to canvas coordinates
-                        let secondLastX, secondLastY;
-                        if (isBlankCanvas) {
-                            const position = imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
-                            const scaledX = (secondLastPoint.x - canvasCenter.x) * scale + canvasCenter.x;
-                            const scaledY = (secondLastPoint.y - canvasCenter.y) * scale + canvasCenter.y;
-                            secondLastX = scaledX + position.x;
-                            secondLastY = scaledY + position.y;
-                        } else {
-                            secondLastX = imageX + (secondLastPoint.x * scale);
-                            secondLastY = imageY + (secondLastPoint.y * scale);
-                        }
-                        
-                        // Calculate end tangent: last - second-to-last (forward direction)
-                        const dx = endX - secondLastX;
-                        const dy = endY - secondLastY;
-                        const length = Math.sqrt(dx * dx + dy * dy);
-                        if (length > 0) {
-                            endTangent = { x: dx / length, y: dy / length };
-                        }
-                        endPoint = { x: endX, y: endY };
-                        
-                        console.log(`End tangent calculation for curved arrow:`, { 
-                            endTangent, 
-                            endPoint: { x: endX, y: endY },
-                            secondLastPoint: { x: secondLastX, y: secondLastY },
-                            dx, dy, length 
-                        });
-                    }
-                    
-                    // Draw arrowheads using calculated tangents
-                    ctx.save();
-                    ctx.fillStyle = vectorData.color;
-                    ctx.strokeStyle = vectorData.color;
-                    
-                    if (vectorData.arrowSettings.startArrow && startTangent && startPoint) {
-                        // Start arrow points backward (opposite to tangent direction)
-                        const startAngle = Math.atan2(-startTangent.y, -startTangent.x);
-                        drawSingleArrowhead(startPoint.x, startPoint.y, startAngle, scaledArrowSize, vectorData.arrowSettings.arrowStyle);
-                    }
-                    
-                    if (vectorData.arrowSettings.endArrow && endTangent && endPoint) {
-                        // End arrow points forward (same as tangent direction)
-                        const endAngle = Math.atan2(endTangent.y, endTangent.x);
-                        drawSingleArrowhead(endPoint.x, endPoint.y, endAngle, scaledArrowSize, vectorData.arrowSettings.arrowStyle);
-                    }
-                    
-                    ctx.restore();
-                }
-                // --- End Curved Arrow Arrowheads ---
-
-                // --- Draw Control Point Indicators for Arrows (ONLY in Edit Mode) ---
-                if (isArrowLine && vectorData.points.length >= 2 && 
-                    window.selectedStrokeInEditMode === strokeLabel) {
-                    console.log(`Drawing arrow endpoint indicators for ${strokeLabel} (IN EDIT MODE)`);
-                    
-                    // Draw control points at start and end of arrow
-                    const startPoint = vectorData.points[0];
-                    const endPoint = vectorData.points[vectorData.points.length - 1];
-                    
-                    [startPoint, endPoint].forEach((point, index) => {
-                        let transformedX, transformedY;
-                        
-                        if (isBlankCanvas) {
-                            const position = imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
-                            const scaledX = (point.x - canvasCenter.x) * scale + canvasCenter.x;
-                            const scaledY = (point.y - canvasCenter.y) * scale + canvasCenter.y;
-                            transformedX = scaledX + position.x;
-                            transformedY = scaledY + position.y;
-                        } else {
-                            transformedX = imageX + (point.x * scale);
-                            transformedY = imageY + (point.y * scale);
-                        }
-                        
-                        // Draw arrow endpoint control indicator
-                        ctx.save();
-                        ctx.beginPath();
-                        
-                        // Enhanced appearance for control points in edit mode
-                        let pointRadius = Math.max(6, 8 * Math.min(scale, 1)); // Scale down only, minimum size
-                        let fillColor = '#ffffff';
-                        let strokeColor = vectorData.color;
-                        let lineWidth = Math.max(2, 3 * Math.min(scale, 1)); // Scale line width too
-                        
-                        // Add a subtle glow effect for control points in edit mode
-                        ctx.shadowColor = vectorData.color;
-                        ctx.shadowBlur = 8;
-                        ctx.shadowOffsetX = 0;
-                        ctx.shadowOffsetY = 0;
-                        
-                        // Make endpoints square to distinguish from curved line control points
-                        const halfSize = pointRadius / 2;
-                        ctx.rect(transformedX - halfSize, transformedY - halfSize, pointRadius, pointRadius);
-                        ctx.fillStyle = fillColor;
-                        ctx.fill();
-                        ctx.strokeStyle = strokeColor;
-                        ctx.lineWidth = lineWidth;
-                        ctx.stroke();
-                        ctx.restore();
-                    });
-                }
-                
-                // --- Draw Control Point Indicators for Curved Lines ---
-                if (isCurvedLine && vectorData.controlPoints && vectorData.controlPoints.length > 0) {
-                    // Only show control points for selected strokes or strokes in edit mode
-                    const shouldShowControlPoints = (window.selectedStrokeByImage[currentImageLabel] === strokeLabel || 
-                                                   window.selectedStrokeInEditMode === strokeLabel);
-                    
-                    if (shouldShowControlPoints) {
-                        console.log(`Drawing control point indicators for curved line ${strokeLabel}`);
-                        
-                        // Draw small circles at each original control point
-                        vectorData.controlPoints.forEach((controlPoint, index) => {
-                            // Use the same transformation logic as the stroke rendering for consistency
-                            let transformedX, transformedY;
-                            
-                            if (isBlankCanvas) {
-                                // Apply both scaling and position offset in blank canvas mode
-                                const position = imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
-                                // Scale from canvas center
-                                const scaledX = (controlPoint.x - canvasCenter.x) * scale + canvasCenter.x;
-                                const scaledY = (controlPoint.y - canvasCenter.y) * scale + canvasCenter.y;
-                                // Then apply position offset
-                                transformedX = scaledX + position.x;
-                                transformedY = scaledY + position.y;
-                            } else {
-                                transformedX = imageX + (controlPoint.x * scale);
-                                transformedY = imageY + (controlPoint.y * scale);
-                            }
-                            
-                            // Draw control point indicator (enhanced for draggability)
-                            ctx.save();
-                            ctx.beginPath();
-                            
-                            // Enhanced appearance for control points
-                            let pointRadius = Math.max(6, (ANCHOR_SIZE || 8) * Math.min(scale, 1)); // Scale down only, minimum size
-                            let fillColor, strokeColor, lineWidth;
-                            
-                            // Check if this is the anchor being dragged
-                            if (draggingAnchor && dragCurveStroke === strokeLabel && dragAnchorIndex === index) {
-                                fillColor = '#ff0000'; // Red when dragging
-                                strokeColor = '#ffffff';
-                                lineWidth = 2;
-                                pointRadius = pointRadius + 2; // Make it slightly larger when dragging
-                            } else if (window.selectedStrokeInEditMode === strokeLabel) {
-                                fillColor = '#00ff00'; // Green when in edit mode
-                                strokeColor = '#ffffff';
-                                lineWidth = 2;
-                            } else {
-                                fillColor = '#4CAF50'; // Brighter green when just selected
-                                strokeColor = '#ffffff';
-                                lineWidth = 1;
-                            }
-                            
-                            ctx.arc(transformedX, transformedY, pointRadius, 0, Math.PI * 2);
-                            ctx.fillStyle = fillColor;
-                            ctx.fill();
-                            ctx.strokeStyle = strokeColor;
-                            ctx.lineWidth = lineWidth;
-                            ctx.stroke();
-                            ctx.restore();
-                        });
-                    }
-                }
-                
-                // --- Draw Control Point Indicators for Straight Lines ---
-                if (isStraightLine && vectorData.points && vectorData.points.length >= 2) {
-                    // Only show control points for selected strokes or strokes in edit mode
-                    const shouldShowControlPoints = (window.selectedStrokeByImage[currentImageLabel] === strokeLabel || 
-                                                   window.selectedStrokeInEditMode === strokeLabel);
-                    
-                    if (shouldShowControlPoints) {
-                        console.log(`Drawing anchor point indicators for straight line ${strokeLabel}`);
-                        
-                        // Draw anchor points at start and end of straight line
-                        const startPoint = vectorData.points[0];
-                        const endPoint = vectorData.points[vectorData.points.length - 1];
-                        
-                        [startPoint, endPoint].forEach((point, index) => {
-                            let transformedX, transformedY;
-                            
-                            if (isBlankCanvas) {
-                                const position = imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
-                                const scaledX = (point.x - canvasCenter.x) * scale + canvasCenter.x;
-                                const scaledY = (point.y - canvasCenter.y) * scale + canvasCenter.y;
-                                transformedX = scaledX + position.x;
-                                transformedY = scaledY + position.y;
-                            } else {
-                                transformedX = imageX + (point.x * scale);
-                                transformedY = imageY + (point.y * scale);
-                            }
-                            
-                            // Draw anchor point indicator
-                            ctx.save();
-                            ctx.beginPath();
-                            
-                            // Enhanced appearance for anchor points
-                            let pointRadius = Math.max(6, (ANCHOR_SIZE || 8) * Math.min(scale, 1)); // Scale down only, minimum size
-                            let fillColor, strokeColor, lineWidth;
-                            
-                            // Check if this is the anchor being dragged
-                            if (isDraggingControlPoint && draggedControlPointInfo && 
-                                draggedControlPointInfo.strokeLabel === strokeLabel && 
-                                draggedControlPointInfo.pointIndex === (index === 0 ? 'start' : 'end')) {
-                                fillColor = '#ff0000'; // Red when dragging
-                                strokeColor = '#ffffff';
-                                lineWidth = 2;
-                                pointRadius = pointRadius + 2; // Make it slightly larger when dragging
-                            } else if (window.selectedStrokeInEditMode === strokeLabel) {
-                                fillColor = '#2196F3'; // Blue when in edit mode
-                                strokeColor = '#ffffff';
-                                lineWidth = 2;
-                            } else {
-                                fillColor = '#2196F3'; // Blue for straight line anchors
-                                strokeColor = '#ffffff';
-                                lineWidth = 1;
-                            }
-                            
-                            // Make straight line anchors square to distinguish from curved line control points
-                            const halfSize = pointRadius / 2;
-                            ctx.rect(transformedX - halfSize, transformedY - halfSize, pointRadius, pointRadius);
-                            ctx.fillStyle = fillColor;
-                            ctx.fill();
-                            ctx.strokeStyle = strokeColor;
-                            ctx.lineWidth = lineWidth;
-                            ctx.stroke();
-                            ctx.restore();
-                        });
-                    }
-                }
-                // --- End Control Point Indicators ---
             });
             
             // --- Start of Label Drawing Logic (Add inside applyVisibleStrokes, after strokes are drawn) ---
@@ -4008,25 +4140,21 @@ document.addEventListener('DOMContentLoaded', () => {
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
 
-    // Drawing state
-    let isDrawing = false;
-    let lastX = 0;
-    let lastY = 0;
-    let points = [];
-    let lastVelocity = 0;
+    // Drawing state - use references to uiState for centralized management
+    let isDrawing = window.paintApp.uiState.isDrawing;
+    let lastX = window.paintApp.uiState.lastX;
+    let lastY = window.paintApp.uiState.lastY;
+    let points = window.paintApp.uiState.points;
+    let lastVelocity = window.paintApp.uiState.lastVelocity;
+    let mouseDownPosition = window.paintApp.uiState.mouseDownPosition;
+    let curveJustCompleted = window.paintApp.uiState.curveJustCompleted;
+    let drawingMode = window.paintApp.uiState.drawingMode;
+    let straightLineStart = window.paintApp.uiState.straightLineStart;
+    let curvedLinePoints = window.paintApp.uiState.curvedLinePoints;
+    let lastDrawnPoint = window.paintApp.uiState.lastDrawnPoint;
     
-    // Click vs drag detection
-    let mouseDownPosition = null;
-    const MINIMUM_DRAG_DISTANCE = 3; // pixels
-    
-    // Curved line defocus tracking
-    let curveJustCompleted = false; // CURVE_DEFOCUS_FIX_1: True if a curve was just finalized by double-click
-
-    // Drawing mode state
-    let drawingMode = 'freehand'; // Options: 'freehand', 'straight', 'curved', 'arrow'
-    let straightLineStart = null; // For straight line mode - start point
-    let curvedLinePoints = []; // For curved line mode - array of control points
-
+    // Click vs drag detection constant - use reference to config
+    const MINIMUM_DRAG_DISTANCE = window.paintApp.config.MINIMUM_DRAG_DISTANCE;
     
     // Performance optimization constants for arrow rendering
     const ARROW_PERFORMANCE_CACHE = {
@@ -4038,8 +4166,6 @@ document.addEventListener('DOMContentLoaded', () => {
             // No longer needed but kept for compatibility
         }
     };
-    
-    let lastDrawnPoint = null;
 
     // F3: Centralized coordinate transform utilities
     function toCanvas(imagePoint, imgLabel = currentImageLabel) {
@@ -6437,10 +6563,16 @@ document.addEventListener('DOMContentLoaded', () => {
             updateScaleUI(); // This calls redrawCanvasWithVisibility (will draw strokes on blank)
         }
         
-        // *** ADDED: Clear selection in the new/target image view ***
+        // *** ADDED: Clear selection and edit mode for the new/target image view ***
         if (selectedStrokeByImage[currentImageLabel] !== undefined) {
             console.log(`[switchToImage] Clearing selection for new image: ${currentImageLabel}`);
             selectedStrokeByImage[currentImageLabel] = null;
+        }
+        // Clear edit mode to prevent stale references to strokes from other images
+        if (window.selectedStrokeInEditMode) {
+            console.log(`[switchToImage] Clearing edit mode for ${window.selectedStrokeInEditMode} when switching to ${currentImageLabel}`);
+            window.selectedStrokeInEditMode = null;
+            window.paintApp.state.selectedStrokeInEditMode = null;
         }
         // *** END ADDED ***
     }
@@ -6537,6 +6669,47 @@ document.addEventListener('DOMContentLoaded', () => {
             };
             
             performRedo();
+        }
+        
+        // Handle Delete key to remove selected strokes
+        if (e.key === 'Delete' && !isDrawingOrPasting) {
+            const activeElement = document.activeElement;
+            const selectedStrokes = multipleSelectedStrokesByImage[currentImageLabel] || [];
+            
+            // Special case: Allow stroke deletion even when a measurement field is focused
+            if (activeElement && 
+                activeElement.classList.contains('stroke-measurement') && 
+                activeElement.isContentEditable) {
+                // If measurement field is focused AND strokes are selected, delete strokes instead of text
+                if (selectedStrokes.length > 0) {
+                    console.log('Delete key pressed while measurement focused, deleting selected strokes:', selectedStrokes);
+                    e.preventDefault(); // Prevent deleting text in the measurement field
+                    deleteSelectedStrokes();
+                }
+                return;
+            }
+            
+            // Apply stricter guards for other input elements
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+                return; // Let the Delete key work normally in these fields
+            }
+            
+            // Don't delete strokes if user is editing a stroke name
+            if (e.target.classList.contains('stroke-name')) {
+                return; // Let the Delete key work normally in stroke name fields
+            }
+            
+            // Don't delete strokes if user is editing other contentEditable elements (excluding measurement fields)
+            if (e.target.isContentEditable && !e.target.classList.contains('stroke-measurement')) {
+                return; // Let the Delete key work normally in other editable fields
+            }
+            
+            // If focus is on canvas/body or non-input element AND strokes are selected
+            if (selectedStrokes.length > 0) {
+                console.log('Delete key pressed, deleting selected strokes:', selectedStrokes);
+                e.preventDefault();
+                deleteSelectedStrokes();
+            }
         }
     });
     

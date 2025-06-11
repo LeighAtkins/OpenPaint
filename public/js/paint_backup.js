@@ -1,45 +1,122 @@
-// Define global variables for use by project-manager.js
-window.IMAGE_LABELS = ['front', 'side', 'back', 'cushion'];
-window.currentImageLabel = 'front';
-window.vectorStrokesByImage = {};
-window.strokeVisibilityByImage = {};
-window.strokeLabelVisibility = {};
-window.strokeMeasurements = {}; // This variable should be accessible globally
-window.imageScaleByLabel = {};
-window.imagePositionByLabel = {};
-window.lineStrokesByImage = {}; // <--- NOTE: This should now be global due to previous fix
-window.labelsByImage = {};      // <--- NOTE: This should now be global due to previous fix
-window.originalImages = {};
-window.imageTags = {};          // <--- NEW: Store image tags
-window.isLoadingProject = false; // <-- Re-adding this line
-
-// Control point dragging variables
-let isDraggingControlPoint = false;
-let draggedControlPointInfo = null; // { strokeLabel, pointIndex, startPos }
-window.folderStructure = {      // <--- NEW: Add folder structure support
-    "root": {
-        id: "root",
-        name: "Root",
-        type: "folder",
-        parentId: null,
-        children: []
+// Define core application structure for better state management
+window.paintApp = {
+    config: {
+        IMAGE_LABELS: ['front', 'side', 'back', 'cushion'],
+        MAX_HISTORY: 50,  // Maximum number of states to store
+        ANCHOR_SIZE: 4,
+        CLICK_AREA: 10,
+        clickDelay: 300, // Milliseconds to wait for double-click
+        defaultScale: 1.0,
+        defaultPosition: { x: 0, y: 0 },
+        INCHES_TO_CM: 2.54, // Conversion factor from inches to centimeters
+        DEFAULT_LABEL_START: 'A1', // Starting label for strokes
+        FRACTION_VALUES: [0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875] // Common fractions for inch display
+    },
+    state: {
+        currentImageLabel: 'front',
+        vectorStrokesByImage: {},
+        strokeVisibilityByImage: {},
+        strokeLabelVisibility: {},
+        strokeMeasurements: {},
+        imageScaleByLabel: {},
+        imagePositionByLabel: {},
+        lineStrokesByImage: {},
+        labelsByImage: {},
+        originalImages: {},
+        originalImageDimensions: {}, // Added missing originalImageDimensions
+        imageTags: {},
+        isLoadingProject: false,
+        isDefocusingOperationInProgress: false,
+        folderStructure: {
+            "root": {
+                id: "root",
+                name: "Root",
+                type: "folder",
+                parentId: null,
+                children: []
+            }
+        },
+        selectedStrokeByImage: {},
+        multipleSelectedStrokesByImage: {},
+        labelCounters: {
+            front: 0,
+            side: 0,
+            back: 0,
+            cushion: 0
+        },
+        customLabelPositions: {},
+        calculatedLabelOffsets: {},
+        selectedStrokeInEditMode: null,
+        lastClickTime: 0,
+        lastCanvasClickTime: 0,
+        orderedImageLabels: []
+    },
+    uiState: {
+        // Control point dragging
+        isDraggingControlPoint: false,
+        draggedControlPointInfo: null, // { strokeLabel, pointIndex, startPos }
+        // Image drag and drop
+        draggedImageItem: null,
+        // Keyboard state
+        isShiftPressed: false
     }
 };
-window.selectedStrokeByImage = {}; // Single stroke selection (kept for backward compatibility)
-window.multipleSelectedStrokesByImage = {}; // NEW: Multiple stroke selection support
-// Add counters for each image label type to ensure uniqueness
-window.labelCounters = {
-    front: 0,
-    side: 0,
-    back: 0,
-    cushion: 0
+
+// Maintain backward compatibility by keeping global references
+// These will be gradually migrated to use the paintApp structure
+window.IMAGE_LABELS = window.paintApp.config.IMAGE_LABELS;
+window.currentImageLabel = window.paintApp.state.currentImageLabel;
+window.vectorStrokesByImage = window.paintApp.state.vectorStrokesByImage;
+window.strokeVisibilityByImage = window.paintApp.state.strokeVisibilityByImage;
+window.strokeLabelVisibility = window.paintApp.state.strokeLabelVisibility;
+window.strokeMeasurements = window.paintApp.state.strokeMeasurements;
+window.imageScaleByLabel = window.paintApp.state.imageScaleByLabel;
+window.imagePositionByLabel = window.paintApp.state.imagePositionByLabel;
+window.lineStrokesByImage = window.paintApp.state.lineStrokesByImage;
+window.labelsByImage = window.paintApp.state.labelsByImage;
+window.originalImages = window.paintApp.state.originalImages;
+window.originalImageDimensions = window.paintApp.state.originalImageDimensions; // Backward compatibility
+window.imageTags = window.paintApp.state.imageTags;
+window.isLoadingProject = window.paintApp.state.isLoadingProject;
+window.isDefocusingOperationInProgress = window.paintApp.state.isDefocusingOperationInProgress;
+window.folderStructure = window.paintApp.state.folderStructure;
+window.selectedStrokeByImage = window.paintApp.state.selectedStrokeByImage;
+window.multipleSelectedStrokesByImage = window.paintApp.state.multipleSelectedStrokesByImage;
+window.labelCounters = window.paintApp.state.labelCounters;
+
+// Control point dragging variables (to be migrated)
+let isDraggingControlPoint = window.paintApp.uiState.isDraggingControlPoint;
+let draggedControlPointInfo = window.paintApp.uiState.draggedControlPointInfo;
+
+// Additional backward compatibility references
+window.customLabelPositions = window.paintApp.state.customLabelPositions;
+window.calculatedLabelOffsets = window.paintApp.state.calculatedLabelOffsets;
+window.selectedStrokeInEditMode = window.paintApp.state.selectedStrokeInEditMode;
+window.lastClickTime = window.paintApp.state.lastClickTime;
+window.lastCanvasClickTime = window.paintApp.state.lastCanvasClickTime;
+window.clickDelay = window.paintApp.config.clickDelay;
+let draggedImageItem = window.paintApp.uiState.draggedImageItem;
+window.orderedImageLabels = window.paintApp.state.orderedImageLabels;
+
+// Add arrow settings and curved line state to the UI state structure
+window.paintApp.uiState.arrowSettings = {
+    startArrow: false,  // Off by default (Priority 1 requirement)
+    endArrow: false,    // Off by default (Priority 1 requirement)
+    arrowSize: 15,
+    arrowStyle: 'triangular' // Options: 'triangular', 'filled', 'curved'
 };
-window.customLabelPositions = {};
-window.calculatedLabelOffsets = {};
-window.selectedStrokeInEditMode = null; // Track which stroke is in edit mode
-window.lastClickTime = 0; // For tracking double-clicks
-window.lastCanvasClickTime = 0; // For tracking double-clicks on canvas
-window.clickDelay = 300; // Milliseconds to wait for double-click
+
+window.paintApp.uiState.draggingAnchor = false;
+window.paintApp.uiState.dragCurveStroke = null; // The stroke being modified
+window.paintApp.uiState.dragAnchorIndex = -1;   // Which control point is being dragged
+
+// Backward compatibility references
+let arrowSettings = window.paintApp.uiState.arrowSettings;
+let draggingAnchor = window.paintApp.uiState.draggingAnchor;
+let dragCurveStroke = window.paintApp.uiState.dragCurveStroke;
+let dragAnchorIndex = window.paintApp.uiState.dragAnchorIndex;
+const ANCHOR_SIZE = window.paintApp.config.ANCHOR_SIZE;
+const CLICK_AREA = window.paintApp.config.CLICK_AREA;
 
 document.addEventListener('DOMContentLoaded', () => {
     // Initialize unit selectors
@@ -116,26 +193,51 @@ document.addEventListener('DOMContentLoaded', () => {
     const imageSidebar = document.getElementById('imageSidebar');
     const strokeSidebarHeader = document.getElementById('strokeSidebarHeader');
     const imageSidebarHeader = document.getElementById('imageSidebarHeader');
+    
+    // Set up drag-and-drop for the image list container
+    imageList.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+    });
+    
+    imageList.addEventListener('drop', (e) => {
+        e.preventDefault();
+        
+        // If dropped on the imageList itself (not on a specific container), append to end
+        if (draggedImageItem && e.target === imageList) {
+            imageList.appendChild(draggedImageItem);
+        }
+    });
 
-    // Undo/Redo functionality
-    const MAX_HISTORY = 50;  // Maximum number of states to store
-    const IMAGE_LABELS = ['front', 'side', 'back', 'cushion'];
-    let currentImageIndex = 0;
-    let imageStates = {}; // Store states for each image
-    lineStrokesByImage = {}; // Track strokes for each image
-    let strokeVisibilityByImage = {}; // Track visibility of each stroke
-    let strokeDataByImage = {}; // Store additional data for each stroke
-    labelsByImage = {}; // Track current label for each image
-    let undoStackByImage = {}; // Separate undo stack for each image
-    let redoStackByImage = {}; // Separate redo stack for each image
-    let pastedImages = [];  // Store all pasted images
-    let isDrawingOrPasting = false;  // Flag to prevent saving states while drawing
-    let strokeInProgress = false;  // Track if we're in the middle of a stroke
-    let currentStroke = null;  // Store the state before current stroke
-    let originalImageDimensions = {}; // Store original image dimensions for scaling
-    let imagePositionByLabel = {}; // Track position offset for each image
-    let isShiftPressed = false; // Track if Shift key is pressed for image movement
-    let calculatedLabelOffsets = {}; // Store automatically calculated label offsets
+    // Undo/Redo functionality - use values from paintApp structure
+    const MAX_HISTORY = window.paintApp.config.MAX_HISTORY;
+    const IMAGE_LABELS = window.paintApp.config.IMAGE_LABELS;
+    
+    // Add missing state variables to paintApp.state and use references
+    window.paintApp.state.currentImageIndex = 0;
+    window.paintApp.state.imageStates = {};
+    window.paintApp.state.undoStackByImage = {};
+    window.paintApp.state.redoStackByImage = {};
+    window.paintApp.state.pastedImages = [];
+    window.paintApp.state.isDrawingOrPasting = false;
+    window.paintApp.state.strokeInProgress = false;
+    window.paintApp.state.currentStroke = null;
+    window.paintApp.state.strokeDataByImage = {};
+    
+    // Use references to the paintApp state instead of shadowing variables
+    let currentImageIndex = window.paintApp.state.currentImageIndex;
+    let imageStates = window.paintApp.state.imageStates;
+    let undoStackByImage = window.paintApp.state.undoStackByImage;
+    let redoStackByImage = window.paintApp.state.redoStackByImage;
+    let pastedImages = window.paintApp.state.pastedImages;
+    let isDrawingOrPasting = window.paintApp.state.isDrawingOrPasting;
+    let strokeInProgress = window.paintApp.state.strokeInProgress;
+    let currentStroke = window.paintApp.state.currentStroke;
+    let strokeDataByImage = window.paintApp.state.strokeDataByImage;
+    
+    // Add UI state variables to paintApp.uiState
+    window.paintApp.uiState.isShiftPressed = false;
+    let isShiftPressed = window.paintApp.uiState.isShiftPressed;
 
     // Initialize states for default images
     IMAGE_LABELS.forEach(label => {
@@ -148,7 +250,7 @@ document.addEventListener('DOMContentLoaded', () => {
         imageStates[label] = null;
         // Initialize scale to 100% (1.0)
         window.imageScaleByLabel[label] = 1.0;
-        originalImageDimensions[label] = { width: 0, height: 0 };
+        window.paintApp.state.originalImageDimensions[label] = { width: 0, height: 0 };
         // Initialize position offset to center (0, 0)
         imagePositionByLabel[label] = { x: 0, y: 0 };
         // Initialize with a blank state when the image is first created
@@ -161,7 +263,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    let currentImageLabel = IMAGE_LABELS[0]; // Start with 'front'
+    // Use the currentImageLabel from paintApp.state instead of redeclaring
+    window.paintApp.state.currentImageLabel = IMAGE_LABELS[0]; // Start with 'front'
+    let currentImageLabel = window.paintApp.state.currentImageLabel;
 
     // Make addImageToSidebar available globally for the project manager
     window.addImageToSidebar = addImageToSidebar;
@@ -173,6 +277,7 @@ document.addEventListener('DOMContentLoaded', () => {
         container.className = 'image-container';
         container.dataset.label = label;
         container.dataset.originalImageUrl = imageUrl; // Store the original image URL for later restoration
+        container.draggable = true; // Enable drag-and-drop
         
         // Display the tag-based filename if available, otherwise display the label
         // MODIFIED: Use getTagBasedFilename immediately if available
@@ -237,6 +342,56 @@ document.addEventListener('DOMContentLoaded', () => {
         img.className = 'pasted-image';
         img.alt = `${label} view`;
         
+        // Create delete button
+        const deleteButton = document.createElement('button');
+        deleteButton.className = 'delete-image-btn';
+        deleteButton.innerHTML = '×';
+        deleteButton.title = 'Delete image';
+        deleteButton.style.cssText = `
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid #ccc;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            color: #666;
+        `;
+        
+        // Delete button hover effect
+        deleteButton.addEventListener('mouseenter', () => {
+            deleteButton.style.background = '#ff4444';
+            deleteButton.style.color = 'white';
+            deleteButton.style.borderColor = '#ff4444';
+        });
+        
+        deleteButton.addEventListener('mouseleave', () => {
+            deleteButton.style.background = 'rgba(255, 255, 255, 0.9)';
+            deleteButton.style.color = '#666';
+            deleteButton.style.borderColor = '#ccc';
+        });
+        
+        // Delete button click handler
+        deleteButton.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent container click (switchToImage)
+            
+            const confirmMsg = `Are you sure you want to delete image "${label}" and all its associated strokes and data? This action cannot be undone directly through the undo stack for image deletion.`;
+            if (!confirm(confirmMsg)) {
+                return;
+            }
+            
+            // Perform deletion
+            deleteImage(label, container);
+        });
+        
         // Add all elements to container
         container.appendChild(img);
         container.appendChild(labelElement);
@@ -244,6 +399,7 @@ document.addEventListener('DOMContentLoaded', () => {
         container.appendChild(strokesElement);
         container.appendChild(scaleElement);
         container.appendChild(editTagsButton); // Add edit tags button
+        container.appendChild(deleteButton); // Add delete button
         
         // Set up click handler for switching images
         container.onclick = () => {
@@ -254,14 +410,163 @@ document.addEventListener('DOMContentLoaded', () => {
             switchToImage(label);
         };
         
+        // Add drag-and-drop event listeners
+        container.addEventListener('dragstart', (e) => {
+            draggedImageItem = container;
+            e.dataTransfer.setData('text/plain', label);
+            e.dataTransfer.effectAllowed = 'move';
+            container.classList.add('dragging');
+        });
+        
+        container.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            
+            if (draggedImageItem && draggedImageItem !== container) {
+                // Determine if we should insert before or after based on mouse position
+                const rect = container.getBoundingClientRect();
+                const midpoint = rect.top + rect.height / 2;
+                
+                // Remove any existing drag-over classes
+                container.classList.remove('drag-over-before', 'drag-over-after');
+                
+                if (e.clientY < midpoint) {
+                    container.classList.add('drag-over-before');
+                } else {
+                    container.classList.add('drag-over-after');
+                }
+            }
+        });
+        
+        container.addEventListener('dragleave', (e) => {
+            container.classList.remove('drag-over-before', 'drag-over-after');
+        });
+        
+        container.addEventListener('drop', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            container.classList.remove('drag-over-before', 'drag-over-after');
+            
+            if (draggedImageItem && draggedImageItem !== container) {
+                const imageList = document.getElementById('imageList');
+                const rect = container.getBoundingClientRect();
+                const midpoint = rect.top + rect.height / 2;
+                
+                if (e.clientY < midpoint) {
+                    // Insert before this container
+                    imageList.insertBefore(draggedImageItem, container);
+                } else {
+                    // Insert after this container
+                    imageList.insertBefore(draggedImageItem, container.nextSibling);
+                }
+            }
+        });
+        
+        container.addEventListener('dragend', (e) => {
+            container.classList.remove('dragging');
+            document.querySelectorAll('.image-container').forEach(el => {
+                el.classList.remove('drag-over-before', 'drag-over-after');
+            });
+            draggedImageItem = null;
+            
+            // Update the ordered image labels array after reordering
+            updateOrderedImageLabelsArray();
+        });
+        
         // Finally add to the sidebar
         document.getElementById('imageList').appendChild(container);
         console.log(`[addImageToSidebar] Successfully appended container for ${label}. #imageList children: ${document.getElementById('imageList').children.length}`);
+        
+        // Update the ordered image labels array
+        updateOrderedImageLabelsArray();
         
         // Update the stroke count
         updateSidebarStrokeCounts();
     }
     
+    // Function to delete an image and clean up all associated data
+    function deleteImage(label, container) {
+        console.log(`[deleteImage] Deleting image: ${label}`);
+        
+        // Remove from DOM
+        container.remove();
+        
+        // Update the ordered image labels array after deletion
+        updateOrderedImageLabelsArray();
+        
+        // Clean up data structures
+        delete window.imageScaleByLabel[label];
+        delete window.imagePositionByLabel[label];
+        delete window.lineStrokesByImage[label];
+        delete window.vectorStrokesByImage[label];
+        delete window.strokeVisibilityByImage[label];
+        delete window.strokeLabelVisibility[label];
+        delete window.strokeMeasurements[label];
+        delete window.labelsByImage[label];
+        delete window.undoStackByImage[label];
+        delete window.redoStackByImage[label];
+        delete window.imageStates[label];
+        delete window.originalImages[label];
+        delete window.originalImageDimensions[label];
+        delete window.imageTags[label];
+        delete window.customLabelPositions[label];
+        delete window.calculatedLabelOffsets[label];
+        delete window.selectedStrokeByImage[label];
+        delete window.multipleSelectedStrokesByImage[label];
+        
+        // Remove from pastedImages array if present
+        const originalImageUrl = container.dataset.originalImageUrl;
+        if (originalImageUrl) {
+            pastedImages = pastedImages.filter(url => url !== originalImageUrl);
+        }
+        
+        // Handle currentImageLabel if it was the deleted image
+        if (currentImageLabel === label) {
+            const imageListEl = document.getElementById('imageList');
+            let nextLabelToSwitch = null;
+            
+            if (imageListEl.children.length > 0) {
+                // Switch to the first available image
+                nextLabelToSwitch = imageListEl.children[0].dataset.label;
+            }
+            
+            if (nextLabelToSwitch) {
+                switchToImage(nextLabelToSwitch);
+            } else {
+                // No images left
+                currentImageLabel = null;
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                updateStrokeCounter(); // Will show 0
+                updateStrokeVisibilityControls(); // Will show "no strokes"
+                updateActiveImageInSidebar();
+            }
+        }
+        
+        // Exit edit mode if the deleted image had a stroke in edit mode
+        if (window.selectedStrokeInEditMode) {
+            const editModeImageLabel = window.selectedStrokeInEditMode.split('_')[0];
+            if (editModeImageLabel === label) {
+                window.selectedStrokeInEditMode = null;
+            }
+        }
+        
+        // Update UI
+        updateSidebarStrokeCounts();
+        
+        console.log(`[deleteImage] Successfully deleted image: ${label}`);
+    }
+    
+    // Function to update the ordered image labels array based on current DOM order
+    function updateOrderedImageLabelsArray() {
+        const imageListEl = document.getElementById('imageList');
+        if (imageListEl) {
+            window.orderedImageLabels = Array.from(imageListEl.children)
+                .map(container => container.dataset.label)
+                .filter(label => label); // Ensure only valid labels are included
+            console.log('[paint.js] Updated orderedImageLabels:', JSON.stringify(window.orderedImageLabels));
+        }
+    }
 
     // Store the original images for each view
     window.originalImages = window.originalImages || {};
@@ -374,7 +679,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Make updateStrokeCounter available globally
     window.updateStrokeCounter = updateStrokeCounter;
     function updateStrokeCounter() {
-        const strokeCount = lineStrokesByImage[currentImageLabel]?.length || 0;
+        const strokeCount = window.paintApp.state.lineStrokesByImage[window.paintApp.state.currentImageLabel]?.length || 0;
         strokeCounter.textContent = `Lines: ${strokeCount}`;
         
         // Update visibility controls
@@ -521,9 +826,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.activeElement.classList && 
                 document.activeElement.classList.contains('stroke-measurement');
                 
-            const shouldAutoFocus = isNewlyCreated || (isSelected && !window.isScalingOrZooming && !window.isMovingImage && !hasActiveMeasurementFocus);
+            const shouldAutoFocus = isNewlyCreated || (!window.isDefocusingOperationInProgress && isSelected && !window.isScalingOrZooming && !window.isMovingImage && !hasActiveMeasurementFocus);
 
-            console.log(`[createEditableMeasureText] Focus logic for ${strokeLabel}: isNewlyCreated=${isNewlyCreated}, isSelected=${isSelected}, isScalingOrZooming=${!!window.isScalingOrZooming}, isMovingImage=${!!window.isMovingImage}, hasActiveMeasurementFocus=${hasActiveMeasurementFocus}, shouldAutoFocus=${shouldAutoFocus}`);
+            console.log(`[createEditableMeasureText] Focus logic for ${strokeLabel}: isNewlyCreated=${isNewlyCreated}, isSelected=${isSelected}, isScalingOrZooming=${!!window.isScalingOrZooming}, isMovingImage=${!!window.isMovingImage}, hasActiveMeasurementFocus=${hasActiveMeasurementFocus}, isDefocusingOperationInProgress=${!!window.isDefocusingOperationInProgress}, shouldAutoFocus=${shouldAutoFocus}`);
 
             if (shouldAutoFocus) {
                 // Focus and select all text for newly created or explicitly selected strokes
@@ -1157,6 +1462,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 }, 0);
             }
             
+
+
             // Build the complete item
             item.appendChild(checkbox);
             item.appendChild(labelContainer);
@@ -1165,6 +1472,21 @@ document.addEventListener('DOMContentLoaded', () => {
             // Add to stroke list
             strokesList.appendChild(item);
         });
+    }
+    
+    // Helper function to update stroke type based on arrow settings
+    function updateStrokeTypeBasedOnArrows(vectorData) {
+        const hasArrows = vectorData.arrowSettings && (vectorData.arrowSettings.startArrow || vectorData.arrowSettings.endArrow);
+        
+        if (vectorData.type === 'straight' && hasArrows) {
+            vectorData.type = 'arrow';
+        } else if (vectorData.type === 'arrow' && !hasArrows) {
+            vectorData.type = 'straight';
+        } else if (vectorData.type === 'curved' && hasArrows) {
+            vectorData.type = 'curved-arrow';
+        } else if (vectorData.type === 'curved-arrow' && !hasArrows) {
+            vectorData.type = 'curved';
+        }
     }
     
     // Function to toggle label visibility on canvas
@@ -1876,685 +2198,123 @@ document.addEventListener('DOMContentLoaded', () => {
         customLabelPositions[label] = {};
     });
     
-    // Cache for loaded images to prevent flickering
-    const imageCache = {};
-    
-    // Store for label positions to prevent overlapping
-    let currentLabelPositions = [];
-    
-    // Store for stroke paths to avoid overlapping with lines
-    let currentStrokePaths = [];
-    
-    // Function to redraw canvas respecting stroke visibility
-    // Make redrawCanvasWithVisibility available globally
-    window.redrawCanvasWithVisibility = redrawCanvasWithVisibility;
-    function redrawCanvasWithVisibility() {
-        console.log(`--- redrawCanvasWithVisibility called for: ${currentImageLabel} ---`);
-        
-        // Clear performance cache for new render cycle
-        ARROW_PERFORMANCE_CACHE.clearCache();
-        
-        // ADDED: Ensure originalImageDimensions exists and has an entry for this label
-        if (!window.originalImageDimensions) {
-            window.originalImageDimensions = {};
-        }
-        
-        // ADDED: If we don't have dimensions for this label but we're trying to draw strokes,
-        // create default dimensions based on the canvas size to prevent coordinates from being lost
-        if (!window.originalImageDimensions[currentImageLabel] && 
-            vectorStrokesByImage[currentImageLabel] && 
-            Object.keys(vectorStrokesByImage[currentImageLabel]).length > 0) {
-            
-            console.log(`Creating default dimensions for ${currentImageLabel} to preserve strokes`);
-            window.originalImageDimensions[currentImageLabel] = {
-                width: canvas.width,
-                height: canvas.height
-            };
-            console.log(`Set dimensions to match canvas: ${canvas.width}x${canvas.height}`);
-        }
-        
-        // Reset label positions and stroke paths for this redraw
-        currentLabelPositions = [];
-        currentStrokePaths = [];
-        
-        // Create a copy of custom label positions for tracking which ones were actually used
-        const usedCustomPositions = {};
-        
-        // Get current scale and position from stored values
-        const scale = window.imageScaleByLabel[currentImageLabel] || 1.0;
-        console.log(`[redrawCanvasWithVisibility] Using scale=${scale} for ${currentImageLabel}`);
-        
-        // Double-check scale against UI for consistency
-        const scaleEl = document.getElementById('scaleButton');
-        if (scaleEl) {
-            const scaleText = scaleEl.textContent;
-            const scaleMatch = scaleText.match(/Scale: (\d+)%/);
-            if (scaleMatch && scaleMatch[1]) {
-                const uiScale = parseInt(scaleMatch[1]) / 100;
-                console.log(`[redrawCanvasWithVisibility] UI shows scale=${uiScale} for ${currentImageLabel}`);
-                if (uiScale !== scale) {
-                    console.warn(`[redrawCanvasWithVisibility] WARNING: Scale mismatch! Variable: ${scale}, UI: ${uiScale}`);
-                    // Don't automatically update as that would create infinite loop with updateScale
-                    // Just warn about the inconsistency
-                }
+// Define core application structure for better state management
+window.paintApp = {
+    config: {
+        IMAGE_LABELS: ['front', 'side', 'back', 'cushion'],
+        MAX_HISTORY: 50,  // Maximum number of states to store
+        ANCHOR_SIZE: 4,
+        CLICK_AREA: 10,
+        clickDelay: 300, // Milliseconds to wait for double-click
+        defaultScale: 1.0,
+        defaultPosition: { x: 0, y: 0 },
+        INCHES_TO_CM: 2.54, // Conversion factor from inches to centimeters
+        DEFAULT_LABEL_START: 'A1', // Starting label for strokes
+        FRACTION_VALUES: [0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875] // Common fractions for inch display
+    },
+    state: {
+        currentImageLabel: 'front',
+        vectorStrokesByImage: {},
+        strokeVisibilityByImage: {},
+        strokeLabelVisibility: {},
+        strokeMeasurements: {},
+        imageScaleByLabel: {},
+        imagePositionByLabel: {},
+        lineStrokesByImage: {},
+        labelsByImage: {},
+        originalImages: {},
+        originalImageDimensions: {}, // Added missing originalImageDimensions
+        imageTags: {},
+        isLoadingProject: false,
+        isDefocusingOperationInProgress: false,
+        folderStructure: {
+            "root": {
+                id: "root",
+                name: "Root",
+                type: "folder",
+                parentId: null,
+                children: []
             }
-        }
-        
-        const position = imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
-        console.log(`[redrawCanvasWithVisibility] Using position: x=${position.x}, y=${position.y} for ${currentImageLabel}`);
-        
-        // We need to rebuild the canvas from scratch using individual stroke data
-        const strokes = lineStrokesByImage[currentImageLabel] || [];
-        
-        // Start with a blank canvas or the original image if available
-        if (window.originalImages && window.originalImages[currentImageLabel]) {
-            // Check if we already have this image in the cache
-            const imageUrl = window.originalImages[currentImageLabel];
-            
-            if (imageCache[imageUrl]) {
-                // Use cached image immediately
-                const img = imageCache[imageUrl];
-                
-                // Calculate center of canvas for positioning
-                const centerX = (canvas.width - img.width * scale) / 2;
-                const centerY = (canvas.height - img.height * scale) / 2;
-                
-                // Get final position with offset
-                const imageX = centerX + position.x;
-                const imageY = centerY + position.y;
-                
-                drawImageAndStrokes(img, scale, imageX, imageY);
-            } else {
-                // Load the image and cache it
-                const img = new Image();
-                img.onload = () => {
-                    // Add to cache
-                    imageCache[imageUrl] = img;
-                    
-                    // Calculate center of canvas for positioning
-                    const centerX = (canvas.width - img.width * scale) / 2;
-                    const centerY = (canvas.height - img.height * scale) / 2;
-                    
-                    // Get final position with offset
-                    const imageX = centerX + position.x;
-                    const imageY = centerY + position.y;
-                    
-                    drawImageAndStrokes(img, scale, imageX, imageY);
-                };
-                img.src = imageUrl;
-                
-                // If the image is already cached in the browser, it might be immediately available
-                if (img.complete) {
-                    imageCache[imageUrl] = img;
-                    
-                    // Calculate center of canvas for positioning
-                    const centerX = (canvas.width - img.width * scale) / 2;
-                    const centerY = (canvas.height - img.height * scale) / 2;
-                    
-                    // Get final position with offset
-                    const imageX = centerX + position.x;
-                    const imageY = centerY + position.y;
-                    
-                    drawImageAndStrokes(img, scale, imageX, imageY);
-                } else {
-                    // If the image isn't immediately available,
-                    // still draw the strokes on a blank canvas so they don't disappear
-                    ctx.clearRect(0, 0, canvas.width, canvas.height);
-                    
-                    // Use default scale and center position when no image is available yet
-                    const canvasCenterX = canvas.width / 2;
-                    const canvasCenterY = canvas.height / 2;
-                    applyVisibleStrokes(scale, canvasCenterX + position.x, canvasCenterY + position.y);
-                }
-            }
-        } else {
-            // Otherwise start with a blank canvas
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = 'white'; // Add white background fill
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            // Use default scale and center position when no image
-            const canvasCenterX = canvas.width / 2;
-            const canvasCenterY = canvas.height / 2;
-            
-            // Apply the position offset to the center coordinates
-            const imageX = canvasCenterX + position.x;
-            const imageY = canvasCenterY + position.y;
-            
-            applyVisibleStrokes(scale, imageX, imageY);
-        }
+        },
+        selectedStrokeByImage: {},
+        multipleSelectedStrokesByImage: {},
+        labelCounters: {
+            front: 0,
+            side: 0,
+            back: 0,
+            cushion: 0
+        },
+        customLabelPositions: {},
+        calculatedLabelOffsets: {},
+        selectedStrokeInEditMode: null,
+        lastClickTime: 0,
+        lastCanvasClickTime: 0,
+        orderedImageLabels: []
+    },
+    uiState: {
+        // Control point dragging
+        isDraggingControlPoint: false,
+        draggedControlPointInfo: null, // { strokeLabel, pointIndex, startPos }
+        // Image drag and drop
+        draggedImageItem: null,
+        // Keyboard state
+        isShiftPressed: false
     }
-        
-    // Function to draw the image and apply strokes
-    function drawImageAndStrokes(img, scale, imageX, imageY) {
-        console.log(`[drawImageAndStrokes] Called with scale=${scale}`);
-        console.log(`[drawImageAndStrokes] Current window.imageScaleByLabel[${currentImageLabel}] = ${window.imageScaleByLabel[currentImageLabel]}`);
-            
-        // CRITICAL FIX: Ensure scale parameter matches the global scale value
-        if (scale !== window.imageScaleByLabel[currentImageLabel]) {
-            console.error(`[drawImageAndStrokes] CRITICAL SCALE MISMATCH! Parameter scale=${scale} but global scale=${window.imageScaleByLabel[currentImageLabel]}. Fixing...`);
-            scale = window.imageScaleByLabel[currentImageLabel]; // Use the global scale value always
-            
-            // Recalculate image position based on correct scale
-            const centerX = (canvas.width - img.width * scale) / 2;
-            const centerY = (canvas.height - img.height * scale) / 2;
-            const position = imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
-            imageX = centerX + position.x;
-            imageY = centerY + position.y;
-        }
-        
-        // Clear the canvas
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+};
 
-        // Get dimensions
-        const imgWidth = img.width;
-        const imgHeight = img.height;
-        
-        // Calculate scaled dimensions
-        const scaledWidth = imgWidth * scale;
-        const scaledHeight = imgHeight * scale;
-            
-            // Draw the image with scaling and positioning
-        ctx.drawImage(img, imageX, imageY, scaledWidth, scaledHeight);
-            
-        // Apply visible strokes
-        applyVisibleStrokes(scale, imageX, imageY);
-        }
-        
-    // Function to apply visible strokes - moved outside redrawCanvasWithVisibility to be globally accessible
-        function applyVisibleStrokes(scale, imageX, imageY) {
-            console.log(`\n--- applyVisibleStrokes ---`); // ADDED LOG
-            console.log(`  Target Label: ${currentImageLabel}`); // ADDED LOG
-            console.log(`  Scale: ${scale}, ImageX: ${imageX}, ImageY: ${imageY}`); // ADDED LOG
-        console.log(`[applyVisibleStrokes] Current window.imageScaleByLabel[${currentImageLabel}] = ${window.imageScaleByLabel[currentImageLabel]}`);
-        
-        // CRITICAL FIX: Ensure scale parameter matches the global scale value
-        if (scale !== window.imageScaleByLabel[currentImageLabel]) {
-            console.error(`[applyVisibleStrokes] CRITICAL SCALE MISMATCH! Parameter scale=${scale} but global scale=${window.imageScaleByLabel[currentImageLabel]}. Fixing...`);
-            scale = window.imageScaleByLabel[currentImageLabel]; // Use the global scale value always
-        }
-        
-            // Apply each visible stroke using vector data if available
-            const strokes = vectorStrokesByImage[currentImageLabel] || {};
-            const strokeOrder = lineStrokesByImage[currentImageLabel] || [];
-            const visibility = strokeVisibilityByImage[currentImageLabel] || {};
+// Maintain backward compatibility by keeping global references
+// These will be gradually migrated to use the paintApp structure
+window.IMAGE_LABELS = window.paintApp.config.IMAGE_LABELS;
+window.currentImageLabel = window.paintApp.state.currentImageLabel;
+window.vectorStrokesByImage = window.paintApp.state.vectorStrokesByImage;
+window.strokeVisibilityByImage = window.paintApp.state.strokeVisibilityByImage;
+window.strokeLabelVisibility = window.paintApp.state.strokeLabelVisibility;
+window.strokeMeasurements = window.paintApp.state.strokeMeasurements;
+window.imageScaleByLabel = window.paintApp.state.imageScaleByLabel;
+window.imagePositionByLabel = window.paintApp.state.imagePositionByLabel;
+window.lineStrokesByImage = window.paintApp.state.lineStrokesByImage;
+window.labelsByImage = window.paintApp.state.labelsByImage;
+window.originalImages = window.paintApp.state.originalImages;
+window.originalImageDimensions = window.paintApp.state.originalImageDimensions; // Backward compatibility
+window.imageTags = window.paintApp.state.imageTags;
+window.isLoadingProject = window.paintApp.state.isLoadingProject;
+window.isDefocusingOperationInProgress = window.paintApp.state.isDefocusingOperationInProgress;
+window.folderStructure = window.paintApp.state.folderStructure;
+window.selectedStrokeByImage = window.paintApp.state.selectedStrokeByImage;
+window.multipleSelectedStrokesByImage = window.paintApp.state.multipleSelectedStrokesByImage;
+window.labelCounters = window.paintApp.state.labelCounters;
 
-            // *** ADDED LOGGING ***
-            console.log(`  Stroke Order (${strokeOrder.length}): [${strokeOrder.join(', ')}]`);
-            console.log(`  Vector Strokes Available (${Object.keys(strokes).length}):`, Object.keys(strokes));
-            console.log(`  Visibility States:`, JSON.stringify(visibility));
-            // *** END LOGGING ***
+// Control point dragging variables (to be migrated)
+let isDraggingControlPoint = window.paintApp.uiState.isDraggingControlPoint;
+let draggedControlPointInfo = window.paintApp.uiState.draggedControlPointInfo;
 
-            // Get the current image dimensions and scale
-            let imageWidth = canvas.width;
-            let imageHeight = canvas.height;
-            
-            // Try to get original image dimensions if available
-            if (window.originalImages && window.originalImages[currentImageLabel]) {
-                const cachedImg = imageCache[window.originalImages[currentImageLabel]];
-                if (cachedImg) {
-                    imageWidth = cachedImg.width;
-                    imageHeight = cachedImg.height;
-                    console.log(`Original image dimensions: ${imageWidth}x${imageHeight}`);
-                }
-            }
-            
-            // Check if this is a blank canvas (no image, using canvas dimensions)
-            const dims = window.originalImageDimensions ? window.originalImageDimensions[currentImageLabel] : undefined;
-            const isBlankCanvas = !window.originalImages || !window.originalImages[currentImageLabel] || 
-                                 (dims && dims.width === canvas.width && dims.height === canvas.height);
-            
-            if (isBlankCanvas) {
-                console.log(`Applying strokes in BLANK CANVAS MODE`);
-            }
-            
-            // Calculate canvas center for scaling in blank canvas mode
-            const canvasCenter = {
-                x: canvas.width / 2,
-                y: canvas.height / 2
-            };
-            
-            // Retrieve the correct stroke data for the current image
-            strokeOrder.forEach((strokeLabel) => {
-                const isVisible = visibility[strokeLabel];
-                // *** ADDED LOGGING ***
-                console.log(`\n  Processing Stroke: ${strokeLabel}`);
-                console.log(`    Is Visible? ${isVisible}`);
-                // *** END LOGGING ***
+// Additional backward compatibility references
+window.customLabelPositions = window.paintApp.state.customLabelPositions;
+window.calculatedLabelOffsets = window.paintApp.state.calculatedLabelOffsets;
+window.selectedStrokeInEditMode = window.paintApp.state.selectedStrokeInEditMode;
+window.lastClickTime = window.paintApp.state.lastClickTime;
+window.lastCanvasClickTime = window.paintApp.state.lastCanvasClickTime;
+window.clickDelay = window.paintApp.config.clickDelay;
+let draggedImageItem = window.paintApp.uiState.draggedImageItem;
+window.orderedImageLabels = window.paintApp.state.orderedImageLabels;
 
-                if (!isVisible) return; // Skip invisible strokes
-                
-                    const vectorData = strokes[strokeLabel];
-                // *** ADDED LOGGING ***
-                if (!vectorData) {
-                    console.warn(`    Vector data MISSING for ${strokeLabel}! Skipping draw.`);
-                    return;
-                } 
-                if (!vectorData.points || vectorData.points.length === 0) {
-                    console.warn(`    Vector data for ${strokeLabel} has NO POINTS! Skipping draw.`);
-                    return;
-                }
-                console.log(`    Vector Data Found: ${vectorData.points.length} points, type: ${vectorData.type}, color: ${vectorData.color}, width: ${vectorData.width}`);
-                // *** END LOGGING ***
-                
-                console.log(`\nDrawing stroke ${strokeLabel}:`);
-                console.log(`Using scale: ${scale}, imageX: ${imageX}, imageY: ${imageY}`);
-                            
-                            // Transform the first point
-                            const firstPoint = vectorData.points[0];
-                // In blank canvas mode, the points are already in canvas coordinates
-                let transformedFirstX, transformedFirstY;
-                
-                if (isBlankCanvas) {
-                    // Apply both scaling and position offset in blank canvas mode
-                    const position = imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
-                    // Scale from canvas center
-                    const scaledX = (firstPoint.x - canvasCenter.x) * scale + canvasCenter.x;
-                    const scaledY = (firstPoint.y - canvasCenter.y) * scale + canvasCenter.y;
-                    // Then apply position offset
-                    transformedFirstX = scaledX + position.x;
-                    transformedFirstY = scaledY + position.y;
-                    console.log(`BLANK CANVAS: Using scaled and adjusted coordinates for first point: (${transformedFirstX}, ${transformedFirstY})`);
-                } else {
-                    transformedFirstX = imageX + (firstPoint.x * scale);
-                    transformedFirstY = imageY + (firstPoint.y * scale);
-                    console.log(`First point transformation:
-                        Original (relative to image): (${firstPoint.x}, ${firstPoint.y})
-                        Scaled: (${firstPoint.x * scale}, ${firstPoint.y * scale})
-                        Final (canvas position): (${transformedFirstX}, ${transformedFirstY})`);
-                }
-                
-                // Check if this is an arrow line and pre-calculate adjusted points
-                const isArrowLine = vectorData.type === 'arrow';
-                let actualStartX = transformedFirstX;
-                let actualStartY = transformedFirstY;
-                let originalStartPoint = {x: transformedFirstX, y: transformedFirstY};
-                let originalEndPoint = null;
-                
-                if (isArrowLine && vectorData.points.length >= 2) {
-                    // Calculate the transformed end point first
-                    const lastPoint = vectorData.points[vectorData.points.length - 1];
-                    let transformedLastX, transformedLastY;
-                    
-                    if (isBlankCanvas) {
-                        const position = imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
-                        const scaledX = (lastPoint.x - canvasCenter.x) * scale + canvasCenter.x;
-                        const scaledY = (lastPoint.y - canvasCenter.y) * scale + canvasCenter.y;
-                        transformedLastX = scaledX + position.x;
-                        transformedLastY = scaledY + position.y;
-                    } else {
-                        transformedLastX = imageX + (lastPoint.x * scale);
-                        transformedLastY = imageY + (lastPoint.y * scale);
-                    }
-                    
-                    originalEndPoint = {x: transformedLastX, y: transformedLastY};
-                    
-                    // Calculate adjusted start and end points for the line shaft
-                    if (vectorData.arrowSettings) {
-                        const brushSizeForStroke = vectorData.width || 5;
-                        const baseArrowSize = Math.max(vectorData.arrowSettings.arrowSize || 15, brushSizeForStroke * 2);
-                        const scaledArrowSize = baseArrowSize * scale;
-                        
-                        // Calculate line direction
-                        const dx = originalEndPoint.x - originalStartPoint.x;
-                        const dy = originalEndPoint.y - originalStartPoint.y;
-                        const lineLength = Math.sqrt(dx * dx + dy * dy);
-                        
-                        if (lineLength > 0) {
-                            const unitX = dx / lineLength;
-                            const unitY = dy / lineLength;
-                            const shortening = scaledArrowSize * 0.8; // How much to shorten from each end
-                            
-                            // Adjust start point if start arrow is enabled
-                            if (vectorData.arrowSettings.startArrow) {
-                                actualStartX = originalStartPoint.x + shortening * unitX;
-                                actualStartY = originalStartPoint.y + shortening * unitY;
-                            }
-                        }
-                    }
-                }
-                
-                const strokePath = [];
-                            ctx.beginPath();
-                ctx.moveTo(actualStartX, actualStartY);
-                strokePath.push({x: actualStartX, y: actualStartY});
-                            
-                            // Check if this is a straight line
-                            const isStraightLine = vectorData.type === 'straight' || 
-                                (vectorData.points.length === 2 && !vectorData.type);
-                            
-                            // Check if this is a curved line (includes curved arrows)
-                            const isCurvedLine = vectorData.type === 'curved' || vectorData.type === 'curved-arrow';
-                            
-                            // Check if this is a curved arrow specifically
-                            const isCurvedArrow = vectorData.type === 'curved-arrow';
-                            
-                            if (isStraightLine && vectorData.points.length >= 2) {
-                                const lastPoint = vectorData.points[vectorData.points.length - 1];
-                            let transformedLastX, transformedLastY;
-                            
-                            if (isBlankCanvas) {
-                                // Apply both scaling and position offset in blank canvas mode
-                                const position = imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
-                                // Scale from canvas center
-                                const scaledX = (lastPoint.x - canvasCenter.x) * scale + canvasCenter.x;
-                                const scaledY = (lastPoint.y - canvasCenter.y) * scale + canvasCenter.y;
-                                // Then apply position offset
-                                transformedLastX = scaledX + position.x;
-                                transformedLastY = scaledY + position.y;
-                                console.log(`BLANK CANVAS: Using scaled and adjusted coordinates for last point: (${transformedLastX}, ${transformedLastY})`);
-                            } else {
-                                transformedLastX = imageX + (lastPoint.x * scale);
-                                transformedLastY = imageY + (lastPoint.y * scale);
-                                console.log(`Last point transformation:
-                                    Original (relative to image): (${lastPoint.x}, ${lastPoint.y})
-                                    Scaled: (${lastPoint.x * scale}, ${lastPoint.y * scale})
-                                    Final (canvas position): (${transformedLastX}, ${transformedLastY})`);
-                            }
-                            
-                                ctx.lineTo(transformedLastX, transformedLastY);
-                            strokePath.push({x: transformedLastX, y: transformedLastY});
-                            } else if (isArrowLine && vectorData.points.length >= 2) {
-                                // For arrow lines, use the pre-calculated original end point and calculate adjusted end point
-                                let adjustedEndX = originalEndPoint.x;
-                                let adjustedEndY = originalEndPoint.y;
-                                
-                                if (vectorData.arrowSettings) {
-                                    // Get arrow settings to calculate end point adjustment
-                                    const brushSizeForStroke = vectorData.width || 5;
-                                    const baseArrowSize = Math.max(vectorData.arrowSettings.arrowSize || 15, brushSizeForStroke * 2);
-                                    const scaledArrowSize = baseArrowSize * scale;
-                                    
-                                    // Calculate line direction
-                                    const dx = originalEndPoint.x - originalStartPoint.x;
-                                    const dy = originalEndPoint.y - originalStartPoint.y;
-                                    const lineLength = Math.sqrt(dx * dx + dy * dy);
-                                    
-                                    if (lineLength > 0) {
-                                        const unitX = dx / lineLength;
-                                        const unitY = dy / lineLength;
-                                        const shortening = scaledArrowSize * 0.8; // How much to shorten from each end
-                                        
-                                        // Shorten line from end if end arrow is enabled
-                                        if (vectorData.arrowSettings.endArrow) {
-                                            adjustedEndX = originalEndPoint.x - shortening * unitX;
-                                            adjustedEndY = originalEndPoint.y - shortening * unitY;
-                                        }
-                                    }
-                                }
-                                
-                                // Draw line to adjusted end point
-                                ctx.lineTo(adjustedEndX, adjustedEndY);
-                                strokePath.push({x: adjustedEndX, y: adjustedEndY});
-                                
-                                // Store the original endpoints for arrowhead drawing
-                                strokePath.originalStart = originalStartPoint;
-                                strokePath.originalEnd = originalEndPoint;
-                            } else if (isCurvedLine) {
-                                // For curved lines, draw smooth spline using stored interpolated points
-                                console.log(`Drawing ${isCurvedArrow ? 'curved arrow' : 'curved line'} with ${vectorData.points.length} interpolated points`);
-                                
-                                // For curved arrows, store original start and end points for arrowhead placement
-                                if (isCurvedArrow && vectorData.points.length >= 2) {
-                                    const startPoint = vectorData.points[0];
-                                    const endPoint = vectorData.points[vectorData.points.length - 1];
-                                    
-                                    // Calculate original start point in canvas coordinates
-                                    let originalStartX, originalStartY;
-                                if (isBlankCanvas) {
-                                    const position = imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
-                                        const scaledX = (startPoint.x - canvasCenter.x) * scale + canvasCenter.x;
-                                        const scaledY = (startPoint.y - canvasCenter.y) * scale + canvasCenter.y;
-                                        originalStartX = scaledX + position.x;
-                                        originalStartY = scaledY + position.y;
-                                } else {
-                                        originalStartX = imageX + (startPoint.x * scale);
-                                        originalStartY = imageY + (startPoint.y * scale);
-                                    }
-                                    
-                                    // Calculate original end point in canvas coordinates
-                                    let originalEndX, originalEndY;
-                                    if (isBlankCanvas) {
-                                        const position = imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
-                                        const scaledX = (endPoint.x - canvasCenter.x) * scale + canvasCenter.x;
-                                        const scaledY = (endPoint.y - canvasCenter.y) * scale + canvasCenter.y;
-                                        originalEndX = scaledX + position.x;
-                                        originalEndY = scaledY + position.y;
-                                    } else {
-                                        originalEndX = imageX + (endPoint.x * scale);
-                                        originalEndY = imageY + (endPoint.y * scale);
-                                    }
-                                    
-                                    // Store original endpoints for arrowhead drawing
-                                    strokePath.originalStart = {x: originalStartX, y: originalStartY};
-                                    strokePath.originalEnd = {x: originalEndX, y: originalEndY};
-                                }
-                                
-                                for (let i = 1; i < vectorData.points.length; i++) {
-                                    const point = vectorData.points[i];
-                                    let transformedX, transformedY;
-                                    
-                                    if (isBlankCanvas) {
-                                        // Apply both scaling and position offset in blank canvas mode
-                                        const position = imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
-                                        // Scale from canvas center
-                                        const scaledX = (point.x - canvasCenter.x) * scale + canvasCenter.x;
-                                        const scaledY = (point.y - canvasCenter.y) * scale + canvasCenter.y;
-                                        // Then apply position offset
-                                        transformedX = scaledX + position.x;
-                                        transformedY = scaledY + position.y;
-                                    } else {
-                                        transformedX = imageX + (point.x * scale);
-                                        transformedY = imageY + (point.y * scale);
-                                    }
-                                    
-                                    ctx.lineTo(transformedX, transformedY);
-                                    strokePath.push({x: transformedX, y: transformedY});
-                                }
-                            } else {
-                                // For freehand drawing, draw straight lines between all points
-                                for (let i = 1; i < vectorData.points.length; i++) {
-                                    const point = vectorData.points[i];
-                                let transformedX, transformedY;
-                                
-                                if (isBlankCanvas) {
-                                    // Apply both scaling and position offset in blank canvas mode
-                                    const position = imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
-                                    // Scale from canvas center
-                                    const scaledX = (point.x - canvasCenter.x) * scale + canvasCenter.x;
-                                    const scaledY = (point.y - canvasCenter.y) * scale + canvasCenter.y;
-                                    // Then apply position offset
-                                    transformedX = scaledX + position.x;
-                                    transformedY = scaledY + position.y;
-                                } else {
-                                    transformedX = imageX + (point.x * scale);
-                                    transformedY = imageY + (point.y * scale);
-                                }
-                                
-                                ctx.lineTo(transformedX, transformedY);
-                                strokePath.push({x: transformedX, y: transformedY});
-                            }
-                        }
-                        
-                        // Store the path for this stroke (for label positioning)
-                        currentStrokePaths.push({
-                            label: strokeLabel,
-                            path: strokePath,
-                    width: (vectorData.width || 5) * scale,
-                    color: vectorData.color
-                        });
-                        
-                        // Set stroke style
-                ctx.strokeStyle = vectorData.color;
-                ctx.lineWidth = (vectorData.width || 5) * scale;
-                        ctx.lineCap = 'round';
-                        ctx.lineJoin = 'round';
-                        
-                // --- Add Glow Effect for Selected Stroke ---
-                const isSelected = selectedStrokeByImage[currentImageLabel] === strokeLabel;
-                            if (isSelected) {
-                    ctx.save(); // Save context state before applying shadow
-                    ctx.shadowColor = '#ffffff'; // White glow
-                    ctx.shadowBlur = 15; // Adjust blur amount as needed
-                    ctx.shadowOffsetX = 0;
-                    ctx.shadowOffsetY = 0;
-                    // console.log(`    Applying glow to selected stroke: ${strokeLabel}`);
-                }
-                // --- End Glow Effect ---
+// Add arrow settings and curved line state to the UI state structure
+window.paintApp.uiState.arrowSettings = {
+    startArrow: false,  // Off by default (Priority 1 requirement)
+    endArrow: false,    // Off by default (Priority 1 requirement)
+    arrowSize: 15,
+    arrowStyle: 'triangular' // Options: 'triangular', 'filled', 'curved'
+};
 
-                ctx.stroke();
+window.paintApp.uiState.draggingAnchor = false;
+window.paintApp.uiState.dragCurveStroke = null; // The stroke being modified
+window.paintApp.uiState.dragAnchorIndex = -1;   // Which control point is being dragged
 
-                // --- Reset Glow Effect ---
-                if (isSelected) {
-                    ctx.restore(); // Restore context state to remove shadow
-                }
-                // --- End Reset Glow Effect ---
-                
-                                 // --- Draw Arrowheads for Arrow Lines ---
-                 if (isArrowLine && vectorData.arrowSettings && strokePath.length >= 2) {
-                     const startPoint = strokePath.originalStart;
-                     const endPoint = strokePath.originalEnd;
-                     
-                     // Create a temporary settings object with brush size-aware scaling
-                     const brushSizeForStroke = vectorData.width || 5;
-                     const baseArrowSize = Math.max(vectorData.arrowSettings.arrowSize || 15, brushSizeForStroke * 2);
-                     
-                     const scaledArrowSettings = {
-                         ...vectorData.arrowSettings,
-                         arrowSize: baseArrowSize // Let drawArrowhead handle the final scaling
-                     };
-                     
-                     // Draw arrowheads using the transformed coordinates and stroke color
-                     drawArrowhead(startPoint, endPoint, scaledArrowSettings, vectorData.color);
-                 }
-                 
-                 // --- Draw Arrowheads for Curved Arrows ---
-                 if (isCurvedArrow && vectorData.arrowSettings && strokePath.originalStart && strokePath.originalEnd) {
-                     const startPoint = strokePath.originalStart;
-                     const endPoint = strokePath.originalEnd;
-                     
-                     // Calculate proper tangent directions from the curve points
-                     let startTangent = null;
-                     let endTangent = null;
-                     
-                     if (vectorData.points.length >= 2) {
-                         // Calculate start tangent (direction from first to second point)
-                         const firstPoint = vectorData.points[0];
-                         const secondPoint = vectorData.points[1];
-                         
-                         let firstX, firstY, secondX, secondY;
-                         
-                         // Transform first point
-                         if (isBlankCanvas) {
-                             const position = imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
-                             const scaledX = (firstPoint.x - canvasCenter.x) * scale + canvasCenter.x;
-                             const scaledY = (firstPoint.y - canvasCenter.y) * scale + canvasCenter.y;
-                             firstX = scaledX + position.x;
-                             firstY = scaledY + position.y;
-                         } else {
-                             firstX = imageX + (firstPoint.x * scale);
-                             firstY = imageY + (firstPoint.y * scale);
-                         }
-                         
-                         // Transform second point
-                         if (isBlankCanvas) {
-                             const position = imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
-                             const scaledX = (secondPoint.x - canvasCenter.x) * scale + canvasCenter.x;
-                             const scaledY = (secondPoint.y - canvasCenter.y) * scale + canvasCenter.y;
-                             secondX = scaledX + position.x;
-                             secondY = scaledY + position.y;
-                         } else {
-                             secondX = imageX + (secondPoint.x * scale);
-                             secondY = imageY + (secondPoint.y * scale);
-                         }
-                         
-                         // Draw the arrow line with proper tapering
-                         drawArrowLine(ctx, firstX, firstY, secondX, secondY, vectorData.color, vectorData.lineWidth, vectorData.arrowStart, vectorData.arrowEnd);
-                     }
-                 }
-             }
-         }
-     }
- }
+// Backward compatibility references
+let arrowSettings = window.paintApp.uiState.arrowSettings;
+let draggingAnchor = window.paintApp.uiState.draggingAnchor;
+let dragCurveStroke = window.paintApp.uiState.dragCurveStroke;
+let dragAnchorIndex = window.paintApp.uiState.dragAnchorIndex;
+const ANCHOR_SIZE = window.paintApp.config.ANCHOR_SIZE;
+const CLICK_AREA = window.paintApp.config.CLICK_AREA;
 
- function drawArrowLine(ctx, startX, startY, endX, endY, color, lineWidth, arrowStart, arrowEnd) {
-     ctx.save();
-     ctx.strokeStyle = color;
-     ctx.lineWidth = lineWidth;
-     ctx.lineCap = 'round';
-     
-     // Calculate arrow properties
-     const arrowLength = Math.max(10, lineWidth * 3);
-     const arrowWidth = Math.max(8, lineWidth * 2);
-     
-     // Calculate line direction
-     const dx = endX - startX;
-     const dy = endY - startY;
-     const length = Math.sqrt(dx * dx + dy * dy);
-     
-     if (length === 0) return;
-     
-     const unitX = dx / length;
-     const unitY = dy / length;
-     
-     // Calculate adjusted start and end points for tapering
-     let adjustedStartX = startX;
-     let adjustedStartY = startY;
-     let adjustedEndX = endX;
-     let adjustedEndY = endY;
-     
-     if (arrowStart) {
-         adjustedStartX = startX + unitX * (arrowLength * 0.7);
-         adjustedStartY = startY + unitY * (arrowLength * 0.7);
-     }
-     
-     if (arrowEnd) {
-         adjustedEndX = endX - unitX * (arrowLength * 0.7);
-         adjustedEndY = endY - unitY * (arrowLength * 0.7);
-     }
-     
-     // Draw the main line
-     ctx.beginPath();
-     ctx.moveTo(adjustedStartX, adjustedStartY);
-     ctx.lineTo(adjustedEndX, adjustedEndY);
-     ctx.stroke();
-     
-     // Draw arrowheads
-     if (arrowStart) {
-         drawArrowhead(ctx, adjustedStartX, adjustedStartY, -unitX, -unitY, arrowLength, arrowWidth, color);
-     }
-     
-     if (arrowEnd) {
-         drawArrowhead(ctx, adjustedEndX, adjustedEndY, unitX, unitY, arrowLength, arrowWidth, color);
-     }
-     
-     ctx.restore();
- }
-
- function drawArrowhead(ctx, x, y, dirX, dirY, length, width, color) {
-     ctx.save();
-     ctx.fillStyle = color;
-     
-     // Calculate perpendicular vector
-     const perpX = -dirY;
-     const perpY = dirX;
-     
-     // Calculate arrowhead points
-     const tipX = x + dirX * length;
-     const tipY = y + dirY * length;
-     const baseLeftX = x + perpX * (width / 2);
-     const baseLeftY = y + perpY * (width / 2);
-     const baseRightX = x - perpX * (width / 2);
-     const baseRightY = y - perpY * (width / 2);
-     
-     // Draw filled arrowhead
-     ctx.beginPath();
-     ctx.moveTo(tipX, tipY);
-     ctx.lineTo(baseLeftX, baseLeftY);
-     ctx.lineTo(baseRightX, baseRightY);
-     ctx.closePath();
-     ctx.fill();
-     
-     ctx.restore();
- }
-});
