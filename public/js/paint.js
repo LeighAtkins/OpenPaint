@@ -2581,8 +2581,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     const scale = window.paintApp.state.imageScaleByLabel[currentImageLabel] || 1;
                     const scaledArrowSize = baseArrowSize * scale;
                     
-                    // Calculate shortening distance (80% of arrow size for clean appearance)
-                    const shorteningDistance = scaledArrowSize * 0.8;
+                    // Use improved shortening calculation for dense curves
+                    const baseArrowSizeInPixels = baseArrowSize; // Use base size without scaling
+                    const shorteningDistance = baseArrowSizeInPixels * 0.8;
+                    
+                    // For very dense curves (>100 points), use percentage-based shortening as fallback
+                    const isDenseCurve = vectorData.points.length > 100;
+                    const minShorteningPercent = 0.05; // At least 5% of points
                     
                     // Find how many points to skip from start for start arrow
                     if (vectorData.arrowSettings.startArrow) {
@@ -2591,14 +2596,15 @@ document.addEventListener('DOMContentLoaded', () => {
                             const prevPoint = vectorData.points[i - 1];
                             const currentPoint = vectorData.points[i];
                             
-                            // Calculate distance between consecutive points in image space
+                            // Calculate distance between consecutive points in unscaled image space
                             const dx = currentPoint.x - prevPoint.x;
                             const dy = currentPoint.y - prevPoint.y;
-                            const segmentDistance = Math.sqrt(dx * dx + dy * dy) * scale;
+                            const segmentDistance = Math.sqrt(dx * dx + dy * dy);
                             
                             accumulatedDistance += segmentDistance;
-                            if (accumulatedDistance >= shorteningDistance) {
-                                startIndex = i - 1;
+                            if (accumulatedDistance >= shorteningDistance || 
+                                (isDenseCurve && i >= vectorData.points.length * minShorteningPercent)) {
+                                startIndex = i;
                                 break;
                             }
                         }
@@ -2611,14 +2617,15 @@ document.addEventListener('DOMContentLoaded', () => {
                             const currentPoint = vectorData.points[i];
                             const nextPoint = vectorData.points[i + 1];
                             
-                            // Calculate distance between consecutive points in image space
+                            // Calculate distance between consecutive points in unscaled image space
                             const dx = nextPoint.x - currentPoint.x;
                             const dy = nextPoint.y - currentPoint.y;
-                            const segmentDistance = Math.sqrt(dx * dx + dy * dy) * scale;
+                            const segmentDistance = Math.sqrt(dx * dx + dy * dy);
                             
                             accumulatedDistance += segmentDistance;
-                            if (accumulatedDistance >= shorteningDistance) {
-                                endIndex = i + 1;
+                            if (accumulatedDistance >= shorteningDistance ||
+                                (isDenseCurve && i <= vectorData.points.length * (1 - minShorteningPercent))) {
+                                endIndex = i;
                                 break;
                             }
                         }
@@ -2739,21 +2746,72 @@ document.addEventListener('DOMContentLoaded', () => {
              if (isCurvedArrow && vectorData.arrowSettings && vectorData.points.length >= 2) {
                  const brushSizeForStroke = vectorData.width || 5;
                  const baseArrowSize = Math.max(vectorData.arrowSettings.arrowSize || 15, brushSizeForStroke * 2);
-                 const scale = window.paintApp.state.imageScaleByLabel[currentImageLabel] || 1;
+                 // Use the scale parameter passed to the function, not fetched separately
                  const scaledArrowSize = baseArrowSize * scale;
                  
-                 // Calculate proper tangent directions from the curve points
+                 // For dense curves, use a more robust shortening approach
+                 let startIndex = 0;
+                 let endIndex = vectorData.points.length - 1;
+                 
+                 // Convert arrow size to image coordinate space for shortening calculation
+                 const shorteningDistance = (baseArrowSize * 0.8) / scale;
+                 
+                 // For very dense curves (>100 points), use percentage-based shortening as fallback
+                 const isDenseCurve = vectorData.points.length > 100;
+                 const minShorteningPercent = 0.05; // At least 5% of points
+                 
+                 // Find start index for start arrow
+                 if (vectorData.arrowSettings.startArrow) {
+                     let accumulatedDistance = 0;
+                     for (let i = 1; i < vectorData.points.length && accumulatedDistance < shorteningDistance; i++) {
+                         const prevPoint = vectorData.points[i - 1];
+                         const currentPoint = vectorData.points[i];
+                         const dx = currentPoint.x - prevPoint.x;
+                         const dy = currentPoint.y - prevPoint.y;
+                         const segmentDistance = Math.sqrt(dx * dx + dy * dy);
+                         accumulatedDistance += segmentDistance;
+                         
+                         if (accumulatedDistance >= shorteningDistance || 
+                             (isDenseCurve && i >= vectorData.points.length * minShorteningPercent)) {
+                             startIndex = i;
+                             break;
+                         }
+                     }
+                 }
+                 
+                 // Find end index for end arrow
+                 if (vectorData.arrowSettings.endArrow) {
+                     let accumulatedDistance = 0;
+                     for (let i = vectorData.points.length - 2; i >= 0 && accumulatedDistance < shorteningDistance; i--) {
+                         const currentPoint = vectorData.points[i];
+                         const nextPoint = vectorData.points[i + 1];
+                         const dx = nextPoint.x - currentPoint.x;
+                         const dy = nextPoint.y - currentPoint.y;
+                         const segmentDistance = Math.sqrt(dx * dx + dy * dy);
+                         accumulatedDistance += segmentDistance;
+                         
+                         if (accumulatedDistance >= shorteningDistance ||
+                             (isDenseCurve && i <= vectorData.points.length * (1 - minShorteningPercent))) {
+                             endIndex = i;
+                             break;
+                         }
+                     }
+                 }
+                 
+                 // Calculate proper tangent directions from the shortened curve points
                  let startTangent = null;
                  let endTangent = null;
                  let startPoint = null;
                  let endPoint = null;
                  
-                 // Calculate start tangent (direction from first to second point)
-                 if (vectorData.points.length >= 2) {
-                     const firstPoint = vectorData.points[0];
-                     const secondPoint = vectorData.points[1];
+                 // Calculate start tangent using shortened curve endpoints (use same transformation as curve drawing)
+                 if (vectorData.points.length >= 2 && startIndex < vectorData.points.length - 1) {
+                     const firstPoint = vectorData.points[startIndex];
+                     // For dense curves, look further ahead for better tangent direction
+                     const lookAheadDistance = Math.min(10, vectorData.points.length - startIndex - 1);
+                     const secondPoint = vectorData.points[startIndex + lookAheadDistance];
                      
-                     // Transform first point to canvas coordinates
+                     // Transform first point to canvas coordinates (same logic as curve drawing)
                      let startX, startY;
                      if (isBlankCanvas) {
                          const position = window.paintApp.state.imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
@@ -2766,7 +2824,7 @@ document.addEventListener('DOMContentLoaded', () => {
                          startY = imageY + (firstPoint.y * scale);
                      }
                      
-                     // Transform second point to canvas coordinates
+                     // Transform second point to canvas coordinates (same logic as curve drawing)
                      let secondX, secondY;
                      if (isBlankCanvas) {
                          const position = window.paintApp.state.imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
@@ -2789,12 +2847,14 @@ document.addEventListener('DOMContentLoaded', () => {
                      startPoint = { x: startX, y: startY };
                  }
                  
-                 // Calculate end tangent (direction from second-to-last to last point)
-                 if (vectorData.points.length >= 2) {
-                     const lastPoint = vectorData.points[vectorData.points.length - 1];
-                     const secondLastPoint = vectorData.points[vectorData.points.length - 2];
+                 // Calculate end tangent using shortened curve endpoints (use same transformation as curve drawing)
+                 if (vectorData.points.length >= 2 && endIndex > 0) {
+                     const lastPoint = vectorData.points[endIndex];
+                     // For dense curves, look further back for better tangent direction
+                     const lookBackDistance = Math.min(10, endIndex);
+                     const secondLastPoint = vectorData.points[endIndex - lookBackDistance];
                      
-                     // Transform last point to canvas coordinates
+                     // Transform last point to canvas coordinates (same logic as curve drawing)
                      let endX, endY;
                      if (isBlankCanvas) {
                          const position = window.paintApp.state.imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
@@ -2807,7 +2867,7 @@ document.addEventListener('DOMContentLoaded', () => {
                          endY = imageY + (lastPoint.y * scale);
                      }
                      
-                     // Transform second-to-last point to canvas coordinates
+                     // Transform second-to-last point to canvas coordinates (same logic as curve drawing)
                      let secondLastX, secondLastY;
                      if (isBlankCanvas) {
                          const position = window.paintApp.state.imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
@@ -2845,12 +2905,14 @@ document.addEventListener('DOMContentLoaded', () => {
                  if (vectorData.arrowSettings.startArrow && startTangent && startPoint) {
                      // Start arrow points backward (opposite to tangent direction)
                      const startAngle = Math.atan2(-startTangent.y, -startTangent.x);
+                     // Scale arrow size to match the scaled coordinates
                      drawSingleArrowhead(startPoint.x, startPoint.y, startAngle, scaledArrowSize, vectorData.arrowSettings.arrowStyle);
                  }
                  
                  if (vectorData.arrowSettings.endArrow && endTangent && endPoint) {
                      // End arrow points forward (same as tangent direction)
                      const endAngle = Math.atan2(endTangent.y, endTangent.x);
+                     // Scale arrow size to match the scaled coordinates
                      drawSingleArrowhead(endPoint.x, endPoint.y, endAngle, scaledArrowSize, vectorData.arrowSettings.arrowStyle);
                  }
                  
@@ -4744,8 +4806,8 @@ document.addEventListener('DOMContentLoaded', () => {
          ctx.translate(x, y);
          ctx.rotate(angle);
          
-         // Always use filled arrowheads with fixed outline thickness
-         ctx.lineWidth = 1; // Fixed thin outline
+         // Use appropriate line width - keep it thin but visible
+         ctx.lineWidth = 1; // Fixed thin outline for consistency
          
          if (style === 'triangular') {
              // Filled triangular arrowhead with thin outline
