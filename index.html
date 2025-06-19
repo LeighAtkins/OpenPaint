@@ -97,18 +97,6 @@
             border-radius: 4px;
             display: block;
         }
-        .image-label {
-            position: absolute;
-            top: 8px;
-            left: 8px;
-            background: rgba(0, 0, 0, 0.6);
-            color: white;
-            padding: 4px 8px;
-            border-radius: 3px;
-            font-size: 12px;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
         .image-strokes {
             position: absolute;
             bottom: 8px;
@@ -146,20 +134,40 @@
             flex-direction: column;
             gap: 15px;
         }
-        canvas {
-            border: 1px solid #ccc;
+        #canvasContainer {
+            border: 3px solid #888;
+            border-radius: 6px;
+            background-color: #f8f8f8;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            position: relative;
+            display: inline-block;
+            overflow: visible;
+            padding: 0;
+            margin: 0;
         }
-        #canvas {
-            background-color: white;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            cursor: crosshair;
-            transition: all 0.3s ease;
-        }
-        #canvas.drag-over {
+        #canvasContainer.drag-over {
             border: 2px dashed #4CAF50;
             box-shadow: 0 0 10px rgba(76, 175, 80, 0.4);
-            background-color: rgba(76, 175, 80, 0.05);
+        }
+        #canvas {
+            background-color: transparent;
+            cursor: crosshair;
+        }
+        /* Main canvas styling */
+        #canvas {
+            border-radius: 4px;
+            display: block;
+        }
+        /* Ensure canvas doesn't hide container borders */
+        #canvasContainer > canvas {
+            display: block;
+            pointer-events: auto;
+        }
+        /* Force container to contain the canvases properly */
+        #canvasContainer::after {
+            content: '';
+            display: block;
+            clear: both;
         }
         /* Only apply these styles to top-level buttons, not to our custom buttons in sidebars */
         .toolbar button, 
@@ -187,12 +195,18 @@
             justify-content: space-between;
             flex-wrap: wrap;
             gap: 10px;
+            position: relative;
+            z-index: 1000;
+            background-color: transparent;
+            pointer-events: auto;
         }
         .tool-controls {
             display: flex;
             align-items: center;
             gap: 10px;
             flex-wrap: wrap;
+            position: relative;
+            z-index: 1001;
         }
         .project-header {
             width: 100%;
@@ -745,19 +759,64 @@
             background-color: #D32F2F;
             border-color: #C62828;
         }
+        .tag-dialog-customize {
+            background-color: #2196F3 !important;
+            color: white !important;
+            border: 1px solid #1976D2 !important;
+            padding: 8px 15px !important;
+            border-radius: 4px !important;
+            cursor: pointer !important;
+            font-size: 14px !important;
+            display: inline-block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+        .tag-dialog-customize:hover {
+            background-color: #1976D2 !important;
+            border-color: #1565C0 !important;
+        }
+        
+        /* Ensure all tag dialog footer buttons are visible */
+        .tag-dialog-footer button {
+            display: inline-block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
         .image-tags {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
             display: flex;
             flex-wrap: wrap;
             gap: 4px;
-            margin-top: 4px;
             cursor: pointer;
+            z-index: 2;
+            pointer-events: none; /* Allow clicks to pass through to image */
+        }
+        
+        .image-tags .tag-badge {
+            pointer-events: auto; /* Re-enable clicks on badges */
         }
         .tag-badge {
-            font-size: 10px;
-            background: #e0e0e0;
-            color: #333;
+            font-size: var(--tag-font-size, 10px);
+            background-color: var(--tag-bg-color, #e0e0e0);
+            opacity: var(--tag-opacity, 1.0);
+            color: var(--tag-text-color, #333);
             padding: 2px 6px;
-            border-radius: 10px;
+            border: var(--tag-border-width, 0px) var(--tag-border-style, solid) var(--tag-border-color, #cccccc);
+            border-radius: var(--tag-border-radius, 10px);
+            font-weight: var(--tag-font-weight, normal);
+            font-style: var(--tag-font-style, normal);
+            text-shadow: var(--tag-text-shadow, none);
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            backdrop-filter: blur(2px);
+        }
+        
+        .tag-badge:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.4);
         }
         .edit-tags-button {
             width: 100%;
@@ -776,6 +835,156 @@
             color: #999;
             font-size: 10px;
             font-style: italic;
+        }
+        
+        /* Tag Customization Dialog Styles */
+        .tag-customization-dialog {
+            width: 90%;
+            max-width: 600px;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+        
+        .tag-customization-content {
+            padding: 10px 0;
+        }
+        
+        .customization-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 6px;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .customization-section h4 {
+            margin: 0 0 10px 0;
+            color: #333;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        
+        .theme-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 8px;
+        }
+        
+        .theme-btn {
+            padding: 8px 12px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            background: #fff;
+            color: #333;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s ease;
+        }
+        
+        .theme-btn:hover {
+            border-color: #4CAF50;
+            background: #f0fff0;
+        }
+        
+        .theme-btn.active {
+            border-color: #4CAF50;
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .tag-preview-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 15px;
+            background: #fff;
+            border: 2px dashed #ddd;
+            border-radius: 6px;
+            justify-content: center;
+        }
+        
+        .preview-tag {
+            pointer-events: none;
+        }
+        
+        .control-group {
+            margin-bottom: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        
+        .control-group label {
+            font-size: 13px;
+            color: #555;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .slider {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #ddd;
+            outline: none;
+            cursor: pointer;
+        }
+        
+        .slider::-webkit-slider-thumb {
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #4CAF50;
+            cursor: pointer;
+            border: 2px solid #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .slider::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #4CAF50;
+            cursor: pointer;
+            border: 2px solid #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        input[type="color"] {
+            width: 60px;
+            height: 35px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            background: none;
+        }
+        
+        input[type="color"]::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+        
+        input[type="color"]::-webkit-color-swatch {
+            border: none;
+            border-radius: 2px;
+        }
+        
+        input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            margin-right: 8px;
+            cursor: pointer;
+        }
+        
+        .font-size-value,
+        .opacity-value,
+        .border-radius-value {
+            font-weight: bold;
+            color: #4CAF50;
+            min-width: 40px;
+            text-align: right;
         }
         /* Additional margin for consistency */
         #strokeCounter {
@@ -807,6 +1016,307 @@
         
         .delete-image-btn:hover {
             transform: scale(1.1);
+        }
+        
+        /* Measurement Export Section */
+        .measurement-export-section {
+            margin-top: 15px;
+        }
+        .measurement-export-section h4,
+        .image-export-section h4 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            color: #333;
+        }
+        
+        .image-export-section {
+            margin-top: 15px;
+        }
+        
+        .export-control-group {
+            margin-bottom: 10px;
+        }
+        
+        .export-control-group label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: #555;
+            cursor: pointer;
+        }
+        
+        .export-control-group input[type="checkbox"] {
+            margin: 0;
+            cursor: pointer;
+        }
+        .export-button {
+            width: 100%;
+            margin-bottom: 8px;
+            padding: 8px 12px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s ease;
+        }
+        .export-button:hover:not(:disabled) {
+            background-color: #45a049;
+            transform: translateY(-1px);
+        }
+        .export-button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        #measurementExportText {
+            width: 100%;
+            margin-bottom: 8px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 11px;
+            resize: vertical;
+            background-color: #f9f9f9;
+        }
+        
+        /* Label Settings Dialog Styles */
+        .label-settings-dialog {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #fff;
+            padding: 20px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 85vh;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            z-index: 1000;
+            overflow-y: auto;
+        }
+        
+        .label-settings-dialog h3 {
+            margin: 0 0 20px 0;
+            color: #333;
+            font-size: 18px;
+            border-bottom: 2px solid #4CAF50;
+            padding-bottom: 10px;
+        }
+        
+        .label-settings-tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .label-settings-tab {
+            padding: 10px 20px;
+            background: #f5f5f5;
+            border: none;
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+        
+        .label-settings-tab.active {
+            background: #fff;
+            border-bottom-color: #4CAF50;
+            color: #4CAF50;
+        }
+        
+        .label-settings-tab:hover:not(.active) {
+            background: #e8f5e9;
+        }
+        
+        .label-settings-content {
+            min-height: 300px;
+        }
+        
+        .label-settings-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 6px;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .label-settings-section h4 {
+            margin: 0 0 15px 0;
+            color: #333;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        
+        .label-control-group {
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        
+        .label-control-group:last-child {
+            margin-bottom: 0;
+        }
+        
+        .label-control-group label {
+            font-size: 13px;
+            color: #555;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .label-control-group input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #ddd;
+            outline: none;
+            cursor: pointer;
+        }
+        
+        .label-control-group input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #4CAF50;
+            cursor: pointer;
+            border: 2px solid #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .label-control-group input[type="color"] {
+            width: 60px;
+            height: 35px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            background: none;
+        }
+        
+        .label-control-group select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+            font-size: 13px;
+        }
+        
+        .label-control-group input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            margin-right: 8px;
+            cursor: pointer;
+        }
+        
+        .label-control-row {
+            display: flex;
+            gap: 15px;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+        
+        .label-control-row .label-control-group {
+            flex: 1;
+            margin-bottom: 0;
+            min-width: 120px;
+        }
+        
+        .label-checkbox-row {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .label-checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .label-checkbox-group label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            font-size: 13px;
+            color: #555;
+            margin: 0;
+        }
+        
+        .label-checkbox-group input[type="checkbox"] {
+            margin: 0 8px 0 0;
+        }
+        
+        .label-value-display {
+            font-weight: bold;
+            color: #4CAF50;
+            min-width: 50px;
+            text-align: right;
+        }
+        
+        .label-preview-container {
+            margin-top: 20px;
+            padding: 20px;
+            background: #fff;
+            border: 2px dashed #ddd;
+            border-radius: 6px;
+            text-align: center;
+        }
+        
+        .label-preview {
+            display: inline-block;
+            padding: 6px;
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid #000;
+            font-family: Arial;
+            font-size: 28px;
+            color: #000;
+        }
+        
+        .label-settings-footer {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        
+        .label-settings-button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+        
+        .label-settings-button.primary {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .label-settings-button.primary:hover {
+            background: #45a049;
+        }
+        
+        .label-settings-button.secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+        
+        .label-settings-button.secondary:hover {
+            background: #e0e0e0;
         }
     </style>
 </head>
@@ -870,8 +1380,12 @@
                 <button id="save">Save</button>
                 <button id="paste">Upload Images</button>
                 <span id="strokeCounter" class="counter">Lines: 0</span>
+                <span id="fpsCounter" class="counter" style="display: none;">FPS: 60</span>
             </div>
-            <canvas id="canvas"></canvas>
+            <div id="canvasContainer" style="position: relative; display: inline-block;">
+                <!-- Main canvas: original single-layer system -->
+                <canvas id="canvas"></canvas>
+            </div>
             <div class="canvas-controls">
                 <div class="tool-controls">
                     <div class="instruction">
@@ -905,6 +1419,7 @@
                     <div class="keyboard-shortcuts">
                         <span title="Scale: Q (zoom out), E (zoom in)">Scale: Q/E</span>
                         <span title="Move: W (down), A (left), S (up), D (right)">Move: WASD</span>
+                        <span title="Help: H (show help dialog)">Help: H</span>
                     </div>
                 </div>
             </div>
@@ -916,6 +1431,21 @@
                 <span class="drag-handle">☰</span>
             </div>
             <div id="strokeVisibilityControls"></div>
+            <hr>
+            <div class="measurement-export-section">
+                <h4>Measurement Export</h4>
+                <button id="generateMeasurementList" class="export-button">Generate Measurement List</button>
+                <textarea id="measurementExportText" 
+                         placeholder="Click 'Generate Measurement List' to create a copy-pasteable measurement summary..."
+                         rows="8" 
+                         readonly></textarea>
+                <button id="copyMeasurements" class="export-button" disabled>Copy to Clipboard</button>
+            </div>
+            <hr>
+            <div class="label-settings-section">
+                <h4>Label Settings</h4>
+                <button id="openLabelSettings" class="export-button">Customize Labels</button>
+            </div>
         </div>
         
         <div class="image-sidebar" id="imageSidebar">
@@ -927,6 +1457,18 @@
             <hr>
             <div class="sidebar-buttons">
                 <button id="addTags" class="tag-button">Add Tags</button>
+            </div>
+            <hr>
+            <div class="image-export-section">
+                <h4>Image Export</h4>
+                <div class="export-control-group">
+                    <label>
+                        <input type="checkbox" id="showLabelsOnCanvas" checked>
+                        Show labels on exported images
+                    </label>
+                </div>
+                <button id="downloadCurrentImage" class="export-button">Download Current Image</button>
+                <button id="downloadAllImages" class="export-button">Download All Images</button>
             </div>
         </div>
     </div>

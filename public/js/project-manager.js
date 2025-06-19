@@ -231,6 +231,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
             
+            // Add tag customization settings
+            if (window.tagCustomization) {
+                console.log('[Save Project] Saving tag customization settings');
+                projectData.tagCustomization = JSON.parse(JSON.stringify(window.tagCustomization));
+            } else {
+                console.log('[Save Project] No tag customization found, using defaults');
+                projectData.tagCustomization = null;
+            }
+            
             // Add image order for sidebar persistence
             if (window.orderedImageLabels && window.orderedImageLabels.length > 0) {
                 projectData.imageOrder = [...window.orderedImageLabels];
@@ -427,6 +436,13 @@ document.addEventListener('DOMContentLoaded', () => {
                                 const imageList = document.getElementById('imageList');
                                 if (imageList) imageList.innerHTML = '';
 
+                                // Clear layer system before loading new project
+                                if (typeof window.resetLayerSystemForProject === 'function') {
+                                    window.resetLayerSystemForProject();
+                                } else {
+                                    console.warn('[Load Project] Layer system reset function not available');
+                                }
+
                                 window.vectorStrokesByImage = {};
                                 window.strokeVisibilityByImage = {};
                                 window.strokeLabelVisibility = {};
@@ -486,6 +502,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                                     reader.readAsDataURL(blob);
                                             }))
                                             .then(dataUrl => {
+                                                console.log(`[Load Project] Setting originalImages[${label}] = dataUrl`);
                                                 window.originalImages[label] = dataUrl;
                                                 return new Promise((resolveDim) => {
                                                     const img = new Image();
@@ -620,6 +637,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     }) // End of JSZip.loadAsync().then()
                     .catch(err => { // Catch for JSZip.loadAsync() and its chained promises
                         window.isLoadingProject = false;
+                        
+                        // Sync legacy references even on error in case some images were loaded
+                        if (typeof window.syncLegacyReferences === 'function') {
+                            window.syncLegacyReferences();
+                        }
+                        
                         document.getElementById('loadingIndicator')?.remove();
                         console.error('Error loading project from ZIP (outer catch):', err);
                         showStatusMessage(`Error loading project: ${err.message}`, 'error');
@@ -710,13 +733,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (dataForFinalSteps.imageLabels && typeof window.getTagBasedFilename === 'function' && typeof window.imageScaleByLabel !== 'undefined') {
             console.log('[Load Project] Updating sidebar label text and scale text...');
             dataForFinalSteps.imageLabels.forEach(label => {
-                // Update Label Text
-                const labelElement = document.querySelector(`.image-container[data-label="${label}"] .image-label`);
-                if (labelElement) {
+                // Update first tag badge text (which contains the display name)
+                const firstTagBadge = document.querySelector(`.image-container[data-label="${label}"] .image-tags .tag-badge:first-child`);
+                if (firstTagBadge) {
                     const filename = window.getTagBasedFilename(label, label.split('_')[0]); // Get updated filename
                     const newText = filename ? filename.charAt(0).toUpperCase() + filename.slice(1) : label;
-                    console.log(`  Updating label text for ${label} to: "${newText}"`);
-                    labelElement.textContent = newText; // Update text
+                    console.log(`  Updating first tag badge text for ${label} to: "${newText}"`);
+                    firstTagBadge.textContent = newText; // Update text
                 } else {
                     console.warn(`  Could not find labelElement for ${label} during final update.`);
                 }
@@ -759,6 +782,45 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         window.isLoadingProject = false;
+        
+        // Sync legacy references after project loading
+        console.log('[Load Project] Project loading completed, syncing references...');
+        if (typeof window.syncLegacyReferences === 'function') {
+            window.syncLegacyReferences();
+        } else {
+            console.error('[Load Project] syncLegacyReferences function not available!');
+        }
+        
+        // Fix current image label if needed
+        console.log('[Load Project] Fixing current image label...');
+        if (typeof window.fixCurrentImageLabel === 'function') {
+            window.fixCurrentImageLabel();
+        } else {
+            console.error('[Load Project] fixCurrentImageLabel function not available!');
+        }
+        
+        // Load tag customization settings
+        if (dataForFinalSteps.tagCustomization) {
+            console.log('[Load Project] Loading tag customization settings');
+            window.tagCustomization = JSON.parse(JSON.stringify(dataForFinalSteps.tagCustomization));
+            
+            // Apply the loaded customization
+            if (typeof applyTagCustomization === 'function') {
+                applyTagCustomization();
+            }
+            
+            // Persist customization to localStorage
+            if (typeof persistTagCustomization === 'function') {
+                persistTagCustomization();
+            }
+        }
+        
+        // Persist loaded tags to localStorage
+        if (typeof persistTags === 'function') {
+            persistTags();
+            console.log('[Load Project] Tags persisted to localStorage');
+        }
+        
         showStatusMessage('Project loaded successfully.', 'success');
         console.log('[Load Project] Complete.');
     }

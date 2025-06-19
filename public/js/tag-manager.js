@@ -3,6 +3,194 @@
 
 console.log('TAG-MANAGER.JS LOADED - Version ' + new Date().toISOString());
 
+// ===== TAG PERSISTENCE SYSTEM =====
+function saveTagsToLocalStorage() {
+    try {
+        if (window.imageTags && Object.keys(window.imageTags).length > 0) {
+            localStorage.setItem('openPaintImageTags', JSON.stringify(window.imageTags));
+            console.log('[TAG-PERSISTENCE] Saved tags to localStorage:', Object.keys(window.imageTags));
+        }
+    } catch (error) {
+        console.error('[TAG-PERSISTENCE] Failed to save tags to localStorage:', error);
+    }
+}
+
+function loadTagsFromLocalStorage() {
+    try {
+        const savedTags = localStorage.getItem('openPaintImageTags');
+        if (savedTags) {
+            const parsedTags = JSON.parse(savedTags);
+            console.log('[TAG-PERSISTENCE] Loaded tags from localStorage:', Object.keys(parsedTags));
+            
+            // Merge with existing tags, preserving any existing data
+            if (!window.imageTags) {
+                window.imageTags = {};
+            }
+            
+            for (const [imageLabel, tagData] of Object.entries(parsedTags)) {
+                if (!window.imageTags[imageLabel]) {
+                    window.imageTags[imageLabel] = tagData;
+                } else {
+                    // Merge existing with saved, preferring existing
+                    window.imageTags[imageLabel] = {
+                        ...tagData,
+                        ...window.imageTags[imageLabel]
+                    };
+                }
+            }
+            
+            return true;
+        }
+    } catch (error) {
+        console.error('[TAG-PERSISTENCE] Failed to load tags from localStorage:', error);
+    }
+    return false;
+}
+
+function clearTagsFromLocalStorage() {
+    try {
+        localStorage.removeItem('openPaintImageTags');
+        console.log('[TAG-PERSISTENCE] Cleared tags from localStorage');
+    } catch (error) {
+        console.error('[TAG-PERSISTENCE] Failed to clear tags from localStorage:', error);
+    }
+}
+
+// Auto-save tags whenever they change
+function persistTags() {
+    saveTagsToLocalStorage();
+}
+
+// ===== TAG CUSTOMIZATION SYSTEM =====
+
+// Default tag customization settings
+window.tagCustomization = {
+    global: {
+        fontSize: 10,           // px
+        backgroundColor: '#e0e0e0',
+        backgroundOpacity: 1.0, // 0.0 to 1.0
+        textColor: '#333333',
+        borderColor: '#cccccc',
+        borderWidth: 0,         // px
+        borderStyle: 'solid',   // solid/dashed/dotted
+        borderRadius: 10,       // px
+        fontWeight: 'normal',   // normal/bold
+        fontStyle: 'normal',    // normal/italic
+        textShadow: false,
+        position: 'below',      // above/below
+        alignment: 'left'       // left/center/right
+    },
+    perTagType: {
+        furnitureType: {},
+        viewType: {}
+    },
+    themes: {
+        default: {
+            fontSize: 10,
+            backgroundColor: '#e0e0e0',
+            backgroundOpacity: 1.0,
+            textColor: '#333333',
+            borderRadius: 10
+        },
+        professional: {
+            fontSize: 11,
+            backgroundColor: '#2c3e50',
+            backgroundOpacity: 0.9,
+            textColor: '#ffffff',
+            borderRadius: 4
+        },
+        colorful: {
+            fontSize: 12,
+            backgroundColor: '#3498db',
+            backgroundOpacity: 0.8,
+            textColor: '#ffffff',
+            borderRadius: 15
+        },
+        minimal: {
+            fontSize: 9,
+            backgroundColor: '#ffffff',
+            backgroundOpacity: 0.7,
+            textColor: '#666666',
+            borderRadius: 3
+        }
+    }
+};
+
+function saveTagCustomizationToLocalStorage() {
+    try {
+        localStorage.setItem('openPaintTagCustomization', JSON.stringify(window.tagCustomization));
+        console.log('[TAG-CUSTOMIZATION] Saved customization to localStorage');
+    } catch (error) {
+        console.error('[TAG-CUSTOMIZATION] Failed to save customization to localStorage:', error);
+    }
+}
+
+function loadTagCustomizationFromLocalStorage() {
+    try {
+        const savedCustomization = localStorage.getItem('openPaintTagCustomization');
+        if (savedCustomization) {
+            const parsedCustomization = JSON.parse(savedCustomization);
+            console.log('[TAG-CUSTOMIZATION] Loaded customization from localStorage');
+            
+            // Merge with defaults to ensure all properties exist
+            window.tagCustomization = {
+                ...window.tagCustomization,
+                global: { ...window.tagCustomization.global, ...parsedCustomization.global },
+                perTagType: { ...window.tagCustomization.perTagType, ...parsedCustomization.perTagType },
+                themes: { ...window.tagCustomization.themes, ...parsedCustomization.themes }
+            };
+            
+            return true;
+        }
+    } catch (error) {
+        console.error('[TAG-CUSTOMIZATION] Failed to load customization from localStorage:', error);
+    }
+    return false;
+}
+
+function persistTagCustomization() {
+    saveTagCustomizationToLocalStorage();
+}
+
+function applyTagCustomization() {
+    const styles = window.tagCustomization.global;
+    
+    // Create CSS custom properties
+    const root = document.documentElement;
+    root.style.setProperty('--tag-font-size', `${styles.fontSize}px`);
+    root.style.setProperty('--tag-bg-color', styles.backgroundColor);
+    root.style.setProperty('--tag-opacity', styles.backgroundOpacity);
+    root.style.setProperty('--tag-text-color', styles.textColor);
+    root.style.setProperty('--tag-border-width', `${styles.borderWidth}px`);
+    root.style.setProperty('--tag-border-style', styles.borderStyle);
+    root.style.setProperty('--tag-border-color', styles.borderColor);
+    root.style.setProperty('--tag-border-radius', `${styles.borderRadius}px`);
+    root.style.setProperty('--tag-font-weight', styles.fontWeight);
+    root.style.setProperty('--tag-font-style', styles.fontStyle);
+    root.style.setProperty('--tag-text-shadow', styles.textShadow ? '1px 1px 2px rgba(0,0,0,0.3)' : 'none');
+    
+    console.log('[TAG-CUSTOMIZATION] Applied styles to CSS variables');
+}
+
+function resetTagCustomization() {
+    window.tagCustomization.global = { ...window.tagCustomization.themes.default };
+    applyTagCustomization();
+    persistTagCustomization();
+    console.log('[TAG-CUSTOMIZATION] Reset to default styles');
+}
+
+function applyTagTheme(themeName) {
+    if (window.tagCustomization.themes[themeName]) {
+        window.tagCustomization.global = { 
+            ...window.tagCustomization.global, 
+            ...window.tagCustomization.themes[themeName] 
+        };
+        applyTagCustomization();
+        persistTagCustomization();
+        console.log(`[TAG-CUSTOMIZATION] Applied theme: ${themeName}`);
+    }
+}
+
 // Define the tag hierarchy and conditions
 window.TAG_MODEL = {
     // Category 0: Furniture Type (always shown)
@@ -360,6 +548,7 @@ window.createTagSelectionDialog = function(imageLabel, existingTags, onSave) {
             <button class="tag-dialog-save">Save Tags</button>
             <button class="tag-dialog-cancel">Cancel</button>
             <button class="tag-dialog-clear-all">Clear All Tags</button>
+            <button class="tag-dialog-customize" style="background-color: #2196F3; color: white; border: 1px solid #1976D2; padding: 8px 15px; border-radius: 4px; cursor: pointer;">Customize Tags</button>
         </div>
     `;
     document.body.appendChild(dialog);
@@ -371,6 +560,31 @@ window.createTagSelectionDialog = function(imageLabel, existingTags, onSave) {
     const closeButton = dialog.querySelector('.tag-dialog-close');
     const cancelButton = dialog.querySelector('.tag-dialog-cancel');
     const clearAllButton = dialog.querySelector('.tag-dialog-clear-all');
+    const customizeButton = dialog.querySelector('.tag-dialog-customize');
+    
+    console.log('[TAG-DIALOG] Button elements found:', {
+        closeButton: !!closeButton,
+        cancelButton: !!cancelButton,
+        clearAllButton: !!clearAllButton,
+        customizeButton: !!customizeButton
+    });
+    
+    // Fallback: If customize button doesn't exist, create it manually
+    let finalCustomizeButton = customizeButton;
+    if (!customizeButton) {
+        console.log('[TAG-DIALOG] Customize button not found, creating manually...');
+        const footer = dialog.querySelector('.tag-dialog-footer');
+        if (footer) {
+            const newCustomizeButton = document.createElement('button');
+            newCustomizeButton.className = 'tag-dialog-customize';
+            newCustomizeButton.textContent = 'Customize Tags';
+            newCustomizeButton.style.cssText = 'background-color: #2196F3; color: white; border: 1px solid #1976D2; padding: 8px 15px; border-radius: 4px; cursor: pointer; margin-left: 10px;';
+            footer.appendChild(newCustomizeButton);
+            finalCustomizeButton = newCustomizeButton;
+            console.log('[TAG-DIALOG] Manually created customize button');
+        }
+    }
+    
     closeButton.addEventListener('click', closeDialog);
     cancelButton.addEventListener('click', closeDialog);
     clearAllButton.addEventListener('click', () => {
@@ -380,6 +594,33 @@ window.createTagSelectionDialog = function(imageLabel, existingTags, onSave) {
         console.log('[Tag Dialog] Cleared all selections.');
         renderCategories();
     });
+    
+    // Additional DOM debugging for final button
+    console.log('[TAG-DIALOG] Dialog HTML innerHTML:', dialog.innerHTML);
+    console.log('[TAG-DIALOG] Footer HTML:', dialog.querySelector('.tag-dialog-footer').innerHTML);
+    console.log('[TAG-DIALOG] Final customize button exists:', !!finalCustomizeButton);
+    console.log('[TAG-DIALOG] Final customize button style:', finalCustomizeButton ? finalCustomizeButton.style.cssText : 'N/A');
+    console.log('[TAG-DIALOG] Final customize button visibility:', finalCustomizeButton ? window.getComputedStyle(finalCustomizeButton).visibility : 'N/A');
+    console.log('[TAG-DIALOG] Final customize button display:', finalCustomizeButton ? window.getComputedStyle(finalCustomizeButton).display : 'N/A');
+    
+    if (finalCustomizeButton) {
+        finalCustomizeButton.addEventListener('click', () => {
+            console.log('[TAG-CUSTOMIZATION] Customize button clicked');
+            try {
+                if (typeof window.createTagCustomizationDialog === 'function') {
+                    window.createTagCustomizationDialog();
+                } else {
+                    console.error('[TAG-CUSTOMIZATION] createTagCustomizationDialog function not found');
+                    alert('Tag customization feature is not available. Please refresh the page.');
+                }
+            } catch (error) {
+                console.error('[TAG-CUSTOMIZATION] Error opening customization dialog:', error);
+                alert('Error opening tag customization. Check console for details.');
+            }
+        });
+    } else {
+        console.error('[TAG-DIALOG] Could not find or create customize button!');
+    }
     
     // Save button
     const saveButton = dialog.querySelector('.tag-dialog-save');
@@ -602,6 +843,258 @@ window.createTagSelectionDialog = function(imageLabel, existingTags, onSave) {
         overlay,
         close: closeDialog
     };
+}; // End of createTagSelectionDialog function
+
+// ===== TAG CUSTOMIZATION DIALOG =====
+
+window.createTagCustomizationDialog = function() {
+    console.log('[TAG-CUSTOMIZATION] Creating customization dialog');
+    
+    // Create overlay
+    const overlay = document.createElement('div');
+    overlay.className = 'tag-dialog-overlay';
+    document.body.appendChild(overlay);
+    
+    console.log('[TAG-CUSTOMIZATION] Overlay created and added to body');
+    
+    // Create customization dialog
+    const dialog = document.createElement('div');
+    dialog.className = 'tag-dialog tag-customization-dialog';
+    dialog.innerHTML = `
+        <div class="tag-dialog-header">
+            <h3>Customize Tag Appearance</h3>
+            <button class="tag-dialog-close">✖</button>
+        </div>
+        <div class="tag-dialog-content">
+            <div class="tag-customization-content">
+                <!-- Theme Presets -->
+                <div class="customization-section">
+                    <h4>Quick Themes</h4>
+                    <div class="theme-buttons">
+                        <button class="theme-btn" data-theme="default">Default</button>
+                        <button class="theme-btn" data-theme="professional">Professional</button>
+                        <button class="theme-btn" data-theme="colorful">Colorful</button>
+                        <button class="theme-btn" data-theme="minimal">Minimal</button>
+                    </div>
+                </div>
+                
+                <!-- Preview Section -->
+                <div class="customization-section">
+                    <h4>Preview</h4>
+                    <div class="tag-preview-container">
+                        <span class="tag-badge preview-tag">Sofa</span>
+                        <span class="tag-badge preview-tag">Front</span>
+                        <span class="tag-badge preview-tag">Rectangle</span>
+                    </div>
+                </div>
+                
+                <!-- Font Settings -->
+                <div class="customization-section">
+                    <h4>Font Settings</h4>
+                    <div class="control-group">
+                        <label>Font Size: <span class="font-size-value">10px</span></label>
+                        <input type="range" id="fontSizeSlider" min="8" max="24" value="10" class="slider">
+                    </div>
+                    <div class="control-group">
+                        <label>Text Color:</label>
+                        <input type="color" id="textColorPicker" value="#333333">
+                    </div>
+                    <div class="control-group">
+                        <label>
+                            <input type="checkbox" id="boldText"> Bold Text
+                        </label>
+                        <label>
+                            <input type="checkbox" id="italicText"> Italic Text
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Background Settings -->
+                <div class="customization-section">
+                    <h4>Background Settings</h4>
+                    <div class="control-group">
+                        <label>Background Color:</label>
+                        <input type="color" id="backgroundColorPicker" value="#e0e0e0">
+                    </div>
+                    <div class="control-group">
+                        <label>Opacity: <span class="opacity-value">100%</span></label>
+                        <input type="range" id="opacitySlider" min="0" max="100" value="100" class="slider">
+                    </div>
+                    <div class="control-group">
+                        <label>Border Radius: <span class="border-radius-value">10px</span></label>
+                        <input type="range" id="borderRadiusSlider" min="0" max="25" value="10" class="slider">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="tag-dialog-footer">
+            <button class="tag-dialog-save customization-save">Apply Changes</button>
+            <button class="tag-dialog-cancel">Cancel</button>
+            <button class="tag-dialog-reset">Reset to Default</button>
+        </div>
+    `;
+    document.body.appendChild(dialog);
+    
+    console.log('[TAG-CUSTOMIZATION] Dialog HTML created and added to body');
+    
+    // Close dialog function
+    function closeCustomizationDialog() {
+        try {
+            if (overlay && overlay.parentNode) {
+                document.body.removeChild(overlay);
+            }
+            if (dialog && dialog.parentNode) {
+                document.body.removeChild(dialog);
+            }
+            console.log('[TAG-CUSTOMIZATION] Dialog closed successfully');
+        } catch (error) {
+            console.error('[TAG-CUSTOMIZATION] Error closing dialog:', error);
+        }
+    }
+    
+    // Close button handlers
+    const closeButton = dialog.querySelector('.tag-dialog-close');
+    const cancelButton = dialog.querySelector('.tag-dialog-cancel');
+    closeButton.addEventListener('click', closeCustomizationDialog);
+    cancelButton.addEventListener('click', closeCustomizationDialog);
+    
+    // Get all controls
+    const fontSizeSlider = dialog.querySelector('#fontSizeSlider');
+    const fontSizeValue = dialog.querySelector('.font-size-value');
+    const textColorPicker = dialog.querySelector('#textColorPicker');
+    const boldText = dialog.querySelector('#boldText');
+    const italicText = dialog.querySelector('#italicText');
+    const backgroundColorPicker = dialog.querySelector('#backgroundColorPicker');
+    const opacitySlider = dialog.querySelector('#opacitySlider');
+    const opacityValue = dialog.querySelector('.opacity-value');
+    const borderRadiusSlider = dialog.querySelector('#borderRadiusSlider');
+    const borderRadiusValue = dialog.querySelector('.border-radius-value');
+    
+    // Load current settings
+    function loadCurrentSettings() {
+        const styles = window.tagCustomization.global;
+        fontSizeSlider.value = styles.fontSize;
+        fontSizeValue.textContent = `${styles.fontSize}px`;
+        textColorPicker.value = styles.textColor;
+        boldText.checked = styles.fontWeight === 'bold';
+        italicText.checked = styles.fontStyle === 'italic';
+        backgroundColorPicker.value = styles.backgroundColor;
+        opacitySlider.value = Math.round(styles.backgroundOpacity * 100);
+        opacityValue.textContent = `${Math.round(styles.backgroundOpacity * 100)}%`;
+        borderRadiusSlider.value = styles.borderRadius;
+        borderRadiusValue.textContent = `${styles.borderRadius}px`;
+    }
+    
+    // Update preview function
+    function updatePreview() {
+        const tempStyles = {
+            fontSize: parseInt(fontSizeSlider.value),
+            textColor: textColorPicker.value,
+            fontWeight: boldText.checked ? 'bold' : 'normal',
+            fontStyle: italicText.checked ? 'italic' : 'normal',
+            backgroundColor: backgroundColorPicker.value,
+            backgroundOpacity: parseFloat(opacitySlider.value) / 100,
+            borderRadius: parseInt(borderRadiusSlider.value)
+        };
+        
+        // Apply to preview tags
+        const previewTags = dialog.querySelectorAll('.preview-tag');
+        previewTags.forEach(tag => {
+            tag.style.fontSize = `${tempStyles.fontSize}px`;
+            tag.style.color = tempStyles.textColor;
+            tag.style.fontWeight = tempStyles.fontWeight;
+            tag.style.fontStyle = tempStyles.fontStyle;
+            tag.style.backgroundColor = tempStyles.backgroundColor;
+            tag.style.opacity = tempStyles.backgroundOpacity;
+            tag.style.borderRadius = `${tempStyles.borderRadius}px`;
+        });
+        
+        // Update value displays
+        fontSizeValue.textContent = `${tempStyles.fontSize}px`;
+        opacityValue.textContent = `${Math.round(tempStyles.backgroundOpacity * 100)}%`;
+        borderRadiusValue.textContent = `${tempStyles.borderRadius}px`;
+    }
+    
+    // Add event listeners for real-time preview
+    fontSizeSlider.addEventListener('input', updatePreview);
+    textColorPicker.addEventListener('input', updatePreview);
+    boldText.addEventListener('change', updatePreview);
+    italicText.addEventListener('change', updatePreview);
+    backgroundColorPicker.addEventListener('input', updatePreview);
+    opacitySlider.addEventListener('input', updatePreview);
+    borderRadiusSlider.addEventListener('input', updatePreview);
+    
+    // Theme button handlers
+    const themeButtons = dialog.querySelectorAll('.theme-btn');
+    themeButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const themeName = button.dataset.theme;
+            const theme = window.tagCustomization.themes[themeName];
+            if (theme) {
+                // Update controls with theme values
+                fontSizeSlider.value = theme.fontSize || 10;
+                textColorPicker.value = theme.textColor || '#333333';
+                backgroundColorPicker.value = theme.backgroundColor || '#e0e0e0';
+                opacitySlider.value = Math.round((theme.backgroundOpacity || 1.0) * 100);
+                borderRadiusSlider.value = theme.borderRadius || 10;
+                boldText.checked = false;
+                italicText.checked = false;
+                
+                updatePreview();
+            }
+        });
+    });
+    
+    // Save button handler
+    const saveButton = dialog.querySelector('.customization-save');
+    saveButton.addEventListener('click', () => {
+        // Apply changes to global settings
+        window.tagCustomization.global = {
+            ...window.tagCustomization.global,
+            fontSize: parseInt(fontSizeSlider.value),
+            textColor: textColorPicker.value,
+            fontWeight: boldText.checked ? 'bold' : 'normal',
+            fontStyle: italicText.checked ? 'italic' : 'normal',
+            backgroundColor: backgroundColorPicker.value,
+            backgroundOpacity: parseFloat(opacitySlider.value) / 100,
+            borderRadius: parseInt(borderRadiusSlider.value)
+        };
+        
+        // Apply styles and persist
+        applyTagCustomization();
+        persistTagCustomization();
+        
+        console.log('[TAG-CUSTOMIZATION] Applied custom settings');
+        closeCustomizationDialog();
+    });
+    
+    // Reset button handler
+    const resetButton = dialog.querySelector('.tag-dialog-reset');
+    resetButton.addEventListener('click', () => {
+        resetTagCustomization();
+        loadCurrentSettings();
+        updatePreview();
+    });
+    
+    // Initialize with current settings
+    loadCurrentSettings();
+    updatePreview();
+    
+    console.log('[TAG-CUSTOMIZATION] Customization dialog initialized successfully');
+};
+
+// Debug function to test tag customization (can be called from browser console)
+window.testTagCustomization = function() {
+    console.log('[DEBUG] Testing tag customization system...');
+    console.log('[DEBUG] tagCustomization object:', window.tagCustomization);
+    console.log('[DEBUG] createTagCustomizationDialog function:', typeof window.createTagCustomizationDialog);
+    
+    if (typeof window.createTagCustomizationDialog === 'function') {
+        console.log('[DEBUG] Attempting to open customization dialog...');
+        window.createTagCustomizationDialog();
+    } else {
+        console.error('[DEBUG] createTagCustomizationDialog function not found!');
+    }
 };
 
 // Function to show tag dialog from sidebar
@@ -614,23 +1107,23 @@ window.showTagDialogForImage = function(imageLabel) {
         // Save tags
         window.imageTags[imageLabel] = newTags;
         
-        // Update display name in sidebar
-        const displayName = window.getTagBasedFilename(imageLabel);
-        const labelElement = document.querySelector(`.image-container[data-label="${imageLabel}"] .image-label`);
-        if (labelElement) {
-            const filename = getTagBasedFilename(imageLabel, imageLabel.split('_')[0]); // Get updated filename
-            const newText = filename ? filename.charAt(0).toUpperCase() + filename.slice(1) : imageLabel;
-            console.log(`[updateTagsDisplay] Found labelElement for ${imageLabel}. Current text: "${labelElement.textContent}". Attempting to set text to: "${newText}"`);
-            labelElement.textContent = newText; // Update text
-            console.log(`[updateTagsDisplay] Updated labelElement text for ${imageLabel} to: ${labelElement.textContent}`);
-        } else {
-            console.warn(`[updateTagsDisplay] Could not find labelElement for label: ${imageLabel}`);
-        }
+        // Persist tags to localStorage
+        persistTags();
         
         // Update tags display
         const tagsContainer = document.querySelector(`.image-container[data-label="${imageLabel}"] .image-tags`);
         if (tagsContainer) {
             tagsContainer.innerHTML = '';
+            
+            // Get display name from tags
+            const filename = getTagBasedFilename(imageLabel, imageLabel.split('_')[0]);
+            const displayName = filename ? filename.charAt(0).toUpperCase() + filename.slice(1) : imageLabel;
+            
+            // Add display name as first tag badge
+            const nameTag = document.createElement('span');
+            nameTag.className = 'tag-badge';
+            nameTag.textContent = displayName;
+            tagsContainer.appendChild(nameTag);
             
             // Add visible tag badges
             const visibleTags = [];
@@ -651,7 +1144,7 @@ window.showTagDialogForImage = function(imageLabel) {
                 }
             }
             
-            // Add badges
+            // Add additional tag badges
             if (visibleTags.length > 0) {
                 visibleTags.forEach(tag => {
                     const badge = document.createElement('span');
@@ -659,8 +1152,6 @@ window.showTagDialogForImage = function(imageLabel) {
                     badge.textContent = tag;
                     tagsContainer.appendChild(badge);
                 });
-            } else {
-                tagsContainer.innerHTML = '<span class="no-tags">No tags</span>';
             }
         }
     });
@@ -679,6 +1170,19 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         console.log('[TAG-MANAGER] Core paint.js globals are ready.');
 
+        // Load existing tags from localStorage first
+        loadTagsFromLocalStorage();
+        
+        // Load tag customization settings
+        console.log('[TAG-CUSTOMIZATION] Loading customization settings from localStorage');
+        loadTagCustomizationFromLocalStorage();
+        
+        // Apply current customization styles
+        console.log('[TAG-CUSTOMIZATION] Applying customization styles');
+        applyTagCustomization();
+        
+        console.log('[TAG-CUSTOMIZATION] Customization system initialized');
+
         // Initialize with default tags if none exist for the standard labels
         window.IMAGE_LABELS.forEach(label => {
             if (!window.imageTags[label]) {
@@ -689,6 +1193,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
         console.log('[TAG-MANAGER] Default tags initialized for standard labels.');
+        
+        // Save initial tags to localStorage
+        persistTags();
 
         // Now that core data is ready, set up UI-dependent parts
         initializeTagUI();
@@ -707,6 +1214,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 const existingTags = window.imageTags[currentLabel] || {};
                 window.createTagSelectionDialog(currentLabel, existingTags, (newTags) => {
                     window.imageTags[currentLabel] = newTags;
+                    
+                    // Persist tags to localStorage
+                    persistTags();
+                    
                     updateTagsDisplay(currentLabel); // This function also needs to be robust
                     console.log(`[TAG-MANAGER] Updated tags for ${currentLabel}:`, newTags);
                 });
@@ -767,10 +1278,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!controlsContainer) {
             controlsContainer = document.createElement('div');
             controlsContainer.className = 'tag-controls';
-            // Insert controls after the image-label and before image-tags if possible, or append
-            const imageLabelDiv = container.querySelector('.image-label');
-            if (imageLabelDiv && imageLabelDiv.nextSibling) {
-                container.insertBefore(controlsContainer, imageLabelDiv.nextSibling);
+            // Insert controls after the image-tags container, or append
+            const imageTagsDiv = container.querySelector('.image-tags');
+            if (imageTagsDiv && imageTagsDiv.nextSibling) {
+                container.insertBefore(controlsContainer, imageTagsDiv.nextSibling);
             } else {
                 container.appendChild(controlsContainer);
             }
@@ -808,14 +1319,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         controlsContainer.appendChild(focusButton);
 
-        // Update the label text
-        const labelElement = container.querySelector('.image-label');
-        if (labelElement) {
+        // Update the first tag badge text (which contains the display name)
+        const firstTagBadge = container.querySelector('.image-tags .tag-badge:first-child');
+        if (firstTagBadge) {
             const tagText = generateFilenameFromTags(label, window.imageTags[label]);
-            labelElement.textContent = tagText;
-            console.log(`[updateTagsDisplay] Updated label text for ${label} to: ${tagText}`);
+            firstTagBadge.textContent = tagText;
+            console.log(`[updateTagsDisplay] Updated first tag badge text for ${label} to: ${tagText}`);
         } else {
-            console.warn(`[updateTagsDisplay] Could not find label element for ${label}`);
+            console.warn(`[updateTagsDisplay] Could not find first tag badge for ${label}`);
         }
     }
 
@@ -1016,6 +1527,9 @@ document.addEventListener('DOMContentLoaded', () => {
                             viewType: baseLabel 
                         };
                          console.log(`[TAG-MANAGER hooked addImageToSidebar] Initialized tags for new image ${label}`);
+                         
+                         // Persist tags after adding new image
+                         persistTags();
                     }
                     updateTagsDisplay(label);
                 }, 150); 
