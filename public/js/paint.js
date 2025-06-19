@@ -5479,7 +5479,7 @@ document.addEventListener('DOMContentLoaded', () => {
         canvas.height = maxHeight;
         
         // Set default canvas styles
-        canvas.style.cursor = 'crosshair';
+        updateCursor('crosshair', 'canvas initialization');
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
         
@@ -5733,22 +5733,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Function to intelligently restore cursor based on current mouse position
     function restoreCursorAfterDrag(x, y) {
-        // Check if we're hovering over a control point - this takes priority
-        const controlPointAtPosition = findControlPointAtPosition(x, y);
-        if (controlPointAtPosition && window.selectedStrokeInEditMode === controlPointAtPosition.strokeLabel) {
-            canvas.style.cursor = 'grab';
-            return;
+        // Ensure all drag flags are properly reset
+        isDraggingControlPoint = false;
+        isDraggingLabel = false;
+        isDraggingImage = false;
+        
+        // Use the same simple priority system as mousemove
+        // Priority 1: Control points (only when in edit mode)
+        if (window.selectedStrokeInEditMode) {
+            const controlPointAtPosition = findControlPointAtPosition(x, y);
+            if (controlPointAtPosition && controlPointAtPosition.strokeLabel === window.selectedStrokeInEditMode) {
+                updateCursor('grab', 'control point after drag');
+                return;
+            }
         }
         
-        // Check if we're hovering over a label
+        // Priority 2: Tags/Labels
         const labelAtPosition = findLabelAtPoint(x, y);
         if (labelAtPosition) {
-            canvas.style.cursor = 'grab'; // Changed from 'pointer' to 'grab' for consistency
+            updateCursor('pointer', 'tag after drag');
             return;
         }
         
-        // Default cursor based on mode
-        canvas.style.cursor = isShiftPressed ? 'grab' : 'crosshair';
+        // Priority 3: Default canvas cursor
+        updateCursor('crosshair', 'canvas default after drag');
     }
 
     // Helper function to handle defocus clicks (single clicks that don't create strokes)
@@ -6519,7 +6527,7 @@ document.addEventListener('DOMContentLoaded', () => {
         cachedLabelPositions.clear();
     }
 
-    // PERFORMANCE: Optimized throttled mousemove handler
+    // PERFORMANCE: Optimized throttled mousemove handler (for expensive operations only)
     function handleMouseMoveThrottled(x, y) {
         // Early exit if dragging - these operations don't need expensive hover detection
         if (isDraggingImage || isDraggingLabel || isDraggingControlPoint || isDrawing) {
@@ -6532,32 +6540,16 @@ document.addEventListener('DOMContentLoaded', () => {
             cacheInvalidated = false;
         }
 
-        // PERFORMANCE: Use cached positions for faster hover detection
-        const newHoveredLabelInfo = findLabelAtPointOptimized(x, y);
+        // NOTE: Cursor management is now handled immediately in the main mousemove handler
+        // This function is only for expensive background operations that can be throttled
         
-        // Update cursor and visual hover state only if hovered label changed
+        // Update hover state for visual feedback (but not cursor - that's handled immediately)
+        const newHoveredLabelInfo = findLabelAtPointOptimized(x, y);
         if ((hoveredCanvasLabelInfo?.strokeLabel !== newHoveredLabelInfo?.strokeLabel) || 
             (!hoveredCanvasLabelInfo && newHoveredLabelInfo) || 
             (hoveredCanvasLabelInfo && !newHoveredLabelInfo)) {
             
             hoveredCanvasLabelInfo = newHoveredLabelInfo;
-
-            if (hoveredCanvasLabelInfo) {
-                updateCursor('pointer', `hovering label ${hoveredCanvasLabelInfo.strokeLabel}`);
-            } else {
-                updateCursor('default', 'canvas default');
-            }
-        }
-        
-        // PERFORMANCE: Only check control points if in edit mode (avoid expensive calculations when not needed)
-        if (window.selectedStrokeInEditMode) {
-            const controlPointHover = findControlPointAtPositionOptimized(x, y);
-            
-            if (controlPointHover) {
-                if(canvas.style.cursor !== 'grab' && canvas.style.cursor !== 'grabbing') {
-                    updateCursor('grab', `control point ${controlPointHover.type} ${controlPointHover.pointIndex}`);
-                }
-            }
         }
     }
 
@@ -6738,7 +6730,7 @@ document.addEventListener('DOMContentLoaded', () => {
             isDraggingImage = true;
             lastMouseX = e.offsetX;
             lastMouseY = e.offsetY;
-            canvas.style.cursor = 'grabbing';
+            updateCursor('grabbing', 'image panning started');
             
             // CRITICAL FIX: Don't exit edit mode when panning - preserve the edit state
             return;
@@ -6858,7 +6850,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     dragAnchorIndex = controlPointAtClick.pointIndex;
                 }
                 
-                canvas.style.cursor = 'grabbing';
+                updateCursor('grabbing', 'control point drag started');
                 e.preventDefault();
                 return;
             }
@@ -7044,6 +7036,9 @@ document.addEventListener('DOMContentLoaded', () => {
         lastDrawnPoint = null;
         [lastX, lastY] = [e.offsetX, e.offsetY];
         
+        // Ensure cursor stays as crosshair during drawing
+        updateCursor('crosshair', 'drawing in progress');
+        
         // Store mousedown position for click vs drag detection
         mouseDownPosition = { x: e.offsetX, y: e.offsetY };
         
@@ -7203,16 +7198,16 @@ document.addEventListener('DOMContentLoaded', () => {
         // Also check if we're currently hovering over a control point before changing cursor
         const controlPointAtPosition = findControlPointAtPosition(lastMouseX, lastMouseY);
         if (controlPointAtPosition && window.selectedStrokeInEditMode === controlPointAtPosition.strokeLabel) {
-            canvas.style.cursor = 'grab';
+            updateCursor('grab', 'control point hover in update');
             return;
         }
         
         if (labelAtPoint) {
-            canvas.style.cursor = 'grab';
+            updateCursor('grab', 'label hover in update');
         } else if (strokeAtPoint) {
-            canvas.style.cursor = 'pointer';
+            updateCursor('pointer', 'stroke hover in update');
         } else {
-            canvas.style.cursor = 'crosshair';
+            updateCursor('crosshair', 'default in update');
         }
     }
     
@@ -7223,7 +7218,7 @@ document.addEventListener('DOMContentLoaded', () => {
         controlPointDetectionTimeout = setTimeout(() => {
             const controlPoint = findControlPointAtPosition(x, y);
             if (controlPoint) {
-                canvas.style.cursor = 'grab';
+                updateCursor('grab', 'debounced control point detection');
             }
         }, 50); // 50ms debounce
     }
@@ -7232,7 +7227,29 @@ document.addEventListener('DOMContentLoaded', () => {
         const x = e.offsetX;
         const y = e.offsetY;
 
-        // PERFORMANCE: Enhanced throttling with event batching
+        // SIMPLE cursor management - immediate updates
+        if (!isDraggingImage && !isDraggingLabel && !isDraggingControlPoint && !isDrawing) {
+            // Priority 1: Control points (only when in edit mode)
+            if (window.selectedStrokeInEditMode) {
+                const controlPointAtPosition = findControlPointAtPosition(x, y);
+                if (controlPointAtPosition && controlPointAtPosition.strokeLabel === window.selectedStrokeInEditMode) {
+                    updateCursor('grab', 'control point');
+                    return;
+                }
+            }
+            
+            // Priority 2: Tags/Labels 
+            const labelAtPosition = findLabelAtPoint(x, y);
+            if (labelAtPosition) {
+                updateCursor('pointer', 'tag hover');
+                return;
+            }
+            
+            // Priority 3: Default canvas cursor
+            updateCursor('crosshair', 'canvas default');
+        }
+
+        // PERFORMANCE: Enhanced throttling with event batching for expensive operations
         if (!mouseMoveThrottled) {
             mouseMoveThrottled = true;
             requestAnimationFrame(() => {
@@ -7272,7 +7289,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
 
-                // PERFORMANCE: Use optimized hover detection
+                // PERFORMANCE: Use optimized hover detection (throttled for performance)
                 handleMouseMoveThrottled(x, y);
             });
         }
@@ -7375,7 +7392,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 draggedLabelStroke = window.labelClickInfo.label;
                 dragStartX = window.labelClickInfo.startX;
                 dragStartY = window.labelClickInfo.startY;
-                canvas.style.cursor = 'grabbing';
+                updateCursor('grabbing', 'label drag started');
                 window.labelClickInfo = null; // Clear click info
             }
         }
@@ -7483,19 +7500,7 @@ document.addEventListener('DOMContentLoaded', () => {
             drawCurvedLinePreview(curvedLinePoints, mousePos);
         }
         
-        // Handle hover cursor for control points (only when not dragging)
-        if (!isDrawing && !isDraggingImage && !isDraggingLabel && !isDraggingControlPoint && window.selectedStrokeInEditMode) {
-            const controlPointAtPosition = findControlPointAtPosition(e.offsetX, e.offsetY);
-            if (controlPointAtPosition && controlPointAtPosition.strokeLabel === window.selectedStrokeInEditMode) {
-                // Show grab cursor when hovering over control points
-                if (canvas.style.cursor !== 'grab' && canvas.style.cursor !== 'grabbing') {
-                    canvas.style.cursor = 'grab';
-                }
-            } else if (canvas.style.cursor === 'grab') {
-                // Only reset cursor if it was previously set to grab (avoid interfering with other cursor logic)
-                canvas.style.cursor = 'crosshair';
-            }
-        }
+        // NOTE: Control point hover detection moved to immediate handling above for better responsiveness
     });
     
     canvas.addEventListener('mouseup', (e) => {
@@ -7607,11 +7612,12 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (isDraggingImage) {
             isDraggingImage = false;
-            canvas.style.cursor = isShiftPressed ? 'grab' : 'crosshair';
             
             // Deselect all strokes when shift-drag ends
             deselectAllStrokes();
             
+            // Restore cursor intelligently based on current mouse position
+            restoreCursorAfterDrag(e.offsetX, e.offsetY);
             return;
         }
         
@@ -7802,6 +7808,11 @@ document.addEventListener('DOMContentLoaded', () => {
         isDrawingOrPasting = false;
         strokeInProgress = false;
         mouseDownPosition = null;
+        
+        // Restore appropriate cursor after drawing ends
+        if (!isDraggingControlPoint && !isDraggingLabel && !isDraggingImage) {
+            restoreCursorAfterDrag(e.offsetX, e.offsetY);
+        }
     });
     
     canvas.addEventListener('mouseout', () => {
@@ -7819,13 +7830,13 @@ document.addEventListener('DOMContentLoaded', () => {
             // Final render to ensure label position is properly saved
             redrawCanvasWithVisibility();
             
-            canvas.style.cursor = 'grab';
+            updateCursor('grab', 'label drag completed');
             return;
         }
         
         if (isDraggingImage) {
             isDraggingImage = false;
-            canvas.style.cursor = isShiftPressed ? 'grab' : 'crosshair';
+            updateCursor(isShiftPressed ? 'grab' : 'crosshair', 'image drag completed 2');
             return;
         }
         
@@ -7853,6 +7864,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // F1 & F2: Enhanced Window-Level Event Handling with Centralized Cursor Management
     
+    
     // Centralized cursor management (F2)
     function updateCursor(state, context = '') {
         
@@ -7876,7 +7888,7 @@ document.addEventListener('DOMContentLoaded', () => {
             case 'default':
             default:
                 document.body.style.cursor = 'default';
-                canvas.style.cursor = isShiftPressed ? 'grab' : 'crosshair';
+                updateCursor(isShiftPressed ? 'grab' : 'crosshair', 'outside canvas restoration');
                 break;
         }
     }
@@ -8016,7 +8028,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 restoreCursorAfterDrag(canvasX, canvasY);
             } else {
                 // Outside canvas - set cursor based on shift state
-                canvas.style.cursor = isShiftPressed ? 'grab' : 'crosshair';
+                updateCursor(isShiftPressed ? 'grab' : 'crosshair', 'outside canvas restoration');
                 document.body.style.cursor = 'default';
             }
             return;
@@ -8043,7 +8055,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 restoreCursorAfterDrag(canvasX, canvasY);
             } else {
                 // Outside canvas - set cursor based on shift state
-                canvas.style.cursor = isShiftPressed ? 'grab' : 'crosshair';
+                updateCursor(isShiftPressed ? 'grab' : 'crosshair', 'outside canvas restoration');
                 document.body.style.cursor = 'default';
             }
             return;
