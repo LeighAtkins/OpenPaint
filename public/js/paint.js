@@ -70,7 +70,7 @@ window.paintApp = {
         lastVelocity: 0,
         mouseDownPosition: null,
         curveJustCompleted: false,
-        drawingMode: 'freehand', // Options: 'freehand', 'straight', 'curved', 'arrow'
+        drawingMode: 'straight', // Options: 'freehand', 'straight', 'curved', 'arrow'
         straightLineStart: null,
         curvedLinePoints: [],
         lastDrawnPoint: null
@@ -121,12 +121,26 @@ window.paintApp.uiState.arrowSettings = {
     arrowStyle: 'triangular' // Options: 'triangular', 'filled', 'curved'
 };
 
+// Add dash offset tracking for continuous freehand patterns
+window.paintApp.uiState.dashOffset = 0;
+
+// Add dash settings for dotted/dashed lines
+window.paintApp.uiState.dashSettings = {
+    enabled: false,     // Solid lines by default
+    style: 'solid',     // 'solid', 'small', 'medium', 'large', 'dot-dash', 'custom'
+    pattern: [],        // Canvas dash array - empty for solid
+    dashLength: 5,      // Base dash length (scales with line width)
+    gapLength: 5        // Base gap length (scales with line width)
+};
+
 window.paintApp.uiState.draggingAnchor = false;
 window.paintApp.uiState.dragCurveStroke = null; // The stroke being modified
 window.paintApp.uiState.dragAnchorIndex = -1;   // Which control point is being dragged
 
 // Backward compatibility references
 let arrowSettings = window.paintApp.uiState.arrowSettings;
+let dashSettings = window.paintApp.uiState.dashSettings;
+let dashOffset = window.paintApp.uiState.dashOffset;
 let draggingAnchor = window.paintApp.uiState.draggingAnchor;
 let dragCurveStroke = window.paintApp.uiState.dragCurveStroke;
 let dragAnchorIndex = window.paintApp.uiState.dragAnchorIndex;
@@ -302,7 +316,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addImageToSidebar = addImageToSidebar;
     function addImageToSidebar(imageUrl, label, filename) {
         // *** ADDED LOG ***
-        console.log(`[addImageToSidebar] Called for label: ${label}, imageUrl: ${imageUrl ? imageUrl.substring(0,30) + '...' : 'null'}`);
+//         console.log(`[addImageToSidebar] Called for label: ${label}, imageUrl: ${imageUrl ? imageUrl.substring(0,30) + '...' : 'null'}`);
 
         const container = document.createElement('div');
         container.className = 'image-container';
@@ -510,7 +524,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Finally add to the sidebar
         document.getElementById('imageList').appendChild(container);
-        console.log(`[addImageToSidebar] Successfully appended container for ${label}. #imageList children: ${document.getElementById('imageList').children.length}`);
+//         console.log(`[addImageToSidebar] Successfully appended container for ${label}. #imageList children: ${document.getElementById('imageList').children.length}`);
         
         // Update the ordered image labels array
         updateOrderedImageLabelsArray();
@@ -521,7 +535,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Function to delete an image and clean up all associated data
     function deleteImage(label, container) {
-        console.log(`[deleteImage] Deleting image: ${label}`);
+//         console.log(`[deleteImage] Deleting image: ${label}`);
         
         // Remove from DOM
         container.remove();
@@ -588,7 +602,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Update UI
         updateSidebarStrokeCounts();
         
-        console.log(`[deleteImage] Successfully deleted image: ${label}`);
+//         console.log(`[deleteImage] Successfully deleted image: ${label}`);
     }
     
     // Function to update the ordered image labels array based on current DOM order
@@ -602,7 +616,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Log for debugging image order discrepancies
             if (JSON.stringify(currentOrder) !== JSON.stringify(window.orderedImageLabels)) {
-                console.log('[updateOrderedImageLabelsArray] Order changed from:', currentOrder, 'to:', window.orderedImageLabels);
+//                 console.log('[updateOrderedImageLabelsArray] Order changed from:', currentOrder, 'to:', window.orderedImageLabels);
             }
         } else {
             console.warn('[updateOrderedImageLabelsArray] imageList element not found!');
@@ -616,7 +630,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function pasteImageFromUrl(url, label) {
         // Wrap in a Promise
         return new Promise((resolve, reject) => {
-            console.log(`[pasteImageFromUrl] Pasting image for ${label}: ${url.substring(0, 30)}...`);
+//             console.log(`[pasteImageFromUrl] Pasting image for ${label}: ${url.substring(0, 30)}...`);
         
         const img = new Image();
         img.onload = () => {
@@ -636,6 +650,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // Log dimensions for debugging
                 console.log(`[pasteImageFromUrl] Stored dimensions for ${label}: ${img.width}x${img.height}`);
+            
             
             // Clear the canvas first
             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -659,7 +674,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const y = centerY + offsetY;
             
             // Draw the image with scaling and positioning
-                console.log(`[pasteImageFromUrl] Drawing image for ${label} at Canvas(${x.toFixed(1)}, ${y.toFixed(1)}) Scale: ${scale * 100}%`);
+//                 console.log(`[pasteImageFromUrl] Drawing image for ${label} at Canvas(${x.toFixed(1)}, ${y.toFixed(1)}) Scale: ${scale * 100}%`);
             ctx.drawImage(img, x, y, scaledWidth, scaledHeight);
             
             // Update the scale display in the sidebar
@@ -671,7 +686,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Save this as the base state for this image
             const newState = getCanvasState();
                 imageStates[label] = cloneImageData(newState); // Use passed-in label
-                console.log(`[pasteImageFromUrl] State saved into imageStates[${label}]`);
+//                 console.log(`[pasteImageFromUrl] State saved into imageStates[${label}]`);
                 
                 // If this is the currently active label, update currentStroke
                 if (label === currentImageLabel) {
@@ -685,7 +700,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 type: 'initial',
                 label: null
             }];
-                    console.log(`[pasteImageFromUrl] Initialized undo stack for ${label}`);
+//                     console.log(`[pasteImageFromUrl] Initialized undo stack for ${label}`);
                 }
             
                 // Update the scale buttons to show active state if this is the current view
@@ -693,7 +708,7 @@ document.addEventListener('DOMContentLoaded', () => {
             updateScaleButtonsActiveState();
                 }
                 
-                console.log(`[pasteImageFromUrl] Image loaded and state saved for ${label}`);
+//                 console.log(`[pasteImageFromUrl] Image loaded and state saved for ${label}`);
                 resolve(); // Resolve the promise
             };
             
@@ -764,24 +779,24 @@ document.addEventListener('DOMContentLoaded', () => {
     // Function to get formatted measurement string
     function getMeasurementString(strokeLabel) {
         // Add detailed logging
-        console.log(`[getMeasurementString] Called for ${strokeLabel} in ${currentImageLabel} view`);
+//         console.log(`[getMeasurementString] Called for ${strokeLabel} in ${currentImageLabel} view`);
         
         // Check if we have measurements for this image
         if (!window.strokeMeasurements[currentImageLabel]) {
-            console.log(`[getMeasurementString] No measurements found for ${currentImageLabel}`);
+//             console.log(`[getMeasurementString] No measurements found for ${currentImageLabel}`);
             return '';
         }
         
         const measurement = window.strokeMeasurements[currentImageLabel][strokeLabel];
-        console.log(`[getMeasurementString] Measurement data for ${strokeLabel}:`, measurement);
+//         console.log(`[getMeasurementString] Measurement data for ${strokeLabel}:`, measurement);
         
         if (!measurement) {
-            console.log(`[getMeasurementString] No measurement found for ${strokeLabel}`);
+//             console.log(`[getMeasurementString] No measurement found for ${strokeLabel}`);
             return '';
         }
         
         const unit = document.getElementById('unitSelector').value;
-        console.log(`[getMeasurementString] Current unit: ${unit}`);
+//         console.log(`[getMeasurementString] Current unit: ${unit}`);
         
         if (unit === 'inch') {
             const whole = measurement.inchWhole || 0;
@@ -803,12 +818,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             const result = `${whole}${fractionStr}"`;
-            console.log(`[getMeasurementString] Returning inch format: ${result}`);
+//             console.log(`[getMeasurementString] Returning inch format: ${result}`);
             return result;
         } else {
             // CM with one decimal
             const result = `${measurement.cm.toFixed(1)} cm`;
-            console.log(`[getMeasurementString] Returning cm format: ${result}`);
+//             console.log(`[getMeasurementString] Returning cm format: ${result}`);
             return result;
         }
     }
@@ -827,10 +842,2190 @@ document.addEventListener('DOMContentLoaded', () => {
     // Function to update all measurements when unit changes
     function updateMeasurementDisplay() {
         window.currentUnit = document.getElementById('unitSelector').value;
-        console.log(`[updateMeasurementDisplay] Unit changed to: ${window.currentUnit}`);
+//         console.log(`[updateMeasurementDisplay] Unit changed to: ${window.currentUnit}`);
         updateStrokeVisibilityControls(); // Update the list to show new units
         redrawCanvasWithVisibility(); // Redraw canvas labels with new units
     }
+    
+    // Make function globally available for HTML onchange handlers
+    window.updateMeasurementDisplay = updateMeasurementDisplay;
+
+    // Function to generate a comprehensive list of all measurements
+    function generateMeasurementsList() {
+        const projectName = document.getElementById('projectName').value || 'Untitled Project';
+        const currentUnit = document.getElementById('unitSelector').value;
+        
+        let measurementsList = `${projectName} - Measurements List\n`;
+        measurementsList += `Generated on: ${new Date().toLocaleDateString()}\n`;
+        measurementsList += `Unit: ${currentUnit === 'inch' ? 'Inches' : 'Centimeters'}\n`;
+        measurementsList += `${'='.repeat(50)}\n\n`;
+        
+        // Get all images that have measurements
+        const imageLabels = Object.keys(window.strokeMeasurements || {});
+        
+        if (imageLabels.length === 0) {
+            measurementsList += 'No measurements found in this project.\n';
+            showMeasurementsDialog(measurementsList);
+            return;
+        }
+        
+        imageLabels.forEach(imageLabel => {
+            const measurements = window.strokeMeasurements[imageLabel];
+            if (!measurements) return;
+            
+            const strokeLabels = Object.keys(measurements);
+            if (strokeLabels.length === 0) return;
+            
+            // Capitalize and format image label
+            const imageName = imageLabel.charAt(0).toUpperCase() + imageLabel.slice(1);
+            measurementsList += `${imageName} Image:\n`;
+            measurementsList += `${'-'.repeat(imageName.length + 7)}\n`;
+            
+            strokeLabels.forEach(strokeLabel => {
+                const measurement = measurements[strokeLabel];
+                if (!measurement) return;
+                
+                let measurementString = '';
+                if (currentUnit === 'inch') {
+                    const whole = measurement.inchWhole || 0;
+                    const fraction = measurement.inchFraction || 0;
+                    
+                    let fractionStr = '';
+                    if (fraction > 0) {
+                        const fractionMap = {
+                            0.125: '1/8',
+                            0.25: '1/4',
+                            0.375: '3/8',
+                            0.5: '1/2',
+                            0.625: '5/8',
+                            0.75: '3/4',
+                            0.875: '7/8'
+                        };
+                        fractionStr = ' ' + fractionMap[fraction];
+                    }
+                    measurementString = `${whole}${fractionStr}"`;
+                } else {
+                    measurementString = `${measurement.cm.toFixed(1)} cm`;
+                }
+                
+                measurementsList += `  ${strokeLabel}: ${measurementString}\n`;
+            });
+            
+            measurementsList += '\n';
+        });
+        
+        showMeasurementsDialog(measurementsList);
+    }
+    
+    // Function to display measurements in a modal dialog
+    function showMeasurementsDialog(measurementsList) {
+        // Create overlay
+        const overlay = document.createElement('div');
+        overlay.className = 'measurement-overlay';
+        overlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        `;
+        
+        // Create dialog
+        const dialog = document.createElement('div');
+        dialog.className = 'measurement-dialog';
+        dialog.style.cssText = `
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+            width: 600px;
+            max-width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        `;
+        
+        // Create content
+        dialog.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="margin: 0; color: #333;">Measurements List</h3>
+                <button onclick="this.closest('.measurement-overlay').remove()" style="background: none; border: none; font-size: 18px; cursor: pointer; color: #666;">&times;</button>
+            </div>
+            <div style="margin-bottom: 20px; position: relative;">
+                <textarea readonly style="width: 100%; height: 400px; font-family: monospace; padding: 10px; border: 1px solid #ddd; border-radius: 4px; resize: vertical; font-size: 12px; background-color: #f9f9f9;">${measurementsList}</textarea>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button onclick="copyMeasurementsToClipboard(this)" style="padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; background-color: #4CAF50; color: white;">Copy to Clipboard</button>
+                <button onclick="downloadMeasurementsFile()" style="padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; background-color: #2196F3; color: white;">Download as Text</button>
+                <button onclick="this.closest('.measurement-overlay').remove()" style="padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; background-color: #f0f0f0; color: #333;">Close</button>
+            </div>
+        `;
+        
+        overlay.appendChild(dialog);
+        document.body.appendChild(overlay);
+        
+        // Store measurements for copy/download functions
+        window.currentMeasurementsList = measurementsList;
+    }
+    
+    // Function to copy measurements to clipboard
+    window.copyMeasurementsToClipboard = function(button) {
+        navigator.clipboard.writeText(window.currentMeasurementsList).then(() => {
+            const originalText = button.textContent;
+            button.textContent = 'Copied!';
+            button.style.backgroundColor = '#45a049';
+            setTimeout(() => {
+                button.textContent = originalText;
+                button.style.backgroundColor = '#4CAF50';
+            }, 2000);
+        }).catch(err => {
+            console.error('Failed to copy measurements:', err);
+            // Fallback for older browsers
+            const textarea = document.createElement('textarea');
+            textarea.value = window.currentMeasurementsList;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            
+            const originalText = button.textContent;
+            button.textContent = 'Copied!';
+            setTimeout(() => {
+                button.textContent = originalText;
+            }, 2000);
+        });
+    };
+    
+    // Function to download measurements as text file
+    window.downloadMeasurementsFile = function() {
+        const projectName = document.getElementById('projectName').value || 'Untitled Project';
+        const fileName = `${projectName}_Measurements.txt`;
+        
+        const blob = new Blob([window.currentMeasurementsList], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    };
+
+    // Function to save all images as individual PNG files
+    function saveAllImages() {
+        const projectName = document.getElementById('projectName').value || 'Untitled Project';
+        
+        // Check both possible storage locations for images
+        const originalImages = window.originalImages || window.paintApp.state.originalImages || {};
+        const originalImageLabels = Object.keys(originalImages);
+        
+        if (originalImageLabels.length === 0) {
+            alert('No images found to save. Please upload some images first.');
+            return;
+        }
+        
+        // Show image selection dialog instead of processing all immediately
+        showImageSelectionDialog(originalImageLabels, projectName);
+    }
+    
+    // Function to generate thumbnail for an image
+    function generateImageThumbnail(imageLabel, size = 200) {
+        return new Promise((resolve) => {
+            const originalImages = window.originalImages || window.paintApp.state.originalImages || {};
+            const originalImageUrl = originalImages[imageLabel];
+            
+            if (!originalImageUrl) {
+                resolve(null);
+                return;
+            }
+            
+            const img = new Image();
+            img.onload = () => {
+                // Create high-resolution thumbnail canvas
+                const thumbCanvas = document.createElement('canvas');
+                const thumbCtx = thumbCanvas.getContext('2d');
+                
+                // Use higher resolution for better quality
+                const pixelRatio = window.devicePixelRatio || 1;
+                const highResSize = size * pixelRatio;
+                
+                thumbCanvas.width = highResSize;
+                thumbCanvas.height = highResSize;
+                thumbCanvas.style.width = size + 'px';
+                thumbCanvas.style.height = size + 'px';
+                
+                // Scale context for high DPI displays
+                thumbCtx.scale(pixelRatio, pixelRatio);
+                
+                // Enable better image rendering
+                thumbCtx.imageSmoothingEnabled = true;
+                thumbCtx.imageSmoothingQuality = 'high';
+                
+                // Calculate scaling to fit image in square thumbnail
+                const scale = Math.min(size / img.width, size / img.height);
+                const scaledWidth = img.width * scale;
+                const scaledHeight = img.height * scale;
+                const offsetX = (size - scaledWidth) / 2;
+                const offsetY = (size - scaledHeight) / 2;
+                
+                // Draw image with better quality
+                thumbCtx.fillStyle = '#f0f0f0';
+                thumbCtx.fillRect(0, 0, size, size);
+                thumbCtx.drawImage(img, offsetX, offsetY, scaledWidth, scaledHeight);
+                
+                // Draw visible strokes with better quality
+                const vectorStrokes = window.vectorStrokesByImage[imageLabel] || {};
+                const strokeVisibility = window.strokeVisibilityByImage[imageLabel] || {};
+                const strokeOrder = window.lineStrokesByImage[imageLabel] || [];
+                
+                // Draw strokes in proper order
+                strokeOrder.forEach(strokeLabel => {
+                    if (strokeVisibility[strokeLabel] !== false && vectorStrokes[strokeLabel]) {
+                        const vectorData = vectorStrokes[strokeLabel];
+                        if (vectorData && vectorData.points && vectorData.points.length >= 2) {
+                            thumbCtx.strokeStyle = vectorData.color || '#ea4335';
+                            thumbCtx.lineWidth = Math.max(1, 3 * scale); // Scale line width appropriately
+                            thumbCtx.lineCap = 'round';
+                            thumbCtx.lineJoin = 'round';
+                            
+                            thumbCtx.beginPath();
+                            const firstPoint = vectorData.points[0];
+                            thumbCtx.moveTo(
+                                offsetX + firstPoint.x * scale,
+                                offsetY + firstPoint.y * scale
+                            );
+                            
+                            for (let i = 1; i < vectorData.points.length; i++) {
+                                const point = vectorData.points[i];
+                                thumbCtx.lineTo(
+                                    offsetX + point.x * scale,
+                                    offsetY + point.y * scale
+                                );
+                            }
+                            thumbCtx.stroke();
+                            
+                            // Draw arrow heads if applicable
+                            if (vectorData.type === 'arrow' || vectorData.type === 'curved-arrow') {
+                                const lastPoint = vectorData.points[vectorData.points.length - 1];
+                                const secondLastPoint = vectorData.points[vectorData.points.length - 2];
+                                if (lastPoint && secondLastPoint) {
+                                    const arrowSize = Math.max(4, 8 * scale);
+                                    drawArrowHead(thumbCtx, 
+                                        { x: offsetX + secondLastPoint.x * scale, y: offsetY + secondLastPoint.y * scale },
+                                        { x: offsetX + lastPoint.x * scale, y: offsetY + lastPoint.y * scale },
+                                        arrowSize, vectorData.color || '#ea4335'
+                                    );
+                                }
+                            }
+                        }
+                    }
+                });
+                
+                resolve(thumbCanvas.toDataURL('image/png', 0.9));
+            };
+            
+            img.onerror = () => resolve(null);
+            img.src = originalImageUrl;
+        });
+    }
+    
+    // Helper function to draw arrow heads for thumbnails
+    function drawArrowHead(ctx, from, to, size, color) {
+        const angle = Math.atan2(to.y - from.y, to.x - from.x);
+        
+        ctx.save();
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.moveTo(to.x, to.y);
+        ctx.lineTo(
+            to.x - size * Math.cos(angle - Math.PI / 6),
+            to.y - size * Math.sin(angle - Math.PI / 6)
+        );
+        ctx.lineTo(
+            to.x - size * Math.cos(angle + Math.PI / 6),
+            to.y - size * Math.sin(angle + Math.PI / 6)
+        );
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+    }
+    
+    // Function to show image selection dialog
+    async function showImageSelectionDialog(imageLabels, projectName) {
+        // Create overlay
+        const overlay = document.createElement('div');
+        overlay.id = 'imageSelectionOverlay';
+        overlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 10000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        `;
+        
+        // Create dialog
+        const dialog = document.createElement('div');
+        dialog.style.cssText = `
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+            width: 700px;
+            max-width: 90%;
+            max-height: 85vh;
+            overflow-y: auto;
+        `;
+        
+        // Initial dialog content with loading state
+        dialog.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="margin: 0; color: #333;">Select Images to Export</h3>
+                <button onclick="this.closest('#imageSelectionOverlay').remove()" style="background: none; border: none; font-size: 18px; cursor: pointer; color: #666;">&times;</button>
+            </div>
+            
+            <!-- Export Mode Selection -->
+            <div style="margin-bottom: 25px; padding: 15px; background: #f9f9f9; border-radius: 6px;">
+                <h4 style="margin: 0 0 10px 0; color: #333;">Export Mode</h4>
+                <label style="display: block; margin-bottom: 8px; cursor: pointer;">
+                    <input type="radio" name="exportMode" value="screenView" checked style="margin-right: 8px;">
+                    <strong>Screen View</strong> - Export exactly what you see on canvas (recommended)
+                </label>
+                <label style="display: block; cursor: pointer;">
+                    <input type="radio" name="exportMode" value="productionOutput" style="margin-right: 8px;">
+                    <strong>Production Output</strong> - Export with measurement labels overlaid on lines
+                </label>
+            </div>
+            
+            <!-- Export Method Selection -->
+            <div style="margin-bottom: 25px; padding: 15px; background: #e8f5e9; border-radius: 6px;">
+                <h4 style="margin: 0 0 10px 0; color: #333;">Export Method</h4>
+                <label style="display: block; margin-bottom: 8px; cursor: pointer;">
+                    <input type="radio" name="exportMethod" value="individual" checked style="margin-right: 8px;">
+                    <strong>📁 Individual Downloads</strong> - Download each file separately (works everywhere)
+                </label>
+                <label style="display: block; margin-bottom: 8px; cursor: pointer; ${!('showDirectoryPicker' in window) ? 'opacity: 0.5;' : ''}">
+                    <input type="radio" name="exportMethod" value="folder" ${!('showDirectoryPicker' in window) ? 'disabled' : ''} style="margin-right: 8px;">
+                    <strong>📂 Save to Folder</strong> - Choose a folder to save all files ${!('showDirectoryPicker' in window) ? '(Not supported in this browser)' : '(Modern browsers)'}
+                </label>
+                <label style="display: block; cursor: pointer;">
+                    <input type="radio" name="exportMethod" value="zip" style="margin-right: 8px;">
+                    <strong>📦 ZIP File</strong> - Bundle all images into one ZIP file
+                </label>
+            </div>
+            
+            <!-- Images Section -->
+            <div style="margin-bottom: 20px;">
+                <h4 style="margin: 0 0 15px 0; color: #333;">Select Images</h4>
+                <div id="imagesContainer" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
+                    <div style="text-align: center; padding: 20px; color: #666;">
+                        Loading thumbnails...
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <label style="margin-right: 15px; cursor: pointer;">
+                        <input type="checkbox" id="selectAll" checked onchange="
+                            const checkboxes = document.querySelectorAll('#imageSelectionOverlay input[type=checkbox][id^=img_]');
+                            checkboxes.forEach(cb => cb.checked = this.checked);
+                            updateThumbnailBorders();
+                        "> Select All
+                    </label>
+                </div>
+                <div>
+                    <button onclick="handleExportImages('${projectName}')" style="padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; background-color: #4CAF50; color: white; font-weight: bold; margin-right: 10px;">Export Images</button>
+                    <button onclick="showPDFExportDialog('${projectName}')" style="padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; background-color: #2196F3; color: white; font-weight: bold; margin-right: 10px;">Save as PDF</button>
+                    <button onclick="this.closest('#imageSelectionOverlay').remove()" style="padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; background-color: #f0f0f0; color: #333;">Cancel</button>
+                </div>
+            </div>
+        `;
+        
+        overlay.appendChild(dialog);
+        document.body.appendChild(overlay);
+        
+        // Generate thumbnails and update the images container
+        const imagesContainer = document.getElementById('imagesContainer');
+        imagesContainer.innerHTML = '';
+        
+        for (const label of imageLabels) {
+            // Use tag-based filename if available, otherwise use label
+            let imageName = label;
+            if (window.getTagBasedFilename && typeof window.getTagBasedFilename === 'function') {
+                const tagBasedName = window.getTagBasedFilename(label, label.split('_')[0]);
+                if (tagBasedName && tagBasedName !== label.split('_')[0]) {
+                    imageName = tagBasedName;
+                }
+            }
+            imageName = imageName.charAt(0).toUpperCase() + imageName.slice(1);
+            
+            // Create image item container
+            const imageItem = document.createElement('div');
+            imageItem.style.cssText = `
+                border: 2px solid #4CAF50;
+                border-radius: 8px;
+                padding: 15px;
+                text-align: center;
+                cursor: pointer;
+                transition: border-color 0.2s;
+                background: white;
+            `;
+            imageItem.dataset.label = label;
+            
+            // Add click to toggle functionality
+            imageItem.onclick = () => {
+                const checkbox = imageItem.querySelector('input[type="checkbox"]');
+                checkbox.checked = !checkbox.checked;
+                updateThumbnailBorders();
+            };
+            
+            imageItem.innerHTML = `
+                <div style="margin-bottom: 10px;">
+                    <div style="width: 120px; height: 120px; margin: 0 auto; background: #f0f0f0; border-radius: 4px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                        <div style="color: #999; font-size: 12px;">Loading...</div>
+                    </div>
+                </div>
+                <div style="margin-bottom: 8px;">
+                    <input type="checkbox" id="img_${label}" value="${label}" checked style="margin-right: 8px; transform: scale(1.2);">
+                    <label for="img_${label}" style="font-weight: bold; color: #333; cursor: pointer;">${imageName}</label>
+                </div>
+                <div style="font-size: 12px; color: #666;">${label}</div>
+            `;
+            
+            imagesContainer.appendChild(imageItem);
+            
+            // Generate thumbnail
+            generateImageThumbnail(label, 200).then(thumbnailDataUrl => {
+                const thumbnailContainer = imageItem.querySelector('div > div');
+                if (thumbnailDataUrl) {
+                    thumbnailContainer.innerHTML = `
+                        <img src="${thumbnailDataUrl}" style="width: 100%; height: 100%; object-fit: contain; border-radius: 4px;">
+                    `;
+                } else {
+                    thumbnailContainer.innerHTML = `
+                        <div style="color: #999; font-size: 12px;">No preview</div>
+                    `;
+                }
+            });
+            
+            // Update border color when checkbox changes
+            const checkbox = imageItem.querySelector('input[type="checkbox"]');
+            checkbox.onchange = () => {
+                updateThumbnailBorders();
+            };
+        }
+        
+        // Function to update thumbnail borders based on selection
+        window.updateThumbnailBorders = function() {
+            const imageItems = document.querySelectorAll('#imagesContainer > div');
+            imageItems.forEach(item => {
+                const checkbox = item.querySelector('input[type="checkbox"]');
+                item.style.borderColor = checkbox.checked ? '#4CAF50' : '#ddd';
+            });
+        };
+    }
+    
+    // Function to select/deselect all images
+    window.selectAllImages = function(selectAll) {
+        const checkboxes = document.querySelectorAll('#imageCheckboxes input[type="checkbox"]');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = selectAll;
+        });
+        updateSelectedCount();
+    };
+    
+    // Function to update selected count
+    function updateSelectedCount() {
+        const checkboxes = document.querySelectorAll('#imageCheckboxes input[type="checkbox"]');
+        const checkedCount = Array.from(checkboxes).filter(cb => cb.checked).length;
+        const countElement = document.getElementById('selectedCount');
+        if (countElement) {
+            countElement.textContent = `${checkedCount} selected`;
+        }
+        
+        // Add change listeners to update count
+        checkboxes.forEach(checkbox => {
+            checkbox.removeEventListener('change', updateSelectedCount); // Remove existing listener
+            checkbox.addEventListener('change', updateSelectedCount);
+        });
+    }
+    
+    // Function to save selected images
+    window.saveSelectedImages = function(projectName) {
+        const checkboxes = document.querySelectorAll('#imageSelectionOverlay input[type="checkbox"][id^="img_"]:checked');
+        const selectedLabels = Array.from(checkboxes).map(cb => cb.value);
+        
+        if (selectedLabels.length === 0) {
+            alert('Please select at least one image to save.');
+            return;
+        }
+        
+        // Get export mode
+        const exportModeRadio = document.querySelector('#imageSelectionOverlay input[name="exportMode"]:checked');
+        console.log('[Debug] Export mode radio element:', exportModeRadio);
+        console.log('[Debug] Export mode radio value:', exportModeRadio ? exportModeRadio.value : 'none found');
+        
+        // Check all radio buttons for debugging
+        const allRadios = document.querySelectorAll('#imageSelectionOverlay input[name="exportMode"]');
+        console.log('[Debug] All export mode radios:', allRadios);
+        allRadios.forEach((radio, index) => {
+            console.log(`[Debug] Radio ${index}: value="${radio.value}", checked=${radio.checked}`);
+        });
+        
+        const exportMode = exportModeRadio ? exportModeRadio.value : 'screenView';
+        
+        // Close selection dialog
+        const overlay = document.getElementById('imageSelectionOverlay');
+        if (overlay) {
+            overlay.remove();
+        }
+        
+        // Start the save process with selected images
+        processSaveImages(selectedLabels, projectName, exportMode);
+    };
+    
+    // New function to handle different export methods
+    window.handleExportImages = function(projectName) {
+        const checkboxes = document.querySelectorAll('#imageSelectionOverlay input[type="checkbox"][id^="img_"]:checked');
+        const selectedLabels = Array.from(checkboxes).map(cb => cb.value);
+        
+        if (selectedLabels.length === 0) {
+            alert('Please select at least one image to export.');
+            return;
+        }
+        
+        // Get export mode (Screen View or Production Output)
+        const exportModeRadio = document.querySelector('#imageSelectionOverlay input[name="exportMode"]:checked');
+        const exportMode = exportModeRadio ? exportModeRadio.value : 'screenView';
+        
+        // Get export method (Individual, Folder, or ZIP)
+        const exportMethodRadio = document.querySelector('#imageSelectionOverlay input[name="exportMethod"]:checked');
+        const exportMethod = exportMethodRadio ? exportMethodRadio.value : 'individual';
+        
+        console.log(`[Export] Selected ${selectedLabels.length} images, mode: ${exportMode}, method: ${exportMethod}`);
+        
+        // Close selection dialog
+        const overlay = document.getElementById('imageSelectionOverlay');
+        if (overlay) {
+            overlay.remove();
+        }
+        
+        // Route to appropriate export method
+        switch (exportMethod) {
+            case 'individual':
+                processSaveImages(selectedLabels, projectName, exportMode);
+                break;
+            case 'folder':
+                processSaveToFolder(selectedLabels, projectName, exportMode);
+                break;
+            case 'zip':
+                processSaveToZip(selectedLabels, projectName, exportMode);
+                break;
+            default:
+                console.error('Unknown export method:', exportMethod);
+                processSaveImages(selectedLabels, projectName, exportMode); // Fallback to individual
+        }
+    };
+    
+    // Function to detect canvas viewport bounds
+    function detectCanvasViewport(imageLabel) {
+        const canvas = document.getElementById('canvas');
+        const originalImages = window.originalImages || window.paintApp.state.originalImages || {};
+        const originalImageDimensions = window.originalImageDimensions || window.paintApp.state.originalImageDimensions || {};
+        
+        const imageDimensions = originalImageDimensions[imageLabel];
+        const scale = window.paintApp.state.imageScaleByLabel[imageLabel] || 1;
+        const position = window.paintApp.state.imagePositionByLabel[imageLabel] || { x: 0, y: 0 };
+        
+        if (!imageDimensions) {
+            // Return full canvas if no image dimensions
+            return {
+                x: 0,
+                y: 0,
+                width: canvas.width,
+                height: canvas.height
+            };
+        }
+        
+        // Calculate image bounds on canvas
+        const scaledWidth = imageDimensions.width * scale;
+        const scaledHeight = imageDimensions.height * scale;
+        
+        // Calculate image position (centered by default, then adjusted by position offset)
+        const centerX = (canvas.width - scaledWidth) / 2;
+        const centerY = (canvas.height - scaledHeight) / 2;
+        const imageX = centerX + position.x;
+        const imageY = centerY + position.y;
+        
+        // Return the viewport bounds that show the image
+        return {
+            x: Math.max(0, imageX),
+            y: Math.max(0, imageY),
+            width: Math.min(canvas.width - Math.max(0, imageX), scaledWidth),
+            height: Math.min(canvas.height - Math.max(0, imageY), scaledHeight),
+            imageX: imageX,
+            imageY: imageY,
+            scaledWidth: scaledWidth,
+            scaledHeight: scaledHeight,
+            scale: scale
+        };
+    }
+    
+    // Function to crop canvas to viewport bounds
+    function cropToViewport(sourceCanvas, viewportBounds) {
+        const croppedCanvas = document.createElement('canvas');
+        const croppedCtx = croppedCanvas.getContext('2d');
+        
+        croppedCanvas.width = viewportBounds.width;
+        croppedCanvas.height = viewportBounds.height;
+        
+        // Copy the viewport area from source canvas
+        croppedCtx.drawImage(
+            sourceCanvas,
+            viewportBounds.x, viewportBounds.y, viewportBounds.width, viewportBounds.height,
+            0, 0, viewportBounds.width, viewportBounds.height
+        );
+        
+        return croppedCanvas;
+    }
+    
+    // Placeholder for PDF export dialog
+    window.showPDFExportDialog = async function(projectName) {
+        // Get all stroke measurements for the PDF from all images
+        const allMeasurements = [];
+        let measurementIndex = 0;
+        
+        // Iterate through all images and their strokes
+        for (const imageLabel in window.vectorStrokesByImage) {
+            const imageStrokes = window.vectorStrokesByImage[imageLabel] || {};
+            const strokeOrder = window.lineStrokesByImage[imageLabel] || [];
+            
+            strokeOrder.forEach(strokeLabel => {
+                const vectorData = imageStrokes[strokeLabel];
+                if (vectorData && strokeLabel && strokeLabel.trim()) {
+                    const measurement = {
+                        id: measurementIndex++,
+                        imageLabel: imageLabel,
+                        strokeLabel: strokeLabel,
+                        label: strokeLabel,
+                        value: vectorData.measurement || 'N/A',
+                        unit: vectorData.unit || window.currentUnit || 'inch',
+                        color: vectorData.color || '#000000',
+                        editable: true
+                    };
+                    allMeasurements.push(measurement);
+                }
+            });
+        }
+
+        // Create PDF export dialog
+        const dialogOverlay = document.createElement('div');
+        dialogOverlay.id = 'pdfExportOverlay';
+        dialogOverlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 10000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        `;
+
+        dialogOverlay.innerHTML = `
+            <div style="background: white; border-radius: 8px; width: 90%; max-width: 800px; max-height: 90vh; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+                <div style="padding: 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
+                    <h3 style="margin: 0; color: #333;">Export PDF - ${projectName}</h3>
+                    <button onclick="this.closest('#pdfExportOverlay').remove()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #666;">&times;</button>
+                </div>
+                
+                <div style="padding: 20px; overflow-y: auto; max-height: calc(90vh - 160px);">
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 10px; font-weight: bold; color: #333;">PDF Layout:</label>
+                        <select id="pdfLayoutSelect" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                            <option value="images-only">Images Only</option>
+                            <option value="side-by-side" selected>Images with Measurements Table</option>
+                            <option value="measurements-only">Measurements Table Only</option>
+                        </select>
+                    </div>
+
+                    <div id="measurementsSection" style="margin-bottom: 20px;">
+                        <h4 style="margin-bottom: 15px; color: #333;">Measurements (${allMeasurements.length} items):</h4>
+                        <div style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px;">
+                            <table style="width: 100%; border-collapse: collapse;">
+                                <thead style="background-color: #f5f5f5; position: sticky; top: 0;">
+                                    <tr>
+                                        <th style="padding: 10px; border-bottom: 1px solid #ddd; text-align: left; width: 60px;">Label</th>
+                                        <th style="padding: 10px; border-bottom: 1px solid #ddd; text-align: left;">Measurement</th>
+                                        <th style="padding: 10px; border-bottom: 1px solid #ddd; text-align: left; width: 80px;">Unit</th>
+                                        <th style="padding: 10px; border-bottom: 1px solid #ddd; text-align: center; width: 60px;">Include</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="measurementsTableBody">
+                                    ${allMeasurements.map((measurement, index) => `
+                                        <tr style="border-bottom: 1px solid #eee;">
+                                            <td style="padding: 8px;">
+                                                <input type="text" value="${measurement.label}" 
+                                                       data-measurement-id="${measurement.id}" 
+                                                       data-field="label"
+                                                       style="width: 100%; padding: 4px; border: 1px solid #ccc; border-radius: 2px; font-size: 14px;">
+                                            </td>
+                                            <td style="padding: 8px;">
+                                                <input type="text" value="${measurement.value}" 
+                                                       data-measurement-id="${measurement.id}" 
+                                                       data-field="value"
+                                                       style="width: 100%; padding: 4px; border: 1px solid #ccc; border-radius: 2px; font-size: 14px;">
+                                            </td>
+                                            <td style="padding: 8px;">
+                                                <select data-measurement-id="${measurement.id}" 
+                                                        data-field="unit"
+                                                        style="width: 100%; padding: 4px; border: 1px solid #ccc; border-radius: 2px; font-size: 14px;">
+                                                    <option value="inch" ${measurement.unit === 'inch' ? 'selected' : ''}>inch</option>
+                                                    <option value="cm" ${measurement.unit === 'cm' ? 'selected' : ''}>cm</option>
+                                                    <option value="ft" ${measurement.unit === 'ft' ? 'selected' : ''}>ft</option>
+                                                    <option value="mm" ${measurement.unit === 'mm' ? 'selected' : ''}>mm</option>
+                                                </select>
+                                            </td>
+                                            <td style="padding: 8px; text-align: center;">
+                                                <input type="checkbox" checked 
+                                                       data-measurement-id="${measurement.id}" 
+                                                       data-field="include"
+                                                       style="transform: scale(1.2);">
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                        ${allMeasurements.length === 0 ? '<p style="color: #666; font-style: italic; text-align: center; padding: 20px;">No measurements found. Create some labeled strokes first.</p>' : ''}
+                    </div>
+
+                    <div style="margin-bottom: 20px;">
+                        <h4 style="margin-bottom: 10px; color: #333;">PDF Options:</h4>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                            <label style="display: flex; align-items: center; gap: 8px;">
+                                <input type="checkbox" id="includeProjectName" checked style="transform: scale(1.2);">
+                                Include project name as title
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px;">
+                                <input type="checkbox" id="includeTimestamp" checked style="transform: scale(1.2);">
+                                Include creation timestamp
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px;">
+                                <input type="checkbox" id="includeImageLabels" checked style="transform: scale(1.2);">
+                                Show image labels
+                            </label>
+                        </div>
+                    </div>
+
+                    <div id="previewSection" style="margin-bottom: 20px; padding: 15px; background-color: #f9f9f9; border-radius: 4px;">
+                        <h4 style="margin-top: 0; margin-bottom: 10px; color: #333;">Preview:</h4>
+                        <div id="previewContent" style="font-size: 14px; color: #666;">
+                            <p>Click "Preview PDF" to see how your document will look.</p>
+                        </div>
+                        <button id="previewPDFBtn" style="padding: 8px 16px; border: 1px solid #2196F3; border-radius: 4px; background: white; color: #2196F3; cursor: pointer; margin-top: 10px;">
+                            Preview PDF
+                        </button>
+                    </div>
+                </div>
+                
+                <div style="padding: 20px; border-top: 1px solid #eee; display: flex; justify-content: flex-end; gap: 10px;">
+                    <button onclick="generatePDF('${projectName}')" style="padding: 12px 24px; border: none; border-radius: 4px; cursor: pointer; background-color: #4CAF50; color: white; font-weight: bold;">
+                        Generate PDF
+                    </button>
+                    <button onclick="this.closest('#pdfExportOverlay').remove()" style="padding: 12px 24px; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; background-color: white; color: #333;">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(dialogOverlay);
+
+        // Add event listeners for real-time preview updates
+        const layoutSelect = document.getElementById('pdfLayoutSelect');
+        const previewBtn = document.getElementById('previewPDFBtn');
+        
+        layoutSelect.addEventListener('change', updateMeasurementsVisibility);
+        previewBtn.addEventListener('click', showPDFPreview);
+
+        // Update measurements section visibility based on layout
+        function updateMeasurementsVisibility() {
+            const measurementsSection = document.getElementById('measurementsSection');
+            const layoutValue = layoutSelect.value;
+            measurementsSection.style.display = layoutValue === 'images-only' ? 'none' : 'block';
+        }
+
+        // Initialize visibility
+        updateMeasurementsVisibility();
+    };
+
+    // PDF Preview Function
+    window.showPDFPreview = function() {
+        const previewContent = document.getElementById('previewContent');
+        const layoutSelect = document.getElementById('pdfLayoutSelect');
+        const includeProjectName = document.getElementById('includeProjectName').checked;
+        const includeTimestamp = document.getElementById('includeTimestamp').checked;
+        
+        const layout = layoutSelect.value;
+        const measurementCount = document.querySelectorAll('#measurementsTableBody input[data-field="include"]:checked').length;
+        const selectedImageCount = window.pastedImages.length;
+        
+        let previewText = '<div style="font-family: Arial, sans-serif; line-height: 1.5;">';
+        
+        if (includeProjectName) {
+            previewText += `<strong>Project:</strong> ${document.getElementById('projectName').value}<br>`;
+        }
+        
+        if (includeTimestamp) {
+            previewText += `<strong>Created:</strong> ${new Date().toLocaleDateString()}<br><br>`;
+        }
+        
+        switch (layout) {
+            case 'images-only':
+                previewText += `<strong>Layout:</strong> Images Only<br>`;
+                previewText += `<strong>Content:</strong> ${selectedImageCount} images with annotations<br>`;
+                break;
+                
+            case 'side-by-side':
+                previewText += `<strong>Layout:</strong> Images with Measurements Table<br>`;
+                previewText += `<strong>Content:</strong> ${selectedImageCount} images + ${measurementCount} measurements<br>`;
+                break;
+                
+            case 'measurements-only':
+                previewText += `<strong>Layout:</strong> Measurements Table Only<br>`;
+                previewText += `<strong>Content:</strong> ${measurementCount} measurements in table format<br>`;
+                break;
+        }
+        
+        previewText += `<br><em>The PDF will be generated with professional formatting and layout.</em>`;
+        previewText += '</div>';
+        
+        previewContent.innerHTML = previewText;
+    };
+
+    // PDF Generation Function
+    window.generatePDF = async function(projectName) {
+        try {
+            if (typeof window.jsPDF === 'undefined') {
+                alert('PDF library not loaded. Please refresh the page and try again.');
+                return;
+            }
+
+            const { jsPDF } = window.jsPDF;
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            
+            // Get user preferences
+            const layoutSelect = document.getElementById('pdfLayoutSelect');
+            const includeProjectName = document.getElementById('includeProjectName').checked;
+            const includeTimestamp = document.getElementById('includeTimestamp').checked;
+            const includeImageLabels = document.getElementById('includeImageLabels').checked;
+            
+            const layout = layoutSelect.value;
+            let yPosition = 20;
+            
+            // Add title and timestamp
+            if (includeProjectName) {
+                pdf.setFontSize(18);
+                pdf.setFont(undefined, 'bold');
+                pdf.text(projectName, 20, yPosition);
+                yPosition += 15;
+            }
+            
+            if (includeTimestamp) {
+                pdf.setFontSize(10);
+                pdf.setFont(undefined, 'normal');
+                pdf.text(`Generated: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`, 20, yPosition);
+                yPosition += 15;
+            }
+            
+            // Collect measurements data
+            const measurements = [];
+            const measurementInputs = document.querySelectorAll('#measurementsTableBody tr');
+            measurementInputs.forEach(row => {
+                const includeCheckbox = row.querySelector('input[data-field="include"]');
+                if (includeCheckbox && includeCheckbox.checked) {
+                    const label = row.querySelector('input[data-field="label"]').value;
+                    const value = row.querySelector('input[data-field="value"]').value;
+                    const unit = row.querySelector('select[data-field="unit"]').value;
+                    measurements.push({ label, value, unit });
+                }
+            });
+            
+            if (layout === 'measurements-only' || layout === 'side-by-side') {
+                // Add measurements table
+                pdf.setFontSize(14);
+                pdf.setFont(undefined, 'bold');
+                pdf.text('Measurements', 20, yPosition);
+                yPosition += 10;
+                
+                if (measurements.length > 0) {
+                    // Table headers
+                    pdf.setFontSize(10);
+                    pdf.setFont(undefined, 'bold');
+                    pdf.text('Label', 20, yPosition);
+                    pdf.text('Measurement', 60, yPosition);
+                    pdf.text('Unit', 120, yPosition);
+                    yPosition += 5;
+                    
+                    // Table line
+                    pdf.line(20, yPosition, 170, yPosition);
+                    yPosition += 5;
+                    
+                    // Table content
+                    pdf.setFont(undefined, 'normal');
+                    measurements.forEach(measurement => {
+                        if (yPosition > 270) {
+                            pdf.addPage();
+                            yPosition = 20;
+                        }
+                        
+                        pdf.text(measurement.label, 20, yPosition);
+                        pdf.text(measurement.value, 60, yPosition);
+                        pdf.text(measurement.unit, 120, yPosition);
+                        yPosition += 6;
+                    });
+                } else {
+                    pdf.setFont(undefined, 'normal');
+                    pdf.text('No measurements found.', 20, yPosition);
+                    yPosition += 10;
+                }
+                
+                yPosition += 10;
+            }
+            
+            if (layout === 'images-only' || layout === 'side-by-side') {
+                // Add images
+                pdf.setFontSize(14);
+                pdf.setFont(undefined, 'bold');
+                pdf.text('Images', 20, yPosition);
+                yPosition += 10;
+                
+                for (let i = 0; i < window.pastedImages.length; i++) {
+                    const image = window.pastedImages[i];
+                    
+                    if (yPosition > 200) {
+                        pdf.addPage();
+                        yPosition = 20;
+                    }
+                    
+                    try {
+                        // Add image label if enabled
+                        if (includeImageLabels && image.label) {
+                            pdf.setFontSize(12);
+                            pdf.setFont(undefined, 'bold');
+                            pdf.text(`Image ${i + 1}: ${image.label}`, 20, yPosition);
+                            yPosition += 8;
+                        }
+                        
+                        // Calculate image dimensions to fit on page
+                        const maxWidth = 170;
+                        const maxHeight = 100;
+                        
+                        let imgWidth = maxWidth;
+                        let imgHeight = (image.height / image.width) * maxWidth;
+                        
+                        if (imgHeight > maxHeight) {
+                            imgHeight = maxHeight;
+                            imgWidth = (image.width / image.height) * maxHeight;
+                        }
+                        
+                        // Add image to PDF
+                        pdf.addImage(image.src, 'JPEG', 20, yPosition, imgWidth, imgHeight);
+                        yPosition += imgHeight + 15;
+                        
+                    } catch (error) {
+                        console.warn(`Could not add image ${i + 1} to PDF:`, error);
+                        pdf.setFontSize(10);
+                        pdf.setFont(undefined, 'italic');
+                        pdf.text(`[Image ${i + 1} could not be included]`, 20, yPosition);
+                        yPosition += 10;
+                    }
+                }
+            }
+            
+            // Save the PDF
+            const fileName = `${projectName.replace(/[^a-z0-9]/gi, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+            pdf.save(fileName);
+            
+            // Close the dialog
+            const overlay = document.getElementById('pdfExportOverlay');
+            if (overlay) {
+                overlay.remove();
+            }
+            
+            showStatus(`PDF "${fileName}" generated successfully!`, 'success');
+            
+        } catch (error) {
+            console.error('Error generating PDF:', error);
+            alert('Error generating PDF. Please check the console for details.');
+        }
+    };
+
+    // Simplified stroke drawing for screen view export
+    function drawStrokeSimplified(ctx, vectorData, imageX, imageY, scale) {
+        if (!vectorData.points || vectorData.points.length === 0) return;
+        
+        // Set stroke properties
+        ctx.strokeStyle = vectorData.color || '#ea4335';
+        ctx.lineWidth = Math.max(1, (vectorData.width || 5));
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        
+        // Set dash pattern if enabled
+        if (vectorData.dashSettings && vectorData.dashSettings.enabled && vectorData.dashSettings.pattern.length > 0) {
+            ctx.setLineDash(vectorData.dashSettings.pattern);
+        } else {
+            ctx.setLineDash([]);
+        }
+        
+        // Draw the stroke
+        ctx.beginPath();
+        
+        // Simple coordinate transformation: scale point and add image offset
+        const firstPoint = vectorData.points[0];
+        ctx.moveTo(
+            imageX + firstPoint.x * scale,
+            imageY + firstPoint.y * scale
+        );
+        
+        for (let i = 1; i < vectorData.points.length; i++) {
+            const point = vectorData.points[i];
+            ctx.lineTo(
+                imageX + point.x * scale,
+                imageY + point.y * scale
+            );
+        }
+        ctx.stroke();
+        
+        // Draw arrows if needed
+        if (vectorData.type === 'arrow' || vectorData.type === 'curved-arrow') {
+            const lastPoint = vectorData.points[vectorData.points.length - 1];
+            const secondLastPoint = vectorData.points[vectorData.points.length - 2];
+            if (lastPoint && secondLastPoint) {
+                const arrowSize = Math.max(8, 15);
+                drawArrowHeadSimplified(ctx, 
+                    { x: imageX + secondLastPoint.x * scale, y: imageY + secondLastPoint.y * scale },
+                    { x: imageX + lastPoint.x * scale, y: imageY + lastPoint.y * scale },
+                    arrowSize, vectorData.color || '#ea4335'
+                );
+            }
+        }
+    }
+
+    // Simplified arrow drawing
+    function drawArrowHeadSimplified(ctx, from, to, size, color) {
+        const angle = Math.atan2(to.y - from.y, to.x - from.x);
+        
+        ctx.save();
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.moveTo(to.x, to.y);
+        ctx.lineTo(
+            to.x - size * Math.cos(angle - Math.PI / 6),
+            to.y - size * Math.sin(angle - Math.PI / 6)
+        );
+        ctx.lineTo(
+            to.x - size * Math.cos(angle + Math.PI / 6),
+            to.y - size * Math.sin(angle + Math.PI / 6)
+        );
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+    }
+
+    // Simplified label drawing for screen view export
+    function drawLabelSimplified(ctx, strokeLabel, vectorData, imageX, imageY, scale, imageLabel) {
+        // Get custom label positions
+        const customLabelPositions = window.customLabelPositions || {};
+        const imagePositions = customLabelPositions[imageLabel] || {};
+        
+        if (imagePositions[strokeLabel]) {
+            // Use custom position (already in canvas coordinates)
+            const customPos = imagePositions[strokeLabel];
+            drawLabelAtPosition(ctx, strokeLabel, customPos.x, customPos.y);
+        } else if (vectorData.points && vectorData.points.length > 0) {
+            // Calculate default position from stroke midpoint
+            const midIndex = Math.floor(vectorData.points.length / 2);
+            const midPoint = vectorData.points[midIndex];
+            const labelX = imageX + midPoint.x * scale;
+            const labelY = imageY + midPoint.y * scale - 10; // Offset above the line
+            
+            drawLabelAtPosition(ctx, strokeLabel, labelX, labelY);
+        }
+    }
+
+    // Helper to draw label at specific position
+    function drawLabelAtPosition(ctx, text, x, y) {
+        ctx.save();
+        ctx.font = 'bold 14px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        
+        // Measure text
+        const metrics = ctx.measureText(text);
+        const textWidth = metrics.width;
+        const textHeight = 16;
+        
+        // Draw background
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+        ctx.fillRect(x - textWidth/2 - 4, y - textHeight/2 - 2, textWidth + 8, textHeight + 4);
+        
+        // Draw border
+        ctx.strokeStyle = '#ccc';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(x - textWidth/2 - 4, y - textHeight/2 - 2, textWidth + 8, textHeight + 4);
+        
+        // Draw text
+        ctx.fillStyle = '#333';
+        ctx.fillText(text, x, y);
+        
+        ctx.restore();
+    }
+    
+    // Function to process saving selected images
+    function processSaveImages(selectedLabels, projectName, exportMode = 'screenView') {
+        console.log(`[Export Mode] Processing individual downloads with mode: ${exportMode}`);
+        
+        // Show enhanced progress dialog for individual downloads
+        showEnhancedSaveProgress('Preparing individual downloads...', 0, selectedLabels.length, 'individual');
+        
+        if (exportMode === 'screenView') {
+            console.log('[Export Mode] Using Screen View processing for individual downloads');
+            // For screen view, process images sequentially with individual downloads
+            processImagesSequentiallyForIndividualDownloads(selectedLabels, projectName, false);
+        } else {
+            console.log('[Export Mode] Using Production Output processing for individual downloads');
+            // For production output, use canvas switching with clean measurement rendering for individual downloads
+            processImagesSequentiallyForIndividualDownloads(selectedLabels, projectName, true);
+        }
+    }
+
+    // Helper function to generate unique filenames when there are duplicates
+    function generateUniqueFilename(baseFilename, extension, usedFilenames) {
+        let finalName = `${baseFilename}.${extension}`;
+        let counter = 1;
+        
+        while (usedFilenames.has(finalName)) {
+            finalName = `${baseFilename}_${counter}.${extension}`;
+            counter++;
+        }
+        
+        return finalName;
+    }
+    
+    // Function to save images to a folder using File System Access API
+    async function processSaveToFolder(selectedLabels, projectName, exportMode = 'screenView') {
+        try {
+            console.log(`[Folder Export] Starting folder export for ${selectedLabels.length} images`);
+            
+            // Show directory picker
+            const directoryHandle = await window.showDirectoryPicker();
+            
+            // Show enhanced progress dialog
+            showEnhancedSaveProgress('Saving to folder...', 0, selectedLabels.length, 'folder');
+            
+            const canvas = document.getElementById('canvas');
+            const originalImageLabel = window.paintApp.state.currentImageLabel;
+            const usedFilenames = new Set();
+            let successCount = 0;
+            
+            for (let i = 0; i < selectedLabels.length; i++) {
+                const imageLabel = selectedLabels[i];
+                
+                try {
+                    updateEnhancedSaveProgress(`Saving ${imageLabel}...`, i, selectedLabels.length);
+                    
+                    // Switch to the target image
+                    if (window.paintApp.state.currentImageLabel !== imageLabel) {
+                        window.switchToImage(imageLabel);
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                    }
+                    
+                    // Capture canvas with high resolution
+                    const tempCanvas = document.createElement('canvas');
+                    const tempCtx = tempCanvas.getContext('2d');
+                    const scale = 2; // High resolution export
+                    
+                    tempCanvas.width = canvas.width * scale;
+                    tempCanvas.height = canvas.height * scale;
+                    tempCtx.scale(scale, scale);
+                    tempCtx.drawImage(canvas, 0, 0);
+                    
+                    // Convert to blob
+                    const blob = await new Promise(resolve => tempCanvas.toBlob(resolve, 'image/png'));
+                    
+                    // Generate unique filename
+                    let baseFilename = imageLabel;
+                    if (window.getTagBasedFilename && typeof window.getTagBasedFilename === 'function') {
+                        const tagBasedName = window.getTagBasedFilename(imageLabel, imageLabel.split('_')[0]);
+                        if (tagBasedName && tagBasedName !== imageLabel.split('_')[0]) {
+                            baseFilename = tagBasedName;
+                        }
+                    }
+                    
+                    const filename = generateUniqueFilename(baseFilename, 'png', usedFilenames);
+                    usedFilenames.add(filename);
+                    
+                    // Save to directory
+                    const fileHandle = await directoryHandle.getFileHandle(filename, { create: true });
+                    const writable = await fileHandle.createWritable();
+                    await writable.write(blob);
+                    await writable.close();
+                    
+                    successCount++;
+                    console.log(`[Folder Export] Saved ${filename}`);
+                    
+                } catch (error) {
+                    console.error(`[Folder Export] Error saving ${imageLabel}:`, error);
+                }
+            }
+            
+            // Restore original image
+            if (originalImageLabel && window.paintApp.state.currentImageLabel !== originalImageLabel) {
+                window.switchToImage(originalImageLabel);
+            }
+            
+            hideEnhancedSaveProgress();
+            alert(`Successfully saved ${successCount} of ${selectedLabels.length} images to folder!`);
+            
+        } catch (error) {
+            hideEnhancedSaveProgress();
+            if (error.name === 'AbortError') {
+                console.log('[Folder Export] User cancelled directory selection');
+                return; // User cancelled, don't show error
+            }
+            console.error('[Folder Export] Error:', error);
+            alert(`Error saving to folder: ${error.message}`);
+        }
+    }
+    
+    // Function to save images as ZIP file
+    async function processSaveToZip(selectedLabels, projectName, exportMode = 'screenView') {
+        try {
+            if (typeof JSZip === 'undefined') {
+                throw new Error('JSZip library is not loaded. Cannot create ZIP file.');
+            }
+            
+            console.log(`[ZIP Export] Starting ZIP export for ${selectedLabels.length} images`);
+            
+            showEnhancedSaveProgress('Creating ZIP file...', 0, selectedLabels.length, 'zip');
+            
+            const zip = new JSZip();
+            const canvas = document.getElementById('canvas');
+            const originalImageLabel = window.paintApp.state.currentImageLabel;
+            const usedFilenames = new Set();
+            let successCount = 0;
+            
+            for (let i = 0; i < selectedLabels.length; i++) {
+                const imageLabel = selectedLabels[i];
+                
+                try {
+                    updateEnhancedSaveProgress(`Processing ${imageLabel}...`, i, selectedLabels.length);
+                    
+                    // Switch to the target image
+                    if (window.paintApp.state.currentImageLabel !== imageLabel) {
+                        window.switchToImage(imageLabel);
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                    }
+                    
+                    // Capture canvas with high resolution
+                    const tempCanvas = document.createElement('canvas');
+                    const tempCtx = tempCanvas.getContext('2d');
+                    const scale = 2;
+                    
+                    tempCanvas.width = canvas.width * scale;
+                    tempCanvas.height = canvas.height * scale;
+                    tempCtx.scale(scale, scale);
+                    tempCtx.drawImage(canvas, 0, 0);
+                    
+                    // Convert to blob
+                    const blob = await new Promise(resolve => tempCanvas.toBlob(resolve, 'image/png'));
+                    
+                    // Generate unique filename
+                    let baseFilename = imageLabel;
+                    if (window.getTagBasedFilename && typeof window.getTagBasedFilename === 'function') {
+                        const tagBasedName = window.getTagBasedFilename(imageLabel, imageLabel.split('_')[0]);
+                        if (tagBasedName && tagBasedName !== imageLabel.split('_')[0]) {
+                            baseFilename = tagBasedName;
+                        }
+                    }
+                    
+                    const filename = generateUniqueFilename(baseFilename, 'png', usedFilenames);
+                    usedFilenames.add(filename);
+                    
+                    // Add to ZIP
+                    zip.file(filename, blob);
+                    successCount++;
+                    
+                } catch (error) {
+                    console.error(`[ZIP Export] Error processing ${imageLabel}:`, error);
+                }
+            }
+            
+            // Generate ZIP file
+            updateEnhancedSaveProgress('Generating ZIP file...', selectedLabels.length, selectedLabels.length);
+            
+            const content = await zip.generateAsync({
+                type: 'blob',
+                compression: 'DEFLATE',
+                compressionOptions: { level: 6 }
+            });
+            
+            // Download ZIP file
+            const safeProjectName = projectName.replace(/[^\w\s]/gi, '').replace(/\s+/g, '_');
+            const dateString = new Date().toISOString().split('T')[0];
+            const zipFilename = `${safeProjectName}_images_${dateString}.zip`;
+            
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(content);
+            link.download = zipFilename;
+            link.click();
+            
+            // Clean up
+            setTimeout(() => URL.revokeObjectURL(link.href), 100);
+            
+            // Restore original image
+            if (originalImageLabel && window.paintApp.state.currentImageLabel !== originalImageLabel) {
+                window.switchToImage(originalImageLabel);
+            }
+            
+            hideEnhancedSaveProgress();
+            alert(`Successfully created ZIP file with ${successCount} of ${selectedLabels.length} images!`);
+            
+        } catch (error) {
+            hideEnhancedSaveProgress();
+            console.error('[ZIP Export] Error:', error);
+            alert(`Error creating ZIP file: ${error.message}`);
+        }
+    }
+
+    // New function for sequential screen view processing
+    async function processImagesSequentiallyForScreenView(selectedLabels, projectName, isProductionOutput = false) {
+        const canvas = document.getElementById('canvas');
+        const originalImageLabel = window.paintApp.state.currentImageLabel;
+        const savedImages = [];
+        const usedFilenames = new Set(); // Track used filenames to avoid duplicates
+        
+        for (let i = 0; i < selectedLabels.length; i++) {
+            const imageLabel = selectedLabels[i];
+            
+            const modeLabel = isProductionOutput ? 'Production Output' : 'Screen View Export';
+            console.log(`[${modeLabel}] Processing ${imageLabel} (${i + 1}/${selectedLabels.length})`);
+            
+            // Switch to the target image using the proper switchToImage function
+            if (window.paintApp.state.currentImageLabel !== imageLabel) {
+                window.switchToImage(imageLabel);
+                // Wait for rendering to complete
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+            
+            // Capture the canvas
+            const tempCanvas = document.createElement('canvas');
+            const tempCtx = tempCanvas.getContext('2d');
+            
+            // Both production output and screen view now capture canvas as-is with higher resolution
+            const scale = 2;
+            tempCanvas.width = canvas.width * scale;
+            tempCanvas.height = canvas.height * scale;
+            tempCtx.scale(scale, scale);
+            tempCtx.drawImage(canvas, 0, 0);
+            
+            // Convert to blob and save
+            const fileFormat = isProductionOutput ? 'image/jpeg' : 'image/png';
+            const quality = isProductionOutput ? 0.85 : 0.9;
+            const fileExtension = isProductionOutput ? 'jpg' : 'png';
+            const blob = await new Promise(resolve => tempCanvas.toBlob(resolve, fileFormat, quality));
+            
+            // Generate unique filename using tag-based names (e.g., chaise-side_1, cushion-only_2)
+            let baseFilename = imageLabel; // Fallback to original label
+            if (window.getTagBasedFilename && typeof window.getTagBasedFilename === 'function') {
+                const tagBasedName = window.getTagBasedFilename(imageLabel, imageLabel.split('_')[0]);
+                if (tagBasedName && tagBasedName !== imageLabel.split('_')[0]) {
+                    baseFilename = tagBasedName;
+                }
+            }
+            const filename = generateUniqueFilename(baseFilename, fileExtension, usedFilenames);
+            usedFilenames.add(filename);
+            
+            savedImages.push({
+                blob: blob,
+                name: filename
+            });
+            
+            // Update progress
+            updateSaveProgress(i + 1, selectedLabels.length, `Processing ${imageLabel}...`);
+        }
+        
+        // Switch back to original image
+        if (originalImageLabel && originalImageLabel !== selectedLabels[selectedLabels.length - 1]) {
+            window.paintApp.state.currentImageLabel = originalImageLabel;
+            window.redrawCanvasWithVisibility();
+        }
+        
+        // Create ZIP file
+        createImagesZip(savedImages, projectName);
+    }
+    
+    // Enhanced function for individual downloads (no ZIP)
+    async function processImagesSequentiallyForIndividualDownloads(selectedLabels, projectName, isProductionOutput = false) {
+        const canvas = document.getElementById('canvas');
+        const originalImageLabel = window.paintApp.state.currentImageLabel;
+        const usedFilenames = new Set();
+        let successCount = 0;
+        
+        try {
+            for (let i = 0; i < selectedLabels.length; i++) {
+                const imageLabel = selectedLabels[i];
+                
+                try {
+                    const modeLabel = isProductionOutput ? 'Production Output' : 'Screen View Export';
+                    console.log(`[${modeLabel}] Processing ${imageLabel} (${i + 1}/${selectedLabels.length}) for individual download`);
+                    
+                    // Update progress
+                    updateEnhancedSaveProgress(`Downloading ${imageLabel}...`, i, selectedLabels.length);
+                    
+                    // Switch to the target image
+                    if (window.paintApp.state.currentImageLabel !== imageLabel) {
+                        window.switchToImage(imageLabel);
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                    }
+                    
+                    // Capture canvas with high resolution
+                    const tempCanvas = document.createElement('canvas');
+                    const tempCtx = tempCanvas.getContext('2d');
+                    const scale = 2; // High resolution export
+                    
+                    tempCanvas.width = canvas.width * scale;
+                    tempCanvas.height = canvas.height * scale;
+                    tempCtx.scale(scale, scale);
+                    tempCtx.drawImage(canvas, 0, 0);
+                    
+                    // Generate unique filename using tag-based names
+                    let baseFilename = imageLabel;
+                    if (window.getTagBasedFilename && typeof window.getTagBasedFilename === 'function') {
+                        const tagBasedName = window.getTagBasedFilename(imageLabel, imageLabel.split('_')[0]);
+                        if (tagBasedName && tagBasedName !== imageLabel.split('_')[0]) {
+                            baseFilename = tagBasedName;
+                        }
+                    }
+                    
+                    const fileExtension = isProductionOutput ? 'jpg' : 'png';
+                    const filename = generateUniqueFilename(baseFilename, fileExtension, usedFilenames);
+                    usedFilenames.add(filename);
+                    
+                    // Convert to data URL and trigger download
+                    const fileFormat = isProductionOutput ? 'image/jpeg' : 'image/png';
+                    const quality = isProductionOutput ? 0.85 : 0.9;
+                    const dataUrl = tempCanvas.toDataURL(fileFormat, quality);
+                    
+                    // Create download link
+                    const link = document.createElement('a');
+                    link.href = dataUrl;
+                    link.download = filename;
+                    link.click();
+                    
+                    successCount++;
+                    console.log(`[Individual Download] Downloaded ${filename}`);
+                    
+                    // Small delay between downloads to prevent browser blocking
+                    await new Promise(resolve => setTimeout(resolve, 150));
+                    
+                } catch (error) {
+                    console.error(`[Individual Download] Error processing ${imageLabel}:`, error);
+                }
+            }
+            
+        } finally {
+            // Always restore original image and hide progress
+            if (originalImageLabel && window.paintApp.state.currentImageLabel !== originalImageLabel) {
+                window.switchToImage(originalImageLabel);
+            }
+            
+            hideEnhancedSaveProgress();
+            
+            if (successCount > 0) {
+                alert(`Successfully downloaded ${successCount} of ${selectedLabels.length} images!`);
+            } else {
+                alert('No images were downloaded. Please try again.');
+            }
+        }
+    }
+
+
+
+    // Original parallel processing function for production output
+    function processImagesParallel(selectedLabels, projectName, exportMode) {
+        // Get the correct image storage location
+        const originalImages = window.originalImages || window.paintApp.state.originalImages || {};
+        const originalImageDimensions = window.originalImageDimensions || window.paintApp.state.originalImageDimensions || {};
+        
+        // Create a temporary canvas for rendering each image
+        const tempCanvas = document.createElement('canvas');
+        const tempCtx = tempCanvas.getContext('2d');
+        
+        const savedImages = [];
+        const usedFilenames = new Set(); // Track used filenames to avoid duplicates
+        let currentIndex = 0;
+        
+        // Process each image sequentially
+        function processNextImage() {
+            if (currentIndex >= selectedLabels.length) {
+                // All images processed, create ZIP
+                createImagesZip(savedImages, projectName);
+                return;
+            }
+            
+            const imageLabel = selectedLabels[currentIndex];
+            updateSaveProgress(currentIndex + 1, selectedLabels.length, `Processing ${imageLabel} image...`);
+            
+            // Get the original image URL
+            const originalImageUrl = originalImages[imageLabel];
+            if (!originalImageUrl) {
+                currentIndex++;
+                processNextImage();
+                return;
+            }
+            
+            // Get image dimensions and scale
+            const imageDimensions = originalImageDimensions[imageLabel];
+            const scale = window.paintApp.state.imageScaleByLabel[imageLabel] || 1;
+            const position = window.paintApp.state.imagePositionByLabel[imageLabel] || { x: 0, y: 0 };
+            
+            if (!imageDimensions) {
+                currentIndex++;
+                processNextImage();
+                return;
+            }
+            
+            // Create image object from URL
+            const img = new Image();
+            img.onload = function() {
+                let exportWidth, exportHeight, exportScale;
+                    // Production Output Mode: Full image with overlaid labels
+                    const originalWidth = imageDimensions.width;
+                    const originalHeight = imageDimensions.height;
+                    const maxDimension = 1600;
+                    
+                    if (originalWidth > originalHeight) {
+                        exportWidth = Math.min(originalWidth, maxDimension);
+                        exportHeight = (originalHeight * exportWidth) / originalWidth;
+                    } else {
+                        exportHeight = Math.min(originalHeight, maxDimension);
+                        exportWidth = (originalWidth * exportHeight) / originalHeight;
+                    }
+                    
+                    exportScale = exportWidth / originalWidth;
+                    
+                    tempCanvas.width = exportWidth;
+                    tempCanvas.height = exportHeight;
+                    tempCtx.clearRect(0, 0, tempCanvas.width, tempCanvas.height);
+                    
+                    // Draw the full image at export size
+                    tempCtx.drawImage(img, 0, 0, exportWidth, exportHeight);
+                
+                // Draw all visible strokes for this image
+                // Use window variables directly (they contain the loaded project data)
+                const baseImageType = imageLabel.split('_')[0]; // front_7 -> front
+                
+                // Try different sources for stroke data using window variables
+                const baseTypeStrokes = window.vectorStrokesByImage[baseImageType] || {};
+                const fullLabelStrokes = window.vectorStrokesByImage[imageLabel] || {};
+                
+                // Use the location that has strokes (prioritize full label, then base type)
+                let vectorStrokes = {};
+                let strokeSource = '';
+                let strokeVisibility = {};
+                
+                if (Object.keys(fullLabelStrokes).length > 0) {
+                    vectorStrokes = fullLabelStrokes;
+                    strokeSource = imageLabel;
+                    strokeVisibility = window.strokeVisibilityByImage[imageLabel] || {};
+                } else if (Object.keys(baseTypeStrokes).length > 0) {
+                    vectorStrokes = baseTypeStrokes;
+                    strokeSource = baseImageType;
+                    strokeVisibility = window.strokeVisibilityByImage[baseImageType] || {};
+                }
+                
+                console.log(`[Save Images] Processing ${imageLabel} - Using stroke source: ${strokeSource} with ${Object.keys(vectorStrokes).length} strokes`);
+                
+                    // Production Output Mode: Original behavior with overlaid labels
+                    Object.keys(vectorStrokes).forEach(strokeLabel => {
+                        if (strokeVisibility[strokeLabel] !== false) {
+                            const vectorData = vectorStrokes[strokeLabel];
+                            if (vectorData && vectorData.points && vectorData.points.length > 0) {
+                                console.log(`[Save Images] Drawing stroke ${strokeLabel} with ${vectorData.points.length} points, color: ${vectorData.color}`);
+                                // Draw the stroke on the temp canvas using export scale
+                                drawStrokeOnCanvas(tempCtx, vectorData, exportScale, 0, 0, imageLabel, false, { x: exportWidth/2, y: exportHeight/2 });
+                                
+                                // Draw measurement label overlaid on line
+                                const labelVisibility = window.strokeLabelVisibility[imageLabel] || {};
+                                if (labelVisibility[strokeLabel] !== false) {
+                                    drawMeasurementLabelForExport(tempCtx, strokeLabel, vectorData, exportScale, imageLabel);
+                                }
+                            }
+                        }
+                    });
+                
+                // Convert canvas to blob with compression for email use
+                tempCanvas.toBlob((blob) => {
+                    if (blob) {
+                        // Use tag-based filename if available, otherwise use imageLabel
+                        let imageName = imageLabel;
+                        if (window.getTagBasedFilename && typeof window.getTagBasedFilename === 'function') {
+                            const tagBasedName = window.getTagBasedFilename(imageLabel, imageLabel.split('_')[0]);
+                            if (tagBasedName && tagBasedName !== imageLabel.split('_')[0]) {
+                                imageName = tagBasedName;
+                            }
+                        }
+                        imageName = imageName.charAt(0).toUpperCase() + imageName.slice(1);
+                        const baseFilename = `${projectName}_${imageName}`;
+                        const filename = generateUniqueFilename(baseFilename, 'jpg', usedFilenames);
+                        usedFilenames.add(filename);
+                        
+                        savedImages.push({
+                            name: filename,
+                            blob: blob
+                        });
+                    }
+                    
+                    currentIndex++;
+                    // Process next image immediately (no delay)
+                    processNextImage();
+                }, 'image/jpeg', 0.85); // Use JPEG with 85% quality for smaller file size
+            };
+            
+            // Handle image load error
+            img.onerror = function() {
+                console.error(`Failed to load image: ${imageLabel}`);
+                currentIndex++;
+                processNextImage();
+            };
+            
+            // Set the image source to trigger loading
+            img.src = originalImageUrl;
+        }
+        
+        // Start processing
+        processNextImage();
+    }
+    
+    // Helper function to draw a stroke on a canvas (optimized for export)
+    function drawStrokeOnCanvas(ctx, vectorData, scale, imageX, imageY, currentImageLabel, isBlankCanvas, canvasCenter) {
+        if (!vectorData.points || vectorData.points.length === 0) return;
+        
+        console.log(`[drawStrokeOnCanvas] Drawing with scale: ${scale}, first point: (${vectorData.points[0].x}, ${vectorData.points[0].y})`);
+        
+        // Set stroke properties
+        ctx.strokeStyle = vectorData.color;
+        ctx.lineWidth = Math.max(2, (vectorData.width || 5) * scale); // Ensure minimum line width of 2px
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        
+        // Set dash pattern if enabled
+        if (vectorData.dashSettings && vectorData.dashSettings.enabled && vectorData.dashSettings.pattern.length > 0) {
+            const scaledPattern = vectorData.dashSettings.pattern.map(dash => Math.max(1, dash * scale));
+            ctx.setLineDash(scaledPattern);
+            ctx.lineDashOffset = 0;
+        } else {
+            ctx.setLineDash([]);
+            ctx.lineDashOffset = 0;
+        }
+        
+        // Draw the stroke
+        ctx.beginPath();
+        
+        // Scale all points directly from their stored coordinates
+        const firstPoint = vectorData.points[0];
+        const transformedFirstX = firstPoint.x * scale;
+        const transformedFirstY = firstPoint.y * scale;
+        
+        console.log(`[drawStrokeOnCanvas] Moving to: (${transformedFirstX}, ${transformedFirstY})`);
+        ctx.moveTo(transformedFirstX, transformedFirstY);
+        
+        // Draw remaining points efficiently
+        for (let i = 1; i < vectorData.points.length; i++) {
+            const point = vectorData.points[i];
+            const transformedX = point.x * scale;
+            const transformedY = point.y * scale;
+            ctx.lineTo(transformedX, transformedY);
+        }
+        
+        ctx.stroke();
+        
+        // Draw arrow heads if this is a straight line with arrow settings
+        if (vectorData.type === 'straight' && vectorData.arrowSettings && vectorData.points.length >= 2) {
+            const startPoint = {
+                x: vectorData.points[0].x * scale,
+                y: vectorData.points[0].y * scale
+            };
+            const endPoint = {
+                x: vectorData.points[vectorData.points.length - 1].x * scale,
+                y: vectorData.points[vectorData.points.length - 1].y * scale
+            };
+            
+            drawArrowheadForExport(ctx, startPoint, endPoint, vectorData.arrowSettings, vectorData.width || 5, vectorData.color, scale);
+        }
+        
+        console.log(`[drawStrokeOnCanvas] Stroke drawn successfully`);
+    }
+    
+    // Helper function to draw arrow heads for export (simplified version)
+    function drawArrowheadForExport(ctx, startPoint, endPoint, arrowSettings, strokeWidth, strokeColor, scale) {
+        if (!arrowSettings || (!arrowSettings.startArrow && !arrowSettings.endArrow)) return;
+        
+        const dx = endPoint.x - startPoint.x;
+        const dy = endPoint.y - startPoint.y;
+        const lineLength = Math.sqrt(dx * dx + dy * dy);
+        
+        if (lineLength === 0) return;
+        
+        const angle = Math.atan2(dy, dx);
+        const baseArrowSize = Math.max(arrowSettings.arrowSize || 15, strokeWidth * 2);
+        const scaledArrowSize = baseArrowSize * scale;
+        const arrowTan30 = Math.tan(Math.PI / 6); // ~0.577
+        
+        // Set context properties for arrows
+        ctx.save();
+        ctx.fillStyle = strokeColor;
+        ctx.strokeStyle = strokeColor;
+        ctx.lineWidth = strokeWidth * scale;
+        ctx.setLineDash([]); // Reset dash pattern for arrows
+        
+        // Draw start arrow
+        if (arrowSettings.startArrow) {
+            ctx.save();
+            ctx.translate(startPoint.x, startPoint.y);
+            ctx.rotate(angle + Math.PI);
+            
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(-scaledArrowSize, -scaledArrowSize * arrowTan30);
+            ctx.lineTo(-scaledArrowSize, scaledArrowSize * arrowTan30);
+            ctx.closePath();
+            ctx.fill();
+            
+            ctx.restore();
+        }
+        
+        // Draw end arrow
+        if (arrowSettings.endArrow) {
+            ctx.save();
+            ctx.translate(endPoint.x, endPoint.y);
+            ctx.rotate(angle);
+            
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(-scaledArrowSize, -scaledArrowSize * arrowTan30);
+            ctx.lineTo(-scaledArrowSize, scaledArrowSize * arrowTan30);
+            ctx.closePath();
+            ctx.fill();
+            
+            ctx.restore();
+        }
+        
+        ctx.restore();
+    }
+    
+    // Helper function to draw stroke for screen view export
+    function drawStrokeForScreenView(ctx, vectorData, viewport, imageLabel) {
+        if (!vectorData.points || vectorData.points.length === 0) return;
+        
+        // Set stroke properties
+        ctx.strokeStyle = vectorData.color;
+        ctx.lineWidth = Math.max(1, (vectorData.width || 5) * viewport.scale);
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        
+        // Set dash pattern if enabled
+        if (vectorData.dashSettings && vectorData.dashSettings.enabled && vectorData.dashSettings.pattern.length > 0) {
+            const scaledPattern = vectorData.dashSettings.pattern.map(dash => Math.max(1, dash * viewport.scale));
+            ctx.setLineDash(scaledPattern);
+            ctx.lineDashOffset = 0;
+        } else {
+            ctx.setLineDash([]);
+        }
+        
+        // Draw the stroke
+        ctx.beginPath();
+        
+        // Transform points from image space to viewport space
+        const transformedPoints = vectorData.points.map(point => ({
+            x: (point.x * viewport.scale + viewport.imageX) - viewport.x,
+            y: (point.y * viewport.scale + viewport.imageY) - viewport.y
+        }));
+        
+        // Only draw if any part of the stroke is visible in viewport
+        const hasVisiblePoints = transformedPoints.some(p => 
+            p.x >= -50 && p.x <= viewport.width + 50 && 
+            p.y >= -50 && p.y <= viewport.height + 50
+        );
+        
+        if (hasVisiblePoints) {
+            ctx.moveTo(transformedPoints[0].x, transformedPoints[0].y);
+            for (let i = 1; i < transformedPoints.length; i++) {
+                ctx.lineTo(transformedPoints[i].x, transformedPoints[i].y);
+            }
+            ctx.stroke();
+            
+            // Draw arrow heads if this is a straight line with arrow settings
+            if (vectorData.type === 'straight' && vectorData.arrowSettings && transformedPoints.length >= 2) {
+                const startPoint = transformedPoints[0];
+                const endPoint = transformedPoints[transformedPoints.length - 1];
+                drawArrowheadForExport(ctx, startPoint, endPoint, vectorData.arrowSettings, vectorData.width || 5, vectorData.color, viewport.scale);
+            }
+        }
+    }
+    
+    // Helper function to draw label for screen view export
+    function drawLabelForScreenView(ctx, strokeLabel, vectorData, viewport, imageLabel) {
+        // Get custom label position if it exists
+        const customPositions = window.customLabelPositions[imageLabel] || {};
+        const calculatedOffsets = window.calculatedLabelOffsets[imageLabel] || {};
+        
+        let labelPosition = null;
+        if (customPositions[strokeLabel]) {
+            labelPosition = customPositions[strokeLabel];
+        } else if (calculatedOffsets[strokeLabel]) {
+            labelPosition = calculatedOffsets[strokeLabel];
+        }
+        
+        if (!labelPosition && vectorData.points && vectorData.points.length >= 2) {
+            // Default to midpoint if no custom position
+            const firstPoint = vectorData.points[0];
+            const lastPoint = vectorData.points[vectorData.points.length - 1];
+            labelPosition = {
+                x: (firstPoint.x + lastPoint.x) / 2,
+                y: (firstPoint.y + lastPoint.y) / 2 - 30 // Default offset above stroke
+            };
+        }
+        
+        if (!labelPosition) return;
+        
+        // Transform label position from image space to viewport space
+        const labelX = (labelPosition.x * viewport.scale + viewport.imageX) - viewport.x;
+        const labelY = (labelPosition.y * viewport.scale + viewport.imageY) - viewport.y;
+        
+        // Only draw if label is visible in viewport
+        if (labelX >= -100 && labelX <= viewport.width + 100 && 
+            labelY >= -50 && labelY <= viewport.height + 50) {
+            
+            // Get measurement text
+            const measurements = window.strokeMeasurements[imageLabel] || {};
+            const measurement = measurements[strokeLabel];
+            
+            let measurementText = '';
+            if (measurement) {
+                if (measurement.inchWhole || measurement.inchFraction) {
+                    let fractionStr = '';
+                    if (measurement.inchFraction) {
+                        fractionStr = ` ${measurement.inchFraction}`;
+                    }
+                    measurementText = `${measurement.inchWhole}${fractionStr}"`;
+                } else if (measurement.cm) {
+                    measurementText = `${measurement.cm}cm`;
+                }
+            }
+            
+            const labelText = measurementText ? `${strokeLabel}=${measurementText}` : strokeLabel;
+            
+            // Set font properties scaled for viewport
+            ctx.save();
+            const fontSize = Math.max(12, 16 * viewport.scale);
+            ctx.font = `${fontSize}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            // Measure text for background
+            const metrics = ctx.measureText(labelText);
+            const textWidth = metrics.width;
+            const textHeight = fontSize;
+            const padding = 6 * viewport.scale;
+            
+            // Draw background rectangle
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+            ctx.fillRect(
+                labelX - textWidth/2 - padding,
+                labelY - textHeight/2 - padding,
+                textWidth + padding * 2,
+                textHeight + padding * 2
+            );
+            
+            // Draw border
+            ctx.strokeStyle = '#ccc';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(
+                labelX - textWidth/2 - padding,
+                labelY - textHeight/2 - padding,
+                textWidth + padding * 2,
+                textHeight + padding * 2
+            );
+            
+            // Draw text
+            ctx.fillStyle = '#333';
+            ctx.fillText(labelText, labelX, labelY);
+            
+            ctx.restore();
+        }
+    }
+    
+    // Helper function to draw measurement labels for export
+    function drawMeasurementLabelForExport(ctx, strokeLabel, vectorData, scale, imageLabel) {
+        // Get the measurement text
+        const measurements = window.strokeMeasurements[imageLabel] || {};
+        const measurement = measurements[strokeLabel];
+        
+        let measurementText = '';
+        if (measurement) {
+            // For production output, always convert to CM
+            if (measurement.cm) {
+                measurementText = `${measurement.cm}cm`;
+            } else if (measurement.inchWhole || measurement.inchFraction) {
+                // Convert inches to CM
+                const totalInches = (measurement.inchWhole || 0) + (measurement.inchFraction || 0);
+                const cm = (totalInches * window.paintApp.config.INCHES_TO_CM).toFixed(1);
+                measurementText = `${cm}cm`;
+            }
+        }
+        
+        const labelText = measurementText ? `${strokeLabel}=${measurementText}` : strokeLabel;
+        
+        // Calculate label position (at the middle of the stroke)
+        if (vectorData.points && vectorData.points.length >= 2) {
+            const firstPoint = vectorData.points[0];
+            const lastPoint = vectorData.points[vectorData.points.length - 1];
+            
+            // Calculate midpoint
+            const midX = (firstPoint.x + lastPoint.x) / 2 * scale;
+            const midY = (firstPoint.y + lastPoint.y) / 2 * scale;
+            
+            // Set font properties for clean, professional text
+            ctx.save();
+            ctx.font = `${Math.max(16, 22 * scale)}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            // Measure text for white background
+            const metrics = ctx.measureText(labelText);
+            const textWidth = metrics.width;
+            const textHeight = Math.max(16, 22 * scale);
+            const padding = 4 * scale;
+            
+            // Draw white background rectangle
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(
+                midX - textWidth/2 - padding,
+                midY - textHeight/2 - padding,
+                textWidth + padding * 2,
+                textHeight + padding * 2
+            );
+            
+            // Draw black text on white background
+            ctx.fillStyle = '#000000';
+            ctx.fillText(labelText, midX, midY);
+            
+            ctx.restore();
+        }
+    }
+    
+    // Function to show save progress dialog
+    function showSaveAllImagesProgress(totalImages) {
+        const overlay = document.createElement('div');
+        overlay.id = 'saveAllImagesOverlay';
+        overlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 10000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        `;
+        
+        const dialog = document.createElement('div');
+        dialog.style.cssText = `
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+            width: 400px;
+            max-width: 90%;
+            text-align: center;
+        `;
+        
+        dialog.innerHTML = `
+            <h3 style="margin: 0 0 20px 0; color: #333;">Saving All Images</h3>
+            <div id="saveProgressText" style="margin-bottom: 20px; color: #666;">Preparing to save ${totalImages} images...</div>
+            <div style="width: 100%; background-color: #f0f0f0; border-radius: 10px; overflow: hidden;">
+                <div id="saveProgressBar" style="width: 0%; height: 20px; background-color: #4CAF50; transition: width 0.3s ease;"></div>
+            </div>
+            <div style="margin-top: 15px; font-size: 12px; color: #999;">Please wait while we process your images...</div>
+        `;
+        
+        overlay.appendChild(dialog);
+        document.body.appendChild(overlay);
+    }
+    
+    // Function to update save progress
+    function updateSaveProgress(current, total, message) {
+        const progressText = document.getElementById('saveProgressText');
+        const progressBar = document.getElementById('saveProgressBar');
+        
+        if (progressText) {
+            progressText.textContent = `${message} (${current}/${total})`;
+        }
+        
+        if (progressBar) {
+            const percentage = (current / total) * 100;
+            progressBar.style.width = percentage + '%';
+        }
+    }
+    
+    // Enhanced progress dialog for different export methods
+    function showEnhancedSaveProgress(message, current, total, method = 'individual') {
+        const overlay = document.createElement('div');
+        overlay.id = 'enhancedSaveProgressOverlay';
+        overlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 10001;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        `;
+        
+        const dialog = document.createElement('div');
+        dialog.style.cssText = `
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+            width: 450px;
+            max-width: 90%;
+            text-align: center;
+        `;
+        
+        // Get method-specific icons and labels
+        const methodInfo = {
+            individual: { icon: '📁', label: 'Individual Downloads' },
+            folder: { icon: '📂', label: 'Saving to Folder' },
+            zip: { icon: '📦', label: 'Creating ZIP File' }
+        };
+        
+        const info = methodInfo[method] || methodInfo.individual;
+        const percentage = total > 0 ? Math.round((current / total) * 100) : 0;
+        
+        dialog.innerHTML = `
+            <div style="font-size: 24px; margin-bottom: 10px;">${info.icon}</div>
+            <h3 style="margin: 0 0 20px 0; color: #333;">${info.label}</h3>
+            <div id="enhancedProgressText" style="margin-bottom: 20px; color: #666; font-weight: 500;">${message}</div>
+            <div style="width: 100%; background-color: #f0f0f0; border-radius: 10px; overflow: hidden; margin-bottom: 15px;">
+                <div id="enhancedProgressBar" style="width: ${percentage}%; height: 24px; background: linear-gradient(90deg, #4CAF50, #45a049); transition: width 0.3s ease; border-radius: 10px;"></div>
+            </div>
+            <div id="enhancedProgressPercentage" style="font-size: 18px; font-weight: bold; color: #333; margin-bottom: 10px;">${percentage}%</div>
+            <div id="enhancedProgressCount" style="font-size: 14px; color: #999;">${current} of ${total} completed</div>
+        `;
+        
+        overlay.appendChild(dialog);
+        document.body.appendChild(overlay);
+    }
+    
+    // Update enhanced progress dialog
+    function updateEnhancedSaveProgress(message, current, total) {
+        const progressText = document.getElementById('enhancedProgressText');
+        const progressBar = document.getElementById('enhancedProgressBar');
+        const progressPercentage = document.getElementById('enhancedProgressPercentage');
+        const progressCount = document.getElementById('enhancedProgressCount');
+        
+        if (progressText) {
+            progressText.textContent = message;
+        }
+        
+        if (progressBar && total > 0) {
+            const percentage = Math.round((current / total) * 100);
+            progressBar.style.width = percentage + '%';
+            
+            if (progressPercentage) {
+                progressPercentage.textContent = percentage + '%';
+            }
+        }
+        
+        if (progressCount) {
+            progressCount.textContent = `${current} of ${total} completed`;
+        }
+    }
+    
+    // Hide enhanced progress dialog
+    function hideEnhancedSaveProgress() {
+        const overlay = document.getElementById('enhancedSaveProgressOverlay');
+        if (overlay) {
+            document.body.removeChild(overlay);
+        }
+    }
+    
+    // Function to create and download ZIP file with all images
+    function createImagesZip(savedImages, projectName) {
+        updateSaveProgress(savedImages.length, savedImages.length, 'Creating ZIP file...');
+        
+        const zip = new JSZip();
+        
+        // Add each image to the ZIP
+        savedImages.forEach(imageData => {
+            zip.file(imageData.name, imageData.blob);
+        });
+        
+        // Generate and download ZIP
+        zip.generateAsync({ type: 'blob' }).then(function(content) {
+            const url = URL.createObjectURL(content);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${projectName}_All_Images.zip`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            // Close progress dialog
+            const overlay = document.getElementById('saveAllImagesOverlay');
+            if (overlay) {
+                overlay.remove();
+            }
+        }).catch(function(err) {
+            console.error('Error creating ZIP:', err);
+            alert('Error creating ZIP file. Please try again.');
+            
+            // Close progress dialog
+            const overlay = document.getElementById('saveAllImagesOverlay');
+            if (overlay) {
+                overlay.remove();
+            }
+        });
+    }
+
+    // Make functions globally accessible
+    window.generateMeasurementsList = generateMeasurementsList;
+    window.saveAllImages = saveAllImages;
 
     // Function to update stroke visibility controls
     // Make updateStrokeVisibilityControls available globally
@@ -843,11 +3038,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const currentFormattedMeasurement = getMeasurementString(strokeLabel) || '';
         measureText.textContent = currentFormattedMeasurement;
-        console.log(`[createEditableMeasureText] Initial for ${strokeLabel}: "${currentFormattedMeasurement}"`);
+//         console.log(`[createEditableMeasureText] Initial for ${strokeLabel}: "${currentFormattedMeasurement}"`);
 
         // SAFETY CHECK: Make sure we don't append to parentItem if it's undefined or null
         if (isSelected && (parentItem === undefined || parentItem === null)) {
-            console.log(`[createEditableMeasureText] INFO: parentItem is null/undefined for stroke ${strokeLabel}. Caller will handle DOM insertion.`);
+//             console.log(`[createEditableMeasureText] INFO: parentItem is null/undefined for stroke ${strokeLabel}. Caller will handle DOM insertion.`);
         }
 
         if (isSelected) {
@@ -869,7 +3064,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 
             const shouldAutoFocus = isNewlyCreated || (!window.isDefocusingOperationInProgress && isSelected && !window.isScalingOrZooming && !window.isMovingImage && !hasActiveMeasurementFocus);
 
-            console.log(`[createEditableMeasureText] Focus logic for ${strokeLabel}: isNewlyCreated=${isNewlyCreated}, isSelected=${isSelected}, isScalingOrZooming=${!!window.isScalingOrZooming}, isMovingImage=${!!window.isMovingImage}, hasActiveMeasurementFocus=${hasActiveMeasurementFocus}, isDefocusingOperationInProgress=${!!window.isDefocusingOperationInProgress}, shouldAutoFocus=${shouldAutoFocus}`);
+//             console.log(`[createEditableMeasureText] Focus logic for ${strokeLabel}: isNewlyCreated=${isNewlyCreated}, isSelected=${isSelected}, isScalingOrZooming=${!!window.isScalingOrZooming}, isMovingImage=${!!window.isMovingImage}, hasActiveMeasurementFocus=${hasActiveMeasurementFocus}, isDefocusingOperationInProgress=${!!window.isDefocusingOperationInProgress}, shouldAutoFocus=${shouldAutoFocus}`);
 
             if (shouldAutoFocus) {
                 // Focus and select all text for newly created or explicitly selected strokes
@@ -950,18 +3145,18 @@ document.addEventListener('DOMContentLoaded', () => {
             if (wasEditable) {
                 if (measureText.dataset.escapeReverted === 'true') {
                     measureText.removeAttribute('data-escape-reverted');
-                    console.log(`[measureText blur - ESCAPE] Reverted ${strokeLabel} to: \"${measureText.dataset.originalMeasurementString}\".`);
+//                     console.log(`[measureText blur - ESCAPE] Reverted ${strokeLabel} to: \"${measureText.dataset.originalMeasurementString}\".`);
                     // Text content is already visually reverted by keydown. No further action needed here.
                 } else {
                     const newText = measureText.textContent;
                     const originalText = measureText.dataset.originalMeasurementString || '';
                     
                     if (newText !== originalText) {
-                        console.log(`[measureText blur - CHANGED] For ${strokeLabel}. Old: \"${originalText}\", New: \"${newText}\". Parsing.`);
+//                         console.log(`[measureText blur - CHANGED] For ${strokeLabel}. Old: \"${originalText}\", New: \"${newText}\". Parsing.`);
                         const parseSuccess = parseAndSaveMeasurement(strokeLabel, newText);
                         if (parseSuccess) {
                             measureText.textContent = getMeasurementString(strokeLabel) || '';
-                            console.log(`[measureText blur - PARSE SUCCESS] ${strokeLabel} updated to: "${measureText.textContent}".`);
+//                             console.log(`[measureText blur - PARSE SUCCESS] ${strokeLabel} updated to: "${measureText.textContent}".`);
                             // Calls to update UI are now here, after successful parse and visual update of measureText
         updateStrokeVisibilityControls();
                             setTimeout(() => { // Defer canvas redraw to next tick
@@ -973,7 +3168,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             console.warn(`[measureText blur - PARSE FAILED] For ${strokeLabel} with \"${newText}\". Reverting to \"${originalText}\".`);
                         }
                     } else {
-                        console.log(`[measureText blur - UNCHANGED] For ${strokeLabel}. Value: \"${newText}\".`);
+//                         console.log(`[measureText blur - UNCHANGED] For ${strokeLabel}. Value: \"${newText}\".`);
                     }
                 }
             }
@@ -1010,7 +3205,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Initialize measurement if not set
             if (window.strokeMeasurements[currentImageLabel] === undefined) {
                 window.strokeMeasurements[currentImageLabel] = {};
-            console.log(`[createStrokeVisibilityControl] Initializing empty measurements for ${currentImageLabel}`);
+//             console.log(`[createStrokeVisibilityControl] Initializing empty measurements for ${currentImageLabel}`);
             }
             
             // ENHANCED preservation code: Check if measurement exists in the existing measurements
@@ -1022,17 +3217,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     existingMeasurement.cm !== undefined) {
                     
                     // Use the existing measurement from before this function was called
-                console.log(`[createStrokeVisibilityControl] PRESERVING existing measurement for ${strokeLabel}:`, 
-                        JSON.stringify(existingMeasurement));
+//                 console.log(`[createStrokeVisibilityControl] PRESERVING existing measurement for ${strokeLabel}:`, 
+//                         JSON.stringify(existingMeasurement));
                     
                     // Ensure we're not losing data by making a deep copy
                     window.strokeMeasurements[currentImageLabel][strokeLabel] = JSON.parse(JSON.stringify(existingMeasurement));
                     
                     // Log successful preservation
-                console.log(`[createStrokeVisibilityControl] ✓ Successfully preserved measurement for ${strokeLabel}`);
+//                 console.log(`[createStrokeVisibilityControl] ✓ Successfully preserved measurement for ${strokeLabel}`);
                 } else {
-                console.log(`[createStrokeVisibilityControl] Found incomplete measurement for ${strokeLabel}:`, 
-                        JSON.stringify(existingMeasurement));
+//                 console.log(`[createStrokeVisibilityControl] Found incomplete measurement for ${strokeLabel}:`, 
+//                         JSON.stringify(existingMeasurement));
                 }
             }
             // Only set default if no measurement exists at all
@@ -1042,10 +3237,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     inchFraction: 0,
                     cm: 0.0
                 };
-            console.log(`[createStrokeVisibilityControl] Setting default measurement for ${strokeLabel}`);
+//             console.log(`[createStrokeVisibilityControl] Setting default measurement for ${strokeLabel}`);
             } else {
-            console.log(`[createStrokeVisibilityControl] Using existing measurement for ${strokeLabel}:`, 
-                    JSON.stringify(window.strokeMeasurements[currentImageLabel][strokeLabel]));
+//             console.log(`[createStrokeVisibilityControl] Using existing measurement for ${strokeLabel}:`, 
+//                     JSON.stringify(window.strokeMeasurements[currentImageLabel][strokeLabel]));
             }
             
             const isVisible = strokeVisibilityByImage[currentImageLabel][strokeLabel];
@@ -1070,7 +3265,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Apply/Remove visual styling for edit mode
             if (isInEditMode) {
-                console.log(`Styling item ${strokeLabel} for edit mode.`);
+//                 console.log(`Styling item ${strokeLabel} for edit mode.`);
                 item.style.backgroundColor = '#FFF3E0';
                 item.style.borderLeft = '5px solid #FF9800';
                 item.style.boxShadow = '0 3px 8px rgba(255, 152, 0, 0.3)';
@@ -1087,14 +3282,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
                 
+                // Prevent event bubbling to canvas and stop default behavior
+                e.preventDefault();
+                e.stopPropagation();
+                
                 const now = Date.now();
                 const timeSinceLastClick = now - window.lastClickTime;
                 const clickedLabel = strokeLabel; // Store for timeout use
                 
-                // Check if this is a double-click
-                if (timeSinceLastClick < window.clickDelay && selectedStrokeByImage[currentImageLabel] === clickedLabel) {
+                // Check if this is a double-click (more permissive timing for better UX)
+                if (timeSinceLastClick < (window.clickDelay * 1.5)) {
                     // Double-click detected
-                    console.log('Double-click on stroke item:', clickedLabel);
+                    // console.log('🔄 [DEBUG] Double-click detected on stroke item:', clickedLabel, 'timeSinceLastClick:', timeSinceLastClick);
                     if (window.singleClickTimeout) {
                         clearTimeout(window.singleClickTimeout); // Cancel single-click action
                         window.singleClickTimeout = null;
@@ -1109,7 +3308,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Update UI for all items by refreshing the list
                     updateStrokeVisibilityControls(); 
                     
-                    console.log('Entered edit mode for stroke:', clickedLabel);
+//                     console.log('Entered edit mode for stroke:', clickedLabel);
                     
                     hideSelectionActionsPanel(); 
                     redrawCanvasWithVisibility();
@@ -1120,7 +3319,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         clearTimeout(window.singleClickTimeout);
                     }
                     window.singleClickTimeout = setTimeout(() => {
-                        console.log('Single-click action for stroke item:', clickedLabel);
+//                         console.log('Single-click action for stroke item:', clickedLabel);
                         // Clear edit mode if a different item is single-clicked
                         if (window.selectedStrokeInEditMode && window.selectedStrokeInEditMode !== clickedLabel) {
                             const prevEditItem = document.querySelector(`.stroke-visibility-item[data-stroke="${window.selectedStrokeInEditMode}"]`);
@@ -1170,7 +3369,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             // Single item selection (replace)
                             if (currentSelection.includes(clickedLabel) && currentSelection.length === 1) {
                                 // Deselect if clicking the only selected item
-                                console.log('Deselecting stroke:', clickedLabel);
+//                                 console.log('Deselecting stroke:', clickedLabel);
                                 currentSelection = []; 
                                 window.selectedStrokeInEditMode = null; // Also exit edit mode
                             } else {
@@ -1385,14 +3584,14 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Only auto-focus for newly created strokes, not for existing selected strokes
             if (isNewlyCreated) {
-            console.log(`[createStrokeVisibilityControl] Found newly created stroke ${strokeLabel}, will focus on it`);
+//             console.log(`[createStrokeVisibilityControl] Found newly created stroke ${strokeLabel}, will focus on it`);
                 // Clear the flag so we don't focus multiple times in other functions
                 window.newlyCreatedStroke = null;
                 
                 // Use setTimeout to ensure the DOM has been updated
                 setTimeout(() => {
                     if (document.body.contains(measureTextElement)) {
-                    console.log(`[createStrokeVisibilityControl] Focusing on ${strokeLabel}`);
+//                     console.log(`[createStrokeVisibilityControl] Focusing on ${strokeLabel}`);
                         measureTextElement.contentEditable = "true";
                         measureTextElement.dataset.originalMeasurementString = measureTextElement.textContent || '';
                         measureTextElement.focus();
@@ -1422,17 +3621,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateStrokeVisibilityControls() {
         // IMPORTANT: Debug the current state of measurements
-        console.log('[updateStrokeVisibilityControls] START - Current window.strokeMeasurements:',
-            window.strokeMeasurements[currentImageLabel] ? JSON.stringify(window.strokeMeasurements[currentImageLabel]) : 'undefined');
+//         console.log('[updateStrokeVisibilityControls] START - Current window.strokeMeasurements:',
+//             window.strokeMeasurements[currentImageLabel] ? JSON.stringify(window.strokeMeasurements[currentImageLabel]) : 'undefined');
         
         // Log the currently selected stroke and edit mode
-        console.log(`[updateStrokeVisibilityControls] Initial state - selectedStroke: ${selectedStrokeByImage[currentImageLabel]}, multipleSelected: ${multipleSelectedStrokesByImage[currentImageLabel] ? JSON.stringify(multipleSelectedStrokesByImage[currentImageLabel]) : 'undefined'}, Edit mode: ${window.selectedStrokeInEditMode}`);
+//         console.log(`[updateStrokeVisibilityControls] Initial state - selectedStroke: ${selectedStrokeByImage[currentImageLabel]}, multipleSelected: ${multipleSelectedStrokesByImage[currentImageLabel] ? JSON.stringify(multipleSelectedStrokesByImage[currentImageLabel]) : 'undefined'}, Edit mode: ${window.selectedStrokeInEditMode}`);
 
         // --- Synchronization Logic --- 
         const currentSelectionArray = multipleSelectedStrokesByImage[currentImageLabel] || [];
         if (currentSelectionArray.length === 1) {
             if (selectedStrokeByImage[currentImageLabel] !== currentSelectionArray[0]) {
-                console.warn(`[updateStrokeVisibilityControls] Correcting selectedStrokeByImage. Was: ${selectedStrokeByImage[currentImageLabel]}, multiple was: ${JSON.stringify(currentSelectionArray)}. Setting to: ${currentSelectionArray[0]}`);
+//                console.warn(`[updateStrokeVisibilityControls] Correcting selectedStrokeByImage. Was: ${selectedStrokeByImage[currentImageLabel]}, multiple was: ${JSON.stringify(currentSelectionArray)}. Setting to: ${currentSelectionArray[0]}`);
                 selectedStrokeByImage[currentImageLabel] = currentSelectionArray[0];
             }
         } else if (currentSelectionArray.length > 1) {
@@ -1448,7 +3647,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 selectedStrokeByImage[currentImageLabel] = null;
             }
         }
-        console.log(`[updateStrokeVisibilityControls] State AFTER sync - selectedStroke: ${selectedStrokeByImage[currentImageLabel]}, multipleSelected: ${multipleSelectedStrokesByImage[currentImageLabel] ? JSON.stringify(multipleSelectedStrokesByImage[currentImageLabel]) : 'undefined'}`);
+//         console.log(`[updateStrokeVisibilityControls] State AFTER sync - selectedStroke: ${selectedStrokeByImage[currentImageLabel]}, multipleSelected: ${multipleSelectedStrokesByImage[currentImageLabel] ? JSON.stringify(multipleSelectedStrokesByImage[currentImageLabel]) : 'undefined'}`);
         // --- End Synchronization Logic ---
 
         const controlsContainer = document.getElementById('strokeVisibilityControls');
@@ -1489,7 +3688,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Preserve existing stroke measurements before processing strokes
         const existingMeasurements = window.strokeMeasurements[currentImageLabel] || {};
-        console.log('[updateStrokeVisibilityControls] Existing measurements:', JSON.stringify(existingMeasurements));
+//         console.log('[updateStrokeVisibilityControls] Existing measurements:', JSON.stringify(existingMeasurements));
         
         // Initialize multi-selection array if needed
         if (!multipleSelectedStrokesByImage[currentImageLabel]) {
@@ -1523,6 +3722,29 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
+    // Helper function to get dash pattern based on style and line width
+    function getDashPattern(style, dashLength, gapLength, lineWidth = 1) {
+        // Use a more generous base scale to make dashes more visible
+        const baseScale = Math.max(2, lineWidth * 0.8);
+        
+        switch (style) {
+            case 'solid':
+                return [];
+            case 'small':
+                return [6 * baseScale, 4 * baseScale];
+            case 'medium':
+                return [12 * baseScale, 8 * baseScale];
+            case 'large':
+                return [20 * baseScale, 12 * baseScale];
+            case 'dot-dash':
+                return [4 * baseScale, 6 * baseScale, 12 * baseScale, 6 * baseScale];
+            case 'custom':
+                return [dashLength * baseScale, gapLength * baseScale];
+            default:
+                return [];
+        }
+    }
+
     // Helper function to update stroke type based on arrow settings
     function updateStrokeTypeBasedOnArrows(vectorData) {
         const hasArrows = vectorData.arrowSettings && (vectorData.arrowSettings.startArrow || vectorData.arrowSettings.endArrow);
@@ -1569,9 +3791,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const dialog = document.createElement('div');
         dialog.className = 'measurement-dialog';
         
-        console.log(`[showMeasurementDialog] Opening for ${strokeLabel} in ${currentImageLabel} view`);
-        console.log(`[showMeasurementDialog] Current window.strokeMeasurements:`, 
-            JSON.stringify(window.strokeMeasurements[currentImageLabel]));
+//         console.log(`[showMeasurementDialog] Opening for ${strokeLabel} in ${currentImageLabel} view`);
+//         console.log(`[showMeasurementDialog] Current window.strokeMeasurements:`, 
+//             JSON.stringify(window.strokeMeasurements[currentImageLabel]));
         
         // Get current measurement
         const measurement = window.strokeMeasurements[currentImageLabel]?.[strokeLabel] || {
@@ -1580,7 +3802,7 @@ document.addEventListener('DOMContentLoaded', () => {
             cm: 0.0
         };
         
-        console.log(`[showMeasurementDialog] Using measurement:`, measurement);
+//         console.log(`[showMeasurementDialog] Using measurement:`, measurement);
         
         // Title
         const title = document.createElement('h3');
@@ -1690,11 +3912,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             // Add debug log before saving the measurement
-            console.log(`[showMeasurementDialog] Saving measurement for ${strokeLabel} in ${currentImageLabel}:`, {
-                inchWhole: finalInchWhole,
-                inchFraction: finalInchFraction,
-                cm: finalCmValue
-            });
+//             console.log(`[showMeasurementDialog] Saving measurement for ${strokeLabel} in ${currentImageLabel}:`, {
+//                 inchWhole: finalInchWhole,
+//                 inchFraction: finalInchFraction,
+//                 cm: finalCmValue
+//             });
             
             // Save only to window.strokeMeasurements
             window.strokeMeasurements[currentImageLabel][strokeLabel] = {
@@ -1704,8 +3926,8 @@ document.addEventListener('DOMContentLoaded', () => {
             };
             
             // Add debug log to verify global state after saving
-            console.log(`[showMeasurementDialog] Verification - window.strokeMeasurements[${currentImageLabel}]:`, 
-                JSON.stringify(window.strokeMeasurements[currentImageLabel]));
+//             console.log(`[showMeasurementDialog] Verification - window.strokeMeasurements[${currentImageLabel}]:`, 
+//                 JSON.stringify(window.strokeMeasurements[currentImageLabel]));
             
             // Close dialog
             document.body.removeChild(overlay);
@@ -1774,9 +3996,9 @@ document.addEventListener('DOMContentLoaded', () => {
             cm: 0.0
         };
         
-        console.log(`[showStrokeEditDialog] Opening for ${strokeLabel} in ${currentImageLabel} view`);
-        console.log(`[showStrokeEditDialog] Current window.strokeMeasurements:`, 
-            JSON.stringify(window.strokeMeasurements[currentImageLabel]));
+//         console.log(`[showStrokeEditDialog] Opening for ${strokeLabel} in ${currentImageLabel} view`);
+//         console.log(`[showStrokeEditDialog] Current window.strokeMeasurements:`, 
+//             JSON.stringify(window.strokeMeasurements[currentImageLabel]));
         
         // Title
         const title = document.createElement('h3');
@@ -1933,7 +4155,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // Show feedback if name was modified to make it unique
                 if (finalName !== newName) {
-                    console.log(`Stroke name automatically adjusted to ${finalName} to avoid duplicates`);
+//                     console.log(`Stroke name automatically adjusted to ${finalName} to avoid duplicates`);
                     
                     // Create and show a temporary notification
                     const notification = document.createElement('div');
@@ -1969,8 +4191,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 cm: finalCmValue
             };
             
-            console.log(`[showStrokeEditDialog] Saved measurement for ${finalName}:`, 
-                window.strokeMeasurements[currentImageLabel][finalName]);
+//             console.log(`[showStrokeEditDialog] Saved measurement for ${finalName}:`, 
+//                 window.strokeMeasurements[currentImageLabel][finalName]);
             
             // Call optional callback
             if (typeof config.onSave === 'function') {
@@ -2003,7 +4225,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Function to show edit dialog for a stroke (DEPRECATED - use showStrokeEditDialog)
     function showEditDialog(strokeLabel) {
-        console.log('[DEPRECATED] showEditDialog is deprecated, use showStrokeEditDialog instead');
+//         console.log('[DEPRECATED] showEditDialog is deprecated, use showStrokeEditDialog instead');
         return showStrokeEditDialog(strokeLabel, {
             showNameField: true,
             title: `Edit Stroke ${strokeLabel}`
@@ -2012,7 +4234,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Function to display a measurement edit dialog (DEPRECATED - use showStrokeEditDialog)
     function showMeasurementDialog(strokeLabel) {
-        console.log('[DEPRECATED] showMeasurementDialog is deprecated, use showStrokeEditDialog instead');
+//         console.log('[DEPRECATED] showMeasurementDialog is deprecated, use showStrokeEditDialog instead');
         return showStrokeEditDialog(strokeLabel, {
             showNameField: false,
             title: `Edit Measurement for ${strokeLabel}`
@@ -2133,6 +4355,14 @@ document.addEventListener('DOMContentLoaded', () => {
             delete strokeMeasurements[currentImageLabel][oldName];
         }
         
+        // Update custom label positions
+        if (customLabelPositions[currentImageLabel] && 
+            customLabelPositions[currentImageLabel][oldName]) {
+            customLabelPositions[currentImageLabel][uniqueNewName] = 
+                customLabelPositions[currentImageLabel][oldName];
+            delete customLabelPositions[currentImageLabel][oldName];
+        }
+        
         // Update next label if needed
         if (labelsByImage[currentImageLabel] === oldName) {
             labelsByImage[currentImageLabel] = uniqueNewName;
@@ -2155,13 +4385,28 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
         
+        // Update selection states if the renamed stroke was selected
+        if (selectedStrokeByImage[currentImageLabel] === oldName) {
+            selectedStrokeByImage[currentImageLabel] = uniqueNewName;
+        }
+        
+        if (multipleSelectedStrokesByImage[currentImageLabel] && 
+            multipleSelectedStrokesByImage[currentImageLabel].includes(oldName)) {
+            const index = multipleSelectedStrokesByImage[currentImageLabel].indexOf(oldName);
+            multipleSelectedStrokesByImage[currentImageLabel][index] = uniqueNewName;
+        }
+        
+        if (window.selectedStrokeInEditMode === oldName) {
+            window.selectedStrokeInEditMode = uniqueNewName;
+        }
+        
         // Return the actual name used for the stroke (either the original or the uniquified version)
         return uniqueNewName;
     }
     
     // Function to toggle stroke visibility
     function toggleStrokeVisibility(strokeLabel, isVisible) {
-        console.log(`Toggling visibility of stroke ${strokeLabel} to ${isVisible}`);
+//         console.log(`Toggling visibility of stroke ${strokeLabel} to ${isVisible}`);
         
         // Update visibility state
         strokeVisibilityByImage[currentImageLabel][strokeLabel] = isVisible;
@@ -2175,7 +4420,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // If we're making a stroke visible, ensure we still have vector data
             if (!vectorStrokesByImage[currentImageLabel][strokeLabel]) {
-                console.log(`Vector data missing for ${strokeLabel}, attempting recovery`);
+//                 console.log(`Vector data missing for ${strokeLabel}, attempting recovery`);
                 
                 // Try to recover vector data from the undo stack
                 for (let i = undoStackByImage[currentImageLabel].length - 1; i >= 0; i--) {
@@ -2183,7 +4428,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (action.label === strokeLabel) {
                         if (action.vectorData) {
                             vectorStrokesByImage[currentImageLabel][strokeLabel] = action.vectorData;
-                            console.log(`Recovered vector data for ${strokeLabel}`);
+//                             console.log(`Recovered vector data for ${strokeLabel}`);
                             break;
                         }
                     }
@@ -2192,7 +4437,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // If we still couldn't recover the vector data, create a basic one
                 // This is especially important for straight lines
                 if (!vectorStrokesByImage[currentImageLabel][strokeLabel]) {
-                    console.log(`Creating default vector data for ${strokeLabel}`);
+//                     console.log(`Creating default vector data for ${strokeLabel}`);
                     
                     // Look for color and properties in the undo stack
                     let strokeColor = "#000000";
@@ -2214,7 +4459,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         points: isLine ? [{x: 0, y: 0}, {x: 1, y: 1}] : [{x: 0, y: 0}],
                         color: strokeColor,
                         width: strokeWidth,
-                        type: isLine ? 'straight' : 'freehand'
+                        type: isLine ? 'straight' : 'freehand',
+                        dashSettings: { enabled: false, style: 'solid', pattern: [], dashLength: 5, gapLength: 5 } // Default dash settings
                     };
                 }
             }
@@ -2231,6 +4477,14 @@ document.addEventListener('DOMContentLoaded', () => {
     IMAGE_LABELS.forEach(label => {
         strokeLabelVisibility[label] = {};
         selectedStrokeByImage[label] = null; // Initialize with no selection
+        
+        // CRITICAL FIX: Also initialize the global state version
+        if (!window.paintApp.state.selectedStrokeByImage[label]) {
+            window.paintApp.state.selectedStrokeByImage[label] = null;
+        }
+        if (!window.paintApp.state.multipleSelectedStrokesByImage[label]) {
+            window.paintApp.state.multipleSelectedStrokesByImage[label] = [];
+        }
     });
     
     // Store for label custom positions (user-dragged positions)
@@ -2260,7 +4514,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Make redrawCanvasWithVisibility available globally
     window.redrawCanvasWithVisibility = redrawCanvasWithVisibility;
     function redrawCanvasWithVisibility() {
-        console.log(`--- redrawCanvasWithVisibility called for: ${currentImageLabel} ---`);
+//         console.log(`--- redrawCanvasWithVisibility called for: ${currentImageLabel} ---`);
         
         // PERFORMANCE: Invalidate interactive element cache before redraw
         invalidateInteractiveElementCache();
@@ -2279,12 +4533,12 @@ document.addEventListener('DOMContentLoaded', () => {
             vectorStrokesByImage[currentImageLabel] && 
             Object.keys(vectorStrokesByImage[currentImageLabel]).length > 0) {
             
-            console.log(`Creating default dimensions for ${currentImageLabel} to preserve strokes`);
+//             console.log(`Creating default dimensions for ${currentImageLabel} to preserve strokes`);
             window.originalImageDimensions[currentImageLabel] = {
                 width: canvas.width,
                 height: canvas.height
             };
-            console.log(`Set dimensions to match canvas: ${canvas.width}x${canvas.height}`);
+//             console.log(`Set dimensions to match canvas: ${canvas.width}x${canvas.height}`);
         }
         
         // Reset label positions and stroke paths for this redraw
@@ -2296,7 +4550,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Get current scale and position from stored values
         const scale = window.imageScaleByLabel[currentImageLabel] || 1.0;
-        console.log(`[redrawCanvasWithVisibility] Using scale=${scale} for ${currentImageLabel}`);
+//         console.log(`[redrawCanvasWithVisibility] Using scale=${scale} for ${currentImageLabel}`);
         
         // Double-check scale against UI for consistency
         const scaleEl = document.getElementById('scaleButton');
@@ -2305,8 +4559,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const scaleMatch = scaleText.match(/Scale: (\d+)%/);
             if (scaleMatch && scaleMatch[1]) {
                 const uiScale = parseInt(scaleMatch[1]) / 100;
-                console.log(`[redrawCanvasWithVisibility] UI shows scale=${uiScale} for ${currentImageLabel}`);
-                if (uiScale !== scale) {
+//                 console.log(`[redrawCanvasWithVisibility] UI shows scale=${uiScale} for ${currentImageLabel}`);
+                // Only warn about significant scale mismatches (more than 1% difference)
+                const scaleDifference = Math.abs(uiScale - scale);
+                if (scaleDifference > 0.01) {
                     console.warn(`[redrawCanvasWithVisibility] WARNING: Scale mismatch! Variable: ${scale}, UI: ${uiScale}`);
                     // Don't automatically update as that would create infinite loop with updateScale
                     // Just warn about the inconsistency
@@ -2315,7 +4571,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         const position = imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
-        console.log(`[redrawCanvasWithVisibility] Using position: x=${position.x}, y=${position.y} for ${currentImageLabel}`);
+//         console.log(`[redrawCanvasWithVisibility] Using position: x=${position.x}, y=${position.y} for ${currentImageLabel}`);
         
         // We need to rebuild the canvas from scratch using individual stroke data
         const strokes = lineStrokesByImage[currentImageLabel] || [];
@@ -2401,8 +4657,8 @@ document.addEventListener('DOMContentLoaded', () => {
         
     // Function to draw the image and apply strokes
     function drawImageAndStrokes(img, scale, imageX, imageY) {
-        console.log(`[drawImageAndStrokes] Called with scale=${scale}`);
-        console.log(`[drawImageAndStrokes] Current window.imageScaleByLabel[${currentImageLabel}] = ${window.imageScaleByLabel[currentImageLabel]}`);
+//         console.log(`[drawImageAndStrokes] Called with scale=${scale}`);
+//         console.log(`[drawImageAndStrokes] Current window.imageScaleByLabel[${currentImageLabel}] = ${window.imageScaleByLabel[currentImageLabel]}`);
             
         // CRITICAL FIX: Ensure scale parameter matches the global scale value
         if (scale !== window.imageScaleByLabel[currentImageLabel]) {
@@ -2437,8 +4693,8 @@ document.addEventListener('DOMContentLoaded', () => {
         
     // Function to apply visible strokes - moved outside redrawCanvasWithVisibility to be globally accessible
         function drawSingleStroke(ctx, strokeLabel, vectorData, scale, imageX, imageY, currentImageLabel, isBlankCanvas, canvasCenter) {
-            console.log(`\nDrawing stroke ${strokeLabel}:`);
-            console.log(`Using scale: ${scale}, imageX: ${imageX}, imageY: ${imageY}`);
+//             console.log(`\nDrawing stroke ${strokeLabel}:`);
+//             console.log(`Using scale: ${scale}, imageX: ${imageX}, imageY: ${imageY}`);
             
             // Transform the first point
             const firstPoint = vectorData.points[0];
@@ -2454,14 +4710,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Then apply position offset
                 transformedFirstX = scaledX + position.x;
                 transformedFirstY = scaledY + position.y;
-                console.log(`BLANK CANVAS: Using scaled and adjusted coordinates for first point: (${transformedFirstX}, ${transformedFirstY})`);
+//                 console.log(`BLANK CANVAS: Using scaled and adjusted coordinates for first point: (${transformedFirstX}, ${transformedFirstY})`);
             } else {
                 transformedFirstX = imageX + (firstPoint.x * scale);
                 transformedFirstY = imageY + (firstPoint.y * scale);
-                console.log(`First point transformation:
-                    Original (relative to image): (${firstPoint.x}, ${firstPoint.y})
-                    Scaled: (${firstPoint.x * scale}, ${firstPoint.y * scale})
-                    Final (canvas position): (${transformedFirstX}, ${transformedFirstY})`);
+//                 console.log(`First point transformation:
+//                     Original (relative to image): (${firstPoint.x}, ${firstPoint.y})
+//                     Scaled: (${firstPoint.x * scale}, ${firstPoint.y * scale})
+//                     Final (canvas position): (${transformedFirstX}, ${transformedFirstY})`);
             }
             
             // Check if this is an arrow line and pre-calculate adjusted points
@@ -2569,7 +4825,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } else if (isCurvedLine) {
                 // For curved lines, draw smooth spline using stored interpolated points
-                console.log(`Drawing curved line with ${vectorData.points.length} interpolated points`);
+//                 console.log(`Drawing curved line with ${vectorData.points.length} interpolated points`);
                 
                 // Calculate curve shortening for arrows if this is a curved arrow
                 let startIndex = 0;
@@ -2631,7 +4887,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     }
                     
-                    console.log(`Curve shortening: startIndex=${startIndex}, endIndex=${endIndex}, total points=${vectorData.points.length}`);
+//                     console.log(`Curve shortening: startIndex=${startIndex}, endIndex=${endIndex}, total points=${vectorData.points.length}`);
                 }
                 
                 // Draw the curve using the calculated start and end indices
@@ -2691,6 +4947,16 @@ document.addEventListener('DOMContentLoaded', () => {
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round';
             
+            // Set dash pattern if enabled
+            if (vectorData.dashSettings && vectorData.dashSettings.enabled && vectorData.dashSettings.pattern.length > 0) {
+                const scaledPattern = vectorData.dashSettings.pattern.map(dash => dash * scale);
+                ctx.setLineDash(scaledPattern);
+                ctx.lineDashOffset = 0; // Always start completed strokes with no offset
+            } else {
+                ctx.setLineDash([]); // Solid line
+                ctx.lineDashOffset = 0; // Reset offset for solid lines too
+            }
+            
             // --- Add Glow Effect for Selected Stroke ---
             const isSelected = window.paintApp.state.selectedStrokeByImage[currentImageLabel] === strokeLabel;
             if (isSelected) {
@@ -2710,6 +4976,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 ctx.restore(); // Restore context state to remove shadow
             }
             // --- End Reset Glow Effect ---
+            
+            // Reset dash pattern to solid
+            ctx.setLineDash([]);
             
             // Draw decorations and control points
             drawStrokeDecorations(ctx, strokeLabel, vectorData, strokePath, isArrowLine, isCurvedArrow, isCurvedLine, isStraightLine, isBlankCanvas, canvasCenter, scale, imageX, imageY, currentImageLabel);
@@ -2754,7 +5023,8 @@ document.addEventListener('DOMContentLoaded', () => {
                  let endIndex = vectorData.points.length - 1;
                  
                  // Convert arrow size to image coordinate space for shortening calculation
-                 const shorteningDistance = (baseArrowSize * 0.8) / scale;
+                 // Increase shortening distance to prevent line overlay on arrows
+                const shorteningDistance = (baseArrowSize + (brushSizeForStroke * 2)) / scale;
                  
                  // For very dense curves (>100 points), use percentage-based shortening as fallback
                  const isDenseCurve = vectorData.points.length > 100;
@@ -2805,11 +5075,11 @@ document.addEventListener('DOMContentLoaded', () => {
                  let endPoint = null;
                  
                  // Calculate start tangent using shortened curve endpoints (use same transformation as curve drawing)
-                 if (vectorData.points.length >= 2 && startIndex < vectorData.points.length - 1) {
-                     const firstPoint = vectorData.points[startIndex];
+                 if (vectorData.points.length >= 2) {
+                     const firstPoint = vectorData.points[0]; // Use original first point for arrow positioning
                      // For dense curves, look further ahead for better tangent direction
                      const lookAheadDistance = Math.min(10, vectorData.points.length - startIndex - 1);
-                     const secondPoint = vectorData.points[startIndex + lookAheadDistance];
+                     const secondPoint = vectorData.points[Math.min(10, vectorData.points.length - 1)]; // Use early point for tangent direction
                      
                      // Transform first point to canvas coordinates (same logic as curve drawing)
                      let startX, startY;
@@ -2848,11 +5118,11 @@ document.addEventListener('DOMContentLoaded', () => {
                  }
                  
                  // Calculate end tangent using shortened curve endpoints (use same transformation as curve drawing)
-                 if (vectorData.points.length >= 2 && endIndex > 0) {
-                     const lastPoint = vectorData.points[endIndex];
+                 if (vectorData.points.length >= 2) {
+                     const lastPoint = vectorData.points[vectorData.points.length - 1]; // Use original last point for arrow positioning
                      // For dense curves, look further back for better tangent direction
                      const lookBackDistance = Math.min(10, endIndex);
-                     const secondLastPoint = vectorData.points[endIndex - lookBackDistance];
+                     const secondLastPoint = vectorData.points[Math.max(0, vectorData.points.length - 11)]; // Use late point for tangent direction
                      
                      // Transform last point to canvas coordinates (same logic as curve drawing)
                      let endX, endY;
@@ -2889,12 +5159,12 @@ document.addEventListener('DOMContentLoaded', () => {
                      }
                      endPoint = { x: endX, y: endY };
                      
-                     console.log(`End tangent calculation for curved arrow:`, { 
-                         endTangent, 
-                         endPoint: { x: endX, y: endY },
-                         secondLastPoint: { x: secondLastX, y: secondLastY },
-                         dx, dy, length 
-                     });
+//                      console.log(`End tangent calculation for curved arrow:`, { 
+//                          endTangent, 
+//                          endPoint: { x: endX, y: endY },
+//                          secondLastPoint: { x: secondLastX, y: secondLastY },
+//                          dx, dy, length 
+//                      });
                  }
                  
                  // Draw arrowheads using calculated tangents
@@ -2923,7 +5193,7 @@ document.addEventListener('DOMContentLoaded', () => {
              // --- Draw Control Point Indicators for Arrows (ONLY in Edit Mode) ---
              if (isArrowLine && vectorData.points.length >= 2 && 
                  window.selectedStrokeInEditMode === strokeLabel) {
-                 console.log(`Drawing arrow endpoint indicators for ${strokeLabel} (IN EDIT MODE)`);
+//                  console.log(`Drawing arrow endpoint indicators for ${strokeLabel} (IN EDIT MODE)`);
                  
                  // Draw control points at start and end of arrow
                  const startPoint = vectorData.points[0];
@@ -2978,7 +5248,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                                 window.selectedStrokeInEditMode === strokeLabel);
                  
                  if (shouldShowControlPoints) {
-                     console.log(`Drawing control point indicators for curved line ${strokeLabel}`);
+//                      console.log(`Drawing control point indicators for curved line ${strokeLabel}`);
                      
                      // Draw small circles at each original control point
                      vectorData.controlPoints.forEach((controlPoint, index) => {
@@ -3041,7 +5311,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                                 window.selectedStrokeInEditMode === strokeLabel);
                  
                  if (shouldShowControlPoints) {
-                     console.log(`Drawing anchor point indicators for straight line ${strokeLabel}`);
+//                      console.log(`Drawing anchor point indicators for straight line ${strokeLabel}`);
                      
                      // Draw anchor points at start and end of straight line
                      const startPoint = vectorData.points[0];
@@ -3103,10 +5373,10 @@ document.addEventListener('DOMContentLoaded', () => {
          }
 
          function applyVisibleStrokes(scale, imageX, imageY) {
-            console.log(`\n--- applyVisibleStrokes ---`); // ADDED LOG
-            console.log(`  Target Label: ${currentImageLabel}`); // ADDED LOG
-            console.log(`  Scale: ${scale}, ImageX: ${imageX}, ImageY: ${imageY}`); // ADDED LOG
-        console.log(`[applyVisibleStrokes] Current window.imageScaleByLabel[${currentImageLabel}] = ${window.imageScaleByLabel[currentImageLabel]}`);
+//             console.log(`\n--- applyVisibleStrokes ---`); // ADDED LOG
+//             console.log(`  Target Label: ${currentImageLabel}`); // ADDED LOG
+//             console.log(`  Scale: ${scale}, ImageX: ${imageX}, ImageY: ${imageY}`); // ADDED LOG
+//         console.log(`[applyVisibleStrokes] Current window.imageScaleByLabel[${currentImageLabel}] = ${window.imageScaleByLabel[currentImageLabel]}`);
         
         // CRITICAL FIX: Ensure scale parameter matches the global scale value
         if (scale !== window.imageScaleByLabel[currentImageLabel]) {
@@ -3126,9 +5396,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const visibility = strokeVisibilityByImage[currentImageLabel] || {};
 
             // *** ADDED LOGGING ***
-            console.log(`  Stroke Order (${strokeOrder.length}): [${strokeOrder.join(', ')}]`);
-            console.log(`  Vector Strokes Available (${Object.keys(strokes).length}):`, Object.keys(strokes));
-            console.log(`  Visibility States:`, JSON.stringify(visibility));
+//             console.log(`  Stroke Order (${strokeOrder.length}): [${strokeOrder.join(', ')}]`);
+//             console.log(`  Vector Strokes Available (${Object.keys(strokes).length}):`, Object.keys(strokes));
+//             console.log(`  Visibility States:`, JSON.stringify(visibility));
             // *** END LOGGING ***
 
             // Get the current image dimensions and scale
@@ -3141,7 +5411,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (cachedImg) {
                     imageWidth = cachedImg.width;
                     imageHeight = cachedImg.height;
-                    console.log(`Original image dimensions: ${imageWidth}x${imageHeight}`);
+//                     console.log(`Original image dimensions: ${imageWidth}x${imageHeight}`);
                 }
             }
             
@@ -3151,7 +5421,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                  (dims && dims.width === canvas.width && dims.height === canvas.height);
             
             if (isBlankCanvas) {
-                console.log(`Applying strokes in BLANK CANVAS MODE`);
+//                 console.log(`Applying strokes in BLANK CANVAS MODE`);
             }
             
             // Calculate canvas center for scaling in blank canvas mode
@@ -3164,8 +5434,8 @@ document.addEventListener('DOMContentLoaded', () => {
             strokeOrder.forEach((strokeLabel) => {
                 const isVisible = visibility[strokeLabel];
                 // *** ADDED LOGGING ***
-                console.log(`\n  Processing Stroke: ${strokeLabel}`);
-                console.log(`    Is Visible? ${isVisible}`);
+//                 console.log(`\n  Processing Stroke: ${strokeLabel}`);
+//                 console.log(`    Is Visible? ${isVisible}`);
                 // *** END LOGGING ***
 
                 if (!isVisible) return; // Skip invisible strokes
@@ -3180,7 +5450,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.warn(`    Vector data for ${strokeLabel} has NO POINTS! Skipping draw.`);
                     return;
                 }
-                console.log(`    Vector Data Found: ${vectorData.points.length} points, type: ${vectorData.type}, color: ${vectorData.color}, width: ${vectorData.width}`);
+//                 console.log(`    Vector Data Found: ${vectorData.points.length} points, type: ${vectorData.type}, color: ${vectorData.color}, width: ${vectorData.width}`);
                 // *** END LOGGING ***
                 
                 // Use the existing drawSingleStroke function
@@ -3442,21 +5712,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function saveState(force = false, incrementLabel = true, updateStrokeList = true, isDrawingOrPasting = false, strokeInProgress = false) {
-        console.log('[Save State Called]', 'force='+force, 'incrementLabel='+incrementLabel, 'updateStrokeList='+updateStrokeList, 'isDrawingOrPasting='+isDrawingOrPasting, 'strokeInProgress='+strokeInProgress);
+//         console.log('[Save State Called]', 'force='+force, 'incrementLabel='+incrementLabel, 'updateStrokeList='+updateStrokeList, 'isDrawingOrPasting='+isDrawingOrPasting, 'strokeInProgress='+strokeInProgress);
         
         // Log current state of measurements to verify they're captured
-        console.log(`[saveState] Current strokeMeasurements for ${currentImageLabel}:`, 
-            JSON.stringify(window.strokeMeasurements[currentImageLabel]));
+//         console.log(`[saveState] Current strokeMeasurements for ${currentImageLabel}:`, 
+//             JSON.stringify(window.strokeMeasurements[currentImageLabel]));
             
         // Track current scale and position to ensure they're preserved
         if (window.imageScaleByLabel && window.imageScaleByLabel[currentImageLabel] !== undefined) {
-            console.log(`[saveState] Current scale for ${currentImageLabel}: ${window.imageScaleByLabel[currentImageLabel]}`);
+//             console.log(`[saveState] Current scale for ${currentImageLabel}: ${window.imageScaleByLabel[currentImageLabel]}`);
         } else {
             console.warn(`[saveState] No scale found for ${currentImageLabel}!`);
         }
         
         if (window.imagePositionByLabel && window.imagePositionByLabel[currentImageLabel]) {
-            console.log(`[saveState] Current position for ${currentImageLabel}: x=${window.imagePositionByLabel[currentImageLabel].x}, y=${window.imagePositionByLabel[currentImageLabel].y}`);
+//             console.log(`[saveState] Current position for ${currentImageLabel}: x=${window.imagePositionByLabel[currentImageLabel].x}, y=${window.imagePositionByLabel[currentImageLabel].y}`);
         } else {
             console.warn(`[saveState] No position found for ${currentImageLabel}!`);
         }
@@ -3501,24 +5771,24 @@ document.addEventListener('DOMContentLoaded', () => {
         let strokeLabel = null;
         if (!isDrawingOrPasting && !strokeInProgress && incrementLabel && updateStrokeList) {
             // *** ADDED DETAILED LOGS ***
-            console.log(`[Save State] Entering stroke update block.`);
+//             console.log(`[Save State] Entering stroke update block.`);
             
             // Get the suggested next label
             const suggestedLabel = labelsByImage[currentImageLabel];
-            console.log(`[Save State] Suggested next label = "${suggestedLabel}" from labelsByImage[${currentImageLabel}]`);
+//             console.log(`[Save State] Suggested next label = "${suggestedLabel}" from labelsByImage[${currentImageLabel}]`);
             
             // *** FIX: Ensure the new stroke gets a UNIQUE label ***
             strokeLabel = generateUniqueStrokeName(suggestedLabel);
-            console.log(`[Save State] Assigned UNIQUE strokeLabel = "${strokeLabel}"`);
+//             console.log(`[Save State] Assigned UNIQUE strokeLabel = "${strokeLabel}"`);
             
             // Always increment the label counter based on the original suggested label for the next stroke
             const nextLabel = getNextLabel(currentImageLabel); // Uses the value in labelsByImage
             labelsByImage[currentImageLabel] = nextLabel;
-            console.log(`[Save State] Incremented labelsByImage[${currentImageLabel}] to "${nextLabel}"`);
+//             console.log(`[Save State] Incremented labelsByImage[${currentImageLabel}] to "${nextLabel}"`);
             
             // Auto-select the newly created stroke to ensure it gets focus
             selectedStrokeByImage[currentImageLabel] = strokeLabel;
-            console.log(`[Save State] Auto-selected newly created stroke: ${strokeLabel}`);
+//             console.log(`[Save State] Auto-selected newly created stroke: ${strokeLabel}`);
             
             // Also add to multi-selection array for action panel
             if (!multipleSelectedStrokesByImage[currentImageLabel]) {
@@ -3536,18 +5806,18 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Only add the *unique* stroke label to the strokes list
             if (!lineStrokesByImage[currentImageLabel]) {
-                console.log(`[Save State] Initializing lineStrokesByImage[${currentImageLabel}] as []`);
+//                 console.log(`[Save State] Initializing lineStrokesByImage[${currentImageLabel}] as []`);
                 lineStrokesByImage[currentImageLabel] = []; // Initialize if it doesn't exist
             }
             
             // Check if unique stroke label already exists before pushing (shouldn't happen with generateUniqueStrokeName)
             const labelAlreadyExists = lineStrokesByImage[currentImageLabel].includes(strokeLabel);
             
-            console.log(`[Save State] BEFORE push: lineStrokesByImage[${currentImageLabel}] =`, JSON.parse(JSON.stringify(lineStrokesByImage[currentImageLabel])));
+//             console.log(`[Save State] BEFORE push: lineStrokesByImage[${currentImageLabel}] =`, JSON.parse(JSON.stringify(lineStrokesByImage[currentImageLabel])));
             
             if (!labelAlreadyExists && updateStrokeList) {
                 lineStrokesByImage[currentImageLabel].push(strokeLabel); // Push the unique label
-                console.log(`[Save State] AFTER push: lineStrokesByImage[${currentImageLabel}] =`, JSON.parse(JSON.stringify(lineStrokesByImage[currentImageLabel])));
+//                 console.log(`[Save State] AFTER push: lineStrokesByImage[${currentImageLabel}] =`, JSON.parse(JSON.stringify(lineStrokesByImage[currentImageLabel])));
             } else {
                 // This case should ideally not be reached if generateUniqueStrokeName works correctly
                 console.warn(`[Save State] Generated unique stroke label "${strokeLabel}" already exists? Not pushing again.`);
@@ -3576,13 +5846,13 @@ document.addEventListener('DOMContentLoaded', () => {
             vectorStrokesByImage[currentImageLabel][strokeLabel] = drawnVectorData;
             // Remove the temporary data
             delete vectorStrokesByImage[currentImageLabel][tempStrokeKey];
-            console.log(`[Save State] Moved vector data from ${tempStrokeKey} to ${strokeLabel}`);
+//             console.log(`[Save State] Moved vector data from ${tempStrokeKey} to ${strokeLabel}`);
         } else if (strokeLabel) {
             console.warn(`[Save State] No temporary vector data found at ${tempStrokeKey} for stroke ${strokeLabel}`);
             // Attempt to find vector data if it somehow got assigned to the suggested label during draw (fallback)
             const suggestedLabel = labelsByImage[currentImageLabel]; // Get the label *before* incrementing
              if (vectorStrokesByImage[currentImageLabel] && vectorStrokesByImage[currentImageLabel][suggestedLabel]) {
-                console.log(`[Save State] Fallback: Found data under suggested label ${suggestedLabel}`);
+//                 console.log(`[Save State] Fallback: Found data under suggested label ${suggestedLabel}`);
                 drawnVectorData = JSON.parse(JSON.stringify(vectorStrokesByImage[currentImageLabel][suggestedLabel]));
                 vectorStrokesByImage[currentImageLabel][strokeLabel] = drawnVectorData;
                 // Optionally delete the data under suggestedLabel if it shouldn't be there
@@ -3647,24 +5917,24 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function undo() {
-        console.log(`Attempting to undo in ${currentImageLabel} workspace`);
-        console.log(`Current undo stack: ${undoStackByImage[currentImageLabel]?.length || 0} items`);
-        console.log(`Current strokes: ${lineStrokesByImage[currentImageLabel]?.join(', ') || 'none'}`);
+//         console.log(`Attempting to undo in ${currentImageLabel} workspace`);
+//         console.log(`Current undo stack: ${undoStackByImage[currentImageLabel]?.length || 0} items`);
+//         console.log(`Current strokes: ${lineStrokesByImage[currentImageLabel]?.join(', ') || 'none'}`);
         
         const currentStack = undoStackByImage[currentImageLabel];
         if (currentStack && currentStack.length > 1) { // Keep at least one state (initial)
             // Get the state we're undoing from
             const lastAction = currentStack.pop();
-            console.log(`Undoing action of type: ${lastAction.type}, label: ${lastAction.label || 'none'}`);
+//             console.log(`Undoing action of type: ${lastAction.type}, label: ${lastAction.label || 'none'}`);
             
             // Add to redo stack
             redoStackByImage[currentImageLabel] = redoStackByImage[currentImageLabel] || [];
             redoStackByImage[currentImageLabel].push(lastAction);
-            console.log(`Added to redo stack, now has ${redoStackByImage[currentImageLabel].length} items`);
+//             console.log(`Added to redo stack, now has ${redoStackByImage[currentImageLabel].length} items`);
             
             // Skip certain state types when undoing
             if (lastAction.type === 'pre-stroke') {
-                console.log('Skipping pre-stroke state');
+//                 console.log('Skipping pre-stroke state');
                 // If we encounter a pre-stroke state, undo again to get to the previous complete state
                 if (currentStack.length > 1) {
                     return undo();
@@ -3673,11 +5943,11 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Handle snapshot type (created when switching views)
             if (lastAction.type === 'snapshot') {
-                console.log('Restoring from snapshot state');
+//                 console.log('Restoring from snapshot state');
                 // If we have stored strokes in the snapshot, restore them
                 if (lastAction.strokes) {
                     lineStrokesByImage[currentImageLabel] = [...(lastAction.strokes || [])];
-                    console.log(`Restored strokes: ${lineStrokesByImage[currentImageLabel].join(', ')}`);
+//                     console.log(`Restored strokes: ${lineStrokesByImage[currentImageLabel].join(', ')}`);
                 }
                 
                 // Continue to next undo action if possible
@@ -3693,7 +5963,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Remove the last stroke and its label
                 if (lineStrokesByImage[currentImageLabel] && lineStrokesByImage[currentImageLabel].length > 0) {
                     const removedStroke = lineStrokesByImage[currentImageLabel].pop();
-                    console.log(`Removed stroke: ${removedStroke}`);
+//                     console.log(`Removed stroke: ${removedStroke}`);
                     
                     // Also remove from visibility tracking
                     if (strokeVisibilityByImage[currentImageLabel] && strokeVisibilityByImage[currentImageLabel][removedStroke]) {
@@ -3717,7 +5987,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         // Save measurement data in lastAction for possible redo
                         lastAction.measurementData = strokeMeasurements[currentImageLabel][removedStroke];
                         delete strokeMeasurements[currentImageLabel][removedStroke];
-                        console.log(`Removed measurement data for stroke: ${removedStroke}`);
+//                         console.log(`Removed measurement data for stroke: ${removedStroke}`);
                     }
                     
                     // Remove vector stroke data
@@ -3730,12 +6000,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     // If this was the last stroke, reset to A1
                     if (lineStrokesByImage[currentImageLabel].length === 0) {
                         labelsByImage[currentImageLabel] = 'A1';
-                        console.log(`All strokes undone, reset label counter to A1`);
+//                         console.log(`All strokes undone, reset label counter to A1`);
                     } else {
                 // Set the next label to be the one we just removed
                 if (lastAction.label) {
                     labelsByImage[currentImageLabel] = lastAction.label;
-                    console.log(`Reset label counter to: ${lastAction.label}`);
+//                     console.log(`Reset label counter to: ${lastAction.label}`);
                         }
                     }
                 }
@@ -3842,7 +6112,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // CRITICAL FIX: Restore vector data for control point undo functionality
                 if (previousState.allVectorData) {
                     vectorStrokesByImage[currentImageLabel] = JSON.parse(JSON.stringify(previousState.allVectorData));
-                    console.log('Vector data restored for undo');
+//                     console.log('Vector data restored for undo');
                 }
                 
                 // Restore the canvas state
@@ -3850,7 +6120,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 imageStates[currentImageLabel] = stateToRestore;
                 restoreCanvasState(stateToRestore);
                 currentStroke = cloneImageData(stateToRestore);
-                console.log('Canvas state restored');
+//                 console.log('Canvas state restored');
 
                 // Restore label positions if they exist in the state
                 if (previousState.customLabelPositions) {
@@ -3866,7 +6136,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
             } else {
-                console.log('Warning: No valid previous state found');
+//                 console.log('Warning: No valid previous state found');
                 // Create a blank state if needed
                 const blankState = ctx.createImageData(canvas.width, canvas.height);
                 imageStates[currentImageLabel] = blankState;
@@ -3890,7 +6160,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } else if (currentStack && currentStack.length === 1) {
             // We're at the initial state
-            console.log('At initial state, resetting workspace');
+//             console.log('At initial state, resetting workspace');
             const initialState = currentStack[0];
             
             // Clear all stroke data
@@ -3922,7 +6192,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             } else if (window.originalImages[currentImageLabel]) {
                 // If we have the original image, redraw it
-                console.log('Redrawing from original image');
+//                 console.log('Redrawing from original image');
                 const img = new Image();
                 img.onload = () => {
                     // Clear the canvas first
@@ -3963,19 +6233,19 @@ document.addEventListener('DOMContentLoaded', () => {
             // Force redraw to ensure visual consistency
             redrawCanvasWithVisibility();
         } else {
-            console.log('No undo history available for this workspace');
+//             console.log('No undo history available for this workspace');
         }
     }
     
     function redo() {
-        console.log(`Attempting to redo in ${currentImageLabel} workspace`);
-        console.log(`Current redo stack: ${redoStackByImage[currentImageLabel]?.length || 0} items`);
+//         console.log(`Attempting to redo in ${currentImageLabel} workspace`);
+//         console.log(`Current redo stack: ${redoStackByImage[currentImageLabel]?.length || 0} items`);
         
         const redoStack = redoStackByImage[currentImageLabel];
         if (redoStack && redoStack.length > 0) {
             // Get the action to redo
             const actionToRedo = redoStack.pop();
-            console.log(`Redoing action of type: ${actionToRedo.type}, label: ${actionToRedo.label || 'none'}`);
+//             console.log(`Redoing action of type: ${actionToRedo.type}, label: ${actionToRedo.label || 'none'}`);
             
             // Add back to undo stack
             undoStackByImage[currentImageLabel].push(actionToRedo);
@@ -4019,7 +6289,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Add the stroke back to the list
                 lineStrokesByImage[currentImageLabel] = lineStrokesByImage[currentImageLabel] || [];
                 lineStrokesByImage[currentImageLabel].push(actionToRedo.label);
-                console.log(`Added stroke back: ${actionToRedo.label}`);
+//                 console.log(`Added stroke back: ${actionToRedo.label}`);
                 
                 // Restore stroke visibility
                 strokeVisibilityByImage[currentImageLabel] = strokeVisibilityByImage[currentImageLabel] || {};
@@ -4057,7 +6327,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             controlPoints: strokeType === 'curved' ? [
                                 { x: canvas.width/2 - 50, y: canvas.height/2 },
                                 { x: canvas.width/2 + 50, y: canvas.height/2 }
-                            ] : undefined
+                            ] : undefined,
+                            dashSettings: { enabled: false, style: 'solid', pattern: [], dashLength: 5, gapLength: 5 } // Default dash settings
                         };
                     }
                 }
@@ -4076,7 +6347,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (actionToRedo.measurementData) {
                     strokeMeasurements[currentImageLabel] = strokeMeasurements[currentImageLabel] || {};
                     strokeMeasurements[currentImageLabel][actionToRedo.label] = actionToRedo.measurementData;
-                    console.log(`Restored measurement data for stroke: ${actionToRedo.label}`);
+//                     console.log(`Restored measurement data for stroke: ${actionToRedo.label}`);
                 }
                 
                 // Update the next label - make sure it's one higher than the redone label
@@ -4088,11 +6359,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         ? String.fromCharCode(letterPart.charCodeAt(0) + 1) + '0' 
                         : letterPart + nextNum;
                     labelsByImage[currentImageLabel] = nextLabel;
-                    console.log(`Set next label to: ${nextLabel}`);
+//                     console.log(`Set next label to: ${nextLabel}`);
                 } else {
                     // Fallback to the standard next label function
                 labelsByImage[currentImageLabel] = getNextLabel(currentImageLabel);
-                console.log(`Set next label to: ${labelsByImage[currentImageLabel]}`);
+//                 console.log(`Set next label to: ${labelsByImage[currentImageLabel]}`);
                 }
             }
             
@@ -4102,7 +6373,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 imageStates[currentImageLabel] = stateToRestore;
                 restoreCanvasState(stateToRestore);
                 currentStroke = cloneImageData(stateToRestore);
-                console.log('Canvas state restored for redo');
+//                 console.log('Canvas state restored for redo');
 
                 // Restore label positions if they exist in the action
                 if (actionToRedo.customLabelPositions) {
@@ -4126,7 +6397,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Force redraw with visibility to ensure labels appear immediately
             redrawCanvasWithVisibility();
         } else {
-            console.log('No redo actions available for this workspace');
+//             console.log('No redo actions available for this workspace');
         }
     }
 
@@ -4332,13 +6603,13 @@ document.addEventListener('DOMContentLoaded', () => {
         let imageX, imageY;
         
         // *** ADDED DETAILED LOGGING ***
-        console.log(`getTransformedCoords START for ${currentImageLabel}`);
+//         console.log(`getTransformedCoords START for ${currentImageLabel}`);
         // Explicitly use the window property to avoid scope issues
         // *** MODIFIED CHECK ***
         const dimensionsObject = window.originalImageDimensions;
         // console.log(`  All Dimensions:`, JSON.stringify(dimensionsObject));
         const dims = dimensionsObject ? dimensionsObject[currentImageLabel] : undefined;
-        console.log(`  Current Dim Check: dims =`, dims);
+//         console.log(`  Current Dim Check: dims =`, dims);
         // *** END MODIFIED CHECK ***
 
         // Check if this is a blank canvas without an image
@@ -4347,7 +6618,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // For blank canvas drawing, need to convert canvas coordinates to "image" coordinates
         // by undoing scaling and position offset
         if (noImageLoaded || (dims && dims.width === canvas.width && dims.height === canvas.height)) {
-            console.log(`getTransformedCoords: BLANK CANVAS MODE - Applying inverse scaling and offset`);
+//             console.log(`getTransformedCoords: BLANK CANVAS MODE - Applying inverse scaling and offset`);
             // Calculate canvas center for scaling
             const canvasCenter = {
                 x: canvas.width / 2,
@@ -4362,8 +6633,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const imgX = ((positionAdjustedX - canvasCenter.x) / scale) + canvasCenter.x;
             const imgY = ((positionAdjustedY - canvasCenter.y) / scale) + canvasCenter.y;
             
-            console.log(`  Removing offset: (${positionAdjustedX}, ${positionAdjustedY})`);
-            console.log(`  Inverse scaling: (${imgX}, ${imgY})`);
+//             console.log(`  Removing offset: (${positionAdjustedX}, ${positionAdjustedY})`);
+//             console.log(`  Inverse scaling: (${imgX}, ${imgY})`);
             
             return { x: imgX, y: imgY };
         }
@@ -4374,7 +6645,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const centerY = (canvas.height - dims.height * scale) / 2;
             imageX = centerX + position.x;
             imageY = centerY + position.y;
-            console.log(`getTransformedCoords: Using image dims ${dims.width}x${dims.height}. Calculated imageX=${imageX}, imageY=${imageY}`);
+//             console.log(`getTransformedCoords: Using image dims ${dims.width}x${dims.height}. Calculated imageX=${imageX}, imageY=${imageY}`);
         } else {
             // Fallback if dimensions aren't loaded (should ideally not happen after load)
             imageX = canvas.width / 2 + position.x;
@@ -4386,13 +6657,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const imgX = (canvasX - imageX) / scale;
         const imgY = (canvasY - imageY) / scale;
         
-        console.log(`getTransformedCoords RESULT: Canvas(${canvasX}, ${canvasY}) -> Image(${imgX.toFixed(1)}, ${imgY.toFixed(1)})`);
+//         console.log(`getTransformedCoords RESULT: Canvas(${canvasX}, ${canvasY}) -> Image(${imgX.toFixed(1)}, ${imgY.toFixed(1)})`);
         return { x: imgX, y: imgY };
     }
 
     // Helper function to deselect all strokes and clear edit mode
     function deselectAllStrokes() {
-        console.log('Deselecting all strokes');
+//         console.log('Deselecting all strokes');
         
         // Clear selection state
         if (window.selectedStrokeByImage && window.currentImageLabel) {
@@ -4441,7 +6712,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Helper function to handle defocus clicks (single clicks that don't create strokes)
     function handleDefocusClick() {
-        console.log('Single click detected - defocusing measurements');
+//         console.log('Single click detected - defocusing measurements');
         
         // Ensure newly created stroke flag is cleared to prevent re-focus
         // from a previous stroke creation when updateStrokeVisibilityControls is called.
@@ -4449,7 +6720,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // CURVE_DEFOCUS_FIX_3: Handle curve completion defocus: first click after curve finalization
         if (curveJustCompleted) {
-            console.log('First click after curve completion - clearing flag and deselecting.');
+//             console.log('First click after curve completion - clearing flag and deselecting.');
             curveJustCompleted = false; // Clear the flag
             // Set flag to prevent re-focusing during defocus operation
             window.isDefocusingOperationInProgress = true;
@@ -4468,7 +6739,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // (e.g., called from mouseup when a drag wasn't long enough to create a stroke,
         // AND curveJustCompleted was already false)
         // ensure everything is deselected.
-        console.log('General defocus click (not related to immediate curve completion) - deselecting all strokes.');
+//         console.log('General defocus click (not related to immediate curve completion) - deselecting all strokes.');
         
         // Defocus any active measurement inputs (including stroke visibility items)
         // This is generally good practice before wider UI updates.
@@ -4479,7 +6750,7 @@ document.addEventListener('DOMContentLoaded', () => {
             activeElement.tagName === 'INPUT' ||
             activeElement.tagName === 'TEXTAREA'
         )) {
-            console.log('Defocusing active input element:', activeElement.className || activeElement.tagName);
+//             console.log('Defocusing active input element:', activeElement.className || activeElement.tagName);
             activeElement.blur();
         }
         
@@ -4488,7 +6759,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const allMeasureTexts = document.querySelectorAll('.stroke-measurement[contenteditable="true"]');
         allMeasureTexts.forEach(element => {
             if (element !== activeElement) {
-                console.log('Defocusing additional measurement element');
+//                 console.log('Defocusing additional measurement element');
                 element.blur();
             }
         });
@@ -4506,12 +6777,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // Helper function to get canvas coordinates from image coordinates
     function getCanvasCoords(imageX_relative, imageY_relative) {
         // *** ADDED DETAILED LOGGING ***
-        console.log(`--- getCanvasCoords Called (Label Anchor?) ---`);
-        console.log(`  Input Relative Coords: x=${imageX_relative}, y=${imageY_relative}`);
+//         console.log(`--- getCanvasCoords Called (Label Anchor?) ---`);
+//         console.log(`  Input Relative Coords: x=${imageX_relative}, y=${imageY_relative}`);
 
         const scale = window.imageScaleByLabel[currentImageLabel] || 1;
         const position = imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
-        console.log(`  Using: scale=${scale}, position=`, position);
+//         console.log(`  Using: scale=${scale}, position=`, position);
 
         // Check if this is a blank canvas without an image
         const noImageLoaded = !window.originalImages || !window.originalImages[currentImageLabel];
@@ -4519,14 +6790,14 @@ document.addEventListener('DOMContentLoaded', () => {
         // Calculate the image position on canvas (TOP-LEFT CORNER)
         // *** MODIFIED CHECK ***
         const dimensionsObject = window.originalImageDimensions; // Use window property
-        console.log(`  Checking Dimensions: dims object =`, dimensionsObject);
+//         console.log(`  Checking Dimensions: dims object =`, dimensionsObject);
         const dims = dimensionsObject ? dimensionsObject[currentImageLabel] : undefined;
-        console.log(`  Checking Dimensions: dims for ${currentImageLabel} =`, dims);
+//         console.log(`  Checking Dimensions: dims for ${currentImageLabel} =`, dims);
         // *** END MODIFIED CHECK ***
         
         // For blank canvas drawing, use the canvas coordinates directly but apply the offset
         if (noImageLoaded || (dims && dims.width === canvas.width && dims.height === canvas.height)) {
-            console.log(`getCanvasCoords: BLANK CANVAS MODE - Applying scale and offset to coordinates`);
+//             console.log(`getCanvasCoords: BLANK CANVAS MODE - Applying scale and offset to coordinates`);
             // Apply both scaling and position offset in blank canvas mode
             const canvasCenter = {
                 x: canvas.width / 2,
@@ -4537,9 +6808,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const scaledY = (imageY_relative - canvasCenter.y) * scale + canvasCenter.y;
             const finalX = scaledX + position.x;
             const finalY = scaledY + position.y;
-            console.log(`  Scaled Coords: x=${scaledX}, y=${scaledY}`);
-            console.log(`  Final Canvas Coords: x=${finalX}, y=${finalY}`);
-            console.log(`---------------------------------------------`);
+//             console.log(`  Scaled Coords: x=${scaledX}, y=${scaledY}`);
+//             console.log(`  Final Canvas Coords: x=${finalX}, y=${finalY}`);
+//             console.log(`---------------------------------------------`);
             return { x: finalX, y: finalY };
         }
 
@@ -4550,7 +6821,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const centerY = (canvas.height - dims.height * scale) / 2;
             canvasImageTopLeftX = centerX + position.x;
             canvasImageTopLeftY = centerY + position.y;
-            console.log(`  Calculated TopLeft: x=${canvasImageTopLeftX}, y=${canvasImageTopLeftY} (Using Dims)`);
+//             console.log(`  Calculated TopLeft: x=${canvasImageTopLeftX}, y=${canvasImageTopLeftY} (Using Dims)`);
         } else {
             // Fallback (should not happen after load ideally)
             canvasImageTopLeftX = canvas.width / 2 + position.x;
@@ -4561,8 +6832,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Transform from image-relative coordinates to canvas coordinates
         const canvasX = (imageX_relative * scale) + canvasImageTopLeftX;
         const canvasY = (imageY_relative * scale) + canvasImageTopLeftY;
-        console.log(`  Final Canvas Coords: x=${canvasX}, y=${canvasY}`);
-        console.log(`---------------------------------------------`);
+//         console.log(`  Final Canvas Coords: x=${canvasX}, y=${canvasY}`);
+//         console.log(`---------------------------------------------`);
         // *** END DETAILED LOGGING ***
 
         return { x: canvasX, y: canvasY };
@@ -4580,7 +6851,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const { x: imgX, y: imgY } = getTransformedCoords(canvasX, canvasY);
 
         // *** Add Log Here ***
-        console.log(`Draw Move: Canvas(${canvasX}, ${canvasY}) -> Image(${imgX.toFixed(1)}, ${imgY.toFixed(1)})`);
+//         console.log(`Draw Move: Canvas(${canvasX}, ${canvasY}) -> Image(${imgX.toFixed(1)}, ${imgY.toFixed(1)})`);
 
         // Calculate time delta for velocity
         const currentPoint = {
@@ -4591,7 +6862,7 @@ document.addEventListener('DOMContentLoaded', () => {
             time: Date.now()
         };
         
-        console.log(`Adding point at canvas: (${canvasX}, ${canvasY}), image-relative: (${imgX}, ${imgY})`);
+//         console.log(`Adding point at canvas: (${canvasX}, ${canvasY}), image-relative: (${imgX}, ${imgY})`);
         
         // Use the correct previous point for time delta calculations
         const prevPoint = points.length > 0 ? points[points.length - 1] : 
@@ -4639,7 +6910,27 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.lineWidth = dynamicWidth;
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
+        
+        // Set dash pattern if enabled
+        if (dashSettings && dashSettings.enabled && dashSettings.pattern.length > 0) {
+            const scaledPattern = dashSettings.pattern.map(dash => dash * scale);
+            ctx.setLineDash(scaledPattern);
+            ctx.lineDashOffset = -window.paintApp.uiState.dashOffset;
+            
+            // Calculate segment length and update dash offset for continuity
+            const segmentLength = Math.sqrt(
+                Math.pow(canvasX - lastX, 2) + Math.pow(canvasY - lastY, 2)
+            );
+            window.paintApp.uiState.dashOffset += segmentLength;
+        } else {
+            ctx.setLineDash([]); // Solid line
+        }
+        
         ctx.stroke();
+        
+        // Reset dash pattern and offset to defaults
+        ctx.setLineDash([]);
+        ctx.lineDashOffset = 0;
 
         // Update the last drawn point coordinates
         lastX = canvasX;
@@ -4669,7 +6960,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 points: relativePoints,
                 color: colorPicker.value,
                 width: baseWidth, // Store the base width without scaling
-                type: 'freehand'
+                type: 'freehand',
+                dashSettings: { ...dashSettings } // Store dash settings for dotted lines
             };
         } else {
             // Just update the points if the vector data already exists
@@ -4700,21 +6992,23 @@ document.addEventListener('DOMContentLoaded', () => {
          let adjustedEndX = endPoint.x;
          let adjustedEndY = endPoint.y;
          
-         if (lineLength > 0) {
+         // Only apply shortening logic if arrows are actually enabled (match final rendering)
+         if (lineLength > 0 && arrowSettings && (arrowSettings.startArrow || arrowSettings.endArrow)) {
              const unitX = dx / lineLength;
              const unitY = dy / lineLength;
-             const shortening = scaledArrowSize * 0.8; // Same shortening as final render
+             // Calculate shortening distance to match final rendering
+             const shorteningDistance = scaledArrowSize * 0.8;
              
-             // Adjust start point if start arrow is enabled
+             // Shorten start point inward if start arrow is enabled
              if (arrowSettings.startArrow) {
-                 adjustedStartX = startPoint.x + shortening * unitX;
-                 adjustedStartY = startPoint.y + shortening * unitY;
+                 adjustedStartX = startPoint.x + shorteningDistance * unitX;
+                 adjustedStartY = startPoint.y + shorteningDistance * unitY;
              }
              
-             // Adjust end point if end arrow is enabled
+             // Shorten end point inward if end arrow is enabled
              if (arrowSettings.endArrow) {
-                 adjustedEndX = endPoint.x - shortening * unitX;
-                 adjustedEndY = endPoint.y - shortening * unitY;
+                 adjustedEndX = endPoint.x - shorteningDistance * unitX;
+                 adjustedEndY = endPoint.y - shorteningDistance * unitY;
              }
          }
          
@@ -4723,12 +7017,22 @@ document.addEventListener('DOMContentLoaded', () => {
          ctx.strokeStyle = colorPicker.value;
          ctx.lineWidth = parseInt(brushSize.value) * scale;
          ctx.lineCap = 'round';
-         ctx.setLineDash([]);
+         
+         // Set dash pattern if enabled
+         if (dashSettings && dashSettings.enabled && dashSettings.pattern.length > 0) {
+             const scaledPattern = dashSettings.pattern.map(dash => dash * scale);
+             ctx.setLineDash(scaledPattern);
+         } else {
+             ctx.setLineDash([]); // Solid line
+         }
          
          ctx.beginPath();
          ctx.moveTo(adjustedStartX, adjustedStartY);
          ctx.lineTo(adjustedEndX, adjustedEndY);
          ctx.stroke();
+         
+         // Reset dash pattern to solid for arrowheads
+         ctx.setLineDash([]);
          
          // Draw arrowheads at original endpoints (not adjusted)
          const currentBrushSize = parseInt(brushSize.value) || 5;
@@ -4752,24 +7056,27 @@ document.addEventListener('DOMContentLoaded', () => {
         const lineLength = Math.sqrt(dx * dx + dy * dy);
         const angle = Math.atan2(dy, dx);
         
-        // Calculate shortened line endpoints so arrowheads become the true endpoints
-        let adjustedStartPoint = { ...startPoint };
-        let adjustedEndPoint = { ...endPoint };
+        // Calculate EXTENDED line endpoints beyond arrowheads to prevent stroke overlay
+        let extendedStartPoint = { ...startPoint };
+        let extendedEndPoint = { ...endPoint };
         
         if (lineLength > 0) {
             const unitX = dx / lineLength;
             const unitY = dy / lineLength;
             
-            // Shorten line from start if start arrow is enabled
+            // Calculate extension distance: arrow size + extra padding for thick strokes
+            const extensionDistance = scaledArrowSize + (strokeActualWidth * scale * 2);
+            
+            // Extend line backward from start if start arrow is enabled
             if (startArrow) {
-                adjustedStartPoint.x = startPoint.x + (scaledArrowSize * 0.8) * unitX;
-                adjustedStartPoint.y = startPoint.y + (scaledArrowSize * 0.8) * unitY;
+                extendedStartPoint.x = startPoint.x - extensionDistance * unitX;
+                extendedStartPoint.y = startPoint.y - extensionDistance * unitY;
             }
             
-            // Shorten line from end if end arrow is enabled  
+            // Extend line forward from end if end arrow is enabled  
             if (endArrow) {
-                adjustedEndPoint.x = endPoint.x - (scaledArrowSize * 0.8) * unitX;
-                adjustedEndPoint.y = endPoint.y - (scaledArrowSize * 0.8) * unitY;
+                extendedEndPoint.x = endPoint.x + extensionDistance * unitX;
+                extendedEndPoint.y = endPoint.y + extensionDistance * unitY;
             }
         }
         
@@ -4780,7 +7087,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.strokeStyle = arrowColor;
         ctx.lineWidth = strokeActualWidth * scale;
         
-        // Draw arrowheads without redundant context operations
+        // Draw arrowheads at the ORIGINAL endpoints (not extended)
         if (startArrow) {
             drawSingleArrowhead(startPoint.x, startPoint.y, angle + Math.PI, scaledArrowSize, arrowStyle);
         }
@@ -4791,10 +7098,10 @@ document.addEventListener('DOMContentLoaded', () => {
         
         ctx.restore();
         
-        // Return the adjusted endpoints so the line can be drawn to the arrowhead bases
+        // Return the EXTENDED endpoints so the line is drawn beyond the arrowheads
         return {
-            adjustedStartPoint,
-            adjustedEndPoint
+            adjustedStartPoint: extendedStartPoint,
+            adjustedEndPoint: extendedEndPoint
         };
     }
     
@@ -4848,24 +7155,72 @@ document.addEventListener('DOMContentLoaded', () => {
             restoreCanvasState(currentStroke);
         }
         
-        // Draw the straight line
+        // Calculate extended endpoints if arrows are enabled (same logic as final rendering)
+        let drawStartPoint = { ...startPoint };
+        let drawEndPoint = { ...endPoint };
+        
+        const scale = window.imageScaleByLabel[currentImageLabel] || 1.0;
+        const brushSizeValue = parseInt(brushSize.value) || 5;
+        
+        if (arrowSettings && (arrowSettings.startArrow || arrowSettings.endArrow)) {
+            // Calculate line direction
+            const dx = endPoint.x - startPoint.x;
+            const dy = endPoint.y - startPoint.y;
+            const lineLength = Math.sqrt(dx * dx + dy * dy);
+            
+            if (lineLength > 0) {
+                const unitX = dx / lineLength;
+                const unitY = dy / lineLength;
+                
+                // Calculate shortening distance to match final rendering (arrows should not extend line)
+                const baseArrowSize = Math.max(arrowSettings.arrowSize || 15, brushSizeValue * 2);
+                const arrowSize = baseArrowSize * scale;
+                const shorteningDistance = arrowSize * 0.8; // Match final rendering logic
+                
+                // Shorten line from start if start arrow is enabled
+                if (arrowSettings.startArrow) {
+                    drawStartPoint.x = startPoint.x + shorteningDistance * unitX;
+                    drawStartPoint.y = startPoint.y + shorteningDistance * unitY;
+                }
+                
+                // Shorten line from end if end arrow is enabled
+                if (arrowSettings.endArrow) {
+                    drawEndPoint.x = endPoint.x - shorteningDistance * unitX;
+                    drawEndPoint.y = endPoint.y - shorteningDistance * unitY;
+                }
+            }
+        }
+        
+        // Draw the straight line with extended endpoints
         ctx.beginPath();
-        ctx.moveTo(startPoint.x, startPoint.y);
-        ctx.lineTo(endPoint.x, endPoint.y);
+        ctx.moveTo(drawStartPoint.x, drawStartPoint.y);
+        ctx.lineTo(drawEndPoint.x, drawEndPoint.y);
         
         // Set drawing styles
         ctx.strokeStyle = colorPicker.value;
-        const scale = window.imageScaleByLabel[currentImageLabel] || 1.0;
-        ctx.lineWidth = parseInt(brushSize.value) * scale;
+        ctx.lineWidth = brushSizeValue * scale;
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
+        
+        // Set dash pattern if enabled
+        if (dashSettings && dashSettings.enabled && dashSettings.pattern.length > 0) {
+            const scaledPattern = dashSettings.pattern.map(dash => dash * scale);
+            ctx.setLineDash(scaledPattern);
+        } else {
+            ctx.setLineDash([]); // Solid line
+        }
+        
         ctx.stroke();
         
-        // Draw arrows if enabled (for straight line mode)
+        // Reset dash pattern to solid
+        ctx.setLineDash([]);
+        
+        // Draw arrows at ORIGINAL endpoints (not extended)
         if (arrowSettings && arrowSettings.startArrow) {
             // Calculate angle from start to end for start arrow
             const startAngle = Math.atan2(endPoint.y - startPoint.y, endPoint.x - startPoint.x);
-            const arrowSize = Math.max(parseInt(brushSize.value) * 2, 15) * scale;
+            const baseArrowSize = Math.max(arrowSettings.arrowSize || 15, brushSizeValue * 2);
+            const arrowSize = baseArrowSize * scale;
             ctx.fillStyle = colorPicker.value;
             ctx.strokeStyle = colorPicker.value;
             drawSingleArrowhead(startPoint.x, startPoint.y, startAngle, arrowSize, 'triangular');
@@ -4873,7 +7228,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (arrowSettings && arrowSettings.endArrow) {
             // Calculate angle from end to start for end arrow (reversed)
             const endAngle = Math.atan2(startPoint.y - endPoint.y, startPoint.x - endPoint.x);
-            const arrowSize = Math.max(parseInt(brushSize.value) * 2, 15) * scale;
+            const baseArrowSize = Math.max(arrowSettings.arrowSize || 15, brushSizeValue * 2);
+            const arrowSize = baseArrowSize * scale;
             ctx.fillStyle = colorPicker.value;
             ctx.strokeStyle = colorPicker.value;
             drawSingleArrowhead(endPoint.x, endPoint.y, endAngle, arrowSize, 'triangular');
@@ -5016,10 +7372,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function drawCurvedLinePreview(controlPoints, mousePos = null) {
         if (controlPoints.length === 0) return;
 
-        // Clear the canvas to the last saved state
-        if (currentStroke) {
-            restoreCanvasState(currentStroke);
-        }
+        // Clear canvas and redraw everything to ensure clean preview (match drawArrowLinePreview approach)
+        redrawCanvasWithVisibility();
 
         const scale = window.imageScaleByLabel[currentImageLabel] || 1.0;
         
@@ -5062,7 +7416,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 ctx.strokeStyle = 'rgba(240, 240, 240, 0.7)'; // Near white with transparency
                 ctx.lineWidth = Math.max(1, parseInt(brushSize.value) * scale * 0.6); // Thinner than regular
                 ctx.lineCap = 'round';
+                
+                // Set dash pattern if enabled
+                if (dashSettings && dashSettings.enabled && dashSettings.pattern.length > 0) {
+                    const scaledPattern = dashSettings.pattern.map(dash => dash * scale);
+                    ctx.setLineDash(scaledPattern);
+                } else {
+                    ctx.setLineDash([]); // Solid line
+                }
+                
                 ctx.stroke();
+                
+                // Reset dash pattern to solid
+                ctx.setLineDash([]);
             }
         } else {
             // Generate and draw the spline curve
@@ -5081,7 +7447,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 ctx.lineWidth = Math.max(1, parseInt(brushSize.value) * scale * 0.6); // 60% of regular thickness
                 ctx.lineCap = 'round';
                 ctx.lineJoin = 'round';
+                
+                // Set dash pattern if enabled
+                if (dashSettings && dashSettings.enabled && dashSettings.pattern.length > 0) {
+                    const scaledPattern = dashSettings.pattern.map(dash => dash * scale);
+                    ctx.setLineDash(scaledPattern);
+                } else {
+                    ctx.setLineDash([]); // Solid line
+                }
+                
                 ctx.stroke();
+                
+                // Reset dash pattern to solid
+                ctx.setLineDash([]);
             }
         }
     }
@@ -5130,7 +7508,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Clear any temporary drawing state when switching modes
         straightLineStart = null;
         curvedLinePoints = [];
-        console.log(`Drawing mode changed to: ${drawingMode}`);
+//         console.log(`Drawing mode changed to: ${drawingMode}`);
     });
     
     // Add hover effects to toolbar arrow toggles
@@ -5154,7 +7532,7 @@ document.addEventListener('DOMContentLoaded', () => {
     startArrowToggle.addEventListener('click', () => {
         arrowSettings.startArrow = !arrowSettings.startArrow;
         updateArrowToggleState(startArrowToggle, arrowSettings.startArrow);
-        console.log(`Start arrow: ${arrowSettings.startArrow}`);
+//         console.log(`Start arrow: ${arrowSettings.startArrow}`);
         
         // If a stroke is in edit mode, also update that stroke
         if (window.selectedStrokeInEditMode && vectorStrokesByImage[currentImageLabel] && vectorStrokesByImage[currentImageLabel][window.selectedStrokeInEditMode]) {
@@ -5178,7 +7556,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 saveState(true, false, false);
                 redrawCanvasWithVisibility();
                 
-                console.log(`Updated start arrow for edited stroke ${window.selectedStrokeInEditMode}:`, vectorData.arrowSettings.startArrow);
+//                 console.log(`Updated start arrow for edited stroke ${window.selectedStrokeInEditMode}:`, vectorData.arrowSettings.startArrow);
             }
         }
     });
@@ -5186,7 +7564,7 @@ document.addEventListener('DOMContentLoaded', () => {
     endArrowToggle.addEventListener('click', () => {
         arrowSettings.endArrow = !arrowSettings.endArrow;
         updateArrowToggleState(endArrowToggle, arrowSettings.endArrow);
-        console.log(`End arrow: ${arrowSettings.endArrow}`);
+//         console.log(`End arrow: ${arrowSettings.endArrow}`);
         
         // If a stroke is in edit mode, also update that stroke
         if (window.selectedStrokeInEditMode && vectorStrokesByImage[currentImageLabel] && vectorStrokesByImage[currentImageLabel][window.selectedStrokeInEditMode]) {
@@ -5210,8 +7588,198 @@ document.addEventListener('DOMContentLoaded', () => {
                 saveState(true, false, false);
                 redrawCanvasWithVisibility();
                 
-                console.log(`Updated end arrow for edited stroke ${window.selectedStrokeInEditMode}:`, vectorData.arrowSettings.endArrow);
+//                 console.log(`Updated end arrow for edited stroke ${window.selectedStrokeInEditMode}:`, vectorData.arrowSettings.endArrow);
             }
+        }
+    });
+
+    // Get dash control elements
+    const dashStyleSelect = document.getElementById('dashStyleSelect');
+    const customDashControls = document.getElementById('customDashControls');
+    const dashLengthInput = document.getElementById('dashLengthInput');
+    const gapLengthInput = document.getElementById('gapLengthInput');
+    
+    // Helper function to update dash settings based on style
+    function updateDashSettings() {
+        const style = dashStyleSelect.value;
+        dashSettings.style = style;
+        dashSettings.enabled = style !== 'solid';
+        
+        if (style === 'custom') {
+            dashSettings.dashLength = parseInt(dashLengthInput.value) || 5;
+            dashSettings.gapLength = parseInt(gapLengthInput.value) || 5;
+            customDashControls.style.display = 'flex';
+        } else {
+            customDashControls.style.display = 'none';
+        }
+        
+        // Update the pattern using the helper function (use default brush size for pattern calculation)
+        const currentBrushSize = parseInt(document.getElementById('brushSize').value) || 5;
+        dashSettings.pattern = getDashPattern(style, dashSettings.dashLength, dashSettings.gapLength, currentBrushSize);
+        
+        
+        // If a stroke is in edit mode, also update that stroke
+        if (window.selectedStrokeInEditMode && vectorStrokesByImage[currentImageLabel] && vectorStrokesByImage[currentImageLabel][window.selectedStrokeInEditMode]) {
+            const vectorData = vectorStrokesByImage[currentImageLabel][window.selectedStrokeInEditMode];
+            
+            // Ensure dashSettings exists and update it
+            if (!vectorData.dashSettings) {
+                vectorData.dashSettings = { enabled: false, style: 'solid', pattern: [], dashLength: 5, gapLength: 5 };
+            }
+            
+            vectorData.dashSettings = { ...dashSettings };
+            
+            // Save state and redraw
+            saveState(true, false, false);
+            redrawCanvasWithVisibility();
+        }
+    }
+    
+    // Dash control event listeners
+    dashStyleSelect.addEventListener('change', updateDashSettings);
+    dashLengthInput.addEventListener('input', updateDashSettings);
+    gapLengthInput.addEventListener('input', updateDashSettings);
+
+    // Get fit control elements
+    const fitModeSelect = document.getElementById('fitModeSelect');
+    const applyFitCurrentButton = document.getElementById('applyFitCurrent');
+    const applyFitAllButton = document.getElementById('applyFitAll');
+    
+    // Fit mode functions
+    function calculateFitScale(fitMode) {
+        const imageDimensions = window.originalImageDimensions[currentImageLabel];
+        if (!imageDimensions || !imageDimensions.width || !imageDimensions.height) {
+            console.warn('No image dimensions available for fit calculation');
+            return { scale: 1.0, position: { x: 0, y: 0 } };
+        }
+        
+        const canvasWidth = canvas.width;
+        const canvasHeight = canvas.height;
+        const imageWidth = imageDimensions.width;
+        const imageHeight = imageDimensions.height;
+        
+        let scale = 1.0;
+        let position = { x: 0, y: 0 };
+        
+        switch (fitMode) {
+            case 'fit-width':
+                scale = canvasWidth / imageWidth;
+                // Center horizontally (no offset from auto-calculated center)
+                position.x = 0;
+                // Center vertically (no offset from auto-calculated center)  
+                position.y = 0;
+                break;
+                
+            case 'fit-height':
+                scale = canvasHeight / imageHeight;
+                // Center horizontally (no offset from auto-calculated center)
+                position.x = 0;
+                // Center vertically (no offset from auto-calculated center)
+                position.y = 0;
+                console.log(`Fit-height: canvas=${canvasWidth}x${canvasHeight}, image=${imageWidth}x${imageHeight}, scale=${scale.toFixed(2)}, position=(${position.x.toFixed(1)}, ${position.y.toFixed(1)})`);
+                break;
+                
+            case 'fit-canvas':
+                scale = Math.min(canvasWidth / imageWidth, canvasHeight / imageHeight);
+                // Center both directions (no offset from auto-calculated center)
+                position.x = 0;
+                position.y = 0;
+                break;
+                
+            case 'actual-size':
+                scale = 1.0;
+                // Center the image (no offset from auto-calculated center)
+                position.x = 0;
+                position.y = 0;
+                break;
+                
+            default:
+                // 'none' or manual - keep current settings
+                return {
+                    scale: window.imageScaleByLabel[currentImageLabel] || 1.0,
+                    position: window.imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 }
+                };
+        }
+        
+        return { scale, position };
+    }
+    
+    function applyFitMode(fitMode) {
+        if (!currentImageLabel) {
+            console.warn('No current image selected');
+            return;
+        }
+        
+        const { scale, position } = calculateFitScale(fitMode);
+        
+        // Update the scale and position
+        window.imageScaleByLabel[currentImageLabel] = scale;
+        window.imagePositionByLabel[currentImageLabel] = { ...position };
+        
+        // Save state for undo/redo
+        saveState(true, false, false);
+        
+        // Redraw with new scale and position
+        redrawCanvasWithVisibility();
+        
+        console.log(`Applied ${fitMode} to current image ${currentImageLabel}: scale=${scale.toFixed(2)}, position=(${position.x.toFixed(1)}, ${position.y.toFixed(1)})`);
+    }
+    
+    function applyFitModeToAll(fitMode) {
+        if (!window.originalImageDimensions || Object.keys(window.originalImageDimensions).length === 0) {
+            console.warn('No images loaded');
+            return;
+        }
+        
+        let appliedCount = 0;
+        const currentLabel = currentImageLabel; // Store current image to restore later
+        
+        // Apply fit mode to all images
+        Object.keys(window.originalImageDimensions).forEach(label => {
+            if (window.originalImageDimensions[label] && window.originalImageDimensions[label].width > 0) {
+                // Temporarily set current image to calculate fit for this specific image
+                const originalCurrentLabel = currentImageLabel;
+                currentImageLabel = label;
+                
+                const { scale, position } = calculateFitScale(fitMode);
+                
+                // Update the scale and position for this image
+                window.imageScaleByLabel[label] = scale;
+                window.imagePositionByLabel[label] = { ...position };
+                
+                appliedCount++;
+                console.log(`Applied ${fitMode} to image ${label}: scale=${scale.toFixed(2)}`);
+                
+                // Restore current image label
+                currentImageLabel = originalCurrentLabel;
+            }
+        });
+        
+        // Restore the original current image
+        currentImageLabel = currentLabel;
+        
+        // Save state for undo/redo
+        saveState(true, false, false);
+        
+        // Redraw with new scale and position for current image
+        redrawCanvasWithVisibility();
+        
+        console.log(`Applied ${fitMode} to ${appliedCount} images`);
+    }
+    
+    // Fit control event listeners
+    applyFitCurrentButton.addEventListener('click', () => {
+        applyFitMode(fitModeSelect.value);
+    });
+    
+    applyFitAllButton.addEventListener('click', () => {
+        applyFitModeToAll(fitModeSelect.value);
+    });
+    
+    // Apply fit mode when selection changes (for immediate feedback on current image)
+    fitModeSelect.addEventListener('change', () => {
+        if (fitModeSelect.value !== 'none') {
+            applyFitMode(fitModeSelect.value);
         }
     });
 
@@ -5226,7 +7794,7 @@ document.addEventListener('DOMContentLoaded', () => {
         cacheInvalidated = true;
         cachedControlPoints.clear();
         cachedLabelPositions.clear();
-        console.log('[PERF] Interactive element cache invalidated');
+//         console.log('[PERF] Interactive element cache invalidated');
     }
 
     // PERFORMANCE: Optimized throttled mousemove handler
@@ -5304,7 +7872,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         const endTime = performance.now();
-        console.log(`[PERF] Cache update took ${(endTime - startTime).toFixed(2)}ms`);
+//         console.log(`[PERF] Cache update took ${(endTime - startTime).toFixed(2)}ms`);
     }
 
     // PERFORMANCE: Cache control points for curved strokes
@@ -5447,15 +8015,26 @@ document.addEventListener('DOMContentLoaded', () => {
             canvas.style.cursor = 'grabbing';
             
             // CRITICAL FIX: Don't exit edit mode when panning - preserve the edit state
-            console.log('Canvas Mousedown: Starting image drag (shift+click) - preserving edit mode');
+//             console.log('Canvas Mousedown: Starting image drag (shift+click) - preserving edit mode');
             return;
         }
 
         // CURVE_DEFOCUS_FIX_2: Handle defocus click immediately if a curve was just completed
         // This ensures the first single click after curve finalization only deselects
         // and does not start a new drawing operation.
-        if (curveJustCompleted) {
-            console.log('Canvas Mousedown: `curveJustCompleted` is true. Handling as defocus click.');
+        // BUT: Don't treat stroke tag clicks as defocus clicks - check if clicking on canvas labels/tags
+        const isClickOnStrokeTag = e.target.closest('.stroke-visibility-item') !== null;
+        
+        // Check if clicking on a canvas label (stroke tag drawn on canvas)
+        const clickedCanvasLabel = findLabelAtPoint(e.offsetX, e.offsetY);
+        const isClickOnCanvasLabel = clickedCanvasLabel !== null;
+        
+        console.log('🔄 [DEBUG] Canvas mousedown - curveJustCompleted:', curveJustCompleted, 'target:', e.target, 'tagName:', e.target.tagName, 'className:', e.target.className, 'isClickOnStrokeTag:', isClickOnStrokeTag);
+        console.log('🔄 [DEBUG] Event coordinates:', e.clientX, e.clientY, 'offset:', e.offsetX, e.offsetY);
+        console.log('🔄 [DEBUG] Canvas label click - clickedCanvasLabel:', clickedCanvasLabel, 'isClickOnCanvasLabel:', isClickOnCanvasLabel);
+        console.log('🔄 [DEBUG] About to check conditions - curveJustCompleted:', curveJustCompleted);
+        if (curveJustCompleted && !isClickOnStrokeTag && !isClickOnCanvasLabel) {
+            console.log('🔄 [DEBUG] Taking curveJustCompleted defocus path');
             handleDefocusClick(); // This will set curveJustCompleted to false and deselect.
             
             // ROBUST_FIX: Set multiple flags to definitively prevent any drawing logic from executing
@@ -5466,17 +8045,25 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();   // Prevent any further mousedown processing (like starting a new stroke).
             e.stopPropagation();  // Stop event from bubbling up
             e.stopImmediatePropagation(); // Stop any other event handlers on the same element
-            console.log('Canvas Mousedown: CURVE_DEFOCUS_FIX - Definitively stopped all drawing flags and event propagation');
+//             console.log('Canvas Mousedown: CURVE_DEFOCUS_FIX - Definitively stopped all drawing flags and event propagation');
             return;               // Stop further execution of this mousedown handler.
+        } else if (curveJustCompleted && (isClickOnStrokeTag || isClickOnCanvasLabel)) {
+            console.log('🔄 [DEBUG] Taking curveJustCompleted clear flag path');
+            // If it's a stroke tag click (sidebar or canvas label), just clear the flag without defocusing
+            curveJustCompleted = false;
+        } else {
+            console.log('🔄 [DEBUG] Taking normal processing path');
         }
 
         // Check for double-click on stroke on canvas (for entering edit mode)
         // BUT FIRST: If we're in curved drawing mode with control points, prioritize curve finalization
         const now = Date.now();
-        if (now - window.lastCanvasClickTime < window.clickDelay) {
+        const timeSinceLastClick = now - window.lastCanvasClickTime;
+        console.log(`🔄 [DEBUG] Canvas click timing - now: ${now}, lastCanvasClickTime: ${window.lastCanvasClickTime}, timeSinceLastClick: ${timeSinceLastClick}, clickDelay: ${window.clickDelay}`);
+        if (timeSinceLastClick < window.clickDelay) {
             // Priority 1: If in curved mode with control points, finalize the curve (don't enter edit mode)
             if (drawingMode === 'curved' && curvedLinePoints.length >= 2) {
-                console.log('Canvas Mousedown: Double-click detected while drawing curve - will finalize curve via dblclick handler');
+//                 console.log('Canvas Mousedown: Double-click detected while drawing curve - will finalize curve via dblclick handler');
                 window.lastCanvasClickTime = 0; // Reset to prevent edit mode logic
                 window.lastClickedCanvasLabel = null;
                 // Let the dblclick handler manage curve finalization
@@ -5485,8 +8072,9 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Priority 2: Normal edit mode logic (only if not finalizing a curve)
             const clickedLabelForDoubleClick = findLabelAtPoint(e.offsetX, e.offsetY);
+            console.log(`🔄 [DEBUG] Double-click check - clickedLabelForDoubleClick:`, clickedLabelForDoubleClick, `lastClickedCanvasLabel: ${window.lastClickedCanvasLabel}`);
             if (clickedLabelForDoubleClick && window.lastClickedCanvasLabel === clickedLabelForDoubleClick.strokeLabel) {
-                console.log(`Canvas Mousedown: Double-click detected on label ${clickedLabelForDoubleClick.strokeLabel}`);
+                console.log(`🔄 [DEBUG] Double-click detected on label ${clickedLabelForDoubleClick.strokeLabel} - entering edit mode`);
                 window.selectedStrokeInEditMode = clickedLabelForDoubleClick.strokeLabel;
                 
                 // Ensure it's also selected in the normal selection models
@@ -5511,7 +8099,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (window.selectedStrokeInEditMode) {
             const controlPointAtClick = findControlPointAtPosition(e.offsetX, e.offsetY);
             if (controlPointAtClick && controlPointAtClick.strokeLabel === window.selectedStrokeInEditMode) {
-                console.log(`Canvas Mousedown: Clicked on control point ${controlPointAtClick.pointIndex} of stroke ${controlPointAtClick.strokeLabel} (IN EDIT MODE)`);
+//                 console.log(`Canvas Mousedown: Clicked on control point ${controlPointAtClick.pointIndex} of stroke ${controlPointAtClick.strokeLabel} (IN EDIT MODE)`);
                 
                 // Start dragging the control point or arrow endpoint
                 isDraggingControlPoint = true;
@@ -5577,12 +8165,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (hoveredLabel) {
             // This is a single click on a label, not a double click (double click is handled above and returns)
             const currentlyHoveredStroke = hoveredLabel.strokeLabel;
-            console.log(`Canvas Mousedown: Single click on canvas label: ${currentlyHoveredStroke}.`);
-            console.log(`Canvas Mousedown: Selection BEFORE update for ${window.currentImageLabel}:`, window.multipleSelectedStrokesByImage[window.currentImageLabel] ? JSON.parse(JSON.stringify(window.multipleSelectedStrokesByImage[window.currentImageLabel])) : 'undefined');
+//             console.log(`Canvas Mousedown: Single click on canvas label: ${currentlyHoveredStroke}.`);
+//             console.log(`Canvas Mousedown: Selection BEFORE update for ${window.currentImageLabel}:`, window.multipleSelectedStrokesByImage[window.currentImageLabel] ? JSON.parse(JSON.stringify(window.multipleSelectedStrokesByImage[window.currentImageLabel])) : 'undefined');
 
             // Clear curved line preview state if we're selecting a label while in curved mode
             if (drawingMode === 'curved' && curvedLinePoints.length > 0) {
-                console.log('Canvas Mousedown: Clearing curved line preview state due to label selection');
+//                 console.log('Canvas Mousedown: Clearing curved line preview state due to label selection');
                 curvedLinePoints = [];
                 // Redraw to clear any lingering preview
                 if (typeof window.redrawCanvasWithVisibility === 'function') {
@@ -5605,8 +8193,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Update the primary selected stroke variable
                 window.selectedStrokeByImage[window.currentImageLabel] = currentlyHoveredStroke;
 
-                console.log(`Canvas Mousedown: Selection AFTER update for ${window.currentImageLabel}:`, JSON.parse(JSON.stringify(window.multipleSelectedStrokesByImage[window.currentImageLabel])));
-                console.log(`Canvas Mousedown: Focused/Selected stroke is now ${currentlyHoveredStroke}`);
+//                 console.log(`Canvas Mousedown: Selection AFTER update for ${window.currentImageLabel}:`, JSON.parse(JSON.stringify(window.multipleSelectedStrokesByImage[window.currentImageLabel])));
+//                 console.log(`Canvas Mousedown: Focused/Selected stroke is now ${currentlyHoveredStroke}`);
 
                 // If NOT already in edit mode for this stroke, do not enter it on single click.
                 // Only select it. Edit mode for canvas labels will be via double-click (handled above).
@@ -5622,6 +8210,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 if (typeof window.updateStrokeVisibilityControls === 'function') {
                     window.updateStrokeVisibilityControls();
+                    
+                    // CRITICAL FIX: After canvas label click, explicitly focus the measurement input
+                    // This ensures measurement editing works on all images, not just the first
+                    setTimeout(() => {
+                        const measurementInput = document.querySelector(`.stroke-visibility-item[data-stroke="${currentlyHoveredStroke}"] .stroke-measurement`);
+                        if (measurementInput && measurementInput.contentEditable === "true") {
+                            measurementInput.focus();
+                            // Select all text for easy editing
+                            const selection = window.getSelection();
+                            if (selection) {
+                                const range = document.createRange();
+                                range.selectNodeContents(measurementInput);
+                                selection.removeAllRanges();
+                                selection.addRange(range);
+                            }
+                        }
+                    }, 100); // Small delay to ensure DOM is updated
                 }
                  if (typeof updateSelectionActionsPanel === 'function') updateSelectionActionsPanel();
             }
@@ -5640,15 +8245,15 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!hoveredLabel) {
             const strokeAtPoint = checkForStrokeAtPoint(e.offsetX, e.offsetY);
             if (strokeAtPoint) {
-                console.log(`Canvas Mousedown: Clicked on stroke ${strokeAtPoint.label} (type: ${strokeAtPoint.type})`);
+//                 console.log(`Canvas Mousedown: Clicked on stroke ${strokeAtPoint.label} (type: ${strokeAtPoint.type})`);
                 
                 // Only clear curved line preview state if we're not actively building a curve
                 // This allows curved lines to connect to existing strokes
                 if (drawingMode === 'curved' && curvedLinePoints.length > 0) {
-                    console.log('Canvas Mousedown: Preserving curved line state for potential stroke connection');
+//                     console.log('Canvas Mousedown: Preserving curved line state for potential stroke connection');
                     // Don't clear curvedLinePoints - let the curved line logic handle stroke snapping
                 } else if (drawingMode === 'curved') {
-                    console.log('Canvas Mousedown: Clearing curved line preview state due to stroke selection');
+//                     console.log('Canvas Mousedown: Clearing curved line preview state due to stroke selection');
                     curvedLinePoints = [];
                     // Redraw to clear any lingering preview
                     if (typeof window.redrawCanvasWithVisibility === 'function') {
@@ -5665,7 +8270,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                         window.multipleSelectedStrokesByImage[window.currentImageLabel] = [strokeAtPoint.label];
                         window.selectedStrokeByImage[window.currentImageLabel] = strokeAtPoint.label;
-                        console.log(`Canvas Mousedown: Selected stroke ${strokeAtPoint.label} by clicking on it`);
+//                         console.log(`Canvas Mousedown: Selected stroke ${strokeAtPoint.label} by clicking on it`);
                         // Update UI
                         if (typeof window.redrawCanvasWithVisibility === 'function') {
                             window.redrawCanvasWithVisibility();
@@ -5679,12 +8284,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 } else {
                     // In drawing mode or curved line creation: do NOT update selection, just allow drawing to start from this point
-                    console.log(`Canvas Mousedown: Drawing mode active or curved line in progress, not updating selection. Allowing drawing to start from stroke ${strokeAtPoint.label}`);
+//                     console.log(`Canvas Mousedown: Drawing mode active or curved line in progress, not updating selection. Allowing drawing to start from stroke ${strokeAtPoint.label}`);
                 }
                 // IMPORTANT: Allow drawing to start from this stroke
                 // Only prevent drawing if we're in edit mode for THIS specific stroke
                 if (window.selectedStrokeInEditMode === strokeAtPoint.label) {
-                    console.log(`Canvas Mousedown: Preventing drawing - stroke ${strokeAtPoint.label} is in edit mode`);
+//                     console.log(`Canvas Mousedown: Preventing drawing - stroke ${strokeAtPoint.label} is in edit mode`);
                     e.preventDefault();
                     return;
                 }
@@ -5704,7 +8309,7 @@ document.addEventListener('DOMContentLoaded', () => {
             hideSelectionActionsPanel(); 
             if (typeof window.redrawCanvasWithVisibility === 'function') window.redrawCanvasWithVisibility();
             if (typeof window.updateStrokeVisibilityControls === 'function') window.updateStrokeVisibilityControls();
-            console.log(`Canvas Mousedown: Clicked outside, exited edit mode for stroke: ${prevEditStrokeLabel}`);
+//             console.log(`Canvas Mousedown: Clicked outside, exited edit mode for stroke: ${prevEditStrokeLabel}`);
             
             // CRITICAL FIX: Prevent drawing from starting when exiting edit mode
             e.preventDefault();
@@ -5736,7 +8341,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // If curveJustCompleted was true at the start of this mousedown, it should have been handled and cleared
         // but we add this as an extra safety check
         if (curveJustCompleted) {
-            console.log('Canvas Mousedown: CURVE_DEFOCUS_FIX_GUARD - curveJustCompleted is STILL true, this should not happen. Aborting drawing.');
+//             console.log('Canvas Mousedown: CURVE_DEFOCUS_FIX_GUARD - curveJustCompleted is STILL true, this should not happen. Aborting drawing.');
             return;
         }
         
@@ -5746,6 +8351,9 @@ document.addEventListener('DOMContentLoaded', () => {
         strokeInProgress = true;
         points = [];
         lastVelocity = 0;
+        
+        // Reset dash offset for continuous freehand dash patterns
+        window.paintApp.uiState.dashOffset = 0;
         lastDrawnPoint = null;
         [lastX, lastY] = [e.offsetX, e.offsetY];
         
@@ -5756,7 +8364,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const tempStrokeKey = '_drawingStroke';
         if (vectorStrokesByImage[currentImageLabel] && vectorStrokesByImage[currentImageLabel][tempStrokeKey]) {
             delete vectorStrokesByImage[currentImageLabel][tempStrokeKey];
-            console.log("Cleared temporary drawing data for key:", tempStrokeKey);
+//             console.log("Cleared temporary drawing data for key:", tempStrokeKey);
         }
         // --- END FIX ---
         
@@ -5775,7 +8383,7 @@ document.addEventListener('DOMContentLoaded', () => {
             };
             
             curvedLinePoints.push(controlPoint);
-            console.log(`Added control point ${curvedLinePoints.length} at (${e.offsetX}, ${e.offsetY})`);
+//             console.log(`Added control point ${curvedLinePoints.length} at (${e.offsetX}, ${e.offsetY})`);
             
             // Draw a visual indicator for the control point
             ctx.beginPath();
@@ -5886,7 +8494,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 endpoint.x = draggedControlPointInfo.startImageCoords.x + deltaImageX;
                 endpoint.y = draggedControlPointInfo.startImageCoords.y + deltaImageY;
                 
-                console.log(`Updated arrow endpoint ${draggedControlPointInfo.pointIndex} to image:(${endpoint.x.toFixed(1)}, ${endpoint.y.toFixed(1)})`);
+//                 console.log(`Updated arrow endpoint ${draggedControlPointInfo.pointIndex} to image:(${endpoint.x.toFixed(1)}, ${endpoint.y.toFixed(1)})`);
                 
                 // Redraw immediately to show the updated arrow
                 redrawCanvasWithVisibility();
@@ -5899,7 +8507,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 endpoint.x = draggedControlPointInfo.startImageCoords.x + deltaImageX;
                 endpoint.y = draggedControlPointInfo.startImageCoords.y + deltaImageY;
                 
-                console.log(`Updated straight line endpoint ${draggedControlPointInfo.pointIndex} to image:(${endpoint.x.toFixed(1)}, ${endpoint.y.toFixed(1)})`);
+//                 console.log(`Updated straight line endpoint ${draggedControlPointInfo.pointIndex} to image:(${endpoint.x.toFixed(1)}, ${endpoint.y.toFixed(1)})`);
                 
                 // Redraw immediately to show the updated line
                 redrawCanvasWithVisibility();
@@ -5927,7 +8535,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     };
                 });
                 
-                console.log(`Updated control point ${draggedControlPointInfo.pointIndex} to image:(${controlPoint.x.toFixed(1)}, ${controlPoint.y.toFixed(1)})`);
+//                 console.log(`Updated control point ${draggedControlPointInfo.pointIndex} to image:(${controlPoint.x.toFixed(1)}, ${controlPoint.y.toFixed(1)})`);
                 
                 // Redraw immediately to show the updated curve
                 redrawCanvasWithVisibility();
@@ -5972,7 +8580,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             x: currentLabelRect.x - anchorPoint.x,
                             y: currentLabelRect.y - anchorPoint.y
                         };
-                         console.log(`Initialized drag offset from current rect for ${strokeName}:`, currentOffset);
+//                          console.log(`Initialized drag offset from current rect for ${strokeName}:`, currentOffset);
                     } else {
                         // Fallback if label wasn't found in current positions (shouldn't happen)
                         currentOffset = { x: 0, y: 0 }; 
@@ -5995,7 +8603,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // Store the updated offset in customLabelPositions (always overwrites calculated)
                 customLabelPositions[currentImageLabel][strokeName] = currentOffset;
-                 console.log(`Storing updated custom offset for ${strokeName}:`, currentOffset);
+//                  console.log(`Storing updated custom offset for ${strokeName}:`, currentOffset);
 
                 // Remove canvas boundary clamping
                 // pos.x = Math.max(10, Math.min(canvas.width - labelToMove.width - 10, pos.x));
@@ -6050,7 +8658,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (draggingAnchor) {
             draggingAnchor = false;
             if (dragCurveStroke) {
-                console.log(`Finished dragging anchor ${dragAnchorIndex} of curve ${dragCurveStroke}`);
+//                 console.log(`Finished dragging anchor ${dragAnchorIndex} of curve ${dragCurveStroke}`);
                 // Save state for undo/redo
                 saveState(true, false); // Save without incrementing label
             }
@@ -6068,7 +8676,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Save state to enable undo/redo
             if (draggedControlPointInfo) {
                 saveState(true, false); // Save without incrementing label
-                console.log(`Finished dragging control point ${draggedControlPointInfo.pointIndex} of stroke ${draggedControlPointInfo.strokeLabel}`);
+//                 console.log(`Finished dragging control point ${draggedControlPointInfo.pointIndex} of stroke ${draggedControlPointInfo.strokeLabel}`);
             }
             
             draggedControlPointInfo = null;
@@ -6092,7 +8700,7 @@ document.addEventListener('DOMContentLoaded', () => {
             canvas.style.cursor = isShiftPressed ? 'grab' : 'crosshair';
             
             // Deselect all strokes when shift-drag ends
-            console.log('Shift-drag canvas completed - deselecting all strokes');
+//             console.log('Shift-drag canvas completed - deselecting all strokes');
             deselectAllStrokes();
             
             return;
@@ -6130,8 +8738,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     const startTransformed = getTransformedCoords(straightLineStart.x, straightLineStart.y);
                     const endTransformed = getTransformedCoords(endPoint.x, endPoint.y);
 
-                    console.log(`Straight line from canvas (${straightLineStart.x}, ${straightLineStart.y}) -> image (${startTransformed.x}, ${startTransformed.y})`);
-                    console.log(`Straight line to canvas (${endPoint.x}, ${endPoint.y}) -> image (${endTransformed.x}, ${endTransformed.y})`);
+//                     console.log(`Straight line from canvas (${straightLineStart.x}, ${straightLineStart.y}) -> image (${startTransformed.x}, ${startTransformed.y})`);
+//                     console.log(`Straight line to canvas (${endPoint.x}, ${endPoint.y}) -> image (${endTransformed.x}, ${endTransformed.y})`);
 
                     // Create a vector representation under the temporary key
                     vectorStrokesByImage[currentImageLabel][tempStrokeKey] = {
@@ -6142,9 +8750,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         color: strokeColor,
                         width: strokeWidth,
                         type: 'straight',
-                        arrowSettings: { ...arrowSettings } // Store arrow settings (unified with arrow line)
+                        arrowSettings: { ...arrowSettings }, // Store arrow settings (unified with arrow line)
+                        dashSettings: { ...dashSettings } // Store dash settings for dotted lines
                     };
-                    console.log(`Stored straight line data temporarily under ${tempStrokeKey}`);
+//                     console.log(`Stored straight line data temporarily under ${tempStrokeKey}`);
                     // --- END MODIFICATION ---
 
                     // Draw the final line
@@ -6267,7 +8876,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // but the primary check in mousedown should cover the intended scenario.
             // We rely on `wasDrawing` to indicate that `mousedown` intended to start a drawing operation.
             if (!strokeWasCreated && wasDrawing) { // Check if it was an attempt to draw that didn't result in a stroke
-                console.log('Short click/drag on mouseup, and not a curve defocus handled by mousedown - calling handleDefocusClick() from mouseup');
+//                 console.log('Short click/drag on mouseup, and not a curve defocus handled by mousedown - calling handleDefocusClick() from mouseup');
                 handleDefocusClick(); // This will now handle general defocus if curveJustCompleted is false
             }
         }
@@ -6283,7 +8892,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // CRITICAL FIX: Do NOT interrupt control point dragging when mouse leaves canvas
         // Allow the drag to continue until mouseup occurs, enabling dragging outside canvas bounds
         if (isDraggingControlPoint) {
-            console.log(`Control point dragging continues outside canvas bounds for stroke ${draggedControlPointInfo?.strokeLabel}`);
+//             console.log(`Control point dragging continues outside canvas bounds for stroke ${draggedControlPointInfo?.strokeLabel}`);
             // Don't interrupt the drag - let it continue until mouseup
             return;
         }
@@ -6327,7 +8936,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Centralized cursor management (F2)
     function updateCursor(state, context = '') {
-        console.log(`[Cursor] Setting cursor to '${state}' (context: ${context})`);
+//         console.log(`[Cursor] Setting cursor to '${state}' (context: ${context})`);
         
         switch (state) {
             case 'grab':
@@ -6447,7 +9056,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Save state to enable undo/redo
             if (draggedControlPointInfo) {
                 saveState(true, false); // Save without incrementing label
-                console.log(`Completed control point drag for stroke ${draggedControlPointInfo.strokeLabel}`);
+//                 console.log(`Completed control point drag for stroke ${draggedControlPointInfo.strokeLabel}`);
             }
             
             draggedControlPointInfo = null;
@@ -6473,7 +9082,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (draggingAnchor) {
             draggingAnchor = false;
             if (dragCurveStroke) {
-                console.log(`Completed curved line anchor drag for ${dragCurveStroke}`);
+//                 console.log(`Completed curved line anchor drag for ${dragCurveStroke}`);
                 // Save state for undo/redo
                 saveState(true, false); // Save without incrementing label
             }
@@ -6517,14 +9126,48 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // Tab key cycling through drawing modes
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Tab') {
+            // Only cycle if not focused on an input element
+            if (document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+                e.preventDefault(); // Prevent default tab behavior
+                
+                // Cycle through modes: straight → curved → freehand → straight
+                if (drawingMode === 'straight') {
+                    drawingMode = 'curved';
+                    drawingModeToggle.textContent = 'Curved Line';
+                    drawingModeToggle.classList.remove('straight-mode');
+                    drawingModeToggle.classList.add('curved-mode');
+                    arrowControls.style.display = 'flex';
+                } else if (drawingMode === 'curved') {
+                    drawingMode = 'freehand';
+                    drawingModeToggle.textContent = 'Freehand';
+                    drawingModeToggle.classList.remove('curved-mode', 'straight-mode');
+                    arrowControls.style.display = 'none';
+                } else if (drawingMode === 'freehand') {
+                    drawingMode = 'straight';
+                    drawingModeToggle.textContent = 'Straight Line';
+                    drawingModeToggle.classList.remove('curved-mode');
+                    drawingModeToggle.classList.add('straight-mode');
+                    arrowControls.style.display = 'flex';
+                }
+                
+                // Clear any temporary drawing state when switching modes
+                straightLineStart = null;
+                curvedLinePoints = [];
+            }
+        }
+    });
+
     // F4: Listen for scale change events to update anchor visibility immediately
     canvas.addEventListener('scalechange', (e) => {
         const { newScale, oldScale, imageLabel } = e.detail;
-        console.log(`[F4 Scale Event] Scale changed from ${oldScale} to ${newScale} for ${imageLabel}`);
+//         console.log(`[F4 Scale Event] Scale changed from ${oldScale} to ${newScale} for ${imageLabel}`);
         
         // Force immediate anchor position recalculation if we're in edit mode
         if (window.selectedStrokeInEditMode) {
-            console.log(`[F4 Scale Event] Updating anchor positions for edit mode stroke: ${window.selectedStrokeInEditMode}`);
+//             console.log(`[F4 Scale Event] Updating anchor positions for edit mode stroke: ${window.selectedStrokeInEditMode}`);
             // Anchor positions will be recalculated during the next redraw
         }
     });
@@ -6534,7 +9177,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.switchToImage = switchToImage;
     function switchToImage(label) {
         if (currentImageLabel === label && !window.isLoadingProject) { // Allow forcing a switch during project load
-            console.log(`[switchToImage] Already on ${label}, no switch needed unless loading project.`);
+//             console.log(`[switchToImage] Already on ${label}, no switch needed unless loading project.`);
             // Even if not switching, ensure UI is consistent if forced by project load
             if (window.isLoadingProject) {
                 updateActiveImageInSidebar();
@@ -6546,7 +9189,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         
-        console.log(`Switching from ${currentImageLabel} to ${label}`);
+//         console.log(`Switching from ${currentImageLabel} to ${label}`);
         
         // Save current state before switching (if not loading, during load state is managed by project-manager)
         if (!window.isLoadingProject) {
@@ -6561,26 +9204,29 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Update current image label
         currentImageLabel = label;
+        // CRITICAL FIX: Update the global window.currentImageLabel used by canvas event handlers
+        window.currentImageLabel = label;
+        window.paintApp.state.currentImageLabel = label;
         
         // Ensure we have properly initialized position and scale for this label
         if (window.imageScaleByLabel[label] === undefined) {
-            console.log(`[switchToImage] No scale found for ${label}, initializing to default scale (1.0)`);
+//             console.log(`[switchToImage] No scale found for ${label}, initializing to default scale (1.0)`);
             window.imageScaleByLabel[label] = 1.0; // Default scale
         } else {
-            console.log(`[switchToImage] Using scale ${window.imageScaleByLabel[label]} for ${label}`);
+//             console.log(`[switchToImage] Using scale ${window.imageScaleByLabel[label]} for ${label}`);
         }
         
         if (!imagePositionByLabel[label]) {
-            console.log(`[switchToImage] No position found for ${label}, initializing to default position (0,0)`);
+//             console.log(`[switchToImage] No position found for ${label}, initializing to default position (0,0)`);
             imagePositionByLabel[label] = { x: 0, y: 0 }; // Default position
         } else {
-            console.log(`[switchToImage] Using position (${imagePositionByLabel[label].x}, ${imagePositionByLabel[label].y}) for ${label}`);
+//             console.log(`[switchToImage] Using position (${imagePositionByLabel[label].x}, ${imagePositionByLabel[label].y}) for ${label}`);
         }
         
         // Restore state for the new image
         if (imageStates[label]) {
             // *** MODIFICATION START: Revert to simple state restoration ***
-            console.log(`[switchToImage] Found existing state for ${label}, restoring directly.`);
+//             console.log(`[switchToImage] Found existing state for ${label}, restoring directly.`);
             restoreCanvasState(imageStates[label]);
             
             // UI Updates after restoring state
@@ -6589,22 +9235,22 @@ document.addEventListener('DOMContentLoaded', () => {
             updateStrokeVisibilityControls(); 
             updateScaleUI();
             // Explicit redraw AFTER restoring state and UI updates
-            console.log(`[switchToImage] Explicitly calling redraw after restoring state for ${label}`);
+//             console.log(`[switchToImage] Explicitly calling redraw after restoring state for ${label}`);
             redrawCanvasWithVisibility();
             // *** MODIFICATION END ***
 
         } else if (window.originalImages[label]) {
-            console.log(`No state exists for ${label}, pasting original image: ${window.originalImages[label].substring(0, 30)}...`);
+//             console.log(`No state exists for ${label}, pasting original image: ${window.originalImages[label].substring(0, 30)}...`);
             pasteImageFromUrl(window.originalImages[label], label)
                 .then(() => {
-                    console.log(`[switchToImage] pasteImageFromUrl COMPLETED for ${label}. Now updating UI.`);
+//                     console.log(`[switchToImage] pasteImageFromUrl COMPLETED for ${label}. Now updating UI.`);
                     // Update UI elements first
                     updateActiveImageInSidebar();
                     updateStrokeCounter();
                     updateStrokeVisibilityControls();
                     updateScaleUI(); 
                     // Explicitly redraw AFTER all UI updates and state changes triggered by them
-                    console.log(`[switchToImage] Explicitly calling final redraw for ${label}`);
+//                     console.log(`[switchToImage] Explicitly calling final redraw for ${label}`);
                     redrawCanvasWithVisibility(); 
                 })
                 .catch(err => {
@@ -6616,7 +9262,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     updateScaleUI();
                 });
         } else {
-            console.log(`No state or image found for ${label}, clearing canvas`);
+//             console.log(`No state or image found for ${label}, clearing canvas`);
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             // UI Updates for blank canvas
         updateActiveImageInSidebar();
@@ -6627,12 +9273,12 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // *** ADDED: Clear selection and edit mode for the new/target image view ***
         if (selectedStrokeByImage[currentImageLabel] !== undefined) {
-            console.log(`[switchToImage] Clearing selection for new image: ${currentImageLabel}`);
+//             console.log(`[switchToImage] Clearing selection for new image: ${currentImageLabel}`);
             selectedStrokeByImage[currentImageLabel] = null;
         }
         // Clear edit mode to prevent stale references to strokes from other images
         if (window.selectedStrokeInEditMode) {
-            console.log(`[switchToImage] Clearing edit mode for ${window.selectedStrokeInEditMode} when switching to ${currentImageLabel}`);
+//             console.log(`[switchToImage] Clearing edit mode for ${window.selectedStrokeInEditMode} when switching to ${currentImageLabel}`);
             window.selectedStrokeInEditMode = null;
             window.paintApp.state.selectedStrokeInEditMode = null;
         }
@@ -6655,18 +9301,18 @@ document.addEventListener('DOMContentLoaded', () => {
         // Handle undo (Ctrl+Z)
         if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !isDrawingOrPasting) {
             e.preventDefault();
-            console.log('Ctrl+Z pressed, executing undo');
+//             console.log('Ctrl+Z pressed, executing undo');
             
             // Make sure we have valid undo stacks
             if (!undoStackByImage[currentImageLabel]) {
                 undoStackByImage[currentImageLabel] = [];
-                console.log(`Created new undo stack for ${currentImageLabel}`);
+//                 console.log(`Created new undo stack for ${currentImageLabel}`);
             }
             
             // Make sure we have valid stroke lists
             if (!lineStrokesByImage[currentImageLabel]) {
                 lineStrokesByImage[currentImageLabel] = [];
-                console.log(`Created new stroke list for ${currentImageLabel}`);
+//                 console.log(`Created new stroke list for ${currentImageLabel}`);
             }
             
             // Make sure we have valid redo stacks
@@ -6693,12 +9339,12 @@ document.addEventListener('DOMContentLoaded', () => {
         // Handle redo (Ctrl+Y)
         if ((e.ctrlKey || e.metaKey) && e.key === 'y' && !isDrawingOrPasting) {
             e.preventDefault();
-            console.log('Ctrl+Y pressed, executing redo');
+//             console.log('Ctrl+Y pressed, executing redo');
             
             // Make sure we have valid redo stacks
             if (!redoStackByImage[currentImageLabel]) {
                 redoStackByImage[currentImageLabel] = [];
-                console.log(`Created new redo stack for ${currentImageLabel}`);
+//                 console.log(`Created new redo stack for ${currentImageLabel}`);
             }
             
             // Force a redraw after redo to ensure visual consistency
@@ -6744,7 +9390,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 activeElement.isContentEditable) {
                 // If measurement field is focused AND strokes are selected, delete strokes instead of text
                 if (selectedStrokes.length > 0) {
-                    console.log('Delete key pressed while measurement focused, deleting selected strokes:', selectedStrokes);
+//                     console.log('Delete key pressed while measurement focused, deleting selected strokes:', selectedStrokes);
                     e.preventDefault(); // Prevent deleting text in the measurement field
                     deleteSelectedStrokes();
                 }
@@ -6768,7 +9414,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // If focus is on canvas/body or non-input element AND strokes are selected
             if (selectedStrokes.length > 0) {
-                console.log('Delete key pressed, deleting selected strokes:', selectedStrokes);
+//                 console.log('Delete key pressed, deleting selected strokes:', selectedStrokes);
                 e.preventDefault();
                 deleteSelectedStrokes();
             }
@@ -6921,14 +9567,14 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Create a unique label by appending the counter
         const uniqueLabel = `${baseLabel}_${window.labelCounters[baseLabel]}`;
-        console.log(`Created unique label: ${uniqueLabel} from filename: ${filename}`);
+//         console.log(`Created unique label: ${uniqueLabel} from filename: ${filename}`);
         
         return uniqueLabel;
     }
     
     // Handle file drop
     const handleFiles = (files) => {
-        console.log('[handleFiles] Processing files:', files); // Add log
+//         console.log('[handleFiles] Processing files:', files); // Add log
         const fileArray = Array.from(files);
         const sortedFiles = fileArray.sort((a, b) => {
             const aName = a.name.toLowerCase();
@@ -6946,13 +9592,17 @@ document.addEventListener('DOMContentLoaded', () => {
         
         let firstImageLabel = null;
         const loadPromises = [];
+        const actualNewImageLabels = []; // Track the actual labels created
 
         sortedFiles.forEach((file, index) => {
             if (file.type.indexOf('image') !== -1) {
-                console.log(`[handleFiles] Processing image file: ${file.name}`); // Add log
+//                 console.log(`[handleFiles] Processing image file: ${file.name}`); // Add log
                 const url = URL.createObjectURL(file);
                 const label = getLabelFromFilename(file.name); // This now generates unique labels like 'front_1', 'front_2'
                 const filename = file.name.replace(/\.[^/.]+$/, "");
+
+                // Track the actual label created
+                actualNewImageLabels.push(label);
 
                 if (index === 0) {
                     firstImageLabel = label; 
@@ -6965,7 +9615,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (window.getTagBasedFilename && typeof window.getTagBasedFilename === 'function') {
                     displayName = window.getTagBasedFilename(label, filename);
                 }
-                console.log(`[handleFiles] Adding to sidebar: URL created for ${file.name}, label=${label}, displayName=${displayName}`);
+//                 console.log(`[handleFiles] Adding to sidebar: URL created for ${file.name}, label=${label}, displayName=${displayName}`);
                 
                 addImageToSidebar(url, label, displayName);
                 if (!pastedImages.includes(url)) pastedImages.push(url);
@@ -6979,23 +9629,59 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                 loadPromises.push(promise);
             } else {
-                console.log(`[handleFiles] Skipping non-image file: ${file.name}`);
+//                 console.log(`[handleFiles] Skipping non-image file: ${file.name}`);
             }
         });
 
         Promise.all(loadPromises)
             .then(() => {
-                console.log('[handleFiles] All image processing promises resolved.');
+//                 console.log('[handleFiles] All image processing promises resolved.');
+                
+                // Apply default fit mode to all newly loaded images (AFTER they've loaded)
+                if (actualNewImageLabels.length > 0) {
+                    const currentLabel = currentImageLabel; // Store current image
+                    
+                    console.log(`[handleFiles] Applying smart fit mode to ${actualNewImageLabels.length} newly loaded images:`, actualNewImageLabels);
+                    
+                    actualNewImageLabels.forEach(label => {
+                        if (window.originalImageDimensions[label] && window.originalImageDimensions[label].width > 0) {
+                            const dimensions = window.originalImageDimensions[label];
+                            // Use fit-height for tall images (height > width), fit-width for wide images
+                            const fitMode = dimensions.height > dimensions.width ? 'fit-height' : 'fit-width';
+                            console.log(`[handleFiles] Image ${label} dimensions: ${dimensions.width}x${dimensions.height}, applying ${fitMode}`);
+                            
+                            // Temporarily set current image to calculate fit for this specific image
+                            currentImageLabel = label;
+                            const { scale, position } = calculateFitScale(fitMode);
+                            
+                            // Update the scale and position for this image
+                            window.imageScaleByLabel[label] = scale;
+                            window.imagePositionByLabel[label] = { ...position };
+                            
+                            console.log(`✅ Auto-applied ${fitMode} to ${label}: scale=${scale.toFixed(2)}`);
+                        } else {
+                            console.log(`❌ Skipping ${label} - no valid dimensions:`, window.originalImageDimensions[label]);
+                        }
+                    });
+                    
+                    // Restore the original current image label
+                    currentImageLabel = currentLabel;
+                    
+                    // Redraw canvas to show the applied fit mode
+                    if (currentImageLabel) {
+                        redrawCanvasWithVisibility();
+                    }
+                }
                 
                 // Update the ordered image labels array after initial load
                 updateOrderedImageLabelsArray();
                 
                 if (firstImageLabel) {
-                    console.log(`[handleFiles] Switching to first image: ${firstImageLabel}`);
+//                     console.log(`[handleFiles] Switching to first image: ${firstImageLabel}`);
                     // REMOVED: currentImageLabel = firstImageLabel; 
                     switchToImage(firstImageLabel); // switchToImage will handle setting currentImageLabel
                 } else {
-                    console.log('[handleFiles] No first image label identified, or no image files were processed.');
+//                     console.log('[handleFiles] No first image label identified, or no image files were processed.');
                     // If no images were processed, still ensure UI is consistent
                     redrawCanvasWithVisibility();
         updateStrokeCounter();
@@ -7058,7 +9744,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateImageScale(newScale) {
         // Update scale for current image
         const oldScale = window.imageScaleByLabel[currentImageLabel];
-        console.log(`[updateImageScale] Changing scale for ${currentImageLabel} from ${oldScale} to ${newScale}`);
+//         console.log(`[updateImageScale] Changing scale for ${currentImageLabel} from ${oldScale} to ${newScale}`);
         
         // Store the old scale for potential restoration on error
         const previousScale = oldScale;
@@ -7077,7 +9763,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
         // F6: Set flag BEFORE any operations to prevent measurement span mutation
         window.isScalingOrZooming = true;
-        console.log('[F6] Set isScalingOrZooming = true before zoom operations');
+//         console.log('[F6] Set isScalingOrZooming = true before zoom operations');
         
         // F4: Emit scale change event for anchor redraw
         const scaleChangeEvent = new CustomEvent('scalechange', {
@@ -7106,11 +9792,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 // This ensures auto-focus logic in createEditableMeasureText is suppressed
                 deselectAllStrokes();
             } else {
-                console.log('[updateImageScale] Curved line creation in progress - preserving state, not deselecting');
+//                 console.log('[updateImageScale] Curved line creation in progress - preserving state, not deselecting');
             }
             
             // F6: Clear the flag LAST after all operations complete, including deselection
-            console.log('[F6] Clearing isScalingOrZooming flag after zoom operations AND deselection.');
+//             console.log('[F6] Clearing isScalingOrZooming flag after zoom operations AND deselection.');
             window.isScalingOrZooming = false;
         }
     }
@@ -7168,12 +9854,12 @@ document.addEventListener('DOMContentLoaded', () => {
                             // Remove edit mode indicator removal
                         }
                         
-                        console.log(`Changed color of stroke ${strokeLabel} to ${color}`);
+//                         console.log(`Changed color of stroke ${strokeLabel} to ${color}`);
                     }
                 }
                     } else if (selectedStrokeByImage[currentImageLabel]) {
             // If there's a selected stroke but not in edit mode, show a message to the user
-            console.log("Double-click a stroke to enter edit mode before changing colors");
+//             console.log("Double-click a stroke to enter edit mode before changing colors");
             
             // Show a status message to the user
             const statusMessage = document.getElementById('statusMessage');
@@ -7229,12 +9915,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     }
                     
-                    console.log(`Changed thickness of stroke ${strokeLabel} to ${size}`);
+//                     console.log(`Changed thickness of stroke ${strokeLabel} to ${size}`);
                 }
             }
         } else if (selectedStrokeByImage[currentImageLabel]) {
             // If there's a selected stroke but not in edit mode, show a message to the user
-            console.log("Double-click a stroke to enter edit mode before changing thickness");
+//             console.log("Double-click a stroke to enter edit mode before changing thickness");
             
             // Show a status message to the user
             const statusMessage = document.getElementById('statusMessage');
@@ -7267,8 +9953,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // PERFORMANCE: Invalidate cache when position changes
         invalidateInteractiveElementCache();
         
-        console.log(`[moveImage] Moving image ${currentImageLabel} by (${deltaX}, ${deltaY})`);
-        console.log(`[moveImage] Position was (${oldPos.x}, ${oldPos.y}), now is (${imagePositionByLabel[currentImageLabel].x}, ${imagePositionByLabel[currentImageLabel].y})`);
+//         console.log(`[moveImage] Moving image ${currentImageLabel} by (${deltaX}, ${deltaY})`);
+//         console.log(`[moveImage] Position was (${oldPos.x}, ${oldPos.y}), now is (${imagePositionByLabel[currentImageLabel].x}, ${imagePositionByLabel[currentImageLabel].y})`);
         
         // Save current state before redrawing, using same pattern as updateImageScale
         // But don't save for small movements to avoid spamming undo stack during continuous dragging
@@ -7324,7 +10010,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
                 
             if (shouldBlockZoom) {
-                console.log(`[F5 Zoom Guard] Blocking zoom during active stroke creation - mode: ${drawingMode}, drawing: ${isDrawing}, progress detected`);
+//                 console.log(`[F5 Zoom Guard] Blocking zoom during active stroke creation - mode: ${drawingMode}, drawing: ${isDrawing}, progress detected`);
                 return; // Block zoom during active stroke creation
             }
             
@@ -7340,7 +10026,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
             
-            console.log(`[Zoom Out] Applying zoom from ${currentScale} to ${nextScale}`);
+//             console.log(`[Zoom Out] Applying zoom from ${currentScale} to ${nextScale}`);
             updateImageScale(nextScale);
             
         } else if (e.key === 'e' || e.key === 'E') {
@@ -7361,7 +10047,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
                 
             if (shouldBlockZoom) {
-                console.log(`[F5 Zoom Guard] Blocking zoom during active stroke creation - mode: ${drawingMode}, drawing: ${isDrawing}, progress detected`);
+//                 console.log(`[F5 Zoom Guard] Blocking zoom during active stroke creation - mode: ${drawingMode}, drawing: ${isDrawing}, progress detected`);
                 return; // Block zoom during active stroke creation
             }
             
@@ -7377,7 +10063,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
             
-            console.log(`[Zoom In] Applying zoom from ${currentScale} to ${nextScale}`);
+//             console.log(`[Zoom In] Applying zoom from ${currentScale} to ${nextScale}`);
             updateImageScale(nextScale);
         }
         
@@ -7410,7 +10096,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const sidebarScaleElement = document.getElementById(`scale-${currentImageLabel}`);
         if (sidebarScaleElement) {
             sidebarScaleElement.textContent = `Scale: ${Math.round(scale * 100)}%`;
-            console.log(`[updateScaleUI] Updated sidebar scale display for ${currentImageLabel} to ${Math.round(scale * 100)}%`);
+//             console.log(`[updateScaleUI] Updated sidebar scale display for ${currentImageLabel} to ${Math.round(scale * 100)}%`);
         }
     }
     
@@ -7470,7 +10156,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 e.preventDefault();
                 e.stopPropagation();
                 canvas.classList.add('drag-over');
-                 console.log('[Drag and Drop] dragover event on canvas target.');
+//                  console.log('[Drag and Drop] dragover event on canvas target.');
             } else {
                 // If dragging over other parts of the document, ensure default is not prevented
                 // unless we specifically want to handle drops elsewhere. For now, only canvas.
@@ -7484,7 +10170,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 e.preventDefault();
                 e.stopPropagation();
                 canvas.classList.remove('drag-over');
-                console.log('[Drag and Drop] dragleave event.');
+//                 console.log('[Drag and Drop] dragleave event.');
             }
         });
 
@@ -7493,20 +10179,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 e.preventDefault();
                 e.stopPropagation();
                 canvas.classList.remove('drag-over');
-                console.log('[Drag and Drop] drop event on canvas target.');
+//                 console.log('[Drag and Drop] drop event on canvas target.');
                 
                 const files = e.dataTransfer.files;
                 if (files && files.length > 0) {
-                    console.log(`[Drag and Drop] ${files.length} files dropped.`);
+//                     console.log(`[Drag and Drop] ${files.length} files dropped.`);
                     handleFiles(files);
                 } else {
-                    console.log('[Drag and Drop] No files found in drop event.');
+//                     console.log('[Drag and Drop] No files found in drop event.');
                 }
             } else {
-                 console.log('[Drag and Drop] drop event on non-canvas target, ignoring.');
+//                  console.log('[Drag and Drop] drop event on non-canvas target, ignoring.');
             }
         });
-        console.log('[setupDragAndDrop] Drag and drop listeners initialized on document body, targeting canvas.');
+//         console.log('[setupDragAndDrop] Drag and drop listeners initialized on document body, targeting canvas.');
     }
 
     // Call setupDragAndDrop on DOMContentLoaded
@@ -7529,7 +10215,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         if (shouldBlockZoom) {
-            console.log(`[Mouse Wheel Zoom Guard] Blocking zoom during active stroke creation.`);
+//             console.log(`[Mouse Wheel Zoom Guard] Blocking zoom during active stroke creation.`);
             return;
         }
         
@@ -7565,7 +10251,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Only proceed if we found a different scale
         if (nextScale !== currentScale) {
-            console.log(`[Mouse Wheel Zoom] Zooming from ${currentScale} to ${nextScale} centered at (${mouseX}, ${mouseY})`);
+//             console.log(`[Mouse Wheel Zoom] Zooming from ${currentScale} to ${nextScale} centered at (${mouseX}, ${mouseY})`);
             
             // Apply the new scale
             updateImageScale(nextScale);
@@ -7875,12 +10561,12 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (strokePathInfo && strokePathInfo.path && strokePathInfo.path.length > 1) {
             // Debug the path structure to see all points
-            console.log(`[drawLabelConnector] PathInfo for ${strokeLabel}:`, 
-                        JSON.stringify({
-                            length: strokePathInfo.path.length,
-                            first: strokePathInfo.path[0],
-                            last: strokePathInfo.path[strokePathInfo.path.length - 1]
-                        }));
+//             console.log(`[drawLabelConnector] PathInfo for ${strokeLabel}:`, 
+//                         JSON.stringify({
+//                             length: strokePathInfo.path.length,
+//                             first: strokePathInfo.path[0],
+//                             last: strokePathInfo.path[strokePathInfo.path.length - 1]
+//                         }));
             
             // Use start, middle, and end points of the stroke
             const startPoint = strokePathInfo.path[0]; // First point
@@ -7905,7 +10591,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     Math.pow(endPoint.y - startPoint.y, 2)
                 );
                 
-                console.log(`[drawLabelConnector] Using calculated midpoint for straight line: (${middlePoint.x}, ${middlePoint.y})`);
+//                 console.log(`[drawLabelConnector] Using calculated midpoint for straight line: (${middlePoint.x}, ${middlePoint.y})`);
         } else {
                 // For freehand, calculate the true geometric midpoint based on path length
                 // First, calculate the total path length
@@ -7947,7 +10633,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     y: p1.y + (p2.y - p1.y) * midpointFraction
                 };
                 
-                console.log(`[drawLabelConnector] Using true geometric midpoint for freehand: (${middlePoint.x.toFixed(1)}, ${middlePoint.y.toFixed(1)})`);
+//                 console.log(`[drawLabelConnector] Using true geometric midpoint for freehand: (${middlePoint.x.toFixed(1)}, ${middlePoint.y.toFixed(1)})`);
             }
             
             // Calculate distances to each point
@@ -7964,7 +10650,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 Math.pow(exitPoint.y - endPoint.y, 2)
             );
             
-            console.log(`[drawLabelConnector] Distances for ${strokeLabel} - Start: ${distToStart.toFixed(2)}, Middle: ${distToMiddle.toFixed(2)}, End: ${distToEnd.toFixed(2)}`);
+//             console.log(`[drawLabelConnector] Distances for ${strokeLabel} - Start: ${distToStart.toFixed(2)}, Middle: ${distToMiddle.toFixed(2)}, End: ${distToEnd.toFixed(2)}`);
             
             // Find the closest point
             let closestPoint = middlePoint;
@@ -7982,12 +10668,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 anchorType = "end";
             }
             
-            console.log(`[drawLabelConnector] Using ${anchorType} anchor for ${strokeLabel} at: (${closestPoint.x}, ${closestPoint.y})`);
+//             console.log(`[drawLabelConnector] Using ${anchorType} anchor for ${strokeLabel} at: (${closestPoint.x}, ${closestPoint.y})`);
             
             // Use the closest point instead of the original anchor
             anchorPoint = closestPoint;
         } else {
-            console.log(`[drawLabelConnector] No path info found for ${strokeLabel}, using original anchor: (${originalAnchorPoint.x}, ${originalAnchorPoint.y})`);
+//             console.log(`[drawLabelConnector] No path info found for ${strokeLabel}, using original anchor: (${originalAnchorPoint.x}, ${originalAnchorPoint.y})`);
             // Use the original point since we don't have path info
             anchorPoint = originalAnchorPoint;
         }
@@ -8017,7 +10703,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 anchorType = "middle";
             }
             
-            console.log(`[drawLabelConnector] Anchor type: ${anchorType} for ${strokeLabel}`);
+//             console.log(`[drawLabelConnector] Anchor type: ${anchorType} for ${strokeLabel}`);
             
             // For midpoints, draw a more prominent indicator
             if (anchorType === "middle") {
@@ -8245,13 +10931,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Helper function to find curved line control points
     function findCurvedControlPoint(x, y, vectorData) {
-        console.log(`=== CURVED CONTROL POINT DETECTION ===`);
-        console.log(`Mouse position: (${x}, ${y})`);
-        console.log(`Control points count: ${vectorData.controlPoints?.length || 0}`);
+//         console.log(`=== CURVED CONTROL POINT DETECTION ===`);
+//         console.log(`Mouse position: (${x}, ${y})`);
+//         console.log(`Control points count: ${vectorData.controlPoints?.length || 0}`);
         
         // Get the same transformation context as applyVisibleStrokes
         const transformContext = getTransformationContext(currentImageLabel);
-        console.log(`Transform context: scale=${transformContext.scale}, imageX=${transformContext.imageX}, imageY=${transformContext.imageY}, isBlankCanvas=${transformContext.isBlankCanvas}`);
+//         console.log(`Transform context: scale=${transformContext.scale}, imageX=${transformContext.imageX}, imageY=${transformContext.imageY}, isBlankCanvas=${transformContext.isBlankCanvas}`);
         
         // Check each control point
         for (let i = 0; i < vectorData.controlPoints.length; i++) {
@@ -8261,7 +10947,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const canvasCoords = transformImagePointToCanvas({ x: controlPoint.x, y: controlPoint.y }, transformContext);
             const canvasX = canvasCoords.x;
             const canvasY = canvasCoords.y;
-            console.log(`CP ${i}: Computed current canvas coords (${canvasX}, ${canvasY}) from image (${controlPoint.x}, ${controlPoint.y})`);
+//             console.log(`CP ${i}: Computed current canvas coords (${canvasX}, ${canvasY}) from image (${controlPoint.x}, ${controlPoint.y})`);
             
             // Check if click is within control point radius (SCALE-AWARE)
             const scale = transformContext.scale;
@@ -8269,12 +10955,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const scaledRadius = Math.max(8, baseRadius * scale); // Never smaller than 8px
             const distance = Math.sqrt((x - canvasX) ** 2 + (y - canvasY) ** 2);
             
-            console.log(`CP ${i}: Distance ${distance.toFixed(1)}, scaled radius ${scaledRadius.toFixed(1)} (scale: ${scale})`);
+//             console.log(`CP ${i}: Distance ${distance.toFixed(1)}, scaled radius ${scaledRadius.toFixed(1)} (scale: ${scale})`);
             
             if (distance <= scaledRadius + 5) { // Add 5px padding for easier selection
                 const strokeToCheck = window.selectedStrokeInEditMode || window.selectedStrokeByImage[currentImageLabel];
-                console.log(`=== CONTROL POINT HIT DETECTED ===`);
-                console.log(`Stroke: ${strokeToCheck}, Point index: ${i}`);
+//                 console.log(`=== CONTROL POINT HIT DETECTED ===`);
+//                 console.log(`Stroke: ${strokeToCheck}, Point index: ${i}`);
                 return {
                     strokeLabel: strokeToCheck,
                     pointIndex: i,
@@ -8285,7 +10971,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         
-        console.log(`No control point hit detected`);
+//         console.log(`No control point hit detected`);
         return null;
     }
 
@@ -8447,37 +11133,37 @@ document.addEventListener('DOMContentLoaded', () => {
     saveState(false, false, false);
 
     // IMPORTANT: We need to ensure the local strokeMeasurements is the same as window.strokeMeasurements
-    console.log('[DOMContentLoaded] Checking initial window.strokeMeasurements:', window.strokeMeasurements);
+//     console.log('[DOMContentLoaded] Checking initial window.strokeMeasurements:', window.strokeMeasurements);
     
     // THIS IS THE FIX: Instead of creating a new variable, we're just referencing the window object
     // There was a previous change to set strokeMeasurements = window.strokeMeasurements
     // But it seems that code was not applied correctly
     
     // CHECK: Log the current values to verify they're equal
-    console.log('[DOMContentLoaded] Current window.strokeMeasurements keys:', 
-        Object.keys(window.strokeMeasurements));
+//     console.log('[DOMContentLoaded] Current window.strokeMeasurements keys:', 
+//         Object.keys(window.strokeMeasurements));
     
     // Ensure all IMAGE_LABELS have an entry in strokeMeasurements
     IMAGE_LABELS.forEach(label => {
         if (!window.strokeMeasurements[label]) {
             window.strokeMeasurements[label] = {};
-            console.log(`[DOMContentLoaded] Initialized empty measurements for ${label}`);
+//             console.log(`[DOMContentLoaded] Initialized empty measurements for ${label}`);
         } else {
-            console.log(`[DOMContentLoaded] Found existing measurements for ${label}:`, 
-                JSON.stringify(window.strokeMeasurements[label]));
+//             console.log(`[DOMContentLoaded] Found existing measurements for ${label}:`, 
+//                 JSON.stringify(window.strokeMeasurements[label]));
         }
     });
 
     // Handle paste from clipboard
     document.addEventListener('paste', (e) => {
-        console.log('[Paste Handler] Paste event triggered on document.'); // Log trigger
+//         console.log('[Paste Handler] Paste event triggered on document.'); // Log trigger
         const items = e.clipboardData.items;
         let imageFoundAndProcessed = false; // Flag to track if any image was processed in this event
 
         for (let i = 0; i < items.length; i++) {
             const item = items[i];
             if (item.type.indexOf('image') !== -1) {
-                console.log(`[Paste Handler] Image item found at index ${i}. Type: ${item.type}`);
+//                 console.log(`[Paste Handler] Image item found at index ${i}. Type: ${item.type}`);
                 e.preventDefault(); 
                 e.stopPropagation();
 
@@ -8493,7 +11179,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 window.labelCounters[baseLabelForPasted] = (window.labelCounters[baseLabelForPasted] || 0) + 1;
                 const newImageLabel = `${baseLabelForPasted}_paste_${window.labelCounters[baseLabelForPasted]}`;
                 
-                console.log(`[Paste Handler] Assigned new unique label: ${newImageLabel}`);
+//                 console.log(`[Paste Handler] Assigned new unique label: ${newImageLabel}`);
                 
                 // Initialize all necessary structures for this new image
                 initializeNewImageStructures(newImageLabel);
@@ -8502,7 +11188,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (window.getTagBasedFilename && typeof window.getTagBasedFilename === 'function') {
                     displayName = window.getTagBasedFilename(newImageLabel, displayName);
                 }
-                console.log(`[Paste Handler] Display name for ${newImageLabel}: ${displayName}`);
+//                 console.log(`[Paste Handler] Display name for ${newImageLabel}: ${displayName}`);
                 
                 addImageToSidebar(url, newImageLabel, displayName);
                 
@@ -8515,9 +11201,38 @@ document.addEventListener('DOMContentLoaded', () => {
                 // However, if pasting multiple, we might only want to switch to the first one.
                 // For now, let's switch to each as it's processed.
                 pasteImageFromUrl(url, newImageLabel).then(() => {
-                    console.log(`[Paste Handler] Successfully processed and displayed pasted image: ${newImageLabel}`);
+//                     console.log(`[Paste Handler] Successfully processed and displayed pasted image: ${newImageLabel}`);
+                    
+                    // Apply default fit mode to newly pasted image - choose based on image dimensions
+                    const originalCurrentLabel = currentImageLabel;
+                    
+                    if (window.originalImageDimensions[newImageLabel] && window.originalImageDimensions[newImageLabel].width > 0) {
+                        const dimensions = window.originalImageDimensions[newImageLabel];
+                        // Use fit-height for tall images (height > width), fit-width for wide images
+                        const fitMode = dimensions.height > dimensions.width ? 'fit-height' : 'fit-width';
+                        console.log(`[Paste Handler] Image ${newImageLabel} dimensions: ${dimensions.width}x${dimensions.height}, applying ${fitMode}`);
+                        
+                        // Temporarily set current image to calculate fit for this specific image
+                        currentImageLabel = newImageLabel;
+                        const { scale, position } = calculateFitScale(fitMode);
+                        
+                        // Update the scale and position for this image
+                        window.imageScaleByLabel[newImageLabel] = scale;
+                        window.imagePositionByLabel[newImageLabel] = { ...position };
+                        
+                        console.log(`Auto-applied ${fitMode} to pasted image ${newImageLabel}: scale=${scale.toFixed(2)}`);
+                        
+                        // Restore original current label
+                        currentImageLabel = originalCurrentLabel;
+                    }
+                    
                     currentImageLabel = newImageLabel; 
                     switchToImage(newImageLabel); // This will also update UI elements
+                    
+                    // CRITICAL FIX: Update UI scale and force redraw immediately after auto-scaling
+                    // This prevents scale mismatch warnings and ensures scaling is visually applied
+                    updateScaleUI();
+                    redrawCanvasWithVisibility();
                 }).catch(err => {
                     console.error(`[Paste Handler] Error in pasteImageFromUrl for ${newImageLabel}:`, err);
                 });
@@ -8528,7 +11243,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (!imageFoundAndProcessed) {
-            console.log('[Paste Handler] No image data found in clipboard items or failed to process.');
+//             console.log('[Paste Handler] No image data found in clipboard items or failed to process.');
         }
     });
 
@@ -8540,7 +11255,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize new image structures
     function initializeNewImageStructures(label) {
         // THIS FUNCTION NEEDS TO BE ROBUST
-        console.log(`[initializeNewImageStructures] Initializing for new label: ${label}`);
+//         console.log(`[initializeNewImageStructures] Initializing for new label: ${label}`);
         if (!window.imageScaleByLabel) window.imageScaleByLabel = {};
         if (!window.imagePositionByLabel) window.imagePositionByLabel = {};
         if (!window.lineStrokesByImage) window.lineStrokesByImage = {};
@@ -8568,14 +11283,38 @@ document.addEventListener('DOMContentLoaded', () => {
         window.imageStates[label] = null;
         window.originalImageDimensions[label] = { width: 0, height: 0 };
         window.customLabelPositions[label] = {}; // Initialize for the new label
+        
+        // CRITICAL FIX: Initialize selection state for new images
+        if (!window.paintApp.state.selectedStrokeByImage) window.paintApp.state.selectedStrokeByImage = {};
+        if (!window.paintApp.state.multipleSelectedStrokesByImage) window.paintApp.state.multipleSelectedStrokesByImage = {};
+        window.paintApp.state.selectedStrokeByImage[label] = null;
+        window.paintApp.state.multipleSelectedStrokesByImage[label] = [];
         window.calculatedLabelOffsets[label] = {}; // Initialize for the new label
 
         // Initialize with default tags, robustly checking for TAG_MODEL
         const baseViewType = label.split('_')[0]; // e.g., 'front' from 'front_1' or 'front' itself
         let defaultViewTagId = 'front'; // Fallback default view type ID
 
+        // Common view type mappings for labels that don't match TAG_MODEL exactly
+        const viewTypeMappings = {
+            'cushion': 'top',  // Map 'cushion' to 'top' view
+            'detail': 'angle', // Map 'detail' to 'angle' view
+            'interior': 'front' // Map 'interior' to 'front' view
+        };
+
         if (window.TAG_MODEL && window.TAG_MODEL.viewType && window.TAG_MODEL.viewType.options && Array.isArray(window.TAG_MODEL.viewType.options)) {
-            const foundOption = window.TAG_MODEL.viewType.options.find(opt => opt.id === baseViewType || (opt.name && opt.name.toLowerCase() === baseViewType));
+            // First try direct match
+            let foundOption = window.TAG_MODEL.viewType.options.find(opt => opt.id === baseViewType || (opt.name && opt.name.toLowerCase() === baseViewType));
+            
+            // If no direct match, try mapping
+            if (!foundOption && viewTypeMappings[baseViewType]) {
+                const mappedViewType = viewTypeMappings[baseViewType];
+                foundOption = window.TAG_MODEL.viewType.options.find(opt => opt.id === mappedViewType);
+                if (foundOption) {
+                    console.log(`[initializeNewImageStructures] Mapped view type '${baseViewType}' to '${mappedViewType}'`);
+                }
+            }
+            
             if (foundOption && foundOption.id) {
                 defaultViewTagId = foundOption.id;
             } else {
@@ -8589,12 +11328,12 @@ document.addEventListener('DOMContentLoaded', () => {
             furnitureType: 'sofa', // Default furniture type ID
             viewType: defaultViewTagId
         };
-        console.log(`[initializeNewImageStructures] Initialized tags for ${label}:`, JSON.stringify(window.imageTags[label]));
+//         console.log(`[initializeNewImageStructures] Initialized tags for ${label}:`, JSON.stringify(window.imageTags[label]));
     }
 
     // *** NEW FUNCTION: Parse and save measurement string ***
     function parseAndSaveMeasurement(strokeLabel, newString) {
-        console.log(`[parseAndSaveMeasurement] For ${strokeLabel}, received: \"${newString}\". Unit selector value: ${document.getElementById('unitSelector').value}`);
+//         console.log(`[parseAndSaveMeasurement] For ${strokeLabel}, received: \"${newString}\". Unit selector value: ${document.getElementById('unitSelector').value}`);
         let successfullyParsedAndSaved = false; // Flag to indicate if an update happened
 
         if (!newString && newString !== "0") { // Allow "0" to clear/reset measurement
@@ -8605,9 +11344,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Or reset to default if preferred:
                 // window.strokeMeasurements[currentImageLabel][strokeLabel] = { inchWhole: 0, inchFraction: 0, cm: 0.0 };
                 successfullyParsedAndSaved = true;
-                console.log(`[parseAndSaveMeasurement] Cleared measurement for ${strokeLabel}.`);
+//                 console.log(`[parseAndSaveMeasurement] Cleared measurement for ${strokeLabel}.`);
             } else {
-                console.log(`[parseAndSaveMeasurement] No existing measurement to clear for ${strokeLabel}.`);
+//                 console.log(`[parseAndSaveMeasurement] No existing measurement to clear for ${strokeLabel}.`);
                 // No actual change, so UI refresh might not be strictly needed from here
                 // but the blur handler will call updateStrokeVisibilityControls anyway.
                 return false; // Indicate no save occurred
@@ -8626,7 +11365,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!isNaN(totalCm)) {
                     totalInches = totalCm / 2.54;
                     explicitUnitMatched = true; // Unit was present
-                    console.log(`[parseAndSaveMeasurement] Parsed as CM: ${totalCm}cm -> ${totalInches} inches. Explicit unit: ${explicitUnitMatched}`);
+//                     console.log(`[parseAndSaveMeasurement] Parsed as CM: ${totalCm}cm -> ${totalInches} inches. Explicit unit: ${explicitUnitMatched}`);
                 }
             }
 
@@ -8654,19 +11393,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (meterMatch && meterMatch[1]) {
                     totalInches = parseFloat(meterMatch[1]) * 39.3701;
                     explicitUnitMatched = true;
-                    console.log(`[parseAndSaveMeasurement] Parsed as Meters: ${meterMatch[1]}m -> ${totalInches} inches`);
+//                     console.log(`[parseAndSaveMeasurement] Parsed as Meters: ${meterMatch[1]}m -> ${totalInches} inches`);
                 } else if (mmMatch && mmMatch[1]) {
                     totalInches = parseFloat(mmMatch[1]) / 25.4;
                     explicitUnitMatched = true;
-                    console.log(`[parseAndSaveMeasurement] Parsed as Millimeters: ${mmMatch[1]}mm -> ${totalInches} inches`);
+//                     console.log(`[parseAndSaveMeasurement] Parsed as Millimeters: ${mmMatch[1]}mm -> ${totalInches} inches`);
                 } else if (feetMatch && feetMatch[1]) {
                     totalInches = parseFloat(feetMatch[1]) * 12;
                     explicitUnitMatched = true;
-                    console.log(`[parseAndSaveMeasurement] Parsed as Feet: ${feetMatch[1]}${feetMatch[2]} -> ${totalInches} inches`);
+//                     console.log(`[parseAndSaveMeasurement] Parsed as Feet: ${feetMatch[1]}${feetMatch[2]} -> ${totalInches} inches`);
                 } else if (yardMatch && yardMatch[1]) {
                     totalInches = parseFloat(yardMatch[1]) * 36;
                     explicitUnitMatched = true;
-                    console.log(`[parseAndSaveMeasurement] Parsed as Yards: ${yardMatch[1]}${yardMatch[2]} -> ${totalInches} inches`);
+//                     console.log(`[parseAndSaveMeasurement] Parsed as Yards: ${yardMatch[1]}${yardMatch[2]} -> ${totalInches} inches`);
                 } else if (inchMatchWithMarker && (inchMatchWithMarker[1] || inchMatchWithMarker[2])) {
                     explicitUnitMatched = true; // Inch marker was present
                     let wholeInches = 0;
@@ -8684,7 +11423,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     if (!isNaN(totalInches)) { // if not marked invalid by bad fraction
                         totalInches = wholeInches + fractionalPart;
-                        console.log(`[parseAndSaveMeasurement] Parsed as Inches (with marker): ${newString} -> ${totalInches}\"`);
+//                         console.log(`[parseAndSaveMeasurement] Parsed as Inches (with marker): ${newString} -> ${totalInches}\"`);
                     }
                 }
             }
@@ -8696,11 +11435,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     const currentUnit = document.getElementById('unitSelector').value;
                     if (currentUnit === 'inch') {
                         totalInches = plainNumber;
-                        console.log(`[parseAndSaveMeasurement] Parsed as plain number (inches): ${totalInches}\"`);
+//                         console.log(`[parseAndSaveMeasurement] Parsed as plain number (inches): ${totalInches}\"`);
                     } else { // cm
                         totalCm = plainNumber;
                         totalInches = totalCm / 2.54;
-                        console.log(`[parseAndSaveMeasurement] Parsed as plain number (cm): ${totalCm}cm -> ${totalInches} inches`);
+//                         console.log(`[parseAndSaveMeasurement] Parsed as plain number (cm): ${totalCm}cm -> ${totalInches} inches`);
                     }
                 }
             }
@@ -8727,8 +11466,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 cm: parseFloat(finalCm.toFixed(4)) // Store cm with precision
             };
             successfullyParsedAndSaved = true;
-            console.log(`[parseAndSaveMeasurement] Updated measurement for ${strokeLabel}:`, 
-                JSON.stringify(window.strokeMeasurements[currentImageLabel][strokeLabel]));
+//             console.log(`[parseAndSaveMeasurement] Updated measurement for ${strokeLabel}:`, 
+//                 JSON.stringify(window.strokeMeasurements[currentImageLabel][strokeLabel]));
         }
 
         if (successfullyParsedAndSaved) {
@@ -8896,7 +11635,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Helper function to enter edit mode for a stroke
     function enterEditMode(strokeLabel) {
-        console.log(`Entering edit mode for stroke: ${strokeLabel}`);
+//         console.log(`Entering edit mode for stroke: ${strokeLabel}`);
         
         // Set the global edit mode variable
         window.selectedStrokeInEditMode = strokeLabel;
@@ -9029,24 +11768,24 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault(); // Prevent default double-click behavior
         
         if (drawingMode === 'curved' && curvedLinePoints.length >= 2) {
-            console.log(`Finalizing curve with ${curvedLinePoints.length} control points`);
+//             console.log(`Finalizing curve with ${curvedLinePoints.length} control points`);
             
             // Check if the double-click is on another stroke for snapping
             const strokeAtPoint = checkForStrokeAtPoint(e.offsetX, e.offsetY);
             let finalControlPoints = [...curvedLinePoints];
             
             if (strokeAtPoint) {
-                console.log(`Double-click detected on stroke ${strokeAtPoint.label}, attempting to snap curve endpoint`);
-                console.log(`Double-click coordinates: (${e.offsetX}, ${e.offsetY})`);
+//                 console.log(`Double-click detected on stroke ${strokeAtPoint.label}, attempting to snap curve endpoint`);
+//                 console.log(`Double-click coordinates: (${e.offsetX}, ${e.offsetY})`);
                 
                 // Find the nearest point on the target stroke
                 const nearestPoint = findNearestPointOnStroke(e.offsetX, e.offsetY, strokeAtPoint.label);
                 
                 if (nearestPoint) {
-                    console.log(`Nearest point found: distance ${nearestPoint.distance.toFixed(2)}px, imageSpace: (${nearestPoint.x.toFixed(2)}, ${nearestPoint.y.toFixed(2)}), canvasSpace: (${nearestPoint.canvasX.toFixed(2)}, ${nearestPoint.canvasY.toFixed(2)})`);
+//                     console.log(`Nearest point found: distance ${nearestPoint.distance.toFixed(2)}px, imageSpace: (${nearestPoint.x.toFixed(2)}, ${nearestPoint.y.toFixed(2)}), canvasSpace: (${nearestPoint.canvasX.toFixed(2)}, ${nearestPoint.canvasY.toFixed(2)})`);
                     
                     if (nearestPoint.distance <= 20) { // 20 pixel snap tolerance
-                        console.log(`✅ Snapping curve endpoint to stroke ${strokeAtPoint.label} at distance ${nearestPoint.distance.toFixed(2)}px`);
+//                         console.log(`✅ Snapping curve endpoint to stroke ${strokeAtPoint.label} at distance ${nearestPoint.distance.toFixed(2)}px`);
                         
                         // Replace the last control point with the snapped point
                         finalControlPoints[finalControlPoints.length - 1] = {
@@ -9058,10 +11797,10 @@ document.addEventListener('DOMContentLoaded', () => {
                             snappedTo: strokeAtPoint.label // Mark this point as snapped
                         };
                     } else {
-                        console.log(`❌ Stroke detected but too far for snapping (distance: ${nearestPoint.distance.toFixed(2)}px > 20px tolerance)`);
+//                         console.log(`❌ Stroke detected but too far for snapping (distance: ${nearestPoint.distance.toFixed(2)}px > 20px tolerance)`);
                     }
                 } else {
-                    console.log(`❌ Could not find nearest point on stroke ${strokeAtPoint.label}`);
+//                     console.log(`❌ Could not find nearest point on stroke ${strokeAtPoint.label}`);
                 }
             }
             
@@ -9084,7 +11823,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
             
-            console.log(`Generated ${finalPoints.length} interpolated points for smooth curve`);
+//             console.log(`Generated ${finalPoints.length} interpolated points for smooth curve`);
             
             // Create a stroke from the interpolated points
             const tempStrokeKey = '_drawingStroke';
@@ -9104,16 +11843,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 type: (arrowSettings.startArrow || arrowSettings.endArrow) ? 'curved-arrow' : 'curved', // Create curved arrow if arrows are enabled
                 controlPoints: [...finalControlPoints], // Store final control points (with potential snapping)
                 arrowSettings: (arrowSettings.startArrow || arrowSettings.endArrow) ? { ...arrowSettings } : undefined, // Include arrow settings if arrows are enabled
+                dashSettings: { ...dashSettings }, // Store dash settings for dotted lines
                 timestamp: Date.now()
             };
             
             // Clear the control points for next curve
             curvedLinePoints = [];
-            console.log('Cleared control points for next curve');
+//             console.log('Cleared control points for next curve');
             
             // CURVE_DEFOCUS_FIX_4: Mark that a curve was just completed (needs one defocus click)
             curveJustCompleted = true;
-            console.log('Set curveJustCompleted flag - next single click will defocus');
+//             console.log('Set curveJustCompleted flag - next single click will defocus');
             
             // Save the completed curved stroke
             saveState(true, true);
@@ -9122,9 +11862,10 @@ document.addEventListener('DOMContentLoaded', () => {
             updateStrokeVisibilityControls();
             redrawCanvasWithVisibility();
             
-            console.log('Curved line finalized and saved');
+//             console.log('Curved line finalized and saved');
         } else if (drawingMode === 'curved') {
-            console.log('Double-click in curved mode, but need at least 2 control points to create a curve');
+//             console.log('Double-click in curved mode, but need at least 2 control points to create a curve');
         }
     });
 }); // Correctly close DOMContentLoaded
+

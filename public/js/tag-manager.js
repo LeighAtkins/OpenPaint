@@ -1,7 +1,7 @@
 // Tag Manager for OpenPaint
 // Handles the furniture/sofa tagging system
 
-console.log('TAG-MANAGER.JS LOADED - Version ' + new Date().toISOString());
+// console.log('TAG-MANAGER.JS LOADED - Version ' + new Date().toISOString());
 
 // Define the tag hierarchy and conditions
 window.TAG_MODEL = {
@@ -377,7 +377,7 @@ window.createTagSelectionDialog = function(imageLabel, existingTags, onSave) {
         for (const key in selections) {
             delete selections[key];
         }
-        console.log('[Tag Dialog] Cleared all selections.');
+        // console.log('[Tag Dialog] Cleared all selections.');
         renderCategories();
     });
     
@@ -453,7 +453,7 @@ window.createTagSelectionDialog = function(imageLabel, existingTags, onSave) {
                     radioInput.addEventListener('change', function() {
                         if (this.checked) {
                             selections[categoryId] = option.id;
-                            console.log(`[Tag Dialog] Selected ${category.name}: ${option.name}`);
+                            // console.log(`[Tag Dialog] Selected ${category.name}: ${option.name}`);
                             
                             // Re-render categories for conditional logic
                             renderCategories();
@@ -501,7 +501,7 @@ window.createTagSelectionDialog = function(imageLabel, existingTags, onSave) {
                             }
                         }
                         
-                        console.log(`[Tag Dialog] Updated ${category.name}:`, selections[categoryId]);
+                        // console.log(`[Tag Dialog] Updated ${category.name}:`, selections[categoryId]);
                         
                         // Re-render categories for conditional logic
                         renderCategories();
@@ -541,7 +541,7 @@ window.createTagSelectionDialog = function(imageLabel, existingTags, onSave) {
                     } else {
                         delete selections[categoryId];
                     }
-                    console.log(`[Tag Dialog] Selected ${category.name}: ${this.options[this.selectedIndex].text}`);
+                    // console.log(`[Tag Dialog] Selected ${category.name}: ${this.options[this.selectedIndex].text}`);
                     
                     // Re-render categories for conditional logic
                     renderCategories();
@@ -577,7 +577,7 @@ window.createTagSelectionDialog = function(imageLabel, existingTags, onSave) {
         }
         
         // Save selections
-        console.log(`[Tag Dialog] Saving tags for ${imageLabel}:`, selections);
+        // console.log(`[Tag Dialog] Saving tags for ${imageLabel}:`, selections);
         
         // Run callback with selections
         if (typeof onSave === 'function') {
@@ -620,9 +620,9 @@ window.showTagDialogForImage = function(imageLabel) {
         if (labelElement) {
             const filename = getTagBasedFilename(imageLabel, imageLabel.split('_')[0]); // Get updated filename
             const newText = filename ? filename.charAt(0).toUpperCase() + filename.slice(1) : imageLabel;
-            console.log(`[updateTagsDisplay] Found labelElement for ${imageLabel}. Current text: "${labelElement.textContent}". Attempting to set text to: "${newText}"`);
+            // console.log(`[updateTagsDisplay] Found labelElement for ${imageLabel}. Current text: "${labelElement.textContent}". Attempting to set text to: "${newText}"`);
             labelElement.textContent = newText; // Update text
-            console.log(`[updateTagsDisplay] Updated labelElement text for ${imageLabel} to: ${labelElement.textContent}`);
+            // console.log(`[updateTagsDisplay] Updated labelElement text for ${imageLabel} to: ${labelElement.textContent}`);
         } else {
             console.warn(`[updateTagsDisplay] Could not find labelElement for label: ${imageLabel}`);
         }
@@ -677,7 +677,7 @@ document.addEventListener('DOMContentLoaded', () => {
             setTimeout(initializeCoreTagData, 100);
             return;
         }
-        console.log('[TAG-MANAGER] Core paint.js globals are ready.');
+        // console.log('[TAG-MANAGER] Core paint.js globals are ready.');
 
         // Initialize with default tags if none exist for the standard labels
         window.IMAGE_LABELS.forEach(label => {
@@ -688,7 +688,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 };
             }
         });
-        console.log('[TAG-MANAGER] Default tags initialized for standard labels.');
+        // console.log('[TAG-MANAGER] Default tags initialized for standard labels.');
 
         // Now that core data is ready, set up UI-dependent parts
         initializeTagUI();
@@ -708,7 +708,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 window.createTagSelectionDialog(currentLabel, existingTags, (newTags) => {
                     window.imageTags[currentLabel] = newTags;
                     updateTagsDisplay(currentLabel); // This function also needs to be robust
-                    console.log(`[TAG-MANAGER] Updated tags for ${currentLabel}:`, newTags);
+                    // console.log(`[TAG-MANAGER] Updated tags for ${currentLabel}:`, newTags);
                 });
             });
         } else {
@@ -752,7 +752,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        console.log(`[updateTagsDisplay] Looking for label element and tags container with selector: .image-container[data-label="${label}"]`);
+        // console.log(`[updateTagsDisplay] Looking for label element and tags container with selector: .image-container[data-label="${label}"]`);
         
         // Find the label element in the sidebar
         const container = document.querySelector(`.image-container[data-label="${label}"]`);
@@ -786,7 +786,7 @@ document.addEventListener('DOMContentLoaded', () => {
         editButton.innerHTML = '✏️';
         editButton.addEventListener('click', (e) => {
             e.stopPropagation(); // Prevent triggering the container click event
-            console.log(`[editButton] Edit button clicked for ${label}`);
+            // console.log(`[editButton] Edit button clicked for ${label}`);
             showEditDialog(label);
         });
         controlsContainer.appendChild(editButton);
@@ -798,7 +798,7 @@ document.addEventListener('DOMContentLoaded', () => {
         focusButton.innerHTML = '🔍'; // Focus icon
         focusButton.addEventListener('click', (e) => {
             e.stopPropagation(); // Prevent triggering the container click event
-            console.log(`[focusButton] Focus button clicked for ${label}`);
+            // console.log(`[focusButton] Focus button clicked for ${label}`);
             // Toggle focus mode
             if (window.preFocusState && window.preFocusState.focusedImageLabel === label) {
                 exitFocusMode(); // If already focused on this image, exit focus mode
@@ -813,14 +813,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (labelElement) {
             const tagText = generateFilenameFromTags(label, window.imageTags[label]);
             labelElement.textContent = tagText;
-            console.log(`[updateTagsDisplay] Updated label text for ${label} to: ${tagText}`);
+            // console.log(`[updateTagsDisplay] Updated label text for ${label} to: ${tagText}`);
         } else {
             console.warn(`[updateTagsDisplay] Could not find label element for ${label}`);
         }
     }
 
     function showEditDialog(label) {
-        console.log(`[showEditDialog] Showing edit dialog for ${label}`);
+        // console.log(`[showEditDialog] Showing edit dialog for ${label}`);
         
         // Show tag dialog if it exists
         if (window.showTagDialogForImage) {
@@ -832,7 +832,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function enterFocusMode(label) {
-        console.log(`[enterFocusMode] Entering focus mode for label: ${label}`);
+        // console.log(`[enterFocusMode] Entering focus mode for label: ${label}`);
 
         const imageLabelBeforeSwitch = window.currentImageLabel;
         let selectionOfTargetImageBeforeFocus = [];
@@ -848,11 +848,11 @@ document.addEventListener('DOMContentLoaded', () => {
             selectionToRestoreOnTarget: selectionOfTargetImageBeforeFocus, // The selection 'label' had *before* we selected all its strokes
             focusedImageLabel: label                            // The image that is now in focus
         };
-        console.log(`[enterFocusMode] Stored preFocusState:`, JSON.parse(JSON.stringify(window.preFocusState)));
+        // console.log(`[enterFocusMode] Stored preFocusState:`, JSON.parse(JSON.stringify(window.preFocusState)));
 
         // Switch to the clicked image (if not already active)
         if (typeof window.switchToImage === 'function' && window.currentImageLabel !== label) {
-            console.log(`[enterFocusMode] Switching to image: ${label}`);
+            // console.log(`[enterFocusMode] Switching to image: ${label}`);
             window.switchToImage(label); // This sets window.currentImageLabel to label
         } else if (window.currentImageLabel !== label) {
             console.warn(`[enterFocusMode] window.switchToImage is not a function, cannot switch to image: ${label}. Focus may not work as expected.`);
@@ -865,7 +865,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const strokesToSelect = [...window.lineStrokesByImage[label]];
             if (typeof window.multipleSelectedStrokesByImage === 'object') {
                 window.multipleSelectedStrokesByImage[label] = strokesToSelect;
-                console.log(`[enterFocusMode] Set multipleSelectedStrokesByImage for ${label} to:`, strokesToSelect);
+                // console.log(`[enterFocusMode] Set multipleSelectedStrokesByImage for ${label} to:`, strokesToSelect);
             }
             if (typeof window.selectedStrokeByImage === 'object') {
                 window.selectedStrokeByImage[label] = strokesToSelect.length === 1 ? strokesToSelect[0] : null;
@@ -881,13 +881,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Trigger UI Update in paint.js
         if (typeof window.redrawCanvasWithVisibility === 'function') {
-            console.log(`[enterFocusMode] Calling redrawCanvasWithVisibility for ${label}`);
+            // console.log(`[enterFocusMode] Calling redrawCanvasWithVisibility for ${label}`);
             window.redrawCanvasWithVisibility();
         } else {
             console.warn('[enterFocusMode] window.redrawCanvasWithVisibility is not a function.');
         }
         if (typeof window.updateStrokeVisibilityControls === 'function') {
-            console.log(`[enterFocusMode] Calling updateStrokeVisibilityControls for ${label}`);
+            // console.log(`[enterFocusMode] Calling updateStrokeVisibilityControls for ${label}`);
             window.updateStrokeVisibilityControls();
         } else {
             console.warn('[enterFocusMode] window.updateStrokeVisibilityControls is not a function.');
@@ -907,12 +907,12 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `;
         document.body.appendChild(focusIndicator);
-        console.log(`[enterFocusMode] Added focus mode indicator to the DOM`);
+        // console.log(`[enterFocusMode] Added focus mode indicator to the DOM`);
         
         // Add ESC key handler for exiting focus mode
         const escHandler = (e) => {
             if (e.key === 'Escape') {
-                console.log('[enterFocusMode] ESC key pressed, exiting focus mode');
+                // console.log('[enterFocusMode] ESC key pressed, exiting focus mode');
                 exitFocusMode();
                 document.removeEventListener('keydown', escHandler);
             }
@@ -921,12 +921,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function exitFocusMode() {
-        console.log('[exitFocusMode] Exiting focus mode');
+        // console.log('[exitFocusMode] Exiting focus mode');
         
         const indicator = document.querySelector('.focus-mode-indicator');
         if (indicator) {
             indicator.remove();
-            console.log('[exitFocusMode] Removed focus mode indicator');
+            // console.log('[exitFocusMode] Removed focus mode indicator');
         } else {
             console.warn('[exitFocusMode] Focus mode indicator not found');
         }
@@ -960,12 +960,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (typeof window.selectedStrokeByImage === 'object') {
             window.selectedStrokeByImage[focusedLabel] = (originalSelectionOnFocusedImage && originalSelectionOnFocusedImage.length === 1) ? originalSelectionOnFocusedImage[0] : null;
         }
-        console.log(`[exitFocusMode] Restored selection on previously focused image ${focusedLabel} to:`, originalSelectionOnFocusedImage);
+        // console.log(`[exitFocusMode] Restored selection on previously focused image ${focusedLabel} to:`, originalSelectionOnFocusedImage);
 
         // 2. Switch back to the image that was active before focus mode began, if it's different from the one that was focused.
         //    And if the one that was focused is still the current one.
         if (typeof window.switchToImage === 'function' && window.currentImageLabel === focusedLabel && focusedLabel !== imageToSwitchBackTo) {
-            console.log(`[exitFocusMode] Switching back to originally active image: ${imageToSwitchBackTo}`);
+            // console.log(`[exitFocusMode] Switching back to originally active image: ${imageToSwitchBackTo}`);
             window.switchToImage(imageToSwitchBackTo);
             // After switchToImage, window.currentImageLabel is imageToSwitchBackTo.
             // Its selection state should be inherently correct from its own history or how switchToImage loads it.
@@ -973,7 +973,7 @@ document.addEventListener('DOMContentLoaded', () => {
              // This means the user manually switched away from the focused image.
              // We should still switch back to the *original* image before focus mode started.
             if (typeof window.switchToImage === 'function' && window.currentImageLabel !== imageToSwitchBackTo) {
-                console.log(`[exitFocusMode] User manually switched. Switching back to original image: ${imageToSwitchBackTo}`);
+                // console.log(`[exitFocusMode] User manually switched. Switching back to original image: ${imageToSwitchBackTo}`);
                 window.switchToImage(imageToSwitchBackTo);
             }
         }
@@ -995,14 +995,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         // The escHandler should have removed itself.
-        console.log('[exitFocusMode] Focus mode exited.');
+        // console.log('[exitFocusMode] Focus mode exited.');
     }
 
     function attemptHookToAddImageToSidebar() {
         if (typeof window.addImageToSidebar === 'function') {
             const originalAddImageToSidebar = window.addImageToSidebar;
             if (originalAddImageToSidebar.isHookedByTagManager) {
-                console.log('[TAG-MANAGER] addImageToSidebar already hooked.');
+                // console.log('[TAG-MANAGER] addImageToSidebar already hooked.');
                 return;
             }
             window.addImageToSidebar = function(imageUrl, label, filename) {
@@ -1015,17 +1015,17 @@ document.addEventListener('DOMContentLoaded', () => {
                             furnitureType: 'sofa', 
                             viewType: baseLabel 
                         };
-                         console.log(`[TAG-MANAGER hooked addImageToSidebar] Initialized tags for new image ${label}`);
+                         // console.log(`[TAG-MANAGER hooked addImageToSidebar] Initialized tags for new image ${label}`);
                     }
                     updateTagsDisplay(label);
                 }, 150); 
             };
             window.addImageToSidebar.isHookedByTagManager = true; // Mark as hooked
-            console.log('[TAG-MANAGER] Successfully hooked into window.addImageToSidebar.');
+            // console.log('[TAG-MANAGER] Successfully hooked into window.addImageToSidebar.');
             
             // After hooking, refresh tags for any images that might have been added before the hook was ready
             setTimeout(() => {
-                console.log('[TAG-MANAGER] Post-hook refresh of tags for existing images.');
+                // console.log('[TAG-MANAGER] Post-hook refresh of tags for existing images.');
                 addTagButtonsToImages();
             }, 600);
         } else {

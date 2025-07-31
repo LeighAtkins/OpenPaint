@@ -1,7 +1,7 @@
 // Project Manager for OpenPaint
 // Handles saving and loading projects using ZIP format
 
-console.log('PROJECT-MANAGER.JS LOADED - Version ' + new Date().toISOString());
+// console.log('PROJECT-MANAGER.JS LOADED - Version ' + new Date().toISOString());
 
 document.addEventListener('DOMContentLoaded', () => {
     // Get reference to save and load buttons
@@ -12,36 +12,36 @@ document.addEventListener('DOMContentLoaded', () => {
     if (saveProjectBtn) {
         saveProjectBtn.addEventListener('click', () => {
             // Before saving, log the current scales for all images
-            console.log('[Save Project] Verifying scales before saving:');
+            // console.log('[Save Project] Verifying scales before saving:');
             if (window.imageScaleByLabel) {
                 Object.keys(window.imageScaleByLabel).forEach(label => {
-                    console.log(`- Scale for ${label}: ${window.imageScaleByLabel[label]}`);
+                    // console.log(`- Scale for ${label}: ${window.imageScaleByLabel[label]}`);
                 });
             } else {
-                console.log('- imageScaleByLabel is not defined!');
+                // console.log('- imageScaleByLabel is not defined!');
             }
             
             // Now explicitly verify the current view's scale is correct
             const currentLabel = window.currentImageLabel;
             if (currentLabel) {
-                console.log(`[Save Project] Current view is ${currentLabel}`);
-                console.log(`[Save Project] Current scale for ${currentLabel} is ${window.imageScaleByLabel[currentLabel]}`);
+                // console.log(`[Save Project] Current view is ${currentLabel}`);
+                // console.log(`[Save Project] Current scale for ${currentLabel} is ${window.imageScaleByLabel[currentLabel]}`);
                 
                 // Get scale from the UI as a backup check
                 const scaleEl = document.getElementById('scaleButton');
                 if (scaleEl) {
                     const scaleText = scaleEl.textContent;
-                    console.log(`[Save Project] Scale shown in UI: ${scaleText}`);
+                    // console.log(`[Save Project] Scale shown in UI: ${scaleText}`);
                     
                     // Try to parse the scale from UI text (e.g. "Scale: 25% ▼")
                     const scaleMatch = scaleText.match(/Scale: (\d+)%/);
                     if (scaleMatch && scaleMatch[1]) {
                         const uiScale = parseInt(scaleMatch[1]) / 100;
-                        console.log(`[Save Project] Parsed UI scale: ${uiScale}`);
+                        // console.log(`[Save Project] Parsed UI scale: ${uiScale}`);
                         
                         // If UI scale doesn't match stored scale, update the stored scale
                         if (uiScale !== window.imageScaleByLabel[currentLabel]) {
-                            console.log(`[Save Project] Scale mismatch! Updating scale for ${currentLabel} from ${window.imageScaleByLabel[currentLabel]} to ${uiScale}`);
+                            // console.log(`[Save Project] Scale mismatch! Updating scale for ${currentLabel} from ${window.imageScaleByLabel[currentLabel]} to ${uiScale}`);
                             window.imageScaleByLabel[currentLabel] = uiScale;
                         }
                     }
@@ -57,6 +57,29 @@ document.addEventListener('DOMContentLoaded', () => {
         loadProjectBtn.addEventListener('click', loadProject);
     }
     
+    // Add event listeners for new buttons
+    const generateMeasurementsBtn = document.getElementById('generateMeasurements');
+    if (generateMeasurementsBtn) {
+        generateMeasurementsBtn.addEventListener('click', () => {
+            if (typeof generateMeasurementsList === 'function') {
+                generateMeasurementsList();
+            } else {
+                console.error('generateMeasurementsList function not found');
+            }
+        });
+    }
+    
+    const saveAllImagesBtn = document.getElementById('saveAllImages');
+    if (saveAllImagesBtn) {
+        saveAllImagesBtn.addEventListener('click', () => {
+            if (typeof saveAllImages === 'function') {
+                saveAllImages();
+            } else {
+                console.error('saveAllImages function not found');
+            }
+        });
+    }
+    
     // Add this BEFORE the loadProject function
     // Global variable to store project data across async operations
     window.loadedProjectDataGlobal = null;
@@ -65,12 +88,12 @@ document.addEventListener('DOMContentLoaded', () => {
     function saveProject() {
         try {
             // DIAGNOSTIC: Add test measurements if needed for debugging
-            console.log('[Save Project] DIAGNOSTIC: Current state of strokeMeasurements before saving:');
+            // console.log('[Save Project] DIAGNOSTIC: Current state of strokeMeasurements before saving:');
             IMAGE_LABELS.forEach(label => {
                 if (window.strokeMeasurements && window.strokeMeasurements[label]) {
-                    console.log(`- ${label}:`, JSON.stringify(window.strokeMeasurements[label]));
+                    // console.log(`- ${label}:`, JSON.stringify(window.strokeMeasurements[label]));
                 } else {
-                    console.log(`- ${label}: undefined or empty`);
+                    // console.log(`- ${label}: undefined or empty`);
                 }
             });
 
@@ -90,7 +113,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 actualImageLabels.push(...(window.IMAGE_LABELS || ['front', 'side', 'back', 'cushion']));
                 console.warn("[Save Project] No keys found in window.imageTags, falling back to default labels.");
             }
-            console.log("[Save Project] Saving data for labels:", actualImageLabels);
+            // console.log("[Save Project] Saving data for labels:", actualImageLabels);
             
             // Create project metadata
             const projectData = {
@@ -122,15 +145,15 @@ document.addEventListener('DOMContentLoaded', () => {
             };
             
             // *** ADDED LOGGING BEFORE LOOP ***
-            console.log('[Save Project] State before saving loop:');
-            console.log('  window.lineStrokesByImage:', JSON.parse(JSON.stringify(window.lineStrokesByImage)));
-            console.log('  window.labelsByImage:', JSON.parse(JSON.stringify(window.labelsByImage)));
-            console.log('  window.imageTags:', JSON.parse(JSON.stringify(window.imageTags || {})));
+            // console.log('[Save Project] State before saving loop:');
+            // console.log('  window.lineStrokesByImage:', JSON.parse(JSON.stringify(window.lineStrokesByImage)));
+            // console.log('  window.labelsByImage:', JSON.parse(JSON.stringify(window.labelsByImage)));
+            // console.log('  window.imageTags:', JSON.parse(JSON.stringify(window.imageTags || {})));
             // *** END ADDED LOGGING ***
             
             // Add stroke data for each image
             for (const label of actualImageLabels) {
-                console.log(`Processing data for ${label}...`);
+                // console.log(`Processing data for ${label}...`);
                 
                 // Get vector strokes data - ensure we have data for each label
                 if (window.vectorStrokesByImage && window.vectorStrokesByImage[label]) {
@@ -155,24 +178,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // Add stroke measurements
                 if (window.strokeMeasurements && window.strokeMeasurements[label]) {
-                    console.log(`[Save Project] Saving measurements for ${label}:`, 
-                        JSON.stringify(window.strokeMeasurements[label]));
+                    // console.log(`[Save Project] Saving measurements for ${label}:`, 
+                    //     JSON.stringify(window.strokeMeasurements[label]));
                     
                     // Check if there are any actual measurements to save
                     const measurementCount = Object.keys(window.strokeMeasurements[label]).length;
-                    console.log(`[Save Project] Found ${measurementCount} measurements for ${label}`);
+                    // console.log(`[Save Project] Found ${measurementCount} measurements for ${label}`);
                     
                     // Add detailed log of each measurement
                     if (measurementCount > 0) {
                         Object.entries(window.strokeMeasurements[label]).forEach(([strokeLabel, measurement]) => {
-                            console.log(`[Save Project] - Measurement for ${strokeLabel}:`, measurement);
+//                             console.log(`[Save Project] - Measurement for ${strokeLabel}:`, measurement);
                         });
                     }
                     
                     // Add measurements to project data
                     projectData.strokeMeasurements[label] = window.strokeMeasurements[label];
                 } else {
-                    console.log(`[Save Project] No measurements found for ${label}, using empty object`);
+//                     console.log(`[Save Project] No measurements found for ${label}, using empty object`);
                     projectData.strokeMeasurements[label] = {};
                 }
                 
@@ -180,7 +203,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (window.imageScaleByLabel && window.imageScaleByLabel[label] !== undefined) {
                     const currentScale = window.imageScaleByLabel[label];
                     projectData.imageScales[label] = currentScale;
-                    console.log(`[Save Project] Saving scale for ${label}: ${currentScale}`);
+//                     console.log(`[Save Project] Saving scale for ${label}: ${currentScale}`);
                     
                     // Double-check to ensure it was assigned correctly
                     if (projectData.imageScales[label] !== currentScale) {
@@ -189,15 +212,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 } else {
                     projectData.imageScales[label] = 1.0; // Default to 100% scale
-                    console.log(`[Save Project] No scale found for ${label}, using default 1.0`);
+//                     console.log(`[Save Project] No scale found for ${label}, using default 1.0`);
                 }
                 
                 if (window.imagePositionByLabel && window.imagePositionByLabel[label]) {
                     projectData.imagePositions[label] = window.imagePositionByLabel[label];
-                    console.log(`[Save Project] Saving position for ${label}: x=${window.imagePositionByLabel[label].x}, y=${window.imagePositionByLabel[label].y}`);
+//                     console.log(`[Save Project] Saving position for ${label}: x=${window.imagePositionByLabel[label].x}, y=${window.imagePositionByLabel[label].y}`);
                 } else {
                     projectData.imagePositions[label] = { x: 0, y: 0 }; // Default position
-                    console.log(`[Save Project] No position found for ${label}, using default {x:0, y:0}`);
+//                     console.log(`[Save Project] No position found for ${label}, using default {x:0, y:0}`);
                 }
                 
                 // Add stroke sequence
@@ -223,10 +246,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // Add image tags
                 if (window.imageTags && window.imageTags[label]) {
-                    console.log(`[Save Project] Saving tags for ${label}:`, JSON.stringify(window.imageTags[label]));
+//                     console.log(`[Save Project] Saving tags for ${label}:`, JSON.stringify(window.imageTags[label]));
                     projectData.imageTags[label] = JSON.parse(JSON.stringify(window.imageTags[label]));
                 } else {
-                    console.log(`[Save Project] No tags found for ${label}, using empty object`);
+//                     console.log(`[Save Project] No tags found for ${label}, using empty object`);
                     projectData.imageTags[label] = {};
                 }
             }
@@ -234,21 +257,21 @@ document.addEventListener('DOMContentLoaded', () => {
             // Add image order for sidebar persistence
             if (window.orderedImageLabels && window.orderedImageLabels.length > 0) {
                 projectData.imageOrder = [...window.orderedImageLabels];
-                console.log('[Save Project] Saving image order:', JSON.stringify(projectData.imageOrder));
+//                 console.log('[Save Project] Saving image order:', JSON.stringify(projectData.imageOrder));
             } else {
                 // Fallback to actual image labels for backward compatibility
                 projectData.imageOrder = [...actualImageLabels];
-                console.log('[Save Project] No orderedImageLabels found, using actualImageLabels as order:', JSON.stringify(projectData.imageOrder));
+//                 console.log('[Save Project] No orderedImageLabels found, using actualImageLabels as order:', JSON.stringify(projectData.imageOrder));
             }
             
             // Add project.json to the zip
             zip.file("project.json", JSON.stringify(projectData, null, 2));
             
             // Validate that scales were correctly added to the project data
-            console.log('[Save Project] VALIDATION - Checking scales in project data:');
+//             console.log('[Save Project] VALIDATION - Checking scales in project data:');
             if (projectData.imageScales) {
                 Object.keys(projectData.imageScales).forEach(label => {
-                    console.log(`- Project data scale for ${label}: ${projectData.imageScales[label]}`);
+//                     console.log(`- Project data scale for ${label}: ${projectData.imageScales[label]}`);
                     
                     // Compare with the current scale in the app
                     if (window.imageScaleByLabel && window.imageScaleByLabel[label] !== undefined) {
@@ -256,7 +279,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (currentScale !== projectData.imageScales[label]) {
                             console.error(`[Save Project] ERROR: Scale mismatch for ${label}! App: ${currentScale}, Project data: ${projectData.imageScales[label]}`);
                         } else {
-                            console.log(`[Save Project] ✓ Scale verified for ${label}: ${currentScale}`);
+//                             console.log(`[Save Project] ✓ Scale verified for ${label}: ${currentScale}`);
                         }
                     }
                 });
@@ -271,7 +294,7 @@ document.addEventListener('DOMContentLoaded', () => {
             for (const label of actualImageLabels) {
                 const imageUrl = window.originalImages ? window.originalImages[label] : null;
                 if (imageUrl) {
-                    console.log(`Adding image for ${label}...`);
+//                     console.log(`Adding image for ${label}...`);
                         const promise = fetch(imageUrl)
                             .then(response => {
                                 if (!response.ok) {
@@ -282,7 +305,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             .then(blob => {
                             // *** MODIFIED: Use label as filename base ***
                             zip.file(`${label}.png`, blob); 
-                            console.log(`   Added ${label}.png to zip.`);
+//                             console.log(`   Added ${label}.png to zip.`);
                         })
                         .catch(error => {
                             console.error(`Error adding image ${label} to zip:`, error);
@@ -290,7 +313,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         });
                         imagePromises.push(promise);
                 } else {
-                    console.log(`No original image found for ${label}, skipping image file.`);
+//                     console.log(`No original image found for ${label}, skipping image file.`);
                 }
             }
             
@@ -379,7 +402,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // *** SET LOADING FLAG ***
             window.isLoadingProject = true; 
-            console.log('[Load Project] Set isLoadingProject = true');
+//             console.log('[Load Project] Set isLoadingProject = true');
             
             showStatusMessage('Loading project...', 'info');
             
@@ -412,7 +435,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 JSZip.loadAsync(data)
                     .then(zip => {
-                        console.log("ZIP file loaded. Contents:", Object.keys(zip.files));
+//                         console.log("ZIP file loaded. Contents:", Object.keys(zip.files));
                         const projectJsonFile = zip.file("project.json");
                         if (!projectJsonFile) {
                             throw new Error("Missing project.json"); // This will be caught by the final .catch()
@@ -420,7 +443,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         
                         return projectJsonFile.async("string")
                             .then(jsonContent => {
-                                console.log("Project data loaded:", jsonContent.substring(0, 100) + "...");
+//                                 console.log("Project data loaded:", jsonContent.substring(0, 100) + "...");
                                 const parsedProjectData = JSON.parse(jsonContent);
                                 
                                 document.getElementById('projectName').value = parsedProjectData.name || 'OpenPaint Project';
@@ -464,7 +487,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                     labelsToProcess = [...parsedProjectData.imageLabels];
                                 }
                                 
-                                console.log('[Project Load] Processing images in order:', JSON.stringify(labelsToProcess));
+//                                 console.log('[Project Load] Processing images in order:', JSON.stringify(labelsToProcess));
                                 
                                 // Initialize paint.js's ordered list with the loaded order
                                 window.orderedImageLabels = [...labelsToProcess];
@@ -522,7 +545,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                             .catch(err => console.error(`Error processing data for label ${label}:`, err)); // Catch per-image errors
                                         imagePromises.push(promise);
                                     } else {
-                                        console.log(`No image file found for ${label}`);
+//                                         console.log(`No image file found for ${label}`);
                                         if (!window.originalImageDimensions[label]) {
                                            window.originalImageDimensions[label] = { width: 0, height: 0 };
                                         }
@@ -531,11 +554,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
                                 return Promise.all(imagePromises)
                                     .then(() => { // Executed after all images and their data are loaded and processed
-                                        console.log('All image files processed. OriginalImageDimensions:', JSON.stringify(window.originalImageDimensions));
+//                                         console.log('All image files processed. OriginalImageDimensions:', JSON.stringify(window.originalImageDimensions));
                                         
                                         // Main UI update timeout
                                         setTimeout((activeProjectData) => { 
-                                            console.log('[Load Project] Main UI Update Timeout. ImageLabels:', activeProjectData.imageLabels);
+//                                             console.log('[Load Project] Main UI Update Timeout. ImageLabels:', activeProjectData.imageLabels);
                                             document.getElementById('loadingIndicator')?.remove();
 
                                             let targetLabel = activeProjectData.currentImageLabel;
@@ -543,7 +566,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                             if (!targetLabel || !availableImageKeys.includes(targetLabel)) {
                                                 targetLabel = availableImageKeys.length > 0 ? availableImageKeys[0] : 'front';
                                             }
-                                            console.log(`[Load Project] Initial targetLabel: ${targetLabel}`);
+//                                             console.log(`[Load Project] Initial targetLabel: ${targetLabel}`);
 
                                             if (typeof window.switchToImage === 'function') {
                                                 window.currentImageLabel = targetLabel;
@@ -577,18 +600,18 @@ document.addEventListener('DOMContentLoaded', () => {
                                             
                                             // Final delayed actions timeout
                                             setTimeout((dataForFinalSteps) => { 
-                                                console.log('[Load Project] Final Delayed Actions Timeout. ImageLabels:', dataForFinalSteps.imageLabels);
+//                                                 console.log('[Load Project] Final Delayed Actions Timeout. ImageLabels:', dataForFinalSteps.imageLabels);
                                                 
                                                 // MODIFIED: Implement retry mechanism for tag display updates
                                                 let attempts = 0;
                                                 const maxAttempts = 20; // Try for up to 2 seconds (20 * 100ms)
                                                 function attemptTagRefresh() {
                                                     if (typeof window.updateTagsDisplay === 'function' && typeof window.getTagBasedFilename === 'function') {
-                                                        console.log('[Load Project] Tag manager functions are now available. Refreshing sidebar tag displays...');
+//                                                         console.log('[Load Project] Tag manager functions are now available. Refreshing sidebar tag displays...');
                                                         if (dataForFinalSteps.imageLabels) {
                                                             dataForFinalSteps.imageLabels.forEach(label => {
                                                                 if (window.imageTags[label]) { 
-                                                                    console.log(`  Refreshing tags for ${label} (attempt ${attempts + 1})`);
+//                                                                     console.log(`  Refreshing tags for ${label} (attempt ${attempts + 1})`);
                                                                     window.updateTagsDisplay(label);
                                                                 } else { 
                                                                     console.warn(`  No tags found in window.imageTags for ${label} during final sidebar refresh.`);
@@ -628,7 +651,7 @@ document.addEventListener('DOMContentLoaded', () => {
             reader.onerror = function(e) {
                 // *** CLEAR LOADING FLAG (Reader Error) ***
                 window.isLoadingProject = false;
-                console.log('[Load Project] Set isLoadingProject = false (Reader Error)');
+//                 console.log('[Load Project] Set isLoadingProject = false (Reader Error)');
 
                 // Remove loading indicator
                 if (loadingIndicator.parentNode) {
@@ -704,18 +727,18 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     function finalizeLoadProcess(dataForFinalSteps) { // ADDED FUNCTION
-        console.log('[Load Project] Finalizing load process...');
+//         console.log('[Load Project] Finalizing load process...');
 
         // *** ADDED: Loop to update sidebar label text and scale text ***
         if (dataForFinalSteps.imageLabels && typeof window.getTagBasedFilename === 'function' && typeof window.imageScaleByLabel !== 'undefined') {
-            console.log('[Load Project] Updating sidebar label text and scale text...');
+//             console.log('[Load Project] Updating sidebar label text and scale text...');
             dataForFinalSteps.imageLabels.forEach(label => {
                 // Update Label Text
                 const labelElement = document.querySelector(`.image-container[data-label="${label}"] .image-label`);
                 if (labelElement) {
                     const filename = window.getTagBasedFilename(label, label.split('_')[0]); // Get updated filename
                     const newText = filename ? filename.charAt(0).toUpperCase() + filename.slice(1) : label;
-                    console.log(`  Updating label text for ${label} to: "${newText}"`);
+//                     console.log(`  Updating label text for ${label} to: "${newText}"`);
                     labelElement.textContent = newText; // Update text
                 } else {
                     console.warn(`  Could not find labelElement for ${label} during final update.`);
@@ -726,7 +749,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (scaleElement) {
                     const scaleValue = window.imageScaleByLabel[label] !== undefined ? window.imageScaleByLabel[label] : 1.0;
                     const scaleText = `Scale: ${Math.round(scaleValue * 100)}%`;
-                    console.log(`  Updating scale text for ${label} to: "${scaleText}"`);
+//                     console.log(`  Updating scale text for ${label} to: "${scaleText}"`);
                     scaleElement.textContent = scaleText;
                 } else {
                     console.warn(`  Could not find scaleElement for ${label} during final update.`);
@@ -738,11 +761,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // *** END ADDED BLOCK ***
 
         if (typeof window.redrawCanvasWithVisibility === 'function') {
-            console.log('[Load Project] Performing final redraw before completing load.');
+//             console.log('[Load Project] Performing final redraw before completing load.');
             window.redrawCanvasWithVisibility();
         }
 
-        console.log('[Load Project] FINAL VALIDATION BLOCK');
+//         console.log('[Load Project] FINAL VALIDATION BLOCK');
         try {
             const labelsToCheck = dataForFinalSteps.imageLabels || [];
             labelsToCheck.forEach(label => {
@@ -751,7 +774,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (JSON.stringify(currentMeasurements) !== JSON.stringify(loadedMeasurements)) {
                     console.warn(`   MEASUREMENT MISMATCH for ${label}! App: ${JSON.stringify(currentMeasurements)}, Loaded: ${JSON.stringify(loadedMeasurements)}`);
                 } else {
-                    console.log(`   ✓ Measurements verified for ${label}`);
+//                     console.log(`   ✓ Measurements verified for ${label}`);
                 }
             });
         } catch(validationError) {
@@ -760,6 +783,6 @@ document.addEventListener('DOMContentLoaded', () => {
         
         window.isLoadingProject = false;
         showStatusMessage('Project loaded successfully.', 'success');
-        console.log('[Load Project] Complete.');
+//         console.log('[Load Project] Complete.');
     }
 });

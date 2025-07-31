@@ -844,6 +844,8 @@
                 <div class="project-buttons">
                     <button id="saveProject" title="Save project as ZIP file">Save Project</button>
                     <button id="loadProject" title="Load project from ZIP file">Load Project</button>
+                    <button id="generateMeasurements" title="Generate list of all measurements">Generate Measurements</button>
+                    <button id="saveAllImages" title="Save all images as individual files">Save All Images</button>
                 </div>
             </div>
         </div>
@@ -860,13 +862,41 @@
                     <button class="color-btn" data-color="#00796b" style="background-color: #00796b;"></button>
                     <button class="color-btn" data-color="#000000" style="background-color: #000000;"></button>
                 </div>
-                <button id="drawingModeToggle">Freehand</button>
-                <div id="arrowControls" style="display: none; align-items: center; gap: 5px;">
+                <button id="drawingModeToggle" class="straight-mode">Straight Line</button>
+                <div id="arrowControls" style="display: flex; align-items: center; gap: 5px;">
                     <span id="startArrow" style="font-size: 16px; cursor: pointer; padding: 4px 6px; border-radius: 4px; user-select: none; background-color: #f0f0f0; color: #666;" title="Toggle start arrow">◀</span>
                     <span id="endArrow" style="font-size: 16px; cursor: pointer; padding: 4px 6px; border-radius: 4px; user-select: none; background-color: #f0f0f0; color: #666;" title="Toggle end arrow">▶</span>
                 </div>
+                <div id="dashControls" style="display: flex; align-items: center; gap: 5px;">
+                    <label style="font-size: 12px; color: #666;">Line Style:</label>
+                    <select id="dashStyleSelect" style="padding: 4px 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px;">
+                        <option value="solid">Solid</option>
+                        <option value="small">Small Dash</option>
+                        <option value="medium">Medium Dash</option>
+                        <option value="large">Large Dash</option>
+                        <option value="dot-dash">Dot-Dash</option>
+                        <option value="custom">Custom</option>
+                    </select>
+                    <div id="customDashControls" style="display: none; align-items: center; gap: 3px;">
+                        <input type="number" id="dashLengthInput" min="1" max="50" value="5" style="width: 40px; padding: 2px 4px; border: 1px solid #ccc; border-radius: 3px; font-size: 11px;" title="Dash length">
+                        <span style="font-size: 10px; color: #999;">/</span>
+                        <input type="number" id="gapLengthInput" min="1" max="50" value="5" style="width: 40px; padding: 2px 4px; border: 1px solid #ccc; border-radius: 3px; font-size: 11px;" title="Gap length">
+                    </div>
+                </div>
                 <input type="color" id="colorPicker" value="#1a73e8" style="display:none;">
                 <input type="range" id="brushSize" min="1" max="50" value="5">
+                <div id="zoomControls" style="display: flex; align-items: center; gap: 5px; margin-left: 10px;">
+                    <label style="font-size: 12px; color: #666;">Fit:</label>
+                    <select id="fitModeSelect" style="padding: 4px 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px;">
+                        <option value="none">Manual</option>
+                        <option value="fit-width" selected>Fit Width</option>
+                        <option value="fit-height">Fit Height</option>
+                        <option value="fit-canvas">Fit Canvas</option>
+                        <option value="actual-size">Actual Size</option>
+                    </select>
+                    <button id="applyFitCurrent" style="padding: 4px 8px; border: 1px solid #999; border-radius: 4px; font-size: 12px; background: #ffffff; color: #333; cursor: pointer;" title="Apply selected fit mode to current image">Current</button>
+                    <button id="applyFitAll" style="padding: 4px 8px; border: 1px solid #0066cc; border-radius: 4px; font-size: 12px; background: #0066cc; color: #ffffff; cursor: pointer;" title="Apply selected fit mode to all images">Apply All</button>
+                </div>
                 <button id="save">Save</button>
                 <button id="paste">Upload Images</button>
                 <span id="strokeCounter" class="counter">Lines: 0</span>
@@ -935,6 +965,7 @@
     <div id="statusMessage"></div>
     
     <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <script src="public/js/paint.js"></script>
