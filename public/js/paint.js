@@ -204,6 +204,15 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('cmInputs').style.display = 'none';
     });
     
+    // Add event listener for standalone Save as PDF button
+    const saveAsPdfButton = document.getElementById('saveAsPdf');
+    if (saveAsPdfButton) {
+        saveAsPdfButton.addEventListener('click', () => {
+            const projectName = document.getElementById('projectName').value || 'Untitled Project';
+            showPDFExportDialog(projectName);
+        });
+    }
+    
     // Initialize DOM elements in state object for centralized access
     window.paintApp.state.domElements.canvas = document.getElementById('canvas');
     window.paintApp.state.domElements.ctx = window.paintApp.state.domElements.canvas.getContext('2d', { willReadFrequently: true });
@@ -1557,10 +1566,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div style="margin-bottom: 20px;">
                         <label style="display: block; margin-bottom: 10px; font-weight: bold; color: #333;">PDF Layout:</label>
                         <select id="pdfLayoutSelect" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-                            <option value="images-only">Images Only</option>
-                            <option value="side-by-side" selected>Images with Measurements Table</option>
-                            <option value="measurements-only">Measurements Table Only</option>
+                            <option value="customer-form" selected>Customer Measurement Form</option>
                         </select>
+                    </div>
+
+                    <div style="margin-bottom: 20px; padding: 15px; background: #f9f9f9; border-radius: 4px;">
+                        <label style="display: flex; align-items: center; margin-bottom: 10px; cursor: pointer;">
+                            <input type="checkbox" id="includeImagesWithoutMeasurements" style="margin-right: 8px;" checked>
+                            <span style="font-weight: bold; color: #333;">Include images without measurements</span>
+                        </label>
+                        <p style="margin: 5px 0 0 24px; font-size: 12px; color: #666;">
+                            When checked, images without measurement lines will be included with a "No measurements" note.
+                        </p>
                     </div>
 
                     <div id="measurementsSection" style="margin-bottom: 20px;">
@@ -1632,6 +1649,26 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>
                     </div>
 
+                    <div style="margin-bottom: 20px; padding: 15px; background: #e3f2fd; border-radius: 4px; border-left: 4px solid #2196F3;">
+                        <h4 style="margin-top: 0; margin-bottom: 15px; color: #333;">Unit Selection:</h4>
+                        <p style="margin: 0 0 15px 0; font-size: 14px; color: #666;">
+                            Choose the unit for all measurements in the PDF. This will also update your project's unit setting.
+                        </p>
+                        <div style="display: flex; gap: 20px; align-items: center;">
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                <input type="radio" name="pdfUnit" value="inch" ${window.currentUnit === 'inch' ? 'checked' : ''} style="transform: scale(1.3);">
+                                <span style="font-weight: 500;">Inches</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                <input type="radio" name="pdfUnit" value="cm" ${window.currentUnit === 'cm' ? 'checked' : ''} style="transform: scale(1.3);">
+                                <span style="font-weight: 500;">Centimeters</span>
+                            </label>
+                        </div>
+                        <p style="margin: 10px 0 0 0; font-size: 12px; color: #666; font-style: italic;">
+                            Current project unit: ${window.currentUnit === 'inch' ? 'Inches' : 'Centimeters'}
+                        </p>
+                    </div>
+
                     <div id="previewSection" style="margin-bottom: 20px; padding: 15px; background-color: #f9f9f9; border-radius: 4px;">
                         <h4 style="margin-top: 0; margin-bottom: 10px; color: #333;">Preview:</h4>
                         <div id="previewContent" style="font-size: 14px; color: #666;">
@@ -1677,189 +1714,432 @@ document.addEventListener('DOMContentLoaded', () => {
     // PDF Preview Function
     window.showPDFPreview = function() {
         const previewContent = document.getElementById('previewContent');
-        const layoutSelect = document.getElementById('pdfLayoutSelect');
-        const includeProjectName = document.getElementById('includeProjectName').checked;
-        const includeTimestamp = document.getElementById('includeTimestamp').checked;
         
-        const layout = layoutSelect.value;
-        const measurementCount = document.querySelectorAll('#measurementsTableBody input[data-field="include"]:checked').length;
-        const selectedImageCount = window.pastedImages.length;
+        // Get all images with measurements
+        const imageContainers = document.querySelectorAll('.image-container');
+        const imagesWithMeasurements = [];
+        let totalMeasurements = 0;
+        
+        for (const container of imageContainers) {
+            const imageLabel = container.dataset.label;
+            if (!imageLabel) continue;
+            
+            const strokeMeasurements = window.strokeMeasurements[imageLabel] || {};
+            const strokeLabels = Object.keys(strokeMeasurements);
+            
+            if (strokeLabels.length > 0) {
+                imagesWithMeasurements.push({
+                    label: imageLabel,
+                    measurementCount: strokeLabels.length
+                });
+                totalMeasurements += strokeLabels.length;
+            }
+        }
         
         let previewText = '<div style="font-family: Arial, sans-serif; line-height: 1.5;">';
         
-        if (includeProjectName) {
-            previewText += `<strong>Project:</strong> ${document.getElementById('projectName').value}<br>`;
+        previewText += `<strong>Document Format:</strong> Customer Measurement Form<br>`;
+        previewText += `<strong>Pages:</strong> ${imagesWithMeasurements.length} (one per image with measurements)<br>`;
+        previewText += `<strong>Total Measurement Fields:</strong> ${totalMeasurements} fillable fields<br><br>`;
+        
+        if (imagesWithMeasurements.length === 0) {
+            previewText += `<em style="color: #f44336;">No images with measurements found. Please add measurements to your images first.</em><br><br>`;
+        } else {
+            previewText += '<strong>Images to be included:</strong><ul>';
+            imagesWithMeasurements.forEach(img => {
+                previewText += `<li><strong>${img.label}</strong> - ${img.measurementCount} measurement field${img.measurementCount > 1 ? 's' : ''}</li>`;
+            });
+            previewText += '</ul>';
         }
         
-        if (includeTimestamp) {
-            previewText += `<strong>Created:</strong> ${new Date().toLocaleDateString()}<br><br>`;
-        }
+        previewText += '<strong>Each page will contain:</strong><ul>';
+        previewText += '<li>Project name and image identifier</li>';
+        previewText += '<li>Date generated</li>';
+        previewText += '<li>Full-size image centered on page</li>';
+        previewText += '<li><strong>Fillable measurement form</strong> with empty boxes for:</li>';
+        previewText += '<ul><li>Inches measurement (customer fills in)</li>';
+        previewText += '<li>Centimeters measurement (customer fills in)</li></ul>';
+        previewText += '<li>Instructions for customers</li>';
+        previewText += '</ul>';
         
-        switch (layout) {
-            case 'images-only':
-                previewText += `<strong>Layout:</strong> Images Only<br>`;
-                previewText += `<strong>Content:</strong> ${selectedImageCount} images with annotations<br>`;
-                break;
-                
-            case 'side-by-side':
-                previewText += `<strong>Layout:</strong> Images with Measurements Table<br>`;
-                previewText += `<strong>Content:</strong> ${selectedImageCount} images + ${measurementCount} measurements<br>`;
-                break;
-                
-            case 'measurements-only':
-                previewText += `<strong>Layout:</strong> Measurements Table Only<br>`;
-                previewText += `<strong>Content:</strong> ${measurementCount} measurements in table format<br>`;
-                break;
-        }
+        previewText += '<br><em>This format allows customers to print the PDF and write their measurements directly into the form fields.</em>';
         
-        previewText += `<br><em>The PDF will be generated with professional formatting and layout.</em>`;
         previewText += '</div>';
         
         previewContent.innerHTML = previewText;
     };
 
-    // PDF Generation Function
+    // Enhanced Customer Measurement Form PDF Generation Function
     window.generatePDF = async function(projectName) {
         try {
-            if (typeof window.jsPDF === 'undefined') {
+            // Get selected unit from PDF dialog
+            const selectedUnitElement = document.querySelector('input[name="pdfUnit"]:checked');
+            const selectedUnit = selectedUnitElement ? selectedUnitElement.value : window.currentUnit || 'inch';
+            
+            // Update project unit system to match PDF selection
+            if (selectedUnit !== window.currentUnit) {
+                document.getElementById('unitSelector').value = selectedUnit;
+                window.currentUnit = selectedUnit;
+                updateMeasurementDisplay(); // Update the project display
+                console.log(`[PDF] Updated project unit to: ${selectedUnit}`);
+            }
+            
+            // Check for jsPDF availability (UMD version can expose as jspdf or jsPDF)
+            const jsPDFConstructor = window.jspdf?.jsPDF || window.jsPDF;
+            if (typeof jsPDFConstructor === 'undefined') {
                 alert('PDF library not loaded. Please refresh the page and try again.');
                 return;
             }
 
-            const { jsPDF } = window.jsPDF;
+            const jsPDF = jsPDFConstructor;
             const pdf = new jsPDF('p', 'mm', 'a4');
             
-            // Get user preferences
-            const layoutSelect = document.getElementById('pdfLayoutSelect');
-            const includeProjectName = document.getElementById('includeProjectName').checked;
-            const includeTimestamp = document.getElementById('includeTimestamp').checked;
-            const includeImageLabels = document.getElementById('includeImageLabels').checked;
+            // Debug AcroForm availability
+            console.log('[PDF Debug] jsPDFConstructor:', jsPDFConstructor);
+            console.log('[PDF Debug] jsPDF.AcroForm:', jsPDF.AcroForm);
+            console.log('[PDF Debug] Available AcroForm classes:', jsPDF.AcroForm ? Object.keys(jsPDF.AcroForm) : 'Not available');
+            console.log('[PDF Debug] Selected unit for PDF:', selectedUnit);
             
-            const layout = layoutSelect.value;
-            let yPosition = 20;
+            // Get user preference for including images without measurements
+            const includeImagesWithoutMeasurements = document.getElementById('includeImagesWithoutMeasurements')?.checked || false;
             
-            // Add title and timestamp
-            if (includeProjectName) {
-                pdf.setFontSize(18);
-                pdf.setFont(undefined, 'bold');
-                pdf.text(projectName, 20, yPosition);
-                yPosition += 15;
-            }
+            // Get all images with their corresponding measurements
+            const images = [];
+            const imageContainers = document.querySelectorAll('.image-container');
             
-            if (includeTimestamp) {
-                pdf.setFontSize(10);
-                pdf.setFont(undefined, 'normal');
-                pdf.text(`Generated: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`, 20, yPosition);
-                yPosition += 15;
-            }
-            
-            // Collect measurements data
-            const measurements = [];
-            const measurementInputs = document.querySelectorAll('#measurementsTableBody tr');
-            measurementInputs.forEach(row => {
-                const includeCheckbox = row.querySelector('input[data-field="include"]');
-                if (includeCheckbox && includeCheckbox.checked) {
-                    const label = row.querySelector('input[data-field="label"]').value;
-                    const value = row.querySelector('input[data-field="value"]').value;
-                    const unit = row.querySelector('select[data-field="unit"]').value;
-                    measurements.push({ label, value, unit });
+            for (const container of imageContainers) {
+                const imageLabel = container.dataset.label;
+                if (!imageLabel) continue;
+                
+                const imageElement = container.querySelector('img');
+                if (!imageElement) continue;
+                
+                // Get measurements for this image
+                const strokeMeasurements = window.strokeMeasurements[imageLabel] || {};
+                const strokeLabels = Object.keys(strokeMeasurements);
+                
+                // Debug logging
+                console.log(`[PDF Debug] Image: ${imageLabel}, strokeMeasurements:`, strokeMeasurements);
+                console.log(`[PDF Debug] strokeLabels:`, strokeLabels);
+                
+                // Include image if it has measurements OR if user wants images without measurements  
+                if (strokeLabels.length > 0 || includeImagesWithoutMeasurements) {
+                    const measurementFields = strokeLabels.map(strokeLabel => {
+                        const measurementData = strokeMeasurements[strokeLabel];
+                        console.log(`[PDF Debug] Processing ${strokeLabel}:`, measurementData);
+                        return {
+                            label: strokeLabel,
+                            measurement: measurementData
+                        };
+                    });
+                    
+                    images.push({
+                        label: imageLabel,
+                        measurements: measurementFields,
+                        hasMeasurements: strokeLabels.length > 0
+                    });
                 }
-            });
+            }
             
-            if (layout === 'measurements-only' || layout === 'side-by-side') {
-                // Add measurements table
+            if (images.length === 0) {
+                if (includeImagesWithoutMeasurements) {
+                    alert('No images found to include in PDF.');
+                } else {
+                    alert('No images with measurements found. Check "Include images without measurements" or add some measurements first.');
+                }
+                return;
+            }
+            
+            // Store original state to restore later
+            const canvas = document.getElementById('canvas');
+            const originalImageLabel = window.paintApp.state.currentImageLabel;
+            
+            let isFirstPage = true;
+            let globalRadioAdded = false;
+            
+            // Create one page per image with screen view capture
+            for (let i = 0; i < images.length; i++) {
+                const imageData = images[i];
+                
+                if (!isFirstPage) {
+                    pdf.addPage();
+                }
+                
+                let yPosition = 20;
+                
+                // Add global unit selection radio buttons only on first page
+                if (isFirstPage && !globalRadioAdded) {
+                    // Global header
+                    pdf.setFontSize(18);
+                    pdf.setFont(undefined, 'bold');
+                    pdf.text(`${projectName} - Measurement Form`, 20, yPosition);
+                    yPosition += 8;
+                    
+                    pdf.setFontSize(10);
+                    pdf.setFont(undefined, 'normal');
+                    pdf.text(`Date: ${new Date().toLocaleDateString()}`, 20, yPosition);
+                    yPosition += 10;
+                    
+                    // Compact global unit selection
+                    const RadioButton = jsPDF.AcroForm.RadioButton;
+                    
+                    // Create radio button group
+                    const radioGroup = new RadioButton();
+                    radioGroup.fieldName = 'units_global';
+                    pdf.addField(radioGroup);
+                    
+                    // Compact unit selection layout - text first, then buttons inline
+                    pdf.setFontSize(11);
+                    pdf.setFont(undefined, 'bold');
+                    pdf.text('UNIT SELECTION (applies to entire form):', 20, yPosition);
+                    
+                    const radioY = yPosition;
+                    
+                    // Position radio buttons inline after the text
+                    const inchesOption = radioGroup.createOption('Inches');
+                    inchesOption.x = 135;
+                    inchesOption.y = radioY - 2;
+                    inchesOption.width = 3;
+                    inchesOption.height = 3;
+                    
+                    const cmOption = radioGroup.createOption('CM');
+                    cmOption.x = 170;
+                    cmOption.y = radioY - 2;
+                    cmOption.width = 3;
+                    cmOption.height = 3;
+                    
+                    // Set appearance for radio buttons (mandatory for proper display)
+                    radioGroup.setAppearance(jsPDF.AcroForm.Appearance.RadioButton.Circle);
+                    
+                    // Pre-select based on chosen unit
+                    if (selectedUnit === 'inch') {
+                        inchesOption.appearanceState = 'On';
+                        cmOption.appearanceState = 'Off';
+                        radioGroup.value = 'Inches';
+                    } else {
+                        inchesOption.appearanceState = 'Off';
+                        cmOption.appearanceState = 'On';
+                        radioGroup.value = 'CM';
+                    }
+                    
+                    // Radio button labels positioned next to buttons
+                    pdf.setFontSize(10);
+                    pdf.setFont(undefined, 'normal');
+                    pdf.text('Inches', 140, yPosition);
+                    pdf.text('Centimeters', 175, yPosition);
+                    yPosition += 5;
+                    
+                    // Instruction text on next line
+                    pdf.setFontSize(9);
+                    pdf.setFont(undefined, 'italic');
+                    pdf.setTextColor(100, 100, 100);
+                    pdf.text('Select your preferred unit. All measurements will display in the selected unit.', 20, yPosition);
+                    pdf.setTextColor(0, 0, 0);
+                    pdf.setFont(undefined, 'normal');
+                    yPosition += 10;
+                    
+                    globalRadioAdded = true;
+                }
+                
+                // Page header with image name
                 pdf.setFontSize(14);
                 pdf.setFont(undefined, 'bold');
-                pdf.text('Measurements', 20, yPosition);
-                yPosition += 10;
+                pdf.text(`${imageData.label}`, 20, yPosition);
+                yPosition += 8;
                 
-                if (measurements.length > 0) {
-                    // Table headers
-                    pdf.setFontSize(10);
+                isFirstPage = false;
+                
+                // Capture image with measurements drawn
+                try {
+                    // Switch to the target image to capture with measurements
+                    if (window.paintApp.state.currentImageLabel !== imageData.label) {
+                        window.switchToImage(imageData.label);
+                        // Wait for rendering to complete
+                        await new Promise(resolve => setTimeout(resolve, 300));
+                    }
+                    
+                    // Create high-resolution capture of canvas with measurements
+                    const tempCanvas = document.createElement('canvas');
+                    const tempCtx = tempCanvas.getContext('2d');
+                    const scale = 2;
+                    tempCanvas.width = canvas.width * scale;
+                    tempCanvas.height = canvas.height * scale;
+                    tempCtx.scale(scale, scale);
+                    tempCtx.drawImage(canvas, 0, 0);
+                    
+                    // Convert to data URL and add to PDF
+                    const imageDataUrl = tempCanvas.toDataURL('image/jpeg', 0.8);
+                    
+                    // Calculate dimensions to fit on page
+                    const maxWidth = 170;
+                    const maxHeight = 120;
+                    const canvasAspectRatio = canvas.width / canvas.height;
+                    
+                    let imgWidth = maxWidth;
+                    let imgHeight = maxWidth / canvasAspectRatio;
+                    
+                    if (imgHeight > maxHeight) {
+                        imgHeight = maxHeight;
+                        imgWidth = maxHeight * canvasAspectRatio;
+                    }
+                    
+                    // Center the image
+                    const imgX = (210 - imgWidth) / 2;
+                    pdf.addImage(imageDataUrl, 'JPEG', imgX, yPosition, imgWidth, imgHeight);
+                    yPosition += imgHeight + 15;
+                    
+                } catch (error) {
+                    console.warn(`Could not capture image ${imageData.label}:`, error);
+                    pdf.setFontSize(12);
+                    pdf.setFont(undefined, 'italic');
+                    pdf.text(`[Image could not be captured]`, 20, yPosition);
+                    yPosition += 20;
+                }
+                
+                // Measurements form section
+                if (imageData.hasMeasurements && imageData.measurements.length > 0) {
+                    pdf.setFontSize(14);
                     pdf.setFont(undefined, 'bold');
-                    pdf.text('Label', 20, yPosition);
-                    pdf.text('Measurement', 60, yPosition);
-                    pdf.text('Unit', 120, yPosition);
-                    yPosition += 5;
+                    pdf.text('MEASUREMENTS', 20, yPosition);
+                    yPosition += 8;
                     
-                    // Table line
-                    pdf.line(20, yPosition, 170, yPosition);
-                    yPosition += 5;
-                    
-                    // Table content
+                    pdf.setFontSize(9);
                     pdf.setFont(undefined, 'normal');
-                    measurements.forEach(measurement => {
-                        if (yPosition > 270) {
+                    pdf.text('Fill in measurements for each labeled dimension:', 20, yPosition);
+                    yPosition += 12;
+                    
+                    // Create measurements in columns - 4x4 (16) max per page
+                    const measurements = imageData.measurements;
+                    let numColumns, itemsPerColumn;
+                    
+                    // Determine column layout - prioritize fitting 16 items (4x4) per page
+                    if (measurements.length <= 8) {
+                        numColumns = 2;
+                        itemsPerColumn = Math.ceil(measurements.length / 2);
+                    } else if (measurements.length <= 12) {
+                        numColumns = 3;
+                        itemsPerColumn = Math.ceil(measurements.length / 3);
+                    } else {
+                        numColumns = 4;
+                        itemsPerColumn = 4; // Force 4 rows max for first page
+                    }
+                    
+                    // Column positions - tighter spacing for 4 columns
+                    const columnWidths = [20, 65, 110, 155]; // Base X positions for up to 4 columns
+                    
+                    for (let j = 0; j < measurements.length; j++) {
+                        const measurement = measurements[j];
+                        const columnIndex = Math.floor(j / itemsPerColumn);
+                        const rowIndex = j % itemsPerColumn;
+                        
+                        const baseX = columnWidths[columnIndex];
+                        const currentY = yPosition + (rowIndex * 15);
+                        
+                        // Check if we need a new page (if any measurement goes beyond page height)
+                        let finalCurrentY = currentY;
+                        if (currentY > 270) {
                             pdf.addPage();
                             yPosition = 20;
+                            pdf.setFontSize(14);
+                            pdf.setFont(undefined, 'bold');
+                            pdf.text('MEASUREMENTS (continued)', 20, yPosition);
+                            yPosition += 15;
+                            
+                            // Recalculate position for new page
+                            const newRowIndex = j % itemsPerColumn;
+                            finalCurrentY = yPosition + (newRowIndex * 15);
                         }
                         
-                        pdf.text(measurement.label, 20, yPosition);
-                        pdf.text(measurement.value, 60, yPosition);
-                        pdf.text(measurement.unit, 120, yPosition);
-                        yPosition += 6;
-                    });
+                        // Measurement label with overflow handling
+                        pdf.setFontSize(10);
+                        pdf.setFont(undefined, 'bold');
+                        
+                        // Check if label is too long to fit before input field (estimate 5 chars per mm)
+                        const labelText = `${measurement.label}:`;
+                        const availableWidth = 40; // Space available for label in mm
+                        const estimatedLabelWidth = labelText.length * 1.8; // Rough estimate
+                        
+                        let fieldY, inputX;
+                        if (estimatedLabelWidth > availableWidth) {
+                            // Long label: put on separate line, input field below
+                            pdf.text(labelText, baseX, finalCurrentY);
+                            fieldY = finalCurrentY + 5; // Input field below label
+                            inputX = baseX; // Align input with label start
+                        } else {
+                            // Short label: put input field inline
+                            pdf.text(labelText, baseX, finalCurrentY);
+                            fieldY = finalCurrentY - 3;
+                            inputX = baseX + estimatedLabelWidth + 2; // Input field after label
+                        }
+                        
+                        const fieldWidth = 25;
+                        const fieldHeight = 6;
+                        
+                        // Create measurement field with single unit value
+                        const TextField = jsPDF.AcroForm.TextField;
+                        const textField = new TextField();
+                        textField.fieldName = `measurement_${imageData.label}_${measurement.label}`;
+                        textField.Rect = [inputX, fieldY, fieldWidth, fieldHeight];
+                        textField.fontSize = 9;
+                        
+                        let measurementValue = '';
+                        if (measurement.measurement) {
+                            const data = measurement.measurement;
+                            if (data.inchWhole !== undefined) {
+                                if (selectedUnit === 'inch') {
+                                    // Show only inch value
+                                    const inches = data.inchWhole + (data.inchFraction || 0);
+                                    measurementValue = `${inches}`;
+                                } else {
+                                    // Show only cm value
+                                    const cm = data.cm || 0;
+                                    measurementValue = `${cm.toFixed(1)}`;
+                                }
+                                
+                                console.log(`[PDF Debug] Measurement ${measurement.label}: selected unit="${selectedUnit}", value="${measurementValue}"`);
+                            }
+                        }
+                        
+                        textField.value = measurementValue;
+                        pdf.addField(textField);
+                    }
+                    
+                    // Update yPosition to after all measurements (account for multi-column layout)
+                    yPosition += (itemsPerColumn * 15) + 10;
+                    
                 } else {
+                    // No measurements for this image
+                    pdf.setFontSize(14);
+                    pdf.setFont(undefined, 'bold');
+                    pdf.text('NO MEASUREMENTS', 20, yPosition);
+                    yPosition += 8;
+                    
+                    pdf.setFontSize(10);
                     pdf.setFont(undefined, 'normal');
-                    pdf.text('No measurements found.', 20, yPosition);
-                    yPosition += 10;
+                    pdf.text('This image does not have measurement lines defined.', 20, yPosition);
+                    yPosition += 6;
+                    pdf.text('Use this page for reference or add measurements as needed.', 20, yPosition);
+                    yPosition += 15;
                 }
                 
-                yPosition += 10;
+                // Instructions at bottom of page
+                if (yPosition < 250) {
+                    yPosition = Math.max(yPosition + 10, 260);
+                    pdf.setFontSize(8);
+                    pdf.setFont(undefined, 'italic');
+                    const unitName = selectedUnit === 'inch' ? 'inches' : 'centimeters';
+                    pdf.text(`Instructions: All measurements are displayed in ${unitName} as selected. The radio button above shows your choice.`, 20, yPosition);
+                    pdf.text('Each label corresponds to a measurement line shown in the image above. Values can be edited as needed.', 20, yPosition + 4);
+                }
             }
             
-            if (layout === 'images-only' || layout === 'side-by-side') {
-                // Add images
-                pdf.setFontSize(14);
-                pdf.setFont(undefined, 'bold');
-                pdf.text('Images', 20, yPosition);
-                yPosition += 10;
-                
-                for (let i = 0; i < window.pastedImages.length; i++) {
-                    const image = window.pastedImages[i];
-                    
-                    if (yPosition > 200) {
-                        pdf.addPage();
-                        yPosition = 20;
-                    }
-                    
-                    try {
-                        // Add image label if enabled
-                        if (includeImageLabels && image.label) {
-                            pdf.setFontSize(12);
-                            pdf.setFont(undefined, 'bold');
-                            pdf.text(`Image ${i + 1}: ${image.label}`, 20, yPosition);
-                            yPosition += 8;
-                        }
-                        
-                        // Calculate image dimensions to fit on page
-                        const maxWidth = 170;
-                        const maxHeight = 100;
-                        
-                        let imgWidth = maxWidth;
-                        let imgHeight = (image.height / image.width) * maxWidth;
-                        
-                        if (imgHeight > maxHeight) {
-                            imgHeight = maxHeight;
-                            imgWidth = (image.width / image.height) * maxHeight;
-                        }
-                        
-                        // Add image to PDF
-                        pdf.addImage(image.src, 'JPEG', 20, yPosition, imgWidth, imgHeight);
-                        yPosition += imgHeight + 15;
-                        
-                    } catch (error) {
-                        console.warn(`Could not add image ${i + 1} to PDF:`, error);
-                        pdf.setFontSize(10);
-                        pdf.setFont(undefined, 'italic');
-                        pdf.text(`[Image ${i + 1} could not be included]`, 20, yPosition);
-                        yPosition += 10;
-                    }
-                }
+            // Restore original image
+            if (originalImageLabel && originalImageLabel !== window.paintApp.state.currentImageLabel) {
+                window.switchToImage(originalImageLabel);
             }
             
             // Save the PDF
-            const fileName = `${projectName.replace(/[^a-z0-9]/gi, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+            const fileName = `${projectName.replace(/[^a-z0-9]/gi, '_')}_measurement_form_${new Date().toISOString().split('T')[0]}.pdf`;
             pdf.save(fileName);
             
             // Close the dialog
@@ -1868,7 +2148,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 overlay.remove();
             }
             
-            showStatus(`PDF "${fileName}" generated successfully!`, 'success');
+            if (typeof window.projectManager?.showStatusMessage === 'function') {
+                window.projectManager.showStatusMessage(`Measurement form PDF "${fileName}" generated successfully!`, 'success');
+            } else {
+                alert(`Measurement form PDF "${fileName}" generated successfully!`);
+            }
             
         } catch (error) {
             console.error('Error generating PDF:', error);
@@ -7835,6 +8119,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 if(canvas.style.cursor !== 'grab' && canvas.style.cursor !== 'grabbing') {
                     updateCursor('grab', `control point ${controlPointHover.type} ${controlPointHover.pointIndex}`);
                 }
+            } else {
+                // Reset cursor when not hovering over control points but still in edit mode
+                if (canvas.style.cursor === 'grab' && !hoveredCanvasLabelInfo) {
+                    updateCursor('default', 'edit mode no hover');
+                }
             }
         }
     }
@@ -8930,6 +9219,9 @@ document.addEventListener('DOMContentLoaded', () => {
             // Force redraw to show labels immediately
             redrawCanvasWithVisibility();
         }
+        
+        // Reset cursor when mouse leaves canvas (unless in specific drag states handled above)
+        updateCursor('default', 'mouse left canvas');
     });
     
     // F1 & F2: Enhanced Window-Level Event Handling with Centralized Cursor Management
