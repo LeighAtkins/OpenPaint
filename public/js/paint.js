@@ -1,7 +1,7 @@
 // Define core application structure for better state management
 window.paintApp = {
     config: {
-        IMAGE_LABELS: ['front', 'side', 'back', 'cushion'],
+        IMAGE_LABELS: ['front', 'side', 'back', 'cushion', 'blank_canvas'],
         MAX_HISTORY: 50,  // Maximum number of states to store
         ANCHOR_SIZE: 4,
         CLICK_AREA: 10,
@@ -224,10 +224,10 @@ document.addEventListener('DOMContentLoaded', () => {
     window.paintApp.state.domElements.strokeCounter = document.getElementById('strokeCounter');
     window.paintApp.state.domElements.imageList = document.getElementById('imageList');
     window.paintApp.state.domElements.drawingModeToggle = document.getElementById('drawingModeToggle');
-    window.paintApp.state.domElements.strokeSidebar = document.getElementById('strokeSidebar');
-    window.paintApp.state.domElements.imageSidebar = document.getElementById('imageSidebar');
-    window.paintApp.state.domElements.strokeSidebarHeader = document.getElementById('strokeSidebarHeader');
-    window.paintApp.state.domElements.imageSidebarHeader = document.getElementById('imageSidebarHeader');
+    window.paintApp.state.domElements.strokeSidebar = document.getElementById('strokePanel');
+    window.paintApp.state.domElements.imageSidebar = document.getElementById('imagePanel');
+    window.paintApp.state.domElements.strokeSidebarHeader = document.getElementById('strokePanel');
+    window.paintApp.state.domElements.imageSidebarHeader = document.getElementById('imagePanel');
     
     // Create backward compatibility references
     const canvas = window.paintApp.state.domElements.canvas;
@@ -1255,8 +1255,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     </label>
                 </div>
                 <div>
-                    <button onclick="handleExportImages('${projectName}')" style="padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; background-color: #4CAF50; color: white; font-weight: bold; margin-right: 10px;">Export Images</button>
-                    <button onclick="showPDFExportDialog('${projectName}')" style="padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; background-color: #2196F3; color: white; font-weight: bold; margin-right: 10px;">Save as PDF</button>
+                    <button onclick="handleExportImages('${projectName.replace(/'/g, "\\'").replace(/"/g, "&quot;")}')" style="padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; background-color: #4CAF50; color: white; font-weight: bold; margin-right: 10px;">Export Images</button>
+                    <button onclick="showPDFExportDialog('${projectName.replace(/'/g, "\\'").replace(/"/g, "&quot;")}')" style="padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; background-color: #2196F3; color: white; font-weight: bold; margin-right: 10px;">Save as PDF</button>
                     <button onclick="this.closest('#imageSelectionOverlay').remove()" style="padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; background-color: #f0f0f0; color: #333;">Cancel</button>
                 </div>
             </div>
@@ -1681,7 +1681,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 
                 <div style="padding: 20px; border-top: 1px solid #eee; display: flex; justify-content: flex-end; gap: 10px;">
-                    <button onclick="generatePDF('${projectName}')" style="padding: 12px 24px; border: none; border-radius: 4px; cursor: pointer; background-color: #4CAF50; color: white; font-weight: bold;">
+                    <button onclick="generatePDF('${projectName.replace(/'/g, "\\'").replace(/"/g, "&quot;")}')" style="padding: 12px 24px; border: none; border-radius: 4px; cursor: pointer; background-color: #4CAF50; color: white; font-weight: bold;">
                         Generate PDF
                     </button>
                     <button onclick="this.closest('#pdfExportOverlay').remove()" style="padding: 12px 24px; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; background-color: white; color: #333;">
@@ -1784,9 +1784,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log(`[PDF] Updated project unit to: ${selectedUnit}`);
             }
             
-            // Check for jsPDF availability (UMD version can expose as jspdf or jsPDF)
+            // Check for jsPDF availability (version 2.5.1 UMD exposes as window.jspdf.jsPDF)
             const jsPDFConstructor = window.jspdf?.jsPDF || window.jsPDF;
             if (typeof jsPDFConstructor === 'undefined') {
+                console.error('[PDF] jsPDF not found. Available:', {
+                    'window.jspdf': window.jspdf,
+                    'window.jsPDF': window.jsPDF,
+                    'window.jspdf?.jsPDF': window.jspdf?.jsPDF
+                });
                 alert('PDF library not loaded. Please refresh the page and try again.');
                 return;
             }
@@ -3561,8 +3566,11 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Make all parts of the item selectable (except checkbox and buttons)
             item.addEventListener('click', (e) => {
+                console.log('🔄 [STROKE ITEM] Clicked:', strokeLabel, 'Target:', e.target.tagName, e.target.className);
+                
                 // Don't trigger selection if clicking a button or checkbox
                 if (e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT') {
+                    console.log('🔄 [STROKE ITEM] Click ignored - clicked on', e.target.tagName);
                     return;
                 }
                 
@@ -3570,136 +3578,57 @@ document.addEventListener('DOMContentLoaded', () => {
                 e.preventDefault();
                 e.stopPropagation();
                 
-                const now = Date.now();
-                const timeSinceLastClick = now - window.lastClickTime;
-                const clickedLabel = strokeLabel; // Store for timeout use
+                const clickedLabel = strokeLabel;
+                console.log('🔄 [STROKE ITEM] Processing click for:', clickedLabel);
                 
-                // Check if this is a double-click (more permissive timing for better UX)
-                if (timeSinceLastClick < (window.clickDelay * 1.5)) {
-                    // Double-click detected
-                    // console.log('🔄 [DEBUG] Double-click detected on stroke item:', clickedLabel, 'timeSinceLastClick:', timeSinceLastClick);
-                    if (window.singleClickTimeout) {
-                        clearTimeout(window.singleClickTimeout); // Cancel single-click action
-                        window.singleClickTimeout = null;
+                // IMMEDIATE SINGLE-CLICK response - SIMPLIFIED (like canvas tag selection)
+                // Clear edit mode if a different item is single-clicked
+                if (window.selectedStrokeInEditMode && window.selectedStrokeInEditMode !== clickedLabel) {
+                    const prevEditItem = document.querySelector(`.stroke-visibility-item[data-stroke="${window.selectedStrokeInEditMode}"]`);
+                    if (prevEditItem) {
+                        prevEditItem.dataset.editMode = 'false';
+                        prevEditItem.style.removeProperty('background-color');
+                        prevEditItem.style.removeProperty('border-left');
+                        prevEditItem.style.removeProperty('box-shadow');
                     }
-                    
-                    window.selectedStrokeInEditMode = clickedLabel;
-                    
-                    // Make sure the item stays selected when entering edit mode
-                    multipleSelectedStrokesByImage[currentImageLabel] = [clickedLabel];
-                    selectedStrokeByImage[currentImageLabel] = clickedLabel;
-                    
-                    // Update UI for all items by refreshing the list
-                    updateStrokeVisibilityControls(); 
-                    
-//                     console.log('Entered edit mode for stroke:', clickedLabel);
-                    
-                    hideSelectionActionsPanel(); 
-                    redrawCanvasWithVisibility();
-                } else {
-                    // Single-click or click on a different item
-                    // Delay single-click action to allow for double-click
-                    if (window.singleClickTimeout) {
-                        clearTimeout(window.singleClickTimeout);
-                    }
-                    window.singleClickTimeout = setTimeout(() => {
-//                         console.log('Single-click action for stroke item:', clickedLabel);
-                        // Clear edit mode if a different item is single-clicked
-                        if (window.selectedStrokeInEditMode && window.selectedStrokeInEditMode !== clickedLabel) {
-                            const prevEditItem = document.querySelector(`.stroke-visibility-item[data-stroke="${window.selectedStrokeInEditMode}"]`);
-                            if (prevEditItem) {
-                                prevEditItem.dataset.editMode = 'false';
-                                prevEditItem.style.removeProperty('background-color');
-                                prevEditItem.style.removeProperty('border-left');
-                                prevEditItem.style.removeProperty('box-shadow');
-                            }
-                            window.selectedStrokeInEditMode = null;
-                        }
-
-                        // Standard single-click selection logic (multi-select aware)
-                        const isCtrlPressed = e.ctrlKey || e.metaKey;
-                        const isShiftPressed = e.shiftKey;
-                        let currentSelection = multipleSelectedStrokesByImage[currentImageLabel] || [];
-                        const itemIndex = sortedStrokeLabels.indexOf(clickedLabel);
-
-                        if (isShiftPressed && lastSelectedStrokeIndex !== -1 && itemIndex !== -1) {
-                            // Range selection
-                            const start = Math.min(lastSelectedStrokeIndex, itemIndex);
-                            const end = Math.max(lastSelectedStrokeIndex, itemIndex);
-                            const rangeSelection = sortedStrokeLabels.slice(start, end + 1);
-                            
-                            if (isCtrlPressed) {
-                                // Add range to current selection (toggle if already present)
-                                rangeSelection.forEach(strokeId => {
-                                    if (currentSelection.includes(strokeId)) {
-                                        currentSelection = currentSelection.filter(id => id !== strokeId);
-                                    } else {
-                                        currentSelection.push(strokeId);
-                                    }
-                                });
-                            } else {
-                                // Replace selection with range
-                                currentSelection = rangeSelection;
-                            }
-                        } else if (isCtrlPressed) {
-                            // Toggle selection for the clicked item
-                            if (currentSelection.includes(clickedLabel)) {
-                                currentSelection = currentSelection.filter(id => id !== clickedLabel);
-                            } else {
-                                currentSelection.push(clickedLabel);
-                            }
-                            lastSelectedStrokeIndex = itemIndex;
-                        } else {
-                            // Single item selection (replace)
-                            if (currentSelection.includes(clickedLabel) && currentSelection.length === 1) {
-                                // Deselect if clicking the only selected item
-//                                 console.log('Deselecting stroke:', clickedLabel);
-                                currentSelection = []; 
-                                window.selectedStrokeInEditMode = null; // Also exit edit mode
-                            } else {
-                                currentSelection = [clickedLabel];
-                                window.selectedStrokeInEditMode = null; // Exit edit mode on new single selection
-                            }
-                            lastSelectedStrokeIndex = itemIndex;
-                        }
-
-                        multipleSelectedStrokesByImage[currentImageLabel] = currentSelection;
-                        selectedStrokeByImage[currentImageLabel] = currentSelection.length === 1 ? currentSelection[0] : null;
-                        
-                        // Update UI to reflect selection (and remove edit mode if it was on this item)
-                        document.querySelectorAll('.stroke-visibility-item').forEach(el => {
-                            const sLabel = el.dataset.stroke;
-                            if (currentSelection.includes(sLabel)) {
-                                el.dataset.selected = 'true';
-                                if (window.selectedStrokeInEditMode === sLabel && currentSelection.length > 1) {
-                                   // If it was in edit mode but now part of multi-select, exit edit mode
-                                   el.dataset.editMode = 'false';
-                                   window.selectedStrokeInEditMode = null;
-                                } else if (window.selectedStrokeInEditMode === sLabel && currentSelection.length === 1 && !isCtrlPressed && !isShiftPressed) {
-                                    // If it was in edit mode, and it's still the only selected, keep edit mode
-                                     el.dataset.editMode = 'true';
-                                } else {
-                                     el.dataset.editMode = 'false'; // Default to not edit mode
-                                }
-
-                            } else {
-                                el.dataset.selected = 'false';
-                                el.dataset.editMode = 'false'; // Ensure not in edit mode if not selected
-                            }
-                        });
-
-                        if (selectedStrokeByImage[currentImageLabel] && !window.selectedStrokeInEditMode) {
-                             // If single selected and NOT in edit mode, ensure edit mode is false
-                             const selectedItem = document.querySelector(`.stroke-visibility-item[data-stroke="${selectedStrokeByImage[currentImageLabel]}"]`);
-                             if (selectedItem) selectedItem.dataset.editMode = 'false';
-                        }
-
-                        updateSelectionActionsPanel();
-                        redrawCanvasWithVisibility();
-                        window.singleClickTimeout = null;
-                    }, window.clickDelay);
+                    window.selectedStrokeInEditMode = null;
                 }
-                window.lastClickTime = now;
+                
+                // Simple single selection (just like canvas tags)
+                const currentSelection = [clickedLabel];
+                window.selectedStrokeInEditMode = null; // Exit edit mode on new single selection
+                
+                console.log('🔄 [STROKE ITEM] Setting selection to:', currentSelection);
+                
+                // Update selection state immediately
+                multipleSelectedStrokesByImage[currentImageLabel] = currentSelection;
+                selectedStrokeByImage[currentImageLabel] = clickedLabel;
+                
+                console.log('🔄 [STROKE ITEM] Updated global state:', {
+                    multiple: multipleSelectedStrokesByImage[currentImageLabel],
+                    single: selectedStrokeByImage[currentImageLabel]
+                });
+                
+                // Update UI to reflect selection immediately
+                document.querySelectorAll('.stroke-visibility-item').forEach(el => {
+                    const sLabel = el.dataset.stroke;
+                    if (sLabel === clickedLabel) {
+                        el.dataset.selected = 'true';
+                        el.dataset.editMode = 'false'; // Clear edit mode for immediate selection
+                        console.log('🔄 [STROKE ITEM] Set selected=true for:', sLabel);
+                    } else {
+                        el.dataset.selected = 'false';
+                        el.dataset.editMode = 'false';
+                    }
+                });
+                
+                console.log('🔄 [STROKE ITEM] Calling updateSelectionActionsPanel and redraw...');
+                
+                // Update UI immediately for snappy response
+                updateSelectionActionsPanel();
+                redrawCanvasWithVisibility();
+                
+                console.log('🔄 [STROKE ITEM] Click handling completed');
             });
             
             const checkbox = document.createElement('input');
@@ -6690,10 +6619,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Set canvas size
     function resizeCanvas() {
-        // Account for the sidebars and gaps in our calculation (approximately 420px for sidebars + gaps)
-        const sidebarSpace = 440;
-        const maxWidth = Math.min(window.innerWidth - sidebarSpace, 1000);  // Cap at 1000px width
-        const maxHeight = Math.min(window.innerHeight - 100, 800);  // Cap at 800px height
+        // Fullscreen canvas - use entire viewport
+        const maxWidth = window.innerWidth;
+        const maxHeight = window.innerHeight;
         
         // Save current state before resizing
         const oldState = imageStates[currentImageLabel];
@@ -10434,9 +10362,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-    // Make both sidebars draggable
-    makeDraggable(strokeSidebar, strokeSidebarHeader);
-    makeDraggable(imageSidebar, imageSidebarHeader);
+    // Make both sidebars draggable (handled by new UI controller script)
+    // makeDraggable(strokeSidebar, strokeSidebarHeader);
+    // makeDraggable(imageSidebar, imageSidebarHeader);
     
     // DRAG AND DROP SETUP - MODIFIED TO USE DOCUMENT LISTENERS
     function setupDragAndDrop() {

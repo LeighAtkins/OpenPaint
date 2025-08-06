@@ -4,827 +4,669 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OpenPaint</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        // Modern brand colors
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        },
+                        // Semantic colors
+                        primary: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            300: '#93c5fd',
+                            400: '#60a5fa',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                        },
+                        success: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            200: '#bbf7d0',
+                            300: '#86efac',
+                            400: '#4ade80',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            800: '#166534',
+                            900: '#14532d',
+                        },
+                        danger: {
+                            50: '#fef2f2',
+                            100: '#fee2e2',
+                            200: '#fecaca',
+                            300: '#fca5a5',
+                            400: '#f87171',
+                            500: '#ef4444',
+                            600: '#dc2626',
+                            700: '#b91c1c',
+                            800: '#991b1b',
+                            900: '#7f1d1d',
+                        },
+                        warning: {
+                            50: '#fffbeb',
+                            100: '#fef3c7',
+                            200: '#fde68a',
+                            300: '#fcd34d',
+                            400: '#fbbf24',
+                            500: '#f59e0b',
+                            600: '#d97706',
+                            700: '#b45309',
+                            800: '#92400e',
+                            900: '#78350f',
+                        },
+                    },
+                    fontFamily: {
+                        'sans': ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'sans-serif'],
+                    },
+                    fontSize: {
+                        'xs': ['0.75rem', { lineHeight: '1rem' }],
+                        'sm': ['0.875rem', { lineHeight: '1.25rem' }],
+                        'base': ['1rem', { lineHeight: '1.5rem' }],
+                        'lg': ['1.125rem', { lineHeight: '1.75rem' }],
+                        'xl': ['1.25rem', { lineHeight: '1.75rem' }],
+                        '2xl': ['1.5rem', { lineHeight: '2rem' }],
+                    },
+                    borderRadius: {
+                        'xl': '0.75rem',
+                        '2xl': '1rem',
+                        '3xl': '1.5rem',
+                    },
+                    boxShadow: {
+                        'glass': '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
+                        'panel': '0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                        'elevated': '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+                    },
+                    backdropBlur: {
+                        'xs': '2px',
+                    }
+                }
+            }
+        }
+    </script>
     <style>
         body {
             margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        .container {
-            width: 100%;
-            max-width: 1400px;
-            margin: 0 auto;
-            position: relative;
-        }
-        
-        .main-content {
-            width: calc(100% - 40px);
-            max-width: 1000px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
-        .toolbar {
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-        .image-sidebar {
-            width: 220px;
-            position: fixed;
-            top: 20px;
-            right: 0px;
-            background: #f5f5f5;
-            padding: 15px;
-            border-radius: 4px;
-            max-height: calc(100vh - 40px);
-            overflow-y: auto;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            cursor: move;
-            z-index: 100;
-        }
-        .stroke-sidebar {
-            width: 220px;
-            position: fixed;
-            top: 20px;
-            left: 0px;
-            background: #f5f5f5;
-            padding: 15px;
-            border-radius: 4px;
-            max-height: calc(100vh - 40px);
-            overflow-y: auto;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            cursor: move;
-            z-index: 100;
-        }
-        .sidebar-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-            cursor: move;
-        }
-        .image-sidebar h3, .stroke-sidebar h3 {
-            margin-top: 0;
-            margin-bottom: 0;
-            font-size: 16px;
-            color: #333;
-        }
-        .drag-handle {
-            cursor: move;
-            font-size: 18px;
-            color: #666;
-        }
-        .image-container {
-            position: relative;
-            margin-bottom: 15px;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            background: white;
-            border: 2px solid transparent;
-        }
-        .image-container.active {
-            border-color: #4CAF50;
-            box-shadow: 0 2px 8px rgba(76, 175, 80, 0.2);
-        }
-        .pasted-image {
-            width: 100%;
-            height: auto;
-            border-radius: 4px;
-            display: block;
-        }
-        .image-label {
-            position: absolute;
-            top: 8px;
-            left: 8px;
-            background: rgba(0, 0, 0, 0.6);
-            color: white;
-            padding: 4px 8px;
-            border-radius: 3px;
-            font-size: 12px;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-        .image-strokes {
-            position: absolute;
-            bottom: 8px;
-            right: 8px;
-            background: rgba(0, 0, 0, 0.6);
-            color: white;
-            padding: 3px 6px;
-            border-radius: 3px;
-            font-size: 10px;
-            max-width: 45%;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-        .image-scale {
-            position: absolute;
-            bottom: 8px;
-            left: 8px;
-            background: rgba(0, 0, 0, 0.6);
-            color: white;
-            padding: 3px 6px;
-            border-radius: 3px;
-            font-size: 10px;
-            max-width: 45%;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-        .image-container:hover {
-            transform: scale(1.02);
-            box-shadow: 0 2px 12px rgba(0,0,0,0.15);
-        }
-        #imageList {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-        canvas {
-            border: 1px solid #ccc;
-        }
-        #canvas {
-            background-color: white;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            cursor: crosshair;
-            transition: all 0.3s ease;
-        }
-        #canvas.drag-over {
-            border: 2px dashed #4CAF50;
-            box-shadow: 0 0 10px rgba(76, 175, 80, 0.4);
-            background-color: rgba(76, 175, 80, 0.05);
-        }
-        /* Only apply these styles to top-level buttons, not to our custom buttons in sidebars */
-        .toolbar button, 
-        .canvas-controls button,
-        .project-buttons button,
-        .button-container button {
-            padding: 8px 15px;
-            margin: 0 5px;
-            border: none;
-            border-radius: 4px;
-            background-color: #4CAF50;
-            color: white;
-            cursor: pointer;
-        }
-        .toolbar button:hover, 
-        .canvas-controls button:hover,
-        .project-buttons button:hover,
-        .button-container button:hover {
-            background-color: #45a049;
-        }
-        .canvas-controls {
-            margin-top: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-        .tool-controls {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-        .project-header {
-            width: 100%;
-            margin-bottom: 15px;
-            display: flex;
-            justify-content: center;
-            padding: 10px;
-            background-color: #f9f9f9;
-            border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-        .project-name {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-        .project-name input {
-            padding: 8px 12px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            width: 200px;
-        }
-        .project-name select {
-            padding: 8px 12px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-        .unit-selector-container {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        .measurement-container {
-            display: flex;
-            align-items: center;
-        }
-        .inch-inputs, .cm-inputs {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        .inch-input, .cm-input {
-            width: 50px;
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-        #inchFraction {
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-        .unit-label {
-            font-size: 14px;
-            color: #666;
-        }
-        .project-buttons {
-            display: flex;
-            gap: 8px;
-            margin-left: 15px;
-        }
-        .project-buttons button {
-            background-color: #4CAF50;
-            color: white;
-            padding: 8px 12px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.2s ease;
-        }
-        .project-buttons button:hover {
-            background-color: #45a049;
-            transform: translateY(-1px);
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        .color-palette {
-            display: flex;
-            gap: 8px;
-            margin: 0 10px;
-        }
-        .color-btn {
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            border: 2px solid #ddd;
-            cursor: pointer;
             padding: 0;
-            margin: 0;
+            overflow: hidden;
+            font-family: system-ui, -apple-system, sans-serif;
         }
-        .color-btn.active {
-            border-color: #333;
-            box-shadow: 0 0 0 2px white, 0 0 0 4px #666;
-        }
-        .instruction {
-            font-size: 14px;
-            color: #555;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        kbd {
-            padding: 2px 5px;
-            border: 1px solid #ddd;
-            border-radius: 3px;
-            box-shadow: 0 1px 1px rgba(0,0,0,0.2);
-            background-color: #f7f7f7;
-            color: #333;
-            font-family: monospace;
-            font-size: 12px;
-        }
-        .scale-dropdown {
-            position: relative;
-            display: inline-block;
-        }
-        .dropdown-btn {
-            padding: 8px 12px;
-            background-color: #4CAF50;
-            color: white;
-            border: 1px solid #43A047;
-            border-radius: 4px;
-            cursor: pointer;
-            min-width: 110px;
-            text-align: left;
-            font-size: 14px;
-        }
-        .dropdown-content {
-            display: none;
-            position: absolute;
-            background-color: white;
-            min-width: 110px;
-            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-            z-index: 1;
-            border-radius: 4px;
-            max-height: 300px;
-            overflow-y: auto;
-            top: 100%;
+        
+        /* Fullscreen canvas styles */
+        #canvas {
+            position: fixed;
+            top: 0;
             left: 0;
+            z-index: 1;
+            cursor: crosshair;
+            background: #f8f9fa;
         }
-        .dropdown-content.dropdown-up {
-            bottom: 100%;
-            top: auto;
+        
+        /* Modern floating panel base styles */
+        .floating-panel {
+            backdrop-filter: blur(20px);
+            background: rgba(255, 255, 255, 0.98);
+            box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 
+                       0 4px 6px -2px rgba(0, 0, 0, 0.05),
+                       0 0 0 1px rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .scale-dropdown:hover .dropdown-content {
+        
+        .floating-panel:hover {
+            background: rgba(255, 255, 255, 0.99);
+        }
+        
+        /* Only apply hover transform to main panels, not side panels */
+        #projectPanel:hover,
+        #toolsPanel:hover,
+        #canvasControls:hover {
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            transform: translateY(-1px);
+        }
+        
+        .floating-panel.dragging {
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            transform: none !important;
+            transition: none !important;
+        }
+        
+        /* Modern capture frame styles */
+        #captureOverlay {
+            backdrop-filter: none;
+        }
+        
+        .capture-frame {
+            background: transparent;
+            transition: none !important;
+        }
+        
+        .capture-frame.locked {
+            cursor: default;
+        }
+        
+        .capture-frame.unlocked {
+            cursor: move;
+        }
+        
+        /* Capture frame dragging - no transitions for 1:1 movement */
+        .capture-frame.dragging {
+            transition: none !important;
+        }
+        
+        /* Modern resize handles - smaller and more discrete */
+        .resize-handle {
+            position: absolute;
+            opacity: 0;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+        
+        .capture-frame.unlocked:hover .resize-handle,
+        .capture-frame.unlocked .resize-handle:hover {
+            opacity: 1;
+        }
+        
+        .resize-handle:hover {
+            transform: scale(1.3);
+            background: #3b82f6 !important;
+            border-color: white !important;
+        }
+        
+        /* Dark overlay - no transitions for instant response */
+        #darkOverlay {
+            transition: none;
+        }
+        
+        /* macOS style popup */
+        #lockPopup {
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        #lockPopup.show {
+            display: flex !important;
+            animation: fadeInOut 1.5s ease-in-out;
+        }
+        
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+            20% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            80% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+        }
+        
+        /* Lock button states */
+        #captureLockButton .locked-icon {
+            display: none;
+        }
+        
+        #captureLockButton .unlocked-icon {
             display: block;
         }
-        .scale-option {
-            padding: 10px;
-            cursor: pointer;
+        
+        #captureLockButton.locked .locked-icon {
+            display: block;
         }
-        .scale-option:hover {
-            background-color: #f0f0f0;
+        
+        #captureLockButton.locked .unlocked-icon {
+            display: none;
         }
-        .scale-option.active {
-            background-color: #4CAF50;
-            color: white;
+        
+        /* Hide resize handles when locked */
+        .capture-frame.locked .resize-handles {
+            display: none;
         }
-        .keyboard-shortcuts {
-            display: flex;
-            flex-direction: column;
-            font-size: 12px;
-            color: #666;
-            margin-left: 10px;
+        
+        /* Drag over canvas effects */
+        #canvas.drag-over {
+            background: rgba(76, 175, 80, 0.05);
         }
-        input[type="color"] {
-            margin: 0 10px;
+        
+        /* Panel minimization styles */
+        .floating-panel.minimized {
+            max-height: none !important;
         }
-        input[type="range"] {
-            width: 100px;
-            margin: 0 10px;
+        
+        .floating-panel.minimized .cursor-move {
+            border-bottom: none;
         }
-        .counter {
-            margin-left: 15px;
-            padding: 5px 10px;
-            background: #f0f0f0;
-            border-radius: 4px;
-            font-size: 14px;
-            color: #333;
-        }
-        /* Stroke visibility controls */
-        #strokeVisibilityControls {
-            margin-top: 10px;
-        }
-        .stroke-visibility-item {
-            display: flex;
-            align-items: center;
-            margin-bottom: 10px;
-            padding: 8px;
-            background-color: white;
-            border-radius: 4px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            position: relative;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-        .stroke-visibility-item input {
-            margin-right: 8px;
-        }
-        .stroke-visibility-item label {
-            flex-grow: 1;
-            font-size: 0.9em;
-            cursor: pointer;
-        }
-        .stroke-visibility-item:hover {
-            background-color: #f0f8ff;
-            transform: translateY(-1px);
-            box-shadow: 0 2px 5px rgba(0,0,0,0.15);
-        }
-        .stroke-visibility-item[data-selected="true"] {
-            background-color: #e6f7ff;
-            border-left: 3px solid #4CAF50;
-            transform: translateY(-1px);
-            box-shadow: 0 3px 6px rgba(76, 175, 80, 0.2);
-        }
-        /* Edit mode styling */
-        .stroke-visibility-item[data-edit-mode="true"],
-        .stroke-visibility-item[data-editmode="true"] {
-            background-color: #fff3e0 !important;
-            border-left: 3px solid #FF9800 !important;
-            transform: translateY(-1px);
-            box-shadow: 0 3px 6px rgba(255, 152, 0, 0.2) !important;
-        }
-        .stroke-label-container {
-            display: flex;
-            align-items: center;
-            flex-grow: 1;
-        }
-        .stroke-name {
-            padding: 2px 6px;
-            border-radius: 3px;
-            background: white;
-            border: 1px solid #ddd;
-            font-weight: bold;
-            display: inline-block;
-            margin-right: 5px;
-            min-width: 30px;
-            text-align: center;
-        }
-        .stroke-measurement {
-            font-size: 0.8em;
-            color: #666;
-            margin-left: 5px;
-            flex-grow: 1;
-        }
-        .stroke-edit-btn, .stroke-label-toggle {
-            background: none;
-            border: none;
-            color: #666;
-            cursor: pointer;
-            padding: 2px;
-            margin-left: 5px;
-            font-size: 12px;
-        }
-        .stroke-edit-btn:hover, .stroke-label-toggle:hover {
-            color: #4CAF50;
-            background: none;
-        }
-        .stroke-label-toggle.active {
-            color: #4CAF50;
-        }
-        .measurement-input {
-            display: flex;
-            align-items: center;
-            margin-top: 6px;
-            gap: 8px;
-        }
-        .measurement-input input {
-            width: 40px;
-            padding: 3px;
-            border: 1px solid #ddd;
-            border-radius: 3px;
-        }
-        .measurement-input select {
-            padding: 3px;
-            border: 1px solid #ddd;
-            border-radius: 3px;
-        }
-        .current-unit-display {
-            font-weight: bold;
-            padding: 8px;
-            background-color: #f0f0f0;
-            border-radius: 4px;
-            text-align: center;
-            margin: 10px 0;
-            color: #444;
-        }
-        .measurement-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 9999;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        .measurement-dialog {
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-            width: 350px;
-            max-width: 90%;
-        }
-        .measurement-dialog h3 {
-            margin-top: 0;
-            margin-bottom: 15px;
-            color: #333;
-            font-size: 18px;
-        }
-        .name-container, .inch-container, .cm-container {
-            margin-bottom: 15px;
-        }
-        .name-container div, .inch-container div, .cm-container div {
-            font-weight: bold;
-            margin-bottom: 5px;
-            color: #555;
-        }
-        .name-container input {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-        .measurement-dialog-inputs {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-        .inch-inputs {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .inch-inputs input, .cm-container input {
-            width: 80px;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-        .inch-inputs select {
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-        .button-container {
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-            margin-top: 20px;
-        }
-        .button-container button {
-            padding: 8px 16px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        .button-container button:first-child {
-            background-color: #4CAF50;
-            color: white;
-        }
-        .button-container button:last-child {
-            background-color: #f0f0f0;
-            color: #333;
-        }
-        .button-container button:first-child:hover {
-            background-color: #45a049;
-        }
-        .button-container button:last-child:hover {
-            background-color: #e0e0e0;
-        }
-        hr {
-            border: none;
-            border-top: 1px solid #ddd;
-            margin: 15px 0;
-        }
-        /* Drawing mode toggle styling */
-        #drawingModeToggle {
-            display: flex;
-            align-items: center;
-            padding: 8px 15px;
-            font-weight: bold;
-            position: relative;
-            border: 1px solid #4CAF50;
-            background-color: white;
-            color: #4CAF50;
-            transition: all 0.2s ease;
-        }
-        #drawingModeToggle:hover {
-            background-color: #f0fff0;
-        }
-        #drawingModeToggle::before {
-            content: "";
-            display: inline-block;
-            width: 14px;
-            height: 14px;
-            margin-right: 8px;
-            background-color: #4CAF50;
-            border-radius: 50%;
-        }
-        #drawingModeToggle.straight-mode {
-            background-color: #e8f5e9;
-        }
-        #drawingModeToggle.straight-mode::before {
-            border-radius: 0;
-        }
-        #drawingModeToggle.curved-mode {
-            background-color: #fff3e0;
-            color: #ff9800;
-            border-color: #ff9800;
-        }
-        #drawingModeToggle.curved-mode::before {
-            background: none;
-            border: none;
-            background-image: 
-                radial-gradient(circle at 25% 50%, #ff9800 1px, transparent 1px),
-                radial-gradient(circle at 75% 50%, #ff9800 1px, transparent 1px);
-            background-size: 4px 4px, 4px 4px;
-            background-position: 0 2px, 0 -2px;
-            background-repeat: repeat-x, repeat-x;
-            width: 14px;
-            height: 6px;
-            border-radius: 0;
-        }
-        #drawingModeToggle.curved-mode:hover {
-            background-color: #fff8f0;
-        }
-        #drawingModeToggle.arrow-mode {
-            background-color: #ffebee;
-            color: #f44336;
-            border-color: #f44336;
-        }
-        #drawingModeToggle.arrow-mode::before {
-            background: none;
-            border: none;
-            content: "➤";
-            color: #f44336;
-            font-size: 12px;
-            width: auto;
-            height: auto;
-            margin-right: 6px;
-        }
-        #drawingModeToggle.arrow-mode:hover {
-            background-color: #ffcdd2;
-        }
-        .tag-dialog {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: #fff;
-            padding: 20px;
-            width: 80%;
-            max-width: 600px;
-            max-height: 80vh;
-            border-radius: 8px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-            z-index: 1000;
-            display: flex;
-            flex-direction: column;
+        
+        /* Smooth transitions for all panel content */
+        .floating-panel [id$='Content'],
+        .floating-panel [id$='Controls'] {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             overflow: hidden;
         }
-        .tag-dialog-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 999;
-        }
-        .tag-dialog-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #eee;
-        }
-        .tag-dialog-header h3 {
-            margin: 0;
-        }
-        .tag-dialog-close {
-            background: none;
-            border: none;
-            font-size: 18px;
-            cursor: pointer;
-        }
-        .tag-dialog-content {
-            flex: 1;
-            overflow-y: auto;
-            padding: 10px 0;
-        }
-        .tag-dialog-footer {
-            padding-top: 10px;
-            border-top: 1px solid #eee;
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-        }
-        .tag-category {
-            margin-bottom: 20px;
-        }
-        .tag-category-header {
-            margin-bottom: 8px;
-        }
-        .tag-category-header h4 {
-            margin: 0;
-            display: inline-block;
-        }
-        .tag-category-header .required {
-            color: red;
-            margin-left: 5px;
-        }
-        .tag-category-options {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-        .tag-option {
-            margin-bottom: 5px;
-        }
-        .tag-select {
-            width: 100%;
-            padding: 5px;
-            border-radius: 4px;
-            border: 1px solid #ccc;
-        }
-        .tag-dialog-save, 
-        .tag-dialog-cancel {
-            padding: 8px 15px;
-            border-radius: 4px;
-            border: 1px solid #ccc;
-            background: #f8f8f8;
-            cursor: pointer;
-        }
-        .tag-dialog-save {
-            background: #4CAF50;
-            color: white;
-            border-color: #43A047;
-        }
-        .tag-dialog-cancel {
-            background-color: #F44336;
-            color: white;
-            border-color: #D32F2F;
-        }
-        .tag-dialog-cancel:hover {
-            background-color: #D32F2F;
-            border-color: #C62828;
-        }
-        .image-tags {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 4px;
-            margin-top: 4px;
-            cursor: pointer;
-        }
-        .tag-badge {
-            font-size: 10px;
-            background: #e0e0e0;
-            color: #333;
-            padding: 2px 6px;
-            border-radius: 10px;
-        }
-        .edit-tags-button {
-            width: 100%;
-            margin-top: 5px;
-            font-size: 11px;
-            padding: 2px 0;
-            background: #4CAF50;
-            border: 1px solid #43A047;
-            border-radius: 3px;
-            cursor: pointer;
-        }
-        .edit-tags-button:hover {
-            background: #38813a;
-        }
-        .no-tags {
-            color: #999;
-            font-size: 10px;
-            font-style: italic;
-        }
-        /* Additional margin for consistency */
-        #strokeCounter {
-            margin-left: 10px;
-        }
-        .stroke-actions-panel {
-            position: absolute;
-            left: 3px; /* Align with the icon */
+        
+        .floating-panel [id$='Content'].hidden,
+        .floating-panel [id$='Controls'].hidden {
+            max-height: 0 !important;
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+            margin-top: 0 !important;
+            margin-bottom: 0 !important;
+            opacity: 0;
         }
         
-        /* Drag-and-drop styles for image reordering */
-        .image-container.dragging {
-            opacity: 0.5;
-            border: 2px dashed #ccc;
-            transform: scale(0.95);
+        /* Enhanced button hover effects */
+        .floating-panel button[id^='toggle']:hover svg {
+            transform: scale(1.1);
         }
         
-        .image-container.drag-over-before {
-            border-top: 3px solid #4CAF50;
+        /* Active state for minimized panels */
+        .floating-panel.minimized {
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
         }
         
-        .image-container.drag-over-after {
-            border-bottom: 3px solid #4CAF50;
+        .floating-panel:not(.minimized) {
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
         }
         
-        .delete-image-btn {
+        /* Ensure proper dragging behavior */
+        .floating-panel.dragging {
+            z-index: 9999 !important;
+            transform: none !important;
+            transition: none !important;
+        }
+        
+        /* Header dragging styles */
+        .cursor-move:active {
+            cursor: grabbing !important;
+        }
+        
+        /* Fix stroke visibility item layout */
+        .stroke-visibility-item {
+            display: flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            padding: 8px !important;
+            margin-bottom: 4px !important;
+            background: white !important;
+            border-radius: 6px !important;
+            border: 1px solid #e5e7eb !important;
+            transition: all 0.2s ease !important;
+        }
+        
+        .stroke-visibility-item:hover {
+            background-color: #f9fafb !important;
+            border-color: #d1d5db !important;
+        }
+        
+        .stroke-label-container {
+            display: flex !important;
+            align-items: center !important;
+            gap: 6px !important;
+            flex: 1 !important;
+        }
+        
+        .stroke-name {
+            font-weight: 600 !important;
+            font-size: 14px !important;
+            padding: 2px 6px !important;
+            border-radius: 4px !important;
+            border: 1px solid currentColor !important;
+            min-width: auto !important;
+        }
+        
+        .stroke-label-toggle-btn {
+            background: none !important;
+            border: none !important;
+            cursor: pointer !important;
+            font-size: 14px !important;
+            padding: 2px !important;
+            opacity: 0.7 !important;
+        }
+        
+        .stroke-label-toggle-btn:hover {
+            opacity: 1 !important;
+        }
+        
+        .stroke-measurement {
+            font-size: 13px !important;
+            color: #6b7280 !important;
+            font-weight: 500 !important;
+        }
+        
+        .stroke-delete-btn {
+            background: none !important;
+            border: none !important;
+            color: #ef4444 !important;
+            cursor: pointer !important;
+            font-size: 16px !important;
+            font-weight: bold !important;
+            padding: 2px 6px !important;
+            border-radius: 4px !important;
+            opacity: 0.7 !important;
+            transition: all 0.2s ease !important;
+        }
+        
+        .stroke-delete-btn:hover {
+            opacity: 1 !important;
+            background-color: #fef2f2 !important;
+        }
+        
+        /* Force scrollbars to always show when content overflows */
+        #strokeVisibilityControls,
+        #imagePanelContent {
+            scroll-behavior: smooth;
+            overflow-y: scroll !important;
+            scrollbar-width: auto !important;
+            scrollbar-color: #9ca3af #f3f4f6 !important;
+        }
+        
+        #strokeVisibilityControls::-webkit-scrollbar,
+        #imagePanelContent::-webkit-scrollbar {
+            width: 8px !important;
+            display: block !important;
+        }
+        
+        #strokeVisibilityControls::-webkit-scrollbar-track,
+        #imagePanelContent::-webkit-scrollbar-track {
+            background: #f3f4f6 !important;
+            border-radius: 4px !important;
+        }
+        
+        #strokeVisibilityControls::-webkit-scrollbar-thumb,
+        #imagePanelContent::-webkit-scrollbar-thumb {
+            background: #9ca3af !important;
+            border-radius: 4px !important;
+            border: 1px solid #f3f4f6 !important;
+        }
+        
+        #strokeVisibilityControls::-webkit-scrollbar-thumb:hover,
+        #imagePanelContent::-webkit-scrollbar-thumb:hover {
+            background: #6b7280 !important;
+        }
+        
+        /* Modern slider styling */
+        .slider {
+            -webkit-appearance: none;
+            appearance: none;
+            background: linear-gradient(to right, #3b82f6 0%, #3b82f6 20%, #e5e7eb 20%, #e5e7eb 100%);
+            outline: none;
+            border-radius: 8px;
+            height: 8px;
+        }
+        
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #3b82f6;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
             transition: all 0.2s ease;
         }
         
-        .delete-image-btn:hover {
+        .slider::-webkit-slider-thumb:hover {
             transform: scale(1.1);
+            box-shadow: 0 6px 12px rgba(59, 130, 246, 0.4);
+        }
+        
+        .slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #3b82f6;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+            transition: all 0.2s ease;
+        }
+        
+        .slider::-moz-range-thumb:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 12px rgba(59, 130, 246, 0.4);
+        }
+        
+        /* Modern input styling */
+        input[type="text"], input[type="number"], select {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        input[type="text"]:focus, input[type="number"]:focus, select:focus {
+            outline: none;
+            ring: 2px;
+            ring-color: #3b82f6;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        /* Enhanced color picker active state */
+        [data-color].active {
+            border-color: #1f2937 !important;
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 1), 0 0 0 6px #1f2937 !important;
+            transform: scale(1.15);
+        }
+        
+        /* Image Gallery Styling */
+        #imageGallery {
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e1 #f1f5f9;
+        }
+        
+        #imageGallery::-webkit-scrollbar {
+            height: 6px;
+        }
+        
+        #imageGallery::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 3px;
+        }
+        
+        #imageGallery::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        
+        #imageGallery::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        
+        /* Image thumbnail styling */
+        .image-thumbnail {
+            flex-shrink: 0;
+            width: 120px;
+            height: 120px;
+            border-radius: 12px;
+            border: 2px solid transparent;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            snap-align: center;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .image-thumbnail:hover {
+            border-color: #cbd5e1;
+            transform: scale(1.05);
+            box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .image-thumbnail.active {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2), 0 10px 25px -3px rgba(0, 0, 0, 0.15);
+            transform: scale(1.05);
+        }
+        
+        .image-thumbnail.dragging {
+            opacity: 0.5;
+            transform: rotate(5deg);
+            z-index: 1000;
+        }
+        
+        .image-thumbnail.drag-over {
+            border-color: #10b981;
+            box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.5);
+            transform: translateY(-1px) scale(1.05);
+        }
+        
+        .image-thumbnail .image-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
+            color: white;
+            padding: 8px;
+            font-size: 11px;
+            font-weight: 500;
+            text-align: center;
+            border-radius: 0 0 10px 10px;
+        }
+        
+        .thumbnail-controls {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            display: none;
+            flex-direction: column;
+            gap: 2px;
+        }
+        
+        .delete-control {
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            display: none;
+        }
+        
+        .image-thumbnail:hover .thumbnail-controls,
+        .image-thumbnail:hover .delete-control {
+            display: flex;
+        }
+        
+        .control-btn {
+            width: 24px;
+            height: 24px;
+            border: none;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.9);
+            color: #374151;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .control-btn:hover {
+            background: white;
+            transform: scale(1.1);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+        
+        .delete-btn {
+            background: #dc2626 !important;
+            color: white !important;
+            font-weight: bold;
+        }
+        
+        .delete-btn:hover {
+            background: #b91c1c !important;
+            transform: scale(1.1);
+        }
+        
+        .rotate-btn:hover {
+            background: #dbeafe;
+            color: #2563eb;
+        }
+        
+        .flip-btn:hover {
+            background: #d1fae5;
+            color: #059669;
+        }
+        
+        /* Navigation dots styling */
+        .nav-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #cbd5e1;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        
+        .nav-dot:hover {
+            background: #94a3b8;
+            transform: scale(1.2);
+        }
+        
+        .nav-dot.active {
+            background: #3b82f6;
+            transform: scale(1.3);
         }
     </style>
 </head>
-<body>
-    <div class="container">
-        <div class="project-header">
-            <div class="project-name">
-                <input type="text" id="projectName" placeholder="Project Name" value="New Sofa">
-                <div class="unit-selector-container">
-                    <select id="unitSelector" onchange="updateMeasurementDisplay()">
-                        <option value="inch">inches</option>
-                        <option value="cm">cm</option>
-                    </select>
-                    <!-- Hidden inputs to maintain functionality but not visible to user -->
-                    <div id="measurementInput" class="measurement-container" style="display: none;">
-                        <div id="inchInputs" class="inch-inputs">
-                            <input type="number" id="inchWhole" min="0" value="0" class="inch-input">
-                            <select id="inchFraction">
+<body class="bg-gray-50 h-screen overflow-hidden">
+    <!-- Fullscreen Canvas -->
+    <canvas id="canvas" class="w-full h-full"></canvas>
+    
+    <!-- Project Header Panel -->
+    <div id="projectPanel" class="floating-panel fixed top-4 right-4 z-30 rounded-2xl w-80 transition-all duration-300">
+        <div class="flex items-center justify-between p-4 cursor-move border-b border-gray-200/50">
+            <h3 class="text-base font-bold text-slate-800">Project Settings</h3>
+            <button id="toggleProjectPanel" class="text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg p-1.5 transition-all duration-200 transform hover:scale-110" title="Minimize/Expand Panel">
+                <svg class="w-5 h-5 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+            </button>
+        </div>
+        <div id="projectPanelContent" class="p-3 transition-all duration-300">
+            <div class="flex flex-col gap-3">
+                <!-- Project Info -->
+                <div class="flex flex-col gap-3">
+                    <input 
+                        type="text" 
+                        id="projectName" 
+                        placeholder="Project Name" 
+                        value="New Sofa" 
+                        class="px-3 py-2.5 border border-gray-300 rounded-xl text-sm bg-white w-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 shadow-sm"
+                    >
+                    <div class="flex items-center gap-3">
+                        <label class="text-sm font-semibold text-slate-700 w-14">Units:</label>
+                        <select 
+                            id="unitSelector" 
+                            onchange="updateMeasurementDisplay()" 
+                            class="px-3 py-2.5 border border-gray-300 rounded-xl text-sm bg-white flex-1 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 shadow-sm"
+                        >
+                            <option value="inch">inches</option>
+                            <option value="cm">cm</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Hidden inputs for functionality -->
+                    <div id="measurementInput" class="hidden">
+                        <div id="inchInputs" class="flex items-center gap-2">
+                            <input type="number" id="inchWhole" min="0" value="0" class="w-16 px-2 py-1 border border-gray-300 rounded text-sm">
+                            <select id="inchFraction" class="px-2 py-1 border border-gray-300 rounded text-sm">
                                 <option value="0">0</option>
                                 <option value="0.125">1/8</option>
                                 <option value="0.25">1/4</option>
@@ -835,129 +677,253 @@
                                 <option value="0.875">7/8</option>
                             </select>
                         </div>
-                        <div id="cmInputs" class="cm-inputs" style="display: none;">
-                            <input type="number" id="cmValue" min="0" step="0.1" value="0.0" class="cm-input">
+                        <div id="cmInputs" class="hidden">
+                            <input type="number" id="cmValue" min="0" step="0.1" value="0.0" class="w-16 px-2 py-1 border border-gray-300 rounded text-sm">
                         </div>
                     </div>
                 </div>
-                <!-- Project Save/Load Buttons -->
-                <div class="project-buttons">
-                    <button id="saveProject" title="Save project as ZIP file">Save Project</button>
-                    <button id="loadProject" title="Load project from ZIP file">Load Project</button>
-                    <button id="generateMeasurements" title="Generate list of all measurements">Generate Measurements</button>
-                    <button id="saveAllImages" title="Save all images as individual files">Save All Images</button>
-                    <button id="saveAsPdf" title="Export measurements as PDF form">Save as PDF</button>
+                
+                <!-- Action Buttons -->
+                <div class="grid grid-cols-2 gap-2">
+                    <button id="saveProject" title="Save project as ZIP file" class="px-3 py-2 bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white text-xs font-semibold rounded-xl shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-105 active:scale-95">Save</button>
+                    <button id="loadProject" title="Load project from ZIP file" class="px-3 py-2 bg-success-600 hover:bg-success-700 active:bg-success-800 text-white text-xs font-semibold rounded-xl shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-105 active:scale-95">Load</button>
+                    <button id="generateMeasurements" title="Generate list of all measurements" class="px-3 py-2 bg-brand-600 hover:bg-brand-700 active:bg-brand-800 text-white text-xs font-semibold rounded-xl shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-105 active:scale-95">Measurements</button>
+                    <button id="saveAllImages" title="Save all images as individual files" class="px-3 py-2 bg-purple-600 hover:bg-purple-700 active:bg-purple-800 text-white text-xs font-semibold rounded-xl shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-105 active:scale-95">Images</button>
+                    <button id="saveAsPdf" title="Export measurements as PDF form" class="px-3 py-2 bg-danger-600 hover:bg-danger-700 active:bg-danger-800 text-white text-xs font-semibold rounded-xl shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-105 active:scale-95 col-span-2">Save as PDF</button>
                 </div>
             </div>
         </div>
-        <div class="main-content">
-            <div class="toolbar">
-                <button id="clear">Clear</button>
-                <div class="color-palette">
-                    <button class="color-btn active" data-color="#1a73e8" style="background-color: #1a73e8;"></button>
-                    <button class="color-btn" data-color="#34a853" style="background-color: #34a853;"></button>
-                    <button class="color-btn" data-color="#ea4335" style="background-color: #ea4335;"></button>
-                    <button class="color-btn" data-color="#fbbc04" style="background-color: #fbbc04;"></button>
-                    <button class="color-btn" data-color="#9c27b0" style="background-color: #9c27b0;"></button>
-                    <button class="color-btn" data-color="#e67c00" style="background-color: #e67c00;"></button>
-                    <button class="color-btn" data-color="#00796b" style="background-color: #00796b;"></button>
-                    <button class="color-btn" data-color="#000000" style="background-color: #000000;"></button>
+    </div>
+
+    <!-- Drawing Tools Panel -->
+    <div id="toolsPanel" class="floating-panel fixed top-4 left-4 z-30 rounded-2xl transition-all duration-300">
+        <div class="flex items-center justify-between p-4 cursor-move border-b border-gray-200/50">
+            <h3 class="text-base font-bold text-slate-800">Drawing Tools</h3>
+            <button id="toggleToolsPanel" class="text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg p-1.5 transition-all duration-200 transform hover:scale-110" title="Minimize/Expand Panel">
+                <svg class="w-5 h-5 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+            </button>
+        </div>
+        <div id="toolsPanelContent" class="p-4 transition-all duration-300">
+            <div class="flex flex-col gap-4">
+                <!-- Primary Tools -->
+                <div class="flex items-center gap-3">
+                    <button id="clear" class="px-4 py-2.5 bg-danger-500 hover:bg-danger-600 active:bg-danger-700 text-white text-sm font-semibold rounded-xl shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-105 active:scale-95">Clear</button>
+                    <button id="paste" class="px-4 py-2.5 bg-primary-500 hover:bg-primary-600 active:bg-primary-700 text-white text-sm font-semibold rounded-xl shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-105 active:scale-95">Upload Images</button>
+                    <button id="save" class="px-4 py-2.5 bg-success-500 hover:bg-success-600 active:bg-success-700 text-white text-sm font-semibold rounded-xl shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-105 active:scale-95">Save</button>
                 </div>
-                <button id="drawingModeToggle" class="straight-mode">Straight Line</button>
-                <div id="arrowControls" style="display: flex; align-items: center; gap: 5px;">
-                    <span id="startArrow" style="font-size: 16px; cursor: pointer; padding: 4px 6px; border-radius: 4px; user-select: none; background-color: #f0f0f0; color: #666;" title="Toggle start arrow">◀</span>
-                    <span id="endArrow" style="font-size: 16px; cursor: pointer; padding: 4px 6px; border-radius: 4px; user-select: none; background-color: #f0f0f0; color: #666;" title="Toggle end arrow">▶</span>
+                
+                <!-- Color Palette -->
+                <div class="flex items-center gap-3">
+                    <span class="text-sm font-semibold text-slate-700">Color:</span>
+                    <div class="flex gap-2">
+                        <button class="w-10 h-10 rounded-full border-2 border-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-110 active" data-color="#3b82f6" style="background-color: #3b82f6;" title="Blue"></button>
+                        <button class="w-10 h-10 rounded-full border-2 border-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-110" data-color="#22c55e" style="background-color: #22c55e;" title="Green"></button>
+                        <button class="w-10 h-10 rounded-full border-2 border-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-110" data-color="#ef4444" style="background-color: #ef4444;" title="Red"></button>
+                        <button class="w-10 h-10 rounded-full border-2 border-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-110" data-color="#f59e0b" style="background-color: #f59e0b;" title="Yellow"></button>
+                        <button class="w-10 h-10 rounded-full border-2 border-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-110" data-color="#a855f7" style="background-color: #a855f7;" title="Purple"></button>
+                        <button class="w-10 h-10 rounded-full border-2 border-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-110" data-color="#1f2937" style="background-color: #1f2937;" title="Dark Gray"></button>
+                    </div>
+                    <input type="color" id="colorPicker" value="#3b82f6" class="hidden">
                 </div>
-                <div id="dashControls" style="display: flex; align-items: center; gap: 5px;">
-                    <label style="font-size: 12px; color: #666;">Line Style:</label>
-                    <select id="dashStyleSelect" style="padding: 4px 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px;">
-                        <option value="solid">Solid</option>
-                        <option value="small">Small Dash</option>
-                        <option value="medium">Medium Dash</option>
-                        <option value="large">Large Dash</option>
-                        <option value="dot-dash">Dot-Dash</option>
-                        <option value="custom">Custom</option>
-                    </select>
-                    <div id="customDashControls" style="display: none; align-items: center; gap: 3px;">
-                        <input type="number" id="dashLengthInput" min="1" max="50" value="5" style="width: 40px; padding: 2px 4px; border: 1px solid #ccc; border-radius: 3px; font-size: 11px;" title="Dash length">
-                        <span style="font-size: 10px; color: #999;">/</span>
-                        <input type="number" id="gapLengthInput" min="1" max="50" value="5" style="width: 40px; padding: 2px 4px; border: 1px solid #ccc; border-radius: 3px; font-size: 11px;" title="Gap length">
+                
+                <!-- Drawing Mode & Controls -->
+                <div class="flex items-center gap-4">
+                    <button id="drawingModeToggle" class="px-4 py-2.5 bg-white border-2 border-success-500 text-success-600 text-sm font-semibold rounded-xl hover:bg-success-50 hover:border-success-600 active:bg-success-100 transition-all duration-200 transform hover:scale-105 active:scale-95 straight-mode shadow-sm">
+                        Straight Line
+                    </button>
+                    <div class="flex items-center gap-3">
+                        <span class="text-sm font-semibold text-slate-700">Size:</span>
+                        <input type="range" id="brushSize" min="1" max="50" value="5" class="w-24 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider">
                     </div>
                 </div>
-                <input type="color" id="colorPicker" value="#1a73e8" style="display:none;">
-                <input type="range" id="brushSize" min="1" max="50" value="5">
-                <div id="zoomControls" style="display: flex; align-items: center; gap: 5px; margin-left: 10px;">
-                    <label style="font-size: 12px; color: #666;">Fit:</label>
-                    <select id="fitModeSelect" style="padding: 4px 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px;">
+                
+                <!-- Arrow & Line Style Controls -->
+                <div class="flex items-center gap-4">
+                    <div id="arrowControls" class="flex items-center gap-3">
+                        <span class="text-sm font-semibold text-slate-700">Arrows:</span>
+                        <button id="startArrow" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 text-sm font-medium rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-sm" title="Toggle start arrow">◀</button>
+                        <button id="endArrow" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 text-sm font-medium rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-sm" title="Toggle end arrow">▶</button>
+                    </div>
+                    <div id="dashControls" class="flex items-center gap-3">
+                        <span class="text-sm font-semibold text-slate-700">Style:</span>
+                        <select id="dashStyleSelect" class="px-3 py-2 border border-gray-300 rounded-xl text-sm bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 shadow-sm">
+                            <option value="solid">Solid</option>
+                            <option value="small">Small Dash</option>
+                            <option value="medium">Medium Dash</option>
+                            <option value="large">Large Dash</option>
+                            <option value="dot-dash">Dot-Dash</option>
+                            <option value="custom">Custom</option>
+                        </select>
+                        <div id="customDashControls" class="hidden items-center gap-2">
+                            <input type="number" id="dashLengthInput" min="1" max="50" value="5" class="w-16 px-2 py-1.5 border border-gray-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200" title="Dash length">
+                            <span class="text-xs text-slate-500">/</span>
+                            <input type="number" id="gapLengthInput" min="1" max="50" value="5" class="w-16 px-2 py-1.5 border border-gray-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200" title="Gap length">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Stroke Counter -->
+                <div class="text-sm text-gray-600 font-medium">
+                    <span id="strokeCounter">Lines: 0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stroke Manager Panel -->
+    <div id="strokePanel" class="floating-panel fixed left-4 top-1/2 -translate-y-1/2 z-30 rounded-2xl w-64 max-h-96 transition-all duration-300 overflow-hidden">
+        <div class="flex items-center justify-between p-4 cursor-move border-b border-gray-200/50 bg-white rounded-t-2xl">
+            <h3 class="text-base font-bold text-slate-800">Stroke Visibility</h3>
+            <button id="toggleStrokePanel" class="text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg p-1.5 transition-all duration-200 transform hover:scale-110" title="Minimize/Expand Panel">
+                <svg class="w-5 h-5 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+            </button>
+        </div>
+        <div id="strokeVisibilityControls" class="p-4 transition-all duration-300" style="max-height: 320px; overflow-y: scroll; overflow-x: hidden;"></div>
+    </div>
+
+    <!-- Image Gallery Panel -->
+    <div id="imagePanel" class="floating-panel fixed right-4 top-1/2 -translate-y-1/2 z-30 rounded-2xl w-96 max-h-[500px] transition-all duration-300 overflow-hidden">
+        <div class="flex items-center justify-between p-4 cursor-move border-b border-gray-200/50 bg-white rounded-t-2xl">
+            <h3 class="text-base font-bold text-slate-800">Images</h3>
+            <div class="flex items-center gap-2">
+                <span id="imageCounter" class="text-xs text-slate-500 font-medium"></span>
+                <button id="toggleImagePanel" class="text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg p-1.5 transition-all duration-200 transform hover:scale-110" title="Minimize/Expand Panel">
+                    <svg class="w-5 h-5 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <div id="imagePanelContent" class="p-4 transition-all duration-300" style="max-height: 420px;">
+            <!-- Legacy image list for backwards compatibility -->
+            <div id="imageList" class="hidden space-y-3 mb-4"></div>
+            
+            <!-- New Image Gallery with Horizontal Scroll Snap -->
+            <div class="mb-4">
+                <div id="imageGallery" class="flex gap-3 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-2" style="scrollbar-width: thin;">
+                    <!-- Images will be dynamically inserted here -->
+                </div>
+                <!-- Navigation Dots -->
+                <div id="imageDots" class="flex justify-center gap-2 mt-3">
+                    <!-- Dots will be dynamically inserted here -->
+                </div>
+            </div>
+            
+            <!-- Navigation Controls -->
+            <div class="flex items-center justify-between mb-4">
+                <button id="prevImage" class="p-2 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed" title="Previous image">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                    </svg>
+                </button>
+                <div class="text-xs text-slate-600 font-medium" id="imagePosition">0 / 0</div>
+                <button id="nextImage" class="p-2 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed" title="Next image">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="pt-4 border-t border-gray-200/50">
+                <button id="addTags" class="w-full px-4 py-2.5 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 text-sm font-semibold rounded-xl transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-sm">Add Tags</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Capture Frame -->
+    <div id="captureOverlay" class="fixed inset-0 pointer-events-none" style="z-index: 15;">
+        <!-- Capture frame -->
+        <div id="captureFrame" class="capture-frame absolute border-2 border-gray-400 bg-transparent" style="left: calc(50% - 400px); top: 60px; width: 800px; height: 800px; pointer-events: none;">
+            <!-- Lock button -->
+            <button id="captureLockButton" class="absolute -bottom-8 -right-8 w-8 h-8 bg-white border border-gray-300 rounded shadow-md hover:bg-gray-50 transition-colors flex items-center justify-center text-gray-600" title="Lock/Unlock frame (L)">
+                <!-- Locked icon -->
+                <svg class="locked-icon w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"></path>
+                </svg>
+                <!-- Unlocked icon -->
+                <svg class="unlocked-icon w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M10 2a5 5 0 00-5 5v2a2 2 0 00-2 2v5a2 2 0 002 2h10a2 2 0 002-2v-5a2 2 0 00-2-2H7V7a3 3 0 015.905-.75 1 1 0 001.937-.5A5.002 5.002 0 0010 2z"></path>
+                </svg>
+            </button>
+            
+            <!-- Resize handles (hidden when locked) -->
+            <div class="resize-handles">
+                <div class="resize-handle w-3 h-3 -top-1 -left-1 bg-white border border-blue-400 rounded-sm" style="cursor: nw-resize;" data-direction="nw"></div>
+                <div class="resize-handle w-3 h-3 -top-1 left-1/2 -translate-x-1/2 bg-white border border-blue-400 rounded-sm" style="cursor: n-resize;" data-direction="n"></div>
+                <div class="resize-handle w-3 h-3 -top-1 -right-1 bg-white border border-blue-400 rounded-sm" style="cursor: ne-resize;" data-direction="ne"></div>
+                <div class="resize-handle w-3 h-3 top-1/2 -translate-y-1/2 -right-1 bg-white border border-blue-400 rounded-sm" style="cursor: e-resize;" data-direction="e"></div>
+                <div class="resize-handle w-3 h-3 -bottom-1 -right-1 bg-white border border-blue-400 rounded-sm" style="cursor: se-resize;" data-direction="se"></div>
+                <div class="resize-handle w-3 h-3 -bottom-1 left-1/2 -translate-x-1/2 bg-white border border-blue-400 rounded-sm" style="cursor: s-resize;" data-direction="s"></div>
+                <div class="resize-handle w-3 h-3 -bottom-1 -left-1 bg-white border border-blue-400 rounded-sm" style="cursor: sw-resize;" data-direction="sw"></div>
+                <div class="resize-handle w-3 h-3 top-1/2 -translate-y-1/2 -left-1 bg-white border border-blue-400 rounded-sm" style="cursor: w-resize;" data-direction="w"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Instruction Text for Unlocked Mode -->
+    <div id="unlockInstructions" class="fixed top-4 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-80 text-white px-4 py-2 rounded-lg shadow-xl hidden backdrop-blur-sm z-40">
+        <div class="text-sm font-medium text-center">
+            Press <kbd class="px-1 py-0.5 bg-white bg-opacity-20 rounded text-xs">L</kbd> or click lock icon to exit positioning mode
+        </div>
+    </div>
+    
+    <!-- macOS Style Lock Popup -->
+    <div id="lockPopup" class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-black bg-opacity-80 text-white px-4 py-2 rounded-lg shadow-xl hidden transition-all duration-200 backdrop-blur-sm" style="z-index: 50;">
+        <div class="flex items-center gap-2">
+            <svg id="lockPopupIcon" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"></path>
+            </svg>
+            <span id="lockPopupText">Locked</span>
+        </div>
+    </div>
+
+    <!-- Canvas Controls (Bottom Panel) -->
+    <div id="canvasControls" class="floating-panel fixed bottom-4 z-50 rounded-2xl w-[700px] transition-all duration-300" style="left: calc(50% - 350px);">
+        <div class="flex items-center justify-between p-4 cursor-move border-b border-gray-200/50">
+            <h3 class="text-base font-bold text-slate-800">Canvas Controls</h3>
+            <button id="toggleCanvasControls" class="text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg p-1.5 transition-all duration-200 transform hover:scale-110" title="Minimize/Expand Panel">
+                <svg class="w-5 h-5 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+            </button>
+        </div>
+        <div id="canvasControlsContent" class="p-3 transition-all duration-300">
+            <div class="flex items-center gap-4 text-sm">
+                <!-- Fit Controls -->
+                <div class="flex items-center gap-3">
+                    <span class="text-sm font-semibold text-slate-700">Fit:</span>
+                    <select id="fitModeSelect" class="px-3 py-2 border border-gray-300 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 shadow-sm">
                         <option value="none">Manual</option>
                         <option value="fit-width" selected>Fit Width</option>
                         <option value="fit-height">Fit Height</option>
                         <option value="fit-canvas">Fit Canvas</option>
                         <option value="actual-size">Actual Size</option>
                     </select>
-                    <button id="applyFitCurrent" style="padding: 4px 8px; border: 1px solid #999; border-radius: 4px; font-size: 12px; background: #ffffff; color: #333; cursor: pointer;" title="Apply selected fit mode to current image">Current</button>
-                    <button id="applyFitAll" style="padding: 4px 8px; border: 1px solid #0066cc; border-radius: 4px; font-size: 12px; background: #0066cc; color: #ffffff; cursor: pointer;" title="Apply selected fit mode to all images">Apply All</button>
+                    <button id="applyFitCurrent" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 text-xs font-medium rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-sm" title="Apply to current image">Current</button>
+                    <button id="applyFitAll" class="px-3 py-2 bg-primary-500 hover:bg-primary-600 active:bg-primary-700 text-white text-xs font-semibold rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-sm hidden" title="Apply to all images" style="display: none;">Apply All</button>
                 </div>
-                <button id="save">Save</button>
-                <button id="paste">Upload Images</button>
-                <span id="strokeCounter" class="counter">Lines: 0</span>
-            </div>
-            <canvas id="canvas"></canvas>
-            <div class="canvas-controls">
-                <div class="tool-controls">
-                    <div class="instruction">
-                        Hold <kbd>Shift</kbd> to move image with mouse
-                    </div>
-                    <div class="scale-dropdown">
-                        <button id="scaleButton" class="dropdown-btn">Scale: 100% ▼</button>
-                        <div class="dropdown-content dropdown-up">
-                            <div class="scale-option" data-scale="0.1">10%</div>
-                            <div class="scale-option" data-scale="0.15">15%</div>
-                            <div class="scale-option" data-scale="0.2">20%</div>
-                            <div class="scale-option" data-scale="0.25">25%</div>
-                            <div class="scale-option" data-scale="0.33">33%</div>
-                            <div class="scale-option" data-scale="0.5">50%</div>
-                            <div class="scale-option" data-scale="0.67">67%</div>
-                            <div class="scale-option" data-scale="0.75">75%</div>
-                            <div class="scale-option" data-scale="0.8">80%</div>
-                            <div class="scale-option" data-scale="0.9">90%</div>
-                            <div class="scale-option" data-scale="1" data-default="true">100%</div>
-                            <div class="scale-option" data-scale="1.1">110%</div>
-                            <div class="scale-option" data-scale="1.25">125%</div>
-                            <div class="scale-option" data-scale="1.5">150%</div>
-                            <div class="scale-option" data-scale="1.75">175%</div>
-                            <div class="scale-option" data-scale="2">200%</div>
-                            <div class="scale-option" data-scale="2.5">250%</div>
-                            <div class="scale-option" data-scale="3">300%</div>
-                            <div class="scale-option" data-scale="4">400%</div>
-                            <div class="scale-option" data-scale="5">500%</div>
-                        </div>
-                    </div>
-                    <div class="keyboard-shortcuts">
-                        <span title="Scale: Q (zoom out), E (zoom in)">Scale: Q/E</span>
-                        <span title="Move: W (down), A (left), S (up), D (right)">Move: WASD</span>
-                    </div>
+                
+                <!-- Visual Separator -->
+                <div class="text-gray-300">|</div>
+                
+                <!-- Scale Controls -->
+                <div class="flex items-center gap-2">
+                    <button id="scaleButton" class="px-3 py-2 bg-white border border-gray-300 rounded-xl text-sm font-medium hover:bg-gray-50 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all duration-200 shadow-sm">100% ▼</button>
                 </div>
-            </div>
-        </div>
-        
-        <div class="stroke-sidebar" id="strokeSidebar">
-            <div class="sidebar-header" id="strokeSidebarHeader">
-                <h3>Stroke Visibility</h3>
-                <span class="drag-handle">☰</span>
-            </div>
-            <div id="strokeVisibilityControls"></div>
-        </div>
-        
-        <div class="image-sidebar" id="imageSidebar">
-            <div class="sidebar-header" id="imageSidebarHeader">
-                <h3>Pasted Images</h3>
-                <div class="drag-handle">⋮⋮</div>
-            </div>
-            <div id="imageList"></div>
-            <hr>
-            <div class="sidebar-buttons">
-                <button id="addTags" class="tag-button">Add Tags</button>
+                
+                <!-- Visual Separator -->
+                <div class="text-slate-300 font-light">|</div>
+                
+                <!-- Keyboard Shortcuts -->
+                <div class="flex items-center gap-4 text-xs text-slate-600">
+                    <span><kbd class="px-2 py-1 bg-slate-100 rounded-md text-xs font-mono shadow-sm">Shift</kbd>+drag: move</span>
+                    <span><kbd class="px-2 py-1 bg-slate-100 rounded-md text-xs font-mono shadow-sm">Q/E</kbd>: scale</span>
+                    <span><kbd class="px-2 py-1 bg-slate-100 rounded-md text-xs font-mono shadow-sm">WASD</kbd>: move</span>
+                </div>
             </div>
         </div>
     </div>
@@ -966,9 +932,2068 @@
     <div id="statusMessage"></div>
     
     <!-- Scripts -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/3.0.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    
+    <!-- New UI Controller Script -->
+    <script>
+        // New UI functionality for modular panels and capture frame
+        document.addEventListener('DOMContentLoaded', () => {
+            // Panel visibility toggles
+            const strokePanel = document.getElementById('strokePanel');
+            const imagePanel = document.getElementById('imagePanel');
+            const captureOverlay = document.getElementById('captureOverlay');
+            const captureFrame = document.getElementById('captureFrame');
+            
+            // Enhanced panel toggle functionality with minimize-to-header behavior
+            function createPanelToggle(panelId, contentId, buttonId) {
+                const panel = document.getElementById(panelId);
+                const content = document.getElementById(contentId);
+                const button = document.getElementById(buttonId);
+                const icon = button?.querySelector('svg');
+                
+                if (!panel || !content || !button || !icon) return;
+                
+                button.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const isMinimized = content.classList.contains('hidden');
+                    
+                    if (isMinimized) {
+                        // Expand panel
+                        content.classList.remove('hidden');
+                        icon.style.transform = 'rotate(0deg)';
+                        panel.classList.remove('minimized');
+                    } else {
+                        // Minimize panel
+                        content.classList.add('hidden');
+                        icon.style.transform = 'rotate(-90deg)';
+                        panel.classList.add('minimized');
+                    }
+                });
+            }
+            
+            // Apply toggle functionality to all panels
+            createPanelToggle('projectPanel', 'projectPanelContent', 'toggleProjectPanel');
+            createPanelToggle('toolsPanel', 'toolsPanelContent', 'toggleToolsPanel');
+            createPanelToggle('strokePanel', 'strokeVisibilityControls', 'toggleStrokePanel');
+            createPanelToggle('imagePanel', 'imagePanelContent', 'toggleImagePanel');
+            createPanelToggle('canvasControls', 'canvasControlsContent', 'toggleCanvasControls');
+            
+            // Capture frame lock functionality
+            let isCaptureLocked = true; // Start locked for minimal appearance
+            
+            // Initialize capture frame on load
+            updateCaptureFrameLockState();
+            
+            // Lock/unlock button functionality
+            const lockButton = document.getElementById('captureLockButton');
+            lockButton?.addEventListener('click', (e) => {
+                e.stopPropagation();
+                toggleCaptureLock();
+            });
+            
+            // Keyboard shortcut for lock/unlock (L key)
+            document.addEventListener('keydown', (e) => {
+                if (e.key.toLowerCase() === 'l') {
+                    e.preventDefault();
+                    toggleCaptureLock();
+                }
+            });
+            
+            function toggleCaptureLock() {
+                isCaptureLocked = !isCaptureLocked;
+                updateCaptureFrameLockState();
+                showLockPopup();
+            }
+            
+            function showLockPopup() {
+                const popup = document.getElementById('lockPopup');
+                const icon = document.getElementById('lockPopupIcon');
+                const text = document.getElementById('lockPopupText');
+                
+                if (isCaptureLocked) {
+                    text.textContent = 'Locked';
+                    icon.innerHTML = '<path d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"></path>';
+                } else {
+                    text.textContent = 'Unlocked';
+                    icon.innerHTML = '<path d="M10 2a5 5 0 00-5 5v2a2 2 0 00-2 2v5a2 2 0 002 2h10a2 2 0 002-2v-5a2 2 0 00-2-2H7V7a3 3 0 015.905-.75 1 1 0 001.937-.5A5.002 5.002 0 0010 2z"></path>';
+                }
+                
+                popup.classList.add('show');
+                setTimeout(() => {
+                    popup.classList.remove('show');
+                }, 1500);
+            }
+            
+            function updateCaptureFrameLockState() {
+                const lockButton = document.getElementById('captureLockButton');
+                const instructions = document.getElementById('unlockInstructions');
+                const applyAllButton = document.getElementById('applyFitAll');
+                
+                if (isCaptureLocked) {
+                    captureFrame.classList.add('locked');
+                    captureFrame.classList.remove('unlocked');
+                    lockButton.classList.add('locked');
+                    lockButton.title = 'Unlock frame (L)';
+                    instructions.classList.add('hidden');
+                    
+                    // Hide Apply All button for safety
+                    if (applyAllButton) {
+                        applyAllButton.style.display = 'none';
+                    }
+                    
+                    // Remove dark overlay effect
+                    captureFrame.style.boxShadow = 'none';
+                    
+                    // Enable pointer events for lock button only
+                    captureFrame.style.pointerEvents = 'none';
+                    lockButton.style.pointerEvents = 'auto';
+                } else {
+                    captureFrame.classList.remove('locked');
+                    captureFrame.classList.add('unlocked');
+                    lockButton.classList.remove('locked');
+                    lockButton.title = 'Lock frame (L)';
+                    instructions.classList.remove('hidden');
+                    
+                    // Show Apply All button when unlocked
+                    if (applyAllButton) {
+                        applyAllButton.style.display = 'inline-block';
+                    }
+                    
+                    // Add dark overlay effect
+                    captureFrame.style.boxShadow = '0px 0px 0px 2000px rgba(0,0,0,0.4)';
+                    
+                    // Enable pointer events for dragging and resizing
+                    captureFrame.style.pointerEvents = 'auto';
+                    lockButton.style.pointerEvents = 'auto';
+                }
+            }
+            
+            
+            // Color picker functionality
+            const colorButtons = document.querySelectorAll('[data-color]');
+            colorButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    // Remove active class from all buttons
+                    colorButtons.forEach(btn => btn.classList.remove('active'));
+                    // Add active class to clicked button
+                    button.classList.add('active');
+                    // Update color picker value
+                    const colorPicker = document.getElementById('colorPicker');
+                    if (colorPicker) {
+                        colorPicker.value = button.getAttribute('data-color');
+                        // Trigger change event for existing functionality
+                        colorPicker.dispatchEvent(new Event('change'));
+                    }
+                });
+            });
+            
+            // Update active color button styling
+            const style = document.createElement('style');
+            style.textContent = `
+                [data-color].active {
+                    border-color: #374151 !important;
+                    box-shadow: 0 0 0 2px white, 0 0 0 4px #374151 !important;
+                    transform: scale(1.1);
+                }
+            `;
+            document.head.appendChild(style);
+            
+            // Capture frame resize functionality
+            let isResizing = false;
+            let currentHandle = null;
+            let startPos = { x: 0, y: 0 };
+            let startRect = { x: 0, y: 0, width: 0, height: 0 };
+            
+            const resizeHandles = document.querySelectorAll('.resize-handle');
+            resizeHandles.forEach(handle => {
+                handle.addEventListener('mousedown', (e) => {
+                    // Don't allow resizing when locked
+                    if (isCaptureLocked) return;
+                    
+                    e.preventDefault();
+                    isResizing = true;
+                    currentHandle = handle.getAttribute('data-direction');
+                    startPos = { x: e.clientX, y: e.clientY };
+                    
+                    const rect = captureFrame.getBoundingClientRect();
+                    startRect = {
+                        x: rect.left,
+                        y: rect.top,
+                        width: rect.width,
+                        height: rect.height
+                    };
+                    
+                    document.addEventListener('mousemove', handleResize);
+                    document.addEventListener('mouseup', stopResize);
+                });
+            });
+            
+            function handleResize(e) {
+                if (!isResizing || !currentHandle) return;
+                
+                const deltaX = e.clientX - startPos.x;
+                const deltaY = e.clientY - startPos.y;
+                
+                let newX = startRect.x;
+                let newY = startRect.y;
+                let newWidth = startRect.width;
+                let newHeight = startRect.height;
+                
+                // Handle different resize directions
+                switch (currentHandle) {
+                    case 'nw':
+                        newX = startRect.x + deltaX;
+                        newY = startRect.y + deltaY;
+                        newWidth = startRect.width - deltaX;
+                        newHeight = startRect.height - deltaY;
+                        break;
+                    case 'n':
+                        newY = startRect.y + deltaY;
+                        newHeight = startRect.height - deltaY;
+                        break;
+                    case 'ne':
+                        newY = startRect.y + deltaY;
+                        newWidth = startRect.width + deltaX;
+                        newHeight = startRect.height - deltaY;
+                        break;
+                    case 'e':
+                        newWidth = startRect.width + deltaX;
+                        break;
+                    case 'se':
+                        newWidth = startRect.width + deltaX;
+                        newHeight = startRect.height + deltaY;
+                        break;
+                    case 's':
+                        newHeight = startRect.height + deltaY;
+                        break;
+                    case 'sw':
+                        newX = startRect.x + deltaX;
+                        newWidth = startRect.width - deltaX;
+                        newHeight = startRect.height + deltaY;
+                        break;
+                    case 'w':
+                        newX = startRect.x + deltaX;
+                        newWidth = startRect.width - deltaX;
+                        break;
+                }
+                
+                // Apply minimum size constraints
+                const minSize = 100;
+                if (newWidth < minSize) {
+                    if (currentHandle.includes('w')) newX = startRect.x + startRect.width - minSize;
+                    newWidth = minSize;
+                }
+                if (newHeight < minSize) {
+                    if (currentHandle.includes('n')) newY = startRect.y + startRect.height - minSize;
+                    newHeight = minSize;
+                }
+                
+                // Apply maximum size constraints (viewport bounds)
+                const maxX = window.innerWidth - newWidth;
+                const maxY = window.innerHeight - newHeight;
+                newX = Math.max(0, Math.min(maxX, newX));
+                newY = Math.max(0, Math.min(maxY, newY));
+                
+                // Update capture frame position and size
+                captureFrame.style.left = newX + 'px';
+                captureFrame.style.top = newY + 'px';
+                captureFrame.style.width = newWidth + 'px';
+                captureFrame.style.height = newHeight + 'px';
+                
+            }
+            
+            function stopResize() {
+                isResizing = false;
+                currentHandle = null;
+                document.removeEventListener('mousemove', handleResize);
+                document.removeEventListener('mouseup', stopResize);
+            }
+            
+            // Optimized capture frame dragging - 1:1 movement with no lag
+            let isCaptureDragging = false;
+            let captureDragOffset = { x: 0, y: 0 };
+            let lastCaptureMousePos = { x: 0, y: 0 };
+            let captureRafId = null;
+            
+            captureFrame.addEventListener('mousedown', (e) => {
+                // Don't drag if locked, clicking on handles, or buttons
+                if (isCaptureLocked || e.target.classList.contains('resize-handle') || e.target.closest('button')) {
+                    return;
+                }
+                
+                // Allow Shift+click to pass through for canvas dragging
+                if (e.shiftKey) {
+                    return;
+                }
+                
+                e.preventDefault();
+                e.stopPropagation();
+                
+                isCaptureDragging = true;
+                
+                const rect = captureFrame.getBoundingClientRect();
+                captureDragOffset.x = e.clientX - rect.left;
+                captureDragOffset.y = e.clientY - rect.top;
+                
+                // Add dragging class for no transitions
+                captureFrame.classList.add('dragging');
+                
+                document.addEventListener('mousemove', handleCaptureDrag, { passive: true });
+                document.addEventListener('mouseup', stopCaptureDrag);
+            });
+            
+            function handleCaptureDrag(e) {
+                if (!isCaptureDragging || isCaptureLocked) return;
+                
+                // Store mouse position for RAF
+                lastCaptureMousePos.x = e.clientX;
+                lastCaptureMousePos.y = e.clientY;
+                
+                // Cancel previous RAF if still pending
+                if (captureRafId) {
+                    cancelAnimationFrame(captureRafId);
+                }
+                
+                // Schedule position update for next frame
+                captureRafId = requestAnimationFrame(updateCapturePosition);
+            }
+            
+            function updateCapturePosition() {
+                if (!isCaptureDragging) return;
+                
+                const newX = Math.max(0, Math.min(window.innerWidth - captureFrame.offsetWidth, lastCaptureMousePos.x - captureDragOffset.x));
+                const newY = Math.max(0, Math.min(window.innerHeight - captureFrame.offsetHeight, lastCaptureMousePos.y - captureDragOffset.y));
+                
+                // Apply position immediately
+                captureFrame.style.left = newX + 'px';
+                captureFrame.style.top = newY + 'px';
+                
+                
+                captureRafId = null;
+            }
+            
+            function stopCaptureDrag() {
+                if (!isCaptureDragging) return;
+                
+                isCaptureDragging = false;
+                
+                // Cancel any pending RAF
+                if (captureRafId) {
+                    cancelAnimationFrame(captureRafId);
+                    captureRafId = null;
+                }
+                
+                // Remove dragging class
+                captureFrame.classList.remove('dragging');
+                
+                document.removeEventListener('mousemove', handleCaptureDrag);
+                document.removeEventListener('mouseup', stopCaptureDrag);
+            }
+            
+            // Optimized draggable functionality - 1:1 mouse movement with requestAnimationFrame
+            function makeDraggable(element, handle) {
+                let isDragging = false;
+                let dragOffset = { x: 0, y: 0 };
+                let lastMousePos = { x: 0, y: 0 };
+                let rafId = null;
+                let elementWidth, elementHeight; // Cache dimensions
+                
+                handle.addEventListener('mousedown', (e) => {
+                    // Don't start drag if clicking on buttons or inputs
+                    if (e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.closest('button')) {
+                        return;
+                    }
+                    
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    isDragging = true;
+                    
+                    // Simplified position setup - get current position directly
+                    const rect = element.getBoundingClientRect();
+                    
+                    // Calculate offset from mouse to element's current position
+                    dragOffset.x = e.clientX - rect.left;
+                    dragOffset.y = e.clientY - rect.top;
+                    
+                    // Cache element dimensions to avoid repeated DOM queries
+                    elementWidth = element.offsetWidth;
+                    elementHeight = element.offsetHeight;
+                    
+                    // Set initial position and prepare for dragging
+                    element.style.position = 'fixed';
+                    element.style.left = rect.left + 'px';
+                    element.style.top = rect.top + 'px';
+                    element.style.transform = 'none';
+                    
+                    // Clear conflicting positioning styles when dragging starts
+                    element.style.bottom = 'auto';
+                    element.style.right = 'auto';
+                    
+                    // Add visual feedback immediately
+                    element.classList.add('dragging');
+                    document.body.style.userSelect = 'none';
+                    
+                    document.addEventListener('mousemove', onMouseMove, { passive: true });
+                    document.addEventListener('mouseup', stopDrag);
+                });
+                
+                function onMouseMove(e) {
+                    if (!isDragging) return;
+                    
+                    // Store mouse position for RAF
+                    lastMousePos.x = e.clientX;
+                    lastMousePos.y = e.clientY;
+                    
+                    // Cancel previous RAF if still pending
+                    if (rafId) {
+                        cancelAnimationFrame(rafId);
+                    }
+                    
+                    // Schedule position update for next frame
+                    rafId = requestAnimationFrame(updatePosition);
+                }
+                
+                function updatePosition() {
+                    if (!isDragging) return;
+                    
+                    // Calculate new position from mouse minus offset
+                    const newX = Math.max(0, Math.min(window.innerWidth - elementWidth, lastMousePos.x - dragOffset.x));
+                    const newY = Math.max(0, Math.min(window.innerHeight - elementHeight, lastMousePos.y - dragOffset.y));
+                    
+                    // Apply position immediately using left/top for immediate visual feedback
+                    element.style.left = newX + 'px';
+                    element.style.top = newY + 'px';
+                    
+                    rafId = null;
+                }
+                
+                function stopDrag(e) {
+                    if (!isDragging) return;
+                    
+                    isDragging = false;
+                    
+                    // Cancel any pending RAF
+                    if (rafId) {
+                        cancelAnimationFrame(rafId);
+                        rafId = null;
+                    }
+                    
+                    document.removeEventListener('mousemove', onMouseMove);
+                    document.removeEventListener('mouseup', stopDrag);
+                    
+                    // Reset visual feedback
+                    element.classList.remove('dragging');
+                    document.body.style.userSelect = '';
+                }
+            }
+            
+            // Make all floating panels draggable by their headers
+            const floatingPanels = document.querySelectorAll('.floating-panel');
+            floatingPanels.forEach(panel => {
+                const header = panel.querySelector('.cursor-move');
+                if (header) {
+                    header.style.cursor = 'move';
+                    makeDraggable(panel, header);
+                }
+            });
+            
+            // Scale dropdown functionality
+            const scaleButton = document.getElementById('scaleButton');
+            const scaleDropdown = document.getElementById('scaleDropdown');
+            
+            if (scaleButton && scaleDropdown) {
+                scaleButton.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    
+                    // Position the dropdown relative to the button with boundary checks
+                    const buttonRect = scaleButton.getBoundingClientRect();
+                    const dropdownWidth = 80; // min-width from CSS
+                    const dropdownHeight = 320; // approximate height for all options
+                    
+                    let left = buttonRect.left;
+                    let top = buttonRect.bottom + 2;
+                    
+                    // Check right boundary
+                    if (left + dropdownWidth > window.innerWidth) {
+                        left = buttonRect.right - dropdownWidth;
+                    }
+                    
+                    // Check left boundary
+                    if (left < 0) {
+                        left = 0;
+                    }
+                    
+                    // Check bottom boundary - show above button if no room below
+                    if (top + dropdownHeight > window.innerHeight) {
+                        top = buttonRect.top - dropdownHeight - 2;
+                    }
+                    
+                    // Check top boundary
+                    if (top < 0) {
+                        top = buttonRect.bottom + 2; // fallback to below button
+                    }
+                    
+                    scaleDropdown.style.left = left + 'px';
+                    scaleDropdown.style.top = top + 'px';
+                    
+                    scaleDropdown.classList.toggle('hidden');
+                });
+                
+                document.addEventListener('click', () => {
+                    scaleDropdown.classList.add('hidden');
+                });
+                
+                scaleDropdown.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                });
+                
+                // Handle scale option selection
+                const scaleOptions = scaleDropdown.querySelectorAll('.scale-option');
+                scaleOptions.forEach(option => {
+                    option.addEventListener('click', () => {
+                        const scale = option.dataset.scale;
+                        const percentage = Math.round(parseFloat(scale) * 100);
+                        scaleButton.textContent = percentage + '% ▼';
+                        scaleDropdown.classList.add('hidden');
+                    });
+                });
+            }
+            
+            // Custom dash controls functionality
+            const dashStyleSelect = document.getElementById('dashStyleSelect');
+            const customDashControls = document.getElementById('customDashControls');
+            
+            if (dashStyleSelect && customDashControls) {
+                dashStyleSelect.addEventListener('change', () => {
+                    if (dashStyleSelect.value === 'custom') {
+                        customDashControls.classList.remove('hidden');
+                        customDashControls.classList.add('flex');
+                    } else {
+                        customDashControls.classList.add('hidden');
+                        customDashControls.classList.remove('flex');
+                    }
+                });
+            }
+            
+            // Enhanced Image Gallery with Horizontal Scroll Navigation
+            let currentImageIndex = 0;
+            let imageGalleryData = [];
+            let intersectionObserver = null;
+            
+            // Initialize image gallery functionality
+            function initializeImageGallery() {
+                const imageGallery = document.getElementById('imageGallery');
+                const imageDots = document.getElementById('imageDots');
+                const prevButton = document.getElementById('prevImage');
+                const nextButton = document.getElementById('nextImage');
+                const imagePosition = document.getElementById('imagePosition');
+                const imageCounter = document.getElementById('imageCounter');
+                
+                if (!imageGallery) return;
+                
+                // Navigation button functionality
+                prevButton?.addEventListener('click', () => navigateToImage(currentImageIndex - 1));
+                nextButton?.addEventListener('click', () => navigateToImage(currentImageIndex + 1));
+                
+                // Intersection Observer for active image detection
+                intersectionObserver = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            const imageIndex = parseInt(entry.target.dataset.imageIndex);
+                            if (!isNaN(imageIndex)) {
+                                updateActiveImage(imageIndex);
+                            }
+                        }
+                    });
+                }, {
+                    root: imageGallery,
+                    threshold: 0.6,
+                    rootMargin: '0px'
+                });
+                
+                // Keyboard navigation
+                document.addEventListener('keydown', (e) => {
+                    // Only handle keyboard navigation if image panel is visible and focused
+                    if (!document.getElementById('imagePanel').classList.contains('hidden')) {
+                        if (e.key === 'ArrowLeft') {
+                            e.preventDefault();
+                            navigateToImage(currentImageIndex - 1);
+                        } else if (e.key === 'ArrowRight') {
+                            e.preventDefault();
+                            navigateToImage(currentImageIndex + 1);
+                        }
+                    }
+                });
+                
+                // Test coordinate transformations to verify boundary constraints
+                setTimeout(() => {
+                    testCoordinateTransformations();
+                }, 1000);
+            }
+            
+            // Add image to gallery
+            function addImageToGallery(imageData, index) {
+                console.log(`[Gallery] Adding image to gallery at index ${index}:`, imageData);
+                
+                const imageGallery = document.getElementById('imageGallery');
+                const imageDots = document.getElementById('imageDots');
+                
+                if (!imageGallery || !imageDots) {
+                    console.error('[Gallery] imageGallery or imageDots element not found');
+                    return;
+                }
+                
+                // Handle different image data formats from external scripts
+                let imageSrc, imageName;
+                if (typeof imageData === 'string') {
+                    // Simple string URL
+                    imageSrc = imageData;
+                    imageName = `Image ${index + 1}`;
+                } else if (imageData && typeof imageData === 'object') {
+                    // Object with src/url and name properties
+                    imageSrc = imageData.src || imageData.url || imageData.dataUrl || imageData.blob;
+                    imageName = imageData.name || imageData.filename || imageData.title || `Image ${index + 1}`;
+                } else {
+                    console.warn('[Gallery] Invalid image data format:', imageData);
+                    return;
+                }
+                
+                // Create image thumbnail
+                const thumbnail = document.createElement('div');
+                thumbnail.className = 'image-thumbnail';
+                thumbnail.dataset.imageIndex = index;
+                thumbnail.style.backgroundImage = `url(${imageSrc})`;
+                thumbnail.title = imageName;
+                thumbnail.draggable = true;
+                
+                // Add image overlay with name
+                const overlay = document.createElement('div');
+                overlay.className = 'image-overlay';
+                overlay.textContent = imageName;
+                thumbnail.appendChild(overlay);
+                
+                // Add hover controls (delete, rotate, flip)
+                const controls = createThumbnailControls(index);
+                thumbnail.appendChild(controls);
+                
+                // Add all event listeners using helper function
+                addThumbnailEventListeners(thumbnail, index);
+                
+                imageGallery.appendChild(thumbnail);
+                console.log(`[Gallery] Created thumbnail element:`, thumbnail);
+                console.log(`[Gallery] Gallery element children count:`, imageGallery.children.length);
+                
+                // Create navigation dot
+                const dot = document.createElement('div');
+                dot.className = 'nav-dot';
+                dot.dataset.imageIndex = index;
+                dot.addEventListener('click', () => navigateToImage(index));
+                imageDots.appendChild(dot);
+                
+                // Observe thumbnail for intersection
+                if (intersectionObserver) {
+                    intersectionObserver.observe(thumbnail);
+                }
+                
+                // Store normalized image data
+                // Handle cases where imageData already has an 'original' property to avoid nesting
+                let originalData = imageData;
+                if (imageData && imageData.original && typeof imageData.original === 'object') {
+                    // If imageData already has an original property, use that instead
+                    originalData = imageData.original;
+                    console.log('[Gallery] Using nested original data to avoid double nesting');
+                }
+                
+                const normalizedData = {
+                    src: imageSrc,
+                    name: imageName,
+                    original: originalData
+                };
+                
+                // Update gallery data
+                imageGalleryData[index] = normalizedData;
+                updateGalleryControls();
+                
+                console.log('[Gallery] Added image:', normalizedData);
+                
+                // Ensure the image panel is visible when adding any image
+                const imagePanel = document.getElementById('imagePanel');
+                if (imagePanel) {
+                    imagePanel.classList.remove('hidden');
+                    imagePanel.style.display = 'block';
+                }
+            }
+            
+            // Navigate to specific image
+            function navigateToImage(index) {
+                const imageGallery = document.getElementById('imageGallery');
+                if (!imageGallery || index < 0 || index >= imageGalleryData.length) return;
+                
+                const targetThumbnail = imageGallery.querySelector(`[data-image-index="${index}"]`);
+                if (targetThumbnail) {
+                    targetThumbnail.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'nearest',
+                        inline: 'center'
+                    });
+                }
+                
+                // Get the image data and find corresponding legacy image
+                const imageData = imageGalleryData[index];
+                if (imageData && imageData.original && imageData.original.label) {
+                    const label = imageData.original.label;
+                    console.log(`[Gallery] Switching to image with label: ${label}`);
+                    
+                    // Try to switch to the image using the legacy system
+                    if (window.switchToImage && typeof window.switchToImage === 'function') {
+                        window.switchToImage(label);
+                        console.log(`[Gallery] Called switchToImage(${label})`);
+                    } else {
+                        console.warn('[Gallery] switchToImage function not available');
+                    }
+                }
+                
+                updateActiveImage(index);
+            }
+            
+            // Reorder images in the gallery
+            function reorderImages(fromIndex, toIndex) {
+                console.log(`[Gallery] Reordering image from ${fromIndex} to ${toIndex}`);
+                
+                // Reorder the data array
+                const movedImage = imageGalleryData.splice(fromIndex, 1)[0];
+                imageGalleryData.splice(toIndex, 0, movedImage);
+                
+                // Rebuild the gallery UI
+                rebuildGalleryUI();
+                
+                // Update active image index if needed
+                if (currentImageIndex === fromIndex) {
+                    currentImageIndex = toIndex;
+                } else if (currentImageIndex > fromIndex && currentImageIndex <= toIndex) {
+                    currentImageIndex--;
+                } else if (currentImageIndex < fromIndex && currentImageIndex >= toIndex) {
+                    currentImageIndex++;
+                }
+                
+                updateActiveImage(currentImageIndex);
+            }
+            
+            // Rebuild the entire gallery UI after reordering
+            function rebuildGalleryUI() {
+                const imageGallery = document.getElementById('imageGallery');
+                const imageDots = document.getElementById('imageDots');
+                
+                if (!imageGallery || !imageDots) return;
+                
+                // Clear existing thumbnails and dots
+                imageGallery.innerHTML = '';
+                imageDots.innerHTML = '';
+                
+                // Rebuild with new order
+                imageGalleryData.forEach((imageData, index) => {
+                    // Create thumbnail
+                    const thumbnail = document.createElement('div');
+                    thumbnail.className = 'image-thumbnail';
+                    thumbnail.dataset.imageIndex = index;
+                    thumbnail.style.backgroundImage = `url(${imageData.src})`;
+                    thumbnail.title = imageData.name;
+                    thumbnail.draggable = true;
+                    
+                    // Add overlay
+                    const overlay = document.createElement('div');
+                    overlay.className = 'image-overlay';
+                    overlay.textContent = imageData.name;
+                    thumbnail.appendChild(overlay);
+                    
+                    // Add hover controls (delete, rotate, flip)
+                    const controls = createThumbnailControls(index);
+                    thumbnail.appendChild(controls);
+                    
+                    // Add all event listeners (click, drag, etc.)
+                    addThumbnailEventListeners(thumbnail, index);
+                    
+                    imageGallery.appendChild(thumbnail);
+                    
+                    // Create dot
+                    const dot = document.createElement('div');
+                    dot.className = 'nav-dot';
+                    dot.dataset.imageIndex = index;
+                    dot.addEventListener('click', () => navigateToImage(index));
+                    imageDots.appendChild(dot);
+                    
+                    // Observe for intersection
+                    if (intersectionObserver) {
+                        intersectionObserver.observe(thumbnail);
+                    }
+                });
+                
+                updateGalleryControls();
+            }
+            
+            // Create thumbnail control buttons (delete, rotate, flip)
+            function createThumbnailControls(index) {
+                const controlsContainer = document.createElement('div');
+                
+                // Delete control (separate, top-left)
+                const deleteControl = document.createElement('div');
+                deleteControl.className = 'delete-control';
+                
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'control-btn delete-btn';
+                deleteBtn.innerHTML = '×';
+                deleteBtn.title = 'Delete image';
+                deleteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    deleteImage(index);
+                });
+                
+                deleteControl.appendChild(deleteBtn);
+                
+                // Other controls (top-right)
+                const controls = document.createElement('div');
+                controls.className = 'thumbnail-controls';
+                
+                // Rotate left button
+                const rotateLeftBtn = document.createElement('button');
+                rotateLeftBtn.className = 'control-btn rotate-btn';
+                rotateLeftBtn.innerHTML = '↶';
+                rotateLeftBtn.title = 'Rotate 90° counter-clockwise';
+                rotateLeftBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    rotateImage(index, -90);
+                });
+                
+                // Rotate right button
+                const rotateRightBtn = document.createElement('button');
+                rotateRightBtn.className = 'control-btn rotate-btn';
+                rotateRightBtn.innerHTML = '↷';
+                rotateRightBtn.title = 'Rotate 90° clockwise';
+                rotateRightBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    rotateImage(index, 90);
+                });
+                
+                // Flip horizontal button
+                const flipHBtn = document.createElement('button');
+                flipHBtn.className = 'control-btn flip-btn';
+                flipHBtn.innerHTML = '↔';
+                flipHBtn.title = 'Flip horizontally';
+                flipHBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    flipImage(index, 'horizontal');
+                });
+                
+                // Flip vertical button
+                const flipVBtn = document.createElement('button');
+                flipVBtn.className = 'control-btn flip-btn';
+                flipVBtn.innerHTML = '↕';
+                flipVBtn.title = 'Flip vertically';
+                flipVBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    flipImage(index, 'vertical');
+                });
+                
+                controls.appendChild(rotateLeftBtn);
+                controls.appendChild(rotateRightBtn);
+                controls.appendChild(flipHBtn);
+                controls.appendChild(flipVBtn);
+                
+                controlsContainer.appendChild(deleteControl);
+                controlsContainer.appendChild(controls);
+                
+                return controlsContainer;
+            }
+            
+            // Helper function to add all event listeners to a thumbnail
+            function addThumbnailEventListeners(thumbnail, index) {
+                // Click handler
+                thumbnail.addEventListener('click', () => {
+                    navigateToImage(index);
+                });
+                
+                // Drag and drop handlers
+                thumbnail.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.setData('text/plain', index);
+                    thumbnail.classList.add('dragging');
+                    e.dataTransfer.effectAllowed = 'move';
+                });
+                
+                thumbnail.addEventListener('dragend', () => {
+                    thumbnail.classList.remove('dragging');
+                });
+                
+                thumbnail.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                    thumbnail.classList.add('drag-over');
+                });
+                
+                thumbnail.addEventListener('dragleave', () => {
+                    thumbnail.classList.remove('drag-over');
+                });
+                
+                thumbnail.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    thumbnail.classList.remove('drag-over');
+                    
+                    const draggedIndex = parseInt(e.dataTransfer.getData('text/plain'));
+                    const targetIndex = index;
+                    
+                    if (draggedIndex !== targetIndex) {
+                        reorderImages(draggedIndex, targetIndex);
+                    }
+                });
+            }
+            
+            // Delete image function
+            function deleteImage(index) {
+                if (confirm(`Delete "${imageGalleryData[index]?.name}"?`)) {
+                    console.log(`[Gallery] Deleting image at index ${index}`);
+                    
+                    // Remove from data array
+                    imageGalleryData.splice(index, 1);
+                    
+                    // Rebuild UI
+                    rebuildGalleryUI();
+                    
+                    // Adjust current index if needed
+                    if (currentImageIndex >= index) {
+                        currentImageIndex = Math.max(0, currentImageIndex - 1);
+                    }
+                    
+                    // Update active image
+                    if (imageGalleryData.length > 0) {
+                        updateActiveImage(Math.min(currentImageIndex, imageGalleryData.length - 1));
+                    }
+                }
+            }
+            
+            // Rotate image function
+            function rotateImage(index, degrees) {
+                console.log(`[Gallery] Rotating image ${index} by ${degrees}°`);
+                
+                const imageData = imageGalleryData[index];
+                if (!imageData) return;
+                
+                // Apply rotation using Canvas
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    // Set canvas dimensions based on rotation
+                    if (Math.abs(degrees) === 90 || Math.abs(degrees) === 270) {
+                        canvas.width = img.height;
+                        canvas.height = img.width;
+                    } else {
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                    }
+                    
+                    // Rotate and draw
+                    ctx.translate(canvas.width / 2, canvas.height / 2);
+                    ctx.rotate((degrees * Math.PI) / 180);
+                    ctx.drawImage(img, -img.width / 2, -img.height / 2);
+                    
+                    // Update image data
+                    const newSrc = canvas.toDataURL();
+                    imageData.src = newSrc;
+                    
+                    // Update thumbnail background
+                    const thumbnail = document.querySelector(`[data-image-index="${index}"]`);
+                    if (thumbnail) {
+                        thumbnail.style.backgroundImage = `url(${newSrc})`;
+                    }
+                    
+                    // Update the actual canvas image if this is the current image
+                    if (imageData.original && imageData.original.label) {
+                        const label = imageData.original.label;
+                        
+                        // Get canvas dimensions instead of raw image dimensions
+                        // This is critical - paint.js coordinates are relative to canvas, not original image!
+                        const canvas = document.getElementById('canvas');
+                        if (!canvas) {
+                            console.error('[Transform] Canvas element not found!');
+                            return;
+                        }
+                        
+                        // Use actual canvas coordinate space dimensions
+                        let canvasWidth = canvas.width;
+                        let canvasHeight = canvas.height;
+                        
+                        console.log(`[Transform] Using canvas dimensions: ${canvasWidth}x${canvasHeight} instead of image: ${img.naturalWidth}x${img.naturalHeight}`);
+                        
+                        // For rotations, we might need to swap canvas dimensions too
+                        let transformWidth = canvasWidth;
+                        let transformHeight = canvasHeight;
+                        
+                        if (Math.abs(degrees) === 90 || Math.abs(degrees) === 270) {
+                            // For blank canvas, keep original dimensions to rotate "in place"
+                            // For real images, swap dimensions to match the rotated coordinate space
+                            if (imageData.original && imageData.original.isBlankCanvas) {
+                                console.log(`[Transform] Keeping canvas dimensions for blank canvas rotation: ${transformWidth}x${transformHeight}`);
+                            } else {
+                                // After rotation, the canvas coordinate space also changes
+                                transformWidth = canvasHeight;  // Width becomes height
+                                transformHeight = canvasWidth;  // Height becomes width
+                                console.log(`[Transform] Swapped canvas dimensions for rotation: ${transformWidth}x${transformHeight}`);
+                            }
+                        }
+                        
+                        // Transform all coordinate-based data using IMAGE dimensions (not canvas)
+                        // Paint.js stores coordinates in image-relative space, not canvas space
+                        // For blank canvas, use canvas dimensions since there's no actual image
+                        let rotateWidth, rotateHeight;
+                        if (imageData.original && imageData.original.isBlankCanvas) {
+                            const canvas = document.getElementById('canvas');
+                            rotateWidth = canvas ? canvas.width : 800;
+                            rotateHeight = canvas ? canvas.height : 800;
+                            console.log(`[Transform] Using canvas dimensions for blank canvas: ${rotateWidth}x${rotateHeight}`);
+                        } else {
+                            rotateWidth = img.naturalWidth;
+                            rotateHeight = img.naturalHeight;
+                        }
+                        // Debug: Check paint.js current state
+                        if (window.paintApp && window.paintApp.state) {
+                            console.log(`[Transform] Paint.js current image label: ${window.paintApp.state.currentImageLabel}`);
+                        }
+                        
+                        console.log(`[Transform] About to call transformImageData with label: ${label}, degrees: ${degrees}, dimensions: ${rotateWidth}x${rotateHeight}`);
+                        transformImageData(label, 'rotate', degrees, rotateWidth, rotateHeight);
+                        // Update the paint.js image data (skip for blank canvas as there's no actual image)
+                        if (!imageData.original?.isBlankCanvas) {
+                            if (window.originalImages && window.originalImages[label]) {
+                                window.originalImages[label] = newSrc;
+                            }
+                            
+                            // Update the canvas if this is the currently displayed image
+                            if (window.paintApp && window.paintApp.state.currentImageLabel === label) {
+                                console.log(`[Gallery] Updating canvas with rotated image for ${label}`);
+                                updateCanvasWithNewImage(newSrc);
+                            }
+                        } else {
+                            console.log('[Transform] Skipping image update for blank canvas - only transforming drawing data');
+                            
+                            // For blank canvas, just redraw the existing strokes with transformed coordinates
+                            if (window.redrawCanvasWithVisibility) {
+                                window.redrawCanvasWithVisibility();
+                            } else if (window.drawAllStrokes) {
+                                window.drawAllStrokes();
+                            }
+                        }
+                    }
+                    
+                    console.log(`[Gallery] Image ${index} rotated ${degrees}°`);
+                };
+                img.crossOrigin = 'anonymous';
+                img.src = imageData.src;
+            }
+            
+            // Flip image function
+            function flipImage(index, direction) {
+                console.log(`[Gallery] Flipping image ${index} ${direction}`);
+                
+                const imageData = imageGalleryData[index];
+                if (!imageData) return;
+                
+                // Apply flip using Canvas
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    
+                    // Apply flip transformation
+                    if (direction === 'horizontal') {
+                        ctx.scale(-1, 1);
+                        ctx.drawImage(img, -canvas.width, 0);
+                    } else if (direction === 'vertical') {
+                        ctx.scale(1, -1);
+                        ctx.drawImage(img, 0, -canvas.height);
+                    }
+                    
+                    // Update image data
+                    const newSrc = canvas.toDataURL();
+                    imageData.src = newSrc;
+                    
+                    // Update thumbnail background
+                    const thumbnail = document.querySelector(`[data-image-index="${index}"]`);
+                    if (thumbnail) {
+                        thumbnail.style.backgroundImage = `url(${newSrc})`;
+                    }
+                    
+                    // Update the actual canvas image if this is the current image
+                    if (imageData.original && imageData.original.label) {
+                        const label = imageData.original.label;
+                        
+                        // Get canvas dimensions for coordinate transformation  
+                        // Paint.js coordinates are relative to canvas, not original image!
+                        const canvas = document.getElementById('canvas');
+                        if (!canvas) {
+                            console.error('[Transform] Canvas element not found!');
+                            return;
+                        }
+                        
+                        // Use actual canvas coordinate space dimensions
+                        const canvasWidth = canvas.width;
+                        const canvasHeight = canvas.height;
+                        
+                        console.log(`[Transform] Using canvas dimensions for flip: ${canvasWidth}x${canvasHeight}`);
+                        
+                        // Transform all coordinate-based data using IMAGE dimensions (not canvas)  
+                        // Paint.js stores coordinates in image-relative space, not canvas space
+                        // For blank canvas, use canvas dimensions since there's no actual image
+                        let flipWidth, flipHeight;
+                        if (imageData.original && imageData.original.isBlankCanvas) {
+                            flipWidth = canvasWidth;
+                            flipHeight = canvasHeight;
+                            console.log(`[Transform] Using canvas dimensions for blank canvas flip: ${flipWidth}x${flipHeight}`);
+                        } else {
+                            flipWidth = img.naturalWidth;
+                            flipHeight = img.naturalHeight;
+                        }
+                        transformImageData(label, 'flip', direction, flipWidth, flipHeight);
+                        // Update the paint.js image data (skip for blank canvas as there's no actual image)
+                        if (!imageData.original?.isBlankCanvas) {
+                            if (window.originalImages && window.originalImages[label]) {
+                                window.originalImages[label] = newSrc;
+                            }
+                            
+                            // Update the canvas if this is the currently displayed image
+                            if (window.paintApp && window.paintApp.state.currentImageLabel === label) {
+                                console.log(`[Gallery] Updating canvas with flipped image for ${label}`);
+                                updateCanvasWithNewImage(newSrc);
+                            }
+                        } else {
+                            console.log('[Transform] Skipping image update for blank canvas flip - only transforming drawing data');
+                            
+                            // For blank canvas, just redraw the existing strokes with transformed coordinates
+                            if (window.redrawCanvasWithVisibility) {
+                                window.redrawCanvasWithVisibility();
+                            } else if (window.drawAllStrokes) {
+                                window.drawAllStrokes();
+                            }
+                        }
+                    }
+                    
+                    console.log(`[Gallery] Image ${index} flipped ${direction}`);
+                };
+                img.crossOrigin = 'anonymous';
+                img.src = imageData.src;
+            }
+            
+            // Test function to validate coordinate transformations
+            function testCoordinateTransformations() {
+                console.log('=== Testing Coordinate Transformations ===');
+                
+                // Get actual canvas dimensions dynamically
+                const canvas = document.getElementById('canvas');
+                const canvasWidth = canvas ? canvas.width : 1920;
+                const canvasHeight = canvas ? canvas.height : 945;
+                
+                console.log(`[Test] Using actual canvas dimensions: ${canvasWidth}x${canvasHeight}`);
+                
+                // Test corner points that were previously going out of bounds
+                const testPoints = [
+                    {x: 100, y: 100, label: 'top-left area'},
+                    {x: 1800, y: 100, label: 'top-right area'}, 
+                    {x: 100, y: 800, label: 'bottom-left area'},
+                    {x: 1800, y: 800, label: 'bottom-right area'},
+                    {x: 960, y: 472.5, label: 'center'}
+                ];
+                
+                let allTestsPassed = true;
+                
+                testPoints.forEach(point => {
+                    console.log(`\nTesting ${point.label} at (${point.x}, ${point.y}):`);
+                    
+                    // Test 90° rotation
+                    const rotated90 = rotateCoordinates(point.x, point.y, 90, canvasWidth, canvasHeight);
+                    console.log(`  90° rotation: (${rotated90.x.toFixed(1)}, ${rotated90.y.toFixed(1)})`);
+                    
+                    // Test 180° rotation  
+                    const rotated180 = rotateCoordinates(point.x, point.y, 180, canvasWidth, canvasHeight);
+                    console.log(`  180° rotation: (${rotated180.x.toFixed(1)}, ${rotated180.y.toFixed(1)})`);
+                    
+                    // Test horizontal flip
+                    const flippedH = flipCoordinates(point.x, point.y, 'horizontal', canvasWidth, canvasHeight);
+                    console.log(`  Horizontal flip: (${flippedH.x.toFixed(1)}, ${flippedH.y.toFixed(1)})`);
+                    
+                    // Test vertical flip
+                    const flippedV = flipCoordinates(point.x, point.y, 'vertical', canvasWidth, canvasHeight);
+                    console.log(`  Vertical flip: (${flippedV.x.toFixed(1)}, ${flippedV.y.toFixed(1)})`);
+                    
+                    // Verify all results are within bounds (for 90°: width becomes height)
+                    const bounds90 = rotated90.x >= 0 && rotated90.x <= canvasHeight && rotated90.y >= 0 && rotated90.y <= canvasWidth;
+                    const bounds180 = rotated180.x >= 0 && rotated180.x <= canvasWidth && rotated180.y >= 0 && rotated180.y <= canvasHeight;
+                    const boundsFlipH = flippedH.x >= 0 && flippedH.x <= canvasWidth && flippedH.y >= 0 && flippedH.y <= canvasHeight;
+                    const boundsFlipV = flippedV.x >= 0 && flippedV.x <= canvasWidth && flippedV.y >= 0 && flippedV.y <= canvasHeight;
+                    
+                    console.log(`  Within bounds: 90°=${bounds90}, 180°=${bounds180}, H-flip=${boundsFlipH}, V-flip=${boundsFlipV}`);
+                    
+                    if (!bounds90 || !bounds180 || !boundsFlipH || !boundsFlipV) {
+                        allTestsPassed = false;
+                        console.error(`  ❌ BOUNDARY TEST FAILED for ${point.label}`);
+                    }
+                });
+                
+                if (allTestsPassed) {
+                    console.log('\n✅ All coordinate transformation tests PASSED - boundary constraints working correctly');
+                } else {
+                    console.error('\n❌ Some coordinate transformation tests FAILED - boundary constraints need adjustment');
+                }
+                
+                console.log('=== Transformation Test Complete ===');
+                return allTestsPassed;
+            }
+
+            // Transform offset vectors (relative to anchor points) for rotation/flip
+            function rotateOffsetVector(x, y, degrees) {
+                // For offsets, we rotate around origin (0,0) since they're relative vectors
+                const radians = (degrees * Math.PI) / 180;
+                const cos = Math.cos(radians);
+                const sin = Math.sin(radians);
+                
+                return {
+                    x: x * cos - y * sin,
+                    y: x * sin + y * cos
+                };
+            }
+            
+            function flipOffsetVector(x, y, direction) {
+                if (direction === 'horizontal') {
+                    return { x: -x, y: y };  // Flip X offset
+                } else if (direction === 'vertical') {
+                    return { x: x, y: -y };  // Flip Y offset
+                }
+                return { x, y };
+            }
+
+            // Coordinate transformation functions for image rotate/flip
+            function rotateCoordinates(x, y, degrees, imageWidth, imageHeight, customCenter = null, keepDimensions = false) {
+                let centerX, centerY;
+                
+                if (customCenter) {
+                    centerX = customCenter.x;
+                    centerY = customCenter.y;
+                    console.log(`[Transform] Using drawing center (${centerX.toFixed(1)}, ${centerY.toFixed(1)}) instead of canvas center`);
+                } else {
+                    centerX = imageWidth / 2;
+                    centerY = imageHeight / 2;
+                    console.log(`[Transform] Using canvas center (${centerX}, ${centerY})`);
+                }
+                
+                console.log(`[Transform] Rotating point (${x}, ${y}) around center (${centerX.toFixed(1)}, ${centerY.toFixed(1)}) by ${degrees}°`);
+                
+                // Translate to origin (relative to center)
+                const translatedX = x - centerX;
+                const translatedY = y - centerY;
+                
+                // Convert degrees to radians
+                const radians = (degrees * Math.PI) / 180;
+                const cos = Math.cos(radians);
+                const sin = Math.sin(radians);
+                
+                // Apply rotation matrix
+                const rotatedX = translatedX * cos - translatedY * sin;
+                const rotatedY = translatedX * sin + translatedY * cos;
+                
+                // For 90° and 270° rotations, dimensions swap
+                let newCenterX, newCenterY;
+                if (Math.abs(degrees) === 90 || Math.abs(degrees) === 270) {
+                    // After 90° rotation, width becomes height and height becomes width
+                    newCenterX = imageHeight / 2;  // New width is old height
+                    newCenterY = imageWidth / 2;   // New height is old width
+                } else {
+                    newCenterX = centerX;
+                    newCenterY = centerY;
+                }
+                
+                // Translate back from new center
+                let finalX = rotatedX + newCenterX;
+                let finalY = rotatedY + newCenterY;
+                
+                // Get the final canvas dimensions (after potential rotation)
+                let finalWidth, finalHeight;
+                if (keepDimensions || !(Math.abs(degrees) === 90 || Math.abs(degrees) === 270)) {
+                    // Keep original dimensions for blank canvas or non-90/270 rotations
+                    finalWidth = imageWidth;
+                    finalHeight = imageHeight;
+                } else {
+                    // Swap dimensions for regular image 90/270 rotations
+                    finalWidth = imageHeight;
+                    finalHeight = imageWidth;
+                }
+                
+                // For blank canvas, skip bounds clamping to prevent shape distortion during rotation
+                if (!keepDimensions) {
+                    // Constrain coordinates to stay within canvas bounds (0 to width-1, 0 to height-1)
+                    finalX = Math.max(0, Math.min(finalWidth - 1, finalX));
+                    finalY = Math.max(0, Math.min(finalHeight - 1, finalY));
+                }
+                
+                console.log(`[Transform] Final coordinates: (${finalX}, ${finalY}) [bounds: ${finalWidth}x${finalHeight}]`);
+                
+                return {
+                    x: finalX,
+                    y: finalY
+                };
+            }
+            
+            function flipCoordinates(x, y, direction, imageWidth, imageHeight) {
+                let finalX = x, finalY = y;
+                
+                if (direction === 'horizontal') {
+                    finalX = imageWidth - x;
+                } else if (direction === 'vertical') {
+                    finalY = imageHeight - y;
+                }
+                
+                // Apply boundary constraints (0 to width-1, 0 to height-1)
+                finalX = Math.max(0, Math.min(imageWidth - 1, finalX));
+                finalY = Math.max(0, Math.min(imageHeight - 1, finalY));
+                
+                return { 
+                    x: finalX, 
+                    y: finalY 
+                };
+            }
+            
+            // Calculate the centroid (center of mass) of all drawn strokes
+            function calculateDrawingCentroid(vectorStrokesByImage, imageLabel) {
+                const vectorStrokes = vectorStrokesByImage[imageLabel];
+                if (!vectorStrokes || Object.keys(vectorStrokes).length === 0) {
+                    return null;
+                }
+                
+                let totalX = 0, totalY = 0, totalPoints = 0;
+                
+                Object.values(vectorStrokes).forEach(stroke => {
+                    if (stroke.points && stroke.points.length > 0) {
+                        stroke.points.forEach(point => {
+                            totalX += point.x;
+                            totalY += point.y;
+                            totalPoints++;
+                        });
+                    }
+                });
+                
+                if (totalPoints === 0) return null;
+                
+                const centroid = {
+                    x: totalX / totalPoints,
+                    y: totalY / totalPoints
+                };
+                
+                console.log(`[Transform] Drawing centroid: (${centroid.x.toFixed(1)}, ${centroid.y.toFixed(1)}) from ${totalPoints} points`);
+                return centroid;
+            }
+            
+            // Transform all stroke and label data for an image
+            function transformImageData(imageLabel, transformType, transformValue, imageWidth, imageHeight) {
+                console.log(`[Transform] ===== TRANSFORMING DATA =====`);
+                console.log(`[Transform] Image: ${imageLabel}, Type: ${transformType} ${transformValue}`);
+                console.log(`[Transform] Using IMAGE dimensions: ${imageWidth} x ${imageHeight}`);
+                
+                // Debug: Check both global state and paintApp state
+                if (window.paintApp && window.paintApp.state) {
+                    console.log(`[Transform] Paint.js current image label: ${window.paintApp.state.currentImageLabel}`);
+                    console.log(`[Transform] Paint.js vectorStrokesByImage keys:`, Object.keys(window.paintApp.state.vectorStrokesByImage || {}));
+                }
+                
+                // Debug: Check what data exists for this image label
+                if (window.vectorStrokesByImage) {
+                    console.log(`[Transform] Available vectorStrokesByImage labels:`, Object.keys(window.vectorStrokesByImage));
+                    if (window.vectorStrokesByImage[imageLabel]) {
+                        console.log(`[Transform] Found ${Object.keys(window.vectorStrokesByImage[imageLabel]).length} strokes for label ${imageLabel}`);
+                    } else {
+                        console.log(`[Transform] No strokes found for label ${imageLabel}`);
+                    }
+                } else {
+                    console.log(`[Transform] Global vectorStrokesByImage is undefined!`);
+                }
+                
+                // Try paint.js state if global variables are empty
+                let vectorStrokesSource = window.vectorStrokesByImage;
+                let labelPositionsSource = window.customLabelPositions;
+                let labelOffsetsSource = window.calculatedLabelOffsets;
+                
+                if (window.paintApp && window.paintApp.state) {
+                    if (!vectorStrokesSource || !vectorStrokesSource[imageLabel]) {
+                        vectorStrokesSource = window.paintApp.state.vectorStrokesByImage;
+                        console.log(`[Transform] Using paint.js state vectorStrokesByImage instead`);
+                    }
+                    if (!labelPositionsSource || !labelPositionsSource[imageLabel]) {
+                        labelPositionsSource = window.paintApp.state.customLabelPositions;
+                        console.log(`[Transform] Using paint.js state customLabelPositions instead`);
+                    }
+                    if (!labelOffsetsSource || !labelOffsetsSource[imageLabel]) {
+                        labelOffsetsSource = window.paintApp.state.calculatedLabelOffsets;
+                        console.log(`[Transform] Using paint.js state calculatedLabelOffsets instead`);
+                    }
+                }
+                
+                // Calculate the centroid of the drawing for better rotation center
+                let rotationCenter = null;
+                let isBlankCanvas = false;
+                if (transformType === 'rotate' && vectorStrokesSource) {
+                    // For blank canvas, use a fixed rotation center to prevent drift
+                    if (imageLabel === 'blank_canvas') {
+                        isBlankCanvas = true;
+                        // Store the original centroid in a persistent location
+                        if (!window.originalCentroidByImage) {
+                            window.originalCentroidByImage = {};
+                        }
+                        
+                        if (!window.originalCentroidByImage[imageLabel]) {
+                            // Calculate and store the original centroid only once
+                            rotationCenter = calculateDrawingCentroid(vectorStrokesSource, imageLabel);
+                            window.originalCentroidByImage[imageLabel] = rotationCenter;
+                            console.log(`[Transform] Stored original centroid for ${imageLabel}:`, rotationCenter);
+                        } else {
+                            // Reuse the original centroid to prevent drift
+                            rotationCenter = window.originalCentroidByImage[imageLabel];
+                            console.log(`[Transform] Using stored original centroid for ${imageLabel}:`, rotationCenter);
+                        }
+                    } else {
+                        // For regular images, calculate centroid normally
+                        rotationCenter = calculateDrawingCentroid(vectorStrokesSource, imageLabel);
+                    }
+                }
+                
+                // Transform vector strokes
+                if (vectorStrokesSource && vectorStrokesSource[imageLabel]) {
+                    const vectorStrokes = vectorStrokesSource[imageLabel];
+                    console.log(`[Transform] Processing ${Object.keys(vectorStrokes).length} vector strokes:`, Object.keys(vectorStrokes));
+                    
+                    Object.keys(vectorStrokes).forEach(strokeLabel => {
+                        const strokeData = vectorStrokes[strokeLabel];
+                        if (strokeData && strokeData.points) {
+                            console.log(`[Transform] Stroke ${strokeLabel}: ${strokeData.points.length} points`);
+                            console.log(`[Transform] Before:`, strokeData.points.slice(0, 2)); // Show first 2 points
+                            
+                            strokeData.points = strokeData.points.map(point => {
+                                if (transformType === 'rotate') {
+                                    return rotateCoordinates(point.x, point.y, transformValue, imageWidth, imageHeight, rotationCenter, isBlankCanvas);
+                                } else if (transformType === 'flip') {
+                                    return flipCoordinates(point.x, point.y, transformValue, imageWidth, imageHeight);
+                                }
+                                return point;
+                            });
+                            
+                            console.log(`[Transform] After:`, strokeData.points.slice(0, 2)); // Show first 2 transformed points
+                        }
+                    });
+                    console.log(`[Transform] Updated ${Object.keys(vectorStrokes).length} vector strokes`);
+                }
+                
+                // Transform custom label positions
+                if (labelPositionsSource && labelPositionsSource[imageLabel]) {
+                    const labelPositions = labelPositionsSource[imageLabel];
+                    console.log(`[Transform] Processing ${Object.keys(labelPositions).length} custom label positions`);
+                    Object.keys(labelPositions).forEach(labelKey => {
+                        const position = labelPositions[labelKey];
+                        if (position && position.x !== undefined && position.y !== undefined) {
+                            // Labels are offset vectors from stroke anchor points, transform as relative vectors
+                            const transformed = transformType === 'rotate' 
+                                ? rotateOffsetVector(position.x, position.y, transformValue)
+                                : flipOffsetVector(position.x, position.y, transformValue);
+                            
+                            console.log(`[Transform] Label ${labelKey}: (${position.x}, ${position.y}) → (${transformed.x.toFixed(1)}, ${transformed.y.toFixed(1)})`);
+                            
+                            labelPositions[labelKey] = {
+                                ...position,
+                                x: transformed.x,
+                                y: transformed.y
+                            };
+                        }
+                    });
+                    console.log(`[Transform] Updated ${Object.keys(labelPositions).length} custom label positions`);
+                }
+                
+                // Transform calculated label offsets
+                if (labelOffsetsSource && labelOffsetsSource[imageLabel]) {
+                    const labelOffsets = labelOffsetsSource[imageLabel];
+                    console.log(`[Transform] Processing ${Object.keys(labelOffsets).length} calculated label offsets`);
+                    Object.keys(labelOffsets).forEach(labelKey => {
+                        const offset = labelOffsets[labelKey];
+                        if (offset && offset.x !== undefined && offset.y !== undefined) {
+                            // Label offsets are also relative vectors from stroke anchor points
+                            const transformed = transformType === 'rotate'
+                                ? rotateOffsetVector(offset.x, offset.y, transformValue)
+                                : flipOffsetVector(offset.x, offset.y, transformValue);
+                            
+                            console.log(`[Transform] Offset ${labelKey}: (${offset.x}, ${offset.y}) → (${transformed.x.toFixed(1)}, ${transformed.y.toFixed(1)})`);
+                            
+                            labelOffsets[labelKey] = {
+                                ...offset,
+                                x: transformed.x,
+                                y: transformed.y
+                            };
+                        }
+                    });
+                    console.log(`[Transform] Updated ${Object.keys(labelOffsets).length} calculated label offsets`);
+                }
+                
+                // Update image dimensions if rotating by 90/270 degrees
+                if (transformType === 'rotate' && (Math.abs(transformValue) === 90 || Math.abs(transformValue) === 270)) {
+                    if (window.originalImageDimensions && window.originalImageDimensions[imageLabel]) {
+                        const dims = window.originalImageDimensions[imageLabel];
+                        window.originalImageDimensions[imageLabel] = {
+                            width: dims.height,
+                            height: dims.width
+                        };
+                        console.log(`[Transform] Swapped image dimensions: ${dims.width}x${dims.height} → ${dims.height}x${dims.width}`);
+                    }
+                }
+            }
+            
+            // Helper function to update canvas with new image data
+            function updateCanvasWithNewImage(newImageSrc) {
+                try {
+                    const img = new Image();
+                    img.onload = function() {
+                        const canvas = document.getElementById('canvas');
+                        if (canvas) {
+                            const ctx = canvas.getContext('2d');
+                            
+                            console.log(`[Canvas] Updating canvas (${canvas.width}x${canvas.height}) with new image (${img.width}x${img.height})`);
+                            
+                            // Clear canvas
+                            ctx.clearRect(0, 0, canvas.width, canvas.height);
+                            
+                            // Get current scale and position from paint.js
+                            const currentLabel = window.paintApp?.state?.currentImageLabel || window.currentImageLabel;
+                            const scale = window.imageScaleByLabel?.[currentLabel] || 1.0;
+                            const position = window.imagePositionByLabel?.[currentLabel] || { x: 0, y: 0 };
+                            
+                            console.log(`[Canvas] Using scale: ${scale}, position: (${position.x}, ${position.y})`);
+                            
+                            // Calculate scaled dimensions and positioning
+                            const scaledWidth = img.width * scale;
+                            const scaledHeight = img.height * scale;
+                            const x = (canvas.width - scaledWidth) / 2 + position.x;
+                            const y = (canvas.height - scaledHeight) / 2 + position.y;
+                            
+                            // Draw image with proper scaling and positioning
+                            ctx.drawImage(img, x, y, scaledWidth, scaledHeight);
+                            
+                            // Trigger paint.js to redraw strokes if available
+                            if (window.redrawCanvasWithVisibility) {
+                                window.redrawCanvasWithVisibility();
+                            } else if (window.drawAllStrokes) {
+                                window.drawAllStrokes();
+                            }
+                            
+                            console.log('[Gallery] Canvas updated with new image using paint.js scale/position');
+                        }
+                    };
+                    img.crossOrigin = 'anonymous';
+                    img.src = newImageSrc;
+                } catch (error) {
+                    console.error('[Gallery] Error updating canvas:', error);
+                }
+            }
+            
+            // Update active image highlighting
+            function updateActiveImage(index) {
+                currentImageIndex = index;
+                
+                // Update thumbnail highlighting
+                document.querySelectorAll('.image-thumbnail').forEach((thumb, idx) => {
+                    thumb.classList.toggle('active', idx === index);
+                });
+                
+                // Update navigation dots
+                document.querySelectorAll('.nav-dot').forEach((dot, idx) => {
+                    dot.classList.toggle('active', idx === index);
+                });
+                
+                updateGalleryControls();
+            }
+            
+            // Update gallery controls and counters
+            function updateGalleryControls() {
+                const prevButton = document.getElementById('prevImage');
+                const nextButton = document.getElementById('nextImage');
+                const imagePosition = document.getElementById('imagePosition');
+                const imageCounter = document.getElementById('imageCounter');
+                
+                const totalImages = imageGalleryData.length;
+                
+                if (prevButton && nextButton) {
+                    prevButton.disabled = currentImageIndex <= 0;
+                    nextButton.disabled = currentImageIndex >= totalImages - 1;
+                }
+                
+                if (imagePosition) {
+                    imagePosition.textContent = `${currentImageIndex + 1} / ${totalImages}`;
+                }
+                
+                if (imageCounter) {
+                    imageCounter.textContent = totalImages > 0 ? `${totalImages} images` : '';
+                }
+            }
+            
+            // Clear image gallery
+            function clearImageGallery() {
+                const imageGallery = document.getElementById('imageGallery');
+                const imageDots = document.getElementById('imageDots');
+                
+                if (imageGallery) imageGallery.innerHTML = '';
+                if (imageDots) imageDots.innerHTML = '';
+                
+                imageGalleryData = [];
+                currentImageIndex = 0;
+                updateGalleryControls();
+            }
+            
+            // Initialize gallery on page load
+            initializeImageGallery();
+            
+            // Store reference to original addImageToSidebar if it exists
+            const originalAddImageToSidebar = window.addImageToSidebar;
+            
+            // Enhanced compatibility function that works with both new and old formats
+            window.addImageToSidebar = function(imageUrl, label, filename) {
+                console.log('[COMPAT] addImageToSidebar called with:', { imageUrl: imageUrl?.substring?.(0, 50) || imageUrl, label, filename });
+                
+                // Call original function first if it exists (for backwards compatibility)
+                if (originalAddImageToSidebar && typeof originalAddImageToSidebar === 'function') {
+                    try {
+                        originalAddImageToSidebar.apply(this, arguments);
+                    } catch (error) {
+                        console.warn('[COMPAT] Original addImageToSidebar failed:', error);
+                    }
+                }
+                
+                // Add to new gallery
+                if (imageUrl) {
+                    const index = imageGalleryData.length;
+                    const imageData = {
+                        src: imageUrl,
+                        url: imageUrl,
+                        name: filename || label || `Image ${index + 1}`,
+                        label: label,
+                        filename: filename
+                    };
+                    
+                    addImageToGallery(imageData, index);
+                    console.log('[COMPAT] Added to new gallery at index', index, 'Total images now:', imageGalleryData.length);
+                    
+                    return index;
+                } else {
+                    console.warn('[COMPAT] No valid imageUrl provided');
+                    return -1;
+                }
+            };
+            
+            window.switchToImage = function(imageIndex) {
+                if (typeof imageIndex === 'number') {
+                    navigateToImage(imageIndex);
+                    console.log('[COMPAT] Switched to image:', imageIndex);
+                }
+            };
+            
+            // Legacy image list compatibility
+            window.updateImageList = function() {
+                // This function exists for compatibility but the new gallery handles updates automatically
+                console.log('[COMPAT] updateImageList called - handled by new gallery system');
+            };
+            
+            // Clear images function
+            window.clearImageSidebar = function() {
+                clearImageGallery();
+                console.log('[COMPAT] Cleared image sidebar');
+            };
+            
+            console.log('[INIT] Image gallery and compatibility functions initialized');
+            
+            // Debug function to inspect paint.js state
+            window.debugPaintState = function() {
+                console.log('=== PAINT.JS STATE DEBUG ===');
+                
+                if (window.paintApp && window.paintApp.state) {
+                    console.log('Current image label:', window.paintApp.state.currentImageLabel);
+                    console.log('Paint app state keys:', Object.keys(window.paintApp.state));
+                }
+                
+                if (window.vectorStrokesByImage) {
+                    const labels = Object.keys(window.vectorStrokesByImage);
+                    console.log('vectorStrokesByImage labels:', labels);
+                    labels.forEach(label => {
+                        const strokes = window.vectorStrokesByImage[label];
+                        console.log(`  ${label}: ${Object.keys(strokes || {}).length} strokes`);
+                    });
+                } else {
+                    console.log('vectorStrokesByImage not found');
+                }
+                
+                if (window.customLabelPositions) {
+                    const labels = Object.keys(window.customLabelPositions);
+                    console.log('customLabelPositions labels:', labels);
+                } else {
+                    console.log('customLabelPositions not found');
+                }
+                
+                console.log('imageGalleryData length:', imageGalleryData.length);
+                console.log('currentImageIndex:', currentImageIndex);
+                if (imageGalleryData[currentImageIndex]) {
+                    console.log('Current image:', imageGalleryData[currentImageIndex].name, imageGalleryData[currentImageIndex].original?.label);
+                    console.log('Full current image data:', JSON.stringify(imageGalleryData[currentImageIndex], null, 2));
+                }
+                
+                // Also debug all gallery images
+                console.log('All gallery images:');
+                imageGalleryData.forEach((img, index) => {
+                    console.log(`  [${index}] ${img.name}: label=${img.original?.label}, isBlankCanvas=${img.original?.isBlankCanvas}`);
+                });
+            };
+            
+            // Test function to add mock drawing data for blank canvas
+            window.addTestTriangle = function() {
+                // Try to get the actual current image label from gallery
+                let targetLabel = 'blank_canvas'; // fallback
+                if (imageGalleryData[currentImageIndex]?.original?.label) {
+                    targetLabel = imageGalleryData[currentImageIndex].original.label;
+                }
+                const paintLabel = window.paintApp?.state?.currentImageLabel;
+                
+                console.log(`[Test] Gallery current index: ${currentImageIndex}`);
+                console.log(`[Test] Gallery target label: ${targetLabel}`);
+                console.log(`[Test] Paint.js current label: ${paintLabel}`);
+                console.log(`[Test] Adding test triangle to label: ${targetLabel}`);
+                
+                // Mock stroke data for a simple triangle
+                const mockStroke = {
+                    points: [
+                        { x: 300, y: 200 },  // Top point
+                        { x: 200, y: 400 },  // Bottom left
+                        { x: 400, y: 400 },  // Bottom right
+                        { x: 300, y: 200 }   // Back to top
+                    ],
+                    color: '#ff0000',
+                    thickness: 3,
+                    type: 'freehand'
+                };
+                
+                // Add to both global and paint.js state
+                if (window.vectorStrokesByImage) {
+                    if (!window.vectorStrokesByImage[targetLabel]) {
+                        window.vectorStrokesByImage[targetLabel] = {};
+                    }
+                    window.vectorStrokesByImage[targetLabel]['test_triangle'] = mockStroke;
+                }
+                
+                if (window.paintApp?.state?.vectorStrokesByImage) {
+                    if (!window.paintApp.state.vectorStrokesByImage[targetLabel]) {
+                        window.paintApp.state.vectorStrokesByImage[targetLabel] = {};
+                    }
+                    window.paintApp.state.vectorStrokesByImage[targetLabel]['test_triangle'] = mockStroke;
+                }
+                
+                // Also switch paint.js to the correct label if it's not already there
+                if (paintLabel !== targetLabel && window.switchToImage) {
+                    console.log(`[Test] Switching paint.js from '${paintLabel}' to '${targetLabel}'`);
+                    window.switchToImage(targetLabel);
+                }
+                
+                console.log(`[Test] Added test triangle. Use debugPaintState() to verify.`);
+                
+                // Redraw if function exists
+                if (window.redrawCanvasWithVisibility) {
+                    window.redrawCanvasWithVisibility();
+                }
+            };
+            
+            // Function to clear stored centroids (call when new drawings are made)
+            window.clearStoredCentroid = function(imageLabel) {
+                if (window.originalCentroidByImage && window.originalCentroidByImage[imageLabel]) {
+                    console.log(`[Transform] Cleared stored centroid for ${imageLabel}`);
+                    delete window.originalCentroidByImage[imageLabel];
+                }
+            };
+            
+            // Test function to try rotating the current image
+            window.testRotate = function() {
+                console.log(`[Test] Testing rotation on current image (index ${currentImageIndex})`);
+                if (currentImageIndex >= 0 && currentImageIndex < imageGalleryData.length) {
+                    const imageData = imageGalleryData[currentImageIndex];
+                    console.log(`[Test] Rotating image: ${imageData.name}`);
+                    rotateImage(currentImageIndex, 90);
+                } else {
+                    console.log(`[Test] Invalid image index: ${currentImageIndex}`);
+                }
+            };
+            
+            // Hook into addImageToSidebar after external scripts load
+            let hookAttempts = 0;
+            const maxHookAttempts = 50;
+            
+            function attemptHook() {
+                hookAttempts++;
+                
+                // Check if paint.js has loaded and defined its own addImageToSidebar
+                if (window.addImageToSidebar && window.addImageToSidebar.toString().includes('imageList')) {
+                    console.log('[HOOK] Found original addImageToSidebar from paint.js, hooking into it...');
+                    
+                    // Store the original function
+                    const paintJsAddImageToSidebar = window.addImageToSidebar;
+                    
+                    // Create our intercepting function
+                    window.addImageToSidebar = function(imageUrl, label, filename) {
+                        console.log('[HOOK] Intercepted addImageToSidebar call:', { imageUrl: imageUrl?.substring?.(0, 50) || imageUrl, label, filename });
+                        
+                        // Call the original paint.js function
+                        const result = paintJsAddImageToSidebar.apply(this, arguments);
+                        
+                        // Add to our new gallery
+                        if (imageUrl) {
+                            const index = imageGalleryData.length;
+                            const imageData = {
+                                src: imageUrl,
+                                url: imageUrl,
+                                name: filename || label || `Image ${index + 1}`,
+                                label: label,
+                                filename: filename
+                            };
+                            
+                            addImageToGallery(imageData, index);
+                            console.log('[HOOK] Added to new gallery at index', index);
+                        }
+                        
+                        return result;
+                    };
+                    
+                    console.log('[HOOK] Successfully hooked addImageToSidebar');
+                    return true;
+                } else if (hookAttempts < maxHookAttempts) {
+                    setTimeout(attemptHook, 100);
+                } else {
+                    console.warn('[HOOK] Max attempts reached, could not hook addImageToSidebar');
+                }
+            }
+            
+            // Start attempting to hook after a short delay
+            setTimeout(attemptHook, 500);
+            
+            // Function to sync existing legacy images to new gallery
+            function syncLegacyImagesToGallery() {
+                const imageList = document.getElementById('imageList');
+                if (!imageList) {
+                    console.log('[SYNC] ERROR: No imageList element found');
+                    return;
+                }
+                
+                const imageContainers = imageList.querySelectorAll('.image-container');
+                console.log(`[SYNC] Processing ${imageContainers.length} legacy images`);
+                
+                let newImagesAdded = 0;
+                
+                imageContainers.forEach((container, index) => {
+                    const img = container.querySelector('img');
+                    const labelDiv = container.querySelector('.image-label');
+                    const label = container.dataset.label;
+                    
+                    if (img && img.src) {
+                        const imageData = {
+                            src: img.src,
+                            url: img.src,
+                            name: labelDiv ? labelDiv.textContent : label || `Image ${index + 1}`,
+                            label: label,
+                            filename: labelDiv ? labelDiv.textContent : undefined
+                        };
+                        
+                        // Check if this image is already in the gallery
+                        const existingIndex = imageGalleryData.findIndex(item => item.src === img.src);
+                        
+                        if (existingIndex === -1) {
+                            addImageToGallery(imageData, imageGalleryData.length);
+                            console.log(`[SYNC] ✓ Added: ${imageData.name}`);
+                            newImagesAdded++;
+                        }
+                    }
+                });
+                
+                if (newImagesAdded > 0) {
+                    console.log(`[SYNC] Added ${newImagesAdded} new images. Total: ${imageGalleryData.length}`);
+                }
+            }
+            
+            // Function to clear demo images
+            function clearDemoImages() {
+                console.log('[DEMO] Clearing demo images...');
+                imageGalleryData = imageGalleryData.filter(item => !item.name?.includes('Demo Image') && !item.name?.includes('Blank Canvas'));
+                
+                // Manually update the gallery UI instead of calling undefined function
+                const gallery = document.getElementById('imageGallery');
+                const dots = document.getElementById('imageDots');
+                
+                if (gallery) {
+                    // Remove demo image thumbnails
+                    const demoThumbnails = gallery.querySelectorAll('.image-thumbnail');
+                    demoThumbnails.forEach(thumb => {
+                        const overlay = thumb.querySelector('.image-overlay');
+                        if (overlay && (overlay.textContent.includes('Demo Image') || overlay.textContent.includes('Blank Canvas'))) {
+                            thumb.remove();
+                        }
+                    });
+                }
+                
+                if (dots) {
+                    // Clear demo dots
+                    const demoDots = dots.querySelectorAll('.nav-dot');
+                    demoDots.forEach(dot => dot.remove());
+                }
+                
+                // Update counter if function exists
+                if (typeof updateImageCounter === 'function') {
+                    updateImageCounter();
+                } else {
+                    // Update counter manually
+                    const counter = document.getElementById('imageCounter');
+                    if (counter) {
+                        counter.textContent = imageGalleryData.length > 0 ? `${imageGalleryData.length} images` : '';
+                    }
+                }
+                console.log('[DEMO] Demo images cleared, remaining images:', imageGalleryData.length);
+            }
+            
+            // Removed manual sync button - syncing is now automatic
+            
+            // Test the gallery with some demo images after everything loads
+            setTimeout(() => {
+                console.log('[INIT] ===== Initial gallery setup =====');
+                console.log('[INIT] imageGalleryData before sync:', imageGalleryData.length);
+                
+                // First, sync any existing legacy images
+                console.log('[INIT] Step 1: Syncing existing legacy images...');
+                syncLegacyImagesToGallery();
+                
+                console.log('[INIT] imageGalleryData after sync:', imageGalleryData.length);
+                
+                // Check if we have any real images (non-demo)
+                const realImagesCount = imageGalleryData.filter(item => !item.name?.includes('Demo Image') && !item.name?.includes('Blank Canvas')).length;
+                console.log('[INIT] Real images found:', realImagesCount);
+                
+                // Only add demo images if we have no real images
+                if (realImagesCount === 0) {
+                    console.log('[TEST] No real images found, adding default blank canvas...');
+                    
+                    // Create a single blank canvas entry instead of multiple demo images
+                    const blankCanvasImage = {
+                        src: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjgwMCIgdmlld0JveD0iMCAwIDgwMCA4MDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI2Y4ZjlmYSIgc3Ryb2tlPSIjZTVlN2ViIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1kYXNoYXJyYXk9IjEwLDEwIi8+PHRleHQgeD0iNDAwIiB5PSI0MDAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIyNCIgZmlsbD0iIzllYTNhOCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSI+QmxhbmsgQ2FudmFzPC90ZXh0Pjwvc3ZnPg==',
+                        name: 'Blank Canvas',
+                        original: {
+                            label: 'blank_canvas',
+                            isBlankCanvas: true
+                        }
+                    };
+                    
+                    const testImages = [blankCanvasImage];
+                    
+                    testImages.forEach((imageData, index) => {
+                        addImageToGallery(imageData, index);
+                    });
+                    
+                    console.log('[TEST] Blank canvas added to gallery');
+                
+                // Ensure the image panel is visible
+                const imagePanel = document.getElementById('imagePanel');
+                if (imagePanel) {
+                    imagePanel.classList.remove('hidden');
+                    imagePanel.style.display = 'block';
+                    console.log('[Gallery] Image panel made visible');
+                }
+                } else {
+                    console.log(`[INIT] Found ${realImagesCount} real images, skipping demo images`);
+                }
+                
+                // Test the addImageToSidebar function to see if hooking works
+                if (window.addImageToSidebar) {
+                    console.log('[TEST] addImageToSidebar function is available');
+                } else {
+                    console.log('[TEST] addImageToSidebar not available yet');
+                }
+                
+                console.log('[INIT] ===== Initial setup complete =====');
+                
+                // Ensure we always start with the first image
+                if (imageGalleryData.length > 0) {
+                    console.log('[INIT] Navigating to first image (index 0)');
+                    setTimeout(() => {
+                        navigateToImage(0);
+                        updateActiveImage(0);
+                    }, 100); // Small delay to ensure everything is ready
+                }
+            }, 2000);
+            
+            // Track last known legacy count to avoid unnecessary syncs
+            let lastLegacyCount = 0;
+            
+            // Also set up a periodic sync to catch any images that get added later (less frequent)
+            setInterval(() => {
+                const currentLegacyCount = document.getElementById('imageList')?.querySelectorAll('.image-container').length || 0;
+                const currentRealImagesCount = imageGalleryData.filter(item => !item.name?.includes('Demo Image') && !item.name?.includes('Blank Canvas')).length;
+                
+                // Only sync if there's actually a change in legacy count
+                if (currentLegacyCount > lastLegacyCount) {
+                    console.log('[PERIODIC] New legacy images detected, syncing...');
+                    console.log(`[PERIODIC] Legacy: ${currentLegacyCount} (was ${lastLegacyCount}), Gallery real: ${currentRealImagesCount}`);
+                    
+                    // Clear demo images if we find real images
+                    if (currentLegacyCount > 0 && imageGalleryData.some(item => item.name?.includes('Demo Image') || item.name?.includes('Blank Canvas'))) {
+                        console.log('[PERIODIC] Clearing demo images before adding real images...');
+                        clearDemoImages();
+                    }
+                    
+                    syncLegacyImagesToGallery();
+                    
+                    // After adding new images, ensure we start at the first one if we're not already there
+                    if (currentImageIndex !== 0 && imageGalleryData.length > 0) {
+                        console.log('[PERIODIC] Resetting to first image after adding new images');
+                        setTimeout(() => {
+                            navigateToImage(0);
+                            updateActiveImage(0);
+                        }, 200);
+                    }
+                    
+                    lastLegacyCount = currentLegacyCount;
+                }
+            }, 2000);  // Check every 2 seconds instead of 1
+        });
+    </script>
+    
+    <!-- Scale Dropdown - positioned outside panel hierarchy -->
+    <div id="scaleDropdown" class="fixed bg-white border border-gray-300 rounded shadow-lg hidden max-h-64 overflow-y-auto" style="z-index: 9999; min-width: 80px;">
+        <div class="scale-option px-3 py-1 hover:bg-gray-100 cursor-pointer text-sm" data-scale="0.1">10%</div>
+        <div class="scale-option px-3 py-1 hover:bg-gray-100 cursor-pointer text-sm" data-scale="0.15">15%</div>
+        <div class="scale-option px-3 py-1 hover:bg-gray-100 cursor-pointer text-sm" data-scale="0.2">20%</div>
+        <div class="scale-option px-3 py-1 hover:bg-gray-100 cursor-pointer text-sm" data-scale="0.25">25%</div>
+        <div class="scale-option px-3 py-1 hover:bg-gray-100 cursor-pointer text-sm" data-scale="0.33">33%</div>
+        <div class="scale-option px-3 py-1 hover:bg-gray-100 cursor-pointer text-sm" data-scale="0.5">50%</div>
+        <div class="scale-option px-3 py-1 hover:bg-gray-100 cursor-pointer text-sm" data-scale="0.67">67%</div>
+        <div class="scale-option px-3 py-1 hover:bg-gray-100 cursor-pointer text-sm" data-scale="0.75">75%</div>
+        <div class="scale-option px-3 py-1 hover:bg-gray-100 cursor-pointer text-sm" data-scale="0.8">80%</div>
+        <div class="scale-option px-3 py-1 hover:bg-gray-100 cursor-pointer text-sm" data-scale="0.9">90%</div>
+        <div class="scale-option px-3 py-1 hover:bg-gray-100 cursor-pointer text-sm bg-blue-50" data-scale="1" data-default="true">100%</div>
+        <div class="scale-option px-3 py-1 hover:bg-gray-100 cursor-pointer text-sm" data-scale="1.1">110%</div>
+        <div class="scale-option px-3 py-1 hover:bg-gray-100 cursor-pointer text-sm" data-scale="1.25">125%</div>
+        <div class="scale-option px-3 py-1 hover:bg-gray-100 cursor-pointer text-sm" data-scale="1.5">150%</div>
+        <div class="scale-option px-3 py-1 hover:bg-gray-100 cursor-pointer text-sm" data-scale="1.75">175%</div>
+        <div class="scale-option px-3 py-1 hover:bg-gray-100 cursor-pointer text-sm" data-scale="2">200%</div>
+        <div class="scale-option px-3 py-1 hover:bg-gray-100 cursor-pointer text-sm" data-scale="2.5">250%</div>
+        <div class="scale-option px-3 py-1 hover:bg-gray-100 cursor-pointer text-sm" data-scale="3">300%</div>
+        <div class="scale-option px-3 py-1 hover:bg-gray-100 cursor-pointer text-sm" data-scale="4">400%</div>
+        <div class="scale-option px-3 py-1 hover:bg-gray-100 cursor-pointer text-sm" data-scale="5">500%</div>
+    </div>
+
     <script src="public/js/paint.js"></script>
     <script src="public/js/project-manager.js"></script>
     <script src="public/js/tag-manager.js"></script>
