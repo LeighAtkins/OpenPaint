@@ -2028,25 +2028,61 @@
                 const flipVCtrl = document.getElementById('flipVCtrl');
                 function getCurrentImageIndex() {
                     const label = window.paintApp?.state?.currentImageLabel;
-                    if (!label) return 0;
-                    const idx = imageGalleryData.findIndex(i => i.label === label);
-                    return idx >= 0 ? idx : 0;
+                    if (!label) return currentImageIndex || 0;
+                    const idx = imageGalleryData.findIndex(i => (i.label || i.original?.label) === label);
+                    return idx >= 0 ? idx : (currentImageIndex || 0);
+                }
+                function rotateFallback(deg) {
+                    const label = window.paintApp?.state?.currentImageLabel || 'blank_canvas';
+                    const c = document.getElementById('canvas');
+                    const w = c?.width || 800;
+                    const h = c?.height || 600;
+                    if (typeof window.transformImageData === 'function') {
+                        window.transformImageData(label, 'rotate', deg, w, h);
+                        if (window.redrawCanvasWithVisibility) window.redrawCanvasWithVisibility();
+                    }
                 }
                 rotateLeftCtrl?.addEventListener('click', () => {
                     const idx = getCurrentImageIndex();
-                    window.rotateImage?.(idx, -90);
+                    if (imageGalleryData[idx]) {
+                        window.rotateImage?.(idx, -90);
+                    } else {
+                        rotateFallback(-90);
+                    }
                 });
                 rotateRightCtrl?.addEventListener('click', () => {
                     const idx = getCurrentImageIndex();
-                    window.rotateImage?.(idx, 90);
+                    if (imageGalleryData[idx]) {
+                        window.rotateImage?.(idx, 90);
+                    } else {
+                        rotateFallback(90);
+                    }
                 });
                 flipHCtrl?.addEventListener('click', () => {
                     const idx = getCurrentImageIndex();
-                    if (typeof flipImage === 'function') flipImage(idx, 'horizontal');
+                    if (imageGalleryData[idx] && typeof flipImage === 'function') {
+                        flipImage(idx, 'horizontal');
+                    } else if (typeof window.transformImageData === 'function') {
+                        const label = window.paintApp?.state?.currentImageLabel || 'blank_canvas';
+                        const c = document.getElementById('canvas');
+                        const w = c?.width || 800;
+                        const h = c?.height || 600;
+                        window.transformImageData(label, 'flip', 'horizontal', w, h);
+                        if (window.redrawCanvasWithVisibility) window.redrawCanvasWithVisibility();
+                    }
                 });
                 flipVCtrl?.addEventListener('click', () => {
                     const idx = getCurrentImageIndex();
-                    if (typeof flipImage === 'function') flipImage(idx, 'vertical');
+                    if (imageGalleryData[idx] && typeof flipImage === 'function') {
+                        flipImage(idx, 'vertical');
+                    } else if (typeof window.transformImageData === 'function') {
+                        const label = window.paintApp?.state?.currentImageLabel || 'blank_canvas';
+                        const c = document.getElementById('canvas');
+                        const w = c?.width || 800;
+                        const h = c?.height || 600;
+                        window.transformImageData(label, 'flip', 'vertical', w, h);
+                        if (window.redrawCanvasWithVisibility) window.redrawCanvasWithVisibility();
+                    }
                 });
 
                 // Name/type inputs wiring
