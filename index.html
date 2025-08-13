@@ -1308,34 +1308,25 @@
             moreMenu.style.left = 'auto';
             moreMenu.style.minWidth = '160px';
             
-            // Replace unit selector with a simple toggle button
+            // Replace unit selector with a simple toggle button in the top-right toolbar
             const unitSel = document.getElementById('unitSelector');
             if (unitSel) {
-                const wrap = document.createElement('div');
-                wrap.style.padding = '6px 6px 10px';
-                const lbl = document.createElement('div');
-                lbl.textContent = 'Units';
-                lbl.style.fontSize='11px'; lbl.style.color='#64748b'; lbl.style.margin='2px 2px 6px';
                 const unitToggle = document.createElement('button');
                 unitToggle.id = 'unitToggleBtn';
                 unitToggle.className = 'tbtn';
-                unitToggle.style.width = '100%';
                 const getLabel = () => unitSel.value === 'inch' ? 'inches' : 'cm';
                 unitToggle.textContent = getLabel();
+                unitToggle.title = 'Toggle units';
                 unitToggle.addEventListener('click', () => {
-                    // Toggle underlying select value to preserve existing logic
                     unitSel.value = unitSel.value === 'inch' ? 'cm' : 'inch';
                     unitToggle.textContent = getLabel();
-                    // Trigger existing onchange logic
                     if (typeof updateMeasurementDisplay === 'function') {
                         updateMeasurementDisplay();
                     } else if (unitSel.onchange) {
                         unitSel.onchange();
                     }
                 });
-                wrap.appendChild(lbl);
-                wrap.appendChild(unitToggle);
-                moreMenu.appendChild(wrap);
+                right.appendChild(unitToggle);
                 // Hide the original select (kept for compatibility)
                 unitSel.style.display = 'none';
             }
