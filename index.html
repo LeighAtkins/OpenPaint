@@ -1169,6 +1169,14 @@
                         const v = window.vectorStrokesByImage[img][edited];
                         v.arrowSettings = v.arrowSettings || { arrowSize: as.arrowSize, arrowStyle: as.arrowStyle, startArrow: false, endArrow: false };
                         v.arrowSettings.startArrow = as.startArrow;
+                        // Ensure curved lines switch type appropriately
+                        if (typeof window.updateStrokeTypeBasedOnArrows === 'function') {
+                            window.updateStrokeTypeBasedOnArrows(v);
+                        } else {
+                            const hasArrows = !!(v.arrowSettings.startArrow || v.arrowSettings.endArrow);
+                            if (v.type === 'curved' && hasArrows) v.type = 'curved-arrow';
+                            if (v.type === 'curved-arrow' && !hasArrows) v.type = 'curved';
+                        }
                         window.saveState?.(true, false, false);
                         window.redrawCanvasWithVisibility?.();
                     }
@@ -1186,6 +1194,14 @@
                         const v = window.vectorStrokesByImage[img][edited];
                         v.arrowSettings = v.arrowSettings || { arrowSize: as.arrowSize, arrowStyle: as.arrowStyle, startArrow: false, endArrow: false };
                         v.arrowSettings.endArrow = as.endArrow;
+                        // Ensure curved lines switch type appropriately
+                        if (typeof window.updateStrokeTypeBasedOnArrows === 'function') {
+                            window.updateStrokeTypeBasedOnArrows(v);
+                        } else {
+                            const hasArrows = !!(v.arrowSettings.startArrow || v.arrowSettings.endArrow);
+                            if (v.type === 'curved' && hasArrows) v.type = 'curved-arrow';
+                            if (v.type === 'curved-arrow' && !hasArrows) v.type = 'curved';
+                        }
                         window.saveState?.(true, false, false);
                         window.redrawCanvasWithVisibility?.();
                     }
