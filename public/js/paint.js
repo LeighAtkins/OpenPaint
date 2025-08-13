@@ -2427,15 +2427,40 @@ if (colorPicker) {
                         await new Promise(resolve => setTimeout(resolve, 500));
                     }
                     
-                    // Capture canvas with high resolution
+                    // Determine source content: crop to capture frame if present
+                    let sourceCanvas = canvas;
+                    const captureEl = document.getElementById('captureFrame');
+                    if (captureEl) {
+                        const canvasRect = canvas.getBoundingClientRect();
+                        const frameRect = captureEl.getBoundingClientRect();
+                        const left = Math.max(frameRect.left, canvasRect.left);
+                        const top = Math.max(frameRect.top, canvasRect.top);
+                        const right = Math.min(frameRect.right, canvasRect.right);
+                        const bottom = Math.min(frameRect.bottom, canvasRect.bottom);
+                        const cssWidth = Math.max(0, right - left);
+                        const cssHeight = Math.max(0, bottom - top);
+                        if (cssWidth > 0 && cssHeight > 0) {
+                            const scalePx = canvas.width / canvasRect.width;
+                            const viewportBounds = {
+                                x: Math.round((left - canvasRect.left) * scalePx),
+                                y: Math.round((top - canvasRect.top) * scalePx),
+                                width: Math.round(cssWidth * scalePx),
+                                height: Math.round(cssHeight * scalePx)
+                            };
+                            sourceCanvas = cropToViewport(canvas, viewportBounds);
+                        }
+                    }
+                    
+                    // Capture the (possibly cropped) content with high resolution and white background
                     const tempCanvas = document.createElement('canvas');
                     const tempCtx = tempCanvas.getContext('2d');
                     const scale = 2; // High resolution export
-                    
-                    tempCanvas.width = canvas.width * scale;
-                    tempCanvas.height = canvas.height * scale;
+                    tempCanvas.width = sourceCanvas.width * scale;
+                    tempCanvas.height = sourceCanvas.height * scale;
+                    tempCtx.fillStyle = 'white';
+                    tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
                     tempCtx.scale(scale, scale);
-                    tempCtx.drawImage(canvas, 0, 0);
+                    tempCtx.drawImage(sourceCanvas, 0, 0);
                     
                     // Convert to blob
                     const blob = await new Promise(resolve => tempCanvas.toBlob(resolve, 'image/png'));
@@ -2514,15 +2539,40 @@ if (colorPicker) {
                         await new Promise(resolve => setTimeout(resolve, 500));
                     }
                     
-                    // Capture canvas with high resolution
+                    // Determine source content: crop to capture frame if present
+                    let sourceCanvas = canvas;
+                    const captureEl = document.getElementById('captureFrame');
+                    if (captureEl) {
+                        const canvasRect = canvas.getBoundingClientRect();
+                        const frameRect = captureEl.getBoundingClientRect();
+                        const left = Math.max(frameRect.left, canvasRect.left);
+                        const top = Math.max(frameRect.top, canvasRect.top);
+                        const right = Math.min(frameRect.right, canvasRect.right);
+                        const bottom = Math.min(frameRect.bottom, canvasRect.bottom);
+                        const cssWidth = Math.max(0, right - left);
+                        const cssHeight = Math.max(0, bottom - top);
+                        if (cssWidth > 0 && cssHeight > 0) {
+                            const scalePx = canvas.width / canvasRect.width;
+                            const viewportBounds = {
+                                x: Math.round((left - canvasRect.left) * scalePx),
+                                y: Math.round((top - canvasRect.top) * scalePx),
+                                width: Math.round(cssWidth * scalePx),
+                                height: Math.round(cssHeight * scalePx)
+                            };
+                            sourceCanvas = cropToViewport(canvas, viewportBounds);
+                        }
+                    }
+                    
+                    // Capture the (possibly cropped) content with high resolution and white background
                     const tempCanvas = document.createElement('canvas');
                     const tempCtx = tempCanvas.getContext('2d');
                     const scale = 2;
-                    
-                    tempCanvas.width = canvas.width * scale;
-                    tempCanvas.height = canvas.height * scale;
+                    tempCanvas.width = sourceCanvas.width * scale;
+                    tempCanvas.height = sourceCanvas.height * scale;
+                    tempCtx.fillStyle = 'white';
+                    tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
                     tempCtx.scale(scale, scale);
-                    tempCtx.drawImage(canvas, 0, 0);
+                    tempCtx.drawImage(sourceCanvas, 0, 0);
                     
                     // Convert to blob
                     const blob = await new Promise(resolve => tempCanvas.toBlob(resolve, 'image/png'));
@@ -2605,16 +2655,40 @@ if (colorPicker) {
                 await new Promise(resolve => setTimeout(resolve, 500));
             }
             
-            // Capture the canvas
+            // Determine source content: crop to capture frame if present
+            let sourceCanvas = canvas;
+            const captureEl = document.getElementById('captureFrame');
+            if (captureEl) {
+                const canvasRect = canvas.getBoundingClientRect();
+                const frameRect = captureEl.getBoundingClientRect();
+                const left = Math.max(frameRect.left, canvasRect.left);
+                const top = Math.max(frameRect.top, canvasRect.top);
+                const right = Math.min(frameRect.right, canvasRect.right);
+                const bottom = Math.min(frameRect.bottom, canvasRect.bottom);
+                const cssWidth = Math.max(0, right - left);
+                const cssHeight = Math.max(0, bottom - top);
+                if (cssWidth > 0 && cssHeight > 0) {
+                    const scalePx = canvas.width / canvasRect.width;
+                    const viewportBounds = {
+                        x: Math.round((left - canvasRect.left) * scalePx),
+                        y: Math.round((top - canvasRect.top) * scalePx),
+                        width: Math.round(cssWidth * scalePx),
+                        height: Math.round(cssHeight * scalePx)
+                    };
+                    sourceCanvas = cropToViewport(canvas, viewportBounds);
+                }
+            }
+            
+            // Capture the (possibly cropped) content at higher resolution with white background
             const tempCanvas = document.createElement('canvas');
             const tempCtx = tempCanvas.getContext('2d');
-            
-            // Both production output and screen view now capture canvas as-is with higher resolution
             const scale = 2;
-            tempCanvas.width = canvas.width * scale;
-            tempCanvas.height = canvas.height * scale;
+            tempCanvas.width = sourceCanvas.width * scale;
+            tempCanvas.height = sourceCanvas.height * scale;
+            tempCtx.fillStyle = 'white';
+            tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
             tempCtx.scale(scale, scale);
-            tempCtx.drawImage(canvas, 0, 0);
+            tempCtx.drawImage(sourceCanvas, 0, 0);
             
             // Convert to blob and save
             const fileFormat = isProductionOutput ? 'image/jpeg' : 'image/png';
@@ -2676,15 +2750,40 @@ if (colorPicker) {
                         await new Promise(resolve => setTimeout(resolve, 500));
                     }
                     
-                    // Capture canvas with high resolution
+                    // Determine source content: crop to capture frame if present
+                    let sourceCanvas = canvas;
+                    const captureEl = document.getElementById('captureFrame');
+                    if (captureEl) {
+                        const canvasRect = canvas.getBoundingClientRect();
+                        const frameRect = captureEl.getBoundingClientRect();
+                        const left = Math.max(frameRect.left, canvasRect.left);
+                        const top = Math.max(frameRect.top, canvasRect.top);
+                        const right = Math.min(frameRect.right, canvasRect.right);
+                        const bottom = Math.min(frameRect.bottom, canvasRect.bottom);
+                        const cssWidth = Math.max(0, right - left);
+                        const cssHeight = Math.max(0, bottom - top);
+                        if (cssWidth > 0 && cssHeight > 0) {
+                            const scalePx = canvas.width / canvasRect.width;
+                            const viewportBounds = {
+                                x: Math.round((left - canvasRect.left) * scalePx),
+                                y: Math.round((top - canvasRect.top) * scalePx),
+                                width: Math.round(cssWidth * scalePx),
+                                height: Math.round(cssHeight * scalePx)
+                            };
+                            sourceCanvas = cropToViewport(canvas, viewportBounds);
+                        }
+                    }
+                    
+                    // Capture the (possibly cropped) content with high resolution and white background
                     const tempCanvas = document.createElement('canvas');
                     const tempCtx = tempCanvas.getContext('2d');
                     const scale = 2; // High resolution export
-                    
-                    tempCanvas.width = canvas.width * scale;
-                    tempCanvas.height = canvas.height * scale;
+                    tempCanvas.width = sourceCanvas.width * scale;
+                    tempCanvas.height = sourceCanvas.height * scale;
+                    tempCtx.fillStyle = 'white';
+                    tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
                     tempCtx.scale(scale, scale);
-                    tempCtx.drawImage(canvas, 0, 0);
+                    tempCtx.drawImage(sourceCanvas, 0, 0);
                     
                     // Generate unique filename using tag-based names
                     let baseFilename = imageLabel;
@@ -4977,6 +5076,9 @@ if (colorPicker) {
         
         // Clear the canvas
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+        // Ensure opaque white background so saved/loaded images don't have transparency outside the image
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
 
         // Get dimensions
         const imgWidth = img.width;
@@ -9857,6 +9959,19 @@ if (colorPicker) {
         });
         }
         
+        // Before switching, persist the current capture frame position/size per image (if available)
+        try {
+            const prevLabel = currentImageLabel;
+            if (prevLabel && typeof window.getComputedStyle === 'function') {
+                const frameEl = document.getElementById('captureFrame');
+                if (frameEl) {
+                    const rect = frameEl.getBoundingClientRect();
+                    window.captureFrameByLabel = window.captureFrameByLabel || {};
+                    window.captureFrameByLabel[prevLabel] = { left: rect.left, top: rect.top, width: rect.width, height: rect.height };
+                }
+            }
+        } catch (e) { /* no-op */ }
+
         // Update current image label
         currentImageLabel = label;
         // CRITICAL FIX: Update the global window.currentImageLabel used by canvas event handlers
@@ -9878,6 +9993,13 @@ if (colorPicker) {
 //             console.log(`[switchToImage] Using position (${imagePositionByLabel[label].x}, ${imagePositionByLabel[label].y}) for ${label}`);
         }
         
+        // Restore capture frame for the new image (default to centered 800x600 if none)
+        try {
+            if (typeof window.applyCaptureFrameForLabel === 'function') {
+                window.applyCaptureFrameForLabel(label);
+            }
+        } catch (e) { /* no-op */ }
+
         // Restore state for the new image
         if (imageStates[label]) {
             // *** MODIFICATION START: Revert to simple state restoration ***
@@ -10175,23 +10297,64 @@ if (colorPicker) {
         }
     });
     
-    // Save canvas
+    // Save canvas (cropped to capture frame if present, otherwise full canvas) with opaque white background
     saveButton.addEventListener('click', () => {
         const projectName = document.getElementById('projectName').value || 'New Sofa';
         const unit = document.getElementById('unitSelector').value || 'inch';
-        
-        // Create filename using project name, view, and unit
-        // Replace spaces with underscores
+
         const sanitizedName = projectName.replace(/\s+/g, '_');
-        
-        // Get the base label without the unique identifier for a friendlier filename
         const baseLabel = currentImageLabel.split('_')[0];
-        
         const filename = `${sanitizedName}_${baseLabel}_${unit}.png`;
-        
+
+        const captureEl = document.getElementById('captureFrame');
+        let dataUrl;
+
+        if (captureEl) {
+            const canvasRect = canvas.getBoundingClientRect();
+            const frameRect = captureEl.getBoundingClientRect();
+
+            // Compute intersection of frame with canvas in CSS pixels
+            const left = Math.max(frameRect.left, canvasRect.left);
+            const top = Math.max(frameRect.top, canvasRect.top);
+            const right = Math.min(frameRect.right, canvasRect.right);
+            const bottom = Math.min(frameRect.bottom, canvasRect.bottom);
+
+            const cssWidth = Math.max(0, right - left);
+            const cssHeight = Math.max(0, bottom - top);
+
+            if (cssWidth > 0 && cssHeight > 0) {
+                // Convert to canvas pixel coordinates
+                const scale = canvas.width / canvasRect.width;
+                const viewportBounds = {
+                    x: Math.round((left - canvasRect.left) * scale),
+                    y: Math.round((top - canvasRect.top) * scale),
+                    width: Math.round(cssWidth * scale),
+                    height: Math.round(cssHeight * scale)
+                };
+
+                // Crop from the current canvas content
+                const cropped = cropToViewport(canvas, viewportBounds);
+
+                // Ensure white background (in case any transparency slipped through)
+                const out = document.createElement('canvas');
+                out.width = viewportBounds.width;
+                out.height = viewportBounds.height;
+                const outCtx = out.getContext('2d');
+                outCtx.fillStyle = 'white';
+                outCtx.fillRect(0, 0, out.width, out.height);
+                outCtx.drawImage(cropped, 0, 0);
+                dataUrl = out.toDataURL('image/png', 0.95);
+            }
+        }
+
+        // Fallback to full canvas if no capture frame or invalid bounds
+        if (!dataUrl) {
+            dataUrl = canvas.toDataURL('image/png', 0.95);
+        }
+
         const link = document.createElement('a');
         link.download = filename;
-        link.href = canvas.toDataURL();
+        link.href = dataUrl;
         link.click();
     });
     
