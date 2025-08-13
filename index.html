@@ -9,6 +9,16 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
+        // Suppress Tailwind production warning for this demo
+        if (typeof console !== 'undefined' && console.warn) {
+            const originalWarn = console.warn;
+            console.warn = (...args) => {
+                if (args[0] && args[0].includes && args[0].includes('should not be used in production')) return;
+                originalWarn.apply(console, args);
+            };
+        }
+    </script>
+    <script>
         tailwind.config = {
             theme: {
                 extend: {
@@ -400,21 +410,23 @@
         
         /* Modern slider styling */
         .slider {
+            --accent: #3b82f6;
+            --filled: 30%;
             -webkit-appearance: none;
             appearance: none;
-            background: linear-gradient(to right, #3b82f6 0%, #3b82f6 20%, #e5e7eb 20%, #e5e7eb 100%);
+            background: linear-gradient(to right, var(--accent) 0%, var(--accent) var(--filled), #e5e7eb var(--filled), #e5e7eb 100%);
             outline: none;
-            border-radius: 8px;
-            height: 8px;
+            border-radius: 9999px;
+            height: 6px;
         }
         
         .slider::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
-            width: 20px;
-            height: 20px;
+            width: 16px;
+            height: 16px;
             border-radius: 50%;
-            background: #3b82f6;
+            background: var(--accent);
             cursor: pointer;
             box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
             transition: all 0.2s ease;
@@ -426,10 +438,10 @@
         }
         
         .slider::-moz-range-thumb {
-            width: 20px;
-            height: 20px;
+            width: 16px;
+            height: 16px;
             border-radius: 50%;
-            background: #3b82f6;
+            background: var(--accent);
             cursor: pointer;
             border: none;
             box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
@@ -623,9 +635,92 @@
             background: #3b82f6;
             transform: scale(1.3);
         }
+
+        /* Modernize panel chrome and add optional sketchbook vibe */
+        .floating-panel {
+            border: 1px solid rgba(15, 23, 42, 0.06);
+            box-shadow: 0 12px 28px rgba(2, 6, 23, 0.08);
+        }
+        .floating-panel .cursor-move {
+            border-bottom: 1px solid rgba(15, 23, 42, 0.06) !important;
+        }
+        /* Tone down button effects for a cleaner feel */
+        .floating-panel button {
+            box-shadow: 0 1px 2px rgba(2,6,23,0.06) !important;
+            transform: none !important;
+        }
+        .floating-panel button:hover {
+            transform: translateY(-1px) !important;
+        }
+        /* Minimal divider */
+        .panel-divider { border-top: 1px solid rgba(15,23,42,0.08); }
+
+        /* Top toolbar styles */
+        #topToolbar {
+            height: 48px;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+        .toolbar-wrap {
+            height: 48px;
+        }
+        .tbtn, .tselect, .tinput {
+            height: 32px;
+            padding: 0 10px;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border: 1px solid rgba(148,163,184,.6);
+            background: #fff;
+            font-size: 12px;
+            line-height: 1;
+            transition: all 0.15s ease;
+        }
+        .tbtn.active { border-color: rgba(59,130,246,.9); background: #eff6ff; color: #1e40af; }
+        .tbtn:hover, .tselect:hover, .tinput:hover {
+            border-color: rgba(59,130,246,.8);
+            box-shadow: 0 2px 4px rgba(59,130,246,.1);
+        }
+        .icon-btn {
+            width: 32px;
+            justify-content: center;
+            padding: 0;
+        }
+        .group-gap > * {
+            margin-right: 6px;
+        }
+        .group-gap > *:last-child {
+            margin-right: 0;
+        }
+        .popover {
+            position: absolute;
+            top: 40px;
+            left: 0;
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            box-shadow: 0 8px 24px rgba(2,6,23,.12);
+            padding: 12px;
+            display: none;
+            z-index: 60;
+            min-width: 120px;
+        }
+        .popover.show {
+            display: block;
+        }
     </style>
 </head>
 <body class="bg-gray-50 h-screen overflow-hidden">
+    <!-- Top Toolbar -->
+    <div id="topToolbar" class="fixed top-0 inset-x-0 z-40 bg-white/85 backdrop-blur border-b border-slate-200">
+        <div class="toolbar-wrap mx-auto max-w-[1400px] px-3 flex items-center justify-between">
+            <div id="tbLeft" class="relative flex items-center group-gap"></div>
+            <div id="tbCenter" class="relative flex items-center group-gap"></div>
+            <div id="tbRight" class="relative flex items-center group-gap"></div>
+        </div>
+    </div>
+
     <!-- Fullscreen Canvas -->
     <canvas id="canvas" class="w-full h-full"></canvas>
     
@@ -684,12 +779,12 @@
                 </div>
                 
                 <!-- Action Buttons -->
-                <div class="grid grid-cols-2 gap-2">
-                    <button id="saveProject" title="Save project as ZIP file" class="px-3 py-2 bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white text-xs font-semibold rounded-xl shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-105 active:scale-95">Save</button>
-                    <button id="loadProject" title="Load project from ZIP file" class="px-3 py-2 bg-success-600 hover:bg-success-700 active:bg-success-800 text-white text-xs font-semibold rounded-xl shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-105 active:scale-95">Load</button>
-                    <button id="generateMeasurements" title="Generate list of all measurements" class="px-3 py-2 bg-brand-600 hover:bg-brand-700 active:bg-brand-800 text-white text-xs font-semibold rounded-xl shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-105 active:scale-95">Measurements</button>
-                    <button id="saveAllImages" title="Save all images as individual files" class="px-3 py-2 bg-purple-600 hover:bg-purple-700 active:bg-purple-800 text-white text-xs font-semibold rounded-xl shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-105 active:scale-95">Images</button>
-                    <button id="saveAsPdf" title="Export measurements as PDF form" class="px-3 py-2 bg-danger-600 hover:bg-danger-700 active:bg-danger-800 text-white text-xs font-semibold rounded-xl shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-105 active:scale-95 col-span-2">Save as PDF</button>
+                <div class="grid grid-cols-2 gap-2 panel-divider pt-3 mt-2">
+                    <button id="saveProject" title="Save project as ZIP file" class="px-3 py-2 bg-white border border-gray-300 text-slate-700 text-xs font-semibold rounded-xl hover:bg-slate-50 transition-all">Save</button>
+                    <button id="loadProject" title="Load project from ZIP file" class="px-3 py-2 bg-white border border-gray-300 text-slate-700 text-xs font-semibold rounded-xl hover:bg-slate-50 transition-all">Load</button>
+                    <button id="generateMeasurements" title="Generate list of all measurements" class="px-3 py-2 bg-white border border-gray-300 text-slate-700 text-xs font-semibold rounded-xl hover:bg-slate-50 transition-all">Measurements</button>
+                    <button id="saveAllImages" title="Save all images as individual files" class="px-3 py-2 bg-white border border-gray-300 text-slate-700 text-xs font-semibold rounded-xl hover:bg-slate-50 transition-all">Images</button>
+                    <button id="saveAsPdf" title="Export measurements as PDF form" class="px-3 py-2 bg-white border border-danger-300 text-danger-600 text-xs font-semibold rounded-xl hover:bg-danger-50 transition-all col-span-2">Save as PDF</button>
                 </div>
             </div>
         </div>
@@ -774,31 +869,30 @@
 
     <!-- Stroke Manager Panel -->
     <div id="strokePanel" class="floating-panel fixed left-4 top-1/2 -translate-y-1/2 z-30 rounded-2xl w-64 max-h-96 transition-all duration-300 overflow-hidden">
-        <div class="flex items-center justify-between p-4 cursor-move border-b border-gray-200/50 bg-white rounded-t-2xl">
-            <h3 class="text-base font-bold text-slate-800">Stroke Visibility</h3>
-            <button id="toggleStrokePanel" class="text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg p-1.5 transition-all duration-200 transform hover:scale-110" title="Minimize/Expand Panel">
-                <svg class="w-5 h-5 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="flex items-center justify-between p-3 cursor-move border-b border-gray-200/50 bg-white rounded-t-2xl">
+            <h3 class="text-sm font-semibold text-slate-800">Stroke Visibility</h3>
+            <button id="toggleStrokePanel" class="text-slate-500 hover:text-slate-700 rounded-lg p-1 transition-all" title="Minimize/Expand Panel">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                 </svg>
             </button>
         </div>
-        <div id="strokeVisibilityControls" class="p-4 transition-all duration-300" style="max-height: 320px; overflow-y: scroll; overflow-x: hidden;"></div>
+        <div id="strokeVisibilityControls" class="p-3 transition-all duration-300" style="max-height: 320px; overflow-y: scroll; overflow-x: hidden;"></div>
     </div>
 
     <!-- Image Gallery Panel -->
-    <div id="imagePanel" class="floating-panel fixed right-4 top-1/2 -translate-y-1/2 z-30 rounded-2xl w-96 max-h-[500px] transition-all duration-300 overflow-hidden">
-        <div class="flex items-center justify-between p-4 cursor-move border-b border-gray-200/50 bg-white rounded-t-2xl">
-            <h3 class="text-base font-bold text-slate-800">Images</h3>
+    <div id="imagePanel" class="floating-panel fixed right-4 top-1/2 -translate-y-1/2 z-30 rounded-2xl w-72 max-h-[380px] transition-all duration-300 overflow-hidden">
+        <div class="flex items-center justify-between p-3 cursor-move border-b border-gray-200/50 bg-white rounded-t-2xl">
+            <h3 class="text-sm font-semibold text-slate-800">Images</h3>
             <div class="flex items-center gap-2">
-                <span id="imageCounter" class="text-xs text-slate-500 font-medium"></span>
-                <button id="toggleImagePanel" class="text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg p-1.5 transition-all duration-200 transform hover:scale-110" title="Minimize/Expand Panel">
-                    <svg class="w-5 h-5 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <button id="toggleImagePanel" class="text-slate-500 hover:text-slate-700 rounded-lg p-1 transition-all" title="Minimize/Expand Panel">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                     </svg>
                 </button>
             </div>
         </div>
-        <div id="imagePanelContent" class="p-4 transition-all duration-300" style="max-height: 420px;">
+        <div id="imagePanelContent" class="p-3 transition-all duration-300" style="max-height: 300px;">
             <!-- Legacy image list for backwards compatibility -->
             <div id="imageList" class="hidden space-y-3 mb-4"></div>
             
@@ -813,23 +907,33 @@
                 </div>
             </div>
             
+            <!-- Image meta: name + quick type -->
+            <div class="flex items-center gap-2 mb-2">
+                <input id="imageNameInput" type="text" class="flex-1 px-2 py-1 border border-gray-300 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-slate-300" placeholder="Image name" />
+                <select id="imageTypeSelect" class="px-2 py-1 border border-gray-300 rounded-lg bg-white text-xs">
+                    <option value="">Type</option>
+                    <option value="sofa">sofa</option>
+                    <option value="armchair">armchair</option>
+                    <option value="chaise">chaise</option>
+                    <option value="ottoman">ottoman</option>
+                    <option value="cushion">cushion</option>
+                    <option value="windowseat">windowseat</option>
+                </select>
+            </div>
+
             <!-- Navigation Controls -->
-            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center justify-between mb-4">
                 <button id="prevImage" class="p-2 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed" title="Previous image">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
                     </svg>
                 </button>
-                <div class="text-xs text-slate-600 font-medium" id="imagePosition">0 / 0</div>
+                    <div class="text-xs text-slate-600 font-medium hidden" id="imagePosition">0 / 0</div>
                 <button id="nextImage" class="p-2 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed" title="Next image">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
                     </svg>
                 </button>
-            </div>
-            
-            <div class="pt-4 border-t border-gray-200/50">
-                <button id="addTags" class="w-full px-4 py-2.5 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 text-sm font-semibold rounded-xl transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-sm">Add Tags</button>
             </div>
         </div>
     </div>
@@ -882,48 +986,22 @@
     </div>
 
     <!-- Canvas Controls (Bottom Panel) -->
-    <div id="canvasControls" class="floating-panel fixed bottom-4 z-50 rounded-2xl w-[700px] transition-all duration-300" style="left: calc(50% - 350px);">
-        <div class="flex items-center justify-between p-4 cursor-move border-b border-gray-200/50">
-            <h3 class="text-base font-bold text-slate-800">Canvas Controls</h3>
-            <button id="toggleCanvasControls" class="text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg p-1.5 transition-all duration-200 transform hover:scale-110" title="Minimize/Expand Panel">
-                <svg class="w-5 h-5 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                </svg>
-            </button>
-        </div>
-        <div id="canvasControlsContent" class="p-3 transition-all duration-300">
-            <div class="flex items-center gap-4 text-sm">
-                <!-- Fit Controls -->
-                <div class="flex items-center gap-3">
-                    <span class="text-sm font-semibold text-slate-700">Fit:</span>
-                    <select id="fitModeSelect" class="px-3 py-2 border border-gray-300 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 shadow-sm">
-                        <option value="none">Manual</option>
-                        <option value="fit-width" selected>Fit Width</option>
-                        <option value="fit-height">Fit Height</option>
-                        <option value="fit-canvas">Fit Canvas</option>
-                        <option value="actual-size">Actual Size</option>
-                    </select>
-                    <button id="applyFitCurrent" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 text-xs font-medium rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-sm" title="Apply to current image">Current</button>
-                    <button id="applyFitAll" class="px-3 py-2 bg-primary-500 hover:bg-primary-600 active:bg-primary-700 text-white text-xs font-semibold rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-sm hidden" title="Apply to all images" style="display: none;">Apply All</button>
-                </div>
-                
-                <!-- Visual Separator -->
-                <div class="text-gray-300">|</div>
-                
-                <!-- Scale Controls -->
-                <div class="flex items-center gap-2">
-                    <button id="scaleButton" class="px-3 py-2 bg-white border border-gray-300 rounded-xl text-sm font-medium hover:bg-gray-50 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all duration-200 shadow-sm">100% ▼</button>
-                </div>
-                
-                <!-- Visual Separator -->
-                <div class="text-slate-300 font-light">|</div>
-                
-                <!-- Keyboard Shortcuts -->
-                <div class="flex items-center gap-4 text-xs text-slate-600">
-                    <span><kbd class="px-2 py-1 bg-slate-100 rounded-md text-xs font-mono shadow-sm">Shift</kbd>+drag: move</span>
-                    <span><kbd class="px-2 py-1 bg-slate-100 rounded-md text-xs font-mono shadow-sm">Q/E</kbd>: scale</span>
-                    <span><kbd class="px-2 py-1 bg-slate-100 rounded-md text-xs font-mono shadow-sm">WASD</kbd>: move</span>
-                </div>
+    <div id="canvasControls" class="floating-panel fixed bottom-4 z-50 rounded-2xl px-3 py-2 transition-all duration-300" style="left: 50%; transform: translateX(-50%);">
+        <div id="canvasControlsContent" class="flex items-center gap-2 text-sm">
+            <select id="fitModeSelect" class="px-2 py-1 border border-gray-300 rounded-lg bg-white focus:outline-none hover:bg-gray-50">
+                <option value="none">Manual</option>
+                <option value="fit-width" selected>Fit Width</option>
+                <option value="fit-height">Fit Height</option>
+                <option value="fit-canvas">Fit Canvas</option>
+                <option value="actual-size">Actual Size</option>
+            </select>
+            <button id="applyFitCurrent" class="px-2 py-1 bg-white border border-gray-300 text-slate-700 text-xs rounded-lg hover:bg-slate-50" title="Apply to current image">Apply</button>
+            <button id="scaleButton" class="px-2 py-1 bg-white border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50">100% ▼</button>
+            <div class="flex items-center gap-1 ml-2">
+                <button id="rotateLeftCtrl" class="px-2 py-1 bg-white border border-gray-300 text-slate-700 text-xs rounded-lg hover:bg-slate-50" title="Rotate 90° CCW">↶</button>
+                <button id="rotateRightCtrl" class="px-2 py-1 bg-white border border-gray-300 text-slate-700 text-xs rounded-lg hover:bg-slate-50" title="Rotate 90° CW">↷</button>
+                <button id="flipHCtrl" class="px-2 py-1 bg-white border border-gray-300 text-slate-700 text-xs rounded-lg hover:bg-slate-50" title="Flip Horizontal">↔</button>
+                <button id="flipVCtrl" class="px-2 py-1 bg-white border border-gray-300 text-slate-700 text-xs rounded-lg hover:bg-slate-50" title="Flip Vertical">↕</button>
             </div>
         </div>
     </div>
@@ -938,8 +1016,361 @@
     
     <!-- New UI Controller Script -->
     <script>
+        // Initialize top toolbar by moving existing controls
+        function initializeTopToolbar() {
+            const left = document.getElementById('tbLeft');
+            const center = document.getElementById('tbCenter');
+            const right = document.getElementById('tbRight');
+            const bottom = document.getElementById('canvasControlsContent') || center;
+
+            // Helper functions
+            const setUniform = el => {
+                if (!el) return;
+                el.classList.add(el.tagName === 'SELECT' ? 'tselect' : el.tagName === 'INPUT' ? 'tinput' : 'tbtn');
+            };
+            
+            const reparent = (id, target, beforeSetup) => {
+                const el = document.getElementById(id);
+                if (!el) return null;
+                beforeSetup?.(el);
+                target.appendChild(el);
+                setUniform(el);
+                return el;
+            };
+
+            // LEFT: drawing tools
+            reparent('paste', left);
+            reparent('clear', left);
+            reparent('drawingModeToggle', left);
+
+            // Inline color swatches (8 colors in a row) using existing swatch buttons; add extras if needed
+            const swatchRow = document.createElement('div');
+            swatchRow.className = 'flex items-center gap-1';
+            const toolsPanel = document.getElementById('toolsPanel');
+            if (toolsPanel) {
+                let swatches = toolsPanel.querySelectorAll('[data-color]');
+                swatches.forEach((b, i) => {
+                    if (i < 8) {
+                        b.style.width='20px'; b.style.height='20px'; b.style.borderRadius='9999px'; b.style.border='2px solid #fff'; b.style.boxShadow='0 1px 2px rgba(0,0,0,.08)';
+                        swatchRow.appendChild(b);
+                    }
+                });
+                // If fewer than 8, add unique colors (ensure only one black)
+                const ensureColors = ['#111827','#10b981','#06b6d4','#f43f5e','#22c55e','#f59e0b','#a855f7','#3b82f6'];
+                const existing = Array.from(swatchRow.querySelectorAll('[data-color]')).map(x=>x.getAttribute('data-color'));
+                ensureColors.forEach(c => {
+                    if (swatchRow.querySelectorAll('[data-color]').length >= 8) return;
+                    // Avoid adding duplicate blacks if already present
+                    if (!existing.includes(c) && !(c==='#111827' && existing.includes('#111827'))) {
+                        const btn = document.createElement('button');
+                        btn.setAttribute('data-color', c);
+                        btn.title = c;
+                        btn.style.width='20px'; btn.style.height='20px'; btn.style.borderRadius='9999px'; btn.style.border='2px solid #fff'; btn.style.boxShadow='0 1px 2px rgba(0,0,0,.08)'; btn.style.backgroundColor=c;
+                        swatchRow.appendChild(btn);
+                    }
+                });
+                // Rebind color buttons (since we moved/added)
+                setTimeout(() => {
+                    const colorButtons = document.querySelectorAll('[data-color]');
+                    colorButtons.forEach(button => {
+                        if (!button.__boundColor) {
+                            button.__boundColor = true;
+                            button.addEventListener('click', () => {
+                                document.querySelectorAll('[data-color].active').forEach(b=>b.classList.remove('active'));
+                                button.classList.add('active');
+                                const hex = button.getAttribute('data-color');
+                                const cp = document.getElementById('colorPicker');
+                                if (cp && hex) {
+                                    cp.value = hex;
+                                    cp.dispatchEvent(new Event('change'));
+                                }
+                                const bs = document.getElementById('brushSize');
+                                if (bs && hex) bs.style.setProperty('--accent', hex);
+                            });
+                        }
+                    });
+                }, 0);
+            }
+            left.appendChild(swatchRow);
+            const colorInput = document.getElementById('colorPicker');
+            if (colorInput) colorInput.classList.add('hidden');
+
+            // Inline thickness slider in toolbar (uses existing #brushSize)
+            const brush = document.getElementById('brushSize');
+            if (brush) {
+                brush.style.width = '120px';
+                brush.style.margin = '0';
+                // Initialize slider fill and color to current selected color
+                const cp = document.getElementById('colorPicker');
+                if (cp) brush.style.setProperty('--accent', cp.value || '#3b82f6');
+                const updateSliderVisual = () => {
+                    const min = parseFloat(brush.min || '1');
+                    const max = parseFloat(brush.max || '50');
+                    const val = parseFloat(brush.value || '5');
+                    const pct = Math.max(0, Math.min(100, ((val - min) / (max - min)) * 100));
+                    brush.style.setProperty('--filled', pct + '%');
+                };
+                updateSliderVisual();
+                brush.addEventListener('input', updateSliderVisual);
+                brush.addEventListener('change', updateSliderVisual);
+                left.appendChild(brush);
+            }
+
+            // Arrow and line style controls
+            const arrowStartBtn = document.createElement('button');
+            arrowStartBtn.id = 'arrowStartBtn';
+            arrowStartBtn.className = 'tbtn icon-btn';
+            arrowStartBtn.title = 'Start Arrow';
+            arrowStartBtn.textContent = '◀';
+            left.appendChild(arrowStartBtn);
+
+            const arrowEndBtn = document.createElement('button');
+            arrowEndBtn.id = 'arrowEndBtn';
+            arrowEndBtn.className = 'tbtn icon-btn';
+            arrowEndBtn.title = 'End Arrow';
+            arrowEndBtn.textContent = '▶';
+            left.appendChild(arrowEndBtn);
+
+            const dottedBtn = document.createElement('button');
+            dottedBtn.id = 'dottedBtn';
+            dottedBtn.className = 'tbtn';
+            dottedBtn.title = 'Line Style';
+            const setLineStyleIcon = (style) => {
+                const svgSolid = '<svg width="34" height="12" viewBox="0 0 34 12" aria-hidden="true"><line x1="2" y1="6" x2="32" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+                const svgSmall = '<svg width="34" height="12" viewBox="0 0 34 12" aria-hidden="true"><line x1="2" y1="6" x2="32" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-dasharray="4 4"/></svg>';
+                const svgMedium = '<svg width="34" height="12" viewBox="0 0 34 12" aria-hidden="true"><line x1="2" y1="6" x2="32" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-dasharray="7 5"/></svg>';
+                const svgLarge = '<svg width="34" height="12" viewBox="0 0 34 12" aria-hidden="true"><line x1="2" y1="6" x2="32" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-dasharray="11 7"/></svg>';
+                dottedBtn.innerHTML = style === 'small' ? svgSmall : style === 'medium' ? svgMedium : style === 'large' ? svgLarge : svgSolid;
+            };
+            setLineStyleIcon('solid');
+            left.appendChild(dottedBtn);
+
+            // Wire controls to UI state in paint.js
+            const setActive = (el, on) => el.classList.toggle('active', !!on);
+            const syncFromState = () => {
+                try {
+                    const as = window.paintApp?.uiState?.arrowSettings;
+                    const ds = window.paintApp?.uiState?.dashSettings;
+                    setActive(arrowStartBtn, as?.startArrow);
+                    setActive(arrowEndBtn, as?.endArrow);
+                    setLineStyleIcon(ds?.style || 'solid');
+                } catch {}
+            };
+            syncFromState();
+            
+            arrowStartBtn.addEventListener('click', () => {
+                try {
+                    const as = window.paintApp.uiState.arrowSettings;
+                    as.startArrow = !as.startArrow;
+                    // Apply to stroke in edit mode if any
+                    const edited = window.selectedStrokeInEditMode;
+                    const img = window.currentImageLabel;
+                    if (edited && img && window.vectorStrokesByImage?.[img]?.[edited]) {
+                        const v = window.vectorStrokesByImage[img][edited];
+                        v.arrowSettings = v.arrowSettings || { arrowSize: as.arrowSize, arrowStyle: as.arrowStyle, startArrow: false, endArrow: false };
+                        v.arrowSettings.startArrow = as.startArrow;
+                        window.saveState?.(true, false, false);
+                        window.redrawCanvasWithVisibility?.();
+                    }
+                    syncFromState();
+                } catch {}
+            });
+            arrowEndBtn.addEventListener('click', () => {
+                try {
+                    const as = window.paintApp.uiState.arrowSettings;
+                    as.endArrow = !as.endArrow;
+                    // Apply to stroke in edit mode if any
+                    const edited = window.selectedStrokeInEditMode;
+                    const img = window.currentImageLabel;
+                    if (edited && img && window.vectorStrokesByImage?.[img]?.[edited]) {
+                        const v = window.vectorStrokesByImage[img][edited];
+                        v.arrowSettings = v.arrowSettings || { arrowSize: as.arrowSize, arrowStyle: as.arrowStyle, startArrow: false, endArrow: false };
+                        v.arrowSettings.endArrow = as.endArrow;
+                        window.saveState?.(true, false, false);
+                        window.redrawCanvasWithVisibility?.();
+                    }
+                    syncFromState();
+                } catch {}
+            });
+            dottedBtn.addEventListener('click', () => {
+                try {
+                    const ds = window.paintApp.uiState.dashSettings;
+                    // Cycle: solid -> small -> medium -> large -> solid
+                    const next = { 'solid': 'small', 'small': 'medium', 'medium': 'large', 'large': 'solid' };
+                    ds.style = next[ds.style] || 'small';
+                    ds.enabled = ds.style !== 'solid';
+                    // Compute dash pattern immediately (mirror paint.js getDashPattern)
+                    const computePattern = (style, dashLen, gapLen, lineWidth = 1) => {
+                        const baseScale = Math.max(2, lineWidth * 0.8);
+                        switch (style) {
+                            case 'small': return [6 * baseScale, 4 * baseScale];
+                            case 'medium': return [12 * baseScale, 8 * baseScale];
+                            case 'large': return [20 * baseScale, 12 * baseScale];
+                            case 'dot-dash': return [4 * baseScale, 6 * baseScale, 12 * baseScale, 6 * baseScale];
+                            case 'custom': return [dashLen * baseScale, gapLen * baseScale];
+                            default: return [];
+                        }
+                    };
+                    const brush = document.getElementById('brushSize');
+                    const size = parseInt(brush?.value || '5') || 5;
+                    ds.pattern = computePattern(ds.style, ds.dashLength, ds.gapLength, size);
+                    // If editing a stroke, also update it live
+                    const edited = window.selectedStrokeInEditMode;
+                    const img = window.currentImageLabel;
+                    if (edited && img && window.vectorStrokesByImage?.[img]?.[edited]) {
+                        const v = window.vectorStrokesByImage[img][edited];
+                        const lw = parseInt(v.width || size) || size;
+                        v.dashSettings = { ...ds, pattern: computePattern(ds.style, ds.dashLength, ds.gapLength, lw) };
+                        window.saveState?.(true, false, false);
+                        window.redrawCanvasWithVisibility?.();
+                    }
+                    setLineStyleIcon(ds.style);
+                    syncFromState();
+                } catch {}
+            });
+
+            // Undo / Redo buttons
+            const mkIconBtn = (id, title, symbol, handler) => {
+                const b = document.createElement('button'); 
+                b.id = id; 
+                b.className = 'tbtn icon-btn'; 
+                b.title = title; 
+                b.textContent = symbol;
+                b.addEventListener('click', handler); 
+                left.appendChild(b);
+                return b;
+            };
+            mkIconBtn('undoBtn', 'Undo', '↺', () => { if (typeof window.undo === 'function') window.undo(); });
+            mkIconBtn('redoBtn', 'Redo', '↻', () => { if (typeof window.redo === 'function') window.redo(); });
+
+            // CENTER/BOTTOM: canvas view controls moved to bottom
+            reparent('fitModeSelect', bottom);
+            reparent('applyFitCurrent', bottom);
+            reparent('rotateLeftCtrl', bottom, el => { 
+                el.classList.add('icon-btn', 'tbtn'); 
+                el.title = 'Rotate Left'; 
+                el.textContent = '↶'; 
+            });
+            reparent('rotateRightCtrl', bottom, el => { 
+                el.classList.add('icon-btn', 'tbtn'); 
+                el.title = 'Rotate Right'; 
+                el.textContent = '↷'; 
+            });
+            reparent('flipHCtrl', bottom, el => { 
+                el.classList.add('icon-btn', 'tbtn'); 
+                el.title = 'Flip Horizontal'; 
+                el.textContent = '↔'; 
+            });
+            reparent('flipVCtrl', bottom, el => { 
+                el.classList.add('icon-btn', 'tbtn'); 
+                el.title = 'Flip Vertical'; 
+                el.textContent = '↕'; 
+            });
+            reparent('scaleButton', bottom);
+
+            // RIGHT: project settings
+            reparent('projectName', right, el => {
+                el.style.width = '140px';
+            });
+            // Move unit selector into More menu (not in top toolbar)
+            reparent('saveProject', right);
+            reparent('loadProject', right);
+
+            // More menu for secondary project actions
+            const moreWrap = document.createElement('div'); 
+            moreWrap.style.position = 'relative';
+            const moreBtn = document.createElement('button'); 
+            moreBtn.id = 'projectMoreBtn'; 
+            moreBtn.className = 'tbtn'; 
+            moreBtn.textContent = 'More ▾';
+            moreBtn.title = 'More Actions';
+            
+            const moreMenu = document.createElement('div'); 
+            moreMenu.id = 'projectMoreMenu'; 
+            moreMenu.className = 'popover'; 
+            moreMenu.style.right = '0'; 
+            moreMenu.style.left = 'auto';
+            moreMenu.style.minWidth = '160px';
+            
+            // Replace unit selector with a simple toggle button
+            const unitSel = document.getElementById('unitSelector');
+            if (unitSel) {
+                const wrap = document.createElement('div');
+                wrap.style.padding = '6px 6px 10px';
+                const lbl = document.createElement('div');
+                lbl.textContent = 'Units';
+                lbl.style.fontSize='11px'; lbl.style.color='#64748b'; lbl.style.margin='2px 2px 6px';
+                const unitToggle = document.createElement('button');
+                unitToggle.id = 'unitToggleBtn';
+                unitToggle.className = 'tbtn';
+                unitToggle.style.width = '100%';
+                const getLabel = () => unitSel.value === 'inch' ? 'inches' : 'cm';
+                unitToggle.textContent = getLabel();
+                unitToggle.addEventListener('click', () => {
+                    // Toggle underlying select value to preserve existing logic
+                    unitSel.value = unitSel.value === 'inch' ? 'cm' : 'inch';
+                    unitToggle.textContent = getLabel();
+                    // Trigger existing onchange logic
+                    if (typeof updateMeasurementDisplay === 'function') {
+                        updateMeasurementDisplay();
+                    } else if (unitSel.onchange) {
+                        unitSel.onchange();
+                    }
+                });
+                wrap.appendChild(lbl);
+                wrap.appendChild(unitToggle);
+                moreMenu.appendChild(wrap);
+                // Hide the original select (kept for compatibility)
+                unitSel.style.display = 'none';
+            }
+
+            ['generateMeasurements', 'saveAllImages', 'saveAsPdf'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) { 
+                    setUniform(el); 
+                    el.style.display = 'block'; 
+                    el.style.width = '100%'; 
+                    el.style.margin = '2px 0';
+                    el.style.textAlign = 'left';
+                    moreMenu.appendChild(el); 
+                }
+            });
+            
+            moreWrap.appendChild(moreBtn); 
+            moreWrap.appendChild(moreMenu); 
+            right.appendChild(moreWrap);
+            
+            moreBtn.addEventListener('click', (e) => { 
+                e.stopPropagation(); 
+                moreMenu.classList.toggle('show');
+            });
+
+            // Global click handler to close all popovers
+            document.addEventListener('click', () => {
+                moreMenu.classList.remove('show');
+            });
+
+            // Prevent popover clicks from closing the popover
+            [moreMenu].forEach(popover => {
+                popover.addEventListener('click', (e) => e.stopPropagation());
+            });
+
+            // Hide legacy panels after moving controls (keep in DOM to preserve any lookups)
+            document.getElementById('toolsPanel')?.classList.add('hidden');
+            document.getElementById('projectPanel')?.classList.add('hidden');
+            const cc = document.getElementById('canvasControls');
+            if (cc) { cc.classList.remove('hidden'); cc.style.display='block'; }
+
+            // Add body padding to prevent toolbar overlap
+            document.body.style.paddingTop = '48px';
+        }
+
         // New UI functionality for modular panels and capture frame
         document.addEventListener('DOMContentLoaded', () => {
+            // Initialize top toolbar by moving existing controls
+            initializeTopToolbar();
+            
+            // (Sketchbook toggle removed per request)
             // Panel visibility toggles
             const strokePanel = document.getElementById('strokePanel');
             const imagePanel = document.getElementById('imagePanel');
@@ -998,12 +1429,26 @@
                 });
             }
             
-            // Apply toggle functionality to all panels
+            // Apply toggle functionality to all panels (default open for Stroke & Images)
             createPanelToggle('projectPanel', 'projectPanelContent', 'toggleProjectPanel');
             createPanelToggle('toolsPanel', 'toolsPanelContent', 'toggleToolsPanel');
             createPanelToggle('strokePanel', 'strokeVisibilityControls', 'toggleStrokePanel');
             createPanelToggle('imagePanel', 'imagePanelContent', 'toggleImagePanel');
             createPanelToggle('canvasControls', 'canvasControlsContent', 'toggleCanvasControls');
+
+            // Ensure Stroke Visibility and Images are open by default
+            (function expandByDefault() {
+                const strokeContent = document.getElementById('strokeVisibilityControls');
+                const strokeButton = document.getElementById('toggleStrokePanel');
+                const imageContent = document.getElementById('imagePanelContent');
+                const imageButton = document.getElementById('toggleImagePanel');
+                if (strokeContent && strokeButton && strokeContent.classList.contains('hidden')) {
+                    strokeButton.click();
+                }
+                if (imageContent && imageButton && imageContent.classList.contains('hidden')) {
+                    imageButton.click();
+                }
+            })();
             
             // Capture frame lock functionality
             let isCaptureLocked = true; // Start locked for minimal appearance
@@ -1018,9 +1463,17 @@
                 toggleCaptureLock();
             });
             
-            // Keyboard shortcut for lock/unlock (L key)
+            // Keyboard shortcut for lock/unlock (L key) - ignore when typing in inputs/textareas/selects or contenteditable
             document.addEventListener('keydown', (e) => {
-                if (e.key.toLowerCase() === 'l') {
+                const target = e.target;
+                const isTyping = target && (
+                    target.tagName === 'INPUT' ||
+                    target.tagName === 'TEXTAREA' ||
+                    target.tagName === 'SELECT' ||
+                    target.isContentEditable
+                );
+                if (isTyping) return;
+                if (e.key && e.key.toLowerCase() === 'l') {
                     e.preventDefault();
                     toggleCaptureLock();
                 }
@@ -1560,11 +2013,58 @@
                         }
                     }
                 });
-                
-                // Test coordinate transformations to verify boundary constraints
-                setTimeout(() => {
-                    testCoordinateTransformations();
-                }, 1000);
+
+                // Canvas Controls: wire rotate/flip buttons to current image
+                const rotateLeftCtrl = document.getElementById('rotateLeftCtrl');
+                const rotateRightCtrl = document.getElementById('rotateRightCtrl');
+                const flipHCtrl = document.getElementById('flipHCtrl');
+                const flipVCtrl = document.getElementById('flipVCtrl');
+                function getCurrentImageIndex() {
+                    const label = window.paintApp?.state?.currentImageLabel;
+                    if (!label) return 0;
+                    const idx = imageGalleryData.findIndex(i => i.label === label);
+                    return idx >= 0 ? idx : 0;
+                }
+                rotateLeftCtrl?.addEventListener('click', () => {
+                    const idx = getCurrentImageIndex();
+                    window.rotateImage?.(idx, -90);
+                });
+                rotateRightCtrl?.addEventListener('click', () => {
+                    const idx = getCurrentImageIndex();
+                    window.rotateImage?.(idx, 90);
+                });
+                flipHCtrl?.addEventListener('click', () => {
+                    const idx = getCurrentImageIndex();
+                    if (typeof flipImage === 'function') flipImage(idx, 'horizontal');
+                });
+                flipVCtrl?.addEventListener('click', () => {
+                    const idx = getCurrentImageIndex();
+                    if (typeof flipImage === 'function') flipImage(idx, 'vertical');
+                });
+
+                // Name/type inputs wiring
+                const nameInput = document.getElementById('imageNameInput');
+                const typeSelect = document.getElementById('imageTypeSelect');
+                nameInput?.addEventListener('change', (e) => {
+                    const val = e.target.value || '';
+                    const idx = currentImageIndex;
+                    if (imageGalleryData[idx]) {
+                        imageGalleryData[idx].name = val;
+                        // Update caption under the thumbnail (if present)
+                        const gallery = document.getElementById('imageGallery');
+                        const card = gallery?.children[idx];
+                        const caption = card?.querySelector('.thumb-caption');
+                        if (caption) caption.textContent = val;
+                    }
+                });
+                typeSelect?.addEventListener('change', (e) => {
+                    const val = e.target.value || '';
+                    const idx = currentImageIndex;
+                    if (imageGalleryData[idx]) {
+                        imageGalleryData[idx].original = imageGalleryData[idx].original || {};
+                        imageGalleryData[idx].original.type = val;
+                    }
+                });
             }
             
             // Add image to gallery
@@ -1602,20 +2102,40 @@
                 thumbnail.title = imageName;
                 thumbnail.draggable = true;
                 
-                // Add image overlay with name
-                const overlay = document.createElement('div');
-                overlay.className = 'image-overlay';
-                overlay.textContent = imageName;
-                thumbnail.appendChild(overlay);
+                // Remove overlay label; use minimal caption below instead
                 
-                // Add hover controls (delete, rotate, flip)
+                // Add hover controls (delete only)
                 const controls = createThumbnailControls(index);
+                // Strip rotate/flip from controls
+                controls.querySelectorAll('.rotate-btn, .flip-btn').forEach(el => el.remove());
                 thumbnail.appendChild(controls);
                 
                 // Add all event listeners using helper function
                 addThumbnailEventListeners(thumbnail, index);
                 
-                imageGallery.appendChild(thumbnail);
+                // Wrap thumbnail in a small card with optional caption
+                const card = document.createElement('div');
+                card.className = 'flex flex-col items-center gap-1';
+                card.appendChild(thumbnail);
+                // Compute caption; hide for blank canvas
+                let displayName = '';
+                try {
+                    if (!(originalData && originalData.isBlankCanvas)) {
+                        const lbl = originalData?.label;
+                        if (lbl && typeof window.getTagBasedFilename === 'function') {
+                            const base = lbl.split('_')[0];
+                            displayName = window.getTagBasedFilename(lbl, base) || imageName || '';
+                        } else {
+                            displayName = imageName || '';
+                        }
+                    }
+                } catch (e) { displayName = imageName || ''; }
+                const caption = document.createElement('div');
+                caption.className = 'thumb-caption text-[11px] text-slate-500 font-medium truncate max-w-[120px]';
+                caption.textContent = displayName || '';
+                card.appendChild(caption);
+                if (displayName) thumbnail.title = displayName; else thumbnail.removeAttribute('title');
+                imageGallery.appendChild(card);
                 console.log(`[Gallery] Created thumbnail element:`, thumbnail);
                 console.log(`[Gallery] Gallery element children count:`, imageGallery.children.length);
                 
@@ -1690,6 +2210,13 @@
                 }
                 
                 updateActiveImage(index);
+
+                // Update image name/type inputs to match current image
+                const nameInput = document.getElementById('imageNameInput');
+                const typeSelect = document.getElementById('imageTypeSelect');
+                const data = imageGalleryData[index];
+                if (nameInput && data) nameInput.value = data.name || '';
+                if (typeSelect && data && data.original && data.original.type) typeSelect.value = data.original.type; else if (typeSelect) typeSelect.value = '';
             }
             
             // Reorder images in the gallery
@@ -1736,14 +2263,10 @@
                     thumbnail.title = imageData.name;
                     thumbnail.draggable = true;
                     
-                    // Add overlay
-                    const overlay = document.createElement('div');
-                    overlay.className = 'image-overlay';
-                    overlay.textContent = imageData.name;
-                    thumbnail.appendChild(overlay);
-                    
-                    // Add hover controls (delete, rotate, flip)
+                    // Add hover controls (delete only)
                     const controls = createThumbnailControls(index);
+                    // Strip rotate/flip from controls
+                    controls.querySelectorAll('.rotate-btn, .flip-btn').forEach(el => el.remove());
                     thumbnail.appendChild(controls);
                     
                     // Add all event listeners (click, drag, etc.)
@@ -1767,7 +2290,7 @@
                 updateGalleryControls();
             }
             
-            // Create thumbnail control buttons (delete, rotate, flip)
+            // Create thumbnail control buttons (delete only)
             function createThumbnailControls(index) {
                 const controlsContainer = document.createElement('div');
                 
@@ -1785,58 +2308,7 @@
                 });
                 
                 deleteControl.appendChild(deleteBtn);
-                
-                // Other controls (top-right)
-                const controls = document.createElement('div');
-                controls.className = 'thumbnail-controls';
-                
-                // Rotate left button
-                const rotateLeftBtn = document.createElement('button');
-                rotateLeftBtn.className = 'control-btn rotate-btn';
-                rotateLeftBtn.innerHTML = '↶';
-                rotateLeftBtn.title = 'Rotate 90° counter-clockwise';
-                rotateLeftBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    rotateImage(index, -90);
-                });
-                
-                // Rotate right button
-                const rotateRightBtn = document.createElement('button');
-                rotateRightBtn.className = 'control-btn rotate-btn';
-                rotateRightBtn.innerHTML = '↷';
-                rotateRightBtn.title = 'Rotate 90° clockwise';
-                rotateRightBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    rotateImage(index, 90);
-                });
-                
-                // Flip horizontal button
-                const flipHBtn = document.createElement('button');
-                flipHBtn.className = 'control-btn flip-btn';
-                flipHBtn.innerHTML = '↔';
-                flipHBtn.title = 'Flip horizontally';
-                flipHBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    flipImage(index, 'horizontal');
-                });
-                
-                // Flip vertical button
-                const flipVBtn = document.createElement('button');
-                flipVBtn.className = 'control-btn flip-btn';
-                flipVBtn.innerHTML = '↕';
-                flipVBtn.title = 'Flip vertically';
-                flipVBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    flipImage(index, 'vertical');
-                });
-                
-                controls.appendChild(rotateLeftBtn);
-                controls.appendChild(rotateRightBtn);
-                controls.appendChild(flipHBtn);
-                controls.appendChild(flipVBtn);
-                
                 controlsContainer.appendChild(deleteControl);
-                controlsContainer.appendChild(controls);
                 
                 return controlsContainer;
             }
@@ -2741,6 +3213,13 @@
                     dot.classList.toggle('active', idx === index);
                 });
                 
+                // Sync inputs to current image
+                const data = imageGalleryData[index];
+                const nameEl = document.getElementById('imageNameInput');
+                const typeEl = document.getElementById('imageTypeSelect');
+                if (nameEl && data) nameEl.value = data.name || '';
+                if (typeEl && data && data.original) typeEl.value = data.original.type || '';
+                
                 updateGalleryControls();
             }
             
@@ -3102,38 +3581,8 @@
                 const realImagesCount = imageGalleryData.filter(item => !item.name?.includes('Demo Image') && !item.name?.includes('Blank Canvas')).length;
                 console.log('[INIT] Real images found:', realImagesCount);
                 
-                // Only add demo images if we have no real images
-                if (realImagesCount === 0) {
-                    console.log('[TEST] No real images found, adding default blank canvas...');
-                    
-                    // Create a single blank canvas entry instead of multiple demo images
-                    const blankCanvasImage = {
-                        src: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjgwMCIgdmlld0JveD0iMCAwIDgwMCA4MDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI2Y4ZjlmYSIgc3Ryb2tlPSIjZTVlN2ViIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1kYXNoYXJyYXk9IjEwLDEwIi8+PHRleHQgeD0iNDAwIiB5PSI0MDAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIyNCIgZmlsbD0iIzllYTNhOCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSI+QmxhbmsgQ2FudmFzPC90ZXh0Pjwvc3ZnPg==',
-                        name: 'Blank Canvas',
-                        original: {
-                            label: 'blank_canvas',
-                            isBlankCanvas: true
-                        }
-                    };
-                    
-                    const testImages = [blankCanvasImage];
-                    
-                    testImages.forEach((imageData, index) => {
-                        addImageToGallery(imageData, index);
-                    });
-                    
-                    console.log('[TEST] Blank canvas added to gallery');
-                
-                // Ensure the image panel is visible
-                const imagePanel = document.getElementById('imagePanel');
-                if (imagePanel) {
-                    imagePanel.classList.remove('hidden');
-                    imagePanel.style.display = 'block';
-                    console.log('[Gallery] Image panel made visible');
-                }
-                } else {
-                    console.log(`[INIT] Found ${realImagesCount} real images, skipping demo images`);
-                }
+                // Do not add demo/blank images; keep gallery empty until user adds/loads
+                console.log(`[INIT] Skipping demo images. Real count: ${realImagesCount}`);
                 
                 // Test the addImageToSidebar function to see if hooking works
                 if (window.addImageToSidebar) {
@@ -3167,11 +3616,7 @@
                     console.log('[PERIODIC] New legacy images detected, syncing...');
                     console.log(`[PERIODIC] Legacy: ${currentLegacyCount} (was ${lastLegacyCount}), Gallery real: ${currentRealImagesCount}`);
                     
-                    // Clear demo images if we find real images
-                    if (currentLegacyCount > 0 && imageGalleryData.some(item => item.name?.includes('Demo Image') || item.name?.includes('Blank Canvas'))) {
-                        console.log('[PERIODIC] Clearing demo images before adding real images...');
-                        clearDemoImages();
-                    }
+                    // No demo images are used anymore; skip clearing
                     
                     syncLegacyImagesToGallery();
                     

@@ -8476,9 +8476,11 @@ if (colorPicker) {
         applyFitMode(fitModeSelect.value);
     });
     
-    applyFitAllButton.addEventListener('click', () => {
-        applyFitModeToAll(fitModeSelect.value);
-    });
+    if (applyFitAllButton) {
+        applyFitAllButton.addEventListener('click', () => {
+            applyFitModeToAll(fitModeSelect.value);
+        });
+    }
     
     // Apply fit mode when selection changes (for immediate feedback on current image)
     fitModeSelect.addEventListener('change', () => {
