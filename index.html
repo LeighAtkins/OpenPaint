@@ -1873,7 +1873,7 @@
             }
             
             // Rotate image function
-            function rotateImage(index, degrees) {
+            window.rotateImage = function rotateImage(index, degrees) {
                 console.log(`[Gallery] Rotating image ${index} by ${degrees}°`);
                 
                 const imageData = imageGalleryData[index];
@@ -1926,6 +1926,17 @@
                         let canvasHeight = canvas.height;
                         
                         console.log(`[Transform] Using canvas dimensions: ${canvasWidth}x${canvasHeight} instead of image: ${img.naturalWidth}x${img.naturalHeight}`);
+                        
+                        // Clear stored centroid if canvas dimensions changed (for screen size changes)
+                        if (window.originalDrawingCentroids && window.originalDrawingCentroids[label]) {
+                            if (!window.lastCanvasDimensions) window.lastCanvasDimensions = {};
+                            const lastDims = window.lastCanvasDimensions[label];
+                            if (lastDims && (lastDims.width !== canvasWidth || lastDims.height !== canvasHeight)) {
+                                delete window.originalDrawingCentroids[label];
+                                console.log(`[Transform] Cleared stored centroid for ${label} - canvas size changed from ${lastDims.width}x${lastDims.height} to ${canvasWidth}x${canvasHeight}`);
+                            }
+                            window.lastCanvasDimensions[label] = { width: canvasWidth, height: canvasHeight };
+                        }
                         
                         // For rotations, we might need to swap canvas dimensions too
                         let transformWidth = canvasWidth;
@@ -2154,15 +2165,22 @@
             }
 
             // Transform offset vectors (relative to anchor points) for rotation/flip
+            // Offsets are ALWAYS rotated as pure vectors around origin (0,0) - no center logic
             function rotateOffsetVector(x, y, degrees) {
-                // For offsets, we rotate around origin (0,0) since they're relative vectors
+                // Pure vector rotation: O' = R(degrees) * O
+                // For -90°: (x,y) → (y,-x), e.g., (-710,-427.5) → (-427.5,710)
                 const radians = (degrees * Math.PI) / 180;
                 const cos = Math.cos(radians);
                 const sin = Math.sin(radians);
                 
+                const rotatedX = x * cos - y * sin;
+                const rotatedY = x * sin + y * cos;
+                
+                console.log(`[Transform] Vector rotation: (${x.toFixed(1)}, ${y.toFixed(1)}) → (${rotatedX.toFixed(1)}, ${rotatedY.toFixed(1)}) by ${degrees}°`);
+                
                 return {
-                    x: x * cos - y * sin,
-                    y: x * sin + y * cos
+                    x: rotatedX,
+                    y: rotatedY
                 };
             }
             
@@ -2174,6 +2192,34 @@
                 }
                 return { x, y };
             }
+            
+            // Get stroke midpoint from vector data in image space
+            function getStrokeMidpointImageSpace(vectorStrokesSource, imageLabel, strokeLabel) {
+                const vectorData = vectorStrokesSource[imageLabel][strokeLabel];
+                if (!vectorData || !vectorData.points || vectorData.points.length === 0) {
+                    console.warn(`[Transform] No vector data found for stroke ${strokeLabel}`);
+                    return { x: 0, y: 0 };
+                }
+                
+                const midpointIndex = Math.floor(vectorData.points.length / 2);
+                const midpoint = vectorData.points[midpointIndex];
+                return { x: midpoint.x, y: midpoint.y };
+            }
+            
+            // Rotate a point around a center point
+            function rotatePoint(point, center, degrees) {
+                const radians = (degrees * Math.PI) / 180;
+                const cos = Math.cos(radians);
+                const sin = Math.sin(radians);
+                
+                const dx = point.x - center.x;
+                const dy = point.y - center.y;
+                
+                return {
+                    x: center.x + (dx * cos - dy * sin),
+                    y: center.y + (dx * sin + dy * cos)
+                };
+            }
 
             // Coordinate transformation functions for image rotate/flip
             function rotateCoordinates(x, y, degrees, imageWidth, imageHeight, customCenter = null, keepDimensions = false) {
@@ -2182,7 +2228,7 @@
                 if (customCenter) {
                     centerX = customCenter.x;
                     centerY = customCenter.y;
-                    console.log(`[Transform] Using drawing center (${centerX.toFixed(1)}, ${centerY.toFixed(1)}) instead of canvas center`);
+                    console.log(`[Transform] Using drawing centroid (${centerX.toFixed(1)}, ${centerY.toFixed(1)}) for blank canvas`);
                 } else {
                     centerX = imageWidth / 2;
                     centerY = imageHeight / 2;
@@ -2207,9 +2253,17 @@
                 // For 90° and 270° rotations, dimensions swap
                 let newCenterX, newCenterY;
                 if (Math.abs(degrees) === 90 || Math.abs(degrees) === 270) {
-                    // After 90° rotation, width becomes height and height becomes width
-                    newCenterX = imageHeight / 2;  // New width is old height
-                    newCenterY = imageWidth / 2;   // New height is old width
+                    // For blank canvas, keep the same rotation center to avoid orbital motion
+                    if (customCenter) {
+                        // Keep the drawing centroid as rotation center
+                        newCenterX = centerX;
+                        newCenterY = centerY;
+                        console.log(`[Transform] Keeping rotation center (${newCenterX.toFixed(1)}, ${newCenterY.toFixed(1)}) for blank canvas 90°/270° rotation`);
+                    } else {
+                        // For regular images, swap center with dimensions
+                        newCenterX = imageHeight / 2;  // New width is old height
+                        newCenterY = imageWidth / 2;   // New height is old width
+                    }
                 } else {
                     newCenterX = centerX;
                     newCenterY = centerY;
@@ -2296,7 +2350,7 @@
             }
             
             // Transform all stroke and label data for an image
-            function transformImageData(imageLabel, transformType, transformValue, imageWidth, imageHeight) {
+            window.transformImageData = function transformImageData(imageLabel, transformType, transformValue, imageWidth, imageHeight) {
                 console.log(`[Transform] ===== TRANSFORMING DATA =====`);
                 console.log(`[Transform] Image: ${imageLabel}, Type: ${transformType} ${transformValue}`);
                 console.log(`[Transform] Using IMAGE dimensions: ${imageWidth} x ${imageHeight}`);
@@ -2324,6 +2378,8 @@
                 let labelPositionsSource = window.customLabelPositions;
                 let labelOffsetsSource = window.calculatedLabelOffsets;
                 
+                console.log(`[DEBUG] Initial sources - vectorStrokesSource:`, !!vectorStrokesSource, 'labelPositionsSource:', !!labelPositionsSource, 'labelOffsetsSource:', !!labelOffsetsSource);
+                
                 if (window.paintApp && window.paintApp.state) {
                     if (!vectorStrokesSource || !vectorStrokesSource[imageLabel]) {
                         vectorStrokesSource = window.paintApp.state.vectorStrokesByImage;
@@ -2339,32 +2395,58 @@
                     }
                 }
                 
-                // Calculate the centroid of the drawing for better rotation center
+                // Calculate the rotation center
                 let rotationCenter = null;
                 let isBlankCanvas = false;
                 if (transformType === 'rotate' && vectorStrokesSource) {
-                    // For blank canvas, use a fixed rotation center to prevent drift
+                    // For blank canvas, rotate around the actual drawing center for intuitive behavior
                     if (imageLabel === 'blank_canvas') {
                         isBlankCanvas = true;
-                        // Store the original centroid in a persistent location
-                        if (!window.originalCentroidByImage) {
-                            window.originalCentroidByImage = {};
+                        
+                        // Initialize original centroid storage if it doesn't exist
+                        if (!window.originalDrawingCentroids) {
+                            window.originalDrawingCentroids = {};
                         }
                         
-                        if (!window.originalCentroidByImage[imageLabel]) {
-                            // Calculate and store the original centroid only once
-                            rotationCenter = calculateDrawingCentroid(vectorStrokesSource, imageLabel);
-                            window.originalCentroidByImage[imageLabel] = rotationCenter;
-                            console.log(`[Transform] Stored original centroid for ${imageLabel}:`, rotationCenter);
-                        } else {
-                            // Reuse the original centroid to prevent drift
-                            rotationCenter = window.originalCentroidByImage[imageLabel];
-                            console.log(`[Transform] Using stored original centroid for ${imageLabel}:`, rotationCenter);
+                        // Store the original centroid on first rotation, then reuse it
+                        if (!window.originalDrawingCentroids[imageLabel]) {
+                            window.originalDrawingCentroids[imageLabel] = calculateDrawingCentroid(vectorStrokesSource, imageLabel);
+                            console.log(`[Transform] Storing original drawing centroid for ${imageLabel}:`, window.originalDrawingCentroids[imageLabel]);
+                            
+                            // Also store the canvas dimensions when we store the centroid
+                            const canvas = document.getElementById('canvas');
+                            if (canvas) {
+                                if (!window.lastCanvasDimensions) window.lastCanvasDimensions = {};
+                                window.lastCanvasDimensions[imageLabel] = { width: canvas.width, height: canvas.height };
+                                console.log(`[Transform] Stored canvas dimensions for ${imageLabel}: ${canvas.width}x${canvas.height}`);
+                            }
                         }
+                        
+                        rotationCenter = window.originalDrawingCentroids[imageLabel];
+                        console.log(`[Transform] Using stored original centroid for ${imageLabel}:`, rotationCenter);
                     } else {
-                        // For regular images, calculate centroid normally
-                        rotationCenter = calculateDrawingCentroid(vectorStrokesSource, imageLabel);
+                        // For regular images, rotate strokes around the image center to match bitmap rotation
+                        rotationCenter = null;
+                        console.log(`[Transform] Using image center for rotation of ${imageLabel}`);
                     }
+                }
+
+                // Record rotation metadata for testing harness
+                if (transformType === 'rotate') {
+                    // Determine real image label used by state (avoid 'blank_canvas' leaks)
+                    const realImageLabel = window.currentImageLabel || imageLabel;
+                    
+                    // Store rotation metadata with normalized delta and canvas coordinates
+                    if (!window.lastRotationMeta) window.lastRotationMeta = {};
+                    
+                    // For regular images (rotationCenter = null), use image center
+                    const centerToRecord = rotationCenter || { x: imageWidth / 2, y: imageHeight / 2 };
+                    
+                    window.lastRotationMeta[realImageLabel] = {
+                        centerCanvas: { x: centerToRecord.x, y: centerToRecord.y },
+                        delta: window.normalizeDelta ? window.normalizeDelta((transformValue * Math.PI) / 180) : ((transformValue * Math.PI) / 180)
+                    };
+                    console.log(`[Transform] Recorded rotation meta for ${realImageLabel}: center=(${centerToRecord.x.toFixed(1)}, ${centerToRecord.y.toFixed(1)}), delta=${transformValue}°`);
                 }
                 
                 // Transform vector strokes
@@ -2393,52 +2475,127 @@
                     console.log(`[Transform] Updated ${Object.keys(vectorStrokes).length} vector strokes`);
                 }
                 
-                // Transform custom label positions
-                if (labelPositionsSource && labelPositionsSource[imageLabel]) {
-                    const labelPositions = labelPositionsSource[imageLabel];
-                    console.log(`[Transform] Processing ${Object.keys(labelPositions).length} custom label positions`);
-                    Object.keys(labelPositions).forEach(labelKey => {
-                        const position = labelPositions[labelKey];
-                        if (position && position.x !== undefined && position.y !== undefined) {
-                            // Labels are offset vectors from stroke anchor points, transform as relative vectors
-                            const transformed = transformType === 'rotate' 
-                                ? rotateOffsetVector(position.x, position.y, transformValue)
-                                : flipOffsetVector(position.x, position.y, transformValue);
+                // Transform custom label positions for rotations - maintain exact positioning
+                // User-positioned labels should stay at the same relative position after rotation
+                if (transformType === 'rotate') {
+                    const allCustomTransformSources = [
+                        window.customLabelPositions,
+                        window.paintApp?.state?.customLabelPositions
+                    ].filter(source => source && source[imageLabel]);
+                    
+                    allCustomTransformSources.forEach((source, index) => {
+                        if (source && source[imageLabel]) {
+                            const labelPositions = source[imageLabel];
+                            const positionCount = Object.keys(labelPositions).length;
+                            console.log(`[Transform] Transforming ${positionCount} custom label positions from source ${index + 1}`);
                             
-                            console.log(`[Transform] Label ${labelKey}: (${position.x}, ${position.y}) → (${transformed.x.toFixed(1)}, ${transformed.y.toFixed(1)})`);
-                            
-                            labelPositions[labelKey] = {
-                                ...position,
-                                x: transformed.x,
-                                y: transformed.y
-                            };
+                            // Transform each custom position using vector rotation
+                            Object.keys(labelPositions).forEach(labelKey => {
+                                const position = labelPositions[labelKey];
+                                if (position && typeof position.x === 'number' && typeof position.y === 'number') {
+                                    const rotatedPosition = rotateOffsetVector(position.x, position.y, transformValue);
+                                    labelPositions[labelKey] = rotatedPosition;
+                                    console.log(`[Transform] Transformed custom position ${labelKey}: (${position.x.toFixed(1)}, ${position.y.toFixed(1)}) → (${rotatedPosition.x.toFixed(1)}, ${rotatedPosition.y.toFixed(1)})`);
+                                }
+                            });
+                            console.log(`[Transform] Transformed ${positionCount} custom positions from source ${index + 1}`);
                         }
                     });
-                    console.log(`[Transform] Updated ${Object.keys(labelPositions).length} custom label positions`);
+                } else {
+                    // For non-rotation transforms (flip), clear custom positions to force recalculation
+                    const allCustomClearSources = [
+                        window.customLabelPositions,
+                        window.paintApp?.state?.customLabelPositions
+                    ].filter(source => source && source[imageLabel]);
+                    
+                    allCustomClearSources.forEach((source, index) => {
+                        if (source && source[imageLabel]) {
+                            const labelPositions = source[imageLabel];
+                            console.log(`[Transform] Clearing ${Object.keys(labelPositions).length} custom label positions from source ${index + 1} for recalculation`);
+                            
+                            // Clear custom positions so they get recalculated with the new stroke positions
+                            Object.keys(labelPositions).forEach(labelKey => {
+                                delete labelPositions[labelKey];
+                            });
+                            console.log(`[Transform] Cleared custom label positions from source ${index + 1} - will be recalculated on next draw`);
+                        }
+                    });
                 }
                 
-                // Transform calculated label offsets
-                if (labelOffsetsSource && labelOffsetsSource[imageLabel]) {
+                // Transform calculated label offsets using simple vector rotation
+                // This maintains proper positioning during rotations without accumulating errors
+                if (labelOffsetsSource && labelOffsetsSource[imageLabel] && transformType === 'rotate') {
                     const labelOffsets = labelOffsetsSource[imageLabel];
-                    console.log(`[Transform] Processing ${Object.keys(labelOffsets).length} calculated label offsets`);
+                    console.log(`[Transform] Transforming ${Object.keys(labelOffsets).length} calculated label offsets for rotation`);
+                    
+                    // Transform each label offset as a vector relative to the stroke's anchor point
                     Object.keys(labelOffsets).forEach(labelKey => {
                         const offset = labelOffsets[labelKey];
-                        if (offset && offset.x !== undefined && offset.y !== undefined) {
-                            // Label offsets are also relative vectors from stroke anchor points
-                            const transformed = transformType === 'rotate'
-                                ? rotateOffsetVector(offset.x, offset.y, transformValue)
-                                : flipOffsetVector(offset.x, offset.y, transformValue);
-                            
-                            console.log(`[Transform] Offset ${labelKey}: (${offset.x}, ${offset.y}) → (${transformed.x.toFixed(1)}, ${transformed.y.toFixed(1)})`);
-                            
-                            labelOffsets[labelKey] = {
-                                ...offset,
-                                x: transformed.x,
-                                y: transformed.y
-                            };
+                        if (offset && typeof offset.x === 'number' && typeof offset.y === 'number') {
+                            // Transform the offset vector using pure rotation (no translation)
+                            // Offsets are relative vectors that should rotate around origin (0,0)
+                            const rotatedOffset = rotateOffsetVector(offset.x, offset.y, transformValue);
+                            labelOffsets[labelKey] = rotatedOffset;
+                            console.log(`[Transform] Transformed label offset ${labelKey}: (${offset.x.toFixed(1)}, ${offset.y.toFixed(1)}) → (${rotatedOffset.x.toFixed(1)}, ${rotatedOffset.y.toFixed(1)})`);
                         }
                     });
-                    console.log(`[Transform] Updated ${Object.keys(labelOffsets).length} calculated label offsets`);
+                    console.log(`[Transform] Transformed ${Object.keys(labelOffsets).length} calculated label offsets`);
+                }
+                
+                // NEW RELATIVE POSITIONING SYSTEM: Use relative positions to recalculate absolute positions after rotation
+                console.log(`[REL-TRANSFORM] Using relative positioning system for rotation-resistant custom labels`);
+                
+                if (transformType === 'rotate' && window.customLabelRelativePositions && window.customLabelRelativePositions[imageLabel]) {
+                    const relativePositions = window.customLabelRelativePositions[imageLabel];
+                    const strokeLabels = Object.keys(relativePositions);
+                    console.log(`[REL-TRANSFORM] Found ${strokeLabels.length} relative positions to recalculate:`, strokeLabels);
+                    
+                    // Initialize absolute position storage if needed
+                    if (!window.customLabelPositions[imageLabel]) {
+                        window.customLabelPositions[imageLabel] = {};
+                    }
+                    
+                    let updatedPositions = 0;
+                    strokeLabels.forEach(strokeLabel => {
+                        const relativePos = relativePositions[strokeLabel];
+                        if (relativePos && typeof relativePos.percentageAlongLine === 'number' && typeof relativePos.perpendicularDistance === 'number') {
+                            // Recalculate absolute position from relative position after stroke rotation
+                            const newAbsoluteOffset = window.convertRelativeToAbsolutePosition(strokeLabel, relativePos, imageLabel);
+                            if (newAbsoluteOffset) {
+                                window.customLabelPositions[imageLabel][strokeLabel] = newAbsoluteOffset;
+                                updatedPositions++;
+                                console.log(`[REL-TRANSFORM] Recalculated ${strokeLabel}: ${(relativePos.percentageAlongLine * 100).toFixed(1)}% + ${relativePos.perpendicularDistance.toFixed(1)}px → (${newAbsoluteOffset.x.toFixed(1)}, ${newAbsoluteOffset.y.toFixed(1)})`);
+                            } else {
+                                console.warn(`[REL-TRANSFORM] Failed to recalculate position for ${strokeLabel}`);
+                            }
+                        }
+                    });
+                    
+                    console.log(`[REL-TRANSFORM] Successfully recalculated ${updatedPositions}/${strokeLabels.length} custom positions using relative positioning`);
+                } else {
+                    console.log(`[REL-TRANSFORM] No relative positions found for ${imageLabel} or not a rotation transform`);
+                    
+                    // Fallback: Clear absolute positions for non-rotation transforms to force recalculation
+                    if (transformType !== 'rotate' && window.customLabelPositions && window.customLabelPositions[imageLabel]) {
+                        const customPositions = window.customLabelPositions[imageLabel];
+                        const strokeLabels = Object.keys(customPositions);
+                        console.log(`[REL-TRANSFORM] Clearing ${strokeLabels.length} absolute custom positions for ${transformType} - will be recalculated`);
+                        
+                        strokeLabels.forEach(strokeLabel => {
+                            delete customPositions[strokeLabel];
+                        });
+                    }
+                }
+                
+                if (transformType !== 'rotate' && labelOffsetsSource && labelOffsetsSource[imageLabel]) {
+                    // For non-rotation transforms (flip), clear offsets to force recalculation
+                    const labelOffsets = labelOffsetsSource[imageLabel];
+                    console.log(`[Transform] Clearing ${Object.keys(labelOffsets).length} calculated label offsets for ${transformType}`);
+                    
+                    Object.keys(labelOffsets).forEach(labelKey => {
+                        delete labelOffsets[labelKey];
+                    });
+                    console.log(`[Transform] Cleared calculated label offsets - will be recalculated on next draw`);
                 }
                 
                 // Update image dimensions if rotating by 90/270 degrees
@@ -2451,6 +2608,42 @@
                         };
                         console.log(`[Transform] Swapped image dimensions: ${dims.width}x${dims.height} → ${dims.height}x${dims.width}`);
                     }
+                }
+
+                // Update rotation stamps and cumulative rotation for custom labels persistence
+                if (transformType === 'rotate') {
+                    // 1) Determine real image label used by state (avoid 'blank_canvas' leaks)
+                    const img = window.currentImageLabel || imageLabel;
+
+                    // 2) Rotation delta already known (transformValue in degrees); normalize it in radians
+                    const deltaRadians = (transformValue * Math.PI) / 180;
+                    const normalizedDelta = window.normalizeDelta ? window.normalizeDelta(deltaRadians) : deltaRadians;
+
+                    // 3) Update per-stroke rotation stamps for custom offsets
+                    if (!window.customLabelOffsetsRotationByImageAndStroke) {
+                        window.customLabelOffsetsRotationByImageAndStroke = {};
+                    }
+                    if (!window.customLabelOffsetsRotationByImageAndStroke[img]) {
+                        window.customLabelOffsetsRotationByImageAndStroke[img] = {};
+                    }
+
+                    // Update stamps for all strokes that have custom offsets
+                    if (window.customLabelPositions && window.customLabelPositions[img]) {
+                        Object.keys(window.customLabelPositions[img]).forEach(stroke => {
+                            const lastStamp = window.customLabelOffsetsRotationByImageAndStroke[img][stroke] || 0;
+                            const newStamp = window.normalizeDelta ? window.normalizeDelta(lastStamp + normalizedDelta) : (lastStamp + normalizedDelta);
+                            window.customLabelOffsetsRotationByImageAndStroke[img][stroke] = newStamp;
+                        });
+                    }
+
+                    // 4) Advance image cumulative rotation so future sync math remains aligned
+                    if (!window.imageRotationByLabel) {
+                        window.imageRotationByLabel = {};
+                    }
+                    const currentRotation = window.imageRotationByLabel[img] || 0;
+                    window.imageRotationByLabel[img] = window.normalizeDelta ? window.normalizeDelta(currentRotation + normalizedDelta) : (currentRotation + normalizedDelta);
+
+                    console.log(`[Transform] Updated rotation state for ${img}: delta=${(transformValue)}°, cumulative=${(window.imageRotationByLabel[img] * 180 / Math.PI).toFixed(1)}°`);
                 }
             }
             
@@ -2712,13 +2905,7 @@
                 }
             };
             
-            // Function to clear stored centroids (call when new drawings are made)
-            window.clearStoredCentroid = function(imageLabel) {
-                if (window.originalCentroidByImage && window.originalCentroidByImage[imageLabel]) {
-                    console.log(`[Transform] Cleared stored centroid for ${imageLabel}`);
-                    delete window.originalCentroidByImage[imageLabel];
-                }
-            };
+            // Note: Stored centroid system removed - blank canvas now uses fixed canvas center
             
             // Test function to try rotating the current image
             window.testRotate = function() {

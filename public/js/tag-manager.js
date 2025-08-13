@@ -1126,4 +1126,50 @@ window.getTagBasedFilename = function(imageLabel, fallbackName) {
     
     // Fallback to the base name if no tags were used
     return fallbackName || imageLabel;
-}; 
+};
+
+// PERFORMANCE FIX: Ensure helpers are globally available and handle catch-up refresh
+(function() {
+    // Ensure updateTagsDisplay is globally available
+    if (typeof window.updateTagsDisplay !== 'function' && typeof updateTagsDisplay === 'function') {
+        window.updateTagsDisplay = updateTagsDisplay;
+    }
+
+    // Catch-up refresh mechanism for labels that finished loading before tag-manager was ready
+    function performCatchupRefresh() {
+        if (Array.isArray(window.__pendingTagRefresh) && typeof window.updateTagsDisplay === 'function') {
+            console.log('[TAG-MANAGER] Performing catch-up refresh for', window.__pendingTagRefresh.length, 'labels');
+            window.__pendingTagRefresh.forEach(label => {
+                if (window.imageTags && window.imageTags[label]) {
+                    try { 
+                        window.updateTagsDisplay(label); 
+                    } catch (e) {
+                        console.warn(`[TAG-MANAGER] Error in catch-up refresh for ${label}:`, e);
+                    }
+                }
+            });
+            window.__pendingTagRefresh = null;
+        }
+    }
+
+    // Run catch-up when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', performCatchupRefresh);
+    } else {
+        // DOM already ready, run immediately
+        setTimeout(performCatchupRefresh, 0);
+    }
+
+    // Also run catch-up when updateTagsDisplay becomes available (belt and suspenders)
+    if (typeof window.updateTagsDisplay !== 'function') {
+        const checkForUpdateTagsDisplay = setInterval(() => {
+            if (typeof window.updateTagsDisplay === 'function') {
+                clearInterval(checkForUpdateTagsDisplay);
+                performCatchupRefresh();
+            }
+        }, 100);
+        
+        // Stop checking after 5 seconds
+        setTimeout(() => clearInterval(checkForUpdateTagsDisplay), 5000);
+    }
+})(); 

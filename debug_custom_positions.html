@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Custom Positions</title>
+    <script>
+        function debugCustomPositions() {
+            console.log("=== DEBUGGING CUSTOM POSITIONS ===");
+            
+            const currentImg = window.currentImageLabel || 'blank_canvas';
+            console.log("Current image label:", currentImg);
+            console.log("window.customLabelPositions:", window.customLabelPositions);
+            
+            if (window.customLabelPositions) {
+                console.log("Keys in customLabelPositions:", Object.keys(window.customLabelPositions));
+                
+                for (const [imageLabel, positions] of Object.entries(window.customLabelPositions)) {
+                    console.log(`Image ${imageLabel}:`, positions);
+                    if (positions && typeof positions === 'object') {
+                        for (const [label, pos] of Object.entries(positions)) {
+                            console.log(`  ${label}: (${pos.x}, ${pos.y})`);
+                        }
+                    }
+                }
+            }
+            
+            // Try paintApp.state as well
+            if (window.paintApp?.state?.customLabelPositions) {
+                console.log("paintApp.state.customLabelPositions:", window.paintApp.state.customLabelPositions);
+            }
+            
+            // Check calculated offsets too
+            if (window.calculatedLabelOffsets) {
+                console.log("calculatedLabelOffsets:", window.calculatedLabelOffsets);
+                if (window.calculatedLabelOffsets[currentImg]) {
+                    console.log(`Calculated offsets for ${currentImg}:`, window.calculatedLabelOffsets[currentImg]);
+                }
+            }
+        }
+        
+        function fixCustomPositionsRotation() {
+            console.log("=== ATTEMPTING TO FIX CUSTOM POSITIONS ROTATION ===");
+            
+            const currentImg = window.currentImageLabel || 'blank_canvas';
+            
+            // Check if there are existing custom positions that need to be cleared/reset
+            if (window.customLabelPositions && window.customLabelPositions[currentImg]) {
+                console.log("Found existing custom positions, clearing them to force recalculation");
+                delete window.customLabelPositions[currentImg];
+            }
+            
+            if (window.paintApp?.state?.customLabelPositions?.[currentImg]) {
+                console.log("Found existing custom positions in paintApp.state, clearing them");
+                delete window.paintApp.state.customLabelPositions[currentImg];
+            }
+            
+            // Force a redraw to recalculate positions
+            if (window.redrawCanvas) {
+                console.log("Forcing canvas redraw...");
+                window.redrawCanvas();
+            }
+            
+            console.log("Custom positions cleared and canvas redrawn");
+        }
+        
+        // Auto-run when page loads
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                debugCustomPositions();
+            }, 2000);
+        });
+    </script>
+</head>
+<body>
+    <h1>Debug Custom Positions</h1>
+    <p>This tool helps debug custom label position rotation issues.</p>
+    <p>Open the browser console to see the debug output.</p>
+    
+    <!-- Embed the OpenPaint application -->
+    <iframe src="index.html" width="100%" height="600" style="border: 1px solid #ccc;"></iframe>
+    
+    <button onclick="debugCustomPositions()">Debug Custom Positions</button>
+    <button onclick="fixCustomPositionsRotation()">Clear Custom Positions (Force Recalc)</button>
+</body>
+</html>

@@ -30,6 +30,9 @@ window.paintApp = {
         isDefocusingOperationInProgress: false,
         // DOM element references for centralized access
         domElements: {},
+        // Event listener management
+        listenersBound: false,
+        eventListeners: new AbortController(),
         folderStructure: {
     "root": {
         id: "root",
@@ -49,6 +52,7 @@ window.paintApp = {
         },
         customLabelPositions: {},
         calculatedLabelOffsets: {},
+        clearedMassiveOffsets: {}, // Track which labels have had massive offsets cleared to prevent repeated clearing
         selectedStrokeInEditMode: null,
         lastClickTime: 0,
         lastCanvasClickTime: 0,
@@ -106,6 +110,7 @@ let draggedControlPointInfo = window.paintApp.uiState.draggedControlPointInfo;
 // Additional backward compatibility references
 window.customLabelPositions = window.paintApp.state.customLabelPositions;
 window.calculatedLabelOffsets = window.paintApp.state.calculatedLabelOffsets;
+window.clearedMassiveOffsets = window.paintApp.state.clearedMassiveOffsets;
 window.selectedStrokeInEditMode = window.paintApp.state.selectedStrokeInEditMode;
 window.lastClickTime = window.paintApp.state.lastClickTime;
 window.lastCanvasClickTime = window.paintApp.state.lastCanvasClickTime;
@@ -236,6 +241,29 @@ document.addEventListener('DOMContentLoaded', () => {
     const brushSize = window.paintApp.state.domElements.brushSize;
     const clearButton = window.paintApp.state.domElements.clearButton;
     const saveButton = window.paintApp.state.domElements.saveButton;
+
+// Update color of stroke currently in edit mode when the color picker changes
+if (colorPicker) {
+    const applyEditedStrokeColor = () => {
+        const img = window.currentImageLabel;
+        const edited = window.selectedStrokeInEditMode;
+        if (!img || !edited) return;
+        if (!window.vectorStrokesByImage || !window.vectorStrokesByImage[img] || !window.vectorStrokesByImage[img][edited]) return;
+
+        // Apply new color to the vector data of the edited stroke
+        const vectorData = window.vectorStrokesByImage[img][edited];
+        vectorData.color = colorPicker.value;
+
+        // Persist and refresh UI
+        try { saveState(true, false, false); } catch(_) {}
+        try { redrawCanvasWithVisibility(); } catch(_) {}
+        try { updateStrokeVisibilityControls(); } catch(_) {}
+    };
+
+    // Support both direct color input and programmatic swatch changes (which dispatch 'change')
+    colorPicker.addEventListener('input', applyEditedStrokeColor);
+    colorPicker.addEventListener('change', applyEditedStrokeColor);
+}
     const pasteButton = window.paintApp.state.domElements.pasteButton;
     const strokeCounter = window.paintApp.state.domElements.strokeCounter;
     const imageList = window.paintApp.state.domElements.imageList;
@@ -569,6 +597,12 @@ document.addEventListener('DOMContentLoaded', () => {
         delete window.imageTags[label];
         delete window.customLabelPositions[label];
         delete window.calculatedLabelOffsets[label];
+        // Clear the persistence flags for this image label
+        Object.keys(window.clearedMassiveOffsets).forEach(key => {
+            if (key.startsWith(`${label}_`)) {
+                delete window.clearedMassiveOffsets[key];
+            }
+        });
         delete window.selectedStrokeByImage[label];
         delete window.multipleSelectedStrokesByImage[label];
         
@@ -750,6 +784,54 @@ document.addEventListener('DOMContentLoaded', () => {
         // Update visibility controls
         updateStrokeVisibilityControls();
     }
+    
+    // PERFORMANCE FIX: Throttled updateStrokeVisibilityControls to prevent excessive UI rebuilds
+    let updateStrokeVisibilityControlsThrottled = false;
+    const originalUpdateStrokeVisibilityControls = updateStrokeVisibilityControls;
+    
+    window.updateStrokeVisibilityControls = function() {
+        // Skip during loading to prevent side effects
+        if (window.isLoadingProject) {
+            console.log('[updateStrokeVisibilityControls] Skipped during project loading');
+            return;
+        }
+        
+        // Throttle rapid calls
+        if (!updateStrokeVisibilityControlsThrottled) {
+            updateStrokeVisibilityControlsThrottled = true;
+            requestAnimationFrame(() => {
+                updateStrokeVisibilityControlsThrottled = false;
+                if (typeof originalUpdateStrokeVisibilityControls === 'function') {
+                    originalUpdateStrokeVisibilityControls();
+                }
+            });
+        }
+    };
+    
+    // PERFORMANCE FIX: Coalesce multiple redrawCanvasWithVisibility calls during loading
+    let redrawCanvasThrottled = false;
+    let redrawCanvasFrameId = null;
+    const originalRedrawCanvasWithVisibility = window.redrawCanvasWithVisibility;
+    
+    window.redrawCanvasWithVisibility = function() {
+        // Skip excessive redraws during loading
+        if (window.isLoadingProject) {
+            console.log('[redrawCanvasWithVisibility] Skipped during project loading');
+            return;
+        }
+        
+        // Coalesce multiple rapid calls into single frame
+        if (redrawCanvasFrameId) {
+            cancelAnimationFrame(redrawCanvasFrameId);
+        }
+        
+        redrawCanvasFrameId = requestAnimationFrame(() => {
+            redrawCanvasFrameId = null;
+            if (typeof originalRedrawCanvasWithVisibility === 'function') {
+                originalRedrawCanvasWithVisibility();
+            }
+        });
+    };
     
     function updateSidebarStrokeCounts() {
         // Update stroke counts in the sidebar
@@ -4675,6 +4757,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         type: isLine ? 'straight' : 'freehand',
                         dashSettings: { enabled: false, style: 'solid', pattern: [], dashLength: 5, gapLength: 5 } // Default dash settings
                     };
+                    
+                    // Clear stored centroid and fixed label positions for blank canvas when new drawing is made
+                    if (currentImageLabel === 'blank_canvas' && window.originalDrawingCentroids) {
+                        delete window.originalDrawingCentroids[currentImageLabel];
+                        console.log(`[Transform] Cleared stored centroid for ${currentImageLabel} - new drawing detected`);
+                        
+                    }
                 }
             }
         };
@@ -4906,32 +4995,14 @@ document.addEventListener('DOMContentLoaded', () => {
         
     // Function to apply visible strokes - moved outside redrawCanvasWithVisibility to be globally accessible
         function drawSingleStroke(ctx, strokeLabel, vectorData, scale, imageX, imageY, currentImageLabel, isBlankCanvas, canvasCenter) {
-//             console.log(`\nDrawing stroke ${strokeLabel}:`);
-//             console.log(`Using scale: ${scale}, imageX: ${imageX}, imageY: ${imageY}`);
+            // Get transformation parameters for this image
+            const transformParams = getTransformationParams(currentImageLabel);
             
-            // Transform the first point
+            // Transform the first point using unified coordinate system
             const firstPoint = vectorData.points[0];
-            // In blank canvas mode, the points are already in canvas coordinates
-            let transformedFirstX, transformedFirstY;
-            
-            if (isBlankCanvas) {
-                // Apply both scaling and position offset in blank canvas mode
-                const position = window.paintApp.state.imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
-                // Scale from canvas center
-                const scaledX = (firstPoint.x - canvasCenter.x) * scale + canvasCenter.x;
-                const scaledY = (firstPoint.y - canvasCenter.y) * scale + canvasCenter.y;
-                // Then apply position offset
-                transformedFirstX = scaledX + position.x;
-                transformedFirstY = scaledY + position.y;
-//                 console.log(`BLANK CANVAS: Using scaled and adjusted coordinates for first point: (${transformedFirstX}, ${transformedFirstY})`);
-            } else {
-                transformedFirstX = imageX + (firstPoint.x * scale);
-                transformedFirstY = imageY + (firstPoint.y * scale);
-//                 console.log(`First point transformation:
-//                     Original (relative to image): (${firstPoint.x}, ${firstPoint.y})
-//                     Scaled: (${firstPoint.x * scale}, ${firstPoint.y * scale})
-//                     Final (canvas position): (${transformedFirstX}, ${transformedFirstY})`);
-            }
+            const transformedFirst = imageToCanvasCoords(firstPoint.x, firstPoint.y, transformParams);
+            let transformedFirstX = transformedFirst.x;
+            let transformedFirstY = transformedFirst.y;
             
             // Check if this is an arrow line and pre-calculate adjusted points
             const isArrowLine = vectorData.type === 'arrow' || (vectorData.type === 'straight' && vectorData.arrowSettings && (vectorData.arrowSettings.startArrow || vectorData.arrowSettings.endArrow));
@@ -4941,20 +5012,11 @@ document.addEventListener('DOMContentLoaded', () => {
             let originalEndPoint = null;
             
             if (isArrowLine && vectorData.points.length >= 2) {
-                // Calculate the transformed end point first
+                // Calculate the transformed end point using unified coordinate system
                 const lastPoint = vectorData.points[vectorData.points.length - 1];
-                let transformedLastX, transformedLastY;
-                
-                if (isBlankCanvas) {
-                    const position = window.paintApp.state.imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
-                    const scaledX = (lastPoint.x - canvasCenter.x) * scale + canvasCenter.x;
-                    const scaledY = (lastPoint.y - canvasCenter.y) * scale + canvasCenter.y;
-                    transformedLastX = scaledX + position.x;
-                    transformedLastY = scaledY + position.y;
-                } else {
-                    transformedLastX = imageX + (lastPoint.x * scale);
-                    transformedLastY = imageY + (lastPoint.y * scale);
-                }
+                const transformedLast = imageToCanvasCoords(lastPoint.x, lastPoint.y, transformParams);
+                const transformedLastX = transformedLast.x;
+                const transformedLastY = transformedLast.y;
                 
                 originalEndPoint = {x: transformedLastX, y: transformedLastY};
                 
@@ -4984,9 +5046,25 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             const strokePath = [];
+            
+            // Save the current context state before applying clipping
+            ctx.save();
+            
+            // For blank canvas mode, clip drawing to canvas boundaries to prevent overflow on large monitors
+            if (isBlankCanvas) {
+                ctx.beginPath();
+                ctx.rect(0, 0, canvas.width, canvas.height);
+                ctx.clip();
+                console.log(`[Clip] Applied viewport clipping: 0,0 to ${canvas.width},${canvas.height} for stroke ${strokeLabel}`);
+            }
+            
             ctx.beginPath();
             ctx.moveTo(actualStartX, actualStartY);
             strokePath.push({x: actualStartX, y: actualStartY});
+            
+            if (isBlankCanvas) {
+                console.log(`[Clip] Drawing stroke ${strokeLabel} starting at (${actualStartX.toFixed(1)}, ${actualStartY.toFixed(1)})`);
+            }
             
             // Check if this is a straight line
             const isStraightLine = vectorData.type === 'straight' || 
@@ -5107,50 +5185,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 let isFirstPoint = true;
                 for (let i = startIndex; i <= endIndex; i++) {
                     const point = vectorData.points[i];
-                    let transformedX, transformedY;
-                    
-                    if (isBlankCanvas) {
-                        const position = window.paintApp.state.imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
-                        const scaledX = (point.x - canvasCenter.x) * scale + canvasCenter.x;
-                        const scaledY = (point.y - canvasCenter.y) * scale + canvasCenter.y;
-                        transformedX = scaledX + position.x;
-                        transformedY = scaledY + position.y;
-                    } else {
-                        transformedX = imageX + (point.x * scale);
-                        transformedY = imageY + (point.y * scale);
-                    }
+                    const transformed = imageToCanvasCoords(point.x, point.y, transformParams);
                     
                     if (isFirstPoint) {
-                        ctx.moveTo(transformedX, transformedY);
-                        strokePath.push({x: transformedX, y: transformedY});
+                        ctx.moveTo(transformed.x, transformed.y);
+                        strokePath.push({x: transformed.x, y: transformed.y});
                         isFirstPoint = false;
                     } else {
-                        ctx.lineTo(transformedX, transformedY);
-                        strokePath.push({x: transformedX, y: transformedY});
+                        ctx.lineTo(transformed.x, transformed.y);
+                        strokePath.push({x: transformed.x, y: transformed.y});
                     }
                 }
             } else {
                 // For freehand drawing, draw straight lines between all points
                 for (let i = 1; i < vectorData.points.length; i++) {
                     const point = vectorData.points[i];
-                    let transformedX, transformedY;
+                    const transformed = imageToCanvasCoords(point.x, point.y, transformParams);
                     
-                    if (isBlankCanvas) {
-                        // Apply both scaling and position offset in blank canvas mode
-                        const position = window.paintApp.state.imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
-                        // Scale from canvas center
-                        const scaledX = (point.x - canvasCenter.x) * scale + canvasCenter.x;
-                        const scaledY = (point.y - canvasCenter.y) * scale + canvasCenter.y;
-                        // Then apply position offset
-                        transformedX = scaledX + position.x;
-                        transformedY = scaledY + position.y;
-                    } else {
-                        transformedX = imageX + (point.x * scale);
-                        transformedY = imageY + (point.y * scale);
-                    }
-                    
-                    ctx.lineTo(transformedX, transformedY);
-                    strokePath.push({x: transformedX, y: transformedY});
+                    ctx.lineTo(transformed.x, transformed.y);
+                    strokePath.push({x: transformed.x, y: transformed.y});
                 }
             }
             
@@ -5190,6 +5243,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             // --- End Reset Glow Effect ---
             
+            // Restore the context state (removes clipping region for blank canvas)
+            ctx.restore();
+            
             // Reset dash pattern to solid
             ctx.setLineDash([]);
             
@@ -5200,6 +5256,9 @@ document.addEventListener('DOMContentLoaded', () => {
          }
 
          function drawStrokeDecorations(ctx, strokeLabel, vectorData, strokePath, isArrowLine, isCurvedArrow, isCurvedLine, isStraightLine, isBlankCanvas, canvasCenter, scale, imageX, imageY, currentImageLabel) {
+             // Get transformation parameters for consistent coordinate transformations
+             const transformParams = getTransformationParams(currentImageLabel);
+             
              // --- Draw Arrowheads for Arrow Lines ---
              if (isArrowLine && vectorData.arrowSettings && strokePath.length >= 2) {
                  const startPoint = strokePath.originalStart;
@@ -5294,31 +5353,14 @@ document.addEventListener('DOMContentLoaded', () => {
                      const lookAheadDistance = Math.min(10, vectorData.points.length - startIndex - 1);
                      const secondPoint = vectorData.points[Math.min(10, vectorData.points.length - 1)]; // Use early point for tangent direction
                      
-                     // Transform first point to canvas coordinates (same logic as curve drawing)
-                     let startX, startY;
-                     if (isBlankCanvas) {
-                         const position = window.paintApp.state.imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
-                         const scaledX = (firstPoint.x - canvasCenter.x) * scale + canvasCenter.x;
-                         const scaledY = (firstPoint.y - canvasCenter.y) * scale + canvasCenter.y;
-                         startX = scaledX + position.x;
-                         startY = scaledY + position.y;
-                     } else {
-                         startX = imageX + (firstPoint.x * scale);
-                         startY = imageY + (firstPoint.y * scale);
-                     }
+                     // Transform first and second points to canvas coordinates using unified system
+                     const startTransformed = imageToCanvasCoords(firstPoint.x, firstPoint.y, transformParams);
+                     const startX = startTransformed.x;
+                     const startY = startTransformed.y;
                      
-                     // Transform second point to canvas coordinates (same logic as curve drawing)
-                     let secondX, secondY;
-                     if (isBlankCanvas) {
-                         const position = window.paintApp.state.imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
-                         const scaledX = (secondPoint.x - canvasCenter.x) * scale + canvasCenter.x;
-                         const scaledY = (secondPoint.y - canvasCenter.y) * scale + canvasCenter.y;
-                         secondX = scaledX + position.x;
-                         secondY = scaledY + position.y;
-                     } else {
-                         secondX = imageX + (secondPoint.x * scale);
-                         secondY = imageY + (secondPoint.y * scale);
-                     }
+                     const secondTransformed = imageToCanvasCoords(secondPoint.x, secondPoint.y, transformParams);
+                     const secondX = secondTransformed.x;
+                     const secondY = secondTransformed.y;
                      
                      // Calculate start tangent: second - first (forward direction)
                      const dx = secondX - startX;
@@ -5337,31 +5379,14 @@ document.addEventListener('DOMContentLoaded', () => {
                      const lookBackDistance = Math.min(10, endIndex);
                      const secondLastPoint = vectorData.points[Math.max(0, vectorData.points.length - 11)]; // Use late point for tangent direction
                      
-                     // Transform last point to canvas coordinates (same logic as curve drawing)
-                     let endX, endY;
-                     if (isBlankCanvas) {
-                         const position = window.paintApp.state.imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
-                         const scaledX = (lastPoint.x - canvasCenter.x) * scale + canvasCenter.x;
-                         const scaledY = (lastPoint.y - canvasCenter.y) * scale + canvasCenter.y;
-                         endX = scaledX + position.x;
-                         endY = scaledY + position.y;
-                     } else {
-                         endX = imageX + (lastPoint.x * scale);
-                         endY = imageY + (lastPoint.y * scale);
-                     }
+                     // Transform last and second-to-last points to canvas coordinates using unified system
+                     const endTransformed = imageToCanvasCoords(lastPoint.x, lastPoint.y, transformParams);
+                     const endX = endTransformed.x;
+                     const endY = endTransformed.y;
                      
-                     // Transform second-to-last point to canvas coordinates (same logic as curve drawing)
-                     let secondLastX, secondLastY;
-                     if (isBlankCanvas) {
-                         const position = window.paintApp.state.imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
-                         const scaledX = (secondLastPoint.x - canvasCenter.x) * scale + canvasCenter.x;
-                         const scaledY = (secondLastPoint.y - canvasCenter.y) * scale + canvasCenter.y;
-                         secondLastX = scaledX + position.x;
-                         secondLastY = scaledY + position.y;
-                     } else {
-                         secondLastX = imageX + (secondLastPoint.x * scale);
-                         secondLastY = imageY + (secondLastPoint.y * scale);
-                     }
+                     const secondLastTransformed = imageToCanvasCoords(secondLastPoint.x, secondLastPoint.y, transformParams);
+                     const secondLastX = secondLastTransformed.x;
+                     const secondLastY = secondLastTransformed.y;
                      
                      // Calculate end tangent: last - second-to-last (forward direction)
                      const dx = endX - secondLastX;
@@ -5413,18 +5438,9 @@ document.addEventListener('DOMContentLoaded', () => {
                  const endPoint = vectorData.points[vectorData.points.length - 1];
                  
                  [startPoint, endPoint].forEach((point, index) => {
-                     let transformedX, transformedY;
-                     
-                     if (isBlankCanvas) {
-                         const position = window.paintApp.state.imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
-                         const scaledX = (point.x - canvasCenter.x) * scale + canvasCenter.x;
-                         const scaledY = (point.y - canvasCenter.y) * scale + canvasCenter.y;
-                         transformedX = scaledX + position.x;
-                         transformedY = scaledY + position.y;
-                     } else {
-                         transformedX = imageX + (point.x * scale);
-                         transformedY = imageY + (point.y * scale);
-                     }
+                     const transformed = imageToCanvasCoords(point.x, point.y, transformParams);
+                     const transformedX = transformed.x;
+                     const transformedY = transformed.y;
                      
                      // Draw arrow endpoint control indicator
                      ctx.save();
@@ -5531,18 +5547,9 @@ document.addEventListener('DOMContentLoaded', () => {
                      const endPoint = vectorData.points[vectorData.points.length - 1];
                      
                      [startPoint, endPoint].forEach((point, index) => {
-                         let transformedX, transformedY;
-                         
-                         if (isBlankCanvas) {
-                             const position = window.paintApp.state.imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
-                             const scaledX = (point.x - canvasCenter.x) * scale + canvasCenter.x;
-                             const scaledY = (point.y - canvasCenter.y) * scale + canvasCenter.y;
-                             transformedX = scaledX + position.x;
-                             transformedY = scaledY + position.y;
-                         } else {
-                             transformedX = imageX + (point.x * scale);
-                             transformedY = imageY + (point.y * scale);
-                         }
+                         const transformed = imageToCanvasCoords(point.x, point.y, transformParams);
+                         const transformedX = transformed.x;
+                         const transformedY = transformed.y;
                          
                          // Draw anchor point indicator
                          ctx.save();
@@ -5709,16 +5716,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     let anchorPointImage;  // Anchor point in image coordinates
 
                     if (vectorData.points.length > 0) {
-                        const midIndex = Math.floor(vectorData.points.length / 2);
-                        const midPointRelative = vectorData.points[midIndex]; // This is in image coordinates
-                        anchorPointImage = { x: midPointRelative.x, y: midPointRelative.y };
+                        // Use robust anchor computation that returns the true geometric midpoint for straight/two-point lines
+                        const anchorImg = getStrokeAnchorPoint(strokeLabel, currentImageLabel);
+                        anchorPointImage = { x: anchorImg.x, y: anchorImg.y };
                         
                         try {
                             // Convert image anchor to canvas anchor for routines that need canvas coords (e.g., initial optimal placement)
-                            anchorPointCanvas = { 
-                                x: (anchorPointImage.x * scale) + imageX, 
-                                y: (anchorPointImage.y * scale) + imageY 
-                            };
+                            // Use toCanvas for proper coordinate transformation (handles center-based scaling for blank canvas)
+                            anchorPointCanvas = toCanvas(anchorPointImage);
                             if (!anchorPointCanvas || isNaN(anchorPointCanvas.x) || isNaN(anchorPointCanvas.y)) {
                                  console.error(`      Error calculating canvas coords for label anchor for ${strokeLabel}. Image anchor:`, anchorPointImage);
                                  anchorPointCanvas = { x: canvas.width / 2, y: canvas.height / 2 }; // Fallback
@@ -5742,25 +5747,83 @@ document.addEventListener('DOMContentLoaded', () => {
                     const labelWidth = metrics.width + 12; 
                     const labelHeight = 48; 
                     
-                    // Initial labelRect definition (using canvas anchor for width/height context)
-                    // This rect's x,y might be adjusted by optimal placement or stored offsets.
+                    // Initial labelRect definition (center-based reference)
+                    // We will treat (x, y) as the CENTER of the label for placement and connector math
                     const labelRectForSizing = {
                         width: labelWidth,
                         height: labelHeight,
-                        // x, y will be determined by finalPosition
+                        // x, y will be assigned as the CENTER position of the tag
                         strokeLabel: strokeLabel
                     };
 
                     let finalPositionCanvas; // This will be the top-left of the label in CANVAS coordinates
                     let imageSpaceOffset; // This will store the {x, y} offset in IMAGE SPACE
 
+                    console.log(`[OFFSET-DEBUG] ${strokeLabel} - Checking offset sources:`);
+                    console.log(`[OFFSET-DEBUG] ${strokeLabel} - customLabelPositions exists:`, !!customLabelPositions[currentImageLabel]?.[strokeLabel]);
+                    console.log(`[OFFSET-DEBUG] ${strokeLabel} - calculatedLabelOffsets exists:`, !!calculatedLabelOffsets[currentImageLabel]?.[strokeLabel]);
+                    
+                    // Check for custom positions in both local and window storage
+                    const localCustomExists = customLabelPositions[currentImageLabel]?.[strokeLabel];
+                    const windowCustomExists = window.customLabelPositions[currentImageLabel]?.[strokeLabel];
+                    
+                    if (localCustomExists && !windowCustomExists) {
+                        console.log(`[SYNC-WARNING] ${strokeLabel} - Found in local but not window storage - this may cause rotation issues`);
+                    } else if (!localCustomExists && windowCustomExists) {
+                        console.log(`[SYNC-WARNING] ${strokeLabel} - Found in window but not local storage - syncing to local`);
+                        if (!customLabelPositions[currentImageLabel]) customLabelPositions[currentImageLabel] = {};
+                        customLabelPositions[currentImageLabel][strokeLabel] = windowCustomExists;
+                    }
+                    
+                    if (calculatedLabelOffsets[currentImageLabel]?.[strokeLabel]) {
+                        console.log(`[OFFSET-DEBUG] ${strokeLabel} - calculated offset value:`, calculatedLabelOffsets[currentImageLabel][strokeLabel]);
+                    }
                     if (customLabelPositions[currentImageLabel]?.[strokeLabel]) {
+                        console.log(`[OFFSET-DEBUG] ${strokeLabel} - custom position value:`, customLabelPositions[currentImageLabel][strokeLabel]);
+                    }
+
+                    // Prefer rotation-stable relative position if available
+                    const relativePos = window.customLabelRelativePositions
+                        && window.customLabelRelativePositions[currentImageLabel]
+                        ? window.customLabelRelativePositions[currentImageLabel][strokeLabel]
+                        : null;
+                    if (relativePos) {
+                        const absFromRelative = window.convertRelativeToAbsolutePosition(strokeLabel, relativePos, currentImageLabel);
+                        if (absFromRelative) {
+                            imageSpaceOffset = absFromRelative;
+                            // Sync into custom maps so persistence/export see the updated absolute offset
+                            if (!customLabelPositions[currentImageLabel]) customLabelPositions[currentImageLabel] = {};
+                            customLabelPositions[currentImageLabel][strokeLabel] = imageSpaceOffset;
+                            if (!window.customLabelPositions[currentImageLabel]) window.customLabelPositions[currentImageLabel] = {};
+                            window.customLabelPositions[currentImageLabel][strokeLabel] = imageSpaceOffset;
+                            console.log(`[OFFSET-DEBUG] ${strokeLabel} - USING RELATIVE (derived absolute):`, imageSpaceOffset);
+                        }
+                    }
+                    if (!imageSpaceOffset && customLabelPositions[currentImageLabel]?.[strokeLabel]) {
                         imageSpaceOffset = customLabelPositions[currentImageLabel][strokeLabel]; // Already in image space
-                        // console.log(`    Using custom image-space offset for ${strokeLabel}:`, imageSpaceOffset);
-                    } else if (calculatedLabelOffsets[currentImageLabel]?.[strokeLabel]) {
+                        console.log(`[OFFSET-DEBUG] ${strokeLabel} - USING CUSTOM:`, imageSpaceOffset);
+                    } else if (!imageSpaceOffset && calculatedLabelOffsets[currentImageLabel]?.[strokeLabel]) {
                         imageSpaceOffset = calculatedLabelOffsets[currentImageLabel][strokeLabel]; // Already in image space
+                        console.log(`[OFFSET-DEBUG] ${strokeLabel} - USING CALCULATED:`, imageSpaceOffset);
+                        
+                        // For blank canvas, check if this is a massive offset from the old buggy calculation
+                        if (currentImageLabel === 'blank_canvas') {
+                            const offsetKey = `${currentImageLabel}_${strokeLabel}`;
+                            const offsetMagnitude = Math.sqrt(imageSpaceOffset.x * imageSpaceOffset.x + imageSpaceOffset.y * imageSpaceOffset.y);
+                            
+                            if (offsetMagnitude > 300 && !window.clearedMassiveOffsets[offsetKey]) { 
+                                console.log(`[Label] Clearing massive offset for blank canvas ${strokeLabel}: (${imageSpaceOffset.x.toFixed(1)}, ${imageSpaceOffset.y.toFixed(1)}) magnitude: ${offsetMagnitude.toFixed(1)}`);
+                                delete calculatedLabelOffsets[currentImageLabel][strokeLabel];
+                                window.clearedMassiveOffsets[offsetKey] = true; // Mark as cleared to prevent repeated clearing
+                                imageSpaceOffset = null; // Force recalculation
+                            } else if (offsetMagnitude <= 300) {
+                                console.log(`[Label] Preserving reasonable offset for blank canvas ${strokeLabel}: (${imageSpaceOffset.x.toFixed(1)}, ${imageSpaceOffset.y.toFixed(1)}) magnitude: ${offsetMagnitude.toFixed(1)}`);
+                            }
+                        }
                         // console.log(`    Using calculated image-space offset for ${strokeLabel}:`, imageSpaceOffset);
-                            } else {
+                    }
+                    
+                    if (!imageSpaceOffset) {
                         // console.log(`    Calculating new optimal position for ${strokeLabel}`);
                          if (typeof findOptimalLabelPosition !== 'function') {
                              console.error("     findOptimalLabelPosition function is not defined! Using default position.");
@@ -5771,10 +5834,11 @@ document.addEventListener('DOMContentLoaded', () => {
                                 x: fallbackCanvasX - anchorPointCanvas.x, 
                                 y: fallbackCanvasY - anchorPointCanvas.y 
                             };
-                            // Convert canvas offset to image space for storage
+                            // Convert canvas offset to image space using proper inverse transform
+                            const fallbackLabelTopLeftImg = getTransformedCoords(fallbackCanvasX, fallbackCanvasY);
                             imageSpaceOffset = { 
-                                x: canvasSpaceFallbackOffset.x / scale, 
-                                y: canvasSpaceFallbackOffset.y / scale 
+                                x: fallbackLabelTopLeftImg.x - anchorPointImage.x, 
+                                y: fallbackLabelTopLeftImg.y - anchorPointImage.y 
                             };
                          } else {
                              try {
@@ -5813,8 +5877,9 @@ document.addEventListener('DOMContentLoaded', () => {
                                 // Position above or to the side of the stroke point
                                 const initialGuessRectCanvas = { 
                                     ...labelRectForSizing, 
-                                    x: initialLabelAnchorCanvas.x - labelRectForSizing.width / 2, 
-                                    y: initialLabelAnchorCanvas.y - labelRectForSizing.height - 10 // Reduced vertical offset
+                                    // Center above anchor by 10px
+                                    x: initialLabelAnchorCanvas.x, 
+                                    y: initialLabelAnchorCanvas.y - (labelRectForSizing.height / 2) - 10
                                 };
 
                                 // findOptimalLabelPosition should search relative to the stroke's actual canvas position
@@ -5834,11 +5899,14 @@ document.addEventListener('DOMContentLoaded', () => {
                                     y: optimalRectCanvas.y - anchorPointCanvas.y
                                 };
 
-                                // Convert canvas-space offset to image-space for storage
+                                // Always store offsets in image space using proper inverse transform
+                                // This ensures consistent behavior during rotations and center-based scaling
+                                const labelTopLeftImg = getTransformedCoords(optimalRectCanvas.x, optimalRectCanvas.y);
                                 imageSpaceOffset = {
-                                    x: canvasSpaceOptimalOffset.x / scale,
-                                    y: canvasSpaceOptimalOffset.y / scale
+                                    x: labelTopLeftImg.x - anchorPointImage.x,
+                                    y: labelTopLeftImg.y - anchorPointImage.y
                                 };
+                                console.log(`[Label] Storing image-space offset for ${strokeLabel}:`, imageSpaceOffset);
                                 // console.log(`    Calculated optimal canvas offset for ${strokeLabel}:`, canvasSpaceOptimalOffset, `-> image offset:`, imageSpaceOffset);
                              } catch(err) {
                                 console.error(`      Error in findOptimalLabelPosition for ${strokeLabel}:`, err);
@@ -5848,30 +5916,44 @@ document.addEventListener('DOMContentLoaded', () => {
                                     x: fallbackCanvasX - anchorPointCanvas.x, 
                                     y: fallbackCanvasY - anchorPointCanvas.y 
                                 };
+                                // Convert error fallback canvas position to image space using proper inverse transform
+                                const errorFallbackLabelTopLeftImg = getTransformedCoords(fallbackCanvasX, fallbackCanvasY);
                                 imageSpaceOffset = { 
-                                    x: canvasSpaceFallbackOffset.x / scale, 
-                                    y: canvasSpaceFallbackOffset.y / scale 
+                                    x: errorFallbackLabelTopLeftImg.x - anchorPointImage.x, 
+                                    y: errorFallbackLabelTopLeftImg.y - anchorPointImage.y 
                                 };
+                                console.log(`[Label] Using error fallback position with proper inverse transform for ${strokeLabel}:`, imageSpaceOffset);
                             }
                         }
                         // Store the newly calculated (or fallback) image-space offset
                          if (!calculatedLabelOffsets[currentImageLabel]) calculatedLabelOffsets[currentImageLabel] = {};
                         calculatedLabelOffsets[currentImageLabel][strokeLabel] = imageSpaceOffset;
+                        
+                        // For blank canvas, mark this offset as preserved to prevent future recalculation
+                        if (currentImageLabel === 'blank_canvas') {
+                            const offsetKey = `${currentImageLabel}_${strokeLabel}`;
+                            window.clearedMassiveOffsets[offsetKey] = true;
+                            const offsetMagnitude = Math.sqrt(imageSpaceOffset.x * imageSpaceOffset.x + imageSpaceOffset.y * imageSpaceOffset.y);
+                            console.log(`[Label] Stored new reasonable offset for blank canvas ${strokeLabel}: (${imageSpaceOffset.x.toFixed(1)}, ${imageSpaceOffset.y.toFixed(1)}) magnitude: ${offsetMagnitude.toFixed(1)} - now preserved`);
+                        }
                         // console.log(`    Stored calculated image-space offset for ${strokeLabel}:`, imageSpaceOffset);
                     }
 
                     // Now, calculate the final canvas position for drawing using the image-space anchor and image-space offset
+                    console.log(`[OFFSET-DEBUG] ${strokeLabel} - FINAL OFFSET BEING USED:`, imageSpaceOffset);
+                    console.log(`[OFFSET-DEBUG] ${strokeLabel} - Anchor point:`, anchorPointImage);
+                    
                     const finalLabelImageX = anchorPointImage.x + imageSpaceOffset.x;
                     const finalLabelImageY = anchorPointImage.y + imageSpaceOffset.y;
 
-                    finalPositionCanvas = {
-                        x: (finalLabelImageX * scale) + imageX,
-                        y: (finalLabelImageY * scale) + imageY
-                    };
+                    // Use toCanvas for proper coordinate transformation (handles center-based scaling for blank canvas)
+                    finalPositionCanvas = toCanvas({ x: finalLabelImageX, y: finalLabelImageY });
+                    console.log(`[Label] Final position for ${strokeLabel}: Image(${finalLabelImageX.toFixed(1)}, ${finalLabelImageY.toFixed(1)}) -> Canvas(${finalPositionCanvas.x.toFixed(1)}, ${finalPositionCanvas.y.toFixed(1)}) | Anchor: Image(${anchorPointImage.x.toFixed(1)}, ${anchorPointImage.y.toFixed(1)}) + Offset: (${imageSpaceOffset.x.toFixed(1)}, ${imageSpaceOffset.y.toFixed(1)})`);
                     // console.log(`    Final Canvas Position for ${strokeLabel}:`, finalPositionCanvas, `(from ImagePos: ${finalLabelImageX.toFixed(1)},${finalLabelImageY.toFixed(1)})`);
 
                     currentLabelPositions.push({ 
                         ...labelRectForSizing, 
+                        // Store the center
                         x: finalPositionCanvas.x, 
                         y: finalPositionCanvas.y, 
                         strokeLabel: strokeLabel 
@@ -5893,16 +5975,20 @@ document.addEventListener('DOMContentLoaded', () => {
                          console.warn("     drawLabelConnector function is not defined!");
                      }
 
+                    // Draw with center-based reference: finalPositionCanvas is the center of the tag
+                    const rectX = finalPositionCanvas.x - labelWidth / 2;
+                    const rectY = finalPositionCanvas.y - labelHeight / 2;
+
                     ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-                    ctx.fillRect(finalPositionCanvas.x, finalPositionCanvas.y, labelWidth, labelHeight);
+                    ctx.fillRect(rectX, rectY, labelWidth, labelHeight);
 
                     ctx.strokeStyle = labelColor;
                     ctx.lineWidth = 1;
-                    ctx.strokeRect(finalPositionCanvas.x, finalPositionCanvas.y, labelWidth, labelHeight);
+                    ctx.strokeRect(rectX, rectY, labelWidth, labelHeight);
 
                     ctx.fillStyle = labelColor;
-                    const textX = finalPositionCanvas.x + labelWidth / 2;
-                    const textY = finalPositionCanvas.y + labelHeight - 7; 
+                    const textX = finalPositionCanvas.x;
+                    const textY = rectY + labelHeight - 7; 
                     ctx.fillText(labelText, textX, textY);
                 } else {
                     // ... existing code ...
@@ -5924,7 +6010,19 @@ document.addEventListener('DOMContentLoaded', () => {
         );
     }
 
+    // Normalize rotation delta to prevent wrap-around issues
+    function normalizeDelta(delta) {
+        const twoPi = Math.PI * 2;
+        delta = ((delta + Math.PI) % twoPi + twoPi) % twoPi - Math.PI; // (-π, π]
+        return Math.abs(delta) < 1e-9 ? 0 : delta;
+    }
+
     function saveState(force = false, incrementLabel = true, updateStrokeList = true, isDrawingOrPasting = false, strokeInProgress = false) {
+        // PERFORMANCE FIX: Don't save state during project loading to prevent side effects
+        if (window.isLoadingProject) {
+            console.log('[Save State] Skipped during project loading');
+            return;
+        }
 //         console.log('[Save State Called]', 'force='+force, 'incrementLabel='+incrementLabel, 'updateStrokeList='+updateStrokeList, 'isDrawingOrPasting='+isDrawingOrPasting, 'strokeInProgress='+strokeInProgress);
         
         // Log current state of measurements to verify they're captured
@@ -6105,6 +6203,9 @@ document.addEventListener('DOMContentLoaded', () => {
             // Store deep copies of label offset data for the current image
             customLabelPositions: customLabelPositions[currentImageLabel] ? JSON.parse(JSON.stringify(customLabelPositions[currentImageLabel])) : {},
             calculatedLabelOffsets: calculatedLabelOffsets[currentImageLabel] ? JSON.parse(JSON.stringify(calculatedLabelOffsets[currentImageLabel])) : {},
+            rotationStamps: window.customLabelOffsetsRotationByImageAndStroke && window.customLabelOffsetsRotationByImageAndStroke[currentImageLabel]
+                ? JSON.parse(JSON.stringify(window.customLabelOffsetsRotationByImageAndStroke[currentImageLabel]))
+                : {},
             // CRITICAL FIX: Store complete vector data for all strokes to enable undo of control point modifications
             allVectorData: vectorStrokesByImage[currentImageLabel] ? JSON.parse(JSON.stringify(vectorStrokesByImage[currentImageLabel])) : {}
         };
@@ -6338,14 +6439,34 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Restore label positions if they exist in the state
                 if (previousState.customLabelPositions) {
                     customLabelPositions[currentImageLabel] = JSON.parse(JSON.stringify(previousState.customLabelPositions));
+                    // SYNC FIX: Also restore to window.customLabelPositions
+                    if (!window.customLabelPositions[currentImageLabel]) {
+                        window.customLabelPositions[currentImageLabel] = {};
+                    }
+                    window.customLabelPositions[currentImageLabel] = JSON.parse(JSON.stringify(previousState.customLabelPositions));
                 } else {
                     // If not in state, ensure it's at least an empty object to prevent errors
-                    customLabelPositions[currentImageLabel] = {}; 
+                    customLabelPositions[currentImageLabel] = {};
+                    if (!window.customLabelPositions[currentImageLabel]) {
+                        window.customLabelPositions[currentImageLabel] = {};
+                    }
                 }
                 if (previousState.calculatedLabelOffsets) {
                     calculatedLabelOffsets[currentImageLabel] = JSON.parse(JSON.stringify(previousState.calculatedLabelOffsets));
                 } else {
                     calculatedLabelOffsets[currentImageLabel] = {};
+                }
+                // Restore rotation stamps if they exist in the state
+                if (previousState.rotationStamps) {
+                    if (!window.customLabelOffsetsRotationByImageAndStroke) {
+                        window.customLabelOffsetsRotationByImageAndStroke = {};
+                    }
+                    window.customLabelOffsetsRotationByImageAndStroke[currentImageLabel] = JSON.parse(JSON.stringify(previousState.rotationStamps));
+                } else {
+                    if (!window.customLabelOffsetsRotationByImageAndStroke) {
+                        window.customLabelOffsetsRotationByImageAndStroke = {};
+                    }
+                    window.customLabelOffsetsRotationByImageAndStroke[currentImageLabel] = {};
                 }
 
             } else {
@@ -6394,8 +6515,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Restore label positions if they exist in the initial state
                 if (initialState.customLabelPositions) {
                     customLabelPositions[currentImageLabel] = JSON.parse(JSON.stringify(initialState.customLabelPositions));
+                    // SYNC FIX: Also restore to window.customLabelPositions
+                    if (!window.customLabelPositions[currentImageLabel]) {
+                        window.customLabelPositions[currentImageLabel] = {};
+                    }
+                    window.customLabelPositions[currentImageLabel] = JSON.parse(JSON.stringify(initialState.customLabelPositions));
                 } else {
                     customLabelPositions[currentImageLabel] = {};
+                    if (!window.customLabelPositions[currentImageLabel]) {
+                        window.customLabelPositions[currentImageLabel] = {};
+                    }
                 }
                 if (initialState.calculatedLabelOffsets) {
                     calculatedLabelOffsets[currentImageLabel] = JSON.parse(JSON.stringify(initialState.calculatedLabelOffsets));
@@ -6591,9 +6720,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Restore label positions if they exist in the action
                 if (actionToRedo.customLabelPositions) {
                     customLabelPositions[currentImageLabel] = JSON.parse(JSON.stringify(actionToRedo.customLabelPositions));
+                    // SYNC FIX: Also restore to window.customLabelPositions
+                    if (!window.customLabelPositions[currentImageLabel]) {
+                        window.customLabelPositions[currentImageLabel] = {};
+                    }
+                    window.customLabelPositions[currentImageLabel] = JSON.parse(JSON.stringify(actionToRedo.customLabelPositions));
                 } else {
                      // If not in state, ensure it's at least an empty object to prevent errors
                     customLabelPositions[currentImageLabel] = {};
+                    if (!window.customLabelPositions[currentImageLabel]) {
+                        window.customLabelPositions[currentImageLabel] = {};
+                    }
                 }
                 if (actionToRedo.calculatedLabelOffsets) {
                     calculatedLabelOffsets[currentImageLabel] = JSON.parse(JSON.stringify(actionToRedo.calculatedLabelOffsets));
@@ -6713,7 +6850,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // F3: Centralized coordinate transform utilities
-    function toCanvas(imagePoint, imgLabel = currentImageLabel) {
+    window.toCanvas = function toCanvas(imagePoint, imgLabel = currentImageLabel) {
         const scale = window.imageScaleByLabel[imgLabel] || 1.0;
         const position = imagePositionByLabel[imgLabel] || { x: 0, y: 0 };
         const dimensionsObject = window.originalImageDimensions;
@@ -6769,7 +6906,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // console.log(`[toCanvas] IMAGE mode: result=(${result.x}, ${result.y})`);
             return result;
         }
-    }
+    };
     
     function toImage(canvasPoint, imgLabel = currentImageLabel) {
         const scale = window.imageScaleByLabel[imgLabel] || 1.0;
@@ -6806,71 +6943,114 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Helper function to get transformed coordinates (image space from canvas space) - LEGACY WRAPPER
-    function getTransformedCoords(canvasX, canvasY) {
-        const scale = window.imageScaleByLabel[currentImageLabel] || 1;
-        const position = imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
+    // *** UNIFIED COORDINATE TRANSFORMATION FUNCTIONS ***
+    // These functions provide consistent coordinate transformations throughout the application
+    
+    /**
+     * Get transformation parameters for the current image
+     * @param {string} imageLabel - The image label to get parameters for
+     * @returns {Object} Transformation parameters
+     */
+    function getTransformationParams(imageLabel = null) {
+        const label = imageLabel || currentImageLabel;
+        const scale = window.imageScaleByLabel[label] || 1;
+        const position = imagePositionByLabel[label] || { x: 0, y: 0 };
+        const dimensions = window.originalImageDimensions?.[label];
+        const hasImage = !!(window.originalImages && window.originalImages[label]);
         
-        // Calculate the image position on canvas (CORRECTED LOGIC)
-        let imageX, imageY;
+        return {
+            scale,
+            position,
+            dimensions,
+            hasImage,
+            label
+        };
+    }
+    
+    /**
+     * Convert image-space coordinates to canvas coordinates
+     * @param {number} imageX - X coordinate in image space
+     * @param {number} imageY - Y coordinate in image space  
+     * @param {Object} params - Transformation parameters (optional, will get current if not provided)
+     * @returns {Object} Canvas coordinates {x, y}
+     */
+    function imageToCanvasCoords(imageX, imageY, params = null) {
+        if (!params) params = getTransformationParams();
         
-        // *** ADDED DETAILED LOGGING ***
-//         console.log(`getTransformedCoords START for ${currentImageLabel}`);
-        // Explicitly use the window property to avoid scope issues
-        // *** MODIFIED CHECK ***
-        const dimensionsObject = window.originalImageDimensions;
-        // console.log(`  All Dimensions:`, JSON.stringify(dimensionsObject));
-        const dims = dimensionsObject ? dimensionsObject[currentImageLabel] : undefined;
-//         console.log(`  Current Dim Check: dims =`, dims);
-        // *** END MODIFIED CHECK ***
-
-        // Check if this is a blank canvas without an image
-        const noImageLoaded = !window.originalImages || !window.originalImages[currentImageLabel];
+        const { scale, position, dimensions, hasImage } = params;
         
-        // For blank canvas drawing, need to convert canvas coordinates to "image" coordinates
-        // by undoing scaling and position offset
-        if (noImageLoaded || (dims && dims.width === canvas.width && dims.height === canvas.height)) {
-//             console.log(`getTransformedCoords: BLANK CANVAS MODE - Applying inverse scaling and offset`);
-            // Calculate canvas center for scaling
-            const canvasCenter = {
-                x: canvas.width / 2,
-                y: canvas.height / 2
-            };
+        // For blank canvas (no image), use center-based scaling
+        if (!hasImage || !dimensions) {
+            const canvasCenter = { x: canvas.width / 2, y: canvas.height / 2 };
             
-            // First remove position offset
+            // Apply scaling from center, then add position offset
+            const scaledX = (imageX - canvasCenter.x) * scale + canvasCenter.x;
+            const scaledY = (imageY - canvasCenter.y) * scale + canvasCenter.y;
+            
+            return {
+                x: scaledX + position.x,
+                y: scaledY + position.y
+            };
+        }
+        
+        // For images, calculate image position on canvas first
+        const centerX = (canvas.width - dimensions.width * scale) / 2;
+        const centerY = (canvas.height - dimensions.height * scale) / 2;
+        const imageOriginX = centerX + position.x;
+        const imageOriginY = centerY + position.y;
+        
+        // Transform image-relative coordinates to canvas coordinates
+        return {
+            x: imageOriginX + (imageX * scale),
+            y: imageOriginY + (imageY * scale)
+        };
+    }
+    
+    /**
+     * Convert canvas coordinates to image-space coordinates
+     * @param {number} canvasX - X coordinate in canvas space
+     * @param {number} canvasY - Y coordinate in canvas space
+     * @param {Object} params - Transformation parameters (optional, will get current if not provided)
+     * @returns {Object} Image-space coordinates {x, y}
+     */
+    function canvasToImageCoords(canvasX, canvasY, params = null) {
+        if (!params) params = getTransformationParams();
+        
+        const { scale, position, dimensions, hasImage } = params;
+        
+        // For blank canvas (no image), use center-based inverse scaling
+        if (!hasImage || !dimensions) {
+            const canvasCenter = { x: canvas.width / 2, y: canvas.height / 2 };
+            
+            // Remove position offset first, then apply inverse scaling from center
             const positionAdjustedX = canvasX - position.x;
             const positionAdjustedY = canvasY - position.y;
             
-            // Then apply inverse scaling from center
-            const imgX = ((positionAdjustedX - canvasCenter.x) / scale) + canvasCenter.x;
-            const imgY = ((positionAdjustedY - canvasCenter.y) / scale) + canvasCenter.y;
-            
-//             console.log(`  Removing offset: (${positionAdjustedX}, ${positionAdjustedY})`);
-//             console.log(`  Inverse scaling: (${imgX}, ${imgY})`);
-            
-            return { x: imgX, y: imgY };
-        }
-
-        // Use loaded dimensions if available, otherwise fallback to canvas center
-        if (dims && dims.width > 0 && dims.height > 0) {
-            const centerX = (canvas.width - dims.width * scale) / 2;
-            const centerY = (canvas.height - dims.height * scale) / 2;
-            imageX = centerX + position.x;
-            imageY = centerY + position.y;
-//             console.log(`getTransformedCoords: Using image dims ${dims.width}x${dims.height}. Calculated imageX=${imageX}, imageY=${imageY}`);
-        } else {
-            // Fallback if dimensions aren't loaded (should ideally not happen after load)
-            imageX = canvas.width / 2 + position.x;
-            imageY = canvas.height / 2 + position.y;
-            console.warn(`getTransformedCoords: Dimensions not found for ${currentImageLabel}. Falling back to canvas center calculation. imageX=${imageX}, imageY=${imageY}`);
+            return {
+                x: (positionAdjustedX - canvasCenter.x) / scale + canvasCenter.x,
+                y: (positionAdjustedY - canvasCenter.y) / scale + canvasCenter.y
+            };
         }
         
-        // Transform from canvas coordinates to image-relative coordinates
-        const imgX = (canvasX - imageX) / scale;
-        const imgY = (canvasY - imageY) / scale;
+        // For images, calculate image position on canvas first
+        const centerX = (canvas.width - dimensions.width * scale) / 2;
+        const centerY = (canvas.height - dimensions.height * scale) / 2;
+        const imageOriginX = centerX + position.x;
+        const imageOriginY = centerY + position.y;
         
-//         console.log(`getTransformedCoords RESULT: Canvas(${canvasX}, ${canvasY}) -> Image(${imgX.toFixed(1)}, ${imgY.toFixed(1)})`);
-        return { x: imgX, y: imgY };
+        // Transform canvas coordinates to image-relative coordinates
+        return {
+            x: (canvasX - imageOriginX) / scale,
+            y: (canvasY - imageOriginY) / scale
+        };
+    }
+    
+    /**
+     * Legacy wrapper for backward compatibility
+     * @deprecated Use canvasToImageCoords instead
+     */
+    function getTransformedCoords(canvasX, canvasY) {
+        return canvasToImageCoords(canvasX, canvasY);
     }
 
     // Helper function to deselect all strokes and clear edit mode
@@ -6987,7 +7167,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Helper function to get canvas coordinates from image coordinates
-    function getCanvasCoords(imageX_relative, imageY_relative) {
+    window.getCanvasCoords = function getCanvasCoords(imageX_relative, imageY_relative) {
         // *** ADDED DETAILED LOGGING ***
 //         console.log(`--- getCanvasCoords Called (Label Anchor?) ---`);
 //         console.log(`  Input Relative Coords: x=${imageX_relative}, y=${imageY_relative}`);
@@ -7049,6 +7229,216 @@ document.addEventListener('DOMContentLoaded', () => {
         // *** END DETAILED LOGGING ***
 
         return { x: canvasX, y: canvasY };
+    };
+
+    // Relative positioning functions for custom labels
+    // Convert absolute offset to relative line positioning (percentage along line + perpendicular distance)
+    window.convertAbsoluteToRelativePosition = function(strokeName, absoluteOffset, imageLabel = null) {
+        const currentImg = imageLabel || currentImageLabel;
+        const vectorData = vectorStrokesByImage[currentImg]?.[strokeName];
+        
+        if (!vectorData || !vectorData.points || vectorData.points.length < 2) {
+            console.warn(`[REL-POS] No vector data found for stroke ${strokeName}`);
+            return null;
+        }
+        
+        const points = vectorData.points;
+        let bestProjection = null;
+        let minDistance = Infinity;
+        
+        // Find the closest point on the line to the absolute offset position
+        for (let i = 0; i < points.length - 1; i++) {
+            const p1 = points[i];
+            const p2 = points[i + 1];
+            
+            // Vector from p1 to p2
+            const lineVec = { x: p2.x - p1.x, y: p2.y - p1.y };
+            const lineLength = Math.sqrt(lineVec.x * lineVec.x + lineVec.y * lineVec.y);
+            
+            if (lineLength === 0) continue; // Skip zero-length segments
+            
+            // Normalize line vector
+            const lineUnit = { x: lineVec.x / lineLength, y: lineVec.y / lineLength };
+            
+            // Vector from p1 to offset position (relative to stroke anchor)
+            const strokeAnchor = getStrokeAnchorPoint(strokeName, currentImg);
+            const offsetPos = { 
+                x: strokeAnchor.x + absoluteOffset.x, 
+                y: strokeAnchor.y + absoluteOffset.y 
+            };
+            const toOffset = { x: offsetPos.x - p1.x, y: offsetPos.y - p1.y };
+            
+            // Project onto line segment
+            const projection = Math.max(0, Math.min(lineLength, 
+                toOffset.x * lineUnit.x + toOffset.y * lineUnit.y));
+            
+            // Point on line segment
+            const projPoint = {
+                x: p1.x + lineUnit.x * projection,
+                y: p1.y + lineUnit.y * projection
+            };
+            
+            // Distance from offset position to projection point
+            const distanceToLine = Math.sqrt(
+                Math.pow(offsetPos.x - projPoint.x, 2) + 
+                Math.pow(offsetPos.y - projPoint.y, 2)
+            );
+            
+            if (distanceToLine < minDistance) {
+                minDistance = distanceToLine;
+                
+                // Calculate cumulative distance along stroke up to this segment
+                let cumulativeDistance = 0;
+                for (let j = 0; j < i; j++) {
+                    const seg = { 
+                        x: points[j + 1].x - points[j].x, 
+                        y: points[j + 1].y - points[j].y 
+                    };
+                    cumulativeDistance += Math.sqrt(seg.x * seg.x + seg.y * seg.y);
+                }
+                cumulativeDistance += projection;
+                
+                // Calculate total stroke length
+                let totalLength = 0;
+                for (let j = 0; j < points.length - 1; j++) {
+                    const seg = { 
+                        x: points[j + 1].x - points[j].x, 
+                        y: points[j + 1].y - points[j].y 
+                    };
+                    totalLength += Math.sqrt(seg.x * seg.x + seg.y * seg.y);
+                }
+                
+                // Calculate perpendicular direction (which side of line)
+                const perpVec = { x: -lineUnit.y, y: lineUnit.x }; // 90° rotation
+                const toOffsetFromProj = {
+                    x: offsetPos.x - projPoint.x,
+                    y: offsetPos.y - projPoint.y
+                };
+                const perpendicular = toOffsetFromProj.x * perpVec.x + toOffsetFromProj.y * perpVec.y;
+                
+                bestProjection = {
+                    percentageAlongLine: totalLength > 0 ? cumulativeDistance / totalLength : 0.5,
+                    perpendicularDistance: perpendicular,
+                    segmentIndex: i,
+                    projectionOnSegment: projection
+                };
+            }
+        }
+        
+        return bestProjection;
+    };
+    
+    // Convert relative line positioning back to absolute offset
+    window.convertRelativeToAbsolutePosition = function(strokeName, relativePosition, imageLabel = null) {
+        const currentImg = imageLabel || currentImageLabel;
+        const vectorData = vectorStrokesByImage[currentImg]?.[strokeName];
+        
+        if (!vectorData || !vectorData.points || vectorData.points.length < 2) {
+            console.warn(`[REL-POS] No vector data found for stroke ${strokeName}`);
+            return { x: 0, y: 0 };
+        }
+        
+        const points = vectorData.points;
+        const percentage = relativePosition.percentageAlongLine;
+        const perpDistance = relativePosition.perpendicularDistance;
+        const storedSegmentIndex = typeof relativePosition.segmentIndex === 'number' ? relativePosition.segmentIndex : null;
+        const storedProjection = typeof relativePosition.projectionOnSegment === 'number' ? relativePosition.projectionOnSegment : null;
+        
+        // Calculate total stroke length
+        let totalLength = 0;
+        const segmentLengths = [];
+        for (let i = 0; i < points.length - 1; i++) {
+            const seg = { 
+                x: points[i + 1].x - points[i].x, 
+                y: points[i + 1].y - points[i].y 
+            };
+            const segLength = Math.sqrt(seg.x * seg.x + seg.y * seg.y);
+            segmentLengths.push(segLength);
+            totalLength += segLength;
+        }
+        
+        // Prefer original segment/t if provided to avoid drift; otherwise compute from percentage of total length
+        let targetSegment = 0;
+        let distanceInSegment = 0;
+        if (storedSegmentIndex !== null && storedProjection !== null && storedSegmentIndex >= 0 && storedSegmentIndex < segmentLengths.length) {
+            targetSegment = storedSegmentIndex;
+            // Clamp projection to current segment length (segments can slightly change after transforms)
+            const segLen = segmentLengths[targetSegment] || 0;
+            distanceInSegment = Math.max(0, Math.min(segLen, storedProjection));
+        } else {
+            const targetDistance = percentage * totalLength;
+            let cumulativeDistance = 0;
+            for (let i = 0; i < segmentLengths.length; i++) {
+                if (cumulativeDistance + segmentLengths[i] >= targetDistance) {
+                    targetSegment = i;
+                    distanceInSegment = targetDistance - cumulativeDistance;
+                    break;
+                }
+                cumulativeDistance += segmentLengths[i];
+            }
+        }
+        
+        // Handle edge case where percentage >= 1.0
+        if (targetSegment >= segmentLengths.length) {
+            targetSegment = segmentLengths.length - 1;
+            distanceInSegment = segmentLengths[targetSegment];
+        }
+        
+        // Get segment points
+        const p1 = points[targetSegment];
+        const p2 = points[targetSegment + 1];
+        
+        // Calculate position along segment
+        const lineVec = { x: p2.x - p1.x, y: p2.y - p1.y };
+        const lineLength = segmentLengths[targetSegment];
+        
+        if (lineLength === 0) {
+            // Zero-length segment, use p1
+            const strokeAnchor = getStrokeAnchorPoint(strokeName, currentImg);
+            return { x: p1.x - strokeAnchor.x, y: p1.y - strokeAnchor.y };
+        }
+        
+        const lineUnit = { x: lineVec.x / lineLength, y: lineVec.y / lineLength };
+        const pointOnLine = {
+            x: p1.x + lineUnit.x * distanceInSegment,
+            y: p1.y + lineUnit.y * distanceInSegment
+        };
+        
+        // Add perpendicular offset
+        const perpVec = { x: -lineUnit.y, y: lineUnit.x }; // 90° rotation
+        const finalPoint = {
+            x: pointOnLine.x + perpVec.x * perpDistance,
+            y: pointOnLine.y + perpVec.y * perpDistance
+        };
+        
+        // Convert to offset relative to stroke anchor
+        const strokeAnchor = getStrokeAnchorPoint(strokeName, currentImg);
+        return {
+            x: finalPoint.x - strokeAnchor.x,
+            y: finalPoint.y - strokeAnchor.y
+        };
+    };
+    
+    // Helper function to get stroke anchor point
+    // For straight/two-point strokes, use the true midpoint between endpoints
+    // For other strokes, fall back to the middle point in the points array
+    function getStrokeAnchorPoint(strokeName, imageLabel = null) {
+        const currentImg = imageLabel || currentImageLabel;
+        const vectorData = vectorStrokesByImage[currentImg]?.[strokeName];
+        
+        if (!vectorData || !vectorData.points || vectorData.points.length === 0) {
+            return { x: 0, y: 0 };
+        }
+        
+        // If this is a straight line (or exactly two points), compute the geometric midpoint
+        if (vectorData.points.length === 2 || vectorData.type === 'straight') {
+            const p0 = vectorData.points[0];
+            const p1 = vectorData.points[vectorData.points.length - 1];
+            return { x: (p0.x + p1.x) / 2, y: (p0.y + p1.y) / 2 };
+        }
+        
+        const midIndex = Math.floor(vectorData.points.length / 2);
+        return vectorData.points[midIndex];
     }
 
     // Drawing function for freehand mode
@@ -8117,31 +8507,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // PERFORMANCE: Cache endpoints for straight/arrow strokes
     function cacheEndpointsForStroke(strokeLabel, vectorData) {
-        const scale = window.imageScaleByLabel[currentImageLabel] || 1;
-        
-        // Calculate image position for coordinate transforms
-        let imageX, imageY;
-        const isBlankCanvas = !window.originalImages || !window.originalImages[currentImageLabel];
-        
-        if (isBlankCanvas) {
-            const canvasCenter = { x: canvas.width / 2, y: canvas.height / 2 };
-            const position = imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
-            imageX = canvasCenter.x + position.x;
-            imageY = canvasCenter.y + position.y;
-        } else {
-            const cachedImg = imageCache[window.originalImages[currentImageLabel]];
-            if (cachedImg) {
-                const imageWidth = cachedImg.width;
-                const imageHeight = cachedImg.height;
-                imageX = (canvas.width - imageWidth * scale) / 2 + 
-                        (imagePositionByLabel[currentImageLabel]?.x || 0);
-                imageY = (canvas.height - imageHeight * scale) / 2 + 
-                        (imagePositionByLabel[currentImageLabel]?.y || 0);
-            } else {
-                imageX = canvas.width / 2 + (imagePositionByLabel[currentImageLabel]?.x || 0);
-                imageY = canvas.height / 2 + (imagePositionByLabel[currentImageLabel]?.y || 0);
-            }
-        }
+        // Use unified coordinate transformation system
+        const transformParams = getTransformationParams(currentImageLabel);
+        const scale = transformParams.scale;
         
         const endpoints = [
             { point: vectorData.points[0], index: 'start' },
@@ -8149,19 +8517,9 @@ document.addEventListener('DOMContentLoaded', () => {
         ];
         
         for (const { point, index } of endpoints) {
-            let transformedX, transformedY;
-            
-            if (isBlankCanvas) {
-                const canvasCenter = { x: canvas.width / 2, y: canvas.height / 2 };
-                const position = imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
-                const scaledX = (point.x - canvasCenter.x) * scale + canvasCenter.x;
-                const scaledY = (point.y - canvasCenter.y) * scale + canvasCenter.y;
-                transformedX = scaledX + position.x;
-                transformedY = scaledY + position.y;
-            } else {
-                transformedX = imageX + (point.x * scale);
-                transformedY = imageY + (point.y * scale);
-            }
+            const transformed = imageToCanvasCoords(point.x, point.y, transformParams);
+            const transformedX = transformed.x;
+            const transformedY = transformed.y;
             
             const baseRadius = ANCHOR_SIZE || 8;
             const scaledRadius = Math.max(8, baseRadius * scale) + 5; // Add 5px padding
@@ -8180,8 +8538,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // PERFORMANCE: Optimized label detection using cached positions
     function findLabelAtPointOptimized(x, y) {
         for (const [strokeLabel, labelInfo] of cachedLabelPositions) {
-            if (x >= labelInfo.x && x <= labelInfo.x + labelInfo.width &&
-                y >= labelInfo.y && y <= labelInfo.y + labelInfo.height) {
+            // Center-anchored labels: convert to top-left for hit test
+            const left = labelInfo.x - labelInfo.width / 2;
+            const top = labelInfo.y - labelInfo.height / 2;
+            if (x >= left && x <= left + labelInfo.width &&
+                y >= top && y <= top + labelInfo.height) {
                 return labelInfo;
             }
         }
@@ -8214,16 +8575,45 @@ document.addEventListener('DOMContentLoaded', () => {
     // Helper function to find if a point is inside a label
     function findLabelAtPoint(x, y) {
         for (const label of currentLabelPositions) {
-            if (x >= label.x && x <= label.x + label.width &&
-                y >= label.y && y <= label.y + label.height) {
+            // Center-anchored labels: convert to top-left for hit test
+            const left = label.x - label.width / 2;
+            const top = label.y - label.height / 2;
+            if (x >= left && x <= left + label.width &&
+                y >= top && y <= top + label.height) {
                 return label;
             }
         }
         return null;
     }
     
-    // Mouse event listeners
-    canvas.addEventListener('mousedown', (e) => {
+    // Centralized canvas event binding function
+    function bindCanvasListeners() {
+        if (window.paintApp.state.listenersBound) {
+            console.log('[Event] Canvas listeners already bound, skipping');
+            return;
+        }
+        
+        const { eventListeners } = window.paintApp.state;
+        console.log('[Event] Binding canvas listeners with AbortController');
+        
+        // Canvas mouse events
+        canvas.addEventListener('mousedown', onCanvasMouseDown, { signal: eventListeners.signal });
+        canvas.addEventListener('mousemove', onCanvasMouseMove, { signal: eventListeners.signal });
+        canvas.addEventListener('mouseup', onCanvasMouseUp, { signal: eventListeners.signal });
+        canvas.addEventListener('mouseout', onCanvasMouseOut, { signal: eventListeners.signal });
+        canvas.addEventListener('dblclick', onCanvasDoubleClick, { signal: eventListeners.signal });
+        canvas.addEventListener('wheel', onCanvasWheel, { signal: eventListeners.signal });
+        canvas.addEventListener('scalechange', onCanvasScaleChange, { signal: eventListeners.signal });
+        
+        // Window mouse events for global dragging
+        window.addEventListener('mousemove', onWindowMouseMove, { signal: eventListeners.signal });
+        window.addEventListener('mouseup', onWindowMouseUp, { signal: eventListeners.signal });
+        
+        window.paintApp.state.listenersBound = true;
+    }
+
+    // Canvas event handlers
+    function onCanvasMouseDown(e) {
         // First, check if we should be dragging the image (shift key pressed)
         if (isShiftPressed) {
             isDraggingImage = true;
@@ -8562,6 +8952,19 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         
+        // Check if this is a blank canvas and prevent drawing outside canvas boundaries
+        const dims = window.originalImageDimensions ? window.originalImageDimensions[currentImageLabel] : undefined;
+        const isBlankCanvas = !window.originalImages || !window.originalImages[currentImageLabel] || 
+                             (dims && dims.width === canvas.width && dims.height === canvas.height);
+        
+        if (isBlankCanvas) {
+            // Constrain drawing to canvas boundaries
+            if (e.offsetX < 0 || e.offsetX >= canvas.width || e.offsetY < 0 || e.offsetY >= canvas.height) {
+                console.log(`[Input] Drawing prevented outside canvas bounds: (${e.offsetX}, ${e.offsetY}) not in 0-${canvas.width-1} x 0-${canvas.height-1}`);
+                return;
+            }
+        }
+        
         // Start drawing
         isDrawing = true;
         isDrawingOrPasting = true;
@@ -8637,10 +9040,10 @@ document.addEventListener('DOMContentLoaded', () => {
             ctx.fillStyle = colorPicker.value;
             ctx.fill();
         }
-    });
+    }
     
     // PERFORMANCE: Throttled mousemove event handler using requestAnimationFrame
-    canvas.addEventListener('mousemove', (e) => {
+    function onCanvasMouseMove(e) {
         const x = e.offsetX;
         const y = e.offsetY;
 
@@ -8781,8 +9184,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const vectorData = vectorStrokesByImage[currentImageLabel]?.[strokeName];
 
             if (vectorData && vectorData.points.length > 0) {
-                const midIndex = Math.floor(vectorData.points.length / 2);
-                const midPointRelative = vectorData.points[midIndex];
+                // Use robust anchor computation for dragging as well, so custom offsets stay relative to true center
+                const midPointRelative = getStrokeAnchorPoint(strokeName, currentImageLabel);
                 const anchorPoint = getCanvasCoords(midPointRelative.x, midPointRelative.y);
 
                 // Get the current offset (custom or calculated) or calculate if first time dragging
@@ -8810,10 +9213,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 // Update the relative offset by the canvas delta
-                // Convert canvas delta to image space delta
-                const scale = window.imageScaleByLabel[currentImageLabel] || 1.0;
-                const imageDeltaX = deltaX / scale;
-                const imageDeltaY = deltaY / scale;
+                // Convert canvas delta to image space delta using full inverse transform (accounts for rotation and scale)
+                const prevCanvasX = dragStartX - deltaX;
+                const prevCanvasY = dragStartY - deltaY;
+                const prevImage = getTransformedCoords(prevCanvasX, prevCanvasY);
+                const currImage = getTransformedCoords(dragStartX, dragStartY);
+                const imageDeltaX = currImage.x - prevImage.x;
+                const imageDeltaY = currImage.y - prevImage.y;
 
                 currentOffset.x += imageDeltaX;
                 currentOffset.y += imageDeltaY;
@@ -8821,6 +9227,35 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Store the updated offset in customLabelPositions (always overwrites calculated)
                 customLabelPositions[currentImageLabel][strokeName] = currentOffset;
 //                  console.log(`Storing updated custom offset for ${strokeName}:`, currentOffset);
+                
+                // CRITICAL FIX: Also store in window.customLabelPositions for transformation access
+                if (!window.customLabelPositions[currentImageLabel]) {
+                    window.customLabelPositions[currentImageLabel] = {};
+                }
+                window.customLabelPositions[currentImageLabel][strokeName] = currentOffset;
+                console.log(`[SYNC-FIX] Stored custom position in both local and window.customLabelPositions for ${strokeName}:`, currentOffset);
+                
+                // NEW: Store relative position for rotation-resistant positioning
+                if (!window.customLabelRelativePositions[currentImageLabel]) {
+                    window.customLabelRelativePositions[currentImageLabel] = {};
+                }
+                const relativePosition = window.convertAbsoluteToRelativePosition(strokeName, currentOffset, currentImageLabel);
+                if (relativePosition) {
+                    window.customLabelRelativePositions[currentImageLabel][strokeName] = relativePosition;
+                    console.log(`[REL-POS] Stored relative position for ${strokeName}:`, relativePosition);
+                } else {
+                    console.warn(`[REL-POS] Could not convert to relative position for ${strokeName}`);
+                }
+                
+                // Stamp the current rotation for this stroke to prevent re-rotation
+                if (!window.customLabelOffsetsRotationByImageAndStroke) {
+                    window.customLabelOffsetsRotationByImageAndStroke = {};
+                }
+                if (!window.customLabelOffsetsRotationByImageAndStroke[currentImageLabel]) {
+                    window.customLabelOffsetsRotationByImageAndStroke[currentImageLabel] = {};
+                }
+                const currentTheta = window.imageRotationByLabel && window.imageRotationByLabel[currentImageLabel] ? window.imageRotationByLabel[currentImageLabel] : 0;
+                window.customLabelOffsetsRotationByImageAndStroke[currentImageLabel][strokeName] = currentTheta;
 
                 // Remove canvas boundary clamping
                 // pos.x = Math.max(10, Math.min(canvas.width - labelToMove.width - 10, pos.x));
@@ -8865,9 +9300,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const mousePos = { x: e.offsetX, y: e.offsetY };
             drawCurvedLinePreview(curvedLinePoints, mousePos);
         }
-    });
+    }
     
-    canvas.addEventListener('mouseup', (e) => {
+    function onCanvasMouseUp(e) {
         // Check if we were drawing when mouseup occurred
         const wasDrawing = isDrawing;
         
@@ -9103,9 +9538,9 @@ document.addEventListener('DOMContentLoaded', () => {
         isDrawingOrPasting = false;
         strokeInProgress = false;
         mouseDownPosition = null;
-    });
+    }
     
-    canvas.addEventListener('mouseout', () => {
+    function onCanvasMouseOut() {
         // CRITICAL FIX: Do NOT interrupt control point dragging when mouse leaves canvas
         // Allow the drag to continue until mouseup occurs, enabling dragging outside canvas bounds
         if (isDraggingControlPoint) {
@@ -9150,7 +9585,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Reset cursor when mouse leaves canvas (unless in specific drag states handled above)
         updateCursor('default', 'mouse left canvas');
-    });
+    }
     
     // F1 & F2: Enhanced Window-Level Event Handling with Centralized Cursor Management
     
@@ -9184,7 +9619,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // F1: Window-level drag handlers with improved event handling
-    window.addEventListener('mousemove', (e) => {
+    function onWindowMouseMove(e) {
         // Continue control point dragging even when mouse is outside canvas
         if (isDraggingControlPoint && draggedControlPointInfo) {
             // Get canvas bounding rect to convert page coordinates to canvas coordinates
@@ -9266,9 +9701,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             return;
         }
-    });
+    }
 
-    window.addEventListener('mouseup', (e) => {
+    function onWindowMouseUp(e) {
         // F1: Handle control point dragging completed anywhere on window
         if (isDraggingControlPoint) {
             isDraggingControlPoint = false;
@@ -9325,7 +9760,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             return;
         }
-    });
+    }
     
     // Track shift key for image movement
     document.addEventListener('keydown', (e) => {
@@ -9381,7 +9816,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // F4: Listen for scale change events to update anchor visibility immediately
-    canvas.addEventListener('scalechange', (e) => {
+    function onCanvasScaleChange(e) {
         const { newScale, oldScale, imageLabel } = e.detail;
 //         console.log(`[F4 Scale Event] Scale changed from ${oldScale} to ${newScale} for ${imageLabel}`);
         
@@ -9390,7 +9825,7 @@ document.addEventListener('DOMContentLoaded', () => {
 //             console.log(`[F4 Scale Event] Updating anchor positions for edit mode stroke: ${window.selectedStrokeInEditMode}`);
             // Anchor positions will be recalculated during the next redraw
         }
-    });
+    }
     
     // Function to switch to a different image
     // Make switchToImage available globally
@@ -10419,7 +10854,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupDragAndDrop();
     
     // MOUSE WHEEL ZOOM FUNCTIONALITY
-    canvas.addEventListener('wheel', (e) => {
+    function onCanvasWheel(e) {
         e.preventDefault(); // Prevent page scrolling
         e.stopPropagation(); // Prevent event bubbling
         
@@ -10493,7 +10928,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Redraw with the corrected position
             redrawCanvasWithVisibility();
         }
-    });
+    }
     
     // Adjust canvas size when window resizes to account for sidebars
     window.addEventListener('resize', () => {
@@ -10733,29 +11168,27 @@ document.addEventListener('DOMContentLoaded', () => {
         // Just keep it as a fallback if we can't find the stroke info
         const originalAnchorPoint = anchorPoint;
         
-        // Find the closest point on the label to connect to
-        const labelCenter = {
-            x: labelRect.x + labelRect.width / 2,
-            y: labelRect.y + labelRect.height / 2
-        };
+        // labelRect.x,y is the CENTER now (center-anchored labels)
+        const labelCenter = { x: labelRect.x, y: labelRect.y };
+        const rectX = labelCenter.x - labelRect.width / 2;
+        const rectY = labelCenter.y - labelRect.height / 2;
         
-        // Determine the exit point from the label using 9-point anchoring
-        // Define all 9 possible anchor points on the label
+        // Determine the exit point from the label using 9-point anchoring on the rectangle
         const anchorPoints = [
             // Top row
-            { x: labelRect.x, y: labelRect.y }, // Top-left
-            { x: labelCenter.x, y: labelRect.y }, // Top-center
-            { x: labelRect.x + labelRect.width, y: labelRect.y }, // Top-right
+            { x: rectX, y: rectY }, // Top-left
+            { x: labelCenter.x, y: rectY }, // Top-center
+            { x: rectX + labelRect.width, y: rectY }, // Top-right
             
             // Middle row
-            { x: labelRect.x, y: labelCenter.y }, // Middle-left
+            { x: rectX, y: labelCenter.y }, // Middle-left
             { x: labelCenter.x, y: labelCenter.y }, // Center
-            { x: labelRect.x + labelRect.width, y: labelCenter.y }, // Middle-right
+            { x: rectX + labelRect.width, y: labelCenter.y }, // Middle-right
             
             // Bottom row
-            { x: labelRect.x, y: labelRect.y + labelRect.height }, // Bottom-left
-            { x: labelCenter.x, y: labelRect.y + labelRect.height }, // Bottom-center
-            { x: labelRect.x + labelRect.width, y: labelRect.y + labelRect.height } // Bottom-right
+            { x: rectX, y: rectY + labelRect.height }, // Bottom-left
+            { x: labelCenter.x, y: rectY + labelRect.height }, // Bottom-center
+            { x: rectX + labelRect.width, y: rectY + labelRect.height } // Bottom-right
         ];
         
         // Find closest anchor point to the stroke anchor point
@@ -11270,33 +11703,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Helper function to find arrow endpoints
     function findArrowEndpoint(x, y, vectorData) {
-        
-        // Get current scale and position for coordinate transforms
-        const scale = window.imageScaleByLabel[currentImageLabel] || 1;
-        
-        // Calculate image position for coordinate transforms
-        let imageX, imageY;
-        const isBlankCanvas = !window.originalImages || !window.originalImages[currentImageLabel];
-        
-        if (isBlankCanvas) {
-            const canvasCenter = { x: canvas.width / 2, y: canvas.height / 2 };
-            const position = imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
-            imageX = canvasCenter.x + position.x;
-            imageY = canvasCenter.y + position.y;
-        } else {
-            const cachedImg = imageCache[window.originalImages[currentImageLabel]];
-            if (cachedImg) {
-                const imageWidth = cachedImg.width;
-                const imageHeight = cachedImg.height;
-                imageX = (canvas.width - imageWidth * scale) / 2 + 
-                        (imagePositionByLabel[currentImageLabel]?.x || 0);
-                imageY = (canvas.height - imageHeight * scale) / 2 + 
-                        (imagePositionByLabel[currentImageLabel]?.y || 0);
-            } else {
-                imageX = canvas.width / 2 + (imagePositionByLabel[currentImageLabel]?.x || 0);
-                imageY = canvas.height / 2 + (imagePositionByLabel[currentImageLabel]?.y || 0);
-            }
-        }
+        // Use unified coordinate transformation system
+        const transformParams = getTransformationParams(currentImageLabel);
+        const scale = transformParams.scale;
         
         // Check arrow start and end points
         const startPoint = vectorData.points[0];
@@ -11305,19 +11714,9 @@ document.addEventListener('DOMContentLoaded', () => {
         
         for (let i = 0; i < endpoints.length; i++) {
             const point = endpoints[i];
-            let transformedX, transformedY;
-            
-            if (isBlankCanvas) {
-                const canvasCenter = { x: canvas.width / 2, y: canvas.height / 2 };
-                const position = imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
-                const scaledX = (point.x - canvasCenter.x) * scale + canvasCenter.x;
-                const scaledY = (point.y - canvasCenter.y) * scale + canvasCenter.y;
-                transformedX = scaledX + position.x;
-                transformedY = scaledY + position.y;
-            } else {
-                transformedX = imageX + (point.x * scale);
-                transformedY = imageY + (point.y * scale);
-            }
+            const transformed = imageToCanvasCoords(point.x, point.y, transformParams);
+            const transformedX = transformed.x;
+            const transformedY = transformed.y;
             
             // Check if click is within endpoint radius (using square hit area)
             const pointRadius = 8 * scale;
@@ -11489,6 +11888,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!window.originalImageDimensions) window.originalImageDimensions = {};
         if (!window.imageTags) window.imageTags = {};
         if (!window.customLabelPositions) window.customLabelPositions = {}; // Ensure this is initialized
+        if (!window.customLabelRelativePositions) window.customLabelRelativePositions = {}; // Store relative line positioning
         if (!window.calculatedLabelOffsets) window.calculatedLabelOffsets = {}; // Ensure this is initialized
 
         window.imageScaleByLabel[label] = 1.0;
@@ -11497,6 +11897,7 @@ document.addEventListener('DOMContentLoaded', () => {
         window.vectorStrokesByImage[label] = {};
         window.strokeVisibilityByImage[label] = {};
         window.strokeLabelVisibility[label] = {};
+        window.customLabelRelativePositions[label] = {}; // Initialize relative positions for this image
         window.labelsByImage[label] = 'A1'; // Default initial stroke label for a new image
         window.undoStackByImage[label] = [];
         window.redoStackByImage[label] = [];
@@ -11876,36 +12277,8 @@ document.addEventListener('DOMContentLoaded', () => {
             return null;
         }
         
-        // Get current scale and position for coordinate transforms (MATCH checkForStrokeAtPoint exactly)
-        const scale = window.imageScaleByLabel[currentImageLabel] || 1;
-        
-        // Calculate image position for coordinate transforms
-        let imageWidth = canvas.width;
-        let imageHeight = canvas.height;
-        let imageX, imageY;
-        
-        // Try to get original image dimensions if available (MATCH checkForStrokeAtPoint exactly)
-        if (window.originalImages && window.originalImages[currentImageLabel]) {
-            const cachedImg = imageCache[window.originalImages[currentImageLabel]];
-            if (cachedImg) {
-                imageWidth = cachedImg.width;
-                imageHeight = cachedImg.height;
-                
-                // Calculate position based on image dimensions
-                imageX = (canvas.width - imageWidth * scale) / 2 + 
-                        (imagePositionByLabel[currentImageLabel]?.x || 0);
-                imageY = (canvas.height - imageHeight * scale) / 2 + 
-                        (imagePositionByLabel[currentImageLabel]?.y || 0);
-            } else {
-                // Image not yet loaded, use canvas center as reference
-                imageX = canvas.width / 2 + (imagePositionByLabel[currentImageLabel]?.x || 0);
-                imageY = canvas.height / 2 + (imagePositionByLabel[currentImageLabel]?.y || 0);
-            }
-        } else {
-            // No image, use canvas center as reference point
-            imageX = canvas.width / 2 + (imagePositionByLabel[currentImageLabel]?.x || 0);
-            imageY = canvas.height / 2 + (imagePositionByLabel[currentImageLabel]?.y || 0);
-        }
+        // Use unified coordinate transformation system
+        const transformParams = getTransformationParams(currentImageLabel);
         
         let nearestPoint = null;
         let minDistance = Number.MAX_VALUE;
@@ -11914,9 +12287,10 @@ document.addEventListener('DOMContentLoaded', () => {
         for (let i = 0; i < vectorData.points.length; i++) {
             const point = vectorData.points[i];
             
-            // Transform point to canvas coordinates
-            const pointCanvasX = imageX + (point.x * scale);
-            const pointCanvasY = imageY + (point.y * scale);
+            // Transform point to canvas coordinates using unified system
+            const transformed = imageToCanvasCoords(point.x, point.y, transformParams);
+            const pointCanvasX = transformed.x;
+            const pointCanvasY = transformed.y;
             
             // Calculate distance to this point
             const distance = Math.sqrt(
@@ -11984,7 +12358,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Double-click handler for finalizing curved lines
-    canvas.addEventListener('dblclick', (e) => {
+    function onCanvasDoubleClick(e) {
         e.preventDefault(); // Prevent default double-click behavior
         
         if (drawingMode === 'curved' && curvedLinePoints.length >= 2) {
@@ -12086,6 +12460,746 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (drawingMode === 'curved') {
 //             console.log('Double-click in curved mode, but need at least 2 control points to create a curve');
         }
-    });
+    }
+
+    // Initialize canvas event listeners
+    bindCanvasListeners();
+    console.log('[Event] Canvas listeners bound successfully');
 }); // Correctly close DOMContentLoaded
+
+// ===== ROTATION TEST HARNESS =====
+// Comprehensive test system for debugging custom label rotation behavior
+
+// Debug flag - set to true for verbose logging
+const ROT_DEBUG = false;
+
+// Helper Functions
+function normalizeDelta(d) {
+    const t = Math.PI * 2;
+    d = ((d + Math.PI) % t + t) % t - Math.PI;
+    return Math.abs(d) < 1e-9 ? 0 : d;
+}
+
+function rotateVec(v, delta) {
+    const c = Math.cos(delta), s = Math.sin(delta);
+    return { x: v.x * c - v.y * s, y: v.x * s + v.y * c };
+}
+
+function sub(a, b) { return { x: a.x - b.x, y: a.y - b.y }; }
+function add(a, b) { return { x: a.x + b.x, y: a.y + b.y }; }
+function dist(a, b) { const dx = a.x - b.x, dy = a.y - b.y; return Math.hypot(dx, dy); }
+function approx(a, b, eps = 0.75) { return dist(a, b) <= eps; }
+
+function getEps(img) {
+    const z = (window.imageScaleByLabel?.[img]) || 1;
+    return Math.max(0.5, 0.75 * z);
+}
+
+function getStrokeMidpointImage(img, stroke) {
+    const v = (window.vectorStrokesByImage?.[img]?.[stroke]) || null;
+    if (!v || !v.points || v.points.length < 1) return null;
+    const mid = v.points[Math.floor(v.points.length / 2)];
+    return { x: mid.x, y: mid.y };
+}
+
+function getImageSpaceOffset(img, stroke) {
+    const cust = window.customLabelPositions?.[img]?.[stroke];
+    if (cust && typeof cust.x === 'number' && typeof cust.y === 'number') return { ...cust };
+    const calc = window.calculatedLabelOffsets?.[img]?.[stroke];
+    if (calc && typeof calc.x === 'number' && typeof calc.y === 'number') return { ...calc };
+    return { x: 0, y: 0 }; // fallback
+}
+
+function labelCanvasPosition(img, stroke) {
+    // Use the same math as render: anchor → image-space offset → toCanvas
+    const anchorImg = getStrokeMidpointImage(img, stroke);
+    if (!anchorImg) return null;
+    const offImg = getImageSpaceOffset(img, stroke);
+    const finalImg = { x: anchorImg.x + offImg.x, y: anchorImg.y + offImg.y };
+    
+    // Use the same coordinate transformation function as rendering (toCanvas)
+    if (typeof window.toCanvas === 'function') {
+        const finalCanvas = window.toCanvas(finalImg, img);
+        return { x: finalCanvas.x, y: finalCanvas.y };
+    } else if (typeof window.getCanvasCoords === 'function') {
+        const finalCanvas = window.getCanvasCoords(finalImg.x, finalImg.y);
+        return { x: finalCanvas.x, y: finalCanvas.y };
+    } else {
+        throw new Error('toCanvas or getCanvasCoords function not available');
+    }
+}
+
+function getRotationMeta(img) {
+    const meta = window.lastRotationMeta?.[img];
+    if (!meta || !meta.centerCanvas) return null;
+    return { center: { ...meta.centerCanvas }, delta: normalizeDelta(meta.delta || 0) };
+}
+
+function snapshotCustomOffsets(img) {
+    const pos = window.customLabelPositions?.[img] || {};
+    const result = {};
+    for (const [stroke, off] of Object.entries(pos)) {
+        if (off && typeof off.x === 'number' && typeof off.y === 'number') {
+            result[stroke] = { x: off.x, y: off.y };
+        }
+    }
+    return result;
+}
+
+function snapshotRotationStamps(img) {
+    const stamps = window.customLabelOffsetsRotationByImageAndStroke?.[img] || {};
+    const result = {};
+    for (const [stroke, stamp] of Object.entries(stamps)) {
+        if (typeof stamp === 'number') {
+            result[stroke] = stamp;
+        }
+    }
+    return result;
+}
+
+// Async rotation wrapper with proper completion waiting
+async function rotateFn90CCW(realImageLabel) {
+    return new Promise(resolve => {
+        const done = () => requestAnimationFrame(() => requestAnimationFrame(resolve));
+        
+        // Find the current image index for the rotation
+        let imageIndex = -1;
+        if (window.imageGalleryData) {
+            // Try multiple matching strategies
+            imageIndex = window.imageGalleryData.findIndex(img => {
+                // Strategy 1: Match original.label
+                if (img.original?.label === realImageLabel) return true;
+                
+                // Strategy 2: Match derived label from name
+                const derivedLabel = img.name?.toLowerCase().replace(/\s+/g, '_') || 'unknown';
+                if (derivedLabel === realImageLabel) return true;
+                
+                // Strategy 3: Check for blank_canvas specifically
+                if (realImageLabel === 'blank_canvas' && (
+                    img.name === 'Blank Canvas' ||
+                    img.original?.isBlankCanvas === true ||
+                    derivedLabel === 'blank_canvas'
+                )) return true;
+                
+                return false;
+            });
+            
+            console.log(`[ROT-TEST] Image search: label=${realImageLabel}, index=${imageIndex}`);
+            console.log(`[ROT-TEST] Gallery data:`, window.imageGalleryData?.map((img, i) => ({
+                index: i,
+                name: img.name,
+                originalLabel: img.original?.label,
+                isBlankCanvas: img.original?.isBlankCanvas,
+                derivedLabel: img.name?.toLowerCase().replace(/\s+/g, '_'),
+                matchesTarget: [
+                    img.original?.label === realImageLabel,
+                    (img.name?.toLowerCase().replace(/\s+/g, '_') || 'unknown') === realImageLabel,
+                    realImageLabel === 'blank_canvas' && (img.name === 'Blank Canvas' || img.original?.isBlankCanvas === true)
+                ]
+            })));
+        }
+        
+        if (imageIndex >= 0 && typeof window.rotateImage === 'function') {
+            try {
+                console.log(`[ROT-TEST] Calling window.rotateImage(${imageIndex}, -90)`);
+                window.rotateImage(imageIndex, -90);
+                done();
+            } catch (error) {
+                console.error('[ROT-TEST] Rotation failed:', error);
+                done();
+            }
+        } else if (imageIndex >= 0 && typeof window.transformImageData === 'function') {
+            // Try alternative: direct transform call if rotateImage not available
+            try {
+                console.log(`[ROT-TEST] Trying direct transformImageData call`);
+                window.transformImageData(realImageLabel, 'rotate', -90, 800, 800);
+                done();
+            } catch (error) {
+                console.error('[ROT-TEST] Direct transform failed:', error);
+                done();
+            }
+        } else if (typeof window.transformImageData === 'function') {
+            // Fallback: try direct transform even without image index
+            try {
+                console.log(`[ROT-TEST] Fallback: trying direct transform without image index`);
+                window.transformImageData(realImageLabel, 'rotate', -90, 800, 800);
+                done();
+            } catch (error) {
+                console.error('[ROT-TEST] Fallback transform failed:', error);
+                done();
+            }
+        } else {
+            console.error(`[ROT-TEST] Could not find image or rotation functions. Label: ${realImageLabel}, Index: ${imageIndex}, rotateImage: ${typeof window.rotateImage}, transformImageData: ${typeof window.transformImageData}`);
+            done();
+        }
+    });
+}
+
+// Main Test Functions
+
+// Core 90° CCW rotation test
+window.run90DegCCWTest = async function(imageLabel, strokes, rotateFn) {
+    const img = imageLabel;
+    const eps = getEps(img);
+
+    // Precondition checks
+    if (typeof window.toCanvas !== 'function' && typeof window.getCanvasCoords !== 'function') {
+        return { pass: false, reason: 'toCanvas or getCanvasCoords function not available' };
+    }
+
+    // Snapshot pre-rotation state
+    const pre = {};
+    const preOffsets = snapshotCustomOffsets(img);
+    const preStamps = snapshotRotationStamps(img);
+    
+    for (const s of strokes) {
+        pre[s] = labelCanvasPosition(img, s);
+        if (!pre[s]) return { pass: false, reason: `No position for ${s} pre-rotation` };
+    }
+
+    // Execute rotation
+    try {
+        await rotateFn();
+    } catch (error) {
+        return { pass: false, reason: `Rotation failed: ${error.message}` };
+    }
+
+    // Read rotation meta (authoritative)
+    const meta = getRotationMeta(img);
+    if (!meta) return { pass: false, reason: `Missing lastRotationMeta for ${img}` };
+    
+    const { center, delta } = meta;
+    if (Math.abs(delta + Math.PI/2) > 1e-6) {
+        return { pass: false, reason: `delta expected -90deg, got ${(delta*180/Math.PI).toFixed(2)}deg` };
+    }
+
+    // Snapshot post-rotation state and compute expectations
+    const postOffsets = snapshotCustomOffsets(img);
+    const postStamps = snapshotRotationStamps(img);
+    const results = [];
+    
+    for (const s of strokes) {
+        const post = labelCanvasPosition(img, s);
+        if (!post) return { pass: false, reason: `No position for ${s} post-rotation` };
+
+        // Compute expectation: rotate around center reported by transform
+        const vPre = sub(pre[s], center);
+        const vExp = rotateVec(vPre, delta);
+        const exp = add(center, vExp);
+
+        const okPos = approx(post, exp, eps);
+        const okRadius = Math.abs(dist(pre[s], center) - dist(post, center)) <= eps;
+
+        // Check custom offset mutation
+        const offsetMutated = preOffsets[s] && postOffsets[s] && 
+            !approx(preOffsets[s], postOffsets[s], 1e-6);
+
+        // Check stamp advancement
+        const stampAdvanced = preStamps[s] !== undefined && postStamps[s] !== undefined &&
+            Math.abs(normalizeDelta(postStamps[s] - preStamps[s]) - delta) <= 1e-6;
+
+        if (ROT_DEBUG || !(okPos && okRadius)) {
+            console[(okPos && okRadius) ? 'log' : 'error'](
+                `[ROT-TEST] ${s} post=${JSON.stringify(post)} exp=${JSON.stringify(exp)} ` +
+                `radiusPre=${dist(pre[s], center).toFixed(2)} radiusPost=${dist(post, center).toFixed(2)} ` +
+                `offsetMutated=${offsetMutated} stampAdvanced=${stampAdvanced}`
+            );
+        }
+
+        results.push({ 
+            stroke: s, 
+            okPos, 
+            okRadius, 
+            offsetMutated,
+            stampAdvanced,
+            post, 
+            exp,
+            center,
+            eps
+        });
+    }
+
+    const allPass = results.every(r => r.okPos && r.okRadius);
+    
+    // Compact summary unless debug mode
+    if (!ROT_DEBUG && !allPass) {
+        console.error(`[ROT-TEST] FAIL: ${results.filter(r => !r.okPos || !r.okRadius).length}/${results.length} strokes failed position/radius test`);
+    }
+    
+    return { pass: allPass, details: results, center, delta: delta * 180 / Math.PI };
+};
+
+// Four-step cycle test (4 × -90° = 360° = back to start)
+window.runFourStepCycleTest = async function(imageLabel, strokes = ['A1', 'A2', 'A3', 'A4']) {
+    const img = imageLabel;
+    const eps = getEps(img);
+
+    // Snapshot baseline positions
+    const baseline = {};
+    for (const s of strokes) {
+        baseline[s] = labelCanvasPosition(img, s);
+        if (!baseline[s]) return { pass: false, reason: `No baseline position for ${s}` };
+    }
+
+    const results = [];
+    
+    // Perform 4 rotations
+    for (let step = 1; step <= 4; step++) {
+        const result = await window.run90DegCCWTest(img, strokes, () => rotateFn90CCW(img));
+        results.push({ step, result });
+        
+        if (!result.pass) {
+            return { 
+                pass: false, 
+                reason: `Step ${step} failed: ${result.details?.find(d => !d.okPos || !d.okRadius)?.stroke || 'unknown'}`,
+                stepResults: results
+            };
+        }
+    }
+
+    // Check return to baseline
+    const final = {};
+    const baselineErrors = [];
+    
+    for (const s of strokes) {
+        final[s] = labelCanvasPosition(img, s);
+        if (!final[s]) return { pass: false, reason: `No final position for ${s}` };
+        
+        const backToBaseline = approx(final[s], baseline[s], eps);
+        if (!backToBaseline) {
+            baselineErrors.push({
+                stroke: s,
+                baseline: baseline[s],
+                final: final[s],
+                distance: dist(final[s], baseline[s])
+            });
+        }
+    }
+
+    const cycleComplete = baselineErrors.length === 0;
+    
+    if (!ROT_DEBUG && !cycleComplete) {
+        console.error(`[ROT-TEST] CYCLE FAIL: ${baselineErrors.length}/${strokes.length} strokes not back to baseline`);
+        baselineErrors.forEach(err => 
+            console.error(`  ${err.stroke}: off by ${err.distance.toFixed(2)}px`)
+        );
+    }
+
+    return { 
+        pass: cycleComplete, 
+        stepResults: results,
+        baselineErrors,
+        eps
+    };
+};
+
+// Initialize cross baseline pattern for testing
+window.initCrossBaseline = function(imageLabel) {
+    const img = imageLabel;
+    
+    // Ensure we're on the correct image
+    if (window.currentImageLabel !== img) {
+        console.warn(`[ROT-TEST] Switching from ${window.currentImageLabel} to ${img}`);
+        // Note: In a full implementation, we'd switch images here
+    }
+
+    // Clear existing strokes for this image to start fresh
+    if (window.vectorStrokesByImage && window.vectorStrokesByImage[img]) {
+        window.vectorStrokesByImage[img] = {};
+    }
+    if (window.lineStrokesByImage && window.lineStrokesByImage[img]) {
+        window.lineStrokesByImage[img] = [];
+    }
+    if (window.customLabelPositions && window.customLabelPositions[img]) {
+        window.customLabelPositions[img] = {};
+    }
+    if (window.calculatedLabelOffsets && window.calculatedLabelOffsets[img]) {
+        window.calculatedLabelOffsets[img] = {};
+    }
+
+    // Create cross pattern strokes (A1-A4) programmatically
+    const canvas = document.getElementById('canvas');
+    if (!canvas) {
+        throw new Error('Canvas not found');
+    }
+    
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    const armLength = 100; // pixels
+    
+    const strokes = {
+        'A1': { start: { x: centerX, y: centerY }, end: { x: centerX + armLength, y: centerY } }, // Right
+        'A2': { start: { x: centerX, y: centerY }, end: { x: centerX, y: centerY - armLength } }, // Up  
+        'A3': { start: { x: centerX, y: centerY }, end: { x: centerX - armLength, y: centerY } }, // Left
+        'A4': { start: { x: centerX, y: centerY }, end: { x: centerX, y: centerY + armLength } }  // Down
+    };
+
+    // Initialize data structures if needed
+    if (!window.vectorStrokesByImage) window.vectorStrokesByImage = {};
+    if (!window.vectorStrokesByImage[img]) window.vectorStrokesByImage[img] = {};
+    if (!window.lineStrokesByImage) window.lineStrokesByImage = {};
+    if (!window.lineStrokesByImage[img]) window.lineStrokesByImage[img] = [];
+
+    // Create vector data for each stroke
+    Object.entries(strokes).forEach(([label, stroke]) => {
+        window.vectorStrokesByImage[img][label] = {
+            type: 'straight',
+            points: [
+                { x: stroke.start.x, y: stroke.start.y },
+                { x: stroke.end.x, y: stroke.end.y }
+            ],
+            color: '#000000',
+            width: 3
+        };
+        window.lineStrokesByImage[img].push(label);
+    });
+
+    // Update label counter
+    if (window.labelsByImage) {
+        window.labelsByImage[img] = 'A5'; // Next available label
+    }
+
+    // Trigger a redraw to make strokes visible and calculate positions
+    if (typeof window.redrawCanvasWithVisibility === 'function') {
+        window.redrawCanvasWithVisibility();
+    }
+
+    console.log(`[ROT-TEST] Created cross baseline pattern with strokes: ${Object.keys(strokes).join(', ')}`);
+    return { strokes: Object.keys(strokes), center: { x: centerX, y: centerY } };
+};
+
+// Global debug helper to test rotation harness
+window.testRotationHarness = async function(imageLabel = null) {
+    const img = imageLabel || window.currentImageLabel || 'blank_canvas';
+    
+    console.log(`[ROT-TEST] Testing rotation harness for image: ${img}`);
+    
+    // Initialize baseline if needed
+    const baseline = window.initCrossBaseline(img);
+    console.log(`[ROT-TEST] Baseline created:`, baseline);
+    
+    // Wait a frame for rendering
+    await new Promise(resolve => requestAnimationFrame(resolve));
+    
+    // Run single rotation test
+    const singleResult = await window.run90DegCCWTest(
+        img, 
+        baseline.strokes, 
+        () => rotateFn90CCW(img)
+    );
+    
+    console.log(`[ROT-TEST] Single rotation result:`, singleResult);
+    
+    // Run full cycle test
+    const cycleResult = await window.runFourStepCycleTest(img, baseline.strokes);
+    console.log(`[ROT-TEST] Four-step cycle result:`, cycleResult);
+    
+    return { single: singleResult, cycle: cycleResult };
+};
+
+// Synchronization helper to ensure custom positions are stored in both locations
+window.syncCustomLabelPositions = function(imageLabel) {
+    const img = imageLabel || window.currentImageLabel;
+    
+    // Ensure both storage locations exist
+    if (!window.customLabelPositions) window.customLabelPositions = {};
+    if (!window.customLabelPositions[img]) window.customLabelPositions[img] = {};
+    
+    // Sync from local to global (if local variable is accessible)
+    // Note: This function is called from window scope, so we need to find another way to sync
+    console.log(`[SYNC] Custom positions synchronization for ${img} - window storage initialized`);
+};
+
+// Debug function to find where custom positions are stored
+window.debugCustomPositionSources = function(imageLabel) {
+    const img = imageLabel || window.currentImageLabel;
+    console.log(`[DEBUG] ===== Investigating custom position sources for ${img} =====`);
+    
+    // Check window.customLabelPositions
+    console.log(`[DEBUG] window.customLabelPositions:`, window.customLabelPositions);
+    if (window.customLabelPositions) {
+        console.log(`[DEBUG] Keys in window.customLabelPositions:`, Object.keys(window.customLabelPositions));
+        for (const [key, value] of Object.entries(window.customLabelPositions)) {
+            console.log(`[DEBUG] window.customLabelPositions[${key}]:`, value);
+        }
+    }
+    
+    // Check paintApp.state.customLabelPositions
+    if (window.paintApp?.state?.customLabelPositions) {
+        console.log(`[DEBUG] paintApp.state.customLabelPositions:`, window.paintApp.state.customLabelPositions);
+        for (const [key, value] of Object.entries(window.paintApp.state.customLabelPositions)) {
+            console.log(`[DEBUG] paintApp.state.customLabelPositions[${key}]:`, value);
+        }
+    }
+    
+    // Check global variables that might contain custom positions
+    console.log(`[DEBUG] Checking globals for custom position patterns...`);
+    
+    // Check for any variable containing custom position-like data
+    const globalsToCheck = ['customPositions', 'labelPositions', 'strokePositions', 'customOffsets'];
+    globalsToCheck.forEach(name => {
+        if (window[name]) {
+            console.log(`[DEBUG] Found global '${name}':`, window[name]);
+        }
+    });
+    
+    // Force a label calculation to see where the values come from
+    console.log(`[DEBUG] Triggering label calculation to trace sources...`);
+    if (window.redrawCanvas) {
+        window.redrawCanvas();
+    }
+};
+
+// Test function to verify custom label rotation fix
+window.testCustomLabelRotationFix = async function(imageLabel) {
+    const img = imageLabel || window.currentImageLabel || 'blank_canvas';
+    console.log(`[TEST] ===== Testing Custom Label Rotation Fix for ${img} =====`);
+    
+    // Step 1: Create some test strokes with custom positions
+    const baseline = window.initCrossBaseline ? window.initCrossBaseline(img) : null;
+    if (!baseline) {
+        console.log(`[TEST] Creating simple cross pattern for testing...`);
+        // Create a simple cross if initCrossBaseline doesn't exist
+        if (!window.vectorStrokesByImage) window.vectorStrokesByImage = {};
+        if (!window.vectorStrokesByImage[img]) window.vectorStrokesByImage[img] = {};
+        
+        const center = { x: 400, y: 300 };
+        window.vectorStrokesByImage[img] = {
+            'A1': [center, { x: center.x + 100, y: center.y }],        // Right
+            'A2': [center, { x: center.x, y: center.y - 100 }],        // Up
+            'A3': [center, { x: center.x - 100, y: center.y }],        // Left  
+            'A4': [center, { x: center.x, y: center.y + 100 }]         // Down
+        };
+    }
+    
+    // Step 2: Manually set custom positions (simulating user drag)
+    console.log(`[TEST] Setting custom positions to simulate user dragging labels...`);
+    
+    if (!window.customLabelPositions) window.customLabelPositions = {};
+    if (!window.customLabelPositions[img]) window.customLabelPositions[img] = {};
+    
+    // Set custom positions that are offset from stroke endpoints
+    const customOffsets = {
+        'A1': { x: -50, y: 70 },
+        'A2': { x: 45, y: -40 },
+        'A3': { x: -55, y: -145 },
+        'A4': { x: -125, y: -45 }
+    };
+    
+    for (const [label, offset] of Object.entries(customOffsets)) {
+        window.customLabelPositions[img][label] = offset;
+        console.log(`[TEST] Set custom position for ${label}:`, offset);
+    }
+    
+    // Step 3: Force a redraw to apply the custom positions
+    if (window.redrawCanvas) {
+        window.redrawCanvas();
+        await new Promise(resolve => requestAnimationFrame(resolve));
+    }
+    
+    // Step 4: Record positions before rotation
+    console.log(`[TEST] Recording label positions before rotation...`);
+    const beforeRotation = {};
+    for (const label of Object.keys(customOffsets)) {
+        const pos = window.labelCanvasPosition ? window.labelCanvasPosition(img, label) : null;
+        beforeRotation[label] = pos;
+        console.log(`[TEST] Before: ${label} at (${pos?.x?.toFixed(1) || 'N/A'}, ${pos?.y?.toFixed(1) || 'N/A'})`);
+    }
+    
+    // Step 5: Perform one rotation
+    console.log(`[TEST] Performing rotation...`);
+    if (window.rotateImage || window.transformImageData) {
+        try {
+            if (window.rotateImage) {
+                await window.rotateImage();
+            } else {
+                await window.transformImageData(img, 'rotate', -90);
+            }
+            
+            await new Promise(resolve => {
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(resolve);
+                });
+            });
+        } catch (error) {
+            console.error(`[TEST] Rotation failed:`, error);
+            return { success: false, error };
+        }
+    } else {
+        console.error(`[TEST] No rotation function available`);
+        return { success: false, error: 'No rotation function' };
+    }
+    
+    // Step 6: Record positions after rotation
+    console.log(`[TEST] Recording label positions after rotation...`);
+    const afterRotation = {};
+    const results = [];
+    
+    for (const label of Object.keys(customOffsets)) {
+        const pos = window.labelCanvasPosition ? window.labelCanvasPosition(img, label) : null;
+        afterRotation[label] = pos;
+        
+        const before = beforeRotation[label];
+        const after = pos;
+        const moved = before && after ? Math.sqrt(Math.pow(after.x - before.x, 2) + Math.pow(after.y - before.y, 2)) : 0;
+        const rotated = moved > 10; // Consider it rotated if moved more than 10 pixels
+        
+        results.push({
+            label,
+            beforePos: before,
+            afterPos: after,
+            distance: moved,
+            rotated
+        });
+        
+        console.log(`[TEST] After:  ${label} at (${pos?.x?.toFixed(1) || 'N/A'}, ${pos?.y?.toFixed(1) || 'N/A'}) [moved: ${moved.toFixed(1)}px, rotated: ${rotated}]`);
+    }
+    
+    // Step 7: Analyze results
+    const rotatedLabels = results.filter(r => r.rotated);
+    const success = rotatedLabels.length === results.length;
+    
+    console.log(`[TEST] ===== TEST RESULTS =====`);
+    console.log(`[TEST] Labels that rotated: ${rotatedLabels.length}/${results.length}`);
+    console.log(`[TEST] Fix successful: ${success ? 'YES' : 'NO'}`);
+    
+    if (success) {
+        console.log(`[TEST] ✅ SUCCESS: All custom labels rotated with their strokes!`);
+    } else {
+        console.log(`[TEST] ❌ FAILURE: Some labels did not rotate properly`);
+        const failedLabels = results.filter(r => !r.rotated);
+        failedLabels.forEach(result => {
+            console.log(`[TEST] - ${result.label}: only moved ${result.distance.toFixed(1)}px`);
+        });
+    }
+    
+    return {
+        success,
+        rotatedLabels: rotatedLabels.length,
+        totalLabels: results.length,
+        results
+    };
+};
+
+// Direct fix for custom label rotation issue (legacy function)
+window.fixCustomLabelRotation = function(imageLabel) {
+    console.log(`[FIX] Legacy fix function called - running new test instead...`);
+    return window.testCustomLabelRotationFix(imageLabel);
+};
+
+// Create custom label positions test to demonstrate the rotation bug
+window.runCustomLabelRotationTest = async function(imageLabel = 'Image 1') {
+    const img = imageLabel;
+    console.log(`[CUSTOM-ROT-TEST] Starting custom label rotation test for ${img}`);
+    
+    // Initialize the cross pattern
+    const baseline = window.initCrossBaseline(img);
+    console.log(`[CUSTOM-ROT-TEST] Initialized cross pattern:`, baseline);
+    
+    // Now programmatically create custom label positions
+    // This simulates the user dragging labels to custom positions
+    const canvas = document.getElementById('canvas');
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    const customOffset = 50; // pixels away from calculated position
+    
+    // Initialize custom positions if not exists
+    if (!window.customLabelPositions) window.customLabelPositions = {};
+    if (!window.customLabelPositions[img]) window.customLabelPositions[img] = {};
+    
+    // Create custom positions for each label - offset from their calculated positions
+    const customPositions = {
+        'A1': { x: centerX + 120, y: centerY - customOffset }, // Right stroke, label moved up-right
+        'A2': { x: centerX + customOffset, y: centerY - 120 }, // Up stroke, label moved up-right  
+        'A3': { x: centerX - 120, y: centerY + customOffset }, // Left stroke, label moved down-left
+        'A4': { x: centerX - customOffset, y: centerY + 120 }  // Down stroke, label moved down-left
+    };
+    
+    // Set the custom positions
+    for (const [label, pos] of Object.entries(customPositions)) {
+        window.customLabelPositions[img][label] = pos;
+    }
+    
+    console.log(`[CUSTOM-ROT-TEST] Set custom label positions:`, customPositions);
+    
+    // Force redraw to show the custom positions
+    if (window.redrawCanvas) {
+        window.redrawCanvas();
+    }
+    
+    // Wait a moment for the redraw
+    await new Promise(resolve => {
+        requestAnimationFrame(() => {
+            requestAnimationFrame(resolve);
+        });
+    });
+    
+    // Now test the current positions before rotation
+    const beforeRotation = {};
+    for (const label of ['A1', 'A2', 'A3', 'A4']) {
+        const pos = labelCanvasPosition(img, label);
+        beforeRotation[label] = pos;
+        console.log(`[CUSTOM-ROT-TEST] Before rotation - ${label}: (${pos?.x.toFixed(1)}, ${pos?.y.toFixed(1)})`);
+    }
+    
+    // Perform one 90-degree CCW rotation
+    console.log(`[CUSTOM-ROT-TEST] Performing 90-degree CCW rotation...`);
+    await rotateFn90CCW(img);
+    
+    // Wait for rotation to complete
+    await new Promise(resolve => {
+        requestAnimationFrame(() => {
+            requestAnimationFrame(resolve);
+        });
+    });
+    
+    // Check positions after rotation
+    const afterRotation = {};
+    const bugDemonstration = [];
+    
+    for (const label of ['A1', 'A2', 'A3', 'A4']) {
+        const pos = labelCanvasPosition(img, label);
+        afterRotation[label] = pos;
+        
+        const before = beforeRotation[label];
+        const after = pos;
+        
+        if (before && after) {
+            // For custom labels, we expect them to have rotated with their strokes
+            // But the bug is that they DON'T rotate - they stay in their original positions
+            const didMove = dist(before, after) > 1; // 1px tolerance
+            
+            bugDemonstration.push({
+                label,
+                beforePos: before,
+                afterPos: after,
+                moved: didMove,
+                distance: dist(before, after)
+            });
+            
+            console.log(`[CUSTOM-ROT-TEST] After rotation - ${label}: (${after.x.toFixed(1)}, ${after.y.toFixed(1)}) [moved: ${didMove}, distance: ${dist(before, after).toFixed(1)}px]`);
+        }
+    }
+    
+    // Analyze the bug
+    const customLabelsDidNotRotate = bugDemonstration.filter(item => !item.moved);
+    const bugDetected = customLabelsDidNotRotate.length > 0;
+    
+    if (bugDetected) {
+        console.error(`[CUSTOM-ROT-TEST] BUG DETECTED! ${customLabelsDidNotRotate.length}/4 custom labels did not rotate with their strokes:`);
+        customLabelsDidNotRotate.forEach(item => {
+            console.error(`  ${item.label}: stayed at (${item.beforePos.x.toFixed(1)}, ${item.beforePos.y.toFixed(1)}) instead of rotating`);
+        });
+    } else {
+        console.log(`[CUSTOM-ROT-TEST] All custom labels rotated correctly (this would indicate the bug is fixed)`);
+    }
+    
+    return {
+        bugDetected,
+        beforeRotation,
+        afterRotation,
+        customLabelsAffected: customLabelsDidNotRotate,
+        allLabels: bugDemonstration
+    };
+};
 

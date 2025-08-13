@@ -84,6 +84,158 @@ document.addEventListener('DOMContentLoaded', () => {
     // Global variable to store project data across async operations
     window.loadedProjectDataGlobal = null;
     
+    // PERFORMANCE FIX: Global guards and utilities to prevent loading loops
+    window.isLoadingProject = window.isLoadingProject || false;
+    window.isSyncingLegacy = window.isSyncingLegacy || false;
+    window.pendingLegacySync = window.pendingLegacySync || false;
+    window.lastLegacySyncHash = window.lastLegacySyncHash || '';
+    window.legacySyncTimer = window.legacySyncTimer || null;
+    
+    // Utility functions for migration and stability
+    function normalizeFurnitureTag(tag) {
+        if (Array.isArray(tag)) return tag[0] || '';
+        if (typeof tag === 'string') return tag;
+        return '';
+    }
+    
+    function ensureStrokeMapsForImage(obj, imageLabel, strokeIds) {
+        obj[imageLabel] = obj[imageLabel] || {};
+        for (const id of strokeIds) {
+            if (typeof obj[imageLabel][id] !== 'boolean') obj[imageLabel][id] = true;
+        }
+    }
+    
+    function buildDefaultFolderStructure(imageLabels, imageOrder) {
+        const ordered = (imageOrder && imageOrder.length) ? imageOrder : imageLabels;
+        return {
+            root: {
+                id: 'root',
+                name: 'Root',
+                type: 'folder',
+                parentId: null,
+                children: ordered.map(l => ({
+                    id: l,
+                    name: l,
+                    type: 'image',
+                    parentId: 'root',
+                    children: []
+                }))
+            }
+        };
+    }
+    
+    function migrateProject(project) {
+        console.log('[Migration] Starting project migration...');
+        const migrated = JSON.parse(JSON.stringify(project));
+        
+        // 1) Normalize imageTags.furnitureType to string (fixes mixed array/string issue)
+        if (!migrated.imageTags) migrated.imageTags = {};
+        for (const img of Object.keys(migrated.imageTags)) {
+            const ft = migrated.imageTags[img]?.furnitureType;
+            if (ft !== undefined) {
+                migrated.imageTags[img].furnitureType = normalizeFurnitureTag(ft);
+            }
+        }
+        
+        // 2) Ensure scales/positions for every imageLabel
+        migrated.imageScales = migrated.imageScales || {};
+        migrated.imagePositions = migrated.imagePositions || {};
+        for (const label of migrated.imageLabels || []) {
+            if (!migrated.imageScales[label] && migrated.imageScales[label] !== 0) {
+                migrated.imageScales[label] = 1.0;
+            }
+            if (!migrated.imagePositions[label]) {
+                migrated.imagePositions[label] = { x: 0, y: 0 };
+            }
+        }
+        
+        // 3) Ensure strokeVisibility and strokeLabelVisibility contain booleans for all strokes
+        migrated.strokeVisibility = migrated.strokeVisibility || {};
+        migrated.strokeLabelVisibility = migrated.strokeLabelVisibility || {};
+        for (const img of Object.keys(migrated.strokes || {})) {
+            const strokeIds = Object.keys(migrated.strokes[img] || {});
+            ensureStrokeMapsForImage(migrated.strokeVisibility, img, strokeIds);
+            ensureStrokeMapsForImage(migrated.strokeLabelVisibility, img, strokeIds);
+        }
+        
+        // 4) CRITICAL FIX: Ensure folderStructure includes all images (prevents legacy gallery loops)
+        const children = migrated.folderStructure?.root?.children || [];
+        const knownIds = new Set(children.map(c => c.id));
+        const needBuild = !migrated.folderStructure || !migrated.folderStructure.root || children.length === 0;
+        
+        if (needBuild) {
+            console.log('[Migration] Building missing folderStructure from imageLabels');
+            migrated.folderStructure = buildDefaultFolderStructure(
+                migrated.imageLabels || [],
+                migrated.imageOrder || []
+            );
+        } else {
+            // Append any missing labels into folder root
+            const root = migrated.folderStructure.root;
+            for (const l of migrated.imageLabels || []) {
+                if (!knownIds.has(l)) {
+                    console.log(`[Migration] Adding missing image ${l} to folderStructure`);
+                    root.children.push({ id: l, name: l, type: 'image', parentId: 'root', children: [] });
+                }
+            }
+        }
+        
+        // 5) Bump version to prevent re-migration
+        migrated.version = '2.0';
+        migrated.migrated = true;
+        
+        console.log('[Migration] Project migration completed');
+        return migrated;
+    }
+    
+    // Debounced legacy sync (replaces interval-based loops)
+    function stableGalleryHash(images, folderStructure) {
+        const ids = [];
+        if (folderStructure?.root?.children) {
+            for (const c of folderStructure.root.children) {
+                if (c?.type === 'image') ids.push(c.id);
+            }
+        }
+        ids.sort();
+        return ids.join('|');
+    }
+    
+    function debounce(fn, wait) {
+        let timeout;
+        return function(...args) {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => fn.apply(this, args), wait);
+        };
+    }
+    
+    const scheduleLegacySync = debounce(async function syncLegacyOnce() {
+        if (window.isLoadingProject) return;
+        if (window.isSyncingLegacy) { 
+            window.pendingLegacySync = true; 
+            return; 
+        }
+        
+        window.isSyncingLegacy = true;
+        try {
+            const hash = stableGalleryHash(window.originalImages, window.folderStructure);
+            if (hash === window.lastLegacySyncHash) {
+                console.log('[Legacy Sync] Hash unchanged, skipping sync');
+                return;
+            }
+            window.lastLegacySyncHash = hash;
+            
+            console.log('[Legacy Sync] Processing gallery changes...');
+            // Add minimal, idempotent sync logic here if needed
+            
+        } finally {
+            window.isSyncingLegacy = false;
+            if (window.pendingLegacySync) {
+                window.pendingLegacySync = false;
+                queueMicrotask(() => scheduleLegacySync());
+            }
+        }
+    }, 400);
+    
     // Function to save project as ZIP file
     function saveProject() {
         try {
@@ -252,6 +404,22 @@ document.addEventListener('DOMContentLoaded', () => {
 //                     console.log(`[Save Project] No tags found for ${label}, using empty object`);
                     projectData.imageTags[label] = {};
                 }
+            }
+            
+            // Add custom label positions and rotation stamps after the main loop
+            if (!projectData.customLabelPositions) projectData.customLabelPositions = {};
+            if (!projectData.customLabelRotationStamps) projectData.customLabelRotationStamps = {};
+            
+            for (const label of actualImageLabels) {
+                projectData.customLabelPositions[label] =
+                    (window.customLabelPositions && window.customLabelPositions[label])
+                        ? JSON.parse(JSON.stringify(window.customLabelPositions[label]))
+                        : {};
+
+                projectData.customLabelRotationStamps[label] =
+                    (window.customLabelOffsetsRotationByImageAndStroke && window.customLabelOffsetsRotationByImageAndStroke[label])
+                        ? JSON.parse(JSON.stringify(window.customLabelOffsetsRotationByImageAndStroke[label]))
+                        : {};
             }
             
             // Add image order for sidebar persistence
@@ -444,7 +612,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         return projectJsonFile.async("string")
                             .then(jsonContent => {
 //                                 console.log("Project data loaded:", jsonContent.substring(0, 100) + "...");
-                                const parsedProjectData = JSON.parse(jsonContent);
+                                const rawProjectData = JSON.parse(jsonContent);
+                                
+                                // PERFORMANCE FIX: Apply migration to prevent repeated processing
+                                const parsedProjectData = migrateProject(rawProjectData);
                                 
                                 document.getElementById('projectName').value = parsedProjectData.name || 'OpenPaint Project';
                                 const imageList = document.getElementById('imageList');
@@ -461,6 +632,12 @@ document.addEventListener('DOMContentLoaded', () => {
                                 window.originalImages = {};
                                 window.originalImageDimensions = {};
                                 window.imageTags = {};
+
+                                // PERFORMANCE FIX: Clear any legacy sync timers during load
+                                if (window.legacySyncTimer) {
+                                    clearInterval(window.legacySyncTimer);
+                                    window.legacySyncTimer = null;
+                                }
 
                                 if (parsedProjectData.folderStructure) {
                                     window.folderStructure = JSON.parse(JSON.stringify(parsedProjectData.folderStructure));
@@ -502,14 +679,10 @@ document.addEventListener('DOMContentLoaded', () => {
                                     if (imageFiles.length > 0) {
                                         const imageFile = imageFiles[0];
                                         const promise = zip.file(imageFile).async("blob")
-                                            .then(blob => new Promise((resolve, reject) => {
-                                                    const reader = new FileReader();
-                                                    reader.onload = e => resolve(e.target.result);
-                                                    reader.onerror = reject;
-                                                    reader.readAsDataURL(blob);
-                                            }))
-                                            .then(dataUrl => {
-                                                window.originalImages[label] = dataUrl;
+                                            .then(blob => {
+                                                // PERFORMANCE FIX: Use object URL instead of data URL (faster, no base64 encoding)
+                                                const objectUrl = URL.createObjectURL(blob);
+                                                window.originalImages[label] = objectUrl;
                                                 return new Promise((resolveDim) => {
                                                     const img = new Image();
                                                     img.onload = () => {
@@ -520,7 +693,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                                         window.originalImageDimensions[label] = { width: 0, height: 0 };
                                                         resolveDim();
                                                     };
-                                                    img.src = dataUrl;
+                                                    img.src = objectUrl;
                                                 });
                                             })
                                             .then(() => { // After image and dimensions are loaded for this label
@@ -541,6 +714,28 @@ document.addEventListener('DOMContentLoaded', () => {
                                                 if (parsedProjectData.imagePositions && parsedProjectData.imagePositions[label]) window.imagePositionByLabel[label] = parsedProjectData.imagePositions[label]; else window.imagePositionByLabel[label] = { x: 0, y: 0 };
                                                 if (parsedProjectData.strokeSequence && parsedProjectData.strokeSequence[label]) window.lineStrokesByImage[label] = Array.isArray(parsedProjectData.strokeSequence[label]) ? parsedProjectData.strokeSequence[label].slice() : []; else window.lineStrokesByImage[label] = [];
                                                 if (parsedProjectData.nextLabels && parsedProjectData.nextLabels[label]) window.labelsByImage[label] = parsedProjectData.nextLabels[label]; else window.labelsByImage[label] = 'A1';
+                                                
+                                                // Restore custom label positions and rotation stamps
+                                                if (!window.customLabelPositions) window.customLabelPositions = {};
+                                                if (!window.customLabelOffsetsRotationByImageAndStroke) window.customLabelOffsetsRotationByImageAndStroke = {};
+
+                                                window.customLabelPositions[label] =
+                                                    (parsedProjectData.customLabelPositions && parsedProjectData.customLabelPositions[label])
+                                                        ? JSON.parse(JSON.stringify(parsedProjectData.customLabelPositions[label]))
+                                                        : {};
+
+                                                window.customLabelOffsetsRotationByImageAndStroke[label] =
+                                                    (parsedProjectData.customLabelRotationStamps && parsedProjectData.customLabelRotationStamps[label])
+                                                        ? JSON.parse(JSON.stringify(parsedProjectData.customLabelRotationStamps[label]))
+                                                        : {};
+
+                                                // Legacy: if a custom offset exists without a stamp, stamp it to current rotation without rotating
+                                                const curTheta = window.imageRotationByLabel && window.imageRotationByLabel[label] ? window.imageRotationByLabel[label] : 0;
+                                                Object.keys(window.customLabelPositions[label]).forEach(stroke => {
+                                                    if (window.customLabelOffsetsRotationByImageAndStroke[label][stroke] === undefined) {
+                                                        window.customLabelOffsetsRotationByImageAndStroke[label][stroke] = curTheta;
+                                                    }
+                                                });
                                             })
                                             .catch(err => console.error(`Error processing data for label ${label}:`, err)); // Catch per-image errors
                                         imagePromises.push(promise);
@@ -598,43 +793,38 @@ document.addEventListener('DOMContentLoaded', () => {
                                                 window.redrawCanvasWithVisibility();
                                             }
                                             
+                                            // PERFORMANCE FIX: Start debounced sync instead of interval
+                                            queueMicrotask(() => scheduleLegacySync());
+                                            
                                             // Final delayed actions timeout
                                             setTimeout((dataForFinalSteps) => { 
 //                                                 console.log('[Load Project] Final Delayed Actions Timeout. ImageLabels:', dataForFinalSteps.imageLabels);
                                                 
-                                                // MODIFIED: Implement retry mechanism for tag display updates
-                                                let attempts = 0;
-                                                const maxAttempts = 20; // Try for up to 2 seconds (20 * 100ms)
-                                                function attemptTagRefresh() {
+                                                // PERFORMANCE FIX: Non-blocking finalization with deferred tag refresh
+                                                const labelsForTagRefresh = Array.isArray(dataForFinalSteps.imageLabels) ? dataForFinalSteps.imageLabels.slice() : [];
+                                                finalizeLoadProcess(dataForFinalSteps);
+
+                                                // Non-blocking tag refresh - runs after load completes
+                                                (function tryTagRefresh(attempts = 0) {
                                                     if (typeof window.updateTagsDisplay === 'function' && typeof window.getTagBasedFilename === 'function') {
-//                                                         console.log('[Load Project] Tag manager functions are now available. Refreshing sidebar tag displays...');
-                                                        if (dataForFinalSteps.imageLabels) {
-                                                            dataForFinalSteps.imageLabels.forEach(label => {
-                                                                if (window.imageTags[label]) { 
-//                                                                     console.log(`  Refreshing tags for ${label} (attempt ${attempts + 1})`);
-                                                                    window.updateTagsDisplay(label);
-                                                                } else { 
-                                                                    console.warn(`  No tags found in window.imageTags for ${label} during final sidebar refresh.`);
+//                                                         console.log('[Load Project] Tag manager functions available, refreshing tags...');
+                                                        labelsForTagRefresh.forEach(label => {
+                                                            if (window.imageTags[label]) {
+                                                                try { 
+                                                                    window.updateTagsDisplay(label); 
+                                                                } catch (e) {
+                                                                    console.warn(`[Load Project] Error refreshing tags for ${label}:`, e);
                                                                 }
-                                                            });
-                                                        } else {
-                                                            console.warn('[Load Project] No image labels in final project data for tag refresh.');
-                                                        }
-                                                        // Proceed with the rest of the finalization after successful tag refresh
-                                                        finalizeLoadProcess(dataForFinalSteps);
-                                            } else {
-                                                        attempts++;
-                                                        if (attempts < maxAttempts) {
-                                                            console.warn(`[Load Project] Tag manager functions (updateTagsDisplay, getTagBasedFilename) not yet available. Retrying in 100ms... (Attempt ${attempts}/${maxAttempts})`);
-                                                            setTimeout(attemptTagRefresh, 100);
-                                                        } else {
-                                                            console.error('[Load Project] Max attempts reached. Tag manager functions did not become available. Tags may not display correctly.');
-                                                            // Proceed anyway, but tags might be missing/incorrect
-                                                            finalizeLoadProcess(dataForFinalSteps);
-                                                        }
+                                                            }
+                                                        });
+                                                    } else if (attempts < 20) {
+                                                        setTimeout(() => tryTagRefresh(attempts + 1), 100);
+                                                    } else {
+                                                        console.warn('[Load Project] Tag manager functions unavailable after retries; skipping tag refresh.');
+                                                        // Let tag-manager run a catch-up when it initializes
+                                                        window.__pendingTagRefresh = labelsForTagRefresh;
                                                     }
-                                                }
-                                                attemptTagRefresh(); // Start the attempt
+                                                })();
 
                                             }, 100, activeProjectData); // Pass activeProjectData (which is parsedProjectData)
                                         }, 200, parsedProjectData); // Pass parsedProjectData to the main UI timeout

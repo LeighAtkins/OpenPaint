@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Custom Label Rotation Fix</title>
+    <script>
+        async function runFixTest() {
+            console.log("=== Starting Fix Test ===");
+            
+            if (!window.testCustomLabelRotationFix) {
+                console.error("Test function not found. OpenPaint may not be loaded yet.");
+                setTimeout(runFixTest, 2000);
+                return;
+            }
+            
+            try {
+                const result = await window.testCustomLabelRotationFix('blank_canvas');
+                
+                console.log("\n=== FINAL RESULTS ===");
+                if (result.success) {
+                    console.log("✅ SUCCESS: Custom label rotation fix is working!");
+                    console.log(`All ${result.totalLabels} labels rotated correctly.`);
+                } else {
+                    console.log("❌ FAILURE: Fix needs more work");
+                    console.log(`Only ${result.rotatedLabels}/${result.totalLabels} labels rotated correctly.`);
+                }
+                
+                return result;
+            } catch (error) {
+                console.error("Test failed with error:", error);
+                return null;
+            }
+        }
+        
+        // Auto-run when page loads
+        window.addEventListener('load', () => {
+            console.log("Page loaded, waiting for OpenPaint...");
+            setTimeout(runFixTest, 3000);
+        });
+    </script>
+</head>
+<body>
+    <h1>Test Custom Label Rotation Fix</h1>
+    <p>This page tests if the custom label rotation fix is working.</p>
+    <p><strong>Open the browser console to see test results.</strong></p>
+    
+    <!-- Embed the OpenPaint application -->
+    <iframe src="index.html" width="100%" height="600" style="border: 1px solid #ccc;"></iframe>
+    
+    <button onclick="runFixTest()">Run Test Manually</button>
+    
+    <div id="instructions" style="margin-top: 20px; padding: 15px; background-color: #f0f8ff; border-radius: 5px;">
+        <h3>Test Instructions:</h3>
+        <ol>
+            <li>The test will automatically run when the page loads</li>
+            <li>Check the browser console for detailed output</li>
+            <li>The test creates custom label positions and then rotates the image</li>
+            <li>If the fix is working, all labels should rotate with their strokes</li>
+            <li>You can also run the test manually by clicking the button above</li>
+        </ol>
+        
+        <h3>Expected Behavior (Fix Working):</h3>
+        <ul>
+            <li>Console shows: "✅ SUCCESS: All custom labels rotated with their strokes!"</li>
+            <li>All labels should move significantly (>10px) during rotation</li>
+        </ul>
+        
+        <h3>Bug Behavior (Fix Not Working):</h3>
+        <ul>
+            <li>Console shows: "❌ FAILURE: Some labels did not rotate properly"</li>
+            <li>Labels stay in the same position or move very little during rotation</li>
+        </ul>
+    </div>
+</body>
+</html>
