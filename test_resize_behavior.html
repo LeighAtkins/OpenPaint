@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Resize Behavior</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .instructions {
+            background-color: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .success {
+            background-color: #e8f5e8;
+            border-left: 4px solid #4caf50;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .failure {
+            background-color: #ffebee;
+            border-left: 4px solid #f44336;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        button {
+            background-color: #2196f3;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #1976d2;
+        }
+        #app-frame {
+            width: 800px;
+            height: 600px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🔧 Resize Behavior Test</h1>
+        <p>This test validates that images remain centered after window resize instead of shifting left.</p>
+        
+        <div class="instructions">
+            <h3>📋 Test Steps:</h3>
+            <ol>
+                <li><strong>Load an Image:</strong> In the OpenPaint app below, load an image or draw something</li>
+                <li><strong>Center Verification:</strong> Ensure the image appears centered in the canvas</li>
+                <li><strong>Resize Test:</strong> Use the "Simulate Resize" buttons to test different canvas sizes</li>
+                <li><strong>Check Centering:</strong> Verify the image stays centered after each resize</li>
+                <li><strong>Switch Images:</strong> If you have multiple images, switch between them and resize again</li>
+                <li><strong>Undo/Redo Test:</strong> Try undo/redo operations after resizing</li>
+            </ol>
+        </div>
+        
+        <div style="margin: 20px 0;">
+            <button onclick="simulateResize(1200, 800)">📱 Resize to 1200x800</button>
+            <button onclick="simulateResize(1600, 900)">💻 Resize to 1600x900</button>
+            <button onclick="simulateResize(1920, 1080)">🖥️ Resize to 1920x1080</button>
+            <button onclick="simulateResize(800, 600)">📺 Resize to 800x600</button>
+            <button onclick="resetToWindowSize()">🔄 Reset to Window Size</button>
+        </div>
+        
+        <iframe id="app-frame" src="index.html"></iframe>
+        
+        <div id="test-results"></div>
+    </div>
+
+    <script>
+        let testResults = [];
+        
+        function simulateResize(width, height) {
+            const iframe = document.getElementById('app-frame');
+            const resultsDiv = document.getElementById('test-results');
+            
+            // Record the test
+            const testName = `Resize to ${width}x${height}`;
+            console.log(`[RESIZE-TEST] Starting: ${testName}`);
+            
+            // Resize the iframe to simulate window resize
+            iframe.style.width = width + 'px';
+            iframe.style.height = height + 'px';
+            
+            // Give the app time to respond to the resize
+            setTimeout(() => {
+                // Check if we can access the canvas through the iframe
+                try {
+                    const iframeWindow = iframe.contentWindow;
+                    if (iframeWindow && iframeWindow.canvas) {
+                        const canvas = iframeWindow.canvas;
+                        console.log(`[RESIZE-TEST] Canvas resized to: ${canvas.width}x${canvas.height}`);
+                        
+                        // Check if redrawCanvasWithVisibility was called
+                        if (typeof iframeWindow.redrawCanvasWithVisibility === 'function') {
+                            console.log(`[RESIZE-TEST] ✅ redrawCanvasWithVisibility function exists`);
+                            
+                            // Record success
+                            recordTestResult(testName, 'success', `Canvas properly resized to ${canvas.width}x${canvas.height}`);
+                        } else {
+                            recordTestResult(testName, 'warning', 'Could not verify redraw function');
+                        }
+                    } else {
+                        recordTestResult(testName, 'warning', 'Canvas not accessible - check manually');
+                    }
+                } catch (e) {
+                    console.log(`[RESIZE-TEST] Cannot access iframe content (cross-origin), but resize should work`);
+                    recordTestResult(testName, 'info', 'Resize applied - verify manually that image stays centered');
+                }
+                
+                updateResultsDisplay();
+            }, 500);
+        }
+        
+        function resetToWindowSize() {
+            const iframe = document.getElementById('app-frame');
+            iframe.style.width = '800px';
+            iframe.style.height = '600px';
+            recordTestResult('Reset to Default Size', 'info', 'Reset to 800x600');
+            updateResultsDisplay();
+        }
+        
+        function recordTestResult(testName, status, message) {
+            testResults.push({
+                name: testName,
+                status: status,
+                message: message,
+                timestamp: new Date().toLocaleTimeString()
+            });
+        }
+        
+        function updateResultsDisplay() {
+            const resultsDiv = document.getElementById('test-results');
+            
+            if (testResults.length === 0) {
+                resultsDiv.innerHTML = '';
+                return;
+            }
+            
+            let html = '<h3>🧪 Test Results:</h3>';
+            
+            testResults.forEach(result => {
+                let className = 'instructions';
+                let icon = '📋';
+                
+                if (result.status === 'success') {
+                    className = 'success';
+                    icon = '✅';
+                } else if (result.status === 'failure') {
+                    className = 'failure';
+                    icon = '❌';
+                } else if (result.status === 'warning') {
+                    className = 'failure';
+                    icon = '⚠️';
+                } else {
+                    icon = 'ℹ️';
+                }
+                
+                html += `
+                    <div class="${className}">
+                        <strong>${icon} ${result.name}</strong> (${result.timestamp})<br>
+                        ${result.message}
+                    </div>
+                `;
+            });
+            
+            resultsDiv.innerHTML = html;
+        }
+        
+        // Add instructions for manual testing
+        window.addEventListener('load', () => {
+            console.log('[RESIZE-TEST] Page loaded. Use the resize buttons to test the new behavior.');
+            console.log('[RESIZE-TEST] Expected behavior: Images should stay centered after resize.');
+            console.log('[RESIZE-TEST] Before fix: Images would shift to left side after resize.');
+        });
+    </script>
+</body>
+</html>

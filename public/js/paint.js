@@ -147,6 +147,20 @@ let arrowSettings = window.paintApp.uiState.arrowSettings;
 let dashSettings = window.paintApp.uiState.dashSettings;
 let dashOffset = window.paintApp.uiState.dashOffset;
 let draggingAnchor = window.paintApp.uiState.draggingAnchor;
+
+// PERFORMANCE OPTIMIZATIONS: Cache variables and functions
+let mouseMoveThrottled = false;
+let cachedControlPoints = new Map(); // Cache for transformed control point coordinates
+let cachedLabelPositions = new Map(); // Cache for transformed label positions
+let cacheInvalidated = true; // Flag to track when cache needs updating
+
+// PERFORMANCE: Cache invalidation helper - call when view changes (pan/zoom) or strokes change
+function invalidateInteractiveElementCache() {
+    cacheInvalidated = true;
+    cachedControlPoints.clear();
+    cachedLabelPositions.clear();
+//         console.log('[PERF] Interactive element cache invalidated');
+}
 let dragCurveStroke = window.paintApp.uiState.dragCurveStroke;
 let dragAnchorIndex = window.paintApp.uiState.dragAnchorIndex;
 const ANCHOR_SIZE = window.paintApp.config.ANCHOR_SIZE;
@@ -857,6 +871,11 @@ if (colorPicker) {
 
     function restoreCanvasState(state) {
         if (!state) return;
+        // If the saved bitmap doesn't match the current canvas size, re-render instead of anchoring at (0,0)
+        if (state.width !== canvas.width || state.height !== canvas.height) {
+            redrawCanvasWithVisibility();
+            return;
+        }
         ctx.putImageData(state, 0, 0);
     }
     
@@ -4920,8 +4939,14 @@ if (colorPicker) {
         // PERFORMANCE: Invalidate interactive element cache before redraw
         invalidateInteractiveElementCache();
         
-        // Clear performance cache for new render cycle
-        ARROW_PERFORMANCE_CACHE.clearCache();
+        // Clear performance cache for new render cycle (if available)
+        try {
+            if (ARROW_PERFORMANCE_CACHE && ARROW_PERFORMANCE_CACHE.clearCache) {
+                ARROW_PERFORMANCE_CACHE.clearCache();
+            }
+        } catch (e) {
+            // ARROW_PERFORMANCE_CACHE not yet initialized, skip for now
+        }
         
         // ADDED: Ensure originalImageDimensions exists and has an entry for this label
         if (!window.originalImageDimensions) {
@@ -6858,68 +6883,30 @@ if (colorPicker) {
 
     // Set canvas size
     function resizeCanvas() {
-        // Fullscreen canvas - use entire viewport
-        const maxWidth = window.innerWidth;
-        const maxHeight = window.innerHeight;
-        
-        // Save current state before resizing
-        const oldState = imageStates[currentImageLabel];
-        
-        // Resize the canvas
-        canvas.width = maxWidth;
-        canvas.height = maxHeight;
-        
+        // Prefer the canvas container's client size
+        const parent = canvas.parentElement;
+        const rect = parent ? parent.getBoundingClientRect() : null;
+        const targetWidth = rect ? Math.max(1, Math.floor(rect.width)) : window.innerWidth;
+        const targetHeight = rect ? Math.max(1, Math.floor(rect.height)) : window.innerHeight;
+
+        console.log(`[resizeCanvas] Container: ${rect ? `${rect.width}x${rect.height}` : 'none'}, Target: ${targetWidth}x${targetHeight}, Window: ${window.innerWidth}x${window.innerHeight}`);
+
+        // Resize the canvas to match the container
+        canvas.width = targetWidth;
+        canvas.height = targetHeight;
+
         // Set default canvas styles
         canvas.style.cursor = 'crosshair';
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
-        
-        // Restore the image after resizing
-        if (oldState) {
-            // Try to restore from saved state first
-            try {
-                restoreCanvasState(oldState);
-                currentStroke = cloneImageData(oldState);
-            } catch (e) {
-                // If that fails, redraw from original image
-                if (window.originalImages[currentImageLabel]) {
-                    const img = new Image();
-                    img.onload = () => {
-                        // Clear the canvas first
-                        ctx.clearRect(0, 0, canvas.width, canvas.height);
-                        
-                        // Get the current scale
-                        const scale = window.imageScaleByLabel[currentImageLabel];
-                        const scaledWidth = img.width * scale;
-                        const scaledHeight = img.height * scale;
-                        
-                        // Calculate base position (center of canvas)
-                        const centerX = (canvas.width - scaledWidth) / 2;
-                        const centerY = (canvas.height - scaledHeight) / 2;
-                        
-                        // Apply position offset
-                        const offsetX = imagePositionByLabel[currentImageLabel].x;
-                        const offsetY = imagePositionByLabel[currentImageLabel].y;
-                        
-                        // Calculate final position
-                        const x = centerX + offsetX;
-                        const y = centerY + offsetY;
-                        
-                        // Draw the original image with scale and position
-                        ctx.drawImage(img, x, y, scaledWidth, scaledHeight);
-                        
-                        // Save this as the new state
-                        const newState = getCanvasState();
-                        imageStates[currentImageLabel] = cloneImageData(newState);
-                        currentStroke = cloneImageData(newState);
-                    };
-                    img.src = window.originalImages[currentImageLabel];
-                } else if (!currentStroke) {
-                    // Initialize blank state if needed
-                    currentStroke = getCanvasState();
-                }
-            }
-        }
+
+        // Re-render using current scale/position so image stays centered within the canvas
+        redrawCanvasWithVisibility();
+
+        // Update snapshot to match new canvas size/state
+        const newState = getCanvasState();
+        imageStates[currentImageLabel] = cloneImageData(newState);
+        currentStroke = cloneImageData(newState);
     }
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
@@ -8356,55 +8343,87 @@ if (colorPicker) {
             console.warn('No image dimensions available for fit calculation');
             return { scale: 1.0, position: { x: 0, y: 0 } };
         }
-        
-        const canvasWidth = canvas.width;
-        const canvasHeight = canvas.height;
+
+        // Canvas client rect (CSS px) and pixel ratio for conversions
+        const canvasRect = canvas.getBoundingClientRect ? canvas.getBoundingClientRect() : null;
+        const scalePx = canvasRect ? (canvas.width / canvasRect.width) : 1;
+
+        // Start with canvas dimensions
+        let effectiveWidth = canvasRect ? canvasRect.width : canvas.width;
+        let effectiveHeight = canvasRect ? canvasRect.height : canvas.height;
+
+        // If a capture frame exists and intersects the canvas, use its dimensions and center
+        let offsetXCanvas = 0;
+        let offsetYCanvas = 0;
+        const captureEl = document.getElementById('captureFrame');
+        if (captureEl && canvasRect) {
+            const frameRect = captureEl.getBoundingClientRect();
+            const left = Math.max(frameRect.left, canvasRect.left);
+            const top = Math.max(frameRect.top, canvasRect.top);
+            const right = Math.min(frameRect.right, canvasRect.right);
+            const bottom = Math.min(frameRect.bottom, canvasRect.bottom);
+            const cssWidth = Math.max(0, right - left);
+            const cssHeight = Math.max(0, bottom - top);
+
+            if (cssWidth > 0 && cssHeight > 0) {
+                // Use frame as the target fitting area
+                effectiveWidth = cssWidth;
+                effectiveHeight = cssHeight;
+
+                // Compute frame center in canvas pixel units for centering offsets
+                const frameCenterCssX = (left + right) / 2 - canvasRect.left;
+                const frameCenterCssY = (top + bottom) / 2 - canvasRect.top;
+                const frameCenterCanvasX = frameCenterCssX * scalePx;
+                const frameCenterCanvasY = frameCenterCssY * scalePx;
+
+                // Offsets so that image center aligns with frame center
+                offsetXCanvas = frameCenterCanvasX - (canvas.width / 2);
+                offsetYCanvas = frameCenterCanvasY - (canvas.height / 2);
+
+                console.log(`[calculateFitScale] Using capture frame: ${cssWidth}x${cssHeight}, offsets(canvas px)=(${offsetXCanvas.toFixed(1)}, ${offsetYCanvas.toFixed(1)})`);
+            }
+        }
+
+        console.log(`[calculateFitScale] Target area: ${effectiveWidth}x${effectiveHeight}`);
+
         const imageWidth = imageDimensions.width;
         const imageHeight = imageDimensions.height;
-        
+
         let scale = 1.0;
         let position = { x: 0, y: 0 };
-        
+
         switch (fitMode) {
             case 'fit-width':
-                scale = canvasWidth / imageWidth;
-                // Center horizontally (no offset from auto-calculated center)
-                position.x = 0;
-                // Center vertically (no offset from auto-calculated center)  
-                position.y = 0;
+                scale = effectiveWidth / imageWidth;
+                position.x = offsetXCanvas;
+                position.y = offsetYCanvas;
                 break;
-                
+
             case 'fit-height':
-                scale = canvasHeight / imageHeight;
-                // Center horizontally (no offset from auto-calculated center)
-                position.x = 0;
-                // Center vertically (no offset from auto-calculated center)
-                position.y = 0;
-                console.log(`Fit-height: canvas=${canvasWidth}x${canvasHeight}, image=${imageWidth}x${imageHeight}, scale=${scale.toFixed(2)}, position=(${position.x.toFixed(1)}, ${position.y.toFixed(1)})`);
+                scale = effectiveHeight / imageHeight;
+                position.x = offsetXCanvas;
+                position.y = offsetYCanvas;
                 break;
-                
+
             case 'fit-canvas':
-                scale = Math.min(canvasWidth / imageWidth, canvasHeight / imageHeight);
-                // Center both directions (no offset from auto-calculated center)
-                position.x = 0;
-                position.y = 0;
+                scale = Math.min(effectiveWidth / imageWidth, effectiveHeight / imageHeight);
+                position.x = offsetXCanvas;
+                position.y = offsetYCanvas;
                 break;
-                
+
             case 'actual-size':
                 scale = 1.0;
-                // Center the image (no offset from auto-calculated center)
-                position.x = 0;
-                position.y = 0;
+                position.x = offsetXCanvas;
+                position.y = offsetYCanvas;
                 break;
-                
+
             default:
-                // 'none' or manual - keep current settings
                 return {
                     scale: window.imageScaleByLabel[currentImageLabel] || 1.0,
                     position: window.imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 }
                 };
         }
-        
+
         return { scale, position };
     }
     
@@ -8489,19 +8508,7 @@ if (colorPicker) {
         }
     });
 
-    // PERFORMANCE OPTIMIZATIONS: Add caching and throttling variables
-    let mouseMoveThrottled = false;
-    let cachedControlPoints = new Map(); // Cache for transformed control point coordinates
-    let cachedLabelPositions = new Map(); // Cache for transformed label positions
-    let cacheInvalidated = true; // Flag to track when cache needs updating
-
-    // PERFORMANCE: Cache invalidation helper - call when view changes (pan/zoom) or strokes change
-    function invalidateInteractiveElementCache() {
-        cacheInvalidated = true;
-        cachedControlPoints.clear();
-        cachedLabelPositions.clear();
-//         console.log('[PERF] Interactive element cache invalidated');
-    }
+    // PERFORMANCE OPTIMIZATIONS: Cache variables moved to top of file for early initialization
 
     // PERFORMANCE: Optimized throttled mousemove handler
     function handleMouseMoveThrottled(x, y) {
@@ -9954,6 +9961,8 @@ if (colorPicker) {
         if (!window.isLoadingProject) {
         const currentStrokes = [...(lineStrokesByImage[currentImageLabel] || [])];
         const currentState = getCanvasState();
+        // Ensure per-image undo stack exists
+        if (!undoStackByImage[currentImageLabel]) undoStackByImage[currentImageLabel] = [];
         undoStackByImage[currentImageLabel].push({
             state: cloneImageData(currentState),
             type: 'snapshot',
@@ -10469,6 +10478,9 @@ if (colorPicker) {
                             // Use fit-height for tall images (height > width), fit-width for wide images
                             const fitMode = dimensions.height > dimensions.width ? 'fit-height' : 'fit-width';
                             console.log(`[handleFiles] Image ${label} dimensions: ${dimensions.width}x${dimensions.height}, applying ${fitMode}`);
+                            
+                            // Ensure canvas matches its container before computing fit (so fit uses actual canvas area)
+                            if (typeof resizeCanvas === 'function') resizeCanvas();
                             
                             // Temporarily set current image to calculate fit for this specific image
                             currentImageLabel = label;
@@ -11995,6 +12007,9 @@ if (colorPicker) {
                         // Use fit-height for tall images (height > width), fit-width for wide images
                         const fitMode = dimensions.height > dimensions.width ? 'fit-height' : 'fit-width';
                         console.log(`[Paste Handler] Image ${newImageLabel} dimensions: ${dimensions.width}x${dimensions.height}, applying ${fitMode}`);
+                        
+                        // Ensure canvas matches its container before computing fit (so fit uses actual canvas area)
+                        if (typeof resizeCanvas === 'function') resizeCanvas();
                         
                         // Temporarily set current image to calculate fit for this specific image
                         currentImageLabel = newImageLabel;
