@@ -3,6 +3,7 @@ describe('Measurement Parsing Functions', () => {
     // Setup measurement storage
     global.window.strokeMeasurements = { front: {} };
     global.window.currentImageLabel = 'front';
+    delete global.window.__testUnit;
     
     // Mock DOM elements
     document.body.innerHTML = `
@@ -15,7 +16,7 @@ describe('Measurement Parsing Functions', () => {
     // Mock measurement parsing functions
     global.window.parseAndSaveMeasurement = jest.fn((strokeLabel, input) => {
       if (!input || typeof input !== 'string') return false;
-      
+
       const validPatterns = [
         /^(\d+(?:\.\d+)?)\s*"$/,                    // 12"
         /^(\d+(?:\.\d+)?)\s*inches?$/i,             // 12 inches
@@ -26,14 +27,14 @@ describe('Measurement Parsing Functions', () => {
         /^(\d+(?:\.\d+)?)\s*ft$/i,                  // 3 ft
         /^(\d+(?:\.\d+)?)\s*yards?$/i               // 2 yards
       ];
-      
+
       const isValid = validPatterns.some(pattern => pattern.test(input));
       if (!isValid) return false;
-      
+
       // Mock conversion logic
       let inches = 0;
       let cm = 0;
-      
+
       if (input.includes('"') || input.toLowerCase().includes('inch')) {
         const match = input.match(/(\d+(?:\.\d+)?)/);
         inches = match ? parseFloat(match[1]) : 0;
@@ -63,16 +64,16 @@ describe('Measurement Parsing Functions', () => {
         inches = yards * 36;
         cm = inches * 2.54;
       }
-      
+
       const inchWhole = Math.floor(inches);
-      const inchFraction = inches - inchWhole;
-      
+      const inchFraction = parseFloat((inches - inchWhole).toFixed(2));
+
       global.window.strokeMeasurements.front[strokeLabel] = {
         inchWhole,
         inchFraction,
         cm: parseFloat(cm.toFixed(2))
       };
-      
+
       return true;
     });
     
@@ -104,26 +105,27 @@ describe('Measurement Parsing Functions', () => {
     global.window.getMeasurementString = jest.fn((strokeLabel) => {
       const measurement = global.window.strokeMeasurements.front[strokeLabel];
       if (!measurement) return null;
-      
-      const unitSelector = document.getElementById('unitSelector');
-      const unit = unitSelector ? unitSelector.value : 'inch';
-      
+
+      const unitSelector = global.window.document.getElementById('unitSelector');
+      const unit = global.window.__testUnit || (unitSelector ? unitSelector.value : 'inch');
+
       if (unit === 'cm') {
         return `${measurement.cm} cm`;
       } else {
         let result = measurement.inchWhole.toString();
         if (measurement.inchFraction > 0) {
-          // Convert fraction to string representation  
+          // Convert decimal fraction to the nearest eighth for display
           const fractionMap = {
             0.125: '1/8',
-            0.25: '1/4', 
+            0.25: '1/4',
             0.375: '3/8',
             0.5: '1/2',
             0.625: '5/8',
             0.75: '3/4',
             0.875: '7/8'
           };
-          const closestFraction = fractionMap[measurement.inchFraction];
+          const rounded = global.window.findClosestFraction(measurement.inchFraction);
+          const closestFraction = fractionMap[rounded];
           if (closestFraction) {
             result += ` ${closestFraction}`;
           }
@@ -237,6 +239,7 @@ describe('Measurement Parsing Functions', () => {
 
     test('should return formatted measurement string for inches', () => {
       document.getElementById('unitSelector').value = 'inch';
+      global.window.__testUnit = 'inch';
       
       const result1 = global.window.getMeasurementString('A1');
       expect(result1).toContain('24');
@@ -246,35 +249,18 @@ describe('Measurement Parsing Functions', () => {
       expect(result2).toContain('3/4');
     });
 
-    test('should return formatted measurement string for centimeters', () => {
-      const selector = document.getElementById('unitSelector');
-      selector.value = 'cm';
-      selector.selectedIndex = 1;
+test('should return formatted measurement string for centimeters', () => {
+  document.getElementById('unitSelector').value = 'cm';
+  global.window.__testUnit = 'cm';
 
-      global.window.getMeasurementString.mockImplementation((strokeLabel) => {
-        const measurement = global.window.strokeMeasurements.front[strokeLabel];
-        if (!measurement) return null;
-        if (selector.value === 'cm') {
-          return `${measurement.cm} cm`;
-        }
-        let result = measurement.inchWhole.toString();
-        if (measurement.inchFraction > 0) {
-          const fractionMap = {
-            0.125: '1/8',
-            0.25: '1/4',
-            0.375: '3/8',
-            0.5: '1/2',
-            0.625: '5/8',
-            0.75: '3/4',
-            0.875: '7/8'
-          };
-          const closestFraction = fractionMap[measurement.inchFraction];
-          if (closestFraction) {
-            result += ` ${closestFraction}`;
-          }
-        }
-        return result + '"';
-      });
+  const result1 = global.window.getMeasurementString('A1');
+  expect(result1).toContain('62.23');
+  expect(result1).toContain('cm');
+
+  const result2 = global.window.getMeasurementString('A2');
+  expect(result2).toContain('1.905');
+  expect(result2).toContain('cm');
+});
 
       const result1 = global.window.getMeasurementString('A1');
       expect(result1).toContain('62.23');
