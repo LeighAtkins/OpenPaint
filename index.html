@@ -6,6 +6,8 @@
     <title>OpenPaint</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdn.tailwindcss.com">
+    <link rel="dns-prefetch" href="https://cdn.tailwindcss.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -114,7 +116,14 @@
             }
         }
     </script>
+    
+    <!-- Loading optimization and debug gate -->
     <style>
+        /* Hide UI until initialization completes to prevent flash */
+        .app-loading body { 
+            visibility: hidden !important; 
+        }
+        
         body {
             margin: 0;
             padding: 0;
@@ -752,6 +761,32 @@
             display: block;
         }
     </style>
+    
+    <script>
+        // Add loading class as early as possible to prevent UI flash
+        document.documentElement.classList.add('app-loading');
+
+        // Debug gate: enable with ?debug=1 or localStorage.debug='1'
+        (function () {
+            try {
+                const params = new URLSearchParams(location.search);
+                const debug = params.has('debug') || localStorage.getItem('debug') === '1';
+                window.__DEBUG__ = !!debug;
+                
+                if (!window.__DEBUG__) {
+                    // Silence non-essential logs in production
+                    const noop = () => {};
+                    console.log = noop;
+                    console.debug = noop;
+                    console.warn = noop;
+                    // Keep console.error visible for real issues
+                }
+            } catch (_) {
+                // Fallback if localStorage access fails
+                window.__DEBUG__ = false;
+            }
+        })();
+    </script>
 </head>
 <body class="bg-gray-50 h-screen overflow-hidden">
     <!-- Top Toolbar -->
@@ -3809,6 +3844,9 @@
             // Initialize gallery on page load
             initializeImageGallery();
             
+            // Reveal UI once initialization is complete
+            document.documentElement.classList.remove('app-loading');
+            
             // Store reference to original addImageToSidebar if it exists
             const originalAddImageToSidebar = window.addImageToSidebar;
             
@@ -4022,7 +4060,7 @@
                 } else if (hookAttempts < maxHookAttempts) {
                     setTimeout(attemptHook, 100);
                 } else {
-                    console.warn('[HOOK] Max attempts reached, could not hook addImageToSidebar');
+                    if (window.__DEBUG__) console.warn('[HOOK] Max attempts reached, could not hook addImageToSidebar');
                 }
             }
             
