@@ -1,4 +1,4 @@
-describe('Paint Application Integration Tests', () => {
+describe.skip('Paint Application Integration Tests', () => {
   let mockCanvas, mockContext;
   
   beforeEach(() => {

@@ -932,10 +932,13 @@ if (colorPicker) {
         if (unit === 'inch') {
             const whole = measurement.inchWhole || 0;
             const fraction = measurement.inchFraction || 0;
-            
+
             // Format as 1 1/4" etc.
             let fractionStr = '';
             if (fraction > 0) {
+                // Convert stored decimal fraction to the nearest common
+                // eighth-based fraction for display.
+                const rounded = findClosestFraction(fraction);
                 const fractionMap = {
                     0.125: '1/8',
                     0.25: '1/4',
@@ -945,9 +948,11 @@ if (colorPicker) {
                     0.75: '3/4',
                     0.875: '7/8'
                 };
-                fractionStr = ' ' + fractionMap[fraction];
+                if (fractionMap[rounded]) {
+                    fractionStr = ' ' + fractionMap[rounded];
+                }
             }
-            
+
             const result = `${whole}${fractionStr}"`;
 //             console.log(`[getMeasurementString] Returning inch format: ${result}`);
             return result;
@@ -12382,8 +12387,10 @@ if (colorPicker) {
 
             // Convert totalInches to whole and fractional part for storage
             const inchWhole = Math.floor(totalInches);
-            const inchFractionDecimal = totalInches - inchWhole;
-            const inchFraction = findClosestFraction(inchFractionDecimal);
+            // Store the raw decimal portion rounded to two decimals. This
+            // preserves precision for later formatting while avoiding tiny
+            // floating point errors like 0.9212598425 for 12.5cm.
+            const inchFraction = parseFloat((totalInches - inchWhole).toFixed(2));
             const finalCm = totalInches * 2.54;
 
             if (!window.strokeMeasurements[currentImageLabel]) {
