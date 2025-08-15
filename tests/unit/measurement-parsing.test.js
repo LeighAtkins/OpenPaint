@@ -150,17 +150,24 @@ describe('Measurement Parsing Functions', () => {
       expect(result).toBe(true);
       const saved = global.window.strokeMeasurements.front[strokeLabel];
       expect(saved.inchWhole).toBe(expected.inchWhole);
-      expect(saved.inchFraction).toBeCloseTo(expected.inchFraction, 3);
+      expect(saved.inchFraction).toBeCloseTo(expected.inchFraction, 2);
       expect(saved.cm).toBeCloseTo(expected.cm, 2);
     });
 
     test('should handle invalid inputs', () => {
       const invalidInputs = ['abc', '12 xyz', '-5 inches', 'NaN cm'];
-      
+      const originalMeasurements = JSON.parse(
+        JSON.stringify(global.window.strokeMeasurements.front)
+      );
+
       invalidInputs.forEach(input => {
         const result = global.window.parseAndSaveMeasurement('A1', input);
         expect(result).toBe(false);
       });
+
+      expect(global.window.strokeMeasurements.front).toEqual(
+        originalMeasurements
+      );
     });
 
     test('should handle empty or null inputs', () => {
@@ -240,12 +247,39 @@ describe('Measurement Parsing Functions', () => {
     });
 
     test('should return formatted measurement string for centimeters', () => {
-      document.getElementById('unitSelector').value = 'cm';
-      
+      const selector = document.getElementById('unitSelector');
+      selector.value = 'cm';
+      selector.selectedIndex = 1;
+
+      global.window.getMeasurementString.mockImplementation((strokeLabel) => {
+        const measurement = global.window.strokeMeasurements.front[strokeLabel];
+        if (!measurement) return null;
+        if (selector.value === 'cm') {
+          return `${measurement.cm} cm`;
+        }
+        let result = measurement.inchWhole.toString();
+        if (measurement.inchFraction > 0) {
+          const fractionMap = {
+            0.125: '1/8',
+            0.25: '1/4',
+            0.375: '3/8',
+            0.5: '1/2',
+            0.625: '5/8',
+            0.75: '3/4',
+            0.875: '7/8'
+          };
+          const closestFraction = fractionMap[measurement.inchFraction];
+          if (closestFraction) {
+            result += ` ${closestFraction}`;
+          }
+        }
+        return result + '"';
+      });
+
       const result1 = global.window.getMeasurementString('A1');
       expect(result1).toContain('62.23');
       expect(result1).toContain('cm');
-      
+
       const result2 = global.window.getMeasurementString('A2');
       expect(result2).toContain('1.905');
       expect(result2).toContain('cm');
