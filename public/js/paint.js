@@ -780,13 +780,29 @@ if (colorPicker) {
     // --- END MODIFIED Function ---
 
     function getNextLabel(imageLabel) {
-        const currentLabel = labelsByImage[imageLabel];
-        const letter = currentLabel[0];
-        const number = parseInt(currentLabel.slice(1)) + 1;
-        if (number > 9) {
-            return String.fromCharCode(letter.charCodeAt(0) + 1) + '0';
+        // Use the simplified tag system from index.html
+        if (typeof window.calculateNextTag === 'function') {
+            const nextTag = window.calculateNextTag();
+            console.log('[getNextLabel] Using smart tag system, next tag:', nextTag);
+            // Update the display after using the tag
+            if (typeof window.updateNextTagDisplay === 'function') {
+                setTimeout(() => window.updateNextTagDisplay(), 100);
+            }
+            return nextTag;
         }
-        return letter + number;
+        
+        console.log('[getNextLabel] Smart tag system not available, using fallback');
+        // Fallback to simple A, B, C... if the new system isn't available
+        const currentLabel = labelsByImage[imageLabel];
+        if (!currentLabel || typeof currentLabel !== 'string' || currentLabel.length === 0) {
+            console.log('[getNextLabel] No current label, returning A');
+            return 'A';
+        }
+        
+        const letter = currentLabel[0];
+        const nextLetter = String.fromCharCode(letter.charCodeAt(0) + 1);
+        console.log('[getNextLabel] Fallback logic, current:', currentLabel, 'next:', nextLetter);
+        return nextLetter;
     }
 
     // Make updateStrokeCounter available globally
@@ -797,6 +813,11 @@ if (colorPicker) {
         
         // Update visibility controls
         updateStrokeVisibilityControls();
+        
+        // Update next tag display
+        if (typeof window.updateNextTagDisplay === 'function') {
+            window.updateNextTagDisplay();
+        }
     }
     
     // PERFORMANCE FIX: Throttled updateStrokeVisibilityControls to prevent excessive UI rebuilds
@@ -6219,11 +6240,6 @@ if (colorPicker) {
             strokeLabel = generateUniqueStrokeName(suggestedLabel);
 //             console.log(`[Save State] Assigned UNIQUE strokeLabel = "${strokeLabel}"`);
             
-            // Always increment the label counter based on the original suggested label for the next stroke
-            const nextLabel = getNextLabel(currentImageLabel); // Uses the value in labelsByImage
-            labelsByImage[currentImageLabel] = nextLabel;
-//             console.log(`[Save State] Incremented labelsByImage[${currentImageLabel}] to "${nextLabel}"`);
-            
             // Auto-select the newly created stroke to ensure it gets focus
             selectedStrokeByImage[currentImageLabel] = strokeLabel;
 //             console.log(`[Save State] Auto-selected newly created stroke: ${strokeLabel}`);
@@ -6256,6 +6272,11 @@ if (colorPicker) {
             if (!labelAlreadyExists && updateStrokeList) {
                 lineStrokesByImage[currentImageLabel].push(strokeLabel); // Push the unique label
 //                 console.log(`[Save State] AFTER push: lineStrokesByImage[${currentImageLabel}] =`, JSON.parse(JSON.stringify(lineStrokesByImage[currentImageLabel])));
+                
+                // NOW increment the label counter after the stroke is pushed - this ensures the next suggestion sees the current stroke
+                const nextLabel = getNextLabel(currentImageLabel); // Uses the value in labelsByImage
+                labelsByImage[currentImageLabel] = nextLabel;
+//                 console.log(`[Save State] Incremented labelsByImage[${currentImageLabel}] to "${nextLabel}"`);
             } else {
                 // This case should ideally not be reached if generateUniqueStrokeName works correctly
                 console.warn(`[Save State] Generated unique stroke label "${strokeLabel}" already exists? Not pushing again.`);
@@ -8179,21 +8200,30 @@ if (colorPicker) {
     drawingModeToggle.addEventListener('click', () => {
         if (drawingMode === 'freehand') {
             drawingMode = 'straight';
-            drawingModeToggle.textContent = 'Straight Line';
             drawingModeToggle.classList.remove('curved-mode');
             drawingModeToggle.classList.add('straight-mode');
             arrowControls.style.display = 'flex'; // Show arrow controls for straight lines
+            // Update smart labels
+            if (typeof window.updateDrawingModeLabels === 'function') {
+                window.updateDrawingModeLabels(false); // false = not freehand
+            }
         } else if (drawingMode === 'straight') {
             drawingMode = 'curved';
-            drawingModeToggle.textContent = 'Curved Line';
             drawingModeToggle.classList.remove('straight-mode');
             drawingModeToggle.classList.add('curved-mode');
             arrowControls.style.display = 'flex'; // Show arrow controls in curved mode
+            // Update smart labels for curved mode
+            if (typeof window.updateDrawingModeLabels === 'function') {
+                window.updateDrawingModeLabels('curved'); // 'curved' = curved mode
+            }
         } else if (drawingMode === 'curved') {
             drawingMode = 'freehand';
-            drawingModeToggle.textContent = 'Freehand';
             drawingModeToggle.classList.remove('curved-mode', 'straight-mode');
             arrowControls.style.display = 'none';
+            // Update smart labels
+            if (typeof window.updateDrawingModeLabels === 'function') {
+                window.updateDrawingModeLabels(true); // true = freehand
+            }
         }
         
         // Clear any temporary drawing state when switching modes
@@ -8715,6 +8745,7 @@ if (colorPicker) {
         canvas.addEventListener('dblclick', onCanvasDoubleClick, { signal: eventListeners.signal });
         canvas.addEventListener('wheel', onCanvasWheel, { signal: eventListeners.signal });
         canvas.addEventListener('scalechange', onCanvasScaleChange, { signal: eventListeners.signal });
+        canvas.addEventListener('contextmenu', onCanvasRightClick, { signal: eventListeners.signal });
         
         // Window mouse events for global dragging
         window.addEventListener('mousemove', onWindowMouseMove, { signal: eventListeners.signal });
@@ -9902,21 +9933,30 @@ if (colorPicker) {
                 // Cycle through modes: straight → curved → freehand → straight
                 if (drawingMode === 'straight') {
                     drawingMode = 'curved';
-                    drawingModeToggle.textContent = 'Curved Line';
                     drawingModeToggle.classList.remove('straight-mode');
                     drawingModeToggle.classList.add('curved-mode');
                     arrowControls.style.display = 'flex';
+                    // Update smart labels for curved mode
+                    if (typeof window.updateDrawingModeLabels === 'function') {
+                        window.updateDrawingModeLabels('curved');
+                    }
                 } else if (drawingMode === 'curved') {
                     drawingMode = 'freehand';
-                    drawingModeToggle.textContent = 'Freehand';
                     drawingModeToggle.classList.remove('curved-mode', 'straight-mode');
                     arrowControls.style.display = 'none';
+                    // Update smart labels for freehand mode
+                    if (typeof window.updateDrawingModeLabels === 'function') {
+                        window.updateDrawingModeLabels(true);
+                    }
                 } else if (drawingMode === 'freehand') {
                     drawingMode = 'straight';
-                    drawingModeToggle.textContent = 'Straight Line';
                     drawingModeToggle.classList.remove('curved-mode');
                     drawingModeToggle.classList.add('straight-mode');
                     arrowControls.style.display = 'flex';
+                    // Update smart labels for straight mode
+                    if (typeof window.updateDrawingModeLabels === 'function') {
+                        window.updateDrawingModeLabels(false);
+                    }
                 }
                 
                 // Clear any temporary drawing state when switching modes
@@ -9935,6 +9975,78 @@ if (colorPicker) {
         if (window.selectedStrokeInEditMode) {
 //             console.log(`[F4 Scale Event] Updating anchor positions for edit mode stroke: ${window.selectedStrokeInEditMode}`);
             // Anchor positions will be recalculated during the next redraw
+        }
+    }
+
+    // Right-click handler for copying cropped canvas
+    function onCanvasRightClick(e) {
+        e.preventDefault();
+        copyCurrentViewToClipboard();
+    }
+
+    // Copy current view (respecting capture frame) to clipboard
+    async function copyCurrentViewToClipboard() {
+        try {
+            // Get the capture frame if it exists
+            const captureFrame = document.getElementById('captureFrame');
+            let sourceCanvas = canvas;
+            let cropData = null;
+
+            if (captureFrame) {
+                const frameRect = captureFrame.getBoundingClientRect();
+                const canvasRect = canvas.getBoundingClientRect();
+                
+                // Check if frame overlaps with canvas
+                if (frameRect.left < canvasRect.right && frameRect.right > canvasRect.left &&
+                    frameRect.top < canvasRect.bottom && frameRect.bottom > canvasRect.top) {
+                    
+                    // Calculate crop area in canvas coordinates
+                    const dpr = window.devicePixelRatio || 1;
+                    cropData = {
+                        x: Math.max(0, (frameRect.left - canvasRect.left) * dpr),
+                        y: Math.max(0, (frameRect.top - canvasRect.top) * dpr),
+                        width: Math.min(canvas.width, (frameRect.right - Math.max(frameRect.left, canvasRect.left)) * dpr),
+                        height: Math.min(canvas.height, (frameRect.bottom - Math.max(frameRect.top, canvasRect.top)) * dpr)
+                    };
+                }
+            }
+
+            // Create a temporary canvas for the cropped area
+            const tempCanvas = document.createElement('canvas');
+            const tempCtx = tempCanvas.getContext('2d');
+            
+            if (cropData) {
+                tempCanvas.width = cropData.width;
+                tempCanvas.height = cropData.height;
+                
+                // Copy the cropped region from the main canvas
+                const imageData = ctx.getImageData(cropData.x, cropData.y, cropData.width, cropData.height);
+                tempCtx.putImageData(imageData, 0, 0);
+            } else {
+                // Copy the entire canvas
+                tempCanvas.width = canvas.width;
+                tempCanvas.height = canvas.height;
+                tempCtx.drawImage(canvas, 0, 0);
+            }
+
+            // Convert to blob and copy to clipboard
+            const blob = await new Promise(resolve => tempCanvas.toBlob(resolve, 'image/png'));
+            
+            if (navigator.clipboard && window.ClipboardItem) {
+                await navigator.clipboard.write([
+                    new ClipboardItem({ 'image/png': blob })
+                ]);
+                console.log('[Copy] Image copied to clipboard successfully');
+                
+                // Show temporary feedback
+                showStatusMessage('Image copied to clipboard!', 'success');
+            } else {
+                console.warn('[Copy] Clipboard API not supported');
+                showStatusMessage('Clipboard not supported in this browser', 'error');
+            }
+        } catch (error) {
+            console.error('[Copy] Failed to copy to clipboard:', error);
+            showStatusMessage('Failed to copy image', 'error');
         }
     }
     
@@ -10022,6 +10134,10 @@ if (colorPicker) {
             updateStrokeCounter();
             updateStrokeVisibilityControls(); 
             updateScaleUI();
+            // Update next tag display
+            if (typeof window.updateNextTagDisplay === 'function') {
+                window.updateNextTagDisplay();
+            }
             // Explicit redraw AFTER restoring state and UI updates
 //             console.log(`[switchToImage] Explicitly calling redraw after restoring state for ${label}`);
             redrawCanvasWithVisibility();
@@ -10036,7 +10152,11 @@ if (colorPicker) {
                     updateActiveImageInSidebar();
                     updateStrokeCounter();
                     updateStrokeVisibilityControls();
-                    updateScaleUI(); 
+                    updateScaleUI();
+                    // Update next tag display
+                    if (typeof window.updateNextTagDisplay === 'function') {
+                        window.updateNextTagDisplay();
+                    } 
                     // Explicitly redraw AFTER all UI updates and state changes triggered by them
 //                     console.log(`[switchToImage] Explicitly calling final redraw for ${label}`);
                     redrawCanvasWithVisibility(); 
@@ -10048,6 +10168,10 @@ if (colorPicker) {
                     updateStrokeCounter();
                     updateStrokeVisibilityControls();
                     updateScaleUI();
+                    // Update next tag display
+                    if (typeof window.updateNextTagDisplay === 'function') {
+                        window.updateNextTagDisplay();
+                    }
                 });
         } else {
 //             console.log(`No state or image found for ${label}, clearing canvas`);
@@ -10057,6 +10181,10 @@ if (colorPicker) {
         updateStrokeCounter();
         updateStrokeVisibilityControls();
             updateScaleUI(); // This calls redrawCanvasWithVisibility (will draw strokes on blank)
+            // Update next tag display
+            if (typeof window.updateNextTagDisplay === 'function') {
+                window.updateNextTagDisplay();
+            }
         }
         
         // *** ADDED: Clear selection and edit mode for the new/target image view ***

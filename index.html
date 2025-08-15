@@ -283,9 +283,51 @@
             transform: scale(1.1);
         }
         
+        /* Allow overflow for canvas controls to show hover menu */
+        #canvasControlsContent { 
+            overflow: visible !important; 
+        }
+        
+        /* Smart label system for responsive button text */
+        .label-short { 
+            display: none; 
+        }
+        .label-long, .label-short {
+            white-space: nowrap;
+        }
+        .smart-label-scope.compact .label-long { 
+            display: none; 
+        }
+        .smart-label-scope.compact .label-short { 
+            display: inline; 
+        }
+        
         /* Active state for minimized panels */
         .floating-panel.minimized {
             box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Enhanced arrow button styling */
+        #startArrow.active, #endArrow.active,
+        #arrowStartBtn.active, #arrowEndBtn.active {
+            background: linear-gradient(135deg, #3b82f6, #2563eb) !important;
+            color: white !important;
+            transform: scale(1.05) !important;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4) !important;
+            border: 2px solid #1d4ed8 !important;
+            font-weight: 600 !important;
+        }
+
+        #startArrow.active:hover, #endArrow.active:hover,
+        #arrowStartBtn.active:hover, #arrowEndBtn.active:hover {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
+            transform: scale(1.08) !important;
+            box-shadow: 0 6px 16px rgba(59, 130, 246, 0.5) !important;
+        }
+
+        /* Arrow button transitions */
+        #startArrow, #endArrow, #arrowStartBtn, #arrowEndBtn {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
         }
         
         .floating-panel:not(.minimized) {
@@ -714,10 +756,10 @@
 <body class="bg-gray-50 h-screen overflow-hidden">
     <!-- Top Toolbar -->
     <div id="topToolbar" class="fixed top-0 inset-x-0 z-40 bg-white/85 backdrop-blur border-b border-slate-200">
-        <div class="toolbar-wrap mx-auto max-w-[1400px] px-3 flex items-center justify-between">
-            <div id="tbLeft" class="relative flex items-center group-gap"></div>
+        <div class="toolbar-wrap mx-auto max-w-[1400px] px-3 flex items-center justify-between smart-label-scope">
+            <div id="tbLeft" class="relative flex items-center group-gap smart-label-scope"></div>
             <div id="tbCenter" class="relative flex items-center group-gap"></div>
-            <div id="tbRight" class="relative flex items-center group-gap"></div>
+            <div id="tbRight" class="relative flex items-center group-gap smart-label-scope"></div>
         </div>
     </div>
 
@@ -779,12 +821,11 @@
                 </div>
                 
                 <!-- Action Buttons -->
-                <div class="grid grid-cols-2 gap-2 panel-divider pt-3 mt-2">
-                    <button id="saveProject" title="Save project as ZIP file" class="px-3 py-2 bg-white border border-gray-300 text-slate-700 text-xs font-semibold rounded-xl hover:bg-slate-50 transition-all">Save</button>
-                    <button id="loadProject" title="Load project from ZIP file" class="px-3 py-2 bg-white border border-gray-300 text-slate-700 text-xs font-semibold rounded-xl hover:bg-slate-50 transition-all">Load</button>
-                    <button id="generateMeasurements" title="Generate list of all measurements" class="px-3 py-2 bg-white border border-gray-300 text-slate-700 text-xs font-semibold rounded-xl hover:bg-slate-50 transition-all">Measurements</button>
-                    <button id="saveAllImages" title="Save all images as individual files" class="px-3 py-2 bg-white border border-gray-300 text-slate-700 text-xs font-semibold rounded-xl hover:bg-slate-50 transition-all">Images</button>
-                    <button id="saveAsPdf" title="Export measurements as PDF form" class="px-3 py-2 bg-white border border-danger-300 text-danger-600 text-xs font-semibold rounded-xl hover:bg-danger-50 transition-all col-span-2">Save as PDF</button>
+                <div class="panel-divider pt-3 mt-2 space-y-2">
+                    <!-- Load Project button -->
+                    <div class="flex justify-center">
+                        <button id="loadProject" title="Load project from ZIP file" class="px-4 py-2 bg-white border border-gray-300 text-slate-700 text-xs font-semibold rounded-xl hover:bg-slate-50 transition-all">Load Project</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -800,13 +841,15 @@
                 </svg>
             </button>
         </div>
-        <div id="toolsPanelContent" class="p-4 transition-all duration-300">
+        <div id="toolsPanelContent" class="p-4 transition-all duration-300 smart-label-scope">
             <div class="flex flex-col gap-4">
                 <!-- Primary Tools -->
                 <div class="flex items-center gap-3">
                     <button id="clear" class="px-4 py-2.5 bg-danger-500 hover:bg-danger-600 active:bg-danger-700 text-white text-sm font-semibold rounded-xl shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-105 active:scale-95">Clear</button>
-                    <button id="paste" class="px-4 py-2.5 bg-primary-500 hover:bg-primary-600 active:bg-primary-700 text-white text-sm font-semibold rounded-xl shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-105 active:scale-95">Upload Images</button>
-                    <button id="save" class="px-4 py-2.5 bg-success-500 hover:bg-success-600 active:bg-success-700 text-white text-sm font-semibold rounded-xl shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-105 active:scale-95">Save</button>
+                    <button id="paste" class="px-4 py-2.5 bg-primary-500 hover:bg-primary-600 active:bg-primary-700 text-white text-sm font-semibold rounded-xl shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-105 active:scale-95" title="Upload Images" aria-label="Upload Images">
+                        <span class="label-long">Upload Images</span><span class="label-short">Upload</span>
+                    </button>
+                    <button id="save" class="px-4 py-2.5 bg-success-500 hover:bg-success-600 active:bg-success-700 text-white text-sm font-semibold rounded-xl shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-105 active:scale-95">Save Current</button>
                 </div>
                 
                 <!-- Color Palette -->
@@ -825,8 +868,8 @@
                 
                 <!-- Drawing Mode & Controls -->
                 <div class="flex items-center gap-4">
-                    <button id="drawingModeToggle" class="px-4 py-2.5 bg-white border-2 border-success-500 text-success-600 text-sm font-semibold rounded-xl hover:bg-success-50 hover:border-success-600 active:bg-success-100 transition-all duration-200 transform hover:scale-105 active:scale-95 straight-mode shadow-sm">
-                        Straight Line
+                    <button id="drawingModeToggle" class="px-4 py-2.5 bg-white border-2 border-success-500 text-success-600 text-sm font-semibold rounded-xl hover:bg-success-50 hover:border-success-600 active:bg-success-100 transition-all duration-200 transform hover:scale-105 active:scale-95 straight-mode shadow-sm" title="Straight Line" aria-label="Straight Line">
+                        <span class="label-long">Straight Line</span><span class="label-short">Straight</span>
                     </button>
                     <div class="flex items-center gap-3">
                         <span class="text-sm font-semibold text-slate-700">Size:</span>
@@ -867,17 +910,44 @@
         </div>
     </div>
 
-    <!-- Stroke Manager Panel -->
+    <!-- Vectors and Tags Panel -->
     <div id="strokePanel" class="floating-panel fixed left-4 top-1/2 -translate-y-1/2 z-30 rounded-2xl w-64 max-h-96 transition-all duration-300 overflow-hidden">
         <div class="flex items-center justify-between p-3 cursor-move border-b border-gray-200/50 bg-white rounded-t-2xl">
-            <h3 class="text-sm font-semibold text-slate-800">Stroke Visibility</h3>
+            <div class="flex items-center gap-2">
+                <h3 class="text-sm font-semibold text-slate-800">Elements</h3>
+                <button id="viewMeasurementsToggle" title="Toggle measurement labels display" class="px-2 py-1 text-xs bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-all font-medium">
+                    Show Labels
+                </button>
+            </div>
             <button id="toggleStrokePanel" class="text-slate-500 hover:text-slate-700 rounded-lg p-1 transition-all" title="Minimize/Expand Panel">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                 </svg>
             </button>
         </div>
-        <div id="strokeVisibilityControls" class="p-3 transition-all duration-300" style="max-height: 320px; overflow-y: scroll; overflow-x: hidden;"></div>
+        <!-- Panel Controls -->
+        <div class="px-3 pt-3 pb-2 border-b border-gray-100">
+            <div class="flex gap-2 mb-2">
+                <button id="selectAllStrokesBtn" title="Select/Deselect all elements" class="flex-1 px-2 py-1 text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-all font-medium">
+                    Deselect All
+                </button>
+                <button id="showAllMeasurementsBtn" title="Show all measurements in a list" class="flex-1 px-2 py-1 text-xs bg-green-100 hover:bg-green-200 text-green-700 rounded-lg transition-all font-medium">
+                    Show List
+                </button>
+            </div>
+            <div class="flex gap-2 mb-2">
+                <div class="flex-1 px-2 py-1 text-xs bg-gray-50 border border-gray-200 rounded-lg">
+                    <div class="text-gray-500 text-xs mb-1">Next Tag:</div>
+                    <div id="nextTagDisplay" class="font-semibold text-blue-600 cursor-pointer hover:bg-blue-50 px-1 py-0.5 rounded" title="Click to set custom tag">A</div>
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <button id="tagModeToggle" title="Toggle between letters only and letters with numbers" class="flex-1 px-2 py-1 text-xs bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg transition-all font-medium">
+                    Letters + Numbers
+                </button>
+            </div>
+        </div>
+        <div id="strokeVisibilityControls" class="p-3 transition-all duration-300" style="max-height: 280px; overflow-y: scroll; overflow-x: hidden;"></div>
     </div>
 
     <!-- Image Gallery Panel -->
@@ -986,8 +1056,8 @@
     </div>
 
     <!-- Canvas Controls (Bottom Panel) -->
-    <div id="canvasControls" class="floating-panel fixed bottom-4 z-50 rounded-2xl px-3 py-2 transition-all duration-300" style="left: 50%; transform: translateX(-50%);">
-        <div id="canvasControlsContent" class="flex items-center gap-2 text-sm">
+    <div id="canvasControls" class="floating-panel fixed bottom-4 rounded-2xl px-3 py-2 transition-all duration-300" style="left: 50%; transform: translateX(-50%); z-index: 4000;">
+        <div id="canvasControlsContent" class="flex items-center gap-2 text-sm smart-label-scope">
             <select id="fitModeSelect" class="px-2 py-1 border border-gray-300 rounded-lg bg-white focus:outline-none hover:bg-gray-50">
                 <option value="none">Manual</option>
                 <option value="fit-width" selected>Fit Width</option>
@@ -1002,6 +1072,19 @@
                 <button id="rotateRightCtrl" class="px-2 py-1 bg-white border border-gray-300 text-slate-700 text-xs rounded-lg hover:bg-slate-50" title="Rotate 90° CW">↷</button>
                 <button id="flipHCtrl" class="px-2 py-1 bg-white border border-gray-300 text-slate-700 text-xs rounded-lg hover:bg-slate-50" title="Flip Horizontal">↔</button>
                 <button id="flipVCtrl" class="px-2 py-1 bg-white border border-gray-300 text-slate-700 text-xs rounded-lg hover:bg-slate-50" title="Flip Vertical">↕</button>
+            </div>
+
+            <!-- Quick Save with hover menu -->
+            <div id="quickSave" class="relative ml-2">
+                <button id="quickSaveBtn" class="px-3 py-1 bg-success-500 hover:bg-success-600 text-white text-xs rounded-lg">
+                    Save
+                </button>
+                <div id="quickSaveMenu"
+                     class="hidden absolute bottom-full mb-1 left-0 bg-white border border-gray-200 rounded-xl shadow-lg min-w-[120px]"
+                     style="white-space: nowrap; z-index: 5000;">
+                    <button class="block w-full text-left px-3 py-2 text-xs hover:bg-slate-50 rounded-t-xl transition-colors" data-action="pdf">Save as PDF</button>
+                    <button class="block w-full text-left px-3 py-2 text-xs hover:bg-slate-50 rounded-b-xl transition-colors" data-action="multiple">Save Multiple</button>
+                </div>
             </div>
         </div>
     </div>
@@ -1288,26 +1371,26 @@
             reparent('projectName', right, el => {
                 el.style.width = '140px';
             });
-            // Move unit selector into More menu (not in top toolbar)
-            reparent('saveProject', right);
+            // Note: saveProject moved to consolidated save flow. Keep Load in right section.
             reparent('loadProject', right);
 
-            // More menu for secondary project actions
-            const moreWrap = document.createElement('div'); 
-            moreWrap.style.position = 'relative';
-            const moreBtn = document.createElement('button'); 
-            moreBtn.id = 'projectMoreBtn'; 
-            moreBtn.className = 'tbtn'; 
-            moreBtn.textContent = 'More ▾';
-            moreBtn.title = 'More Actions';
-            
-            const moreMenu = document.createElement('div'); 
-            moreMenu.id = 'projectMoreMenu'; 
-            moreMenu.className = 'popover'; 
-            moreMenu.style.right = '0'; 
-            moreMenu.style.left = 'auto';
-            moreMenu.style.minWidth = '160px';
-            
+            // Big Save Project button (replaces legacy More dropdown)
+            const saveProjectTop = document.createElement('button');
+            saveProjectTop.id = 'saveProjectTop';
+            saveProjectTop.className = 'tbtn';
+            saveProjectTop.textContent = 'Save Project';
+            saveProjectTop.title = 'Save Project (ZIP)';
+            saveProjectTop.style.padding = '6px 12px';
+            saveProjectTop.style.fontWeight = '600';
+            saveProjectTop.style.background = '#22c55e';
+            saveProjectTop.style.color = 'white';
+            saveProjectTop.style.borderColor = '#16a34a';
+            saveProjectTop.style.borderRadius = '12px';
+            saveProjectTop.addEventListener('click', () => {
+                if (window.projectManager?.saveProject) window.projectManager.saveProject();
+            });
+            right.appendChild(saveProjectTop);
+
             // Replace unit selector with a simple toggle button in the top-right toolbar
             const unitSel = document.getElementById('unitSelector');
             if (unitSel) {
@@ -1331,37 +1414,6 @@
                 unitSel.style.display = 'none';
             }
 
-            ['generateMeasurements', 'saveAllImages', 'saveAsPdf'].forEach(id => {
-                const el = document.getElementById(id);
-                if (el) { 
-                    setUniform(el); 
-                    el.style.display = 'block'; 
-                    el.style.width = '100%'; 
-                    el.style.margin = '2px 0';
-                    el.style.textAlign = 'left';
-                    moreMenu.appendChild(el); 
-                }
-            });
-            
-            moreWrap.appendChild(moreBtn); 
-            moreWrap.appendChild(moreMenu); 
-            right.appendChild(moreWrap);
-            
-            moreBtn.addEventListener('click', (e) => { 
-                e.stopPropagation(); 
-                moreMenu.classList.toggle('show');
-            });
-
-            // Global click handler to close all popovers
-            document.addEventListener('click', () => {
-                moreMenu.classList.remove('show');
-            });
-
-            // Prevent popover clicks from closing the popover
-            [moreMenu].forEach(popover => {
-                popover.addEventListener('click', (e) => e.stopPropagation());
-            });
-
             // Hide legacy panels after moving controls (keep in DOM to preserve any lookups)
             document.getElementById('toolsPanel')?.classList.add('hidden');
             document.getElementById('projectPanel')?.classList.add('hidden');
@@ -1372,10 +1424,205 @@
             document.body.style.paddingTop = '48px';
         }
 
+        // Setup quick save hover menu functionality
+        function setupQuickSaveHover() {
+            // Quick Save hover menu (bottom panel)
+            const quickSave = document.getElementById('quickSave');
+            const quickSaveBtn = document.getElementById('quickSaveBtn');
+            const quickSaveMenu = document.getElementById('quickSaveMenu');
+
+            console.log('Setting up quick save hover:', { quickSave, quickSaveBtn, quickSaveMenu });
+
+            if (quickSave && quickSaveBtn && quickSaveMenu) {
+                // Click: Save current image (reuses existing 'save' button)
+                quickSaveBtn.addEventListener('click', () => {
+                    console.log('Quick save clicked');
+                    const saveButton = document.getElementById('save');
+                    if (saveButton) saveButton.click();
+                });
+
+                let hideTimer = null;
+                const showMenu = () => {
+                    if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+                    quickSaveMenu.classList.remove('hidden');
+                };
+                const scheduleHide = () => {
+                    if (hideTimer) clearTimeout(hideTimer);
+                    hideTimer = setTimeout(() => {
+                        quickSaveMenu.classList.add('hidden');
+                        hideTimer = null;
+                    }, 200); // small delay prevents flicker when moving cursor to menu
+                };
+
+                // Hover to show menu on the trigger container
+                quickSave.addEventListener('mouseenter', showMenu);
+                quickSave.addEventListener('mouseleave', scheduleHide);
+
+                // Keep the menu open while hovering the menu; hide after leaving it
+                quickSaveMenu.addEventListener('mouseenter', showMenu);
+                quickSaveMenu.addEventListener('mouseleave', scheduleHide);
+
+                // Menu actions
+                quickSaveMenu.addEventListener('click', (e) => {
+                    const item = e.target.closest('[data-action]');
+                    if (!item) return;
+                    const action = item.dataset.action;
+                    console.log('Quick save menu action:', action);
+
+                    if (action === 'pdf') {
+                        const projectName = document.getElementById('projectName')?.value || 'Untitled Project';
+                        if (typeof window.showPDFExportDialog === 'function') {
+                            window.showPDFExportDialog(projectName);
+                        }
+                    } else if (action === 'multiple') {
+                        if (typeof window.saveAllImages === 'function') {
+                            window.saveAllImages();
+                        }
+                    }
+                });
+                console.log('Quick save hover menu setup complete');
+            } else {
+                console.error('Quick save elements not found:', { quickSave, quickSaveBtn, quickSaveMenu });
+            }
+        }
+
+        // Smart label system for responsive button text
+        function initSmartLabels() {
+            // Helper to wrap button with smart label spans
+            function wrapSmartLabel(buttonEl, longText, shortText) {
+                if (!buttonEl || buttonEl.querySelector('.label-long')) return; // Already wrapped
+                
+                buttonEl.innerHTML = `<span class="label-long">${longText}</span><span class="label-short">${shortText}</span>`;
+                buttonEl.setAttribute('title', longText);
+                buttonEl.setAttribute('aria-label', longText);
+            }
+            
+            // Helper to check if container needs compact mode
+            function applyCompactLabels(container) {
+                if (!container) return;
+                
+                // Simpler, more reliable overflow detection
+                const containerWidth = container.clientWidth;
+                const containerScrollWidth = container.scrollWidth;
+                const needsCompact = containerScrollWidth > containerWidth;
+                
+                if (needsCompact) {
+                    container.classList.add('compact');
+                } else {
+                    container.classList.remove('compact');
+                }
+            }
+            
+            // Setup ResizeObserver for each smart-label-scope container
+            const containers = document.querySelectorAll('.smart-label-scope');
+            const observers = new Map();
+            
+            containers.forEach(container => {
+                let debounceTimer = null;
+                const debouncedApply = () => {
+                    if (debounceTimer) clearTimeout(debounceTimer);
+                    debounceTimer = setTimeout(() => {
+                        applyCompactLabels(container);
+                        // Also check parent containers
+                        const parent = container.closest('.smart-label-scope');
+                        if (parent && parent !== container) {
+                            applyCompactLabels(parent);
+                        }
+                    }, 50); // Reduced debounce time for better responsiveness
+                };
+                
+                const observer = new ResizeObserver(debouncedApply);
+                observer.observe(container);
+                observers.set(container, observer);
+                
+                // Initial check with immediate execution
+                applyCompactLabels(container);
+            });
+            
+            // Setup buttons that get created dynamically by toolbar initialization
+            setTimeout(() => {
+                // Load Project button (created by reparent)
+                const loadBtn = document.getElementById('loadProject');
+                if (loadBtn) {
+                    wrapSmartLabel(loadBtn, 'Load Project', 'Load');
+                }
+                
+                // Save Project button (created dynamically)
+                const saveBtn = document.getElementById('saveProjectTop');
+                if (saveBtn) {
+                    wrapSmartLabel(saveBtn, 'Save Project', 'Save');
+                    // Make it visually distinct from bottom save button
+                    saveBtn.style.background = '#3b82f6'; // Blue instead of green
+                    saveBtn.style.borderColor = '#2563eb';
+                    saveBtn.style.fontWeight = '700';
+                    saveBtn.style.fontSize = '14px';
+                    saveBtn.style.padding = '8px 16px';
+                }
+                
+                // Immediate check for all containers
+                containers.forEach(container => {
+                    applyCompactLabels(container);
+                });
+                
+                // Additional check after a short delay to ensure everything is rendered
+                setTimeout(() => {
+                    containers.forEach(container => {
+                        applyCompactLabels(container);
+                    });
+                }, 100);
+            }, 150);
+            
+            // Global function to update drawing mode toggle labels
+            window.updateDrawingModeLabels = function(mode) {
+                const toggle = document.getElementById('drawingModeToggle');
+                if (!toggle) return;
+                
+                const longSpan = toggle.querySelector('.label-long');
+                const shortSpan = toggle.querySelector('.label-short');
+                
+                if (mode === true || mode === 'freehand') {
+                    const longText = 'Freehand';
+                    const shortText = 'Free';
+                    if (longSpan) longSpan.textContent = longText;
+                    if (shortSpan) shortSpan.textContent = shortText;
+                    toggle.setAttribute('title', longText);
+                    toggle.setAttribute('aria-label', longText);
+                } else if (mode === 'curved') {
+                    const longText = 'Curved Line';
+                    const shortText = 'Curved';
+                    if (longSpan) longSpan.textContent = longText;
+                    if (shortSpan) shortSpan.textContent = shortText;
+                    toggle.setAttribute('title', longText);
+                    toggle.setAttribute('aria-label', longText);
+                } else {
+                    // Straight mode (false or 'straight')
+                    const longText = 'Straight Line';
+                    const shortText = 'Straight';
+                    if (longSpan) longSpan.textContent = longText;
+                    if (shortSpan) shortSpan.textContent = shortText;
+                    toggle.setAttribute('title', longText);
+                    toggle.setAttribute('aria-label', longText);
+                }
+                
+                // Re-check container after label change
+                const container = toggle.closest('.smart-label-scope');
+                if (container) applyCompactLabels(container);
+            };
+            
+            // Store observers for cleanup if needed
+            window.smartLabelObservers = observers;
+        }
+
         // New UI functionality for modular panels and capture frame
         document.addEventListener('DOMContentLoaded', () => {
             // Initialize top toolbar by moving existing controls
             initializeTopToolbar();
+            
+            // Setup quick save hover menu after toolbar initialization (with small delay)
+            setTimeout(setupQuickSaveHover, 100);
+            
+            // Initialize smart label system
+            setTimeout(initSmartLabels, 200);
             
             // (Sketchbook toggle removed per request)
             // Panel visibility toggles
@@ -1443,7 +1690,7 @@
             createPanelToggle('imagePanel', 'imagePanelContent', 'toggleImagePanel');
             createPanelToggle('canvasControls', 'canvasControlsContent', 'toggleCanvasControls');
 
-            // Ensure Stroke Visibility and Images are open by default
+            // Ensure Vectors and tags and Images are open by default
             (function expandByDefault() {
                 const strokeContent = document.getElementById('strokeVisibilityControls');
                 const strokeButton = document.getElementById('toggleStrokePanel');
@@ -1456,6 +1703,258 @@
                     imageButton.click();
                 }
             })();
+
+            // Set up Vectors and tags panel button functionality
+            const selectAllStrokesBtn = document.getElementById('selectAllStrokesBtn');
+            const showAllMeasurementsBtn = document.getElementById('showAllMeasurementsBtn');
+
+            // Select/Deselect All Strokes functionality
+            if (selectAllStrokesBtn) {
+                let allSelected = false; // Start with deselect all (false)
+                selectAllStrokesBtn.addEventListener('click', () => {
+                    const checkboxes = document.querySelectorAll('#strokeVisibilityControls input[type="checkbox"]');
+                    allSelected = !allSelected;
+                    
+                    checkboxes.forEach(checkbox => {
+                        if (checkbox.checked !== allSelected) {
+                            checkbox.click(); // Use click to trigger the existing event handlers
+                        }
+                    });
+                    
+                    // Update button text
+                    selectAllStrokesBtn.textContent = allSelected ? 'Deselect All' : 'Select All';
+                    selectAllStrokesBtn.title = allSelected ? 'Deselect all elements' : 'Select all elements';
+                });
+            }
+
+            // Show All Measurements functionality
+            if (showAllMeasurementsBtn) {
+                showAllMeasurementsBtn.addEventListener('click', () => {
+                    if (typeof window.generateMeasurementsList === 'function') {
+                        window.generateMeasurementsList();
+                    }
+                });
+            }
+
+            // Simplified Tag System
+            let tagMode = 'letters+numbers'; // 'letters' or 'letters+numbers'
+            
+            // Helper function to find next available letter (A, B, C...)
+            function findNextAvailableLetter() {
+                const currentImageLabel = window.currentImageLabel || 'default';
+                const lineStrokes = window.lineStrokesByImage?.[currentImageLabel] || [];
+                const existingTags = lineStrokes.filter(Boolean);
+                
+                // Extract all letters that have been used (from both A and A1 patterns)
+                const usedLetters = new Set();
+                for (const tag of existingTags) {
+                    if (/^[A-Z]/.test(tag)) {
+                        usedLetters.add(tag[0]); // Get the first letter
+                    }
+                }
+                
+                // Find the first unused letter
+                for (let i = 0; i < 26; i++) {
+                    const letter = String.fromCharCode(65 + i); // A=65, B=66, etc.
+                    if (!usedLetters.has(letter)) {
+                        return letter;
+                    }
+                }
+                
+                // If all letters A-Z are used, start over at A
+                return 'A';
+            }
+            
+            // Helper function to find next available letter+number (A1, A2, A3...)
+            function findNextAvailableLetterNumber() {
+                const currentImageLabel = window.currentImageLabel || 'default';
+                const lineStrokes = window.lineStrokesByImage?.[currentImageLabel] || [];
+                const existingTags = lineStrokes.filter(Boolean);
+                
+                // Extract all base tags (A1, A2, etc.) and track the highest per letter
+                const letterCounts = new Map();
+                
+                for (const tag of existingTags) {
+                    // Handle both A1 and A1(1) patterns
+                    const match = tag.match(/^([A-Z])(\d+)(?:\((\d+)\))?$/);
+                    if (match) {
+                        const letter = match[1];
+                        const number = parseInt(match[2]);
+                        const currentMax = letterCounts.get(letter) || 0;
+                        letterCounts.set(letter, Math.max(currentMax, number));
+                    }
+                }
+                
+                // Find the next available tag
+                for (let letter = 'A'; letter <= 'Z'; letter = String.fromCharCode(letter.charCodeAt(0) + 1)) {
+                    const maxNumber = letterCounts.get(letter) || 0;
+                    const nextNumber = maxNumber + 1;
+                    
+                    if (nextNumber <= 9) {
+                        return letter + nextNumber;
+                    }
+                }
+                
+                // If we've exhausted all possibilities up to Z9, start over at A1
+                return 'A1';
+            }
+
+            // Tag Mode Toggle functionality
+            const tagModeToggle = document.getElementById('tagModeToggle');
+            if (tagModeToggle) {
+                tagModeToggle.addEventListener('click', () => {
+                    const oldMode = tagMode;
+                    tagMode = tagMode === 'letters' ? 'letters+numbers' : 'letters';
+                    tagModeToggle.textContent = tagMode === 'letters' ? 'Letters Only' : 'Letters + Numbers';
+                    
+                    // Automatically set the next appropriate tag when switching modes
+                    const currentImageLabel = window.currentImageLabel || 'default';
+                    window.labelsByImage = window.labelsByImage || {};
+                    
+                    if (tagMode === 'letters') {
+                        // Switching to letters only - find next available letter
+                        const nextLetter = findNextAvailableLetter();
+                        window.labelsByImage[currentImageLabel] = nextLetter;
+                        console.log(`[tagModeToggle] Switched to letters mode, next tag: ${nextLetter}`);
+                    } else {
+                        // Switching to letters+numbers - find next available letter+number
+                        const nextLetterNumber = findNextAvailableLetterNumber();
+                        window.labelsByImage[currentImageLabel] = nextLetterNumber;
+                        console.log(`[tagModeToggle] Switched to letters+numbers mode, next tag: ${nextLetterNumber}`);
+                    }
+                    
+                    updateNextTagDisplay();
+                });
+            }
+
+            // Calculate next tag based on current mode and existing tags
+            function calculateNextTag() {
+                console.log('[calculateNextTag] Called with tagMode:', tagMode);
+                const currentImageLabel = window.currentImageLabel || 'default';
+                const lineStrokes = window.lineStrokesByImage?.[currentImageLabel] || [];
+                const existingTags = lineStrokes.filter(Boolean);
+                
+                console.log('[calculateNextTag] Current image:', currentImageLabel, 'existing tags:', existingTags);
+                
+                if (existingTags.length === 0) {
+                    const result = tagMode === 'letters' ? 'A' : 'A1';
+                    console.log('[calculateNextTag] No existing tags, returning:', result);
+                    return result;
+                }
+                
+                // Extract all base tags (without suffixes) and find the highest one
+                const baseTags = new Set();
+                const tagCounts = new Map(); // Track how many times each base tag appears
+                
+                for (const tag of existingTags) {
+                    if (tagMode === 'letters') {
+                        if (/^[A-Z]$/.test(tag)) {
+                            baseTags.add(tag);
+                            tagCounts.set(tag, (tagCounts.get(tag) || 0) + 1);
+                        }
+                    } else {
+                        // Handle both A1 and A1(1), A1(2) patterns
+                        const match = tag.match(/^([A-Z]\d+)(?:\((\d+)\))?$/);
+                        if (match) {
+                            const baseTag = match[1];
+                            baseTags.add(baseTag);
+                            tagCounts.set(baseTag, (tagCounts.get(baseTag) || 0) + 1);
+                        }
+                    }
+                }
+                
+                if (baseTags.size === 0) {
+                    // No valid tags found, start fresh
+                    const result = tagMode === 'letters' ? 'A' : 'A1';
+                    console.log('[calculateNextTag] No valid tags found, returning:', result);
+                    return result;
+                }
+                
+                // Find the highest base tag
+                const sortedBaseTags = Array.from(baseTags).sort();
+                const lastBaseTag = sortedBaseTags[sortedBaseTags.length - 1];
+                
+                console.log('[calculateNextTag] Last base tag:', lastBaseTag, 'count:', tagCounts.get(lastBaseTag));
+                
+                if (tagMode === 'letters') {
+                    // Letters only mode: A -> B -> C -> D...
+                    const lastLetter = lastBaseTag[0];
+                    const nextLetter = String.fromCharCode(lastLetter.charCodeAt(0) + 1);
+                    console.log('[calculateNextTag] Letters mode, next:', nextLetter);
+                    return nextLetter;
+                } else {
+                    // Letters + numbers mode: A1 -> A2 -> A3... -> B1 -> B2...
+                    const match = lastBaseTag.match(/^([A-Z])(\d+)$/);
+                    if (match) {
+                        const [, letter, number] = match;
+                        const nextNumber = parseInt(number) + 1;
+                        if (nextNumber > 9) {
+                            // Move to next letter when we exceed 9
+                            const nextLetter = String.fromCharCode(letter.charCodeAt(0) + 1);
+                            const result = nextLetter + '1';
+                            console.log('[calculateNextTag] Numbers mode, exceeded 9, next:', result);
+                            return result;
+                        }
+                        const result = letter + nextNumber;
+                        console.log('[calculateNextTag] Numbers mode, next:', result);
+                        return result;
+                    } else {
+                        // This shouldn't happen since we validated the tag, but just in case
+                        console.log('[calculateNextTag] Unexpected tag format, returning A1');
+                        return 'A1';
+                    }
+                }
+            }
+
+            // Update the next tag display
+            function updateNextTagDisplay() {
+                const nextTagDisplay = document.getElementById('nextTagDisplay');
+                if (nextTagDisplay) {
+                    const currentImageLabel = window.currentImageLabel || 'default';
+                    // Show labelsByImage value if set, otherwise fall back to calculated next tag
+                    const nextTag = (window.labelsByImage && window.labelsByImage[currentImageLabel]) || calculateNextTag();
+                    nextTagDisplay.textContent = nextTag;
+                }
+            }
+
+            // Initialize next tag display
+            updateNextTagDisplay();
+
+            // Make functions available globally for paint.js to call
+            window.updateNextTagDisplay = updateNextTagDisplay;
+            window.calculateNextTag = calculateNextTag;
+            console.log('[index.html] Made calculateNextTag available globally:', typeof window.calculateNextTag);
+            
+            // Allow user to set the next tag directly by clicking the display
+            const nextTagEl = document.getElementById('nextTagDisplay');
+            nextTagEl?.addEventListener('click', () => {
+                const mode = typeof tagMode === 'string' ? tagMode : 'letters+numbers';
+                const currentImageLabel = window.currentImageLabel || 'default';
+                const input = prompt(
+                    mode === 'letters'
+                        ? 'Set next tag (letters only, e.g., D):'
+                        : 'Set next tag (letter+number, e.g., D4):'
+                );
+                if (!input) return;
+
+                const cleaned = input.trim().toUpperCase();
+                const valid = mode === 'letters'
+                    ? /^[A-Z]$/.test(cleaned)
+                    : /^[A-Z]\d+$/.test(cleaned);
+
+                if (!valid) {
+                    alert(mode === 'letters'
+                        ? 'Invalid tag. Use a single letter (A-Z).'
+                        : 'Invalid tag. Use Letter+Number (e.g., D4).');
+                    return;
+                }
+
+                // Ensure labelsByImage exists, then set the next tag seed
+                window.labelsByImage = window.labelsByImage || {};
+                window.labelsByImage[currentImageLabel] = cleaned;
+
+                updateNextTagDisplay();
+            });
             
             // Capture frame lock functionality
             let isCaptureLocked = true; // Start locked for minimal appearance
@@ -3675,6 +4174,60 @@
                     lastLegacyCount = currentLegacyCount;
                 }
             }, 2000);  // Check every 2 seconds instead of 1
+        });
+
+        // View Measurements toggle functionality
+        document.addEventListener('DOMContentLoaded', () => {
+            // View Measurements toggle functionality
+            const viewMeasurementsToggle = document.getElementById('viewMeasurementsToggle');
+            if (viewMeasurementsToggle) {
+                let measurementsVisible = true; // Default state
+
+                const updateToggleAppearance = () => {
+                    if (measurementsVisible) {
+                        viewMeasurementsToggle.classList.remove('bg-gray-500', 'text-white');
+                        viewMeasurementsToggle.classList.add('bg-blue-500', 'text-white');
+                        viewMeasurementsToggle.textContent = 'Show Labels';
+                        viewMeasurementsToggle.title = 'Hide measurement labels';
+                    } else {
+                        viewMeasurementsToggle.classList.remove('bg-blue-500', 'text-white');
+                        viewMeasurementsToggle.classList.add('bg-gray-500', 'text-white');
+                        viewMeasurementsToggle.textContent = 'Hide Labels';
+                        viewMeasurementsToggle.title = 'Show measurement labels';
+                    }
+                };
+
+                viewMeasurementsToggle.addEventListener('click', (e) => {
+                    e.stopPropagation(); // Prevent panel dragging
+                    measurementsVisible = !measurementsVisible;
+                    updateToggleAppearance();
+
+                    // Toggle all measurement labels visibility
+                    if (window.strokeLabelVisibility && window.currentImageLabel) {
+                        const imageLabels = window.strokeLabelVisibility[window.currentImageLabel];
+                        if (imageLabels) {
+                            for (const strokeLabel in imageLabels) {
+                                window.strokeLabelVisibility[window.currentImageLabel][strokeLabel] = measurementsVisible;
+                            }
+                        }
+                    }
+
+                    // Update all label toggle buttons in the stroke list
+                    const labelToggleBtns = document.querySelectorAll('.stroke-label-toggle');
+                    labelToggleBtns.forEach(btn => {
+                        btn.innerHTML = measurementsVisible ? '🏷️' : ' 🏷️ ';
+                        btn.title = measurementsVisible ? 'Hide Label' : 'Show Label';
+                    });
+
+                    // Redraw canvas to apply changes
+                    if (typeof window.redrawCanvasWithVisibility === 'function') {
+                        window.redrawCanvasWithVisibility();
+                    }
+                });
+
+                // Set initial appearance
+                updateToggleAppearance();
+            }
         });
     </script>
     
