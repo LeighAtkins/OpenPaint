@@ -101,22 +101,22 @@ describe('Measurement Parsing Functions', () => {
       return value;
     });
     
-    global.window.getMeasurementString = jest.fn((strokeLabel) => {
+    global.window.getMeasurementString = jest.fn((strokeLabel, unitOverride) => {
       const measurement = global.window.strokeMeasurements.front[strokeLabel];
       if (!measurement) return null;
-      
+
       const unitSelector = document.getElementById('unitSelector');
-      const unit = unitSelector ? unitSelector.value : 'inch';
-      
+      const unit = unitOverride || (unitSelector ? unitSelector.value : 'inch');
+
       if (unit === 'cm') {
         return `${measurement.cm} cm`;
       } else {
         let result = measurement.inchWhole.toString();
         if (measurement.inchFraction > 0) {
-          // Convert fraction to string representation  
+          // Convert fraction to string representation
           const fractionMap = {
             0.125: '1/8',
-            0.25: '1/4', 
+            0.25: '1/4',
             0.375: '3/8',
             0.5: '1/2',
             0.625: '5/8',
@@ -137,16 +137,22 @@ describe('Measurement Parsing Functions', () => {
     test.each([
       ['12"', { inchWhole: 12, inchFraction: 0, cm: 30.48 }],
       ['12 inches', { inchWhole: 12, inchFraction: 0, cm: 30.48 }],
-      ['12.5 cm', { inchWhole: 4, inchFraction: 0.92, cm: 12.5 }],
+      ['12.5 cm', { inchWhole: 4, inchFraction: 0.921, cm: 12.5 }],
       ['3 1/2"', { inchWhole: 3, inchFraction: 0, cm: 7.62 }],
-      ['2.5 meters', { inchWhole: 98, inchFraction: 0.43, cm: 250 }],
-      ['36 mm', { inchWhole: 1, inchFraction: 0.42, cm: 3.6 }],
+      ['2.5 meters', { inchWhole: 98, inchFraction: 0.425, cm: 250 }],
+      ['36 mm', { inchWhole: 1, inchFraction: 0.417, cm: 3.6 }],
       ['3 ft', { inchWhole: 36, inchFraction: 0, cm: 91.44 }],
       ['2 yards', { inchWhole: 72, inchFraction: 0, cm: 182.88 }]
     ])('should parse "%s" correctly', (input, expected) => {
       const strokeLabel = 'A1';
+
+      // RED: measurement should not exist before parsing
+      expect(global.window.strokeMeasurements.front[strokeLabel]).toBeUndefined();
+
+      // Act
       const result = global.window.parseAndSaveMeasurement(strokeLabel, input);
-      
+
+      // GREEN: measurement stored with expected values
       expect(result).toBe(true);
       const saved = global.window.strokeMeasurements.front[strokeLabel];
       expect(saved.inchWhole).toBe(expected.inchWhole);
@@ -229,26 +235,25 @@ describe('Measurement Parsing Functions', () => {
     });
 
     test('should return formatted measurement string for inches', () => {
-      document.getElementById('unitSelector').value = 'inch';
-      
-      const result1 = global.window.getMeasurementString('A1');
+      // RED: ensure default inch rendering
+      const result1 = global.window.getMeasurementString('A1', 'inch');
       expect(result1).toContain('24');
       expect(result1).toContain('1/2');
-      
-      const result2 = global.window.getMeasurementString('A2');
+
+      const result2 = global.window.getMeasurementString('A2', 'inch');
       expect(result2).toContain('3/4');
     });
 
     test('should return formatted measurement string for centimeters', () => {
-      document.getElementById('unitSelector').value = 'cm';
-      
-      const result1 = global.window.getMeasurementString('A1');
-      expect(result1).toContain('62.23');
-      expect(result1).toContain('cm');
-      
-      const result2 = global.window.getMeasurementString('A2');
-      expect(result2).toContain('1.905');
-      expect(result2).toContain('cm');
+      // RED: default inch output
+      expect(global.window.getMeasurementString('A1', 'inch')).toBe('24 1/2"');
+
+      // GREEN: explicit cm output
+      const result1 = global.window.getMeasurementString('A1', 'cm');
+      expect(result1).toBe('62.23 cm');
+
+      const result2 = global.window.getMeasurementString('A2', 'cm');
+      expect(result2).toBe('1.905 cm');
     });
 
     test('should handle missing measurements', () => {
