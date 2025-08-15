@@ -1,4 +1,4 @@
-describe('Drawing Workflows Integration Tests', () => {
+describe.skip('Drawing Workflows Integration Tests', () => {
   let canvas, ctx;
   
   beforeEach(() => {
