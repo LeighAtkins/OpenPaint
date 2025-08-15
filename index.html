@@ -3444,12 +3444,11 @@
                 
                 // Calculate the rotation center
                 let rotationCenter = null;
-                let isBlankCanvas = false;
+                // Treat as blank-like when no bitmap exists for this label or label is explicitly 'blank_canvas'
+                const isBlankCanvas = (imageLabel === 'blank_canvas') || !(window.originalImages && window.originalImages[imageLabel]);
                 if (transformType === 'rotate' && vectorStrokesSource) {
-                    // For blank canvas, rotate around the actual drawing center for intuitive behavior
-                    if (imageLabel === 'blank_canvas') {
-                        isBlankCanvas = true;
-                        
+                    // For blank canvas, rotate around the actual drawing center (fallback to canvas center if no strokes)
+                    if (isBlankCanvas) {
                         // Initialize original centroid storage if it doesn't exist
                         if (!window.originalDrawingCentroids) {
                             window.originalDrawingCentroids = {};
@@ -3469,8 +3468,8 @@
                             }
                         }
                         
-                        rotationCenter = window.originalDrawingCentroids[imageLabel];
-                        console.log(`[Transform] Using stored original centroid for ${imageLabel}:`, rotationCenter);
+                        rotationCenter = window.originalDrawingCentroids[imageLabel] || { x: imageWidth / 2, y: imageHeight / 2 };
+                        console.log(`[Transform] Using stored centroid or canvas center for ${imageLabel}:`, rotationCenter);
                     } else {
                         // For regular images, rotate strokes around the image center to match bitmap rotation
                         rotationCenter = null;
@@ -3646,14 +3645,20 @@
                 }
                 
                 // Update image dimensions if rotating by 90/270 degrees
+                // Skip dimension swapping for blank-like images (no real bitmap to swap)
                 if (transformType === 'rotate' && (Math.abs(transformValue) === 90 || Math.abs(transformValue) === 270)) {
-                    if (window.originalImageDimensions && window.originalImageDimensions[imageLabel]) {
+                    // Treat as blank-like when no bitmap exists for this label or label is explicitly 'blank_canvas'
+                    const isBlankCanvas = (imageLabel === 'blank_canvas') || !(window.originalImages && window.originalImages[imageLabel]);
+                    
+                    if (!isBlankCanvas && window.originalImageDimensions && window.originalImageDimensions[imageLabel]) {
                         const dims = window.originalImageDimensions[imageLabel];
                         window.originalImageDimensions[imageLabel] = {
                             width: dims.height,
                             height: dims.width
                         };
                         console.log(`[Transform] Swapped image dimensions: ${dims.width}x${dims.height} → ${dims.height}x${dims.width}`);
+                    } else if (isBlankCanvas) {
+                        console.log(`[Transform] Skipping dimension swap for blank-like canvas (${imageLabel})`);
                     }
                 }
 
