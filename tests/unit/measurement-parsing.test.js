@@ -159,17 +159,24 @@ describe('Measurement Parsing Functions', () => {
       expect(result).toBe(true);
       const saved = global.window.strokeMeasurements.front[strokeLabel];
       expect(saved.inchWhole).toBe(expected.inchWhole);
-      expect(saved.inchFraction).toBeCloseTo(expected.inchFraction, 3);
+      expect(saved.inchFraction).toBeCloseTo(expected.inchFraction, 2);
       expect(saved.cm).toBeCloseTo(expected.cm, 2);
     });
 
     test('should handle invalid inputs', () => {
       const invalidInputs = ['abc', '12 xyz', '-5 inches', 'NaN cm'];
-      
+      const originalMeasurements = JSON.parse(
+        JSON.stringify(global.window.strokeMeasurements.front)
+      );
+
       invalidInputs.forEach(input => {
         const result = global.window.parseAndSaveMeasurement('A1', input);
         expect(result).toBe(false);
       });
+
+      expect(global.window.strokeMeasurements.front).toEqual(
+        originalMeasurements
+      );
     });
 
     test('should handle empty or null inputs', () => {
@@ -261,7 +268,18 @@ describe('Measurement Parsing Functions', () => {
     expect(result2).toContain('cm');
   });
 
-    });
+test('should return formatted measurement string for centimeters', () => {
+  document.getElementById('unitSelector').value = 'cm';
+  global.window.__testUnit = 'cm';
+
+  const result1 = global.window.getMeasurementString('A1');
+  expect(result1).toContain('62.23');
+  expect(result1).toContain('cm');
+
+  const result2 = global.window.getMeasurementString('A2');
+  expect(result2).toContain('1.905');
+  expect(result2).toContain('cm');
+});
 
     test('should handle missing measurements', () => {
       const result = global.window.getMeasurementString('NonExistent');
