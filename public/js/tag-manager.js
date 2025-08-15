@@ -235,7 +235,12 @@ function getVisibleCategories(selections) {
     const visibleCategories = ['furnitureType', 'viewType'];
     
     // Check each category to see if its condition is met
-    for (const categoryId of window.TAG_CATEGORY_ORDER.slice(2)) { // Skip the first two (always visible)
+    for (const categoryId of window.TAG_CATEGORY_ORDER) {
+        // Skip the two base categories which are always visible
+        if (categoryId === 'furnitureType' || categoryId === 'viewType') {
+            continue;
+        }
+
         const category = window.TAG_MODEL[categoryId];
         if (!category) continue; // Should not happen if TAG_MODEL and TAG_CATEGORY_ORDER are in sync
 
