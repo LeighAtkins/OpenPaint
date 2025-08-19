@@ -823,7 +823,7 @@
                         class="px-3 py-2.5 border border-gray-300 rounded-xl text-sm bg-white w-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 shadow-sm"
                     >
                     <div class="flex items-center gap-3">
-                        <label class="text-sm font-semibold text-slate-700 w-14">Units:</label>
+                        <label for="unitSelector" class="text-sm font-semibold text-slate-700 w-14">Units:</label>
                         <select 
                             id="unitSelector" 
                             onchange="updateMeasurementDisplay()" 
@@ -885,6 +885,7 @@
                         <span class="label-long">Upload Images</span><span class="label-short">Upload</span>
                     </button>
                     <button id="save" class="px-4 py-2.5 bg-success-500 hover:bg-success-600 active:bg-success-700 text-white text-sm font-semibold rounded-xl shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-105 active:scale-95">Save Current</button>
+                    <button id="copy" class="px-4 py-2.5 bg-primary-500 hover:bg-primary-600 active:bg-primary-700 text-white text-sm font-semibold rounded-xl shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-105 active:scale-95" title="Copy image to clipboard (cropped to frame)" aria-label="Copy Image">Copy</button>
                 </div>
                 
                 <!-- Color Palette -->
@@ -1093,6 +1094,9 @@
     <!-- Canvas Controls (Bottom Panel) -->
     <div id="canvasControls" class="floating-panel fixed bottom-4 rounded-2xl px-3 py-2 transition-all duration-300" style="left: 50%; transform: translateX(-50%); z-index: 4000;">
         <div id="canvasControlsContent" class="flex items-center gap-2 text-sm smart-label-scope">
+            <button id="copyCanvasBtn" class="px-3 py-1 bg-primary-500 hover:bg-primary-600 text-white text-xs rounded-lg" title="Copy image to clipboard">
+                Copy
+            </button>
             <select id="fitModeSelect" class="px-2 py-1 border border-gray-300 rounded-lg bg-white focus:outline-none hover:bg-gray-50">
                 <option value="none">Manual</option>
                 <option value="fit-width" selected>Fit Width</option>
@@ -4298,8 +4302,9 @@
         <div class="scale-option px-3 py-1 hover:bg-gray-100 cursor-pointer text-sm" data-scale="5">500%</div>
     </div>
 
-    <script src="public/js/paint.js"></script>
-    <script src="public/js/project-manager.js"></script>
-    <script src="public/js/tag-manager.js"></script>
+    <script>console.log('[INDEX] before paint.js'); window.onerror=(m,s,l,c,e)=>console.error('[INDEX] onerror',m,s,l,c,e);</script>
+    <script src="/js/paint.js?v=20250819"></script>
+    <script src="/js/project-manager.js?v=20250819"></script>
+    <script src="/js/tag-manager.js?v=20250819"></script>
 </body>
 </html>
