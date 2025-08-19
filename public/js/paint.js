@@ -1,4 +1,6 @@
 // Define core application structure for better state management
+console.log('[PAINT.JS] Script loaded successfully');
+console.warn('[PAINT.JS] Script loaded (warn)');
 window.paintApp = {
     config: {
         IMAGE_LABELS: ['front', 'side', 'back', 'cushion', 'blank_canvas'],
@@ -239,7 +241,18 @@ document.addEventListener('DOMContentLoaded', () => {
     window.paintApp.state.domElements.brushSize = document.getElementById('brushSize');
     window.paintApp.state.domElements.clearButton = document.getElementById('clear');
     window.paintApp.state.domElements.saveButton = document.getElementById('save');
+    window.paintApp.state.domElements.copyButton = document.getElementById('copy');
+    window.paintApp.state.domElements.copyCanvasBtn = document.getElementById('copyCanvasBtn');
     window.paintApp.state.domElements.pasteButton = document.getElementById('paste');
+    
+    // Debug DOM element loading
+    console.log('[PAINT.JS] DOM elements found:', {
+        brushSize: !!window.paintApp.state.domElements.brushSize,
+        clearButton: !!window.paintApp.state.domElements.clearButton,
+        saveButton: !!window.paintApp.state.domElements.saveButton,
+        copyButton: !!window.paintApp.state.domElements.copyButton,
+        pasteButton: !!window.paintApp.state.domElements.pasteButton
+    });
     window.paintApp.state.domElements.strokeCounter = document.getElementById('strokeCounter');
     window.paintApp.state.domElements.imageList = document.getElementById('imageList');
     window.paintApp.state.domElements.drawingModeToggle = document.getElementById('drawingModeToggle');
@@ -255,6 +268,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const brushSize = window.paintApp.state.domElements.brushSize;
     const clearButton = window.paintApp.state.domElements.clearButton;
     const saveButton = window.paintApp.state.domElements.saveButton;
+    const copyButton = window.paintApp.state.domElements.copyButton;
 
 // Update color of stroke currently in edit mode when the color picker changes
 if (colorPicker) {
@@ -7545,15 +7559,26 @@ if (colorPicker) {
             return { x: 0, y: 0 };
         }
         
-        // If this is a straight line (or exactly two points), compute the geometric midpoint
-        if (vectorData.points.length === 2 || vectorData.type === 'straight') {
-            const p0 = vectorData.points[0];
-            const p1 = vectorData.points[vectorData.points.length - 1];
-            return { x: (p0.x + p1.x) / 2, y: (p0.y + p1.y) / 2 };
+        // EXPERIMENTAL: For dragging freedom, use the geometric center of the stroke's bounding box
+        // instead of just the midpoint. This gives more freedom for label positioning.
+        const points = vectorData.points;
+        let minX = points[0].x, maxX = points[0].x;
+        let minY = points[0].y, maxY = points[0].y;
+        
+        for (const point of points) {
+            minX = Math.min(minX, point.x);
+            maxX = Math.max(maxX, point.x);
+            minY = Math.min(minY, point.y);
+            maxY = Math.max(maxY, point.y);
         }
         
-        const midIndex = Math.floor(vectorData.points.length / 2);
-        return vectorData.points[midIndex];
+        // Return center of bounding box instead of midpoint
+        const centerX = (minX + maxX) / 2;
+        const centerY = (minY + maxY) / 2;
+        
+        console.log(`[ANCHOR] Stroke ${strokeName} bounds: (${minX.toFixed(1)},${minY.toFixed(1)}) to (${maxX.toFixed(1)},${maxY.toFixed(1)}) -> center: (${centerX.toFixed(1)},${centerY.toFixed(1)})`);
+        
+        return { x: centerX, y: centerY };
     }
 
     // Drawing function for freehand mode
@@ -8741,6 +8766,8 @@ if (colorPicker) {
         
         const { eventListeners } = window.paintApp.state;
         console.log('[Event] Binding canvas listeners with AbortController');
+        console.log('[Event] Canvas element:', canvas);
+        console.log('[Event] Canvas ID:', canvas.id);
         
         // Canvas mouse events
         canvas.addEventListener('mousedown', onCanvasMouseDown, { signal: eventListeners.signal });
@@ -8750,17 +8777,69 @@ if (colorPicker) {
         canvas.addEventListener('dblclick', onCanvasDoubleClick, { signal: eventListeners.signal });
         canvas.addEventListener('wheel', onCanvasWheel, { signal: eventListeners.signal });
         canvas.addEventListener('scalechange', onCanvasScaleChange, { signal: eventListeners.signal });
-        canvas.addEventListener('contextmenu', onCanvasRightClick, { signal: eventListeners.signal });
+        // canvas.addEventListener('contextmenu', onCanvasRightClick, { signal: eventListeners.signal }); // Disabled to allow browser context menu
+        console.log('[Event] Context menu listener bound to canvas');
+        
+        // --- RIGHT-CLICK DEBUGGING (temporary) ---
+        // Logs whether a right-click leads to a contextmenu event, and where it fired.
+        // Remove when done debugging.
+        window.__rcDebug = window.__rcDebug || {};
+
+        document.addEventListener('mousedown', function(e) {
+            if (e.button === 2) { // right-click down
+                window.__rcDebug.lastRightClickAt = Date.now();
+                window.__rcDebug.target = e.target;
+                if (window.__rcDebug.timer) clearTimeout(window.__rcDebug.timer);
+                window.__rcDebug.seenContextMenu = false;
+
+                // If no contextmenu arrives shortly, warn.
+                window.__rcDebug.timer = setTimeout(function() {
+                    if (!window.__rcDebug.seenContextMenu) {
+                        console.warn('[RC-DEBUG] No contextmenu fired after right-click. Target:', window.__rcDebug.target);
+                    }
+                }, 300);
+            }
+        }, { capture: true });
+
+        document.addEventListener('contextmenu', function(e) {
+            window.__rcDebug.seenContextMenu = true;
+            console.log('[RC-DEBUG] contextmenu fired on:', e.target, ' defaultPrevented=', e.defaultPrevented);
+        }, { capture: true });
+        // --- END RIGHT-CLICK DEBUGGING ---
+        
+        // Allow standard browser context menu on canvas for image operations
         
         // Window mouse events for global dragging
         window.addEventListener('mousemove', onWindowMouseMove, { signal: eventListeners.signal });
         window.addEventListener('mouseup', onWindowMouseUp, { signal: eventListeners.signal });
         
         window.paintApp.state.listenersBound = true;
+        console.warn('[PAINT.JS] Event listeners bound successfully');
+        
+        // Debug panel visibility
+        const toolsPanel = document.getElementById('toolsPanel');
+        if (toolsPanel) {
+            console.log('[PAINT.JS] Tools panel found, visibility:', {
+                display: getComputedStyle(toolsPanel).display,
+                visibility: getComputedStyle(toolsPanel).visibility,
+                opacity: getComputedStyle(toolsPanel).opacity,
+                position: getComputedStyle(toolsPanel).position,
+                top: getComputedStyle(toolsPanel).top,
+                left: getComputedStyle(toolsPanel).left
+            });
+        } else {
+            console.warn('[PAINT.JS] Tools panel not found!');
+        }
     }
 
     // Canvas event handlers
     function onCanvasMouseDown(e) {
+        // Check if this is a right-click (button 2) - trigger copy directly
+        if (e.button === 2) {
+            // Allow standard browser right-click context menu on canvas
+            return;
+        }
+        
         // First, check if we should be dragging the image (shift key pressed)
         if (isShiftPressed) {
             isDraggingImage = true;
@@ -9319,6 +9398,8 @@ if (colorPicker) {
             const deltaX = currentX - dragStartX;
             const deltaY = currentY - dragStartY;
             
+                            console.log(`[DRAG] Label drag delta: (${deltaX}, ${deltaY}) for stroke: ${draggedLabelStroke.strokeLabel}`);
+            
             // Update start position for next move event
             dragStartX = currentX;
             dragStartY = currentY;
@@ -9334,6 +9415,8 @@ if (colorPicker) {
                 // Use robust anchor computation for dragging as well, so custom offsets stay relative to true center
                 const midPointRelative = getStrokeAnchorPoint(strokeName, currentImageLabel);
                 const anchorPoint = getCanvasCoords(midPointRelative.x, midPointRelative.y);
+                
+                console.log(`[DRAG] Stroke points:`, vectorData.points.length, `midPoint:`, midPointRelative, `anchor:`, anchorPoint);
 
                 // Get the current offset (custom or calculated) or calculate if first time dragging
                 let currentOffset = customLabelPositions[currentImageLabel][strokeName] || 
@@ -9359,50 +9442,14 @@ if (colorPicker) {
                     currentOffset = { ...currentOffset };
                 }
 
-                // Update the relative offset by the canvas delta
-                // Convert canvas delta to image space delta using full inverse transform (accounts for rotation and scale)
-                const prevCanvasX = dragStartX - deltaX;
-                const prevCanvasY = dragStartY - deltaY;
-                const prevImage = getTransformedCoords(prevCanvasX, prevCanvasY);
-                const currImage = getTransformedCoords(dragStartX, dragStartY);
-                const imageDeltaX = currImage.x - prevImage.x;
-                const imageDeltaY = currImage.y - prevImage.y;
-
-                currentOffset.x += imageDeltaX;
-                currentOffset.y += imageDeltaY;
+                                // SIMPLIFIED: Direct canvas delta for unrestricted movement
+                currentOffset.x += deltaX;
+                currentOffset.y += deltaY;
                 
-                // Store the updated offset in customLabelPositions (always overwrites calculated)
+                console.log(`[DRAG] Delta: (${deltaX}, ${deltaY}) -> Offset: (${currentOffset.x.toFixed(1)}, ${currentOffset.y.toFixed(1)})`);
+                
+                // Store the updated offset
                 customLabelPositions[currentImageLabel][strokeName] = currentOffset;
-//                  console.log(`Storing updated custom offset for ${strokeName}:`, currentOffset);
-                
-                // CRITICAL FIX: Also store in window.customLabelPositions for transformation access
-                if (!window.customLabelPositions[currentImageLabel]) {
-                    window.customLabelPositions[currentImageLabel] = {};
-                }
-                window.customLabelPositions[currentImageLabel][strokeName] = currentOffset;
-                console.log(`[SYNC-FIX] Stored custom position in both local and window.customLabelPositions for ${strokeName}:`, currentOffset);
-                
-                // NEW: Store relative position for rotation-resistant positioning
-                if (!window.customLabelRelativePositions[currentImageLabel]) {
-                    window.customLabelRelativePositions[currentImageLabel] = {};
-                }
-                const relativePosition = window.convertAbsoluteToRelativePosition(strokeName, currentOffset, currentImageLabel);
-                if (relativePosition) {
-                    window.customLabelRelativePositions[currentImageLabel][strokeName] = relativePosition;
-                    console.log(`[REL-POS] Stored relative position for ${strokeName}:`, relativePosition);
-                } else {
-                    console.warn(`[REL-POS] Could not convert to relative position for ${strokeName}`);
-                }
-                
-                // Stamp the current rotation for this stroke to prevent re-rotation
-                if (!window.customLabelOffsetsRotationByImageAndStroke) {
-                    window.customLabelOffsetsRotationByImageAndStroke = {};
-                }
-                if (!window.customLabelOffsetsRotationByImageAndStroke[currentImageLabel]) {
-                    window.customLabelOffsetsRotationByImageAndStroke[currentImageLabel] = {};
-                }
-                const currentTheta = window.imageRotationByLabel && window.imageRotationByLabel[currentImageLabel] ? window.imageRotationByLabel[currentImageLabel] : 0;
-                window.customLabelOffsetsRotationByImageAndStroke[currentImageLabel][strokeName] = currentTheta;
 
                 // Remove canvas boundary clamping
                 // pos.x = Math.max(10, Math.min(canvas.width - labelToMove.width - 10, pos.x));
@@ -9450,6 +9497,13 @@ if (colorPicker) {
     }
     
     function onCanvasMouseUp(e) {
+        // Check if this is a right-click (button 2) - don't process in mouseup
+        if (e.button === 2) {
+            e.preventDefault();
+            e.stopPropagation();
+            return; // Don't process right-clicks in mouseup
+        }
+        
         // Check if we were drawing when mouseup occurred
         const wasDrawing = isDrawing;
         
@@ -9984,10 +10038,10 @@ if (colorPicker) {
     }
 
     // Right-click handler for copying cropped canvas
-    function onCanvasRightClick(e) {
-        e.preventDefault();
-        copyCurrentViewToClipboard();
-    }
+    // function onCanvasRightClick(e) {
+    //     e.preventDefault();
+    //     copyCurrentViewToClipboard();
+    // }
 
     // Copy current view (respecting capture frame) to clipboard
     async function copyCurrentViewToClipboard() {
@@ -10041,17 +10095,28 @@ if (colorPicker) {
                 await navigator.clipboard.write([
                     new ClipboardItem({ 'image/png': blob })
                 ]);
-                console.log('[Copy] Image copied to clipboard successfully');
                 
                 // Show temporary feedback
-                showStatusMessage('Image copied to clipboard!', 'success');
+                if (typeof window.projectManager?.showStatusMessage === 'function') {
+                    window.projectManager.showStatusMessage('Image copied to clipboard!', 'success');
+                } else {
+                    alert('Image copied to clipboard!');
+                }
             } else {
                 console.warn('[Copy] Clipboard API not supported');
-                showStatusMessage('Clipboard not supported in this browser', 'error');
+                if (typeof window.projectManager?.showStatusMessage === 'function') {
+                    window.projectManager.showStatusMessage('Clipboard not supported in this browser', 'error');
+                } else {
+                    alert('Clipboard not supported in this browser');
+                }
             }
         } catch (error) {
             console.error('[Copy] Failed to copy to clipboard:', error);
-            showStatusMessage('Failed to copy image', 'error');
+            if (typeof window.projectManager?.showStatusMessage === 'function') {
+                window.projectManager.showStatusMessage('Failed to copy image', 'error');
+            } else {
+                alert('Failed to copy image');
+            }
         }
     }
     
@@ -10299,6 +10364,16 @@ if (colorPicker) {
             
             performRedo();
         }
+
+        // Handle copy (Ctrl+C) to copy current view (cropped to capture frame)
+        if ((e.ctrlKey || e.metaKey) && e.key === 'c' && !isDrawingOrPasting) {
+            const t = e.target;
+            const isEditable = t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable);
+            if (!isEditable) {
+                e.preventDefault();
+                copyCurrentViewToClipboard();
+            }
+        }
         
         // Handle Delete key to remove selected strokes
         if (e.key === 'Delete' && !isDrawingOrPasting) {
@@ -10441,6 +10516,27 @@ if (colorPicker) {
         }
     });
     
+    // Copy current view via button (cropped to capture frame if present)
+    if (copyButton) {
+        copyButton.addEventListener('click', () => {
+            copyCurrentViewToClipboard();
+        });
+        console.log('[PAINT.JS] Copy button event listener added');
+    } else {
+        console.warn('[PAINT.JS] Copy button not found!');
+    }
+    
+    // Canvas copy button (in bottom controls)
+    const copyCanvasBtn = window.paintApp.state.domElements.copyCanvasBtn;
+    if (copyCanvasBtn) {
+        copyCanvasBtn.addEventListener('click', () => {
+            copyCurrentViewToClipboard();
+        });
+        console.log('[PAINT.JS] Canvas copy button event listener added');
+    } else {
+        console.warn('[PAINT.JS] Canvas copy button not found!');
+    }
+
     // Save canvas (cropped to capture frame if present, otherwise full canvas) with opaque white background
     saveButton.addEventListener('click', () => {
         const projectName = document.getElementById('projectName').value || 'New Sofa';
@@ -11270,8 +11366,8 @@ if (colorPicker) {
     function findOptimalLabelPosition(labelRect, anchorPoint, strokeInfo) {
         // Parameters for positioning
         const MAX_TRIES = 12;
-        const MAX_DISTANCE = 150; // Maximum distance from anchor point
-        const MIN_DISTANCE = 30;  // Minimum distance from anchor point
+        const MAX_DISTANCE = 500; // Increased maximum distance from anchor point for more freedom
+        const MIN_DISTANCE = 10;  // Reduced minimum distance from anchor point
 
         // Create a copy of the initial rect
         let bestRect = { ...labelRect };
@@ -11362,8 +11458,8 @@ if (colorPicker) {
             Math.pow(centerY - anchorPoint.y, 2)
         );
         
-        // Normalize distance penalty (0-0.4) - further means bigger penalty
-        const distancePenalty = Math.min(0.4, (distance / 300) * 0.4);
+        // Normalize distance penalty (0-0.2) - reduced penalty to allow more freedom
+        const distancePenalty = Math.min(0.2, (distance / 500) * 0.2);
         score -= distancePenalty;
         
         // Prefer positions to the right or above (slight preference)
