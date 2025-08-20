@@ -79,7 +79,12 @@ window.paintApp = {
         drawingMode: 'straight', // Options: 'freehand', 'straight', 'curved', 'arrow'
         straightLineStart: null,
         curvedLinePoints: [],
-        lastDrawnPoint: null
+        lastDrawnPoint: null,
+        // Label dragging state
+        isDraggingLabel: false,
+        draggedLabelStroke: null, // Store stroke label string
+        dragStartX: 0,
+        dragStartY: 0
     }
 };
 
@@ -108,6 +113,12 @@ window.labelCounters = window.paintApp.state.labelCounters;
 // Control point dragging variables (to be migrated)
 let isDraggingControlPoint = window.paintApp.uiState.isDraggingControlPoint;
 let draggedControlPointInfo = window.paintApp.uiState.draggedControlPointInfo;
+
+// Label dragging variables (migrated to uiState)
+let isDraggingLabel = window.paintApp.uiState.isDraggingLabel;
+let draggedLabelStroke = window.paintApp.uiState.draggedLabelStroke;
+let dragStartX = window.paintApp.uiState.dragStartX;
+let dragStartY = window.paintApp.uiState.dragStartY;
 
 // Additional backward compatibility references
 window.customLabelPositions = window.paintApp.state.customLabelPositions;
@@ -383,54 +394,100 @@ if (colorPicker) {
         // *** ADDED LOG ***
 //         console.log(`[addImageToSidebar] Called for label: ${label}, imageUrl: ${imageUrl ? imageUrl.substring(0,30) + '...' : 'null'}`);
 
-        const container = document.createElement('div');
-        container.className = 'image-container';
+        const container = document.createElement('button');
+        container.type = 'button';
+        container.className = 'image-container group w-full text-left relative flex items-center gap-2 p-2 rounded-lg hover:bg-slate-50 transition-colors';
         container.dataset.label = label;
         container.dataset.originalImageUrl = imageUrl; // Store the original image URL for later restoration
         container.draggable = true; // Enable drag-and-drop
         
-        // Display the tag-based filename if available, otherwise display the label
-        // MODIFIED: Use getTagBasedFilename immediately if available
-        let displayName = label.split('_')[0]; // Default fallback
-        // if (typeof window.getTagBasedFilename === 'function') {
-        //     const tagBasedName = window.getTagBasedFilename(label, displayName); // Use default as fallback
-        //     if (tagBasedName) {
-        //         displayName = tagBasedName;
-        //     }
-        // }
+        // Determine display name: custom name > tag-based name > fallback
+        function getDisplayName() {
+            // 1. Check for custom name first
+            if (window.customImageNames && window.customImageNames[label]) {
+                return window.customImageNames[label];
+            }
+            
+            // 2. Try tag-based name
+            if (typeof window.getTagBasedFilename === 'function') {
+                const tagBasedName = window.getTagBasedFilename(label, label.split('_')[0]);
+                if (tagBasedName && tagBasedName !== label) {
+                    return tagBasedName;
+                }
+            }
+            
+            // 3. Fallback to cleaned label
+            return label.split('_')[0];
+        }
         
-        // Create image label (name display)
+        // Create image label (name display) - clickable for inline editing
         const labelElement = document.createElement('div');
-        labelElement.className = 'image-label';
+        labelElement.className = 'image-label text-xs font-medium text-slate-800 truncate cursor-pointer hover:bg-slate-100 px-1 py-0.5 rounded transition-colors';
+        labelElement.title = 'Click to rename';
+        
+        function updateLabelText() {
+            const displayName = getDisplayName();
         labelElement.textContent = displayName.charAt(0).toUpperCase() + displayName.slice(1);
+        }
         
-        // Create tags container
-        const tagsContainer = document.createElement('div');
-        tagsContainer.className = 'image-tags';
-        tagsContainer.dataset.label = label;
+        updateLabelText();
         
-        // Add edit tags button
+        // Add inline rename functionality
+        labelElement.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent container click
+            
+            const currentName = getDisplayName();
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = currentName;
+            input.className = 'text-xs font-medium bg-white border border-primary-400 rounded px-1 py-0.5 w-full outline-none';
+            
+            // Replace label with input
+            labelElement.style.display = 'none';
+            labelElement.parentNode.insertBefore(input, labelElement);
+            input.focus();
+            input.select();
+            
+            function finishEditing(save = true) {
+                if (save && input.value.trim() && input.value.trim() !== currentName) {
+                    // Save custom name
+                    window.customImageNames[label] = input.value.trim();
+                    updateLabelText();
+                }
+                
+                // Remove input, show label
+                input.remove();
+                labelElement.style.display = '';
+            }
+            
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    finishEditing(true);
+                } else if (e.key === 'Escape') {
+                    finishEditing(false);
+                }
+            });
+            
+            input.addEventListener('blur', () => finishEditing(true));
+        });
+        
+        // Store reference for updates from tag manager
+        labelElement._updateDisplay = updateLabelText;
+        
+        // Add edit tags button (single button for tag selection)
         const editTagsButton = document.createElement('button');
-        editTagsButton.className = 'edit-tags-button';
-        editTagsButton.textContent = 'Edit Tags';
+        editTagsButton.className = 'edit-tags-button ml-auto px-2 py-0.5 text-[11px] rounded border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition-colors';
+        editTagsButton.textContent = 'Tags';
+        editTagsButton.title = 'Edit tags for this image';
         editTagsButton.addEventListener('click', (e) => {
             e.stopPropagation(); // Prevent container click
             
             // Show tag dialog
             if (window.showTagDialogForImage) {
-                window.showTagDialogForImage(label);
-            } else {
-                console.error('[addImageToSidebar] showTagDialogForImage function not found!');
-            }
-        });
-        
-        // Add click handler to tags container to edit tags
-        tagsContainer.addEventListener('click', (e) => {
-            e.stopPropagation(); // Prevent container click
-            
-            // Show tag dialog
-            if (window.showTagDialogForImage) {
-                window.showTagDialogForImage(label);
+                window.showTagDialogForImage(label, () => {
+                    // Callback to update display name after tag changes
+                    updateLabelText();
+                });
             } else {
                 console.error('[addImageToSidebar] showTagDialogForImage function not found!');
             }
@@ -438,29 +495,29 @@ if (colorPicker) {
         
         // Create stroke count display
         const strokesElement = document.createElement('div');
-        strokesElement.className = 'image-strokes';
+        strokesElement.className = 'image-strokes text-[11px] text-slate-500';
         strokesElement.textContent = 'Strokes: 0';
         
         // Create scale display
         const scaleElement = document.createElement('div');
-        scaleElement.className = 'image-scale';
+        scaleElement.className = 'image-scale text-[11px] text-slate-500';
         scaleElement.id = `scale-${label}`;
         
         // Create the image element
         const img = document.createElement('img');
         img.src = imageUrl;
-        img.className = 'pasted-image';
+        img.className = 'pasted-image w-12 h-12 rounded object-cover bg-slate-100';
         img.alt = `${label} view`;
         
         // Create delete button
         const deleteButton = document.createElement('button');
-        deleteButton.className = 'delete-image-btn';
+        deleteButton.className = 'delete-image-btn opacity-0 group-hover:opacity-100 transition-opacity';
         deleteButton.innerHTML = '×';
         deleteButton.title = 'Delete image';
         deleteButton.style.cssText = `
             position: absolute;
-            top: 5px;
-            right: 5px;
+            top: 6px;
+            right: 6px;
             cursor: pointer;
             background: rgba(255, 255, 255, 0.9);
             border: 1px solid #ccc;
@@ -503,13 +560,17 @@ if (colorPicker) {
         });
         
         // Add all elements to container
+        // Layout: [thumb] [texts] [Tags btn] [x]
+        const textCol = document.createElement('div');
+        textCol.className = 'min-w-0 flex-1';
+        textCol.appendChild(labelElement);
+        textCol.appendChild(strokesElement);
+        textCol.appendChild(scaleElement);
+
         container.appendChild(img);
-        container.appendChild(labelElement);
-        container.appendChild(tagsContainer); // Add tags container
-        container.appendChild(strokesElement);
-        container.appendChild(scaleElement);
-        container.appendChild(editTagsButton); // Add edit tags button
-        container.appendChild(deleteButton); // Add delete button
+        container.appendChild(textCol);
+        container.appendChild(editTagsButton);
+        container.appendChild(deleteButton);
         
         // Set up click handler for switching images
         container.onclick = () => {
@@ -519,6 +580,9 @@ if (colorPicker) {
             // Switch to the new image
             switchToImage(label);
         };
+
+        // Store reference to container for selection updates
+        container._label = label;
         
         // Add drag-and-drop event listeners
         container.addEventListener('dragstart', (e) => {
@@ -625,6 +689,7 @@ if (colorPicker) {
         delete window.imageTags[label];
         delete window.customLabelPositions[label];
         delete window.calculatedLabelOffsets[label];
+        delete window.customImageNames[label]; // Clean up custom names
         // Clear the persistence flags for this image label
         Object.keys(window.clearedMassiveOffsets).forEach(key => {
             if (key.startsWith(`${label}_`)) {
@@ -696,6 +761,12 @@ if (colorPicker) {
 
     // Store the original images for each view
     window.originalImages = window.originalImages || {};
+    
+    // Initialize custom image names storage
+    window.customImageNames = window.customImageNames || {};
+    
+    // Initialize custom label absolute positions map
+    if (!window.customLabelAbsolutePositions) window.customLabelAbsolutePositions = {};
     
     // --- MODIFIED Function Signature and Logic --- 
     function pasteImageFromUrl(url, label) {
@@ -946,7 +1017,7 @@ if (colorPicker) {
         if (unit === 'inch') {
             const whole = measurement.inchWhole || 0;
             const fraction = measurement.inchFraction || 0;
-
+            
             // Format as 1 1/4" etc.
             let fractionStr = '';
             if (fraction > 0) {
@@ -966,7 +1037,7 @@ if (colorPicker) {
                     fractionStr = ' ' + fractionMap[rounded];
                 }
             }
-
+            
             const result = `${whole}${fractionStr}"`;
 //             console.log(`[getMeasurementString] Returning inch format: ${result}`);
             return result;
@@ -1495,7 +1566,6 @@ if (colorPicker) {
         });
         updateSelectedCount();
     };
-    
     // Function to update selected count
     function updateSelectedCount() {
         const checkboxes = document.querySelectorAll('#imageCheckboxes input[type="checkbox"]');
@@ -1909,7 +1979,6 @@ if (colorPicker) {
         
         previewContent.innerHTML = previewText;
     };
-
     // Enhanced Customer Measurement Form PDF Generation Function
     window.generatePDF = async function(projectName) {
         try {
@@ -2693,7 +2762,6 @@ if (colorPicker) {
             alert(`Error creating ZIP file: ${error.message}`);
         }
     }
-
     // New function for sequential screen view processing
     async function processImagesSequentiallyForScreenView(selectedLabels, projectName, isProductionOutput = false) {
         const canvas = document.getElementById('canvas');
@@ -3479,7 +3547,6 @@ if (colorPicker) {
         overlay.appendChild(dialog);
         document.body.appendChild(overlay);
     }
-    
     // Update enhanced progress dialog
     function updateEnhancedSaveProgress(message, current, total) {
         const progressText = document.getElementById('enhancedProgressText');
@@ -4254,7 +4321,6 @@ if (colorPicker) {
             inchFraction: 0,
             cm: 0.0
         };
-        
 //         console.log(`[showMeasurementDialog] Using measurement:`, measurement);
         
         // Title
@@ -4959,6 +5025,8 @@ if (colorPicker) {
     // Initialize custom label positions for each image
     IMAGE_LABELS.forEach(label => {
         customLabelPositions[label] = {};
+        if (!window.customLabelAbsolutePositions) window.customLabelAbsolutePositions = {};
+        window.customLabelAbsolutePositions[label] = {}; // Initialize absolute positions for this image
     });
     
     // Cache for loaded images to prevent flickering
@@ -6110,8 +6178,18 @@ if (colorPicker) {
                     console.log(`[OFFSET-DEBUG] ${strokeLabel} - FINAL OFFSET BEING USED:`, imageSpaceOffset);
                     console.log(`[OFFSET-DEBUG] ${strokeLabel} - Anchor point:`, anchorPointImage);
                     
-                    const finalLabelImageX = anchorPointImage.x + imageSpaceOffset.x;
-                    const finalLabelImageY = anchorPointImage.y + imageSpaceOffset.y;
+                    // If an absolute tag center exists, prefer it to avoid drift relative to changing midpoints
+                    const absCenter = (window.customLabelAbsolutePositions && window.customLabelAbsolutePositions[currentImageLabel])
+                        ? window.customLabelAbsolutePositions[currentImageLabel][strokeLabel]
+                        : null;
+                    let finalLabelImageX, finalLabelImageY;
+                    if (absCenter && typeof absCenter.x === 'number' && typeof absCenter.y === 'number') {
+                        finalLabelImageX = absCenter.x;
+                        finalLabelImageY = absCenter.y;
+                    } else {
+                        finalLabelImageX = anchorPointImage.x + imageSpaceOffset.x;
+                        finalLabelImageY = anchorPointImage.y + imageSpaceOffset.y;
+                    }
 
                     // Use toCanvas for proper coordinate transformation (handles center-based scaling for blank canvas)
                     finalPositionCanvas = toCanvas({ x: finalLabelImageX, y: finalLabelImageY });
@@ -8109,7 +8187,6 @@ if (colorPicker) {
 
         return splinePoints;
     }
-
     // Function to draw curved line preview
     function drawCurvedLinePreview(controlPoints, mousePos = null) {
         if (controlPoints.length === 0) return;
@@ -9066,7 +9143,7 @@ if (colorPicker) {
             
             // Then, allow label dragging to proceed
             isDraggingLabel = true;
-            draggedLabelStroke = hoveredLabel; // Store the whole hoveredLabel object
+            draggedLabelStroke = hoveredLabel.strokeLabel; // Store just the stroke label string
             dragStartX = e.offsetX;
             dragStartY = e.offsetY;
             canvas.style.cursor = 'grabbing'; // Cursor for dragging
@@ -9394,11 +9471,13 @@ if (colorPicker) {
             const currentX = e.offsetX;
             const currentY = e.offsetY;
 
-            // Calculate the canvas delta from the last position
-            const deltaX = currentX - dragStartX;
-            const deltaY = currentY - dragStartY;
+            // Convert consecutive mouse positions to image space and compute image delta
+            const prevImg = getTransformedCoords(dragStartX, dragStartY);
+            const currImg = getTransformedCoords(currentX, currentY);
+            const deltaImageX = currImg.x - prevImg.x;
+            const deltaImageY = currImg.y - prevImg.y;
             
-                            console.log(`[DRAG] Label drag delta: (${deltaX}, ${deltaY}) for stroke: ${draggedLabelStroke.strokeLabel}`);
+            // console.log(`[DRAG] Label drag - img delta: (${deltaImageX.toFixed(2)}, ${deltaImageY.toFixed(2)}) for stroke: ${draggedLabelStroke}`);
             
             // Update start position for next move event
             dragStartX = currentX;
@@ -9408,7 +9487,7 @@ if (colorPicker) {
             if (!customLabelPositions[currentImageLabel]) customLabelPositions[currentImageLabel] = {};
             
             // Get the anchor point for the dragged label's stroke (current canvas coords)
-            const strokeName = draggedLabelStroke.strokeLabel; // Use the actual stroke name (string)
+            const strokeName = draggedLabelStroke; // Use the stroke label string directly
             const vectorData = vectorStrokesByImage[currentImageLabel]?.[strokeName];
 
             if (vectorData && vectorData.points.length > 0) {
@@ -9423,14 +9502,14 @@ if (colorPicker) {
                                     calculatedLabelOffsets[currentImageLabel]?.[strokeName];
 
                 if (!currentOffset) {
-                    // Calculate initial offset based on current drawn position if neither exists
+                    // Calculate initial offset based on current drawn position if neither exists (convert to image space)
                     const currentLabelRect = currentLabelPositions.find(l => l.strokeLabel === strokeName);
                     if (currentLabelRect) {
+                        const currentLabelCenterImg = getTransformedCoords(currentLabelRect.x, currentLabelRect.y);
                         currentOffset = {
-                            x: currentLabelRect.x - anchorPoint.x,
-                            y: currentLabelRect.y - anchorPoint.y
+                            x: currentLabelCenterImg.x - midPointRelative.x,
+                            y: currentLabelCenterImg.y - midPointRelative.y
                         };
-//                          console.log(`Initialized drag offset from current rect for ${strokeName}:`, currentOffset);
                     } else {
                         // Fallback if label wasn't found in current positions (shouldn't happen)
                         currentOffset = { x: 0, y: 0 }; 
@@ -9442,18 +9521,24 @@ if (colorPicker) {
                     currentOffset = { ...currentOffset };
                 }
 
-                                // SIMPLIFIED: Direct canvas delta for unrestricted movement
-                currentOffset.x += deltaX;
-                currentOffset.y += deltaY;
+                // Apply image-space delta for consistent dragging
+                currentOffset.x += deltaImageX;
+                currentOffset.y += deltaImageY;
                 
-                console.log(`[DRAG] Delta: (${deltaX}, ${deltaY}) -> Offset: (${currentOffset.x.toFixed(1)}, ${currentOffset.y.toFixed(1)})`);
+                // console.log(`[DRAG] New image-space offset: (${currentOffset.x.toFixed(1)}, ${currentOffset.y.toFixed(1)})`);
                 
                 // Store the updated offset
                 customLabelPositions[currentImageLabel][strokeName] = currentOffset;
-
-                // Remove canvas boundary clamping
-                // pos.x = Math.max(10, Math.min(canvas.width - labelToMove.width - 10, pos.x));
-                // pos.y = Math.max(10, Math.min(canvas.height - labelToMove.height - 10, pos.y));
+                // Keep window storage in sync for transforms (rotation/flip)
+                if (!window.customLabelPositions) window.customLabelPositions = {};
+                if (!window.customLabelPositions[currentImageLabel]) window.customLabelPositions[currentImageLabel] = {};
+                window.customLabelPositions[currentImageLabel][strokeName] = currentOffset;
+                // Additionally store absolute tag center in image space to avoid re-centering to stroke midpoint
+                if (!window.customLabelAbsolutePositions[currentImageLabel]) window.customLabelAbsolutePositions[currentImageLabel] = {};
+                window.customLabelAbsolutePositions[currentImageLabel][strokeName] = {
+                    x: midPointRelative.x + currentOffset.x,
+                    y: midPointRelative.y + currentOffset.y
+                };
                 
                 // Redraw with the new position
                 redrawCanvasWithVisibility();
@@ -9542,6 +9627,9 @@ if (colorPicker) {
         if (isDraggingLabel) {
             isDraggingLabel = false;
             draggedLabelStroke = null;
+            
+            // Save state to enable undo/redo for label position changes
+            saveState(true, false); // Save without incrementing label
             
             // IMPROVED: Restore cursor intelligently based on current mouse position
             restoreCursorAfterDrag(e.offsetX, e.offsetY);
@@ -10276,8 +10364,10 @@ if (colorPicker) {
         document.querySelectorAll('.image-container').forEach(container => {
             if (container.dataset.label === currentImageLabel) {
                 container.classList.add('active');
+                container.setAttribute('aria-selected', 'true');
             } else {
                 container.classList.remove('active');
+                container.setAttribute('aria-selected', 'false');
             }
         });
     }
@@ -10536,7 +10626,7 @@ if (colorPicker) {
     } else {
         console.warn('[PAINT.JS] Canvas copy button not found!');
     }
-
+    
     // Save canvas (cropped to capture frame if present, otherwise full canvas) with opaque white background
     saveButton.addEventListener('click', () => {
         const projectName = document.getElementById('projectName').value || 'New Sofa';
@@ -11761,7 +11851,6 @@ if (colorPicker) {
             } else {
                 anchorType = "middle";
             }
-            
 //             console.log(`[drawLabelConnector] Anchor type: ${anchorType} for ${strokeLabel}`);
             
             // For midpoints, draw a more prominent indicator
@@ -12299,6 +12388,8 @@ if (colorPicker) {
         if (!window.customLabelPositions) window.customLabelPositions = {}; // Ensure this is initialized
         if (!window.customLabelRelativePositions) window.customLabelRelativePositions = {}; // Store relative line positioning
         if (!window.calculatedLabelOffsets) window.calculatedLabelOffsets = {}; // Ensure this is initialized
+        if (!window.customLabelAbsolutePositions) window.customLabelAbsolutePositions = {};
+        window.customLabelAbsolutePositions[label] = {}; // Initialize absolute positions for this image
 
         window.imageScaleByLabel[label] = 1.0;
         window.imagePositionByLabel[label] = { x: 0, y: 0 };
@@ -13278,7 +13369,6 @@ window.initCrossBaseline = function(imageLabel) {
     console.log(`[ROT-TEST] Created cross baseline pattern with strokes: ${Object.keys(strokes).join(', ')}`);
     return { strokes: Object.keys(strokes), center: { x: centerX, y: centerY } };
 };
-
 // Global debug helper to test rotation harness
 window.testRotationHarness = async function(imageLabel = null) {
     const img = imageLabel || window.currentImageLabel || 'blank_canvas';
@@ -13613,4 +13703,3 @@ window.runCustomLabelRotationTest = async function(imageLabel = 'Image 1') {
         allLabels: bugDemonstration
     };
 };
-
