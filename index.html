@@ -20,6 +20,44 @@
             };
         }
     </script>
+    <style>
+        /* Custom styles for image list and tag system */
+        .image-container {
+            border-left: 2px solid transparent;
+            transition: all 0.2s ease;
+        }
+        
+        .image-container:hover {
+            border-left-color: #3b82f6;
+            background-color: #f8fafc;
+        }
+        
+        .image-container[aria-selected="true"] {
+            border-left-color: #3b82f6;
+            background-color: #eff6ff;
+        }
+        
+        .tag-badge {
+            display: inline-block;
+            background-color: #e0e7ff;
+            color: #3730a3;
+            font-size: 10px;
+            font-weight: 500;
+            padding: 2px 6px;
+            border-radius: 6px;
+            line-height: 1;
+        }
+        
+        .no-tags {
+            font-size: 10px;
+            color: #9ca3af;
+            font-style: italic;
+        }
+        
+        .image-label:hover {
+            background-color: #f1f5f9 !important;
+        }
+    </style>
     <script>
         tailwind.config = {
             theme: {
@@ -987,7 +1025,7 @@
     </div>
 
     <!-- Image Gallery Panel -->
-    <div id="imagePanel" class="floating-panel fixed right-4 top-1/2 -translate-y-1/2 z-30 rounded-2xl w-72 max-h-[380px] transition-all duration-300 overflow-hidden">
+    <div id="imagePanel" class="floating-panel fixed right-4 top-1/2 -translate-y-1/2 z-30 rounded-2xl w-72 max-h-[80vh] transition-all duration-300 overflow-hidden">
         <div class="flex items-center justify-between p-3 cursor-move border-b border-gray-200/50 bg-white rounded-t-2xl">
             <h3 class="text-sm font-semibold text-slate-800">Images</h3>
             <div class="flex items-center gap-2">
@@ -998,19 +1036,14 @@
                 </button>
             </div>
         </div>
-        <div id="imagePanelContent" class="p-3 transition-all duration-300" style="max-height: 300px;">
+        <div id="imagePanelContent" class="p-3 transition-all duration-300" style="max-height: 70vh; overflow: visible; position: relative;">
             <!-- Legacy image list for backwards compatibility -->
-            <div id="imageList" class="hidden space-y-3 mb-4"></div>
+            <div id="imageList" class="space-y-2 mb-2"></div>
             
-            <!-- New Image Gallery with Horizontal Scroll Snap -->
-            <div class="mb-4">
-                <div id="imageGallery" class="flex gap-3 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-2" style="scrollbar-width: thin;">
-                    <!-- Images will be dynamically inserted here -->
-                </div>
-                <!-- Navigation Dots -->
-                <div id="imageDots" class="flex justify-center gap-2 mt-3">
-                    <!-- Dots will be dynamically inserted here -->
-                </div>
+            <!-- Gallery (disabled in vertical list mode) -->
+            <div class="mb-4 hidden">
+                <div id="imageGallery" class="hidden"></div>
+                <div id="imageDots" class="hidden"></div>
             </div>
             
             <!-- Image meta: name + quick type -->
@@ -3566,43 +3599,45 @@
                     const allCustomTransformSources = [
                         window.customLabelPositions,
                         window.paintApp?.state?.customLabelPositions
-                    ].filter(source => source && source[imageLabel]);
+                    ].filter(Boolean);
                     
-                    allCustomTransformSources.forEach((source, index) => {
+                    allCustomTransformSources.forEach(source => {
                         if (source && source[imageLabel]) {
-                            const labelPositions = source[imageLabel];
-                            const positionCount = Object.keys(labelPositions).length;
-                            console.log(`[Transform] Transforming ${positionCount} custom label positions from source ${index + 1}`);
-                            
-                            // Transform each custom position using vector rotation
-                            Object.keys(labelPositions).forEach(labelKey => {
-                                const position = labelPositions[labelKey];
-                                if (position && typeof position.x === 'number' && typeof position.y === 'number') {
-                                    const rotatedPosition = rotateOffsetVector(position.x, position.y, transformValue);
-                                    labelPositions[labelKey] = rotatedPosition;
-                                    console.log(`[Transform] Transformed custom position ${labelKey}: (${position.x.toFixed(1)}, ${position.y.toFixed(1)}) → (${rotatedPosition.x.toFixed(1)}, ${rotatedPosition.y.toFixed(1)})`);
+                            console.log(`[Transform] Rotating custom label positions for ${imageLabel}`);
+                            Object.keys(source[imageLabel]).forEach(strokeLabel => {
+                                const offset = source[imageLabel][strokeLabel];
+                                if (offset && typeof offset.x === 'number' && typeof offset.y === 'number') {
+                                    console.log(`[Transform] Before rotation - ${strokeLabel}: (${offset.x.toFixed(1)}, ${offset.y.toFixed(1)})`);
+                                    const rotated = rotateCoordinates(offset.x, offset.y, transformValue, imageWidth, imageHeight, rotationCenter, isBlankCanvas);
+                                    offset.x = rotated.x;
+                                    offset.y = rotated.y;
+                                    console.log(`[Transform] After rotation - ${strokeLabel}: (${offset.x.toFixed(1)}, ${offset.y.toFixed(1)})`);
                                 }
                             });
-                            console.log(`[Transform] Transformed ${positionCount} custom positions from source ${index + 1}`);
                         }
                     });
-                } else {
-                    // For non-rotation transforms (flip), clear custom positions to force recalculation
-                    const allCustomClearSources = [
-                        window.customLabelPositions,
-                        window.paintApp?.state?.customLabelPositions
-                    ].filter(source => source && source[imageLabel]);
+                }
+                
+                // Transform absolute tag positions for rotations - maintain exact positioning
+                if (transformType === 'rotate') {
+                    const allAbsoluteTransformSources = [
+                        window.customLabelAbsolutePositions,
+                        window.paintApp?.state?.customLabelAbsolutePositions
+                    ].filter(Boolean);
                     
-                    allCustomClearSources.forEach((source, index) => {
+                    allAbsoluteTransformSources.forEach(source => {
                         if (source && source[imageLabel]) {
-                            const labelPositions = source[imageLabel];
-                            console.log(`[Transform] Clearing ${Object.keys(labelPositions).length} custom label positions from source ${index + 1} for recalculation`);
-                            
-                            // Clear custom positions so they get recalculated with the new stroke positions
-                            Object.keys(labelPositions).forEach(labelKey => {
-                                delete labelPositions[labelKey];
+                            console.log(`[Transform] Rotating absolute tag positions for ${imageLabel}`);
+                            Object.keys(source[imageLabel]).forEach(strokeLabel => {
+                                const absPos = source[imageLabel][strokeLabel];
+                                if (absPos && typeof absPos.x === 'number' && typeof absPos.y === 'number') {
+                                    console.log(`[Transform] Before rotation - ${strokeLabel} absolute: (${absPos.x.toFixed(1)}, ${absPos.y.toFixed(1)})`);
+                                    const rotated = rotateCoordinates(absPos.x, absPos.y, transformValue, imageWidth, imageHeight, rotationCenter, isBlankCanvas);
+                                    absPos.x = rotated.x;
+                                    absPos.y = rotated.y;
+                                    console.log(`[Transform] After rotation - ${strokeLabel} absolute: (${absPos.x.toFixed(1)}, ${absPos.y.toFixed(1)})`);
+                                }
                             });
-                            console.log(`[Transform] Cleared custom label positions from source ${index + 1} - will be recalculated on next draw`);
                         }
                     });
                 }

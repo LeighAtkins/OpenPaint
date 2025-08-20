@@ -610,7 +610,7 @@ window.createTagSelectionDialog = function(imageLabel, existingTags, onSave) {
 };
 
 // Function to show tag dialog from sidebar
-window.showTagDialogForImage = function(imageLabel) {
+window.showTagDialogForImage = function(imageLabel, callback) {
     // Get existing tags or default
     const existingTags = window.imageTags[imageLabel] || {};
     
@@ -619,54 +619,30 @@ window.showTagDialogForImage = function(imageLabel) {
         // Save tags
         window.imageTags[imageLabel] = newTags;
         
-        // Update display name in sidebar
-        const displayName = window.getTagBasedFilename(imageLabel);
+        // Update display name in sidebar ONLY if no custom name is set
         const labelElement = document.querySelector(`.image-container[data-label="${imageLabel}"] .image-label`);
         if (labelElement) {
-            const filename = getTagBasedFilename(imageLabel, imageLabel.split('_')[0]); // Get updated filename
-            const newText = filename ? filename.charAt(0).toUpperCase() + filename.slice(1) : imageLabel;
-            // console.log(`[updateTagsDisplay] Found labelElement for ${imageLabel}. Current text: "${labelElement.textContent}". Attempting to set text to: "${newText}"`);
-            labelElement.textContent = newText; // Update text
-            // console.log(`[updateTagsDisplay] Updated labelElement text for ${imageLabel} to: ${labelElement.textContent}`);
+            // Check if there's a custom name - if so, preserve it
+            const hasCustomName = window.customImageNames && window.customImageNames[imageLabel];
+            
+            if (!hasCustomName) {
+                // Update to tag-based name only if no custom name exists
+                if (labelElement._updateDisplay) {
+                    labelElement._updateDisplay();
+                } else {
+                    // Fallback for older elements
+                    const filename = getTagBasedFilename(imageLabel, imageLabel.split('_')[0]);
+                    const newText = filename ? filename.charAt(0).toUpperCase() + filename.slice(1) : imageLabel;
+                    labelElement.textContent = newText;
+                }
+            }
         } else {
             console.warn(`[updateTagsDisplay] Could not find labelElement for label: ${imageLabel}`);
         }
         
-        // Update tags display
-        const tagsContainer = document.querySelector(`.image-container[data-label="${imageLabel}"] .image-tags`);
-        if (tagsContainer) {
-            tagsContainer.innerHTML = '';
-            
-            // Add visible tag badges
-            const visibleTags = [];
-            
-            // Get primary tag (furniture type)
-            if (newTags.furnitureType) {
-                const furnitureType = window.TAG_MODEL.furnitureType.options.find(opt => opt.id === newTags.furnitureType);
-                if (furnitureType) {
-                    visibleTags.push(furnitureType.name);
-                }
-            }
-            
-            // Get view type
-            if (newTags.viewType) {
-                const viewType = window.TAG_MODEL.viewType.options.find(opt => opt.id === newTags.viewType);
-                if (viewType) {
-                    visibleTags.push(viewType.name);
-                }
-            }
-            
-            // Add badges
-            if (visibleTags.length > 0) {
-                visibleTags.forEach(tag => {
-                    const badge = document.createElement('span');
-                    badge.className = 'tag-badge';
-                    badge.textContent = tag;
-                    tagsContainer.appendChild(badge);
-                });
-            } else {
-                tagsContainer.innerHTML = '<span class="no-tags">No tags</span>';
-            }
+        // Call the callback if provided (for updating display from paint.js)
+        if (callback && typeof callback === 'function') {
+            callback();
         }
     });
 };
