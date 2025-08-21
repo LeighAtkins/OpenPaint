@@ -137,15 +137,19 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         
-        // 2) Ensure scales/positions for every imageLabel
+        // 2) Ensure scales/positions/rotations for every imageLabel
         migrated.imageScales = migrated.imageScales || {};
         migrated.imagePositions = migrated.imagePositions || {};
+        migrated.imageRotations = migrated.imageRotations || {};
         for (const label of migrated.imageLabels || []) {
             if (!migrated.imageScales[label] && migrated.imageScales[label] !== 0) {
                 migrated.imageScales[label] = 1.0;
             }
             if (!migrated.imagePositions[label]) {
                 migrated.imagePositions[label] = { x: 0, y: 0 };
+            }
+            if (!migrated.imageRotations[label] && migrated.imageRotations[label] !== 0) {
+                migrated.imageRotations[label] = 0;
             }
         }
         
@@ -241,6 +245,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             // DIAGNOSTIC: Add test measurements if needed for debugging
             // console.log('[Save Project] DIAGNOSTIC: Current state of strokeMeasurements before saving:');
+            const IMAGE_LABELS = window.IMAGE_LABELS || ['front', 'side', 'back', 'cushion'];
             IMAGE_LABELS.forEach(label => {
                 if (window.strokeMeasurements && window.strokeMeasurements[label]) {
                     // console.log(`- ${label}:`, JSON.stringify(window.strokeMeasurements[label]));
@@ -259,10 +264,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const projectName = document.getElementById('projectName').value || 'OpenPaint Project';
             
             // *** MODIFIED: Get actual current image labels ***
-            const actualImageLabels = Object.keys(window.imageTags || {});
+            let actualImageLabels = Object.keys(window.imageTags || {});
             if (actualImageLabels.length === 0) {
                 // Fallback if imageTags is empty for some reason
-                actualImageLabels.push(...(window.IMAGE_LABELS || ['front', 'side', 'back', 'cushion']));
+                actualImageLabels = [...(window.IMAGE_LABELS || ['front', 'side', 'back', 'cushion'])];
                 console.warn("[Save Project] No keys found in window.imageTags, falling back to default labels.");
             }
             // console.log("[Save Project] Saving data for labels:", actualImageLabels);
@@ -281,10 +286,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 strokeMeasurements: {},
                 imageScales: {},
                 imagePositions: {},
+                imageRotations: {},
                 strokeSequence: {},
                 nextLabels: {},
                 originalImageDimensions: {},
                 imageTags: {},
+                customImageNames: {},
                 folderStructure: window.folderStructure || {
                     "root": {
                         id: "root",
@@ -372,8 +379,15 @@ document.addEventListener('DOMContentLoaded', () => {
 //                     console.log(`[Save Project] Saving position for ${label}: x=${window.imagePositionByLabel[label].x}, y=${window.imagePositionByLabel[label].y}`);
                 } else {
                     projectData.imagePositions[label] = { x: 0, y: 0 }; // Default position
-//                     console.log(`[Save Project] No position found for ${label}, using default {x:0, y:0}`);
                 }
+                
+                // Add image rotation
+                if (window.imageRotationByLabel && window.imageRotationByLabel[label] !== undefined) {
+                    projectData.imageRotations[label] = window.imageRotationByLabel[label];
+                } else {
+                    projectData.imageRotations[label] = 0; // Default to 0 rotation
+                }
+//                     console.log(`[Save Project] No position found for ${label}, using default {x:0, y:0}`);
                 
                 // Add stroke sequence
                 if (window.lineStrokesByImage && window.lineStrokesByImage[label]) {
@@ -403,6 +417,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
 //                     console.log(`[Save Project] No tags found for ${label}, using empty object`);
                     projectData.imageTags[label] = {};
+                }
+
+                // Persist custom image name if set
+                if (window.customImageNames && window.customImageNames[label]) {
+                    projectData.customImageNames[label] = window.customImageNames[label];
                 }
             }
             
@@ -627,11 +646,13 @@ document.addEventListener('DOMContentLoaded', () => {
                                 window.strokeMeasurements = {};
                                 window.imageScaleByLabel = {};
                                 window.imagePositionByLabel = {};
+                                window.imageRotationByLabel = {};
                                 window.lineStrokesByImage = {};
                                 window.labelsByImage = {};
                                 window.originalImages = {};
                                 window.originalImageDimensions = {};
                                 window.imageTags = {};
+                                window.customImageNames = {};
 
                                 // PERFORMANCE FIX: Clear any legacy sync timers during load
                                 if (window.legacySyncTimer) {
@@ -710,8 +731,12 @@ document.addEventListener('DOMContentLoaded', () => {
                                                     if (typeof window.initializeNewImageStructures === 'function') window.initializeNewImageStructures(label); 
                                                     else window.imageTags[label] = { furnitureType: 'sofa', viewType: label }; 
                                                 }
+                                                if (parsedProjectData.customImageNames && parsedProjectData.customImageNames[label]) {
+                                                    window.customImageNames[label] = parsedProjectData.customImageNames[label];
+                                                }
                                                 if (parsedProjectData.imageScales && parsedProjectData.imageScales[label] !== undefined) window.imageScaleByLabel[label] = parsedProjectData.imageScales[label]; else window.imageScaleByLabel[label] = 1.0;
                                                 if (parsedProjectData.imagePositions && parsedProjectData.imagePositions[label]) window.imagePositionByLabel[label] = parsedProjectData.imagePositions[label]; else window.imagePositionByLabel[label] = { x: 0, y: 0 };
+                if (parsedProjectData.imageRotations && parsedProjectData.imageRotations[label] !== undefined) window.imageRotationByLabel[label] = parsedProjectData.imageRotations[label]; else window.imageRotationByLabel[label] = 0;
                                                 if (parsedProjectData.strokeSequence && parsedProjectData.strokeSequence[label]) window.lineStrokesByImage[label] = Array.isArray(parsedProjectData.strokeSequence[label]) ? parsedProjectData.strokeSequence[label].slice() : []; else window.lineStrokesByImage[label] = [];
                                                 if (parsedProjectData.nextLabels && parsedProjectData.nextLabels[label]) window.labelsByImage[label] = parsedProjectData.nextLabels[label]; else window.labelsByImage[label] = 'A1';
                                                 
@@ -920,16 +945,17 @@ document.addEventListener('DOMContentLoaded', () => {
 //         console.log('[Load Project] Finalizing load process...');
 
         // *** ADDED: Loop to update sidebar label text and scale text ***
-        if (dataForFinalSteps.imageLabels && typeof window.getTagBasedFilename === 'function' && typeof window.imageScaleByLabel !== 'undefined') {
+        if (dataForFinalSteps.imageLabels && typeof window.imageScaleByLabel !== 'undefined') {
 //             console.log('[Load Project] Updating sidebar label text and scale text...');
             dataForFinalSteps.imageLabels.forEach(label => {
-                // Update Label Text
+                // Update Label Text (prefer custom names)
                 const labelElement = document.querySelector(`.image-container[data-label="${label}"] .image-label`);
                 if (labelElement) {
-                    const filename = window.getTagBasedFilename(label, label.split('_')[0]); // Get updated filename
-                    const newText = filename ? filename.charAt(0).toUpperCase() + filename.slice(1) : label;
-//                     console.log(`  Updating label text for ${label} to: "${newText}"`);
-                    labelElement.textContent = newText; // Update text
+                    const displayName = (typeof window.getUserFacingImageName === 'function')
+                        ? window.getUserFacingImageName(label)
+                        : (typeof window.getTagBasedFilename === 'function' ? window.getTagBasedFilename(label, label.split('_')[0]) : label);
+                    const newText = displayName ? displayName.charAt(0).toUpperCase() + displayName.slice(1) : label;
+                    labelElement.textContent = newText;
                 } else {
                     console.warn(`  Could not find labelElement for ${label} during final update.`);
                 }

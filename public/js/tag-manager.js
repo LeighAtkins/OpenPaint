@@ -743,51 +743,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return; 
         }
         
-        // Find or create the tag controls container
-        let controlsContainer = container.querySelector('.tag-controls');
-        if (!controlsContainer) {
-            controlsContainer = document.createElement('div');
-            controlsContainer.className = 'tag-controls';
-            // Insert controls after the image-label and before image-tags if possible, or append
-            const imageLabelDiv = container.querySelector('.image-label');
-            if (imageLabelDiv && imageLabelDiv.nextSibling) {
-                container.insertBefore(controlsContainer, imageLabelDiv.nextSibling);
-            } else {
-                container.appendChild(controlsContainer);
-            }
-        }
-
-        // Clear existing controls
-        controlsContainer.innerHTML = '';
-
-        // Add edit button
-        const editButton = document.createElement('button');
-        editButton.className = 'tag-edit-button';
-        editButton.title = 'Edit tags';
-        editButton.innerHTML = '✏️';
-        editButton.addEventListener('click', (e) => {
-            e.stopPropagation(); // Prevent triggering the container click event
-            // console.log(`[editButton] Edit button clicked for ${label}`);
-            showEditDialog(label);
-        });
-        controlsContainer.appendChild(editButton);
-
-        // Add focus button
-        const focusButton = document.createElement('button');
-        focusButton.className = 'tag-focus-button'; // Ensure this class matches CSS if specific styling is needed
-        focusButton.title = 'Focus all strokes on this image';
-        focusButton.innerHTML = '🔍'; // Focus icon
-        focusButton.addEventListener('click', (e) => {
-            e.stopPropagation(); // Prevent triggering the container click event
-            // console.log(`[focusButton] Focus button clicked for ${label}`);
-            // Toggle focus mode
-            if (window.preFocusState && window.preFocusState.focusedImageLabel === label) {
-                exitFocusMode(); // If already focused on this image, exit focus mode
-            } else {
-                enterFocusMode(label);
-            }
-        });
-        controlsContainer.appendChild(focusButton);
+        // Remove tag controls (edit/focus) — no longer used
 
         // Update the label text
         const labelElement = container.querySelector('.image-label');
