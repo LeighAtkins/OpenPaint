@@ -388,6 +388,20 @@ if (colorPicker) {
     window.paintApp.state.currentImageLabel = IMAGE_LABELS[0]; // Start with 'front'
     let currentImageLabel = window.paintApp.state.currentImageLabel;
 
+    // Helper: user-facing image name (custom > tag-based > base label)
+    if (!window.getUserFacingImageName) {
+        window.getUserFacingImageName = function(label) {
+            if (window.customImageNames && window.customImageNames[label]) {
+                return window.customImageNames[label];
+            }
+            if (typeof window.getTagBasedFilename === 'function') {
+                const tagBased = window.getTagBasedFilename(label, (label || '').split('_')[0]);
+                if (tagBased && tagBased !== label) return tagBased;
+            }
+            return (label || '').split('_')[0];
+        };
+    }
+
     // Make addImageToSidebar available globally for the project manager
     window.addImageToSidebar = addImageToSidebar;
     function addImageToSidebar(imageUrl, label, filename) {
@@ -396,34 +410,20 @@ if (colorPicker) {
 
         const container = document.createElement('button');
         container.type = 'button';
-        container.className = 'image-container group w-full text-left relative flex items-center gap-2 p-2 rounded-lg hover:bg-slate-50 transition-colors';
+        container.className = 'image-container group w-full text-left relative flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 transition-colors snap-center';
         container.dataset.label = label;
         container.dataset.originalImageUrl = imageUrl; // Store the original image URL for later restoration
         container.draggable = true; // Enable drag-and-drop
         
         // Determine display name: custom name > tag-based name > fallback
         function getDisplayName() {
-            // 1. Check for custom name first
-            if (window.customImageNames && window.customImageNames[label]) {
-                return window.customImageNames[label];
-            }
-            
-            // 2. Try tag-based name
-            if (typeof window.getTagBasedFilename === 'function') {
-                const tagBasedName = window.getTagBasedFilename(label, label.split('_')[0]);
-                if (tagBasedName && tagBasedName !== label) {
-                    return tagBasedName;
-                }
-            }
-            
-            // 3. Fallback to cleaned label
-            return label.split('_')[0];
+            return window.getUserFacingImageName(label);
         }
         
         // Create image label (name display) - clickable for inline editing
         const labelElement = document.createElement('div');
-        labelElement.className = 'image-label text-xs font-medium text-slate-800 truncate cursor-pointer hover:bg-slate-100 px-1 py-0.5 rounded transition-colors';
-        labelElement.title = 'Click to rename';
+        labelElement.className = 'hidden';
+        labelElement.title = '';
         
         function updateLabelText() {
             const displayName = getDisplayName();
@@ -451,6 +451,7 @@ if (colorPicker) {
             function finishEditing(save = true) {
                 if (save && input.value.trim() && input.value.trim() !== currentName) {
                     // Save custom name
+                    if (!window.customImageNames) window.customImageNames = {};
                     window.customImageNames[label] = input.value.trim();
                     updateLabelText();
                 }
@@ -474,39 +475,21 @@ if (colorPicker) {
         // Store reference for updates from tag manager
         labelElement._updateDisplay = updateLabelText;
         
-        // Add edit tags button (single button for tag selection)
-        const editTagsButton = document.createElement('button');
-        editTagsButton.className = 'edit-tags-button ml-auto px-2 py-0.5 text-[11px] rounded border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition-colors';
-        editTagsButton.textContent = 'Tags';
-        editTagsButton.title = 'Edit tags for this image';
-        editTagsButton.addEventListener('click', (e) => {
-            e.stopPropagation(); // Prevent container click
-            
-            // Show tag dialog
-            if (window.showTagDialogForImage) {
-                window.showTagDialogForImage(label, () => {
-                    // Callback to update display name after tag changes
-                    updateLabelText();
-                });
-            } else {
-                console.error('[addImageToSidebar] showTagDialogForImage function not found!');
-            }
-        });
+        // Tags button removed
         
-        // Create stroke count display
+        // Remove stroke count display in compact list
         const strokesElement = document.createElement('div');
-        strokesElement.className = 'image-strokes text-[11px] text-slate-500';
-        strokesElement.textContent = 'Strokes: 0';
+        strokesElement.className = 'hidden';
         
         // Create scale display
         const scaleElement = document.createElement('div');
-        scaleElement.className = 'image-scale text-[11px] text-slate-500';
+        scaleElement.className = 'hidden';
         scaleElement.id = `scale-${label}`;
         
         // Create the image element
         const img = document.createElement('img');
-        img.src = imageUrl;
-        img.className = 'pasted-image w-12 h-12 rounded object-cover bg-slate-100';
+        img.src = imageUrl; // will be replaced by a generated thumbnail including vectors
+        img.className = 'pasted-image w-full h-40 rounded-lg object-contain bg-slate-100 shadow-sm';
         img.alt = `${label} view`;
         
         // Create delete button
@@ -560,25 +543,34 @@ if (colorPicker) {
         });
         
         // Add all elements to container
-        // Layout: [thumb] [texts] [Tags btn] [x]
-        const textCol = document.createElement('div');
-        textCol.className = 'min-w-0 flex-1';
-        textCol.appendChild(labelElement);
-        textCol.appendChild(strokesElement);
-        textCol.appendChild(scaleElement);
-
+        // Layout: [thumb] [x]
         container.appendChild(img);
-        container.appendChild(textCol);
-        container.appendChild(editTagsButton);
+
+        // Generate a high-quality thumbnail that includes current vectors
+        try {
+            generateImageThumbnail(label, 320).then((dataUrl) => {
+                if (dataUrl) {
+                    img.src = dataUrl;
+                } else if (imageUrl) {
+                    img.src = imageUrl;
+                }
+            }).catch(() => { /* ignore */ });
+        } catch (_) { /* ignore */ }
         container.appendChild(deleteButton);
         
-        // Set up click handler for switching images
+        // Set up click handler: switch image and auto-scroll this item to center
         container.onclick = () => {
-            // Store current state before switching
             saveState();
-            
-            // Switch to the new image
             switchToImage(label);
+            const list = document.getElementById('imageList');
+            if (list) {
+                const listRect = list.getBoundingClientRect();
+                const elRect = container.getBoundingClientRect();
+                const delta = (elRect.top - listRect.top) + (elRect.height / 2) - (listRect.height / 2);
+                // Suppress scroll-driven switching during this smooth scroll
+                window.__imageListProgrammaticScrollUntil = Date.now() + 250;
+                list.scrollBy({ top: delta, behavior: 'smooth' });
+            }
         };
 
         // Store reference to container for selection updates
@@ -653,6 +645,10 @@ if (colorPicker) {
         
         // Finally add to the sidebar
         document.getElementById('imageList').appendChild(container);
+        if (typeof window.observeImageContainer === 'function') window.observeImageContainer(container);
+        
+        // Observe snapping/visibility for active-name box
+        ensureImageSnapObserver();
 //         console.log(`[addImageToSidebar] Successfully appended container for ${label}. #imageList children: ${document.getElementById('imageList').children.length}`);
         
         // Update the ordered image labels array
@@ -757,6 +753,95 @@ if (colorPicker) {
         } else {
             console.warn('[updateOrderedImageLabelsArray] imageList element not found!');
         }
+    }
+
+    // Ensure scroll-snap tracker to sync sticky name box
+    let __imageSnapObserverSetup = false;
+    window.__imageSnapIO = window.__imageSnapIO || null;
+    function ensureImageSnapObserver() {
+        if (__imageSnapObserverSetup) return;
+        const list = document.getElementById('imageList');
+        const nameBox = document.getElementById('currentImageNameBox');
+        if (!list || !nameBox) return;
+
+        const updateNameBox = (activeLabel) => {
+            if (!activeLabel) return;
+            const name = (typeof window.getUserFacingImageName === 'function')
+                ? window.getUserFacingImageName(activeLabel)
+                : (activeLabel || '');
+            nameBox.value = name;
+            nameBox.dataset.label = activeLabel;
+        };
+
+        // Manual rename from sticky box
+        nameBox.addEventListener('change', () => {
+            const lbl = nameBox.dataset.label;
+            const val = nameBox.value.trim();
+            if (!lbl) return;
+            if (!window.customImageNames) window.customImageNames = {};
+            if (val.length > 0) window.customImageNames[lbl] = val; else delete window.customImageNames[lbl];
+            // No visible per-item label anymore, nothing else to update here
+        });
+
+        // Scroll-based closest-to-center tracking
+        let ticking = false;
+        const handleScroll = () => {
+            if (ticking) return;
+            ticking = true;
+            requestAnimationFrame(() => {
+                // Suppress switching if we're in a programmatic smooth scroll window
+                const now = Date.now();
+                if (window.__imageListProgrammaticScrollUntil && now < window.__imageListProgrammaticScrollUntil) {
+                    ticking = false;
+                    return;
+                }
+
+                const listRect = list.getBoundingClientRect();
+                const anchorY = listRect.height / 2; // center guideline
+                let best = null;
+                let bestDist = Infinity;
+                list.querySelectorAll('.image-container').forEach(el => {
+                    const r = el.getBoundingClientRect();
+                    const center = (r.top - listRect.top) + r.height / 2;
+                    const dist = Math.abs(center - anchorY);
+                    if (dist < bestDist) { bestDist = dist; best = el; }
+                });
+                if (best) updateNameBox(best.getAttribute('data-label'));
+                // Switch main canvas image when crossing center with hysteresis (no save during scroll)
+                if (best && typeof window.switchToImage === 'function') {
+                    const newLabel = best.getAttribute('data-label');
+                    if (window.currentImageLabel !== newLabel) {
+                        // Compute current element distance to center
+                        const currentEl = list.querySelector(`.image-container[data-label="${window.currentImageLabel}"]`);
+                        let currentDist = Infinity;
+                        if (currentEl) {
+                            const rr = currentEl.getBoundingClientRect();
+                            const currCenter = (rr.top - listRect.top) + rr.height / 2;
+                            currentDist = Math.abs(currCenter - anchorY);
+                        }
+                        const threshold = 12; // require new candidate to be clearly closer than current
+                        if (bestDist + threshold < currentDist) {
+                            window.switchToImage(newLabel);
+                        }
+                    }
+                }
+                ticking = false;
+            });
+        };
+
+        list.addEventListener('scroll', handleScroll, { passive: true });
+        // Also run on resize to keep center detection accurate
+        window.addEventListener('resize', handleScroll, { passive: true });
+
+        // Initialize to first element and run once
+        const first = list.querySelector('.image-container');
+        if (first) updateNameBox(first.getAttribute('data-label'));
+        handleScroll();
+
+        // Optional helper for future additions (no IO needed now)
+        window.observeImageContainer = function(_) { /* no-op with scroll tracker */ };
+
+        __imageSnapObserverSetup = true;
     }
 
     // Store the original images for each view
@@ -1482,14 +1567,10 @@ if (colorPicker) {
         imagesContainer.innerHTML = '';
         
         for (const label of imageLabels) {
-            // Use tag-based filename if available, otherwise use label
-            let imageName = label;
-            if (window.getTagBasedFilename && typeof window.getTagBasedFilename === 'function') {
-                const tagBasedName = window.getTagBasedFilename(label, label.split('_')[0]);
-                if (tagBasedName && tagBasedName !== label.split('_')[0]) {
-                    imageName = tagBasedName;
-                }
-            }
+            // Use user-facing image name (custom > tag-based > base label)
+            let imageName = (typeof window.getUserFacingImageName === 'function')
+                ? window.getUserFacingImageName(label)
+                : (window.getTagBasedFilename ? window.getTagBasedFilename(label, label.split('_')[0]) : label);
             imageName = imageName.charAt(0).toUpperCase() + imageName.slice(1);
             
             // Create image item container
@@ -2159,7 +2240,8 @@ if (colorPicker) {
                 // Page header with image name
                 pdf.setFontSize(14);
                 pdf.setFont(undefined, 'bold');
-                pdf.text(`${imageData.label}`, 20, yPosition);
+                const titleName = (typeof window.getUserFacingImageName === 'function') ? window.getUserFacingImageName(imageData.label) : imageData.label;
+                pdf.text(`${titleName}`, 20, yPosition);
                 yPosition += 8;
                 
                 isFirstPage = false;
@@ -5196,7 +5278,7 @@ if (colorPicker) {
             
         // CRITICAL FIX: Ensure scale parameter matches the global scale value
         if (scale !== window.imageScaleByLabel[currentImageLabel]) {
-            console.error(`[drawImageAndStrokes] CRITICAL SCALE MISMATCH! Parameter scale=${scale} but global scale=${window.imageScaleByLabel[currentImageLabel]}. Fixing...`);
+            if (window.__DEBUG__) console.warn(`[drawImageAndStrokes] Scale mismatch. Param=${scale} global=${window.imageScaleByLabel[currentImageLabel]}. Correcting.`);
             scale = window.imageScaleByLabel[currentImageLabel]; // Use the global scale value always
             
             // Recalculate image position based on correct scale
@@ -5220,9 +5302,32 @@ if (colorPicker) {
         // Calculate scaled dimensions
         const scaledWidth = imgWidth * scale;
         const scaledHeight = imgHeight * scale;
+        
+        // Check if there's rotation to apply
+        const rotation = window.imageRotationByLabel ? (window.imageRotationByLabel[currentImageLabel] || 0) : 0;
+        
+        if (rotation !== 0) {
+            // Save context state
+            ctx.save();
             
-            // Draw the image with scaling and positioning
-        ctx.drawImage(img, imageX, imageY, scaledWidth, scaledHeight);
+            // Calculate center of the image for rotation
+            const imageCenterX = imageX + scaledWidth / 2;
+            const imageCenterY = imageY + scaledHeight / 2;
+            
+            // Apply rotation transformation
+            ctx.translate(imageCenterX, imageCenterY);
+            ctx.rotate(rotation);
+            ctx.translate(-imageCenterX, -imageCenterY);
+            
+            // Draw the image with rotation, scaling and positioning
+            ctx.drawImage(img, imageX, imageY, scaledWidth, scaledHeight);
+            
+            // Restore context state before drawing strokes
+            ctx.restore();
+        } else {
+            // Draw the image without rotation
+            ctx.drawImage(img, imageX, imageY, scaledWidth, scaledHeight);
+        }
             
         // Apply visible strokes
         applyVisibleStrokes(scale, imageX, imageY);
@@ -5835,7 +5940,7 @@ if (colorPicker) {
         
         // CRITICAL FIX: Ensure scale parameter matches the global scale value
         if (scale !== window.imageScaleByLabel[currentImageLabel]) {
-            console.error(`[applyVisibleStrokes] CRITICAL SCALE MISMATCH! Parameter scale=${scale} but global scale=${window.imageScaleByLabel[currentImageLabel]}. Fixing...`);
+            if (window.__DEBUG__) console.warn(`[applyVisibleStrokes] Scale mismatch. Param=${scale} global=${window.imageScaleByLabel[currentImageLabel]}. Correcting.`);
             scale = window.imageScaleByLabel[currentImageLabel]; // Use the global scale value always
         }
         
@@ -5958,7 +6063,7 @@ if (colorPicker) {
                         try {
                             // Convert image anchor to canvas anchor for routines that need canvas coords (e.g., initial optimal placement)
                             // Use toCanvas for proper coordinate transformation (handles center-based scaling for blank canvas)
-                            anchorPointCanvas = toCanvas(anchorPointImage);
+                            anchorPointCanvas = imageToCanvasCoords(anchorPointImage.x, anchorPointImage.y);
                             if (!anchorPointCanvas || isNaN(anchorPointCanvas.x) || isNaN(anchorPointCanvas.y)) {
                                  console.error(`      Error calculating canvas coords for label anchor for ${strokeLabel}. Image anchor:`, anchorPointImage);
                                  anchorPointCanvas = { x: canvas.width / 2, y: canvas.height / 2 }; // Fallback
@@ -6191,8 +6296,8 @@ if (colorPicker) {
                         finalLabelImageY = anchorPointImage.y + imageSpaceOffset.y;
                     }
 
-                    // Use toCanvas for proper coordinate transformation (handles center-based scaling for blank canvas)
-                    finalPositionCanvas = toCanvas({ x: finalLabelImageX, y: finalLabelImageY });
+                    // Use imageToCanvasCoords for proper coordinate transformation (includes rotation)
+                    finalPositionCanvas = imageToCanvasCoords(finalLabelImageX, finalLabelImageY);
                     console.log(`[Label] Final position for ${strokeLabel}: Image(${finalLabelImageX.toFixed(1)}, ${finalLabelImageY.toFixed(1)}) -> Canvas(${finalPositionCanvas.x.toFixed(1)}, ${finalPositionCanvas.y.toFixed(1)}) | Anchor: Image(${anchorPointImage.x.toFixed(1)}, ${anchorPointImage.y.toFixed(1)}) + Offset: (${imageSpaceOffset.x.toFixed(1)}, ${imageSpaceOffset.y.toFixed(1)})`);
                     // console.log(`    Final Canvas Position for ${strokeLabel}:`, finalPositionCanvas, `(from ImagePos: ${finalLabelImageX.toFixed(1)},${finalLabelImageY.toFixed(1)})`);
 
@@ -7164,13 +7269,15 @@ if (colorPicker) {
         const position = imagePositionByLabel[label] || { x: 0, y: 0 };
         const dimensions = window.originalImageDimensions?.[label];
         const hasImage = !!(window.originalImages && window.originalImages[label]);
+        const rotation = window.imageRotationByLabel ? (window.imageRotationByLabel[label] || 0) : 0;
         
         return {
             scale,
             position,
             dimensions,
             hasImage,
-            label
+            label,
+            rotation
         };
     }
     
@@ -7184,15 +7291,25 @@ if (colorPicker) {
     function imageToCanvasCoords(imageX, imageY, params = null) {
         if (!params) params = getTransformationParams();
         
-        const { scale, position, dimensions, hasImage } = params;
+        const { scale, position, dimensions, hasImage, rotation } = params;
         
         // For blank canvas (no image), use center-based scaling
         if (!hasImage || !dimensions) {
             const canvasCenter = { x: canvas.width / 2, y: canvas.height / 2 };
             
             // Apply scaling from center, then add position offset
-            const scaledX = (imageX - canvasCenter.x) * scale + canvasCenter.x;
-            const scaledY = (imageY - canvasCenter.y) * scale + canvasCenter.y;
+            let scaledX = (imageX - canvasCenter.x) * scale + canvasCenter.x;
+            let scaledY = (imageY - canvasCenter.y) * scale + canvasCenter.y;
+            
+            // Apply rotation if needed
+            if (rotation !== 0) {
+                const cos = Math.cos(rotation);
+                const sin = Math.sin(rotation);
+                const dx = scaledX - canvasCenter.x;
+                const dy = scaledY - canvasCenter.y;
+                scaledX = canvasCenter.x + (dx * cos - dy * sin);
+                scaledY = canvasCenter.y + (dx * sin + dy * cos);
+            }
             
             return {
                 x: scaledX + position.x,
@@ -7206,10 +7323,26 @@ if (colorPicker) {
         const imageOriginX = centerX + position.x;
         const imageOriginY = centerY + position.y;
         
+        // Apply scaling first
+        let transformedX = imageX * scale;
+        let transformedY = imageY * scale;
+        
+        // Apply rotation around image center if needed
+        if (rotation !== 0) {
+            const imageCenterX = dimensions.width * scale / 2;
+            const imageCenterY = dimensions.height * scale / 2;
+            const cos = Math.cos(rotation);
+            const sin = Math.sin(rotation);
+            const dx = transformedX - imageCenterX;
+            const dy = transformedY - imageCenterY;
+            transformedX = imageCenterX + (dx * cos - dy * sin);
+            transformedY = imageCenterY + (dx * sin + dy * cos);
+        }
+        
         // Transform image-relative coordinates to canvas coordinates
         return {
-            x: imageOriginX + (imageX * scale),
-            y: imageOriginY + (imageY * scale)
+            x: imageOriginX + transformedX,
+            y: imageOriginY + transformedY
         };
     }
     
@@ -7223,19 +7356,30 @@ if (colorPicker) {
     function canvasToImageCoords(canvasX, canvasY, params = null) {
         if (!params) params = getTransformationParams();
         
-        const { scale, position, dimensions, hasImage } = params;
+        const { scale, position, dimensions, hasImage, rotation } = params;
         
         // For blank canvas (no image), use center-based inverse scaling
         if (!hasImage || !dimensions) {
             const canvasCenter = { x: canvas.width / 2, y: canvas.height / 2 };
             
-            // Remove position offset first, then apply inverse scaling from center
-            const positionAdjustedX = canvasX - position.x;
-            const positionAdjustedY = canvasY - position.y;
+            // Remove position offset first
+            let transformedX = canvasX - position.x;
+            let transformedY = canvasY - position.y;
             
+            // Apply inverse rotation if needed
+            if (rotation !== 0) {
+                const cos = Math.cos(-rotation); // Negative for inverse rotation
+                const sin = Math.sin(-rotation);
+                const dx = transformedX - canvasCenter.x;
+                const dy = transformedY - canvasCenter.y;
+                transformedX = canvasCenter.x + (dx * cos - dy * sin);
+                transformedY = canvasCenter.y + (dx * sin + dy * cos);
+            }
+            
+            // Apply inverse scaling from center
             return {
-                x: (positionAdjustedX - canvasCenter.x) / scale + canvasCenter.x,
-                y: (positionAdjustedY - canvasCenter.y) / scale + canvasCenter.y
+                x: (transformedX - canvasCenter.x) / scale + canvasCenter.x,
+                y: (transformedY - canvasCenter.y) / scale + canvasCenter.y
             };
         }
         
@@ -7245,10 +7389,26 @@ if (colorPicker) {
         const imageOriginX = centerX + position.x;
         const imageOriginY = centerY + position.y;
         
+        // Remove image origin offset
+        let transformedX = canvasX - imageOriginX;
+        let transformedY = canvasY - imageOriginY;
+        
+        // Apply inverse rotation around image center if needed
+        if (rotation !== 0) {
+            const imageCenterX = dimensions.width * scale / 2;
+            const imageCenterY = dimensions.height * scale / 2;
+            const cos = Math.cos(-rotation); // Negative for inverse rotation
+            const sin = Math.sin(-rotation);
+            const dx = transformedX - imageCenterX;
+            const dy = transformedY - imageCenterY;
+            transformedX = imageCenterX + (dx * cos - dy * sin);
+            transformedY = imageCenterY + (dx * sin + dy * cos);
+        }
+        
         // Transform canvas coordinates to image-relative coordinates
         return {
-            x: (canvasX - imageOriginX) / scale,
-            y: (canvasY - imageOriginY) / scale
+            x: transformedX / scale,
+            y: transformedY / scale
         };
     }
     
@@ -8852,37 +9012,12 @@ if (colorPicker) {
         canvas.addEventListener('mouseup', onCanvasMouseUp, { signal: eventListeners.signal });
         canvas.addEventListener('mouseout', onCanvasMouseOut, { signal: eventListeners.signal });
         canvas.addEventListener('dblclick', onCanvasDoubleClick, { signal: eventListeners.signal });
-        canvas.addEventListener('wheel', onCanvasWheel, { signal: eventListeners.signal });
+        canvas.addEventListener('wheel', onCanvasWheel, { signal: eventListeners.signal, passive: true });
         canvas.addEventListener('scalechange', onCanvasScaleChange, { signal: eventListeners.signal });
         // canvas.addEventListener('contextmenu', onCanvasRightClick, { signal: eventListeners.signal }); // Disabled to allow browser context menu
         console.log('[Event] Context menu listener bound to canvas');
         
-        // --- RIGHT-CLICK DEBUGGING (temporary) ---
-        // Logs whether a right-click leads to a contextmenu event, and where it fired.
-        // Remove when done debugging.
-        window.__rcDebug = window.__rcDebug || {};
 
-        document.addEventListener('mousedown', function(e) {
-            if (e.button === 2) { // right-click down
-                window.__rcDebug.lastRightClickAt = Date.now();
-                window.__rcDebug.target = e.target;
-                if (window.__rcDebug.timer) clearTimeout(window.__rcDebug.timer);
-                window.__rcDebug.seenContextMenu = false;
-
-                // If no contextmenu arrives shortly, warn.
-                window.__rcDebug.timer = setTimeout(function() {
-                    if (!window.__rcDebug.seenContextMenu) {
-                        console.warn('[RC-DEBUG] No contextmenu fired after right-click. Target:', window.__rcDebug.target);
-                    }
-                }, 300);
-            }
-        }, { capture: true });
-
-        document.addEventListener('contextmenu', function(e) {
-            window.__rcDebug.seenContextMenu = true;
-            console.log('[RC-DEBUG] contextmenu fired on:', e.target, ' defaultPrevented=', e.defaultPrevented);
-        }, { capture: true });
-        // --- END RIGHT-CLICK DEBUGGING ---
         
         // Allow standard browser context menu on canvas for image operations
         
@@ -8911,9 +9046,11 @@ if (colorPicker) {
 
     // Canvas event handlers
     function onCanvasMouseDown(e) {
-        // Check if this is a right-click (button 2) - trigger copy directly
+        // Check if this is a right-click (button 2) - prevent default context menu
         if (e.button === 2) {
-            // Allow standard browser right-click context menu on canvas
+            // Prevent default browser context menu
+            e.preventDefault();
+            e.stopPropagation();
             return;
         }
         
@@ -10131,6 +10268,51 @@ if (colorPicker) {
     //     copyCurrentViewToClipboard();
     // }
 
+    // Function to show Chrome-style copy icon feedback
+    function showCopyIconFeedback() {
+        // Create a temporary copy icon element
+        const copyIcon = document.createElement('div');
+        copyIcon.innerHTML = '📋';
+        copyIcon.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 48px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            border-radius: 8px;
+            padding: 16px;
+            z-index: 10000;
+            pointer-events: none;
+            animation: copyIconFade 1s ease-out forwards;
+        `;
+        
+        // Add CSS animation if not already present
+        if (!document.getElementById('copyIconStyles')) {
+            const style = document.createElement('style');
+            style.id = 'copyIconStyles';
+            style.textContent = `
+                @keyframes copyIconFade {
+                    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+                    20% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+                    80% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+                    100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+        
+        document.body.appendChild(copyIcon);
+        
+        // Remove after animation completes
+        setTimeout(() => {
+            if (copyIcon.parentNode) {
+                copyIcon.parentNode.removeChild(copyIcon);
+            }
+        }, 1000);
+    }
+
     // Copy current view (respecting capture frame) to clipboard
     async function copyCurrentViewToClipboard() {
         try {
@@ -10184,7 +10366,10 @@ if (colorPicker) {
                     new ClipboardItem({ 'image/png': blob })
                 ]);
                 
-                // Show temporary feedback
+                // Show Chrome-style copy icon feedback
+                showCopyIconFeedback();
+                
+                // Also show status message
                 if (typeof window.projectManager?.showStatusMessage === 'function') {
                     window.projectManager.showStatusMessage('Image copied to clipboard!', 'success');
                 } else {
@@ -10963,6 +11148,130 @@ if (colorPicker) {
         });
     });
     
+    // Working rotation function that properly manages rotation state
+    window.rotateImage = function(imageIndex, degrees) {
+        // Get current image label from the global state
+        const currentLabel = window.currentImageLabel;
+        if (!currentLabel) {
+            console.warn('[rotateImage] No current image label found');
+            return;
+        }
+        
+        // Initialize rotation state if it doesn't exist
+        if (!window.imageRotationByLabel) {
+            window.imageRotationByLabel = {};
+        }
+        if (!window.imageRotationByLabel[currentLabel]) {
+            window.imageRotationByLabel[currentLabel] = 0;
+        }
+        
+        // Update the global rotation state
+        const currentRotation = window.imageRotationByLabel[currentLabel];
+        const normalizedDelta = (degrees * Math.PI) / 180; // Convert to radians
+        window.imageRotationByLabel[currentLabel] = currentRotation + normalizedDelta;
+        
+        console.log(`[rotateImage] Updated rotation for ${currentLabel}: ${(currentRotation * 180 / Math.PI).toFixed(1)}° + ${degrees}° = ${(window.imageRotationByLabel[currentLabel] * 180 / Math.PI).toFixed(1)}°`);
+        
+        // For now, just update the rotation state and let coordinate transformation handle it
+        // The coordinate transformation will apply the rotation when drawing
+        
+        // Save state and redraw
+        if (typeof window.saveState === 'function') {
+            window.saveState();
+        }
+        if (typeof window.redrawCanvasWithVisibility === 'function') {
+            window.redrawCanvasWithVisibility();
+        }
+    };
+    
+    // Debug function to test rotation
+    window.testRotation = function() {
+        const currentLabel = window.currentImageLabel;
+        if (!currentLabel) {
+            console.warn('No current image to test rotation');
+            return;
+        }
+        
+        console.log('=== ROTATION TEST ===');
+        console.log('Current image label:', currentLabel);
+        console.log('Current rotation:', window.imageRotationByLabel?.[currentLabel] || 0);
+        
+        // Test coordinate transformation
+        const testPoint = { x: 100, y: 100 };
+        const params = getTransformationParams(currentLabel);
+        console.log('Transformation params:', params);
+        
+        const transformed = imageToCanvasCoords(testPoint.x, testPoint.y, params);
+        console.log('Test point:', testPoint);
+        console.log('Transformed point:', transformed);
+        
+        // Test 90 degree rotation
+        console.log('Testing 90° rotation...');
+        window.rotateImage(0, 90);
+        
+        const newParams = getTransformationParams(currentLabel);
+        console.log('New rotation:', newParams.rotation);
+        
+        const newTransformed = imageToCanvasCoords(testPoint.x, testPoint.y, newParams);
+        console.log('After 90° rotation:', newTransformed);
+        
+        console.log('=== END ROTATION TEST ===');
+    };
+    
+    // Working transform function that handles rotation and flip
+    window.transformImageData = function(imageLabel, operation, value, width, height) {
+        if (!imageLabel) {
+            // Fallback to current image label
+            imageLabel = window.currentImageLabel;
+            if (!imageLabel) {
+                console.warn('[transformImageData] No image label provided and no current image');
+                return;
+            }
+        }
+        
+        if (operation === 'rotate') {
+            // Delegate to rotateImage function
+            window.rotateImage(0, value); // imageIndex doesn't matter, we use currentLabel
+        } else if (operation === 'flip') {
+            // Simple flip implementation
+            const canvas = document.getElementById('canvas');
+            if (!canvas) {
+                console.warn('[transformImageData] Canvas not found for flip');
+                return;
+            }
+            
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            
+            if (window.vectorStrokesByImage && window.vectorStrokesByImage[imageLabel]) {
+                const strokes = window.vectorStrokesByImage[imageLabel];
+                Object.keys(strokes).forEach(strokeLabel => {
+                    const stroke = strokes[strokeLabel];
+                    if (stroke && stroke.points) {
+                        stroke.points = stroke.points.map(point => {
+                            if (value === 'horizontal') {
+                                return { x: centerX + (centerX - point.x), y: point.y };
+                            } else if (value === 'vertical') {
+                                return { x: point.x, y: centerY + (centerY - point.y) };
+                            }
+                            return point;
+                        });
+                    }
+                });
+                
+                console.log(`[transformImageData] Flipped ${Object.keys(strokes).length} strokes ${value}`);
+                
+                // Save state and redraw
+                if (typeof window.saveState === 'function') {
+                    window.saveState();
+                }
+                if (typeof window.redrawCanvasWithVisibility === 'function') {
+                    window.redrawCanvasWithVisibility();
+                }
+            }
+        }
+    };
+    
     // Initialize color palette buttons
     const colorButtons = document.querySelectorAll('.color-btn');
     colorButtons.forEach(button => {
@@ -11351,7 +11660,8 @@ if (colorPicker) {
     
     // MOUSE WHEEL ZOOM FUNCTIONALITY
     function onCanvasWheel(e) {
-        e.preventDefault(); // Prevent page scrolling
+        // Note: Cannot call preventDefault() in passive listener
+        // The wheel event is marked passive: true for performance
         e.stopPropagation(); // Prevent event bubbling
         
         // Guard against zooming during stroke creation (same as Q/E key guards)

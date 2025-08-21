@@ -465,35 +465,35 @@
         }
         
         /* Force scrollbars to always show when content overflows */
-        #strokeVisibilityControls,
-        #imagePanelContent {
+        #strokeVisibilityControls {
             scroll-behavior: smooth;
             overflow-y: scroll !important;
             scrollbar-width: auto !important;
             scrollbar-color: #9ca3af #f3f4f6 !important;
         }
         
-        #strokeVisibilityControls::-webkit-scrollbar,
-        #imagePanelContent::-webkit-scrollbar {
+        /* Ensure outer image panel content never scrolls; inner #imageList handles scrolling */
+        #imagePanelContent { 
+            overflow: hidden !important; 
+        }
+        
+        #strokeVisibilityControls::-webkit-scrollbar {
             width: 8px !important;
             display: block !important;
         }
         
-        #strokeVisibilityControls::-webkit-scrollbar-track,
-        #imagePanelContent::-webkit-scrollbar-track {
+        #strokeVisibilityControls::-webkit-scrollbar-track {
             background: #f3f4f6 !important;
             border-radius: 4px !important;
         }
         
-        #strokeVisibilityControls::-webkit-scrollbar-thumb,
-        #imagePanelContent::-webkit-scrollbar-thumb {
+        #strokeVisibilityControls::-webkit-scrollbar-thumb {
             background: #9ca3af !important;
             border-radius: 4px !important;
             border: 1px solid #f3f4f6 !important;
         }
         
-        #strokeVisibilityControls::-webkit-scrollbar-thumb:hover,
-        #imagePanelContent::-webkit-scrollbar-thumb:hover {
+        #strokeVisibilityControls::-webkit-scrollbar-thumb:hover {
             background: #6b7280 !important;
         }
         
@@ -834,6 +834,7 @@
             <div id="tbCenter" class="relative flex items-center group-gap"></div>
             <div id="tbRight" class="relative flex items-center group-gap smart-label-scope"></div>
         </div>
+        
     </div>
 
     <!-- Fullscreen Canvas -->
@@ -1036,9 +1037,19 @@
                 </button>
             </div>
         </div>
-        <div id="imagePanelContent" class="p-3 transition-all duration-300" style="max-height: 70vh; overflow: visible; position: relative;">
+        <!-- Name/title box outside the scroll area (always visible at top of images panel) -->
+        <div class="px-3 bg-white border-b border-slate-200 py-2">
+            <label for="currentImageNameBox" class="block text-[10px] text-slate-500 mb-1">Image name</label>
+            <input id="currentImageNameBox" type="text" class="w-full px-2 py-1 border border-slate-300 rounded-md text-[12px] focus:outline-none focus:ring-2 focus:ring-primary-300" placeholder="Rename current image" />
+        </div>
+        <div id="imagePanelContent" class="p-3 transition-all duration-300" style="position: relative;">
             <!-- Legacy image list for backwards compatibility -->
-            <div id="imageList" class="space-y-2 mb-2"></div>
+            <div id="imageList" class="space-y-4 mb-0 h-[60vh] overflow-y-auto overflow-x-hidden pr-0 snap-y snap-mandatory scroll-smooth pt-[28vh] pb-[28vh]"></div>
+
+            <!-- Snap guide line -->
+            <div class="pointer-events-none absolute left-0 right-0 top-1/2 -translate-y-1/2 border-t border-slate-300/70"></div>
+
+            
             
             <!-- Gallery (disabled in vertical list mode) -->
             <div class="mb-4 hidden">
@@ -1046,34 +1057,9 @@
                 <div id="imageDots" class="hidden"></div>
             </div>
             
-            <!-- Image meta: name + quick type -->
-            <div class="flex items-center gap-2 mb-2">
-                <input id="imageNameInput" type="text" class="flex-1 px-2 py-1 border border-gray-300 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-slate-300" placeholder="Image name" />
-                <select id="imageTypeSelect" class="px-2 py-1 border border-gray-300 rounded-lg bg-white text-xs">
-                    <option value="">Type</option>
-                    <option value="sofa">sofa</option>
-                    <option value="armchair">armchair</option>
-                    <option value="chaise">chaise</option>
-                    <option value="ottoman">ottoman</option>
-                    <option value="cushion">cushion</option>
-                    <option value="windowseat">windowseat</option>
-                </select>
-            </div>
+            <!-- Image meta removed (name/type inputs no longer used) -->
 
-            <!-- Navigation Controls -->
-                <div class="flex items-center justify-between mb-4">
-                <button id="prevImage" class="p-2 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed" title="Previous image">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-                    </svg>
-                </button>
-                    <div class="text-xs text-slate-600 font-medium hidden" id="imagePosition">0 / 0</div>
-                <button id="nextImage" class="p-2 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed" title="Next image">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                    </svg>
-                </button>
-            </div>
+            <!-- Navigation controls removed -->
         </div>
     </div>
 
@@ -4231,31 +4217,48 @@
             let lastLegacyCount = 0;
             
             // Also set up a periodic sync to catch any images that get added later (less frequent)
-            setInterval(() => {
-                const currentLegacyCount = document.getElementById('imageList')?.querySelectorAll('.image-container').length || 0;
-                const currentRealImagesCount = imageGalleryData.filter(item => !item.name?.includes('Demo Image') && !item.name?.includes('Blank Canvas')).length;
-                
-                // Only sync if there's actually a change in legacy count
-                if (currentLegacyCount > lastLegacyCount) {
-                    console.log('[PERIODIC] New legacy images detected, syncing...');
-                    console.log(`[PERIODIC] Legacy: ${currentLegacyCount} (was ${lastLegacyCount}), Gallery real: ${currentRealImagesCount}`);
+            // Only run when tab is visible to reduce performance impact
+            let syncInterval;
+            const startSyncInterval = () => {
+                syncInterval = setInterval(() => {
+                    // Skip if tab is not visible
+                    if (document.hidden) return;
                     
-                    // No demo images are used anymore; skip clearing
+                    const currentLegacyCount = document.getElementById('imageList')?.querySelectorAll('.image-container').length || 0;
+                    const currentRealImagesCount = imageGalleryData.filter(item => !item.name?.includes('Demo Image') && !item.name?.includes('Blank Canvas')).length;
                     
-                    syncLegacyImagesToGallery();
-                    
-                    // After adding new images, ensure we start at the first one if we're not already there
-                    if (currentImageIndex !== 0 && imageGalleryData.length > 0) {
-                        console.log('[PERIODIC] Resetting to first image after adding new images');
-                        setTimeout(() => {
-                            navigateToImage(0);
-                            updateActiveImage(0);
-                        }, 200);
+                    // Only sync if there's actually a change in legacy count
+                    if (currentLegacyCount > lastLegacyCount) {
+                        console.log('[PERIODIC] New legacy images detected, syncing...');
+                        console.log(`[PERIODIC] Legacy: ${currentLegacyCount} (was ${lastLegacyCount}), Gallery real: ${currentRealImagesCount}`);
+                        
+                        // No demo images are used anymore; skip clearing
+                        
+                        syncLegacyImagesToGallery();
+                        
+                        // After adding new images, ensure we start at the first one if we're not already there
+                        if (currentImageIndex !== 0 && imageGalleryData.length > 0) {
+                            console.log('[PERIODIC] Resetting to first image after adding new images');
+                            setTimeout(() => {
+                                navigateToImage(0);
+                                updateActiveImage(0);
+                            }, 200);
+                        }
+                        
+                        lastLegacyCount = currentLegacyCount;
                     }
-                    
-                    lastLegacyCount = currentLegacyCount;
+                }, 3000);  // Check every 3 seconds instead of 2
+            };
+            
+            // Start interval and handle visibility changes
+            startSyncInterval();
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden) {
+                    clearInterval(syncInterval);
+                } else {
+                    startSyncInterval();
                 }
-            }, 2000);  // Check every 2 seconds instead of 1
+            });
         });
 
         // View Measurements toggle functionality
@@ -4338,8 +4341,8 @@
     </div>
 
     <script>console.log('[INDEX] before paint.js'); window.onerror=(m,s,l,c,e)=>console.error('[INDEX] onerror',m,s,l,c,e);</script>
-    <script src="public/js/paint.js?v=20250819"></script>
-    <script src="public/js/project-manager.js?v=20250819"></script>
-    <script src="public/js/tag-manager.js?v=20250819"></script>
+    <script src="public/js/paint.js?v=20250820123456"></script>
+    <script src="public/js/project-manager.js?v=20250820123458"></script>
+    <script src="public/js/tag-manager.js?v=20250820123456"></script>
 </body>
 </html>
