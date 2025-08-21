@@ -14013,3 +14013,350 @@ window.runCustomLabelRotationTest = async function(imageLabel = 'Image 1') {
         allLabels: bugDemonstration
     };
 };
+
+/**
+ * Share Project Functionality
+ * Creates shareable URLs for customer measurement collection
+ */
+window.shareProject = async function() {
+    let originalText = '';
+    try {
+        // Show loading state
+        const shareBtn = document.getElementById('shareProjectBtn');
+        if (shareBtn) originalText = shareBtn.textContent;
+        shareBtn.textContent = 'Creating Share Link...';
+        shareBtn.disabled = true;
+        
+        // Prepare images as data URLs for portability across tabs
+        async function toDataUrl(src) {
+            try {
+                const resp = await fetch(src);
+                const blob = await resp.blob();
+                return await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(blob);
+                });
+            } catch (e) {
+                return null;
+            }
+        }
+        async function convertOriginalImages(images) {
+            const result = {};
+            const labels = Object.keys(images || {});
+            for (const label of labels) {
+                const src = images[label];
+                if (!src) continue;
+                if (typeof src === 'string' && src.startsWith('data:')) {
+                    result[label] = src;
+                } else {
+                    const dataUrl = await toDataUrl(src);
+                    if (dataUrl) result[label] = dataUrl;
+                }
+            }
+            return result;
+        }
+
+        const originalImagesForShare = await convertOriginalImages(window.originalImages || {});
+
+        // Determine robust image label list
+        const labelsFromOrder = Array.isArray(window.orderedImageLabels) && window.orderedImageLabels.length ? window.orderedImageLabels.slice() : [];
+        const labelsFromTags = Object.keys(window.imageTags || {});
+        const labelsFromImages = Object.keys(window.originalImages || {});
+        const labelsFromState = (window.paintApp && window.paintApp.state && Array.isArray(window.paintApp.state.imageLabels)) ? window.paintApp.state.imageLabels : [];
+        const imageLabels = (labelsFromOrder.length ? labelsFromOrder
+                            : (labelsFromTags.length ? labelsFromTags
+                            : (labelsFromImages.length ? labelsFromImages
+                            : labelsFromState)));
+        const currentImageLabel = (window.paintApp && window.paintApp.state && window.paintApp.state.currentImageLabel) || imageLabels[0] || null;
+
+        // Collect project data for sharing
+        const projectData = {
+            currentImageLabel,
+            imageLabels,
+            originalImages: originalImagesForShare,
+            originalImageDimensions: window.originalImageDimensions || {},
+            strokes: window.vectorStrokesByImage || {},
+            strokeVisibility: window.strokeVisibilityByImage || {},
+            strokeSequence: window.lineStrokesByImage || {},
+            strokeMeasurements: window.strokeMeasurements || {},
+            strokeLabelVisibility: window.strokeLabelVisibility || {},
+            imageScales: window.paintApp.state.imageScaleByLabel || {},
+            imagePositions: window.paintApp.state.imagePositionByLabel || {},
+            customImageNames: window.customImageNames || {}
+        };
+
+        // Include custom label positions and rotation stamps for accurate label placement
+        try {
+            projectData.customLabelPositions = {};
+            imageLabels.forEach(label => {
+                projectData.customLabelPositions[label] = (window.customLabelPositions && window.customLabelPositions[label])
+                    ? JSON.parse(JSON.stringify(window.customLabelPositions[label]))
+                    : {};
+            });
+            if (window.customLabelOffsetsRotationByImageAndStroke) {
+                projectData.customLabelRotationStamps = {};
+                imageLabels.forEach(label => {
+                    projectData.customLabelRotationStamps[label] = window.customLabelOffsetsRotationByImageAndStroke[label]
+                        ? JSON.parse(JSON.stringify(window.customLabelOffsetsRotationByImageAndStroke[label]))
+                        : {};
+                });
+            }
+        } catch (e) {
+            // best-effort; ignore if deep copy fails
+        }
+        
+        // Share options
+        const shareOptions = {
+            expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days
+            isPublic: true,
+            allowEditing: false,
+            measurements: {}
+        };
+        
+        // Send to backend
+        const response = await fetch('/api/share-project', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                title: (document.getElementById('projectName')?.value || 'OpenPaint Project'),
+                projectData: projectData,
+                shareOptions: shareOptions
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (!result.success) {
+            throw new Error(result.message || 'Failed to create share link');
+        }
+        
+        // Show share dialog
+        showShareDialog(result.shareUrl, result.expiresAt);
+        
+        // Show success message
+        if (typeof window.projectManager?.showStatusMessage === 'function') {
+            window.projectManager.showStatusMessage('Share link created successfully!', 'success');
+        }
+
+        // Persist share info for future updates
+        try {
+            window.lastShareId = result.shareId;
+            window.lastEditToken = result.editToken;
+            if (window.localStorage) {
+                localStorage.setItem('openpaint:lastShareId', result.shareId);
+                localStorage.setItem('openpaint:lastEditToken', result.editToken);
+            }
+        } catch (e) {
+            // ignore storage errors
+        }
+        
+    } catch (error) {
+        console.error('Error creating share link:', error);
+        
+        if (typeof window.projectManager?.showStatusMessage === 'function') {
+            window.projectManager.showStatusMessage('Failed to create share link: ' + error.message, 'error');
+        } else {
+            alert('Failed to create share link: ' + error.message);
+        }
+    } finally {
+        // Restore button state
+        const shareBtn = document.getElementById('shareProjectBtn');
+        if (shareBtn) {
+            shareBtn.textContent = originalText || 'Share Project';
+            shareBtn.disabled = false;
+        }
+    }
+};
+
+// Update an existing shared project using saved editToken
+window.updateSharedProject = async function() {
+    try {
+        const shareId = window.lastShareId || (window.localStorage && localStorage.getItem('openpaint:lastShareId'));
+        const editToken = window.lastEditToken || (window.localStorage && localStorage.getItem('openpaint:lastEditToken'));
+        if (!shareId || !editToken) {
+            const msg = 'No existing share info found. Create a share link first.';
+            if (typeof window.projectManager?.showStatusMessage === 'function') {
+                window.projectManager.showStatusMessage(msg, 'error');
+            } else {
+                alert(msg);
+            }
+            return;
+        }
+
+        const btn = document.getElementById('updateShareBtn');
+        const originalText = btn ? btn.textContent : '';
+        if (btn) { btn.textContent = 'Updating...'; btn.disabled = true; }
+
+        const projectData = {
+            currentImageLabel: window.paintApp.state.currentImageLabel,
+            imageLabels: window.paintApp.state.imageLabels || [],
+            originalImages: window.originalImages || {},
+            originalImageDimensions: window.originalImageDimensions || {},
+            strokes: window.vectorStrokesByImage || {},
+            strokeVisibility: window.strokeVisibilityByImage || {},
+            strokeSequence: window.lineStrokesByImage || {},
+            strokeMeasurements: window.strokeMeasurements || {},
+            strokeLabelVisibility: window.strokeLabelVisibility || {},
+            imageScales: window.paintApp.state.imageScaleByLabel || {},
+            imagePositions: window.paintApp.state.imagePositionByLabel || {},
+            customImageNames: window.customImageNames || {}
+        };
+
+        const response = await fetch(`/api/shared/${shareId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                editToken,
+                title: (document.getElementById('projectName')?.value || null),
+                projectData,
+                shareOptions: {}
+            })
+        });
+        const result = await response.json();
+        if (!result.success) {
+            throw new Error(result.message || 'Failed to update shared project');
+        }
+
+        if (typeof window.projectManager?.showStatusMessage === 'function') {
+            window.projectManager.showStatusMessage('Shared project updated.', 'success');
+        }
+    } catch (error) {
+        console.error('Error updating shared project:', error);
+        if (typeof window.projectManager?.showStatusMessage === 'function') {
+            window.projectManager.showStatusMessage('Failed to update share: ' + error.message, 'error');
+        } else {
+            alert('Failed to update share: ' + error.message);
+        }
+    } finally {
+        const btn = document.getElementById('updateShareBtn');
+        if (btn) { btn.textContent = 'Update Share'; btn.disabled = false; }
+    }
+};
+
+/**
+ * Show share dialog with the generated URL
+ */
+function showShareDialog(shareUrl, expiresAt) {
+    // Create modal dialog
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        font-family: Arial, sans-serif;
+    `;
+    
+    const dialog = document.createElement('div');
+    dialog.style.cssText = `
+        background: white;
+        border-radius: 15px;
+        padding: 30px;
+        max-width: 500px;
+        width: 90%;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+    `;
+    
+    const expiryDate = new Date(expiresAt).toLocaleDateString();
+    
+    dialog.innerHTML = `
+        <h2 style="color: #2c3e50; margin: 0 0 20px 0; font-size: 1.5em;">🔗 Project Share Link Created</h2>
+        
+        <p style="color: #555; margin-bottom: 20px;">
+            Share this link with your customers to collect their measurements:
+        </p>
+        
+        <div style="background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+            <input 
+                type="text" 
+                id="shareUrlInput" 
+                value="${shareUrl}" 
+                readonly 
+                style="width: 100%; border: none; background: transparent; font-family: monospace; font-size: 14px; outline: none;"
+            >
+        </div>
+        
+        <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+            <button 
+                id="copyUrlBtn" 
+                style="flex: 1; background: #007bff; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: 600;"
+            >
+                📋 Copy Link
+            </button>
+            <button 
+                id="openUrlBtn" 
+                style="flex: 1; background: #28a745; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: 600;"
+            >
+                🔗 Open Link
+            </button>
+        </div>
+        
+        <p style="color: #666; font-size: 12px; margin-bottom: 20px;">
+            ⏰ Link expires: ${expiryDate}
+        </p>
+        
+        <div style="text-align: center;">
+            <button 
+                id="closeModalBtn" 
+                style="background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer;"
+            >
+                Close
+            </button>
+        </div>
+    `;
+    
+    modal.appendChild(dialog);
+    document.body.appendChild(modal);
+    
+    // Event listeners
+    document.getElementById('copyUrlBtn').addEventListener('click', async () => {
+        const input = document.getElementById('shareUrlInput');
+        input.select();
+        
+        try {
+            await navigator.clipboard.writeText(shareUrl);
+            const btn = document.getElementById('copyUrlBtn');
+            const originalText = btn.textContent;
+            btn.textContent = '✅ Copied!';
+            btn.style.background = '#28a745';
+            
+            setTimeout(() => {
+                btn.textContent = originalText;
+                btn.style.background = '#007bff';
+            }, 2000);
+        } catch (err) {
+            console.error('Failed to copy to clipboard:', err);
+            document.execCommand('copy');
+        }
+    });
+    
+    document.getElementById('openUrlBtn').addEventListener('click', () => {
+        window.open(shareUrl, '_blank');
+    });
+    
+    document.getElementById('closeModalBtn').addEventListener('click', () => {
+        document.body.removeChild(modal);
+    });
+    
+    // Close on background click
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            document.body.removeChild(modal);
+        }
+    });
+    
+    // Auto-select URL text
+    setTimeout(() => {
+        document.getElementById('shareUrlInput').select();
+    }, 100);
+}
