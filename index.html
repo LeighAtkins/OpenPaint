@@ -1449,6 +1449,42 @@
             });
             right.appendChild(saveProjectTop);
 
+            // Share Project button
+            const shareProjectBtn = document.createElement('button');
+            shareProjectBtn.id = 'shareProjectBtn';
+            shareProjectBtn.className = 'tbtn';
+            shareProjectBtn.textContent = 'Share Project';
+            shareProjectBtn.title = 'Create shareable URL for customer measurements';
+            shareProjectBtn.style.padding = '6px 12px';
+            shareProjectBtn.style.fontWeight = '600';
+            shareProjectBtn.style.background = '#8b5cf6';
+            shareProjectBtn.style.color = 'white';
+            shareProjectBtn.style.borderColor = '#7c3aed';
+            shareProjectBtn.style.borderRadius = '12px';
+            shareProjectBtn.style.marginLeft = '8px';
+            shareProjectBtn.addEventListener('click', () => {
+                if (window.shareProject) window.shareProject();
+            });
+            right.appendChild(shareProjectBtn);
+
+            // Update Share button
+            const updateShareBtn = document.createElement('button');
+            updateShareBtn.id = 'updateShareBtn';
+            updateShareBtn.className = 'tbtn';
+            updateShareBtn.textContent = 'Update Share';
+            updateShareBtn.title = 'Update existing share with current project state';
+            updateShareBtn.style.padding = '6px 12px';
+            updateShareBtn.style.fontWeight = '600';
+            updateShareBtn.style.background = '#0ea5e9';
+            updateShareBtn.style.color = 'white';
+            updateShareBtn.style.borderColor = '#0284c7';
+            updateShareBtn.style.borderRadius = '12px';
+            updateShareBtn.style.marginLeft = '8px';
+            updateShareBtn.addEventListener('click', () => {
+                if (window.updateSharedProject) window.updateSharedProject();
+            });
+            right.appendChild(updateShareBtn);
+
             // Replace unit selector with a simple toggle button in the top-right toolbar
             const unitSel = document.getElementById('unitSelector');
             if (unitSel) {
@@ -4341,8 +4377,8 @@
     </div>
 
     <script>console.log('[INDEX] before paint.js'); window.onerror=(m,s,l,c,e)=>console.error('[INDEX] onerror',m,s,l,c,e);</script>
-    <script src="public/js/paint.js?v=20250820123456"></script>
-    <script src="public/js/project-manager.js?v=20250820123458"></script>
-    <script src="public/js/tag-manager.js?v=20250820123456"></script>
+    <script src="js/paint.js?v=20250820123456"></script>
+    <script src="js/project-manager.js?v=20250820123458"></script>
+    <script src="js/tag-manager.js?v=20250820123456"></script>
 </body>
 </html>

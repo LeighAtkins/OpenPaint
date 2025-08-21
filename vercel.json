@@ -1,0 +1,23 @@
+{
+  "functions": {
+    "api/index.js": {
+      "maxDuration": 30
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/index.js"
+    },
+    {
+      "source": "/shared/(.*)",
+      "destination": "/api/index.js"
+    },
+    {
+      "source": "/",
+      "destination": "/api/index.js"
+    }
+  ],
+  "buildCommand": "echo 'No build required - static files in root'",
+  "outputDirectory": "."
+}

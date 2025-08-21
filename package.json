@@ -5,6 +5,10 @@
   "main": "app.js",
   "scripts": {
     "start": "node app.js",
+    "dev": "node app.js",
+    "build": "echo 'Static assets ready for deployment'",
+    "deploy": "vercel --prod",
+    "deploy:preview": "vercel",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "test": "npm run test:unit && npm run test:integration",
@@ -23,6 +27,7 @@
     "file-saver": "^2.0.5",
     "jszip": "^3.10.1",
     "multer": "^1.4.5-lts.1",
+    "@vercel/postgres": "^0.8.0",
     "task-master-ai": "^0.13.2"
   },
   "devDependencies": {

@@ -1,0 +1,40 @@
+Shareable Projects with Database + Blob Storage (OpenPaint)
+
+Context
+- OpenPaint is an Express + vanilla JS app deployed on Vercel. Currently saves/loads projects locally (ZIP via JSZip) and has basic server scaffolding.
+- Goal: Implement shareable projects via server-side persistence with a shareable link.
+
+Architecture
+- Database: Vercel Postgres for metadata and project JSON.
+- Blob Storage: Vercel Blob for binary assets (images/zip). Store returned public URLs in DB.
+- API: REST under /api/projects for create/read/update. Public reader endpoint.
+- Client: Add Share button to upload project; return share URL; support loading by link.
+
+Functional Requirements
+1) Create project (POST /api/projects)
+   - Request: title, project JSON (strokes, labels, scales, visibility), images (data URLs or already-hosted URLs), optional custom image names.
+   - Server: upload any image binaries to Blob; store their URLs+metadata; persist project JSON + metadata in Postgres; generate unique slug; return {slug, shareUrl}.
+2) Get project (GET /api/projects/:slug)
+   - Return full project JSON + asset URLs. Public read.
+3) Update project (PATCH /api/projects/:slug)
+   - Accept partial updates of JSON/title/assets. For v1, guard with editToken returned on create.
+4) Public share page (GET /p/:slug)
+   - Minimal HTML that loads OpenPaint viewer and fetches project by slug.
+5) Client integration
+   - Add Share button: serializes current in-memory state; sends to POST; copies share URL to clipboard.
+   - Add load-by-link flow: if URL has ?share=<slug> or on /p/:slug, load and hydrate state.
+
+Non-Functional & Security
+- Validation and payload limits. Stream uploads where possible. Sanitize JSON.
+- Rate-limit POST/PATCH. Basic logging and error responses. Slugs must be unguessable.
+- Keep local ZIP save/load working alongside server features.
+
+Data Model (initial)
+- projects (id uuid pk, slug text unique, title text, data jsonb, created_at timestamptz, updated_at timestamptz, edit_token text)
+- assets (id uuid pk, project_id uuid fk, url text, filename text, mime text, width int, height int, ordinal int)
+
+Testing
+- Unit: API validation and db layer. Integration: create→get roundtrip. E2E: share button creates link and loads project by link.
+
+Out of Scope (for v1)
+- Auth/users, version history, granular permissions, team collaboration.
