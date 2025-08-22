@@ -223,6 +223,48 @@ app.post('/api/shared/:shareId/measurements', async (req, res) => {
 });
 
 /**
+ * API endpoint for retrieving submitted measurements for a share
+ * Requires editToken to access
+ */
+app.get('/api/shared/:shareId/measurements', async (req, res) => {
+    try {
+        const { shareId } = req.params;
+        const { editToken } = req.query;
+
+        if (!editToken) {
+            return res.status(400).json({ success: false, message: 'editToken is required' });
+        }
+
+        let shareRecord = null;
+
+        if (isDbConfigured()) {
+            await ensureSchema();
+            const dbRow = await getProjectBySlug(shareId);
+            if (!dbRow) return res.status(404).json({ success: false, message: 'Shared project not found' });
+            if (dbRow.edit_token !== editToken) return res.status(403).json({ success: false, message: 'Invalid edit token' });
+            shareRecord = dbRow.data;
+        } else {
+            shareRecord = sharedProjects.get(shareId);
+            if (!shareRecord) return res.status(404).json({ success: false, message: 'Shared project not found' });
+            if (shareRecord.editToken && shareRecord.editToken !== editToken) {
+                return res.status(403).json({ success: false, message: 'Invalid edit token' });
+            }
+        }
+
+        const measurements = shareRecord.measurements || {};
+        
+        return res.json({ 
+            success: true, 
+            measurements: measurements,
+            totalSubmissions: Object.keys(measurements).length
+        });
+    } catch (error) {
+        console.error('Error retrieving measurements:', error);
+        return res.status(500).json({ success: false, message: 'Server error retrieving measurements' });
+    }
+});
+
+/**
  * Serve the shared project viewer page
  */
 app.get('/shared/:shareId', (req, res) => {
@@ -312,6 +354,7 @@ app.use((err, req, res, next) => {
 });
 
 // Start the server
-app.listen(port, () => {
+app.listen(port, '0.0.0.0', () => {
     console.log(`OpenPaint app listening at http://localhost:${port}`);
+    console.log(`Also accessible at http://172.31.25.185:${port} (WSL IP)`);
 });

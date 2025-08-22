@@ -15,10 +15,18 @@
         if (typeof console !== 'undefined' && console.warn) {
             const originalWarn = console.warn;
             console.warn = (...args) => {
-                if (args[0] && args[0].includes && args[0].includes('should not be used in production')) return;
+                if (args[0] && typeof args[0] === 'string' && args[0].includes('should not be used in production')) return;
                 originalWarn.apply(console, args);
             };
         }
+        
+        // Suppress autofill extension errors
+        window.addEventListener('error', (event) => {
+            if (event.message && event.message.includes('autofill.bundle.js')) {
+                event.preventDefault();
+                return false;
+            }
+        });
     </script>
     <style>
         /* Custom styles for image list and tag system */
@@ -160,6 +168,223 @@
         /* Hide UI until initialization completes to prevent flash */
         .app-loading body { 
             visibility: hidden !important; 
+        }
+        
+        /* Hide toolbar specifically during loading to prevent flash */
+        .app-loading #topToolbar {
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        /* Ensure stable toolbar layout from the start */
+        #topToolbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 40;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border-bottom: 1px solid rgb(226, 232, 240);
+            height: 48px;
+        }
+        
+        .toolbar-wrap {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 48px;
+        }
+        
+        #tbLeft, #tbCenter, #tbRight {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        
+        .group-gap > * {
+            margin-right: 6px;
+        }
+        
+        .group-gap > *:last-child {
+            margin-right: 0;
+        }
+        
+        /* Ensure all toolbar buttons have consistent sizing */
+        .tbtn {
+            height: 32px;
+            padding: 0 10px;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border: 1px solid rgba(148, 163, 184, 0.6);
+            background: #fff;
+            font-size: 12px;
+            line-height: 1;
+            transition: all 0.15s ease;
+            white-space: nowrap;
+        }
+        
+        .tinput {
+            height: 32px;
+            padding: 0 10px;
+            border-radius: 8px;
+            border: 1px solid rgba(148, 163, 184, 0.6);
+            background: #fff;
+            font-size: 12px;
+            line-height: 1;
+            transition: all 0.15s ease;
+        }
+        
+        .icon-btn {
+            width: 32px;
+            justify-content: center;
+            padding: 0;
+        }
+        
+        /* Specific button styles to prevent layout shifts */
+        #paste {
+            padding: 8px 16px;
+            background: rgb(59, 130, 246);
+            color: white;
+            font-weight: 600;
+            border-radius: 12px;
+            border: none;
+        }
+        
+        #clear {
+            padding: 8px 16px;
+            background: rgb(239, 68, 68);
+            color: white;
+            font-weight: 600;
+            border-radius: 12px;
+            border: none;
+        }
+        
+        #drawingModeToggle {
+            padding: 8px 16px;
+            background: white;
+            color: rgb(34, 197, 94);
+            font-weight: 600;
+            border-radius: 12px;
+            border: 2px solid rgb(34, 197, 94);
+        }
+        
+        #projectName {
+            width: 140px;
+            padding: 8px 12px;
+            border: 1px solid rgb(209, 213, 219);
+            border-radius: 12px;
+            background: white;
+            font-size: 14px;
+        }
+        
+        #loadProject {
+            padding: 8px 16px;
+            background: white;
+            color: rgb(51, 65, 85);
+            font-weight: 600;
+            border-radius: 12px;
+            border: 1px solid rgb(209, 213, 219);
+            font-size: 12px;
+        }
+        
+        #saveProjectTop {
+            padding: 8px 16px;
+            background: rgb(59, 130, 246);
+            color: white;
+            font-weight: 700;
+            border-radius: 12px;
+            border: 1px solid rgb(37, 99, 235);
+            font-size: 14px;
+        }
+        
+        #shareProjectBtn {
+            padding: 6px 12px;
+            background: rgb(139, 92, 246);
+            color: white;
+            font-weight: 600;
+            border-radius: 12px;
+            border: 1px solid rgb(124, 58, 237);
+            margin-left: 8px;
+        }
+        
+        #updateShareBtn {
+            padding: 6px 12px;
+            background: rgb(14, 165, 233);
+            color: white;
+            font-weight: 600;
+            border-radius: 12px;
+            border: 1px solid rgb(2, 132, 199);
+            margin-left: 8px;
+        }
+        
+        #unitToggleBtn {
+            padding: 6px 12px;
+            background: white;
+            color: rgb(51, 65, 85);
+            font-weight: 600;
+            border-radius: 12px;
+            border: 1px solid rgb(209, 213, 219);
+        }
+        
+        /* Color swatches */
+        .color-swatches {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .color-swatches button {
+            width: 20px;
+            height: 20px;
+            border-radius: 9999px;
+            border: 2px solid white;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+            margin: 0;
+            padding: 0;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .color-swatches button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
+        }
+        
+        /* Brush size slider */
+        #brushSize {
+            width: 120px;
+            margin: 0;
+            height: 8px;
+            border-radius: 4px;
+            background: rgb(229, 231, 235);
+            appearance: none;
+            cursor: pointer;
+        }
+        
+        /* Responsive text labels */
+        .label-long {
+            display: inline;
+        }
+        
+        .label-short {
+            display: none;
+        }
+        
+        @media (max-width: 768px) {
+            .label-long {
+                display: none;
+            }
+            
+            .label-short {
+                display: inline;
+            }
         }
         
         body {
@@ -549,10 +774,8 @@
         
         input[type="text"]:focus, input[type="number"]:focus, select:focus {
             outline: none;
-            ring: 2px;
-            ring-color: #3b82f6;
             border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            box-shadow: 0 0 0 2px #3b82f6, 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
         
         /* Enhanced color picker active state */
@@ -595,7 +818,7 @@
             border: 2px solid transparent;
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             cursor: pointer;
-            snap-align: center;
+            scroll-snap-align: center;
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
@@ -744,43 +967,11 @@
         /* Minimal divider */
         .panel-divider { border-top: 1px solid rgba(15,23,42,0.08); }
 
-        /* Top toolbar styles */
-        #topToolbar {
-            height: 48px;
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-        }
-        .toolbar-wrap {
-            height: 48px;
-        }
-        .tbtn, .tselect, .tinput {
-            height: 32px;
-            padding: 0 10px;
-            border-radius: 8px;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            border: 1px solid rgba(148,163,184,.6);
-            background: #fff;
-            font-size: 12px;
-            line-height: 1;
-            transition: all 0.15s ease;
-        }
+        /* Top toolbar styles - now handled by comprehensive CSS above */
         .tbtn.active { border-color: rgba(59,130,246,.9); background: #eff6ff; color: #1e40af; }
         .tbtn:hover, .tselect:hover, .tinput:hover {
             border-color: rgba(59,130,246,.8);
             box-shadow: 0 2px 4px rgba(59,130,246,.1);
-        }
-        .icon-btn {
-            width: 32px;
-            justify-content: center;
-            padding: 0;
-        }
-        .group-gap > * {
-            margin-right: 6px;
-        }
-        .group-gap > *:last-child {
-            margin-right: 0;
         }
         .popover {
             position: absolute;
@@ -828,13 +1019,52 @@
 </head>
 <body class="bg-gray-50 h-screen overflow-hidden">
     <!-- Top Toolbar -->
-    <div id="topToolbar" class="fixed top-0 inset-x-0 z-40 bg-white/85 backdrop-blur border-b border-slate-200">
-        <div class="toolbar-wrap mx-auto max-w-[1400px] px-3 flex items-center justify-between smart-label-scope">
-            <div id="tbLeft" class="relative flex items-center group-gap smart-label-scope"></div>
-            <div id="tbCenter" class="relative flex items-center group-gap"></div>
-            <div id="tbRight" class="relative flex items-center group-gap smart-label-scope"></div>
+    <div id="topToolbar">
+        <div class="toolbar-wrap smart-label-scope">
+            <div id="tbLeft" class="group-gap smart-label-scope">
+                <!-- Pre-populated toolbar content to prevent flash -->
+                <button id="paste" class="tbtn" title="Upload Images" aria-label="Upload Images">
+                    <span class="label-long">Upload Images</span><span class="label-short">Upload</span>
+                </button>
+                <button id="clear" class="tbtn">Clear</button>
+                <button id="drawingModeToggle" class="tbtn straight-mode" title="Straight Line" aria-label="Straight Line">
+                    <span class="label-long">Straight Line</span><span class="label-short">Straight</span>
+                </button>
+                <div class="color-swatches">
+                    <button class="active" data-color="#3b82f6" style="background-color: rgb(59, 130, 246);" title="Blue"></button>
+                    <button data-color="#22c55e" style="background-color: rgb(34, 197, 94);" title="Green"></button>
+                    <button data-color="#ef4444" style="background-color: rgb(239, 68, 68);" title="Red"></button>
+                    <button data-color="#f59e0b" style="background-color: rgb(245, 158, 11);" title="Yellow"></button>
+                    <button data-color="#a855f7" style="background-color: rgb(168, 85, 247);" title="Purple"></button>
+                    <button data-color="#1f2937" style="background-color: rgb(31, 41, 55);" title="Dark Gray"></button>
+                    <button data-color="#111827" style="background-color: rgb(17, 24, 39);" title="#111827"></button>
+                    <button data-color="#10b981" style="background-color: rgb(16, 185, 129);" title="#10b981"></button>
+                </div>
+                <input type="range" id="brushSize" min="1" max="50" value="5" class="slider" data-sharkid="__0">
+                <button id="arrowStartBtn" class="tbtn icon-btn" title="Start Arrow">◀</button>
+                <button id="arrowEndBtn" class="tbtn icon-btn" title="End Arrow">▶</button>
+                <button id="dottedBtn" class="tbtn" title="Line Style"><svg width="34" height="12" viewBox="0 0 34 12" aria-hidden="true"><line x1="2" y1="6" x2="32" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round"></line></svg></button>
+                <button id="undoBtn" class="tbtn icon-btn" title="Undo">↺</button>
+                <button id="redoBtn" class="tbtn icon-btn" title="Redo">↻</button>
+            </div>
+            <div id="tbCenter" class="group-gap"></div>
+            <div id="tbRight" class="group-gap smart-label-scope">
+                <input type="text" id="projectName" placeholder="Project Name" value="New Sofa" class="tinput" data-sharkid="__1">
+                <button id="loadProject" title="Load Project" class="tbtn" aria-label="Load Project">
+                    <span class="label-long">Load Project</span><span class="label-short">Load</span>
+                </button>
+                <button id="saveProjectTop" class="tbtn" title="Save Project" aria-label="Save Project">
+                    <span class="label-long">Save Project</span><span class="label-short">Save</span>
+                </button>
+                <button id="shareProjectBtn" class="tbtn" title="Create shareable URL for customer measurements">
+                    <span class="label-long">Share Project</span><span class="label-short">Share</span>
+                </button>
+                <button id="updateShareBtn" class="tbtn" title="Update existing share with current project state">
+                    <span class="label-long">Update Share</span><span class="label-short">Update</span>
+                </button>
+                <button id="unitToggleBtn" class="tbtn" title="Toggle units">inches</button>
+            </div>
         </div>
-        
     </div>
 
     <!-- Fullscreen Canvas -->
@@ -1009,6 +1239,9 @@
                 <button id="showAllMeasurementsBtn" title="Show all measurements in a list" class="flex-1 px-2 py-1 text-xs bg-green-100 hover:bg-green-200 text-green-700 rounded-lg transition-all font-medium">
                     Show List
                 </button>
+                <button id="viewSubmittedMeasurementsBtn" title="View submitted measurements from shared projects" class="flex-1 px-2 py-1 text-xs bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg transition-all font-medium">
+                    View Submitted
+                </button>
             </div>
             <div class="flex gap-2 mb-2">
                 <div class="flex-1 px-2 py-1 text-xs bg-gray-50 border border-gray-200 rounded-lg">
@@ -1157,7 +1390,7 @@
     
     <!-- New UI Controller Script -->
     <script>
-        // Initialize top toolbar by moving existing controls
+        // Initialize top toolbar - now works with pre-populated content
         function initializeTopToolbar() {
             const left = document.getElementById('tbLeft');
             const center = document.getElementById('tbCenter');
@@ -1179,68 +1412,42 @@
                 return el;
             };
 
-            // LEFT: drawing tools
-            reparent('paste', left);
-            reparent('clear', left);
-            reparent('drawingModeToggle', left);
+            // Since toolbar is now pre-populated, we just need to ensure proper styling
+            // and wire up any missing functionality
+            const ensureUniformStyling = () => {
+                const buttons = left.querySelectorAll('button, input, select');
+                buttons.forEach(setUniform);
+            };
+            
+            ensureUniformStyling();
 
-            // Inline color swatches (8 colors in a row) using existing swatch buttons; add extras if needed
-            const swatchRow = document.createElement('div');
-            swatchRow.className = 'flex items-center gap-1';
-            const toolsPanel = document.getElementById('toolsPanel');
-            if (toolsPanel) {
-                let swatches = toolsPanel.querySelectorAll('[data-color]');
-                swatches.forEach((b, i) => {
-                    if (i < 8) {
-                        b.style.width='20px'; b.style.height='20px'; b.style.borderRadius='9999px'; b.style.border='2px solid #fff'; b.style.boxShadow='0 1px 2px rgba(0,0,0,.08)';
-                        swatchRow.appendChild(b);
-                    }
-                });
-                // If fewer than 8, add unique colors (ensure only one black)
-                const ensureColors = ['#111827','#10b981','#06b6d4','#f43f5e','#22c55e','#f59e0b','#a855f7','#3b82f6'];
-                const existing = Array.from(swatchRow.querySelectorAll('[data-color]')).map(x=>x.getAttribute('data-color'));
-                ensureColors.forEach(c => {
-                    if (swatchRow.querySelectorAll('[data-color]').length >= 8) return;
-                    // Avoid adding duplicate blacks if already present
-                    if (!existing.includes(c) && !(c==='#111827' && existing.includes('#111827'))) {
-                        const btn = document.createElement('button');
-                        btn.setAttribute('data-color', c);
-                        btn.title = c;
-                        btn.style.width='20px'; btn.style.height='20px'; btn.style.borderRadius='9999px'; btn.style.border='2px solid #fff'; btn.style.boxShadow='0 1px 2px rgba(0,0,0,.08)'; btn.style.backgroundColor=c;
-                        swatchRow.appendChild(btn);
-                    }
-                });
-                // Rebind color buttons (since we moved/added)
-                setTimeout(() => {
-                    const colorButtons = document.querySelectorAll('[data-color]');
-                    colorButtons.forEach(button => {
-                        if (!button.__boundColor) {
-                            button.__boundColor = true;
-                            button.addEventListener('click', () => {
-                                document.querySelectorAll('[data-color].active').forEach(b=>b.classList.remove('active'));
-                                button.classList.add('active');
-                                const hex = button.getAttribute('data-color');
-                                const cp = document.getElementById('colorPicker');
-                                if (cp && hex) {
-                                    cp.value = hex;
-                                    cp.dispatchEvent(new Event('change'));
-                                }
-                                const bs = document.getElementById('brushSize');
-                                if (bs && hex) bs.style.setProperty('--accent', hex);
-                            });
+            // Color swatches are now pre-populated, just need to wire up functionality
+            const colorButtons = left.querySelectorAll('[data-color]');
+            colorButtons.forEach(button => {
+                if (!button.__boundColor) {
+                    button.__boundColor = true;
+                    button.addEventListener('click', () => {
+                        document.querySelectorAll('[data-color].active').forEach(b=>b.classList.remove('active'));
+                        button.classList.add('active');
+                        const hex = button.getAttribute('data-color');
+                        const cp = document.getElementById('colorPicker');
+                        if (cp && hex) {
+                            cp.value = hex;
+                            cp.dispatchEvent(new Event('change'));
                         }
+                        const bs = document.getElementById('brushSize');
+                        if (bs && hex) bs.style.setProperty('--accent', hex);
                     });
-                }, 0);
-            }
-            left.appendChild(swatchRow);
+                }
+            });
+            
+            // Hide the color picker since we're using swatches
             const colorInput = document.getElementById('colorPicker');
             if (colorInput) colorInput.classList.add('hidden');
 
-            // Inline thickness slider in toolbar (uses existing #brushSize)
+            // Brush size slider is now pre-populated, just need to wire up functionality
             const brush = document.getElementById('brushSize');
             if (brush) {
-                brush.style.width = '120px';
-                brush.style.margin = '0';
                 // Initialize slider fill and color to current selected color
                 const cp = document.getElementById('colorPicker');
                 if (cp) brush.style.setProperty('--accent', cp.value || '#3b82f6');
@@ -1254,29 +1461,15 @@
                 updateSliderVisual();
                 brush.addEventListener('input', updateSliderVisual);
                 brush.addEventListener('change', updateSliderVisual);
-                left.appendChild(brush);
             }
 
-            // Arrow and line style controls
-            const arrowStartBtn = document.createElement('button');
-            arrowStartBtn.id = 'arrowStartBtn';
-            arrowStartBtn.className = 'tbtn icon-btn';
-            arrowStartBtn.title = 'Start Arrow';
-            arrowStartBtn.textContent = '◀';
-            left.appendChild(arrowStartBtn);
-
-            const arrowEndBtn = document.createElement('button');
-            arrowEndBtn.id = 'arrowEndBtn';
-            arrowEndBtn.className = 'tbtn icon-btn';
-            arrowEndBtn.title = 'End Arrow';
-            arrowEndBtn.textContent = '▶';
-            left.appendChild(arrowEndBtn);
-
-            const dottedBtn = document.createElement('button');
-            dottedBtn.id = 'dottedBtn';
-            dottedBtn.className = 'tbtn';
-            dottedBtn.title = 'Line Style';
+            // Arrow and line style controls are now pre-populated, just need to wire up functionality
+            const arrowStartBtn = document.getElementById('arrowStartBtn');
+            const arrowEndBtn = document.getElementById('arrowEndBtn');
+            const dottedBtn = document.getElementById('dottedBtn');
+            
             const setLineStyleIcon = (style) => {
+                if (!dottedBtn) return;
                 const svgSolid = '<svg width="34" height="12" viewBox="0 0 34 12" aria-hidden="true"><line x1="2" y1="6" x2="32" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
                 const svgSmall = '<svg width="34" height="12" viewBox="0 0 34 12" aria-hidden="true"><line x1="2" y1="6" x2="32" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-dasharray="4 4"/></svg>';
                 const svgMedium = '<svg width="34" height="12" viewBox="0 0 34 12" aria-hidden="true"><line x1="2" y1="6" x2="32" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-dasharray="7 5"/></svg>';
@@ -1284,7 +1477,6 @@
                 dottedBtn.innerHTML = style === 'small' ? svgSmall : style === 'medium' ? svgMedium : style === 'large' ? svgLarge : svgSolid;
             };
             setLineStyleIcon('solid');
-            left.appendChild(dottedBtn);
 
             // Wire controls to UI state in paint.js
             const setActive = (el, on) => el.classList.toggle('active', !!on);
@@ -1387,18 +1579,21 @@
             });
 
             // Undo / Redo buttons
-            const mkIconBtn = (id, title, symbol, handler) => {
-                const b = document.createElement('button'); 
-                b.id = id; 
-                b.className = 'tbtn icon-btn'; 
-                b.title = title; 
-                b.textContent = symbol;
-                b.addEventListener('click', handler); 
-                left.appendChild(b);
-                return b;
-            };
-            mkIconBtn('undoBtn', 'Undo', '↺', () => { if (typeof window.undo === 'function') window.undo(); });
-            mkIconBtn('redoBtn', 'Redo', '↻', () => { if (typeof window.redo === 'function') window.redo(); });
+            // Undo/Redo buttons are now pre-populated, just need to wire up functionality
+            const undoBtn = document.getElementById('undoBtn');
+            const redoBtn = document.getElementById('redoBtn');
+            
+            if (undoBtn) {
+                undoBtn.addEventListener('click', () => { 
+                    if (typeof window.undo === 'function') window.undo(); 
+                });
+            }
+            
+            if (redoBtn) {
+                redoBtn.addEventListener('click', () => { 
+                    if (typeof window.redo === 'function') window.redo(); 
+                });
+            }
 
             // CENTER/BOTTOM: canvas view controls moved to bottom
             reparent('fitModeSelect', bottom);
@@ -1425,75 +1620,36 @@
             });
             reparent('scaleButton', bottom);
 
-            // RIGHT: project settings
-            reparent('projectName', right, el => {
-                el.style.width = '140px';
-            });
-            // Note: saveProject moved to consolidated save flow. Keep Load in right section.
-            reparent('loadProject', right);
+            // RIGHT: project settings are now pre-populated, just need to wire up functionality
+            const saveProjectTop = document.getElementById('saveProjectTop');
+            const shareProjectBtn = document.getElementById('shareProjectBtn');
+            const updateShareBtn = document.getElementById('updateShareBtn');
+            
+            if (saveProjectTop) {
+                saveProjectTop.addEventListener('click', () => {
+                    if (window.projectManager?.saveProject) window.projectManager.saveProject();
+                });
+            }
+            
+            if (shareProjectBtn) {
+                shareProjectBtn.addEventListener('click', () => {
+                    if (window.shareProject) window.shareProject();
+                });
+            }
+            
+            if (updateShareBtn) {
+                updateShareBtn.addEventListener('click', () => {
+                    if (window.updateSharedProject) window.updateSharedProject();
+                });
+            }
 
-            // Big Save Project button (replaces legacy More dropdown)
-            const saveProjectTop = document.createElement('button');
-            saveProjectTop.id = 'saveProjectTop';
-            saveProjectTop.className = 'tbtn';
-            saveProjectTop.textContent = 'Save Project';
-            saveProjectTop.title = 'Save Project (ZIP)';
-            saveProjectTop.style.padding = '6px 12px';
-            saveProjectTop.style.fontWeight = '600';
-            saveProjectTop.style.background = '#22c55e';
-            saveProjectTop.style.color = 'white';
-            saveProjectTop.style.borderColor = '#16a34a';
-            saveProjectTop.style.borderRadius = '12px';
-            saveProjectTop.addEventListener('click', () => {
-                if (window.projectManager?.saveProject) window.projectManager.saveProject();
-            });
-            right.appendChild(saveProjectTop);
-
-            // Share Project button
-            const shareProjectBtn = document.createElement('button');
-            shareProjectBtn.id = 'shareProjectBtn';
-            shareProjectBtn.className = 'tbtn';
-            shareProjectBtn.textContent = 'Share Project';
-            shareProjectBtn.title = 'Create shareable URL for customer measurements';
-            shareProjectBtn.style.padding = '6px 12px';
-            shareProjectBtn.style.fontWeight = '600';
-            shareProjectBtn.style.background = '#8b5cf6';
-            shareProjectBtn.style.color = 'white';
-            shareProjectBtn.style.borderColor = '#7c3aed';
-            shareProjectBtn.style.borderRadius = '12px';
-            shareProjectBtn.style.marginLeft = '8px';
-            shareProjectBtn.addEventListener('click', () => {
-                if (window.shareProject) window.shareProject();
-            });
-            right.appendChild(shareProjectBtn);
-
-            // Update Share button
-            const updateShareBtn = document.createElement('button');
-            updateShareBtn.id = 'updateShareBtn';
-            updateShareBtn.className = 'tbtn';
-            updateShareBtn.textContent = 'Update Share';
-            updateShareBtn.title = 'Update existing share with current project state';
-            updateShareBtn.style.padding = '6px 12px';
-            updateShareBtn.style.fontWeight = '600';
-            updateShareBtn.style.background = '#0ea5e9';
-            updateShareBtn.style.color = 'white';
-            updateShareBtn.style.borderColor = '#0284c7';
-            updateShareBtn.style.borderRadius = '12px';
-            updateShareBtn.style.marginLeft = '8px';
-            updateShareBtn.addEventListener('click', () => {
-                if (window.updateSharedProject) window.updateSharedProject();
-            });
-            right.appendChild(updateShareBtn);
-
-            // Replace unit selector with a simple toggle button in the top-right toolbar
+            // Unit toggle button is now pre-populated, just need to wire up functionality
+            const unitToggle = document.getElementById('unitToggleBtn');
             const unitSel = document.getElementById('unitSelector');
-            if (unitSel) {
-                const unitToggle = document.createElement('button');
-                unitToggle.id = 'unitToggleBtn';
-                unitToggle.className = 'tbtn';
+            
+            if (unitToggle && unitSel) {
                 const getLabel = () => unitSel.value === 'inch' ? 'inches' : 'cm';
                 unitToggle.textContent = getLabel();
-                unitToggle.title = 'Toggle units';
                 unitToggle.addEventListener('click', () => {
                     unitSel.value = unitSel.value === 'inch' ? 'cm' : 'inch';
                     unitToggle.textContent = getLabel();
@@ -1503,7 +1659,6 @@
                         unitSel.onchange();
                     }
                 });
-                right.appendChild(unitToggle);
                 // Hide the original select (kept for compatibility)
                 unitSel.style.display = 'none';
             }
@@ -1826,6 +1981,18 @@
                 showAllMeasurementsBtn.addEventListener('click', () => {
                     if (typeof window.generateMeasurementsList === 'function') {
                         window.generateMeasurementsList();
+                    }
+                });
+            }
+            
+            // View Submitted Measurements functionality
+            const viewSubmittedMeasurementsBtn = document.getElementById('viewSubmittedMeasurementsBtn');
+            if (viewSubmittedMeasurementsBtn) {
+                viewSubmittedMeasurementsBtn.addEventListener('click', () => {
+                    if (typeof window.viewSubmittedMeasurements === 'function') {
+                        window.viewSubmittedMeasurements();
+                    } else {
+                        console.error('viewSubmittedMeasurements function not found');
                     }
                 });
             }
@@ -3907,6 +4074,12 @@
             
             // Reveal UI once initialization is complete
             document.documentElement.classList.remove('app-loading');
+            
+            // Ensure toolbar is visible after loading
+            const topToolbar = document.getElementById('topToolbar');
+            if (topToolbar) {
+                topToolbar.style.opacity = '1';
+            }
             
             // Store reference to original addImageToSidebar if it exists
             const originalAddImageToSidebar = window.addImageToSidebar;

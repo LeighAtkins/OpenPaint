@@ -12,6 +12,7 @@ class SharedProjectViewer {
         this.ctx = null;
         this.currentIndex = 0;
         this.currentLabel = null;
+        // TODO: Remove this line if not implementing click-to-focus functionality
         this.labelRects = [];
         
         this.init();
@@ -27,6 +28,26 @@ class SharedProjectViewer {
         
         this.canvas = document.getElementById('sharedCanvas');
         this.ctx = this.canvas.getContext('2d');
+        
+        // Set canvas to responsive sizing like the main canvas
+        this.canvas.style.width = '100%';
+        this.canvas.style.height = '100%';
+        
+        // Wait for DOM to be ready and get container dimensions
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Get the container dimensions and set canvas size
+        const container = this.canvas.parentElement;
+        const containerRect = container.getBoundingClientRect();
+        
+        // Use a minimum size if container is not yet sized
+        const width = Math.max(containerRect.width, 800);
+        const height = Math.max(containerRect.height, 600);
+        
+        this.canvas.width = width;
+        this.canvas.height = height;
+        
+        console.log('Canvas initialized with dimensions:', this.canvas.width, 'x', this.canvas.height);
         
         // Setup event listeners
         this.setupEventListeners();
@@ -51,7 +72,9 @@ class SharedProjectViewer {
         });
 
         // Canvas click to focus related input
-        this.canvas?.addEventListener('click', (e) => this.handleCanvasClick(e));
+        if (this.canvas) {
+            this.canvas.addEventListener('click', () => this.handleCanvasClick());
+        }
     }
     
     async loadSharedProject() {
@@ -69,17 +92,24 @@ class SharedProjectViewer {
             this.shareInfo = result.shareInfo;
             
             console.log('Loaded project data:', this.projectData);
+            console.log('Project data keys:', Object.keys(this.projectData));
+            console.log('Original images:', this.projectData.originalImages);
+            console.log('Vector strokes:', this.projectData.vectorStrokesByImage);
+            console.log('Line strokes:', this.projectData.lineStrokesByImage);
+            console.log('Image scale:', this.projectData.imageScaleByLabel);
+            console.log('Image position:', this.projectData.imagePositionByLabel);
             
             // Display project information
             this.displayProjectInfo();
             
-            // Render the project on canvas
+            // Render the project on canvas (only once)
             this.renderProject();
             
             // Generate measurement form
             this.generateMeasurementForm();
             
             this.showProject(true);
+            console.log('Shared project loaded and displayed successfully');
             
         } catch (error) {
             console.error('Error loading shared project:', error);
@@ -100,8 +130,16 @@ class SharedProjectViewer {
     renderProject() {
         if (!this.projectData) return;
         
+        // Prevent multiple renders during initialization
+        if (this._isRendering) {
+            console.log('Render already in progress, skipping');
+            return;
+        }
+        this._isRendering = true;
+        
         // Clear canvas
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        // TODO: Remove this line if not implementing click-to-focus functionality
         this.labelRects = [];
         
         // Set canvas background
@@ -121,82 +159,168 @@ class SharedProjectViewer {
             console.warn('No images available to render');
             return;
         }
-        // Set current index/label if not set
-        if (this.currentIndex < 0 || this.currentIndex >= imageLabels.length) this.currentIndex = 0;
-        this.currentLabel = this.currentLabel || this.projectData.currentImageLabel || imageLabels[0];
-        const currentIndexFromLabel = imageLabels.indexOf(this.currentLabel);
-        if (currentIndexFromLabel >= 0) this.currentIndex = currentIndexFromLabel;
-        const currentLabel = imageLabels[this.currentIndex];
-        this.currentLabel = currentLabel;
+        
+        // Set current index/label if not set - only set once to avoid cycling
+        if (this.currentLabel === null) {
+            this.currentIndex = 0;
+            this.currentLabel = this.projectData.currentImageLabel || imageLabels[0];
+            console.log('Set initial image label:', this.currentLabel);
+        }
+        
+        const currentLabel = this.currentLabel;
+        console.log('Rendering image:', currentLabel);
         const nameEl = document.getElementById('currentImageName');
         if (nameEl) nameEl.textContent = (this.projectData.customImageNames?.[currentLabel]) || currentLabel;
         
+        // Get scale and position from project data (using saved project structure)
+        let scale = this.projectData.imageScales?.[currentLabel];
+        let position = this.projectData.imagePositions?.[currentLabel] || { x: 0, y: 0 };
+        
+        // Safety: clamp/normalize absurd or missing values
+        if (!Number.isFinite(scale) || scale <= 0) scale = 1.0;
+        scale = Math.max(0.05, Math.min(5, scale));
+        
+        // Handle extreme position values - if they're very large negative numbers, reset to center
+        console.log('Raw position from project data:', JSON.stringify(position));
+        if (!Number.isFinite(position.x) || Math.abs(position.x) > 1000) {
+            console.log('Resetting extreme X position from', position.x, 'to 0');
+            position.x = 0;
+        }
+        if (!Number.isFinite(position.y) || Math.abs(position.y) > 1000) {
+            console.log('Resetting extreme Y position from', position.y, 'to 0');
+            position.y = 0;
+        }
+        console.log('Final position after sanitization:', position);
+        
         // Load and display the image if available
         if (currentLabel && this.projectData.originalImages && this.projectData.originalImages[currentLabel]) {
-            this.loadAndDisplayImage(currentLabel);
+            this.loadAndDisplayImage(currentLabel, scale, position);
         } else {
-            // No image; still draw strokes with a default scale
-            this.drawStrokes(currentLabel, 1, 0, 0);
+            // No image; still draw strokes with proper scale and position
+            // Use the same logic as main paint.js for blank canvas
+            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+            this.ctx.fillStyle = 'white';
+            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+            
+            // Use default scale and center position when no image
+            const canvasCenterX = this.canvas.width / 2;
+            const canvasCenterY = this.canvas.height / 2;
+            
+            // Apply the position offset to the center coordinates
+            const imageX = canvasCenterX + position.x;
+            const imageY = canvasCenterY + position.y;
+            
+            this.drawStrokes(currentLabel, scale, imageX, imageY);
         }
+        
+        this._isRendering = false;
     }
 
     showPreviousImage() {
-        if (!this.projectData?.imageLabels?.length) return;
-        this.currentIndex = (this.currentIndex - 1 + this.projectData.imageLabels.length) % this.projectData.imageLabels.length;
-        this.currentLabel = this.projectData.imageLabels[this.currentIndex];
+        console.log('Manual navigation: Previous image');
+        // Get image labels from the same source as renderProject
+        let imageLabels = this.projectData.imageLabels || [];
+        if (!imageLabels.length && this.projectData.originalImages) {
+            imageLabels = Object.keys(this.projectData.originalImages);
+        }
+        if (!imageLabels.length && this.projectData.strokeSequence) {
+            imageLabels = Object.keys(this.projectData.strokeSequence);
+        }
+        
+        if (!imageLabels.length) return;
+        
+        this.currentIndex = (this.currentIndex - 1 + imageLabels.length) % imageLabels.length;
+        this.currentLabel = imageLabels[this.currentIndex];
         this.renderProject();
         this.generateMeasurementForm();
         this.showProject(true);
     }
 
     showNextImage() {
-        if (!this.projectData?.imageLabels?.length) return;
-        this.currentIndex = (this.currentIndex + 1) % this.projectData.imageLabels.length;
-        this.currentLabel = this.projectData.imageLabels[this.currentIndex];
+        console.log('Manual navigation: Next image');
+        // Get image labels from the same source as renderProject
+        let imageLabels = this.projectData.imageLabels || [];
+        if (!imageLabels.length && this.projectData.originalImages) {
+            imageLabels = Object.keys(this.projectData.originalImages);
+        }
+        if (!imageLabels.length && this.projectData.strokeSequence) {
+            imageLabels = Object.keys(this.projectData.strokeSequence);
+        }
+        
+        if (!imageLabels.length) return;
+        
+        this.currentIndex = (this.currentIndex + 1) % imageLabels.length;
+        this.currentLabel = imageLabels[this.currentIndex];
         this.renderProject();
         this.generateMeasurementForm();
         this.showProject(true);
     }
     
-    async loadAndDisplayImage(imageLabel) {
+    async loadAndDisplayImage(imageLabel, scale, position) {
         try {
             const imageUrl = this.projectData.originalImages[imageLabel];
             if (!imageUrl) return;
             
             const img = new Image();
             img.onload = () => {
-                // Calculate scaling to fit canvas
-                const scale = Math.min(
-                    this.canvas.width / img.width,
-                    this.canvas.height / img.height
-                );
+                // Use the same logic as main paint.js for positioning
+                // Calculate center of canvas for positioning
+                const centerX = (this.canvas.width - img.width * scale) / 2;
+                const centerY = (this.canvas.height - img.height * scale) / 2;
                 
-                const scaledWidth = img.width * scale;
-                const scaledHeight = img.height * scale;
-                const x = (this.canvas.width - scaledWidth) / 2;
-                const y = (this.canvas.height - scaledHeight) / 2;
+                // Get final position with offset - use the same logic as main paint.js
+                let imageX = centerX + position.x;
+                let imageY = centerY + position.y;
+
+                // Safety: if the computed image rect is completely off-canvas, recenter
+                const imageRect = { x: imageX, y: imageY, w: img.width * scale, h: img.height * scale };
+                const offscreen = (imageRect.x + imageRect.w < 0) || (imageRect.y + imageRect.h < 0) ||
+                                  (imageRect.x > this.canvas.width) || (imageRect.y > this.canvas.height);
+                if (offscreen) {
+                    console.log('Image would be off-screen, recentering');
+                    imageX = (this.canvas.width - imageRect.w) / 2;
+                    imageY = (this.canvas.height - imageRect.h) / 2;
+                }
+                
+                console.log('Image positioning:', JSON.stringify({
+                    canvasSize: `${this.canvas.width}x${this.canvas.height}`,
+                    imageSize: `${img.width}x${img.height}`,
+                    scale: scale,
+                    centerX: centerX,
+                    centerY: centerY,
+                    position: position,
+                    finalX: imageX,
+                    finalY: imageY
+                }));
+                
+                // Clear the canvas
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                // Ensure opaque white background
+                this.ctx.fillStyle = 'white';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
                 
                 // Draw the image
-                this.ctx.drawImage(img, x, y, scaledWidth, scaledHeight);
+                this.ctx.drawImage(img, imageX, imageY, img.width * scale, img.height * scale);
                 
-                // Redraw strokes on top of image
-                this.drawStrokes(imageLabel, scale, x, y);
+                // Redraw strokes on top of image using the same coordinate system
+                this.drawStrokes(imageLabel, scale, imageX, imageY);
             };
             
             img.onerror = () => {
                 console.warn('Failed to load image for label:', imageLabel);
                 // Continue without image
-                this.drawStrokes(imageLabel);
+                this.drawStrokes(imageLabel, scale, position);
             };
             
             img.src = imageUrl;
         } catch (error) {
             console.error('Error loading image:', error);
-            this.drawStrokes(imageLabel);
+            this.drawStrokes(imageLabel, scale, position);
         }
     }
     
     drawStrokes(imageLabel, imageScale = 1, imageX = 0, imageY = 0) {
+        // Use the correct data structure from saved project data
         const strokes = this.projectData.strokes?.[imageLabel] || {};
         const strokeVisibility = this.projectData.strokeVisibility?.[imageLabel] || {};
         const strokeLabels = this.projectData.strokeSequence?.[imageLabel] || [];
@@ -292,10 +416,15 @@ class SharedProjectViewer {
         }
 
         // Apply custom offset (image space → canvas space using scale)
+        // Use the same logic as main paint.js for label positioning
         const customOffset = this.projectData.customLabelPositions?.[this.currentLabel]?.[strokeLabel] || { x: 0, y: 0 };
+        
+        // Use custom offset (calculatedLabelOffsets might not be saved in project data)
+        const finalOffset = customOffset;
+        
         const labelCenter = {
-            x: anchor.x + (customOffset.x || 0) * scale,
-            y: anchor.y + (customOffset.y || 0) * scale
+            x: anchor.x + (finalOffset.x || 0) * scale,
+            y: anchor.y + (finalOffset.y || 0) * scale
         };
 
         // Compose text with measurement value if present
@@ -335,11 +464,13 @@ class SharedProjectViewer {
         this.ctx.fillStyle = '#000';
         this.ctx.fillText(text, labelCenter.x - textWidth / 2, labelCenter.y + fontSize / 3);
 
-        // Track for click mapping
+        // TODO: Remove this line if not implementing click-to-focus functionality
         this.labelRects.push({ imageLabel: this.currentLabel, strokeLabel, rect: box });
     }
     
     transformPoint(point, scale, offsetX, offsetY) {
+        // Use the same coordinate transformation as main paint.js
+        // Points are stored in image-relative coordinates, need to transform to canvas coordinates
         return {
             x: point.x * scale + offsetX,
             y: point.y * scale + offsetY
@@ -402,10 +533,7 @@ class SharedProjectViewer {
         return result;
     }
 
-    handleCanvasClick(e) {
-        const rect = this.canvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
+    handleCanvasClick() {
         // Naive hit test: focus the first input (enhance later with per-stroke proximity)
         const first = document.querySelector('#measurementsForm input[data-stroke]');
         if (first) first.focus();
