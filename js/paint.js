@@ -1,4 +1,4 @@
-// Define core application structure for better state management
+﻿// Define core application structure for better state management
 console.log('[PAINT.JS] Script loaded successfully');
 console.warn('[PAINT.JS] Script loaded (warn)');
 window.paintApp = {
@@ -495,7 +495,7 @@ if (colorPicker) {
         // Create delete button
         const deleteButton = document.createElement('button');
         deleteButton.className = 'delete-image-btn opacity-0 group-hover:opacity-100 transition-opacity';
-        deleteButton.innerHTML = '×';
+        deleteButton.innerHTML = 'Ã—';
         deleteButton.title = 'Delete image';
         deleteButton.style.cssText = `
             position: absolute;
@@ -1223,6 +1223,69 @@ if (colorPicker) {
         showMeasurementsDialog(measurementsList);
     }
     
+    // Function to view submitted measurements from shared projects
+    async function viewSubmittedMeasurements() {
+        const shareId = prompt('Enter the share ID to view submitted measurements:');
+        if (!shareId) return;
+        
+        const editToken = prompt('Enter the edit token for this share:');
+        if (!editToken) return;
+        
+        try {
+            const response = await fetch(`/api/shared/${shareId}/measurements?editToken=${encodeURIComponent(editToken)}`);
+            const result = await response.json();
+            
+            if (!result.success) {
+                alert('Error: ' + result.message);
+                return;
+            }
+            
+            const measurements = result.measurements;
+            const totalSubmissions = result.totalSubmissions;
+            
+            if (totalSubmissions === 0) {
+                alert('No submitted measurements found for this share.');
+                return;
+            }
+            
+            let measurementsList = `Submitted Measurements for Share: ${shareId}\n`;
+            measurementsList += `Total Submissions: ${totalSubmissions}\n`;
+            measurementsList += `Generated on: ${new Date().toLocaleDateString()}\n`;
+            measurementsList += `${'='.repeat(50)}\n\n`;
+            
+            Object.entries(measurements).forEach(([submissionId, submission]) => {
+                measurementsList += `Submission ID: ${submissionId}\n`;
+                measurementsList += `Submitted: ${new Date(submission.submittedAt).toLocaleString()}\n`;
+                
+                if (submission.customerInfo) {
+                    measurementsList += `Customer: ${submission.customerInfo.name || 'Anonymous'}`;
+                    if (submission.customerInfo.email) {
+                        measurementsList += ` (${submission.customerInfo.email})`;
+                    }
+                    measurementsList += '\n';
+                }
+                
+                measurementsList += `Measurements:\n`;
+                measurementsList += `${'-'.repeat(12)}\n`;
+                
+                Object.entries(submission.measurements).forEach(([imageLabel, imageMeasurements]) => {
+                    measurementsList += `  ${imageLabel}:\n`;
+                    Object.entries(imageMeasurements).forEach(([strokeLabel, measurement]) => {
+                        measurementsList += `    ${strokeLabel}: ${measurement.value}\n`;
+                    });
+                });
+                
+                measurementsList += '\n';
+            });
+            
+            showMeasurementsDialog(measurementsList);
+            
+        } catch (error) {
+            console.error('Error fetching submitted measurements:', error);
+            alert('Error fetching submitted measurements. Please check the console for details.');
+        }
+    }
+    
     // Function to display measurements in a modal dialog
     function showMeasurementsDialog(measurementsList) {
         // Create overlay
@@ -1518,15 +1581,15 @@ if (colorPicker) {
                 <h4 style="margin: 0 0 10px 0; color: #333;">Export Method</h4>
                 <label style="display: block; margin-bottom: 8px; cursor: pointer;">
                     <input type="radio" name="exportMethod" value="individual" checked style="margin-right: 8px;">
-                    <strong>📁 Individual Downloads</strong> - Download each file separately (works everywhere)
+                    <strong>ðŸ“ Individual Downloads</strong> - Download each file separately (works everywhere)
                 </label>
                 <label style="display: block; margin-bottom: 8px; cursor: pointer; ${!('showDirectoryPicker' in window) ? 'opacity: 0.5;' : ''}">
                     <input type="radio" name="exportMethod" value="folder" ${!('showDirectoryPicker' in window) ? 'disabled' : ''} style="margin-right: 8px;">
-                    <strong>📂 Save to Folder</strong> - Choose a folder to save all files ${!('showDirectoryPicker' in window) ? '(Not supported in this browser)' : '(Modern browsers)'}
+                    <strong>ðŸ“‚ Save to Folder</strong> - Choose a folder to save all files ${!('showDirectoryPicker' in window) ? '(Not supported in this browser)' : '(Modern browsers)'}
                 </label>
                 <label style="display: block; cursor: pointer;">
                     <input type="radio" name="exportMethod" value="zip" style="margin-right: 8px;">
-                    <strong>📦 ZIP File</strong> - Bundle all images into one ZIP file
+                    <strong>ðŸ“¦ ZIP File</strong> - Bundle all images into one ZIP file
                 </label>
             </div>
             
@@ -3607,9 +3670,9 @@ if (colorPicker) {
         
         // Get method-specific icons and labels
         const methodInfo = {
-            individual: { icon: '📁', label: 'Individual Downloads' },
-            folder: { icon: '📂', label: 'Saving to Folder' },
-            zip: { icon: '📦', label: 'Creating ZIP File' }
+            individual: { icon: 'ðŸ“', label: 'Individual Downloads' },
+            folder: { icon: 'ðŸ“‚', label: 'Saving to Folder' },
+            zip: { icon: 'ðŸ“¦', label: 'Creating ZIP File' }
         };
         
         const info = methodInfo[method] || methodInfo.individual;
@@ -3703,6 +3766,7 @@ if (colorPicker) {
 
     // Make functions globally accessible
     window.generateMeasurementsList = generateMeasurementsList;
+    window.viewSubmittedMeasurements = viewSubmittedMeasurements;
     window.saveAllImages = saveAllImages;
 
     // Function to update stroke visibility controls
@@ -3902,7 +3966,7 @@ if (colorPicker) {
                     window.strokeMeasurements[currentImageLabel][strokeLabel] = JSON.parse(JSON.stringify(existingMeasurement));
                     
                     // Log successful preservation
-//                 console.log(`[createStrokeVisibilityControl] ✓ Successfully preserved measurement for ${strokeLabel}`);
+//                 console.log(`[createStrokeVisibilityControl] âœ“ Successfully preserved measurement for ${strokeLabel}`);
                 } else {
 //                 console.log(`[createStrokeVisibilityControl] Found incomplete measurement for ${strokeLabel}:`, 
 //                         JSON.stringify(existingMeasurement));
@@ -3955,11 +4019,11 @@ if (colorPicker) {
             
             // Make all parts of the item selectable (except checkbox and buttons)
             item.addEventListener('click', (e) => {
-                console.log('🔄 [STROKE ITEM] Clicked:', strokeLabel, 'Target:', e.target.tagName, e.target.className);
+                console.log('ðŸ”„ [STROKE ITEM] Clicked:', strokeLabel, 'Target:', e.target.tagName, e.target.className);
                 
                 // Don't trigger selection if clicking a button or checkbox
                 if (e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT') {
-                    console.log('🔄 [STROKE ITEM] Click ignored - clicked on', e.target.tagName);
+                    console.log('ðŸ”„ [STROKE ITEM] Click ignored - clicked on', e.target.tagName);
                     return;
                 }
                 
@@ -3968,7 +4032,7 @@ if (colorPicker) {
                 e.stopPropagation();
                 
                 const clickedLabel = strokeLabel;
-                console.log('🔄 [STROKE ITEM] Processing click for:', clickedLabel);
+                console.log('ðŸ”„ [STROKE ITEM] Processing click for:', clickedLabel);
                 
                 // IMMEDIATE SINGLE-CLICK response - SIMPLIFIED (like canvas tag selection)
                 // Clear edit mode if a different item is single-clicked
@@ -3987,13 +4051,13 @@ if (colorPicker) {
                 const currentSelection = [clickedLabel];
                 window.selectedStrokeInEditMode = null; // Exit edit mode on new single selection
                 
-                console.log('🔄 [STROKE ITEM] Setting selection to:', currentSelection);
+                console.log('ðŸ”„ [STROKE ITEM] Setting selection to:', currentSelection);
                 
                 // Update selection state immediately
                 multipleSelectedStrokesByImage[currentImageLabel] = currentSelection;
                 selectedStrokeByImage[currentImageLabel] = clickedLabel;
                 
-                console.log('🔄 [STROKE ITEM] Updated global state:', {
+                console.log('ðŸ”„ [STROKE ITEM] Updated global state:', {
                     multiple: multipleSelectedStrokesByImage[currentImageLabel],
                     single: selectedStrokeByImage[currentImageLabel]
                 });
@@ -4004,20 +4068,20 @@ if (colorPicker) {
                     if (sLabel === clickedLabel) {
                         el.dataset.selected = 'true';
                         el.dataset.editMode = 'false'; // Clear edit mode for immediate selection
-                        console.log('🔄 [STROKE ITEM] Set selected=true for:', sLabel);
+                        console.log('ðŸ”„ [STROKE ITEM] Set selected=true for:', sLabel);
                     } else {
                         el.dataset.selected = 'false';
                         el.dataset.editMode = 'false';
                     }
                 });
                 
-                console.log('🔄 [STROKE ITEM] Calling updateSelectionActionsPanel and redraw...');
+                console.log('ðŸ”„ [STROKE ITEM] Calling updateSelectionActionsPanel and redraw...');
                 
                 // Update UI immediately for snappy response
                 updateSelectionActionsPanel();
                 redrawCanvasWithVisibility();
                 
-                console.log('🔄 [STROKE ITEM] Click handling completed');
+                console.log('ðŸ”„ [STROKE ITEM] Click handling completed');
             });
             
             const checkbox = document.createElement('input');
@@ -4136,7 +4200,7 @@ if (colorPicker) {
             // Create edit button
             const editBtn = document.createElement('button');
             editBtn.className = 'stroke-edit-btn';
-            editBtn.innerHTML = '✏️';
+            editBtn.innerHTML = 'âœï¸';
             editBtn.title = 'Edit Stroke';
             editBtn.onclick = (e) => {
                 e.stopPropagation(); // Prevent triggering the item's click event
@@ -4159,7 +4223,7 @@ if (colorPicker) {
             // Create label toggle button
             const labelToggleBtn = document.createElement('button');
             labelToggleBtn.className = 'stroke-label-toggle-btn';
-            labelToggleBtn.innerHTML = isLabelVisible ? '🏷️' : ' 🏷️ '; // Show label icon, strikethrough if hidden
+            labelToggleBtn.innerHTML = isLabelVisible ? 'ðŸ·ï¸' : ' ðŸ·ï¸ '; // Show label icon, strikethrough if hidden
             labelToggleBtn.title = isLabelVisible ? 'Hide Label' : 'Show Label';
             labelToggleBtn.onclick = (e) => {
                 e.stopPropagation();
@@ -4371,7 +4435,7 @@ if (colorPicker) {
         const toggleBtn = document.querySelector(`.stroke-visibility-item[data-stroke="${strokeLabel}"] .stroke-label-toggle`);
         if (toggleBtn) {
             const isLabelVisible = strokeLabelVisibility[currentImageLabel][strokeLabel];
-            toggleBtn.innerHTML = isLabelVisible ? '🏷️' : ' 🏷️ '; // Show label icon, strikethrough if hidden
+            toggleBtn.innerHTML = isLabelVisible ? 'ðŸ·ï¸' : ' ðŸ·ï¸ '; // Show label icon, strikethrough if hidden
             toggleBtn.title = isLabelVisible ? 'Hide Label' : 'Show Label';
             toggleBtn.classList.toggle('active', isLabelVisible);
         }
@@ -6363,7 +6427,7 @@ if (colorPicker) {
     // Normalize rotation delta to prevent wrap-around issues
     function normalizeDelta(delta) {
         const twoPi = Math.PI * 2;
-        delta = ((delta + Math.PI) % twoPi + twoPi) % twoPi - Math.PI; // (-π, π]
+        delta = ((delta + Math.PI) % twoPi + twoPi) % twoPi - Math.PI; // (-Ï€, Ï€]
         return Math.abs(delta) < 1e-9 ? 0 : delta;
     }
 
@@ -6372,6 +6436,17 @@ if (colorPicker) {
         if (window.isLoadingProject) {
             console.log('[Save State] Skipped during project loading');
             return;
+        }
+        
+        // Safety check: Ensure currentImageLabel is valid and undoStackByImage is initialized
+        if (!currentImageLabel) {
+            console.warn('[Save State] No currentImageLabel, skipping save');
+            return;
+        }
+        
+        // Ensure undoStackByImage is initialized for the current image
+        if (!undoStackByImage[currentImageLabel]) {
+            undoStackByImage[currentImageLabel] = [];
         }
 //         console.log('[Save State Called]', 'force='+force, 'incrementLabel='+incrementLabel, 'updateStrokeList='+updateStrokeList, 'isDrawingOrPasting='+isDrawingOrPasting, 'strokeInProgress='+strokeInProgress);
         
@@ -6398,6 +6473,10 @@ if (colorPicker) {
         // Initialize if first save for this image
         if (!imageStates[currentImageLabel]) {
             imageStates[currentImageLabel] = cloneImageData(currentState);
+            // Ensure undoStackByImage is initialized for this image label
+            if (!undoStackByImage[currentImageLabel]) {
+                undoStackByImage[currentImageLabel] = [];
+            }
             undoStackByImage[currentImageLabel].push({
                 state: cloneImageData(currentState),
                 type: 'initial',
@@ -7676,7 +7755,7 @@ if (colorPicker) {
                 }
                 
                 // Calculate perpendicular direction (which side of line)
-                const perpVec = { x: -lineUnit.y, y: lineUnit.x }; // 90° rotation
+                const perpVec = { x: -lineUnit.y, y: lineUnit.x }; // 90Â° rotation
                 const toOffsetFromProj = {
                     x: offsetPos.x - projPoint.x,
                     y: offsetPos.y - projPoint.y
@@ -7772,7 +7851,7 @@ if (colorPicker) {
         };
         
         // Add perpendicular offset
-        const perpVec = { x: -lineUnit.y, y: lineUnit.x }; // 90° rotation
+        const perpVec = { x: -lineUnit.y, y: lineUnit.x }; // 90Â° rotation
         const finalPoint = {
             x: pointOnLine.x + perpVec.x * perpDistance,
             y: pointOnLine.y + perpVec.y * perpDistance
@@ -9076,12 +9155,12 @@ if (colorPicker) {
         const clickedCanvasLabel = findLabelAtPoint(e.offsetX, e.offsetY);
         const isClickOnCanvasLabel = clickedCanvasLabel !== null;
         
-        console.log('🔄 [DEBUG] Canvas mousedown - curveJustCompleted:', curveJustCompleted, 'target:', e.target, 'tagName:', e.target.tagName, 'className:', e.target.className, 'isClickOnStrokeTag:', isClickOnStrokeTag);
-        console.log('🔄 [DEBUG] Event coordinates:', e.clientX, e.clientY, 'offset:', e.offsetX, e.offsetY);
-        console.log('🔄 [DEBUG] Canvas label click - clickedCanvasLabel:', clickedCanvasLabel, 'isClickOnCanvasLabel:', isClickOnCanvasLabel);
-        console.log('🔄 [DEBUG] About to check conditions - curveJustCompleted:', curveJustCompleted);
+        console.log('ðŸ”„ [DEBUG] Canvas mousedown - curveJustCompleted:', curveJustCompleted, 'target:', e.target, 'tagName:', e.target.tagName, 'className:', e.target.className, 'isClickOnStrokeTag:', isClickOnStrokeTag);
+        console.log('ðŸ”„ [DEBUG] Event coordinates:', e.clientX, e.clientY, 'offset:', e.offsetX, e.offsetY);
+        console.log('ðŸ”„ [DEBUG] Canvas label click - clickedCanvasLabel:', clickedCanvasLabel, 'isClickOnCanvasLabel:', isClickOnCanvasLabel);
+        console.log('ðŸ”„ [DEBUG] About to check conditions - curveJustCompleted:', curveJustCompleted);
         if (curveJustCompleted && !isClickOnStrokeTag && !isClickOnCanvasLabel) {
-            console.log('🔄 [DEBUG] Taking curveJustCompleted defocus path');
+            console.log('ðŸ”„ [DEBUG] Taking curveJustCompleted defocus path');
             handleDefocusClick(); // This will set curveJustCompleted to false and deselect.
             
             // ROBUST_FIX: Set multiple flags to definitively prevent any drawing logic from executing
@@ -9095,18 +9174,18 @@ if (colorPicker) {
 //             console.log('Canvas Mousedown: CURVE_DEFOCUS_FIX - Definitively stopped all drawing flags and event propagation');
             return;               // Stop further execution of this mousedown handler.
         } else if (curveJustCompleted && (isClickOnStrokeTag || isClickOnCanvasLabel)) {
-            console.log('🔄 [DEBUG] Taking curveJustCompleted clear flag path');
+            console.log('ðŸ”„ [DEBUG] Taking curveJustCompleted clear flag path');
             // If it's a stroke tag click (sidebar or canvas label), just clear the flag without defocusing
             curveJustCompleted = false;
         } else {
-            console.log('🔄 [DEBUG] Taking normal processing path');
+            console.log('ðŸ”„ [DEBUG] Taking normal processing path');
         }
 
         // Check for double-click on stroke on canvas (for entering edit mode)
         // BUT FIRST: If we're in curved drawing mode with control points, prioritize curve finalization
         const now = Date.now();
         const timeSinceLastClick = now - window.lastCanvasClickTime;
-        console.log(`🔄 [DEBUG] Canvas click timing - now: ${now}, lastCanvasClickTime: ${window.lastCanvasClickTime}, timeSinceLastClick: ${timeSinceLastClick}, clickDelay: ${window.clickDelay}`);
+        console.log(`ðŸ”„ [DEBUG] Canvas click timing - now: ${now}, lastCanvasClickTime: ${window.lastCanvasClickTime}, timeSinceLastClick: ${timeSinceLastClick}, clickDelay: ${window.clickDelay}`);
         if (timeSinceLastClick < window.clickDelay) {
             // Priority 1: If in curved mode with control points, finalize the curve (don't enter edit mode)
             if (drawingMode === 'curved' && curvedLinePoints.length >= 2) {
@@ -9119,9 +9198,9 @@ if (colorPicker) {
             
             // Priority 2: Normal edit mode logic (only if not finalizing a curve)
             const clickedLabelForDoubleClick = findLabelAtPoint(e.offsetX, e.offsetY);
-            console.log(`🔄 [DEBUG] Double-click check - clickedLabelForDoubleClick:`, clickedLabelForDoubleClick, `lastClickedCanvasLabel: ${window.lastClickedCanvasLabel}`);
+            console.log(`ðŸ”„ [DEBUG] Double-click check - clickedLabelForDoubleClick:`, clickedLabelForDoubleClick, `lastClickedCanvasLabel: ${window.lastClickedCanvasLabel}`);
             if (clickedLabelForDoubleClick && window.lastClickedCanvasLabel === clickedLabelForDoubleClick.strokeLabel) {
-                console.log(`🔄 [DEBUG] Double-click detected on label ${clickedLabelForDoubleClick.strokeLabel} - entering edit mode`);
+                console.log(`ðŸ”„ [DEBUG] Double-click detected on label ${clickedLabelForDoubleClick.strokeLabel} - entering edit mode`);
                 window.selectedStrokeInEditMode = clickedLabelForDoubleClick.strokeLabel;
                 
                 // Ensure it's also selected in the normal selection models
@@ -10214,7 +10293,7 @@ if (colorPicker) {
             if (document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
                 e.preventDefault(); // Prevent default tab behavior
                 
-                // Cycle through modes: straight → curved → freehand → straight
+                // Cycle through modes: straight â†’ curved â†’ freehand â†’ straight
                 if (drawingMode === 'straight') {
                     drawingMode = 'curved';
                     drawingModeToggle.classList.remove('straight-mode');
@@ -10272,7 +10351,7 @@ if (colorPicker) {
     function showCopyIconFeedback() {
         // Create a temporary copy icon element
         const copyIcon = document.createElement('div');
-        copyIcon.innerHTML = '📋';
+        copyIcon.innerHTML = 'ðŸ“‹';
         copyIcon.style.cssText = `
             position: fixed;
             top: 50%;
@@ -10994,9 +11073,9 @@ if (colorPicker) {
                             window.imageScaleByLabel[label] = scale;
                             window.imagePositionByLabel[label] = { ...position };
                             
-                            console.log(`✅ Auto-applied ${fitMode} to ${label}: scale=${scale.toFixed(2)}`);
+                            console.log(`âœ… Auto-applied ${fitMode} to ${label}: scale=${scale.toFixed(2)}`);
                         } else {
-                            console.log(`❌ Skipping ${label} - no valid dimensions:`, window.originalImageDimensions[label]);
+                            console.log(`âŒ Skipping ${label} - no valid dimensions:`, window.originalImageDimensions[label]);
                         }
                     });
                     
@@ -11170,7 +11249,7 @@ if (colorPicker) {
         const normalizedDelta = (degrees * Math.PI) / 180; // Convert to radians
         window.imageRotationByLabel[currentLabel] = currentRotation + normalizedDelta;
         
-        console.log(`[rotateImage] Updated rotation for ${currentLabel}: ${(currentRotation * 180 / Math.PI).toFixed(1)}° + ${degrees}° = ${(window.imageRotationByLabel[currentLabel] * 180 / Math.PI).toFixed(1)}°`);
+        console.log(`[rotateImage] Updated rotation for ${currentLabel}: ${(currentRotation * 180 / Math.PI).toFixed(1)}Â° + ${degrees}Â° = ${(window.imageRotationByLabel[currentLabel] * 180 / Math.PI).toFixed(1)}Â°`);
         
         // For now, just update the rotation state and let coordinate transformation handle it
         // The coordinate transformation will apply the rotation when drawing
@@ -11206,14 +11285,14 @@ if (colorPicker) {
         console.log('Transformed point:', transformed);
         
         // Test 90 degree rotation
-        console.log('Testing 90° rotation...');
+        console.log('Testing 90Â° rotation...');
         window.rotateImage(0, 90);
         
         const newParams = getTransformationParams(currentLabel);
         console.log('New rotation:', newParams.rotation);
         
         const newTransformed = imageToCanvasCoords(testPoint.x, testPoint.y, newParams);
-        console.log('After 90° rotation:', newTransformed);
+        console.log('After 90Â° rotation:', newTransformed);
         
         console.log('=== END ROTATION TEST ===');
     };
@@ -11364,7 +11443,7 @@ if (colorPicker) {
                         if (!editItem.querySelector('.edit-mode-indicator')) {
                             const editIndicator = document.createElement('div');
                             editIndicator.className = 'edit-mode-indicator';
-                            editIndicator.innerHTML = '✏️ Edit Mode';
+                            editIndicator.innerHTML = 'âœï¸ Edit Mode';
                             editIndicator.style.position = 'absolute';
                             editIndicator.style.top = '3px';
                             editIndicator.style.right = '26px';
@@ -11549,7 +11628,7 @@ if (colorPicker) {
         const scale = window.imageScaleByLabel[currentImageLabel] || 1.0;
         const scaleButton = document.getElementById('scaleButton');
         if (scaleButton) {
-            scaleButton.textContent = `Scale: ${Math.round(scale * 100)}% ▼`;
+            scaleButton.textContent = `Scale: ${Math.round(scale * 100)}% â–¼`;
         }
         
         // ADDED: Update the sidebar thumbnail scale display for the current image
@@ -13191,7 +13270,7 @@ if (colorPicker) {
 //                     console.log(`Nearest point found: distance ${nearestPoint.distance.toFixed(2)}px, imageSpace: (${nearestPoint.x.toFixed(2)}, ${nearestPoint.y.toFixed(2)}), canvasSpace: (${nearestPoint.canvasX.toFixed(2)}, ${nearestPoint.canvasY.toFixed(2)})`);
                     
                     if (nearestPoint.distance <= 20) { // 20 pixel snap tolerance
-//                         console.log(`✅ Snapping curve endpoint to stroke ${strokeAtPoint.label} at distance ${nearestPoint.distance.toFixed(2)}px`);
+//                         console.log(`âœ… Snapping curve endpoint to stroke ${strokeAtPoint.label} at distance ${nearestPoint.distance.toFixed(2)}px`);
                         
                         // Replace the last control point with the snapped point
                         finalControlPoints[finalControlPoints.length - 1] = {
@@ -13203,10 +13282,10 @@ if (colorPicker) {
                             snappedTo: strokeAtPoint.label // Mark this point as snapped
                         };
                     } else {
-//                         console.log(`❌ Stroke detected but too far for snapping (distance: ${nearestPoint.distance.toFixed(2)}px > 20px tolerance)`);
+//                         console.log(`âŒ Stroke detected but too far for snapping (distance: ${nearestPoint.distance.toFixed(2)}px > 20px tolerance)`);
                     }
                 } else {
-//                     console.log(`❌ Could not find nearest point on stroke ${strokeAtPoint.label}`);
+//                     console.log(`âŒ Could not find nearest point on stroke ${strokeAtPoint.label}`);
                 }
             }
             
@@ -13323,7 +13402,7 @@ function getImageSpaceOffset(img, stroke) {
 }
 
 function labelCanvasPosition(img, stroke) {
-    // Use the same math as render: anchor → image-space offset → toCanvas
+    // Use the same math as render: anchor â†’ image-space offset â†’ toCanvas
     const anchorImg = getStrokeMidpointImage(img, stroke);
     if (!anchorImg) return null;
     const offImg = getImageSpaceOffset(img, stroke);
@@ -13449,7 +13528,7 @@ async function rotateFn90CCW(realImageLabel) {
 
 // Main Test Functions
 
-// Core 90° CCW rotation test
+// Core 90Â° CCW rotation test
 window.run90DegCCWTest = async function(imageLabel, strokes, rotateFn) {
     const img = imageLabel;
     const eps = getEps(img);
@@ -13541,7 +13620,7 @@ window.run90DegCCWTest = async function(imageLabel, strokes, rotateFn) {
     return { pass: allPass, details: results, center, delta: delta * 180 / Math.PI };
 };
 
-// Four-step cycle test (4 × -90° = 360° = back to start)
+// Four-step cycle test (4 Ã— -90Â° = 360Â° = back to start)
 window.runFourStepCycleTest = async function(imageLabel, strokes = ['A1', 'A2', 'A3', 'A4']) {
     const img = imageLabel;
     const eps = getEps(img);
@@ -13875,9 +13954,9 @@ window.testCustomLabelRotationFix = async function(imageLabel) {
     console.log(`[TEST] Fix successful: ${success ? 'YES' : 'NO'}`);
     
     if (success) {
-        console.log(`[TEST] ✅ SUCCESS: All custom labels rotated with their strokes!`);
+        console.log(`[TEST] âœ… SUCCESS: All custom labels rotated with their strokes!`);
     } else {
-        console.log(`[TEST] ❌ FAILURE: Some labels did not rotate properly`);
+        console.log(`[TEST] âŒ FAILURE: Some labels did not rotate properly`);
         const failedLabels = results.filter(r => !r.rotated);
         failedLabels.forEach(result => {
             console.log(`[TEST] - ${result.label}: only moved ${result.distance.toFixed(1)}px`);
@@ -14270,7 +14349,7 @@ function showShareDialog(shareUrl, expiresAt) {
     const expiryDate = new Date(expiresAt).toLocaleDateString();
     
     dialog.innerHTML = `
-        <h2 style="color: #2c3e50; margin: 0 0 20px 0; font-size: 1.5em;">🔗 Project Share Link Created</h2>
+        <h2 style="color: #2c3e50; margin: 0 0 20px 0; font-size: 1.5em;">ðŸ”— Project Share Link Created</h2>
         
         <p style="color: #555; margin-bottom: 20px;">
             Share this link with your customers to collect their measurements:
@@ -14291,18 +14370,18 @@ function showShareDialog(shareUrl, expiresAt) {
                 id="copyUrlBtn" 
                 style="flex: 1; background: #007bff; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: 600;"
             >
-                📋 Copy Link
+                ðŸ“‹ Copy Link
             </button>
             <button 
                 id="openUrlBtn" 
                 style="flex: 1; background: #28a745; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: 600;"
             >
-                🔗 Open Link
+                ðŸ”— Open Link
             </button>
         </div>
         
         <p style="color: #666; font-size: 12px; margin-bottom: 20px;">
-            ⏰ Link expires: ${expiryDate}
+            â° Link expires: ${expiryDate}
         </p>
         
         <div style="text-align: center;">
@@ -14327,7 +14406,7 @@ function showShareDialog(shareUrl, expiresAt) {
             await navigator.clipboard.writeText(shareUrl);
             const btn = document.getElementById('copyUrlBtn');
             const originalText = btn.textContent;
-            btn.textContent = '✅ Copied!';
+            btn.textContent = 'âœ… Copied!';
             btn.style.background = '#28a745';
             
             setTimeout(() => {
@@ -14360,3 +14439,6 @@ function showShareDialog(shareUrl, expiresAt) {
         document.getElementById('shareUrlInput').select();
     }, 100);
 }
+
+// Ensure file terminates cleanly; prevents "Unexpected end of input" if a prior block failed to auto-close
+;
