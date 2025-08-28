@@ -1,5 +1,15 @@
 // Define core application structure for better state management
 console.log('[PAINT.JS] Script loaded successfully');
+console.log('[PAINT.JS] Script execution started at:', new Date().toISOString());
+console.log('[PAINT.JS] Document readyState:', document.readyState);
+console.log('[PAINT.JS] Window paintApp exists:', typeof window.paintApp !== 'undefined');
+// Global error visibility to catch silent failures
+window.addEventListener('error', (e) => {
+    try { console.error('[PAINT.JS][GlobalError]', e?.error || e?.message || e); } catch (_) {}
+});
+window.addEventListener('unhandledrejection', (e) => {
+    try { console.error('[PAINT.JS][UnhandledRejection]', e?.reason || e); } catch (_) {}
+});
 console.warn('[PAINT.JS] Script loaded (warn)');
 window.paintApp = {
     config: {
@@ -244,7 +254,100 @@ document.addEventListener('DOMContentLoaded', () => {
             showPDFExportDialog(projectName);
         });
     }
-    
+
+    // Simple custom context menu for reliable right-click copy
+    let __canvasCtxMenuEl = null;
+    let __canvasCtxMenuBound = false;
+    function ensureCanvasContextMenu() {
+        if (__canvasCtxMenuEl) return __canvasCtxMenuEl;
+        const el = document.createElement('div');
+        el.id = 'canvasCopyContextMenu';
+        el.style.cssText = [
+            'position: fixed',
+            'z-index: 10000',
+            'background: #111827', // gray-900
+            'color: #F9FAFB', // gray-50
+            'border: 1px solid #374151', // gray-700
+            'border-radius: 8px',
+            'box-shadow: 0 10px 20px rgba(0,0,0,0.2)',
+            'padding: 6px',
+            'min-width: 220px',
+            'display: none'
+        ].join(';');
+
+        function mkItem(text, handler) {
+            const item = document.createElement('div');
+            item.textContent = text;
+            item.style.cssText = [
+                'padding: 8px 12px',
+                'cursor: pointer',
+                'border-radius: 6px'
+            ].join(';');
+            item.addEventListener('mouseenter', () => { item.style.background = '#1F2937'; }); // gray-800
+            item.addEventListener('mouseleave', () => { item.style.background = 'transparent'; });
+            item.addEventListener('click', async (e) => {
+                hideMenu();
+                try {
+                    await handler(e);
+                } catch (err) {
+                    console.error('[ContextMenu] action failed', err);
+                }
+            });
+            return item;
+        }
+
+        const title = document.createElement('div');
+        title.textContent = 'Canvas Actions';
+        title.style.cssText = 'padding: 6px 10px; font-size: 12px; color: #9CA3AF;'; // gray-400
+        el.appendChild(title);
+
+        const copyCropped = mkItem('Copy Image', () => copyCurrentViewToClipboard());
+        const copyFull = mkItem('Copy full canvas', () => copyCurrentViewToClipboard({ ignoreCaptureFrame: true }));
+        el.appendChild(copyCropped);
+        el.appendChild(copyFull);
+
+        const hr = document.createElement('div');
+        hr.style.cssText = 'height:1px;background:#374151;margin:6px 4px;';
+        el.appendChild(hr);
+
+        const hint = document.createElement('div');
+        hint.textContent = 'Hold Shift + Right\u2011click for browser menu';
+        hint.style.cssText = 'padding: 6px 10px; font-size: 11px; color: #9CA3AF;';
+        el.appendChild(hint);
+
+        document.body.appendChild(el);
+
+        function hideMenu() {
+            el.style.display = 'none';
+        }
+
+        if (!__canvasCtxMenuBound) {
+            __canvasCtxMenuBound = true;
+            document.addEventListener('click', hideMenu, true);
+            document.addEventListener('keydown', (e) => { if (e.key === 'Escape') hideMenu(); }, true);
+            window.addEventListener('blur', hideMenu);
+            window.addEventListener('resize', hideMenu);
+            document.addEventListener('scroll', hideMenu, true);
+        }
+
+        __canvasCtxMenuEl = el;
+        return el;
+    }
+
+    function showCanvasContextMenu(x, y) {
+        const el = ensureCanvasContextMenu();
+        el.style.display = 'block';
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        const rect = el.getBoundingClientRect();
+        let left = x;
+        let top = y;
+        if (left + rect.width > vw - 8) left = Math.max(8, vw - rect.width - 8);
+        if (top + rect.height > vh - 8) top = Math.max(8, vh - rect.height - 8);
+        el.style.left = left + 'px';
+        el.style.top = top + 'px';
+    }
+
     // Initialize DOM elements in state object for centralized access
     window.paintApp.state.domElements.canvas = document.getElementById('canvas');
     window.paintApp.state.domElements.ctx = window.paintApp.state.domElements.canvas.getContext('2d', { willReadFrequently: true });
@@ -7114,9 +7217,29 @@ if (colorPicker) {
 
         console.log(`[resizeCanvas] Container: ${rect ? `${rect.width}x${rect.height}` : 'none'}, Target: ${targetWidth}x${targetHeight}, Window: ${window.innerWidth}x${window.innerHeight}`);
 
+        // Preserve current image screen position by compensating for center shift
+        const oldCanvasWidth = canvas.width;
+        const oldCanvasHeight = canvas.height;
+
+        const dims = originalImageDimensions[currentImageLabel];
+        const scale = (imageScaleByLabel && imageScaleByLabel[currentImageLabel]) ? imageScaleByLabel[currentImageLabel] : 1;
+        const scaledWidth = dims ? dims.width * scale : 0;
+        const scaledHeight = dims ? dims.height * scale : 0;
+
+        const oldCenterX = (oldCanvasWidth - scaledWidth) / 2;
+        const oldCenterY = (oldCanvasHeight - scaledHeight) / 2;
+        const newCenterX = (targetWidth - scaledWidth) / 2;
+        const newCenterY = (targetHeight - scaledHeight) / 2;
+
         // Resize the canvas to match the container
         canvas.width = targetWidth;
         canvas.height = targetHeight;
+
+        // Adjust position offset so image stays visually anchored
+        if (imagePositionByLabel && imagePositionByLabel[currentImageLabel]) {
+            imagePositionByLabel[currentImageLabel].x += (oldCenterX - newCenterX);
+            imagePositionByLabel[currentImageLabel].y += (oldCenterY - newCenterY);
+        }
 
         // Set default canvas styles
         canvas.style.cursor = 'crosshair';
@@ -7842,7 +7965,7 @@ if (colorPicker) {
             time: Date.now()
         };
         
-//         console.log(`Adding point at canvas: (${canvasX}, ${canvasY}), image-relative: (${imgX}, ${imgY})`);
+        console.log(`Adding point at canvas: (${canvasX}, ${canvasY}), image-relative: (${imgX}, ${imgY})`);
         
         // Use the correct previous point for time delta calculations
         const prevPoint = points.length > 0 ? points[points.length - 1] : 
@@ -8997,8 +9120,12 @@ if (colorPicker) {
     // Centralized canvas event binding function
     function bindCanvasListeners() {
         if (window.paintApp.state.listenersBound) {
-            console.log('[Event] Canvas listeners already bound, skipping');
-            return;
+            if (window.__contextMenuBound) {
+                console.log('[Event] Canvas listeners already bound, skipping');
+                return;
+            } else {
+                console.warn('[Event] listenersBound=true but __contextMenuBound is false. Proceeding to (re)bind listeners.');
+            }
         }
         
         const { eventListeners } = window.paintApp.state;
@@ -9014,8 +9141,9 @@ if (colorPicker) {
         canvas.addEventListener('dblclick', onCanvasDoubleClick, { signal: eventListeners.signal });
         canvas.addEventListener('wheel', onCanvasWheel, { signal: eventListeners.signal, passive: true });
         canvas.addEventListener('scalechange', onCanvasScaleChange, { signal: eventListeners.signal });
-        // canvas.addEventListener('contextmenu', onCanvasRightClick, { signal: eventListeners.signal }); // Disabled to allow browser context menu
-        console.log('[Event] Context menu listener bound to canvas');
+        canvas.addEventListener('contextmenu', onCanvasRightClick, { signal: eventListeners.signal });
+        window.__contextMenuBound = true;
+        console.log('[Event] Context menu listener bound to canvas:', { id: canvas.id });
         
 
         
@@ -9046,13 +9174,8 @@ if (colorPicker) {
 
     // Canvas event handlers
     function onCanvasMouseDown(e) {
-        // Check if this is a right-click (button 2) - prevent default context menu
-        if (e.button === 2) {
-            // Prevent default browser context menu
-            e.preventDefault();
-            e.stopPropagation();
-            return;
-        }
+        // Allow native behavior on right-click; do not suppress the context menu here
+        if (e.button === 2) return;
         
         // First, check if we should be dragging the image (shift key pressed)
         if (isShiftPressed) {
@@ -9719,12 +9842,8 @@ if (colorPicker) {
     }
     
     function onCanvasMouseUp(e) {
-        // Check if this is a right-click (button 2) - don't process in mouseup
-        if (e.button === 2) {
-            e.preventDefault();
-            e.stopPropagation();
-            return; // Don't process right-clicks in mouseup
-        }
+        // Skip handling right-click here but do not suppress native menu
+        if (e.button === 2) return;
         
         // Check if we were drawing when mouseup occurred
         const wasDrawing = isDrawing;
@@ -10262,11 +10381,54 @@ if (colorPicker) {
         }
     }
 
-    // Right-click handler for copying cropped canvas
-    // function onCanvasRightClick(e) {
-    //     e.preventDefault();
-    //     copyCurrentViewToClipboard();
-    // }
+    // Track recent canvas contextmenu to detect subsequent menu-based copy
+    let __lastCanvasContextMenuTs = 0;
+    let __lastCanvasContextMenuPos = { x: 0, y: 0 };
+    function logCopyDebug(step, data) {
+        try { console.log(`[CopyDebug] ${step}`, data || {}); } catch (_) {}
+    }
+
+    // Right-click handler: prefer custom menu for reliable copy
+    function onCanvasRightClick(e) {
+        __lastCanvasContextMenuTs = Date.now();
+        __lastCanvasContextMenuPos = { x: e.clientX, y: e.clientY };
+        logCopyDebug('contextmenu', { ts: __lastCanvasContextMenuTs, pos: __lastCanvasContextMenuPos });
+        // If user holds Shift, allow native menu (for Save image as..., etc.)
+        if (e.shiftKey) return;
+        try { e.preventDefault(); } catch (_) {}
+        showCanvasContextMenu(e.clientX, e.clientY);
+    }
+
+    // Intercept menu-based copy shortly after a canvas contextmenu to enforce cropped copy
+    document.addEventListener('copy', (e) => {
+        const now = Date.now();
+        const withinWindow = now - __lastCanvasContextMenuTs < 3000;
+        logCopyDebug('document.copy', { now, last: __lastCanvasContextMenuTs, withinWindow, activeElement: document.activeElement && document.activeElement.tagName });
+        console.log('[CopyDebug] Global copy event triggered:', { 
+            now, 
+            last: __lastCanvasContextMenuTs, 
+            withinWindow, 
+            activeElement: document.activeElement && document.activeElement.tagName,
+            eventTarget: e.target && e.target.tagName
+        });
+        if (withinWindow) {
+            // Within 3s of a canvas contextmenu: override with our cropped copy
+            console.log('[CopyDebug] Intercepting copy event for cropped copy');
+            try {
+                e.preventDefault();
+            } catch (_) {}
+            // Call directly to maximize chances of user activation
+            try { 
+                logCopyDebug('document.copy -> invoking copyCurrentViewToClipboard'); 
+                console.log('[CopyDebug] Calling copyCurrentViewToClipboard from global copy event');
+                copyCurrentViewToClipboard(); 
+            } catch (error) {
+                console.error('[CopyDebug] Error in copyCurrentViewToClipboard:', error);
+            }
+        } else {
+            console.log('[CopyDebug] Copy event outside window, not intercepting');
+        }
+    }, true);
 
     // Function to show Chrome-style copy icon feedback
     function showCopyIconFeedback() {
@@ -10313,15 +10475,19 @@ if (colorPicker) {
         }, 1000);
     }
 
-    // Copy current view (respecting capture frame) to clipboard
-    async function copyCurrentViewToClipboard() {
+    // Copy current view (respecting capture frame by default) to clipboard
+    // options: { ignoreCaptureFrame?: boolean }
+    async function copyCurrentViewToClipboard(options = {}) {
+        const { ignoreCaptureFrame = false } = options;
         try {
             // Get the capture frame if it exists
             const captureFrame = document.getElementById('captureFrame');
             let sourceCanvas = canvas;
             let cropData = null;
+            const canvasRectForDebug = canvas.getBoundingClientRect();
+            logCopyDebug('copyCurrentViewToClipboard:start', { canvas: { w: canvas.width, h: canvas.height, cssW: canvasRectForDebug.width, cssH: canvasRectForDebug.height } });
 
-            if (captureFrame) {
+            if (captureFrame && !ignoreCaptureFrame) {
                 const frameRect = captureFrame.getBoundingClientRect();
                 const canvasRect = canvas.getBoundingClientRect();
                 
@@ -10329,14 +10495,37 @@ if (colorPicker) {
                 if (frameRect.left < canvasRect.right && frameRect.right > canvasRect.left &&
                     frameRect.top < canvasRect.bottom && frameRect.bottom > canvasRect.top) {
                     
-                    // Calculate crop area in canvas coordinates
-                    const dpr = window.devicePixelRatio || 1;
+                    // Calculate crop area in canvas coordinates using canvas-to-CSS scale
+                    const scalePx = canvas.width / canvasRect.width;
+                    const leftCss = Math.max(frameRect.left, canvasRect.left);
+                    const topCss = Math.max(frameRect.top, canvasRect.top);
+                    const rightCss = Math.min(frameRect.right, canvasRect.right);
+                    const bottomCss = Math.min(frameRect.bottom, canvasRect.bottom);
+
+                    const cssX = leftCss - canvasRect.left;
+                    const cssY = topCss - canvasRect.top;
+                    const cssW = Math.max(0, rightCss - leftCss);
+                    const cssH = Math.max(0, bottomCss - topCss);
+
                     cropData = {
-                        x: Math.max(0, (frameRect.left - canvasRect.left) * dpr),
-                        y: Math.max(0, (frameRect.top - canvasRect.top) * dpr),
-                        width: Math.min(canvas.width, (frameRect.right - Math.max(frameRect.left, canvasRect.left)) * dpr),
-                        height: Math.min(canvas.height, (frameRect.bottom - Math.max(frameRect.top, canvasRect.top)) * dpr)
+                        x: Math.round(cssX * scalePx),
+                        y: Math.round(cssY * scalePx),
+                        width: Math.round(cssW * scalePx),
+                        height: Math.round(cssH * scalePx)
                     };
+
+                    // Clamp to canvas bounds
+                    cropData.x = Math.max(0, Math.min(cropData.x, canvas.width));
+                    cropData.y = Math.max(0, Math.min(cropData.y, canvas.height));
+                    cropData.width = Math.max(0, Math.min(cropData.width, canvas.width - cropData.x));
+                    cropData.height = Math.max(0, Math.min(cropData.height, canvas.height - cropData.y));
+                    logCopyDebug('copyCurrentViewToClipboard:cropData', { scalePx, frameRect: { l: frameRect.left, t: frameRect.top, r: frameRect.right, b: frameRect.bottom }, canvasRect: { l: canvasRect.left, t: canvasRect.top, r: canvasRect.right, b: canvasRect.bottom }, css: { x: cssX, y: cssY, w: cssW, h: cssH }, cropData });
+                    console.log('[CopyDebug] Crop details:', {
+                        frameRect: { left: frameRect.left, top: frameRect.top, right: frameRect.right, bottom: frameRect.bottom },
+                        canvasRect: { left: canvasRect.left, top: canvasRect.top, right: canvasRect.right, bottom: canvasRect.bottom },
+                        cropData: cropData,
+                        scalePx: scalePx
+                    });
                 }
             }
 
@@ -10360,23 +10549,28 @@ if (colorPicker) {
 
             // Convert to blob and copy to clipboard
             const blob = await new Promise(resolve => tempCanvas.toBlob(resolve, 'image/png'));
+            logCopyDebug('copyCurrentViewToClipboard:tempCanvas', { w: tempCanvas.width, h: tempCanvas.height, hasCrop: !!cropData });
             
             if (navigator.clipboard && window.ClipboardItem) {
-                await navigator.clipboard.write([
-                    new ClipboardItem({ 'image/png': blob })
-                ]);
-                
-                // Show Chrome-style copy icon feedback
-                showCopyIconFeedback();
-                
-                // Also show status message
-                if (typeof window.projectManager?.showStatusMessage === 'function') {
-                    window.projectManager.showStatusMessage('Image copied to clipboard!', 'success');
-                } else {
-                    alert('Image copied to clipboard!');
+                try {
+                    await navigator.clipboard.write([
+                        new ClipboardItem({ 'image/png': blob })
+                    ]);
+                    logCopyDebug('copyCurrentViewToClipboard:clipboardWrite', { ok: true });
+                    // Also show status message (no animation)
+                    if (typeof window.projectManager?.showStatusMessage === 'function') {
+                        window.projectManager.showStatusMessage('Image copied to clipboard!', 'success');
+                    } else {
+                        alert('Image copied to clipboard!');
+                    }
+                } catch (error) {
+                    console.error('[Copy] Clipboard write failed:', error);
+                    logCopyDebug('copyCurrentViewToClipboard:clipboardWrite', { ok: false, reason: 'write_failed', error: error.message });
+                    alert('Failed to copy to clipboard. Please try again.');
                 }
             } else {
                 console.warn('[Copy] Clipboard API not supported');
+                logCopyDebug('copyCurrentViewToClipboard:clipboardWrite', { ok: false, reason: 'unsupported' });
                 if (typeof window.projectManager?.showStatusMessage === 'function') {
                     window.projectManager.showStatusMessage('Clipboard not supported in this browser', 'error');
                 } else {
@@ -10385,6 +10579,7 @@ if (colorPicker) {
             }
         } catch (error) {
             console.error('[Copy] Failed to copy to clipboard:', error);
+            logCopyDebug('copyCurrentViewToClipboard:error', { message: error?.message });
             if (typeof window.projectManager?.showStatusMessage === 'function') {
                 window.projectManager.showStatusMessage('Failed to copy image', 'error');
             } else {
@@ -10392,6 +10587,9 @@ if (colorPicker) {
             }
         }
     }
+    // Expose for other scripts (index.html menus)
+    window.copyCurrentViewToClipboard = copyCurrentViewToClipboard;
+    // Background removal disabled
     
     // Function to switch to a different image
     // Make switchToImage available globally
@@ -10811,6 +11009,7 @@ if (colorPicker) {
     } else {
         console.warn('[PAINT.JS] Canvas copy button not found!');
     }
+    // Remove background feature removed; button no longer present
     
     // Save canvas (cropped to capture frame if present, otherwise full canvas) with opaque white background
     saveButton.addEventListener('click', () => {
@@ -11317,22 +11516,21 @@ if (colorPicker) {
 //                         console.log(`Changed color of stroke ${strokeLabel} to ${color}`);
                     }
                 }
-                    } else if (selectedStrokeByImage[currentImageLabel]) {
-            // If there's a selected stroke but not in edit mode, show a message to the user
+            } else if (selectedStrokeByImage[currentImageLabel]) {
+                // If there's a selected stroke but not in edit mode, show a message to the user
 //             console.log("Double-click a stroke to enter edit mode before changing colors");
             
-            // Show a status message to the user
-            const statusMessage = document.getElementById('statusMessage');
-            if (statusMessage) {
-                statusMessage.textContent = "Double-click a stroke to enter edit mode first";
-                statusMessage.classList.add('visible');
-                // Hide message after a few seconds
-                setTimeout(() => {
-                    statusMessage.classList.remove('visible');
-                }, 3000);
+                // Show a status message to the user
+                const statusMessage = document.getElementById('statusMessage');
+                if (statusMessage) {
+                    statusMessage.textContent = "Double-click a stroke to enter edit mode first";
+                    statusMessage.classList.add('visible');
+                    // Hide message after a few seconds
+                    setTimeout(() => {
+                        statusMessage.classList.remove('visible');
+                    }, 3000);
+                }
             }
-            }
-            // If no stroke is in edit mode, the color is just set for new strokes
         });
     });
     
@@ -11419,7 +11617,7 @@ if (colorPicker) {
         // Save current state before redrawing, using same pattern as updateImageScale
         // But don't save for small movements to avoid spamming undo stack during continuous dragging
         if (Math.abs(deltaX) > 20 || Math.abs(deltaY) > 20) {
-        saveState(true, false, false);
+            saveState(true, false, false);
         }
             
         // Set flag to prevent auto-focus during move operations
@@ -11736,30 +11934,24 @@ if (colorPicker) {
         }
     }
     
-    // Adjust canvas size when window resizes to account for sidebars
+    // Adjust sidebar positions after window resize (avoid double-calling resizeCanvas)
     window.addEventListener('resize', () => {
-        resizeCanvas();
-        
-        // Check if sidebars are overlapping canvas and adjust if needed
-        const canvasRect = canvas.getBoundingClientRect();
-        const imageSidebar = document.getElementById('imageSidebar'); // Get elements directly
-        const strokeSidebar = document.getElementById('strokeSidebar');
-
-        if (imageSidebar && strokeSidebar) { // Check if elements exist
-            const imageSidebarRect = imageSidebar.getBoundingClientRect();
-            const strokeSidebarRect = strokeSidebar.getBoundingClientRect();
-            
-            // If image sidebar is overlapping canvas on the right
-            if (imageSidebarRect.left < canvasRect.right && imageSidebarRect.right > canvasRect.left) { // Added check for actual overlap
-                imageSidebar.style.left = 'auto'; // Reset left
-                imageSidebar.style.right = '20px';
+        requestAnimationFrame(() => {
+            const canvasRect = canvas.getBoundingClientRect();
+            const imageSidebar = document.getElementById('imageSidebar');
+            const strokeSidebar = document.getElementById('strokeSidebar');
+            if (imageSidebar && strokeSidebar) {
+                const imageSidebarRect = imageSidebar.getBoundingClientRect();
+                const strokeSidebarRect = strokeSidebar.getBoundingClientRect();
+                if (imageSidebarRect.left < canvasRect.right && imageSidebarRect.right > canvasRect.left) {
+                    imageSidebar.style.left = 'auto';
+                    imageSidebar.style.right = '20px';
+                }
+                if (strokeSidebarRect.right > canvasRect.left && strokeSidebarRect.left < canvasRect.right) {
+                    strokeSidebar.style.left = '20px';
+                }
             }
-            
-            // If stroke sidebar is overlapping canvas on the left
-            if (strokeSidebarRect.right > canvasRect.left && strokeSidebarRect.left < canvasRect.right) { // Added check for actual overlap
-                strokeSidebar.style.left = '20px';
-            }
-        }
+        });
     });
 
     // Function to find an optimal position for a label
@@ -13275,8 +13467,13 @@ if (colorPicker) {
     }
 
     // Initialize canvas event listeners
-    bindCanvasListeners();
-    console.log('[Event] Canvas listeners bound successfully');
+    try {
+        console.log('[Event] Attempting to bind canvas listeners...');
+        bindCanvasListeners();
+        console.log('[Event] Canvas listeners bound successfully');
+    } catch (err) {
+        console.error('[Event] Failed to bind canvas listeners:', err);
+    }
 }); // Correctly close DOMContentLoaded
 
 // ===== ROTATION TEST HARNESS =====

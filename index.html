@@ -1113,17 +1113,28 @@
     <!-- Canvas Controls (Bottom Panel) -->
     <div id="canvasControls" class="floating-panel fixed bottom-4 rounded-2xl px-3 py-2 transition-all duration-300" style="left: 50%; transform: translateX(-50%); z-index: 4000;">
         <div id="canvasControlsContent" class="flex items-center gap-2 text-sm smart-label-scope">
-            <button id="copyCanvasBtn" class="px-3 py-1 bg-primary-500 hover:bg-primary-600 text-white text-xs rounded-lg" title="Copy image to clipboard">
-                Copy
-            </button>
-            <select id="fitModeSelect" class="px-2 py-1 border border-gray-300 rounded-lg bg-white focus:outline-none hover:bg-gray-50">
+            <!-- Copy with hover menu -->
+            <div id="copyActions" class="relative">
+                <button id="copyCanvasBtn" class="flex items-center gap-1 px-3 py-1 bg-primary-500 hover:bg-primary-600 active:bg-primary-700 text-white text-xs rounded-lg shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-[1.02] active:scale-95" title="Copy image to clipboard" aria-label="Copy Image">
+                    <svg class="w-3.5 h-3.5 opacity-90" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16 1H4a2 2 0 00-2 2v12h2V3h12V1zm3 4H8a2 2 0 00-2 2v14a2 2 0 002 2h11a2 2 0 002-2V7a2 2 0 00-2-2zm0 16H8V7h11v14z"/></svg>
+                    <span class="label-long">Copy Image</span>
+                    <span class="label-short">Copy</span>
+                </button>
+                <div id="copyMenu" class="hidden absolute bottom-full mb-1 left-0 bg-white border border-gray-200 rounded-xl shadow-lg min-w-[160px] text-xs" style="white-space: nowrap; z-index: 5000;">
+                    <button class="block w-full text-left px-3 py-2 hover:bg-slate-50 rounded-t-xl transition-colors" data-copy="cropped">Copy Image</button>
+                    <button class="block w-full text-left px-3 py-2 hover:bg-slate-50 rounded-b-xl transition-colors" data-copy="full">Copy Full Canvas</button>
+                </div>
+            </div>
+
+            
+            <select id="fitModeSelect" class="px-2 py-1 border border-gray-300 rounded-lg bg-white focus:outline-none hover:bg-gray-50 tselect">
                 <option value="none">Manual</option>
                 <option value="fit-width" selected>Fit Width</option>
                 <option value="fit-height">Fit Height</option>
                 <option value="fit-canvas">Fit Canvas</option>
                 <option value="actual-size">Actual Size</option>
             </select>
-            <button id="applyFitCurrent" class="px-2 py-1 bg-white border border-gray-300 text-slate-700 text-xs rounded-lg hover:bg-slate-50" title="Apply to current image">Apply</button>
+            <button id="applyFitCurrent" class="px-2 py-1 bg-white border border-gray-300 text-slate-700 text-xs rounded-lg hover:bg-slate-50 tbtn" title="Apply to current image">Apply</button>
             <button id="scaleButton" class="px-2 py-1 bg-white border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50">100% ▼</button>
             <div class="flex items-center gap-1 ml-2">
                 <button id="rotateLeftCtrl" class="px-2 py-1 bg-white border border-gray-300 text-slate-700 text-xs rounded-lg hover:bg-slate-50" title="Rotate 90° CCW">↶</button>
@@ -1544,6 +1555,55 @@
             }
         }
 
+        // Setup copy hover menu functionality
+        function setupCopyHoverMenu() {
+            const copyWrap = document.getElementById('copyActions');
+            const copyBtn = document.getElementById('copyCanvasBtn');
+            const copyMenu = document.getElementById('copyMenu');
+
+            console.log('Setting up copy hover:', { copyWrap, copyBtn, copyMenu });
+
+            if (!copyWrap || !copyBtn || !copyMenu) {
+                console.error('Copy hover elements not found:', { copyWrap, copyBtn, copyMenu });
+                return;
+            }
+
+            // Default click is already handled in paint.js; this module only manages the menu
+
+            // Hover show/hide like quick save
+            let hideTimer = null;
+            const showMenu = () => {
+                if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+                copyMenu.classList.remove('hidden');
+            };
+            const scheduleHide = () => {
+                if (hideTimer) clearTimeout(hideTimer);
+                hideTimer = setTimeout(() => {
+                    copyMenu.classList.add('hidden');
+                    hideTimer = null;
+                }, 200);
+            };
+            copyWrap.addEventListener('mouseenter', showMenu);
+            copyWrap.addEventListener('mouseleave', scheduleHide);
+            copyMenu.addEventListener('mouseenter', showMenu);
+            copyMenu.addEventListener('mouseleave', scheduleHide);
+
+            // Menu actions
+            copyMenu.addEventListener('click', (e) => {
+                const item = e.target.closest('[data-copy]');
+                if (!item) return;
+                const mode = item.dataset.copy;
+                if (typeof window.copyCurrentViewToClipboard === 'function') {
+                    if (mode === 'full') {
+                        window.copyCurrentViewToClipboard({ ignoreCaptureFrame: true });
+                    } else {
+                        window.copyCurrentViewToClipboard();
+                    }
+                }
+                copyMenu.classList.add('hidden');
+            });
+        }
+
         // Smart label system for responsive button text
         function initSmartLabels() {
             // Helper to wrap button with smart label spans
@@ -1678,6 +1738,7 @@
             
             // Setup quick save hover menu after toolbar initialization (with small delay)
             setTimeout(setupQuickSaveHover, 100);
+            setTimeout(setupCopyHoverMenu, 100);
             
             // Initialize smart label system
             setTimeout(initSmartLabels, 200);
