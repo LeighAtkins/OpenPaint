@@ -251,7 +251,18 @@
                 
                 <div class="project-info" style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:10px;">
                     <div><strong>Image:</strong> <span id="currentImageName">—</span></div>
-                    <div style="display:flex; gap:8px;">
+                    <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+                        <label style="display:flex; align-items:center; gap:6px; font-size:12px; background:#f1f5f9; padding:6px 10px; border-radius:9999px;">
+                            <input id="toggleShowMeasurements" type="checkbox" checked>
+                            Show measurements
+                        </label>
+                        <label style="display:flex; align-items:center; gap:6px; font-size:12px; background:#f1f5f9; padding:6px 10px; border-radius:9999px;">
+                            Units
+                            <select id="unitsSelect" style="padding:4px 8px; border-radius:8px; border:1px solid #cbd5e1;">
+                                <option value="in">Inches</option>
+                                <option value="cm">Centimeters</option>
+                            </select>
+                        </label>
                         <button id="prevImage" class="submit-btn" style="padding:8px 12px;">◀ Prev</button>
                         <button id="nextImage" class="submit-btn" style="padding:8px 12px;">Next ▶</button>
                     </div>
