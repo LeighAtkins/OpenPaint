@@ -36,7 +36,8 @@ window.TAG_MODEL = {
             { id: 'ear', name: 'Ear' },
             { id: 'top', name: 'Top' },
             { id: 'angle', name: 'Angle' },
-            { id: 'seatBack', name: 'Seat Back' }
+            { id: 'seatBack', name: 'Seat Back' },
+            { id: 'blank', name: 'Blank' }
         ]
     },
     
@@ -658,7 +659,7 @@ document.addEventListener('DOMContentLoaded', () => {
             setTimeout(initializeCoreTagData, 100);
             return;
         }
-        // console.log('[TAG-MANAGER] Core paint.js globals are ready.');
+        console.log('[TAG-MANAGER] Core paint.js globals are ready.');
 
         // Initialize with default tags if none exist for the standard labels
         window.IMAGE_LABELS.forEach(label => {
@@ -669,7 +670,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 };
             }
         });
-        // console.log('[TAG-MANAGER] Default tags initialized for standard labels.');
+        console.log('[TAG-MANAGER] Default tags initialized for standard labels.');
 
         // Now that core data is ready, set up UI-dependent parts
         initializeTagUI();
@@ -939,39 +940,77 @@ document.addEventListener('DOMContentLoaded', () => {
         if (typeof window.addImageToSidebar === 'function') {
             const originalAddImageToSidebar = window.addImageToSidebar;
             if (originalAddImageToSidebar.isHookedByTagManager) {
-                // console.log('[TAG-MANAGER] addImageToSidebar already hooked.');
+                console.log('[TAG-MANAGER] addImageToSidebar already hooked.');
                 return;
             }
-            window.addImageToSidebar = function(imageUrl, label, filename) {
-                originalAddImageToSidebar(imageUrl, label, filename);
-                setTimeout(() => {
-                    // Ensure imageTags for the new label is initialized before updating display
-                    if (!window.imageTags[label]) {
-                        const baseLabel = label.split('_')[0];
-                        window.imageTags[label] = {
-                            furnitureType: 'sofa', 
-                            viewType: baseLabel 
-                        };
-                         // console.log(`[TAG-MANAGER hooked addImageToSidebar] Initialized tags for new image ${label}`);
-                    }
-                    updateTagsDisplay(label);
-                }, 150); 
-            };
-            window.addImageToSidebar.isHookedByTagManager = true; // Mark as hooked
-            // console.log('[TAG-MANAGER] Successfully hooked into window.addImageToSidebar.');
             
-            // After hooking, refresh tags for any images that might have been added before the hook was ready
-            setTimeout(() => {
-                // console.log('[TAG-MANAGER] Post-hook refresh of tags for existing images.');
-                addTagButtonsToImages();
-            }, 600);
+            // Check if this is the paint.js version (not the compatibility layer)
+            if (originalAddImageToSidebar.toString().includes('image-container') || 
+                originalAddImageToSidebar.toString().includes('dataset.label')) {
+                
+                window.addImageToSidebar = function(imageUrl, label, filename) {
+                    const result = originalAddImageToSidebar(imageUrl, label, filename);
+                    setTimeout(() => {
+                        // Ensure imageTags for the new label is initialized before updating display
+                        if (!window.imageTags[label]) {
+                            const baseLabel = label.split('_')[0];
+                            window.imageTags[label] = {
+                                furnitureType: 'sofa', 
+                                viewType: baseLabel 
+                            };
+                            console.log(`[TAG-MANAGER hooked addImageToSidebar] Initialized tags for new image ${label}`);
+                        }
+                        updateTagsDisplay(label);
+                    }, 150); 
+                    return result;
+                };
+                window.addImageToSidebar.isHookedByTagManager = true; // Mark as hooked
+                console.log('[TAG-MANAGER] Successfully hooked into window.addImageToSidebar.');
+                
+                // After hooking, refresh tags for any images that might have been added before the hook was ready
+                setTimeout(() => {
+                    console.log('[TAG-MANAGER] Post-hook refresh of tags for existing images.');
+                    addTagButtonsToImages();
+                }, 600);
+            } else {
+                console.log('[TAG-MANAGER] Found compatibility layer addImageToSidebar, waiting for paint.js version...');
+                setTimeout(attemptHookToAddImageToSidebar, 100);
+            }
         } else {
             console.warn('[TAG-MANAGER] window.addImageToSidebar not ready for hooking, retrying...');
             setTimeout(attemptHookToAddImageToSidebar, 200);
         }
     }
+    
+    // Add a timeout to prevent infinite retries
+    let hookTimeout = setTimeout(() => {
+        console.error('[TAG-MANAGER] Failed to hook addImageToSidebar after 10 seconds. Tag functionality may be limited.');
+    }, 10000);
+    
+    // Clear timeout if hook succeeds
+    const originalAttemptHook = attemptHookToAddImageToSidebar;
+    attemptHookToAddImageToSidebar = function() {
+        const result = originalAttemptHook.apply(this, arguments);
+        if (window.addImageToSidebar && window.addImageToSidebar.isHookedByTagManager) {
+            clearTimeout(hookTimeout);
+        }
+        return result;
+    };
 
-    initializeCoreTagData(); // Start the initialization chain
+    // Wait for paint.js to be fully loaded before initializing
+    function waitForPaintJs() {
+        if (typeof window.addImageToSidebar === 'function' && 
+            typeof window.IMAGE_LABELS !== 'undefined') {
+            console.log('[TAG-MANAGER] paint.js appears to be ready, starting initialization...');
+            initializeCoreTagData();
+        } else {
+            console.log('[TAG-MANAGER] Waiting for paint.js to be ready...');
+            setTimeout(waitForPaintJs, 100);
+        }
+    }
+    
+    // Start waiting for paint.js
+    waitForPaintJs();
 });
 
 // Function to generate a filename from tags

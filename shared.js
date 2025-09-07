@@ -12,8 +12,16 @@ class SharedProjectViewer {
         this.ctx = null;
         this.currentIndex = 0;
         this.currentLabel = null;
-        // TODO: Remove this line if not implementing click-to-focus functionality
+        // Label hit rects and drag state
         this.labelRects = [];
+        this.isDraggingLabel = false;
+        this.draggingStroke = null;
+        this.dragAnchorCanvas = null; // {x,y}
+        this.dragScale = 1;
+        this._renderScheduled = false;
+        this.imageCache = {}; // cache HTMLImageElement by imageLabel
+        this.showMeasurements = true;
+        this.units = 'in'; // 'in' | 'cm'
         
         this.init();
     }
@@ -56,6 +64,15 @@ class SharedProjectViewer {
         await this.loadSharedProject();
     }
     
+    scheduleRender() {
+        if (this._renderScheduled) return;
+        this._renderScheduled = true;
+        window.requestAnimationFrame(() => {
+            this._renderScheduled = false;
+            this.renderProject();
+        });
+    }
+
     setupEventListeners() {
         const submitBtn = document.getElementById('submitMeasurements');
         submitBtn.addEventListener('click', () => this.submitMeasurements());
@@ -63,6 +80,20 @@ class SharedProjectViewer {
         const nextBtn = document.getElementById('nextImage');
         if (prevBtn) prevBtn.addEventListener('click', () => this.showPreviousImage());
         if (nextBtn) nextBtn.addEventListener('click', () => this.showNextImage());
+        const toggle = document.getElementById('toggleShowMeasurements');
+        const unitsSel = document.getElementById('unitsSelect');
+        if (toggle) {
+            toggle.addEventListener('change', (e) => {
+                this.showMeasurements = !!e.target.checked;
+                this.renderProject();
+            });
+        }
+        if (unitsSel) {
+            unitsSel.addEventListener('change', (e) => {
+                this.units = e.target.value === 'cm' ? 'cm' : 'in';
+                this.renderProject();
+            });
+        }
         
         // Handle Enter key in input fields
         document.addEventListener('keypress', (e) => {
@@ -71,9 +102,12 @@ class SharedProjectViewer {
             }
         });
 
-        // Canvas click to focus related input
+        // Canvas click to focus related input and drag-to-move labels
         if (this.canvas) {
             this.canvas.addEventListener('click', () => this.handleCanvasClick());
+            this.canvas.addEventListener('mousedown', (e) => this.onCanvasMouseDown(e));
+            window.addEventListener('mousemove', (e) => this.onCanvasMouseMove(e));
+            window.addEventListener('mouseup', () => this.onCanvasMouseUp());
         }
     }
     
@@ -260,9 +294,8 @@ class SharedProjectViewer {
         try {
             const imageUrl = this.projectData.originalImages[imageLabel];
             if (!imageUrl) return;
-            
-            const img = new Image();
-            img.onload = () => {
+            const cached = this.imageCache[imageLabel];
+            const drawWith = (img) => {
                 // Use the same logic as main paint.js for positioning
                 // Calculate center of canvas for positioning
                 const centerX = (this.canvas.width - img.width * scale) / 2;
@@ -293,26 +326,44 @@ class SharedProjectViewer {
                     finalY: imageY
                 }));
                 
-                // Clear the canvas
+                // Clear the canvas to white
                 this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-                // Ensure opaque white background
                 this.ctx.fillStyle = 'white';
                 this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-                
+
                 // Draw the image
                 this.ctx.drawImage(img, imageX, imageY, img.width * scale, img.height * scale);
                 
                 // Redraw strokes on top of image using the same coordinate system
                 this.drawStrokes(imageLabel, scale, imageX, imageY);
             };
-            
-            img.onerror = () => {
-                console.warn('Failed to load image for label:', imageLabel);
-                // Continue without image
-                this.drawStrokes(imageLabel, scale, position);
-            };
-            
-            img.src = imageUrl;
+
+            if (cached && cached.complete && cached.naturalWidth > 0) {
+                drawWith(cached);
+                return;
+            }
+
+            // If we have started loading before, reuse same element to prevent flicker
+            const img = cached || new Image();
+            if (!cached) {
+                this.imageCache[imageLabel] = img;
+                img.onload = () => drawWith(img);
+                img.onerror = () => {
+                    console.warn('Failed to load image for label:', imageLabel);
+                    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                    this.ctx.fillStyle = 'white';
+                    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                    this.drawStrokes(imageLabel, scale, position);
+                };
+                img.src = imageUrl;
+            } else {
+                // Image element exists but not complete yet; keep previous frame, strokes will update once loaded
+                // Draw interim frame without redownloading
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                this.ctx.fillStyle = 'white';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                this.drawStrokes(imageLabel, scale, (this.canvas.width - (this.projectData.originalImageDimensions?.[imageLabel]?.width || 0) * scale) / 2 + position.x, (this.canvas.height - (this.projectData.originalImageDimensions?.[imageLabel]?.height || 0) * scale) / 2 + position.y);
+            }
         } catch (error) {
             console.error('Error loading image:', error);
             this.drawStrokes(imageLabel, scale, position);
@@ -427,29 +478,27 @@ class SharedProjectViewer {
             y: anchor.y + (finalOffset.y || 0) * scale
         };
 
-        // Compose text with measurement value if present
-        const measurement = this.projectData.strokeMeasurements?.[this.currentLabel]?.[strokeLabel]?.value;
-        const text = measurement ? `${strokeLabel}: ${measurement}` : strokeLabel;
+        // Compose label text (just tag inside circle)
+        const labelText = strokeLabel;
+        // Optional measurement text shown alongside
+        const rawMeasurement = this.projectData.strokeMeasurements?.[this.currentLabel]?.[strokeLabel]?.value;
+        const measurementText = this.showMeasurements && rawMeasurement ? this.formatMeasurement(rawMeasurement) : null;
 
         // Sizing
+        const radius = Math.max(10, 14 * scale);
         const fontSize = Math.max(10, 12 * scale);
-        const padding = 4 * Math.max(1, scale);
         this.ctx.font = `${fontSize}px Arial`;
-        const textWidth = this.ctx.measureText(text).width;
+        const textMetrics = this.ctx.measureText(labelText);
+        const textHalfWidth = textMetrics.width / 2;
 
-        const box = {
-            x: labelCenter.x - textWidth / 2 - padding,
-            y: labelCenter.y - fontSize / 2 - padding,
-            w: textWidth + padding * 2,
-            h: fontSize + padding * 2
-        };
-
-        // Background and border in stroke color
-        this.ctx.fillStyle = 'rgba(255,255,255,0.92)';
-        this.ctx.fillRect(box.x, box.y, box.w, box.h);
+        // Circle background
+        this.ctx.fillStyle = 'rgba(255,255,255,0.95)';
+        this.ctx.beginPath();
+        this.ctx.arc(labelCenter.x, labelCenter.y, radius, 0, Math.PI * 2);
+        this.ctx.fill();
         this.ctx.strokeStyle = strokeData.color || '#000';
         this.ctx.lineWidth = 1;
-        this.ctx.strokeRect(box.x, box.y, box.w, box.h);
+        this.ctx.stroke();
 
         // Dotted connector from anchor to label box center
         this.ctx.save();
@@ -460,12 +509,46 @@ class SharedProjectViewer {
         this.ctx.stroke();
         this.ctx.restore();
 
-        // Text
+        // Label text centered inside circle
         this.ctx.fillStyle = '#000';
-        this.ctx.fillText(text, labelCenter.x - textWidth / 2, labelCenter.y + fontSize / 3);
+        this.ctx.textBaseline = 'middle';
+        this.ctx.fillText(labelText, labelCenter.x - textHalfWidth, labelCenter.y);
 
-        // TODO: Remove this line if not implementing click-to-focus functionality
-        this.labelRects.push({ imageLabel: this.currentLabel, strokeLabel, rect: box });
+        // Optional measurement text to the right of the circle
+        if (measurementText) {
+            const mFont = Math.max(10, 11 * scale);
+            this.ctx.font = `${mFont}px Arial`;
+            const mx = labelCenter.x + radius + 6 * Math.max(1, scale);
+            const my = labelCenter.y;
+            this.ctx.fillText(measurementText, mx, my);
+        }
+
+        // Track rects for hit-testing during drag
+        // Hit circle as rect bounds for simplicity
+        const box = { x: labelCenter.x - radius, y: labelCenter.y - radius, w: radius * 2, h: radius * 2 };
+        this.labelRects.push({ imageLabel: this.currentLabel, strokeLabel, rect: box, anchor, scale });
+    }
+
+    formatMeasurement(raw) {
+        // If stored string already has unit, just return as-is
+        if (typeof raw === 'string') {
+            if (this.units === 'in') return raw;
+            // best-effort parse number and convert to cm
+            const num = parseFloat(raw);
+            if (Number.isFinite(num)) {
+                const cm = num * 2.54;
+                return `${cm.toFixed(1)} cm`;
+            }
+            return raw;
+        }
+        if (typeof raw === 'number') {
+            if (this.units === 'in') return `${raw.toFixed(2)} in`;
+            return `${(raw * 2.54).toFixed(1)} cm`;
+        }
+        if (raw && typeof raw === 'object' && ('value' in raw)) {
+            return this.formatMeasurement(raw.value);
+        }
+        return '';
     }
     
     transformPoint(point, scale, offsetX, offsetY) {
@@ -537,6 +620,54 @@ class SharedProjectViewer {
         // Naive hit test: focus the first input (enhance later with per-stroke proximity)
         const first = document.querySelector('#measurementsForm input[data-stroke]');
         if (first) first.focus();
+    }
+
+    // ===== Label Dragging =====
+    getMousePos(evt) {
+        const rect = this.canvas.getBoundingClientRect();
+        const x = ((evt.clientX - rect.left) / rect.width) * this.canvas.width;
+        const y = ((evt.clientY - rect.top) / rect.height) * this.canvas.height;
+        return { x, y };
+    }
+
+    onCanvasMouseDown(evt) {
+        if (!this.projectData) return;
+        const pos = this.getMousePos(evt);
+        // Check top-most label first
+        for (let i = this.labelRects.length - 1; i >= 0; i--) {
+            const entry = this.labelRects[i];
+            const r = entry.rect;
+            if (pos.x >= r.x && pos.x <= r.x + r.w && pos.y >= r.y && pos.y <= r.y + r.h) {
+                this.isDraggingLabel = true;
+                this.draggingStroke = { imageLabel: entry.imageLabel, strokeLabel: entry.strokeLabel };
+                this.dragAnchorCanvas = entry.anchor; // canvas coords
+                this.dragScale = entry.scale || 1;
+                evt.preventDefault();
+                break;
+            }
+        }
+    }
+
+    onCanvasMouseMove(evt) {
+        if (!this.isDraggingLabel || !this.draggingStroke) return;
+        const pos = this.getMousePos(evt);
+        const newOffset = {
+            x: (pos.x - this.dragAnchorCanvas.x) / this.dragScale,
+            y: (pos.y - this.dragAnchorCanvas.y) / this.dragScale
+        };
+        const { imageLabel, strokeLabel } = this.draggingStroke;
+        this.projectData.customLabelPositions = this.projectData.customLabelPositions || {};
+        this.projectData.customLabelPositions[imageLabel] = this.projectData.customLabelPositions[imageLabel] || {};
+        this.projectData.customLabelPositions[imageLabel][strokeLabel] = newOffset;
+        this.scheduleRender();
+    }
+
+    onCanvasMouseUp() {
+        if (this.isDraggingLabel) {
+            this.isDraggingLabel = false;
+            this.draggingStroke = null;
+            this.dragAnchorCanvas = null;
+        }
     }
     
     async submitMeasurements() {

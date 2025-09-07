@@ -40,7 +40,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({ 
     storage: storage,
-    limits: { fileSize: 50 * 1024 * 1024 } // 50MB limit
+    limits: { fileSize: 200 * 1024 * 1024 } // 200MB limit
 });
 
 // Middleware setup
@@ -48,8 +48,9 @@ const upload = multer({
 app.use(express.static('public'));
 // Serve static files from root directory
 app.use(express.static('./'));
-// Parse JSON request bodies
-app.use(express.json({ limit: '50mb' }));
+// Parse JSON request bodies (increase limit for large projects)
+app.use(express.json({ limit: '200mb' }));
+app.use(express.urlencoded({ extended: true, limit: '200mb' }));
 
 // Route handlers
 // Serve the main page

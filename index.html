@@ -656,9 +656,10 @@
             background: none !important;
             border: none !important;
             cursor: pointer !important;
-            font-size: 14px !important;
+            font-size: 16px !important;
+            line-height: 1 !important;
             padding: 2px !important;
-            opacity: 0.7 !important;
+            opacity: 0.8 !important;
         }
         
         .stroke-label-toggle-btn:hover {
@@ -1056,13 +1057,22 @@
                 <button id="saveProjectTop" class="tbtn" title="Save Project" aria-label="Save Project">
                     <span class="label-long">Save Project</span><span class="label-short">Save</span>
                 </button>
-                <button id="shareProjectBtn" class="tbtn" title="Create shareable URL for customer measurements">
-                    <span class="label-long">Share Project</span><span class="label-short">Share</span>
-                </button>
-                <button id="updateShareBtn" class="tbtn" title="Update existing share with current project state">
-                    <span class="label-long">Update Share</span><span class="label-short">Update</span>
-                </button>
                 <button id="unitToggleBtn" class="tbtn" title="Toggle units">inches</button>
+                <div class="flex items-center gap-2 text-xs bg-slate-50 border border-slate-200 px-2 py-1 rounded-lg">
+                    <span>Tag</span>
+                    <div class="inline-flex rounded-md overflow-hidden border border-slate-200">
+                        <button id="shapeSquareBtn" type="button" class="px-2 py-1 bg-white text-slate-700 hover:bg-slate-50" aria-pressed="true" title="Square">
+                            ■
+                        </button>
+                        <button id="shapeCircleBtn" type="button" class="px-2 py-1 bg-white text-slate-700 hover:bg-slate-50" aria-pressed="false" title="Circle">
+                            ●
+                        </button>
+                    </div>
+                    <select id="labelShapeSelect" class="hidden">
+                        <option value="square" selected>Square</option>
+                        <option value="circle">Circle</option>
+                    </select>
+                </div>
             </div>
         </div>
     </div>
@@ -1249,9 +1259,18 @@
                     <div id="nextTagDisplay" class="font-semibold text-blue-600 cursor-pointer hover:bg-blue-50 px-1 py-0.5 rounded" title="Click to set custom tag">A</div>
                 </div>
             </div>
-            <div class="flex gap-2">
-                <button id="tagModeToggle" title="Toggle between letters only and letters with numbers" class="flex-1 px-2 py-1 text-xs bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg transition-all font-medium">
+            <div class="flex gap-2 flex-wrap items-center">
+                <button id="tagModeToggle" title="Toggle between letters only and letters with numbers" class="px-2 py-1 text-xs bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg transition-all font-medium">
                     Letters + Numbers
+                </button>
+                <label class="flex items-center gap-1 text-xs bg-slate-50 border border-slate-200 px-2 py-1 rounded-lg">
+                    <input id="toggleShowMeasurements" type="checkbox" class="accent-blue-600" checked>
+                    Show measurements
+                </label>
+                <button id="unitToggleBtnSecondary" class="px-2 py-1 text-xs bg-white border border-gray-300 rounded-lg hover:bg-gray-50" title="Toggle units">inches</button>
+                <button id="labelShapeToggleBtn" class="px-2 py-1 text-xs bg-white border border-gray-300 rounded-lg hover:bg-gray-50" title="Toggle tag shape" aria-pressed="true">■</button>
+                <button id="addTags" title="Add or edit tags for current image" class="px-2 py-1 text-xs bg-green-100 hover:bg-green-200 text-green-700 rounded-lg transition-all font-medium">
+                    Add Tags
                 </button>
             </div>
         </div>
@@ -1357,13 +1376,19 @@
                 <option value="actual-size">Actual Size</option>
             </select>
             <button id="applyFitCurrent" class="px-2 py-1 bg-white border border-gray-300 text-slate-700 text-xs rounded-lg hover:bg-slate-50" title="Apply to current image">Apply</button>
-            <button id="scaleButton" class="px-2 py-1 bg-white border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50">100% ▼</button>
+            <button id="scaleButton" class="px-2 py-1 bg-white border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50" aria-haspopup="listbox" aria-expanded="false" type="button">100% <svg class="inline w-3 h-3 -mt-0.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M5.25 7.5l4.5 4.5 4.5-4.5H5.25z"/></svg></button>
             <div class="flex items-center gap-1 ml-2">
                 <button id="rotateLeftCtrl" class="px-2 py-1 bg-white border border-gray-300 text-slate-700 text-xs rounded-lg hover:bg-slate-50" title="Rotate 90° CCW">↶</button>
                 <button id="rotateRightCtrl" class="px-2 py-1 bg-white border border-gray-300 text-slate-700 text-xs rounded-lg hover:bg-slate-50" title="Rotate 90° CW">↷</button>
                 <button id="flipHCtrl" class="px-2 py-1 bg-white border border-gray-300 text-slate-700 text-xs rounded-lg hover:bg-slate-50" title="Flip Horizontal">↔</button>
                 <button id="flipVCtrl" class="px-2 py-1 bg-white border border-gray-300 text-slate-700 text-xs rounded-lg hover:bg-slate-50" title="Flip Vertical">↕</button>
             </div>
+
+            <!-- Share/Update next to Copy/Save -->
+            <button id="shareProjectBtn" class="px-3 py-1 bg-white border border-gray-300 text-slate-700 text-xs rounded-lg hover:bg-slate-50" title="Create shareable URL for customer measurements">
+                Share
+            </button>
+            
 
             <!-- Quick Save with hover menu -->
             <div id="quickSave" class="relative ml-2">
@@ -1487,6 +1512,17 @@
                     setActive(arrowStartBtn, as?.startArrow);
                     setActive(arrowEndBtn, as?.endArrow);
                     setLineStyleIcon(ds?.style || 'solid');
+                    // Sync label shape toggle visual state
+                    const state = window.paintApp?.state || {};
+                    const shape = state.labelShape || (document.getElementById('labelShapeSelect')?.value) || 'square';
+                    const squareBtn = document.getElementById('shapeSquareBtn');
+                    const circleBtn = document.getElementById('shapeCircleBtn');
+                    if (squareBtn && circleBtn) {
+                        squareBtn.setAttribute('aria-pressed', String(shape === 'square'));
+                        circleBtn.setAttribute('aria-pressed', String(shape === 'circle'));
+                        setActive(squareBtn, shape === 'square');
+                        setActive(circleBtn, shape === 'circle');
+                    }
                 } catch {}
             };
             syncFromState();
@@ -1619,6 +1655,24 @@
                 el.textContent = '↕'; 
             });
             reparent('scaleButton', bottom);
+            // Shape toggle wiring
+            const labelShapeSelect = document.getElementById('labelShapeSelect');
+            const shapeSquareBtn = document.getElementById('shapeSquareBtn');
+            const shapeCircleBtn = document.getElementById('shapeCircleBtn');
+            const setShape = (val) => {
+                if (labelShapeSelect) {
+                    labelShapeSelect.value = val;
+                    labelShapeSelect.dispatchEvent(new Event('change'));
+                }
+                if (window.paintApp?.state) {
+                    window.paintApp.state.labelShape = val;
+                }
+                syncFromState();
+                if (window.redrawCanvasWithVisibility) window.redrawCanvasWithVisibility();
+            };
+            if (shapeSquareBtn) shapeSquareBtn.addEventListener('click', () => setShape('square'));
+            if (shapeCircleBtn) shapeCircleBtn.addEventListener('click', () => setShape('circle'));
+            syncFromState();
 
             // RIGHT: project settings are now pre-populated, just need to wire up functionality
             const saveProjectTop = document.getElementById('saveProjectTop');
@@ -1646,21 +1700,72 @@
             // Unit toggle button is now pre-populated, just need to wire up functionality
             const unitToggle = document.getElementById('unitToggleBtn');
             const unitSel = document.getElementById('unitSelector');
+            const unitToggleSecondary = document.getElementById('unitToggleBtnSecondary');
             
+            const getUnitLabel = () => (unitSel?.value === 'inch' ? 'inches' : 'cm');
+            const toggleUnits = () => {
+                if (!unitSel) return;
+                unitSel.value = unitSel.value === 'inch' ? 'cm' : 'inch';
+                const label = getUnitLabel();
+                if (unitToggle) unitToggle.textContent = label;
+                if (unitToggleSecondary) unitToggleSecondary.textContent = label;
+                if (typeof updateMeasurementDisplay === 'function') {
+                    updateMeasurementDisplay();
+                } else if (unitSel.onchange) {
+                    unitSel.onchange();
+                }
+            };
+
             if (unitToggle && unitSel) {
-                const getLabel = () => unitSel.value === 'inch' ? 'inches' : 'cm';
-                unitToggle.textContent = getLabel();
-                unitToggle.addEventListener('click', () => {
-                    unitSel.value = unitSel.value === 'inch' ? 'cm' : 'inch';
-                    unitToggle.textContent = getLabel();
-                    if (typeof updateMeasurementDisplay === 'function') {
-                        updateMeasurementDisplay();
-                    } else if (unitSel.onchange) {
-                        unitSel.onchange();
-                    }
-                });
+                unitToggle.textContent = getUnitLabel();
+                unitToggle.addEventListener('click', toggleUnits);
                 // Hide the original select (kept for compatibility)
                 unitSel.style.display = 'none';
+            }
+
+            if (unitToggleSecondary && unitSel) {
+                unitToggleSecondary.textContent = getUnitLabel();
+                unitToggleSecondary.addEventListener('click', toggleUnits);
+            }
+
+            // Elements panel single-button shape toggle wiring
+            const labelShapeToggleBtn = document.getElementById('labelShapeToggleBtn');
+            const applyShape = (val) => {
+                if (labelShapeSelect) {
+                    labelShapeSelect.value = val;
+                    labelShapeSelect.dispatchEvent(new Event('change'));
+                }
+                if (window.paintApp?.state) window.paintApp.state.labelShape = val;
+                if (window.redrawCanvasWithVisibility) window.redrawCanvasWithVisibility();
+            };
+            if (labelShapeToggleBtn) {
+                const syncShapeBtn = () => {
+                    const shape = (window.paintApp?.state?.labelShape) || labelShapeSelect?.value || 'square';
+                    const isSquare = shape !== 'circle';
+                    labelShapeToggleBtn.textContent = isSquare ? '■' : '●';
+                    labelShapeToggleBtn.setAttribute('aria-pressed', String(isSquare));
+                };
+                labelShapeToggleBtn.addEventListener('click', () => {
+                    const shape = (window.paintApp?.state?.labelShape) || labelShapeSelect?.value || 'square';
+                    applyShape(shape === 'circle' ? 'square' : 'circle');
+                    syncShapeBtn();
+                });
+                syncShapeBtn();
+            }
+
+            // Auto-update shared project when state saves (debounced)
+            if (window.updateSharedProject && window.saveState && !window.__autoUpdateSharePatched) {
+                window.__autoUpdateSharePatched = true;
+                const originalSaveState = window.saveState;
+                let updateTimer = null;
+                window.saveState = function() {
+                    const result = originalSaveState.apply(this, arguments);
+                    clearTimeout(updateTimer);
+                    updateTimer = setTimeout(() => {
+                        try { window.updateSharedProject(); } catch {}
+                    }, 600);
+                    return result;
+                };
             }
 
             // Hide legacy panels after moving controls (keep in DOM to preserve any lookups)
@@ -2709,7 +2814,7 @@
                     option.addEventListener('click', () => {
                         const scale = option.dataset.scale;
                         const percentage = Math.round(parseFloat(scale) * 100);
-                        scaleButton.textContent = percentage + '% ▼';
+                        scaleButton.innerHTML = `${percentage}% <svg class="inline w-3 h-3 -mt-0.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M5.25 7.5l4.5 4.5 4.5-4.5H5.25z"/></svg>`;
                         scaleDropdown.classList.add('hidden');
                     });
                 });

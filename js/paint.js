@@ -1,6 +1,8 @@
 ﻿// Define core application structure for better state management
 console.log('[PAINT.JS] Script loaded successfully');
 console.warn('[PAINT.JS] Script loaded (warn)');
+// Disable legacy measurement overlay rendering in favor of unified tag renderer
+window.disableLegacyMeasurementOverlay = true;
 window.paintApp = {
     config: {
         IMAGE_LABELS: ['front', 'side', 'back', 'cushion', 'blank_canvas'],
@@ -495,7 +497,7 @@ if (colorPicker) {
         // Create delete button
         const deleteButton = document.createElement('button');
         deleteButton.className = 'delete-image-btn opacity-0 group-hover:opacity-100 transition-opacity';
-        deleteButton.innerHTML = 'Ã—';
+        deleteButton.textContent = '×';
         deleteButton.title = 'Delete image';
         deleteButton.style.cssText = `
             position: absolute;
@@ -3465,6 +3467,10 @@ if (colorPicker) {
         // Only draw if label is visible in viewport
         if (labelX >= -100 && labelX <= viewport.width + 100 && 
             labelY >= -50 && labelY <= viewport.height + 50) {
+            // Disable legacy overlay if unified renderer is active
+            if (window.disableLegacyMeasurementOverlay) {
+                return;
+            }
             
             // Get measurement text
             const measurements = window.strokeMeasurements[imageLabel] || {};
@@ -3519,7 +3525,9 @@ if (colorPicker) {
             
             // Draw text
             ctx.fillStyle = '#333';
-            ctx.fillText(labelText, labelX, labelY);
+            if (!window.disableLegacyMeasurementOverlay) {
+                ctx.fillText(labelText, labelX, labelY);
+            }
             
             ctx.restore();
         }
@@ -4223,7 +4231,9 @@ if (colorPicker) {
             // Create label toggle button
             const labelToggleBtn = document.createElement('button');
             labelToggleBtn.className = 'stroke-label-toggle-btn';
-            labelToggleBtn.innerHTML = isLabelVisible ? 'ðŸ·ï¸' : ' ðŸ·ï¸ '; // Show label icon, strikethrough if hidden
+            // Use stable unicode for label/tag icon to avoid mojibake
+            const tagIcon = '\uD83C\uDFF7\uFE0F';
+            labelToggleBtn.textContent = tagIcon;
             labelToggleBtn.title = isLabelVisible ? 'Hide Label' : 'Show Label';
             labelToggleBtn.onclick = (e) => {
                 e.stopPropagation();
@@ -6113,8 +6123,11 @@ if (colorPicker) {
                 const vectorData = strokes[strokeLabel];
 
                 if (isStrokeVisible && isLabelVisible && vectorData && vectorData.points.length > 0) {
+                    // Determine shape and build label text rules
+                    const shape = (window.paintApp?.state?.labelShape) || (document.getElementById('labelShapeSelect')?.value) || 'square';
                     const measurement = getMeasurementString(strokeLabel);
-                    const labelText = measurement ? `${strokeLabel}=${measurement}` : strokeLabel;
+                    // Circle: tag only; Square: tag plus measurement (if any)
+                    const labelText = (shape === 'circle') ? `${strokeLabel}` : (measurement ? `${strokeLabel}=${measurement}` : `${strokeLabel}`);
 
                     let anchorPointCanvas; // Anchor point in canvas coordinates
                     let anchorPointImage;  // Anchor point in image coordinates
@@ -6148,8 +6161,8 @@ if (colorPicker) {
                     ctx.textBaseline = 'bottom';
 
                     const metrics = ctx.measureText(labelText);
-                    const labelWidth = metrics.width + 12; 
                     const labelHeight = 48; 
+                    const labelWidth = Math.max(metrics.width + 12, labelHeight); // ensure at least a square for short text
                     
                     // Initial labelRect definition (center-based reference)
                     // We will treat (x, y) as the CENTER of the label for placement and connector math
@@ -6393,17 +6406,63 @@ if (colorPicker) {
                     const rectX = finalPositionCanvas.x - labelWidth / 2;
                     const rectY = finalPositionCanvas.y - labelHeight / 2;
 
-                    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-                    ctx.fillRect(rectX, rectY, labelWidth, labelHeight);
+                    // Shape toggle (already determined above as 'shape')
+                    const showMeasurements = document.getElementById('toggleShowMeasurements') ? document.getElementById('toggleShowMeasurements').checked : true;
+                    const unitsSelect = document.getElementById('unitsSelect');
+                    const units = unitsSelect ? (unitsSelect.value === 'cm' ? 'cm' : 'in') : 'in';
 
-                    ctx.strokeStyle = labelColor;
-                    ctx.lineWidth = 1;
-                    ctx.strokeRect(rectX, rectY, labelWidth, labelHeight);
+                    if (shape === 'circle') {
+                        // Circle or rounded pill depending on length
+                        const radius = Math.max(10, (labelHeight / 2));
+                        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+                        const tm = ctx.measureText(labelText);
+                        const textFitsInCircle = tm.width <= radius * 1.6; // heuristic: two chars fit in circle
+                        if (textFitsInCircle) {
+                            ctx.beginPath();
+                            ctx.arc(finalPositionCanvas.x, finalPositionCanvas.y, radius, 0, Math.PI * 2);
+                            ctx.fill();
+                            ctx.strokeStyle = labelColor;
+                            ctx.lineWidth = 1;
+                            ctx.stroke();
+                        } else {
+                            // Draw pill (oblong) to contain text
+                            const pillW = Math.max(tm.width + 14, radius * 2);
+                            const pillH = radius * 2;
+                            const x = finalPositionCanvas.x - pillW / 2;
+                            const y = finalPositionCanvas.y - pillH / 2;
+                            const r = pillH / 2;
+                            ctx.beginPath();
+                            ctx.moveTo(x + r, y);
+                            ctx.lineTo(x + pillW - r, y);
+                            ctx.arc(x + pillW - r, y + r, r, -Math.PI / 2, Math.PI / 2);
+                            ctx.lineTo(x + r, y + pillH);
+                            ctx.arc(x + r, y + r, r, Math.PI / 2, -Math.PI / 2);
+                            ctx.closePath();
+                            ctx.fill();
+                            ctx.strokeStyle = labelColor;
+                            ctx.lineWidth = 1;
+                            ctx.stroke();
+                        }
+                        // Label text centered
+                        ctx.fillStyle = labelColor;
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText(labelText, finalPositionCanvas.x, finalPositionCanvas.y);
+                    } else {
+                        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+                        ctx.fillRect(rectX, rectY, labelWidth, labelHeight);
+                        ctx.strokeStyle = labelColor;
+                        ctx.lineWidth = 1;
+                        ctx.strokeRect(rectX, rectY, labelWidth, labelHeight);
+                        // Center tag text inside the square
+                        ctx.fillStyle = labelColor;
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText(labelText, finalPositionCanvas.x, finalPositionCanvas.y);
+                    }
 
-                    ctx.fillStyle = labelColor;
-                    const textX = finalPositionCanvas.x;
-                    const textY = rectY + labelHeight - 7; 
-                    ctx.fillText(labelText, textX, textY);
+                    // Measurement text is already included in labelText for square mode.
+                    // Do not render separate black measurement overlay.
                 } else {
                     // ... existing code ...
                 }
@@ -6422,6 +6481,23 @@ if (colorPicker) {
             imageData.width,
             imageData.height
         );
+    }
+
+    // Shared with viewer: convert measurement string/number to desired units
+    function formatMeasurementForUnits(raw, units) {
+        if (typeof raw === 'string') {
+            if (units === 'in') return raw;
+            const num = parseFloat(raw);
+            if (Number.isFinite(num)) return `${(num * 2.54).toFixed(1)} cm`;
+            return raw;
+        }
+        if (typeof raw === 'number') {
+            return units === 'cm' ? `${(raw * 2.54).toFixed(1)} cm` : `${raw.toFixed(2)} in`;
+        }
+        if (raw && typeof raw === 'object' && ('value' in raw)) {
+            return formatMeasurementForUnits(raw.value, units);
+        }
+        return '';
     }
 
     // Normalize rotation delta to prevent wrap-around issues
@@ -11628,7 +11704,8 @@ if (colorPicker) {
         const scale = window.imageScaleByLabel[currentImageLabel] || 1.0;
         const scaleButton = document.getElementById('scaleButton');
         if (scaleButton) {
-            scaleButton.textContent = `Scale: ${Math.round(scale * 100)}% â–¼`;
+            const pct = Math.round(scale * 100);
+            scaleButton.innerHTML = `Scale: ${pct}% <svg class="inline w-3 h-3 -mt-0.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M5.25 7.5l4.5 4.5 4.5-4.5H5.25z"/></svg>`;
         }
         
         // ADDED: Update the sidebar thumbnail scale display for the current image
@@ -12809,7 +12886,8 @@ if (colorPicker) {
         const viewTypeMappings = {
             'cushion': 'top',  // Map 'cushion' to 'top' view
             'detail': 'angle', // Map 'detail' to 'angle' view
-            'interior': 'front' // Map 'interior' to 'front' view
+            'interior': 'front', // Map 'interior' to 'front' view
+            'blank': 'front'   // Map 'blank' to 'front' view (most common use case)
         };
 
         if (window.TAG_MODEL && window.TAG_MODEL.viewType && window.TAG_MODEL.viewType.options && Array.isArray(window.TAG_MODEL.viewType.options)) {
@@ -14349,7 +14427,7 @@ function showShareDialog(shareUrl, expiresAt) {
     const expiryDate = new Date(expiresAt).toLocaleDateString();
     
     dialog.innerHTML = `
-        <h2 style="color: #2c3e50; margin: 0 0 20px 0; font-size: 1.5em;">ðŸ”— Project Share Link Created</h2>
+        <h2 style="color: #2c3e50; margin: 0 0 20px 0; font-size: 1.5em;">🔗 Project Share Link Created</h2>
         
         <p style="color: #555; margin-bottom: 20px;">
             Share this link with your customers to collect their measurements:
@@ -14370,18 +14448,18 @@ function showShareDialog(shareUrl, expiresAt) {
                 id="copyUrlBtn" 
                 style="flex: 1; background: #007bff; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: 600;"
             >
-                ðŸ“‹ Copy Link
+                📋 Copy Link
             </button>
             <button 
                 id="openUrlBtn" 
                 style="flex: 1; background: #28a745; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: 600;"
             >
-                ðŸ”— Open Link
+                🔗 Open Link
             </button>
         </div>
         
         <p style="color: #666; font-size: 12px; margin-bottom: 20px;">
-            â° Link expires: ${expiryDate}
+            ⏰ Link expires: ${expiryDate}
         </p>
         
         <div style="text-align: center;">
