@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run test:unit:*)",
+      "Bash(npm run test:integration:*)",
+      "Bash(rg:*)",
+      "Bash(npm test:*)",
+      "Bash(npx jest:*)",
+      "Bash(grep:*)",
+      "Bash(sed:*)",
+      "Bash(find:*)",
+      "Bash(timeout:*)",
+      "Bash(echo:*)",
+      "Bash(node:*)",
+      "Bash(awk:*)",
+      "Bash(git checkout:*)",
+      "Bash(npm run test:coverage:*)",
+      "Bash(convert:*)",
+      "Bash(curl:*)",
+      "Bash(npm run test:e2e:*)",
+      "Bash(npx cypress run:*)",
+      "Bash(mv:*)",
+      "Bash(rm:*)"
+    ],
+    "deny": []
+  }
+}

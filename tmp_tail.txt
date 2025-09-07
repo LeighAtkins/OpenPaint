@@ -1,0 +1,200 @@
+                    const demoThumbnails = gallery.querySelectorAll('.image-thumbnail');
+                    demoThumbnails.forEach(thumb => {
+                        const overlay = thumb.querySelector('.image-overlay');
+                        if (overlay && (overlay.textContent.includes('Demo Image') || overlay.textContent.includes('Blank Canvas'))) {
+                            thumb.remove();
+                        }
+                    });
+                }
+                
+                if (dots) {
+                    // Clear demo dots
+                    const demoDots = dots.querySelectorAll('.nav-dot');
+                    demoDots.forEach(dot => dot.remove());
+                }
+                
+                // Update counter if function exists
+                if (typeof updateImageCounter === 'function') {
+                    updateImageCounter();
+                } else {
+                    // Update counter manually
+                    const counter = document.getElementById('imageCounter');
+                    if (counter) {
+                        counter.textContent = imageGalleryData.length > 0 ? `${imageGalleryData.length} images` : '';
+                    }
+                }
+                console.log('[DEMO] Demo images cleared, remaining images:', imageGalleryData.length);
+            }
+            
+            // Removed manual sync button - syncing is now automatic
+            
+            // Test the gallery with some demo images after everything loads
+            setTimeout(() => {
+                console.log('[INIT] ===== Initial gallery setup =====');
+                console.log('[INIT] imageGalleryData before sync:', imageGalleryData.length);
+                
+                // First, sync any existing legacy images
+                console.log('[INIT] Step 1: Syncing existing legacy images...');
+                syncLegacyImagesToGallery();
+                
+                console.log('[INIT] imageGalleryData after sync:', imageGalleryData.length);
+                
+                // Check if we have any real images (non-demo)
+                const realImagesCount = imageGalleryData.filter(item => !item.name?.includes('Demo Image') && !item.name?.includes('Blank Canvas')).length;
+                console.log('[INIT] Real images found:', realImagesCount);
+                
+                // Do not add demo/blank images; keep gallery empty until user adds/loads
+                console.log(`[INIT] Skipping demo images. Real count: ${realImagesCount}`);
+                
+                // Test the addImageToSidebar function to see if hooking works
+                if (window.addImageToSidebar) {
+                    console.log('[TEST] addImageToSidebar function is available');
+                } else {
+                    console.log('[TEST] addImageToSidebar not available yet');
+                }
+                
+                console.log('[INIT] ===== Initial setup complete =====');
+                
+                // Ensure we always start with the first image
+                if (imageGalleryData.length > 0) {
+                    console.log('[INIT] Navigating to first image (index 0)');
+                    setTimeout(() => {
+                        navigateToImage(0);
+                        updateActiveImage(0);
+                    }, 100); // Small delay to ensure everything is ready
+                }
+            }, 2000);
+            
+            // Track last known legacy count to avoid unnecessary syncs
+            let lastLegacyCount = 0;
+            
+            // Also set up a periodic sync to catch any images that get added later (less frequent)
+            // Only run when tab is visible to reduce performance impact
+            let syncInterval;
+            const startSyncInterval = () => {
+                syncInterval = setInterval(() => {
+                    // Skip if tab is not visible
+                    if (document.hidden) return;
+                    
+                    const currentLegacyCount = document.getElementById('imageList')?.querySelectorAll('.image-container').length || 0;
+                    const currentRealImagesCount = imageGalleryData.filter(item => !item.name?.includes('Demo Image') && !item.name?.includes('Blank Canvas')).length;
+                    
+                    // Only sync if there's actually a change in legacy count
+                    if (currentLegacyCount > lastLegacyCount) {
+                        console.log('[PERIODIC] New legacy images detected, syncing...');
+                        console.log(`[PERIODIC] Legacy: ${currentLegacyCount} (was ${lastLegacyCount}), Gallery real: ${currentRealImagesCount}`);
+                        
+                        // No demo images are used anymore; skip clearing
+                        
+                        syncLegacyImagesToGallery();
+                        
+                        // After adding new images, ensure we start at the first one if we're not already there
+                        if (currentImageIndex !== 0 && imageGalleryData.length > 0) {
+                            console.log('[PERIODIC] Resetting to first image after adding new images');
+                            setTimeout(() => {
+                                navigateToImage(0);
+                                updateActiveImage(0);
+                            }, 200);
+                        }
+                        
+                        lastLegacyCount = currentLegacyCount;
+                    }
+                }, 3000);  // Check every 3 seconds instead of 2
+            };
+            
+            // Start interval and handle visibility changes
+            startSyncInterval();
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden) {
+                    clearInterval(syncInterval);
+                } else {
+                    startSyncInterval();
+                }
+            });
+        });
+
+        // View Measurements toggle functionality
+        document.addEventListener('DOMContentLoaded', () => {
+            // View Measurements toggle functionality
+            const viewMeasurementsToggle = document.getElementById('viewMeasurementsToggle');
+            if (viewMeasurementsToggle) {
+                let measurementsVisible = true; // Default state
+
+                const updateToggleAppearance = () => {
+                    if (measurementsVisible) {
+                        viewMeasurementsToggle.classList.remove('bg-gray-500', 'text-white');
+                        viewMeasurementsToggle.classList.add('bg-blue-500', 'text-white');
+                        viewMeasurementsToggle.textContent = 'Show Labels';
+                        viewMeasurementsToggle.title = 'Hide measurement labels';
+                    } else {
+                        viewMeasurementsToggle.classList.remove('bg-blue-500', 'text-white');
+                        viewMeasurementsToggle.classList.add('bg-gray-500', 'text-white');
+                        viewMeasurementsToggle.textContent = 'Hide Labels';
+                        viewMeasurementsToggle.title = 'Show measurement labels';
+                    }
+                };
+
+                viewMeasurementsToggle.addEventListener('click', (e) => {
+                    e.stopPropagation(); // Prevent panel dragging
+                    measurementsVisible = !measurementsVisible;
+                    updateToggleAppearance();
+
+                    // Toggle all measurement labels visibility
+                    if (window.strokeLabelVisibility && window.currentImageLabel) {
+                        const imageLabels = window.strokeLabelVisibility[window.currentImageLabel];
+                        if (imageLabels) {
+                            for (const strokeLabel in imageLabels) {
+                                window.strokeLabelVisibility[window.currentImageLabel][strokeLabel] = measurementsVisible;
+                            }
+                        }
+                    }
+
+                    // Update all label toggle buttons in the stroke list
+                    const labelToggleBtns = document.querySelectorAll('.stroke-label-toggle');
+                    labelToggleBtns.forEach(btn => {
+                        btn.innerHTML = measurementsVisible ? '🏷️' : ' 🏷️ ';
+                        btn.title = measurementsVisible ? 'Hide Label' : 'Show Label';
+                    });
+
+                    // Redraw canvas to apply changes
+                    if (typeof window.redrawCanvasWithVisibility === 'function') {
+                        window.redrawCanvasWithVisibility();
+                    }
+                });
+
+                // Set initial appearance
+                updateToggleAppearance();
+            }
+        });
+    </script>
+    
+    <!-- Scale Dropdown - positioned outside panel hierarchy -->
+    <div id="scaleDropdown" class="fixed bg-white border border-gray-300 rounded shadow-lg hidden max-h-64 overflow-y-auto" style="z-index: 9999; min-width: 80px;">
+        <div class="scale-option px-3 py-1 hover:bg-gray-100 cursor-pointer text-sm" data-scale="0.1">10%</div>
+        <div class="scale-option px-3 py-1 hover:bg-gray-100 cursor-pointer text-sm" data-scale="0.15">15%</div>
+        <div class="scale-option px-3 py-1 hover:bg-gray-100 cursor-pointer text-sm" data-scale="0.2">20%</div>
+        <div class="scale-option px-3 py-1 hover:bg-gray-100 cursor-pointer text-sm" data-scale="0.25">25%</div>
+        <div class="scale-option px-3 py-1 hover:bg-gray-100 cursor-pointer text-sm" data-scale="0.33">33%</div>
+        <div class="scale-option px-3 py-1 hover:bg-gray-100 cursor-pointer text-sm" data-scale="0.5">50%</div>
+        <div class="scale-option px-3 py-1 hover:bg-gray-100 cursor-pointer text-sm" data-scale="0.67">67%</div>
+        <div class="scale-option px-3 py-1 hover:bg-gray-100 cursor-pointer text-sm" data-scale="0.75">75%</div>
+        <div class="scale-option px-3 py-1 hover:bg-gray-100 cursor-pointer text-sm" data-scale="0.8">80%</div>
+        <div class="scale-option px-3 py-1 hover:bg-gray-100 cursor-pointer text-sm" data-scale="0.9">90%</div>
+        <div class="scale-option px-3 py-1 hover:bg-gray-100 cursor-pointer text-sm bg-blue-50" data-scale="1" data-default="true">100%</div>
+        <div class="scale-option px-3 py-1 hover:bg-gray-100 cursor-pointer text-sm" data-scale="1.1">110%</div>
+        <div class="scale-option px-3 py-1 hover:bg-gray-100 cursor-pointer text-sm" data-scale="1.25">125%</div>
+        <div class="scale-option px-3 py-1 hover:bg-gray-100 cursor-pointer text-sm" data-scale="1.5">150%</div>
+        <div class="scale-option px-3 py-1 hover:bg-gray-100 cursor-pointer text-sm" data-scale="1.75">175%</div>
+        <div class="scale-option px-3 py-1 hover:bg-gray-100 cursor-pointer text-sm" data-scale="2">200%</div>
+        <div class="scale-option px-3 py-1 hover:bg-gray-100 cursor-pointer text-sm" data-scale="2.5">250%</div>
+        <div class="scale-option px-3 py-1 hover:bg-gray-100 cursor-pointer text-sm" data-scale="3">300%</div>
+        <div class="scale-option px-3 py-1 hover:bg-gray-100 cursor-pointer text-sm" data-scale="4">400%</div>
+        <div class="scale-option px-3 py-1 hover:bg-gray-100 cursor-pointer text-sm" data-scale="5">500%</div>
+    </div>
+
+    <script>console.log('[INDEX] before paint.js'); window.onerror=(m,s,l,c,e)=>console.error('[INDEX] onerror',m,s,l,c,e);</script>
+    <script src="public/js/paint.js?v=20250820123456"></script>
+    <script src="public/js/project-manager.js?v=20250820123458"></script>
+    <script src="public/js/tag-manager.js?v=20250820123456"></script>
+</body>
+</html>

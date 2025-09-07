@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Import</title>
+</head>
+<body>
+    <h1>Test Background Removal Library Import</h1>
+    <button id="testImport">Test Import</button>
+    <div id="result"></div>
+
+    <script>
+        const result = document.getElementById('result');
+        const testBtn = document.getElementById('testImport');
+
+        testBtn.addEventListener('click', async () => {
+            result.textContent = 'Importing...';
+            let removeBackground;
+
+            try {
+                console.log('Starting import from unpkg...');
+                const mod = await import('https://unpkg.com/@imgly/background-removal@1.7.0/dist/index.js');
+                console.log('Import successful:', mod);
+                removeBackground = mod?.default || mod?.removeBackground;
+                console.log('removeBackground function:', typeof removeBackground);
+
+            } catch (e1) {
+                console.warn('Failed to import from unpkg, trying jsdelivr:', e1.message);
+
+                try {
+                    console.log('Starting import from jsdelivr...');
+                    const mod = await import('https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.7.0/+esm');
+                    console.log('Import successful:', mod);
+                    removeBackground = mod?.default || mod?.removeBackground;
+                    console.log('removeBackground function:', typeof removeBackground);
+
+                } catch (e2) {
+                    console.warn('Failed to import from jsdelivr, trying esm.sh:', e2.message);
+
+                    try {
+                        console.log('Starting import from esm.sh...');
+                        const mod = await import('https://esm.sh/@imgly/background-removal@1.7.0?bundle&deps=onnxruntime-web@1.21.0');
+                        console.log('Import successful:', mod);
+                        removeBackground = mod?.default || mod?.removeBackground;
+                        console.log('removeBackground function:', typeof removeBackground);
+
+                    } catch (e3) {
+                        console.error('All CDN imports failed:', e3);
+                        result.textContent = `❌ All CDN imports failed: ${e3.message}`;
+                        return;
+                    }
+                }
+            }
+
+            if (typeof removeBackground === 'function') {
+                result.textContent = '✅ Import successful! Function available.';
+            } else {
+                result.textContent = '❌ Import successful but function not found.';
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<RemBGIntegrationReport version="1.0">
+  <Metadata>
+    <Project>OpenPaint</Project>
+    <GeneratedAt iso8601="true">${NOW}</GeneratedAt>
+    <Summary>Server-side background removal (REMBG via Docker/Python) wired to the main app UI; client-side fallbacks removed; initialization and cache issues resolved.</Summary>
+  </Metadata>
+
+  <Environment>
+    <Runtime>
+      <Node>Express app serving static assets and API</Node>
+      <Python>REMBG executed via python3 inside Docker image</Python>
+      <Docker>
+        <BaseImage>ubuntu:22.04</BaseImage>
+        <Packages>python3, python3-pip, python3-dev, nodejs, npm, build-essential</Packages>
+        <PythonDeps file="requirements.txt">rembg[cli]&gt;=2.0.0</PythonDeps>
+      </Docker>
+    </Runtime>
+    <Ports>
+      <HTTP>3000</HTTP>
+    </Ports>
+    <Storage>
+      <UploadsDir>/app/uploads (mounted/persisted by Docker)</UploadsDir>
+    </Storage>
+  </Environment>
+
+  <InitialSymptoms>
+    <Symptom>Client Remove BG button in the main app did nothing; no logs.</Symptom>
+    <Symptom>When client loaders worked, the library rejected model value 'isnet_quint8' (ZodError) or failed with iterable/config errors.</Symptom>
+    <Symptom>Server endpoint worked in test pages, but main app path didn’t call Docker/REMBG.</Symptom>
+    <Symptom>Top toolbar button created dynamically, but event handler bound only at initial load.</Symptom>
+    <Symptom>Browser sometimes served cached paint.js; changes weren’t applied under /?debug.</Symptom>
+  </InitialSymptoms>
+
+  <RootCauses>
+    <Cause>Event binding ran before toolbar button injection; the handler didn’t attach to the late-inserted element.</Cause>
+    <Cause>paint.js initialization was gated on DOMContentLoaded; with dynamic loading it could execute after the event had already fired, so init never ran.</Cause>
+    <Cause>Client-only background removal (via @imgly/background-removal) is brittle in non-COOP/COEP contexts and changed schema (models 'small'|'medium' expected), producing validation/runtime errors.</Cause>
+    <Cause>Caching of paint.js prevented updated code from loading during debug sessions.</Cause>
+  </RootCauses>
+
+  <HighLevelFix>
+    <Decision>Make the UI Remove BG action call the server REMBG endpoint exclusively.</Decision>
+    <Rationale>Server path was already reliable in Docker, avoids client WASM/COOP issues, and keeps behavior consistent.</Rationale>
+  </HighLevelFix>
+
+  <Changes>
+    <File path="app.js">
+      <Change>
+        <What>Background removal API returns a compatibility alias 'url' in addition to 'processed'.</What>
+        <Why>Some test pages expected 'url'. Keeps both main app and tests working.</Why>
+        <How>Response shape: { success: true, original, processed, url }.</How>
+      </Change>
+      <Change>
+        <What>Python REMBG is executed via a temporary script through 'python3' inside the container.</What>
+        <Why>Ensures consistent execution within Docker without relying on host-specific Python paths.</Why>
+        <How>Writes temp_rembg_script.py, runs with spawn('python3', ...), cleans up after completion.</How>
+      </Change>
+    </File>
+
+    <File path="public/js/paint.js">
+      <Change>
+        <What>Unified client Remove BG handler (top toolbar + side panel) now uploads the current image to /api/remove-background and applies the server-processed image.</What>
+        <Why>Guarantees REMBG in Docker is used; removes brittle in-browser model behavior.</Why>
+        <How>
+          <Step>Get source image URL for current label from window.originalImages[label].</Step>
+          <Step>Fetch to Blob; if it fails (e.g., blob: URL fetch issues), fallback to canvas.toBlob('image/png').</Step>
+          <Step>POST FormData('image') to /api/remove-background.</Step>
+          <Step>Read JSON { success, processed | url }.</Step>
+          <Step>Replace current image via pasteImageFromUrl(processedUrl, label); update originalImages[label] = processedUrl.</Step>
+        </How>
+      </Change>
+      <Change>
+        <What>Robust event binding for Remove BG buttons.</What>
+        <Why>Top toolbar button is injected dynamically; previous binding ran too early.</Why>
+        <How>
+          <Detail>Bind initial candidate buttons (removeBgClient, removeBgClientTop) with a per-element guard (__removeBgBound).</Detail>
+          <Detail>Attach a MutationObserver to document.body to bind newly inserted matching buttons.</Detail>
+          <Detail>Add delegated document-level click (capture phase) as a safety net if the element is replaced; it defers to bound handlers and avoids double execution.</Detail>
+        </How>
+      </Change>
+      <Change>
+        <What>Initialization wrapper and readiness check.</What>
+        <Why>paint.js can be loaded after DOMContentLoaded when scripts are injected dynamically; gating only on DOMContentLoaded caused init to be skipped.</Why>
+        <How>Wrap init in __initOpenPaint(); call immediately if document.readyState != 'loading', otherwise attach to DOMContentLoaded.</How>
+      </Change>
+      <Change>
+        <What>UI/UX fixes.</What>
+        <How>
+          <Detail>Button label/disabled state managed on the clicked element; restored in finally.</Detail>
+          <Detail>Console logs added for traceability (e.g., "Calling server /api/remove-background with blob upload").</Detail>
+        </How>
+      </Change>
+    </File>
+
+    <File path="index.html">
+      <Change>
+        <What>Debug cache bust for paint.js.</What>
+        <Why>Ensure updated paint.js is loaded during /?debug sessions, avoiding stale cached copies.</Why>
+        <How>Inline loader script computes a version query param: Date.now() for debug, static string for normal.</How>
+      </Change>
+      <Change>
+        <What>Top toolbar constructs Remove BG button (removeBgClientTop).</What>
+        <Why>Offers convenient access; paint.js now binds to it reliably.</Why>
+        <How>Button is injected in the toolbar; paint.js MutationObserver picks it up and binds the click handler.</How>
+      </Change>
+      <Note>The legacy side Tools panel includes removeBgClient but the panel may be hidden in the new layout; either button now works the same (server REMBG).</Note>
+    </File>
+  </Changes>
+
+  <ServerEndpoint>
+    <Route method="POST" path="/api/remove-background">
+      <Input>multipart/form-data, field name 'image'</Input>
+      <Processing>
+        <Step>Store upload in /uploads via multer.</Step>
+        <Step>Run temporary Python script that: reads input bytes, runs rembg.remove, writes output to /uploads/processed_*.png.</Step>
+      </Processing>
+      <Output>{ success: true, original: "/uploads/...", processed: "/uploads/...", url: "/uploads/..." }</Output>
+      <Errors>{ success: false, message: "..." }</Errors>
+    </Route>
+  </ServerEndpoint>
+
+  <ClientFlow>
+    <Button id="removeBgClientTop" title="Remove background using server (Docker)">Top Toolbar Remove BG</Button>
+    <Button id="removeBgClient" panel="Tools Panel" visibility="panel may be hidden in new layout"/>
+    <Flow>
+      <Step>Determine current image label (window.paintApp.state.currentImageLabel).</Step>
+      <Step>Resolve original image URL from window.originalImages[label].</Step>
+      <Step>Fetch to Blob; if fetch fails (e.g., blob: URL context), use canvas.toBlob('image/png').</Step>
+      <Step>Upload FormData('image') to server endpoint.</Step>
+      <Step>On success, replace the image via pasteImageFromUrl(processedUrl, label) to preserve scaling and UI state.</Step>
+      <Step>Update caches and UI; restore button state.</Step>
+    </Flow>
+  </ClientFlow>
+
+  <Validation>
+    <Checklist>
+      <Item>Open http://localhost:3000/?debug and hard refresh (Ctrl+F5).</Item>
+      <Item>Load an image; verify it appears in gallery and on canvas.</Item>
+      <Item>Click the top "Remove BG" button; button text should change to "Processing…".</Item>
+      <Item>Console should show: "Calling server /api/remove-background with blob upload".</Item>
+      <Item>Network tab should show POST /api/remove-background with 200 response and { success: true, processed }.</Item>
+      <Item>The canvas image is replaced with the processed image (transparent background).</Item>
+      <Item>Undo should revert to the prior state if desired.</Item>
+    </Checklist>
+  </Validation>
+
+  <Troubleshooting>
+    <Case title="Button click logs don’t appear">
+      <Hint>Ensure the page is loaded with /?debug so cache busting is active; hard refresh. Check console for "Delegated click binding active".</Hint>
+    </Case>
+    <Case title="Server request fails">
+      <Hint>Check Docker logs; confirm python3 and rembg are installed (Dockerfile installs requirements.txt). Verify uploads directory permissions.</Hint>
+    </Case>
+    <Case title="Processed image not replacing on canvas">
+      <Hint>pasteImageFromUrl is preferred; if unavailable, paint.js falls back to drawing directly. Ensure pasteImageFromUrl is defined in the current build.</Hint>
+    </Case>
+    <Case title="Side Tools panel missing">
+      <Hint>New layout hides #toolsPanel; use the top toolbar button (removeBgClientTop), which is now fully wired.</Hint>
+    </Case>
+  </Troubleshooting>
+
+  <SecurityAndLimits>
+    <UploadLimit>50MB per image (multer limit in app.js).</UploadLimit>
+    <StaticServing>Uploads served under /uploads; URLs are encoded to handle special characters.</StaticServing>
+    <CORS>Server enables CORS via express-cors for local UI.</CORS>
+  </SecurityAndLimits>
+
+  <FutureImprovements>
+    <Item>Expose env vars REMBG_PYTHON/REMBG_CMD inside Docker app.js to support custom Python entry when needed.</Item>
+    <Item>Optional job queue for long-running images, with progress reporting to the UI.</Item>
+    <Item>Persist a history of processed images in uploads with metadata for easy rollback.</Item>
+  </FutureImprovements>
+
+  <Outcome>
+    <Result>Remove BG actions in the main app consistently invoke Docker REMBG, replacing the current image with the processed version, while maintaining UI scale and allowing undo.</Result>
+  </Outcome>
+</RemBGIntegrationReport>
+

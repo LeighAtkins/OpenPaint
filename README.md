@@ -34,17 +34,87 @@ OpenPaint/
 
 ## Setup
 
+### Option 1: Local Development
+
 1. Install dependencies:
 ```bash
 npm install
 ```
 
-2. Start the server:
+2. Install Python dependencies for background removal:
+```bash
+pip install -r requirements.txt
+```
+
+3. Start the server:
 ```bash
 npm start
 ```
 
+4. Open your browser and navigate to `http://localhost:3000`
+
+5. **Test background removal:** Visit `http://localhost:3000/test-rembg-endpoint.html` to test the background removal API
+
+### Option 2: Docker (Recommended)
+
+1. Ensure Docker and Docker Compose are installed on your system
+
+2. Build and start the application:
+```bash
+docker-compose up --build
+```
+
 3. Open your browser and navigate to `http://localhost:3000`
+
+4. **Test background removal:** Visit `http://localhost:3000/test-rembg-endpoint.html` to test the background removal API
+
+#### Docker Commands
+
+- **Build the image:**
+```bash
+docker-compose build
+```
+
+- **Start the application:**
+```bash
+docker-compose up
+```
+
+- **Start in background:**
+```bash
+docker-compose up -d
+```
+
+- **Stop the application:**
+```bash
+docker-compose down
+```
+
+- **View logs:**
+```bash
+docker-compose logs
+```
+
+- **Rebuild and restart:**
+```bash
+docker-compose up --build --force-recreate
+```
+
+#### Docker Features
+
+- **Background Removal**: Integrated Python rembg for automatic background removal from images
+- **Persistent Storage**: Uploads are mounted as volumes for data persistence
+- **Health Checks**: Automatic health monitoring of the application
+- **Production Ready**: Optimized for production deployment
+
+### Background Removal Setup
+
+OpenPaint includes integrated background removal functionality using Python's rembg library:
+
+- **Docker**: Automatically included and configured
+- **Local**: Install Python dependencies with `pip install -r requirements.txt`
+
+The background removal API endpoint `/api/remove-background` accepts image uploads and returns processed images with transparent backgrounds.
 
 ## Usage
 

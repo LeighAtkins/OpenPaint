@@ -5,6 +5,7 @@
   "main": "app.js",
   "scripts": {
     "start": "node app.js",
+    "test:docker": "node test-docker-integration.js",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "test": "npm run test:unit && npm run test:integration",
@@ -20,6 +21,7 @@
   },
   "dependencies": {
     "express": "^4.18.2",
+    "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "file-saver": "^2.0.5",
     "jszip": "^3.10.1",

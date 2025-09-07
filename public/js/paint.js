@@ -1,5 +1,5 @@
 // Define core application structure for better state management
-console.log('[PAINT.JS] Script loaded successfully');
+console.log('[PAINT.JS] Script loaded successfully - UPDATED VERSION 20250907');
 console.log('[PAINT.JS] Script execution started at:', new Date().toISOString());
 console.log('[PAINT.JS] Document readyState:', document.readyState);
 console.log('[PAINT.JS] Window paintApp exists:', typeof window.paintApp !== 'undefined');
@@ -11,6 +11,45 @@ window.addEventListener('unhandledrejection', (e) => {
     try { console.error('[PAINT.JS][UnhandledRejection]', e?.reason || e); } catch (_) {}
 });
 console.warn('[PAINT.JS] Script loaded (warn)');
+
+// Configure ONNX runtime BEFORE any imports or other code
+if (typeof window !== 'undefined') {
+    // Set up global configuration for ONNX runtime BEFORE library loads
+    window.ort = window.ort || {};
+    window.ort.env = window.ort.env || {};
+    window.ort.env.wasm = window.ort.env.wasm || {};
+
+    // Force single-threaded execution and disable SIMD
+    Object.defineProperty(window.ort.env.wasm, 'numThreads', {
+        value: 1,
+        writable: false,
+        configurable: false
+    });
+    Object.defineProperty(window.ort.env.wasm, 'simd', {
+        value: false,
+        writable: false,
+        configurable: false
+    });
+
+    // Also try setting it directly
+    window.ort.env.wasm.numThreads = 1;
+    window.ort.env.wasm.simd = false;
+
+    // Set up a global interceptor to override any attempts to change these values
+    let originalDefineProperty = Object.defineProperty;
+    Object.defineProperty = function(obj, prop, descriptor) {
+        // Intercept attempts to set numThreads or simd on wasm objects
+        if (obj && typeof obj === 'object' && obj.numThreads !== undefined && (prop === 'numThreads' || prop === 'simd')) {
+            console.log(`[ONNX] Intercepted attempt to set ${prop}, forcing to single-threaded value`);
+            if (prop === 'numThreads') descriptor.value = 1;
+            if (prop === 'simd') descriptor.value = false;
+        }
+        return originalDefineProperty.call(this, obj, prop, descriptor);
+    };
+
+    console.log('[ONNX] Pre-configured for single-threaded execution with interceptor');
+}
+
 window.paintApp = {
     config: {
         IMAGE_LABELS: ['front', 'side', 'back', 'cushion', 'blank_canvas'],
@@ -189,7 +228,9 @@ let dragAnchorIndex = window.paintApp.uiState.dragAnchorIndex;
 const ANCHOR_SIZE = window.paintApp.config.ANCHOR_SIZE;
 const CLICK_AREA = window.paintApp.config.CLICK_AREA;
 
-document.addEventListener('DOMContentLoaded', () => {
+// Wrap full initialization in a function so we can call it immediately
+// even if DOMContentLoaded has already fired (when paint.js is loaded dynamically)
+function __initOpenPaint() {
     // Initialize unit selectors
     const unitSelector = document.getElementById('unitSelector');
     unitSelector.addEventListener('change', updateMeasurementDisplay);
@@ -347,7 +388,7 @@ document.addEventListener('DOMContentLoaded', () => {
         el.style.left = left + 'px';
         el.style.top = top + 'px';
     }
-
+    
     // Initialize DOM elements in state object for centralized access
     window.paintApp.state.domElements.canvas = document.getElementById('canvas');
     window.paintApp.state.domElements.ctx = window.paintApp.state.domElements.canvas.getContext('2d', { willReadFrequently: true });
@@ -358,6 +399,11 @@ document.addEventListener('DOMContentLoaded', () => {
     window.paintApp.state.domElements.copyButton = document.getElementById('copy');
     window.paintApp.state.domElements.copyCanvasBtn = document.getElementById('copyCanvasBtn');
     window.paintApp.state.domElements.pasteButton = document.getElementById('paste');
+    window.paintApp.state.domElements.removeBgClientButton =
+        document.getElementById('removeBgClient') || document.getElementById('removeBgClientTop');
+    
+    // Add server-side background removal button
+    window.paintApp.state.domElements.removeBgServerButton = document.getElementById('removeBgServer');
     
     // Debug DOM element loading
     console.log('[PAINT.JS] DOM elements found:', {
@@ -365,8 +411,42 @@ document.addEventListener('DOMContentLoaded', () => {
         clearButton: !!window.paintApp.state.domElements.clearButton,
         saveButton: !!window.paintApp.state.domElements.saveButton,
         copyButton: !!window.paintApp.state.domElements.copyButton,
-        pasteButton: !!window.paintApp.state.domElements.pasteButton
+        pasteButton: !!window.paintApp.state.domElements.pasteButton,
+        removeBgClientButton: !!window.paintApp.state.domElements.removeBgClientButton,
+        removeBgServerButton: !!window.paintApp.state.domElements.removeBgServerButton
     });
+
+    // If the Remove BG button is missing (older HTML or collapsed tool variations), inject it after Copy
+    if (!window.paintApp.state.domElements.removeBgClientButton) {
+        // Try injecting into top toolbar left group
+        const tbLeft = document.getElementById('tbLeft');
+        if (tbLeft) {
+            const btn = document.createElement('button');
+            btn.id = 'removeBgClientTop';
+            btn.className = 'tbtn';
+            btn.title = 'Remove background in-browser (no server / no keys)';
+            btn.textContent = 'Remove BG';
+            tbLeft.appendChild(btn);
+            window.paintApp.state.domElements.removeBgClientButton = btn;
+            console.log('[PAINT.JS] Injected Remove BG button into top toolbar');
+        } else {
+            // Fallback to tools panel next to Copy
+            const copyBtnEl = window.paintApp.state.domElements.copyButton;
+            if (copyBtnEl && copyBtnEl.parentElement) {
+                const btn = document.createElement('button');
+                btn.id = 'removeBgClient';
+                btn.className = 'px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-sm font-semibold rounded-xl shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-105 active:scale-95';
+                btn.title = 'Remove background in-browser (no server / no keys)';
+                btn.setAttribute('aria-label', 'Remove Background (Client)');
+                btn.textContent = 'Remove BG (Client)';
+                copyBtnEl.parentElement.appendChild(btn);
+                window.paintApp.state.domElements.removeBgClientButton = btn;
+                console.log('[PAINT.JS] Injected Remove BG (Client) button dynamically');
+            } else {
+                console.warn('[PAINT.JS] Could not inject Remove BG button (no suitable container found)');
+            }
+        }
+    }
     window.paintApp.state.domElements.strokeCounter = document.getElementById('strokeCounter');
     window.paintApp.state.domElements.imageList = document.getElementById('imageList');
     window.paintApp.state.domElements.drawingModeToggle = document.getElementById('drawingModeToggle');
@@ -9121,8 +9201,8 @@ if (colorPicker) {
     function bindCanvasListeners() {
         if (window.paintApp.state.listenersBound) {
             if (window.__contextMenuBound) {
-                console.log('[Event] Canvas listeners already bound, skipping');
-                return;
+            console.log('[Event] Canvas listeners already bound, skipping');
+            return;
             } else {
                 console.warn('[Event] listenersBound=true but __contextMenuBound is false. Proceeding to (re)bind listeners.');
             }
@@ -10553,15 +10633,15 @@ if (colorPicker) {
             
             if (navigator.clipboard && window.ClipboardItem) {
                 try {
-                    await navigator.clipboard.write([
-                        new ClipboardItem({ 'image/png': blob })
-                    ]);
+                await navigator.clipboard.write([
+                    new ClipboardItem({ 'image/png': blob })
+                ]);
                     logCopyDebug('copyCurrentViewToClipboard:clipboardWrite', { ok: true });
                     // Also show status message (no animation)
-                    if (typeof window.projectManager?.showStatusMessage === 'function') {
-                        window.projectManager.showStatusMessage('Image copied to clipboard!', 'success');
-                    } else {
-                        alert('Image copied to clipboard!');
+                if (typeof window.projectManager?.showStatusMessage === 'function') {
+                    window.projectManager.showStatusMessage('Image copied to clipboard!', 'success');
+                } else {
+                    alert('Image copied to clipboard!');
                     }
                 } catch (error) {
                     console.error('[Copy] Clipboard write failed:', error);
@@ -11248,6 +11328,560 @@ if (colorPicker) {
         // Trigger file selection dialog
         fileInput.click();
     });
+
+    // Handle client-side background removal button click
+    const removeBgBtn = window.paintApp.state.domElements.removeBgClientButton;
+    console.log('[RemoveBG] Looking for client button:', {
+        button: removeBgBtn,
+        buttonId: removeBgBtn?.id,
+        buttonText: removeBgBtn?.textContent,
+        buttonExists: !!removeBgBtn
+    });
+
+    if (removeBgBtn) {
+        // Bind to both the sidebar and top toolbar buttons
+        const candidateButtons = Array.from(new Set([
+            removeBgBtn,
+            document.getElementById('removeBgClientTop')
+        ].filter(Boolean)));
+
+        const handlerFactory = (btn) => async () => {
+            console.log('[RemoveBG] Client button clicked at:', new Date().toISOString());
+            console.log('[RemoveBG] Current image label:', window.paintApp.state.currentImageLabel || window.currentImageLabel);
+
+            let originalLabel = btn.textContent;
+            console.log('[RemoveBG] Original button text:', originalLabel);
+            // Variables needed by both try and catch blocks
+            let label;
+            let inputEl;
+            try {
+                btn.disabled = true;
+                btn.textContent = 'Removing…';
+
+                label = window.paintApp.state.currentImageLabel || window.currentImageLabel;
+                console.log('[RemoveBG] Image label check:', { label, currentImageLabel: window.paintApp.state.currentImageLabel, globalCurrentImageLabel: window.currentImageLabel });
+
+                if (!label) {
+                    console.warn('[RemoveBG] No current image label');
+                    alert('No active image selected. Please select an image first.');
+                    return;
+                }
+
+                // Prefer original image URL if available; fallback to current canvas
+                const srcUrl = (window.originalImages && window.originalImages[label]) || null;
+
+                if (srcUrl) {
+                    inputEl = await new Promise((resolve, reject) => {
+                        const img = new Image();
+                        img.onload = () => resolve(img);
+                        img.onerror = reject;
+                        // Use anonymous CORS to avoid taint if source is same-origin or blob
+                        img.crossOrigin = 'anonymous';
+                        img.src = srcUrl;
+                    });
+                } else {
+                    console.warn('[RemoveBG] No original image URL; using current canvas');
+                    inputEl = window.paintApp.state.domElements.canvas || document.getElementById('canvas');
+                }
+
+                // Always use server-side REMBG via Docker
+                // Convert image to blob for upload (robust: supports blob: and canvas fallback)
+                let uploadBlob;
+                try {
+                    const resp = await fetch(srcUrl);
+                    if (!resp.ok) throw new Error(`Fetch failed with status ${resp.status}`);
+                    uploadBlob = await resp.blob();
+                } catch (e) {
+                    console.warn('[RemoveBG] Fetching srcUrl failed, attempting canvas fallback:', e);
+                    const canvas = window.paintApp?.state?.domElements?.canvas || document.getElementById('canvas');
+                    if (!canvas) throw new Error('No canvas available for fallback blob creation');
+                    uploadBlob = await new Promise((resolve, reject) => {
+                        try {
+                            canvas.toBlob((b) => {
+                                if (!b) {
+                                    reject(new Error('Canvas toBlob returned null'));
+                                    return;
+                                }
+                                resolve(b);
+                            }, 'image/png');
+                        } catch (err) {
+                            reject(err);
+                        }
+                    });
+                }
+
+                // Create FormData for server upload
+                const formData = new FormData();
+                formData.append('image', uploadBlob, 'image.png');
+
+                btn.textContent = 'Processing…';
+                console.log('[RemoveBG] Calling server /api/remove-background with blob upload');
+
+                const serverResponse = await fetch('/api/remove-background', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!serverResponse.ok) {
+                    const errorData = await serverResponse.json().catch(() => ({ message: 'Unknown error' }));
+                    throw new Error(`Server error: ${errorData.message || serverResponse.status}`);
+                }
+
+                const result = await serverResponse.json();
+                const processedUrl = result?.processed || result?.url;
+                if (!(result?.success && processedUrl)) {
+                    throw new Error(result?.message || 'Background removal failed');
+                }
+
+                // Replace the current image with the processed version from server
+                if (typeof pasteImageFromUrl === 'function') {
+                    await pasteImageFromUrl(processedUrl, label);
+                } else {
+                    // Direct draw fallback
+                    const canvas = window.paintApp.state.domElements.canvas || document.getElementById('canvas');
+                    const ctx = canvas.getContext('2d');
+                    const outImg = new Image();
+                    await new Promise((res, rej) => { outImg.onload = res; outImg.onerror = rej; outImg.src = processedUrl; });
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.drawImage(outImg, 0, 0, canvas.width, canvas.height);
+                }
+
+                if (window.originalImages) {
+                    window.originalImages[label] = processedUrl;
+                }
+
+            } catch (err) {
+                console.error('[RemoveBG] Server REMBG failed:', err);
+                alert(`Background removal failed on server: ${err?.message || err}`);
+            } finally {
+                btn.disabled = false;
+                // Restore whatever label the button originally had
+                if (typeof originalLabel === 'string' && originalLabel.length) {
+                    btn.textContent = originalLabel;
+                } else {
+                    btn.textContent = 'Remove BG';
+                }
+            }
+        };
+
+        // Helper to bind once per element
+        const bindOnce = (btn) => {
+            if (!btn || btn.__removeBgBound) return;
+            btn.__removeBgBound = true;
+            console.log('[RemoveBG] Client button found and click handler bound to:', btn.id || btn, 'Text:', btn.textContent);
+            btn.addEventListener('click', handlerFactory(btn));
+        };
+
+        // Bind handler to all candidate client buttons (existing at init)
+        candidateButtons.forEach(bindOnce);
+
+        // Observe DOM for late-inserted toolbar button (e.g., index.html injecting #removeBgClientTop)
+        try {
+            const mo = new MutationObserver((mutations) => {
+                for (const m of mutations) {
+                    for (const node of m.addedNodes) {
+                        if (!(node instanceof Element)) continue;
+                        const btnTop = node.id === 'removeBgClientTop' ? node : node.querySelector?.('#removeBgClientTop');
+                        const btnSide = node.id === 'removeBgClient' ? node : node.querySelector?.('#removeBgClient');
+                        if (btnTop) bindOnce(btnTop);
+                        if (btnSide) bindOnce(btnSide);
+                    }
+                }
+            });
+            mo.observe(document.body, { childList: true, subtree: true });
+        } catch (e) {
+            console.warn('[RemoveBG] MutationObserver failed:', e?.message || e);
+        }
+
+        // Global delegated click handler as a final safety net for dynamically replaced buttons
+        try {
+            if (!window.__removeBgDelegatedBound) {
+                window.__removeBgDelegatedBound = true;
+                document.addEventListener('click', (ev) => {
+                    const target = ev.target instanceof Element ? ev.target : null;
+                    if (!target) return;
+                    const btn = target.closest('#removeBgClient, #removeBgClientTop');
+                    if (btn) {
+                        console.log('[RemoveBG] Delegated click captured for:', btn.id || btn);
+                        // If this button already has a bound handler, let it handle the click
+                        if (btn.__removeBgBound) return;
+                        // Otherwise, run the handler inline
+                        handlerFactory(btn)().catch((err) => console.error('[RemoveBG] Delegated handler error:', err));
+                    }
+                }, true); // capture to beat other handlers if needed
+                console.log('[RemoveBG] Delegated click binding active');
+            }
+        } catch (e) {
+            console.warn('[RemoveBG] Delegated binding failed:', e?.message || e);
+        }
+    } else {
+        console.warn('[RemoveBG] Client button not found! Available elements:', {
+            removeBgClient: document.getElementById('removeBgClient'),
+            removeBgClientTop: document.getElementById('removeBgClientTop'),
+            allRemoveBgButtons: document.querySelectorAll('[id*="removeBg"]')
+        });
+    }
+
+    // Handle server-side background removal button click
+    const removeBgServerBtn = window.paintApp.state.domElements.removeBgServerButton;
+    if (removeBgServerBtn) {
+        console.log('[RemoveBG-Server] Click handler bound to:', removeBgServerBtn.id || removeBgServerBtn);
+        removeBgServerBtn.addEventListener('click', async () => {
+            console.log('[RemoveBG-Server] Clicked');
+            let originalLabel = removeBgServerBtn.textContent;
+            try {
+                removeBgServerBtn.disabled = true;
+                removeBgServerBtn.textContent = 'Processing…';
+
+                const label = window.paintApp.state.currentImageLabel || window.currentImageLabel;
+                if (!label) {
+                    console.warn('[RemoveBG-Server] No current image label');
+                    alert('No active image selected.');
+                    return;
+                }
+
+                // Get the original image URL if available
+                const srcUrl = (window.originalImages && window.originalImages[label]) || null;
+                if (!srcUrl) {
+                    console.warn('[RemoveBG-Server] No original image URL available');
+                    alert('No original image URL available for background removal.');
+                    return;
+                }
+
+                console.log('[RemoveBG-Server] Processing image:', srcUrl);
+
+                // Convert image to blob for upload (robust: supports blob: and canvas fallback)
+                let blob;
+                try {
+                    // Prefer direct fetch (works for http(s) and most blob: URLs)
+                    const resp = await fetch(srcUrl);
+                    if (!resp.ok) throw new Error(`Fetch failed with status ${resp.status}`);
+                    blob = await resp.blob();
+                } catch (e) {
+                    console.warn('[RemoveBG-Server] Fetching srcUrl failed, attempting canvas fallback:', e);
+                    const canvas = window.paintApp?.state?.domElements?.canvas || document.getElementById('canvas');
+                    if (!canvas) throw new Error('No canvas available for fallback blob creation');
+                    blob = await new Promise((resolve, reject) => {
+                        try {
+                            canvas.toBlob((b) => {
+                                if (!b) {
+                                    reject(new Error('Canvas toBlob returned null'));
+                                    return;
+                                }
+                                resolve(b);
+                            }, 'image/png');
+                        } catch (err) {
+                            reject(err);
+                        }
+                    });
+                }
+
+                // Create FormData for server upload
+                const formData = new FormData();
+                formData.append('image', blob, 'image.png');
+
+                console.log('[RemoveBG-Server] Sending to server API...');
+
+                // Send to server-side background removal API
+                const serverResponse = await fetch('/api/remove-background', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!serverResponse.ok) {
+                    const errorData = await serverResponse.json().catch(() => ({ message: 'Unknown error' }));
+                    throw new Error(`Server error: ${errorData.message || serverResponse.status}`);
+                }
+
+                const result = await serverResponse.json();
+                console.log('[RemoveBG-Server] Server response:', result);
+
+                if (result.success && result.processed) {
+                    console.log('[RemoveBG-Server] Processing successful, loading image:', result.processed);
+
+                    // Load the processed image from the server
+                    const processedImg = new Image();
+                    processedImg.crossOrigin = 'anonymous'; // Handle CORS
+                    processedImg.onload = () => {
+                        console.log('[RemoveBG-Server] Processed image loaded, size:', processedImg.width, 'x', processedImg.height);
+
+                        // Update the current image with the processed version
+                        const canvas = window.paintApp.state.domElements.canvas;
+                        const ctx = canvas.getContext('2d');
+
+                        // Store old dimensions for comparison
+                        const oldWidth = canvas.width;
+                        const oldHeight = canvas.height;
+
+                        // Resize canvas to match new image if needed
+                        if (canvas.width !== processedImg.width || canvas.height !== processedImg.height) {
+                            console.log('[RemoveBG-Server] Resizing canvas from', oldWidth, 'x', oldHeight, 'to', processedImg.width, 'x', processedImg.height);
+                            canvas.width = processedImg.width;
+                            canvas.height = processedImg.height;
+
+                            // Update paint.js state for new canvas size
+                            if (window.resizeCanvas) {
+                                window.resizeCanvas();
+                            }
+                        }
+
+                        // Clear canvas and draw processed image
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                        ctx.drawImage(processedImg, 0, 0);
+
+                        // Update original images cache with processed version
+                        if (window.originalImages) {
+                            window.originalImages[label] = result.processed;
+                        }
+
+                        // Update paint.js image state
+                        if (window.originalImageDimensions && window.originalImageDimensions[label]) {
+                            window.originalImageDimensions[label] = {
+                                width: processedImg.width,
+                                height: processedImg.height
+                            };
+                        }
+
+                        // Update image scale and position for new image
+                        if (window.imageScaleByLabel && window.imagePositionByLabel) {
+                            window.imageScaleByLabel[label] = 1.0; // Reset to 1:1 scale
+                            window.imagePositionByLabel[label] = { x: 0, y: 0 }; // Reset position
+                        }
+
+                        // Clear any existing strokes for this image since it's now processed
+                        if (window.vectorStrokesByImage && window.vectorStrokesByImage[label]) {
+                            console.log('[RemoveBG-Server] Clearing existing strokes for processed image');
+                            window.vectorStrokesByImage[label] = [];
+                        }
+                        if (window.lineStrokesByImage && window.lineStrokesByImage[label]) {
+                            window.lineStrokesByImage[label] = [];
+                        }
+
+                        // Save state to preserve the processed image
+                        if (window.saveState) {
+                            window.saveState();
+                        }
+
+                        // Update UI elements
+                        if (window.updateStrokeCounter) {
+                            window.updateStrokeCounter();
+                        }
+                        if (window.updateStrokeVisibilityControls) {
+                            window.updateStrokeVisibilityControls();
+                        }
+
+                        console.log('[RemoveBG-Server] Image updated successfully');
+                        alert('Background removed successfully! The processed image has replaced the original.');
+                    };
+
+                    processedImg.onerror = (error) => {
+                        console.error('[RemoveBG-Server] Failed to load processed image:', error);
+                        throw new Error('Failed to load processed image from server');
+                    };
+
+                    processedImg.src = result.processed;
+                } else {
+                    throw new Error(result.message || 'Background removal failed');
+                }
+
+            } catch (error) {
+                console.error('[RemoveBG-Server] Error:', error);
+                alert(`Background removal failed: ${error.message}`);
+
+                // Log additional error details for debugging
+                if (error.message.includes('load')) {
+                    console.error('[RemoveBG-Server] This might be a CORS or network issue with loading the processed image');
+                } else if (error.message.includes('Server error')) {
+                    console.error('[RemoveBG-Server] Backend processing failed - check Docker logs');
+                }
+            } finally {
+                console.log('[RemoveBG-Server] Cleaning up...');
+                removeBgServerBtn.disabled = false;
+                // Restore original label
+                if (typeof originalLabel === 'string' && originalLabel.length > 0) {
+                    removeBgServerBtn.textContent = originalLabel;
+                    console.log('[RemoveBG-Server] Restored button text to:', originalLabel);
+                } else {
+                    removeBgServerBtn.textContent = 'Remove BG (Server)';
+                    console.log('[RemoveBG-Server] Set button text to default');
+                }
+            }
+        });
+    }
+
+
+
+    // Advanced client-side background removal using flood fill
+    async function simpleBackgroundRemoval(input) {
+        return new Promise((resolve, reject) => {
+            try {
+                let img, canvas, ctx;
+
+                if (input.tagName === 'IMG') {
+                    img = input;
+                    canvas = document.createElement('canvas');
+                    ctx = canvas.getContext('2d');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    ctx.drawImage(img, 0, 0);
+                } else if (input.tagName === 'CANVAS') {
+                    canvas = input;
+                    ctx = canvas.getContext('2d');
+                } else {
+                    reject(new Error('Unsupported input type for background removal'));
+                    return;
+                }
+
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const data = imageData.data;
+                const width = canvas.width;
+                const height = canvas.height;
+
+                // Create a visited array to track processed pixels
+                const visited = new Uint8Array(width * height);
+                const backgroundMask = new Uint8Array(width * height);
+
+                // Get background color from corners
+                const corners = [
+                    [0, 0], [width - 1, 0], [0, height - 1], [width - 1, height - 1]
+                ];
+
+                let bgR = 0, bgG = 0, bgB = 0;
+                corners.forEach(([x, y]) => {
+                    const index = (y * width + x) * 4;
+                    bgR += data[index];
+                    bgG += data[index + 1];
+                    bgB += data[index + 2];
+                });
+                bgR /= corners.length;
+                bgG /= corners.length;
+                bgB /= corners.length;
+
+                console.log(`[Fallback] Background color: rgb(${Math.round(bgR)}, ${Math.round(bgG)}, ${Math.round(bgB)})`);
+
+                // Adaptive tolerance based on color variance
+                let totalVariance = 0;
+                let sampleCount = 0;
+                corners.forEach(([x, y]) => {
+                    const index = (y * width + x) * 4;
+                    const r = data[index];
+                    const g = data[index + 1];
+                    const b = data[index + 2];
+
+                    // Calculate variance from average background
+                    const variance = Math.sqrt(
+                        Math.pow(r - bgR, 2) +
+                        Math.pow(g - bgG, 2) +
+                        Math.pow(b - bgB, 2)
+                    );
+                    totalVariance += variance;
+                    sampleCount++;
+                });
+
+                const avgVariance = totalVariance / sampleCount;
+                // Adaptive tolerance: higher variance = higher tolerance
+                const tolerance = Math.max(15, Math.min(80, 25 + avgVariance * 0.5));
+
+                console.log(`[Fallback] Adaptive tolerance: ${tolerance}, avg variance: ${avgVariance.toFixed(2)}`);
+
+                // Flood fill from edges to find all background pixels
+                const stack = [];
+
+                // Start from all edge pixels
+                for (let x = 0; x < width; x++) {
+                    // Top edge
+                    if (!visited[x]) {
+                        stack.push([x, 0]);
+                        visited[x] = 1;
+                    }
+                    // Bottom edge
+                    if (!visited[(height - 1) * width + x]) {
+                        stack.push([x, height - 1]);
+                        visited[(height - 1) * width + x] = 1;
+                    }
+                }
+                for (let y = 1; y < height - 1; y++) {
+                    // Left edge
+                    if (!visited[y * width]) {
+                        stack.push([0, y]);
+                        visited[y * width] = 1;
+                    }
+                    // Right edge
+                    if (!visited[y * width + (width - 1)]) {
+                        stack.push([width - 1, y]);
+                        visited[y * width + (width - 1)] = 1;
+                    }
+                }
+
+                // Flood fill algorithm with safety limits
+                let processedPixels = 0;
+                const maxPixels = width * height * 0.5; // Don't process more than 50% of image
+                const maxIterations = 100000; // Safety limit
+                let iterations = 0;
+
+                while (stack.length > 0 && processedPixels < maxPixels && iterations < maxIterations) {
+                    const [x, y] = stack.pop();
+                    const pixelIndex = y * width + x;
+                    const dataIndex = pixelIndex * 4;
+
+                    if (backgroundMask[pixelIndex]) continue;
+                    if (visited[pixelIndex]) continue;
+
+                    iterations++;
+                    visited[pixelIndex] = 1;
+
+                    const r = data[dataIndex];
+                    const g = data[dataIndex + 1];
+                    const b = data[dataIndex + 2];
+
+                    // Check if this pixel matches background color
+                    const distance = Math.sqrt(
+                        Math.pow(r - bgR, 2) +
+                        Math.pow(g - bgG, 2) +
+                        Math.pow(b - bgB, 2)
+                    );
+
+                    if (distance <= tolerance) {
+                        backgroundMask[pixelIndex] = 1;
+                        processedPixels++;
+
+                        // Add neighboring pixels to stack (only if not visited)
+                        const neighbors = [
+                            [x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]
+                        ];
+
+                        for (const [nx, ny] of neighbors) {
+                            if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+                                const nIndex = ny * width + nx;
+                                if (!visited[nIndex] && !backgroundMask[nIndex]) {
+                                    visited[nIndex] = 1;
+                                    stack.push([nx, ny]);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                console.log(`[Fallback] Flood fill completed: ${iterations} iterations, ${processedPixels} pixels marked`);
+
+                // Apply the background mask to make background transparent
+                let pixelsRemoved = 0;
+                for (let i = 0; i < backgroundMask.length; i++) {
+                    if (backgroundMask[i]) {
+                        data[i * 4 + 3] = 0; // Set alpha to 0
+                        pixelsRemoved++;
+                    }
+                }
+
+                console.log(`[Fallback] Removed ${pixelsRemoved} background pixels (${((pixelsRemoved / (width * height)) * 100).toFixed(1)}% of image)`);
+
+                ctx.putImageData(imageData, 0, 0);
+                canvas.toBlob(resolve, 'image/png');
+            } catch (error) {
+                reject(error);
+            }
+        });
+    }
     
     // Initialize the stroke visibility controls
     updateStrokeVisibilityControls();
@@ -11516,20 +12150,20 @@ if (colorPicker) {
 //                         console.log(`Changed color of stroke ${strokeLabel} to ${color}`);
                     }
                 }
-            } else if (selectedStrokeByImage[currentImageLabel]) {
-                // If there's a selected stroke but not in edit mode, show a message to the user
+                    } else if (selectedStrokeByImage[currentImageLabel]) {
+            // If there's a selected stroke but not in edit mode, show a message to the user
 //             console.log("Double-click a stroke to enter edit mode before changing colors");
             
-                // Show a status message to the user
-                const statusMessage = document.getElementById('statusMessage');
-                if (statusMessage) {
-                    statusMessage.textContent = "Double-click a stroke to enter edit mode first";
-                    statusMessage.classList.add('visible');
-                    // Hide message after a few seconds
-                    setTimeout(() => {
-                        statusMessage.classList.remove('visible');
-                    }, 3000);
-                }
+            // Show a status message to the user
+            const statusMessage = document.getElementById('statusMessage');
+            if (statusMessage) {
+                statusMessage.textContent = "Double-click a stroke to enter edit mode first";
+                statusMessage.classList.add('visible');
+                // Hide message after a few seconds
+                setTimeout(() => {
+                    statusMessage.classList.remove('visible');
+                }, 3000);
+            }
             }
         });
     });
@@ -11617,7 +12251,7 @@ if (colorPicker) {
         // Save current state before redrawing, using same pattern as updateImageScale
         // But don't save for small movements to avoid spamming undo stack during continuous dragging
         if (Math.abs(deltaX) > 20 || Math.abs(deltaY) > 20) {
-            saveState(true, false, false);
+        saveState(true, false, false);
         }
             
         // Set flag to prevent auto-focus during move operations
@@ -11937,20 +12571,20 @@ if (colorPicker) {
     // Adjust sidebar positions after window resize (avoid double-calling resizeCanvas)
     window.addEventListener('resize', () => {
         requestAnimationFrame(() => {
-            const canvasRect = canvas.getBoundingClientRect();
+        const canvasRect = canvas.getBoundingClientRect();
             const imageSidebar = document.getElementById('imageSidebar');
-            const strokeSidebar = document.getElementById('strokeSidebar');
+        const strokeSidebar = document.getElementById('strokeSidebar');
             if (imageSidebar && strokeSidebar) {
-                const imageSidebarRect = imageSidebar.getBoundingClientRect();
-                const strokeSidebarRect = strokeSidebar.getBoundingClientRect();
+            const imageSidebarRect = imageSidebar.getBoundingClientRect();
+            const strokeSidebarRect = strokeSidebar.getBoundingClientRect();
                 if (imageSidebarRect.left < canvasRect.right && imageSidebarRect.right > canvasRect.left) {
                     imageSidebar.style.left = 'auto';
-                    imageSidebar.style.right = '20px';
-                }
-                if (strokeSidebarRect.right > canvasRect.left && strokeSidebarRect.left < canvasRect.right) {
-                    strokeSidebar.style.left = '20px';
-                }
+                imageSidebar.style.right = '20px';
             }
+                if (strokeSidebarRect.right > canvasRect.left && strokeSidebarRect.left < canvasRect.right) {
+                strokeSidebar.style.left = '20px';
+            }
+        }
         });
     });
 
@@ -13469,12 +14103,24 @@ if (colorPicker) {
     // Initialize canvas event listeners
     try {
         console.log('[Event] Attempting to bind canvas listeners...');
-        bindCanvasListeners();
-        console.log('[Event] Canvas listeners bound successfully');
+    bindCanvasListeners();
+    console.log('[Event] Canvas listeners bound successfully');
     } catch (err) {
         console.error('[Event] Failed to bind canvas listeners:', err);
     }
-}); // Correctly close DOMContentLoaded
+} // end __initOpenPaint
+
+// Ensure initialization runs regardless of when this script loads
+try {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', __initOpenPaint);
+    } else {
+        // DOM is already interactive/complete; run init now
+        __initOpenPaint();
+    }
+} catch (e) {
+    try { console.error('[PAINT.JS] Failed to schedule or run init:', e); } catch (_) {}
+}
 
 // ===== ROTATION TEST HARNESS =====
 // Comprehensive test system for debugging custom label rotation behavior

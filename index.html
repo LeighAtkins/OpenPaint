@@ -925,6 +925,10 @@
                     </button>
                     <button id="save" class="px-4 py-2.5 bg-success-500 hover:bg-success-600 active:bg-success-700 text-white text-sm font-semibold rounded-xl shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-105 active:scale-95">Save Current</button>
                     <button id="copy" class="px-4 py-2.5 bg-primary-500 hover:bg-primary-600 active:bg-primary-700 text-white text-sm font-semibold rounded-xl shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-105 active:scale-95" title="Copy image to clipboard (cropped to frame)" aria-label="Copy Image">Copy</button>
+                    <div class="flex gap-2">
+                        <button id="removeBgClient" class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-sm font-semibold rounded-xl shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-105 active:scale-95" title="Remove background in-browser (no server / no keys)" aria-label="Remove Background (Client)">Remove BG (Client)</button>
+                        <button id="removeBgServer" class="px-4 py-2.5 bg-green-600 hover:bg-green-700 active:bg-green-800 text-white text-sm font-semibold rounded-xl shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-105 active:scale-95" title="Remove background using server-side rembg (Docker)" aria-label="Remove Background (Server)">Remove BG (Server)</button>
+                    </div>
                 </div>
                 
                 <!-- Color Palette -->
@@ -1296,6 +1300,16 @@
             };
             setLineStyleIcon('solid');
             left.appendChild(dottedBtn);
+
+            // Remove Background (Client) button in top toolbar (guard against duplicate injection)
+            if (!document.getElementById('removeBgClientTop')) {
+                const removeBgTopBtn = document.createElement('button');
+                removeBgTopBtn.id = 'removeBgClientTop';
+                removeBgTopBtn.className = 'tbtn';
+                removeBgTopBtn.title = 'Remove background in-browser (no server / no keys)';
+                removeBgTopBtn.textContent = 'Remove BG';
+                left.appendChild(removeBgTopBtn);
+            }
 
             // Wire controls to UI state in paint.js
             const setActive = (el, on) => el.classList.toggle('active', !!on);
@@ -4402,8 +4416,30 @@
     </div>
 
     <script>console.log('[INDEX] before paint.js'); window.onerror=(m,s,l,c,e)=>console.error('[INDEX] onerror',m,s,l,c,e);</script>
-    <script src="public/js/paint.js?v=20250820123456"></script>
-    <script src="public/js/project-manager.js?v=20250820123458"></script>
-    <script src="public/js/tag-manager.js?v=20250820123456"></script>
+    <script>
+        // Test button detection
+        setTimeout(() => {
+            const btn = document.getElementById('removeBgClient');
+            console.log('[INDEX] Button test:', {btn, exists: !!btn, text: btn?.textContent});
+            
+            if (btn) {
+                btn.addEventListener('click', () => {
+                    console.log('[INDEX] Button clicked!');
+                });
+            }
+        }, 2000);
+    </script>
+    <script>
+        // Dynamically load paint.js with cache-busting in debug mode
+        (function(){
+            const isDebug = /[?&]debug(=|&|$)/i.test(location.search);
+            const version = isDebug ? Date.now() : '20250907113000';
+            const s = document.createElement('script');
+            s.src = `public/js/paint.js?v=${version}`;
+            document.currentScript.parentNode.insertBefore(s, document.currentScript);
+        })();
+    </script>
+    <script src="public/js/project-manager.js?v=20250907090300"></script>
+    <script src="public/js/tag-manager.js?v=20250907090300"></script>
 </body>
 </html>
