@@ -1,0 +1,12 @@
+name = "sofapaint-api"
+main = "src/index.ts"
+compatibility_date = "2025-09-06"
+
+[vars]
+CF_ACCOUNT_ID = "665aca072a7cddbc216be6b25a6fd951"
+ALLOWED_ORIGINS = "https://sofapaint.vercel.app,https://leighatkins.github.io"
+ACCOUNT_HASH = "tJVRdWyUXVZJRoGHy-ATBQ"
+
+# Bind Images to this Worker
+[images]
+binding = "IMAGES"

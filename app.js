@@ -15,6 +15,7 @@ const {
     createOrUpdateProject,
     getProjectBySlug
 } = require('./api/db');
+const { spawn } = require('child_process');
 const port = process.env.PORT || 3000;
 
 // In-memory storage for shared projects (in production, use a database)
@@ -48,6 +49,8 @@ const upload = multer({
 app.use(express.static('public'));
 // Serve static files from root directory
 app.use(express.static('./'));
+// Serve uploaded files under /uploads
+app.use('/uploads', express.static(uploadDir));
 // Parse JSON request bodies (increase limit for large projects)
 app.use(express.json({ limit: '200mb' }));
 app.use(express.urlencoded({ extended: true, limit: '200mb' }));
@@ -296,6 +299,39 @@ app.post('/api/upload-project', upload.single('projectFile'), (req, res) => {
 });
 
 /**
+ * API endpoint for background removal using integrated Python rembg
+ * Accepts multipart form-data with field name 'image'
+ * Returns JSON containing URLs to both original and processed images
+ */
+app.post('/api/remove-background', upload.single('image'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ success: false, message: 'No image uploaded (field name should be "image")' });
+        }
+
+        const inputPath = req.file.path;
+        const outputPath = path.join(uploadDir, `processed_${req.file.filename}`);
+
+        await processImageWithRembg(inputPath, outputPath);
+
+        const processedFilename = path.basename(outputPath);
+        const processedImageUrl = `/uploads/${encodeURIComponent(processedFilename)}`;
+        const originalFilename = req.file.filename;
+        const originalImageUrl = `/uploads/${encodeURIComponent(originalFilename)}`;
+
+        return res.json({
+            success: true,
+            original: originalImageUrl,
+            processed: processedImageUrl,
+            url: processedImageUrl
+        });
+    } catch (error) {
+        console.error('Error processing image:', error);
+        return res.status(500).json({ success: false, message: 'Failed to process image' });
+    }
+});
+
+/**
  * Update an existing shared project (requires editToken)
  */
 app.patch('/api/shared/:shareId', async (req, res) => {
@@ -359,3 +395,68 @@ app.listen(port, '0.0.0.0', () => {
     console.log(`OpenPaint app listening at http://localhost:${port}`);
     console.log(`Also accessible at http://172.31.25.185:${port} (WSL IP)`);
 });
+
+/**
+ * Python rembg processing function using inline script execution
+ */
+async function processImageWithRembg(inputPath, outputPath) {
+    return new Promise((resolve, reject) => {
+        const fs = require('fs');
+        const tempScriptPath = path.join(__dirname, 'temp_rembg_script.py');
+        const pythonScript = `
+import sys
+import os
+from rembg import remove
+from PIL import Image
+import io
+
+def main():
+    try:
+        input_path = sys.argv[1]
+        output_path = sys.argv[2]
+
+        if not os.path.exists(input_path):
+            print(f"Input file does not exist: {input_path}", file=sys.stderr)
+            sys.exit(1)
+
+        with open(input_path, 'rb') as f:
+            input_data = f.read()
+
+        try:
+            Image.open(io.BytesIO(input_data))
+        except Exception:
+            pass
+
+        output_data = remove(input_data)
+
+        out_dir = os.path.dirname(output_path)
+        if out_dir and not os.path.exists(out_dir):
+            os.makedirs(out_dir, exist_ok=True)
+
+        with open(output_path, 'wb') as f:
+            f.write(output_data)
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
+
+if __name__ == "__main__":
+    if len(sys.argv) != 3:
+        print("Usage: python script.py <input_path> <output_path>", file=sys.stderr)
+        sys.exit(1)
+    main()
+`;
+
+        fs.writeFileSync(tempScriptPath, pythonScript);
+
+        const py = spawn('python3', [tempScriptPath, inputPath, outputPath], { stdio: 'inherit' });
+        let failed = false;
+        py.on('error', (err) => { failed = true; try { fs.unlinkSync(tempScriptPath); } catch (_) {}; reject(err); });
+        py.on('close', (code) => {
+            try { fs.unlinkSync(tempScriptPath); } catch (_) {}
+            if (!failed && code === 0) return resolve();
+            reject(new Error(`Python process exited with code ${code}`));
+        });
+    });
+}
