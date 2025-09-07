@@ -38,6 +38,66 @@ app.use((req, res, next) => {
 // Route handlers
 // API routes only - static files are served by Vercel
 
+// Proxy direct upload to Cloudflare Worker
+app.post('/api/images/direct-upload', async (req, res) => {
+    try {
+        const origin = process.env.REMBG_ORIGIN;
+        if (!origin) {
+            return res.status(500).json({ success: false, message: 'REMBG_ORIGIN is not configured' });
+        }
+
+        const upstream = await fetch(`${origin.replace(/\/$/, '')}/images/direct-upload`, {
+            method: 'POST',
+            headers: {
+                'x-api-key': 'dev-secret'
+            }
+        });
+
+        const data = await upstream.json();
+        res.status(upstream.status).json(data);
+    } catch (err) {
+        console.error('Proxy /api/images/direct-upload error:', err);
+        res.status(500).json({ success: false, message: 'Proxy error' });
+    }
+});
+
+// Proxy background removal to external Worker/REMBG backend
+app.post('/api/remove-background', async (req, res) => {
+    try {
+        const origin = process.env.REMBG_ORIGIN;
+        if (!origin) {
+            return res.status(500).json({ success: false, message: 'REMBG_ORIGIN is not configured' });
+        }
+
+        const chunks = [];
+        for await (const chunk of req) chunks.push(chunk);
+        const body = Buffer.concat(chunks);
+
+        const upstream = await fetch(`${origin.replace(/\/$/, '')}/remove-background`, {
+            method: 'POST',
+            headers: {
+                'content-type': req.headers['content-type'] || 'application/octet-stream',
+                'x-api-key': 'dev-secret'
+            },
+            body
+        });
+
+        const ct = upstream.headers.get('content-type') || '';
+        res.status(upstream.status);
+        if (ct.includes('application/json')) {
+            const data = await upstream.json();
+            res.json(data);
+        } else {
+            const buf = Buffer.from(await upstream.arrayBuffer());
+            res.setHeader('content-type', ct || 'application/octet-stream');
+            res.send(buf);
+        }
+    } catch (err) {
+        console.error('Proxy /api/remove-background error:', err);
+        res.status(500).json({ success: false, message: 'Proxy error' });
+    }
+});
+
 // Root route - serve index.html
 app.get('/', (req, res) => {
     const indexPath = path.join(__dirname, '../index.html');
@@ -303,7 +363,6 @@ app.post('/api/upload-project', (req, res) => {
         return res.status(500).json({ success: false, message: 'Server error handling upload' });
     }
 });
-
 
 
 

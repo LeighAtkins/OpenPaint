@@ -246,6 +246,55 @@ document.addEventListener('DOMContentLoaded', () => {
             showPDFExportDialog(projectName);
         });
     }
+    // Remove Background (server REMBG) - toolbar button
+    const removeBgBtn = document.getElementById('removeBgClientTop');
+    if (removeBgBtn) {
+        if (!removeBgBtn.__removeBgBound) {
+            removeBgBtn.__removeBgBound = true;
+            removeBgBtn.addEventListener('click', async () => {
+                try {
+                    const label = window.paintApp.state.currentImageLabel || 'front';
+                    const srcUrl = (window.originalImages && window.originalImages[label]) || null;
+                    const canvasEl = window.paintApp.state.domElements.canvas;
+                    removeBgBtn.disabled = true;
+                    const oldText = removeBgBtn.textContent;
+                    removeBgBtn.textContent = 'Processing…';
+
+                    let blob;
+                    if (srcUrl) {
+                        try {
+                            const r = await fetch(srcUrl, { cache: 'no-store' });
+                            blob = await r.blob();
+                        } catch (_) {}
+                    }
+                    if (!blob && canvasEl) {
+                        blob = await new Promise(resolve => canvasEl.toBlob(resolve, 'image/png'));
+                    }
+                    if (!blob) throw new Error('No image to process');
+
+                    const fd = new FormData();
+                    fd.append('image', blob, 'image.png');
+                    const resp = await fetch('/api/remove-background', { method: 'POST', body: fd });
+                    const data = await resp.json();
+                    if (!data || !data.success) throw new Error(data && data.message || 'REMBG failed');
+                    const processedUrl = data.processed || data.url;
+                    if (!processedUrl) throw new Error('No processed URL returned');
+
+                    if (typeof pasteImageFromUrl === 'function') {
+                        await pasteImageFromUrl(processedUrl, label);
+                    }
+                    if (!window.originalImages) window.originalImages = {};
+                    window.originalImages[label] = processedUrl;
+                } catch (e) {
+                    console.error('[RemoveBG]', e);
+                    alert('Remove background failed: ' + e.message);
+                } finally {
+                    removeBgBtn.disabled = false;
+                    removeBgBtn.textContent = 'Remove BG';
+                }
+            });
+        }
+    }
     
     // Initialize DOM elements in state object for centralized access
     window.paintApp.state.domElements.canvas = document.getElementById('canvas');
