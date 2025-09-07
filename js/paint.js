@@ -272,19 +272,51 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     if (!blob) throw new Error('No image to process');
 
-                    const fd = new FormData();
-                    fd.append('image', blob, 'image.png');
-                    const resp = await fetch('/api/remove-background', { method: 'POST', body: fd });
-                    const data = await resp.json();
-                    if (!data || !data.success) throw new Error(data && data.message || 'REMBG failed');
-                    const processedUrl = data.processed || data.url;
-                    if (!processedUrl) throw new Error('No processed URL returned');
+                    // Step 1: Get direct upload URL from Cloudflare Worker
+                    const uploadResp = await fetch('/api/images/direct-upload', { 
+                        method: 'POST',
+                        headers: { 'x-api-key': 'dev-secret' }
+                    });
+                    const uploadData = await uploadResp.json();
+                    if (!uploadData.success || !uploadData.result?.uploadURL) {
+                        throw new Error('Failed to get upload URL');
+                    }
 
+                    // Step 2: Upload image directly to Cloudflare Images
+                    const formData = new FormData();
+                    formData.append('file', blob, 'image.png');
+                    const imageUploadResp = await fetch(uploadData.result.uploadURL, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const imageUploadData = await imageUploadResp.json();
+                    if (!imageUploadData.success || !imageUploadData.result?.id) {
+                        throw new Error('Failed to upload image');
+                    }
+
+                    // Step 3: Remove background using Cloudflare Images
+                    const bgRemoveResp = await fetch('/api/remove-background', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'x-api-key': 'dev-secret'
+                        },
+                        body: JSON.stringify({
+                            imageId: imageUploadData.result.id,
+                            return: 'url'
+                        })
+                    });
+                    const bgRemoveData = await bgRemoveResp.json();
+                    if (!bgRemoveData.success || !bgRemoveData.cutoutUrl) {
+                        throw new Error(bgRemoveData.message || 'Background removal failed');
+                    }
+
+                    // Step 4: Apply the processed image
                     if (typeof pasteImageFromUrl === 'function') {
-                        await pasteImageFromUrl(processedUrl, label);
+                        await pasteImageFromUrl(bgRemoveData.cutoutUrl, label);
                     }
                     if (!window.originalImages) window.originalImages = {};
-                    window.originalImages[label] = processedUrl;
+                    window.originalImages[label] = bgRemoveData.cutoutUrl;
                 } catch (e) {
                     console.error('[RemoveBG]', e);
                     alert('Remove background failed: ' + e.message);
