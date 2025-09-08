@@ -1,21 +1,3 @@
 {
-  "functions": {
-    "api/**/*.{js,ts}": {
-      "runtime": "nodejs22.x"
-    }
-  },
-  "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "/api/index.js"
-    },
-    {
-      "source": "/shared/(.*)",
-      "destination": "/api/index.js"
-    },
-    {
-      "source": "/",
-      "destination": "/api/index.js"
-    }
-  ]
+  "outputDirectory": "."
 }
