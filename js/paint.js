@@ -318,7 +318,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         throw new Error('Failed to upload image');
                     }
 
-                    // Step 3: Remove background using Cloudflare Images
+                    // Step 3: Remove background using Cloudflare Images (robust parsing)
                     const bgRemoveResp = await fetch('/api/remove-background', {
                         method: 'POST',
                         headers: {
@@ -330,17 +330,44 @@ document.addEventListener('DOMContentLoaded', () => {
                             return: 'url'
                         })
                     });
-                    const bgRemoveData = await bgRemoveResp.json();
-                    if (!bgRemoveData.success || !bgRemoveData.cutoutUrl) {
-                        throw new Error(bgRemoveData.message || 'Background removal failed');
+                    const ct = (bgRemoveResp.headers.get('content-type') || '').toLowerCase();
+                    if (!bgRemoveResp.ok) {
+                        if (ct.includes('application/json')) {
+                            const errJson = await bgRemoveResp.json().catch(() => ({}));
+                            throw new Error(errJson.message || JSON.stringify(errJson));
+                        }
+                        if (ct.startsWith('text/')) {
+                            const text = await bgRemoveResp.text();
+                            throw new Error(text.slice(0, 300));
+                        }
+                        const ab = await bgRemoveResp.arrayBuffer().catch(() => null);
+                        throw new Error(`RemoveBG HTTP ${bgRemoveResp.status}: ${ct || 'unknown'} (${ab ? ab.byteLength : 'no'} bytes)`);
+                    }
+                    let cutoutUrl;
+                    if (ct.includes('application/json')) {
+                        const bgRemoveData = await bgRemoveResp.json();
+                        if (!bgRemoveData.success || !bgRemoveData.cutoutUrl) {
+                            throw new Error(bgRemoveData.message || 'Background removal failed');
+                        }
+                        cutoutUrl = bgRemoveData.cutoutUrl;
+                    } else if (ct.startsWith('image/')) {
+                        const blobOut = await bgRemoveResp.blob();
+                        cutoutUrl = URL.createObjectURL(blobOut);
+                    } else if (ct.startsWith('text/')) {
+                        const text = await bgRemoveResp.text();
+                        throw new Error(`Unexpected text from remove-background: ${text.slice(0, 300)}`);
+                    } else {
+                        const buf = await bgRemoveResp.arrayBuffer();
+                        const blobOut = new Blob([buf]);
+                        cutoutUrl = URL.createObjectURL(blobOut);
                     }
 
                     // Step 4: Apply the processed image
                     if (typeof pasteImageFromUrl === 'function') {
-                        await pasteImageFromUrl(bgRemoveData.cutoutUrl, label);
+                        await pasteImageFromUrl(cutoutUrl, label);
                     }
                     if (!window.originalImages) window.originalImages = {};
-                    window.originalImages[label] = bgRemoveData.cutoutUrl;
+                    window.originalImages[label] = cutoutUrl;
                 } catch (e) {
                     console.error('[RemoveBG]', e);
                     alert('Remove background failed: ' + e.message);
