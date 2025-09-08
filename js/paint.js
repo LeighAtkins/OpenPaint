@@ -170,6 +170,30 @@ let cachedLabelPositions = new Map(); // Cache for transformed label positions
 let cacheInvalidated = true; // Flag to track when cache needs updating
 
 // PERFORMANCE: Cache invalidation helper - call when view changes (pan/zoom) or strokes change
+
+// JSON validation helper function
+function isValidJSON(jsonString) {
+    try {
+        JSON.parse(jsonString);
+        return true;
+    } catch (e) {
+        return false;
+    }
+}
+
+// Safe JSON parsing with fallback
+function safeJsonParse(jsonString, fallback = null) {
+    if (!jsonString || jsonString.trim() === '') {
+        return fallback;
+    }
+    try {
+        return JSON.parse(jsonString);
+    } catch (e) {
+        console.error('JSON parsing error:', e.message, 'Input:', jsonString);
+        return fallback;
+    }
+}
+
 function invalidateInteractiveElementCache() {
     cacheInvalidated = true;
     cachedControlPoints.clear();

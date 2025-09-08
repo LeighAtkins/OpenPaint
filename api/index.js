@@ -38,6 +38,14 @@ app.use((req, res, next) => {
 // Route handlers
 // API routes only - static files are served by Vercel
 
+// Debug endpoint to check environment variables
+app.get('/api/_env', (req, res) => {
+    res.json({
+        REMBG_ORIGIN: process.env.REMBG_ORIGIN ? 'configured' : 'missing',
+        NODE_ENV: process.env.NODE_ENV || 'development'
+    });
+});
+
 // Proxy direct upload to Cloudflare Worker
 app.post('/api/images/direct-upload', async (req, res) => {
     try {
@@ -69,29 +77,24 @@ app.post('/api/remove-background', async (req, res) => {
             return res.status(500).json({ success: false, message: 'REMBG_ORIGIN is not configured' });
         }
 
-        const chunks = [];
-        for await (const chunk of req) chunks.push(chunk);
-        const body = Buffer.concat(chunks);
+        // Get the raw body as text to avoid double-parsing
+        const bodyText = typeof req.body === 'string' ? req.body : JSON.stringify(req.body || {});
 
         const upstream = await fetch(`${origin.replace(/\/$/, '')}/remove-background`, {
             method: 'POST',
             headers: {
-                'content-type': req.headers['content-type'] || 'application/octet-stream',
+                'content-type': 'application/json',
                 'x-api-key': 'dev-secret'
             },
-            body
+            body: bodyText
         });
 
-        const ct = upstream.headers.get('content-type') || '';
+        const ct = upstream.headers.get('content-type') || 'application/octet-stream';
+        const buf = Buffer.from(await upstream.arrayBuffer());
+        
         res.status(upstream.status);
-        if (ct.includes('application/json')) {
-            const data = await upstream.json();
-            res.json(data);
-        } else {
-            const buf = Buffer.from(await upstream.arrayBuffer());
-            res.setHeader('content-type', ct || 'application/octet-stream');
-            res.send(buf);
-        }
+        res.setHeader('content-type', ct);
+        res.send(buf);
     } catch (err) {
         console.error('Proxy /api/remove-background error:', err);
         res.status(500).json({ success: false, message: 'Proxy error' });

@@ -1,7 +1,7 @@
 {
   "functions": {
-    "api/index.js": {
-      "maxDuration": 30
+    "api/**/*.{js,ts}": {
+      "runtime": "nodejs22.x"
     }
   },
   "rewrites": [
@@ -17,7 +17,5 @@
       "source": "/",
       "destination": "/api/index.js"
     }
-  ],
-  "buildCommand": "echo 'No build required - static files in root'",
-  "outputDirectory": "."
+  ]
 }
