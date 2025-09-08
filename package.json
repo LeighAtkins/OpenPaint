@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "A web-based drawing and annotation tool designed for email communication of measurements and specifications",
   "main": "app.js",
+  "engines": {
+    "node": "22.x"
+  },
   "scripts": {
     "start": "node app.js",
     "dev": "node app.js",
