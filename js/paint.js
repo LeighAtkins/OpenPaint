@@ -200,6 +200,11 @@ function invalidateInteractiveElementCache() {
     cachedLabelPositions.clear();
 //         console.log('[PERF] Interactive element cache invalidated');
 }
+
+// Safe number formatter to avoid toFixed on undefined or non-numbers
+function fmt(n, p = 1) {
+    return (typeof n === 'number' && isFinite(n)) ? n.toFixed(p) : String(n);
+}
 let dragCurveStroke = window.paintApp.uiState.dragCurveStroke;
 let dragAnchorIndex = window.paintApp.uiState.dragAnchorIndex;
 const ANCHOR_SIZE = window.paintApp.config.ANCHOR_SIZE;
@@ -362,12 +367,59 @@ document.addEventListener('DOMContentLoaded', () => {
                         cutoutUrl = URL.createObjectURL(blobOut);
                     }
 
-                    // Step 4: Apply the processed image
-                    if (typeof pasteImageFromUrl === 'function') {
-                        await pasteImageFromUrl(cutoutUrl, label);
+                    // Step 4: Apply the processed image (optional safety shim; falls back silently)
+                    try {
+                        if (typeof rembg_isShimEnabled === 'function' && rembg_isShimEnabled()) {
+                            if (typeof rembg_debug === 'function') rembg_debug('[REMBG-SHIM] enabled');
+                            try {
+                                const resp = await fetch(cutoutUrl, { cache: 'no-store' });
+                                const outBlob = await resp.blob();
+                                
+                                // **NEW**: Use centralized background removal handler
+                                if (typeof window.onBackgroundRemoved === 'function') {
+                                    await window.onBackgroundRemoved(label, outBlob);
+                                } else {
+                                    // Fallback to direct paste
+                                const dataUrl = await rembg_blobToDataURL(outBlob);
+                                if (typeof pasteImageFromUrl === 'function') {
+                                        await pasteImageFromUrl(dataUrl, label, { preserveCanvasScale: true, preserveBasis: 'width' });
+                                }
+                                }
+                                // Keep UI scale text and canvas in sync after replace
+                                try { if (label === window.currentImageLabel && typeof updateScaleUI === 'function') updateScaleUI(); } catch(_) {}
+                                try { if (typeof redrawCanvasWithVisibility === 'function') redrawCanvasWithVisibility(); } catch(_) {}
+                                if (!window.originalImages) window.originalImages = {};
+                                // Only set originalImages if we used the fallback path
+                                if (typeof window.onBackgroundRemoved !== 'function') {
+                                    const dataUrl = await rembg_blobToDataURL(outBlob);
+                                window.originalImages[label] = dataUrl;
+                                }
+                                return;
+                            } catch (shimErr) {
+                                if (typeof rembg_debug === 'function') rembg_debug('[REMBG-SHIM] error; fallback', shimErr && shimErr.message);
+                            }
+                        } else {
+                            if (typeof rembg_debug === 'function') rembg_debug('[REMBG-SHIM] disabled');
+                        }
+                    } catch (_) {}
+
+                    // Original path - use centralized handler if available
+                    if (typeof window.onBackgroundRemoved === 'function') {
+                        // Convert data URL to blob for centralized handler
+                        const response = await fetch(cutoutUrl);
+                        const blob = await response.blob();
+                        await window.onBackgroundRemoved(label, blob);
+                    } else if (typeof pasteImageFromUrl === 'function') {
+                        await pasteImageFromUrl(cutoutUrl, label, { preserveCanvasScale: true, preserveBasis: 'width' });
                     }
+                    // Keep UI scale text and canvas in sync after replace
+                    try { if (label === window.currentImageLabel && typeof updateScaleUI === 'function') updateScaleUI(); } catch(_) {}
+                    try { if (typeof redrawCanvasWithVisibility === 'function') redrawCanvasWithVisibility(); } catch(_) {}
                     if (!window.originalImages) window.originalImages = {};
-                    window.originalImages[label] = cutoutUrl;
+                    // Only set originalImages if we used the fallback path
+                    if (typeof window.onBackgroundRemoved !== 'function') {
+                        window.originalImages[label] = cutoutUrl;
+                    }
                 } catch (e) {
                     console.error('[RemoveBG]', e);
                     alert('Remove background failed: ' + e.message);
@@ -463,6 +515,82 @@ if (colorPicker) {
             imageList.appendChild(draggedImageItem);
         }
     });
+
+    // === REMBG Safety Shim (additive, opt-in, no side effects when disabled) ===
+    function rembg_isShimEnabled() {
+        try {
+            var v = (typeof process !== 'undefined' && process && process.env && process.env.NEXT_PUBLIC_REMBG_SAFESHIM) || globalThis.NEXT_PUBLIC_REMBG_SAFESHIM;
+            return String(v) === '1';
+        } catch (_) { return false; }
+    }
+
+    function rembg_debug() {
+        try {
+            var dbg = (typeof process !== 'undefined' && process && process.env && process.env.NEXT_PUBLIC_REMBG_SAFESHIM_DEBUG) || globalThis.NEXT_PUBLIC_REMBG_SAFESHIM_DEBUG;
+            if (String(dbg) === '1') {
+                // eslint-disable-next-line no-console
+                console.log.apply(console, arguments);
+            }
+        } catch (_) {}
+    }
+
+    // === LABEL REPROJECTION FEATURE FLAG ===
+    function labelReprojectEnabled() {
+        try {
+            var v = (typeof process !== 'undefined' && process && process.env && process.env.NEXT_PUBLIC_LABEL_REPROJECT) || globalThis.NEXT_PUBLIC_LABEL_REPROJECT;
+            return String(v) === '1';
+        } catch (_) { return false; }
+    }
+    function labelReprojectDebug() {
+        try {
+            var v = (typeof process !== 'undefined' && process && process.env && process.env.NEXT_PUBLIC_LABEL_REPROJECT_DEBUG) || globalThis.NEXT_PUBLIC_LABEL_REPROJECT_DEBUG;
+            return String(v) === '1';
+        } catch (_) { return false; }
+    }
+
+    function labelNormEnabled() {
+        try {
+            var v = (typeof process !== 'undefined' && process && process.env && process.env.NEXT_PUBLIC_LABEL_NORM) || globalThis.NEXT_PUBLIC_LABEL_NORM;
+            return String(v) === '1';
+        } catch (_) { return false; }
+    }
+
+    function labelStrictEnabled() {
+        try {
+            var v = (typeof process !== 'undefined' && process && process.env && process.env.NEXT_PUBLIC_LABEL_REPROJECT_STRICT) || globalThis.NEXT_PUBLIC_LABEL_REPROJECT_STRICT;
+            return String(v) === '1';
+        } catch (_) { return false; }
+    }
+
+    function labelSkipRebaseEnabled() {
+        try {
+            var v = (typeof process !== 'undefined' && process && process.env && process.env.NEXT_PUBLIC_LABEL_REPROJECT_SKIP_REBASE) || globalThis.NEXT_PUBLIC_LABEL_REPROJECT_SKIP_REBASE;
+            return String(v) === '1';
+        } catch (_) { return false; }
+    }
+
+    function rembg_blobToDataURL(blob) {
+        return new Promise(function(resolve, reject) {
+            var reader = new FileReader();
+            reader.onload = function() { resolve(reader.result); };
+            reader.onerror = function(err) { reject(err); };
+            reader.readAsDataURL(blob);
+        });
+    }
+
+    async function rembg_createImageSafe(dataUrl) {
+        var img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.src = dataUrl;
+        await img.decode();
+        return img;
+    }
+
+    async function rembg_useBitmapSafely(outBlob) {
+        var dataUrl = await rembg_blobToDataURL(outBlob);
+        var img = await rembg_createImageSafe(dataUrl);
+        return { img: img, width: img.naturalWidth || img.width, height: img.naturalHeight || img.height };
+    }
 
     // Undo/Redo functionality - use values from paintApp structure
     const MAX_HISTORY = window.paintApp.config.MAX_HISTORY;
@@ -988,22 +1116,80 @@ if (colorPicker) {
     if (!window.customLabelAbsolutePositions) window.customLabelAbsolutePositions = {};
     
     // --- MODIFIED Function Signature and Logic --- 
-    function pasteImageFromUrl(url, label) {
+    // Optional opts:
+    // - preserveCanvasScale: boolean. If true and previous dimensions exist for this label,
+    //   the function adjusts imageScaleByLabel so the on-canvas size remains visually
+    //   consistent after replacing the image (e.g., after background removal that changes
+    //   pixel dimensions). Defaults to false for backwards compatibility.
+    // - preserveBasis: 'width' | 'height' | 'max' | 'min' (default: 'width').
+    function pasteImageFromUrl(url, label, opts) {
         // Wrap in a Promise
         return new Promise((resolve, reject) => {
 //             console.log(`[pasteImageFromUrl] Pasting image for ${label}: ${url.substring(0, 30)}...`);
         
+        // LABEL REPROJECTION: capture pre-replace canvas centers for this image
+        let __preCenters = null;
+        try {
+                if (labelReprojectEnabled()) {
+                    __preCenters = capturePreReplaceLabelCenters(label);
+                    if (!window.__labelReprojectPreCenters) window.__labelReprojectPreCenters = {};
+                    window.__labelReprojectPreCenters[label] = __preCenters;
+                    if (labelReprojectDebug()) console.log(`[LABEL-REPROJECT] capture pre centers: ${Object.keys(__preCenters||{}).length} for ${label}`);
+                }
+            } catch (_) {}
+        
         const img = new Image();
+        try { img.crossOrigin = 'anonymous'; } catch (_) {}
         img.onload = () => {
-            // Store the original image for this view
+            // **NEW**: Record image dimensions for offset tracking
+            if (img.naturalWidth && img.naturalHeight) {
+                lastImageDims[label] = { w: img.naturalWidth, h: img.naturalHeight };
+            }
+
+            // Before mutating globals, capture previous dimensions and scale (if any)
+            const prevDims = (window.originalImageDimensions && window.originalImageDimensions[label]) || null;
+            const prevScale = (window.imageScaleByLabel && window.imageScaleByLabel[label] != null)
+                ? window.imageScaleByLabel[label]
+                : 1.0;
+
+            // Optionally preserve the visual on-canvas size if the underlying pixel
+            // dimensions change (common after background removal/cropping)
+            const preserve = opts && opts.preserveCanvasScale;
+            const basis = (opts && opts.preserveBasis) || 'width';
+
+            // Store the original image URL for this view
                 window.originalImages[label] = url;
                 
-                // Ensure the object exists before setting properties
+            // Ensure the dimensions map exists
                 if (!window.originalImageDimensions) {
                     window.originalImageDimensions = {};
                 }
             
-            // Store original dimensions for scaling
+            // If requested, adjust the stored scale so that the drawn size remains the same
+            // after the replacement image loads.
+            if (preserve && prevDims && img && img.width > 0 && img.height > 0) {
+                let ratioW = prevDims.width / img.width;
+                let ratioH = prevDims.height / img.height;
+                let ratio = ratioW; // default: preserve by width
+                if (basis === 'height') ratio = ratioH;
+                else if (basis === 'max') ratio = Math.max(ratioW, ratioH);
+                else if (basis === 'min') ratio = Math.min(ratioW, ratioH);
+
+                let newScale = prevScale * (isFinite(ratio) && ratio > 0 ? ratio : 1);
+                // Clamp to avoid extreme values if something goes wrong
+                const MIN_SCALE = 0.02; // 2%
+                const MAX_SCALE = 20;   // 2000%
+                if (newScale < MIN_SCALE) newScale = MIN_SCALE;
+                if (newScale > MAX_SCALE) newScale = MAX_SCALE;
+                if (!window.imageScaleByLabel) window.imageScaleByLabel = {};
+                window.imageScaleByLabel[label] = newScale;
+                // Keep UI in sync if this is the active image
+                if (typeof updateScaleUI === 'function' && label === currentImageLabel) {
+                    try { updateScaleUI(); } catch (_) {}
+                }
+            }
+
+            // Store new dimensions for future operations
                 window.originalImageDimensions[label] = {
                 width: img.width,
                 height: img.height
@@ -1011,13 +1197,53 @@ if (colorPicker) {
                 
                 // Log dimensions for debugging
                 console.log(`[pasteImageFromUrl] Stored dimensions for ${label}: ${img.width}x${img.height}`);
+
+            // If we replaced the image (e.g., remove BG) while preserving canvas scale,
+            // previously calculated image-space label offsets need to be rebased so that
+            // their visual (canvas-space) displacement stays consistent. Since we adjusted
+            // the scale by `ratio`, divide the stored image-space offsets by the same ratio.
+            // Preserve user-defined custom positions as-is.
+            try {
+                if (opts && opts.preserveCanvasScale && prevDims) {
+                    // Determine the ratio that was used to adjust scale above
+                    let ratioW = prevDims.width / img.width;
+                    let ratioH = prevDims.height / img.height;
+                    let ratioUsed = ratioW;
+                    const basisForOffsets = (opts && opts.preserveBasis) || 'width';
+                    if (basisForOffsets === 'height') ratioUsed = ratioH;
+                    else if (basisForOffsets === 'max') ratioUsed = Math.max(ratioW, ratioH);
+                    else if (basisForOffsets === 'min') ratioUsed = Math.min(ratioW, ratioH);
+
+                    if (isFinite(ratioUsed) && ratioUsed > 0) {
+                        if (window.calculatedLabelOffsets && window.calculatedLabelOffsets[label]) {
+                            const map = window.calculatedLabelOffsets[label];
+                            const keys = Object.keys(map);
+                            // Always shadow-only: do not persist rebased values; reprojection will commit authoritative offsets
+                            if (!window.__shadowRebasedOffset) window.__shadowRebasedOffset = {};
+                            window.__shadowRebasedOffset[label] = window.__shadowRebasedOffset[label] || {};
+                            keys.forEach(k => {
+                                const off = map[k];
+                                const px = normalizeToPixels(off, label) || { x: 0, y: 0 };
+                                const rebased = { x: px.x / ratioUsed, y: px.y / ratioUsed };
+                                window.__shadowRebasedOffset[label][k] = rebased;
+                                if (labelReprojectDebug()) console.log('[REBASE] skipped (shadow-only)', { imageId: label, labelId: k, ratio: ratioUsed.toFixed(4) });
+                            });
+                        }
+                    }
+
+                    // Also clear any cached label positions so redraw recomputes
+                    if (typeof invalidateInteractiveElementCache === 'function') {
+                        invalidateInteractiveElementCache();
+                    }
+                }
+            } catch (_) {}
             
             
             // Clear the canvas first
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
             // Apply current scale factor
-                const scale = window.imageScaleByLabel[label] || 1.0; // Use passed-in label
+                const scale = window.imageScaleByLabel[label] || 1.0; // Use passed-in label (may be adjusted above)
             const scaledWidth = img.width * scale;
             const scaledHeight = img.height * scale;
             
@@ -1064,10 +1290,30 @@ if (colorPicker) {
 //                     console.log(`[pasteImageFromUrl] Initialized undo stack for ${label}`);
                 }
             
-                // Update the scale buttons to show active state if this is the current view
+                // Update the scale buttons and main scale text if this is the current view
                 if (label === currentImageLabel) {
             updateScaleButtonsActiveState();
+                    try { if (typeof updateScaleUI === 'function') updateScaleUI(); } catch(_) {}
                 }
+
+                // LABEL REPROJECTION: after we updated dims/scale, reproject label offsets to preserve canvas positions
+                try {
+                    if (labelReprojectEnabled() && window.__labelReprojectPreCenters && window.__labelReprojectPreCenters[label]) {
+                        // session bump for transactional fencing
+                        bumpImageSession(label);
+                        applyPostReplaceReprojection(label);
+                        // Trigger a redraw so that ABS_LOCK_ONCE and/or committed offsets take effect
+                        try { if (typeof redrawCanvasWithVisibility === 'function') redrawCanvasWithVisibility(); } catch(_) {}
+
+                        // Validate coordinate stability after background removal
+                        if (window.__shadowRebasedOffset && window.__shadowRebasedOffset[label]) {
+                            console.log(`[COORD-FIX] Background removal coordinate validation for ${label}`);
+                            Object.keys(window.__shadowRebasedOffset[label]).forEach(strokeLabel => {
+                                validateCoordinateStability(label, strokeLabel);
+                            });
+                        }
+                    }
+                } catch (_) {}
                 
 //                 console.log(`[pasteImageFromUrl] Image loaded and state saved for ${label}`);
                 resolve(); // Resolve the promise
@@ -5381,13 +5627,10 @@ if (colorPicker) {
             const scaleMatch = scaleText.match(/Scale: (\d+)%/);
             if (scaleMatch && scaleMatch[1]) {
                 const uiScale = parseInt(scaleMatch[1]) / 100;
-//                 console.log(`[redrawCanvasWithVisibility] UI shows scale=${uiScale} for ${currentImageLabel}`);
-                // Only warn about significant scale mismatches (more than 1% difference)
                 const scaleDifference = Math.abs(uiScale - scale);
-                if (scaleDifference > 0.01) {
+                    // Gate warning behind debug only to avoid noisy false-positives during strict mode
+                    if (scaleDifference > 0.01 && labelReprojectDebug()) {
                     console.warn(`[redrawCanvasWithVisibility] WARNING: Scale mismatch! Variable: ${scale}, UI: ${uiScale}`);
-                    // Don't automatically update as that would create infinite loop with updateScale
-                    // Just warn about the inconsistency
                 }
             }
         }
@@ -5419,6 +5662,7 @@ if (colorPicker) {
             } else {
                 // Load the image and cache it
                 const img = new Image();
+                try { img.crossOrigin = 'anonymous'; } catch (_) {}
                 img.onload = () => {
                     // Add to cache
                     imageCache[imageUrl] = img;
@@ -5495,6 +5739,22 @@ if (colorPicker) {
             imageY = centerY + position.y;
         }
         
+        // Stamp the active transform used for this draw and update session stability
+        try {
+            const params = getTransformationParams(currentImageLabel);
+            const thash = getTransformHash(params);
+            window.__activeDrawMatrixHashByLabel[currentImageLabel] = thash;
+            window.__lastActiveDrawParamsByLabel[currentImageLabel] = params;
+            // compute anchor hash for stability checks
+            const ahash = computeAnchorHash(currentImageLabel);
+            if (window.__lastAnchorHashByLabel[currentImageLabel] !== ahash) {
+                window.__anchorsVersionByLabel[currentImageLabel] = (window.__anchorsVersionByLabel[currentImageLabel] || 0) + 1;
+                window.__lastAnchorHashByLabel[currentImageLabel] = ahash;
+            }
+            onSessionDrawTick(currentImageLabel, thash, window.__lastAnchorHashByLabel[currentImageLabel]);
+            if (labelReprojectDebug()) console.log('[XFORM] activeDrawHash=', thash, 'anchorsVer=', window.__anchorsVersionByLabel[currentImageLabel]||0);
+        } catch (_) {}
+        
         // Clear the canvas
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         // Ensure opaque white background so saved/loaded images don't have transparency outside the image
@@ -5508,6 +5768,9 @@ if (colorPicker) {
         // Calculate scaled dimensions
         const scaledWidth = imgWidth * scale;
         const scaledHeight = imgHeight * scale;
+        
+        // Attempt to commit any pending reprojection now that the active draw transform is stamped
+        try { if (labelReprojectEnabled()) tryCommitPendingReprojectionForLabel(currentImageLabel); } catch(_) {}
         
         // Check if there's rotation to apply
         const rotation = window.imageRotationByLabel ? (window.imageRotationByLabel[currentImageLabel] || 0) : 0;
@@ -6349,24 +6612,27 @@ if (colorPicker) {
                         }
                     }
                     if (!imageSpaceOffset && customLabelPositions[currentImageLabel]?.[strokeLabel]) {
-                        imageSpaceOffset = customLabelPositions[currentImageLabel][strokeLabel]; // Already in image space
+                        // Convert to pixels if normalized
+                        const raw = customLabelPositions[currentImageLabel][strokeLabel];
+                        imageSpaceOffset = normalizeToPixels(raw, currentImageLabel) || raw; // px
                         console.log(`[OFFSET-DEBUG] ${strokeLabel} - USING CUSTOM:`, imageSpaceOffset);
                     } else if (!imageSpaceOffset && calculatedLabelOffsets[currentImageLabel]?.[strokeLabel]) {
-                        imageSpaceOffset = calculatedLabelOffsets[currentImageLabel][strokeLabel]; // Already in image space
+                        const raw = calculatedLabelOffsets[currentImageLabel][strokeLabel];
+                        imageSpaceOffset = normalizeToPixels(raw, currentImageLabel) || raw; // px
                         console.log(`[OFFSET-DEBUG] ${strokeLabel} - USING CALCULATED:`, imageSpaceOffset);
                         
                         // For blank canvas, check if this is a massive offset from the old buggy calculation
                         if (currentImageLabel === 'blank_canvas') {
                             const offsetKey = `${currentImageLabel}_${strokeLabel}`;
-                            const offsetMagnitude = Math.sqrt(imageSpaceOffset.x * imageSpaceOffset.x + imageSpaceOffset.y * imageSpaceOffset.y);
+                            const offsetMagnitude = Math.sqrt((imageSpaceOffset.x||0) * (imageSpaceOffset.x||0) + (imageSpaceOffset.y||0) * (imageSpaceOffset.y||0));
                             
                             if (offsetMagnitude > 300 && !window.clearedMassiveOffsets[offsetKey]) { 
-                                console.log(`[Label] Clearing massive offset for blank canvas ${strokeLabel}: (${imageSpaceOffset.x.toFixed(1)}, ${imageSpaceOffset.y.toFixed(1)}) magnitude: ${offsetMagnitude.toFixed(1)}`);
+                                console.log(`[Label] Clearing massive offset for blank canvas ${strokeLabel}: (${fmt(imageSpaceOffset.x)}, ${fmt(imageSpaceOffset.y)}) magnitude: ${fmt(offsetMagnitude)}`);
                                 delete calculatedLabelOffsets[currentImageLabel][strokeLabel];
                                 window.clearedMassiveOffsets[offsetKey] = true; // Mark as cleared to prevent repeated clearing
                                 imageSpaceOffset = null; // Force recalculation
                             } else if (offsetMagnitude <= 300) {
-                                console.log(`[Label] Preserving reasonable offset for blank canvas ${strokeLabel}: (${imageSpaceOffset.x.toFixed(1)}, ${imageSpaceOffset.y.toFixed(1)}) magnitude: ${offsetMagnitude.toFixed(1)}`);
+                                console.log(`[Label] Preserving reasonable offset for blank canvas ${strokeLabel}: (${fmt(imageSpaceOffset.x)}, ${fmt(imageSpaceOffset.y)}) magnitude: ${fmt(offsetMagnitude)}`);
                             }
                         }
                         // console.log(`    Using calculated image-space offset for ${strokeLabel}:`, imageSpaceOffset);
@@ -6474,9 +6740,12 @@ if (colorPicker) {
                                 console.log(`[Label] Using error fallback position with proper inverse transform for ${strokeLabel}:`, imageSpaceOffset);
                             }
                         }
+                        // **NEW**: Check persistence guard before saving calculated offsets
+                        if (window.checkPersistenceGuard(currentImageLabel, 'calculate_offset')) {
                         // Store the newly calculated (or fallback) image-space offset
                          if (!calculatedLabelOffsets[currentImageLabel]) calculatedLabelOffsets[currentImageLabel] = {};
                         calculatedLabelOffsets[currentImageLabel][strokeLabel] = imageSpaceOffset;
+                        }
                         
                         // For blank canvas, mark this offset as preserved to prevent future recalculation
                         if (currentImageLabel === 'blank_canvas') {
@@ -6507,7 +6776,21 @@ if (colorPicker) {
 
                     // Use imageToCanvasCoords for proper coordinate transformation (includes rotation)
                     finalPositionCanvas = imageToCanvasCoords(finalLabelImageX, finalLabelImageY);
-                    console.log(`[Label] Final position for ${strokeLabel}: Image(${finalLabelImageX.toFixed(1)}, ${finalLabelImageY.toFixed(1)}) -> Canvas(${finalPositionCanvas.x.toFixed(1)}, ${finalPositionCanvas.y.toFixed(1)}) | Anchor: Image(${anchorPointImage.x.toFixed(1)}, ${anchorPointImage.y.toFixed(1)}) + Offset: (${imageSpaceOffset.x.toFixed(1)}, ${imageSpaceOffset.y.toFixed(1)})`);
+                    // ABS_LOCK_ONCE: if an absolute lock exists for this stroke, override for this frame
+                    try {
+                        const lock = window.__labelAbsLockOnce && window.__labelAbsLockOnce[currentImageLabel] && window.__labelAbsLockOnce[currentImageLabel][strokeLabel];
+                        if (lock && typeof lock.x === 'number' && typeof lock.y === 'number') {
+                            finalPositionCanvas = { x: lock.x, y: lock.y };
+                            // Clear only when session is Stable; else keep until stable
+                            const sess = getImageSession(currentImageLabel);
+                            if (sess.phase === 'Stable') {
+                                delete window.__labelAbsLockOnce[currentImageLabel][strokeLabel];
+                                if (Object.keys(window.__labelAbsLockOnce[currentImageLabel]).length === 0) delete window.__labelAbsLockOnce[currentImageLabel];
+                            }
+                            if (labelReprojectDebug()) console.log(`[LABEL-REPROJECT] ABS_LOCK_${getImageSession(currentImageLabel).phase==='Stable'?'CLEARED':'UNTIL_STABLE'} for ${strokeLabel}`);
+                        }
+                    } catch(_) {}
+                    console.log(`[Label] Final position for ${strokeLabel}: Image(${fmt(finalLabelImageX)}, ${fmt(finalLabelImageY)}) -> Canvas(${fmt(finalPositionCanvas.x)}, ${fmt(finalPositionCanvas.y)}) | Anchor: Image(${fmt(anchorPointImage.x)}, ${fmt(anchorPointImage.y)}) + Offset: (${fmt(imageSpaceOffset.x)}, ${fmt(imageSpaceOffset.y)})`);
                     // console.log(`    Final Canvas Position for ${strokeLabel}:`, finalPositionCanvas, `(from ImagePos: ${finalLabelImageX.toFixed(1)},${finalLabelImageY.toFixed(1)})`);
 
                     currentLabelPositions.push({ 
@@ -6794,6 +7077,9 @@ if (colorPicker) {
             vectorStrokesByImage[currentImageLabel][strokeLabel] = drawnVectorData;
             // Remove the temporary data
             delete vectorStrokesByImage[currentImageLabel][tempStrokeKey];
+
+            // **NEW**: Invalidate anchor cache when stroke is completed
+            window.invalidateAnchorCache(currentImageLabel);
 //             console.log(`[Save State] Moved vector data from ${tempStrokeKey} to ${strokeLabel}`);
         } else if (strokeLabel) {
             console.warn(`[Save State] No temporary vector data found at ${tempStrokeKey} for stroke ${strokeLabel}`);
@@ -7063,6 +7349,8 @@ if (colorPicker) {
                 // CRITICAL FIX: Restore vector data for control point undo functionality
                 if (previousState.allVectorData) {
                     vectorStrokesByImage[currentImageLabel] = JSON.parse(JSON.stringify(previousState.allVectorData));
+                    // **NEW**: Invalidate anchor cache when vector data is restored from undo
+                    window.invalidateAnchorCache(currentImageLabel);
 //                     console.log('Vector data restored for undo');
                 }
                 
@@ -7140,6 +7428,9 @@ if (colorPicker) {
             strokeLabelVisibility[currentImageLabel] = {};
             vectorStrokesByImage[currentImageLabel] = {};
             strokeDataByImage[currentImageLabel] = {};
+
+            // **NEW**: Clear anchor cache when clearing strokes
+            window.invalidateAnchorCache(currentImageLabel);
             
             // Reset label counter
             labelsByImage[currentImageLabel] = 'A1';  // Reset to A1
@@ -7284,6 +7575,8 @@ if (colorPicker) {
                 if (actionToRedo.vectorData) {
                     vectorStrokesByImage[currentImageLabel] = vectorStrokesByImage[currentImageLabel] || {};
                     vectorStrokesByImage[currentImageLabel][actionToRedo.label] = actionToRedo.vectorData;
+                    // **NEW**: Invalidate anchor cache when vector data is restored from redo
+                    window.invalidateAnchorCache(currentImageLabel);
                     
                     // If no vector data saved in the action, but we're redoing a line/stroke/curve,
                     // try to recreate basic vector data to ensure label display
@@ -7707,6 +8000,410 @@ if (colorPicker) {
         return canvasToImageCoords(canvasX, canvasY);
     }
 
+    // --- LABEL REPROJECTION UTILITIES ---
+    // Capture and preserve label canvas centers across image replacement
+    window.__labelReprojectPreCenters = window.__labelReprojectPreCenters || {};
+    window.__labelReprojectPreHash = window.__labelReprojectPreHash || {}; // { [label]: hash }
+    window.__labelReprojectPending = window.__labelReprojectPending || {}; // { [label]: { offsets: { [stroke]: {x,y} } } }
+    window.__labelAbsLockOnce = window.__labelAbsLockOnce || {};           // { [label]: { [stroke]: {x,y} } }
+    window.__activeDrawMatrixHashByLabel = window.__activeDrawMatrixHashByLabel || {}; // { [label]: string }
+    window.__lastActiveDrawParamsByLabel = window.__lastActiveDrawParamsByLabel || {}; // debug aid
+    window.__labelOffsetWriteKeys = window.__labelOffsetWriteKeys || new Set(); // write-once keys
+    window.__imageSessionByLabel = window.__imageSessionByLabel || {}; // { [label]: { id, phase, stableTicks, lastSig } }
+    window.__anchorsVersionByLabel = window.__anchorsVersionByLabel || {}; // { [label]: number }
+    window.__lastAnchorHashByLabel = window.__lastAnchorHashByLabel || {}; // { [label]: string }
+    window.__shadowRebasedOffset = window.__shadowRebasedOffset || {}; // { [label]: { [stroke]: {x,y} } }
+
+    function getTransformHash(params) {
+        try {
+            const dpr = typeof window !== 'undefined' && window.devicePixelRatio ? window.devicePixelRatio : 1;
+            const obj = {
+                label: params.label,
+                scale: +params.scale,
+                posX: +(params.position?.x || 0),
+                posY: +(params.position?.y || 0),
+                rot: +params.rotation,
+                w: +(params.dimensions?.width || 0),
+                h: +(params.dimensions?.height || 0),
+                hasImage: !!params.hasImage,
+                dpr: +dpr
+            };
+            return JSON.stringify(obj);
+        } catch (_) {
+            return Math.random().toString(36).slice(2);
+        }
+    }
+
+    function tryCommitPendingReprojectionForLabel(imageLabel) {
+        const pending = window.__labelReprojectPending && window.__labelReprojectPending[imageLabel];
+        if (!pending || !pending.offsets) return;
+        // Verify current active draw matrix hash matches recomputed params
+        const paramsNow = getTransformationParams(imageLabel);
+        const activeHash = window.__activeDrawMatrixHashByLabel[imageLabel];
+        const thisHash = getTransformHash(paramsNow);
+        // Require session to be Stable and hash match
+        const sess = getImageSession(imageLabel);
+        if (sess.phase === 'Stable' && activeHash && activeHash === thisHash) {
+            // Commit offsets
+            const offsets = pending.offsets;
+        Object.keys(offsets).forEach(strokeLabel => {
+            const off = offsets[strokeLabel];
+            if (!off) return;
+            const writeKey = `${imageLabel}:${strokeLabel}:${sess.id}`;
+            if (window.__labelOffsetWriteKeys.has(writeKey)) return;
+
+            // **FIX**: Check for shadow rebased offsets first (from background removal)
+            let finalOffset = off;
+            const shadowRebased = window.__shadowRebasedOffset &&
+                                window.__shadowRebasedOffset[imageLabel] &&
+                                window.__shadowRebasedOffset[imageLabel][strokeLabel];
+            if (shadowRebased && typeof shadowRebased.x === 'number' && typeof shadowRebased.y === 'number') {
+                finalOffset = shadowRebased;
+                if (labelReprojectDebug()) console.log('[COMMIT] Using shadow rebased offset', { imageLabel, strokeLabel, shadowRebased });
+            }
+
+            // **NEW**: Check persistence guard before committing reprojected offsets
+            if (window.checkPersistenceGuard(imageLabel, 'reproject_commit')) {
+                // Prefer updating custom slot if it exists
+                if (!window.customLabelPositions) window.customLabelPositions = {};
+                if (!window.customLabelPositions[imageLabel]) window.customLabelPositions[imageLabel] = {};
+                const userHadCustom = !!(window.customLabelPositions[imageLabel] && window.customLabelPositions[imageLabel][strokeLabel]);
+                if (userHadCustom) {
+                    window.customLabelPositions[imageLabel][strokeLabel] = normalizeMaybeStore(finalOffset, imageLabel);
+                } else {
+                    if (!window.calculatedLabelOffsets) window.calculatedLabelOffsets = {};
+                    if (!window.calculatedLabelOffsets[imageLabel]) window.calculatedLabelOffsets[imageLabel] = {};
+                    window.calculatedLabelOffsets[imageLabel][strokeLabel] = normalizeMaybeStore(finalOffset, imageLabel);
+                }
+            }
+            window.__labelOffsetWriteKeys.add(writeKey);
+            if (labelReprojectDebug()) console.log('[COMMIT] calculatedLabelOffsets persisted', { imageLabel, strokeLabel, sessionId: sess.id });
+        });
+            // Clear pending and any absolute locks
+            delete window.__labelReprojectPending[imageLabel];
+            // Clear ABS lock only after Stable commit
+            if (window.__labelAbsLockOnce && window.__labelAbsLockOnce[imageLabel]) delete window.__labelAbsLockOnce[imageLabel];
+            // Clear shadow rebase shim after successful reproject commit
+            if (window.__shadowRebasedOffset && window.__shadowRebasedOffset[imageLabel]) delete window.__shadowRebasedOffset[imageLabel];
+            if (labelReprojectDebug()) console.log(`[LABEL-REPROJECT] Committed ${Object.keys(offsets).length} offsets for ${imageLabel}`);
+        } else {
+            // Keep pending; absolute locks will keep visuals stable for this frame
+            if (labelReprojectDebug()) console.log('[BLOCK] offset_write_blocked', { imageLabel, reason: (sess.phase!=='Stable'?'not_stable':'matrix_mismatch') });
+        }
+    }
+
+    function validateCoordinateStability(imageLabel, strokeLabel) {
+        try {
+            const calculatedOffsets = window.calculatedLabelOffsets?.[imageLabel]?.[strokeLabel];
+            const customPositions = window.customLabelPositions?.[imageLabel]?.[strokeLabel];
+
+            if (calculatedOffsets || customPositions) {
+                const offset = calculatedOffsets || customPositions;
+                const anchor = getStrokeAnchorPoint(strokeLabel, imageLabel);
+
+                if (anchor && offset) {
+                    const canvasPos = imageToCanvasCoords(anchor.x + offset.x, anchor.y + offset.y, getTransformationParams(imageLabel));
+                    console.log(`[COORD-VALIDATION] ${strokeLabel}: Anchor(${anchor.x.toFixed(1)},${anchor.y.toFixed(1)}) + Offset(${offset.x.toFixed(1)},${offset.y.toFixed(1)}) = Canvas(${canvasPos.x.toFixed(1)},${canvasPos.y.toFixed(1)})`);
+                }
+            }
+        } catch (e) {
+            console.warn('[COORD-VALIDATION] Error validating coordinates:', e);
+        }
+    }
+
+    function getImageSession(label) {
+        const sess = window.__imageSessionByLabel[label] || { id: 0, phase: 'Loading', stableTicks: 0, lastSig: '' };
+        window.__imageSessionByLabel[label] = sess;
+        return sess;
+    }
+
+    function bumpImageSession(label) {
+        const sess = getImageSession(label);
+        sess.id += 1;
+        sess.phase = 'Computing';
+        sess.stableTicks = 0;
+        sess.lastSig = '';
+        // reset write-once guard for this session
+        // note: we do not clear previous keys, they are keyed by session id
+        if (labelReprojectDebug()) console.log('[SESSION] bump', label, '->', sess.id);
+    }
+
+    function onSessionDrawTick(label, transformHash, anchorHash) {
+        const sess = getImageSession(label);
+        const sig = `${transformHash}|${anchorHash||''}`;
+        if (sess.phase === 'Computing') sess.phase = 'WaitingStable';
+        if (sess.phase === 'WaitingStable') {
+            if (sig === sess.lastSig) {
+                sess.stableTicks += 1;
+                if (sess.stableTicks >= 2) {
+                    sess.phase = 'Stable';
+                    if (labelReprojectDebug()) console.log('[STABLE]', { label, sessionId: sess.id, ticks: sess.stableTicks });
+                }
+            } else {
+                sess.lastSig = sig;
+                sess.stableTicks = 1; // current tick counts as first
+            }
+        }
+    }
+
+    function computeAnchorHash(label) {
+        try {
+            const strokes = (window.lineStrokesByImage && window.lineStrokesByImage[label]) || [];
+            const vectors = (window.vectorStrokesByImage && window.vectorStrokesByImage[label]) || {};
+            const parts = [];
+            strokes.forEach(s => {
+                const v = vectors[s];
+                if (!v || !v.points || v.points.length === 0) return;
+                const a = getStrokeAnchorPoint(s, label);
+                // round for stable hash
+                parts.push(`${s}:${a.x.toFixed(1)}:${a.y.toFixed(1)}`);
+            });
+            return parts.join('|');
+        } catch (_) { return ''; }
+    }
+
+    function isTransformDesynced(label) {
+        try {
+            const params = getTransformationParams(label);
+            const scaleButton = document.getElementById('scaleButton');
+            if (!scaleButton) return false;
+            const m = scaleButton.textContent && scaleButton.textContent.match(/Scale: (\d+)%/);
+            if (!m) return false;
+            const ui = parseInt(m[1], 10) / 100;
+            return Math.abs((params.scale || 1) - ui) > 1e-6;
+        } catch (_) { return false; }
+    }
+
+    function getOffsetForStroke(imageLabel, strokeLabel) {
+        // If shadow rebase exists during non-stable session, use it (visual only, not persisted)
+        try {
+            const sess = window.__imageSessionByLabel && window.__imageSessionByLabel[imageLabel];
+            if (sess && sess.phase !== 'Stable') {
+                const shadow = window.__shadowRebasedOffset && window.__shadowRebasedOffset[imageLabel] && window.__shadowRebasedOffset[imageLabel][strokeLabel];
+                if (shadow && typeof shadow.x === 'number' && typeof shadow.y === 'number') {
+                    if (labelReprojectDebug()) console.log('[LOCK] using shadow rebase offset', { imageLabel, strokeLabel, shadow });
+                    return { x: shadow.x, y: shadow.y };
+                }
+            }
+        } catch(_) {}
+        // Prefer rotation-stable relative position
+        const relMap = window.customLabelRelativePositions && window.customLabelRelativePositions[imageLabel];
+        if (relMap && relMap[strokeLabel] && typeof window.convertRelativeToAbsolutePosition === 'function') {
+            const absOffset = window.convertRelativeToAbsolutePosition(strokeLabel, relMap[strokeLabel], imageLabel);
+            if (absOffset && typeof absOffset.x === 'number' && typeof absOffset.y === 'number') {
+                return { x: absOffset.x, y: absOffset.y };
+            }
+        }
+        // User-defined custom offset
+        const customMap = (window.customLabelPositions && window.customLabelPositions[imageLabel]) || null;
+        if (customMap && customMap[strokeLabel]) {
+            const off = customMap[strokeLabel];
+            const px = normalizeToPixels(off, imageLabel);
+            if (px) return px;
+        }
+        // Calculated offset
+        const calcMap = (window.calculatedLabelOffsets && window.calculatedLabelOffsets[imageLabel]) || null;
+        if (calcMap && calcMap[strokeLabel]) {
+            const off = calcMap[strokeLabel];
+            const px = normalizeToPixels(off, imageLabel);
+            if (px) return px;
+        }
+        // Default small offset upwards
+        return { x: 10, y: -48 };
+    }
+
+    function normalizeToPixels(off, imageLabel) {
+        if (!off) return null;
+        if (typeof off.x === 'number' && typeof off.y === 'number') return { x: off.x, y: off.y };
+        if (typeof off.dx_norm === 'number' && typeof off.dy_norm === 'number') {
+            const dims = window.originalImageDimensions && window.originalImageDimensions[imageLabel];
+            if (!dims || !dims.width || !dims.height) return { x: 0, y: 0 };
+            const ref = (off.normRef === 'height') ? dims.height : (off.normRef === 'diag') ? Math.hypot(dims.width, dims.height) : dims.width;
+            return { x: off.dx_norm * ref, y: off.dy_norm * ref };
+        }
+        return null;
+    }
+
+    function normalizeMaybeStore(off, imageLabel) {
+        if (!off) return off;
+        const dims = window.originalImageDimensions && window.originalImageDimensions[imageLabel];
+        const refPx = (dims && dims.width) ? dims.width : 1; // normalize by width; avoid divide-by-zero
+        const x = (typeof off.x === 'number' && isFinite(off.x)) ? off.x : 0;
+        const y = (typeof off.y === 'number' && isFinite(off.y)) ? off.y : 0;
+        return { kind: 'norm', dx_norm: x / refPx, dy_norm: y / refPx, normRef: 'width' };
+    }
+
+    function computeLabelCanvasCenter(imageLabel, strokeLabel) {
+        try {
+            // If an absolute tag center exists, prefer it
+            const absCenter = (window.customLabelAbsolutePositions && window.customLabelAbsolutePositions[imageLabel])
+                ? window.customLabelAbsolutePositions[imageLabel][strokeLabel]
+                : null;
+
+            const params = getTransformationParams(imageLabel);
+            if (absCenter && typeof absCenter.x === 'number' && typeof absCenter.y === 'number') {
+                const pt = imageToCanvasCoords(absCenter.x, absCenter.y, params);
+                return pt && isFinite(pt.x) && isFinite(pt.y) ? pt : null;
+            }
+
+            // Otherwise compute from anchor + offset
+            const anchor = getStrokeAnchorPoint(strokeLabel, imageLabel);
+            if (!anchor || !isFinite(anchor.x) || !isFinite(anchor.y)) return null;
+
+            const off = getOffsetForStroke(imageLabel, strokeLabel);
+            const imgX = anchor.x + off.x;
+            const imgY = anchor.y + off.y;
+            const pt2 = imageToCanvasCoords(imgX, imgY, params);
+            return pt2 && isFinite(pt2.x) && isFinite(pt2.y) ? pt2 : null;
+        } catch (e) {
+            if (labelReprojectDebug()) console.warn('[LABEL-REPROJECT] computeLabelCanvasCenter error for', imageLabel, strokeLabel, e);
+            return null;
+        }
+    }
+
+    function capturePreReplaceLabelCenters(imageLabel) {
+        const map = {};
+        try {
+            const strokeOrder = (window.lineStrokesByImage && window.lineStrokesByImage[imageLabel]) || [];
+            const vectors = (window.vectorStrokesByImage && window.vectorStrokesByImage[imageLabel]) || {};
+            const labels = strokeOrder.length > 0 ? strokeOrder : Object.keys(vectors);
+            // Stamp current transform hash used before replacement
+            window.__labelReprojectPreHash[imageLabel] = getTransformHash(getTransformationParams(imageLabel));
+            labels.forEach(lbl => {
+                if (!vectors[lbl] || !vectors[lbl].points || vectors[lbl].points.length === 0) return;
+                const center = computeLabelCanvasCenter(imageLabel, lbl);
+                if (center) map[lbl] = center;
+            });
+        } catch (e) {
+            if (labelReprojectDebug()) console.warn('[LABEL-REPROJECT] capturePreReplaceLabelCenters error for', imageLabel, e);
+        }
+        return map;
+    }
+
+    function applyPostReplaceReprojection(imageLabel) {
+        try {
+            const pre = window.__labelReprojectPreCenters && window.__labelReprojectPreCenters[imageLabel];
+            if (!pre || Object.keys(pre).length === 0) return;
+
+            const paramsNew = getTransformationParams(imageLabel);
+            const dims = paramsNew.dimensions;
+            const hashNow = getTransformHash(paramsNew);
+            const activeHash = window.__activeDrawMatrixHashByLabel[imageLabel];
+            const margin = 2;
+            if (labelReprojectDebug()) {
+                console.log('[XFORM]', {
+                    old: window.__labelReprojectPreHash[imageLabel],
+                    new: hashNow,
+                    draw: activeHash,
+                    scale: paramsNew.scale,
+                    pos: paramsNew.position,
+                    rot: paramsNew.rotation,
+                    dpr: (typeof window !== 'undefined' && window.devicePixelRatio) ? window.devicePixelRatio : 1
+                });
+            }
+
+            // If matrix mismatch, or strict parity fails, or session not stable, enqueue ABS_LOCK and defer
+            const sess = getImageSession(imageLabel);
+            const mismatch = !activeHash || activeHash !== hashNow;
+            const parityFail = labelStrictEnabled() && isTransformDesynced(imageLabel);
+            const defer = mismatch || parityFail || sess.phase !== 'Stable';
+            const pending = {};
+
+            Object.keys(pre).forEach(strokeLabel => {
+                const Lc = pre[strokeLabel];
+                if (!Lc) return;
+                // Map desired canvas center back to image space under new transform
+                const Limg = canvasToImageCoords(Lc.x, Lc.y, paramsNew);
+                const anchorNew = getStrokeAnchorPoint(strokeLabel, imageLabel) || { x: 0, y: 0 };
+                let dx = Limg.x - anchorNew.x;
+                let dy = Limg.y - anchorNew.y;
+
+                // Optional clamp to keep label center within image bounds
+                if (dims && dims.width > 0 && dims.height > 0) {
+                    let finalX = anchorNew.x + dx;
+                    let finalY = anchorNew.y + dy;
+                    finalX = Math.max(margin, Math.min(dims.width - margin, finalX));
+                    finalY = Math.max(margin, Math.min(dims.height - margin, finalY));
+                    dx = finalX - anchorNew.x;
+                    dy = finalY - anchorNew.y;
+                }
+
+                pending[strokeLabel] = { x: dx, y: dy };
+
+                if (defer) {
+                    // Place absolutely for this frame
+                    if (!window.__labelAbsLockOnce[imageLabel]) window.__labelAbsLockOnce[imageLabel] = {};
+                    window.__labelAbsLockOnce[imageLabel][strokeLabel] = { x: Lc.x, y: Lc.y };
+                }
+            });
+
+            // Either persist immediately or hold pending until draw matrix stabilizes
+            if (defer) {
+                window.__labelReprojectPending[imageLabel] = { offsets: pending };
+                if (labelReprojectDebug()) {
+                    const reason = mismatch ? 'matrix_mismatch' : (parityFail ? 'TransformDesync' : 'not_stable');
+                    console.log('[BLOCK] offset_write_blocked', { imageLabel, reason });
+                    console.log('[LABEL-REPROJECT] Defer committing offsets; applying ABS_LOCK_UNTIL_STABLE');
+                }
+            } else {
+                // Commit directly
+                Object.keys(pending).forEach(strokeLabel => {
+                    // Check if we have shadow rebased offsets to use instead
+                    let finalOffset = pending[strokeLabel];
+                    const shadowRebased = window.__shadowRebasedOffset &&
+                                        window.__shadowRebasedOffset[imageLabel] &&
+                                        window.__shadowRebasedOffset[imageLabel][strokeLabel];
+                    if (shadowRebased && typeof shadowRebased.x === 'number' && typeof shadowRebased.y === 'number') {
+                        finalOffset = shadowRebased;
+                        if (labelReprojectDebug()) console.log('[COMMIT] Using shadow rebased offset (immediate)', { imageLabel, strokeLabel, shadowRebased });
+                    }
+
+                    // **NEW**: Check persistence guard before immediate commit
+                    if (window.checkPersistenceGuard(imageLabel, 'immediate_commit')) {
+                        if (!window.customLabelPositions) window.customLabelPositions = {};
+                        if (!window.customLabelPositions[imageLabel]) window.customLabelPositions[imageLabel] = {};
+                        const userHadCustom = !!(window.customLabelPositions[imageLabel] && window.customLabelPositions[imageLabel][strokeLabel]);
+                        const storedVal = normalizeMaybeStore(finalOffset, imageLabel);
+                        const writeKey = `${imageLabel}:${strokeLabel}:${sess.id}`;
+                        if (!window.__labelOffsetWriteKeys.has(writeKey)) {
+                            if (userHadCustom) {
+                                window.customLabelPositions[imageLabel][strokeLabel] = storedVal;
+                            } else {
+                                if (!window.calculatedLabelOffsets) window.calculatedLabelOffsets = {};
+                                if (!window.calculatedLabelOffsets[imageLabel]) window.calculatedLabelOffsets[imageLabel] = {};
+                                window.calculatedLabelOffsets[imageLabel][strokeLabel] = storedVal;
+                            }
+                            window.__labelOffsetWriteKeys.add(writeKey);
+                        }
+                    }
+                    if (labelReprojectDebug()) {
+                        // Sanity check pixel error
+                        const anchorNew = getStrokeAnchorPoint(strokeLabel, imageLabel) || { x: 0, y: 0 };
+                        const fwd = imageToCanvasCoords(anchorNew.x + finalOffset.x, anchorNew.y + finalOffset.y, paramsNew);
+                        const Lc = pre[strokeLabel];
+                        const err = Lc && fwd ? Math.hypot((fwd.x - Lc.x), (fwd.y - Lc.y)) : null;
+                        console.log('[REPROJECT]', strokeLabel, {
+                            Lc_before: pre[strokeLabel], A_new: anchorNew, d_new: finalOffset, err: err != null ? err.toFixed(3) : 'n/a'
+                        });
+                    }
+                    if (labelReprojectDebug()) console.log('[COMMIT] calculatedLabelOffsets persisted', { imageLabel, strokeLabel, sessionId: sess.id });
+                });
+                if (labelReprojectDebug()) console.log(`[LABEL-REPROJECT] Committed ${Object.keys(pending).length} offsets immediately`);
+                // Cleanup shadow rebase shim after successful commit
+                if (window.__shadowRebasedOffset && window.__shadowRebasedOffset[imageLabel]) delete window.__shadowRebasedOffset[imageLabel];
+            }
+
+            // Clear pre-centers for this image
+            delete window.__labelReprojectPreCenters[imageLabel];
+            delete window.__labelReprojectPreHash[imageLabel];
+
+            // Invalidate caches so redraw uses updated offsets
+            try { invalidateInteractiveElementCache(); } catch (_) {}
+        } catch (e) {
+            if (labelReprojectDebug()) console.warn('[LABEL-REPROJECT] applyPostReplaceReprojection error for', imageLabel, e);
+        }
+    }
+
     // Helper function to deselect all strokes and clear edit mode
     function deselectAllStrokes() {
 //         console.log('Deselecting all strokes');
@@ -8073,37 +8770,65 @@ if (colorPicker) {
         };
     };
     
-    // Helper function to get stroke anchor point
-    // For straight/two-point strokes, use the true midpoint between endpoints
-    // For other strokes, fall back to the middle point in the points array
-    function getStrokeAnchorPoint(strokeName, imageLabel = null) {
-        const currentImg = imageLabel || currentImageLabel;
-        const vectorData = vectorStrokesByImage[currentImg]?.[strokeName];
+    // **NEW**: Cached anchor centers for stable label positioning
+    // Cache computed anchor centers to avoid recalculation and ensure stability
+    if (!window._anchorCenterCache) {
+        window._anchorCenterCache = {}; // { [imageLabel]: { [strokeLabel]: {x, y, version} } }
+        window._anchorCenterVersion = {}; // { [imageLabel]: number }
+    }
+
+    // Invalidate anchor cache for a specific image when strokes change
+    window.invalidateAnchorCache = function(imageLabel) {
+        if (window._anchorCenterCache[imageLabel]) {
+            delete window._anchorCenterCache[imageLabel];
+            window._anchorCenterVersion[imageLabel] = (window._anchorCenterVersion[imageLabel] || 0) + 1;
+            if (window.labelReprojectDebug && labelReprojectDebug()) {
+                console.log(`[ANCHOR-CACHE] Invalidated cache for ${imageLabel}`);
+            }
+        }
+    };
+
+    // Get cached anchor center or compute new one
+    window.getCachedAnchorCenter = function(strokeLabel, imageLabel) {
+        const imgLabel = imageLabel || currentImageLabel;
+        const vectorData = vectorStrokesByImage[imgLabel]?.[strokeLabel];
         
         if (!vectorData || !vectorData.points || vectorData.points.length === 0) {
             return { x: 0, y: 0 };
         }
         
-        // EXPERIMENTAL: For dragging freedom, use the geometric center of the stroke's bounding box
-        // instead of just the midpoint. This gives more freedom for label positioning.
-        const points = vectorData.points;
-        let minX = points[0].x, maxX = points[0].x;
-        let minY = points[0].y, maxY = points[0].y;
-        
-        for (const point of points) {
-            minX = Math.min(minX, point.x);
-            maxX = Math.max(maxX, point.x);
-            minY = Math.min(minY, point.y);
-            maxY = Math.max(maxY, point.y);
+        // Check cache first
+        const cacheKey = `${imgLabel}:${strokeLabel}`;
+        const cached = window._anchorCenterCache[imgLabel]?.[strokeLabel];
+        const currentVersion = window._anchorCenterVersion[imgLabel] || 0;
+
+        if (cached && cached.version === currentVersion) {
+            return { x: cached.x, y: cached.y };
         }
-        
-        // Return center of bounding box instead of midpoint
-        const centerX = (minX + maxX) / 2;
-        const centerY = (minY + maxY) / 2;
-        
-        console.log(`[ANCHOR] Stroke ${strokeName} bounds: (${minX.toFixed(1)},${minY.toFixed(1)}) to (${maxX.toFixed(1)},${maxY.toFixed(1)}) -> center: (${centerX.toFixed(1)},${centerY.toFixed(1)})`);
-        
-        return { x: centerX, y: centerY };
+
+        // Compute new anchor center using geometry function
+        const anchorCenter = window.computeAnchorCenterImage(vectorData);
+
+        // Cache the result
+        if (!window._anchorCenterCache[imgLabel]) {
+            window._anchorCenterCache[imgLabel] = {};
+        }
+        window._anchorCenterCache[imgLabel][strokeLabel] = {
+            x: anchorCenter.x,
+            y: anchorCenter.y,
+            version: currentVersion
+        };
+
+        if (window.labelReprojectDebug && labelReprojectDebug()) {
+            console.log(`[ANCHOR-CACHE] Computed new anchor for ${cacheKey}: (${anchorCenter.x.toFixed(1)}, ${anchorCenter.y.toFixed(1)})`);
+        }
+
+        return anchorCenter;
+    };
+
+    // Helper function to get stroke anchor point (now uses cached version)
+    function getStrokeAnchorPoint(strokeName, imageLabel = null) {
+        return window.getCachedAnchorCenter(strokeName, imageLabel);
     }
 
     // Drawing function for freehand mode
@@ -8921,6 +9646,255 @@ if (colorPicker) {
     const applyFitAllButton = document.getElementById('applyFitAll');
     
     // Fit mode functions
+    // **NEW**: Label Offset Model for Resolution Changes
+    // Handles v1 (px) and v2 (normalized) offset formats with reprojection
+    window.__labelOffsetVersion = 2; // 1 = px, 2 = normalized
+    
+    // Storage shape: calculatedLabelOffsets[imageLabel][tag] = Offset
+    // Offset v1: { kind:'px', x, y }
+    // Offset v2: { kind:'norm', dx_norm, dy_norm, normRef:[w,h] }
+    
+    const lastImageDims = Object.create(null); // label -> {w,h}
+    
+    /** Convert px -> normalized (v2) */
+    function pxToNorm(offPx, w, h) {
+        return {
+            kind: 'norm',
+            dx_norm: offPx.x / w,
+            dy_norm: offPx.y / h,
+            normRef: [w, h],
+            version: 2
+        };
+    }
+    
+    /** Convert normalized (v2) -> px for target dims */
+    function normToPx(offNorm, newW, newH) {
+        return {
+            kind: 'px',
+            x: offNorm.dx_norm * newW,
+            y: offNorm.dy_norm * newH,
+            version: 1
+        };
+    }
+    
+    /** Ensure an offset object is normalized (migrates legacy px) */
+    function ensureNorm(off, w, h) {
+        if (!off) return null;
+        if (off.kind === 'norm' && off.version === 2) return off;
+        // migrate v1 (px) to v2
+        return pxToNorm({ x: off.x, y: off.y }, w, h);
+    }
+    
+    /** Reproject all stored offsets for a label to new image dimensions */
+    function reprojectAllOffsetsForLabel(label, oldW, oldH, newW, newH) {
+        const table = (window.calculatedLabelOffsets && window.calculatedLabelOffsets[label]) || {};
+        for (const tag of Object.keys(table)) {
+            // 1) normalize (idempotent)
+            const norm = ensureNorm(table[tag], oldW, oldH);
+            // 2) compute px for new dims
+            const px = normToPx(norm, newW, newH);
+            // 3) keep both forms for compatibility
+            table[tag] = {
+                ...px,
+                norm: norm,          // handy for debugging
+                version: 1
+            };
+        }
+        if (window.calculatedLabelOffsets) {
+            window.calculatedLabelOffsets[label] = table;
+        }
+        console.debug('[REPROJECT] label=%s old=%sx%s new=%sx%s (tags=%d)',
+            label, oldW, oldH, newW, newH, Object.keys(table).length);
+    }
+    
+    /** Freeze & restore canvas transform across a bitmap swap */
+    function withFrozenTransform(fn) {
+        const T = {
+            scale: window.currentScale ?? 1,
+            panX: window.currentPanX ?? 0,
+            panY: window.currentPanY ?? 0,
+            dpr:  window.devicePixelRatio || 1
+        };
+        const prevFreeze = window.__transformFrozen;
+        window.__transformFrozen = true;
+        try {
+            return fn(T);
+        } finally {
+            window.__transformFrozen = prevFreeze || false;
+            if (typeof window.redrawCanvasWithVisibility === 'function') {
+                window.redrawCanvasWithVisibility();
+            }
+        }
+    }
+    
+    /** Optional: force BG-removed bitmap back to original dimensions */
+    async function toOriginalSize(blob, origW, origH) {
+        const bmp = await createImageBitmap(blob);
+        if (bmp.width === origW && bmp.height === origH) return blob;
+        
+        const c = document.createElement('canvas');
+        c.width = origW; c.height = origH;
+        const g = c.getContext('2d', { alpha: true });
+        g.clearRect(0, 0, origW, origH);
+        
+        const s = Math.min(origW / bmp.width, origH / bmp.height);
+        const dw = Math.round(bmp.width * s);
+        const dh = Math.round(bmp.height * s);
+        const dx = Math.round((origW - dw) / 2);
+        const dy = Math.round((origH - dh) / 2);
+        
+        g.drawImage(bmp, dx, dy, dw, dh);
+        
+        return await new Promise((res) => c.toBlob(res, 'image/png'));
+    }
+    
+    /** Public entry: replace the image while keeping label alignment. */
+    window.replaceImagePreservingOffsets = async function({ label, newBlob, reason='replace' }) {
+        const dims = lastImageDims[label] || { w: window.currentImageWidth, h: window.currentImageHeight };
+        const oldW = dims?.w || 0, oldH = dims?.h || 0;
+        
+        // If enabled, force-resize the incoming bitmap to the old intrinsic size
+        let processedBlob = newBlob;
+        if (window.flags?.BG_REMOVED_FORCE_ORIGINAL_SIZE ?? true) {
+            try {
+                processedBlob = await toOriginalSize(newBlob, oldW, oldH);
+                console.debug('[SIZE-PIN] Forced BG-removed bitmap to %dx%d', oldW, oldH);
+            } catch (e) {
+                console.warn('[SIZE-PIN] Failed to force size; continuing with native dims', e);
+            }
+        }
+        
+        // Inspect incoming blob dims
+        const bmp = await createImageBitmap(processedBlob);
+        const newW = bmp.width, newH = bmp.height;
+        
+        await withFrozenTransform(async () => {
+            // If size changed and we didn't pin size, reproject offsets
+            if ((newW !== oldW || newH !== oldH) && !(window.flags?.BG_REMOVED_FORCE_ORIGINAL_SIZE ?? true)) {
+                reprojectAllOffsetsForLabel(label, oldW, oldH, newW, newH);
+            } else {
+                // Still normalize stored offsets to be future-proof
+                const table = (window.calculatedLabelOffsets && window.calculatedLabelOffsets[label]) || {};
+                for (const tag of Object.keys(table)) {
+                    table[tag] = {
+                        ...normToPx(ensureNorm(table[tag], oldW, oldH), newW, newH),
+                        version: 1
+                    };
+                }
+            }
+            
+            // Swap bitmap via existing pipeline
+            const url = URL.createObjectURL(processedBlob);
+            await window.pasteImageFromUrl(url, label, {
+                preserveCanvasScale: true,
+                preserveBasis: 'width'
+            });
+            URL.revokeObjectURL(url);
+        });
+        
+        lastImageDims[label] = { w: newW, h: newH };
+        console.debug('[REPLACE] %s → %s (%sx%s) reason=%s',
+            label, label, newW, newH, reason);
+    };
+    
+    /** Hook into existing BG-removal completion */
+    window.onBackgroundRemoved = async function(label, blob) {
+        // Centralized path
+        await window.replaceImagePreservingOffsets({ label, newBlob: blob, reason: 'bg-removed' });
+    };
+    
+    /** Migrate offsets table at startup to normalized form (idempotent) */
+    function migrateOffsetsToNorm() {
+        const map = window.calculatedLabelOffsets || {};
+        for (const label of Object.keys(map)) {
+            const dims = lastImageDims[label] || { w: window.currentImageWidth, h: window.currentImageHeight };
+            const { w, h } = dims;
+            const table = map[label];
+            for (const tag of Object.keys(table)) {
+                table[tag] = ensureNorm(table[tag], w, h); // becomes v2
+            }
+        }
+        console.debug('[MIGRATE] Offsets normalized (v2) for %d images', Object.keys(map).length);
+    }
+
+    // **NEW**: Initialize offset system
+    function initializeOffsetSystem() {
+        // Record initial dims for current image if known
+        if (window.currentImageLabel && window.originalImages) {
+            const img = window.originalImages[window.currentImageLabel];
+            if (img?.width && img?.height) {
+                lastImageDims[window.currentImageLabel] = { w: img.width, h: img.height };
+            }
+        }
+        if (window.flags?.LABEL_OFFSETS_NORM ?? true) {
+            migrateOffsetsToNorm();
+        }
+    }
+
+    // Initialize when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initializeOffsetSystem);
+    } else {
+        initializeOffsetSystem();
+    }
+    
+    // **NEW**: Persistence guard for offset stability
+    // Prevent saving offsets during unstable transform states
+    window.checkPersistenceGuard = function(imageLabel, operation = 'save') {
+        const session = window.getTransformSession();
+        if (!session) {
+            console.warn(`[PERSISTENCE-GUARD] No session available for ${imageLabel}`);
+            return false;
+        }
+
+        if (session.phase !== 'Stable') {
+            console.log(`[PERSISTENCE-GUARD] ${operation}_blocked: Transform not stable (${session.phase}) for ${imageLabel}`);
+            return false;
+        }
+
+        // Check roundtrip accuracy
+        const canPersist = window.canPersistOffsets(session);
+        if (!canPersist) {
+            console.log(`[PERSISTENCE-GUARD] ${operation}_blocked: Roundtrip error too high for ${imageLabel}`);
+        }
+
+        return canPersist;
+    };
+
+    // **NEW**: Feature flags for offset handling
+    if (!window.flags) {
+        window.flags = {
+            LABEL_OFFSETS_NORM: true,
+            BG_REMOVED_FORCE_ORIGINAL_SIZE: true
+        };
+    }
+
+    // **NEW**: Session persistence for fit modes
+    // Store fit mode preferences per image for consistent behavior
+    if (!window._fitSessions) {
+        window._fitSessions = {}; // { [imageLabel]: { mode, naturalW, naturalH, basisDim } }
+    }
+
+    window.saveFitSession = function(imageLabel, fitMode, natural) {
+        if (!imageLabel || !natural) return;
+
+        window._fitSessions[imageLabel] = {
+            mode: fitMode,
+            naturalW: natural.width,
+            naturalH: natural.height,
+            timestamp: Date.now()
+        };
+
+        if (window.labelReprojectDebug && labelReprojectDebug()) {
+            console.log(`[FIT-SESSION] Saved: ${imageLabel} -> ${fitMode} (${natural.width}x${natural.height})`);
+        }
+    };
+
+    window.getFitSession = function(imageLabel) {
+        return window._fitSessions[imageLabel] || null;
+    };
+
+    // **NEW**: Deterministic fit calculation using Transform T and session persistence
     function calculateFitScale(fitMode) {
         const imageDimensions = window.originalImageDimensions[currentImageLabel];
         if (!imageDimensions || !imageDimensions.width || !imageDimensions.height) {
@@ -8928,17 +9902,13 @@ if (colorPicker) {
             return { scale: 1.0, position: { x: 0, y: 0 } };
         }
 
-        // Canvas client rect (CSS px) and pixel ratio for conversions
+        // Get canvas viewport dimensions (CSS pixels)
         const canvasRect = canvas.getBoundingClientRect ? canvas.getBoundingClientRect() : null;
-        const scalePx = canvasRect ? (canvas.width / canvasRect.width) : 1;
+        let viewportWidth = canvasRect ? canvasRect.width : canvas.width;
+        let viewportHeight = canvasRect ? canvasRect.height : canvas.height;
 
-        // Start with canvas dimensions
-        let effectiveWidth = canvasRect ? canvasRect.width : canvas.width;
-        let effectiveHeight = canvasRect ? canvasRect.height : canvas.height;
-
-        // If a capture frame exists and intersects the canvas, use its dimensions and center
-        let offsetXCanvas = 0;
-        let offsetYCanvas = 0;
+        // Handle capture frame if present
+        let offsetX = 0, offsetY = 0;
         const captureEl = document.getElementById('captureFrame');
         if (captureEl && canvasRect) {
             const frameRect = captureEl.getBoundingClientRect();
@@ -8950,65 +9920,34 @@ if (colorPicker) {
             const cssHeight = Math.max(0, bottom - top);
 
             if (cssWidth > 0 && cssHeight > 0) {
-                // Use frame as the target fitting area
-                effectiveWidth = cssWidth;
-                effectiveHeight = cssHeight;
+                viewportWidth = cssWidth;
+                viewportHeight = cssHeight;
 
-                // Compute frame center in canvas pixel units for centering offsets
-                const frameCenterCssX = (left + right) / 2 - canvasRect.left;
-                const frameCenterCssY = (top + bottom) / 2 - canvasRect.top;
-                const frameCenterCanvasX = frameCenterCssX * scalePx;
-                const frameCenterCanvasY = frameCenterCssY * scalePx;
+                // Calculate center offset for capture frame
+                const frameCenterX = (left + right) / 2 - canvasRect.left;
+                const frameCenterY = (top + bottom) / 2 - canvasRect.top;
+                const canvasCenterX = canvasRect.width / 2;
+                const canvasCenterY = canvasRect.height / 2;
 
-                // Offsets so that image center aligns with frame center
-                offsetXCanvas = frameCenterCanvasX - (canvas.width / 2);
-                offsetYCanvas = frameCenterCanvasY - (canvas.height / 2);
+                offsetX = frameCenterX - canvasCenterX;
+                offsetY = frameCenterY - canvasCenterY;
 
-                console.log(`[calculateFitScale] Using capture frame: ${cssWidth}x${cssHeight}, offsets(canvas px)=(${offsetXCanvas.toFixed(1)}, ${offsetYCanvas.toFixed(1)})`);
+                console.log(`[FIT] Using capture frame: ${cssWidth}x${cssHeight}, offsets: (${offsetX.toFixed(1)}, ${offsetY.toFixed(1)})`);
             }
         }
 
-        console.log(`[calculateFitScale] Target area: ${effectiveWidth}x${effectiveHeight}`);
+        // Use deterministic fit calculation from geometry.js
+        const imageNatural = { w: imageDimensions.width, h: imageDimensions.height };
+        const viewportCss = { w: viewportWidth, h: viewportHeight };
 
-        const imageWidth = imageDimensions.width;
-        const imageHeight = imageDimensions.height;
+        let scale = window.computeScaleForFit(imageNatural, viewportCss, fitMode);
 
-        let scale = 1.0;
-        let position = { x: 0, y: 0 };
+        // Clamp scale to reasonable bounds
+        scale = Math.max(0.01, Math.min(100, scale));
 
-        switch (fitMode) {
-            case 'fit-width':
-                scale = effectiveWidth / imageWidth;
-                position.x = offsetXCanvas;
-                position.y = offsetYCanvas;
-                break;
+        console.log(`[FIT] ${fitMode}: ${imageNatural.w}x${imageNatural.h} → ${viewportCss.w}x${viewportCss.h} = scale ${scale.toFixed(3)}`);
 
-            case 'fit-height':
-                scale = effectiveHeight / imageHeight;
-                position.x = offsetXCanvas;
-                position.y = offsetYCanvas;
-                break;
-
-            case 'fit-canvas':
-                scale = Math.min(effectiveWidth / imageWidth, effectiveHeight / imageHeight);
-                position.x = offsetXCanvas;
-                position.y = offsetYCanvas;
-                break;
-
-            case 'actual-size':
-                scale = 1.0;
-                position.x = offsetXCanvas;
-                position.y = offsetYCanvas;
-                break;
-
-            default:
-                return {
-                    scale: window.imageScaleByLabel[currentImageLabel] || 1.0,
-                    position: window.imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 }
-                };
-        }
-
-        return { scale, position };
+        return { scale, position: { x: offsetX, y: offsetY } };
     }
     
     function applyFitMode(fitMode) {
@@ -9019,13 +9958,28 @@ if (colorPicker) {
         
         const { scale, position } = calculateFitScale(fitMode);
         
-        // Update the scale and position
-        window.imageScaleByLabel[currentImageLabel] = scale;
-        window.imagePositionByLabel[currentImageLabel] = { ...position };
+        // **NEW**: Use Transform T system for deterministic updates
+        const currentT = window.getCurrentTransform();
+        const newT = {
+            scale: scale,
+            panX: position.x,
+            panY: position.y,
+            dpr: currentT.dpr
+        };
+
+        window.setTransform(newT);
+
+        // Save fit session for persistence
+        const imageDimensions = window.originalImageDimensions[currentImageLabel];
+        if (imageDimensions) {
+            window.saveFitSession(currentImageLabel, fitMode, imageDimensions);
+        }
         
         // Save state for undo/redo
         saveState(true, false, false);
         
+        // Update UI scale text before redraw to keep it in sync
+        try { if (typeof updateScaleUI === 'function') updateScaleUI(); } catch(_) {}
         // Redraw with new scale and position
         redrawCanvasWithVisibility();
         
@@ -9068,6 +10022,8 @@ if (colorPicker) {
         // Save state for undo/redo
         saveState(true, false, false);
         
+        // Update UI for current image and redraw
+        try { if (typeof updateScaleUI === 'function') updateScaleUI(); } catch(_) {}
         // Redraw with new scale and position for current image
         redrawCanvasWithVisibility();
         
@@ -9093,6 +10049,9 @@ if (colorPicker) {
     });
 
     // PERFORMANCE OPTIMIZATIONS: Cache variables moved to top of file for early initialization
+
+    // Signal readiness for external modules (e.g., tag-manager) to avoid hook races
+    try { window.paintReady = window.paintReady || Promise.resolve(true); } catch (_) {}
 
     // PERFORMANCE: Optimized throttled mousemove handler
     function handleMouseMoveThrottled(x, y) {
@@ -10684,6 +11643,8 @@ if (colorPicker) {
     // Make switchToImage available globally
     window.switchToImage = switchToImage;
     function switchToImage(label) {
+        // Start a new session for this image to fence writes until stable
+        try { bumpImageSession(label); } catch(_) {}
         if (currentImageLabel === label && !window.isLoadingProject) { // Allow forcing a switch during project load
 //             console.log(`[switchToImage] Already on ${label}, no switch needed unless loading project.`);
             // Even if not switching, ensure UI is consistent if forced by project load
@@ -11290,8 +12251,9 @@ if (colorPicker) {
                     // Restore the original current image label
                     currentImageLabel = currentLabel;
                     
-                    // Redraw canvas to show the applied fit mode
+                    // Redraw canvas to show the applied fit mode and sync scale UI
                     if (currentImageLabel) {
+                        try { if (typeof updateScaleUI === 'function') updateScaleUI(); } catch(_) {}
                         redrawCanvasWithVisibility();
                     }
                 }
@@ -13959,6 +14921,9 @@ window.initCrossBaseline = function(imageLabel) {
     if (window.labelsByImage) {
         window.labelsByImage[img] = 'A5'; // Next available label
     }
+
+    // **NEW**: Invalidate anchor cache when loading test data
+    window.invalidateAnchorCache(img);
 
     // Trigger a redraw to make strokes visible and calculate positions
     if (typeof window.redrawCanvasWithVisibility === 'function') {
