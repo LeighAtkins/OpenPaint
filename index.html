@@ -535,13 +535,15 @@
         
         /* Smooth transitions for all panel content */
         .floating-panel [id$='Content'],
-        .floating-panel [id$='Controls'] {
+        .floating-panel [id$='Controls'],
+        #elementsBody {
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             overflow: hidden;
         }
         
         .floating-panel [id$='Content'].hidden,
-        .floating-panel [id$='Controls'].hidden {
+        .floating-panel [id$='Controls'].hidden,
+        #elementsBody.hidden {
             max-height: 0 !important;
             padding-top: 0 !important;
             padding-bottom: 0 !important;
@@ -612,6 +614,35 @@
             transform: none !important;
             transition: none !important;
         }
+
+        /* Keep Elements header always visible; body uses remaining space */
+        #strokePanel {
+            display: flex;
+            flex-direction: column;
+            /* Let the panel grow to near full viewport height while preserving drag behavior */
+            max-height: calc(100vh - 24px) !important;
+        }
+        #elementsHeader {
+            flex: 0 0 auto;
+        }
+        #elementsBody {
+            flex: 1 1 auto;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        /* removed elementsResizeHandle */
+        #elementsControls {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: white;
+        }
+        #strokeVisibilityControls {
+            flex: 1 1 auto;
+            min-height: 0; /* allows flex child to shrink for scrolling in Firefox */
+            overflow-y: auto !important;
+        }
         
         /* Header dragging styles */
         .cursor-move:active {
@@ -630,6 +661,22 @@
             border: 1px solid #e5e7eb !important;
             transition: all 0.2s ease !important;
         }
+
+        /* Ensure the strokes list flows vertically and doesn't overlap */
+        #strokesList { display: flex; flex-direction: column; gap: 6px; }
+        .stroke-actions-panel { display: block; margin: 6px 0; }
+        .stroke-actions-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
+
+        /* Make the strokes area adjustable but constrained so new items never overlap headers */
+        #strokeVisibilityControls {
+            min-height: 120px;
+            max-height: min(60vh, 24rem) !important; /* cap to viewport or panel max-h-96 */
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            box-sizing: border-box;
+            position: relative;
+        }
+        #strokeVisibilityControls hr { margin: 6px 0; }
         
         .stroke-visibility-item:hover {
             background-color: #f9fafb !important;
@@ -1228,7 +1275,7 @@
 
     <!-- Vectors and Tags Panel -->
     <div id="strokePanel" class="floating-panel fixed left-4 top-1/2 -translate-y-1/2 z-30 rounded-2xl w-64 max-h-96 transition-all duration-300 overflow-hidden">
-        <div class="flex items-center justify-between p-3 cursor-move border-b border-gray-200/50 bg-white rounded-t-2xl">
+        <div id="elementsHeader" class="flex items-center justify-between p-3 cursor-move border-b border-gray-200/50 bg-white rounded-t-2xl">
             <div class="flex items-center gap-2">
                 <h3 class="text-sm font-semibold text-slate-800">Elements</h3>
                 <button id="viewMeasurementsToggle" title="Toggle measurement labels display" class="px-2 py-1 text-xs bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-all font-medium">
@@ -1241,8 +1288,9 @@
                 </svg>
             </button>
         </div>
-        <!-- Panel Controls -->
-        <div class="px-3 pt-3 pb-2 border-b border-gray-100">
+        <!-- Panel Body (collapsible) -->
+        <div id="elementsBody" role="region" aria-labelledby="elementsHeader">
+        <div id="elementsControls" class="px-3 pt-3 pb-2 border-b border-gray-100">
             <div class="flex gap-2 mb-2">
                 <button id="selectAllStrokesBtn" title="Select/Deselect all elements" class="flex-1 px-2 py-1 text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-all font-medium">
                     Deselect All
@@ -1275,7 +1323,8 @@
                 </button>
             </div>
         </div>
-        <div id="strokeVisibilityControls" class="p-3 transition-all duration-300" style="max-height: 280px; overflow-y: scroll; overflow-x: hidden;"></div>
+        <div id="strokeVisibilityControls" class="p-3 transition-all duration-300" style="min-height: 120px; max-height: 60vh; overflow-y: auto; overflow-x: hidden; box-sizing: border-box;"></div>
+        </div>
     </div>
 
     <!-- Image Gallery Panel -->
@@ -2022,18 +2071,37 @@
                 
                 button.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    const isMinimized = content.classList.contains('hidden');
+                    // Use elementsBody if present to keep header always visible
+                    const body = document.getElementById('elementsBody') || content;
+                    const isMinimized = body.classList.contains('hidden');
                     
                     if (isMinimized) {
                         // Expand panel
-                        content.classList.remove('hidden');
+                        // starting from hidden (max-height:0), set explicit height to animate open
+                        body.classList.remove('hidden');
+                        body.style.maxHeight = body.scrollHeight + 'px';
+                        // after transition completes, allow natural growth
+                        const onEnd = () => {
+                            body.style.maxHeight = 'none';
+                            body.removeEventListener('transitionend', onEnd);
+                        };
+                        body.addEventListener('transitionend', onEnd);
                         icon.style.transform = 'rotate(0deg)';
                         panel.classList.remove('minimized');
+                        panel.setAttribute('aria-expanded', 'true');
                     } else {
                         // Minimize panel
-                        content.classList.add('hidden');
+                        // if maxHeight is none (auto), set current height to enable smooth collapse
+                        if (!body.style.maxHeight || body.style.maxHeight === 'none') {
+                            body.style.maxHeight = body.scrollHeight + 'px';
+                            // force reflow
+                            void body.offsetHeight;
+                        }
+                        // add hidden to animate to max-height:0 via CSS
+                        body.classList.add('hidden');
                         icon.style.transform = 'rotate(-90deg)';
                         panel.classList.add('minimized');
+                        panel.setAttribute('aria-expanded', 'false');
                     }
                 });
             }
@@ -2057,7 +2125,29 @@
                 if (imageContent && imageButton && imageContent.classList.contains('hidden')) {
                     imageButton.click();
                 }
+                // Ensure Elements body has no artificial cap when expanded
+                const elementsBody = document.getElementById('elementsBody');
+                if (elementsBody && !elementsBody.classList.contains('hidden')) {
+                    elementsBody.style.maxHeight = 'none';
+                }
             })();
+
+            // Size the Elements panel to extend to bottom of viewport from its current top
+            (function sizeStrokePanelToBottom() {
+                const panel = document.getElementById('strokePanel');
+                if (!panel) return;
+                const resize = () => {
+                    const rect = panel.getBoundingClientRect();
+                    const margin = 12; // small breathing room
+                    const h = Math.max(0, Math.round(window.innerHeight - rect.top - margin));
+                    panel.style.height = h + 'px';
+                    panel.style.maxHeight = h + 'px';
+                };
+                resize();
+                window.addEventListener('resize', resize);
+            })();
+
+            // removed elements resize handle wiring
 
             // Set up Vectors and tags panel button functionality
             const selectAllStrokesBtn = document.getElementById('selectAllStrokesBtn');
@@ -4656,6 +4746,14 @@
     </div>
 
     <script>console.log('[INDEX] before paint.js'); window.onerror=(m,s,l,c,e)=>console.error('[INDEX] onerror',m,s,l,c,e);</script>
+    <script>(function(){try{window.NEXT_PUBLIC_REMBG_SAFESHIM='1';}catch(_){}})();</script>
+    <!-- New coordinate system scripts -->
+    <script src="js/transform.js?v=20250820123456"></script>
+    <script src="js/geometry.js?v=20250820123456"></script>
+    <script src="js/migration.js?v=20250820123456"></script>
+    <script src="diagnostics-overlay.js?v=20250820123456"></script>
+    <script src="test-coordinate-system.js?v=20250820123456"></script>
+
     <script src="js/paint.js?v=20250820123456"></script>
     <script src="js/project-manager.js?v=20250820123458"></script>
     <script src="js/tag-manager.js?v=20250820123456"></script>
