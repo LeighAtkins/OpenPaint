@@ -669,7 +669,7 @@
 
         /* Make the strokes area adjustable but constrained so new items never overlap headers */
         #strokeVisibilityControls {
-            min-height: 120px;
+            min-height: 60px;
             max-height: min(60vh, 24rem) !important; /* cap to viewport or panel max-h-96 */
             overflow-y: auto !important;
             overflow-x: hidden !important;
@@ -1290,7 +1290,7 @@
         </div>
         <!-- Panel Body (collapsible) -->
         <div id="elementsBody" role="region" aria-labelledby="elementsHeader">
-        <div id="elementsControls" class="px-3 pt-3 pb-2 border-b border-gray-100">
+        <div id="elementsControls" class="px-3 pt-3 pb-1 border-b border-gray-100">
             <div class="flex gap-2 mb-2">
                 <button id="selectAllStrokesBtn" title="Select/Deselect all elements" class="flex-1 px-2 py-1 text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-all font-medium">
                     Deselect All
@@ -1323,7 +1323,7 @@
                 </button>
             </div>
         </div>
-        <div id="strokeVisibilityControls" class="p-3 transition-all duration-300" style="min-height: 120px; max-height: 60vh; overflow-y: auto; overflow-x: hidden; box-sizing: border-box;"></div>
+        <div id="strokeVisibilityControls" class="px-3 pt-2 pb-2 transition-all duration-300" style="min-height: 60px; max-height: 60vh; overflow-y: auto; overflow-x: hidden; box-sizing: border-box;"></div>
         </div>
     </div>
 
@@ -1415,8 +1415,10 @@
     <!-- Canvas Controls (Bottom Panel) -->
     <div id="canvasControls" class="floating-panel fixed bottom-4 rounded-2xl px-3 py-2 transition-all duration-300" style="left: 50%; transform: translateX(-50%); z-index: 4000;">
         <div id="canvasControlsContent" class="flex items-center gap-2 text-sm smart-label-scope">
-            <button id="copyCanvasBtn" class="px-3 py-1 bg-primary-500 hover:bg-primary-600 text-white text-xs rounded-lg" title="Copy image to clipboard">
-                Copy
+            <button id="copyCanvasBtn" class="flex items-center gap-1 px-3 py-1 bg-primary-500 hover:bg-primary-600 active:bg-primary-700 text-white text-xs rounded-lg shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-[1.02] active:scale-95" title="Copy image to clipboard" aria-label="Copy Image">
+                <svg class="w-3.5 h-3.5 opacity-90" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16 1H4a2 2 0 00-2 2v12h2V3h12V1zm3 4H8a2 2 0 00-2 2v14a2 2 0 002 2h11a2 2 0 002-2V7a2 2 0 00-2-2zm0 16H8V7h11v14z"></path></svg>
+                <span class="label-long">Copy Image</span>
+                <span class="label-short">Copy</span>
             </button>
             <select id="fitModeSelect" class="px-2 py-1 border border-gray-300 rounded-lg bg-white focus:outline-none hover:bg-gray-50">
                 <option value="none">Manual</option>

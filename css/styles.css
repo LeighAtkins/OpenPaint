@@ -105,4 +105,23 @@
 /* Make sure the image container has position relative for proper button positioning */
 .image-container {
     position: relative;
+}
+
+/* Responsive label behavior for buttons */
+.label-long {
+    display: inline;
+}
+
+.label-short {
+    display: none;
+}
+
+@media (max-width: 640px) {
+    .label-long {
+        display: none;
+    }
+    
+    .label-short {
+        display: inline;
+    }
 } 

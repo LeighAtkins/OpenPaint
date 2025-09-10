@@ -26,7 +26,7 @@ app.use((req, res, next) => {
 // Handlers extracted for dual-path mounting during routing migration
 async function directUploadHandler(req, res) {
     try {
-        const origin = process.env.REMBG_ORIGIN;
+        const origin = process.env.REMBG_ORIGIN || 'https://sofapaint-api.leigh-atkins.workers.dev';
         if (!origin) {
             return res.status(500).json({ success: false, message: 'REMBG_ORIGIN is not configured' });
         }
@@ -48,7 +48,7 @@ async function directUploadHandler(req, res) {
 
 async function removeBackgroundHandler(req, res) {
     try {
-        const origin = process.env.REMBG_ORIGIN;
+        const origin = process.env.REMBG_ORIGIN || 'https://sofapaint-api.leigh-atkins.workers.dev';
         if (!origin) {
             return res.status(500).json({ success: false, message: 'REMBG_ORIGIN is not configured' });
         }
