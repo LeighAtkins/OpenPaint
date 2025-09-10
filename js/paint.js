@@ -476,9 +476,48 @@ document.addEventListener('DOMContentLoaded', () => {
     const ctx = window.paintApp.state.domElements.ctx;
     const colorPicker = window.paintApp.state.domElements.colorPicker;
     const brushSize = window.paintApp.state.domElements.brushSize;
+    // Enforce consistent slider attributes to match original OpenPaint
+    if (brushSize) {
+        if (!brushSize.min || Number(brushSize.min) < 1) brushSize.min = '1';
+        if (!brushSize.max || Number(brushSize.max) < 50) brushSize.max = '50';
+        if (!brushSize.value) brushSize.value = '5';
+    }
     const clearButton = window.paintApp.state.domElements.clearButton;
     const saveButton = window.paintApp.state.domElements.saveButton;
-    const copyButton = window.paintApp.state.domElements.copyButton;
+
+    // Sync slider UI with brush size and color
+    const updateBrushSliderAccent = () => {
+        if (brushSize) {
+            const accent = (colorPicker && colorPicker.value) ? colorPicker.value : '#3b82f6';
+            brushSize.style.setProperty('--accent', accent);
+        }
+    };
+// cache these unless you dynamically change attributes later
+    const MIN = Number.isFinite(+brushSize.min) ? +brushSize.min : 0;
+    const MAX = Number.isFinite(+brushSize.max) ? +brushSize.max : 100;
+
+    const updateBrushSliderFill = () => {
+    if (!brushSize) return;
+
+    const val = Number(brushSize.value);
+    const lo = Math.min(MIN, MAX);
+    const hi = Math.max(MIN, MAX);
+    const range = Math.max(hi - lo, 1); // avoid /0
+
+    const pRaw = (val - lo) / range;
+    // Prevent tiny FP rounding from stopping short of 100%
+    const p = (val >= hi) ? 1 : Math.min(1, Math.max(0, pRaw));
+
+    // Keep both variables for compatibility with older CSS
+    brushSize.style.setProperty('--p', String(p));
+    brushSize.style.setProperty('--filled', (p === 1) ? '100%' : `${(p * 100).toFixed(2)}%`);
+
+    // optional: keep ARIA in sync for screen readers
+    brushSize.setAttribute('aria-valuenow', String(val));
+    };
+        updateBrushSliderAccent();
+        updateBrushSliderFill();
+        const copyButton = window.paintApp.state.domElements.copyButton;
 
 // Update color of stroke currently in edit mode when the color picker changes
 if (colorPicker) {
@@ -501,6 +540,14 @@ if (colorPicker) {
     // Support both direct color input and programmatic swatch changes (which dispatch 'change')
     colorPicker.addEventListener('input', applyEditedStrokeColor);
     colorPicker.addEventListener('change', applyEditedStrokeColor);
+
+    // Keep slider accent in sync with chosen color
+    colorPicker.addEventListener('input', () => {
+        if (brushSize) brushSize.style.setProperty('--accent', colorPicker.value);
+    });
+    colorPicker.addEventListener('change', () => {
+        if (brushSize) brushSize.style.setProperty('--accent', colorPicker.value);
+    });
 }
     const pasteButton = window.paintApp.state.domElements.pasteButton;
     const strokeCounter = window.paintApp.state.domElements.strokeCounter;
@@ -12584,6 +12631,7 @@ if (colorPicker) {
             // Set the drawing color
             const color = button.dataset.color;
             colorPicker.value = color;
+            if (brushSize) brushSize.style.setProperty('--accent', color);
             
             // Check if we have a stroke in edit mode
             if (window.selectedStrokeInEditMode) {
@@ -12638,6 +12686,15 @@ if (colorPicker) {
     // Add brush size input event listener
     brushSize.addEventListener('input', () => {
         const size = parseInt(brushSize.value);
+        // Update progress (0..1) for Option A CSS
+        const min = Number(brushSize.min) || 0;
+        const max = Number(brushSize.max) || 100;
+        const range = Math.max(max - min, 1);
+        let p = (size >= max) ? 1 : Math.min(1, Math.max(0, (size - min) / range));
+        // Keep both variables for compatibility with older CSS
+        brushSize.style.setProperty('--p', String(p));
+        brushSize.style.setProperty('--filled', (p === 1) ? '100%' : `${(p * 100).toFixed(2)}%`);
+        brushSize.setAttribute('aria-valuenow', String(size));
         
         // Check if we have a stroke in edit mode
         if (window.selectedStrokeInEditMode) {

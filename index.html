@@ -25,7 +25,7 @@
             if (event.message && event.message.includes('autofill.bundle.js')) {
                 event.preventDefault();
                 return false;
-            }
+            } 
         });
     </script>
     <style>
@@ -65,6 +65,95 @@
         .image-label:hover {
             background-color: #f1f5f9 !important;
         }
+
+        /* Modern slider styling (align with original OpenPaint) */
+        .slider {
+            --accent: #3b82f6;
+            --p: 0;            /* 0..1 progress (set by JS) */
+            --filled: 30%;     /* legacy percent for compatibility */
+            --track-h: 6px;    /* track height */
+            --thumb: 16px;     /* thumb diameter (px) */
+            /* align fill end exactly under thumb center across browsers */
+            --pos: calc((var(--p) * (100% - var(--thumb))) + (var(--thumb) / 2));
+            -webkit-appearance: none;
+            appearance: none;
+            outline: none;
+            border-radius: 9999px;
+            height: var(--track-h);
+            background: transparent; /* let track draw the background */
+        }
+
+        /* WebKit/Blink track + thumb */
+        .slider::-webkit-slider-runnable-track {
+            height: var(--track-h);
+            border-radius: 9999px;
+            background: linear-gradient(
+                to right,
+                var(--accent) 0,
+                var(--accent) var(--pos),
+                #e5e7eb   var(--pos),
+                #e5e7eb 100%
+            );
+            }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: var(--thumb);
+            height: var(--thumb);
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+            /* keep a subtle depth but pull the blue glow inside the thumb */
+            box-shadow: inset 0 0 0 3px rgba(59, 130, 246, 0.45), 0 1px 2px rgba(0, 0, 0, 0.07);
+            transition: all 0.2s ease;
+            /* center the thumb on a thin track */
+            margin-top: calc((var(--track-h) - var(--thumb)) / 2);
+        }
+
+        
+
+        .slider::-webkit-slider-thumb:hover {
+            transform: scale(1.08);
+            box-shadow: inset 0 0 0 4px rgba(59, 130, 246, 0.55), 0 2px 3px rgba(0, 0, 0, 0.08);
+        }
+
+        /* Firefox track + thumb + progress */
+        .slider::-moz-range-track {
+            height: var(--track-h);
+            border-radius: 9999px;
+            background: #e5e7eb;
+        }
+
+        .slider::-moz-range-progress {
+            height: var(--track-h);
+            border-radius: 9999px;
+            background: var(--accent);
+        }
+
+        .slider::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+            border: none;
+            box-shadow: inset 0 0 0 3px rgba(59, 130, 246, 0.45), 0 1px 2px rgba(0, 0, 0, 0.07);
+            transition: all 0.2s ease;
+        }
+
+        .slider::-moz-range-thumb:hover {
+            transform: scale(1.08);
+            box-shadow: inset 0 0 0 4px rgba(59, 130, 246, 0.55), 0 2px 3px rgba(0, 0, 0, 0.08);
+        }
+        
+        /* Match original OpenPaint slider width */
+        #brushSize { width: 120px; margin: 0; }
+
+        /* Remove native focus outline while keeping custom inset ring */
+        .slider { -webkit-tap-highlight-color: transparent; }
+        .slider:focus, .slider:focus-visible { outline: none !important; box-shadow: none; }
+        .slider::-moz-focus-outer { border: 0; }
     </style>
     <script>
         tailwind.config = {
@@ -357,16 +446,7 @@
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
         }
         
-        /* Brush size slider */
-        #brushSize {
-            width: 120px;
-            margin: 0;
-            height: 8px;
-            border-radius: 4px;
-            background: rgb(229, 231, 235);
-            appearance: none;
-            cursor: pointer;
-        }
+
         
         /* Responsive text labels */
         .label-long {
@@ -770,49 +850,10 @@
             background: #6b7280 !important;
         }
         
-        /* Modern slider styling */
-        .slider {
-            --accent: #3b82f6;
-            --filled: 30%;
-            -webkit-appearance: none;
-            appearance: none;
-            background: linear-gradient(to right, var(--accent) 0%, var(--accent) var(--filled), #e5e7eb var(--filled), #e5e7eb 100%);
+        /* Keep focus treatment tidy */
+        #brushSize:focus-visible {
             outline: none;
-            border-radius: 9999px;
-            height: 6px;
-        }
-        
-        .slider::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            background: var(--accent);
-            cursor: pointer;
-            box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
-            transition: all 0.2s ease;
-        }
-        
-        .slider::-webkit-slider-thumb:hover {
-            transform: scale(1.1);
-            box-shadow: 0 6px 12px rgba(59, 130, 246, 0.4);
-        }
-        
-        .slider::-moz-range-thumb {
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            background: var(--accent);
-            cursor: pointer;
-            border: none;
-            box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
-            transition: all 0.2s ease;
-        }
-        
-        .slider::-moz-range-thumb:hover {
-            transform: scale(1.1);
-            box-shadow: 0 6px 12px rgba(59, 130, 246, 0.4);
+            box-shadow: 0 0 0 4px rgba(59,130,246,0.15);
         }
         
         /* Modern input styling */
@@ -1088,7 +1129,15 @@
                     <button data-color="#111827" style="background-color: rgb(17, 24, 39);" title="#111827"></button>
                     <button data-color="#10b981" style="background-color: rgb(16, 185, 129);" title="#10b981"></button>
                 </div>
-                <input type="range" id="brushSize" min="1" max="50" value="5" class="slider" data-sharkid="__0">
+                <input
+                    type="range"
+                    id="brushSize"
+                    class="h-2 rounded-lg appearance-none cursor-pointer slider"
+                    min="1"
+                    max="50"
+                    value="5"
+                    style="width: 120px; margin: 0;"
+                />
                 <button id="arrowStartBtn" class="tbtn icon-btn" title="Start Arrow">◀</button>
                 <button id="arrowEndBtn" class="tbtn icon-btn" title="End Arrow">▶</button>
                 <button id="dottedBtn" class="tbtn" title="Line Style"><svg width="34" height="12" viewBox="0 0 34 12" aria-hidden="true"><line x1="2" y1="6" x2="32" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round"></line></svg></button>
@@ -1234,10 +1283,7 @@
                     <button id="drawingModeToggle" class="px-4 py-2.5 bg-white border-2 border-success-500 text-success-600 text-sm font-semibold rounded-xl hover:bg-success-50 hover:border-success-600 active:bg-success-100 transition-all duration-200 transform hover:scale-105 active:scale-95 straight-mode shadow-sm" title="Straight Line" aria-label="Straight Line">
                         <span class="label-long">Straight Line</span><span class="label-short">Straight</span>
                     </button>
-                    <div class="flex items-center gap-3">
-                        <span class="text-sm font-semibold text-slate-700">Size:</span>
-                        <input type="range" id="brushSize" min="1" max="50" value="5" class="w-24 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider">
-                    </div>
+                    
                 </div>
                 
                 <!-- Arrow & Line Style Controls -->
@@ -1477,6 +1523,8 @@
             // Helper functions
             const setUniform = el => {
                 if (!el) return;
+                // Do not apply text-input styling to range sliders; it breaks their visuals
+                if (el.tagName === 'INPUT' && el.type === 'range') return;
                 el.classList.add(el.tagName === 'SELECT' ? 'tselect' : el.tagName === 'INPUT' ? 'tinput' : 'tbtn');
             };
             
@@ -1522,23 +1570,7 @@
             const colorInput = document.getElementById('colorPicker');
             if (colorInput) colorInput.classList.add('hidden');
 
-            // Brush size slider is now pre-populated, just need to wire up functionality
-            const brush = document.getElementById('brushSize');
-            if (brush) {
-                // Initialize slider fill and color to current selected color
-                const cp = document.getElementById('colorPicker');
-                if (cp) brush.style.setProperty('--accent', cp.value || '#3b82f6');
-                const updateSliderVisual = () => {
-                    const min = parseFloat(brush.min || '1');
-                    const max = parseFloat(brush.max || '50');
-                    const val = parseFloat(brush.value || '5');
-                    const pct = Math.max(0, Math.min(100, ((val - min) / (max - min)) * 100));
-                    brush.style.setProperty('--filled', pct + '%');
-                };
-                updateSliderVisual();
-                brush.addEventListener('input', updateSliderVisual);
-                brush.addEventListener('change', updateSliderVisual);
-            }
+            
 
             // Arrow and line style controls are now pre-populated, just need to wire up functionality
             const arrowStartBtn = document.getElementById('arrowStartBtn');
@@ -2140,7 +2172,7 @@
                 if (!panel) return;
                 const resize = () => {
                     const rect = panel.getBoundingClientRect();
-                    const margin = 12; // small breathing room
+                    const margin = -8; // small breathing room
                     const h = Math.max(0, Math.round(window.innerHeight - rect.top - margin));
                     panel.style.height = h + 'px';
                     panel.style.maxHeight = h + 'px';
