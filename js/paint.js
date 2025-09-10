@@ -367,50 +367,63 @@ document.addEventListener('DOMContentLoaded', () => {
                         cutoutUrl = URL.createObjectURL(blobOut);
                     }
 
-                    // Step 4: Apply the processed image (optional safety shim; falls back silently)
-                    try {
-                        if (typeof rembg_isShimEnabled === 'function' && rembg_isShimEnabled()) {
-                            if (typeof rembg_debug === 'function') rembg_debug('[REMBG-SHIM] enabled');
-                            try {
-                                const resp = await fetch(cutoutUrl, { cache: 'no-store' });
-                                const outBlob = await resp.blob();
-                                
-                                // **NEW**: Use centralized background removal handler
-                                if (typeof window.onBackgroundRemoved === 'function') {
-                                    await window.onBackgroundRemoved(label, outBlob);
-                                } else {
-                                    // Fallback to direct paste
-                                const dataUrl = await rembg_blobToDataURL(outBlob);
-                                if (typeof pasteImageFromUrl === 'function') {
-                                        await pasteImageFromUrl(dataUrl, label, { preserveCanvasScale: true, preserveBasis: 'width' });
-                                }
-                                }
-                                // Keep UI scale text and canvas in sync after replace
-                                try { if (label === window.currentImageLabel && typeof updateScaleUI === 'function') updateScaleUI(); } catch(_) {}
-                                try { if (typeof redrawCanvasWithVisibility === 'function') redrawCanvasWithVisibility(); } catch(_) {}
-                                if (!window.originalImages) window.originalImages = {};
-                                // Only set originalImages if we used the fallback path
-                                if (typeof window.onBackgroundRemoved !== 'function') {
-                                    const dataUrl = await rembg_blobToDataURL(outBlob);
-                                window.originalImages[label] = dataUrl;
-                                }
-                                return;
-                            } catch (shimErr) {
-                                if (typeof rembg_debug === 'function') rembg_debug('[REMBG-SHIM] error; fallback', shimErr && shimErr.message);
+                    // Step 4: Apply the processed image
+                    // If cutoutUrl is already a URL (from JSON response), fetch it first to avoid CORS/HTTP2 issues
+                    // If it's a blob URL (from binary response), we need to fetch it
+                    if (cutoutUrl.startsWith('http')) {
+                        // cutoutUrl is already a URL from the API response - fetch it first to convert to blob
+                        try {
+                            console.log('[BG-REMOVE] Fetching processed image from:', cutoutUrl);
+                            const response = await fetch(cutoutUrl, { 
+                                mode: 'cors',
+                                cache: 'no-cache'
+                            });
+                            
+                            if (!response.ok) {
+                                throw new Error(`Failed to fetch processed image: ${response.status} ${response.statusText}`);
                             }
-                        } else {
-                            if (typeof rembg_debug === 'function') rembg_debug('[REMBG-SHIM] disabled');
+                            
+                            const blob = await response.blob();
+                            console.log('[BG-REMOVE] Successfully fetched processed image blob:', blob.size, 'bytes');
+                            
+                            // Use centralized background removal handler if available
+                            if (typeof window.onBackgroundRemoved === 'function') {
+                                await window.onBackgroundRemoved(label, blob);
+                            } else {
+                                // Fallback to direct paste
+                                const dataUrl = await rembg_blobToDataURL(blob);
+                                if (typeof pasteImageFromUrl === 'function') {
+                                    await pasteImageFromUrl(dataUrl, label, { preserveCanvasScale: true, preserveBasis: 'width' });
+                                }
+                            }
+                        } catch (fetchError) {
+                            console.error('[BG-REMOVE] Failed to fetch processed image from URL:', fetchError);
+                            // Try direct URL as fallback
+                            console.log('[BG-REMOVE] Attempting direct URL fallback...');
+                            if (typeof pasteImageFromUrl === 'function') {
+                                await pasteImageFromUrl(cutoutUrl, label, { preserveCanvasScale: true, preserveBasis: 'width' });
+                            }
                         }
-                    } catch (_) {}
-
-                    // Original path - use centralized handler if available
-                    if (typeof window.onBackgroundRemoved === 'function') {
-                        // Convert data URL to blob for centralized handler
-                        const response = await fetch(cutoutUrl);
-                        const blob = await response.blob();
-                        await window.onBackgroundRemoved(label, blob);
-                    } else if (typeof pasteImageFromUrl === 'function') {
-                        await pasteImageFromUrl(cutoutUrl, label, { preserveCanvasScale: true, preserveBasis: 'width' });
+                    } else {
+                        // cutoutUrl is a blob URL - fetch it to get the blob
+                        try {
+                            const response = await fetch(cutoutUrl);
+                            const blob = await response.blob();
+                            
+                            // Use centralized background removal handler if available
+                            if (typeof window.onBackgroundRemoved === 'function') {
+                                await window.onBackgroundRemoved(label, blob);
+                            } else {
+                                // Fallback to direct paste
+                                const dataUrl = await rembg_blobToDataURL(blob);
+                                if (typeof pasteImageFromUrl === 'function') {
+                                    await pasteImageFromUrl(dataUrl, label, { preserveCanvasScale: true, preserveBasis: 'width' });
+                                }
+                            }
+                        } catch (fetchErr) {
+                            console.error('[RemoveBG] Failed to fetch blob URL:', fetchErr);
+                            throw new Error('Failed to process background removal result');
+                        }
                     }
                     // Keep UI scale text and canvas in sync after replace
                     try { if (label === window.currentImageLabel && typeof updateScaleUI === 'function') updateScaleUI(); } catch(_) {}
@@ -9753,6 +9766,15 @@ if (colorPicker) {
         const dims = lastImageDims[label] || { w: window.currentImageWidth, h: window.currentImageHeight };
         const oldW = dims?.w || 0, oldH = dims?.h || 0;
         
+        // **CRITICAL FIX**: Preserve stroke data before image replacement
+        const preservedStrokeData = {
+            vectorStrokes: window.vectorStrokesByImage[label] ? JSON.parse(JSON.stringify(window.vectorStrokesByImage[label])) : {},
+            lineStrokes: window.lineStrokesByImage[label] ? [...(window.lineStrokesByImage[label] || [])] : [],
+            strokeVisibility: window.strokeVisibilityByImage[label] ? JSON.parse(JSON.stringify(window.strokeVisibilityByImage[label])) : {},
+            strokeLabelVisibility: window.strokeLabelVisibility[label] ? JSON.parse(JSON.stringify(window.strokeLabelVisibility[label])) : {},
+            strokeMeasurements: window.strokeMeasurements[label] ? JSON.parse(JSON.stringify(window.strokeMeasurements[label])) : {}
+        };
+        
         // If enabled, force-resize the incoming bitmap to the old intrinsic size
         let processedBlob = newBlob;
         if (window.flags?.BG_REMOVED_FORCE_ORIGINAL_SIZE ?? true) {
@@ -9784,13 +9806,41 @@ if (colorPicker) {
             }
             
             // Swap bitmap via existing pipeline
-            const url = URL.createObjectURL(processedBlob);
-            await window.pasteImageFromUrl(url, label, {
+            // Convert blob to data URL to avoid blob URL timing issues
+            const dataUrl = await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(processedBlob);
+            });
+            
+            await window.pasteImageFromUrl(dataUrl, label, {
                 preserveCanvasScale: true,
                 preserveBasis: 'width'
             });
-            URL.revokeObjectURL(url);
         });
+        
+        // **CRITICAL FIX**: Restore stroke data after image replacement
+        if (preservedStrokeData.vectorStrokes && Object.keys(preservedStrokeData.vectorStrokes).length > 0) {
+            window.vectorStrokesByImage[label] = preservedStrokeData.vectorStrokes;
+            console.debug('[REPLACE] Restored %d vector strokes for %s', Object.keys(preservedStrokeData.vectorStrokes).length, label);
+        }
+        if (preservedStrokeData.lineStrokes && preservedStrokeData.lineStrokes.length > 0) {
+            window.lineStrokesByImage[label] = preservedStrokeData.lineStrokes;
+            console.debug('[REPLACE] Restored %d line strokes for %s', preservedStrokeData.lineStrokes.length, label);
+        }
+        if (preservedStrokeData.strokeVisibility && Object.keys(preservedStrokeData.strokeVisibility).length > 0) {
+            window.strokeVisibilityByImage[label] = preservedStrokeData.strokeVisibility;
+            console.debug('[REPLACE] Restored stroke visibility for %s', label);
+        }
+        if (preservedStrokeData.strokeLabelVisibility && Object.keys(preservedStrokeData.strokeLabelVisibility).length > 0) {
+            window.strokeLabelVisibility[label] = preservedStrokeData.strokeLabelVisibility;
+            console.debug('[REPLACE] Restored stroke label visibility for %s', label);
+        }
+        if (preservedStrokeData.strokeMeasurements && Object.keys(preservedStrokeData.strokeMeasurements).length > 0) {
+            window.strokeMeasurements[label] = preservedStrokeData.strokeMeasurements;
+            console.debug('[REPLACE] Restored stroke measurements for %s', label);
+        }
         
         lastImageDims[label] = { w: newW, h: newH };
         console.debug('[REPLACE] %s → %s (%sx%s) reason=%s',
@@ -14375,8 +14425,9 @@ if (colorPicker) {
             // Also check line segments between points
             if (i > 0) {
                 const prevPoint = vectorData.points[i - 1];
-                const prevCanvasX = imageX + (prevPoint.x * scale);
-                const prevCanvasY = imageY + (prevPoint.y * scale);
+                const prevTransformed = imageToCanvasCoords(prevPoint.x, prevPoint.y, transformParams);
+                const prevCanvasX = prevTransformed.x;
+                const prevCanvasY = prevTransformed.y;
                 
                 // Find closest point on line segment
                 const segmentLength = Math.sqrt(
@@ -14402,12 +14453,11 @@ if (colorPicker) {
                     
                     if (projDistance < minDistance) {
                         minDistance = projDistance;
-                        // Convert back to image space
-                        const projImageX = (projCanvasX - imageX) / scale;
-                        const projImageY = (projCanvasY - imageY) / scale;
+                        // Convert back to image space using inverse transformation
+                        const projImageCoords = canvasToImageCoords(projCanvasX, projCanvasY, transformParams);
                         nearestPoint = {
-                            x: projImageX,
-                            y: projImageY,
+                            x: projImageCoords.x,
+                            y: projImageCoords.y,
                             canvasX: projCanvasX,
                             canvasY: projCanvasY,
                             distance: projDistance
