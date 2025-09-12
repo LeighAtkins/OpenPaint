@@ -1126,7 +1126,7 @@
                     <button data-color="#f59e0b" style="background-color: rgb(245, 158, 11);" title="Yellow"></button>
                     <button data-color="#a855f7" style="background-color: rgb(168, 85, 247);" title="Purple"></button>
                     <button data-color="#1f2937" style="background-color: rgb(31, 41, 55);" title="Dark Gray"></button>
-                    <button data-color="#111827" style="background-color: rgb(17, 24, 39);" title="#111827"></button>
+                    <button data-color="#ffffff" style="background-color: rgb(255, 255, 255); box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3); border: 1px solid #ccc;" title="White"></button>
                     <button data-color="#10b981" style="background-color: rgb(16, 185, 129);" title="#10b981"></button>
                 </div>
                 <input
@@ -1155,21 +1155,6 @@
                     <span class="label-long">Save Project</span><span class="label-short">Save</span>
                 </button>
                 <button id="unitToggleBtn" class="tbtn" title="Toggle units">inches</button>
-                <div class="flex items-center gap-2 text-xs bg-slate-50 border border-slate-200 px-2 py-1 rounded-lg">
-                    <span>Tag</span>
-                    <div class="inline-flex rounded-md overflow-hidden border border-slate-200">
-                        <button id="shapeSquareBtn" type="button" class="px-2 py-1 bg-white text-slate-700 hover:bg-slate-50" aria-pressed="true" title="Square">
-                            ■
-                        </button>
-                        <button id="shapeCircleBtn" type="button" class="px-2 py-1 bg-white text-slate-700 hover:bg-slate-50" aria-pressed="false" title="Circle">
-                            ●
-                        </button>
-                    </div>
-                    <select id="labelShapeSelect" class="hidden">
-                        <option value="square" selected>Square</option>
-                        <option value="circle">Circle</option>
-                    </select>
-                </div>
             </div>
         </div>
     </div>
@@ -1364,9 +1349,6 @@
                 </label>
                 <button id="unitToggleBtnSecondary" class="px-2 py-1 text-xs bg-white border border-gray-300 rounded-lg hover:bg-gray-50" title="Toggle units">inches</button>
                 <button id="labelShapeToggleBtn" class="px-2 py-1 text-xs bg-white border border-gray-300 rounded-lg hover:bg-gray-50" title="Toggle tag shape" aria-pressed="true">■</button>
-                <button id="addTags" title="Add or edit tags for current image" class="px-2 py-1 text-xs bg-green-100 hover:bg-green-200 text-green-700 rounded-lg transition-all font-medium">
-                    Add Tags
-                </button>
             </div>
         </div>
         <div id="strokeVisibilityControls" class="px-3 pt-2 pb-2 transition-all duration-300" style="min-height: 60px; max-height: 60vh; overflow-y: auto; overflow-x: hidden; box-sizing: border-box;"></div>
@@ -1598,15 +1580,8 @@
                     setLineStyleIcon(ds?.style || 'solid');
                     // Sync label shape toggle visual state
                     const state = window.paintApp?.state || {};
-                    const shape = state.labelShape || (document.getElementById('labelShapeSelect')?.value) || 'square';
-                    const squareBtn = document.getElementById('shapeSquareBtn');
-                    const circleBtn = document.getElementById('shapeCircleBtn');
-                    if (squareBtn && circleBtn) {
-                        squareBtn.setAttribute('aria-pressed', String(shape === 'square'));
-                        circleBtn.setAttribute('aria-pressed', String(shape === 'circle'));
-                        setActive(squareBtn, shape === 'square');
-                        setActive(circleBtn, shape === 'circle');
-                    }
+                    const shape = state.labelShape || 'square';
+                    // Note: shapeSquareBtn and shapeCircleBtn were removed, using single toggle button instead
                 } catch {}
             };
             syncFromState();
@@ -1739,23 +1714,6 @@
                 el.textContent = '↕'; 
             });
             reparent('scaleButton', bottom);
-            // Shape toggle wiring
-            const labelShapeSelect = document.getElementById('labelShapeSelect');
-            const shapeSquareBtn = document.getElementById('shapeSquareBtn');
-            const shapeCircleBtn = document.getElementById('shapeCircleBtn');
-            const setShape = (val) => {
-                if (labelShapeSelect) {
-                    labelShapeSelect.value = val;
-                    labelShapeSelect.dispatchEvent(new Event('change'));
-                }
-                if (window.paintApp?.state) {
-                    window.paintApp.state.labelShape = val;
-                }
-                syncFromState();
-                if (window.redrawCanvasWithVisibility) window.redrawCanvasWithVisibility();
-            };
-            if (shapeSquareBtn) shapeSquareBtn.addEventListener('click', () => setShape('square'));
-            if (shapeCircleBtn) shapeCircleBtn.addEventListener('click', () => setShape('circle'));
             syncFromState();
 
             // RIGHT: project settings are now pre-populated, just need to wire up functionality
@@ -1815,22 +1773,18 @@
             // Elements panel single-button shape toggle wiring
             const labelShapeToggleBtn = document.getElementById('labelShapeToggleBtn');
             const applyShape = (val) => {
-                if (labelShapeSelect) {
-                    labelShapeSelect.value = val;
-                    labelShapeSelect.dispatchEvent(new Event('change'));
-                }
                 if (window.paintApp?.state) window.paintApp.state.labelShape = val;
                 if (window.redrawCanvasWithVisibility) window.redrawCanvasWithVisibility();
             };
             if (labelShapeToggleBtn) {
                 const syncShapeBtn = () => {
-                    const shape = (window.paintApp?.state?.labelShape) || labelShapeSelect?.value || 'square';
+                    const shape = (window.paintApp?.state?.labelShape) || 'square';
                     const isSquare = shape !== 'circle';
                     labelShapeToggleBtn.textContent = isSquare ? '■' : '●';
                     labelShapeToggleBtn.setAttribute('aria-pressed', String(isSquare));
                 };
                 labelShapeToggleBtn.addEventListener('click', () => {
-                    const shape = (window.paintApp?.state?.labelShape) || labelShapeSelect?.value || 'square';
+                    const shape = (window.paintApp?.state?.labelShape) || 'square';
                     applyShape(shape === 'circle' ? 'square' : 'circle');
                     syncShapeBtn();
                 });
@@ -4786,10 +4740,10 @@
     <script src="js/geometry.js?v=20250820123456"></script>
     <script src="js/migration.js?v=20250820123456"></script>
     <script src="diagnostics-overlay.js?v=20250820123456"></script>
-    <script src="test-coordinate-system.js?v=20250820123456"></script>
+    <script src="test-coordinate-system.js?v=20250912113000"></script>
 
-    <script src="js/paint.js?v=20250820123456"></script>
-    <script src="js/project-manager.js?v=20250820123458"></script>
-    <script src="js/tag-manager.js?v=20250820123456"></script>
+    <script src="js/paint.js?v=20250912113000"></script>
+    <script src="js/project-manager.js?v=20250912113000"></script>
+    <script src="js/tag-manager.js?v=20250912113000"></script>
 </body>
 </html>

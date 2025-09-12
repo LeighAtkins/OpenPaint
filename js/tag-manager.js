@@ -694,7 +694,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             });
         } else {
-            console.warn('[TAG-MANAGER] addTags button not found.');
+            console.log('[TAG-MANAGER] addTags button not found (removed from UI).');
         }
 
         // Attempt to hook into addImageToSidebar from paint.js

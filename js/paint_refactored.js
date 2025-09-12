@@ -90,7 +90,7 @@ window.paintApp = {
         arrowSettings: {
             startArrow: false,  // Off by default (Priority 1 requirement)
             endArrow: false,    // Off by default (Priority 1 requirement)
-            arrowSize: 15,
+            arrowSize: null,    // null means use proportional sizing based on stroke width
             arrowStyle: 'triangular' // Options: 'triangular', 'filled', 'curved'
         },
         draggingAnchor: false,
@@ -157,7 +157,7 @@ window.paintApp = {
                 
                 if (vectorData.arrowSettings) {
                     const brushSizeForStroke = vectorData.width || 5;
-                    const baseArrowSize = Math.max(vectorData.arrowSettings.arrowSize || 15, brushSizeForStroke * 2);
+                    const baseArrowSize = Math.max(vectorData.arrowSettings.arrowSize || (brushSizeForStroke * 2), brushSizeForStroke * 2);
                     const scaledArrowSize = baseArrowSize * scale;
                     const dx = originalEndPoint.x - originalStartPoint.x;
                     const dy = originalEndPoint.y - originalStartPoint.y;
@@ -190,7 +190,7 @@ window.paintApp = {
                 
                 if (vectorData.arrowSettings) {
                     const brushSizeForStroke = vectorData.width || 5;
-                    const baseArrowSize = Math.max(vectorData.arrowSettings.arrowSize || 15, brushSizeForStroke * 2);
+                    const baseArrowSize = Math.max(vectorData.arrowSettings.arrowSize || (brushSizeForStroke * 2), brushSizeForStroke * 2);
                     const scaledArrowSize = baseArrowSize * scale;
                     const dx = originalEndPoint.x - originalStartPoint.x;
                     const dy = originalEndPoint.y - originalStartPoint.y;
