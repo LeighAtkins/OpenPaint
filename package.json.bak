@@ -1,0 +1,54 @@
+{
+  "name": "openpaint",
+  "version": "1.0.0",
+  "description": "A web-based drawing and annotation tool designed for email communication of measurements and specifications",
+  "main": "app.js",
+  "engines": {
+    "node": "22.x"
+  },
+  "scripts": {
+    "start": "node app.js",
+    "dev": "node app.js",
+    "build": "echo 'Static assets ready for deployment'",
+    "deploy": "vercel --prod",
+    "deploy:preview": "vercel",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "test": "npm run test:unit && npm run test:integration",
+    "test:unit": "jest --testMatch='**/tests/unit/**/*.test.js'",
+    "test:integration": "jest --testMatch='**/tests/integration/**/*.test.js'",
+    "test:e2e": "cypress run",
+    "test:e2e:open": "cypress open",
+    "test:visual": "jest --testMatch='**/tests/visual/**/*.test.js'",
+    "test:performance": "jest --testMatch='**/tests/performance/**/*.test.js' --runInBand",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:all": "npm run test && npm run test:e2e && npm run test:visual && npm run test:performance"
+  },
+  "dependencies": {
+    "@types/react": "18.3.12",
+    "@types/react-dom": "18.3.1",
+    "express": "^4.18.2",
+    "file-saver": "^2.0.5",
+    "jszip": "^3.10.1",
+    "multer": "^1.4.5-lts.1",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  },
+  "devDependencies": {
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/jsdom": "^21.1.7",
+    "@types/node": "^24.5.2",
+    "@typescript-eslint/eslint-plugin": "^8.44.1",
+    "@typescript-eslint/parser": "^8.44.1",
+    "eslint": "^9.36.0",
+    "jsdom": "^27.0.0",
+    "prettier": "^3.6.2",
+    "typescript": "^5.9.2",
+    "vite": "^7.1.7",
+    "vite-tsconfig-paths": "^5.1.4",
+    "vitest": "^3.2.4"
+  }
+}

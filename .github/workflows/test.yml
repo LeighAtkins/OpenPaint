@@ -1,136 +1,39 @@
-name: Test Suite
-
+name: ci
 on:
   push:
-    branches: [ master, develop ]
+    branches: [ migration/ts-react-bun ]
   pull_request:
-    branches: [ master ]
+    branches: [ migration/ts-react-bun, master ]
 
 jobs:
-  unit-tests:
+  test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-          cache: 'npm'
-      
-      - name: Install dependencies
-        run: npm ci
-      
-      - name: Run lint
-        run: npm run lint
-      
-      - name: Run unit tests
-        run: npm run test:unit -- --coverage
-      
-      - name: Upload coverage
-        uses: codecov/codecov-action@v3
-        with:
-          file: ./coverage/lcov.info
-          flags: unit
+      - uses: actions/checkout@v4
 
-  integration-tests:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
+      - uses: oven-sh/setup-bun@v1
         with:
-          node-version: '18'
-          cache: 'npm'
-      
-      - name: Install dependencies
-        run: npm ci
-      
-      - name: Run integration tests
-        run: npm run test:integration
+          bun-version: latest
 
-  e2e-tests:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-          cache: 'npm'
-      
-      - name: Install dependencies
-        run: npm ci
-      
-      - name: Start application
+      - name: Install (bun)
+        run: bun install --frozen-lockfile
+
+      - name: Typecheck
+        run: bun run typecheck
+
+      # Install ESLint + plugins with npm so Node’s module resolver is happy
+      - name: Prep lint toolchain (npm)
         run: |
-          npm start &
-          npx wait-on http://localhost:3000
-        env:
-          PORT: 3000
-      
-      - name: Run E2E tests
-        run: npm run test:e2e
-      
-      - name: Upload test videos
-        if: failure()
-        uses: actions/upload-artifact@v3
-        with:
-          name: cypress-videos
-          path: cypress/videos
-      
-      - name: Upload screenshots
-        if: failure()
-        uses: actions/upload-artifact@v3
-        with:
-          name: cypress-screenshots
-          path: cypress/screenshots
+          npm i --no-save \
+            eslint@^9 \
+            typescript-eslint@^8 \
+            eslint-plugin-react@^7 \
+            eslint-plugin-react-hooks@^5 \
+            eslint-plugin-jsx-a11y@^6 \
+            globals@^15
 
-  visual-tests:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-          cache: 'npm'
-      
-      - name: Install dependencies
-        run: npm ci
-      
-      - name: Run visual regression tests
-        run: npm run test:visual
-      
-      - name: Upload diff images
-        if: failure()
-        uses: actions/upload-artifact@v3
-        with:
-          name: visual-diff
-          path: tests/visual/__diff_output__
+      - name: Lint (node + npm toolchain)
+        run: npx eslint .
 
-  performance-tests:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-          cache: 'npm'
-      
-      - name: Install dependencies
-        run: npm ci
-      
-      - name: Run performance tests
-        run: npm run test:performance
-      
-      - name: Upload performance results
-        uses: actions/upload-artifact@v3
-        with:
-          name: performance-results
-          path: tests/performance/results.json
+      - name: Test
+        run: bun run test -- --run

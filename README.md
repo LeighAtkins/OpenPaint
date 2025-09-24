@@ -79,3 +79,6 @@ npm start
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
+
+# in README.md
+[![ci](https://github.com/LeighAtkins/OpenPaint/actions/workflows/test.yml/badge.svg?branch=migration/ts-react-bun)](https://github.com/LeighAtkins/OpenPaint/actions/workflows/test.yml)
