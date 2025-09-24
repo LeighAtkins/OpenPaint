@@ -1,3 +1,5 @@
 {
-  "outputDirectory": "."
+  "buildCommand": "bun install && bunx vite build",
+  "installCommand": "bun install",
+  "outputDirectory": "dist"
 }
