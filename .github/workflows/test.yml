@@ -21,9 +21,19 @@ jobs:
       - name: Typecheck
         run: bun run typecheck
 
-      # Run ESLint with Node to avoid Bun/ESLint module-resolution drama
-      - name: Lint (node)
-        run: node node_modules/eslint/bin/eslint.js .
+      # Install ESLint + plugins with npm so Node’s module resolver is happy
+      - name: Prep lint toolchain (npm)
+        run: |
+          npm i --no-save \
+            eslint@^9 \
+            typescript-eslint@^8 \
+            eslint-plugin-react@^7 \
+            eslint-plugin-react-hooks@^5 \
+            eslint-plugin-jsx-a11y@^6 \
+            globals@^15
+
+      - name: Lint (node + npm toolchain)
+        run: npx eslint .
 
       - name: Test
         run: bun run test -- --run
