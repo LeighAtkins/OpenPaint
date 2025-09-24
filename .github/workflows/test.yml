@@ -1,20 +1,29 @@
 name: ci
-
 on:
   push:
-    branches:
-      - migration/ts-react-bun
+    branches: [ migration/ts-react-bun ]
   pull_request:
+    branches: [ migration/ts-react-bun, master ]
 
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: oven-sh/setup-bun@v1
         with:
           bun-version: latest
-      - run: bun install
-      - run: bun run typecheck
-      - run: bun run lint
-      - run: bun run test
+
+      - name: Install (bun)
+        run: bun install --frozen-lockfile
+
+      - name: Typecheck
+        run: bun run typecheck
+
+      # Run ESLint with Node to avoid Bun/ESLint module-resolution drama
+      - name: Lint (node)
+        run: node node_modules/eslint/bin/eslint.js .
+
+      - name: Test
+        run: bun run test -- --run
