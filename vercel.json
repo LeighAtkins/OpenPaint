@@ -1,5 +1,3 @@
 {
-  "buildCommand": "bun install && bunx vite build",
-  "installCommand": "bun install",
-  "outputDirectory": "dist"
+  "ignoreCommand": "if [ \"$VERCEL_GIT_COMMIT_REF\" = \"migration/ts-react-bun\" ]; then echo skip; exit 0; fi"
 }
