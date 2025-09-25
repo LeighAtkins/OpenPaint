@@ -2867,16 +2867,38 @@ if (colorPicker) {
                     
                     // Column positions - tighter spacing for 4 columns
                     const columnWidths = [20, 65, 110, 155]; // Base X positions for up to 4 columns
-                    
+                    const columnXPositions = columnWidths.slice(0, numColumns);
+                    const itemsPerPage = Math.max(1, numColumns * itemsPerColumn);
+                    let maxFieldBottom = yPosition;
+                    let currentPageIndex = 0;
+
                     for (let j = 0; j < measurements.length; j++) {
                         const measurement = measurements[j];
-                        const columnIndex = Math.floor(j / itemsPerColumn);
-                        const rowIndex = j % itemsPerColumn;
-                        
-                        const baseX = columnWidths[columnIndex];
+                        const pageIndex = Math.floor(j / itemsPerPage);
+
+                        if (pageIndex > currentPageIndex) {
+                            pdf.addPage();
+                            yPosition = 20;
+                            pdf.setFontSize(14);
+                            pdf.setFont(undefined, 'bold');
+                            pdf.text('MEASUREMENTS (continued)', 20, yPosition);
+                            yPosition += 15;
+                            pdf.setFontSize(9);
+                            pdf.setFont(undefined, 'normal');
+                            pdf.text('Fill in measurements for each labeled dimension:', 20, yPosition);
+                            yPosition += 12;
+                            currentPageIndex = pageIndex;
+                            maxFieldBottom = Math.max(maxFieldBottom, yPosition);
+                        }
+
+                        const indexInPage = j % itemsPerPage;
+                        const columnIndex = Math.floor(indexInPage / itemsPerColumn);
+                        const rowIndex = indexInPage % itemsPerColumn;
+
+                        const baseX = columnXPositions[columnIndex] ?? columnXPositions[columnXPositions.length - 1] ?? 20;
                         const currentY = yPosition + (rowIndex * 15);
-                        
-                        // Check if we need a new page (if any measurement goes beyond page height)
+
+                        // Check if we need a new page (fallback for unexpected overflow)
                         let finalCurrentY = currentY;
                         if (currentY > 270) {
                             pdf.addPage();
@@ -2885,12 +2907,14 @@ if (colorPicker) {
                             pdf.setFont(undefined, 'bold');
                             pdf.text('MEASUREMENTS (continued)', 20, yPosition);
                             yPosition += 15;
-                            
-                            // Recalculate position for new page
-                            const newRowIndex = j % itemsPerColumn;
-                            finalCurrentY = yPosition + (newRowIndex * 15);
+                            pdf.setFontSize(9);
+                            pdf.setFont(undefined, 'normal');
+                            pdf.text('Fill in measurements for each labeled dimension:', 20, yPosition);
+                            yPosition += 12;
+                            finalCurrentY = yPosition;
+                            maxFieldBottom = Math.max(maxFieldBottom, yPosition);
                         }
-                        
+
                         // Measurement label with overflow handling
                         pdf.setFontSize(10);
                         pdf.setFont(undefined, 'bold');
@@ -2943,10 +2967,13 @@ if (colorPicker) {
                         
                         textField.value = measurementValue;
                         pdf.addField(textField);
+
+                        const fieldBottom = (Number.isFinite(fieldY) ? fieldY + fieldHeight : finalCurrentY + fieldHeight);
+                        maxFieldBottom = Math.max(maxFieldBottom, fieldBottom);
                     }
                     
-                    // Update yPosition to after all measurements (account for multi-column layout)
-                    yPosition += (itemsPerColumn * 15) + 10;
+                    // Update yPosition to after all measurements (account for layout and potential extra pages)
+                    yPosition = maxFieldBottom + 10;
                     
                 } else {
                     // No measurements for this image
