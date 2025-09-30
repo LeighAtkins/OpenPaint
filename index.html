@@ -477,8 +477,6 @@
         /* Fullscreen canvas styles */
         #canvas {
             position: fixed;
-            top: 0;
-            left: 0;
             z-index: 1;
             cursor: crosshair;
             background: #f8f9fa;
@@ -1160,7 +1158,7 @@
     </div>
 
     <!-- Fullscreen Canvas -->
-    <canvas id="canvas" class="w-full h-full"></canvas>
+    <canvas id="canvas"></canvas>
     
     <!-- Project Header Panel -->
     <div id="projectPanel" class="floating-panel fixed top-4 right-4 z-30 rounded-2xl w-80 transition-all duration-300">
@@ -1372,7 +1370,7 @@
             <label for="currentImageNameBox" class="block text-[10px] text-slate-500 mb-1">Image name</label>
             <input id="currentImageNameBox" type="text" class="w-full px-2 py-1 border border-slate-300 rounded-md text-[12px] focus:outline-none focus:ring-2 focus:ring-primary-300" placeholder="Rename current image" />
         </div>
-        <div id="imagePanelContent" class="p-3 transition-all duration-300" style="position: relative;">
+            <div id="imagePanelContent" class="p-3 transition-all duration-300" style="position: relative;">
             <!-- Legacy image list for backwards compatibility -->
             <div id="imageList" class="space-y-4 mb-0 h-[60vh] overflow-y-auto overflow-x-hidden pr-0 snap-y snap-mandatory scroll-smooth pt-[28vh] pb-[28vh]"></div>
 
@@ -2024,29 +2022,121 @@
             const captureFrame = document.getElementById('captureFrame');
             // Per-image capture frame storage and helpers
             window.captureFrameByLabel = window.captureFrameByLabel || {};
+            function buildCaptureFrameRecord(rect) {
+                const winW = Math.max(window.innerWidth, 1);
+                const winH = Math.max(window.innerHeight, 1);
+                return {
+                    left: Math.round(rect.left),
+                    top: Math.round(rect.top),
+                    width: Math.round(rect.width),
+                    height: Math.round(rect.height),
+                    windowWidth: winW,
+                    windowHeight: winH,
+                    relativeLeft: rect.left / winW,
+                    relativeTop: rect.top / winH,
+                    relativeWidth: rect.width / winW,
+                    relativeHeight: rect.height / winH
+                };
+            }
             function getCaptureFrameRectPixels() {
                 const rect = captureFrame.getBoundingClientRect();
-                return { left: rect.left, top: rect.top, width: rect.width, height: rect.height };
+                return buildCaptureFrameRecord(rect);
             }
             function saveCurrentCaptureFrameForLabel(label) {
                 if (!label) return;
                 window.captureFrameByLabel[label] = getCaptureFrameRectPixels();
             }
+            function resolveCaptureFrameRect(stored) {
+                const winW = Math.max(window.innerWidth, 1);
+                const winH = Math.max(window.innerHeight, 1);
+                const targetAspect = 4 / 3;
+
+                let fallbackWidth = Math.min(800, winW);
+                let fallbackHeight = Math.round(fallbackWidth / targetAspect);
+                if (fallbackHeight > winH) {
+                    fallbackHeight = Math.min(600, winH);
+                    fallbackWidth = Math.round(fallbackHeight * targetAspect);
+                }
+
+                const fallback = {
+                    left: Math.max(0, Math.round((winW - fallbackWidth) / 2)),
+                    top: Math.max(0, Math.round((winH - fallbackHeight) / 2)),
+                    width: fallbackWidth,
+                    height: fallbackHeight
+                };
+                if (!stored) return fallback;
+
+                const baseW = stored.windowWidth || winW;
+                const baseH = stored.windowHeight || winH;
+                let width = Math.max(1, Math.round(
+                    typeof stored.relativeWidth === 'number'
+                        ? stored.relativeWidth * winW
+                        : (stored.width ?? fallback.width)
+                ));
+                let height = Math.max(1, Math.round(
+                    typeof stored.relativeHeight === 'number'
+                        ? stored.relativeHeight * winH
+                        : (stored.height ?? fallback.height)
+                ));
+
+                if (width / height > targetAspect) {
+                    width = Math.round(height * targetAspect);
+                } else {
+                    height = Math.round(width / targetAspect);
+                }
+
+                const leftRatio = typeof stored.relativeLeft === 'number'
+                    ? stored.relativeLeft
+                    : (stored.left ?? fallback.left) / baseW;
+                const topRatio = typeof stored.relativeTop === 'number'
+                    ? stored.relativeTop
+                    : (stored.top ?? fallback.top) / baseH;
+
+                const maxLeft = Math.max(0, winW - width);
+                const maxTop = Math.max(0, winH - height);
+
+                return {
+                    left: Math.min(maxLeft, Math.max(0, Math.round(leftRatio * winW))),
+                    top: Math.min(maxTop, Math.max(0, Math.round(topRatio * winH))),
+                    width: Math.min(width, winW),
+                    height: Math.min(height, winH)
+                };
+            }
             function applyCaptureFrameForLabel(label) {
                 const stored = window.captureFrameByLabel[label];
-                const fallback = {
-                    left: Math.max(0, Math.round((window.innerWidth - 800) / 2)),
-                    top: Math.max(0, Math.round((window.innerHeight - 600) / 2)),
-                    width: 800,
-                    height: 600
-                };
-                const target = stored || fallback;
-                captureFrame.style.left = `${Math.max(0, Math.round(target.left))}px`;
-                captureFrame.style.top = `${Math.max(0, Math.round(target.top))}px`;
-                captureFrame.style.width = `${Math.round(target.width)}px`;
-                captureFrame.style.height = `${Math.round(target.height)}px`;
+                const rect = resolveCaptureFrameRect(stored);
+                captureFrame.style.left = `${rect.left}px`;
+                captureFrame.style.top = `${rect.top}px`;
+                captureFrame.style.width = `${rect.width}px`;
+                captureFrame.style.height = `${rect.height}px`;
+
+                if (label) {
+                    window.captureFrameByLabel[label] = {
+                        ...(stored || {}),
+                        ...rect,
+                        windowWidth: Math.max(window.innerWidth, 1),
+                        windowHeight: Math.max(window.innerHeight, 1),
+                        relativeLeft: rect.left / Math.max(window.innerWidth, 1),
+                        relativeTop: rect.top / Math.max(window.innerHeight, 1),
+                        relativeWidth: rect.width / Math.max(window.innerWidth, 1),
+                        relativeHeight: rect.height / Math.max(window.innerHeight, 1)
+                    };
+                }
             }
+            window.saveCurrentCaptureFrameForLabel = saveCurrentCaptureFrameForLabel;
             window.applyCaptureFrameForLabel = applyCaptureFrameForLabel;
+
+            let captureFrameResizeRaf = null;
+            window.addEventListener('resize', () => {
+                if (captureFrameResizeRaf !== null) return;
+                captureFrameResizeRaf = requestAnimationFrame(() => {
+                    captureFrameResizeRaf = null;
+                    const activeLabel = window.currentImageLabel;
+                    if (typeof window.applyCaptureFrameForLabel === 'function') {
+                        window.applyCaptureFrameForLabel(activeLabel);
+                    }
+                });
+            });
             
             // Enhanced panel toggle functionality with minimize-to-header behavior
             function createPanelToggle(panelId, contentId, buttonId) {
@@ -2641,6 +2731,23 @@
                 // Save per-image frame when resizing ends
                 if (typeof window.currentImageLabel !== 'undefined') {
                     saveCurrentCaptureFrameForLabel(window.currentImageLabel);
+                    
+                    // Store the frame dimensions as a ratio of canvas size
+                    const canvas = document.getElementById('canvas');
+                    const frameRect = captureFrame.getBoundingClientRect();
+                    
+                    if (!window.manualFrameRatios) {
+                        window.manualFrameRatios = {};
+                    }
+                    
+                    window.manualFrameRatios[window.currentImageLabel] = {
+                        widthRatio: frameRect.width / canvas.clientWidth,
+                        heightRatio: frameRect.height / canvas.clientHeight,
+                        leftRatio: frameRect.left / canvas.clientWidth,
+                        topRatio: frameRect.top / canvas.clientHeight
+                    };
+                    
+                    console.log(`[FRAME] Saved ${window.currentImageLabel} frame ratios: ${(window.manualFrameRatios[window.currentImageLabel].widthRatio * 100).toFixed(1)}% width, ${(window.manualFrameRatios[window.currentImageLabel].heightRatio * 100).toFixed(1)}% height`);
                 }
             }
             

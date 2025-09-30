@@ -3,6 +3,49 @@ console.log('[PAINT.JS] Script loaded successfully');
 console.warn('[PAINT.JS] Script loaded (warn)');
 // Disable legacy measurement overlay rendering in favor of unified tag renderer
 window.disableLegacyMeasurementOverlay = true;
+
+// Load viewport controller modules (safely)
+(function loadViewportModules() {
+    try {
+        // Load feature flags first
+        const featureFlagsScript = document.createElement('script');
+        featureFlagsScript.src = 'src/canvas/viewport/featureFlags.js';
+        featureFlagsScript.onload = function() {
+            console.log('[VIEWPORT] Feature flags loaded');
+            
+            // Initialize feature flags after script loads
+            setTimeout(() => {
+                try {
+                    if (window.ViewportFeatureFlags) {
+                        window.ViewportFeatureFlags.initFeatureFlags();
+                        console.log('[VIEWPORT] Feature flags initialized');
+                    } else {
+                        console.warn('[VIEWPORT] ViewportFeatureFlags not available, using legacy system');
+                    }
+                } catch (e) {
+                    console.warn('[VIEWPORT] Error initializing feature flags, using legacy system:', e);
+                }
+            }, 10);
+            
+            // Load viewport controller after feature flags are ready
+            const viewportScript = document.createElement('script');
+            viewportScript.src = 'src/canvas/viewport/canvasViewport.js';
+            viewportScript.onload = function() {
+                console.log('[VIEWPORT] Controller loaded');
+            };
+            viewportScript.onerror = function(error) {
+                console.warn('[VIEWPORT] Controller failed to load, using legacy system:', error);
+            };
+            document.head.appendChild(viewportScript);
+        };
+        featureFlagsScript.onerror = function(error) {
+            console.warn('[VIEWPORT] Feature flags failed to load, using legacy system:', error);
+        };
+        document.head.appendChild(featureFlagsScript);
+    } catch (e) {
+        console.warn('[VIEWPORT] Failed to initialize viewport modules, using legacy system:', e);
+    }
+})();
 window.paintApp = {
     config: {
         IMAGE_LABELS: ['front', 'side', 'back', 'cushion', 'blank_canvas'],
@@ -32,6 +75,8 @@ window.paintApp = {
         imageTags: {},
         isLoadingProject: false,
         isDefocusingOperationInProgress: false,
+        // New viewport controller instance
+        viewportController: null,
         // DOM element references for centralized access
         domElements: {},
         // Event listener management
@@ -49,18 +94,20 @@ window.paintApp = {
         selectedStrokeByImage: {},
         multipleSelectedStrokesByImage: {},
         labelCounters: {
-    front: 0,
-    side: 0,
-    back: 0,
-    cushion: 0
+    front: { regular: 1, paste: 1 },
+    side: { regular: 1, paste: 1 },
+    back: { regular: 1, paste: 1 },
+    cushion: { regular: 1, paste: 1 }
         },
+        imageLabels: [],
         customLabelPositions: {},
         calculatedLabelOffsets: {},
         clearedMassiveOffsets: {}, // Track which labels have had massive offsets cleared to prevent repeated clearing
         selectedStrokeInEditMode: null,
         lastClickTime: 0,
         lastCanvasClickTime: 0,
-        orderedImageLabels: []
+        orderedImageLabels: [],
+        imageLabels: []
     },
     uiState: {
         // Control point dragging
@@ -464,6 +511,71 @@ document.addEventListener('DOMContentLoaded', () => {
     window.paintApp.state.domElements.copyCanvasBtn = document.getElementById('copyCanvasBtn');
     window.paintApp.state.domElements.pasteButton = document.getElementById('paste');
     
+    // Initialize viewport controller if feature flag is enabled
+    (function initViewportController() {
+        // Wait for viewport modules to load
+        const checkAndInit = () => {
+            if (window.ViewportFeatureFlags && window.CanvasViewportController) {
+                const useNewViewport = window.ViewportFeatureFlags.getFeatureFlag('USE_NEW_VIEWPORT');
+                
+                if (useNewViewport) {
+                    console.log('[VIEWPORT] Initializing new viewport controller');
+                    
+                    const canvas = window.paintApp.state.domElements.canvas;
+                    const container = canvas.parentElement;
+                    
+                    if (container && canvas) {
+                        // Create viewport controller for blank canvas mode
+                        // For blank canvas, we want 1:1 coordinate mapping (no scaling)
+                        window.paintApp.state.viewportController = new window.CanvasViewportController(
+                            container,
+                            canvas,
+                            {
+                                padding: 0,
+                                frameBounds: null // null means no auto-scaling, use identity transform
+                            }
+                        );
+                        
+                        // Listen for viewport changes to update legacy state
+                        container.addEventListener('viewportChanged', (event) => {
+                            const { transform, dpr } = event.detail;
+                            
+                            // Update legacy scale and position for backward compatibility
+                            if (window.currentImageLabel) {
+                                window.imageScaleByLabel[window.currentImageLabel] = transform.scale;
+                                window.imagePositionByLabel[window.currentImageLabel] = {
+                                    x: transform.tx,
+                                    y: transform.ty
+                                };
+                            }
+                            
+                            // Log viewport changes if debugging is enabled
+                            if (window.ViewportFeatureFlags.getFeatureFlag('LOG_VIEWPORT_CHANGES')) {
+                                console.log('[VIEWPORT] Transform updated:', {
+                                    scale: transform.scale.toFixed(3),
+                                    tx: transform.tx.toFixed(1),
+                                    ty: transform.ty.toFixed(1),
+                                    dpr: dpr.toFixed(2)
+                                });
+                            }
+                        });
+                        
+                        console.log('[VIEWPORT] Controller initialized successfully');
+                    } else {
+                        console.warn('[VIEWPORT] Could not find canvas container for viewport controller');
+                    }
+                } else {
+                    console.log('[VIEWPORT] Using legacy resize system (new viewport disabled)');
+                }
+            } else {
+                // Modules not loaded yet, try again
+                setTimeout(checkAndInit, 100);
+            }
+        };
+        
+        checkAndInit();
+    })();
+    
     // Debug DOM element loading
     console.log('[PAINT.JS] DOM elements found:', {
         brushSize: !!window.paintApp.state.domElements.brushSize,
@@ -575,6 +687,59 @@ if (colorPicker) {
     const strokeSidebarHeader = window.paintApp.state.domElements.strokeSidebarHeader;
     const imageSidebarHeader = window.paintApp.state.domElements.imageSidebarHeader;
     
+// Overlay used during canvas resize to keep previous render visible until redraw completes
+let resizeOverlayCanvas = null;
+let resizeOverlayCleanupId = null;
+
+
+function showResizeOverlay(targetWidth, targetHeight) {
+    const canvasEl = window.paintApp?.state?.domElements?.canvas;
+    if (!canvasEl || !canvasEl.parentElement) return;
+
+    const canvasRect = canvasEl.getBoundingClientRect();
+
+    if (!resizeOverlayCanvas) {
+        resizeOverlayCanvas = document.createElement('canvas');
+        resizeOverlayCanvas.style.pointerEvents = 'none';
+        resizeOverlayCanvas.style.position = 'absolute';
+        const zIndex = parseInt(window.getComputedStyle(canvasEl).zIndex || '0', 10) || 0;
+        resizeOverlayCanvas.style.zIndex = String(zIndex + 1);
+        canvasEl.parentElement.appendChild(resizeOverlayCanvas);
+    }
+
+    const parentRect = canvasEl.parentElement.getBoundingClientRect();
+    resizeOverlayCanvas.style.left = `${canvasRect.left - parentRect.left}px`;
+    resizeOverlayCanvas.style.top = `${canvasRect.top - parentRect.top}px`;
+
+    resizeOverlayCanvas.width = Math.max(1, Math.floor(canvasRect.width));
+    resizeOverlayCanvas.height = Math.max(1, Math.floor(canvasRect.height));
+
+    const overlayCtx = resizeOverlayCanvas.getContext('2d');
+    overlayCtx.clearRect(0, 0, resizeOverlayCanvas.width, resizeOverlayCanvas.height);
+    try {
+        overlayCtx.drawImage(canvasEl, 0, 0, resizeOverlayCanvas.width, resizeOverlayCanvas.height);
+    } catch (_) {
+        // Ignore drawImage failures (e.g., tainted canvas) and leave overlay blank
+    }
+
+    resizeOverlayCanvas.style.width = `${targetWidth}px`;
+    resizeOverlayCanvas.style.height = `${targetHeight}px`;
+}
+
+function hideResizeOverlay() {
+    if (resizeOverlayCleanupId) {
+        cancelAnimationFrame(resizeOverlayCleanupId);
+    }
+
+    resizeOverlayCleanupId = requestAnimationFrame(() => {
+        resizeOverlayCleanupId = null;
+        if (resizeOverlayCanvas && resizeOverlayCanvas.parentElement) {
+            resizeOverlayCanvas.parentElement.removeChild(resizeOverlayCanvas);
+        }
+        resizeOverlayCanvas = null;
+    });
+}
+
     // Expose canvas globally for project management
     window.canvas = canvas;
     
@@ -1393,6 +1558,12 @@ if (colorPicker) {
                 } catch (_) {}
                 
 //                 console.log(`[pasteImageFromUrl] Image loaded and state saved for ${label}`);
+                
+                // Trigger resize to recalculate fit scale for the newly loaded image
+                if (label === currentImageLabel && typeof window.resizeCanvas === 'function') {
+                    window.resizeCanvas();
+                }
+                
                 resolve(); // Resolve the promise
             };
             
@@ -2871,7 +3042,7 @@ if (colorPicker) {
                     const itemsPerPage = Math.max(1, numColumns * itemsPerColumn);
                     let maxFieldBottom = yPosition;
                     let currentPageIndex = 0;
-
+                    
                     for (let j = 0; j < measurements.length; j++) {
                         const measurement = measurements[j];
                         const pageIndex = Math.floor(j / itemsPerPage);
@@ -2897,7 +3068,7 @@ if (colorPicker) {
 
                         const baseX = columnXPositions[columnIndex] ?? columnXPositions[columnXPositions.length - 1] ?? 20;
                         const currentY = yPosition + (rowIndex * 15);
-
+                        
                         // Check if we need a new page (fallback for unexpected overflow)
                         let finalCurrentY = currentY;
                         if (currentY > 270) {
@@ -2914,7 +3085,7 @@ if (colorPicker) {
                             finalCurrentY = yPosition;
                             maxFieldBottom = Math.max(maxFieldBottom, yPosition);
                         }
-
+                        
                         // Measurement label with overflow handling
                         pdf.setFontSize(10);
                         pdf.setFont(undefined, 'bold');
@@ -5839,8 +6010,38 @@ if (colorPicker) {
         } else {
             // Otherwise start with a blank canvas
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = 'white'; // Add white background fill
+            
+            // Fill entire canvas with light gray background
+            ctx.fillStyle = '#f8f9fa';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw centered 4:3 drawing frame (like a mat board)
+            const aspectRatio = 4 / 3;
+            let frameWidth, frameHeight;
+            
+            // Calculate 4:3 frame that fits within canvas
+            if (canvas.width / canvas.height > aspectRatio) {
+                // Canvas is wider than 4:3, constrain by height
+                frameHeight = canvas.height;
+                frameWidth = frameHeight * aspectRatio;
+            } else {
+                // Canvas is taller than 4:3, constrain by width
+                frameWidth = canvas.width;
+                frameHeight = frameWidth / aspectRatio;
+            }
+            
+            // Center the frame
+            const frameX = (canvas.width - frameWidth) / 2;
+            const frameY = (canvas.height - frameHeight) / 2;
+            
+            // Draw white drawing area
+            ctx.fillStyle = 'white';
+            ctx.fillRect(frameX, frameY, frameWidth, frameHeight);
+            
+            // Optional: Draw border around frame
+            ctx.strokeStyle = '#dee2e6';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(frameX, frameY, frameWidth, frameHeight);
             
             // Use default scale and center position when no image
             const canvasCenterX = canvas.width / 2;
@@ -7886,33 +8087,224 @@ if (colorPicker) {
 //    saveState();
 
     // Set canvas size
-    function resizeCanvas() {
-        // Prefer the canvas container's client size
+    let pendingResizeFrame = null;
+    let pendingResizeWidth = null;
+    let pendingResizeHeight = null;
+
+    function getAvailableCanvasSize() {
         const parent = canvas.parentElement;
         const rect = parent ? parent.getBoundingClientRect() : null;
-        const targetWidth = rect ? Math.max(1, Math.floor(rect.width)) : window.innerWidth;
-        const targetHeight = rect ? Math.max(1, Math.floor(rect.height)) : window.innerHeight;
+        const margin = 16;
+        const isVisible = (el) => el && el.offsetParent !== null;
 
-        console.log(`[resizeCanvas] Container: ${rect ? `${rect.width}x${rect.height}` : 'none'}, Target: ${targetWidth}x${targetHeight}, Window: ${window.innerWidth}x${window.innerHeight}`);
+        let leftReserve = 0;
+        ['toolsPanel', 'strokePanel'].forEach((id) => {
+            const el = document.getElementById(id);
+            if (isVisible(el)) {
+                const elRect = el.getBoundingClientRect();
+                leftReserve = Math.max(leftReserve, Math.ceil(elRect.right) + margin);
+            }
+        });
 
-        // Resize the canvas to match the container
-        canvas.width = targetWidth;
-        canvas.height = targetHeight;
+        let rightReserve = 0;
+        ['projectPanel', 'imagePanel'].forEach((id) => {
+            const el = document.getElementById(id);
+            if (isVisible(el)) {
+                const elRect = el.getBoundingClientRect();
+                rightReserve = Math.max(rightReserve, Math.ceil(window.innerWidth - elRect.left) + margin);
+            }
+        });
 
-        // Set default canvas styles
+        let reservedTop = 0;
+        const topToolbar = document.getElementById('topToolbar');
+        if (isVisible(topToolbar)) {
+            const toolbarRect = topToolbar.getBoundingClientRect();
+            reservedTop = Math.max(reservedTop, Math.ceil(toolbarRect.bottom));
+        }
+
+        let reservedBottom = 16;
+        const bottomControls = document.getElementById('canvasControls');
+        if (isVisible(bottomControls)) {
+            const controlsRect = bottomControls.getBoundingClientRect();
+            reservedBottom = Math.max(reservedBottom, Math.ceil(window.innerHeight - controlsRect.top));
+        }
+
+        const widthByWindow = Math.max(320, Math.floor(window.innerWidth - leftReserve - rightReserve));
+        const heightByWindow = Math.max(240, Math.floor(window.innerHeight - reservedTop - reservedBottom));
+
+        const widthFromParent = rect ? Math.max(1, Math.floor(rect.width)) : 0;
+        const heightFromParent = rect ? Math.max(1, Math.floor(rect.height)) : 0;
+
+        const width = Math.max(1, widthByWindow || widthFromParent);
+        const height = Math.max(1, heightByWindow || heightFromParent);
+
+        return {
+            width,
+            height,
+            leftReserve,
+            rightReserve,
+            reservedTop,
+            reservedBottom
+        };
+    }
+
+    function applyResize(width, height) {
+        // Always use legacy resize system for consistency
+        // The new viewport controller causes coordinate mismatches when switching between
+        // blank canvas and canvas with strokes
+        const viewportController = window.paintApp.state.viewportController;
+        if (viewportController && viewportController.removeOverlay) {
+            viewportController.removeOverlay();
+        }
+        
+        // Legacy resize system
         canvas.style.cursor = 'crosshair';
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
 
-        // Re-render using current scale/position so image stays centered within the canvas
+        const available = getAvailableCanvasSize();
+        console.log(`[applyResize] Called with available: ${available.width}x${available.height}`);
+
+        // Canvas should fill the entire available space (no 4:3 constraint on canvas element)
+        let targetWidth = typeof width === 'number' ? width : available.width;
+        let targetHeight = typeof height === 'number' ? height : available.height;
+        
+        targetWidth = Math.max(1, targetWidth);
+        targetHeight = Math.max(1, targetHeight);
+
+        const previousSize = window.__lastCanvasSize || { width: canvas.width, height: canvas.height };
+        const sizeChanged = previousSize.width !== targetWidth || previousSize.height !== targetHeight;
+
+        if (sizeChanged) {
+            showResizeOverlay(targetWidth, targetHeight);
+        }
+
+        // Update canvas dimensions (bitmap and CSS) BEFORE recalculating fit scale
+        canvas.width = targetWidth;
+        canvas.height = targetHeight;
+        canvas.style.width = `${targetWidth}px`;
+        canvas.style.height = `${targetHeight}px`;
+        canvas.style.left = '0px';
+        canvas.style.top = '0px';
+        canvas.style.position = 'fixed';
+        
+        // Force browser to recognize the new dimensions
+        canvas.style.maxWidth = 'none';
+        canvas.style.maxHeight = 'none';
+        canvas.style.minWidth = `${targetWidth}px`;
+        canvas.style.minHeight = `${targetHeight}px`;
+
+        console.log(`[applyResize] Set canvas dimensions: ${targetWidth}x${targetHeight}, actual: ${canvas.clientWidth}x${canvas.clientHeight}`);
+
+        window.__lastCanvasSize = { width: targetWidth, height: targetHeight };
+
+        // Update capture frame to maintain size and position
+        const captureFrame = document.getElementById('captureFrame');
+        if (captureFrame) {
+            const current = currentImageLabel;
+            const savedRatios = window.manualFrameRatios && window.manualFrameRatios[current];
+            
+            if (savedRatios) {
+                // Frame was manually resized - apply saved ratios to current canvas size
+                const frameWidth = targetWidth * savedRatios.widthRatio;
+                const frameHeight = targetHeight * savedRatios.heightRatio;
+                const frameLeft = targetWidth * savedRatios.leftRatio;
+                const frameTop = targetHeight * savedRatios.topRatio;
+                
+                // Ensure frame stays within canvas bounds
+                const maxLeft = Math.max(0, targetWidth - frameWidth);
+                const maxTop = Math.max(0, targetHeight - frameHeight);
+                const boundedLeft = Math.max(0, Math.min(maxLeft, frameLeft));
+                const boundedTop = Math.max(0, Math.min(maxTop, frameTop));
+                
+                captureFrame.style.width = `${frameWidth}px`;
+                captureFrame.style.height = `${frameHeight}px`;
+                captureFrame.style.left = `${boundedLeft}px`;
+                captureFrame.style.top = `${boundedTop}px`;
+                
+                console.log(`[applyResize] Scaled manual frame: ${frameWidth.toFixed(1)}x${frameHeight.toFixed(1)} (${(savedRatios.widthRatio * 100).toFixed(1)}% x ${(savedRatios.heightRatio * 100).toFixed(1)}%) at (${boundedLeft.toFixed(1)}, ${boundedTop.toFixed(1)})`);
+            } else {
+                // No manual resize - use legacy default 800x600 or fit to canvas
+                let frameWidth = 800;  // Legacy default
+                let frameHeight = 600; // Legacy default
+                
+                // If canvas is smaller than 800x600, scale down to fit
+                if (targetWidth < 800 || targetHeight < 600) {
+                    const aspectRatio = 4 / 3;
+                    if (targetWidth / targetHeight > aspectRatio) {
+                        frameHeight = targetHeight * 0.9;
+                        frameWidth = frameHeight * aspectRatio;
+                    } else {
+                        frameWidth = targetWidth * 0.9;
+                        frameHeight = frameWidth / aspectRatio;
+                    }
+                }
+                
+                // Center the frame on the canvas
+                const frameLeft = (targetWidth - frameWidth) / 2;
+                const frameTop = (targetHeight - frameHeight) / 2;
+                
+                captureFrame.style.width = `${frameWidth}px`;
+                captureFrame.style.height = `${frameHeight}px`;
+                captureFrame.style.left = `${frameLeft}px`;
+                captureFrame.style.top = `${frameTop}px`;
+                
+                console.log(`[applyResize] Legacy default frame: ${frameWidth.toFixed(1)}x${frameHeight.toFixed(1)} at (${frameLeft.toFixed(1)}, ${frameTop.toFixed(1)})`);
+            }
+        }
+        
+        // Recalculate and apply fit scale for current image to maintain proper zoom level
+        const isCaptureLocked = captureFrame?.classList.contains('locked');
+
+        const current = currentImageLabel;
+        if (current && window.originalImageDimensions?.[current]) {
+            const { width: imgWidth, height: imgHeight } = window.originalImageDimensions[current];
+            if (imgWidth > 0 && imgHeight > 0 && (!isCaptureLocked || sizeChanged)) {
+                // Store old scale to detect changes
+                const oldScale = window.imageScaleByLabel[current] || 1.0;
+                
+                const savedSession = window.getFitSession ? window.getFitSession(current) : null;
+                const fitMode = savedSession?.mode || 'fit-width';
+                const { scale, position } = calculateFitScale(fitMode);
+
+                window.imageScaleByLabel[current] = scale;
+                window.imagePositionByLabel[current] = { ...position };
+
+                console.log(`[applyResize] Canvas: ${targetWidth}x${targetHeight}, Image: ${imgWidth}x${imgHeight}, Mode: ${fitMode}, Scale: ${oldScale.toFixed(3)} → ${scale.toFixed(3)}, Pos: (${position.x.toFixed(1)}, ${position.y.toFixed(1)})`);
+            }
+        }
+
         redrawCanvasWithVisibility();
 
-        // Update snapshot to match new canvas size/state
         const newState = getCanvasState();
         imageStates[currentImageLabel] = cloneImageData(newState);
         currentStroke = cloneImageData(newState);
+
+        if (sizeChanged) {
+            hideResizeOverlay();
+        }
+
+        pendingResizeWidth = null;
+        pendingResizeHeight = null;
     }
-    resizeCanvas();
+
+    function resizeCanvas() {
+        const { width, height } = getAvailableCanvasSize();
+        pendingResizeWidth = width;
+        pendingResizeHeight = height;
+
+        if (!pendingResizeFrame) {
+            pendingResizeFrame = requestAnimationFrame(() => {
+                pendingResizeFrame = null;
+                applyResize(pendingResizeWidth, pendingResizeHeight);
+            });
+        }
+    }
+
+    // Expose resizeCanvas globally so project manager can call it after loading
+    window.resizeCanvas = resizeCanvas;
+    
+    applyResize();
     window.addEventListener('resize', resizeCanvas);
 
     // Drawing state - use references to uiState for centralized management
@@ -7943,6 +8335,32 @@ if (colorPicker) {
     };
 
     // F3: Centralized coordinate transform utilities
+    
+    // New viewport-aware coordinate transform helpers
+    window.clientToWorld = function clientToWorld(clientX, clientY) {
+        // Always use legacy system for coordinate transforms
+        return canvasToImageCoords(clientX, clientY);
+    };
+    
+    window.worldToClient = function worldToClient(worldX, worldY) {
+        // Always use legacy system for coordinate transforms
+        return imageToCanvasCoords(worldX, worldY);
+    };
+    
+    // Enhanced coordinate transform that works with both systems
+    window.getPointerCoords = function getPointerCoords(event) {
+        // Always use legacy system for coordinate transforms
+        const canvasCoords = { x: event.offsetX, y: event.offsetY };
+        const imageCoords = getTransformedCoords(canvasCoords.x, canvasCoords.y);
+        
+        return {
+            client: canvasCoords,
+            world: imageCoords,
+            canvas: canvasCoords,
+            image: imageCoords
+        };
+    };
+    
     window.toCanvas = function toCanvas(imagePoint, imgLabel = currentImageLabel) {
         const scale = window.imageScaleByLabel[imgLabel] || 1.0;
         const position = imagePositionByLabel[imgLabel] || { x: 0, y: 0 };
@@ -9075,12 +9493,14 @@ if (colorPicker) {
     function draw(e) {
         if (!isDrawing) return;
         
-        const canvasX = e.offsetX;
-        const canvasY = e.offsetY;
+        // Use new coordinate system if available
+        const coords = window.getPointerCoords(e);
+        const canvasX = coords.canvas.x;
+        const canvasY = coords.canvas.y;
 
-        // Get image coordinates for storing in the points array
-        // This transforms from canvas coordinates to image-relative coordinates
-        const { x: imgX, y: imgY } = getTransformedCoords(canvasX, canvasY);
+        // Get world coordinates for storing in the points array
+        // This transforms from canvas coordinates to world-relative coordinates
+        const { x: imgX, y: imgY } = coords.world;
 
         // *** Add Log Here ***
 //         console.log(`Draw Move: Canvas(${canvasX}, ${canvasY}) -> Image(${imgX.toFixed(1)}, ${imgY.toFixed(1)})`);
@@ -10330,8 +10750,72 @@ if (colorPicker) {
         let viewportWidth = canvasRect ? canvasRect.width : canvas.width;
         let viewportHeight = canvasRect ? canvasRect.height : canvas.height;
 
-        // Handle capture frame if present
+        // Handle UI panels that reserve space (project panel, tools, etc.)
         let offsetX = 0, offsetY = 0;
+        if (canvasRect) {
+            const margin = 16;
+            const isVisible = (el) => el && el.offsetParent !== null;
+
+            const leftPanels = ['toolsPanel', 'strokePanel'];
+            let leftReserve = 0;
+            leftPanels.forEach(id => {
+                const el = document.getElementById(id);
+                if (isVisible(el)) {
+                    const rect = el.getBoundingClientRect();
+                    leftReserve = Math.max(leftReserve, rect.right + margin);
+                }
+            });
+
+            const rightPanels = ['projectPanel', 'imagePanel'];
+            let rightReserve = 0;
+            rightPanels.forEach(id => {
+                const el = document.getElementById(id);
+                if (isVisible(el)) {
+                    const rect = el.getBoundingClientRect();
+                    rightReserve = Math.max(rightReserve, (window.innerWidth - rect.left) + margin);
+                }
+            });
+
+            let topReserve = 0;
+            const toolbar = document.getElementById('topToolbar');
+            if (isVisible(toolbar)) {
+                const rect = toolbar.getBoundingClientRect();
+                topReserve = Math.max(topReserve, rect.bottom + margin);
+            }
+
+            let bottomReserve = 0;
+            const bottomPanel = document.getElementById('canvasControls');
+            if (isVisible(bottomPanel)) {
+                const rect = bottomPanel.getBoundingClientRect();
+                bottomReserve = Math.max(bottomReserve, (window.innerHeight - rect.top) + margin);
+            }
+
+            const availableWidth = Math.min(
+                window.innerWidth,
+                Math.max(320, window.innerWidth - leftReserve - rightReserve)
+            );
+            const availableHeight = Math.min(
+                window.innerHeight,
+                Math.max(240, window.innerHeight - topReserve - bottomReserve)
+            );
+
+            const usingReservedViewport = (availableWidth < window.innerWidth) || (availableHeight < window.innerHeight);
+
+            if (usingReservedViewport) {
+                viewportWidth = availableWidth;
+                viewportHeight = availableHeight;
+
+                const canvasCenterX = canvasRect.left + canvasRect.width / 2;
+                const canvasCenterY = canvasRect.top + canvasRect.height / 2;
+                const targetCenterX = Math.max(leftReserve, 0) + viewportWidth / 2;
+                const targetCenterY = Math.max(topReserve, 0) + viewportHeight / 2;
+
+                offsetX = targetCenterX - canvasCenterX;
+                offsetY = targetCenterY - canvasCenterY;
+            }
+        }
+
+        // Handle capture frame if present
         const captureEl = document.getElementById('captureFrame');
         if (captureEl && canvasRect) {
             const frameRect = captureEl.getBoundingClientRect();
@@ -10343,15 +10827,15 @@ if (colorPicker) {
             const cssHeight = Math.max(0, bottom - top);
 
             if (cssWidth > 0 && cssHeight > 0) {
+                // Use capture frame for scaling calculations
                 viewportWidth = cssWidth;
                 viewportHeight = cssHeight;
 
-                // Calculate center offset for capture frame
-                const frameCenterX = (left + right) / 2 - canvasRect.left;
-                const frameCenterY = (top + bottom) / 2 - canvasRect.top;
-                const canvasCenterX = canvasRect.width / 2;
-                const canvasCenterY = canvasRect.height / 2;
-
+                // Center relative to the capture frame center instead of full canvas center
+                const frameCenterX = (left + right) / 2;
+                const frameCenterY = (top + bottom) / 2;
+                const canvasCenterX = canvasRect.left + canvasRect.width / 2;
+                const canvasCenterY = canvasRect.top + canvasRect.height / 2;
                 offsetX = frameCenterX - canvasCenterX;
                 offsetY = frameCenterY - canvasCenterY;
 
@@ -10366,11 +10850,50 @@ if (colorPicker) {
         let scale = window.computeScaleForFit(imageNatural, viewportCss, fitMode);
 
         // Clamp scale to reasonable bounds
-        scale = Math.max(0.01, Math.min(100, scale));
+        const sizeClamp = Math.max(0.01, Math.min(100, scale));
+        const widthScaleLimit = viewportCss.w > 0 ? viewportCss.w / imageNatural.w : Infinity;
+        const heightScaleLimit = viewportCss.h > 0 ? viewportCss.h / imageNatural.h : Infinity;
+        const containScale = Math.min(widthScaleLimit, heightScaleLimit, sizeClamp);
+        scale = Number.isFinite(containScale) && containScale > 0 ? containScale : sizeClamp;
 
         console.log(`[FIT] ${fitMode}: ${imageNatural.w}x${imageNatural.h} ? ${viewportCss.w}x${viewportCss.h} = scale ${scale.toFixed(3)}`);
 
-        return { scale, position: { x: offsetX, y: offsetY } };
+        // Always center the image in the full canvas viewport
+        // Get actual canvas dimensions for centering
+        const canvasRectForCentering = canvas.getBoundingClientRect();
+        const canvasWidth = canvasRectForCentering ? canvasRectForCentering.width : canvas.width;
+        const canvasHeight = canvasRectForCentering ? canvasRectForCentering.height : canvas.height;
+        
+        // Calculate scaled image dimensions
+        const scaledImageWidth = imageDimensions.width * scale;
+        const scaledImageHeight = imageDimensions.height * scale;
+        
+        // Compute centered top-left and pan offset relative to centered position
+        const defaultCenterX = (canvasWidth - scaledImageWidth) / 2;
+        const defaultCenterY = (canvasHeight - scaledImageHeight) / 2;
+        const topLeftX = defaultCenterX + offsetX;
+        const topLeftY = defaultCenterY + offsetY;
+
+        // Clamp so the image stays within canvas bounds during extreme resizes
+        const minTopLeftX = Math.min(0, canvasWidth - scaledImageWidth);
+        const maxTopLeftX = Math.max(0, canvasWidth - scaledImageWidth);
+        const minTopLeftY = Math.min(0, canvasHeight - scaledImageHeight);
+        const maxTopLeftY = Math.max(0, canvasHeight - scaledImageHeight);
+
+        const clampedTopLeftX = Math.min(Math.max(topLeftX, minTopLeftX), maxTopLeftX);
+        const clampedTopLeftY = Math.min(Math.max(topLeftY, minTopLeftY), maxTopLeftY);
+
+        const finalOffsetX = clampedTopLeftX - defaultCenterX;
+        const finalOffsetY = clampedTopLeftY - defaultCenterY;
+
+        if (clampedTopLeftX !== topLeftX || clampedTopLeftY !== topLeftY) {
+            console.log(`[FIT] Clamped viewport: requestedTopLeft(${topLeftX.toFixed(1)}, ${topLeftY.toFixed(1)}) -> clamped(${clampedTopLeftX.toFixed(1)}, ${clampedTopLeftY.toFixed(1)})`);
+        }
+
+        console.log(`[FIT] Centering image in full canvas: canvas(${canvasWidth}x${canvasHeight}) scaled(${scaledImageWidth.toFixed(1)}x${scaledImageHeight.toFixed(1)}) topLeft(${clampedTopLeftX.toFixed(1)}, ${clampedTopLeftY.toFixed(1)}) panOffset(${finalOffsetX.toFixed(1)}, ${finalOffsetY.toFixed(1)})`);
+
+        // Return offset relative to centered position
+        return { scale, position: { x: finalOffsetX, y: finalOffsetY } };
     }
     
     function applyFitMode(fitMode) {
@@ -10742,7 +11265,9 @@ if (colorPicker) {
         const isClickOnStrokeTag = e.target.closest('.stroke-visibility-item') !== null;
         
         // Check if clicking on a canvas label (stroke tag drawn on canvas)
-        const clickedCanvasLabel = findLabelAtPoint(e.offsetX, e.offsetY);
+        // Use new coordinate system if available
+        const coords = window.getPointerCoords(e);
+        const clickedCanvasLabel = findLabelAtPoint(coords.canvas.x, coords.canvas.y);
         const isClickOnCanvasLabel = clickedCanvasLabel !== null;
         
         console.log('🔄 [DEBUG] Canvas mousedown - curveJustCompleted:', curveJustCompleted, 'target:', e.target, 'tagName:', e.target.tagName, 'className:', e.target.className, 'isClickOnStrokeTag:', isClickOnStrokeTag);
@@ -10787,7 +11312,7 @@ if (colorPicker) {
             }
             
             // Priority 2: Normal edit mode logic (only if not finalizing a curve)
-            const clickedLabelForDoubleClick = findLabelAtPoint(e.offsetX, e.offsetY);
+            const clickedLabelForDoubleClick = findLabelAtPoint(coords.canvas.x, coords.canvas.y);
             console.log(`🔄 [DEBUG] Double-click check - clickedLabelForDoubleClick:`, clickedLabelForDoubleClick, `lastClickedCanvasLabel: ${window.lastClickedCanvasLabel}`);
             if (clickedLabelForDoubleClick && window.lastClickedCanvasLabel === clickedLabelForDoubleClick.strokeLabel) {
                 console.log(`🔄 [DEBUG] Double-click detected on label ${clickedLabelForDoubleClick.strokeLabel} - entering edit mode`);
@@ -10813,7 +11338,7 @@ if (colorPicker) {
 
         // First, check if we're clicking on a control point (ONLY if in edit mode)
         if (window.selectedStrokeInEditMode) {
-            const controlPointAtClick = findControlPointAtPosition(e.offsetX, e.offsetY);
+            const controlPointAtClick = findControlPointAtPosition(coords.canvas.x, coords.canvas.y);
             if (controlPointAtClick && controlPointAtClick.strokeLabel === window.selectedStrokeInEditMode) {
 //                 console.log(`Canvas Mousedown: Clicked on control point ${controlPointAtClick.pointIndex} of stroke ${controlPointAtClick.strokeLabel} (IN EDIT MODE)`);
                 
@@ -11084,10 +11609,10 @@ if (colorPicker) {
         // Reset dash offset for continuous freehand dash patterns
         window.paintApp.uiState.dashOffset = 0;
         lastDrawnPoint = null;
-        [lastX, lastY] = [e.offsetX, e.offsetY];
+        [lastX, lastY] = [coords.canvas.x, coords.canvas.y];
         
         // Store mousedown position for click vs drag detection
-        mouseDownPosition = { x: e.offsetX, y: e.offsetY };
+        mouseDownPosition = { x: coords.canvas.x, y: coords.canvas.y };
         
         // --- FIX: Clear temporary drawing data --- 
         const tempStrokeKey = '_drawingStroke';
@@ -11099,15 +11624,15 @@ if (colorPicker) {
         
         if (drawingMode === 'straight') {
             // For straight line (now using arrow line implementation), store the start point
-            straightLineStart = { x: e.offsetX, y: e.offsetY };
+            straightLineStart = { x: coords.canvas.x, y: coords.canvas.y };
         } else if (drawingMode === 'curved') {
             // For curved line, collect control points
-            const { x: imgX, y: imgY } = getTransformedCoords(e.offsetX, e.offsetY);
+            const { x: imgX, y: imgY } = coords.world;
             const controlPoint = {
-                x: imgX,             // Image space X
-                y: imgY,             // Image space Y
-                canvasX: e.offsetX,  // Canvas space X
-                canvasY: e.offsetY,  // Canvas space Y
+                x: imgX,                    // World space X
+                y: imgY,                    // World space Y
+                canvasX: coords.canvas.x,   // Canvas space X
+                canvasY: coords.canvas.y,   // Canvas space Y
                 time: Date.now()
             };
             
@@ -11153,8 +11678,9 @@ if (colorPicker) {
     
     // PERFORMANCE: Throttled mousemove event handler using requestAnimationFrame
     function onCanvasMouseMove(e) {
-        const x = e.offsetX;
-        const y = e.offsetY;
+        const coords = window.getPointerCoords(e);
+        const x = coords.canvas.x;
+        const y = coords.canvas.y;
 
         // PERFORMANCE: Throttle mousemove events using requestAnimationFrame
         if (!mouseMoveThrottled) {
@@ -11168,8 +11694,8 @@ if (colorPicker) {
                     if (vectorData && vectorData.controlPoints && vectorData.controlPoints[dragAnchorIndex]) {
                         const controlPoint = vectorData.controlPoints[dragAnchorIndex];
                         
-                        // Update the control point position in image space - this is the source of truth
-                        const { x: imgX, y: imgY } = getTransformedCoords(x, y);
+                        // Update the control point position in world space - this is the source of truth
+                        const { x: imgX, y: imgY } = coords.world;
                         controlPoint.x = imgX;
                         controlPoint.y = imgY;
                         
@@ -11178,12 +11704,12 @@ if (colorPicker) {
                             const refreshedControlPoints = refreshControlPointCanvasCoords(vectorData.controlPoints);
                             const newSplinePoints = generateCatmullRomSpline(refreshedControlPoints, 50);
                             
-                            // CRITICAL FIX: Convert spline canvas coordinates to image coordinates for storage
+                            // CRITICAL FIX: Convert spline canvas coordinates to world coordinates for storage
                             vectorData.points = newSplinePoints.map(splinePoint => {
-                                const { x: imgX, y: imgY } = getTransformedCoords(splinePoint.x, splinePoint.y);
+                                const worldCoords = window.clientToWorld(splinePoint.x, splinePoint.y);
                                 return {
-                                    x: imgX,  // Image coordinate
-                                    y: imgY,  // Image coordinate
+                                    x: worldCoords.x,  // World coordinate
+                                    y: worldCoords.y,  // World coordinate
                                     time: Date.now()
                                 };
                             });
@@ -11204,13 +11730,14 @@ if (colorPicker) {
         
         // Handle control point dragging
         if (isDraggingControlPoint && draggedControlPointInfo) {
-            const deltaX = e.offsetX - draggedControlPointInfo.startCanvasX;
-            const deltaY = e.offsetY - draggedControlPointInfo.startCanvasY;
+            const deltaX = coords.canvas.x - draggedControlPointInfo.startCanvasX;
+            const deltaY = coords.canvas.y - draggedControlPointInfo.startCanvasY;
             
-            // Convert delta to image space
-            const scale = window.imageScaleByLabel[currentImageLabel] || 1;
-            const deltaImageX = deltaX / scale;
-            const deltaImageY = deltaY / scale;
+            // Convert delta to world space using new coordinate system
+            const worldDelta = window.clientToWorld(deltaX, deltaY);
+            const worldOrigin = window.clientToWorld(0, 0);
+            const deltaImageX = worldDelta.x - worldOrigin.x;
+            const deltaImageY = worldDelta.y - worldOrigin.y;
             
             const vectorData = vectorStrokesByImage[currentImageLabel][draggedControlPointInfo.strokeLabel];
             
@@ -11254,12 +11781,12 @@ if (colorPicker) {
                 const refreshedControlPoints = refreshControlPointCanvasCoords(vectorData.controlPoints);
                 const newSplinePoints = generateCatmullRomSpline(refreshedControlPoints, 50);
                 
-                // CRITICAL FIX: Convert spline canvas coordinates to image coordinates for storage
+                // CRITICAL FIX: Convert spline canvas coordinates to world coordinates for storage
                 vectorData.points = newSplinePoints.map(splinePoint => {
-                    const { x: imgX, y: imgY } = getTransformedCoords(splinePoint.x, splinePoint.y);
+                    const worldCoords = window.clientToWorld(splinePoint.x, splinePoint.y);
                     return {
-                        x: imgX,  // Image coordinate
-                        y: imgY,  // Image coordinate
+                        x: worldCoords.x,  // World coordinate
+                        y: worldCoords.y,  // World coordinate
                         time: Date.now()
                     };
                 });
@@ -11458,7 +11985,9 @@ if (colorPicker) {
             
             // For straight line, finalize the line
             if (drawingMode === 'straight' && straightLineStart) {
-                const endPoint = { x: e.offsetX, y: e.offsetY };
+                // Use new coordinate system
+                const coords = window.getPointerCoords(e);
+                const endPoint = { x: coords.canvas.x, y: coords.canvas.y };
                 
                 // Calculate movement distance from mousedown
                 const dragDistance = mouseDownPosition ? 
@@ -11481,9 +12010,9 @@ if (colorPicker) {
                         vectorStrokesByImage[currentImageLabel] = {};
                     }
 
-                    // Get transformed coordinates
-                    const startTransformed = getTransformedCoords(straightLineStart.x, straightLineStart.y);
-                    const endTransformed = getTransformedCoords(endPoint.x, endPoint.y);
+                    // Get world coordinates for both start and end points
+                    const startWorldCoords = window.clientToWorld(straightLineStart.x, straightLineStart.y);
+                    const endWorldCoords = coords.world;
 
 //                     console.log(`Straight line from canvas (${straightLineStart.x}, ${straightLineStart.y}) -> image (${startTransformed.x}, ${startTransformed.y})`);
 //                     console.log(`Straight line to canvas (${endPoint.x}, ${endPoint.y}) -> image (${endTransformed.x}, ${endTransformed.y})`);
@@ -11491,8 +12020,8 @@ if (colorPicker) {
                     // Create a vector representation under the temporary key
                     vectorStrokesByImage[currentImageLabel][tempStrokeKey] = {
                         points: [
-                            { x: startTransformed.x, y: startTransformed.y },
-                            { x: endTransformed.x, y: endTransformed.y }
+                            { x: startWorldCoords.x, y: startWorldCoords.y },
+                            { x: endWorldCoords.x, y: endWorldCoords.y }
                         ],
                         color: strokeColor,
                         width: strokeWidth,
@@ -12004,11 +12533,24 @@ if (colorPicker) {
                     const top = Math.max(frameRect.top, canvasRect.top);
                     const right = Math.min(frameRect.right, canvasRect.right);
                     const bottom = Math.min(frameRect.bottom, canvasRect.bottom);
+                    const winW = Math.max(window.innerWidth, 1);
+                    const winH = Math.max(window.innerHeight, 1);
+                    const pixelLeft = Math.round((left - canvasRect.left) * scalePx);
+                    const pixelTop = Math.round((top - canvasRect.top) * scalePx);
+                    const pixelWidth = Math.round((right - left) * scalePx);
+                    const pixelHeight = Math.round((bottom - top) * scalePx);
+
                     cropData = {
-                        x: Math.round((left - canvasRect.left) * scalePx),
-                        y: Math.round((top - canvasRect.top) * scalePx),
-                        width: Math.round((right - left) * scalePx),
-                        height: Math.round((bottom - top) * scalePx)
+                        x: pixelLeft,
+                        y: pixelTop,
+                        width: pixelWidth,
+                        height: pixelHeight,
+                        windowWidth: winW,
+                        windowHeight: winH,
+                        relativeLeft: left / winW,
+                        relativeTop: top / winH,
+                        relativeWidth: (right - left) / winW,
+                        relativeHeight: (bottom - top) / winH
                     };
                 }
             }
@@ -12107,8 +12649,21 @@ if (colorPicker) {
                 const frameEl = document.getElementById('captureFrame');
                 if (frameEl) {
                     const rect = frameEl.getBoundingClientRect();
+                    const winW = Math.max(window.innerWidth, 1);
+                    const winH = Math.max(window.innerHeight, 1);
                     window.captureFrameByLabel = window.captureFrameByLabel || {};
-                    window.captureFrameByLabel[prevLabel] = { left: rect.left, top: rect.top, width: rect.width, height: rect.height };
+                    window.captureFrameByLabel[prevLabel] = {
+                        left: Math.round(rect.left),
+                        top: Math.round(rect.top),
+                        width: Math.round(rect.width),
+                        height: Math.round(rect.height),
+                        windowWidth: winW,
+                        windowHeight: winH,
+                        relativeLeft: rect.left / winW,
+                        relativeTop: rect.top / winH,
+                        relativeWidth: rect.width / winW,
+                        relativeHeight: rect.height / winH
+                    };
                 }
             }
         } catch (e) { /* no-op */ }
@@ -12156,6 +12711,11 @@ if (colorPicker) {
             if (typeof window.updateNextTagDisplay === 'function') {
                 window.updateNextTagDisplay();
             }
+            // Trigger resize to recalculate fit scale when switching to an image
+            if (typeof window.resizeCanvas === 'function') {
+                window.resizeCanvas();
+            }
+            
             // Explicit redraw AFTER restoring state and UI updates
 //             console.log(`[switchToImage] Explicitly calling redraw after restoring state for ${label}`);
             redrawCanvasWithVisibility();
@@ -12571,10 +13131,13 @@ if (colorPicker) {
         }
         
         // Increment the counter for this label type
-        window.labelCounters[baseLabel] = (window.labelCounters[baseLabel] || 0) + 1;
+        if (!window.labelCounters[baseLabel]) {
+            window.labelCounters[baseLabel] = { regular: 1, paste: 1 };
+        }
         
-        // Create a unique label by appending the counter
-        const uniqueLabel = `${baseLabel}_${window.labelCounters[baseLabel]}`;
+        const counter = window.labelCounters[baseLabel].regular;
+        const uniqueLabel = `${baseLabel}_${counter}`;
+        window.labelCounters[baseLabel].regular = counter + 1;
 //         console.log(`Created unique label: ${uniqueLabel} from filename: ${filename}`);
         
         return uniqueLabel;
@@ -14287,8 +14850,13 @@ if (colorPicker) {
                 
                 // Generate a unique label for the new image
                 const baseLabelForPasted = currentImageLabel.split('_')[0] || 'image'; // Use current view's base
-                window.labelCounters[baseLabelForPasted] = (window.labelCounters[baseLabelForPasted] || 0) + 1;
-                const newImageLabel = `${baseLabelForPasted}_paste_${window.labelCounters[baseLabelForPasted]}`;
+                if (!window.labelCounters[baseLabelForPasted]) {
+                    window.labelCounters[baseLabelForPasted] = { regular: 1, paste: 1 };
+                }
+
+                const pasteCounter = window.labelCounters[baseLabelForPasted].paste;
+                const newImageLabel = `${baseLabelForPasted}_paste_${pasteCounter}`;
+                window.labelCounters[baseLabelForPasted].paste = pasteCounter + 1;
                 
 //                 console.log(`[Paste Handler] Assigned new unique label: ${newImageLabel}`);
                 
