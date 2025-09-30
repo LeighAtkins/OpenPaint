@@ -735,7 +735,9 @@ document.addEventListener('DOMContentLoaded', () => {
                                                     window.customImageNames[label] = parsedProjectData.customImageNames[label];
                                                 }
                                                 if (parsedProjectData.imageScales && parsedProjectData.imageScales[label] !== undefined) window.imageScaleByLabel[label] = parsedProjectData.imageScales[label]; else window.imageScaleByLabel[label] = 1.0;
-                                                if (parsedProjectData.imagePositions && parsedProjectData.imagePositions[label]) window.imagePositionByLabel[label] = parsedProjectData.imagePositions[label]; else window.imagePositionByLabel[label] = { x: 0, y: 0 };
+                                                // Force recalculation of centered positions instead of using saved positions
+                                                // This ensures images are centered properly regardless of saved project data
+                                                window.imagePositionByLabel[label] = { x: 0, y: 0 }; // Will be recalculated by calculateFitScale
                 if (parsedProjectData.imageRotations && parsedProjectData.imageRotations[label] !== undefined) window.imageRotationByLabel[label] = parsedProjectData.imageRotations[label]; else window.imageRotationByLabel[label] = 0;
                                                 if (parsedProjectData.strokeSequence && parsedProjectData.strokeSequence[label]) window.lineStrokesByImage[label] = Array.isArray(parsedProjectData.strokeSequence[label]) ? parsedProjectData.strokeSequence[label].slice() : []; else window.lineStrokesByImage[label] = [];
                                                 if (parsedProjectData.nextLabels && parsedProjectData.nextLabels[label]) window.labelsByImage[label] = parsedProjectData.nextLabels[label]; else window.labelsByImage[label] = 'A1';
@@ -809,14 +811,11 @@ document.addEventListener('DOMContentLoaded', () => {
                                             if (activeProjectData.imageScales && activeProjectData.imageScales[currentActiveLabel] !== undefined) {
                                                 window.imageScaleByLabel[currentActiveLabel] = activeProjectData.imageScales[currentActiveLabel];
                                             } else window.imageScaleByLabel[currentActiveLabel] = 1.0;
-                                            if (activeProjectData.imagePositions && activeProjectData.imagePositions[currentActiveLabel]) {
-                                                window.imagePositionByLabel[currentActiveLabel] = activeProjectData.imagePositions[currentActiveLabel];
-                                            } else window.imagePositionByLabel[currentActiveLabel] = { x: 0, y: 0 };
+                                            // Force recalculation of centered positions instead of using saved positions
+                                            window.imagePositionByLabel[currentActiveLabel] = { x: 0, y: 0 }; // Will be recalculated by calculateFitScale
                                             if (typeof window.updateScaleUI === 'function') window.updateScaleUI();
 
-                                            if (typeof window.redrawCanvasWithVisibility === 'function') {
-                                                window.redrawCanvasWithVisibility();
-                                            }
+                                            // Note: resizeCanvas will be called after all images are loaded
                                             
                                             // PERFORMANCE FIX: Start debounced sync instead of interval
                                             queueMicrotask(() => scheduleLegacySync());
@@ -976,9 +975,33 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         // *** END ADDED BLOCK ***
 
-        if (typeof window.redrawCanvasWithVisibility === 'function') {
+        // Force recalculation of centered positions now that all images are loaded
+        console.log('[Load Project] Checking resizeCanvas availability:', typeof window.resizeCanvas);
+        if (typeof window.resizeCanvas === 'function') {
+            console.log('[Load Project] Calling resizeCanvas to recalculate centered positions');
+            window.resizeCanvas();
+        } else {
+            console.log('[Load Project] resizeCanvas not available, trying redrawCanvasWithVisibility');
+            if (typeof window.redrawCanvasWithVisibility === 'function') {
 //             console.log('[Load Project] Performing final redraw before completing load.');
-            window.redrawCanvasWithVisibility();
+                window.redrawCanvasWithVisibility();
+            } else {
+                console.log('[Load Project] Neither resizeCanvas nor redrawCanvasWithVisibility available');
+            }
+        }
+        
+        // Additional fallback: force centering by calling calculateFitScale directly
+        if (typeof window.calculateFitScale === 'function' && window.currentImageLabel) {
+            console.log('[Load Project] Fallback: calling calculateFitScale directly for current image');
+            const fitResult = window.calculateFitScale('fit-width'); // or appropriate fit mode
+            if (fitResult && fitResult.position && window.imagePositionByLabel) {
+                console.log('[Load Project] Updating position for', window.currentImageLabel, 'to', fitResult.position);
+                window.imagePositionByLabel[window.currentImageLabel] = fitResult.position;
+                // Trigger a redraw
+                if (typeof window.redrawCanvasWithVisibility === 'function') {
+                    window.redrawCanvasWithVisibility();
+                }
+            }
         }
 
 //         console.log('[Load Project] FINAL VALIDATION BLOCK');
