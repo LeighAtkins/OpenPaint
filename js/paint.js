@@ -1359,7 +1359,7 @@ function hideResizeOverlay() {
         delete window.originalImages[label];
         delete window.originalImageDimensions[label];
         if (window.imageTags && window.imageTags[label]) {
-            delete window.imageTags[label];
+        delete window.imageTags[label];
         }
         delete window.customLabelPositions[label];
         delete window.calculatedLabelOffsets[label];
@@ -1535,7 +1535,7 @@ function hideResizeOverlay() {
                         console.log('[INIT] Explicitly switching to first image:', firstLabel);
                         window.switchToImage(firstLabel);
                     } else {
-                        handleScroll();
+        handleScroll();
                     }
                 }, 100);
             } else {
@@ -8279,25 +8279,25 @@ function hideResizeOverlay() {
                 // Delete strokes again (only the ones that were originally deleted)
                 if (actionToRedo.deletedStrokeLabels) {
                     actionToRedo.deletedStrokeLabels.forEach(strokeLabel => {
-                        // Remove from vector data
-                        if (vectorStrokesByImage[actionToRedo.image] && vectorStrokesByImage[actionToRedo.image][strokeLabel]) {
-                            delete vectorStrokesByImage[actionToRedo.image][strokeLabel];
-                        }
-                        
-                        // Remove from visibility tracking
-                        if (strokeVisibilityByImage[actionToRedo.image] && strokeVisibilityByImage[actionToRedo.image][strokeLabel]) {
-                            delete strokeVisibilityByImage[actionToRedo.image][strokeLabel];
-                        }
-                        
-                        // Remove from label visibility tracking
-                        if (strokeLabelVisibility[actionToRedo.image] && strokeLabelVisibility[actionToRedo.image][strokeLabel]) {
-                            delete strokeLabelVisibility[actionToRedo.image][strokeLabel];
-                        }
-                        
-                        // Remove from measurements
-                        if (strokeMeasurements[actionToRedo.image] && strokeMeasurements[actionToRedo.image][strokeLabel]) {
-                            delete strokeMeasurements[actionToRedo.image][strokeLabel];
-                        }
+                    // Remove from vector data
+                    if (vectorStrokesByImage[actionToRedo.image] && vectorStrokesByImage[actionToRedo.image][strokeLabel]) {
+                        delete vectorStrokesByImage[actionToRedo.image][strokeLabel];
+                    }
+                    
+                    // Remove from visibility tracking
+                    if (strokeVisibilityByImage[actionToRedo.image] && strokeVisibilityByImage[actionToRedo.image][strokeLabel]) {
+                        delete strokeVisibilityByImage[actionToRedo.image][strokeLabel];
+                    }
+                    
+                    // Remove from label visibility tracking
+                    if (strokeLabelVisibility[actionToRedo.image] && strokeLabelVisibility[actionToRedo.image][strokeLabel]) {
+                        delete strokeLabelVisibility[actionToRedo.image][strokeLabel];
+                    }
+                    
+                    // Remove from measurements
+                    if (strokeMeasurements[actionToRedo.image] && strokeMeasurements[actionToRedo.image][strokeLabel]) {
+                        delete strokeMeasurements[actionToRedo.image][strokeLabel];
+                    }
                         
                         // Remove custom label positions (CRITICAL!)
                         const posKey = `${actionToRedo.image}_${strokeLabel}`;
@@ -8308,12 +8308,12 @@ function hideResizeOverlay() {
                         if (window.calculatedLabelOffsets && window.calculatedLabelOffsets[posKey]) {
                             delete window.calculatedLabelOffsets[posKey];
                         }
-                        
-                        // Remove from line strokes
-                        if (lineStrokesByImage[actionToRedo.image]) {
-                            lineStrokesByImage[actionToRedo.image] = lineStrokesByImage[actionToRedo.image].filter(label => label !== strokeLabel);
-                        }
-                    });
+                    
+                    // Remove from line strokes
+                    if (lineStrokesByImage[actionToRedo.image]) {
+                        lineStrokesByImage[actionToRedo.image] = lineStrokesByImage[actionToRedo.image].filter(label => label !== strokeLabel);
+                    }
+                });
                 }
                 
                 // Clear selection

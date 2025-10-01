@@ -393,16 +393,6 @@
             font-size: 14px;
         }
         
-        #shareProjectBtn {
-            padding: 6px 12px;
-            background: rgb(139, 92, 246);
-            color: white;
-            font-weight: 600;
-            border-radius: 12px;
-            border: 1px solid rgb(124, 58, 237);
-            margin-left: 8px;
-        }
-        
         #updateShareBtn {
             padding: 6px 12px;
             background: rgb(14, 165, 233);
@@ -619,6 +609,13 @@
         
         #imagePanel:has(#imagePanelContent.hidden) {
             height: auto !important;
+        }
+        
+        /* Ensure Images header is always visible */
+        #imagePanelHeader {
+            display: flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
         }
         
         /* Smooth transitions for all panel content */
@@ -1369,7 +1366,7 @@
 
     <!-- Image Gallery Panel -->
     <div id="imagePanel" class="floating-panel fixed right-4 z-30 rounded-2xl w-72 transition-all duration-300 overflow-hidden" style="top: clamp(1rem, 50vh - 20rem, calc(100vh - 40rem - 1rem)); max-height: min(40rem, calc(100vh - 2rem));">
-        <div class="flex items-center justify-between p-3 cursor-move border-b border-gray-200/50 bg-white rounded-t-2xl">
+        <div id="imagePanelHeader" class="flex items-center justify-between p-3 cursor-move border-b border-gray-200/50 bg-white rounded-t-2xl">
             <h3 class="text-sm font-semibold text-slate-800">Images</h3>
             <div class="flex items-center gap-2">
                 <button id="toggleImagePanel" class="text-slate-500 hover:text-slate-700 rounded-lg p-1 transition-all" title="Minimize/Expand Panel">
@@ -1475,7 +1472,7 @@
             </div>
 
             <!-- Share/Update next to Copy/Save -->
-            <button id="shareProjectBtn" class="px-3 py-1 bg-white border border-gray-300 text-slate-700 text-xs rounded-lg hover:bg-slate-50" title="Create shareable URL for customer measurements">
+            <button id="shareProjectBtn" class="px-3 py-1 bg-white border border-gray-300 text-slate-700 text-xs rounded-lg shadow-sm hover:shadow-md hover:bg-slate-50 transition-all duration-200 transform hover:scale-[1.02] active:scale-95" title="Create shareable URL for customer measurements">
                 Share
             </button>
             
@@ -4949,7 +4946,7 @@
                             
                             if (firstLabel) {
                                 console.log('[PERIODIC] Loading first image silently:', firstLabel);
-                                setTimeout(() => {
+                            setTimeout(() => {
                                     // Directly update canvas without scrolling thumbnail
                                     if (window.pastedImages && window.pastedImages[firstLabel]) {
                                         window.currentImageLabel = firstLabel;
@@ -4969,7 +4966,7 @@
                                             });
                                         }
                                     }
-                                }, 200);
+                            }, 200);
                             }
                         }
                         
