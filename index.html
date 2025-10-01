@@ -1334,7 +1334,11 @@
             <div class="flex gap-2 mb-2">
                 <div class="flex-1 px-2 py-1 text-xs bg-gray-50 border border-gray-200 rounded-lg">
                     <div class="text-gray-500 text-xs mb-1">Next Tag:</div>
-                    <div id="nextTagDisplay" class="font-semibold text-blue-600 cursor-pointer hover:bg-blue-50 px-1 py-0.5 rounded" title="Click to set custom tag">A</div>
+                    <div id="nextTagDisplay" 
+                         contenteditable="true" 
+                         spellcheck="false"
+                         class="font-semibold text-blue-600 cursor-text hover:bg-blue-50 px-1 py-0.5 rounded outline-none focus:ring-2 focus:ring-blue-300" 
+                         title="Type to set next tag">A</div>
                 </div>
             </div>
             <div class="flex gap-2 flex-wrap items-center">
@@ -2377,15 +2381,13 @@
                     return result;
                 }
                 
-                // Extract all base tags (without suffixes) and find the highest one
+                // Extract all base tags (without suffixes)
                 const baseTags = new Set();
-                const tagCounts = new Map(); // Track how many times each base tag appears
                 
                 for (const tag of existingTags) {
                     if (tagMode === 'letters') {
                         if (/^[A-Z]$/.test(tag)) {
                             baseTags.add(tag);
-                            tagCounts.set(tag, (tagCounts.get(tag) || 0) + 1);
                         }
                     } else {
                         // Handle both A1 and A1(1), A1(2) patterns
@@ -2393,7 +2395,6 @@
                         if (match) {
                             const baseTag = match[1];
                             baseTags.add(baseTag);
-                            tagCounts.set(baseTag, (tagCounts.get(baseTag) || 0) + 1);
                         }
                     }
                 }
@@ -2405,39 +2406,178 @@
                     return result;
                 }
                 
-                // Find the highest base tag
-                const sortedBaseTags = Array.from(baseTags).sort();
-                const lastBaseTag = sortedBaseTags[sortedBaseTags.length - 1];
+                // Sort tags properly for alphanumeric comparison
+                const sortedBaseTags = Array.from(baseTags).sort((a, b) => {
+                    if (tagMode === 'letters') {
+                        // Simple alphabetic sort for letter-only mode
+                        return a.localeCompare(b);
+                    } else {
+                        // Alphanumeric sort: compare letter first, then number
+                        const matchA = a.match(/^([A-Z])(\d+)$/);
+                        const matchB = b.match(/^([A-Z])(\d+)$/);
+                        
+                        if (!matchA || !matchB) return a.localeCompare(b);
+                        
+                        const [, letterA, numA] = matchA;
+                        const [, letterB, numB] = matchB;
+                        
+                        // Compare letters first
+                        if (letterA !== letterB) {
+                            return letterA.localeCompare(letterB);
+                        }
+                        
+                        // If same letter, compare numbers numerically
+                        return parseInt(numA) - parseInt(numB);
+                    }
+                });
                 
-                console.log('[calculateNextTag] Last base tag:', lastBaseTag, 'count:', tagCounts.get(lastBaseTag));
+                console.log('[calculateNextTag] Sorted tags:', sortedBaseTags);
                 
                 if (tagMode === 'letters') {
-                    // Letters only mode: A -> B -> C -> D...
-                    const lastLetter = lastBaseTag[0];
+                    // Letters only mode: Check for gaps first
+                    for (let i = 0; i < sortedBaseTags.length - 1; i++) {
+                        const currentLetter = sortedBaseTags[i][0];
+                        const nextLetter = sortedBaseTags[i + 1][0];
+                        const expectedNext = String.fromCharCode(currentLetter.charCodeAt(0) + 1);
+                        
+                        if (expectedNext !== nextLetter && expectedNext <= 'Z') {
+                            console.log('[calculateNextTag] Letters mode, found gap:', expectedNext);
+                            return expectedNext;
+                        }
+                    }
+                    
+                    // No gaps, increment from last
+                    const lastLetter = sortedBaseTags[sortedBaseTags.length - 1][0];
                     const nextLetter = String.fromCharCode(lastLetter.charCodeAt(0) + 1);
+                    
+                    if (nextLetter > 'Z') {
+                        console.log('[calculateNextTag] Letters mode, wrapped to A');
+                        return 'A';
+                    }
+                    
                     console.log('[calculateNextTag] Letters mode, next:', nextLetter);
                     return nextLetter;
                 } else {
-                    // Letters + numbers mode: A1 -> A2 -> A3... -> B1 -> B2...
+                    // Letters + numbers mode: Check for gaps first
+                    for (let i = 0; i < sortedBaseTags.length; i++) {
+                        const match = sortedBaseTags[i].match(/^([A-Z])(\d+)$/);
+                        if (!match) continue;
+                        
+                        const [, letter, number] = match;
+                        const num = parseInt(number);
+                        
+                        // Check if this is the first tag with this letter
+                        if (i === 0 || sortedBaseTags[i - 1][0] !== letter) {
+                            // If it doesn't start at 1, fill from 1
+                            if (num > 1) {
+                                const result = letter + '1';
+                                console.log('[calculateNextTag] Numbers mode, found gap at start:', result);
+                                return result;
+                            }
+                        }
+                        
+                        // Check for gaps within the same letter
+                        if (i < sortedBaseTags.length - 1) {
+                            const nextMatch = sortedBaseTags[i + 1].match(/^([A-Z])(\d+)$/);
+                            if (nextMatch) {
+                                const [, nextLetter, nextNumber] = nextMatch;
+                                const nextNum = parseInt(nextNumber);
+                                
+                                // If same letter, check for gap
+                                if (letter === nextLetter && nextNum > num + 1) {
+                                    const result = letter + (num + 1);
+                                    console.log('[calculateNextTag] Numbers mode, found gap:', result);
+                                    return result;
+                                }
+                            }
+                        }
+                    }
+                    
+                    // No gaps, increment from last
+                    const lastBaseTag = sortedBaseTags[sortedBaseTags.length - 1];
                     const match = lastBaseTag.match(/^([A-Z])(\d+)$/);
                     if (match) {
                         const [, letter, number] = match;
                         const nextNumber = parseInt(number) + 1;
+                        
+                        // Check if we need to move to the next letter
                         if (nextNumber > 9) {
-                            // Move to next letter when we exceed 9
                             const nextLetter = String.fromCharCode(letter.charCodeAt(0) + 1);
+                            if (nextLetter > 'Z') {
+                                console.log('[calculateNextTag] Numbers mode, wrapped to A1');
+                                return 'A1';
+                            }
                             const result = nextLetter + '1';
                             console.log('[calculateNextTag] Numbers mode, exceeded 9, next:', result);
                             return result;
                         }
+                        
                         const result = letter + nextNumber;
                         console.log('[calculateNextTag] Numbers mode, next:', result);
                         return result;
                     } else {
-                        // This shouldn't happen since we validated the tag, but just in case
                         console.log('[calculateNextTag] Unexpected tag format, returning A1');
                         return 'A1';
                     }
+                }
+            }
+
+            // Calculate the next tag after a specific tag (for manual tag setting)
+            // This increments without gap-filling to preserve user intent
+            function calculateNextTagFrom(tag) {
+                const mode = typeof tagMode === 'string' ? tagMode : 'letters+numbers';
+                
+                if (mode === 'letters') {
+                    // Just increment the letter
+                    const nextLetter = String.fromCharCode(tag.charCodeAt(0) + 1);
+                    return nextLetter > 'Z' ? 'A' : nextLetter;
+                } else {
+                    // Letters + numbers mode
+                    const match = tag.match(/^([A-Z])(\d+)$/);
+                    if (!match) return 'A1';
+                    
+                    const [, letter, number] = match;
+                    const nextNumber = parseInt(number) + 1;
+                    
+                    if (nextNumber > 9) {
+                        // Wrap to next letter
+                        const nextLetter = String.fromCharCode(letter.charCodeAt(0) + 1);
+                        if (nextLetter > 'Z') {
+                            return 'A1'; // Wrap around
+                        }
+                        return nextLetter + '1';
+                    }
+                    
+                    return letter + nextNumber;
+                }
+            }
+
+            // Calculate the next tag after a specific tag (simple increment, no gap-filling)
+            function calculateNextTagFrom(tag) {
+                const mode = typeof tagMode === 'string' ? tagMode : 'letters+numbers';
+                
+                if (mode === 'letters') {
+                    // Just increment the letter
+                    const nextLetter = String.fromCharCode(tag.charCodeAt(0) + 1);
+                    return nextLetter > 'Z' ? 'A' : nextLetter;
+                } else {
+                    // Letters + numbers mode
+                    const match = tag.match(/^([A-Z])(\d+)$/);
+                    if (!match) return 'A1';
+                    
+                    const [, letter, number] = match;
+                    const nextNumber = parseInt(number) + 1;
+                    
+                    if (nextNumber > 9) {
+                        // Wrap to next letter
+                        const nextLetter = String.fromCharCode(letter.charCodeAt(0) + 1);
+                        if (nextLetter > 'Z') {
+                            return 'A1'; // Wrap around
+                        }
+                        return nextLetter + '1';
+                    }
+                    
+                    return letter + nextNumber;
                 }
             }
 
@@ -2446,8 +2586,22 @@
                 const nextTagDisplay = document.getElementById('nextTagDisplay');
                 if (nextTagDisplay) {
                     const currentImageLabel = window.currentImageLabel || 'default';
-                    // Show labelsByImage value if set, otherwise fall back to calculated next tag
-                    const nextTag = (window.labelsByImage && window.labelsByImage[currentImageLabel]) || calculateNextTag();
+                    
+                    // Priority: 1) labelsByImage (immediate next), 2) manualTagByImage (manual sequence), 3) calculateNextTag (gap-filling)
+                    let nextTag;
+                    if (window.labelsByImage && window.labelsByImage[currentImageLabel]) {
+                        nextTag = window.labelsByImage[currentImageLabel];
+                        console.log('[updateNextTagDisplay] Using labelsByImage:', nextTag);
+                    } else if (window.manualTagByImage && window.manualTagByImage[currentImageLabel]) {
+                        // We're in a manual sequence - use the manual flag value
+                        nextTag = window.manualTagByImage[currentImageLabel];
+                        console.log('[updateNextTagDisplay] Using manualTagByImage:', nextTag);
+                    } else {
+                        // Normal gap-filling mode
+                        nextTag = calculateNextTag();
+                        console.log('[updateNextTagDisplay] Using calculateNextTag (gap-filling):', nextTag);
+                    }
+                    
                     nextTagDisplay.textContent = nextTag;
                 }
             }
@@ -2458,37 +2612,75 @@
             // Make functions available globally for paint.js to call
             window.updateNextTagDisplay = updateNextTagDisplay;
             window.calculateNextTag = calculateNextTag;
+            window.calculateNextTagFrom = calculateNextTagFrom;
             console.log('[index.html] Made calculateNextTag available globally:', typeof window.calculateNextTag);
             
-            // Allow user to set the next tag directly by clicking the display
+            // Allow user to set the next tag directly by typing in the display
             const nextTagEl = document.getElementById('nextTagDisplay');
-            nextTagEl?.addEventListener('click', () => {
+            
+            // Store original value when user starts editing
+            let originalTagValue = '';
+            
+            nextTagEl?.addEventListener('focus', (e) => {
+                originalTagValue = e.target.textContent.trim();
+                // Select all text for easy replacement
+                const range = document.createRange();
+                range.selectNodeContents(e.target);
+                const sel = window.getSelection();
+                sel.removeAllRanges();
+                sel.addRange(range);
+            });
+            
+            // Handle Enter key to commit changes
+            nextTagEl?.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    e.target.blur(); // Trigger validation via blur
+                } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    e.target.textContent = originalTagValue;
+                    e.target.blur();
+                }
+            });
+            
+            // Validate and save on blur
+            nextTagEl?.addEventListener('blur', (e) => {
                 const mode = typeof tagMode === 'string' ? tagMode : 'letters+numbers';
                 const currentImageLabel = window.currentImageLabel || 'default';
-                const input = prompt(
-                    mode === 'letters'
-                        ? 'Set next tag (letters only, e.g., D):'
-                        : 'Set next tag (letter+number, e.g., D4):'
-                );
-                if (!input) return;
-
-                const cleaned = input.trim().toUpperCase();
+                const input = e.target.textContent.trim().toUpperCase();
+                
+                // If empty or unchanged, restore original
+                if (!input || input === originalTagValue) {
+                    e.target.textContent = originalTagValue;
+                    return;
+                }
+                
                 const valid = mode === 'letters'
-                    ? /^[A-Z]$/.test(cleaned)
-                    : /^[A-Z]\d+$/.test(cleaned);
+                    ? /^[A-Z]$/.test(input)
+                    : /^[A-Z]\d+$/.test(input);
 
                 if (!valid) {
-                    alert(mode === 'letters'
-                        ? 'Invalid tag. Use a single letter (A-Z).'
-                        : 'Invalid tag. Use Letter+Number (e.g., D4).');
+                    // Show error briefly and restore original
+                    e.target.textContent = '❌ Invalid';
+                    e.target.classList.add('text-red-600');
+                    setTimeout(() => {
+                        e.target.textContent = originalTagValue;
+                        e.target.classList.remove('text-red-600');
+                    }, 1000);
                     return;
                 }
 
                 // Ensure labelsByImage exists, then set the next tag seed
                 window.labelsByImage = window.labelsByImage || {};
-                window.labelsByImage[currentImageLabel] = cleaned;
-
-                updateNextTagDisplay();
+                window.labelsByImage[currentImageLabel] = input;
+                
+                // Set flag to indicate this was a manual tag (not auto-calculated)
+                // This tells the system to increment from this tag, not use gap-filling
+                window.manualTagByImage = window.manualTagByImage || {};
+                window.manualTagByImage[currentImageLabel] = input;
+                
+                e.target.textContent = input;
+                console.log('[nextTagDisplay] Updated next tag to:', input, '(manual override)');
             });
             
             // Capture frame lock functionality

@@ -4836,6 +4836,10 @@ function hideResizeOverlay() {
                         saveState(true, false, true);
                         updateStrokeVisibilityControls(); // This will re-render the list
                         redrawCanvasWithVisibility();
+                        // Update next tag display after renaming
+                        if (typeof window.updateNextTagDisplay === 'function') {
+                            window.updateNextTagDisplay();
+                        }
                     } else {
                         strokeName.textContent = originalName; // Revert if empty or unchanged
                     }
@@ -5562,6 +5566,11 @@ function hideResizeOverlay() {
             // Update UI and redraw
             updateStrokeVisibilityControls();
             redrawCanvasWithVisibility();
+            
+            // Update next tag display if stroke was renamed
+            if (finalName !== strokeLabel && typeof window.updateNextTagDisplay === 'function') {
+                window.updateNextTagDisplay();
+            }
             
             // Save state to ensure measurements are preserved
             saveState(true, false, true);
@@ -7396,8 +7405,13 @@ function hideResizeOverlay() {
             // *** ADDED DETAILED LOGS ***
 //             console.log(`[Save State] Entering stroke update block.`);
             
-            // Get the suggested next label
-            const suggestedLabel = labelsByImage[currentImageLabel];
+            // Get the suggested next label with priority:
+            // 1) labelsByImage (immediate next)
+            // 2) manualTagByImage (manual sequence mode)
+            // 3) getNextLabel (gap-filling mode)
+            const suggestedLabel = labelsByImage[currentImageLabel] || 
+                                  (window.manualTagByImage && window.manualTagByImage[currentImageLabel]) ||
+                                  getNextLabel(currentImageLabel);
 //             console.log(`[Save State] Suggested next label = "${suggestedLabel}" from labelsByImage[${currentImageLabel}]`);
             
             // *** FIX: Ensure the new stroke gets a UNIQUE label ***
@@ -7437,8 +7451,35 @@ function hideResizeOverlay() {
                 lineStrokesByImage[currentImageLabel].push(strokeLabel); // Push the unique label
 //                 console.log(`[Save State] AFTER push: lineStrokesByImage[${currentImageLabel}] =`, JSON.parse(JSON.stringify(lineStrokesByImage[currentImageLabel])));
                 
-                // NOW increment the label counter after the stroke is pushed - this ensures the next suggestion sees the current stroke
-                const nextLabel = getNextLabel(currentImageLabel); // Uses the value in labelsByImage
+                // NOW increment the label counter after the stroke is pushed
+                let nextLabel;
+                
+                // Check if this was a manually-set tag (user typed it in)
+                if (window.manualTagByImage && window.manualTagByImage[currentImageLabel] === strokeLabel) {
+                    // User manually set this tag (e.g., D7) - increment from it without gap-filling
+                    if (typeof window.calculateNextTagFrom === 'function') {
+                        nextLabel = window.calculateNextTagFrom(strokeLabel);
+                        
+                        // Check if the incremented tag already exists (e.g., filling gap F6 → F7, but F7 exists)
+                        // Keep incrementing until we find one that doesn't exist
+                        const existingStrokes = lineStrokesByImage[currentImageLabel] || [];
+                        const baseTags = existingStrokes.map(tag => tag.replace(/\(\d+\)$/, ''));
+                        while (baseTags.includes(nextLabel)) {
+                            nextLabel = window.calculateNextTagFrom(nextLabel);
+                        }
+                        
+                        console.log(`[Save State] Manual tag ${strokeLabel} used, next available: ${nextLabel}`);
+                        // Keep the manual tag flag pointing to the next tag to continue the sequence
+                        window.manualTagByImage[currentImageLabel] = nextLabel;
+                    } else {
+                        nextLabel = getNextLabel(currentImageLabel);
+                        delete window.manualTagByImage[currentImageLabel];
+                    }
+                } else {
+                    // Normal flow - use gap-filling logic
+                    nextLabel = getNextLabel(currentImageLabel);
+                }
+                
                 labelsByImage[currentImageLabel] = nextLabel;
 //                 console.log(`[Save State] Incremented labelsByImage[${currentImageLabel}] to "${nextLabel}"`);
             } else {
@@ -7802,6 +7843,64 @@ function hideResizeOverlay() {
             // Force redraw after any undo operation to ensure visual consistency
             redrawCanvasWithVisibility();
             
+            // Clear the manual next tag override so it recalculates based on existing strokes
+            if (window.labelsByImage && window.labelsByImage[currentImageLabel]) {
+                delete window.labelsByImage[currentImageLabel];
+            }
+            
+            // If in manual sequence mode, recalculate the flag based on remaining strokes
+            if (window.manualTagByImage && window.manualTagByImage[currentImageLabel] && typeof window.calculateNextTagFrom === 'function') {
+                const remainingStrokes = lineStrokesByImage[currentImageLabel] || [];
+                if (remainingStrokes.length > 0) {
+                    // Get base tags and filter to manual sequence
+                    const baseTags = remainingStrokes.map(tag => tag.replace(/\(\d+\)$/, ''));
+                    const currentManualTag = window.manualTagByImage[currentImageLabel];
+                    const manualLetter = currentManualTag.match(/^([A-Z])/)?.[1];
+                    const manualTags = baseTags.filter(tag => tag.match(/^([A-Z])/)?.[1] === manualLetter);
+                    
+                    if (manualTags.length > 0) {
+                        // Sort and look for gaps
+                        const sorted = manualTags.sort((a, b) => {
+                            const matchA = a.match(/^([A-Z])(\d+)$/);
+                            const matchB = b.match(/^([A-Z])(\d+)$/);
+                            if (!matchA || !matchB) return a.localeCompare(b);
+                            return parseInt(matchA[2]) - parseInt(matchB[2]);
+                        });
+                        
+                        let foundGap = null;
+                        for (let i = 0; i < sorted.length - 1; i++) {
+                            const match = sorted[i].match(/^([A-Z])(\d+)$/);
+                            const nextMatch = sorted[i + 1].match(/^([A-Z])(\d+)$/);
+                            if (match && nextMatch && parseInt(nextMatch[2]) > parseInt(match[2]) + 1) {
+                                foundGap = match[1] + (parseInt(match[2]) + 1);
+                                break;
+                            }
+                        }
+                        
+                        if (foundGap) {
+                            window.manualTagByImage[currentImageLabel] = foundGap;
+                            console.log(`[undo] Found gap in manual sequence: ${foundGap}`);
+                        } else {
+                            const lastTag = sorted[sorted.length - 1];
+                            const nextManualTag = window.calculateNextTagFrom(lastTag);
+                            window.manualTagByImage[currentImageLabel] = nextManualTag;
+                            console.log(`[undo] No gaps, recalculated: ${lastTag} → ${nextManualTag}`);
+                        }
+                    } else {
+                        delete window.manualTagByImage[currentImageLabel];
+                        console.log('[undo] No manual tags found, cleared flag');
+                    }
+                } else {
+                    delete window.manualTagByImage[currentImageLabel];
+                    console.log('[undo] No strokes left, cleared manual flag');
+                }
+            }
+            
+            // Update next tag display after any undo operation
+            if (typeof window.updateNextTagDisplay === 'function') {
+                window.updateNextTagDisplay();
+            }
+            
             // For delete-stroke undo operations, ensure a complete redraw to avoid visual glitches
             if (lastAction && lastAction.type === 'delete-strokes') {
                 // Short delay to ensure all state is updated before final redraw
@@ -7950,6 +8049,64 @@ function hideResizeOverlay() {
                 // Clear selection
                 multipleSelectedStrokesByImage[actionToRedo.image] = [];
                 selectedStrokeByImage[actionToRedo.image] = null;
+                
+                // Clear the manual next tag override so it recalculates based on existing strokes
+                if (window.labelsByImage && window.labelsByImage[actionToRedo.image]) {
+                    delete window.labelsByImage[actionToRedo.image];
+                }
+                
+                // If in manual sequence mode, recalculate the flag based on remaining strokes
+                if (window.manualTagByImage && window.manualTagByImage[actionToRedo.image] && typeof window.calculateNextTagFrom === 'function') {
+                    const remainingStrokes = lineStrokesByImage[actionToRedo.image] || [];
+                    if (remainingStrokes.length > 0) {
+                        // Get base tags and filter to manual sequence
+                        const baseTags = remainingStrokes.map(tag => tag.replace(/\(\d+\)$/, ''));
+                        const currentManualTag = window.manualTagByImage[actionToRedo.image];
+                        const manualLetter = currentManualTag.match(/^([A-Z])/)?.[1];
+                        const manualTags = baseTags.filter(tag => tag.match(/^([A-Z])/)?.[1] === manualLetter);
+                        
+                        if (manualTags.length > 0) {
+                            // Sort and look for gaps
+                            const sorted = manualTags.sort((a, b) => {
+                                const matchA = a.match(/^([A-Z])(\d+)$/);
+                                const matchB = b.match(/^([A-Z])(\d+)$/);
+                                if (!matchA || !matchB) return a.localeCompare(b);
+                                return parseInt(matchA[2]) - parseInt(matchB[2]);
+                            });
+                            
+                            let foundGap = null;
+                            for (let i = 0; i < sorted.length - 1; i++) {
+                                const match = sorted[i].match(/^([A-Z])(\d+)$/);
+                                const nextMatch = sorted[i + 1].match(/^([A-Z])(\d+)$/);
+                                if (match && nextMatch && parseInt(nextMatch[2]) > parseInt(match[2]) + 1) {
+                                    foundGap = match[1] + (parseInt(match[2]) + 1);
+                                    break;
+                                }
+                            }
+                            
+                            if (foundGap) {
+                                window.manualTagByImage[actionToRedo.image] = foundGap;
+                                console.log(`[redo] Found gap in manual sequence: ${foundGap}`);
+                            } else {
+                                const lastTag = sorted[sorted.length - 1];
+                                const nextManualTag = window.calculateNextTagFrom(lastTag);
+                                window.manualTagByImage[actionToRedo.image] = nextManualTag;
+                                console.log(`[redo] No gaps, recalculated: ${lastTag} → ${nextManualTag}`);
+                            }
+                        } else {
+                            delete window.manualTagByImage[actionToRedo.image];
+                            console.log('[redo] No manual tags found, cleared flag');
+                        }
+                    } else {
+                        delete window.manualTagByImage[actionToRedo.image];
+                        console.log('[redo] No strokes left, cleared manual flag');
+                    }
+                }
+                
+                // Update next tag display when redoing a deletion
+                if (typeof window.updateNextTagDisplay === 'function') {
+                    window.updateNextTagDisplay();
+                }
             }
             // Handle stroke type actions (freehand strokes, straight lines, and curved lines)
             else if ((actionToRedo.type === 'line' || actionToRedo.type === 'stroke' || actionToRedo.type === 'curve') && actionToRedo.label) {
@@ -15271,6 +15428,72 @@ function hideResizeOverlay() {
         // REMOVE: saveState(true, false, false); // This was causing a double state for delete undo
         redrawCanvasWithVisibility();
         updateStrokeVisibilityControls();
+        
+        // Clear the manual next tag override so it recalculates based on existing strokes
+        if (window.labelsByImage && window.labelsByImage[currentImageLabel]) {
+            delete window.labelsByImage[currentImageLabel];
+        }
+        
+        // If in manual sequence mode, recalculate the flag based on remaining strokes
+        if (window.manualTagByImage && window.manualTagByImage[currentImageLabel] && typeof window.calculateNextTagFrom === 'function') {
+            const remainingStrokes = lineStrokesByImage[currentImageLabel] || [];
+            if (remainingStrokes.length > 0) {
+                // Get base tags (remove (n) suffixes)
+                const baseTags = remainingStrokes.map(tag => tag.replace(/\(\d+\)$/, ''));
+                
+                // Filter to only tags that match the manual sequence pattern (same letter)
+                const currentManualTag = window.manualTagByImage[currentImageLabel];
+                const manualLetter = currentManualTag.match(/^([A-Z])/)?.[1];
+                const manualTags = baseTags.filter(tag => tag.match(/^([A-Z])/)?.[1] === manualLetter);
+                
+                if (manualTags.length > 0) {
+                    // Sort numerically
+                    const sorted = manualTags.sort((a, b) => {
+                        const matchA = a.match(/^([A-Z])(\d+)$/);
+                        const matchB = b.match(/^([A-Z])(\d+)$/);
+                        if (!matchA || !matchB) return a.localeCompare(b);
+                        const [, , numA] = matchA;
+                        const [, , numB] = matchB;
+                        return parseInt(numA) - parseInt(numB);
+                    });
+                    
+                    // Look for gaps in the sequence
+                    let foundGap = null;
+                    for (let i = 0; i < sorted.length - 1; i++) {
+                        const match = sorted[i].match(/^([A-Z])(\d+)$/);
+                        const nextMatch = sorted[i + 1].match(/^([A-Z])(\d+)$/);
+                        if (match && nextMatch) {
+                            const num = parseInt(match[2]);
+                            const nextNum = parseInt(nextMatch[2]);
+                            if (nextNum > num + 1) {
+                                // Found a gap! Return the missing tag
+                                foundGap = match[1] + (num + 1);
+                                break;
+                            }
+                        }
+                    }
+                    
+                    if (foundGap) {
+                        window.manualTagByImage[currentImageLabel] = foundGap;
+                        console.log(`[deleteSelectedStrokes] Found gap in manual sequence: ${foundGap}`);
+                    } else {
+                        // No gaps, increment from last
+                        const lastTag = sorted[sorted.length - 1];
+                        const nextManualTag = window.calculateNextTagFrom(lastTag);
+                        window.manualTagByImage[currentImageLabel] = nextManualTag;
+                        console.log(`[deleteSelectedStrokes] No gaps, recalculated manual flag: ${lastTag} → ${nextManualTag}`);
+                    }
+                } else {
+                    // No manual tags found, clear flag
+                    delete window.manualTagByImage[currentImageLabel];
+                    console.log('[deleteSelectedStrokes] No manual tags found, cleared flag');
+                }
+            } else {
+                // No strokes left, clear manual flag
+                delete window.manualTagByImage[currentImageLabel];
+                console.log('[deleteSelectedStrokes] No strokes left, cleared manual flag');
+            }
+        }
         
         // Update next tag display to reflect the new stroke state
         if (typeof window.updateNextTagDisplay === 'function') {
