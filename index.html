@@ -605,10 +605,20 @@
         /* Panel minimization styles */
         .floating-panel.minimized {
             max-height: none !important;
+            height: auto !important; /* Override any inline height when minimized */
         }
         
         .floating-panel.minimized .cursor-move {
             border-bottom: none;
+        }
+        
+        /* When elementsBody is hidden, ensure panel shrinks to header only */
+        #strokePanel:has(#elementsBody.hidden) {
+            height: auto !important;
+        }
+        
+        #imagePanel:has(#imagePanelContent.hidden) {
+            height: auto !important;
         }
         
         /* Smooth transitions for all panel content */
@@ -1303,7 +1313,7 @@
     </div>
 
     <!-- Vectors and Tags Panel -->
-    <div id="strokePanel" class="floating-panel fixed left-4 top-1/2 -translate-y-1/2 z-30 rounded-2xl w-64 max-h-96 transition-all duration-300 overflow-hidden">
+    <div id="strokePanel" class="floating-panel fixed left-4 z-30 rounded-2xl w-64 transition-all duration-300 overflow-hidden" style="top: clamp(1rem, 50vh - 20rem, calc(100vh - 40rem - 1rem)); max-height: min(40rem, calc(100vh - 2rem));">
         <div id="elementsHeader" class="flex items-center justify-between p-3 cursor-move border-b border-gray-200/50 bg-white rounded-t-2xl">
             <div class="flex items-center gap-2">
                 <h3 class="text-sm font-semibold text-slate-800">Elements</h3>
@@ -1353,12 +1363,12 @@
                 <button id="labelShapeToggleBtn" class="px-2 py-1 text-xs bg-white border border-gray-300 rounded-lg hover:bg-gray-50" title="Toggle tag shape" aria-pressed="true">■</button>
             </div>
         </div>
-        <div id="strokeVisibilityControls" class="px-3 pt-2 pb-2 transition-all duration-300" style="min-height: 60px; max-height: 60vh; overflow-y: auto; overflow-x: hidden; box-sizing: border-box;"></div>
+        <div id="strokeVisibilityControls" class="px-3 pt-2 pb-2 transition-all duration-300 overflow-y-auto overflow-x-hidden" style="box-sizing: border-box;"></div>
         </div>
     </div>
 
     <!-- Image Gallery Panel -->
-    <div id="imagePanel" class="floating-panel fixed right-4 top-1/2 -translate-y-1/2 z-30 rounded-2xl w-72 max-h-[80vh] transition-all duration-300 overflow-hidden">
+    <div id="imagePanel" class="floating-panel fixed right-4 z-30 rounded-2xl w-72 transition-all duration-300 overflow-hidden" style="top: clamp(1rem, 50vh - 20rem, calc(100vh - 40rem - 1rem)); max-height: min(40rem, calc(100vh - 2rem));">
         <div class="flex items-center justify-between p-3 cursor-move border-b border-gray-200/50 bg-white rounded-t-2xl">
             <h3 class="text-sm font-semibold text-slate-800">Images</h3>
             <div class="flex items-center gap-2">
@@ -1462,8 +1472,6 @@
             <div class="flex items-center gap-1 ml-2">
                 <button id="rotateLeftCtrl" class="px-2 py-1 bg-white border border-gray-300 text-slate-700 text-xs rounded-lg hover:bg-slate-50" title="Rotate 90° CCW">↶</button>
                 <button id="rotateRightCtrl" class="px-2 py-1 bg-white border border-gray-300 text-slate-700 text-xs rounded-lg hover:bg-slate-50" title="Rotate 90° CW">↷</button>
-                <button id="flipHCtrl" class="px-2 py-1 bg-white border border-gray-300 text-slate-700 text-xs rounded-lg hover:bg-slate-50" title="Flip Horizontal">↔</button>
-                <button id="flipVCtrl" class="px-2 py-1 bg-white border border-gray-300 text-slate-700 text-xs rounded-lg hover:bg-slate-50" title="Flip Vertical">↕</button>
             </div>
 
             <!-- Share/Update next to Copy/Save -->
@@ -1704,16 +1712,6 @@
                 el.classList.add('icon-btn', 'tbtn'); 
                 el.title = 'Rotate Right'; 
                 el.textContent = '↷'; 
-            });
-            reparent('flipHCtrl', bottom, el => { 
-                el.classList.add('icon-btn', 'tbtn'); 
-                el.title = 'Flip Horizontal'; 
-                el.textContent = '↔'; 
-            });
-            reparent('flipVCtrl', bottom, el => { 
-                el.classList.add('icon-btn', 'tbtn'); 
-                el.title = 'Flip Vertical'; 
-                el.textContent = '↕'; 
             });
             reparent('scaleButton', bottom);
             syncFromState();
@@ -2153,8 +2151,8 @@
                 
                 button.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    // Use elementsBody if present to keep header always visible
-                    const body = document.getElementById('elementsBody') || content;
+                    // Use the specified content element
+                    const body = content;
                     const isMinimized = body.classList.contains('hidden');
                     
                     if (isMinimized) {
@@ -2191,13 +2189,13 @@
             // Apply toggle functionality to all panels (default open for Stroke & Images)
             createPanelToggle('projectPanel', 'projectPanelContent', 'toggleProjectPanel');
             createPanelToggle('toolsPanel', 'toolsPanelContent', 'toggleToolsPanel');
-            createPanelToggle('strokePanel', 'strokeVisibilityControls', 'toggleStrokePanel');
+            createPanelToggle('strokePanel', 'elementsBody', 'toggleStrokePanel');
             createPanelToggle('imagePanel', 'imagePanelContent', 'toggleImagePanel');
             createPanelToggle('canvasControls', 'canvasControlsContent', 'toggleCanvasControls');
 
             // Ensure Vectors and tags and Images are open by default
             (function expandByDefault() {
-                const strokeContent = document.getElementById('strokeVisibilityControls');
+                const strokeContent = document.getElementById('elementsBody');
                 const strokeButton = document.getElementById('toggleStrokePanel');
                 const imageContent = document.getElementById('imagePanelContent');
                 const imageButton = document.getElementById('toggleImagePanel');
@@ -2212,21 +2210,6 @@
                 if (elementsBody && !elementsBody.classList.contains('hidden')) {
                     elementsBody.style.maxHeight = 'none';
                 }
-            })();
-
-            // Size the Elements panel to extend to bottom of viewport from its current top
-            (function sizeStrokePanelToBottom() {
-                const panel = document.getElementById('strokePanel');
-                if (!panel) return;
-                const resize = () => {
-                    const rect = panel.getBoundingClientRect();
-                    const margin = -8; // small breathing room
-                    const h = Math.max(0, Math.round(window.innerHeight - rect.top - margin));
-                    panel.style.height = h + 'px';
-                    panel.style.maxHeight = h + 'px';
-                };
-                resize();
-                window.addEventListener('resize', resize);
             })();
 
             // removed elements resize handle wiring
@@ -3267,8 +3250,6 @@
                 // Canvas Controls: wire rotate/flip buttons to current image
                 const rotateLeftCtrl = document.getElementById('rotateLeftCtrl');
                 const rotateRightCtrl = document.getElementById('rotateRightCtrl');
-                const flipHCtrl = document.getElementById('flipHCtrl');
-                const flipVCtrl = document.getElementById('flipVCtrl');
                 function getCurrentImageIndex() {
                     const label = window.paintApp?.state?.currentImageLabel;
                     if (!label) return currentImageIndex || 0;
@@ -3299,32 +3280,6 @@
                         window.rotateImage?.(idx, 90);
                     } else {
                         rotateFallback(90);
-                    }
-                });
-                flipHCtrl?.addEventListener('click', () => {
-                    const idx = getCurrentImageIndex();
-                    if (imageGalleryData[idx] && typeof flipImage === 'function') {
-                        flipImage(idx, 'horizontal');
-                    } else if (typeof window.transformImageData === 'function') {
-                        const label = window.paintApp?.state?.currentImageLabel || 'blank_canvas';
-                        const c = document.getElementById('canvas');
-                        const w = c?.width || 800;
-                        const h = c?.height || 600;
-                        window.transformImageData(label, 'flip', 'horizontal', w, h);
-                        if (window.redrawCanvasWithVisibility) window.redrawCanvasWithVisibility();
-                    }
-                });
-                flipVCtrl?.addEventListener('click', () => {
-                    const idx = getCurrentImageIndex();
-                    if (imageGalleryData[idx] && typeof flipImage === 'function') {
-                        flipImage(idx, 'vertical');
-                    } else if (typeof window.transformImageData === 'function') {
-                        const label = window.paintApp?.state?.currentImageLabel || 'blank_canvas';
-                        const c = document.getElementById('canvas');
-                        const w = c?.width || 800;
-                        const h = c?.height || 600;
-                        window.transformImageData(label, 'flip', 'vertical', w, h);
-                        if (window.redrawCanvasWithVisibility) window.redrawCanvasWithVisibility();
                     }
                 });
 
@@ -3586,7 +3541,7 @@
                 
                 const deleteBtn = document.createElement('button');
                 deleteBtn.className = 'control-btn delete-btn';
-                deleteBtn.innerHTML = '×';
+                deleteBtn.innerHTML = '&times;';
                 deleteBtn.title = 'Delete image';
                 deleteBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
