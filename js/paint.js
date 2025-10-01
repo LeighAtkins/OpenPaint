@@ -1034,16 +1034,16 @@ function hideResizeOverlay() {
         });
         
         // Delete button click handler
-        deleteButton.addEventListener('click', (e) => {
+        deleteButton.addEventListener('click', async (e) => {
             e.stopPropagation(); // Prevent container click (switchToImage)
             
-            const confirmMsg = `Are you sure you want to delete image "${label}" and all its associated strokes and data? This action cannot be undone directly through the undo stack for image deletion.`;
+            const confirmMsg = `Are you sure you want to delete image "${label}" and all its associated strokes and data? You can undo this with Ctrl+Z.`;
             if (!confirm(confirmMsg)) {
                 return;
             }
             
-            // Perform deletion
-            deleteImage(label, container);
+            // Perform deletion (await because it converts blob URLs to data URLs)
+            await deleteImage(label, container);
         });
         
         // Add all elements to container
@@ -1162,9 +1162,181 @@ function hideResizeOverlay() {
         updateSidebarStrokeCounts();
     }
     
+    // Helper function to convert any image URL to a data URL
+    async function imageUrlToDataUrl(imageUrl) {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.crossOrigin = 'Anonymous'; // Handle CORS if needed
+            img.onload = () => {
+                try {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0);
+                    const dataUrl = canvas.toDataURL('image/png');
+                    resolve(dataUrl);
+                } catch (e) {
+                    console.error('[imageUrlToDataUrl] Error converting:', e);
+                    resolve(imageUrl); // Fallback to original URL
+                }
+            };
+            img.onerror = () => {
+                console.error('[imageUrlToDataUrl] Failed to load image');
+                resolve(imageUrl); // Fallback to original URL
+            };
+            img.src = imageUrl;
+        });
+    }
+    
+    // Function to restore a deleted image from undo data
+    function restoreDeletedImage(imageData) {
+        const label = imageData.label;
+        console.log(`[restoreDeletedImage] Restoring image: ${label}`);
+        
+        // Use originalImageUrl (data URL) for restoration
+        const imageUrl = imageData.originalImageUrl || imageData.originalImage;
+        
+        // Restore all data structures
+        window.imageScaleByLabel[label] = imageData.imageScale;
+        window.imagePositionByLabel[label] = imageData.imagePosition ? {...imageData.imagePosition} : {x: 0, y: 0};
+        window.lineStrokesByImage[label] = imageData.lineStrokes ? [...imageData.lineStrokes] : [];
+        window.vectorStrokesByImage[label] = imageData.vectorStrokes ? JSON.parse(JSON.stringify(imageData.vectorStrokes)) : {};
+        window.strokeVisibilityByImage[label] = imageData.strokeVisibility ? {...imageData.strokeVisibility} : {};
+        window.strokeLabelVisibility[label] = imageData.strokeLabelVisibility ? {...imageData.strokeLabelVisibility} : {};
+        window.strokeMeasurements[label] = imageData.strokeMeasurements ? JSON.parse(JSON.stringify(imageData.strokeMeasurements)) : {};
+        window.labelsByImage[label] = imageData.labelsByImage;
+        window.undoStackByImage[label] = imageData.undoStack ? [...imageData.undoStack] : [];
+        window.redoStackByImage[label] = imageData.redoStack ? [...imageData.redoStack] : [];
+        window.imageStates[label] = imageData.imageState;
+        window.originalImages[label] = imageUrl; // Use the persistent data URL
+        window.originalImageDimensions[label] = imageData.originalImageDimensions ? {...imageData.originalImageDimensions} : null;
+        window.imageTags[label] = (imageData.imageTags && Array.isArray(imageData.imageTags)) ? [...imageData.imageTags] : [];
+        window.customImageNames[label] = imageData.customImageName;
+        window.selectedStrokeByImage[label] = null;
+        window.multipleSelectedStrokesByImage[label] = [];
+        
+        // Restore custom label positions
+        Object.keys(imageData.customLabelPositions || {}).forEach(key => {
+            window.customLabelPositions[key] = JSON.parse(JSON.stringify(imageData.customLabelPositions[key]));
+            syncLabelOffsetsToStorage(key, window.customLabelPositions[key]);
+        });
+        
+        // Restore calculated label offsets
+        Object.keys(imageData.calculatedLabelOffsets || {}).forEach(key => {
+            window.calculatedLabelOffsets[key] = JSON.parse(JSON.stringify(imageData.calculatedLabelOffsets[key]));
+        });
+        
+        // Restore to pastedImages if it had a URL
+        if (imageUrl && !pastedImages.includes(imageUrl)) {
+            pastedImages.push(imageUrl);
+        }
+        
+        // Re-create the DOM container by calling addImageToSidebar
+        const imageList = document.getElementById('imageList');
+        if (imageList && imageUrl) {
+            // Call addImageToSidebar to recreate the thumbnail (params: imageUrl, label)
+            addImageToSidebar(imageUrl, label);
+            
+            // Move the newly added container to its original position
+            if (typeof imageData.containerIndex === 'number' && imageData.containerIndex >= 0) {
+                const containers = Array.from(imageList.querySelectorAll('.image-container'));
+                const restoredContainer = containers.find(c => c.dataset.label === label);
+                
+                if (restoredContainer && imageData.containerIndex < containers.length - 1) {
+                    // Remove from current position (end of list)
+                    restoredContainer.remove();
+                    
+                    // Insert at original position
+                    const targetContainer = containers[imageData.containerIndex];
+                    if (targetContainer) {
+                        imageList.insertBefore(restoredContainer, targetContainer);
+                        console.log(`[restoreDeletedImage] Moved image to original position: index ${imageData.containerIndex}`);
+                    }
+                }
+            }
+            
+            // Update the ordered array
+            updateOrderedImageLabelsArray();
+            
+            // If this was the current image, switch back to it
+            if (imageData.wasCurrentImage) {
+                setTimeout(() => {
+                    switchToImage(label);
+                }, 100);
+            }
+        }
+        
+        updateStrokeCounter();
+        updateStrokeVisibilityControls();
+        console.log(`[restoreDeletedImage] Successfully restored image: ${label}`);
+    }
+    
     // Function to delete an image and clean up all associated data
-    function deleteImage(label, container) {
+    async function deleteImage(label, container) {
 //         console.log(`[deleteImage] Deleting image: ${label}`);
+        
+        // Convert blob/object URL to data URL for persistence
+        const originalImageUrl = container.dataset.originalImageUrl;
+        let persistentImageUrl = originalImageUrl;
+        
+        // If it's a blob URL, convert to data URL so it persists
+        if (originalImageUrl && originalImageUrl.startsWith('blob:')) {
+            console.log(`[deleteImage] Converting blob URL to data URL for undo persistence`);
+            persistentImageUrl = await imageUrlToDataUrl(originalImageUrl);
+        }
+        
+        // Save all image data for undo BEFORE deletion
+        const imageData = {
+            type: 'delete-image',
+            label: label,
+            imageScale: window.imageScaleByLabel[label],
+            imagePosition: window.imagePositionByLabel[label] ? {...window.imagePositionByLabel[label]} : null,
+            lineStrokes: window.lineStrokesByImage[label] ? [...window.lineStrokesByImage[label]] : [],
+            vectorStrokes: window.vectorStrokesByImage[label] ? JSON.parse(JSON.stringify(window.vectorStrokesByImage[label])) : {},
+            strokeVisibility: window.strokeVisibilityByImage[label] ? {...window.strokeVisibilityByImage[label]} : {},
+            strokeLabelVisibility: window.strokeLabelVisibility[label] ? {...window.strokeLabelVisibility[label]} : {},
+            strokeMeasurements: window.strokeMeasurements[label] ? JSON.parse(JSON.stringify(window.strokeMeasurements[label])) : {},
+            labelsByImage: window.labelsByImage[label],
+            undoStack: window.undoStackByImage[label] ? [...window.undoStackByImage[label]] : [],
+            redoStack: window.redoStackByImage[label] ? [...window.redoStackByImage[label]] : [],
+            imageState: window.imageStates[label],
+            originalImage: window.originalImages[label],
+            originalImageDimensions: window.originalImageDimensions[label] ? {...window.originalImageDimensions[label]} : null,
+            imageTags: (window.imageTags && window.imageTags[label] && Array.isArray(window.imageTags[label])) ? [...window.imageTags[label]] : [],
+            customImageName: window.customImageNames[label],
+            containerHTML: container.outerHTML, // Save full container HTML for DOM restoration
+            containerIndex: Array.from(container.parentElement.children).indexOf(container), // Save position
+            originalImageUrl: persistentImageUrl, // Use converted data URL instead of blob URL
+            wasCurrentImage: currentImageLabel === label
+        };
+        
+        // Save custom label positions for this image
+        imageData.customLabelPositions = {};
+        Object.keys(window.customLabelPositions || {}).forEach(key => {
+            if (key.startsWith(`${label}_`)) {
+                imageData.customLabelPositions[key] = JSON.parse(JSON.stringify(window.customLabelPositions[key]));
+            }
+        });
+        
+        // Save calculated label offsets for this image
+        imageData.calculatedLabelOffsets = {};
+        Object.keys(window.calculatedLabelOffsets || {}).forEach(key => {
+            if (key.startsWith(`${label}_`)) {
+                imageData.calculatedLabelOffsets[key] = JSON.parse(JSON.stringify(window.calculatedLabelOffsets[key]));
+            }
+        });
+        
+        // Push to undo stack (use a global undo stack for image deletions)
+        if (!window.globalUndoStack) {
+            window.globalUndoStack = [];
+        }
+        window.globalUndoStack.push(imageData);
+        
+        // Clear global redo stack when new action is performed
+        window.globalRedoStack = [];
+        
+        console.log(`[deleteImage] Saved undo data for image: ${label}`);
         
         // Remove from DOM
         container.remove();
@@ -1186,7 +1358,9 @@ function hideResizeOverlay() {
         delete window.imageStates[label];
         delete window.originalImages[label];
         delete window.originalImageDimensions[label];
-        delete window.imageTags[label];
+        if (window.imageTags && window.imageTags[label]) {
+            delete window.imageTags[label];
+        }
         delete window.customLabelPositions[label];
         delete window.calculatedLabelOffsets[label];
         delete window.customImageNames[label]; // Clean up custom names
@@ -1199,10 +1373,9 @@ function hideResizeOverlay() {
         delete window.selectedStrokeByImage[label];
         delete window.multipleSelectedStrokesByImage[label];
         
-        // Remove from pastedImages array if present
-        const originalImageUrl = container.dataset.originalImageUrl;
-        if (originalImageUrl) {
-            pastedImages = pastedImages.filter(url => url !== originalImageUrl);
+        // Remove from pastedImages array if present (use persistentImageUrl already declared above)
+        if (persistentImageUrl) {
+            pastedImages = pastedImages.filter(url => url !== persistentImageUrl);
         }
         
         // Handle currentImageLabel if it was the deleted image
@@ -1337,10 +1510,40 @@ function hideResizeOverlay() {
         // Also run on resize to keep center detection accurate
         window.addEventListener('resize', handleScroll, { passive: true });
 
-        // Initialize to first element and run once
+        // Initialize to first element - scroll it to center BEFORE running handleScroll
         const first = list.querySelector('.image-container');
-        if (first) updateNameBox(first.getAttribute('data-label'));
-        handleScroll();
+        if (first) {
+            // Get label from data attribute or from imageGalleryData
+            let firstLabel = first.getAttribute('data-label');
+            if (!firstLabel && window.imageGalleryData && window.imageGalleryData.length > 0) {
+                const firstImage = window.imageGalleryData[0];
+                firstLabel = firstImage?.name || firstImage?.label;
+            }
+            
+            if (firstLabel) {
+                updateNameBox(firstLabel);
+                
+                // Suppress scroll detection during initialization
+                window.__imageListProgrammaticScrollUntil = Date.now() + 200;
+                
+                // Scroll first image to center position
+                first.scrollIntoView({ behavior: 'auto', block: 'center' });
+                
+                // Explicitly switch to first image after scroll completes
+                setTimeout(() => {
+                    if (window.switchToImage) {
+                        console.log('[INIT] Explicitly switching to first image:', firstLabel);
+                        window.switchToImage(firstLabel);
+                    } else {
+                        handleScroll();
+                    }
+                }, 100);
+            } else {
+                handleScroll();
+            }
+        } else {
+            handleScroll();
+        }
 
         // Optional helper for future additions (no IO needed now)
         window.observeImageContainer = function(_) { /* no-op with scroll tracker */ };
@@ -7591,6 +7794,26 @@ function hideResizeOverlay() {
 //         console.log(`Current undo stack: ${undoStackByImage[currentImageLabel]?.length || 0} items`);
 //         console.log(`Current strokes: ${lineStrokesByImage[currentImageLabel]?.join(', ') || 'none'}`);
         
+        // Check global undo stack first for image deletions
+        if (window.globalUndoStack && window.globalUndoStack.length > 0) {
+            const lastGlobalAction = window.globalUndoStack[window.globalUndoStack.length - 1];
+            
+            if (lastGlobalAction.type === 'delete-image') {
+                const imageData = window.globalUndoStack.pop();
+                console.log(`[undo] Restoring deleted image: ${imageData.label}`);
+                
+                // Restore the image to the gallery
+                restoreDeletedImage(imageData);
+                
+                // Push to global redo stack
+                if (!window.globalRedoStack) {
+                    window.globalRedoStack = [];
+                }
+                window.globalRedoStack.push(imageData);
+                return;
+            }
+        }
+        
         const currentStack = undoStackByImage[currentImageLabel];
         if (currentStack && currentStack.length > 1) { // Keep at least one state (initial)
             // Get the state we're undoing from
@@ -7754,6 +7977,18 @@ function hideResizeOverlay() {
                                 strokeMeasurements[lastAction.image] = {};
                             }
                             strokeMeasurements[lastAction.image][strokeLabel] = JSON.parse(JSON.stringify(lastAction.measurements[strokeLabel]));
+                        }
+                        
+                        // Restore custom label positions (CRITICAL!)
+                        if (lastAction.labelOffsets && lastAction.labelOffsets[strokeLabel]) {
+                            const posKey = `${lastAction.image}_${strokeLabel}`;
+                            if (!window.customLabelPositions) {
+                                window.customLabelPositions = {};
+                            }
+                            window.customLabelPositions[posKey] = JSON.parse(JSON.stringify(lastAction.labelOffsets[strokeLabel]));
+                            
+                            // Also sync to localStorage
+                            syncLabelOffsetsToStorage(posKey, window.customLabelPositions[posKey]);
                         }
                     });
                 }
@@ -8007,6 +8242,29 @@ function hideResizeOverlay() {
 //         console.log(`Attempting to redo in ${currentImageLabel} workspace`);
 //         console.log(`Current redo stack: ${redoStackByImage[currentImageLabel]?.length || 0} items`);
         
+        // Check global redo stack first for image deletions
+        if (window.globalRedoStack && window.globalRedoStack.length > 0) {
+            const lastGlobalAction = window.globalRedoStack[window.globalRedoStack.length - 1];
+            
+            if (lastGlobalAction.type === 'delete-image') {
+                const imageData = window.globalRedoStack.pop();
+                console.log(`[redo] Re-deleting image: ${imageData.label}`);
+                
+                // Find the image container to delete again
+                const imageList = document.getElementById('imageList');
+                if (imageList) {
+                    const containers = imageList.querySelectorAll('.image-container');
+                    containers.forEach(container => {
+                        if (container.dataset.label === imageData.label) {
+                            // Delete the image again (this will push to globalUndoStack)
+                            deleteImage(imageData.label, container);
+                        }
+                    });
+                }
+                return;
+            }
+        }
+        
         const redoStack = redoStackByImage[currentImageLabel];
         if (redoStack && redoStack.length > 0) {
             // Get the action to redo
@@ -8018,33 +8276,45 @@ function hideResizeOverlay() {
             
             // Handle delete-strokes action
             if (actionToRedo.type === 'delete-strokes') {
-                // Delete strokes again
-                actionToRedo.strokes.forEach(strokeLabel => {
-                    // Remove from vector data
-                    if (vectorStrokesByImage[actionToRedo.image] && vectorStrokesByImage[actionToRedo.image][strokeLabel]) {
-                        delete vectorStrokesByImage[actionToRedo.image][strokeLabel];
-                    }
-                    
-                    // Remove from visibility tracking
-                    if (strokeVisibilityByImage[actionToRedo.image] && strokeVisibilityByImage[actionToRedo.image][strokeLabel]) {
-                        delete strokeVisibilityByImage[actionToRedo.image][strokeLabel];
-                    }
-                    
-                    // Remove from label visibility tracking
-                    if (strokeLabelVisibility[actionToRedo.image] && strokeLabelVisibility[actionToRedo.image][strokeLabel]) {
-                        delete strokeLabelVisibility[actionToRedo.image][strokeLabel];
-                    }
-                    
-                    // Remove from measurements
-                    if (strokeMeasurements[actionToRedo.image] && strokeMeasurements[actionToRedo.image][strokeLabel]) {
-                        delete strokeMeasurements[actionToRedo.image][strokeLabel];
-                    }
-                    
-                    // Remove from line strokes
-                    if (lineStrokesByImage[actionToRedo.image]) {
-                        lineStrokesByImage[actionToRedo.image] = lineStrokesByImage[actionToRedo.image].filter(label => label !== strokeLabel);
-                    }
-                });
+                // Delete strokes again (only the ones that were originally deleted)
+                if (actionToRedo.deletedStrokeLabels) {
+                    actionToRedo.deletedStrokeLabels.forEach(strokeLabel => {
+                        // Remove from vector data
+                        if (vectorStrokesByImage[actionToRedo.image] && vectorStrokesByImage[actionToRedo.image][strokeLabel]) {
+                            delete vectorStrokesByImage[actionToRedo.image][strokeLabel];
+                        }
+                        
+                        // Remove from visibility tracking
+                        if (strokeVisibilityByImage[actionToRedo.image] && strokeVisibilityByImage[actionToRedo.image][strokeLabel]) {
+                            delete strokeVisibilityByImage[actionToRedo.image][strokeLabel];
+                        }
+                        
+                        // Remove from label visibility tracking
+                        if (strokeLabelVisibility[actionToRedo.image] && strokeLabelVisibility[actionToRedo.image][strokeLabel]) {
+                            delete strokeLabelVisibility[actionToRedo.image][strokeLabel];
+                        }
+                        
+                        // Remove from measurements
+                        if (strokeMeasurements[actionToRedo.image] && strokeMeasurements[actionToRedo.image][strokeLabel]) {
+                            delete strokeMeasurements[actionToRedo.image][strokeLabel];
+                        }
+                        
+                        // Remove custom label positions (CRITICAL!)
+                        const posKey = `${actionToRedo.image}_${strokeLabel}`;
+                        if (window.customLabelPositions && window.customLabelPositions[posKey]) {
+                            delete window.customLabelPositions[posKey];
+                            localStorage.removeItem(`labelOffset_${posKey}`);
+                        }
+                        if (window.calculatedLabelOffsets && window.calculatedLabelOffsets[posKey]) {
+                            delete window.calculatedLabelOffsets[posKey];
+                        }
+                        
+                        // Remove from line strokes
+                        if (lineStrokesByImage[actionToRedo.image]) {
+                            lineStrokesByImage[actionToRedo.image] = lineStrokesByImage[actionToRedo.image].filter(label => label !== strokeLabel);
+                        }
+                    });
+                }
                 
                 // Clear selection
                 multipleSelectedStrokesByImage[actionToRedo.image] = [];
@@ -15358,6 +15628,7 @@ function hideResizeOverlay() {
         const originalMeasurements = {};
 
         // Save original data for potential undo (for the deleted strokes)
+        const originalLabelOffsets = {};
         deletedStrokeLabels.forEach(strokeLabel => {
             if (vectorStrokesByImage[currentImageLabel] && vectorStrokesByImage[currentImageLabel][strokeLabel]) {
                 originalVectorData[strokeLabel] = JSON.parse(JSON.stringify(vectorStrokesByImage[currentImageLabel][strokeLabel]));
@@ -15370,6 +15641,13 @@ function hideResizeOverlay() {
             }
             if (strokeMeasurements[currentImageLabel]) {
                 originalMeasurements[strokeLabel] = JSON.parse(JSON.stringify(strokeMeasurements[currentImageLabel][strokeLabel] || {}));
+            }
+            // Save custom label positions (CRITICAL for undo!)
+            const posKey = `${currentImageLabel}_${strokeLabel}`;
+            if (window.customLabelPositions && window.customLabelPositions[posKey]) {
+                originalLabelOffsets[strokeLabel] = JSON.parse(JSON.stringify(window.customLabelPositions[posKey]));
+            } else if (window.calculatedLabelOffsets && window.calculatedLabelOffsets[posKey]) {
+                originalLabelOffsets[strokeLabel] = JSON.parse(JSON.stringify(window.calculatedLabelOffsets[posKey]));
             }
         });
 
@@ -15414,6 +15692,7 @@ function hideResizeOverlay() {
             visibility: originalVisibility,
             labelVisibility: originalLabelVisibility,
             measurements: originalMeasurements,
+            labelOffsets: originalLabelOffsets, // CRITICAL: Save label positions!
             image: currentImageLabel
         };
         
