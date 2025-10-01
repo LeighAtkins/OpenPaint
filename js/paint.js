@@ -999,7 +999,7 @@ function hideResizeOverlay() {
         // Create delete button
         const deleteButton = document.createElement('button');
         deleteButton.className = 'delete-image-btn opacity-0 group-hover:opacity-100 transition-opacity';
-        deleteButton.textContent = '�';
+        deleteButton.textContent = '×';
         deleteButton.title = 'Delete image';
         deleteButton.style.cssText = `
             position: absolute;
