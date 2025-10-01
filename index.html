@@ -3570,6 +3570,11 @@
                 
                 thumbnail.addEventListener('dragend', () => {
                     thumbnail.classList.remove('dragging');
+                    // Clear scroll interval when drag ends
+                    if (window.dragScrollInterval) {
+                        clearInterval(window.dragScrollInterval);
+                        window.dragScrollInterval = null;
+                    }
                 });
                 
                 thumbnail.addEventListener('dragover', (e) => {
@@ -3585,6 +3590,12 @@
                 thumbnail.addEventListener('drop', (e) => {
                     e.preventDefault();
                     thumbnail.classList.remove('drag-over');
+                    
+                    // Clear scroll interval when drop happens
+                    if (window.dragScrollInterval) {
+                        clearInterval(window.dragScrollInterval);
+                        window.dragScrollInterval = null;
+                    }
                     
                     const draggedIndex = parseInt(e.dataTransfer.getData('text/plain'));
                     const targetIndex = index;
@@ -4577,6 +4588,54 @@
             
             console.log('[INIT] Image gallery and compatibility functions initialized');
             
+            // Setup container-level drag auto-scroll
+            const imageListContainer = document.getElementById('imageList');
+            if (imageListContainer) {
+                imageListContainer.addEventListener('dragover', (e) => {
+                    const rect = imageListContainer.getBoundingClientRect();
+                    const scrollThreshold = 80; // Distance from edge to trigger scroll
+                    const scrollSpeed = 10; // Pixels per scroll
+                    const mouseY = e.clientY;
+                    
+                    // Clear any existing scroll interval
+                    if (window.dragScrollInterval) {
+                        clearInterval(window.dragScrollInterval);
+                        window.dragScrollInterval = null;
+                    }
+                    
+                    // Check if near top edge
+                    if (mouseY - rect.top < scrollThreshold && mouseY > rect.top) {
+                        window.dragScrollInterval = setInterval(() => {
+                            imageListContainer.scrollBy(0, -scrollSpeed);
+                        }, 20);
+                    }
+                    // Check if near bottom edge
+                    else if (rect.bottom - mouseY < scrollThreshold && mouseY < rect.bottom) {
+                        window.dragScrollInterval = setInterval(() => {
+                            imageListContainer.scrollBy(0, scrollSpeed);
+                        }, 20);
+                    }
+                });
+                
+                // Clear scroll interval when drag ends anywhere
+                imageListContainer.addEventListener('drop', () => {
+                    if (window.dragScrollInterval) {
+                        clearInterval(window.dragScrollInterval);
+                        window.dragScrollInterval = null;
+                    }
+                });
+                
+                imageListContainer.addEventListener('dragleave', (e) => {
+                    // Only clear if leaving the container entirely
+                    if (e.target === imageListContainer) {
+                        if (window.dragScrollInterval) {
+                            clearInterval(window.dragScrollInterval);
+                            window.dragScrollInterval = null;
+                        }
+                    }
+                });
+            }
+            
             // Debug function to inspect paint.js state
             window.debugPaintState = function() {
                 console.log('=== PAINT.JS STATE DEBUG ===');
@@ -4883,13 +4942,35 @@
                         
                         syncLegacyImagesToGallery();
                         
-                        // After adding new images, ensure we start at the first one if we're not already there
-                        if (currentImageIndex !== 0 && imageGalleryData.length > 0) {
-                            console.log('[PERIODIC] Resetting to first image after adding new images');
-                            setTimeout(() => {
-                                navigateToImage(0);
-                                updateActiveImage(0);
-                            }, 200);
+                        // After adding new images, silently load the first one without scrolling
+                        if (imageGalleryData.length > 0) {
+                            const firstImage = imageGalleryData[0];
+                            const firstLabel = firstImage?.name || firstImage?.label;
+                            
+                            if (firstLabel) {
+                                console.log('[PERIODIC] Loading first image silently:', firstLabel);
+                                setTimeout(() => {
+                                    // Directly update canvas without scrolling thumbnail
+                                    if (window.pastedImages && window.pastedImages[firstLabel]) {
+                                        window.currentImageLabel = firstLabel;
+                                        const imgElement = window.pastedImages[firstLabel];
+                                        if (imgElement && imgElement.complete) {
+                                            window.redrawCanvasWithVisibility();
+                                            // Update active state without scrolling
+                                            const thumbnails = document.querySelectorAll('.image-container');
+                                            thumbnails.forEach((thumb, idx) => {
+                                                if (thumb.dataset.label === firstLabel || thumb.getAttribute('title') === firstLabel) {
+                                                    thumb.classList.add('active');
+                                                    thumb.setAttribute('aria-selected', 'true');
+                                                } else {
+                                                    thumb.classList.remove('active');
+                                                    thumb.removeAttribute('aria-selected');
+                                                }
+                                            });
+                                        }
+                                    }
+                                }, 200);
+                            }
                         }
                         
                         lastLegacyCount = currentLegacyCount;
