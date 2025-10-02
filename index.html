@@ -609,6 +609,7 @@
         
         #imagePanel:has(#imagePanelContent.hidden) {
             height: auto !important;
+            min-height: 140px !important; /* Header + name box + some padding */
         }
         
         /* Ensure Images header is always visible */
@@ -616,6 +617,37 @@
             display: flex !important;
             visibility: visible !important;
             opacity: 1 !important;
+        }
+
+        /* Ensure image name header is always visible and not squished */
+        #imagePanel > .px-3.bg-white.border-b.border-slate-200.py-2 {
+            flex-shrink: 0 !important;
+            min-height: 60px !important;
+            position: relative !important;
+            z-index: 10 !important;
+            display: block !important;
+            visibility: visible !important;
+        }
+
+        /* Ensure the image name input is always visible */
+        #currentImageNameBox {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            width: 100% !important;
+        }
+
+        /* Ensure image panel maintains proper height when content changes */
+        #imagePanel {
+            display: flex !important;
+            flex-direction: column !important;
+        }
+
+        /* Ensure content area doesn't affect header visibility */
+        #imagePanelContent {
+            flex: 1 1 auto !important;
+            min-height: 0 !important;
+            overflow: hidden !important;
         }
         
         /* Smooth transitions for all panel content */
@@ -3412,9 +3444,56 @@
                 
                 // Ensure the image panel is visible when adding any image
                 const imagePanel = document.getElementById('imagePanel');
+                const imagePanelContent = document.getElementById('imagePanelContent');
                 if (imagePanel) {
+                    // Remove any hidden classes
                     imagePanel.classList.remove('hidden');
-                    imagePanel.style.display = 'block';
+                    
+                    // Ensure the content is also visible (not collapsed)
+                    if (imagePanelContent) {
+                        imagePanelContent.classList.remove('hidden');
+                        
+                        // Ensure content has proper max-height for expansion
+                        if (imagePanelContent.style.maxHeight === '0px' || imagePanelContent.style.maxHeight === '0') {
+                            imagePanelContent.style.maxHeight = 'none';
+                        }
+                    }
+                    
+                    // Don't set display:block as it can interfere with drag positioning
+                    // The panel is visible by default; just ensure no hidden class
+                    if (imagePanel.style.display === 'none') {
+                        imagePanel.style.display = '';
+                    }
+                    
+                    // Ensure the panel is positioned within the visible viewport
+                    // This fixes the issue where the panel might be off-screen after drag operations
+                    const rect = imagePanel.getBoundingClientRect();
+                    const windowWidth = window.innerWidth;
+                    const windowHeight = window.innerHeight;
+                    
+                    // Check if panel is completely off-screen or has invalid dimensions
+                    const isOffScreen = rect.right < 0 || rect.left > windowWidth || 
+                                       rect.bottom < 0 || rect.top > windowHeight;
+                    const hasInvalidSize = rect.width === 0 || rect.height === 0;
+                    
+                    // Also check if panel is mostly off-screen (more than 80% hidden)
+                    const visibleWidth = Math.max(0, Math.min(rect.right, windowWidth) - Math.max(rect.left, 0));
+                    const visibleHeight = Math.max(0, Math.min(rect.bottom, windowHeight) - Math.max(rect.top, 0));
+                    const visibleArea = visibleWidth * visibleHeight;
+                    const totalArea = rect.width * rect.height;
+                    const isMostlyHidden = totalArea > 0 && (visibleArea / totalArea) < 0.2;
+                    
+                    if (isOffScreen || hasInvalidSize || isMostlyHidden) {
+                        console.log('[Gallery] Panel is off-screen or invalid, resetting position');
+                        
+                        // Reset to default position (right side, vertically centered)
+                        imagePanel.style.position = 'fixed';
+                        imagePanel.style.right = '1rem';
+                        imagePanel.style.left = 'auto';
+                        imagePanel.style.top = 'clamp(1rem, 50vh - 20rem, calc(100vh - 40rem - 1rem))';
+                        imagePanel.style.bottom = 'auto';
+                        imagePanel.style.transform = '';
+                    }
                 }
             }
             
