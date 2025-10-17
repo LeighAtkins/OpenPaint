@@ -1,6 +1,17 @@
 // Define core application structure for better state management
-console.log('[PAINT.JS] Script loaded successfully');
-console.warn('[PAINT.JS] Script loaded (warn)');
+function debugLog(...args) {
+    try {
+        const isDebug = Boolean(window?.paintApp?.config?.debugMode) || Boolean(window?.debugMode);
+        const queryDebug = typeof window !== 'undefined' && window.location?.search?.includes('debug');
+        if (isDebug || queryDebug) {
+            console.log(...args);
+        }
+    } catch (err) {
+        console.log(...args);
+    }
+}
+
+debugLog('[PAINT.JS] Script loaded successfully');
 // Disable legacy measurement overlay rendering in favor of unified tag renderer
 window.disableLegacyMeasurementOverlay = true;
 
@@ -107,7 +118,9 @@ window.paintApp = {
         lastClickTime: 0,
         lastCanvasClickTime: 0,
         orderedImageLabels: [],
-        imageLabels: []
+        imageLabels: [],
+        // Text elements per image label (moved from uiState since it's persistent data)
+        textElementsByImage: {}
     },
     uiState: {
         // Control point dragging
@@ -125,7 +138,8 @@ window.paintApp = {
         lastVelocity: 0,
         mouseDownPosition: null,
         curveJustCompleted: false,
-        drawingMode: 'straight', // Options: 'freehand', 'straight', 'curved', 'arrow'
+        drawingMode: 'straight', // Options: 'freehand', 'straight', 'curved', 'arrow', 'text'
+        previousDrawingMode: 'straight', // Track previous drawing mode for text exit
         straightLineStart: null,
         curvedLinePoints: [],
         lastDrawnPoint: null,
@@ -343,7 +357,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const canvasEl = window.paintApp.state.domElements.canvas;
                     removeBgBtn.disabled = true;
                     const oldText = removeBgBtn.textContent;
-                    removeBgBtn.textContent = 'Processing�';
+                    removeBgBtn.textContent = 'Processing ⏳';
 
                     let blob;
                     if (srcUrl) {
@@ -587,6 +601,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.paintApp.state.domElements.strokeCounter = document.getElementById('strokeCounter');
     window.paintApp.state.domElements.imageList = document.getElementById('imageList');
     window.paintApp.state.domElements.drawingModeToggle = document.getElementById('drawingModeToggle');
+    window.paintApp.state.domElements.textModeToggle = document.getElementById('textModeToggle');
     window.paintApp.state.domElements.strokeSidebar = document.getElementById('strokePanel');
     window.paintApp.state.domElements.imageSidebar = document.getElementById('imagePanel');
     window.paintApp.state.domElements.strokeSidebarHeader = document.getElementById('strokePanel');
@@ -682,6 +697,7 @@ if (colorPicker) {
     const strokeCounter = window.paintApp.state.domElements.strokeCounter;
     const imageList = window.paintApp.state.domElements.imageList;
     const drawingModeToggle = window.paintApp.state.domElements.drawingModeToggle;
+    const textModeToggle = window.paintApp.state.domElements.textModeToggle;
     const strokeSidebar = window.paintApp.state.domElements.strokeSidebar;
     const imageSidebar = window.paintApp.state.domElements.imageSidebar;
     const strokeSidebarHeader = window.paintApp.state.domElements.strokeSidebarHeader;
@@ -5243,8 +5259,107 @@ function hideResizeOverlay() {
         // Create a sorted array of stroke labels we can use for index-based operations
         const sortedStrokeLabels = Object.keys(lineStrokesByImage[currentImageLabel] || {});
         
+        // Text elements section
+        const textHeader = document.createElement('h4');
+        textHeader.textContent = 'Text Elements';
+        textHeader.style.margin = '10px 0 6px 0';
+        textHeader.style.fontSize = '13px';
+        textHeader.style.color = '#475569';
+        strokesList.appendChild(textHeader);
+
+        const currentLabel = window.paintApp.state.currentImageLabel || window.currentImageLabel || 'front';
+        const textElementsByImage = window.paintApp.state.textElementsByImage || {};
+        const textList = textElementsByImage[currentLabel] || [];
+        if (textList.length === 0) {
+            const p = document.createElement('p');
+            p.textContent = 'No text elements';
+            p.style.margin = '0 0 8px 0';
+            strokesList.appendChild(p);
+        } else {
+            textList.forEach((el, idx) => {
+                const item = document.createElement('div');
+                item.className = 'stroke-visibility-item';
+                
+                // Visibility checkbox
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.checked = el.visible !== false;
+                checkbox.addEventListener('change', () => {
+                    el.visible = checkbox.checked;
+                    redrawCanvasWithVisibility();
+                });
+                
+                // Background toggle checkbox
+                const bgCheckbox = document.createElement('input');
+                bgCheckbox.type = 'checkbox';
+                bgCheckbox.checked = el.hasWhiteBackground === true;
+                bgCheckbox.title = 'Toggle white background';
+                bgCheckbox.style.marginLeft = '4px';
+                bgCheckbox.addEventListener('change', () => {
+                    el.hasWhiteBackground = bgCheckbox.checked;
+                    try { saveState(true, false, false); } catch(_) {}
+                    redrawCanvasWithVisibility();
+                });
+                
+                // Create input field for inline editing
+                const labelEl = document.createElement('input');
+                labelEl.type = 'text';
+                labelEl.value = el.text || '';
+                labelEl.style.marginLeft = '8px';
+                labelEl.style.width = '120px'; // Fixed width instead of flex: 1
+                labelEl.style.border = 'none';
+                labelEl.style.background = 'transparent';
+                labelEl.style.fontSize = '13px';
+                labelEl.style.padding = '2px 4px';
+                labelEl.title = 'Edit text here';
+                
+                // Save on blur or Enter
+                labelEl.addEventListener('blur', () => {
+                    const newText = labelEl.value.trim();
+                    if (newText && newText !== el.text) {
+                        el.text = newText;
+                        try { saveState(true, false, false); } catch(_) {}
+                        try { redrawCanvasWithVisibility(); } catch(_) {}
+                    }
+                });
+                
+                labelEl.addEventListener('keydown', (ev) => {
+                    if (ev.key === 'Enter') {
+                        ev.preventDefault();
+                        labelEl.blur();
+                    } else if (ev.key === 'Escape') {
+                        labelEl.value = el.text;
+                        labelEl.blur();
+                    }
+                });
+                
+                const del = document.createElement('button');
+                del.textContent = '×';
+                del.title = 'Delete text';
+                del.addEventListener('click', () => {
+                    textList.splice(idx, 1);
+                    redrawCanvasWithVisibility();
+                    updateStrokeVisibilityControls();
+                    try { saveState(true, false, false); } catch(_) {}
+                });
+                
+                item.appendChild(checkbox);
+                item.appendChild(bgCheckbox);
+                item.appendChild(labelEl);
+                item.appendChild(del);
+                strokesList.appendChild(item);
+            });
+        }
+
+        // Divider before strokes
+        const divider = document.createElement('hr');
+        divider.style.margin = '10px 0';
+        strokesList.appendChild(divider);
+        
         if (strokes.length === 0) {
-            strokesList.innerHTML = '<p>No strokes to display</p>';
+            const p2 = document.createElement('p');
+            p2.textContent = 'No strokes to display';
+            strokesList.appendChild(p2);
             return;
         }
         
@@ -6072,6 +6187,17 @@ function hideResizeOverlay() {
     let dragStartX = 0;
     let dragStartY = 0;
     
+// Text dragging state
+const TEXT_DRAG_THRESHOLD = 5;
+let textDragPending = false;
+let textDragPendingElement = null;
+let textDragStartCanvasX = 0;
+let textDragStartCanvasY = 0;
+    let isDraggingTextElement = false;
+    let draggedTextElement = null;
+    let dragStartTextX = 0;
+    let dragStartTextY = 0;
+    
     // Initialize custom label positions for each image
     IMAGE_LABELS.forEach(label => {
         customLabelPositions[label] = {};
@@ -6092,7 +6218,7 @@ function hideResizeOverlay() {
     // Make redrawCanvasWithVisibility available globally
     window.redrawCanvasWithVisibility = redrawCanvasWithVisibility;
     function redrawCanvasWithVisibility() {
-//         console.log(`--- redrawCanvasWithVisibility called for: ${currentImageLabel} ---`);
+//        console.log(`--- redrawCanvasWithVisibility called for: ${currentImageLabel} ---`);
         
         // PERFORMANCE: Invalidate interactive element cache before redraw
         invalidateInteractiveElementCache();
@@ -6264,6 +6390,115 @@ function hideResizeOverlay() {
             const imageY = canvasCenterY + position.y;
             
             applyVisibleStrokes(scale, imageX, imageY);
+            
+            // Draw text elements even when no image is loaded
+            try {
+                const currentLabelForText = window.paintApp.state.currentImageLabel || window.currentImageLabel || 'front';
+                const textElementsByImage = window.paintApp.state.textElementsByImage || {};
+                const textList = textElementsByImage[currentLabelForText] || [];
+                if (Array.isArray(textList) && textList.length > 0) {
+                    const ctxText = ctx;
+                    textList.forEach(el => {
+                        if (!el || el.visible === false || typeof el.text !== 'string') return;
+                        
+                        // Use canvas coordinates directly (no transformation)
+                        // This ensures text appears exactly where it was placed
+                        const canvasCoords = el.useCanvasCoords ? 
+                            { x: el.x, y: el.y } : 
+                            (window.worldToClient ? window.worldToClient(el.x, el.y) : { x: el.x, y: el.y });
+                        
+                    ctxText.save();
+                    
+                    // CRITICAL: Lock canvas text state to prevent inheritance from previous drawing operations
+                    ctxText.setTransform(1, 0, 0, 1, 0, 0); // Reset any transforms
+                    ctxText.textAlign = 'left';              // Ensure left alignment (not center/right)
+                    ctxText.textBaseline = 'top';            // Ensure top baseline
+                    ctxText.direction = 'ltr';               // Left-to-right
+                    
+                    console.log('[RENDER TEXT DEBUG 1]', {
+                        id: el.id,
+                        useCanvasCoords: el.useCanvasCoords,
+                        savedCoords: { x: el.x, y: el.y },
+                        canvasCoords: { x: canvasCoords.x, y: canvasCoords.y },
+                        savedSize: { width: el.width, height: el.height }
+                    });
+                    
+                    // Saved coordinates and dimensions represent the wrapper box (including border)
+                    // Use saved values from preview to ensure exact match (no hardcoded values)
+                    const wrapperWidth = el.width || 154;
+                    const wrapperHeight = el.height || 44;
+                    const padding = el.padding !== undefined ? el.padding : 8;
+                    const borderWidth = el.borderWidth !== undefined ? el.borderWidth : 2;
+                    
+                    // Draw border (the wrapper's border)
+                    ctxText.strokeStyle = '#3b82f6';
+                    ctxText.lineWidth = borderWidth;
+                    ctxText.strokeRect(
+                        canvasCoords.x + borderWidth/2,
+                        canvasCoords.y + borderWidth/2,
+                        wrapperWidth - borderWidth,
+                        wrapperHeight - borderWidth
+                    );
+                    
+                    // Draw white background if enabled (inside the border, this is where textBox background would be)
+                    if (el.hasWhiteBackground) {
+                        ctxText.fillStyle = 'rgba(255, 255, 255, 0.95)';
+                        ctxText.fillRect(
+                            canvasCoords.x + borderWidth,
+                            canvasCoords.y + borderWidth,
+                            wrapperWidth - borderWidth * 2,
+                            wrapperHeight - borderWidth * 2
+                        );
+                        console.log('[RENDER BG 1]', { 
+                            x: canvasCoords.x + borderWidth, 
+                            y: canvasCoords.y + borderWidth,
+                            w: wrapperWidth - borderWidth * 2,
+                            h: wrapperHeight - borderWidth * 2
+                        });
+                    }
+                    
+                    // Draw text with padding inside the box (using saved computed styles)
+                    // Build font string with weight to match preview exactly
+                    const fontWeight = el.fontWeight || 'normal';
+                    ctxText.font = `${fontWeight} ${el.fontSize || 16}px ${el.fontFamily || 'Arial, sans-serif'}`;
+                    ctxText.fillStyle = el.color || '#1f2937';
+                    
+                    // Apply letter spacing if supported (modern browsers)
+                    if (el.letterSpacing && el.letterSpacing !== 'normal') {
+                        ctxText.letterSpacing = el.letterSpacing;
+                    }
+                    
+                    // Available width for text = wrapper width - (border on each side) - (padding on each side)
+                    const maxWidth = Math.max(20, wrapperWidth - borderWidth * 2 - padding * 2);
+                    // Use saved line height if available, otherwise calculate from fontSize
+                    const lineHeight = el.lineHeight && el.lineHeight !== 'normal' ? 
+                        parseFloat(el.lineHeight) : 
+                        Math.round((el.fontSize || 16) * 1.2);
+                    const lines = wrapCanvasText(ctxText, el.text, maxWidth);
+                    const totalHeight = lines.length * lineHeight;
+                    
+                    // Text starts at: wrapper left + border width + padding
+                    const textStartX = canvasCoords.x + borderWidth + padding;
+                    const textStartY = canvasCoords.y + borderWidth + padding;
+                    
+                    console.log('[RENDER TEXT 1]', { 
+                        x: textStartX, 
+                        y: textStartY, 
+                        maxWidth, 
+                        lines: lines.length,
+                        wrapperWidth,
+                        availableWidth: wrapperWidth - borderWidth * 2 - padding * 2
+                    });
+                    
+                    let drawY = textStartY;
+                    lines.forEach(line => {
+                        ctxText.fillText(line, textStartX, drawY, maxWidth);
+                        drawY += lineHeight;
+                    });
+                    ctxText.restore();
+                    });
+                }
+            } catch (_) {}
         }
     }
         
@@ -6346,6 +6581,132 @@ function hideResizeOverlay() {
             
         // Apply visible strokes
         applyVisibleStrokes(scale, imageX, imageY);
+
+        // After strokes, draw text elements for the current image
+        try {
+            const currentLabelForText = window.paintApp.state.currentImageLabel || window.currentImageLabel || 'front';
+            const textElementsByImage = window.paintApp.state.textElementsByImage || {};
+            const textList = textElementsByImage[currentLabelForText] || [];
+            if (Array.isArray(textList) && textList.length > 0) {
+                const ctxText = ctx;
+                textList.forEach(el => {
+                    if (!el || el.visible === false || typeof el.text !== 'string') return;
+                    
+                    // Use canvas coordinates directly (no transformation)
+                    // This ensures text appears exactly where it was placed
+                    const canvasCoords = el.useCanvasCoords ? 
+                        { x: el.x, y: el.y } : 
+                        (window.worldToClient ? window.worldToClient(el.x, el.y) : { x: el.x, y: el.y });
+                    
+                    console.log('[RENDER TEXT DEBUG] Element:', el.id, 'stored coords:', {x: el.x, y: el.y}, 'canvas coords:', canvasCoords, 'size:', {width: el.width, height: el.height});
+                    
+                    ctxText.save();
+                    
+                    // CRITICAL: Lock canvas text state to prevent inheritance from previous drawing operations
+                    ctxText.setTransform(1, 0, 0, 1, 0, 0); // Reset any transforms
+                    ctxText.textAlign = 'left';              // Ensure left alignment (not center/right)
+                    ctxText.textBaseline = 'top';            // Ensure top baseline
+                    ctxText.direction = 'ltr';               // Left-to-right
+                    
+                    // Debug: Log current text rendering state
+                    if (window.__TEXT_DEBUG) {
+                        const transform = ctxText.getTransform?.() || { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 };
+                        console.log('[TEXT STATE]', {
+                            textAlign: ctxText.textAlign,
+                            textBaseline: ctxText.textBaseline,
+                            direction: ctxText.direction,
+                            transform: { a: transform.a, b: transform.b, c: transform.c, d: transform.d, e: transform.e, f: transform.f }
+                        });
+                    }
+                    
+                    // Saved coordinates and dimensions represent the wrapper box (including border)
+                    // Use saved values from preview to ensure exact match (no hardcoded values)
+                    const wrapperWidth = el.width || 154;
+                    const wrapperHeight = el.height || 44;
+                    const padding = el.padding !== undefined ? el.padding : 8;
+                    const borderWidth = el.borderWidth !== undefined ? el.borderWidth : 2;
+                    
+                    // Saved x,y represent the outer edge of the container (including border)
+                    // The border is drawn with its stroke centered on the rectangle edge
+                    // So we need to inset by borderWidth/2 to keep it inside the container bounds
+                    
+                    // Draw border (the wrapper's border) using fillRect for precise pixel control
+                    ctxText.fillStyle = '#3b82f6';
+                    // Top border
+                    ctxText.fillRect(canvasCoords.x, canvasCoords.y, wrapperWidth, borderWidth);
+                    // Bottom border
+                    ctxText.fillRect(canvasCoords.x, canvasCoords.y + wrapperHeight - borderWidth, wrapperWidth, borderWidth);
+                    // Left border
+                    ctxText.fillRect(canvasCoords.x, canvasCoords.y, borderWidth, wrapperHeight);
+                    // Right border
+                    ctxText.fillRect(canvasCoords.x + wrapperWidth - borderWidth, canvasCoords.y, borderWidth, wrapperHeight);
+                    
+                    // Draw white background if enabled (inside the border)
+                    if (el.hasWhiteBackground) {
+                        ctxText.fillStyle = 'rgba(255, 255, 255, 0.95)';
+                        ctxText.fillRect(
+                            canvasCoords.x + borderWidth,
+                            canvasCoords.y + borderWidth,
+                            wrapperWidth - borderWidth * 2,
+                            wrapperHeight - borderWidth * 2
+                        );
+                    }
+                    
+                    // Draw text with padding inside the box (using saved computed styles)
+                    // Build font string with weight to match preview exactly
+                    const fontWeight = el.fontWeight || 'normal';
+                    ctxText.font = `${fontWeight} ${el.fontSize || 16}px ${el.fontFamily || 'Arial, sans-serif'}`;
+                    ctxText.fillStyle = el.color || '#1f2937';
+                    
+                    // Apply letter spacing if supported (modern browsers)
+                    if (el.letterSpacing && el.letterSpacing !== 'normal') {
+                        ctxText.letterSpacing = el.letterSpacing;
+                    }
+                    
+                    // Available width for text = wrapper width - (border on each side) - (padding on each side)
+                    const maxWidth = Math.max(20, wrapperWidth - borderWidth * 2 - padding * 2);
+                    // Use saved line height if available, otherwise calculate from fontSize
+                    const lineHeight = el.lineHeight && el.lineHeight !== 'normal' ? 
+                        parseFloat(el.lineHeight) : 
+                        Math.round((el.fontSize || 16) * 1.2);
+                    const lines = wrapCanvasText(ctxText, el.text, maxWidth);
+                    const totalHeight = lines.length * lineHeight;
+                    
+                    // Text starts at: wrapper left + border width + padding
+                    const textStartX = canvasCoords.x + borderWidth + padding;
+                    const textStartY = canvasCoords.y + borderWidth + padding;
+                    
+                    // Debug: Draw red guide line at text start X
+                    if (window.__TEXT_DEBUG) {
+                        ctxText.save();
+                        ctxText.strokeStyle = 'red';
+                        ctxText.lineWidth = 1;
+                        ctxText.setLineDash([5, 5]);
+                        ctxText.beginPath();
+                        ctxText.moveTo(textStartX, canvasCoords.y);
+                        ctxText.lineTo(textStartX, canvasCoords.y + wrapperHeight);
+                        ctxText.stroke();
+                        ctxText.setLineDash([]);
+                        ctxText.restore();
+                        
+                        console.log('[TEXT POSITION]', {
+                            canvasX: canvasCoords.x,
+                            borderWidth,
+                            padding,
+                            textStartX,
+                            calculation: `${canvasCoords.x} + ${borderWidth} + ${padding} = ${textStartX}`
+                        });
+                    }
+                    
+                    let drawY = textStartY;
+                    lines.forEach(line => {
+                        ctxText.fillText(line, textStartX, drawY, maxWidth);
+                        drawY += lineHeight;
+                    });
+                    ctxText.restore();
+                });
+            }
+        } catch (_) {}
         }
         
     // Function to apply visible strokes - moved outside redrawCanvasWithVisibility to be globally accessible
@@ -7176,27 +7537,14 @@ function hideResizeOverlay() {
                     let finalPositionCanvas; // This will be the top-left of the label in CANVAS coordinates
                     let imageSpaceOffset; // This will store the {x, y} offset in IMAGE SPACE
 
-                    console.log(`[OFFSET-DEBUG] ${strokeLabel} - Checking offset sources:`);
-                    console.log(`[OFFSET-DEBUG] ${strokeLabel} - customLabelPositions exists:`, !!customLabelPositions[currentImageLabel]?.[strokeLabel]);
-                    console.log(`[OFFSET-DEBUG] ${strokeLabel} - calculatedLabelOffsets exists:`, !!calculatedLabelOffsets[currentImageLabel]?.[strokeLabel]);
-                    
                     // Check for custom positions in both local and window storage
                     const localCustomExists = customLabelPositions[currentImageLabel]?.[strokeLabel];
                     const windowCustomExists = window.customLabelPositions[currentImageLabel]?.[strokeLabel];
                     
-                    if (localCustomExists && !windowCustomExists) {
-                        console.log(`[SYNC-WARNING] ${strokeLabel} - Found in local but not window storage - this may cause rotation issues`);
-                    } else if (!localCustomExists && windowCustomExists) {
-                        console.log(`[SYNC-WARNING] ${strokeLabel} - Found in window but not local storage - syncing to local`);
+                    if (!localCustomExists && windowCustomExists) {
+                        // Sync from window to local storage
                         if (!customLabelPositions[currentImageLabel]) customLabelPositions[currentImageLabel] = {};
                         customLabelPositions[currentImageLabel][strokeLabel] = windowCustomExists;
-                    }
-                    
-                    if (calculatedLabelOffsets[currentImageLabel]?.[strokeLabel]) {
-                        console.log(`[OFFSET-DEBUG] ${strokeLabel} - calculated offset value:`, calculatedLabelOffsets[currentImageLabel][strokeLabel]);
-                    }
-                    if (customLabelPositions[currentImageLabel]?.[strokeLabel]) {
-                        console.log(`[OFFSET-DEBUG] ${strokeLabel} - custom position value:`, customLabelPositions[currentImageLabel][strokeLabel]);
                     }
 
                     // Prefer rotation-stable relative position if available
@@ -7213,18 +7561,15 @@ function hideResizeOverlay() {
                             customLabelPositions[currentImageLabel][strokeLabel] = imageSpaceOffset;
                             if (!window.customLabelPositions[currentImageLabel]) window.customLabelPositions[currentImageLabel] = {};
                             window.customLabelPositions[currentImageLabel][strokeLabel] = imageSpaceOffset;
-                            console.log(`[OFFSET-DEBUG] ${strokeLabel} - USING RELATIVE (derived absolute):`, imageSpaceOffset);
                         }
                     }
                     if (!imageSpaceOffset && customLabelPositions[currentImageLabel]?.[strokeLabel]) {
                         // Convert to pixels if normalized
                         const raw = customLabelPositions[currentImageLabel][strokeLabel];
                         imageSpaceOffset = normalizeToPixels(raw, currentImageLabel) || raw; // px
-                        console.log(`[OFFSET-DEBUG] ${strokeLabel} - USING CUSTOM:`, imageSpaceOffset);
                     } else if (!imageSpaceOffset && calculatedLabelOffsets[currentImageLabel]?.[strokeLabel]) {
                         const raw = calculatedLabelOffsets[currentImageLabel][strokeLabel];
                         imageSpaceOffset = normalizeToPixels(raw, currentImageLabel) || raw; // px
-                        console.log(`[OFFSET-DEBUG] ${strokeLabel} - USING CALCULATED:`, imageSpaceOffset);
                         
                         // For blank canvas, check if this is a massive offset from the old buggy calculation
                         if (currentImageLabel === 'blank_canvas') {
@@ -8743,6 +9088,7 @@ function hideResizeOverlay() {
     let mouseDownPosition = window.paintApp.uiState.mouseDownPosition;
     let curveJustCompleted = window.paintApp.uiState.curveJustCompleted;
     let drawingMode = window.paintApp.uiState.drawingMode;
+    let previousDrawingMode = window.paintApp.state.previousDrawingMode;
     let straightLineStart = window.paintApp.uiState.straightLineStart;
     let curvedLinePoints = window.paintApp.uiState.curvedLinePoints;
     let lastDrawnPoint = window.paintApp.uiState.lastDrawnPoint;
@@ -9537,6 +9883,32 @@ function hideResizeOverlay() {
         // Default cursor based on mode
         canvas.style.cursor = isShiftPressed ? 'grab' : 'crosshair';
     }
+
+    // Helper function to restore previous drawing mode after text mode exit (made global for createTextBox)
+    window.restorePreviousDrawingMode = function() {
+        // Restore the drawing mode from before entering text mode
+        drawingMode = previousDrawingMode;
+        window.paintApp.uiState.drawingMode = previousDrawingMode;
+        
+        // Update UI to reflect the restored mode
+        textModeToggle.classList.remove('text-mode-active');
+        
+        // Update drawing mode toggle classes based on restored mode
+        drawingModeToggle.classList.remove('straight-mode', 'curved-mode');
+        if (previousDrawingMode === 'straight') {
+            drawingModeToggle.classList.add('straight-mode');
+            arrowControls.style.display = 'flex';
+            canvas.style.cursor = 'crosshair';
+        } else if (previousDrawingMode === 'curved') {
+            drawingModeToggle.classList.add('curved-mode');
+            arrowControls.style.display = 'flex';
+            canvas.style.cursor = 'crosshair';
+        } else if (previousDrawingMode === 'freehand') {
+            // No mode class for freehand
+            arrowControls.style.display = 'none';
+            canvas.style.cursor = 'crosshair';
+        }
+    };
 
     // Helper function to handle defocus clicks (single clicks that don't create strokes)
     function handleDefocusClick() {
@@ -10743,6 +11115,31 @@ function hideResizeOverlay() {
         curvedLinePoints = [];
 //         console.log(`Drawing mode changed to: ${drawingMode}`);
     });
+
+    // Text mode toggle event listener
+    textModeToggle.addEventListener('click', () => {
+        if (drawingMode === 'text') {
+            // Exit text mode, restore previous drawing mode
+            restorePreviousDrawingMode();
+        } else {
+            // Store current mode before entering text mode
+            previousDrawingMode = drawingMode;
+            window.paintApp.state.previousDrawingMode = drawingMode;
+            
+            // Enter text mode
+            drawingMode = 'text';
+            window.paintApp.uiState.drawingMode = 'text';
+            textModeToggle.classList.add('text-mode-active');
+            drawingModeToggle.classList.remove('straight-mode', 'curved-mode');
+            arrowControls.style.display = 'none';
+            canvas.style.cursor = 'text';
+        }
+        
+        // Clear any temporary drawing state when switching modes
+        straightLineStart = null;
+        curvedLinePoints = [];
+        console.log(`Drawing mode changed to: ${drawingMode}`);
+    });
     
     // Add hover effects to toolbar arrow toggles
     [startArrowToggle, endArrowToggle].forEach(toggle => {
@@ -11429,7 +11826,7 @@ function hideResizeOverlay() {
     // PERFORMANCE: Optimized throttled mousemove handler
     function handleMouseMoveThrottled(x, y) {
         // Early exit if dragging - these operations don't need expensive hover detection
-        if (isDraggingImage || isDraggingLabel || isDraggingControlPoint || isDrawing) {
+        if (isDraggingImage || isDraggingLabel || isDraggingControlPoint || isDraggingTextElement || isDrawing) {
             return;
         }
 
@@ -11439,11 +11836,16 @@ function hideResizeOverlay() {
             cacheInvalidated = false;
         }
 
+        // Check if hovering over text element first
+        const hoveredTextElement = findTextElementAtPoint(x, y);
+
         // PERFORMANCE: Use cached positions for faster hover detection
         const newHoveredLabelInfo = findLabelAtPointOptimized(x, y);
         
         // Update cursor and visual hover state only if hovered label changed
-        if ((hoveredCanvasLabelInfo?.strokeLabel !== newHoveredLabelInfo?.strokeLabel) || 
+        if (hoveredTextElement) {
+            updateCursor('move', 'hovering text element');
+        } else if ((hoveredCanvasLabelInfo?.strokeLabel !== newHoveredLabelInfo?.strokeLabel) || 
             (!hoveredCanvasLabelInfo && newHoveredLabelInfo) || 
             (hoveredCanvasLabelInfo && !newHoveredLabelInfo)) {
             
@@ -11696,6 +12098,12 @@ function hideResizeOverlay() {
         const coords = window.getPointerCoords(e);
         const clickedCanvasLabel = findLabelAtPoint(coords.canvas.x, coords.canvas.y);
         const isClickOnCanvasLabel = clickedCanvasLabel !== null;
+    
+    // Check if clicking on a text element
+    console.log('[TEXT CHECK] About to call findTextElementAtPoint at:', coords.canvas.x, coords.canvas.y);
+    const clickedTextElement = findTextElementAtPoint(coords.canvas.x, coords.canvas.y);
+    const isClickOnTextElement = clickedTextElement !== null;
+    console.log('[TEXT CHECK] Result:', isClickOnTextElement, clickedTextElement);
         
         console.log('🔄 [DEBUG] Canvas mousedown - curveJustCompleted:', curveJustCompleted, 'target:', e.target, 'tagName:', e.target.tagName, 'className:', e.target.className, 'isClickOnStrokeTag:', isClickOnStrokeTag);
         console.log('🔄 [DEBUG] Event coordinates:', e.clientX, e.clientY, 'offset:', e.offsetX, e.offsetY);
@@ -11738,7 +12146,310 @@ function hideResizeOverlay() {
                 return;
             }
             
-            // Priority 2: Normal edit mode logic (only if not finalizing a curve)
+            // Priority 2a: Text element clicks are now handled by single-click below (removed old double-click handler)
+            // Check moved to avoid duplicate edit boxes
+            const clickedTextForDoubleClick = null;  // Disabled - using single-click handler instead
+            if (false && clickedTextForDoubleClick) {
+                // Convert world coordinates to canvas coordinates for text box positioning
+                const canvasCoords = window.worldToClient ? 
+                    window.worldToClient(clickedTextForDoubleClick.element.x, clickedTextForDoubleClick.element.y) : 
+                    { x: clickedTextForDoubleClick.element.x, y: clickedTextForDoubleClick.element.y };
+                
+                // Create beautiful editable text box with Tailwind-like styling
+                const editBox = document.createElement('div');
+                editBox.contentEditable = true;
+                editBox.textContent = clickedTextForDoubleClick.element.text;
+                editBox.style.cssText = `
+                    position: absolute;
+                    left: ${canvasCoords.x}px;
+                    top: ${canvasCoords.y}px;
+                    min-width: 120px;
+                    min-height: 40px;
+                    width: ${Math.max(120, clickedTextForDoubleClick.element.width)}px;
+                    height: ${Math.max(40, clickedTextForDoubleClick.element.height)}px;
+                    padding: 12px 16px;
+                    border: 3px solid #3b82f6;
+                    border-radius: 8px;
+                    background: rgba(255, 255, 255, 0.98);
+                    backdrop-filter: blur(10px);
+                    font-family: ${clickedTextForDoubleClick.element.fontFamily || 'Arial, sans-serif'};
+                    font-size: ${clickedTextForDoubleClick.element.fontSize || 16}px;
+                    color: ${clickedTextForDoubleClick.element.color || '#1f2937'};
+                    resize: none;
+                    overflow: hidden;
+                    z-index: 1000;
+                    outline: none;
+                    cursor: text;
+                    box-shadow: 0 8px 32px rgba(0,0,0,0.12), 0 2px 6px rgba(0,0,0,0.08);
+                    user-select: text;
+                    transition: all 0.2s ease;
+                `;
+
+                // Add resize handles
+                const resizeHandles = ['nw', 'ne', 'se', 'sw'];
+                resizeHandles.forEach(handle => {
+                    const handleEl = document.createElement('div');
+                    handleEl.className = `resize-handle resize-handle-${handle}`;
+                    handleEl.style.cssText = `
+                        position: absolute;
+                        width: 12px;
+                        height: 12px;
+                        background: #3b82f6;
+                        border: 2px solid white;
+                        border-radius: 50%;
+                        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+                        cursor: ${handle}-resize;
+                        z-index: 1001;
+                    `;
+
+                    switch(handle) {
+                        case 'nw':
+                            handleEl.style.top = '-6px';
+                            handleEl.style.left = '-6px';
+                            break;
+                        case 'ne':
+                            handleEl.style.top = '-6px';
+                            handleEl.style.right = '-6px';
+                            break;
+                        case 'se':
+                            handleEl.style.bottom = '-6px';
+                            handleEl.style.right = '-6px';
+                            break;
+                        case 'sw':
+                            handleEl.style.bottom = '-6px';
+                            handleEl.style.left = '-6px';
+                            break;
+                    }
+
+                    // Make resize handles functional
+                    handleEl.addEventListener('mousedown', (ev) => {
+                        ev.stopPropagation();
+                        ev.preventDefault();
+                        
+                        const startX = ev.clientX;
+                        const startY = ev.clientY;
+                        const startWidth = editBox.offsetWidth;
+                        const startHeight = editBox.offsetHeight;
+                        const startLeft = editBox.offsetLeft;
+                        const startTop = editBox.offsetTop;
+
+                        const handleResizeMove = (moveEv) => {
+                            const deltaX = moveEv.clientX - startX;
+                            const deltaY = moveEv.clientY - startY;
+
+                            switch(handle) {
+                                case 'se':
+                                    editBox.style.width = Math.max(120, startWidth + deltaX) + 'px';
+                                    editBox.style.height = Math.max(40, startHeight + deltaY) + 'px';
+                                    break;
+                                case 'sw':
+                                    editBox.style.width = Math.max(120, startWidth - deltaX) + 'px';
+                                    editBox.style.height = Math.max(40, startHeight + deltaY) + 'px';
+                                    editBox.style.left = (startLeft + deltaX) + 'px';
+                                    break;
+                                case 'ne':
+                                    editBox.style.width = Math.max(120, startWidth + deltaX) + 'px';
+                                    editBox.style.height = Math.max(40, startHeight - deltaY) + 'px';
+                                    editBox.style.top = (startTop + deltaY) + 'px';
+                                    break;
+                                case 'nw':
+                                    editBox.style.width = Math.max(120, startWidth - deltaX) + 'px';
+                                    editBox.style.height = Math.max(40, startHeight - deltaY) + 'px';
+                                    editBox.style.left = (startLeft + deltaX) + 'px';
+                                    editBox.style.top = (startTop + deltaY) + 'px';
+                                    break;
+                            }
+                        };
+
+                        const handleResizeUp = () => {
+                            document.removeEventListener('mousemove', handleResizeMove);
+                            document.removeEventListener('mouseup', handleResizeUp);
+                        };
+
+                        document.addEventListener('mousemove', handleResizeMove);
+                        document.addEventListener('mouseup', handleResizeUp);
+                    });
+
+                    editBox.appendChild(handleEl);
+                });
+
+                // Add drag handle
+                const dragHandle = document.createElement('div');
+                dragHandle.className = 'drag-handle';
+                dragHandle.textContent = '⋮⋮';
+                dragHandle.style.cssText = `
+                    position: absolute;
+                    top: 0;
+                    right: 0;
+                    width: 20px;
+                    height: 20px;
+                    background: #3b82f6;
+                    color: white;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 10px;
+                    cursor: move;
+                    border-radius: 0 8px 0 4px;
+                    z-index: 1001;
+                    user-select: none;
+                    pointer-events: auto;
+                `;
+                editBox.appendChild(dragHandle);
+
+                // Make drag handle draggable
+                dragHandle.addEventListener('mousedown', (ev) => {
+                    // Clear any text selection immediately
+                    if (window.getSelection) {
+                        window.getSelection().removeAllRanges();
+                    }
+
+                    initialLeft = editBox.offsetLeft;
+                    initialTop = editBox.offsetTop;
+                    editDragStart = {
+                        mx: ev.clientX,
+                        my: ev.clientY
+                    };
+                    isDragging = true;
+                    editBox.style.cursor = 'move';
+                    editBox.style.userSelect = 'none';
+                    document.body.style.userSelect = 'none';
+                    
+                    document.addEventListener('mousemove', handleEditMove);
+                    document.addEventListener('mouseup', handleEditUp);
+                    ev.preventDefault();
+                    ev.stopPropagation();
+                });
+                
+                document.body.appendChild(editBox);
+                setTimeout(() => {
+                    editBox.focus();
+                    // Position cursor at end of text instead of selecting all
+                    const range = document.createRange();
+                    const sel = window.getSelection();
+                    range.selectNodeContents(editBox);
+                    range.collapse(false); // Collapse to end
+                    sel.removeAllRanges();
+                    sel.addRange(range);
+                }, 50);
+                
+                // Save on blur or Enter
+                const saveEdit = () => {
+                    const newText = editBox.textContent.trim();
+                    if (newText) {
+                        clickedTextForDoubleClick.element.text = newText;
+                        clickedTextForDoubleClick.element.width = editBox.offsetWidth;
+                        clickedTextForDoubleClick.element.height = editBox.offsetHeight;
+
+                        // Update world coordinates based on final position
+                        const finalX = editBox.offsetLeft;
+                        const finalY = editBox.offsetTop;
+                        
+                        const finalWorldCoords = window.clientToWorld ?
+                            window.clientToWorld(finalX, finalY) :
+                            { x: finalX, y: finalY };
+                        clickedTextForDoubleClick.element.x = finalWorldCoords.x;
+                        clickedTextForDoubleClick.element.y = finalWorldCoords.y;
+
+                        try { saveState(true, false, false); } catch(_) {}
+                        try { redrawCanvasWithVisibility(); } catch(_) {}
+                        try { updateStrokeVisibilityControls(); } catch(_) {}
+                    }
+                    editBox.remove();
+                };
+                
+                editBox.addEventListener('keydown', (ev) => {
+                    if (ev.key === 'Enter') {
+                        ev.preventDefault();
+                        saveEdit();
+                    } else if (ev.key === 'Escape') {
+                        editBox.remove();
+                    }
+                });
+                
+                // Delay adding the click-outside handler to prevent immediate close from double-click
+                setTimeout(() => {
+                    document.addEventListener('click', (ev) => {
+                        if (!editBox.contains(ev.target)) {
+                            saveEdit();
+                        }
+                    }, { once: true });
+                }, 100);
+                
+                // Make draggable from anywhere in the box
+                let editDragStart = null;
+                let isDragging = false;
+                let initialLeft = 0;
+                let initialTop = 0;
+
+                const handleEditMove = (ev) => {
+                    if (!editDragStart || !isDragging) return;
+                    ev.preventDefault();
+                    
+                    const dx = ev.clientX - editDragStart.mx;
+                    const dy = ev.clientY - editDragStart.my;
+                    
+                    // Use requestAnimationFrame for smooth updates (with fallback)
+                    if (window.requestAnimationFrame) {
+                        requestAnimationFrame(() => {
+                            editBox.style.left = (initialLeft + dx) + 'px';
+                            editBox.style.top = (initialTop + dy) + 'px';
+                        });
+                    } else {
+                        // Fallback for older browsers
+                        editBox.style.left = (initialLeft + dx) + 'px';
+                        editBox.style.top = (initialTop + dy) + 'px';
+                    }
+                };
+
+                const handleEditUp = () => {
+                    if (isDragging) {
+                        isDragging = false;
+                        editBox.style.cursor = 'text';
+                        editBox.style.userSelect = 'text';
+                        document.body.style.userSelect = '';
+                    }
+                    editDragStart = null;
+                    document.removeEventListener('mousemove', handleEditMove);
+                    document.removeEventListener('mouseup', handleEditUp);
+                };
+
+                editBox.addEventListener('mousedown', (ev) => {
+                    // Don't start drag if clicking on resize handles or drag handle
+                    if (ev.target.classList.contains('resize-handle') ||
+                        ev.target.classList.contains('drag-handle')) {
+                        return;
+                    }
+
+                    // Clear any text selection immediately
+                    if (window.getSelection) {
+                        window.getSelection().removeAllRanges();
+                    }
+
+                    initialLeft = editBox.offsetLeft;
+                    initialTop = editBox.offsetTop;
+                    editDragStart = {
+                        mx: ev.clientX,
+                        my: ev.clientY
+                    };
+                    isDragging = true;
+                    editBox.style.cursor = 'move';
+                    editBox.style.userSelect = 'none';
+                    document.body.style.userSelect = 'none';
+                    
+                    document.addEventListener('mousemove', handleEditMove);
+                    document.addEventListener('mouseup', handleEditUp);
+                    ev.preventDefault();
+                    ev.stopPropagation();
+                });
+                
+                window.lastCanvasClickTime = 0;
+                window.lastClickedTextElementId = null;
+                e.preventDefault();
+                return;
+            }
+            
+            // Priority 2b: Normal edit mode logic for strokes (only if not finalizing a curve)
             const clickedLabelForDoubleClick = findLabelAtPoint(coords.canvas.x, coords.canvas.y);
             console.log(`🔄 [DEBUG] Double-click check - clickedLabelForDoubleClick:`, clickedLabelForDoubleClick, `lastClickedCanvasLabel: ${window.lastClickedCanvasLabel}`);
             if (clickedLabelForDoubleClick && window.lastClickedCanvasLabel === clickedLabelForDoubleClick.strokeLabel) {
@@ -11761,6 +12472,13 @@ function hideResizeOverlay() {
             }
         }
         window.lastCanvasClickTime = now;
+        
+        // Track last clicked text element for double-click detection
+        if (isClickOnTextElement) {
+            window.lastClickedTextElementId = clickedTextElement.element.id;
+        } else {
+            window.lastClickedTextElementId = null;
+        }
         
 
         // First, check if we're clicking on a control point (ONLY if in edit mode)
@@ -11992,6 +12710,60 @@ function hideResizeOverlay() {
 
         // Note: Double-click detection for curved line finalization is now handled above in the general double-click logic
     
+        // CURVE_DEFOCUS_FIX_GUARD: Add a definitive check before starting any drawing logic
+        // If curveJustCompleted was true at the start of this mousedown, it should have been handled and cleared
+        // but we add this as an extra safety check
+        if (curveJustCompleted) {
+//             console.log('Canvas Mousedown: CURVE_DEFOCUS_FIX_GUARD - curveJustCompleted is STILL true, this should not happen. Aborting drawing.');
+            return;
+        }
+        
+        console.log('[DRAW CHECK] Pre-checks - drawingMode:', drawingMode, 'isClickOnTextElement:', isClickOnTextElement);
+        
+        // Check for text element clicks FIRST, before any drawing mode logic
+        if (isClickOnTextElement) {
+            // Clicked on existing text element - set up drag regardless of mode
+            const now = Date.now();
+            const last = window.lastTextClickTime || 0;
+
+            if (window.lastClickedTextElementId === clickedTextElement.element.id && (now - last) <= window.paintApp.config.clickDelay) {
+                debugLog('[TEXT]', 'double-click detected', clickedTextElement.element.id);
+                openTextEditor(clickedTextElement.element);
+                window.lastTextClickTime = 0;
+                window.lastClickedTextElementId = null;
+                e.preventDefault();
+                    return;
+                }
+                
+            debugLog('[TEXT]', 'click detected; pending drag setup for element', clickedTextElement.element.id);
+            updateCursor('grab', 'text click - pending drag');
+
+            textDragPending = true;
+            textDragPendingElement = clickedTextElement;
+            textDragStartCanvasX = coords.canvas.x;
+            textDragStartCanvasY = coords.canvas.y;
+            dragStartTextX = clickedTextElement.element.x;
+            dragStartTextY = clickedTextElement.element.y;
+
+            window.lastTextClickTime = now;
+            window.lastClickedTextElementId = clickedTextElement.element.id;
+            
+            e.preventDefault();
+            return;
+        } else if (drawingMode === 'text') {
+            // For text mode, create a text box at the click position
+            console.log('[TEXT MODE] About to call createTextBox at:', coords.canvas.x, coords.canvas.y);
+            console.log('[TEXT MODE] createTextBox function exists?', typeof createTextBox);
+            createTextBox(coords.canvas.x, coords.canvas.y);
+            console.log('[TEXT MODE] createTextBox called');
+            
+            // Mode will be restored when text box is committed or cancelled
+            return; // Don't proceed with drawing logic
+        }
+        
+        // NOW proceed with drawing mode logic - initialize drawing state
+        console.log('[DRAW CHECK] Proceeding to drawing mode logic - drawingMode:', drawingMode);
+        
         // Handle drawing (default when Shift is not pressed)
         // Save the state before starting a new stroke
         if (!strokeInProgress) {
@@ -12003,14 +12775,6 @@ function hideResizeOverlay() {
                 type: 'pre-stroke',
                 label: null
             });
-        }
-
-        // CURVE_DEFOCUS_FIX_GUARD: Add a definitive check before starting any drawing logic
-        // If curveJustCompleted was true at the start of this mousedown, it should have been handled and cleared
-        // but we add this as an extra safety check
-        if (curveJustCompleted) {
-//             console.log('Canvas Mousedown: CURVE_DEFOCUS_FIX_GUARD - curveJustCompleted is STILL true, this should not happen. Aborting drawing.');
-            return;
         }
         
         // Check if this is a blank canvas and prevent drawing outside canvas boundaries
@@ -12062,7 +12826,6 @@ function hideResizeOverlay() {
                 canvasY: coords.canvas.y,   // Canvas space Y
                 time: Date.now()
             };
-            
             curvedLinePoints.push(controlPoint);
 //             console.log(`Added control point ${curvedLinePoints.length} at (${e.offsetX}, ${e.offsetY})`);
             
@@ -12082,6 +12845,12 @@ function hideResizeOverlay() {
             isDrawingOrPasting = false;
             strokeInProgress = false;
         } else {
+            // GUARD: Don't start drawing if text is being dragged or drag is pending
+            if (textDragPending || isDraggingTextElement) {
+                console.log('[DRAW GUARD] Blocking draw - text drag in progress');
+                return;
+            }
+            
             // For freehand, add first point
             const { x: imgX, y: imgY } = getTransformedCoords(e.offsetX, e.offsetY);
             const firstPoint = {
@@ -12100,6 +12869,9 @@ function hideResizeOverlay() {
             ctx.arc(e.offsetX, e.offsetY, dotRadius, 0, Math.PI * 2);
             ctx.fillStyle = colorPicker.value;
             ctx.fill();
+            
+            isDrawing = true;
+            isDrawingOrPasting = true;
         }
     }
     
@@ -12147,6 +12919,67 @@ function hideResizeOverlay() {
                         // PERFORMANCE: Invalidate cache after control point drag
                         invalidateInteractiveElementCache();
                     }
+                    return;
+                }
+                
+        // Handle text element drag activation and dragging
+        if (textDragPending && textDragPendingElement) {
+            const dxCanvas = x - textDragStartCanvasX;
+            const dyCanvas = y - textDragStartCanvasY;
+            const dragDist = Math.hypot(dxCanvas, dyCanvas);
+
+            if (dragDist >= TEXT_DRAG_THRESHOLD) {
+                isDraggingTextElement = true;
+                draggedTextElement = textDragPendingElement;
+                dragStartX = textDragStartCanvasX;
+                dragStartY = textDragStartCanvasY;
+                dragStartTextX = draggedTextElement.element.x;
+                dragStartTextY = draggedTextElement.element.y;
+
+                textDragPending = false;
+                textDragPendingElement = null;
+                updateCursor('grabbing', 'text drag activated');
+                debugLog('[TEXT]', 'drag activated', { id: draggedTextElement.element.id, distance: dragDist.toFixed(2) });
+            }
+        }
+
+                if (isDraggingTextElement && draggedTextElement) {
+                    // For new text elements (useCanvasCoords), work directly in canvas space
+                    // For old text elements, convert to world coordinates
+                    if (draggedTextElement.element.useCanvasCoords) {
+                        // Direct canvas coordinate dragging (new system)
+                        const dxCanvas = x - dragStartX;
+                        const dyCanvas = y - dragStartY;
+                        
+                        draggedTextElement.element.x = dragStartTextX + dxCanvas;
+                        draggedTextElement.element.y = dragStartTextY + dyCanvas;
+                        
+                        debugLog('[TEXT]', 'dragging (canvas coords)', { 
+                            id: draggedTextElement.element.id, 
+                            dx: dxCanvas.toFixed(2), 
+                            dy: dyCanvas.toFixed(2) 
+                        });
+                    } else {
+                        // World coordinate dragging (old system, for backwards compatibility)
+                        const worldCurrent = window.clientToWorld ? window.clientToWorld(x, y) : { x, y };
+                        const worldStart = window.clientToWorld ? window.clientToWorld(dragStartX, dragStartY) : { x: dragStartX, y: dragStartY };
+                        
+                        // Calculate delta in world coordinates
+                        const dxWorld = worldCurrent.x - worldStart.x;
+                        const dyWorld = worldCurrent.y - worldStart.y;
+                        
+                        // Apply the delta to the original text position
+                        draggedTextElement.element.x = dragStartTextX + dxWorld;
+                        draggedTextElement.element.y = dragStartTextY + dyWorld;
+                        
+                        debugLog('[TEXT]', 'dragging (world coords)', { 
+                            id: draggedTextElement.element.id, 
+                            dx: dxWorld.toFixed(2), 
+                            dy: dyWorld.toFixed(2) 
+                        });
+                    }
+                    
+                    redrawCanvasWithVisibility();
                     return;
                 }
 
@@ -12258,10 +13091,12 @@ function hideResizeOverlay() {
                 console.log(`[DRAG] Stroke points:`, vectorData.points.length, `midPoint:`, midPointRelative, `anchor:`, anchorPoint);
 
                 // Get the current offset (custom or calculated) or calculate if first time dragging
-                let currentOffset = customLabelPositions[currentImageLabel][strokeName] || 
-                                    calculatedLabelOffsets[currentImageLabel]?.[strokeName];
+                let currentOffsetRaw = customLabelPositions[currentImageLabel][strokeName] || 
+                                       calculatedLabelOffsets[currentImageLabel]?.[strokeName];
 
-                if (!currentOffset) {
+                // Convert to pixels if normalized
+                let currentOffset;
+                if (!currentOffsetRaw) {
                     // Calculate initial offset based on current drawn position if neither exists (convert to image space)
                     const currentLabelRect = currentLabelPositions.find(l => l.strokeLabel === strokeName);
                     if (currentLabelRect) {
@@ -12276,23 +13111,27 @@ function hideResizeOverlay() {
                         console.warn(`Could not find current rect for ${strokeName} during drag start.`);
                     }
                 } else {
-                    // Clone the offset object if it came from calculatedLabelOffsets 
-                    // to avoid modifying the original calculated offset
-                    currentOffset = { ...currentOffset };
+                    // Convert normalized offset to pixels, or clone if already in pixel format
+                    const pixelOffset = normalizeToPixels(currentOffsetRaw, currentImageLabel);
+                    currentOffset = pixelOffset ? { x: pixelOffset.x, y: pixelOffset.y } : { x: 0, y: 0 };
+                    console.log(`[DRAG] Converted offset for ${strokeName}:`, currentOffsetRaw, '->', currentOffset);
                 }
 
                 // Apply image-space delta for consistent dragging
                 currentOffset.x += deltaImageX;
                 currentOffset.y += deltaImageY;
                 
-                // console.log(`[DRAG] New image-space offset: (${currentOffset.x.toFixed(1)}, ${currentOffset.y.toFixed(1)})`);
+                console.log(`[DRAG] New image-space offset for ${strokeName}: (${currentOffset.x.toFixed(1)}, ${currentOffset.y.toFixed(1)})`);
                 
-                // Store the updated offset
-                customLabelPositions[currentImageLabel][strokeName] = currentOffset;
+                // Normalize the offset before storing
+                const normalizedOffset = normalizeMaybeStore(currentOffset, currentImageLabel);
+                
+                // Store the normalized offset
+                customLabelPositions[currentImageLabel][strokeName] = normalizedOffset;
                 // Keep window storage in sync for transforms (rotation/flip)
                 if (!window.customLabelPositions) window.customLabelPositions = {};
                 if (!window.customLabelPositions[currentImageLabel]) window.customLabelPositions[currentImageLabel] = {};
-                window.customLabelPositions[currentImageLabel][strokeName] = currentOffset;
+                window.customLabelPositions[currentImageLabel][strokeName] = normalizedOffset;
                 // Additionally store absolute tag center in image space to avoid re-centering to stroke midpoint
                 if (!window.customLabelAbsolutePositions[currentImageLabel]) window.customLabelAbsolutePositions[currentImageLabel] = {};
                 window.customLabelAbsolutePositions[currentImageLabel][strokeName] = {
@@ -12393,6 +13232,32 @@ function hideResizeOverlay() {
             
             // IMPROVED: Restore cursor intelligently based on current mouse position
             restoreCursorAfterDrag(e.offsetX, e.offsetY);
+            return;
+        }
+        
+        // Handle text element dragging cleanup
+        if (isDraggingTextElement) {
+            const finishedElementId = draggedTextElement?.element?.id;
+            isDraggingTextElement = false;
+            draggedTextElement = null;
+            textDragPending = false;
+            textDragPendingElement = null;
+            
+            // Note: Text elements are managed separately; no canvas state save needed
+            // saveState(true, false);  // REMOVED: Was creating phantom stroke entries
+            restoreCursorAfterDrag(e.offsetX, e.offsetY);
+            debugLog('[TEXT]', 'drag finished', finishedElementId);
+            return;
+        }
+
+        if (textDragPending && textDragPendingElement) {
+            const pendingElement = textDragPendingElement;
+            textDragPending = false;
+            textDragPendingElement = null;
+
+            debugLog('[TEXT]', 'click without drag, opening editor', pendingElement.element.id);
+            openTextEditor(pendingElement.element);
+            e.preventDefault();
             return;
         }
         
@@ -15301,6 +16166,12 @@ function hideResizeOverlay() {
                 if (!pastedImages.includes(url)) pastedImages.push(url);
                 window.originalImages[newImageLabel] = url;
                 
+                // CRITICAL: Update current image label IMMEDIATELY before async operations
+                // This ensures tag calculations use the correct image label
+                currentImageLabel = newImageLabel;
+                window.currentImageLabel = newImageLabel;
+                window.paintApp.state.currentImageLabel = newImageLabel;
+                
                 // pasteImageFromUrl will handle setting imageStates, undoStack, etc.
                 // and also drawing the image.
                 // It's important to switch to the newly pasted image if we want it to be active.
@@ -15335,8 +16206,8 @@ function hideResizeOverlay() {
                         currentImageLabel = originalCurrentLabel;
                     }
                     
-                    currentImageLabel = newImageLabel; 
-                    switchToImage(newImageLabel); // This will also update UI elements
+                    // Switch to the newly pasted image (will update all state variables)
+                    switchToImage(newImageLabel);
                     
                     // CRITICAL FIX: Update UI scale and force redraw immediately after auto-scaling
                     // This prevents scale mismatch warnings and ensures scaling is visually applied
@@ -16781,6 +17652,181 @@ window.runCustomLabelRotationTest = async function(imageLabel = 'Image 1') {
 };
 
 /**
+ * Find text element at a given canvas point
+ */
+function findTextElementAtPoint(canvasX, canvasY) {
+    const currentImageLabel = window.paintApp?.state?.currentImageLabel || window.currentImageLabel || 'front';
+    const textElements = window.paintApp?.state?.textElementsByImage?.[currentImageLabel] || [];
+    
+    
+    for (let i = textElements.length - 1; i >= 0; i--) {
+        const el = textElements[i];
+        if (!el.visible) continue;
+        
+        // Use canvas coordinates directly if available (new system), otherwise convert from world coords (old system)
+        const canvasCoords = el.useCanvasCoords ? 
+            { x: el.x, y: el.y } :
+            (window.worldToClient ? 
+                window.worldToClient(el.x, el.y) : 
+                { x: el.x, y: el.y });
+        
+        
+        // Check if point is within text element bounds
+        if (canvasX >= canvasCoords.x && 
+            canvasX <= canvasCoords.x + el.width &&
+            canvasY >= canvasCoords.y && 
+            canvasY <= canvasCoords.y + el.height) {
+            return { element: el, index: i };
+        }
+    }
+    
+    return null;
+}
+
+/**
+ * Open text editor for an existing text element (used for double-click editing)
+ */
+function openTextEditor(targetElement) {
+    try {
+        const currentImageLabel = window.paintApp?.state?.currentImageLabel || window.currentImageLabel || 'front';
+        const textElements = window.paintApp?.state?.textElementsByImage?.[currentImageLabel] || [];
+        const textElement = textElements.find(el => el.id === targetElement.id);
+
+        if (!textElement) {
+            console.warn('[OPEN TEXT EDITOR] Text element not found for id', targetElement.id);
+            return;
+        }
+
+        // Use canvas coordinates directly if available
+        const canvasCoords = textElement.useCanvasCoords ?
+            { x: textElement.x, y: textElement.y } :
+            (window.worldToClient ?
+                window.worldToClient(textElement.x, textElement.y) :
+                { x: textElement.x, y: textElement.y });
+
+        const editBox = document.createElement('div');
+        editBox.contentEditable = true;
+        editBox.textContent = textElement.text || '';
+        editBox.style.cssText = `
+            position: absolute;
+            left: ${canvasCoords.x}px;
+            top: ${canvasCoords.y}px;
+            min-width: 120px;
+            min-height: 40px;
+            width: ${Math.max(150, textElement.width || 150)}px;
+            height: ${Math.max(40, textElement.height || 40)}px;
+            padding: 12px 16px;
+            border: 3px solid #3b82f6;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(8px);
+            font-family: ${textElement.fontFamily || "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"};
+            font-size: ${textElement.fontSize || 14}px;
+            font-weight: 500;
+            color: ${textElement.color || '#1f2937'};
+            outline: none;
+            cursor: text;
+            user-select: text;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            transition: all 0.2s ease;
+            z-index: 1001;
+        `;
+        
+        const saveAndClose = () => {
+            const newText = editBox.textContent.trim();
+            
+            // Save in canvas coordinates (matching the new system)
+            const canvas = document.getElementById('canvas');
+            const canvasRect = canvas.getBoundingClientRect();
+            const editBoxRect = editBox.getBoundingClientRect();
+            const canvasRelativeX = editBoxRect.left - canvasRect.left;
+            const canvasRelativeY = editBoxRect.top - canvasRect.top;
+
+            textElement.text = newText || textElement.text;
+            textElement.x = canvasRelativeX;
+            textElement.y = canvasRelativeY;
+            textElement.width = editBox.offsetWidth;
+            textElement.height = editBox.offsetHeight;
+            textElement.useCanvasCoords = true; // Flag to use canvas coordinates
+
+            // Note: Text elements are managed separately; no canvas state save needed
+            // saveState(true, false);  // REMOVED: Was creating phantom stroke entries
+            
+            if (typeof redrawCanvasWithVisibility === 'function') {
+                redrawCanvasWithVisibility();
+            }
+            if (typeof updateStrokeVisibilityControls === 'function') {
+                updateStrokeVisibilityControls();
+            }
+            editBox.remove();
+        };
+
+        // Auto-resize height as content grows
+        const autoResize = () => {
+            editBox.style.height = 'auto';
+            editBox.style.height = Math.max(40, editBox.scrollHeight) + 'px';
+        };
+        
+        editBox.addEventListener('input', autoResize);
+        
+        editBox.addEventListener('keydown', (ev) => {
+            // Prevent arrow keys from propagating to sidebar navigation
+            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(ev.key)) {
+                ev.stopPropagation();
+            }
+            
+            if (ev.key === 'Enter' && !ev.shiftKey) {
+                ev.preventDefault();
+                saveAndClose();
+            } else if (ev.key === 'Escape') {
+                editBox.remove();
+            }
+        });
+        
+        editBox.addEventListener('blur', () => {
+            setTimeout(() => {
+                if (document.body.contains(editBox)) {
+                    saveAndClose();
+                }
+            }, 50);
+        });
+        
+        document.body.appendChild(editBox);
+        
+        setTimeout(() => {
+            editBox.focus();
+            if (window.getSelection && window.getSelection().selectAllChildren) {
+                window.getSelection().selectAllChildren(editBox);
+            }
+        }, 0);
+    } catch (error) {
+        console.error('[OPEN TEXT EDITOR] Failed to open editor', error);
+    }
+}
+
+/**
+ * Helper function to wrap text for canvas rendering
+ */
+function wrapCanvasText(ctx, text, maxWidth) {
+    const words = text.split(' ');
+    const lines = [];
+    let currentLine = words[0];
+
+    for (let i = 1; i < words.length; i++) {
+        const word = words[i];
+        const width = ctx.measureText(currentLine + ' ' + word).width;
+        if (width < maxWidth) {
+            currentLine += ' ' + word;
+        } else {
+            lines.push(currentLine);
+            currentLine = word;
+        }
+    }
+    lines.push(currentLine);
+    return lines;
+}
+
+/**
  * Share Project Functionality
  * Creates shareable URLs for customer measurement collection
  */
@@ -17127,8 +18173,262 @@ function showShareDialog(shareUrl, expiresAt) {
     }, 100);
 }
 
+// Helper function to find text element at a point (x, y are in canvas coordinates)
+// Note: Duplicate function removed - using the one defined earlier around line 17547
+
+// Helper function to wrap text for canvas rendering
+function wrapCanvasText(ctx, text, maxWidth) {
+    const words = text.split(' ');
+    const lines = [];
+    let currentLine = words[0];
+
+    for (let i = 1; i < words.length; i++) {
+        const word = words[i];
+        const width = ctx.measureText(currentLine + ' ' + word).width;
+        if (width < maxWidth) {
+            currentLine += ' ' + word;
+        } else {
+            lines.push(currentLine);
+            currentLine = word;
+        }
+    }
+    lines.push(currentLine);
+    return lines;
+}
+
+    // Text box creation function
+    function createTextBox(x, y) {
+        // Store the original click position (where text content should appear)
+        const contentX = x;
+        const contentY = y;
+        
+        // Create container for text box and controls
+        const container = document.createElement('div');
+        container.className = 'text-box-container';
+        // Store content position as data attribute for saving later
+        container.dataset.contentX = contentX;
+        container.dataset.contentY = contentY;
+        container.style.cssText = `
+            position: absolute;
+            left: ${x}px;
+            top: ${y}px;
+            z-index: 1000;
+        `;
+    
+    // Create text box wrapper with resize handles
+    const textBoxWrapper = document.createElement('div');
+    textBoxWrapper.style.cssText = `
+        position: relative;
+        min-width: 100px;
+        min-height: 30px;
+        width: 150px;
+        height: auto;
+        border: 2px solid #3b82f6;
+        border-radius: 4px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        box-sizing: border-box;
+    `;
+    
+    // Create contenteditable text box
+    const textBox = document.createElement('div');
+    textBox.className = 'text-box';
+    textBox.contentEditable = true;
+    
+    // Background is now controlled per-element in the stroke visibility controls
+    // Default: transparent background (hasWhiteBackground = false)
+    textBox.style.cssText = `
+        padding: 8px;
+        background: transparent;
+        font-family: Arial, sans-serif;
+        font-size: 16px;
+        color: #1f2937;
+        overflow: auto;
+        outline: none;
+        box-sizing: border-box;
+        cursor: text;
+        user-select: text;
+        min-height: 30px;
+        word-wrap: break-word;
+    `;
+    
+    // Add placeholder text
+    textBox.textContent = 'Type here...';
+    
+    textBoxWrapper.appendChild(textBox);
+    container.appendChild(textBoxWrapper);
+    
+    // Remove placeholder on focus
+    textBox.addEventListener('focus', () => {
+        if (textBox.textContent === 'Type here...') {
+            textBox.textContent = '';
+        }
+    });
+    
+    // Auto-resize height as content grows
+    const autoResize = () => {
+        if (textBox.textContent.trim() && textBox.textContent !== 'Type here...') {
+            const currentHeight = textBox.scrollHeight;
+            if (currentHeight > 30) {
+                textBoxWrapper.style.height = 'auto';
+            }
+        }
+    };
+    
+    textBox.addEventListener('input', autoResize);
+    
+    // Handle keydown events
+    textBox.addEventListener('keydown', (e) => {
+        // Prevent arrow keys from propagating to sidebar navigation
+        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+            e.stopPropagation();
+        }
+        
+        if (e.key === 'Escape') {
+            if (typeof window.restorePreviousDrawingMode === 'function') {
+                window.restorePreviousDrawingMode();
+            }
+            container.remove();
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            saveTextElement();
+            container.remove();
+            
+            if (typeof window.restorePreviousDrawingMode === 'function') {
+                window.restorePreviousDrawingMode();
+            }
+            return;
+        }
+    });
+    
+    // Add to document body (overlay above canvas)
+    document.body.appendChild(container);
+
+    // Make the entire wrapper draggable (user can drag from anywhere)
+    let dragStart = null;
+    let isDragging = false;
+    
+    textBoxWrapper.addEventListener('mousedown', (ev) => {
+        // Allow dragging from wrapper, but not from text box itself when typing
+        if (ev.target === textBoxWrapper || ev.target.closest('.text-box') === null) {
+            dragStart = { mx: ev.clientX, my: ev.clientY, x: container.offsetLeft, y: container.offsetTop };
+            isDragging = false;
+        }
+    });
+    
+    const handleMouseMove = (ev) => {
+        if (!dragStart) return;
+        
+        const dx = ev.clientX - dragStart.mx;
+        const dy = ev.clientY - dragStart.my;
+        
+        // Only start dragging if moved more than 3 pixels (prevents accidental drags while clicking)
+        if (!isDragging && (Math.abs(dx) > 3 || Math.abs(dy) > 3)) {
+            isDragging = true;
+        }
+        
+        if (isDragging) {
+            container.style.left = (dragStart.x + dx) + 'px';
+            container.style.top = (dragStart.y + dy) + 'px';
+        }
+    };
+    
+    const handleMouseUp = () => {
+        dragStart = null;
+        isDragging = false;
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+    };
+    
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    // Save text element when user finishes editing
+    const saveTextElement = () => {
+        const label = window.paintApp.state.currentImageLabel || window.currentImageLabel || 'front';
+        if (!window.paintApp.state.textElementsByImage) {
+            window.paintApp.state.textElementsByImage = {};
+        }
+        if (!window.paintApp.state.textElementsByImage[label]) {
+            window.paintApp.state.textElementsByImage[label] = [];
+        }
+        const text = textBox.textContent.trim();
+        
+        if (text && text !== 'Type here...') {
+            // Get canvas element
+            const canvas = document.getElementById('canvas');
+            const canvasRect = canvas.getBoundingClientRect();
+            
+            // Get the wrapper's position and size (the blue bordered box)
+            // getBoundingClientRect() includes the border, but we need to render it ourselves on canvas
+            const wrapperRect = textBoxWrapper.getBoundingClientRect();
+            
+            // The wrapper has a 2px border that's rendered by CSS INSIDE the bounding rect
+            // When we draw on canvas, we need to match this exactly
+            // Save the outer edge position (which matches the wrapper's visual position)
+            const canvasRelativeX = wrapperRect.left - canvasRect.left;
+            const canvasRelativeY = wrapperRect.top - canvasRect.top;
+            
+            console.log('[SAVE TEXT DEBUG] wrapperRect:', {left: wrapperRect.left, top: wrapperRect.top, width: wrapperRect.width, height: wrapperRect.height});
+            console.log('[SAVE TEXT DEBUG] canvasRect:', {left: canvasRect.left, top: canvasRect.top});
+            console.log('[SAVE TEXT DEBUG] Calculated canvas coords:', {x: canvasRelativeX, y: canvasRelativeY});
+            
+            // Capture computed styles from the preview textBox to ensure exact rendering match
+            const computedStyle = window.getComputedStyle(textBox);
+            const fontSize = parseFloat(computedStyle.fontSize) || 16;
+            const fontFamily = computedStyle.fontFamily || 'Arial, sans-serif';
+            const fontWeight = computedStyle.fontWeight || 'normal';
+            const letterSpacing = computedStyle.letterSpacing || 'normal';
+            const lineHeight = computedStyle.lineHeight || 'normal';
+            const color = computedStyle.color || '#1f2937';
+            
+            // Also capture computed border and padding from wrapper
+            const wrapperStyle = window.getComputedStyle(textBoxWrapper);
+            const borderWidth = parseFloat(wrapperStyle.borderTopWidth) || 2;
+            const padding = parseFloat(computedStyle.padding) || 8;
+            
+            console.log('[SAVE TEXT DEBUG] Computed styles:', {
+                fontSize, fontFamily, fontWeight, letterSpacing, lineHeight, color,
+                borderWidth, padding
+            });
+            
+            // Save in canvas-relative coordinates (no world transformation)
+            // This ensures the text appears exactly where the preview box was
+            const data = {
+                id: 'text_' + Date.now(),
+                x: canvasRelativeX,
+                y: canvasRelativeY,
+                width: wrapperRect.width,
+                height: wrapperRect.height,
+                text: text,
+                fontSize: fontSize,
+                fontFamily: fontFamily,
+                fontWeight: fontWeight,
+                letterSpacing: letterSpacing,
+                lineHeight: lineHeight,
+                color: color,
+                borderWidth: borderWidth,
+                padding: padding,
+                hasWhiteBackground: false, // Default: transparent background (user can toggle in stroke visibility controls)
+                visible: true,
+                useCanvasCoords: true // Flag to indicate these are canvas coordinates, not world coordinates
+            };
+            window.paintApp.state.textElementsByImage[label].push(data);
+            try { saveState(true, false, false); } catch(_) {}
+            try { redrawCanvasWithVisibility(); } catch(_) {}
+            try { updateStrokeVisibilityControls(); } catch(_) {}
+        }
+    };
+    
+    // Focus the text box
+    setTimeout(() => {
+        textBox.focus();
+        if (window.getSelection && window.getSelection().selectAllChildren) {
+            window.getSelection().selectAllChildren(textBox);
+        }
+    }, 50);
+}
+
 // Ensure file terminates cleanly; prevents "Unexpected end of input" if a prior block failed to auto-close
 ;
 
-// Cache bust: 20250912102313
-// Cache bust: 20250912103045
+// Cache bust: 20250912170000
