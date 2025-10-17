@@ -54,6 +54,62 @@ alwaysApply: false
 **Connection**: Called when panning image with mouse or keyboard
 **Notes**: Updates position offsets which affect stroke rendering
 
+### Text Element Dragging (mousedown)
+**Status**: Fixed (Text dragging now works in all drawing modes)
+**Start Line**: mousedown ~12605
+**Connection**: Checks isClickOnTextElement before drawing mode logic
+**Changes**: Moved text element click check to execute BEFORE straight/curved mode logic
+**Notes**: Fixed bug where clicking text in straight/curved modes would initiate stroke drawing instead of text drag
+
+### Drawing Initialization (mousedown)
+**Status**: CRITICAL FIX - Reordered initialization logic
+**Start Line**: mousedown ~12547 (previously), now ~12598
+**Connection**: Initializes drawing state (isDrawing, strokeInProgress, points array, undo stack, etc.)
+**Changes**: 
+- **MOVED entire drawing initialization block from BEFORE text/mode checks to AFTER them (lines 12549-12594 → after line 12597)**
+- This prevents drawing flags from being set when clicking text elements
+- Ensures clean state when switching between drawing and text modes
+**Root Cause Fixed**: Drawing state was being initialized before checking if user clicked on text element, causing:
+  - `isDrawing = true` even when dragging text
+  - Phantom strokes due to drawing state persisting through mode changes
+  - "Vector data MISSING" errors when drawing after text interaction
+**Notes**: This was the root cause of all phantom stroke and "missing vector data" issues
+
+### Freehand Drawing Initialization (mousedown, freehand branch)
+**Status**: Fixed (Variable name error corrected)
+**Start Line**: mousedown ~12727 (after restructure)
+**Connection**: Initializes freehand drawing, draws initial dot
+**Changes**: Fixed `brushColor.value` to `colorPicker.value` at line ~12732
+**Notes**: Was causing ReferenceError when starting freehand drawing in certain mode-switching scenarios
+
+### Text Element Drag Cleanup (mouseup)
+**Status**: Fixed (Removed phantom stroke creation)
+**Start Line**: mouseup ~13032
+**Connection**: Cleans up after text element dragging
+**Changes**: Removed `saveState(true, false)` call at line 13040 that was creating phantom stroke entries
+**Notes**: Text elements have separate persistence; canvas state save was unnecessary and created labeled strokes with no vector data
+
+### Text Editor Save (openTextEditor)
+**Status**: Fixed (Removed phantom stroke creation)
+**Start Line**: openTextEditor/saveAndClose ~17538
+**Connection**: Saves text element changes when editing existing text
+**Changes**: Removed `saveState(true, false)` call at line 17541 that was creating phantom stroke entries
+**Notes**: Text elements are managed separately in textElementsByImage; canvas state save was unnecessary and created labeled strokes with no vector data when editing text
+
+### Text Element Dragging Coordinate Bug (mousemove)
+**Status**: FIXED - Coordinate system mismatch resolved
+**Start Line**: mousemove ~12780
+**Connection**: Updates text element position during drag
+**Root Cause**: Was mixing canvas and world coordinates when calculating drag delta
+  - `dragStartX/Y` were canvas coordinates
+  - `worldCurrent` was world coordinates
+  - Subtracting canvas from world gave nonsense values causing text to disappear
+**Fix**: Convert BOTH start and current positions to world coordinates before calculating delta
+**Changes**:
+  - Added `worldStart = clientToWorld(dragStartX, dragStartY)` (line 12783)
+  - Changed delta calculation to `worldCurrent - worldStart` (lines 12786-12787)
+**Notes**: This bug only manifested in loaded projects with zoom/pan transformations applied
+
 ### Curved Arrow Rendering (Final & Preview)
 *   **Status:** Fixed (Direction logic corrected). Start arrows point backward along tangent, end arrows point forward along tangent.
 *   **Location:** Final rendering ~2511-2518, Preview rendering ~4551-4556, Single point preview ~4518
@@ -62,6 +118,31 @@ alwaysApply: false
     *   [Previous Turn] - Added `+ Math.PI` to all curved arrow angle calculations to fix direction.
     *   [Previous Turn] - CORRECTED: Removed `Math.PI` addition - arrows should point in same direction as tangent, not opposite. Also improved canvas clearing in preview to prevent arrow artifacts.
     *   [This Turn] - FINAL FIX: Applied correct tangent orientations: Start arrow uses `Math.atan2(-startTangent.y, -startTangent.x)` (backward), End arrow uses `Math.atan2(endTangent.y, endTangent.x)` (forward). Arrows now point outward from curve as expected.
+
+## index.html
+
+### Periodic Gallery Sync
+*   **Status:** Modified (Fixed auto-switching to first image on new paste).
+*   **Start Line:** ~5130
+*   **Connections:** Calls `syncLegacyImagesToGallery`, reads `window.currentImageLabel`, sets `window.currentImageLabel`.
+*   **Change History (This Session):**
+    *   [Previous Turn] - Fixed bug where pasting a second image would auto-switch back to the first image, causing tags to mix between images. Now only auto-switches to first image if `!window.currentImageLabel`, preventing override when user pastes additional images.
+
+### Paste Handler (`document.addEventListener('paste')`)
+*   **Status:** Modified (Fixed currentImageLabel timing issue).
+*   **Start Line:** ~15259
+*   **Connections:** Creates new image, calls `initializeNewImageStructures`, `addImageToSidebar`, `pasteImageFromUrl`, `switchToImage`.
+*   **Change History (This Session):**
+    *   [Current Turn] - Fixed critical timing bug where `currentImageLabel` was only updated inside async callback, causing `calculateNextTag` to read the wrong image label. Now sets `currentImageLabel`, `window.currentImageLabel`, and `window.paintApp.state.currentImageLabel` IMMEDIATELY after creating the new image label, before any async operations.
+
+### Mini-Stepper (Navigation Pills)
+*   **Status:** Modified (Fixed multiple issues, now fully functional).
+*   **Start Line:** ~5280 (mini-stepper script block)
+*   **Connections:** Calls `getImageContainers`, `updatePills`, `initIntersectionObserver`, `updateActivePill`.
+*   **Change History (This Session):**
+    *   [Earlier] - Fixed `TypeError: className.includes is not a function` by converting `el.className` to string before calling `.includes()`.
+    *   [Earlier] - Fixed image detection for pasted images: Added checks for `blob:` and `http` URLs in addition to `data:image`. Fixed `updatePills()` to return empty array instead of `undefined`.
+    *   [Current Turn] - Fixed validation logic to accept sidebar `.image-container` buttons even without background images (they represent images). Added `updateActivePill()` function that directly checks `window.currentImageLabel` and applies `bg-slate-900 text-white` styling to active pill. Function is called on pill generation, click, and periodically. Pills now display correctly and show active state with black background.
 
 ## public/js/project-manager.js
 
@@ -96,4 +177,38 @@ alwaysApply: false
 ### setupEventListeners()
 **Status**: Unchanged
 **Connection**: Called during initialization
-**Notes**: Sets up UI interaction events 
+**Notes**: Sets up UI interaction events
+
+---
+
+## Recent Updates (Current Session)
+
+### `findTextElementAtPoint(canvasX, canvasY)`
+*   **Status:** Fixed (Added `useCanvasCoords` support for hit detection)
+*   **Start Line:** ~17547
+*   **Connections:** Called by `mousedown` handler to detect clicks on text elements
+*   **Change History:**
+    *   Updated to check `el.useCanvasCoords` flag. If true, uses `el.x` and `el.y` directly as canvas coordinates for hit testing. Otherwise, converts from world coordinates via `worldToClient` for backwards compatibility with old saved projects.
+    *   Removed duplicate definition that was at line ~18069.
+*   **Fix:** This resolves the issue where text elements from loaded projects couldn't be clicked/detected because hit detection was incorrectly using `worldToClient` for all elements.
+
+### Text Dragging Logic in `onCanvasMouseMove()`
+*   **Status:** Fixed (Added dual coordinate system support)
+*   **Start Line:** ~12864
+*   **Connections:** Handles dragging of text elements, updates their positions
+*   **Change History:**
+    *   Updated to handle both canvas coordinate system (new, `useCanvasCoords: true`) and world coordinate system (old).
+    *   For new elements with `useCanvasCoords: true`, drag works directly in canvas space without any coordinate transformations.
+    *   For old elements without the flag, maintains backwards compatibility by using world coordinate transformations.
+*   **Fix:** This resolves the issue where text elements from loaded projects couldn't be dragged because the drag logic was trying to apply world coordinate transformations to elements that were already in canvas coordinates.
+
+### Text Rendering in `redrawCanvasWithVisibility()`
+*   **Status:** Fixed (Text overflow issue resolved)
+*   **Start Lines:** ~6403-6466 (first occurrence), ~6562-6625 (second occurrence)
+*   **Connections:** Renders text elements on canvas with border, background, and padding
+*   **Change History:**
+    *   Fixed text overflow by adding `maxWidth` parameter to `ctx.fillText()` calls, which enforces the width constraint.
+    *   Clarified that saved dimensions (`el.width`, `el.height`) represent the wrapper including the 2px border.
+    *   Removed vertical centering to match DOM text box behavior (text starts at top + border + padding).
+    *   Improved debug logging to show wrapper width and available text width.
+*   **Fix:** Text was poking out the left side of the box because `fillText` wasn't enforcing the calculated `maxWidth`. The third parameter to `fillText(text, x, y, maxWidth)` now constrains rendering to match the visual text box dimensions exactly.

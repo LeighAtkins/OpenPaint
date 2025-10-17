@@ -184,7 +184,56 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         
-        // 5) Bump version to prevent re-migration
+        // 5) Migrate label offsets from legacy absolute coordinates to normalized format
+        migrated.customLabelPositions = migrated.customLabelPositions || {};
+        migrated.calculatedLabelOffsets = migrated.calculatedLabelOffsets || {};
+        
+        console.log('[Migration] Starting offset migration. originalImageDimensions:', migrated.originalImageDimensions);
+        
+        for (const label of migrated.imageLabels || []) {
+            const dims = migrated.originalImageDimensions && migrated.originalImageDimensions[label];
+            const refPx = (dims && dims.width) ? dims.width : 1;
+            console.log(`[Migration] Processing label ${label}: dims=`, dims, `refPx=${refPx}`);
+            
+            // Migrate customLabelPositions
+            if (migrated.customLabelPositions[label]) {
+                const posMap = migrated.customLabelPositions[label];
+                for (const strokeLabel of Object.keys(posMap)) {
+                    const offset = posMap[strokeLabel];
+                    // Check if this is legacy format (has x,y but no 'kind' field, indicating it needs normalization)
+                    if (offset && typeof offset.x === 'number' && typeof offset.y === 'number' && !offset.kind) {
+                        // Legacy format detected - convert to normalized
+                        console.log(`[Migration] Converting legacy offset for ${label}.${strokeLabel}: (${offset.x}, ${offset.y}) with refPx=${refPx}`);
+                        posMap[strokeLabel] = {
+                            kind: 'norm',
+                            dx_norm: offset.x / refPx,
+                            dy_norm: offset.y / refPx,
+                            normRef: 'width'
+                        };
+                    }
+                }
+            }
+            
+            // Migrate calculatedLabelOffsets
+            if (migrated.calculatedLabelOffsets[label]) {
+                const offsetMap = migrated.calculatedLabelOffsets[label];
+                for (const strokeLabel of Object.keys(offsetMap)) {
+                    const offset = offsetMap[strokeLabel];
+                    // Check if this is legacy format
+                    if (offset && typeof offset.x === 'number' && typeof offset.y === 'number' && !offset.kind) {
+                        console.log(`[Migration] Converting legacy calculated offset for ${label}.${strokeLabel}: (${offset.x}, ${offset.y}) with refPx=${refPx}`);
+                        offsetMap[strokeLabel] = {
+                            kind: 'norm',
+                            dx_norm: offset.x / refPx,
+                            dy_norm: offset.y / refPx,
+                            normRef: 'width'
+                        };
+                    }
+                }
+            }
+        }
+        
+        // 6) Bump version to prevent re-migration
         migrated.version = '2.0';
         migrated.migrated = true;
         
@@ -425,9 +474,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
             
-            // Add custom label positions and rotation stamps after the main loop
+            // Add custom label positions, calculated offsets, rotation stamps, and text elements after the main loop
             if (!projectData.customLabelPositions) projectData.customLabelPositions = {};
+            if (!projectData.calculatedLabelOffsets) projectData.calculatedLabelOffsets = {};
             if (!projectData.customLabelRotationStamps) projectData.customLabelRotationStamps = {};
+            if (!projectData.textElementsByImage) projectData.textElementsByImage = {};
             
             for (const label of actualImageLabels) {
                 projectData.customLabelPositions[label] =
@@ -435,10 +486,20 @@ document.addEventListener('DOMContentLoaded', () => {
                         ? JSON.parse(JSON.stringify(window.customLabelPositions[label]))
                         : {};
 
+                projectData.calculatedLabelOffsets[label] =
+                    (window.calculatedLabelOffsets && window.calculatedLabelOffsets[label])
+                        ? JSON.parse(JSON.stringify(window.calculatedLabelOffsets[label]))
+                        : {};
+
                 projectData.customLabelRotationStamps[label] =
                     (window.customLabelOffsetsRotationByImageAndStroke && window.customLabelOffsetsRotationByImageAndStroke[label])
                         ? JSON.parse(JSON.stringify(window.customLabelOffsetsRotationByImageAndStroke[label]))
                         : {};
+
+                projectData.textElementsByImage[label] =
+                    (window.paintApp?.state?.textElementsByImage && window.paintApp.state.textElementsByImage[label])
+                        ? JSON.parse(JSON.stringify(window.paintApp.state.textElementsByImage[label]))
+                        : [];
             }
             
             // Add image order for sidebar persistence
@@ -708,10 +769,12 @@ document.addEventListener('DOMContentLoaded', () => {
                                                     const img = new Image();
                                                     img.onload = () => {
                                                         window.originalImageDimensions[label] = { width: img.width, height: img.height };
+                                                        console.log(`[Image Load] ${label} dimensions set:`, window.originalImageDimensions[label]);
                                                         resolveDim();
                                                     };
                                                     img.onerror = () => {
                                                         window.originalImageDimensions[label] = { width: 0, height: 0 };
+                                                        console.error(`[Image Load] ${label} failed to load, dimensions set to zero`);
                                                         resolveDim();
                                                     };
                                                     img.src = objectUrl;
@@ -742,19 +805,44 @@ document.addEventListener('DOMContentLoaded', () => {
                                                 if (parsedProjectData.strokeSequence && parsedProjectData.strokeSequence[label]) window.lineStrokesByImage[label] = Array.isArray(parsedProjectData.strokeSequence[label]) ? parsedProjectData.strokeSequence[label].slice() : []; else window.lineStrokesByImage[label] = [];
                                                 if (parsedProjectData.nextLabels && parsedProjectData.nextLabels[label]) window.labelsByImage[label] = parsedProjectData.nextLabels[label]; else window.labelsByImage[label] = 'A1';
                                                 
-                                                // Restore custom label positions and rotation stamps
+                                                // Restore custom label positions, calculated offsets, rotation stamps, and text elements
                                                 if (!window.customLabelPositions) window.customLabelPositions = {};
+                                                if (!window.calculatedLabelOffsets) window.calculatedLabelOffsets = {};
                                                 if (!window.customLabelOffsetsRotationByImageAndStroke) window.customLabelOffsetsRotationByImageAndStroke = {};
+                                                if (!window.paintApp) window.paintApp = { state: {} };
+                                                if (!window.paintApp.state) window.paintApp.state = {};
+                                                if (!window.paintApp.state.textElementsByImage) window.paintApp.state.textElementsByImage = {};
 
                                                 window.customLabelPositions[label] =
                                                     (parsedProjectData.customLabelPositions && parsedProjectData.customLabelPositions[label])
                                                         ? JSON.parse(JSON.stringify(parsedProjectData.customLabelPositions[label]))
                                                         : {};
 
+                                                window.calculatedLabelOffsets[label] =
+                                                    (parsedProjectData.calculatedLabelOffsets && parsedProjectData.calculatedLabelOffsets[label])
+                                                        ? JSON.parse(JSON.stringify(parsedProjectData.calculatedLabelOffsets[label]))
+                                                        : {};
+
                                                 window.customLabelOffsetsRotationByImageAndStroke[label] =
                                                     (parsedProjectData.customLabelRotationStamps && parsedProjectData.customLabelRotationStamps[label])
                                                         ? JSON.parse(JSON.stringify(parsedProjectData.customLabelRotationStamps[label]))
                                                         : {};
+
+                                                window.paintApp.state.textElementsByImage[label] =
+                                                    (parsedProjectData.textElementsByImage && parsedProjectData.textElementsByImage[label])
+                                                        ? JSON.parse(JSON.stringify(parsedProjectData.textElementsByImage[label]))
+                                                        : [];
+
+                                                // MIGRATION: Ensure all loaded text elements have useCanvasCoords set to true
+                                                // This fixes misalignment issues with text loaded from older projects
+                                                if (window.paintApp.state.textElementsByImage[label]) {
+                                                    window.paintApp.state.textElementsByImage[label].forEach(textEl => {
+                                                        if (textEl && textEl.useCanvasCoords === undefined) {
+                                                            console.log(`[Migration] Setting useCanvasCoords=true for text element ${textEl.id} in ${label}`);
+                                                            textEl.useCanvasCoords = true;
+                                                        }
+                                                    });
+                                                }
 
                                                 // Legacy: if a custom offset exists without a stamp, stamp it to current rotation without rotating
                                                 const curTheta = window.imageRotationByLabel && window.imageRotationByLabel[label] ? window.imageRotationByLabel[label] : 0;

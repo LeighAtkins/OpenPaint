@@ -21,5 +21,11 @@
     "window": true,
     "document": true
   },
+  "overrides": [
+    {
+      "files": ["tests/**/*.{js,ts}"] ,
+      "env": { "jest": true }
+    }
+  ],
   "ignorePatterns": ["node_modules/", "public/js/lib/"]
 } 

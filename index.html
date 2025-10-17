@@ -649,6 +649,103 @@
             min-height: 0 !important;
             overflow: hidden !important;
         }
+
+        /* Minimal Numeric Pill Strip Styling */
+        #mini-stepper {
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            min-height: 60px;
+        }
+
+        #mini-stepper::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* Navigation container styling */
+        #navigation-container {
+            background: white;
+            box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
+            position: relative;
+            z-index: 100;
+            width: 100%;
+            display: block !important;
+            visibility: visible !important;
+        }
+
+        /* Ensure the navigation strip is always visible */
+        nav[aria-label="Image quick nav"] {
+            display: block !important;
+            visibility: visible !important;
+        }
+
+        #mini-stepper .step {
+            min-width: 2rem;
+            min-height: 2rem;
+            border: 1px solid transparent;
+            cursor: pointer;
+            position: relative;
+            z-index: 10;
+        }
+
+        #mini-stepper .step:hover {
+            transform: scale(1.05);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            z-index: 20;
+        }
+
+        #mini-stepper .step:focus {
+            outline: 2px solid #3b82f6;
+            outline-offset: 2px;
+            z-index: 20;
+        }
+
+        #mini-stepper .step[aria-current="true"] {
+            transform: scale(1.05);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+            z-index: 20;
+        }
+
+        /* Ensure pills are always clickable */
+        #mini-stepper button {
+            pointer-events: auto !important;
+            user-select: none;
+            cursor: pointer;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+
+        /* Ensure stepper is always visible */
+        #mini-stepper {
+            display: flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+
+        /* Ensure frame capture container allows scrolling */
+        #frame-capture {
+            scroll-behavior: smooth;
+        }
+
+        /* Section styling for better visual separation */
+        #frame-capture section {
+            scroll-margin-top: 2rem;
+        }
+
+        /* Responsive adjustments for mobile */
+        @media (max-width: 768px) {
+            #mini-stepper .step {
+                min-width: 2.5rem;
+                min-height: 2.5rem;
+                font-size: 0.875rem;
+            }
+
+            #mini-stepper {
+                gap: 0.75rem;
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+        }
         
         /* Smooth transitions for all panel content */
         .floating-panel [id$='Content'],
@@ -691,6 +788,13 @@
         }
         .smart-label-scope.compact .label-short { 
             display: inline; 
+        }
+        
+        /* Text mode active state */
+        .text-mode-active {
+            background: #3b82f6 !important;
+            color: white !important;
+            border-color: #2563eb !important;
         }
         
         /* Active state for minimized panels */
@@ -1156,6 +1260,9 @@
                 <button id="drawingModeToggle" class="tbtn straight-mode" title="Straight Line" aria-label="Straight Line">
                     <span class="label-long">Straight Line</span><span class="label-short">Straight</span>
                 </button>
+                <button id="textModeToggle" class="tbtn" title="Text Tool" aria-label="Text Tool">
+                    <span class="label-long">Text</span><span class="label-short">Text</span>
+                </button>
                 <div class="color-swatches">
                     <button class="active" data-color="#3b82f6" style="background-color: rgb(59, 130, 246);" title="Blue"></button>
                     <button data-color="#22c55e" style="background-color: rgb(34, 197, 94);" title="Green"></button>
@@ -1198,7 +1305,27 @@
 
     <!-- Fullscreen Canvas -->
     <canvas id="canvas"></canvas>
-    
+
+    <!-- Main Content Container for Frame Capture -->
+    <div id="frame-capture" class="w-full" style="min-height: 100vh; overflow-y: visible; position: relative;">
+        <!-- Content will be dynamically generated based on images -->
+        <div id="frame-content" class="min-h-screen flex items-center justify-center">
+            <div class="text-center p-8">
+                <h1 class="text-4xl font-bold text-slate-800 mb-4">OpenPaint Frame Capture</h1>
+                <p class="text-slate-600">Images will appear here as you add them to your project</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Minimal Numeric Pill Strip Navigation - Positioned under frame capture -->
+    <div id="navigation-container" class="w-full" style="background: white; border-top: 1px solid #cbd5e1; position: relative; z-index: 10; display: block;">
+        <nav aria-label="Image quick nav" class="w-full">
+            <ol id="mini-stepper" class="flex gap-3 px-4 py-3 overflow-x-auto snap-x snap-mandatory justify-center items-center min-h-[60px]">
+                <!-- Pills will be generated by JavaScript -->
+            </ol>
+        </nav>
+    </div>
+
     <!-- Project Header Panel -->
     <div id="projectPanel" class="floating-panel fixed top-4 right-4 z-30 rounded-2xl w-80 transition-all duration-300">
         <div class="flex items-center justify-between p-4 cursor-move border-b border-gray-200/50">
@@ -1304,6 +1431,9 @@
                 <div class="flex items-center gap-4">
                     <button id="drawingModeToggle" class="px-4 py-2.5 bg-white border-2 border-success-500 text-success-600 text-sm font-semibold rounded-xl hover:bg-success-50 hover:border-success-600 active:bg-success-100 transition-all duration-200 transform hover:scale-105 active:scale-95 straight-mode shadow-sm" title="Straight Line" aria-label="Straight Line">
                         <span class="label-long">Straight Line</span><span class="label-short">Straight</span>
+                    </button>
+                    <button id="textModeToggle" class="px-4 py-2.5 bg-white border-2 border-slate-400 text-slate-700 text-sm font-semibold rounded-xl hover:bg-slate-50 hover:border-slate-500 active:bg-slate-100 transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-sm" title="Text Tool" aria-label="Text Tool">
+                        <span class="label-long">Text</span><span class="label-short">Text</span>
                     </button>
                     
                 </div>
@@ -1482,7 +1612,7 @@
     </div>
 
     <!-- Canvas Controls (Bottom Panel) -->
-    <div id="canvasControls" class="floating-panel fixed bottom-4 rounded-2xl px-3 py-2 transition-all duration-300" style="left: 50%; transform: translateX(-50%); z-index: 4000;">
+    <div id="canvasControls" class="floating-panel fixed bottom-16 rounded-2xl px-3 py-2 transition-all duration-300" style="left: 50%; transform: translateX(-50%); z-index: 4000;">
         <div id="canvasControlsContent" class="flex items-center gap-2 text-sm smart-label-scope">
             <button id="copyCanvasBtn" class="flex items-center gap-1 px-3 py-1 bg-primary-500 hover:bg-primary-600 active:bg-primary-700 text-white text-xs rounded-lg shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-[1.02] active:scale-95" title="Copy image to clipboard" aria-label="Copy Image">
                 <svg class="w-3.5 h-3.5 opacity-90" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16 1H4a2 2 0 00-2 2v12h2V3h12V1zm3 4H8a2 2 0 00-2 2v14a2 2 0 002 2h11a2 2 0 002-2V7a2 2 0 00-2-2zm0 16H8V7h11v14z"></path></svg>
@@ -3264,7 +3394,19 @@
                 
                 // Keyboard navigation
                 document.addEventListener('keydown', (e) => {
-                    // Only handle keyboard navigation if image panel is visible and focused
+                    // Don't process arrow keys if user is typing in an input field
+                    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+                        return;
+                    }
+                    
+                    // Don't process if user is editing a contentEditable element
+                    if (e.target.isContentEditable || 
+                        e.target.classList.contains('stroke-name') || 
+                        e.target.classList.contains('stroke-measurement')) {
+                        return;
+                    }
+                    
+                    // Only handle keyboard navigation if image panel is visible
                     if (!document.getElementById('imagePanel').classList.contains('hidden')) {
                         if (e.key === 'ArrowLeft') {
                             e.preventDefault();
@@ -5018,8 +5160,9 @@
                         
                         syncLegacyImagesToGallery();
                         
-                        // After adding new images, silently load the first one without scrolling
-                        if (imageGalleryData.length > 0) {
+                        // After adding new images, only load the first one if no image is currently active
+                        // This prevents overriding when user pastes a second image
+                        if (imageGalleryData.length > 0 && !window.currentImageLabel) {
                             const firstImage = imageGalleryData[0];
                             const firstLabel = firstImage?.name || firstImage?.label;
                             
@@ -5153,8 +5296,388 @@
     <script src="diagnostics-overlay.js?v=20250820123456"></script>
     <script src="test-coordinate-system.js?v=20250912113000"></script>
 
-    <script src="js/paint.js?v=20250912113000"></script>
+    <script src="js/paint.js?v=20250912134000"></script>
     <script src="js/project-manager.js?v=20250912113000"></script>
     <script src="js/tag-manager.js?v=20250912113000"></script>
+
+    <!-- Minimal Numeric Pill Strip Implementation -->
+    <script>
+        (function initMiniStepper() {
+            // Configuration
+            const cfg = {
+                activeClasses: "bg-slate-900 text-white scale-105 shadow-md",
+                inactiveClasses: "bg-white text-slate-600 border border-slate-300",
+                pillSize: "w-8 h-8",
+                threshold: 0.3
+            };
+
+            function updateActivePill() {
+                const currentLabel = window.currentImageLabel || window.paintApp?.state?.currentImageLabel;
+                if (!currentLabel) return;
+                
+                const stepButtons = Array.from(document.querySelectorAll('#mini-stepper button[data-target]'));
+                let activeButton = null;
+                
+                stepButtons.forEach(btn => {
+                    const isActive = btn.dataset.target === currentLabel;
+                    if (isActive) {
+                        btn.classList.remove(...cfg.inactiveClasses.split(' '));
+                        btn.classList.add(...cfg.activeClasses.split(' '));
+                        btn.setAttribute('aria-current', 'true');
+                        activeButton = btn;
+                    } else {
+                        btn.classList.remove(...cfg.activeClasses.split(' '));
+                        btn.classList.add(...cfg.inactiveClasses.split(' '));
+                        btn.removeAttribute('aria-current');
+                    }
+                });
+                
+                // Auto-scroll the active pill to center using the same approach as thumbnail clicks
+                if (activeButton) {
+                    const stepper = document.getElementById('mini-stepper');
+                    if (stepper) {
+                        const stepperRect = stepper.getBoundingClientRect();
+                        const btnRect = activeButton.getBoundingClientRect();
+                        const delta = (btnRect.left - stepperRect.left) + (btnRect.width / 2) - (stepperRect.width / 2);
+                        stepper.scrollBy({ left: delta, behavior: 'smooth' });
+                    }
+                }
+            }
+
+            function getImageContainers() {
+                // First try the specific image containers
+                const imageList = document.getElementById('imageList');
+                const imageGallery = document.getElementById('imageGallery');
+
+                let containers = [];
+
+                if (imageList) {
+                    const listContainers = Array.from(imageList.querySelectorAll('.image-container, .image-thumbnail'));
+                    containers.push(...listContainers);
+                }
+
+                if (imageGallery) {
+                    const galleryContainers = Array.from(imageGallery.querySelectorAll('.image-container, .image-thumbnail'));
+                    containers.push(...galleryContainers);
+                }
+
+                // If no containers found in specific locations, search more broadly
+                if (containers.length === 0) {
+                    // console.log('[MiniStepper] No containers in specific locations, searching broadly...');
+                    const allPossibleContainers = Array.from(document.querySelectorAll('*')).filter(el => {
+                        // Convert className to string (it might be a DOMTokenList)
+                        const className = (typeof el.className === 'string') ? el.className : (el.className ? el.className.toString() : '');
+                        const id = el.id || '';
+                        const hasImageData = el.dataset && (el.dataset.label || el.dataset.imageIndex || el.dataset.src);
+
+                        return (
+                            className.includes('image') ||
+                            id.includes('image') ||
+                            hasImageData ||
+                            el.tagName === 'IMG' ||
+                            (el.style && el.style.backgroundImage && (
+                                el.style.backgroundImage.includes('data:image') ||
+                                el.style.backgroundImage.includes('blob:') ||
+                                el.style.backgroundImage.includes('http')
+                            ))
+                        );
+                    });
+
+                    containers.push(...allPossibleContainers);
+                }
+
+                // console.log('[MiniStepper] Found', containers.length, 'total containers');
+
+                // Filter to valid image containers
+                const validContainers = containers.filter(container => {
+                    const label = container.dataset?.label || container.getAttribute('title') || container.dataset?.imageIndex || container.id;
+                    const isVisible = container.offsetWidth > 0 && container.offsetHeight > 0;
+                    const bgImage = container.style && container.style.backgroundImage;
+                    const hasImage = container.tagName === 'IMG' ||
+                                   (bgImage && (
+                                       bgImage.includes('data:image') ||
+                                       bgImage.includes('blob:') ||
+                                       bgImage.includes('http')
+                                   )) ||
+                                   container.dataset?.src;
+
+                    // For sidebar image-container buttons, they don't have images themselves but represent images
+                    const isSidebarContainer = container.classList && container.classList.contains('image-container');
+                    
+                    // Accept if: (visible container with label) OR (has actual image)
+                    const isValid = label && !label.includes('Demo') && !label.includes('Blank') && 
+                                   (isSidebarContainer ? isVisible : (hasImage && isVisible));
+
+                    // Debug logging removed - validation is working correctly
+                    
+                    return isValid;
+                });
+
+                // console.log('[MiniStepper] Filtered to', validContainers.length, 'valid image containers');
+                return validContainers;
+            }
+
+            function positionNavigationContainer() {
+                const frameCapture = document.getElementById('frame-capture');
+                const navContainer = document.getElementById('navigation-container');
+
+                if (!frameCapture || !navContainer) {
+                    console.log('[MiniStepper] Missing elements for positioning');
+                    return;
+                }
+
+                // Position the navigation container directly under frame-capture
+                const frameRect = frameCapture.getBoundingClientRect();
+                navContainer.style.position = 'fixed';
+                navContainer.style.bottom = '0';
+                navContainer.style.left = '0';
+                navContainer.style.right = '0';
+                navContainer.style.width = '100%';
+                navContainer.style.zIndex = '5000';
+
+                // console.log('[MiniStepper] Positioned nav container:', {
+                //     position: navContainer.style.position,
+                //     bottom: navContainer.style.bottom,
+                //     left: navContainer.style.left,
+                //     width: navContainer.style.width,
+                //     zIndex: navContainer.style.zIndex,
+                //     frameRect: frameRect
+                // });
+            }
+
+            function updatePills() {
+                const imageContainers = getImageContainers();
+                const stepper = document.getElementById('mini-stepper');
+
+                if (!stepper) {
+                    console.log('[MiniStepper] No stepper element found');
+                    return []; // Return empty array instead of undefined
+                }
+
+                if (imageContainers.length === 0) {
+                    console.log('[MiniStepper] No images found yet');
+                    stepper.innerHTML = '<li class="px-4 py-2 text-slate-500 text-sm">No images yet</li>';
+                    // Ensure base classes are applied even when empty
+                    stepper.className = 'flex gap-3 px-4 py-3 overflow-x-auto snap-x snap-mandatory justify-center items-center min-h-[60px]';
+                    return []; // Return empty array instead of undefined
+                }
+
+                console.log('[MiniStepper] Found', imageContainers.length, 'images');
+                console.log('[MiniStepper] Image labels:', imageContainers.map(c => c.dataset.label || c.getAttribute('title') || c.dataset.imageIndex));
+
+                // Ensure stepper has base classes
+                stepper.className = 'flex gap-3 px-4 py-3 overflow-x-auto snap-x snap-mandatory justify-center items-center min-h-[60px]';
+
+                // Build pills for each image
+                const pillsHTML = imageContainers.map((container, idx) => {
+                    const label = container.dataset?.label || container.getAttribute('title') || container.dataset?.imageIndex || container.id || `Image ${idx + 1}`;
+                    const n = idx + 1;
+                    return `
+                        <li class="snap-center">
+                            <button
+                                type="button"
+                                class="step w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-200 bg-white text-slate-600 border border-slate-300 hover:bg-slate-900 hover:text-white hover:scale-105 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-slate-500"
+                                aria-label="Go to ${label}"
+                                data-target="${label}"
+                                data-index="${idx}">
+                                ${n}
+                            </button>
+                        </li>`;
+                }).join('');
+
+                console.log('[MiniStepper] Generated pills HTML:', pillsHTML);
+                stepper.innerHTML = pillsHTML;
+
+                const stepButtons = Array.from(stepper.querySelectorAll('button[data-target]'));
+
+                console.log('[MiniStepper] Created', stepButtons.length, 'pill buttons');
+                console.log('[MiniStepper] Stepper HTML after generation:', stepper.innerHTML);
+
+                // Initialise states - all start as inactive
+                stepButtons.forEach(btn => {
+                    btn.classList.add(...cfg.inactiveClasses.split(' '));
+                    console.log('[MiniStepper] Applied classes to button:', btn.className, 'data-target:', btn.dataset.target);
+                });
+                
+                // Update active state immediately after creating pills
+                setTimeout(() => updateActivePill(), 100);
+
+                // Click to switch to image
+                stepButtons.forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const label = btn.dataset.target;
+                        console.log('[MiniStepper] Clicking pill for label:', label);
+                        if (window.switchToImage && typeof window.switchToImage === 'function') {
+                            try {
+                                window.switchToImage(label);
+                                console.log('[MiniStepper] Successfully switched to image:', label);
+                                // Center the pill
+                                btn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                                
+                                // Also scroll the sidebar to center the corresponding thumbnail
+                                const list = document.getElementById('imageList');
+                                if (list) {
+                                    const container = list.querySelector(`.image-container[data-label="${label}"]`);
+                                    if (container) {
+                                        const listRect = list.getBoundingClientRect();
+                                        const elRect = container.getBoundingClientRect();
+                                        const delta = (elRect.top - listRect.top) + (elRect.height / 2) - (listRect.height / 2);
+                                        // Suppress scroll-driven switching during this smooth scroll
+                                        window.__imageListProgrammaticScrollUntil = Date.now() + 250;
+                                        list.scrollBy({ top: delta, behavior: 'smooth' });
+                                    }
+                                }
+                                
+                                // Update active state immediately
+                                setTimeout(() => updateActivePill(), 50);
+                                // Dispatch event
+                                window.dispatchEvent(new CustomEvent('mini-step-click', { detail: { label, index: btn.dataset.index } }));
+                            } catch (error) {
+                                console.error('[MiniStepper] Error switching to image:', label, error);
+                            }
+                        } else {
+                            console.error('[MiniStepper] switchToImage function not available');
+                        }
+                    });
+
+                    // Keyboard activation
+                    btn.addEventListener('keydown', e => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            btn.click();
+                        }
+                    });
+                });
+
+                return stepButtons;
+            }
+
+            function initIntersectionObserver(stepButtons) {
+                if (stepButtons.length === 0) return;
+
+                const io = new IntersectionObserver(entries => {
+                    // Find the image container with the highest intersection ratio
+                    const imageEntries = entries.filter(entry => {
+                        // Convert className to string (it might be a DOMTokenList)
+                        const className = (typeof entry.target.className === 'string') ? entry.target.className : (entry.target.className ? entry.target.className.toString() : '');
+                        const id = entry.target.id || '';
+                        const hasImageData = entry.target.dataset && (entry.target.dataset.label || entry.target.dataset.imageIndex || entry.target.dataset.src);
+
+                        return (
+                            className.includes('image') ||
+                            id.includes('image') ||
+                            hasImageData ||
+                            entry.target.tagName === 'IMG' ||
+                            (entry.target.style && entry.target.style.backgroundImage && (
+                                entry.target.style.backgroundImage.includes('data:image') ||
+                                entry.target.style.backgroundImage.includes('blob:') ||
+                                entry.target.style.backgroundImage.includes('http')
+                            ))
+                        );
+                    });
+                    if (imageEntries.length === 0) return;
+
+                    let best = imageEntries.reduce((a, b) => a.intersectionRatio > b.intersectionRatio ? a : b);
+                    const label = best.target.dataset?.label || best.target.getAttribute('title') || best.target.dataset?.imageIndex || best.target.id || `Image ${Array.from(best.target.parentNode?.children || []).indexOf(best.target)}`;
+
+                    if (!label) return;
+
+                    // Update UI
+                    stepButtons.forEach(b => {
+                        const active = b.dataset.target === label;
+                        b.classList.toggle('aria-current', active);
+
+                        if (active) {
+                            b.setAttribute('aria-current', 'true');
+                            b.classList.remove(...cfg.inactiveClasses.split(' '));
+                            b.classList.add(...cfg.activeClasses.split(' '));
+                            b.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                        } else {
+                            b.removeAttribute('aria-current');
+                            b.classList.remove(...cfg.activeClasses.split(' '));
+                            b.classList.add(...cfg.inactiveClasses.split(' '));
+                        }
+                    });
+
+                    // Dispatch event for external listeners
+                    window.dispatchEvent(new CustomEvent('mini-step-change', { detail: { label, index: best.target.dataset?.imageIndex || best.target.dataset?.index } }));
+                }, { threshold: [cfg.threshold], rootMargin: '-50% 0px -50% 0px' });
+
+                // Observe all image containers
+                getImageContainers().forEach(container => {
+                    const label = container.dataset?.label || container.getAttribute('title') || container.dataset?.imageIndex || container.id;
+                    console.log('[MiniStepper] Observing container:', {
+                        tag: container.tagName,
+                        className: container.className,
+                        id: container.id,
+                        label: label
+                    });
+                    io.observe(container);
+                });
+            }
+
+            // Initialize when DOM is ready and wait for paint.js to load
+            function initializeWhenReady() {
+                if (typeof window.switchToImage === 'function') {
+                    initialize();
+                } else {
+                    console.log('[MiniStepper] Waiting for paint.js to load...');
+                    setTimeout(initializeWhenReady, 500);
+                }
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initializeWhenReady);
+            } else {
+                initializeWhenReady();
+            }
+
+            function initialize() {
+                positionNavigationContainer();
+
+                // Initial update
+                const stepButtons = updatePills();
+                initIntersectionObserver(stepButtons);
+                
+                // Update active pill immediately
+                updateActivePill();
+
+                // Set up periodic updates to handle dynamically added images
+                setInterval(() => {
+                    positionNavigationContainer();
+                    const currentButtons = Array.from(document.querySelectorAll('#mini-stepper button[data-target]'));
+                    const currentContainers = getImageContainers();
+                    if (currentButtons.length !== currentContainers.length) {
+                        console.log('[MiniStepper] Image count changed, updating pills');
+                        const newButtons = updatePills();
+                        initIntersectionObserver(newButtons);
+                    }
+                    // Update active pill on each check
+                    updateActivePill();
+                }, 1000); // Check more frequently
+
+                console.log('[MiniStepper] Initialized and monitoring for image changes');
+            }
+
+            // Reduced motion preference
+            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                // Adjust behaviors for reduced motion
+                document.querySelectorAll('#mini-stepper .step').forEach(btn => {
+                    btn.style.transition = 'none';
+                });
+            }
+
+            // Example listeners for external integration
+            window.addEventListener('mini-step-change', e => {
+                const { label, index } = e.detail;
+                console.log(`[MiniStepper] Active image changed to: ${label} (index: ${index})`);
+            });
+
+            window.addEventListener('mini-step-click', e => {
+                const { label, index } = e.detail;
+                console.log(`[MiniStepper] Image clicked: ${label} (index: ${index})`);
+            });
+        })();
+    </script>
 </body>
 </html>
