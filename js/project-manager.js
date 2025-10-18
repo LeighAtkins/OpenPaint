@@ -515,6 +515,22 @@ document.addEventListener('DOMContentLoaded', () => {
             // Add project.json to the zip
             zip.file("project.json", JSON.stringify(projectData, null, 2));
             
+            // Save AI exports if they exist
+            if (window.aiExports && typeof window.aiExports === 'object') {
+                for (const label of actualImageLabels) {
+                    const aiExport = window.aiExports[label];
+                    if (aiExport && aiExport.svg && aiExport.vectors) {
+                        console.log(`[Save Project] Saving AI export for ${label}`);
+                        zip.file(`exports/${label}/ai-latest.svg`, aiExport.svg);
+                        zip.file(`exports/${label}/ai-latest.json`, JSON.stringify({
+                            vectors: aiExport.vectors,
+                            summary: aiExport.summary,
+                            timestamp: aiExport.timestamp
+                        }, null, 2));
+                    }
+                }
+            }
+            
             // Validate that scales were correctly added to the project data
 //             console.log('[Save Project] VALIDATION - Checking scales in project data:');
             if (projectData.imageScales) {
@@ -866,6 +882,37 @@ document.addEventListener('DOMContentLoaded', () => {
                                     .then(() => { // Executed after all images and their data are loaded and processed
 //                                         console.log('All image files processed. OriginalImageDimensions:', JSON.stringify(window.originalImageDimensions));
                                         
+                                        // Load AI exports if they exist
+                                        if (!window.aiExports) window.aiExports = {};
+                                        const aiExportPromises = [];
+                                        
+                                        for (const label of labelsToProcess) {
+                                            const aiSvgFile = zip.file(`exports/${label}/ai-latest.svg`);
+                                            const aiJsonFile = zip.file(`exports/${label}/ai-latest.json`);
+                                            
+                                            if (aiSvgFile && aiJsonFile) {
+                                                const promise = Promise.all([
+                                                    aiSvgFile.async('text'),
+                                                    aiJsonFile.async('text')
+                                                ]).then(([svg, jsonStr]) => {
+                                                    const data = JSON.parse(jsonStr);
+                                                    window.aiExports[label] = {
+                                                        svg,
+                                                        vectors: data.vectors,
+                                                        summary: data.summary,
+                                                        timestamp: data.timestamp
+                                                    };
+                                                    console.log(`[Load Project] Loaded AI export for ${label}`);
+                                                }).catch(err => {
+                                                    console.error(`[Load Project] Error loading AI export for ${label}:`, err);
+                                                });
+                                                aiExportPromises.push(promise);
+                                            }
+                                        }
+                                        
+                                        return Promise.all(aiExportPromises);
+                                    })
+                                    .then(() => {
                                         // Main UI update timeout
                                         setTimeout((activeProjectData) => { 
 //                                             console.log('[Load Project] Main UI Update Timeout. ImageLabels:', activeProjectData.imageLabels);

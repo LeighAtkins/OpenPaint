@@ -1,3 +1,23 @@
 {
-  "outputDirectory": "."
+  "version": 2,
+  "builds": [
+    {
+      "src": "app.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "^/ai/(.*)$",
+      "dest": "/app.js"
+    },
+    {
+      "src": "^/health$",
+      "dest": "/app.js"
+    },
+    {
+      "src": ".*",
+      "dest": "/index.html"
+    }
+  ]
 }

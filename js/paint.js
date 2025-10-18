@@ -1,4 +1,4 @@
-// Define core application structure for better state management
+﻿// Define core application structure for better state management
 function debugLog(...args) {
     try {
         const isDebug = Boolean(window?.paintApp?.config?.debugMode) || Boolean(window?.debugMode);
@@ -661,7 +661,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
         updateBrushSliderAccent();
         updateBrushSliderFill();
-        const copyButton = window.paintApp.state.domElements.copyButton;
+    const copyButton = window.paintApp.state.domElements.copyButton;
 
 // Update color of stroke currently in edit mode when the color picker changes
 if (colorPicker) {
@@ -755,7 +755,7 @@ function hideResizeOverlay() {
         resizeOverlayCanvas = null;
     });
 }
-
+    
     // Expose canvas globally for project management
     window.canvas = canvas;
     
@@ -7536,7 +7536,7 @@ let textDragStartCanvasY = 0;
 
                     let finalPositionCanvas; // This will be the top-left of the label in CANVAS coordinates
                     let imageSpaceOffset; // This will store the {x, y} offset in IMAGE SPACE
-
+                    
                     // Check for custom positions in both local and window storage
                     const localCustomExists = customLabelPositions[currentImageLabel]?.[strokeLabel];
                     const windowCustomExists = window.customLabelPositions[currentImageLabel]?.[strokeLabel];
@@ -8652,7 +8652,7 @@ let textDragStartCanvasY = 0;
                         }
                         if (window.calculatedLabelOffsets && window.calculatedLabelOffsets[posKey]) {
                             delete window.calculatedLabelOffsets[posKey];
-                        }
+                    }
                     
                     // Remove from line strokes
                     if (lineStrokesByImage[actionToRedo.image]) {
@@ -12098,7 +12098,7 @@ let textDragStartCanvasY = 0;
         const coords = window.getPointerCoords(e);
         const clickedCanvasLabel = findLabelAtPoint(coords.canvas.x, coords.canvas.y);
         const isClickOnCanvasLabel = clickedCanvasLabel !== null;
-    
+        
     // Check if clicking on a text element
     console.log('[TEXT CHECK] About to call findTextElementAtPoint at:', coords.canvas.x, coords.canvas.y);
     const clickedTextElement = findTextElementAtPoint(coords.canvas.x, coords.canvas.y);
@@ -12763,7 +12763,7 @@ let textDragStartCanvasY = 0;
         
         // NOW proceed with drawing mode logic - initialize drawing state
         console.log('[DRAW CHECK] Proceeding to drawing mode logic - drawingMode:', drawingMode);
-        
+    
         // Handle drawing (default when Shift is not pressed)
         // Save the state before starting a new stroke
         if (!strokeInProgress) {
@@ -13092,7 +13092,7 @@ let textDragStartCanvasY = 0;
 
                 // Get the current offset (custom or calculated) or calculate if first time dragging
                 let currentOffsetRaw = customLabelPositions[currentImageLabel][strokeName] || 
-                                       calculatedLabelOffsets[currentImageLabel]?.[strokeName];
+                                    calculatedLabelOffsets[currentImageLabel]?.[strokeName];
 
                 // Convert to pixels if normalized
                 let currentOffset;
@@ -18430,5 +18430,127 @@ function wrapCanvasText(ctx, text, maxWidth) {
 
 // Ensure file terminates cleanly; prevents "Unexpected end of input" if a prior block failed to auto-close
 ;
+
+/**
+ * AI Export Integration
+ * Handles AI-enhanced SVG generation and preview
+ */
+(function initAIExport() {
+    const aiExportBtn = document.getElementById('exportAISVG');
+    if (!aiExportBtn) {
+        console.warn('[AI Export] Button not found');
+        return;
+    }
+    
+    aiExportBtn.addEventListener('click', async () => {
+        try {
+            console.log('[AI Export] Starting export...');
+            aiExportBtn.disabled = true;
+            aiExportBtn.textContent = 'Generating...';
+            
+            // Get current units
+            const units = {
+                name: window.currentUnit || 'cm',
+                pxPerUnit: window.pxPerUnit || 37.8
+            };
+            
+            const result = await window.exportAIEnhancedSVG({ units });
+            showAIPreview(result);
+        } catch (error) {
+            console.error('[AI Export] Failed:', error);
+            alert('AI export failed: ' + error.message + '\n\nPlease use manual export instead.');
+        } finally {
+            aiExportBtn.disabled = false;
+            const longLabel = aiExportBtn.querySelector('.label-long');
+            const shortLabel = aiExportBtn.querySelector('.label-short');
+            if (longLabel) longLabel.textContent = 'AI SVG Export';
+            if (shortLabel) shortLabel.textContent = 'AI SVG';
+        }
+    });
+    
+    function showAIPreview(result) {
+        const modal = document.getElementById('aiPreviewModal');
+        const container = document.getElementById('aiPreviewContainer');
+        
+        if (!modal || !container) {
+            console.error('[AI Export] Modal elements not found');
+            return;
+        }
+        
+        // Insert SVG
+        container.innerHTML = result.svg;
+        modal.classList.remove('hidden');
+        
+        // Get current image dimensions for PNG export
+        const imageLabel = window.currentImageLabel;
+        const dims = window.originalImageDimensions?.[imageLabel];
+        
+        // Wire up buttons
+        const acceptBtn = document.getElementById('aiAccept');
+        const saveBtn = document.getElementById('aiSaveToProject');
+        const downloadSVGBtn = document.getElementById('aiDownloadSVG');
+        const downloadPNGBtn = document.getElementById('aiDownloadPNG');
+        const cancelBtn = document.getElementById('aiCancel');
+        
+        // Remove old listeners by cloning
+        const newAcceptBtn = acceptBtn.cloneNode(true);
+        const newSaveBtn = saveBtn.cloneNode(true);
+        const newDownloadSVGBtn = downloadSVGBtn.cloneNode(true);
+        const newDownloadPNGBtn = downloadPNGBtn.cloneNode(true);
+        const newCancelBtn = cancelBtn.cloneNode(true);
+        
+        acceptBtn.parentNode.replaceChild(newAcceptBtn, acceptBtn);
+        saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
+        downloadSVGBtn.parentNode.replaceChild(newDownloadSVGBtn, downloadSVGBtn);
+        downloadPNGBtn.parentNode.replaceChild(newDownloadPNGBtn, downloadPNGBtn);
+        cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+        
+        newAcceptBtn.onclick = () => {
+            console.log('[AI Export] Accepting AI vectors (not yet implemented)');
+            // Future: Replace current annotations with AI vectors
+            modal.classList.add('hidden');
+        };
+        
+        newSaveBtn.onclick = () => {
+            // Save AI export to project
+            if (!window.aiExports) window.aiExports = {};
+            window.aiExports[imageLabel] = {
+                svg: result.svg,
+                vectors: result.vectors,
+                summary: result.summary,
+                timestamp: new Date().toISOString()
+            };
+            console.log('[AI Export] Saved to project');
+            alert('AI export saved to project');
+            modal.classList.add('hidden');
+        };
+        
+        newDownloadSVGBtn.onclick = () => {
+            const filename = `${imageLabel || 'export'}-ai.svg`;
+            window.downloadBlob(result.svg, filename, 'image/svg+xml');
+            console.log('[AI Export] Downloaded SVG:', filename);
+        };
+        
+        newDownloadPNGBtn.onclick = async () => {
+            try {
+                const width = dims?.width || 800;
+                const height = dims?.height || 600;
+                const png = await window.svgToPNG(result.svg, width, height);
+                const filename = `${imageLabel || 'export'}-ai.png`;
+                window.downloadBlob(png, filename, 'image/png');
+                console.log('[AI Export] Downloaded PNG:', filename);
+            } catch (error) {
+                console.error('[AI Export] PNG export failed:', error);
+                alert('PNG export failed: ' + error.message);
+            }
+        };
+        
+        newCancelBtn.onclick = () => {
+            modal.classList.add('hidden');
+        };
+    }
+    
+    console.log('[AI Export] Initialized');
+})();
 
 // Cache bust: 20250912170000
