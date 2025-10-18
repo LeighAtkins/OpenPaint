@@ -15,7 +15,7 @@
     },
     {
       "source": "/test",
-      "destination": "/api/app"
+      "destination": "/api/test"
     }
   ]
 }
