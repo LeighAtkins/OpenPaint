@@ -26,7 +26,6 @@
     "test:all": "npm run test && npm run test:e2e && npm run test:visual && npm run test:performance"
   },
   "dependencies": {
-    "22": "^0.0.0",
     "@vercel/postgres": "^0.8.0",
     "express": "^4.21.2",
     "file-saver": "^2.0.5",
