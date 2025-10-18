@@ -587,10 +587,13 @@ app.use((err, req, res, next) => {
 });
 
 // Start the server
-app.listen(port, '0.0.0.0', () => {
+module.exports = app;
+// If you still want local dev server, guard it:
+if (require.main === module) {
+  app.listen(port, '0.0.0.0', () => {
     console.log(`OpenPaint app listening at http://localhost:${port}`);
-    console.log(`Also accessible at http://172.31.25.185:${port} (WSL IP)`);
-});
+  });
+}
 
 /**
  * Python rembg processing function using inline script execution
