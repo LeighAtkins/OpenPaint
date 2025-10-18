@@ -1,4 +1,5 @@
 {
+  "outputDirectory": ".",
   "rewrites": [
     { "source": "/ai/(.*)", "destination": "/api/app" },
     { "source": "/health", "destination": "/api/app" }
