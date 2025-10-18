@@ -74,6 +74,14 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 app.get("/health", (req, res) => res.json({ ok: true }));
+
+app.get("/env-check", (req, res) => {
+  res.json({
+    AI_WORKER_URL: (process.env.AI_WORKER_URL || "").trim(),
+    HAS_AI_WORKER_KEY: Boolean((process.env.AI_WORKER_KEY || "").trim()),
+    ROUTES_MOUNTED: true
+  });
+});
 /**
  * API endpoint for creating a shareable URL for a project
  * Accepts project data and returns a unique share ID

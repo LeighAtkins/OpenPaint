@@ -1,7 +1,17 @@
 {
   "outputDirectory": ".",
   "rewrites": [
-    { "source": "/ai/(.*)", "destination": "/api/app" },
-    { "source": "/health", "destination": "/api/app" }
+    {
+      "source": "/ai/(.*)",
+      "destination": "/api/app"
+    },
+    {
+      "source": "/health",
+      "destination": "/api/app"
+    },
+    {
+      "source": "/env-check",
+      "destination": "/api/app"
+    }
   ]
 }
