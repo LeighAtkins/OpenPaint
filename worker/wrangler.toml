@@ -1,0 +1,10 @@
+name = "openpaint-ai-worker"
+main = "src/index.js"
+compatibility_date = "2024-01-01"
+
+[vars]
+ENVIRONMENT = "production"
+
+# Secrets (set via: wrangler secret put AI_WORKER_KEY)
+# AI_WORKER_KEY = "your-secret-key"
+

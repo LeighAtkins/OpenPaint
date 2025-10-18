@@ -25,7 +25,7 @@
             if (event.message && event.message.includes('autofill.bundle.js')) {
                 event.preventDefault();
                 return false;
-            } 
+            }
         });
     </script>
     <style>
@@ -1295,12 +1295,15 @@
                     <span class="label-long">Load Project</span><span class="label-short">Load</span>
                 </button>
                 <button id="removeBgClientTop" class="tbtn" title="Remove background using server">Remove BG</button>
+                <button id="exportAISVG" class="tbtn" title="AI SVG Export" aria-label="AI SVG Export" style="background: #8b5cf6; border-color: #7c3aed;">
+                    <span class="label-long">AI SVG Export</span><span class="label-short">AI SVG</span>
+                </button>
                 <button id="saveProjectTop" class="tbtn" title="Save Project" aria-label="Save Project">
                     <span class="label-long">Save Project</span><span class="label-short">Save</span>
                 </button>
                 <button id="unitToggleBtn" class="tbtn" title="Toggle units">inches</button>
-            </div>
-        </div>
+                    </div>
+                </div>
     </div>
 
     <!-- Fullscreen Canvas -->
@@ -1325,7 +1328,7 @@
             </ol>
         </nav>
     </div>
-
+    
     <!-- Project Header Panel -->
     <div id="projectPanel" class="floating-panel fixed top-4 right-4 z-30 rounded-2xl w-80 transition-all duration-300">
         <div class="flex items-center justify-between p-4 cursor-move border-b border-gray-200/50">
@@ -1543,7 +1546,7 @@
             <label for="currentImageNameBox" class="block text-[10px] text-slate-500 mb-1">Image name</label>
             <input id="currentImageNameBox" type="text" class="w-full px-2 py-1 border border-slate-300 rounded-md text-[12px] focus:outline-none focus:ring-2 focus:ring-primary-300" placeholder="Rename current image" />
         </div>
-            <div id="imagePanelContent" class="p-3 transition-all duration-300" style="position: relative;">
+        <div id="imagePanelContent" class="p-3 transition-all duration-300" style="position: relative;">
             <!-- Legacy image list for backwards compatibility -->
             <div id="imageList" class="space-y-4 mb-0 h-[60vh] overflow-y-auto overflow-x-hidden pr-0 snap-y snap-mandatory scroll-smooth pt-[28vh] pb-[28vh]"></div>
 
@@ -5678,6 +5681,41 @@
                 console.log(`[MiniStepper] Image clicked: ${label} (index: ${index})`);
             });
         })();
+    </script>
+
+    <!-- AI Preview Modal -->
+    <div id="aiPreviewModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+        <div class="bg-white rounded-lg p-6 max-w-4xl w-full max-h-[90vh] overflow-auto m-4">
+            <h2 class="text-xl font-bold mb-4">AI SVG Preview</h2>
+            <div id="aiPreviewContainer" class="border border-gray-300 rounded mb-4 relative bg-gray-50 min-h-[400px] flex items-center justify-center">
+                <!-- SVG overlay will be inserted here -->
+                <p class="text-gray-400">Loading preview...</p>
+            </div>
+            <div class="flex gap-2 flex-wrap">
+                <button id="aiAccept" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors">Accept</button>
+                <button id="aiSaveToProject" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors">Save to Project</button>
+                <button id="aiDownloadSVG" class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors">Download SVG</button>
+                <button id="aiDownloadPNG" class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors">Download PNG</button>
+                <button id="aiCancel" class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition-colors">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load AI Export Module -->
+    <script type="module">
+        import { exportAIEnhancedSVG, assistMeasurement, enhanceAnnotations, downloadBlob, svgToPNG } from './js/ai-export.js';
+        
+        // Make functions available globally
+        window.exportAIEnhancedSVG = exportAIEnhancedSVG;
+        window.assistMeasurement = assistMeasurement;
+        window.enhanceAnnotations = enhanceAnnotations;
+        window.downloadBlob = downloadBlob;
+        window.svgToPNG = svgToPNG;
+        
+        // Initialize AI exports storage
+        if (!window.aiExports) {
+            window.aiExports = {};
+        }
     </script>
 </body>
 </html>

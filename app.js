@@ -384,6 +384,202 @@ app.patch('/api/shared/:shareId', async (req, res) => {
     }
 });
 
+/**
+ * AI Worker Relay Endpoints
+ * These endpoints relay requests to the Cloudflare Worker for AI-enhanced SVG generation
+ */
+
+// AI Worker configuration
+const AI_WORKER_URL = process.env.AI_WORKER_URL || 'http://localhost:8787';
+const AI_WORKER_KEY = process.env.AI_WORKER_KEY || 'dev-key';
+
+// Rate limiting for AI endpoints
+const aiRequestCounts = new Map();
+const AI_RATE_LIMIT = 10; // requests per minute
+const AI_RATE_WINDOW = 60 * 1000; // 1 minute
+
+function checkAIRateLimit(ip) {
+    const now = Date.now();
+    const record = aiRequestCounts.get(ip) || { count: 0, resetTime: now + AI_RATE_WINDOW };
+    
+    if (now > record.resetTime) {
+        record.count = 0;
+        record.resetTime = now + AI_RATE_WINDOW;
+    }
+    
+    record.count++;
+    aiRequestCounts.set(ip, record);
+    
+    return record.count <= AI_RATE_LIMIT;
+}
+
+/**
+ * Generate AI-enhanced SVG from strokes
+ */
+app.post('/ai/generate-svg', async (req, res) => {
+    try {
+        const clientIp = req.ip || req.connection.remoteAddress;
+        
+        // Rate limiting
+        if (!checkAIRateLimit(clientIp)) {
+            return res.status(429).json({ error: 'Too many AI requests', fallback: true });
+        }
+        
+        const { image, units, strokes, prompt, styleGuide } = req.body;
+        
+        // Validate input
+        if (!image || !strokes || !Array.isArray(strokes)) {
+            return res.status(400).json({ error: 'Invalid input: image and strokes required' });
+        }
+        
+        if (strokes.length === 0) {
+            return res.status(400).json({ error: 'No strokes provided' });
+        }
+        
+        console.log(`[AI Worker] Relaying generate-svg request: ${strokes.length} strokes, ${image.width}x${image.height}`);
+        
+        // Relay to Worker with timeout
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 2000);
+        
+        try {
+            const response = await fetch(`${AI_WORKER_URL}/generate-svg`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-API-Key': AI_WORKER_KEY,
+                    'X-Request-ID': crypto.randomUUID()
+                },
+                body: JSON.stringify({ image, units, strokes, prompt, styleGuide }),
+                signal: controller.signal
+            });
+            
+            clearTimeout(timeout);
+            
+            if (!response.ok) {
+                throw new Error(`Worker responded with ${response.status}`);
+            }
+            
+            const result = await response.json();
+            console.log(`[AI Worker] Success: ${result.vectors?.length || 0} vectors generated`);
+            res.json(result);
+        } catch (fetchError) {
+            clearTimeout(timeout);
+            throw fetchError;
+        }
+    } catch (error) {
+        console.error('[AI Worker] generate-svg error:', error.message);
+        res.status(500).json({ 
+            error: 'Worker failed: ' + error.message, 
+            fallback: true 
+        });
+    }
+});
+
+/**
+ * Assist with measurement calculation
+ */
+app.post('/ai/assist-measurement', async (req, res) => {
+    try {
+        const clientIp = req.ip || req.connection.remoteAddress;
+        
+        if (!checkAIRateLimit(clientIp)) {
+            return res.status(429).json({ error: 'Too many AI requests' });
+        }
+        
+        const { units, stroke, styleGuide } = req.body;
+        
+        if (!units || !stroke) {
+            return res.status(400).json({ error: 'Invalid input: units and stroke required' });
+        }
+        
+        console.log(`[AI Worker] Relaying assist-measurement request for stroke ${stroke.id}`);
+        
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 1000);
+        
+        try {
+            const response = await fetch(`${AI_WORKER_URL}/assist-measurement`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-API-Key': AI_WORKER_KEY,
+                    'X-Request-ID': crypto.randomUUID()
+                },
+                body: JSON.stringify({ units, stroke, styleGuide }),
+                signal: controller.signal
+            });
+            
+            clearTimeout(timeout);
+            
+            if (!response.ok) {
+                throw new Error(`Worker responded with ${response.status}`);
+            }
+            
+            const result = await response.json();
+            res.json(result);
+        } catch (fetchError) {
+            clearTimeout(timeout);
+            throw fetchError;
+        }
+    } catch (error) {
+        console.error('[AI Worker] assist-measurement error:', error.message);
+        res.status(500).json({ error: 'Worker failed: ' + error.message });
+    }
+});
+
+/**
+ * Enhance annotation placement
+ */
+app.post('/ai/enhance-placement', async (req, res) => {
+    try {
+        const clientIp = req.ip || req.connection.remoteAddress;
+        
+        if (!checkAIRateLimit(clientIp)) {
+            return res.status(429).json({ error: 'Too many AI requests' });
+        }
+        
+        const { image, strokes, styleGuide } = req.body;
+        
+        if (!image || !strokes || !Array.isArray(strokes)) {
+            return res.status(400).json({ error: 'Invalid input: image and strokes required' });
+        }
+        
+        console.log(`[AI Worker] Relaying enhance-placement request: ${strokes.length} strokes`);
+        
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 2000);
+        
+        try {
+            const response = await fetch(`${AI_WORKER_URL}/enhance-placement`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-API-Key': AI_WORKER_KEY,
+                    'X-Request-ID': crypto.randomUUID()
+                },
+                body: JSON.stringify({ image, strokes, styleGuide }),
+                signal: controller.signal
+            });
+            
+            clearTimeout(timeout);
+            
+            if (!response.ok) {
+                throw new Error(`Worker responded with ${response.status}`);
+            }
+            
+            const result = await response.json();
+            res.json(result);
+        } catch (fetchError) {
+            clearTimeout(timeout);
+            throw fetchError;
+        }
+    } catch (error) {
+        console.error('[AI Worker] enhance-placement error:', error.message);
+        res.status(500).json({ error: 'Worker failed: ' + error.message });
+    }
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
     console.error('Server error:', err);
@@ -460,3 +656,6 @@ if __name__ == "__main__":
         });
     });
 }
+
+// Export for Vercel
+module.exports = app;
