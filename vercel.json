@@ -12,6 +12,10 @@
     {
       "source": "/env-check",
       "destination": "/api/app"
+    },
+    {
+      "source": "/test",
+      "destination": "/api/app"
     }
   ]
 }

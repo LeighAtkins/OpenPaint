@@ -69,6 +69,11 @@ app.get("/env-check", (req, res) => {
     ROUTES_MOUNTED: true
   });
 });
+
+// Minimal test endpoint to check if Express works at all
+app.get("/test", (req, res) => {
+  res.json({ status: "ok", timestamp: new Date().toISOString() });
+});
 /**
  * API endpoint for creating a shareable URL for a project
  * Accepts project data and returns a unique share ID
