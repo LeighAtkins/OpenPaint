@@ -389,23 +389,17 @@ app.patch('/api/shared/:shareId', async (req, res) => {
  * These endpoints relay requests to the Cloudflare Worker for AI-enhanced SVG generation
  */
 
-// AI Worker configuration (trim to kill hidden spaces/newlines)
+// AI Worker configuration with startup logging
 const AI_WORKER_URL = (process.env.AI_WORKER_URL || "http://localhost:8787")
-  .replace(/^\s*-\s*/, "") // remove accidental "- " prefix
+  .replace(/^\s*-\s*/, "") // strip accidental "- "
   .trim();
-const AI_WORKER_KEY = (process.env.AI_WORKER_KEY || "dev-key").trim();
+const AI_WORKER_KEY = (process.env.AI_WORKER_KEY || "").trim();
 
-// Validate and log once
-try {
-  new URL(AI_WORKER_URL);
-  console.log("[AI Relay] Using AI_WORKER_URL:", JSON.stringify(AI_WORKER_URL));
-} catch (e) {
-  console.error("[AI Relay] INVALID AI_WORKER_URL:", JSON.stringify(AI_WORKER_URL), e.message);
-}
+console.log("[AI Relay] Using AI_WORKER_URL:", JSON.stringify(AI_WORKER_URL));
+console.log("[AI Relay] Has KEY:", AI_WORKER_KEY ? "yes" : "no");
 
-// Helper function for clean URL joining
 function joinUrl(base, path) {
-  return `${base.replace(/\/+$/, "")}/${path.replace(/^\/+/, "")}`;
+  return `${base.replace(/\/+$/, "")}/${String(path).replace(/^\/+/, "")}`;
 }
 
 // Rate limiting for AI endpoints
@@ -431,171 +425,136 @@ function checkAIRateLimit(ip) {
 /**
  * Generate AI-enhanced SVG from strokes
  */
-app.post('/ai/generate-svg', async (req, res) => {
-    try {
-        const clientIp = req.ip || req.connection.remoteAddress;
-        
-        // Rate limiting
-        if (!checkAIRateLimit(clientIp)) {
-            return res.status(429).json({ error: 'Too many AI requests', fallback: true });
-        }
-        
-        const { image, units, strokes, prompt, styleGuide } = req.body;
-        
-        // Validate input
-        if (!image || !strokes || !Array.isArray(strokes)) {
-            return res.status(400).json({ error: 'Invalid input: image and strokes required' });
-        }
-        
-        if (strokes.length === 0) {
-            return res.status(400).json({ error: 'No strokes provided' });
-        }
-        
-        console.log(`[AI Worker] Relaying generate-svg request: ${strokes.length} strokes, ${image.width}x${image.height}`);
-        
-        // Relay to Worker with timeout
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 2000);
-        
-        try {
-            const target = joinUrl(AI_WORKER_URL, "/generate-svg");
-            const response = await fetch(target, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-API-Key': AI_WORKER_KEY,
-                    'X-Request-ID': crypto.randomUUID()
-                },
-                body: JSON.stringify({ image, units, strokes, prompt, styleGuide }),
-                signal: controller.signal
-            });
-            
-            clearTimeout(timeout);
-            
-            if (!response.ok) {
-                throw new Error(`Worker responded with ${response.status}`);
-            }
-            
-            const result = await response.json();
-            console.log(`[AI Worker] Success: ${result.vectors?.length || 0} vectors generated`);
-            res.json(result);
-        } catch (fetchError) {
-            clearTimeout(timeout);
-            throw fetchError;
-        }
-    } catch (error) {
-        console.error('[AI Worker] generate-svg error:', error.message);
-        res.status(500).json({ 
-            error: 'Worker failed: ' + error.message, 
-            fallback: true 
-        });
+app.post("/ai/generate-svg", async (req, res) => {
+  try {
+    if (!req.body || !req.body.image || !Array.isArray(req.body.strokes)) {
+      return res.status(400).json({ error: "Invalid input: image and strokes required" });
     }
+
+    const target = joinUrl(AI_WORKER_URL, "/generate-svg");
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 3000);
+
+    let r, text;
+    try {
+      r = await fetch(target, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-API-Key": AI_WORKER_KEY,
+          "X-Request-ID": crypto.randomUUID(),
+        },
+        body: JSON.stringify(req.body),
+        signal: controller.signal,
+      });
+      text = await r.text();
+    } catch (e) {
+      clearTimeout(timer);
+      console.error("[AI Relay] Fetch failed:", e);
+      return res.status(502).json({ error: "Relay fetch failed", detail: String(e) });
+    }
+    clearTimeout(timer);
+
+    if (!r.ok) {
+      console.error("[AI Relay] Worker error:", r.status, text);
+      return res.status(r.status).type("application/json").send(text);
+    }
+
+    return res.type("application/json").send(text);
+  } catch (e) {
+    console.error("[AI Relay] Route crash:", e);
+    return res.status(500).json({ error: "Relay crashed", detail: String(e) });
+  }
 });
 
 /**
  * Assist with measurement calculation
  */
-app.post('/ai/assist-measurement', async (req, res) => {
-    try {
-        const clientIp = req.ip || req.connection.remoteAddress;
-        
-        if (!checkAIRateLimit(clientIp)) {
-            return res.status(429).json({ error: 'Too many AI requests' });
-        }
-        
-        const { units, stroke, styleGuide } = req.body;
-        
-        if (!units || !stroke) {
-            return res.status(400).json({ error: 'Invalid input: units and stroke required' });
-        }
-        
-        console.log(`[AI Worker] Relaying assist-measurement request for stroke ${stroke.id}`);
-        
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 1000);
-        
-        try {
-            const target = joinUrl(AI_WORKER_URL, "/assist-measurement");
-            const response = await fetch(target, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-API-Key': AI_WORKER_KEY,
-                    'X-Request-ID': crypto.randomUUID()
-                },
-                body: JSON.stringify({ units, stroke, styleGuide }),
-                signal: controller.signal
-            });
-            
-            clearTimeout(timeout);
-            
-            if (!response.ok) {
-                throw new Error(`Worker responded with ${response.status}`);
-            }
-            
-            const result = await response.json();
-            res.json(result);
-        } catch (fetchError) {
-            clearTimeout(timeout);
-            throw fetchError;
-        }
-    } catch (error) {
-        console.error('[AI Worker] assist-measurement error:', error.message);
-        res.status(500).json({ error: 'Worker failed: ' + error.message });
+app.post("/ai/assist-measurement", async (req, res) => {
+  try {
+    if (!req.body || !req.body.units || !req.body.stroke) {
+      return res.status(400).json({ error: "Invalid input: units and stroke required" });
     }
+
+    const target = joinUrl(AI_WORKER_URL, "/assist-measurement");
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 2000);
+
+    let r, text;
+    try {
+      r = await fetch(target, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-API-Key": AI_WORKER_KEY,
+          "X-Request-ID": crypto.randomUUID(),
+        },
+        body: JSON.stringify(req.body),
+        signal: controller.signal,
+      });
+      text = await r.text();
+    } catch (e) {
+      clearTimeout(timer);
+      console.error("[AI Relay] Fetch failed:", e);
+      return res.status(502).json({ error: "Relay fetch failed", detail: String(e) });
+    }
+    clearTimeout(timer);
+
+    if (!r.ok) {
+      console.error("[AI Relay] Worker error:", r.status, text);
+      return res.status(r.status).type("application/json").send(text);
+    }
+
+    return res.type("application/json").send(text);
+  } catch (e) {
+    console.error("[AI Relay] Route crash:", e);
+    return res.status(500).json({ error: "Relay crashed", detail: String(e) });
+  }
 });
 
 /**
  * Enhance annotation placement
  */
-app.post('/ai/enhance-placement', async (req, res) => {
-    try {
-        const clientIp = req.ip || req.connection.remoteAddress;
-        
-        if (!checkAIRateLimit(clientIp)) {
-            return res.status(429).json({ error: 'Too many AI requests' });
-        }
-        
-        const { image, strokes, styleGuide } = req.body;
-        
-        if (!image || !strokes || !Array.isArray(strokes)) {
-            return res.status(400).json({ error: 'Invalid input: image and strokes required' });
-        }
-        
-        console.log(`[AI Worker] Relaying enhance-placement request: ${strokes.length} strokes`);
-        
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 2000);
-        
-        try {
-            const target = joinUrl(AI_WORKER_URL, "/enhance-placement");
-            const response = await fetch(target, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-API-Key': AI_WORKER_KEY,
-                    'X-Request-ID': crypto.randomUUID()
-                },
-                body: JSON.stringify({ image, strokes, styleGuide }),
-                signal: controller.signal
-            });
-            
-            clearTimeout(timeout);
-            
-            if (!response.ok) {
-                throw new Error(`Worker responded with ${response.status}`);
-            }
-            
-            const result = await response.json();
-            res.json(result);
-        } catch (fetchError) {
-            clearTimeout(timeout);
-            throw fetchError;
-        }
-    } catch (error) {
-        console.error('[AI Worker] enhance-placement error:', error.message);
-        res.status(500).json({ error: 'Worker failed: ' + error.message });
+app.post("/ai/enhance-placement", async (req, res) => {
+  try {
+    if (!req.body || !req.body.image || !Array.isArray(req.body.strokes)) {
+      return res.status(400).json({ error: "Invalid input: image and strokes required" });
     }
+
+    const target = joinUrl(AI_WORKER_URL, "/enhance-placement");
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 3000);
+
+    let r, text;
+    try {
+      r = await fetch(target, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-API-Key": AI_WORKER_KEY,
+          "X-Request-ID": crypto.randomUUID(),
+        },
+        body: JSON.stringify(req.body),
+        signal: controller.signal,
+      });
+      text = await r.text();
+    } catch (e) {
+      clearTimeout(timer);
+      console.error("[AI Relay] Fetch failed:", e);
+      return res.status(502).json({ error: "Relay fetch failed", detail: String(e) });
+    }
+    clearTimeout(timer);
+
+    if (!r.ok) {
+      console.error("[AI Relay] Worker error:", r.status, text);
+      return res.status(r.status).type("application/json").send(text);
+    }
+
+    return res.type("application/json").send(text);
+  } catch (e) {
+    console.error("[AI Relay] Route crash:", e);
+    return res.status(500).json({ error: "Relay crashed", detail: String(e) });
+  }
 });
 
 // Error handling middleware
