@@ -1,11 +1,6 @@
 {
-  "functions": {
-    "app.js": {
-      "runtime": "@vercel/node"
-    }
-  },
   "rewrites": [
-    { "source": "/ai/(.*)", "destination": "/app.js" },
-    { "source": "/health", "destination": "/app.js" }
+    { "source": "/ai/(.*)", "destination": "/api/app" },
+    { "source": "/health", "destination": "/api/app" }
   ]
 }
