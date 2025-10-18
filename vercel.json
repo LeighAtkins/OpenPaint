@@ -3,19 +3,19 @@
   "rewrites": [
     {
       "source": "/ai/(.*)",
-      "destination": "/api/app"
+      "destination": "/api/app-simple"
     },
     {
       "source": "/health",
-      "destination": "/api/app"
+      "destination": "/api/app-simple"
     },
     {
       "source": "/env-check",
-      "destination": "/api/app"
+      "destination": "/api/app-simple"
     },
     {
       "source": "/test",
-      "destination": "/api/test"
+      "destination": "/api/app-simple"
     }
   ]
 }
