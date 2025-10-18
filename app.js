@@ -60,7 +60,7 @@ app.use(express.urlencoded({ extended: true, limit: '200mb' }));
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
-
+app.get("/health", (req, res) => res.json({ ok: true }));
 /**
  * API endpoint for creating a shareable URL for a project
  * Accepts project data and returns a unique share ID
@@ -586,11 +586,13 @@ app.use((err, req, res, next) => {
     res.status(500).json({ success: false, message: 'Server error' });
 });
 
-// Start the server
+// export for Vercel
 module.exports = app;
-// If you still want local dev server, guard it:
+
+// keep local server only when run directly
 if (require.main === module) {
-  app.listen(port, '0.0.0.0', () => {
+  const port = process.env.PORT || 3000;
+  app.listen(port, "0.0.0.0", () => {
     console.log(`OpenPaint app listening at http://localhost:${port}`);
   });
 }
