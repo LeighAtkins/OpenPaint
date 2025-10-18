@@ -389,9 +389,24 @@ app.patch('/api/shared/:shareId', async (req, res) => {
  * These endpoints relay requests to the Cloudflare Worker for AI-enhanced SVG generation
  */
 
-// AI Worker configuration
-const AI_WORKER_URL = process.env.AI_WORKER_URL || 'http://localhost:8787';
-const AI_WORKER_KEY = process.env.AI_WORKER_KEY || 'dev-key';
+// AI Worker configuration (trim to kill hidden spaces/newlines)
+const AI_WORKER_URL = (process.env.AI_WORKER_URL || "http://localhost:8787")
+  .replace(/^\s*-\s*/, "") // remove accidental "- " prefix
+  .trim();
+const AI_WORKER_KEY = (process.env.AI_WORKER_KEY || "dev-key").trim();
+
+// Validate and log once
+try {
+  new URL(AI_WORKER_URL);
+  console.log("[AI Relay] Using AI_WORKER_URL:", JSON.stringify(AI_WORKER_URL));
+} catch (e) {
+  console.error("[AI Relay] INVALID AI_WORKER_URL:", JSON.stringify(AI_WORKER_URL), e.message);
+}
+
+// Helper function for clean URL joining
+function joinUrl(base, path) {
+  return `${base.replace(/\/+$/, "")}/${path.replace(/^\/+/, "")}`;
+}
 
 // Rate limiting for AI endpoints
 const aiRequestCounts = new Map();
@@ -443,7 +458,8 @@ app.post('/ai/generate-svg', async (req, res) => {
         const timeout = setTimeout(() => controller.abort(), 2000);
         
         try {
-            const response = await fetch(`${AI_WORKER_URL}/generate-svg`, {
+            const target = joinUrl(AI_WORKER_URL, "/generate-svg");
+            const response = await fetch(target, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -499,7 +515,8 @@ app.post('/ai/assist-measurement', async (req, res) => {
         const timeout = setTimeout(() => controller.abort(), 1000);
         
         try {
-            const response = await fetch(`${AI_WORKER_URL}/assist-measurement`, {
+            const target = joinUrl(AI_WORKER_URL, "/assist-measurement");
+            const response = await fetch(target, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -551,7 +568,8 @@ app.post('/ai/enhance-placement', async (req, res) => {
         const timeout = setTimeout(() => controller.abort(), 2000);
         
         try {
-            const response = await fetch(`${AI_WORKER_URL}/enhance-placement`, {
+            const target = joinUrl(AI_WORKER_URL, "/enhance-placement");
+            const response = await fetch(target, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
