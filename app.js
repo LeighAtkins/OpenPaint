@@ -24,11 +24,19 @@ const AI_WORKER_URL = (process.env.AI_WORKER_URL || "http://localhost:8787")
   .trim();
 const AI_WORKER_KEY = (process.env.AI_WORKER_KEY || "").trim();
 
+// Cloudflare Images configuration
+const CF_ACCOUNT_ID = (process.env.CF_ACCOUNT_ID || "").trim();
+const CF_IMAGES_API_TOKEN = (process.env.CF_IMAGES_API_TOKEN || "").trim();
+const CF_ACCOUNT_HASH = (process.env.CF_ACCOUNT_HASH || "").trim();
+
 console.log("[AI Relay] Using AI_WORKER_URL:", JSON.stringify(AI_WORKER_URL));
 console.log("[AI Relay] Has KEY:", AI_WORKER_KEY ? "yes" : "no");
+console.log("[Cloudflare Images] Account ID:", CF_ACCOUNT_ID ? "configured" : "missing");
+console.log("[Cloudflare Images] API Token:", CF_IMAGES_API_TOKEN ? "configured" : "missing");
+console.log("[Cloudflare Images] Account Hash:", CF_ACCOUNT_HASH ? "configured" : "missing");
 
 function joinUrl(base, path) {
-  return `${base.replace(/\/+$/, "")}/${String(path).replace(/^\/+/, "")}`;
+  return `${String(base).replace(/\/+$/, "")}/${String(path).replace(/^\/+/, "")}`;
 }
 
 // In-memory storage for shared projects (in production, use a database)
@@ -73,7 +81,15 @@ app.use(express.urlencoded({ extended: true, limit: '200mb' }));
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
-app.get("/health", (req, res) => res.json({ ok: true }));
+app.get("/health", (req, res) => res.json({ ok: true, ts: Date.now() }));
+
+app.get('/version', (req, res) => {
+  res.json({ commit: process.env.VERCEL_GIT_COMMIT_SHA || null, ts: Date.now() });
+});
+
+app.post('/ai/echo', (req, res) => {
+  res.json({ got: Object.keys(req.body || {}), sample: req.body?.imageUrl || null });
+});
 
 app.get("/env-check", (req, res) => {
   res.json({
@@ -438,47 +454,23 @@ function checkAIRateLimit(ip) {
 }
 
 /**
- * Generate AI-enhanced SVG from strokes
+ * Generate AI-enhanced SVG from strokes (stroke cleanup)
  */
 app.post("/ai/generate-svg", async (req, res) => {
   try {
-    if (!req.body || !req.body.image || !Array.isArray(req.body.strokes)) {
-      return res.status(400).json({ error: "Invalid input: image and strokes required" });
-    }
-
-    const target = joinUrl(AI_WORKER_URL, "/generate-svg");
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 3000);
-
-    let r, text;
-    try {
-      r = await fetch(target, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-API-Key": AI_WORKER_KEY,
-          "X-Request-ID": crypto.randomUUID(),
-        },
-        body: JSON.stringify(req.body),
-        signal: controller.signal,
-      });
-      text = await r.text();
-    } catch (e) {
-      clearTimeout(timer);
-      console.error("[AI Relay] Fetch failed:", e);
-      return res.status(502).json({ error: "Relay fetch failed", detail: String(e) });
-    }
-    clearTimeout(timer);
-
-    if (!r.ok) {
-      console.error("[AI Relay] Worker error:", r.status, text);
-      return res.status(r.status).type("application/json").send(text);
-    }
-
-    return res.type("application/json").send(text);
+    const r = await fetch(joinUrl(AI_WORKER_URL, "/generate-svg"), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-API-Key": AI_WORKER_KEY
+      },
+      body: JSON.stringify(req.body)
+    });
+    const text = await r.text();
+    return res.status(r.status).type("application/json").send(text);
   } catch (e) {
-    console.error("[AI Relay] Route crash:", e);
-    return res.status(500).json({ error: "Relay crashed", detail: String(e) });
+    console.error("[AI Relay] /generate-svg failed:", e);
+    return res.status(502).json({ error: "Relay fetch failed", detail: String(e) });
   }
 });
 
@@ -569,6 +561,113 @@ app.post("/ai/enhance-placement", async (req, res) => {
   } catch (e) {
     console.error("[AI Relay] Route crash:", e);
     return res.status(500).json({ error: "Relay crashed", detail: String(e) });
+  }
+});
+
+/**
+ * AI Analyze and Dimension Relay Endpoint
+ * Forwards requests to Cloudflare Worker for furniture dimensioning
+ */
+app.post('/ai/analyze-and-dimension', async (req, res) => {
+  try { 
+    console.log('[AI Relay] analyze req keys:', Object.keys(req.body || {})); 
+  } catch (_){}
+  try {
+    const r = await fetch(joinUrl((process.env.AI_WORKER_URL || '').trim(), '/analyze-and-dimension'), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-API-Key': (process.env.AI_WORKER_KEY || '').trim()
+      },
+      body: JSON.stringify(req.body || {})
+    });
+    const text = await r.text();
+    console.log('[AI Relay] analyze status:', r.status);
+    return res.status(r.status).type('application/json').send(text);
+  } catch (e) {
+    console.error('[AI Relay] /analyze-and-dimension failed:', e);
+    return res.status(502).json({ error: 'Relay fetch failed', detail: String(e) });
+  }
+});
+
+/**
+ * Cloudflare Images Storage Presign Endpoint
+ * Generates presigned upload URLs for AI image processing
+ */
+app.post('/api/storage/presign', async (req, res) => {
+  try {
+    // Validate Cloudflare Images configuration
+    if (!CF_ACCOUNT_ID || !CF_IMAGES_API_TOKEN) {
+      return res.status(500).json({ 
+        success: false, 
+        message: 'Cloudflare Images not configured. Missing CF_ACCOUNT_ID or CF_IMAGES_API_TOKEN.' 
+      });
+    }
+
+    // Generate unique image key
+    const timestamp = Date.now();
+    const uuid = crypto.randomUUID();
+    const imageKey = `ai-uploads/${timestamp}-${uuid}`;
+
+    // Call Cloudflare Images Direct Creator Upload API
+    const endpoint = `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/images/v2/direct_upload`;
+    
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${CF_IMAGES_API_TOKEN}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        requireSignedURLs: false,
+        metadata: {
+          key: imageKey,
+          purpose: 'ai-furniture-dimensioning'
+        }
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('[Cloudflare Images] Upload URL generation failed:', response.status, errorText);
+      return res.status(502).json({ 
+        success: false, 
+        message: 'Failed to generate upload URL',
+        detail: errorText
+      });
+    }
+
+    const data = await response.json();
+    
+    if (!data.success) {
+      console.error('[Cloudflare Images] API error:', data.errors);
+      return res.status(502).json({ 
+        success: false, 
+        message: 'Cloudflare Images API error',
+        errors: data.errors
+      });
+    }
+
+    const { uploadURL, id: imageId } = data.result;
+    const deliveryUrl = `https://imagedelivery.net/${CF_ACCOUNT_HASH}/${imageId}/public`;
+
+    console.log(`[Cloudflare Images] Generated presign for key: ${imageKey}, imageId: ${imageId}`);
+
+    return res.json({
+      success: true,
+      key: imageKey,
+      uploadUrl: uploadURL,
+      imageId: imageId,
+      deliveryUrl: deliveryUrl
+    });
+
+  } catch (error) {
+    console.error('Error generating presigned upload URL:', error);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Server error generating upload URL',
+      detail: error.message 
+    });
   }
 });
 

@@ -1,21 +1,27 @@
 {
-  "outputDirectory": ".",
-  "rewrites": [
+  "version": 2,
+  "builds": [
     {
-      "source": "/ai/(.*)",
-      "destination": "/api/app-simple"
+      "src": "app.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "^/ai/(.*)$",
+      "dest": "/app.js"
     },
     {
-      "source": "/health",
-      "destination": "/api/app-simple"
+      "src": "^/api/(.*)$",
+      "dest": "/app.js"
     },
     {
-      "source": "/env-check",
-      "destination": "/api/app-simple"
+      "src": "^/(health|env-check|version)$",
+      "dest": "/app.js"
     },
     {
-      "source": "/test",
-      "destination": "/api/app-simple"
+      "src": ".*",
+      "dest": "/index.html"
     }
   ]
 }
