@@ -81,6 +81,7 @@ app.use(express.urlencoded({ extended: true, limit: '200mb' }));
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
+
 app.get("/health", (req, res) => res.json({ ok: true, ts: Date.now() }));
 
 app.get('/version', (req, res) => {
@@ -669,6 +670,11 @@ app.post('/api/storage/presign', async (req, res) => {
       detail: error.message 
     });
   }
+});
+
+// SPA fallback - serve index.html for all other routes
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 // Error handling middleware
