@@ -77,11 +77,6 @@ app.use(express.json({ limit: '200mb' }));
 app.use(express.urlencoded({ extended: true, limit: '200mb' }));
 
 // Route handlers
-// Serve the main page
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
-});
-
 app.get("/health", (req, res) => res.json({ ok: true, ts: Date.now() }));
 
 app.get('/version', (req, res) => {
@@ -672,11 +667,6 @@ app.post('/api/storage/presign', async (req, res) => {
   }
 });
 
-// SPA fallback - serve index.html for all other routes
-app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
-});
-
 // Error handling middleware
 app.use((err, req, res, next) => {
     console.error('Server error:', err);
@@ -758,6 +748,69 @@ if __name__ == "__main__":
         });
     });
 }
+
+// Serve static files with proper MIME types
+app.get('/js/:filename(*)', (req, res) => {
+  const filePath = path.join(__dirname, 'js', req.params.filename);
+  res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+  res.sendFile(filePath, (err) => {
+    if (err) {
+      console.error('[Static] Failed to serve JS file:', req.path, err.message);
+      res.status(404).send('File not found');
+    }
+  });
+});
+
+app.get('/css/:filename(*)', (req, res) => {
+  const filePath = path.join(__dirname, 'css', req.params.filename);
+  res.setHeader('Content-Type', 'text/css; charset=utf-8');
+  res.sendFile(filePath, (err) => {
+    if (err) {
+      console.error('[Static] Failed to serve CSS file:', req.path, err.message);
+      res.status(404).send('File not found');
+    }
+  });
+});
+
+app.get('/diagnostics-overlay.js', (req, res) => {
+  const filePath = path.join(__dirname, 'diagnostics-overlay.js');
+  res.setHeader('Content-Type', 'application/javascript');
+  res.sendFile(filePath);
+});
+
+// Specific route for ai-export.js to test
+app.get('/js/ai-export.js', (req, res) => {
+  const filePath = path.join(__dirname, 'js', 'ai-export.js');
+  res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+  res.sendFile(filePath, (err) => {
+    if (err) {
+      console.error('[Static] Failed to serve ai-export.js:', err.message);
+      res.status(404).send('File not found');
+    }
+  });
+});
+
+app.get('/test-coordinate-system.js', (req, res) => {
+  const filePath = path.join(__dirname, 'test-coordinate-system.js');
+  res.setHeader('Content-Type', 'application/javascript');
+  res.sendFile(filePath);
+});
+
+app.get('/src/:filename(*)', (req, res) => {
+  const filePath = path.join(__dirname, 'src', req.params.filename);
+  res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+  res.sendFile(filePath, (err) => {
+    if (err) {
+      console.error('[Static] Failed to serve src file:', req.path, err.message);
+      res.status(404).send('File not found');
+    }
+  });
+});
+
+// SPA fallback (last route)
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
 
 // Export for Vercel
 module.exports = app;

@@ -153,20 +153,7 @@ window.paintApp = {
 
 // Maintain backward compatibility by keeping global references
 // These will be gradually migrated to use the paintApp structure
-window.IMAGE_LABELS = window.paintApp.config.IMAGE_LABELS;
-window.currentImageLabel = window.paintApp.state.currentImageLabel;
-window.vectorStrokesByImage = window.paintApp.state.vectorStrokesByImage;
-window.strokeVisibilityByImage = window.paintApp.state.strokeVisibilityByImage;
-window.strokeLabelVisibility = window.paintApp.state.strokeLabelVisibility;
-window.strokeMeasurements = window.paintApp.state.strokeMeasurements;
-window.imageScaleByLabel = window.paintApp.state.imageScaleByLabel;
-window.imagePositionByLabel = window.paintApp.state.imagePositionByLabel;
-window.lineStrokesByImage = window.paintApp.state.lineStrokesByImage;
-window.labelsByImage = window.paintApp.state.labelsByImage;
-window.originalImages = window.paintApp.state.originalImages;
-window.originalImageDimensions = window.paintApp.state.originalImageDimensions;
-window.imageTags = window.paintApp.state.imageTags;
-window.isLoadingProject = window.paintApp.state.isLoadingProject;
+// Moved to DOMContentLoaded event handler to ensure proper initialization
 window.isDefocusingOperationInProgress = window.paintApp.state.isDefocusingOperationInProgress;
 window.folderStructure = window.paintApp.state.folderStructure;
 window.selectedStrokeByImage = window.paintApp.state.selectedStrokeByImage;
@@ -272,6 +259,22 @@ const ANCHOR_SIZE = window.paintApp.config.ANCHOR_SIZE;
 const CLICK_AREA = window.paintApp.config.CLICK_AREA;
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Initialize global variables from paintApp state
+    window.IMAGE_LABELS = window.paintApp.config.IMAGE_LABELS;
+    window.currentImageLabel = window.paintApp.state.currentImageLabel;
+    window.vectorStrokesByImage = window.paintApp.state.vectorStrokesByImage;
+    window.strokeVisibilityByImage = window.paintApp.state.strokeVisibilityByImage;
+    window.strokeLabelVisibility = window.paintApp.state.strokeLabelVisibility;
+    window.strokeMeasurements = window.paintApp.state.strokeMeasurements;
+    window.imageScaleByLabel = window.paintApp.state.imageScaleByLabel;
+    window.imagePositionByLabel = window.paintApp.state.imagePositionByLabel;
+    window.lineStrokesByImage = window.paintApp.state.lineStrokesByImage;
+    window.labelsByImage = window.paintApp.state.labelsByImage;
+    window.originalImages = window.paintApp.state.originalImages;
+    window.originalImageDimensions = window.paintApp.state.originalImageDimensions;
+    window.imageTags = window.paintApp.state.imageTags;
+    window.isLoadingProject = window.paintApp.state.isLoadingProject;
+    
     // Initialize unit selectors
     const unitSelector = document.getElementById('unitSelector');
     unitSelector.addEventListener('change', updateMeasurementDisplay);

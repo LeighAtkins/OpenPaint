@@ -4,6 +4,10 @@
     {
       "src": "app.js",
       "use": "@vercel/node"
+    },
+    {
+      "src": "public/**",
+      "use": "@vercel/static"
     }
   ],
   "routes": [
@@ -20,8 +24,24 @@
       "dest": "/app.js"
     },
     {
-      "src": ".*",
-      "dest": "/index.html"
+      "src": "^/js/(.*)$",
+      "dest": "/public/js/$1"
+    },
+    {
+      "src": "^/css/(.*)$",
+      "dest": "/css/$1"
+    },
+    {
+      "src": "^/src/(.*)$",
+      "dest": "/src/$1"
+    },
+    {
+      "src": "^/(diagnostics-overlay|test-coordinate-system)\\.js$",
+      "dest": "/$1.js"
+    },
+    {
+      "src": "^(?!/(ai|api|health|env-check|version|js|css|src|diagnostics-overlay|test-coordinate-system)/).*$",
+      "dest": "/app.js"
     }
   ]
 }

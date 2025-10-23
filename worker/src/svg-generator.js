@@ -13,12 +13,44 @@ import { sanitizeSVG, sanitizeColor, sanitizeNumber, validateViewBox } from './s
  * @returns {Object} GenerateSVGOutput
  */
 export async function generateSVG(input) {
-    const { image, units, strokes, styleGuide = {} } = input;
+    const { image, units, strokes, styleGuide = {} } = input || {};
     
     // Validate image dimensions
-    if (!validateViewBox(image.width, image.height)) {
-        throw new Error('Invalid image dimensions');
+    if (!image || !Number.isFinite(image.width) || !Number.isFinite(image.height) || 
+        image.width <= 0 || image.height <= 0) {
+        return {
+            svg: "",
+            vectors: [],
+            summary: { measurements: [], counts: { lines: 0, arrows: 0, labels: 0 } },
+            error: { code: "invalid_image", message: "Invalid image dimensions" }
+        };
     }
+    
+    if (!Array.isArray(strokes) || strokes.length === 0) {
+        return {
+            svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${image.width} ${image.height}" width="${image.width}" height="${image.height}"></svg>`,
+            vectors: [],
+            summary: { measurements: [], counts: { lines: 0, arrows: 0, labels: 0 } }
+        };
+    }
+    
+    if (!validateViewBox(image.width, image.height)) {
+        return {
+            svg: "",
+            vectors: [],
+            summary: { measurements: [], counts: { lines: 0, arrows: 0, labels: 0 } },
+            error: { code: "invalid_viewbox", message: "Invalid image viewBox" }
+        };
+    }
+    
+    // Filter/clean strokes
+    const cleaned = strokes
+        .filter(s => s && Array.isArray(s.points))
+        .map(s => ({ 
+            ...s, 
+            points: s.points.filter(p => Number.isFinite(p?.x) && Number.isFinite(p?.y)) 
+        }))
+        .filter(s => s.points.length >= 2);
     
     const vectors = [];
     const occupiedRects = [];
@@ -33,8 +65,8 @@ export async function generateSVG(input) {
     // Add definitions (markers, etc.)
     svg += createDefs(style);
     
-    // Process each stroke
-    for (const stroke of strokes) {
+    // Process each cleaned stroke
+    for (const stroke of cleaned) {
         const result = processStroke(stroke, units, style, occupiedRects, image);
         svg += result.svg;
         vectors.push(result.vector);
@@ -158,7 +190,7 @@ function processStraightLine(stroke, points, color, width, units, style, occupie
     let label = null;
     
     // Add measurement label if units provided
-    if (units && units.pxPerUnit) {
+    if (units && Number.isFinite(units.pxPerUnit) && units.pxPerUnit > 0) {
         const length = Math.hypot(end.x - start.x, end.y - start.y);
         const value = length / units.pxPerUnit;
         const formatted = `${value.toFixed(2)} ${units.name}`;
@@ -270,5 +302,122 @@ function mergeStyleGuide(userStyle, image) {
     }
     
     return merged;
+}
+
+/**
+ * Generate SVG for dimensions with labels
+ * @param {Array} dimensions - Array of dimension objects
+ * @param {Object} image - Image info with width, height
+ * @param {Object} styleGuide - Style guide configuration
+ * @returns {string} SVG markup for dimensions
+ */
+export function generateDimensionSVG(dimensions, image, styleGuide = {}) {
+    const style = mergeStyleGuide(styleGuide, image);
+    let svg = '';
+    
+    // Add dimension lines and labels
+    for (const dim of dimensions) {
+        if (!dim.points || dim.points.length < 2) continue;
+        
+        const start = dim.points[0];
+        const end = dim.points[1];
+        
+        // Draw dimension line
+        svg += `<line x1="${start.x.toFixed(2)}" y1="${start.y.toFixed(2)}" `;
+        svg += `x2="${end.x.toFixed(2)}" y2="${end.y.toFixed(2)}" `;
+        svg += `stroke="${style.colors.measure}" stroke-width="${style.stroke.baseWidth}" `;
+        svg += `stroke-linecap="round" marker-end="url(#arrow-end)" />`;
+        
+        // Add ticks at endpoints
+        const tickSize = style.fonts.size * 0.5;
+        svg += generateDimensionTicks(start, end, tickSize, style.colors.measure);
+        
+        // Add label
+        const label = dim.formatted || `${dim.value.toFixed(1)} ${dim.unit}`;
+        const midX = (start.x + end.x) / 2;
+        const midY = (start.y + end.y) / 2;
+        
+        svg += generateDimensionLabel(midX, midY, label, style);
+    }
+    
+    return svg;
+}
+
+/**
+ * Generate dimension ticks at endpoints
+ * @param {Object} start - Start point
+ * @param {Object} end - End point
+ * @param {number} tickSize - Size of ticks
+ * @param {string} color - Tick color
+ * @returns {string} SVG markup for ticks
+ */
+function generateDimensionTicks(start, end, tickSize, color) {
+    const dx = end.x - start.x;
+    const dy = end.y - start.y;
+    const length = Math.hypot(dx, dy);
+    
+    if (length === 0) return '';
+    
+    // Perpendicular direction for ticks
+    const perpX = -dy / length;
+    const perpY = dx / length;
+    
+    const halfTick = tickSize / 2;
+    
+    let svg = '';
+    
+    // Start tick
+    svg += `<line x1="${(start.x - perpX * halfTick).toFixed(2)}" y1="${(start.y - perpY * halfTick).toFixed(2)}" `;
+    svg += `x2="${(start.x + perpX * halfTick).toFixed(2)}" y2="${(start.y + perpY * halfTick).toFixed(2)}" `;
+    svg += `stroke="${color}" stroke-width="2" stroke-linecap="round" />`;
+    
+    // End tick
+    svg += `<line x1="${(end.x - perpX * halfTick).toFixed(2)}" y1="${(end.y - perpY * halfTick).toFixed(2)}" `;
+    svg += `x2="${(end.x + perpX * halfTick).toFixed(2)}" y2="${(end.y + perpY * halfTick).toFixed(2)}" `;
+    svg += `stroke="${color}" stroke-width="2" stroke-linecap="round" />`;
+    
+    return svg;
+}
+
+/**
+ * Generate dimension label with background
+ * @param {number} x - X position
+ * @param {number} y - Y position
+ * @param {string} text - Label text
+ * @param {Object} style - Style configuration
+ * @returns {string} SVG markup for label
+ */
+function generateDimensionLabel(x, y, text, style) {
+    const fontSize = style.fonts.size;
+    const fontFamily = style.fonts.family;
+    const textColor = style.colors.labelText;
+    const bgColor = '#ffffff';
+    const borderColor = '#cccccc';
+    
+    // Estimate text width (rough approximation)
+    const textWidth = text.length * fontSize * 0.6;
+    const textHeight = fontSize;
+    const padding = 4;
+    
+    const rectX = x - textWidth / 2 - padding;
+    const rectY = y - textHeight / 2 - padding;
+    const rectWidth = textWidth + padding * 2;
+    const rectHeight = textHeight + padding * 2;
+    
+    let svg = '';
+    
+    // Background rectangle
+    svg += `<rect x="${rectX.toFixed(2)}" y="${rectY.toFixed(2)}" `;
+    svg += `width="${rectWidth.toFixed(2)}" height="${rectHeight.toFixed(2)}" `;
+    svg += `fill="${bgColor}" stroke="${borderColor}" stroke-width="1" rx="4" />`;
+    
+    // Text
+    svg += `<text x="${x.toFixed(2)}" y="${(y + fontSize / 3).toFixed(2)}" `;
+    svg += `fill="${textColor}" font-family="${fontFamily}" `;
+    svg += `font-size="${fontSize}" text-anchor="middle" dominant-baseline="middle">`;
+    svg += text;
+    svg += '</text>';
+    
+    return svg;
 }
 
