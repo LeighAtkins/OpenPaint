@@ -1416,6 +1416,13 @@
                     <button id="copy" class="px-4 py-2.5 bg-primary-500 hover:bg-primary-600 active:bg-primary-700 text-white text-sm font-semibold rounded-xl shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-105 active:scale-95" title="Copy image to clipboard (cropped to frame)" aria-label="Copy Image">Copy</button>
                 </div>
                 
+                <!-- AI Tools -->
+                <div class="flex items-center gap-3">
+                    <button id="generateSofaBasics" class="px-4 py-2.5 bg-purple-500 hover:bg-purple-600 active:bg-purple-700 text-white text-sm font-semibold rounded-xl shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-105 active:scale-95" title="Generate AI Sofa Dimensions" aria-label="Generate AI Sofa Dimensions">
+                        <span class="label-long">🤖 Generate Sofa Basics</span><span class="label-short">AI Basics</span>
+                    </button>
+                </div>
+                
                 <!-- Color Palette -->
                 <div class="flex items-center gap-3">
                     <span class="text-sm font-semibold text-slate-700">Color:</span>
@@ -4976,8 +4983,9 @@
                 hookAttempts++;
                 
                 // Check if paint.js has loaded and defined its own addImageToSidebar
-                if (window.addImageToSidebar && window.addImageToSidebar.toString().includes('imageList')) {
+                if (window.addImageToSidebar && typeof window.addImageToSidebar === 'function') {
                     console.log('[HOOK] Found original addImageToSidebar from paint.js, hooking into it...');
+                    console.log('[HOOK] Function source preview:', window.addImageToSidebar.toString().substring(0, 200));
                     
                     // Store the original function
                     const paintJsAddImageToSidebar = window.addImageToSidebar;
@@ -5010,9 +5018,11 @@
                     console.log('[HOOK] Successfully hooked addImageToSidebar');
                     return true;
                 } else if (hookAttempts < maxHookAttempts) {
+                    if (window.__DEBUG__) console.log('[HOOK] Attempt', hookAttempts, '- addImageToSidebar not ready yet:', typeof window.addImageToSidebar);
                     setTimeout(attemptHook, 100);
                 } else {
                     if (window.__DEBUG__) console.warn('[HOOK] Max attempts reached, could not hook addImageToSidebar');
+                    console.warn('[HOOK] Final state - addImageToSidebar:', typeof window.addImageToSidebar, window.addImageToSidebar ? 'exists' : 'undefined');
                 }
             }
             
@@ -5298,6 +5308,37 @@
     <script src="js/migration.js?v=20250820123456"></script>
     <script src="diagnostics-overlay.js?v=20250820123456"></script>
     <script src="test-coordinate-system.js?v=20250912113000"></script>
+
+    <!-- Load AI Export Module before paint.js -->
+    <script type="module">
+        try {
+            console.log('[AI Export] Starting to load AI export module...');
+            const module = await import('./js/ai-export.js');
+            console.log('[AI Export] Module loaded, exports:', Object.keys(module));
+            
+            const { exportAIEnhancedSVG, assistMeasurement, enhanceAnnotations } = module;
+            
+            // Make functions available globally
+            window.exportAIEnhancedSVG = exportAIEnhancedSVG;
+            window.assistMeasurement = assistMeasurement;
+            window.enhanceAnnotations = enhanceAnnotations;
+            
+            // Initialize AI exports storage
+            if (!window.aiExports) {
+                window.aiExports = {};
+            }
+            
+            console.log('[AI Export] Functions loaded and available globally');
+            console.log('[AI Export] window.exportAIEnhancedSVG:', typeof window.exportAIEnhancedSVG);
+        } catch (error) {
+            console.error('[AI Export] Failed to load AI export module:', error);
+            console.error('[AI Export] Error stack:', error.stack);
+            // Create stub functions to prevent errors
+            window.exportAIEnhancedSVG = () => Promise.reject(new Error('AI Export module failed to load: ' + error.message));
+            window.assistMeasurement = () => Promise.reject(new Error('AI Export module failed to load: ' + error.message));
+            window.enhanceAnnotations = () => Promise.reject(new Error('AI Export module failed to load: ' + error.message));
+        }
+    </script>
 
     <script src="js/paint.js?v=20250912134000"></script>
     <script src="js/project-manager.js?v=20250912113000"></script>
@@ -5701,21 +5742,85 @@
         </div>
     </div>
 
-    <!-- Load AI Export Module -->
-    <script type="module">
-        import { exportAIEnhancedSVG, assistMeasurement, enhanceAnnotations, downloadBlob, svgToPNG } from './js/ai-export.js';
-        
-        // Make functions available globally
-        window.exportAIEnhancedSVG = exportAIEnhancedSVG;
-        window.assistMeasurement = assistMeasurement;
-        window.enhanceAnnotations = enhanceAnnotations;
-        window.downloadBlob = downloadBlob;
-        window.svgToPNG = svgToPNG;
-        
-        // Initialize AI exports storage
-        if (!window.aiExports) {
-            window.aiExports = {};
-        }
-    </script>
+    <!-- AI Calibration Dialog -->
+    <dialog id="ai-calibration-dialog" class="backdrop:bg-black backdrop:bg-opacity-50 bg-white rounded-2xl shadow-2xl border-0 p-0 max-w-md w-full">
+        <div class="p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold text-slate-800">AI Calibration</h3>
+                <button onclick="document.getElementById('ai-calibration-dialog').close()" class="text-slate-400 hover:text-slate-600 text-xl">&times;</button>
+            </div>
+            
+            <div class="mb-4">
+                <p class="text-sm text-slate-600 mb-2">AI detected the overall width as:</p>
+                <div class="bg-slate-100 rounded-lg p-3 text-center">
+                    <span id="detected-width-pixels" class="text-lg font-semibold text-slate-800">0px</span>
+                </div>
+            </div>
+            
+            <form id="calibration-form" onsubmit="handleCalibrationSubmit(event)">
+                <div class="mb-4">
+                    <label for="real-width" class="block text-sm font-semibold text-slate-700 mb-2">Real width:</label>
+                    <input type="number" id="real-width" name="real-width" step="0.1" min="0.1" max="1000" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500" 
+                           placeholder="Enter real width" required>
+                </div>
+                
+                <div class="mb-6">
+                    <label for="unit" class="block text-sm font-semibold text-slate-700 mb-2">Unit:</label>
+                    <select id="unit" name="unit" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                        <option value="cm">Centimeters (cm)</option>
+                        <option value="mm">Millimeters (mm)</option>
+                        <option value="in">Inches (in)</option>
+                    </select>
+                </div>
+                
+                <div class="flex gap-3">
+                    <button type="submit" class="flex-1 px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white font-semibold rounded-lg transition-colors">
+                        Generate
+                    </button>
+                    <button type="button" onclick="document.getElementById('ai-calibration-dialog').close()" 
+                            class="flex-1 px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-700 font-semibold rounded-lg transition-colors">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </dialog>
+
+    <!-- AI Preview Modal -->
+    <dialog id="ai-preview-modal" class="backdrop:bg-black backdrop:bg-opacity-50 bg-white rounded-2xl shadow-2xl border-0 p-0 max-w-2xl w-full">
+        <div class="p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold text-slate-800">AI Dimension Preview</h3>
+                <button onclick="document.getElementById('ai-preview-modal').close()" class="text-slate-400 hover:text-slate-600 text-xl">&times;</button>
+            </div>
+            
+            <div class="mb-4">
+                <div id="ai-status-text" class="text-sm text-slate-600 mb-3">Calibrated: 1 cm = 0 px</div>
+                <div id="ai-dimension-summary" class="bg-slate-50 rounded-lg p-4 space-y-2">
+                    <!-- Dimension summary will be populated here -->
+                </div>
+            </div>
+            
+            <div class="flex gap-3">
+                <button onclick="handlePreviewAction('accept')" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors">
+                    Accept
+                </button>
+                <button onclick="handlePreviewAction('save')" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition-colors">
+                    Save to Project
+                </button>
+                <button onclick="handlePreviewAction('download-svg')" class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white font-semibold rounded-lg transition-colors">
+                    Download SVG
+                </button>
+                <button onclick="handlePreviewAction('cancel')" class="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-700 font-semibold rounded-lg transition-colors">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </dialog>
+
+    <!-- Load AI Integration Module -->
+    <script src="js/ai-integration.js"></script>
+
 </body>
 </html>

@@ -3,8 +3,11 @@
  * Main entry point
  */
 
-import { generateSVG } from './svg-generator.js';
+import { generateSVG, generateDimensionSVG } from './svg-generator.js';
 import { computeLength, getMidpoint } from './geometry.js';
+import { extractSilhouetteFromRembg } from './silhouette.js';
+import { computePxPerUnit } from './calibration.js';
+import { generateBasicDimensions } from './dimensions.js';
 
 /**
  * Helper function to create CORS headers
@@ -66,6 +69,22 @@ export default {
             
             if (url.pathname === '/enhance-placement' && request.method === 'POST') {
                 return await handleEnhancePlacement(request, origin);
+            }
+            
+            if (url.pathname === '/generate-svg' && request.method === 'POST') {
+                try {
+                    const body = await request.json();
+                    const out = await generateSVG(body);
+                    if (out?.error) return json(out, 400);
+                    return json(out, 200);
+                } catch (e) {
+                    console.error("generate-svg error:", e);
+                    return json({ error: { code: "internal_error", message: String(e) } }, 500);
+                }
+            }
+            
+            if (url.pathname === '/analyze-and-dimension' && request.method === 'POST') {
+                return await handleAnalyzeAndDimension(request, origin);
             }
             
             return new Response(JSON.stringify({ error: 'Not Found' }), {
@@ -209,5 +228,107 @@ async function handleEnhancePlacement(request, origin) {
             ...cors(origin) 
         }
     });
+}
+
+/**
+ * Handle analyze-and-dimension endpoint
+ */
+async function handleAnalyzeAndDimension(request, origin) {
+    const input = await request.json();
+    
+    // Validate input
+    if (!input.image || !input.imageUrl || !input.calibration) {
+        return new Response(JSON.stringify({ 
+            error: 'Invalid input: image, imageUrl, and calibration required' 
+        }), {
+            status: 400,
+            headers: { 
+                'Content-Type': 'application/json', 
+                ...cors(origin) 
+            }
+        });
+    }
+    
+    try {
+        const { image, imageUrl, calibration, view = 'front', options = {} } = input;
+        
+        console.log('[Analyze] Processing image:', imageUrl);
+        console.log('[Analyze] View:', view, 'Options:', options);
+        
+        // Extract silhouette
+        const silhouette = await extractSilhouetteFromRembg(imageUrl);
+        console.log('[Analyze] Silhouette extracted:', silhouette.bbox);
+        
+        // Compute calibration
+        const { pxPerUnit, unit } = computePxPerUnit(calibration);
+        console.log('[Analyze] Calibration:', pxPerUnit, 'px per', unit);
+        
+        // Generate dimensions
+        const dimensions = generateBasicDimensions(silhouette.anchors, pxPerUnit, unit, view);
+        console.log('[Analyze] Generated', dimensions.length, 'dimensions');
+        
+        // Generate SVG
+        const dimensionSVG = generateDimensionSVG(dimensions, image, input.styleGuide);
+        
+        // Create vectors for frontend
+        const vectors = dimensions.map(dim => ({
+            id: dim.id,
+            type: 'line',
+            points: dim.points,
+            style: {
+                color: '#0B84F3',
+                width: 2,
+                marker: 'arrow'
+            },
+            label: dim.formatted
+        }));
+        
+        // Create summary
+        const summary = {
+            dims: dimensions.map(dim => ({
+                id: dim.id,
+                value: dim.value,
+                unit: dim.unit
+            })),
+            notes: [
+                `Calibrated: 1 ${unit} = ${pxPerUnit.toFixed(1)} px`,
+                `View: ${view}`,
+                `Dimensions: ${dimensions.length}`
+            ]
+        };
+        
+        const result = {
+            svg: dimensionSVG,
+            vectors,
+            derived: {
+                pxPerUnit,
+                unit,
+                kDepthUsed: view === '3q' ? 0.7 : null
+            },
+            summary
+        };
+        
+        console.log('[Analyze] Result generated:', summary);
+        
+        return new Response(JSON.stringify(result), {
+            headers: { 
+                'Content-Type': 'application/json', 
+                ...cors(origin) 
+            }
+        });
+        
+    } catch (error) {
+        console.error('[Analyze] Error:', error);
+        return new Response(JSON.stringify({ 
+            error: 'Analysis failed', 
+            message: error.message 
+        }), {
+            status: 500,
+            headers: { 
+                'Content-Type': 'application/json', 
+                ...cors(origin) 
+            }
+        });
+    }
 }
 

@@ -13,6 +13,12 @@ A web-based drawing and annotation tool designed for email communication of meas
 - Save and load projects (preserves measurements, annotations, and folder structure)
 - Zoom and pan functionality for detailed work
 - Clean and responsive interface
+- **AI-Powered Furniture Dimensioning** (NEW)
+  - Automatic silhouette detection using REMBG background removal
+  - One-click calibration with real-world measurements
+  - Generate professional dimensioned drawings
+  - Support for front and top view furniture images
+  - Export AI-generated SVG files
 
 ## Project Structure
 
@@ -39,12 +45,22 @@ OpenPaint/
 npm install
 ```
 
-2. Start the server:
+2. Configure environment variables (for AI features):
+```bash
+# Required for AI-powered dimensioning
+CF_ACCOUNT_ID=your_cloudflare_account_id
+CF_IMAGES_API_TOKEN=your_cloudflare_images_api_token
+CF_ACCOUNT_HASH=your_cloudflare_account_hash
+AI_WORKER_URL=https://your-worker.your-subdomain.workers.dev
+AI_WORKER_KEY=your_worker_secret_key
+```
+
+3. Start the server:
 ```bash
 npm start
 ```
 
-3. Open your browser and navigate to `http://localhost:3000`
+4. Open your browser and navigate to `http://localhost:3000`
 
 ## Usage
 
@@ -70,6 +86,19 @@ npm start
 ### Project Management
 - Save your project with all measurements and organization using the Save Project button
 - Load existing projects with the Load Project button
+
+### AI-Powered Dimensioning
+1. **Upload an image** of furniture (sofa, chair, etc.) using the Upload Images button
+2. **Click "🤖 Generate Sofa Basics"** in the Drawing Tools panel
+3. **Calibrate the measurement** by entering the real-world width of the furniture
+4. **Review the AI-generated dimensions** in the preview modal
+5. **Accept or Save** the dimensions to add them as a separate AI layer
+6. **Toggle AI layer visibility** in the stroke list to show/hide AI dimensions
+
+**Supported Views:**
+- Front view: Generates overall width, seat width, and back height
+- Top view: Generates overall width and depth
+- Works best with furniture images that have clear silhouettes
 
 ## Development
 
