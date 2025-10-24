@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Per-Image Tag Resize</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; }
+        .success { color: green; }
+        .error { color: red; }
+        .info { color: blue; }
+    </style>
+</head>
+<body>
+    <h1>Per-Image Tag Resize Test</h1>
+    
+    <div class="test-section">
+        <h2>Test Instructions</h2>
+        <ol>
+            <li>Load the main application</li>
+            <li>Add an image to the canvas</li>
+            <li>Draw some strokes with labels (A, B, C, etc.)</li>
+            <li>Use the per-image tag size controls (+ and - buttons)</li>
+            <li>Verify that the tag sizes change for all strokes on the current image</li>
+            <li>Switch to a different image and repeat the test</li>
+        </ol>
+    </div>
+    
+    <div class="test-section">
+        <h2>Expected Behavior</h2>
+        <ul>
+            <li class="success">✅ Tag size controls should be visible in the UI</li>
+            <li class="success">✅ Clicking + should increase all tag sizes on current image</li>
+            <li class="success">✅ Clicking - should decrease all tag sizes on current image</li>
+            <li class="success">✅ Tag sizes should persist when switching between images</li>
+            <li class="success">✅ Each image should have independent tag sizes</li>
+        </ul>
+    </div>
+    
+    <div class="test-section">
+        <h2>Debug Information</h2>
+        <p>Open browser console to see debug logs:</p>
+        <ul>
+            <li><code>[PER-IMAGE-BUTTON]</code> - Button click events</li>
+            <li><code>[TAG-SIZE-ADJUST]</code> - Size adjustment logic</li>
+            <li><code>[GET-TAG-SIZE]</code> - Tag size retrieval</li>
+        </ul>
+    </div>
+    
+    <div class="test-section">
+        <h2>Known Issues Fixed</h2>
+        <ul>
+            <li class="success">✅ Fixed: Using wrong currentImageLabel reference</li>
+            <li class="success">✅ Fixed: Looking in wrong vectorStrokesByImage location</li>
+            <li class="success">✅ Fixed: Tag size display not updating correctly</li>
+        </ul>
+    </div>
+    
+    <script>
+        console.log('Test page loaded. Navigate to the main application to test per-image tag resizing.');
+    </script>
+</body>
+</html>
