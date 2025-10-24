@@ -68,6 +68,10 @@ window.paintApp = {
         defaultPosition: { x: 0, y: 0 },
         INCHES_TO_CM: 2.54, // Conversion factor from inches to centimeters
         DEFAULT_LABEL_START: 'A1', // Starting label for strokes
+        DEFAULT_TAG_SIZE: 20, // Default font size for tags in pixels
+        MIN_TAG_SIZE: 8, // Minimum tag size in pixels
+        MAX_TAG_SIZE: 32, // Maximum tag size in pixels
+        TAG_SIZE_STEP: 2, // Size increment/decrement step
         FRACTION_VALUES: [0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875], // Common fractions for inch display
         MINIMUM_DRAG_DISTANCE: 3 // pixels - minimum distance to detect drag vs click
     },
@@ -287,6 +291,128 @@ document.addEventListener('DOMContentLoaded', () => {
             redrawCanvasWithVisibility();
         });
     }
+    
+    // Initialize per-picture tag size controls
+    const currentTagSizeDisplay = document.getElementById('currentTagSize');
+    const decreaseAllTagSizeBtn = document.getElementById('decreaseAllTagSize');
+    const increaseAllTagSizeBtn = document.getElementById('increaseAllTagSize');
+    
+    // Debug: Check if buttons were found
+    console.log('[PER-IMAGE-INIT] Elements found:', {
+        currentTagSizeDisplay: !!currentTagSizeDisplay,
+        decreaseAllTagSizeBtn: !!decreaseAllTagSizeBtn,
+        increaseAllTagSizeBtn: !!increaseAllTagSizeBtn
+    });
+    
+    const updateTagSizeDisplay = () => {
+        if (currentTagSizeDisplay && window.currentImageLabel) {
+            const currentImageLabel = window.currentImageLabel;
+            
+            // Check if there are any tag sizes set for this image
+            const existingSizes = window.tagSizesByImage?.[currentImageLabel];
+            if (existingSizes && Object.keys(existingSizes).length > 0) {
+                // Show the size of the first tag (they should all be the same for per-image adjustment)
+                const firstTagSize = Object.values(existingSizes)[0];
+                currentTagSizeDisplay.textContent = firstTagSize;
+            } else {
+                // Show default size
+                currentTagSizeDisplay.textContent = window.paintApp?.config?.DEFAULT_TAG_SIZE || 20;
+            }
+        }
+    };
+    
+    const adjustAllTagSizes = (adjustment) => {
+        try {
+            const currentImageLabel = window.currentImageLabel || window.paintApp?.state?.currentImageLabel;
+            if (!currentImageLabel) {
+                console.log('[TAG-SIZE-ADJUST] No current image label');
+                return;
+            }
+            
+            // Since paintApp.state doesn't have images object, use window.tagSizesByImage for per-image sizes
+            if (!window.tagSizesByImage) {
+                window.tagSizesByImage = {};
+            }
+            if (!window.tagSizesByImage[currentImageLabel]) {
+                window.tagSizesByImage[currentImageLabel] = {};
+            }
+            
+            // Get current tag size for this image or use default
+            // Check if there's already a per-image tag size set
+            const existingStrokeSizes = Object.values(window.tagSizesByImage[currentImageLabel]);
+            let currentSize;
+            if (existingStrokeSizes.length > 0) {
+                // Use the first tag's size as current image size
+                currentSize = existingStrokeSizes[0];
+            } else {
+                // Use default size
+                currentSize = window.paintApp?.config?.DEFAULT_TAG_SIZE || 20;
+            }
+            
+            const newSize = Math.max(
+                window.paintApp?.config?.MIN_TAG_SIZE || 8, 
+                Math.min(window.paintApp?.config?.MAX_TAG_SIZE || 72, currentSize + adjustment)
+            );
+            
+            // Update ALL individual tag sizes for this image to the new size
+            // Get all strokes for current image
+            const strokesForImage = window.vectorStrokesByImage?.[currentImageLabel];
+            console.log(`[TAG-SIZE-ADJUST] Debug: strokesForImage for ${currentImageLabel}:`, strokesForImage);
+            console.log(`[TAG-SIZE-ADJUST] Debug: vectorStrokesByImage structure:`, window.vectorStrokesByImage);
+            
+            if (strokesForImage && typeof strokesForImage === 'object') {
+                const strokeKeys = Object.keys(strokesForImage);
+                console.log(`[TAG-SIZE-ADJUST] Debug: Found stroke keys:`, strokeKeys);
+                strokeKeys.forEach(strokeLabel => {
+                    window.tagSizesByImage[currentImageLabel][strokeLabel] = newSize;
+                    console.log(`[TAG-SIZE-ADJUST] Debug: Set ${strokeLabel} to size ${newSize}`);
+                });
+            } else {
+                // If no strokes exist yet, just set a base size for new strokes
+                console.log(`[TAG-SIZE-ADJUST] No strokes found for ${currentImageLabel}, setting base size`);
+            }
+            
+            // Update display and redraw
+            updateTagSizeDisplay();
+            redrawCanvasWithVisibility();
+            
+            console.log(`[TAG-SIZE-ADJUST] Image: ${currentImageLabel}, adjustment: ${adjustment}, new size: ${newSize}px`);
+            console.log(`[TAG-SIZE-ADJUST] Updated ${Object.keys(window.tagSizesByImage[currentImageLabel] || {}).length} tags to size: ${newSize}`);
+        } catch (error) {
+            console.error('[TAG-SIZE-ADJUST] Error adjusting tag sizes:', error);
+        }
+    };
+    
+    // Add event listeners
+    if (decreaseAllTagSizeBtn) {
+        decreaseAllTagSizeBtn.addEventListener('click', () => {
+            console.log('[PER-IMAGE-BUTTON] Decrease button clicked');
+            adjustAllTagSizes(-window.paintApp.config.TAG_SIZE_STEP);
+        });
+    } else {
+        console.warn('[PER-IMAGE-BUTTON] Decrease button not found');
+    }
+    
+    if (increaseAllTagSizeBtn) {
+        increaseAllTagSizeBtn.addEventListener('click', () => {
+            console.log('[PER-IMAGE-BUTTON] Increase button clicked');
+            adjustAllTagSizes(window.paintApp.config.TAG_SIZE_STEP);
+        });
+    } else {
+        console.warn('[PER-IMAGE-BUTTON] Increase button not found');
+    }
+    
+    // Update display when switching images
+    const paintAppRedrawCanvasWithVisibility = window.paintApp?.redrawCanvasWithVisibility;
+    if (paintAppRedrawCanvasWithVisibility) {
+        window.paintApp.redrawCanvasWithVisibility = function() {
+            updateTagSizeDisplay();
+            return paintAppRedrawCanvasWithVisibility.call(this);
+        };
+    }
+    
+    // Initial display update
+    updateTagSizeDisplay();
     
     // Initialize the measurement inputs
     const inchWhole = document.getElementById('inchWhole');
@@ -910,6 +1036,11 @@ function hideResizeOverlay() {
     // Use the currentImageLabel from paintApp.state instead of redeclaring
     window.paintApp.state.currentImageLabel = IMAGE_LABELS[0]; // Start with 'front'
     let currentImageLabel = window.paintApp.state.currentImageLabel;
+    
+    // Update currentImageLabel when the current image changes
+    const updateCurrentImageLabel = () => {
+        currentImageLabel = window.paintApp.state.currentImageLabel;
+    };
 
     // Helper: user-facing image name (custom > tag-based > base label)
     if (!window.getUserFacingImageName) {
@@ -1224,6 +1355,7 @@ function hideResizeOverlay() {
         window.strokeVisibilityByImage[label] = imageData.strokeVisibility ? {...imageData.strokeVisibility} : {};
         window.strokeLabelVisibility[label] = imageData.strokeLabelVisibility ? {...imageData.strokeLabelVisibility} : {};
         window.strokeMeasurements[label] = imageData.strokeMeasurements ? JSON.parse(JSON.stringify(imageData.strokeMeasurements)) : {};
+        window.tagSizesByImage[label] = imageData.tagSizes ? JSON.parse(JSON.stringify(imageData.tagSizes)) : {};
         window.labelsByImage[label] = imageData.labelsByImage;
         window.undoStackByImage[label] = imageData.undoStack ? [...imageData.undoStack] : [];
         window.redoStackByImage[label] = imageData.redoStack ? [...imageData.redoStack] : [];
@@ -1316,6 +1448,7 @@ function hideResizeOverlay() {
             strokeVisibility: window.strokeVisibilityByImage[label] ? {...window.strokeVisibilityByImage[label]} : {},
             strokeLabelVisibility: window.strokeLabelVisibility[label] ? {...window.strokeLabelVisibility[label]} : {},
             strokeMeasurements: window.strokeMeasurements[label] ? JSON.parse(JSON.stringify(window.strokeMeasurements[label])) : {},
+            tagSizes: window.tagSizesByImage[label] ? JSON.parse(JSON.stringify(window.tagSizesByImage[label])) : {},
             labelsByImage: window.labelsByImage[label],
             undoStack: window.undoStackByImage[label] ? [...window.undoStackByImage[label]] : [],
             redoStack: window.redoStackByImage[label] ? [...window.redoStackByImage[label]] : [],
@@ -1866,12 +1999,19 @@ function hideResizeOverlay() {
     // PERFORMANCE FIX: Coalesce multiple redrawCanvasWithVisibility calls during loading
     let redrawCanvasThrottled = false;
     let redrawCanvasFrameId = null;
+    let redrawInProgress = false; // Prevent recursive redraws
     const originalRedrawCanvasWithVisibility = window.redrawCanvasWithVisibility;
     
     window.redrawCanvasWithVisibility = function() {
         // Skip excessive redraws during loading
         if (window.isLoadingProject) {
             console.log('[redrawCanvasWithVisibility] Skipped during project loading');
+            return;
+        }
+        
+        // Prevent recursive redraws that could cause infinite loops
+        if (redrawInProgress) {
+            console.warn('[redrawCanvasWithVisibility] Skipping - redraw already in progress');
             return;
         }
         
@@ -1882,8 +2022,13 @@ function hideResizeOverlay() {
         
         redrawCanvasFrameId = requestAnimationFrame(() => {
             redrawCanvasFrameId = null;
-            if (typeof originalRedrawCanvasWithVisibility === 'function') {
-                originalRedrawCanvasWithVisibility();
+            redrawInProgress = true;
+            try {
+                if (typeof originalRedrawCanvasWithVisibility === 'function') {
+                    originalRedrawCanvasWithVisibility();
+                }
+            } finally {
+                redrawInProgress = false;
             }
         });
     };
@@ -3517,14 +3662,18 @@ function hideResizeOverlay() {
     // Helper to draw label at specific position
     function drawLabelAtPosition(ctx, text, x, y) {
         ctx.save();
-        ctx.font = 'bold 14px Arial';
+        
+        // Get dynamic tag size for this stroke label
+        const tagSize = getTagSize(text);
+        console.log(`[TAG-DRAW-REAL] text: ${text}, tagSize: ${tagSize}, final font: bold ${tagSize}px Arial`);
+        ctx.font = `bold ${tagSize}px Arial`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         
         // Measure text
         const metrics = ctx.measureText(text);
         const textWidth = metrics.width;
-        const textHeight = 16;
+        const textHeight = tagSize + 2; // Dynamic height based on font size
         
         // Draw background
         ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
@@ -4390,7 +4539,10 @@ function hideResizeOverlay() {
             
             // Set font properties scaled for viewport
             ctx.save();
-            const fontSize = Math.max(12, 16 * viewport.scale);
+            // Get the tag size for this stroke label and scale it for viewport
+            const baseTagSize = getTagSize(strokeLabel);
+            const fontSize = Math.max(12, baseTagSize * viewport.scale);
+            console.log(`[TAG-DRAW] stroke: ${strokeLabel}, baseTagSize: ${baseTagSize}, viewport.scale: ${viewport.scale}, final fontSize: ${fontSize}`);
             ctx.font = `${fontSize}px Arial`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
@@ -5148,6 +5300,38 @@ function hideResizeOverlay() {
                 toggleLabelVisibility(strokeLabel);
             };
             
+            // Create tag size buttons container
+            const tagSizeContainer = document.createElement('div');
+            tagSizeContainer.className = 'tag-size-container';
+            
+            // Create smaller button
+            const smallerBtn = document.createElement('button');
+            smallerBtn.className = 'tag-size-btn tag-size-smaller';
+            smallerBtn.innerHTML = '−';
+            smallerBtn.title = 'Make tag smaller';
+            smallerBtn.onclick = (e) => {
+                e.stopPropagation();
+                decreaseTagSize(strokeLabel);
+            };
+            
+            // Create bigger button  
+            const biggerBtn = document.createElement('button');
+            biggerBtn.className = 'tag-size-btn tag-size-bigger';
+            biggerBtn.innerHTML = '+';
+            biggerBtn.title = 'Make tag bigger';
+            biggerBtn.onclick = (e) => {
+                e.stopPropagation();
+                increaseTagSize(strokeLabel);
+            };
+            
+            // Get current tag size and update button states
+            const currentTagSize = getTagSize(strokeLabel);
+            updateTagSizeButtons(strokeLabel, currentTagSize);
+            
+            // Add buttons to container
+            tagSizeContainer.appendChild(smallerBtn);
+            tagSizeContainer.appendChild(biggerBtn);
+            
             labelContainer.appendChild(strokeName); // Add stroke name first
             labelContainer.appendChild(labelToggleBtn);
 
@@ -5158,6 +5342,9 @@ function hideResizeOverlay() {
             if (!measureTextElement.parentNode) {
                 labelContainer.appendChild(measureTextElement);
             }
+            
+            // Add tag size container to label container
+            labelContainer.appendChild(tagSizeContainer);
             
             // If this is the selected stroke or newly created stroke, focus on it
             // Check if this is the newly created stroke
@@ -5460,6 +5647,109 @@ function hideResizeOverlay() {
         // Redraw the canvas with updated label visibility
         // This should not affect the stroke visibility
         redrawCanvasWithVisibility();
+    }
+    
+    // Function to increase tag size
+    function increaseTagSize(strokeLabel) {
+        updateCurrentImageLabel(); // Ensure we have the latest current image
+        const imageLabel = window.paintApp?.state?.currentImageLabel || currentImageLabel;
+        console.log(`[TAG-SIZE] increaseTagSize called for stroke: ${strokeLabel}, currentImage: ${imageLabel}, local currentImageLabel: ${currentImageLabel}`);
+        console.log(`[TAG-SIZE] tagSizesByImage before:`, window.tagSizesByImage);
+        
+        if (!window.tagSizesByImage[imageLabel]) {
+            window.tagSizesByImage[imageLabel] = {};
+            console.log(`[TAG-SIZE] Initialized tagSizesByImage for image: ${imageLabel}`);
+        }
+        
+        const currentSize = window.tagSizesByImage[imageLabel][strokeLabel] || window.paintApp.config.DEFAULT_TAG_SIZE;
+        const newSize = Math.min(currentSize + window.paintApp.config.TAG_SIZE_STEP, window.paintApp.config.MAX_TAG_SIZE);
+        
+        console.log(`[TAG-SIZE] Size change: ${currentSize} -> ${newSize}`);
+        
+        window.tagSizesByImage[imageLabel][strokeLabel] = newSize;
+        
+        // Update the UI to show the new size
+        updateTagSizeButtons(strokeLabel, newSize);
+        
+        // Redraw canvas to apply the new size
+        redrawCanvasWithVisibility();
+        
+        console.log(`[TAG-SIZE] tagSizesByImage after:`, window.tagSizesByImage);
+    }
+    
+    // Function to decrease tag size
+    function decreaseTagSize(strokeLabel) {
+        updateCurrentImageLabel(); // Ensure we have the latest current image
+        const imageLabel = window.paintApp?.state?.currentImageLabel || currentImageLabel;
+        if (!window.tagSizesByImage[imageLabel]) {
+            window.tagSizesByImage[imageLabel] = {};
+        }
+        
+        const currentSize = window.tagSizesByImage[imageLabel][strokeLabel] || window.paintApp.config.DEFAULT_TAG_SIZE;
+        const newSize = Math.max(currentSize - window.paintApp.config.TAG_SIZE_STEP, window.paintApp.config.MIN_TAG_SIZE);
+        
+        window.tagSizesByImage[imageLabel][strokeLabel] = newSize;
+        
+        // Update the UI to show the new size
+        updateTagSizeButtons(strokeLabel, newSize);
+        
+        // Redraw canvas to apply the new size
+        redrawCanvasWithVisibility();
+    }
+    
+    // Function to get current tag size for a stroke
+    function getTagSize(strokeLabel) {
+        try {
+            // Get the current image label safely
+            const imageLabel = window.currentImageLabel || window.paintApp?.state?.currentImageLabel;
+            if (!imageLabel) {
+                console.log(`[GET-TAG-SIZE] No image label, using default size: ${window.paintApp?.config?.DEFAULT_TAG_SIZE || 20}`);
+                return window.paintApp?.config?.DEFAULT_TAG_SIZE || 20;
+            }
+            
+            // First check if the current image has a per-image tag size
+            // Add comprehensive null/undefined checks
+            if (window.paintApp?.state?.images && typeof window.paintApp.state.images === 'object') {
+                const currentImage = window.paintApp.state.images[imageLabel];
+                if (currentImage && typeof currentImage === 'object' && currentImage.tagSize) {
+                    console.log(`[GET-TAG-SIZE] Using per-image size: ${currentImage.tagSize} for ${strokeLabel} on ${imageLabel}`);
+                    return currentImage.tagSize;
+                }
+            }
+            
+            // Fall back to individual tag sizes
+            if (window.tagSizesByImage && typeof window.tagSizesByImage === 'object' && 
+                window.tagSizesByImage[imageLabel] && typeof window.tagSizesByImage[imageLabel] === 'object' &&
+                window.tagSizesByImage[imageLabel][strokeLabel]) {
+                const size = window.tagSizesByImage[imageLabel][strokeLabel];
+                console.log(`[GET-TAG-SIZE] Using individual size: ${size} for ${strokeLabel} on ${imageLabel}`);
+                return size;
+            }
+            
+            // Final fallback to default
+            const defaultSize = window.paintApp?.config?.DEFAULT_TAG_SIZE || 20;
+            console.log(`[GET-TAG-SIZE] Using final default size: ${defaultSize} for ${strokeLabel} on ${imageLabel}`);
+            return defaultSize;
+        } catch (error) {
+            console.error(`[GET-TAG-SIZE] Error getting tag size for ${strokeLabel}:`, error);
+            return window.paintApp?.config?.DEFAULT_TAG_SIZE || 20;
+        }
+    }
+    
+    // Function to update tag size button states
+    function updateTagSizeButtons(strokeLabel, currentSize) {
+        const biggerBtn = document.querySelector(`.stroke-visibility-item[data-stroke="${strokeLabel}"] .tag-size-bigger`);
+        const smallerBtn = document.querySelector(`.stroke-visibility-item[data-stroke="${strokeLabel}"] .tag-size-smaller`);
+        
+        if (biggerBtn) {
+            biggerBtn.disabled = currentSize >= window.paintApp.config.MAX_TAG_SIZE;
+            biggerBtn.style.opacity = currentSize >= window.paintApp.config.MAX_TAG_SIZE ? '0.5' : '1';
+        }
+        
+        if (smallerBtn) {
+            smallerBtn.disabled = currentSize <= window.paintApp.config.MIN_TAG_SIZE;
+            smallerBtn.style.opacity = currentSize <= window.paintApp.config.MIN_TAG_SIZE ? '0.5' : '1';
+        }
     }
     
     // Function to update measurement input with selected stroke's value
@@ -7516,7 +7806,10 @@ let textDragStartCanvasY = 0;
                         anchorPointCanvas = { x: canvas.width / 2, y: canvas.height / 2 };
                     }
 
-                    ctx.font = '28px Arial';
+                    // Use dynamic tag size instead of hardcoded font
+                    const tagSize = getTagSize(strokeLabel);
+                    ctx.font = `${tagSize}px Arial`;
+                    console.log(`[TAG-FINAL-DRAW] stroke: ${strokeLabel}, tagSize: ${tagSize}, final font: ${tagSize}px Arial`);
                     // Use grey outline for white strokes, black text for all
                     const isWhiteStroke = vectorData.color === '#ffffff' || vectorData.color === 'white' || vectorData.color === 'rgb(255, 255, 255)';
                     const labelOutlineColor = isWhiteStroke ? '#666666' : (vectorData.color || '#000');
@@ -7525,8 +7818,10 @@ let textDragStartCanvasY = 0;
                     ctx.textBaseline = 'bottom';
 
                     const metrics = ctx.measureText(labelText);
-                    const labelHeight = 48; 
-                    const labelWidth = Math.max(metrics.width + 12, labelHeight); // ensure at least a square for short text
+                    // Make box dimensions proportional to font size
+                    const padding = Math.ceil(tagSize * 0.3); // 30% of font size for padding
+                    const labelHeight = Math.ceil(tagSize * 1.5); // 1.5x font size for height
+                    const labelWidth = Math.max(metrics.width + padding * 2, labelHeight); // ensure at least a square for short text
                     
                     // Initial labelRect definition (center-based reference)
                     // We will treat (x, y) as the CENTER of the label for placement and connector math
@@ -9651,7 +9946,12 @@ let textDragStartCanvasY = 0;
         if (typeof off.x === 'number' && typeof off.y === 'number') return { x: off.x, y: off.y };
         if (typeof off.dx_norm === 'number' && typeof off.dy_norm === 'number') {
             const dims = window.originalImageDimensions && window.originalImageDimensions[imageLabel];
-            if (!dims || !dims.width || !dims.height) return { x: 0, y: 0 };
+            if (!dims || !dims.width || !dims.height) {
+                // Fallback: treat normalized values as pixel values when dimensions are missing
+                // This preserves drag offsets for images without proper dimension tracking
+                console.warn(`[normalizeToPixels] Missing dimensions for ${imageLabel}, treating normalized values as pixels`);
+                return { x: off.dx_norm, y: off.dy_norm };
+            }
             const ref = (off.normRef === 'height') ? dims.height : (off.normRef === 'diag') ? Math.hypot(dims.width, dims.height) : dims.width;
             return { x: off.dx_norm * ref, y: off.dy_norm * ref };
         }
@@ -12773,6 +13073,10 @@ let textDragStartCanvasY = 0;
             const currentState = getCanvasState();
             currentStroke = cloneImageData(currentState);
             // Save the state before we start drawing
+            // Ensure undoStackByImage exists for currentImageLabel
+            if (!undoStackByImage[currentImageLabel]) {
+                undoStackByImage[currentImageLabel] = [];
+            }
             undoStackByImage[currentImageLabel].push({
                 state: cloneImageData(currentState),
                 type: 'pre-stroke',
@@ -13073,7 +13377,7 @@ let textDragStartCanvasY = 0;
             const deltaImageX = currImg.x - prevImg.x;
             const deltaImageY = currImg.y - prevImg.y;
             
-            // console.log(`[DRAG] Label drag - img delta: (${deltaImageX.toFixed(2)}, ${deltaImageY.toFixed(2)}) for stroke: ${draggedLabelStroke}`);
+            console.log(`[DRAG] Label drag - img delta: (${deltaImageX.toFixed(2)}, ${deltaImageY.toFixed(2)}) for stroke: ${draggedLabelStroke}`);
             
             // Update start position for next move event
             dragStartX = currentX;
@@ -13227,6 +13531,7 @@ let textDragStartCanvasY = 0;
         }
         
         if (isDraggingLabel) {
+            console.log(`[DRAG] Label drag ended for stroke: ${draggedLabelStroke}`);
             isDraggingLabel = false;
             draggedLabelStroke = null;
             
@@ -16255,6 +16560,7 @@ let textDragStartCanvasY = 0;
         if (!window.customLabelRelativePositions) window.customLabelRelativePositions = {}; // Store relative line positioning
         if (!window.calculatedLabelOffsets) window.calculatedLabelOffsets = {}; // Ensure this is initialized
         if (!window.customLabelAbsolutePositions) window.customLabelAbsolutePositions = {};
+        if (!window.tagSizesByImage) window.tagSizesByImage = {}; // Initialize tag size management
         window.customLabelAbsolutePositions[label] = {}; // Initialize absolute positions for this image
 
         window.imageScaleByLabel[label] = 1.0;
@@ -16277,6 +16583,7 @@ let textDragStartCanvasY = 0;
         window.paintApp.state.selectedStrokeByImage[label] = null;
         window.paintApp.state.multipleSelectedStrokesByImage[label] = [];
         window.calculatedLabelOffsets[label] = {}; // Initialize for the new label
+        window.tagSizesByImage[label] = {}; // Initialize tag sizes for this image
 
         // Initialize with default tags, robustly checking for TAG_MODEL
         const baseViewType = label.split('_')[0]; // e.g., 'front' from 'front_1' or 'front' itself

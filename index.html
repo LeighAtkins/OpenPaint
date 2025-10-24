@@ -1528,6 +1528,12 @@
                     <input id="toggleShowMeasurements" type="checkbox" class="accent-blue-600" checked>
                     Show measurements
                 </label>
+                <div class="flex items-center gap-1 text-xs bg-slate-50 border border-slate-200 px-2 py-1 rounded-lg">
+                    <span class="text-slate-600">Tag Size:</span>
+                    <button id="decreaseAllTagSize" title="Decrease tag size for all tags on this image" class="w-5 h-5 bg-white border border-slate-300 rounded hover:bg-slate-50 flex items-center justify-center text-slate-600 hover:text-slate-800 transition-colors">−</button>
+                    <span id="currentTagSize" class="text-slate-700 font-medium min-w-[2ch] text-center">20</span>
+                    <button id="increaseAllTagSize" title="Increase tag size for all tags on this image" class="w-5 h-5 bg-white border border-slate-300 rounded hover:bg-slate-50 flex items-center justify-center text-slate-600 hover:text-slate-800 transition-colors">+</button>
+                </div>
                 <button id="unitToggleBtnSecondary" class="px-2 py-1 text-xs bg-white border border-gray-300 rounded-lg hover:bg-gray-50" title="Toggle units">inches</button>
                 <button id="labelShapeToggleBtn" class="px-2 py-1 text-xs bg-white border border-gray-300 rounded-lg hover:bg-gray-50" title="Toggle tag shape" aria-pressed="true">■</button>
             </div>
