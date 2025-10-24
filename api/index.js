@@ -14,6 +14,7 @@ app.use('/css', express.static(path.join(__dirname, '..', 'css'), {
   setHeaders: (res) => res.set('Cache-Control', 'public, max-age=604800, immutable')
 }));
 app.use('/src', express.static(path.join(__dirname, '..', 'src')));
+app.use('/public', express.static(path.join(__dirname, '..', 'public')));
 app.use(express.static(path.join(__dirname, '..')));
 
 // Simple test endpoint
@@ -26,8 +27,8 @@ app.get("/health", (req, res) => {
   res.json({ ok: true, ts: Date.now() });
 });
 
-// Prevent SPA fallback for missing static assets
-app.get(/\.(js|mjs|css|map|json|png|jpg|jpeg|gif|svg|ico)$/i, (_req, res) => {
+// Prevent SPA fallback for missing static assets (but allow favicon)
+app.get(/\.(js|mjs|css|map|json|png|jpg|jpeg|gif|svg)$/i, (_req, res) => {
   res.status(404).end();
 });
 

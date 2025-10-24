@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OpenPaint</title>
+    <link rel="icon" href="/favicon.ico" sizes="any">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -144,102 +145,6 @@
         .slider:focus, .slider:focus-visible { outline: none !important; box-shadow: none; }
         .slider::-moz-focus-outer { border: 0; }
     </style>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        // Modern brand colors
-                        brand: {
-                            50: '#f0f9ff',
-                            100: '#e0f2fe',
-                            200: '#bae6fd',
-                            300: '#7dd3fc',
-                            400: '#38bdf8',
-                            500: '#0ea5e9',
-                            600: '#0284c7',
-                            700: '#0369a1',
-                            800: '#075985',
-                            900: '#0c4a6e',
-                        },
-                        // Semantic colors
-                        primary: {
-                            50: '#eff6ff',
-                            100: '#dbeafe',
-                            200: '#bfdbfe',
-                            300: '#93c5fd',
-                            400: '#60a5fa',
-                            500: '#3b82f6',
-                            600: '#2563eb',
-                            700: '#1d4ed8',
-                            800: '#1e40af',
-                            900: '#1e3a8a',
-                        },
-                        success: {
-                            50: '#f0fdf4',
-                            100: '#dcfce7',
-                            200: '#bbf7d0',
-                            300: '#86efac',
-                            400: '#4ade80',
-                            500: '#22c55e',
-                            600: '#16a34a',
-                            700: '#15803d',
-                            800: '#166534',
-                            900: '#14532d',
-                        },
-                        danger: {
-                            50: '#fef2f2',
-                            100: '#fee2e2',
-                            200: '#fecaca',
-                            300: '#fca5a5',
-                            400: '#f87171',
-                            500: '#ef4444',
-                            600: '#dc2626',
-                            700: '#b91c1c',
-                            800: '#991b1b',
-                            900: '#7f1d1d',
-                        },
-                        warning: {
-                            50: '#fffbeb',
-                            100: '#fef3c7',
-                            200: '#fde68a',
-                            300: '#fcd34d',
-                            400: '#fbbf24',
-                            500: '#f59e0b',
-                            600: '#d97706',
-                            700: '#b45309',
-                            800: '#92400e',
-                            900: '#78350f',
-                        },
-                    },
-                    fontFamily: {
-                        'sans': ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'sans-serif'],
-                    },
-                    fontSize: {
-                        'xs': ['0.75rem', { lineHeight: '1rem' }],
-                        'sm': ['0.875rem', { lineHeight: '1.25rem' }],
-                        'base': ['1rem', { lineHeight: '1.5rem' }],
-                        'lg': ['1.125rem', { lineHeight: '1.75rem' }],
-                        'xl': ['1.25rem', { lineHeight: '1.75rem' }],
-                        '2xl': ['1.5rem', { lineHeight: '2rem' }],
-                    },
-                    borderRadius: {
-                        'xl': '0.75rem',
-                        '2xl': '1rem',
-                        '3xl': '1.5rem',
-                    },
-                    boxShadow: {
-                        'glass': '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
-                        'panel': '0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-                        'elevated': '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-                    },
-                    backdropBlur: {
-                        'xs': '2px',
-                    }
-                }
-            }
-        }
-    </script>
     
     <!-- Loading optimization and debug gate -->
     <style>
@@ -4828,33 +4733,46 @@
                     
                     // Check if near top edge
                     if (mouseY - rect.top < scrollThreshold && mouseY > rect.top) {
-                        window.dragScrollInterval = setInterval(() => {
+                        let scrolling = true;
+                        const scroll = () => {
+                            if (!scrolling) return;
                             imageListContainer.scrollBy(0, -scrollSpeed);
-                        }, 20);
+                            window.dragScrollFrame = requestAnimationFrame(scroll);
+                        };
+                        scrolling = true;
+                        window.dragScrollFrame = requestAnimationFrame(scroll);
                     }
                     // Check if near bottom edge
                     else if (rect.bottom - mouseY < scrollThreshold && mouseY < rect.bottom) {
-                        window.dragScrollInterval = setInterval(() => {
+                        let scrolling = true;
+                        const scroll = () => {
+                            if (!scrolling) return;
                             imageListContainer.scrollBy(0, scrollSpeed);
-                        }, 20);
+                            window.dragScrollFrame = requestAnimationFrame(scroll);
+                        };
+                        scrolling = true;
+                        window.dragScrollFrame = requestAnimationFrame(scroll);
                     }
                 });
                 
-                // Clear scroll interval when drag ends anywhere
-                imageListContainer.addEventListener('drop', () => {
+                // Clear scroll animation when drag ends anywhere
+                const stopScrolling = () => {
                     if (window.dragScrollInterval) {
                         clearInterval(window.dragScrollInterval);
                         window.dragScrollInterval = null;
                     }
-                });
+                    if (window.dragScrollFrame) {
+                        cancelAnimationFrame(window.dragScrollFrame);
+                        window.dragScrollFrame = null;
+                    }
+                };
+
+                imageListContainer.addEventListener('drop', stopScrolling);
                 
                 imageListContainer.addEventListener('dragleave', (e) => {
                     // Only clear if leaving the container entirely
                     if (e.target === imageListContainer) {
-                        if (window.dragScrollInterval) {
-                            clearInterval(window.dragScrollInterval);
-                            window.dragScrollInterval = null;
-                        }
+                        stopScrolling();
                     }
                 });
             }
@@ -5301,8 +5219,6 @@
     <script src="js/transform.js?v=20250820123456"></script>
     <script src="js/geometry.js?v=20250820123456"></script>
     <script src="js/migration.js?v=20250820123456"></script>
-    <script src="diagnostics-overlay.js?v=20250820123456"></script>
-    <script src="test-coordinate-system.js?v=20250912113000"></script>
 
     <!-- Load AI Export Module before paint.js -->
     <script type="module">
@@ -5681,19 +5597,26 @@
                 // Update active pill immediately
                 updateActivePill();
 
-                // Set up periodic updates to handle dynamically added images
-                setInterval(() => {
-                    positionNavigationContainer();
-                    const currentButtons = Array.from(document.querySelectorAll('#mini-stepper button[data-target]'));
-                    const currentContainers = getImageContainers();
-                    if (currentButtons.length !== currentContainers.length) {
-                        console.log('[MiniStepper] Image count changed, updating pills');
-                        const newButtons = updatePills();
-                        initIntersectionObserver(newButtons);
-                    }
-                    // Update active pill on each check
-                    updateActivePill();
-                }, 1000); // Check more frequently
+                // Set up periodic updates to handle dynamically added images (optimized with requestAnimationFrame)
+                let ticking = false;
+                const checkForChanges = () => {
+                    if (ticking) return;
+                    ticking = true;
+                    requestAnimationFrame(() => {
+                        positionNavigationContainer();
+                        const currentButtons = Array.from(document.querySelectorAll('#mini-stepper button[data-target]'));
+                        const currentContainers = getImageContainers();
+                        if (currentButtons.length !== currentContainers.length) {
+                            console.log('[MiniStepper] Image count changed, updating pills');
+                            const newButtons = updatePills();
+                            initIntersectionObserver(newButtons);
+                        }
+                        // Update active pill on each check
+                        updateActivePill();
+                        ticking = false;
+                    });
+                };
+                setInterval(checkForChanges, 2000); // Check less frequently (every 2 seconds)
 
                 console.log('[MiniStepper] Initialized and monitoring for image changes');
             }
