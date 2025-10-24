@@ -6,20 +6,9 @@
     <title>OpenPaint</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preconnect" href="https://cdn.tailwindcss.com">
-    <link rel="dns-prefetch" href="https://cdn.tailwindcss.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/css/tailwind.build.css" />
     <script>
-        // Suppress Tailwind production warning for this demo
-        if (typeof console !== 'undefined' && console.warn) {
-            const originalWarn = console.warn;
-            console.warn = (...args) => {
-                if (args[0] && typeof args[0] === 'string' && args[0].includes('should not be used in production')) return;
-                originalWarn.apply(console, args);
-            };
-        }
-        
         // Suppress autofill extension errors
         window.addEventListener('error', (event) => {
             if (event.message && event.message.includes('autofill.bundle.js')) {
