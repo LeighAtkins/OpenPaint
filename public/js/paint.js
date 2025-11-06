@@ -8770,7 +8770,27 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
 
       // Add back to undo stack
       undoStackByImage[currentImageLabel].push(actionToRedo);
-            
+
+      // Skip pre-stroke states (they have no visual effect)
+      if (actionToRedo.type === 'pre-stroke') {
+        console.log('[redo] Skipping pre-stroke state, redoing next action...');
+        // If we encounter a pre-stroke state, redo again to get to the next visible state
+        if (redoStack.length > 0) {
+          return redo();
+        }
+        return; // No more actions to redo
+      }
+
+      // Skip snapshot states (created when switching views)
+      if (actionToRedo.type === 'snapshot') {
+        console.log('[redo] Skipping snapshot state, redoing next action...');
+        // Continue to next redo action if possible
+        if (redoStack.length > 0) {
+          return redo();
+        }
+        return; // No more actions to redo
+      }
+
       // Handle delete-strokes action
       if (actionToRedo.type === 'delete-strokes') {
         // Delete strokes again (only the ones that were originally deleted)
