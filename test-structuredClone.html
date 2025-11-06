@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>structuredClone Test</title>
+</head>
+<body>
+    <h1>structuredClone Performance & Correctness Test</h1>
+    <div id="results"></div>
+
+    <script>
+        // Load the polyfill like paint.js does
+        if (typeof structuredClone !== 'function') {
+            window.structuredClone = function(obj) {
+                return JSON.parse(JSON.stringify(obj));
+            };
+        }
+
+        const results = [];
+
+        // Test 1: Basic object cloning
+        const testObj = {
+            vectorStrokes: {
+                A1: { type: 'straight', points: [{x: 10, y: 20}, {x: 30, y: 40}] },
+                A2: { type: 'curved', points: [{x: 50, y: 60}] }
+            },
+            measurements: {
+                A1: { length: 100, unit: 'cm' }
+            }
+        };
+
+        const clone1 = structuredClone(testObj);
+        const correct1 = JSON.stringify(clone1) === JSON.stringify(testObj);
+        const mutationSafe1 = (clone1.vectorStrokes.A1.points[0].x = 999) && testObj.vectorStrokes.A1.points[0].x === 10;
+        results.push(`Test 1 - Basic Clone: ${correct1 ? '✅ PASS' : '❌ FAIL'}`);
+        results.push(`Test 1 - Mutation Safety: ${mutationSafe1 ? '✅ PASS' : '❌ FAIL'}`);
+
+        // Test 2: Performance comparison
+        const largeObj = {};
+        for (let i = 0; i < 100; i++) {
+            largeObj[`stroke${i}`] = {
+                type: 'straight',
+                points: Array.from({length: 100}, (_, j) => ({x: j * 10, y: j * 20})),
+                measurement: { length: Math.random() * 1000, unit: 'cm' }
+            };
+        }
+
+        // Time structuredClone
+        const start1 = performance.now();
+        for (let i = 0; i < 100; i++) {
+            const c = structuredClone(largeObj);
+        }
+        const time1 = performance.now() - start1;
+
+        // Time JSON.parse/stringify
+        const start2 = performance.now();
+        for (let i = 0; i < 100; i++) {
+            const c = JSON.parse(JSON.stringify(largeObj));
+        }
+        const time2 = performance.now() - start2;
+
+        const speedup = ((time2 / time1) * 100 - 100).toFixed(1);
+        results.push(`Test 2 - structuredClone: ${time1.toFixed(2)}ms`);
+        results.push(`Test 2 - JSON method: ${time2.toFixed(2)}ms`);
+        results.push(`Test 2 - Performance: ${speedup}% ${speedup > 0 ? 'FASTER ✅' : 'SLOWER ❌'}`);
+
+        // Test 3: Circular reference handling (structuredClone supports, JSON doesn't)
+        try {
+            const circular = { a: 1 };
+            circular.self = circular;
+            const clone3 = structuredClone(circular);
+            results.push(`Test 3 - Circular References: ✅ SUPPORTED (native structuredClone)`);
+        } catch (e) {
+            results.push(`Test 3 - Circular References: ⚠️ NOT SUPPORTED (polyfill fallback)`);
+        }
+
+        // Test 4: Undefined and null handling
+        const testObj4 = {
+            a: undefined,
+            b: null,
+            c: [1, undefined, 3]
+        };
+        const clone4 = structuredClone(testObj4);
+        const correct4 = clone4.b === null && Array.isArray(clone4.c) && clone4.c.length === 3;
+        results.push(`Test 4 - Null/Undefined: ${correct4 ? '✅ PASS' : '❌ FAIL'}`);
+
+        // Display results
+        document.getElementById('results').innerHTML = results.map(r => `<p>${r}</p>`).join('');
+
+        console.log('All tests completed:', results);
+    </script>
+</body>
+</html>

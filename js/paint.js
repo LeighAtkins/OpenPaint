@@ -8201,10 +8201,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function undo() {
-    //         console.log(`Attempting to undo in ${currentImageLabel} workspace`);
-    //         console.log(`Current undo stack: ${undoStackByImage[currentImageLabel]?.length || 0} items`);
-    //         console.log(`Current strokes: ${lineStrokesByImage[currentImageLabel]?.join(', ') || 'none'}`);
-        
+    console.log(`[UNDO] Starting undo for ${currentImageLabel} - Stack size: ${undoStackByImage[currentImageLabel]?.length || 0}`);
+
     // Check global undo stack first for image deletions
     if (window.globalUndoStack && window.globalUndoStack.length > 0) {
       const lastGlobalAction = window.globalUndoStack[window.globalUndoStack.length - 1];
@@ -8229,34 +8227,36 @@ document.addEventListener('DOMContentLoaded', () => {
     if (currentStack && currentStack.length > 1) { // Keep at least one state (initial)
       // Get the state we're undoing from
       const lastAction = currentStack.pop();
-      //             console.log(`Undoing action of type: ${lastAction.type}, label: ${lastAction.label || 'none'}`);
-            
+      console.log(`[UNDO] Popped action: type=${lastAction.type}, label=${lastAction.label || 'none'}, remaining=${currentStack.length}`);
+
       // Add to redo stack
       redoStackByImage[currentImageLabel] = redoStackByImage[currentImageLabel] || [];
       redoStackByImage[currentImageLabel].push(lastAction);
-      //             console.log(`Added to redo stack, now has ${redoStackByImage[currentImageLabel].length} items`);
-            
+
       // Skip certain state types when undoing
       if (lastAction.type === 'pre-stroke') {
-        //                 console.log('Skipping pre-stroke state');
+        console.log('[UNDO] Encountered pre-stroke, recursively undoing...');
         // If we encounter a pre-stroke state, undo again to get to the previous complete state
         if (currentStack.length > 1) {
           return undo();
+        } else {
+          console.log('[UNDO] Cannot recurse - at last state');
         }
       }
-            
+
       // Handle snapshot type (created when switching views)
       if (lastAction.type === 'snapshot') {
-        //                 console.log('Restoring from snapshot state');
+        console.log('[UNDO] Encountered snapshot, recursively undoing...');
         // If we have stored strokes in the snapshot, restore them
         if (lastAction.strokes) {
           lineStrokesByImage[currentImageLabel] = [...(lastAction.strokes || [])];
-          //                     console.log(`Restored strokes: ${lineStrokesByImage[currentImageLabel].join(', ')}`);
         }
-                
+
         // Continue to next undo action if possible
         if (currentStack.length > 1) {
           return undo();
+        } else {
+          console.log('[UNDO] Cannot recurse - at last state');
         }
       }
             
@@ -8487,6 +8487,7 @@ document.addEventListener('DOMContentLoaded', () => {
       updateSidebarStrokeCounts();
             
       // Force redraw after any undo operation to ensure visual consistency
+      console.log(`[UNDO] Completed undo, redrawing canvas`);
       redrawCanvasWithVisibility();
             
       // Clear the manual next tag override so it recalculates based on existing strokes
