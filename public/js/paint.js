@@ -1,27 +1,10 @@
 ﻿// Define core application structure for better state management
 
-// Debug mode toggle for rotation/hit-test debugging
-window.DEBUG_ROTATION = false;
-window.toggleRotationDebug = function() {
-  window.DEBUG_ROTATION = !window.DEBUG_ROTATION;
-  console.log(`🔧 Rotation Debug Mode: ${window.DEBUG_ROTATION ? 'ON' : 'OFF'}`);
-  console.log('Use window.toggleRotationDebug() to toggle');
-  return window.DEBUG_ROTATION;
-};
-
+// Simple debug logging function
 function debugLog(...args) {
-  try {
-    const isDebug = Boolean(window?.paintApp?.config?.debugMode) || Boolean(window?.debugMode);
-    const queryDebug = typeof window !== 'undefined' && window.location?.search?.includes('debug');
-    if (isDebug || queryDebug) {
-      console.log(...args);
-    }
-  } catch (err) {
-    console.log(...args);
-  }
+  // For now, just use console.log - can be enhanced later
+  console.log(...args);
 }
-
-debugLog('[PAINT.JS] Script loaded successfully');
 // Disable legacy measurement overlay rendering in favor of unified tag renderer
 window.disableLegacyMeasurementOverlay = true;
 
@@ -292,9 +275,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
   // Initialize unit selectors
   const unitSelector = document.getElementById('unitSelector');
-  if (unitSelector) {
-    unitSelector.addEventListener('change', updateMeasurementDisplay);
-  }
+  unitSelector.addEventListener('change', updateMeasurementDisplay);
     
   // Initialize show measurements toggle
   const toggleShowMeasurements = document.getElementById('toggleShowMeasurements');
@@ -311,39 +292,30 @@ document.addEventListener('DOMContentLoaded', () => {
   const cmValue = document.getElementById('cmValue');
     
   // Handle unit conversion when changing values
-  if (inchWhole) {
-    inchWhole.addEventListener('change', () => {
-      const whole = parseInt(inchWhole.value) || 0;
-      const fraction = parseFloat(inchFraction?.value) || 0;
-      const totalInches = whole + fraction;
-          
-      // Update cm value
-      if (cmValue) {
-        cmValue.value = (totalInches * window.paintApp.config.INCHES_TO_CM).toFixed(1);
-      }
-    });
-  }
+  inchWhole.addEventListener('change', () => {
+    const whole = parseInt(inchWhole.value) || 0;
+    const fraction = parseFloat(inchFraction.value) || 0;
+    const totalInches = whole + fraction;
+        
+    // Update cm value
+    cmValue.value = (totalInches * window.paintApp.config.INCHES_TO_CM).toFixed(1);
+  });
     
-  if (inchFraction) {
-    inchFraction.addEventListener('change', () => {
-      const whole = parseInt(inchWhole?.value) || 0;
-      const fraction = parseFloat(inchFraction.value) || 0;
-      const totalInches = whole + fraction;
-          
-      // Update cm value
-      if (cmValue) {
-        cmValue.value = (totalInches * window.paintApp.config.INCHES_TO_CM).toFixed(1);
-      }
-    });
-  }
+  inchFraction.addEventListener('change', () => {
+    const whole = parseInt(inchWhole.value) || 0;
+    const fraction = parseFloat(inchFraction.value) || 0;
+    const totalInches = whole + fraction;
+        
+    // Update cm value
+    cmValue.value = (totalInches * window.paintApp.config.INCHES_TO_CM).toFixed(1);
+  });
     
-  if (cmValue) {
-    cmValue.addEventListener('change', () => {
+  cmValue.addEventListener('change', () => {
     const cm = parseFloat(cmValue.value) || 0;
     const inches = cm / window.paintApp.config.INCHES_TO_CM;
         
     // Update inch values
-    if (inchWhole) inchWhole.value = Math.floor(inches);
+    inchWhole.value = Math.floor(inches);
         
     // Find closest fraction
     const fractionPart = inches - Math.floor(inches);
@@ -359,15 +331,12 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
         
-      if (inchFraction) inchFraction.value = closestFraction;
-          
-      // Show inch inputs, hide cm inputs
-      const inchInputs = document.getElementById('inchInputs');
-      const cmInputs = document.getElementById('cmInputs');
-      if (inchInputs) inchInputs.style.display = 'flex';
-      if (cmInputs) cmInputs.style.display = 'none';
-    });
-  }
+    inchFraction.value = closestFraction;
+        
+    // Show inch inputs, hide cm inputs
+    document.getElementById('inchInputs').style.display = 'flex';
+    document.getElementById('cmInputs').style.display = 'none';
+  });
     
   // Add event listener for standalone Save as PDF button
   const saveAsPdfButton = document.getElementById('saveAsPdf');
@@ -939,6 +908,21 @@ document.addEventListener('DOMContentLoaded', () => {
   // Use the currentImageLabel from paintApp.state instead of redeclaring
   window.paintApp.state.currentImageLabel = IMAGE_LABELS[0]; // Start with 'front'
   let currentImageLabel = window.paintApp.state.currentImageLabel;
+    
+  // ADDED: Initialize dimensions for default image labels to prevent NORMALIZE-TO-PIXELS errors
+  if (!window.originalImageDimensions) {
+    window.originalImageDimensions = {};
+  }
+    
+  // Set default dimensions for common image labels that may not have actual images
+  const canvasElement = document.getElementById('canvas');
+  if (canvasElement && !window.originalImageDimensions[currentImageLabel]) {
+    window.originalImageDimensions[currentImageLabel] = {
+      width: canvasElement.width,
+      height: canvasElement.height
+    };
+    console.log(`[INIT] Set default dimensions for ${currentImageLabel}: ${canvasElement.width}x${canvasElement.height}`);
+  }
 
   // Helper: user-facing image name (custom > tag-based > base label)
   if (!window.getUserFacingImageName) {
@@ -3562,7 +3546,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const textHeight = tagSize;
         
     // Draw background
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+    ctx.fillStyle = 'white';
     ctx.fillRect(x - textWidth/2 - 4, y - textHeight/2 - 2, textWidth + 8, textHeight + 4);
         
     // Draw border
@@ -4438,7 +4422,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const padding = 6 * viewport.scale;
             
       // Draw background rectangle
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+      ctx.fillStyle = 'white';
       ctx.fillRect(
         labelX - textWidth/2 - padding,
         labelY - textHeight/2 - padding,
@@ -6294,14 +6278,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Reset label positions and stroke paths for this redraw
     currentLabelPositions = [];
     currentStrokePaths = [];
-    
-    if (window.DEBUG_ROTATION) {
-      const rotation = window.imageRotationByLabel && window.imageRotationByLabel[currentImageLabel] 
-        ? (window.imageRotationByLabel[currentImageLabel] * 180 / Math.PI).toFixed(1) 
-        : '0';
-      console.group(`🎨 Redrawing Canvas (${currentImageLabel}, rotation: ${rotation}°)`);
-      console.log(`🧹 Cleared currentLabelPositions - will rebuild with new coordinates`);
-    }
         
     // Create a copy of custom label positions for tracking which ones were actually used
     const usedCustomPositions = {};
@@ -6444,16 +6420,68 @@ document.addEventListener('DOMContentLoaded', () => {
         const currentLabelForText = window.paintApp.state.currentImageLabel || window.currentImageLabel || 'front';
         const textElementsByImage = window.paintApp.state.textElementsByImage || {};
         const textList = textElementsByImage[currentLabelForText] || [];
+        
+        console.log('[TEXT DEBUG] Current label for rendering:', currentLabelForText);
+        console.log('[TEXT DEBUG] window.currentImageLabel:', window.currentImageLabel);  
+        console.log('[TEXT DEBUG] paintApp.state.currentImageLabel:', window.paintApp.state.currentImageLabel);
+        console.log('[TEXT DEBUG] Text elements by image keys:', Object.keys(textElementsByImage));
+        console.log('[TEXT DEBUG] Text list length for', currentLabelForText + ':', textList.length);
+        if (Object.keys(textElementsByImage).length > 0) {
+          Object.keys(textElementsByImage).forEach(key => {
+            console.log('[TEXT DEBUG] Label', key, 'has', textElementsByImage[key].length, 'text elements');
+          });
+        }
         if (Array.isArray(textList) && textList.length > 0) {
           const ctxText = ctx;
           textList.forEach(el => {
             if (!el || el.visible === false || typeof el.text !== 'string') return;
                         
-            // Use canvas coordinates directly (no transformation)
-            // This ensures text appears exactly where it was placed
-            const canvasCoords = el.useCanvasCoords ? 
-              { x: el.x, y: el.y } : 
-              (window.worldToClient ? window.worldToClient(el.x, el.y) : { x: el.x, y: el.y });
+            // Apply coordinate transformation to handle image rotation and scaling
+            // Convert from image space to canvas space using the transformation system
+            let canvasCoords;
+            const transformParams = getTransformationParams(currentLabelForText);
+            
+            console.log('[TEXT TRANSFORM DEBUG] Element:', el.id, 'useCanvasCoords:', el.useCanvasCoords);
+            console.log('[TEXT TRANSFORM DEBUG] Original coords:', el.x, el.y);
+            console.log('[TEXT TRANSFORM DEBUG] Transform params:', {
+              rotation: transformParams.rotation,
+              scale: transformParams.scale,
+              hasImage: transformParams.hasImage
+            });
+            
+            if (el.useCanvasCoords) {
+              // For elements created in canvas coordinates, we need to handle rotation
+              if (transformParams.rotation !== 0) {
+                // Apply rotation around canvas center for text elements
+                const canvasCenterX = canvas.width / 2;
+                const canvasCenterY = canvas.height / 2;
+                
+                // Get position relative to canvas center
+                const dx = el.x - canvasCenterX;
+                const dy = el.y - canvasCenterY;
+                
+                // Apply rotation around center
+                const cos = Math.cos(transformParams.rotation);
+                const sin = Math.sin(transformParams.rotation);
+                const rotatedX = dx * cos - dy * sin;
+                const rotatedY = dx * sin + dy * cos;
+                
+                // Convert back to canvas coordinates
+                canvasCoords = {
+                  x: canvasCenterX + rotatedX,
+                  y: canvasCenterY + rotatedY
+                };
+                console.log('[TEXT TRANSFORM DEBUG] Direct rotation around center:', el.x, el.y, '->', canvasCoords.x.toFixed(1), canvasCoords.y.toFixed(1));
+              } else {
+                // No rotation, use coordinates directly
+                canvasCoords = { x: el.x, y: el.y };
+                console.log('[TEXT TRANSFORM DEBUG] No rotation, using direct coords:', canvasCoords.x, canvasCoords.y);
+              }
+            } else {
+              // For elements created in image space, transform to canvas space
+              canvasCoords = imageToCanvasCoords(el.x, el.y, transformParams);
+              console.log('[TEXT TRANSFORM DEBUG] Image->Canvas:', el.x, el.y, '->', canvasCoords.x, canvasCoords.y);
+            }
                         
             ctxText.save();
                     
@@ -6620,15 +6648,20 @@ document.addEventListener('DOMContentLoaded', () => {
       // Draw the image with rotation, scaling and positioning
       ctx.drawImage(img, imageX, imageY, scaledWidth, scaledHeight);
             
-      // Restore context state before drawing strokes
+      // Apply visible strokes and labels WITHIN the rotated coordinate system
+      // IMPORTANT: Since the canvas context is rotated here, avoid applying rotation again in math
+      // by signaling applyVisibleStrokes that the context is already rotated
+      applyVisibleStrokes(scale, imageX, imageY, true);
+            
+      // Restore context state after drawing everything
       ctx.restore();
     } else {
       // Draw the image without rotation
       ctx.drawImage(img, imageX, imageY, scaledWidth, scaledHeight);
-    }
             
-    // Apply visible strokes
-    applyVisibleStrokes(scale, imageX, imageY);
+      // Apply visible strokes and labels normally (no rotation)
+      applyVisibleStrokes(scale, imageX, imageY);
+    }
 
     // After strokes, draw text elements for the current image
     try {
@@ -6646,7 +6679,20 @@ document.addEventListener('DOMContentLoaded', () => {
             { x: el.x, y: el.y } : 
             (window.worldToClient ? window.worldToClient(el.x, el.y) : { x: el.x, y: el.y });
                     
+          // Debug rotation info
+          const currentLabel = window.paintApp.state.currentImageLabel || window.currentImageLabel || 'front';
+          const rotationValue = window.imageRotationByLabel ? (window.imageRotationByLabel[currentLabel] || 0) : 0;
+          const rotationDegrees = (rotationValue * 180 / Math.PI).toFixed(1);
+          
           console.log('[RENDER TEXT DEBUG] Element:', el.id, 'stored coords:', {x: el.x, y: el.y}, 'canvas coords:', canvasCoords, 'size:', {width: el.width, height: el.height});
+          console.log('[RENDER TEXT DEBUG] Rotation debug:', {
+            currentLabel: currentLabel,
+            textLabel: currentLabelForText,
+            rotationRadians: rotationValue,
+            rotationDegrees: rotationDegrees,
+            useCanvasCoords: el.useCanvasCoords,
+            imageRotationByLabel: window.imageRotationByLabel
+          });
                     
           ctxText.save();
                     
@@ -6761,6 +6807,11 @@ document.addEventListener('DOMContentLoaded', () => {
   function drawSingleStroke(ctx, strokeLabel, vectorData, scale, imageX, imageY, currentImageLabel, isBlankCanvas, canvasCenter) {
     // Get transformation parameters for this image
     const transformParams = getTransformationParams(currentImageLabel);
+    
+    // Debug: Log transformation parameters for strokes
+    if (Math.abs(transformParams.rotation) > 0.1) {
+      console.log(`[STROKE-PARAMS] ${strokeLabel} - Scale:${transformParams.scale} Rotation:${(transformParams.rotation * 180 / Math.PI).toFixed(1)}° Position:(${transformParams.position.x},${transformParams.position.y}) Dimensions:${transformParams.dimensions.width}x${transformParams.dimensions.height}`);
+    }
             
     // Transform the first point using unified coordinate system
     const firstPoint = vectorData.points[0];
@@ -7402,7 +7453,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- End Control Point Indicators ---
   }
 
-  function applyVisibleStrokes(scale, imageX, imageY) {
+function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
+  // Set a scoped flag to inform coordinate transforms that context is pre-rotated
+  const prevCtxRotatedFlag = window.__renderContextRotatedForStrokes;
+  window.__renderContextRotatedForStrokes = !!contextRotated;
     //             console.log(`\n--- applyVisibleStrokes ---`); // ADDED LOG
     //             console.log(`  Target Label: ${currentImageLabel}`); // ADDED LOG
     //             console.log(`  Scale: ${scale}, ImageX: ${imageX}, ImageY: ${imageY}`); // ADDED LOG
@@ -7546,7 +7600,10 @@ document.addEventListener('DOMContentLoaded', () => {
           try {
             // Convert image anchor to canvas anchor for routines that need canvas coords (e.g., initial optimal placement)
             // Use toCanvas for proper coordinate transformation (handles center-based scaling for blank canvas)
-            anchorPointCanvas = imageToCanvasCoords(anchorPointImage.x, anchorPointImage.y);
+            // IMPORTANT: Use the same transformParams here as we use later for final position calculation
+            const transformParams = getTransformationParams(currentImageLabel);
+            if (window.__renderContextRotatedForStrokes) transformParams.__renderContextRotated = true;
+            anchorPointCanvas = imageToCanvasCoords(anchorPointImage.x, anchorPointImage.y, transformParams);
             if (!anchorPointCanvas || isNaN(anchorPointCanvas.x) || isNaN(anchorPointCanvas.y)) {
               console.error(`      Error calculating canvas coords for label anchor for ${strokeLabel}. Image anchor:`, anchorPointImage);
               anchorPointCanvas = { x: canvas.width / 2, y: canvas.height / 2 }; // Fallback
@@ -7616,21 +7673,42 @@ document.addEventListener('DOMContentLoaded', () => {
           // Convert to pixels if normalized
           const raw = customLabelPositions[currentImageLabel][strokeLabel];
           imageSpaceOffset = normalizeToPixels(raw, currentImageLabel) || raw; // px
+          
+          // Check for massive offsets in custom positions too (legacy projects)
+          if (imageSpaceOffset) {
+            const offsetKey = `${currentImageLabel}_${strokeLabel}`;
+            const offsetMagnitude = Math.sqrt((imageSpaceOffset.x||0) * (imageSpaceOffset.x||0) + (imageSpaceOffset.y||0) * (imageSpaceOffset.y||0));
+            const dims = window.originalImageDimensions && window.originalImageDimensions[currentImageLabel];
+            const maxReasonableOffset = dims ? Math.max(dims.width, dims.height) * 1.5 : 500;
+            
+            if (offsetMagnitude > maxReasonableOffset && !window.clearedMassiveOffsets[offsetKey]) {
+              console.log(`[Label] Clearing massive custom offset for ${currentImageLabel} ${strokeLabel}: (${fmt(imageSpaceOffset.x)}, ${fmt(imageSpaceOffset.y)}) magnitude: ${fmt(offsetMagnitude)} (max: ${fmt(maxReasonableOffset)})`);
+              delete customLabelPositions[currentImageLabel][strokeLabel];
+              delete window.customLabelPositions[currentImageLabel]?.[strokeLabel];
+              window.clearedMassiveOffsets[offsetKey] = true;
+              imageSpaceOffset = null; // Force recalculation
+            }
+          }
         } else if (!imageSpaceOffset && calculatedLabelOffsets[currentImageLabel]?.[strokeLabel]) {
           const raw = calculatedLabelOffsets[currentImageLabel][strokeLabel];
           imageSpaceOffset = normalizeToPixels(raw, currentImageLabel) || raw; // px
                         
-          // For blank canvas, check if this is a massive offset from the old buggy calculation
-          if (currentImageLabel === 'blank_canvas') {
-            const offsetKey = `${currentImageLabel}_${strokeLabel}`;
-            const offsetMagnitude = Math.sqrt((imageSpaceOffset.x||0) * (imageSpaceOffset.x||0) + (imageSpaceOffset.y||0) * (imageSpaceOffset.y||0));
-                            
-            if (offsetMagnitude > 300 && !window.clearedMassiveOffsets[offsetKey]) { 
-              console.log(`[Label] Clearing massive offset for blank canvas ${strokeLabel}: (${fmt(imageSpaceOffset.x)}, ${fmt(imageSpaceOffset.y)}) magnitude: ${fmt(offsetMagnitude)}`);
-              delete calculatedLabelOffsets[currentImageLabel][strokeLabel];
-              window.clearedMassiveOffsets[offsetKey] = true; // Mark as cleared to prevent repeated clearing
-              imageSpaceOffset = null; // Force recalculation
-            } else if (offsetMagnitude <= 300) {
+          // Check for massive offsets that are likely from legacy buggy calculations
+          // This applies to both blank canvas and images (especially rotated legacy projects)
+          const offsetKey = `${currentImageLabel}_${strokeLabel}`;
+          const offsetMagnitude = Math.sqrt((imageSpaceOffset.x||0) * (imageSpaceOffset.x||0) + (imageSpaceOffset.y||0) * (imageSpaceOffset.y||0));
+          const dims = window.originalImageDimensions && window.originalImageDimensions[currentImageLabel];
+          const maxReasonableOffset = dims ? Math.max(dims.width, dims.height) * 1.5 : 500; // Allow up to 1.5x image dimension
+          
+          if (offsetMagnitude > maxReasonableOffset && !window.clearedMassiveOffsets[offsetKey]) {
+            console.log(`[Label] Clearing massive offset for ${currentImageLabel} ${strokeLabel}: (${fmt(imageSpaceOffset.x)}, ${fmt(imageSpaceOffset.y)}) magnitude: ${fmt(offsetMagnitude)} (max: ${fmt(maxReasonableOffset)})`);
+            delete calculatedLabelOffsets[currentImageLabel][strokeLabel];
+            delete customLabelPositions[currentImageLabel]?.[strokeLabel];
+            delete window.customLabelPositions[currentImageLabel]?.[strokeLabel];
+            window.clearedMassiveOffsets[offsetKey] = true; // Mark as cleared to prevent repeated clearing
+            imageSpaceOffset = null; // Force recalculation
+          } else if (offsetMagnitude <= maxReasonableOffset) {
+            if (currentImageLabel === 'blank_canvas') {
               console.log(`[Label] Preserving reasonable offset for blank canvas ${strokeLabel}: (${fmt(imageSpaceOffset.x)}, ${fmt(imageSpaceOffset.y)}) magnitude: ${fmt(offsetMagnitude)}`);
             }
           }
@@ -7773,8 +7851,10 @@ document.addEventListener('DOMContentLoaded', () => {
           finalLabelImageY = anchorPointImage.y + imageSpaceOffset.y;
         }
 
-        // Use imageToCanvasCoords for proper coordinate transformation (includes rotation)
-        finalPositionCanvas = imageToCanvasCoords(finalLabelImageX, finalLabelImageY);
+        // Use imageToCanvasCoords for coordinate transformation (rotation = 0, so no rotation applied)
+        const transformParams = getTransformationParams(currentImageLabel);
+        
+        finalPositionCanvas = imageToCanvasCoords(finalLabelImageX, finalLabelImageY, transformParams);
         // ABS_LOCK_ONCE: if an absolute lock exists for this stroke, override for this frame
         try {
           const lock = window.__labelAbsLockOnce && window.__labelAbsLockOnce[currentImageLabel] && window.__labelAbsLockOnce[currentImageLabel][strokeLabel];
@@ -7789,7 +7869,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (labelReprojectDebug()) console.log(`[LABEL-REPROJECT] ABS_LOCK_${getImageSession(currentImageLabel).phase==='Stable'?'CLEARED':'UNTIL_STABLE'} for ${strokeLabel}`);
           }
         } catch(_) {}
-        console.log(`[Label] Final position for ${strokeLabel}: Image(${fmt(finalLabelImageX)}, ${fmt(finalLabelImageY)}) -> Canvas(${fmt(finalPositionCanvas.x)}, ${fmt(finalPositionCanvas.y)}) | Anchor: Image(${fmt(anchorPointImage.x)}, ${fmt(anchorPointImage.y)}) + Offset: (${fmt(imageSpaceOffset.x)}, ${fmt(imageSpaceOffset.y)})`);
+        console.log(`[Label] Final position for ${strokeLabel}: Canvas(${fmt(finalPositionCanvas.x)}, ${fmt(finalPositionCanvas.y)}) | Anchor: Image(${fmt(anchorPointImage.x)}, ${fmt(anchorPointImage.y)}) + Offset: (${fmt(imageSpaceOffset.x)}, ${fmt(imageSpaceOffset.y)}) [Rotation: ${(transformParams.rotation * 180 / Math.PI).toFixed(1)}° - Position rotates, text stays upright]`);
         // console.log(`    Final Canvas Position for ${strokeLabel}:`, finalPositionCanvas, `(from ImagePos: ${finalLabelImageX.toFixed(1)},${finalLabelImageY.toFixed(1)})`);
 
         currentLabelPositions.push({ 
@@ -7799,10 +7879,6 @@ document.addEventListener('DOMContentLoaded', () => {
           y: finalPositionCanvas.y, 
           strokeLabel: strokeLabel 
         });
-        
-        if (window.DEBUG_ROTATION) {
-          console.log(`📍 Added ${strokeLabel} at canvas(${finalPositionCanvas.x.toFixed(1)}, ${finalPositionCanvas.y.toFixed(1)})`);
-        }
 
         // Draw the connector line FIRST, so it's behind the label
         if (typeof drawLabelConnector === 'function') {
@@ -7831,12 +7907,22 @@ document.addEventListener('DOMContentLoaded', () => {
         if (shape === 'circle') {
           // Circle or rounded pill depending on length
           const radius = Math.max(10, (labelHeight / 2));
-          ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+          ctx.fillStyle = 'white';
           const tm = ctx.measureText(labelText);
           const textFitsInCircle = tm.width <= radius * 1.6; // heuristic: two chars fit in circle
+
+          // Counter-rotate the entire label (shape + text) so the tag never flips
+          // BUT: Skip counter-rotation for blank canvas (no image) - labels should stay fixed
+          const currentRotation = window.imageRotationByLabel ? (window.imageRotationByLabel[currentImageLabel] || 0) : 0;
+          const shouldCounterRotate = transformParams.hasImage && currentRotation !== 0;
+          ctx.save();
+          ctx.translate(finalPositionCanvas.x, finalPositionCanvas.y);
+          if (shouldCounterRotate) ctx.rotate(-currentRotation);
+          window.__skipTextCounterRotate = true;
+
           if (textFitsInCircle) {
             ctx.beginPath();
-            ctx.arc(finalPositionCanvas.x, finalPositionCanvas.y, radius, 0, Math.PI * 2);
+            ctx.arc(0, 0, radius, 0, Math.PI * 2);
             ctx.fill();
             ctx.strokeStyle = labelOutlineColor;
             ctx.lineWidth = 1;
@@ -7845,8 +7931,8 @@ document.addEventListener('DOMContentLoaded', () => {
             // Draw pill (oblong) to contain text
             const pillW = Math.max(tm.width + 14, radius * 2);
             const pillH = radius * 2;
-            const x = finalPositionCanvas.x - pillW / 2;
-            const y = finalPositionCanvas.y - pillH / 2;
+            const x = -pillW / 2;
+            const y = -pillH / 2;
             const r = pillH / 2;
             ctx.beginPath();
             ctx.moveTo(x + r, y);
@@ -7864,18 +7950,31 @@ document.addEventListener('DOMContentLoaded', () => {
           ctx.fillStyle = labelTextColor;
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          ctx.fillText(labelText, finalPositionCanvas.x, finalPositionCanvas.y);
+          ctx.fillText(labelText, 0, 0);
+          window.__skipTextCounterRotate = false;
+          ctx.restore();
         } else {
-          ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-          ctx.fillRect(rectX, rectY, labelWidth, labelHeight);
+          // Counter-rotate the entire square label so the box stays horizontal
+          // BUT: Skip counter-rotation for blank canvas (no image) - labels should stay fixed
+          const currentRotation = window.imageRotationByLabel ? (window.imageRotationByLabel[currentImageLabel] || 0) : 0;
+          const shouldCounterRotate = transformParams.hasImage && currentRotation !== 0;
+          ctx.save();
+          ctx.translate(finalPositionCanvas.x, finalPositionCanvas.y);
+          if (shouldCounterRotate) ctx.rotate(-currentRotation);
+          window.__skipTextCounterRotate = true;
+
+          ctx.fillStyle = 'white';
+          ctx.fillRect(-labelWidth / 2, -labelHeight / 2, labelWidth, labelHeight);
           ctx.strokeStyle = labelOutlineColor;
           ctx.lineWidth = 1;
-          ctx.strokeRect(rectX, rectY, labelWidth, labelHeight);
+          ctx.strokeRect(-labelWidth / 2, -labelHeight / 2, labelWidth, labelHeight);
           // Center tag text inside the square
           ctx.fillStyle = labelTextColor;
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          ctx.fillText(labelText, finalPositionCanvas.x, finalPositionCanvas.y);
+          ctx.fillText(labelText, 0, 0);
+          window.__skipTextCounterRotate = false;
+          ctx.restore();
         }
 
         // Measurement text is already included in labelText for square mode.
@@ -7886,11 +7985,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     // console.log(`--- Redraw: Finished Drawing Labels ---`);
     // --- End of Label Drawing Logic ---
-    
-    if (window.DEBUG_ROTATION) {
-      console.log(`✅ Redraw complete - ${currentLabelPositions.length} labels positioned`);
-      console.groupEnd();
-    }
             
     // Save the now-combined state
     const newState = getCanvasState();
@@ -9251,6 +9345,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Always use legacy system for coordinate transforms
     const canvasCoords = { x: event.offsetX, y: event.offsetY };
     const imageCoords = getTransformedCoords(canvasCoords.x, canvasCoords.y);
+    
         
     return {
       client: canvasCoords,
@@ -9406,6 +9501,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const position = imagePositionByLabel[label] || { x: 0, y: 0 };
     const dimensions = window.originalImageDimensions?.[label];
     const hasImage = !!(window.originalImages && window.originalImages[label]);
+    // RESTORED: Include rotation so vectors and labels move with image content
     const rotation = window.imageRotationByLabel ? (window.imageRotationByLabel[label] || 0) : 0;
         
     return {
@@ -9417,9 +9513,191 @@ document.addEventListener('DOMContentLoaded', () => {
       rotation
     };
   }
+
+  // Make getTransformationParams available globally
+  window.getTransformationParams = getTransformationParams;
+  
+  // Debug function to test text rotation
+  window.debugTextRotation = function() {
+    const currentLabel = window.paintApp.state.currentImageLabel || window.currentImageLabel || 'front';
+    const currentRotation = window.imageRotationByLabel ? (window.imageRotationByLabel[currentLabel] || 0) : 0;
+    const rotationDegrees = (currentRotation * 180 / Math.PI).toFixed(1);
+    
+    console.log('=== TEXT ROTATION DEBUG ===');
+    console.log('Current image label:', currentLabel);
+    console.log('Current rotation (radians):', currentRotation);
+    console.log('Current rotation (degrees):', rotationDegrees);
+    console.log('imageRotationByLabel object:', window.imageRotationByLabel);
+    
+    // Test rotation by applying 90 degrees for clearer visual difference
+    const testRotation = 90 * Math.PI / 180;
+    if (!window.imageRotationByLabel) window.imageRotationByLabel = {};
+    window.imageRotationByLabel[currentLabel] = testRotation;
+    
+    console.log('Applied 90° test rotation');
+    console.log('New rotation value:', window.imageRotationByLabel[currentLabel]);
+    
+    // Trigger redraw
+    if (typeof redrawCanvasWithVisibility === 'function') {
+      redrawCanvasWithVisibility();
+    }
+    
+    return {
+      label: currentLabel,
+      oldRotation: currentRotation,
+      newRotation: testRotation,
+      rotationDegrees: 90
+    };
+  };
+  
+  // Function to convert existing text elements to use image coordinates
+  window.convertTextToImageCoords = function(targetLabel = null) {
+    const currentLabel = targetLabel || window.paintApp.state.currentImageLabel || window.currentImageLabel || 'front';
+    const textElements = window.paintApp.state.textElementsByImage?.[currentLabel];
+    
+    if (!textElements || textElements.length === 0) {
+      console.log('No text elements found for', currentLabel);
+      return;
+    }
+    
+    const transformParams = window.getTransformationParams ? window.getTransformationParams(currentLabel) : null;
+    if (!transformParams || !transformParams.hasImage) {
+      console.log('No image found for', currentLabel, transformParams);
+      return;
+    }
+    
+    let converted = 0;
+    textElements.forEach(element => {
+      if (element.useCanvasCoords) {
+        console.log('[CONVERT] Converting element', element.id, 'from canvas to image coords');
+        console.log('[CONVERT] Original coords:', element.x, element.y);
+        
+        // Convert canvas coordinates to image coordinates
+        const imageCoords = window.canvasToImageCoords ? 
+          window.canvasToImageCoords(element.x, element.y, transformParams) : 
+          {x: element.x, y: element.y};
+        
+        element.x = imageCoords.x;
+        element.y = imageCoords.y;
+        element.useCanvasCoords = false;
+        converted++;
+        
+        console.log('[CONVERT] New image coords:', element.x, element.y);
+      }
+    });
+    
+    console.log(`[CONVERT] Converted ${converted} text elements to image coordinates`);
+    
+    // Trigger redraw
+    if (typeof redrawCanvasWithVisibility === 'function') {
+      redrawCanvasWithVisibility();
+    }
+    
+    return {
+      label: currentLabel,
+      converted: converted,
+      total: textElements.length
+    };
+  };
+  
+  // Function to convert ALL text elements across all images
+  window.convertAllTextToImageCoords = function() {
+    if (!window.paintApp.state.textElementsByImage) {
+      console.log('No text elements found');
+      return { totalConverted: 0, totalImages: 0 };
+    }
+    
+    let totalConverted = 0;
+    let totalImages = 0;
+    
+    Object.keys(window.paintApp.state.textElementsByImage).forEach(imageLabel => {
+      console.log(`[CONVERT ALL] Processing image: ${imageLabel}`);
+      const result = window.convertTextToImageCoords(imageLabel);
+      if (result) {
+        totalConverted += result.converted;
+        totalImages++;
+      }
+    });
+    
+    console.log(`[CONVERT ALL] Total: ${totalConverted} text elements converted across ${totalImages} images`);
+    return { totalConverted, totalImages };
+  };
+  
+  // Auto-fix text elements on initialization
+  window.autoFixTextRotation = function() {
+    console.log('[AUTO-FIX] Checking for text elements that need rotation fix...');
+    
+    // Wait for paint app to be ready
+    if (!window.paintApp || !window.paintApp.state) {
+      console.log('[AUTO-FIX] Paint app not ready, will retry in 1 second');
+      setTimeout(window.autoFixTextRotation, 1000);
+      return;
+    }
+    
+    // Convert all text elements to use image coordinates
+    const result = window.convertAllTextToImageCoords();
+    
+    if (result.totalConverted > 0) {
+      console.log(`[AUTO-FIX] ✅ Fixed ${result.totalConverted} text elements for rotation`);
+    } else {
+      console.log('[AUTO-FIX] ✅ All text elements already using correct coordinates');
+    }
+  };
+  
+  // Function to force fix a specific text element that keeps reverting
+  window.forceFixTextElement = function(elementId) {
+    const currentLabel = window.paintApp.state.currentImageLabel || window.currentImageLabel || 'front';
+    const textElements = window.paintApp.state.textElementsByImage?.[currentLabel];
+    
+    if (!textElements) {
+      console.log('No text elements found for', currentLabel);
+      return;
+    }
+    
+    const element = textElements.find(el => el.id === elementId);
+    if (!element) {
+      console.log('Element not found:', elementId);
+      return;
+    }
+    
+    console.log('[FORCE FIX] Element before:', {
+      id: element.id,
+      useCanvasCoords: element.useCanvasCoords,
+      coords: {x: element.x, y: element.y}
+    });
+    
+    if (element.useCanvasCoords) {
+      const transformParams = window.getTransformationParams ? window.getTransformationParams(currentLabel) : null;
+      if (transformParams && transformParams.hasImage) {
+        const imageCoords = window.canvasToImageCoords ? 
+          window.canvasToImageCoords(element.x, element.y, transformParams) : 
+          {x: element.x, y: element.y};
+        
+        element.x = imageCoords.x;
+        element.y = imageCoords.y;
+        element.useCanvasCoords = false;
+        
+        console.log('[FORCE FIX] Element after:', {
+          id: element.id,
+          useCanvasCoords: element.useCanvasCoords,
+          coords: {x: element.x, y: element.y}
+        });
+        
+        // Trigger redraw
+        if (typeof redrawCanvasWithVisibility === 'function') {
+          redrawCanvasWithVisibility();
+        }
+        
+        return { fixed: true, element: element };
+      }
+    }
+    
+    console.log('[FORCE FIX] Element already using image coords or no image found');
+    return { fixed: false, element: element };
+  };
     
   /**
-     * Convert image-space coordinates to canvas coordinates
+     * Convert image-space coordinates to canvas coordinates using center-based transformation
      * @param {number} imageX - X coordinate in image space
      * @param {number} imageY - Y coordinate in image space  
      * @param {Object} params - Transformation parameters (optional, will get current if not provided)
@@ -9428,7 +9706,15 @@ document.addEventListener('DOMContentLoaded', () => {
   function imageToCanvasCoords(imageX, imageY, params = null) {
     if (!params) params = getTransformationParams();
         
-    const { scale, position, dimensions, hasImage, rotation } = params;
+    const { scale, position, dimensions, hasImage } = params;
+    // If we're drawing while the canvas context is already rotated, skip applying rotation in math
+    // to avoid double rotation of vectors/anchors
+    const rotation = (window.__renderContextRotatedForStrokes || params.__renderContextRotated) ? 0 : (params.rotation || 0);
+    
+    // Debug rotation suppression for text coordinates (only in development)
+    if (false && (window.__renderContextRotatedForStrokes || params.__renderContextRotated) && params.rotation !== 0) {
+      console.log('[ROTATION DEBUG] Rotation suppressed - renderContextRotated flag is true, rotation would be:', (params.rotation * 180 / Math.PI).toFixed(1) + '°');
+    }
         
     // For blank canvas (no image), use center-based scaling
     if (!hasImage || !dimensions) {
@@ -9454,32 +9740,39 @@ document.addEventListener('DOMContentLoaded', () => {
       };
     }
         
-    // For images, calculate image position on canvas first
-    const centerX = (canvas.width - dimensions.width * scale) / 2;
-    const centerY = (canvas.height - dimensions.height * scale) / 2;
-    const imageOriginX = centerX + position.x;
-    const imageOriginY = centerY + position.y;
-        
-    // Apply scaling first
-    let transformedX = imageX * scale;
-    let transformedY = imageY * scale;
-        
-    // Apply rotation around image center if needed
+    // CENTER-BASED TRANSFORMATION for images (fixes rotation drift)
+    // 1. Image center in original image space
+    const imageCenterX = dimensions.width / 2;
+    const imageCenterY = dimensions.height / 2;
+    
+    // 2. Recenter point relative to image center and apply uniform scale
+    const dx = (imageX - imageCenterX) * scale;
+    const dy = (imageY - imageCenterY) * scale;
+    
+    // 3. Apply rotation around origin (scaled image center)
+    let rotatedX = dx;
+    let rotatedY = dy;
     if (rotation !== 0) {
-      const imageCenterX = dimensions.width * scale / 2;
-      const imageCenterY = dimensions.height * scale / 2;
       const cos = Math.cos(rotation);
       const sin = Math.sin(rotation);
-      const dx = transformedX - imageCenterX;
-      const dy = transformedY - imageCenterY;
-      transformedX = imageCenterX + (dx * cos - dy * sin);
-      transformedY = imageCenterY + (dx * sin + dy * cos);
+      rotatedX = dx * cos - dy * sin;
+      rotatedY = dx * sin + dy * cos;
+      
     }
-        
-    // Transform image-relative coordinates to canvas coordinates
+    
+    // 4. Translate to canvas center and add pan offset
+    const canvasCenterX = canvas.width / 2;
+    const canvasCenterY = canvas.height / 2;
+    const panX = position.x || 0;
+    const panY = position.y || 0;
+    
+    const finalX = canvasCenterX + panX + rotatedX;
+    const finalY = canvasCenterY + panY + rotatedY;
+    
+    
     return {
-      x: imageOriginX + transformedX,
-      y: imageOriginY + transformedY
+      x: finalX,
+      y: finalY
     };
   }
     
@@ -9520,34 +9813,38 @@ document.addEventListener('DOMContentLoaded', () => {
       };
     }
         
-    // For images, calculate image position on canvas first
-    const centerX = (canvas.width - dimensions.width * scale) / 2;
-    const centerY = (canvas.height - dimensions.height * scale) / 2;
-    const imageOriginX = centerX + position.x;
-    const imageOriginY = centerY + position.y;
-        
-    // Remove image origin offset
-    let transformedX = canvasX - imageOriginX;
-    let transformedY = canvasY - imageOriginY;
-        
-    // Apply inverse rotation around image center if needed
+    // CENTER-BASED INVERSE TRANSFORMATION for images
+    // 1. Remove canvas center and pan offset
+    const canvasCenterX = canvas.width / 2;
+    const canvasCenterY = canvas.height / 2;
+    const panX = position.x || 0;
+    const panY = position.y || 0;
+    
+    const relativeX = canvasX - canvasCenterX - panX;
+    const relativeY = canvasY - canvasCenterY - panY;
+    
+    // 2. Apply inverse rotation
+    let unrotatedX = relativeX;
+    let unrotatedY = relativeY;
     if (rotation !== 0) {
-      const imageCenterX = dimensions.width * scale / 2;
-      const imageCenterY = dimensions.height * scale / 2;
-      const cos = Math.cos(-rotation); // Negative for inverse rotation
+      const cos = Math.cos(-rotation); // Negative for inverse
       const sin = Math.sin(-rotation);
-      const dx = transformedX - imageCenterX;
-      const dy = transformedY - imageCenterY;
-      transformedX = imageCenterX + (dx * cos - dy * sin);
-      transformedY = imageCenterY + (dx * sin + dy * cos);
+      unrotatedX = relativeX * cos - relativeY * sin;
+      unrotatedY = relativeX * sin + relativeY * cos;
     }
+    
+    // 3. Inverse scale and add back image center
+    const imageCenterX = dimensions.width / 2;
+    const imageCenterY = dimensions.height / 2;
+    
+    const imageX = unrotatedX / scale + imageCenterX;
+    const imageY = unrotatedY / scale + imageCenterY;
         
-    // Transform canvas coordinates to image-relative coordinates
-    return {
-      x: transformedX / scale,
-      y: transformedY / scale
-    };
+    return { x: imageX, y: imageY };
   }
+
+  // Make canvasToImageCoords available globally
+  window.canvasToImageCoords = canvasToImageCoords;
     
   /**
      * Legacy wrapper for backward compatibility
@@ -9787,6 +10084,9 @@ document.addEventListener('DOMContentLoaded', () => {
     return null;
   }
 
+  // Expose normalizeToPixels on window for use in project-manager.js
+  window.normalizeToPixels = normalizeToPixels;
+
   function normalizeMaybeStore(off, imageLabel) {
     if (!off) return off;
     const dims = window.originalImageDimensions && window.originalImageDimensions[imageLabel];
@@ -10005,8 +10305,12 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
         
-    // Check if we're hovering over a label
-    const labelAtPosition = findLabelAtPoint(x, y);
+    // Check if we're hovering over a label - transform coordinates to match label positioning
+    const currentImageLabel = window.currentImageLabel || window.paintApp?.state?.currentImageLabel || 'front';
+    const transformParams = getTransformationParams(currentImageLabel);
+    const imageCoords = canvasToImageCoords(x, y, transformParams);
+    const canvasFromImage = imageToCanvasCoords(imageCoords.x, imageCoords.y, transformParams);
+    const labelAtPosition = findLabelAtPoint(canvasFromImage.x, canvasFromImage.y);
     if (labelAtPosition) {
       canvas.style.cursor = 'pointer';
       return;
@@ -12137,35 +12441,23 @@ document.addEventListener('DOMContentLoaded', () => {
   let lastMouseY = 0;
   let hoveredCanvasLabelInfo = null; // NEW: To store info about the label currently hovered on canvas
     
-
   // Helper function to find if a point is inside a label
   function findLabelAtPoint(x, y) {
-    // ALWAYS show hit test info for debugging rotation issue
-    console.group(`🎯 Hit Test at (${x.toFixed(1)}, ${y.toFixed(1)})`);
-    console.log(`📍 Testing ${currentLabelPositions.length} labels`);
-    const rotation = window.imageRotationByLabel && window.imageRotationByLabel[window.currentImageLabel] 
-      ? (window.imageRotationByLabel[window.currentImageLabel] * 180 / Math.PI).toFixed(1) 
-      : '0';
-    console.log(`🔄 Current rotation: ${rotation}°`);
-    
     for (const label of currentLabelPositions) {
-      // Center-anchored labels: convert to top-left for hit test
+      // Simple rectangular hit test using the final canvas positions
+      // The currentLabelPositions already contains the final rotated canvas coordinates
       const left = label.x - label.width / 2;
       const top = label.y - label.height / 2;
-      const right = left + label.width;
-      const bottom = top + label.height;
+      const right = label.x + label.width / 2;
+      const bottom = label.y + label.height / 2;
       
-      console.log(`📋 ${label.strokeLabel}: center(${label.x.toFixed(1)}, ${label.y.toFixed(1)}) bounds(${left.toFixed(1)}, ${top.toFixed(1)}, ${right.toFixed(1)}, ${bottom.toFixed(1)})`);
+      const isHit = x >= left && x <= right && y >= top && y <= bottom;
       
-      if (x >= left && x <= right && y >= top && y <= bottom) {
-        console.log(`✅ HIT! Found label ${label.strokeLabel}`);
-        console.groupEnd();
+      if (isHit) {
         return label;
       }
     }
     
-    console.log(`❌ No label found`);
-    console.groupEnd();
     return null;
   }
     
@@ -12250,7 +12542,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // Check if clicking on a canvas label (stroke tag drawn on canvas)
     // Use new coordinate system if available
     const coords = window.getPointerCoords(e);
-    const clickedCanvasLabel = findLabelAtPoint(coords.canvas.x, coords.canvas.y);
+    // Transform coordinates to match how labels are positioned
+    const currentImageLabel = window.currentImageLabel || window.paintApp?.state?.currentImageLabel || 'front';
+    const transformParams = getTransformationParams(currentImageLabel);
+    const canvasFromImage = imageToCanvasCoords(coords.image.x, coords.image.y, transformParams);
+    
+    const clickedCanvasLabel = findLabelAtPoint(canvasFromImage.x, canvasFromImage.y);
     const isClickOnCanvasLabel = clickedCanvasLabel !== null;
         
     // Check if clicking on a text element
@@ -12259,12 +12556,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const isClickOnTextElement = clickedTextElement !== null;
     console.log('[TEXT CHECK] Result:', isClickOnTextElement, clickedTextElement);
         
-    console.log('🔄 [DEBUG] Canvas mousedown - curveJustCompleted:', curveJustCompleted, 'target:', e.target, 'tagName:', e.target.tagName, 'className:', e.target.className, 'isClickOnStrokeTag:', isClickOnStrokeTag);
-    console.log('🔄 [DEBUG] Event coordinates:', e.clientX, e.clientY, 'offset:', e.offsetX, e.offsetY);
-    console.log('🔄 [DEBUG] Canvas label click - clickedCanvasLabel:', clickedCanvasLabel, 'isClickOnCanvasLabel:', isClickOnCanvasLabel);
-    console.log('🔄 [DEBUG] About to check conditions - curveJustCompleted:', curveJustCompleted);
     if (curveJustCompleted && !isClickOnStrokeTag && !isClickOnCanvasLabel) {
-      console.log('🔄 [DEBUG] Taking curveJustCompleted defocus path');
       handleDefocusClick(); // This will set curveJustCompleted to false and deselect.
             
       // ROBUST_FIX: Set multiple flags to definitively prevent any drawing logic from executing
@@ -12278,18 +12570,15 @@ document.addEventListener('DOMContentLoaded', () => {
       //             console.log('Canvas Mousedown: CURVE_DEFOCUS_FIX - Definitively stopped all drawing flags and event propagation');
       return;               // Stop further execution of this mousedown handler.
     } else if (curveJustCompleted && (isClickOnStrokeTag || isClickOnCanvasLabel)) {
-      console.log('🔄 [DEBUG] Taking curveJustCompleted clear flag path');
       // If it's a stroke tag click (sidebar or canvas label), just clear the flag without defocusing
       curveJustCompleted = false;
     } else {
-      console.log('🔄 [DEBUG] Taking normal processing path');
     }
 
     // Check for double-click on stroke on canvas (for entering edit mode)
     // BUT FIRST: If we're in curved drawing mode with control points, prioritize curve finalization
     const now = Date.now();
     const timeSinceLastClick = now - window.lastCanvasClickTime;
-    console.log(`🔄 [DEBUG] Canvas click timing - now: ${now}, lastCanvasClickTime: ${window.lastCanvasClickTime}, timeSinceLastClick: ${timeSinceLastClick}, clickDelay: ${window.clickDelay}`);
     if (timeSinceLastClick < window.clickDelay) {
       // Priority 1: If in curved mode with control points, finalize the curve (don't enter edit mode)
       if (drawingMode === 'curved' && curvedLinePoints.length >= 2) {
@@ -12604,10 +12893,11 @@ document.addEventListener('DOMContentLoaded', () => {
       }
             
       // Priority 2b: Normal edit mode logic for strokes (only if not finalizing a curve)
-      const clickedLabelForDoubleClick = findLabelAtPoint(coords.canvas.x, coords.canvas.y);
-      console.log('🔄 [DEBUG] Double-click check - clickedLabelForDoubleClick:', clickedLabelForDoubleClick, `lastClickedCanvasLabel: ${window.lastClickedCanvasLabel}`);
+      const currentImageLabel = window.currentImageLabel || window.paintApp?.state?.currentImageLabel || 'front';
+      const transformParams = getTransformationParams(currentImageLabel);
+      const canvasFromImage = imageToCanvasCoords(coords.image.x, coords.image.y, transformParams);
+      const clickedLabelForDoubleClick = findLabelAtPoint(canvasFromImage.x, canvasFromImage.y);
       if (clickedLabelForDoubleClick && window.lastClickedCanvasLabel === clickedLabelForDoubleClick.strokeLabel) {
-        console.log(`🔄 [DEBUG] Double-click detected on label ${clickedLabelForDoubleClick.strokeLabel} - entering edit mode`);
         window.selectedStrokeInEditMode = clickedLabelForDoubleClick.strokeLabel;
                 
         // Ensure it's also selected in the normal selection models
@@ -12698,8 +12988,8 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // Second, check if we're clicking on a label
-    const hoveredLabel = findLabelAtPoint(e.offsetX, e.offsetY);
+    // Second, check if we're clicking on a label - use same coordinate transformation as main click detection
+    const hoveredLabel = findLabelAtPoint(canvasFromImage.x, canvasFromImage.y);
     window.lastClickedCanvasLabel = hoveredLabel ? hoveredLabel.strokeLabel : null;
 
     if (hoveredLabel) {
@@ -13218,11 +13508,14 @@ document.addEventListener('DOMContentLoaded', () => {
       const currentX = e.offsetX;
       const currentY = e.offsetY;
 
-      // Convert consecutive mouse positions to image space and compute image delta
-      const prevImg = getTransformedCoords(dragStartX, dragStartY);
-      const currImg = getTransformedCoords(currentX, currentY);
-      const deltaImageX = currImg.x - prevImg.x;
-      const deltaImageY = currImg.y - prevImg.y;
+      // Convert both start and current positions from canvas space to image space
+      // This ensures correct coordinate transformation accounting for rotation, scale, and translation
+      const startImageCoords = getTransformedCoords(dragStartX, dragStartY);
+      const currentImageCoords = getTransformedCoords(currentX, currentY);
+      
+      // Compute delta in image space (this is what we'll add to the offset)
+      const deltaImageX = currentImageCoords.x - startImageCoords.x;
+      const deltaImageY = currentImageCoords.y - startImageCoords.y;
             
       // console.log(`[DRAG] Label drag - img delta: (${deltaImageX.toFixed(2)}, ${deltaImageY.toFixed(2)}) for stroke: ${draggedLabelStroke}`);
             
@@ -13231,22 +13524,22 @@ document.addEventListener('DOMContentLoaded', () => {
       dragStartY = currentY;
             
       // Ensure customLabelPositions structure exists
-      if (!customLabelPositions[currentImageLabel]) customLabelPositions[currentImageLabel] = {};
+      if (!window.customLabelPositions[window.currentImageLabel]) window.customLabelPositions[window.currentImageLabel] = {};
             
       // Get the anchor point for the dragged label's stroke (current canvas coords)
       const strokeName = draggedLabelStroke; // Use the stroke label string directly
-      const vectorData = vectorStrokesByImage[currentImageLabel]?.[strokeName];
+      const vectorData = window.vectorStrokesByImage[window.currentImageLabel]?.[strokeName];
 
       if (vectorData && vectorData.points.length > 0) {
         // Use robust anchor computation for dragging as well, so custom offsets stay relative to true center
-        const midPointRelative = getStrokeAnchorPoint(strokeName, currentImageLabel);
+        const midPointRelative = getStrokeAnchorPoint(strokeName, window.currentImageLabel);
         const anchorPoint = getCanvasCoords(midPointRelative.x, midPointRelative.y);
                 
         console.log('[DRAG] Stroke points:', vectorData.points.length, 'midPoint:', midPointRelative, 'anchor:', anchorPoint);
 
         // Get the current offset (custom or calculated) or calculate if first time dragging
-        let currentOffsetRaw = customLabelPositions[currentImageLabel][strokeName] || 
-                                    calculatedLabelOffsets[currentImageLabel]?.[strokeName];
+        let currentOffsetRaw = window.customLabelPositions[window.currentImageLabel][strokeName] || 
+                                    window.calculatedLabelOffsets[window.currentImageLabel]?.[strokeName];
 
         // Convert to pixels if normalized
         let currentOffset;
@@ -13266,8 +13559,16 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         } else {
           // Convert normalized offset to pixels, or clone if already in pixel format
-          const pixelOffset = normalizeToPixels(currentOffsetRaw, currentImageLabel);
-          currentOffset = pixelOffset ? { x: pixelOffset.x, y: pixelOffset.y } : { x: 0, y: 0 };
+          const pixelOffset = normalizeToPixels(currentOffsetRaw, window.currentImageLabel);
+          if (pixelOffset && (pixelOffset.x !== 0 || pixelOffset.y !== 0)) {
+            currentOffset = { x: pixelOffset.x, y: pixelOffset.y };
+          } else if (currentOffsetRaw && typeof currentOffsetRaw.x === 'number' && typeof currentOffsetRaw.y === 'number') {
+            // Use raw pixel offset if normalization failed but we have pixel values
+            currentOffset = { x: currentOffsetRaw.x, y: currentOffsetRaw.y };
+          } else {
+            // Fallback to zero offset
+            currentOffset = { x: 0, y: 0 };
+          }
           console.log(`[DRAG] Converted offset for ${strokeName}:`, currentOffsetRaw, '->', currentOffset);
         }
 
@@ -13277,18 +13578,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 
         console.log(`[DRAG] New image-space offset for ${strokeName}: (${currentOffset.x.toFixed(1)}, ${currentOffset.y.toFixed(1)})`);
                 
-        // Normalize the offset before storing
-        const normalizedOffset = normalizeMaybeStore(currentOffset, currentImageLabel);
+        // During drag operations, store the pixel offset directly to avoid normalization issues
+        // We'll store the raw pixel offset which should work consistently
+        const offsetToStore = { x: currentOffset.x, y: currentOffset.y };
                 
-        // Store the normalized offset
-        customLabelPositions[currentImageLabel][strokeName] = normalizedOffset;
-        // Keep window storage in sync for transforms (rotation/flip)
-        if (!window.customLabelPositions) window.customLabelPositions = {};
-        if (!window.customLabelPositions[currentImageLabel]) window.customLabelPositions[currentImageLabel] = {};
-        window.customLabelPositions[currentImageLabel][strokeName] = normalizedOffset;
+        // Store the pixel offset directly (don't normalize during drag)
+        window.customLabelPositions[window.currentImageLabel][strokeName] = offsetToStore;
         // Additionally store absolute tag center in image space to avoid re-centering to stroke midpoint
-        if (!window.customLabelAbsolutePositions[currentImageLabel]) window.customLabelAbsolutePositions[currentImageLabel] = {};
-        window.customLabelAbsolutePositions[currentImageLabel][strokeName] = {
+        if (!window.customLabelAbsolutePositions[window.currentImageLabel]) window.customLabelAbsolutePositions[window.currentImageLabel] = {};
+        window.customLabelAbsolutePositions[window.currentImageLabel][strokeName] = {
           x: midPointRelative.x + currentOffset.x,
           y: midPointRelative.y + currentOffset.y
         };
@@ -14842,6 +15140,16 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
         
+    // Guard against duplicate invocations in quick succession (e.g., double-wired click)
+    if (!window.__rotateClickGuard) window.__rotateClickGuard = { lastTs: 0, lastLabel: null };
+    const __now = Date.now();
+    if (window.__rotateClickGuard.lastLabel === currentLabel && (__now - window.__rotateClickGuard.lastTs) < 120) {
+      if (window.__DEBUG__) console.log('[rotateImage] Suppressed duplicate rotate within 120ms');
+      return;
+    }
+    window.__rotateClickGuard.lastTs = __now;
+    window.__rotateClickGuard.lastLabel = currentLabel;
+
     // Initialize rotation state if it doesn't exist
     if (!window.imageRotationByLabel) {
       window.imageRotationByLabel = {};
@@ -14853,17 +15161,37 @@ document.addEventListener('DOMContentLoaded', () => {
     // Update the global rotation state
     const currentRotation = window.imageRotationByLabel[currentLabel];
     const normalizedDelta = (degrees * Math.PI) / 180; // Convert to radians
-    window.imageRotationByLabel[currentLabel] = currentRotation + normalizedDelta;
-        
-    if (window.DEBUG_ROTATION) {
-      console.group(`🔄 Rotating Image ${currentLabel}`);
-      console.log(`📐 ${(currentRotation * 180 / Math.PI).toFixed(1)}° + ${degrees}° = ${(window.imageRotationByLabel[currentLabel] * 180 / Math.PI).toFixed(1)}°`);
-      console.log(`🔄 About to redraw canvas - this will update tag positions`);
-      console.groupEnd();
+    let newRotation = currentRotation + normalizedDelta;
+    
+    // Normalize rotation to keep it within -2π to 2π range using modulo to prevent infinite loops
+    const TWO_PI = Math.PI * 2;
+    newRotation = ((newRotation % TWO_PI) + TWO_PI) % TWO_PI;
+    
+    // Convert to -π to π range for consistency with typical rotation handling
+    if (newRotation > Math.PI) {
+      newRotation -= TWO_PI;
     }
+    
+    // Use the normal rotation system for images and labels
+    if (!window.imageRotationByLabel) window.imageRotationByLabel = {};
+    window.imageRotationByLabel[currentLabel] = newRotation;
+    console.log(`[rotateImage] Updated rotation to ${(newRotation * 180 / Math.PI).toFixed(1)}° using standard coordinate transformation system`);
+        
+    const finalRotation = window.imageRotationByLabel[currentLabel] || 0;
+    console.log(`[rotateImage] Applied ${degrees}° rotation to ${currentLabel}, final rotation: ${(finalRotation * 180 / Math.PI).toFixed(1)}°`);
+    
+    // IMPORTANT: Do not mutate vector stroke points here.
+    // The render pipeline applies rotation via imageToCanvasCoords/canvasToImageCoords.
+    // Mutating points would double-transform and push vectors off the capture frame.
         
     // For now, just update the rotation state and let coordinate transformation handle it
     // The coordinate transformation will apply the rotation when drawing
+    
+    // IMPORTANT: Invalidate anchor cache when rotation changes so labels recalculate positions
+    if (typeof window.invalidateAnchorCache === 'function') {
+      window.invalidateAnchorCache(currentLabel);
+      console.log(`[rotateImage] Invalidated anchor cache for ${currentLabel} due to rotation change`);
+    }
         
     // Save state and redraw
     if (typeof window.saveState === 'function') {
@@ -14920,8 +15248,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
         
     if (operation === 'rotate') {
-      // Delegate to rotateImage function
-      window.rotateImage(0, value); // imageIndex doesn't matter, we use currentLabel
+      // Delegate solely to rotateImage; avoid mutating vector points to prevent double-rotation
+      window.rotateImage(0, value);
     } else if (operation === 'flip') {
       // Simple flip implementation
       const canvas = document.getElementById('canvas');
@@ -15415,24 +15743,31 @@ document.addEventListener('DOMContentLoaded', () => {
     if (nextScale !== currentScale) {
       //             console.log(`[Mouse Wheel Zoom] Zooming from ${currentScale} to ${nextScale} centered at (${mouseX}, ${mouseY})`);
             
-      // Apply the new scale
-      updateImageScale(nextScale);
+      // Store current position before zoom
+      const currentPosition = imagePositionByLabel[currentImageLabel] || { x: 0, y: 0 };
             
-      // Calculate zoom centering adjustment
-      const canvasPointAfterZoomTarget = toCanvas(imagePointBeforeZoom);
-      const deltaX = mouseX - canvasPointAfterZoomTarget.x;
-      const deltaY = mouseY - canvasPointAfterZoomTarget.y;
-            
+      // Calculate what the position adjustment should be for zoom centering
+      const scaleRatio = nextScale / currentScale;
+      const canvasCenter = { x: canvas.width / 2, y: canvas.height / 2 };
+      
+      // Calculate position adjustment to keep mouse point centered
+      const deltaX = (mouseX - canvasCenter.x - currentPosition.x) * (1 - scaleRatio);
+      const deltaY = (mouseY - canvasCenter.y - currentPosition.y) * (1 - scaleRatio);
+      
+      // Apply both scale and position changes atomically
+      window.imageScaleByLabel[currentImageLabel] = nextScale;
+      
       // Initialize image position if not set
       if (!imagePositionByLabel[currentImageLabel]) {
         imagePositionByLabel[currentImageLabel] = { x: 0, y: 0 };
       }
-            
-      // Adjust image position to keep the same image point under the cursor
+      
+      // Adjust position for zoom centering
       imagePositionByLabel[currentImageLabel].x += deltaX;
       imagePositionByLabel[currentImageLabel].y += deltaY;
-            
-      // Redraw with the corrected position
+      
+      // Update UI and redraw once with both changes applied
+      updateScaleUI();
       redrawCanvasWithVisibility();
     }
   }
@@ -15668,7 +16003,111 @@ document.addEventListener('DOMContentLoaded', () => {
     // Check if intersection point is within both line segments
     return (t1 >= 0 && t1 <= 1 && t2 >= 0 && t2 <= 1);
   }
+
+  // Function to calculate the intersection point of two line segments
+  function lineIntersection(x1, y1, x2, y2, x3, y3, x4, y4) {
+    // Calculate direction vectors
+    const denom = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+        
+    // Lines are parallel if denominator is zero
+    if (Math.abs(denom) < 0.0001) return null;
+        
+    // Calculate intersection parameters
+    const t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / denom;
+    const u = -((x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)) / denom;
+        
+    // Check if intersection point is within both line segments
+    if (t >= 0 && t <= 1 && u >= 0 && u <= 1) {
+      return {
+        x: x1 + t * (x2 - x1),
+        y: y1 + t * (y2 - y1)
+      };
+    }
+        
+    return null; // No intersection within segments
+  }
     
+  // Calculate where a line intersects with a rotated rectangle
+  function calculateCurveRectangleIntersection(startPoint, rectCenter, rectWidth, rectHeight, rotation) {
+    // Define rectangle corners in local space (relative to center)
+    const halfWidth = rectWidth / 2;
+    const halfHeight = rectHeight / 2;
+    const corners = [
+      { x: -halfWidth, y: -halfHeight }, // top-left
+      { x: halfWidth, y: -halfHeight },  // top-right
+      { x: halfWidth, y: halfHeight },   // bottom-right
+      { x: -halfWidth, y: halfHeight }   // bottom-left
+    ];
+    
+    // Rotate corners and translate to world space
+    const cos = Math.cos(rotation);
+    const sin = Math.sin(rotation);
+    const rotatedCorners = corners.map(corner => ({
+      x: rectCenter.x + (corner.x * cos - corner.y * sin),
+      y: rectCenter.y + (corner.x * sin + corner.y * cos)
+    }));
+    
+    // Define the four edges of the rotated rectangle
+    const edges = [
+      [rotatedCorners[0], rotatedCorners[1]], // top edge
+      [rotatedCorners[1], rotatedCorners[2]], // right edge  
+      [rotatedCorners[2], rotatedCorners[3]], // bottom edge
+      [rotatedCorners[3], rotatedCorners[0]]  // left edge
+    ];
+    
+    // Extend line from startPoint through rectCenter to find intersection
+    // Calculate direction vector from start to center
+    const dx = rectCenter.x - startPoint.x;
+    const dy = rectCenter.y - startPoint.y;
+    const length = Math.sqrt(dx * dx + dy * dy);
+    
+    if (length < 0.001) {
+      // Start point is too close to center, return center
+      return rectCenter;
+    }
+    
+    // Normalize direction vector
+    const dirX = dx / length;
+    const dirY = dy / length;
+    
+    // Extend line far beyond the rectangle to ensure intersection
+    const extensionLength = Math.max(rectWidth, rectHeight) * 2;
+    const extendedPoint = {
+      x: startPoint.x + dirX * (length + extensionLength),
+      y: startPoint.y + dirY * (length + extensionLength)
+    };
+    
+    // Find intersection with each edge
+    let closestIntersection = null;
+    let closestDistance = Infinity;
+    
+    for (const [edgeStart, edgeEnd] of edges) {
+      const intersection = lineIntersection(
+        startPoint.x, startPoint.y, 
+        extendedPoint.x, extendedPoint.y,
+        edgeStart.x, edgeStart.y,
+        edgeEnd.x, edgeEnd.y
+      );
+      
+      if (intersection) {
+        // Calculate distance from start point to intersection
+        const distToIntersection = Math.sqrt(
+          Math.pow(intersection.x - startPoint.x, 2) + 
+          Math.pow(intersection.y - startPoint.y, 2)
+        );
+        
+        // Use the closest intersection point that's closer than the center
+        if (distToIntersection < length && distToIntersection < closestDistance) {
+          closestDistance = distToIntersection;
+          closestIntersection = intersection;
+        }
+      }
+    }
+    
+    // Return closest intersection or center as fallback
+    return closestIntersection || rectCenter;
+  }
+
   // Function to draw a connector line between the label and the stroke
   function drawLabelConnector(labelRect, anchorPoint, strokeColor) {
     // Don't use the provided anchorPoint - we'll find the best one based on the stroke
@@ -15679,24 +16118,50 @@ document.addEventListener('DOMContentLoaded', () => {
     const labelCenter = { x: labelRect.x, y: labelRect.y };
     const rectX = labelCenter.x - labelRect.width / 2;
     const rectY = labelCenter.y - labelRect.height / 2;
-        
-    // Determine the exit point from the label using 9-point anchoring on the rectangle
-    const anchorPoints = [
+    
+    // Get current rotation to rotate anchor points to match visual label orientation
+    const currentImageLabel = window.currentImageLabel || window.paintApp?.state?.currentImageLabel || 'front';
+    const transformParams = getTransformationParams(currentImageLabel);
+    const rotation = transformParams.hasImage && transformParams.rotation ? transformParams.rotation : 0;
+    
+    // Calculate 9 anchor points in local (unrotated) space relative to center
+    const localAnchorPoints = [
       // Top row
-      { x: rectX, y: rectY }, // Top-left
-      { x: labelCenter.x, y: rectY }, // Top-center
-      { x: rectX + labelRect.width, y: rectY }, // Top-right
+      { x: -labelRect.width / 2, y: -labelRect.height / 2 }, // Top-left
+      { x: 0, y: -labelRect.height / 2 }, // Top-center
+      { x: labelRect.width / 2, y: -labelRect.height / 2 }, // Top-right
             
       // Middle row
-      { x: rectX, y: labelCenter.y }, // Middle-left
-      { x: labelCenter.x, y: labelCenter.y }, // Center
-      { x: rectX + labelRect.width, y: labelCenter.y }, // Middle-right
+      { x: -labelRect.width / 2, y: 0 }, // Middle-left
+      { x: 0, y: 0 }, // Center
+      { x: labelRect.width / 2, y: 0 }, // Middle-right
             
       // Bottom row
-      { x: rectX, y: rectY + labelRect.height }, // Bottom-left
-      { x: labelCenter.x, y: rectY + labelRect.height }, // Bottom-center
-      { x: rectX + labelRect.width, y: rectY + labelRect.height } // Bottom-right
+      { x: -labelRect.width / 2, y: labelRect.height / 2 }, // Bottom-left
+      { x: 0, y: labelRect.height / 2 }, // Bottom-center
+      { x: labelRect.width / 2, y: labelRect.height / 2 } // Bottom-right
     ];
+    
+    // Rotate anchor points and translate to world position
+    const anchorPoints = localAnchorPoints.map(point => {
+      if (Math.abs(rotation) < 0.001) {
+        // No rotation - use direct translation
+        return {
+          x: labelCenter.x + point.x,
+          y: labelCenter.y + point.y
+        };
+      } else {
+        // Apply rotation around label center
+        const cos = Math.cos(rotation);
+        const sin = Math.sin(rotation);
+        const rotatedX = point.x * cos - point.y * sin;
+        const rotatedY = point.x * sin + point.y * cos;
+        return {
+          x: labelCenter.x + rotatedX,
+          y: labelCenter.y + rotatedY
+        };
+      }
+    });
         
     // Find closest anchor point to the stroke anchor point
     let closestDist = Infinity;
@@ -15838,15 +16303,36 @@ document.addEventListener('DOMContentLoaded', () => {
       anchorPoint = originalAnchorPoint;
     }
         
-    // Draw the connecting line
-    ctx.beginPath();
-    ctx.moveTo(exitPoint.x, exitPoint.y);
-    ctx.lineTo(anchorPoint.x, anchorPoint.y);
-    ctx.strokeStyle = strokeColor;
-    ctx.lineWidth = 1;
-    ctx.setLineDash([3, 3]); // Dotted line
-    ctx.stroke();
-    ctx.setLineDash([]); // Reset to solid line
+    // Draw a curved connecting line that intersects exactly with the rotated label edge
+    const curveIntersection = calculateCurveRectangleIntersection(
+      anchorPoint, 
+      labelCenter, 
+      labelRect.width, 
+      labelRect.height, 
+      rotation
+    );
+    
+    if (curveIntersection) {
+      // Draw straight line from stroke anchor to exact edge intersection
+      ctx.beginPath();
+      ctx.moveTo(anchorPoint.x, anchorPoint.y);
+      ctx.lineTo(curveIntersection.x, curveIntersection.y);
+      ctx.strokeStyle = strokeColor;
+      ctx.lineWidth = 1;
+      ctx.setLineDash([3, 3]); // Dotted line
+      ctx.stroke();
+      ctx.setLineDash([]); // Reset to solid line
+    } else {
+      // Fallback to straight line if intersection calculation fails
+      ctx.beginPath();
+      ctx.moveTo(exitPoint.x, exitPoint.y);
+      ctx.lineTo(anchorPoint.x, anchorPoint.y);
+      ctx.strokeStyle = strokeColor;
+      ctx.lineWidth = 1;
+      ctx.setLineDash([3, 3]); // Dotted line
+      ctx.stroke();
+      ctx.setLineDash([]); // Reset to solid line
+    }
         
     // If we're using a midpoint anchor, draw a small circle to indicate the connection point
     if (strokePathInfo && strokePathInfo.path && strokePathInfo.path.length > 1) {
@@ -17198,6 +17684,89 @@ document.addEventListener('DOMContentLoaded', () => {
   console.log('[PER-IMAGE-INIT] Tag size controls initialized');
 }); // Correctly close DOMContentLoaded
 
+// COOPERATIVE ROTATION FIX: Integrate working rotation solution
+// This fix addresses the reported rotation issues:
+// 1. "stroke tag is text rotating when it should not" - text stays horizontal
+// 2. "when I use an image the vector rotates 180 not 90" - proper rotation increments
+(function initializeCooperativeRotationFix() {
+  debugLog('[ROTATION-FIX] Initializing cooperative rotation solution...');
+  
+  // Enhanced text rendering that keeps labels horizontal during rotation
+  const originalFillText = window.CanvasRenderingContext2D.prototype.fillText;
+  const originalStrokeText = window.CanvasRenderingContext2D.prototype.strokeText;
+  
+  // Counter-rotate text to keep it horizontal and readable
+  window.CanvasRenderingContext2D.prototype.fillText = function(text, x, y) {
+    if (window.__skipTextCounterRotate) {
+      return originalFillText.call(this, text, x, y);
+    }
+    // Only apply fix to actual labels (not measurements or coordinates)
+    if (typeof text === 'string' && text.length > 0 && 
+        !text.match(/^\d+$/) && // not just numbers
+        !text.match(/^[\d.,]+$/) && // not measurements  
+        text !== '0') { // not zero
+        
+      // Save current transform
+      this.save();
+      
+      // Get current transform matrix
+      const transform = this.getTransform();
+      
+      // Check if there's any rotation applied
+      if (Math.abs(transform.b) > 0.01 || Math.abs(transform.a - 1) > 0.01) {
+        // Calculate the rotation angle
+        const rotation = Math.atan2(transform.b, transform.a);
+        
+        // Apply counter-rotation to keep text horizontal
+        this.translate(x, y);
+        this.rotate(-rotation);
+        
+        debugLog(`[ROTATION-FIX] Counter-rotating label "${text}" by ${(-rotation * 180 / Math.PI).toFixed(1)}° to stay horizontal`);
+        
+        // Draw text at origin (we already translated)
+        const result = originalFillText.call(this, text, 0, 0);
+        
+        // Restore transform
+        this.restore();
+        
+        return result;
+      }
+    }
+    
+    // For non-label text or no rotation, use original behavior
+    return originalFillText.call(this, text, x, y);
+  };
+  
+  // Same logic for stroke text
+  window.CanvasRenderingContext2D.prototype.strokeText = function(text, x, y) {
+    if (window.__skipTextCounterRotate) {
+      return originalStrokeText.call(this, text, x, y);
+    }
+    if (typeof text === 'string' && text.length > 0 && 
+        !text.match(/^\d+$/) && 
+        !text.match(/^[\d.,]+$/) && 
+        text !== '0') {
+        
+      this.save();
+      const transform = this.getTransform();
+      
+      if (Math.abs(transform.b) > 0.01 || Math.abs(transform.a - 1) > 0.01) {
+        const rotation = Math.atan2(transform.b, transform.a);
+        this.translate(x, y);
+        this.rotate(-rotation);
+        
+        const result = originalStrokeText.call(this, text, 0, 0);
+        this.restore();
+        return result;
+      }
+    }
+    
+    return originalStrokeText.call(this, text, x, y);
+  };
+  
+  debugLog('[ROTATION-FIX] ✅ Cooperative rotation fix initialized - labels will stay horizontal during rotation');
+})();
+
 // Function to get tag size for a specific stroke
 function getTagSize(strokeLabel) {
   try {
@@ -18445,45 +19014,34 @@ function showShareDialog(shareUrl, expiresAt) {
   document.body.appendChild(modal);
     
   // Event listeners
-  const copyUrlBtn = document.getElementById('copyUrlBtn');
-  if (copyUrlBtn) {
-    copyUrlBtn.addEventListener('click', async () => {
-      const input = document.getElementById('shareUrlInput');
-      if (input) {
-        input.select();
+  document.getElementById('copyUrlBtn').addEventListener('click', async () => {
+    const input = document.getElementById('shareUrlInput');
+    input.select();
         
-        try {
-          await navigator.clipboard.writeText(shareUrl);
-          // Use existing copyUrlBtn reference
-          const originalText = copyUrlBtn.textContent;
-          copyUrlBtn.textContent = '✓ Copied!';
-          copyUrlBtn.style.background = '#28a745';
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      const btn = document.getElementById('copyUrlBtn');
+      const originalText = btn.textContent;
+      btn.textContent = '� Copied!';
+      btn.style.background = '#28a745';
             
-          setTimeout(() => {
-            copyUrlBtn.textContent = originalText;
-            copyUrlBtn.style.background = '#007bff';
-          }, 2000);
-        } catch (err) {
-          console.error('Failed to copy to clipboard:', err);
-          document.execCommand('copy');
-        }
-      }
-    });
-  }
+      setTimeout(() => {
+        btn.textContent = originalText;
+        btn.style.background = '#007bff';
+      }, 2000);
+    } catch (err) {
+      console.error('Failed to copy to clipboard:', err);
+      document.execCommand('copy');
+    }
+  });
     
-  const openUrlBtn = document.getElementById('openUrlBtn');
-  if (openUrlBtn) {
-    openUrlBtn.addEventListener('click', () => {
-      window.open(shareUrl, '_blank');
-    });
-  }
+  document.getElementById('openUrlBtn').addEventListener('click', () => {
+    window.open(shareUrl, '_blank');
+  });
     
-  const closeModalBtn = document.getElementById('closeModalBtn');
-  if (closeModalBtn) {
-    closeModalBtn.addEventListener('click', () => {
-      document.body.removeChild(modal);
-    });
-  }
+  document.getElementById('closeModalBtn').addEventListener('click', () => {
+    document.body.removeChild(modal);
+  });
     
   // Close on background click
   modal.addEventListener('click', (e) => {
@@ -18497,189 +19055,6 @@ function showShareDialog(shareUrl, expiresAt) {
     document.getElementById('shareUrlInput').select();
   }, 100);
 }
-
-// ========================= TEXT ROTATION MANAGEMENT =========================
-
-// Debug function to test text rotation
-window.debugTextRotation = function() {
-  const currentLabel = window.paintApp.state.currentImageLabel || window.currentImageLabel || 'front';
-  const currentRotation = window.imageRotationByLabel ? (window.imageRotationByLabel[currentLabel] || 0) : 0;
-  const rotationDegrees = (currentRotation * 180 / Math.PI).toFixed(1);
-  
-  console.log('=== TEXT ROTATION DEBUG ===');
-  console.log('Current image label:', currentLabel);
-  console.log('Current rotation (radians):', currentRotation);
-  console.log('Current rotation (degrees):', rotationDegrees);
-  console.log('imageRotationByLabel object:', window.imageRotationByLabel);
-  
-  // Test rotation by applying 90 degrees for clearer visual difference
-  const testRotation = 90 * Math.PI / 180;
-  if (!window.imageRotationByLabel) window.imageRotationByLabel = {};
-  window.imageRotationByLabel[currentLabel] = testRotation;
-  
-  console.log('Applied 90° test rotation');
-  console.log('New rotation value:', window.imageRotationByLabel[currentLabel]);
-  
-  // Trigger redraw
-  if (typeof redrawCanvasWithVisibility === 'function') {
-    redrawCanvasWithVisibility();
-  }
-  
-  return {
-    label: currentLabel,
-    oldRotation: currentRotation,
-    newRotation: testRotation,
-    rotationDegrees: 90
-  };
-};
-
-// Function to convert existing text elements to use image coordinates
-window.convertTextToImageCoords = function(targetLabel = null) {
-  const currentLabel = targetLabel || window.paintApp.state.currentImageLabel || window.currentImageLabel || 'front';
-  const textElements = window.paintApp.state.textElementsByImage?.[currentLabel];
-  
-  if (!textElements || textElements.length === 0) {
-    console.log('No text elements found for', currentLabel);
-    return;
-  }
-  
-  const transformParams = window.getTransformationParams ? window.getTransformationParams(currentLabel) : null;
-  if (!transformParams || !transformParams.hasImage) {
-    console.log('No image found for', currentLabel, transformParams);
-    return;
-  }
-  
-  let converted = 0;
-  textElements.forEach(element => {
-    if (element.useCanvasCoords) {
-      console.log('[CONVERT] Converting element', element.id, 'from canvas to image coords');
-      console.log('[CONVERT] Original coords:', element.x, element.y);
-      
-      // Convert canvas coordinates to image coordinates
-      const imageCoords = window.canvasToImageCoords ? 
-        window.canvasToImageCoords(element.x, element.y, transformParams) : 
-        {x: element.x, y: element.y};
-      
-      element.x = imageCoords.x;
-      element.y = imageCoords.y;
-      element.useCanvasCoords = false;
-      converted++;
-      
-      console.log('[CONVERT] New image coords:', element.x, element.y);
-    }
-  });
-  
-  console.log(`[CONVERT] Converted ${converted} text elements to image coordinates`);
-  
-  // Trigger redraw
-  if (typeof redrawCanvasWithVisibility === 'function') {
-    redrawCanvasWithVisibility();
-  }
-  
-  return {
-    label: currentLabel,
-    converted: converted,
-    total: textElements.length
-  };
-};
-
-// Function to convert ALL text elements across all images
-window.convertAllTextToImageCoords = function() {
-  if (!window.paintApp.state.textElementsByImage) {
-    console.log('No text elements found');
-    return { totalConverted: 0, totalImages: 0 };
-  }
-  
-  let totalConverted = 0;
-  let totalImages = 0;
-  
-  Object.keys(window.paintApp.state.textElementsByImage).forEach(imageLabel => {
-    console.log(`[CONVERT ALL] Processing image: ${imageLabel}`);
-    const result = window.convertTextToImageCoords(imageLabel);
-    if (result) {
-      totalConverted += result.converted;
-      totalImages++;
-    }
-  });
-  
-  console.log(`[CONVERT ALL] Total: ${totalConverted} text elements converted across ${totalImages} images`);
-  return { totalConverted, totalImages };
-};
-
-// Auto-fix text elements on initialization
-window.autoFixTextRotation = function() {
-  console.log('[AUTO-FIX] Checking for text elements that need rotation fix...');
-  
-  // Wait for paint app to be ready
-  if (!window.paintApp || !window.paintApp.state) {
-    console.log('[AUTO-FIX] Paint app not ready, will retry in 1 second');
-    setTimeout(window.autoFixTextRotation, 1000);
-    return;
-  }
-  
-  // Convert all text elements to use image coordinates
-  const result = window.convertAllTextToImageCoords();
-  
-  if (result.totalConverted > 0) {
-    console.log(`[AUTO-FIX] ✅ Fixed ${result.totalConverted} text elements for rotation`);
-  } else {
-    console.log('[AUTO-FIX] ✅ All text elements already using correct coordinates');
-  }
-};
-
-// Function to force fix a specific text element that keeps reverting
-window.forceFixTextElement = function(elementId) {
-  const currentLabel = window.paintApp.state.currentImageLabel || window.currentImageLabel || 'front';
-  const textElements = window.paintApp.state.textElementsByImage?.[currentLabel];
-  
-  if (!textElements) {
-    console.log('No text elements found for', currentLabel);
-    return;
-  }
-  
-  const element = textElements.find(el => el.id === elementId);
-  if (!element) {
-    console.log('Element not found:', elementId);
-    return;
-  }
-  
-  console.log('[FORCE FIX] Element before:', {
-    id: element.id,
-    useCanvasCoords: element.useCanvasCoords,
-    coords: {x: element.x, y: element.y}
-  });
-  
-  if (element.useCanvasCoords) {
-    const transformParams = window.getTransformationParams ? window.getTransformationParams(currentLabel) : null;
-    if (transformParams && transformParams.hasImage) {
-      const imageCoords = window.canvasToImageCoords ? 
-        window.canvasToImageCoords(element.x, element.y, transformParams) : 
-        {x: element.x, y: element.y};
-      
-      element.x = imageCoords.x;
-      element.y = imageCoords.y;
-      element.useCanvasCoords = false;
-      
-      console.log('[FORCE FIX] Element after:', {
-        id: element.id,
-        useCanvasCoords: element.useCanvasCoords,
-        coords: {x: element.x, y: element.y}
-      });
-      
-      // Trigger redraw
-      if (typeof redrawCanvasWithVisibility === 'function') {
-        redrawCanvasWithVisibility();
-      }
-      
-      return { fixed: true, element: element };
-    }
-  }
-  
-  console.log('[FORCE FIX] Element already using image coords or no image found');
-  return { fixed: false, element: element };
-};
-
-// ========================= END TEXT ROTATION MANAGEMENT =========================
 
 // Helper function to find text element at a point (x, y are in canvas coordinates)
 // Note: Duplicate function removed - using the one defined earlier around line 17547
@@ -18899,12 +19274,32 @@ function createTextBox(x, y) {
         borderWidth, padding
       });
             
-      // Save in canvas-relative coordinates (no world transformation)
-      // This ensures the text appears exactly where the preview box was
+      // Determine coordinate space based on whether there's an image
+      const transformParams = window.getTransformationParams ? window.getTransformationParams(label) : null;
+      let textX, textY, useCanvasCoords;
+      
+      console.log('[SAVE TEXT DEBUG] Transform params:', transformParams);
+      console.log('[SAVE TEXT DEBUG] Has image check:', transformParams && transformParams.hasImage);
+      
+      if (transformParams && transformParams.hasImage) {
+        // For images, convert canvas coordinates to image space so text rotates with image
+        const imageCoords = window.canvasToImageCoords ? window.canvasToImageCoords(canvasRelativeX, canvasRelativeY, transformParams) : {x: canvasRelativeX, y: canvasRelativeY};
+        textX = imageCoords.x;
+        textY = imageCoords.y;
+        useCanvasCoords = false;
+        console.log('[SAVE TEXT DEBUG] Image mode: Canvas coords', canvasRelativeX, canvasRelativeY, '-> Image coords', textX.toFixed(1), textY.toFixed(1));
+      } else {
+        // For blank canvas, use canvas coordinates
+        textX = canvasRelativeX;
+        textY = canvasRelativeY;
+        useCanvasCoords = true;
+        console.log('[SAVE TEXT DEBUG] Canvas mode: Using canvas coords', textX, textY);
+      }
+      
       const data = {
         id: 'text_' + Date.now(),
-        x: canvasRelativeX,
-        y: canvasRelativeY,
+        x: textX,
+        y: textY,
         width: wrapperRect.width,
         height: wrapperRect.height,
         text: text,
@@ -18918,7 +19313,7 @@ function createTextBox(x, y) {
         padding: padding,
         hasWhiteBackground: false, // Default: transparent background (user can toggle in stroke visibility controls)
         visible: true,
-        useCanvasCoords: true // Flag to indicate these are canvas coordinates, not world coordinates
+        useCanvasCoords: useCanvasCoords
       };
       window.paintApp.state.textElementsByImage[label].push(data);
       try { saveState(true, false, false); } catch(_) {}
