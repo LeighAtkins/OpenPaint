@@ -673,9 +673,6 @@ app.use((err, req, res, next) => {
     res.status(500).json({ success: false, message: 'Server error' });
 });
 
-// export for Vercel
-module.exports = app;
-
 // keep local server only when run directly
 if (require.main === module) {
   const port = process.env.PORT || 3000;

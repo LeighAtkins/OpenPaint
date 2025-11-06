@@ -38,13 +38,14 @@ async function ensureSchema() {
 
 async function createOrUpdateProject({ slug, title, data, editToken }) {
 	if (!isDbConfigured()) throw new Error('Database not configured');
+	// Pass data as JSON string for JSONB column
 	await sql`
 		INSERT INTO projects (slug, title, data, edit_token)
-		VALUES (${slug}, ${title ?? null}, ${sql.json(data)}, ${editToken ?? null})
+		VALUES (${slug}, ${title ?? null}, ${JSON.stringify(data)}::jsonb, ${editToken ?? null})
 		ON CONFLICT (slug)
 		DO UPDATE SET
 			title = EXCLUDED.title,
-			data = EXCLUDED.data,
+			data = ${JSON.stringify(data)}::jsonb,
 			edit_token = EXCLUDED.edit_token,
 			updated_at = NOW();
 	`;
