@@ -126,7 +126,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     function migrateProject(project) {
         console.log('[Migration] Starting project migration...');
-        const migrated = JSON.parse(JSON.stringify(project));
+        const migrated = structuredClone(project);
         
         // 1) Normalize imageTags.furnitureType to string (fixes mixed array/string issue)
         if (!migrated.imageTags) migrated.imageTags = {};
@@ -354,9 +354,9 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // *** ADDED LOGGING BEFORE LOOP ***
             // console.log('[Save Project] State before saving loop:');
-            // console.log('  window.lineStrokesByImage:', JSON.parse(JSON.stringify(window.lineStrokesByImage)));
-            // console.log('  window.labelsByImage:', JSON.parse(JSON.stringify(window.labelsByImage)));
-            // console.log('  window.imageTags:', JSON.parse(JSON.stringify(window.imageTags || {})));
+            // console.log('  window.lineStrokesByImage:', structuredClone(window.lineStrokesByImage));
+            // console.log('  window.labelsByImage:', structuredClone(window.labelsByImage));
+            // console.log('  window.imageTags:', structuredClone(window.imageTags || {}));
             // *** END ADDED LOGGING ***
             
             // Add stroke data for each image
@@ -365,7 +365,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // Get vector strokes data - ensure we have data for each label
                 if (window.vectorStrokesByImage && window.vectorStrokesByImage[label]) {
-                    projectData.strokes[label] = JSON.parse(JSON.stringify(window.vectorStrokesByImage[label]));
+                    projectData.strokes[label] = structuredClone(window.vectorStrokesByImage[label]);
                 } else {
                     projectData.strokes[label] = {};
                 }
@@ -462,7 +462,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Add image tags
                 if (window.imageTags && window.imageTags[label]) {
 //                     console.log(`[Save Project] Saving tags for ${label}:`, JSON.stringify(window.imageTags[label]));
-                    projectData.imageTags[label] = JSON.parse(JSON.stringify(window.imageTags[label]));
+                    projectData.imageTags[label] = structuredClone(window.imageTags[label]);
                 } else {
 //                     console.log(`[Save Project] No tags found for ${label}, using empty object`);
                     projectData.imageTags[label] = {};
@@ -483,22 +483,22 @@ document.addEventListener('DOMContentLoaded', () => {
             for (const label of actualImageLabels) {
                 projectData.customLabelPositions[label] =
                     (window.customLabelPositions && window.customLabelPositions[label])
-                        ? JSON.parse(JSON.stringify(window.customLabelPositions[label]))
+                        ? structuredClone(window.customLabelPositions[label])
                         : {};
 
                 projectData.calculatedLabelOffsets[label] =
                     (window.calculatedLabelOffsets && window.calculatedLabelOffsets[label])
-                        ? JSON.parse(JSON.stringify(window.calculatedLabelOffsets[label]))
+                        ? structuredClone(window.calculatedLabelOffsets[label])
                         : {};
 
                 projectData.customLabelRotationStamps[label] =
                     (window.customLabelOffsetsRotationByImageAndStroke && window.customLabelOffsetsRotationByImageAndStroke[label])
-                        ? JSON.parse(JSON.stringify(window.customLabelOffsetsRotationByImageAndStroke[label]))
+                        ? structuredClone(window.customLabelOffsetsRotationByImageAndStroke[label])
                         : {};
 
                 projectData.textElementsByImage[label] =
                     (window.paintApp?.state?.textElementsByImage && window.paintApp.state.textElementsByImage[label])
-                        ? JSON.parse(JSON.stringify(window.paintApp.state.textElementsByImage[label]))
+                        ? structuredClone(window.paintApp.state.textElementsByImage[label])
                         : [];
             }
             
@@ -738,7 +738,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 }
 
                                 if (parsedProjectData.folderStructure) {
-                                    window.folderStructure = JSON.parse(JSON.stringify(parsedProjectData.folderStructure));
+                                    window.folderStructure = structuredClone(parsedProjectData.folderStructure);
                                 } else {
                                     window.folderStructure = { "root": { id: "root", name: "Root", type: "folder", parentId: null, children: [] } };
                                 }
@@ -801,11 +801,11 @@ document.addEventListener('DOMContentLoaded', () => {
                                                     window.addImageToSidebar(window.originalImages[label], label);
                                                 }
                                                 // Load other per-label data from parsedProjectData
-                                                if (parsedProjectData.strokes && parsedProjectData.strokes[label]) window.vectorStrokesByImage[label] = JSON.parse(JSON.stringify(parsedProjectData.strokes[label])); else window.vectorStrokesByImage[label] = {};
+                                                if (parsedProjectData.strokes && parsedProjectData.strokes[label]) window.vectorStrokesByImage[label] = structuredClone(parsedProjectData.strokes[label]); else window.vectorStrokesByImage[label] = {};
                                                 if (parsedProjectData.strokeVisibility && parsedProjectData.strokeVisibility[label]) window.strokeVisibilityByImage[label] = parsedProjectData.strokeVisibility[label]; else window.strokeVisibilityByImage[label] = {};
                                                 if (parsedProjectData.strokeLabelVisibility && parsedProjectData.strokeLabelVisibility[label]) window.strokeLabelVisibility[label] = parsedProjectData.strokeLabelVisibility[label]; else window.strokeLabelVisibility[label] = {};
-                                                if (parsedProjectData.strokeMeasurements && parsedProjectData.strokeMeasurements[label]) window.strokeMeasurements[label] = JSON.parse(JSON.stringify(parsedProjectData.strokeMeasurements[label])); else window.strokeMeasurements[label] = {};
-                                                if (parsedProjectData.imageTags && parsedProjectData.imageTags[label]) window.imageTags[label] = JSON.parse(JSON.stringify(parsedProjectData.imageTags[label])); 
+                                                if (parsedProjectData.strokeMeasurements && parsedProjectData.strokeMeasurements[label]) window.strokeMeasurements[label] = structuredClone(parsedProjectData.strokeMeasurements[label]); else window.strokeMeasurements[label] = {};
+                                                if (parsedProjectData.imageTags && parsedProjectData.imageTags[label]) window.imageTags[label] = structuredClone(parsedProjectData.imageTags[label]); 
                                                 else { 
                                                     if (typeof window.initializeNewImageStructures === 'function') window.initializeNewImageStructures(label); 
                                                     else window.imageTags[label] = { furnitureType: 'sofa', viewType: label }; 
@@ -831,22 +831,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
                                                 window.customLabelPositions[label] =
                                                     (parsedProjectData.customLabelPositions && parsedProjectData.customLabelPositions[label])
-                                                        ? JSON.parse(JSON.stringify(parsedProjectData.customLabelPositions[label]))
+                                                        ? structuredClone(parsedProjectData.customLabelPositions[label])
                                                         : {};
 
                                                 window.calculatedLabelOffsets[label] =
                                                     (parsedProjectData.calculatedLabelOffsets && parsedProjectData.calculatedLabelOffsets[label])
-                                                        ? JSON.parse(JSON.stringify(parsedProjectData.calculatedLabelOffsets[label]))
+                                                        ? structuredClone(parsedProjectData.calculatedLabelOffsets[label])
                                                         : {};
 
                                                 window.customLabelOffsetsRotationByImageAndStroke[label] =
                                                     (parsedProjectData.customLabelRotationStamps && parsedProjectData.customLabelRotationStamps[label])
-                                                        ? JSON.parse(JSON.stringify(parsedProjectData.customLabelRotationStamps[label]))
+                                                        ? structuredClone(parsedProjectData.customLabelRotationStamps[label])
                                                         : {};
 
                                                 window.paintApp.state.textElementsByImage[label] =
                                                     (parsedProjectData.textElementsByImage && parsedProjectData.textElementsByImage[label])
-                                                        ? JSON.parse(JSON.stringify(parsedProjectData.textElementsByImage[label]))
+                                                        ? structuredClone(parsedProjectData.textElementsByImage[label])
                                                         : [];
 
                                                 // MIGRATION: Ensure all loaded text elements have useCanvasCoords set to true

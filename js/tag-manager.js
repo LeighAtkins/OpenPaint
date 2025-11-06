@@ -391,7 +391,7 @@ window.createTagSelectionDialog = function(imageLabel, existingTags, onSave) {
     const saveButton = dialog.querySelector('.tag-dialog-save');
     
     // Clone existing tags or create new ones
-    const selections = existingTags ? JSON.parse(JSON.stringify(existingTags)) : {};
+    const selections = existingTags ? structuredClone(existingTags) : {};
     
     // Get initial visible categories
     const visibleCategories = getVisibleCategories(selections);
@@ -786,7 +786,7 @@ document.addEventListener('DOMContentLoaded', () => {
             selectionToRestoreOnTarget: selectionOfTargetImageBeforeFocus, // The selection 'label' had *before* we selected all its strokes
             focusedImageLabel: label                            // The image that is now in focus
         };
-        // console.log(`[enterFocusMode] Stored preFocusState:`, JSON.parse(JSON.stringify(window.preFocusState)));
+        // console.log(`[enterFocusMode] Stored preFocusState:`, structuredClone(window.preFocusState));
 
         // Switch to the clicked image (if not already active)
         if (typeof window.switchToImage === 'function' && window.currentImageLabel !== label) {

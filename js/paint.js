@@ -1,5 +1,13 @@
 ﻿// Define core application structure for better state management
 
+// Polyfill for structuredClone() - Performance Optimization #1
+// Provides fallback for older browsers that don't support native structuredClone
+if (typeof structuredClone !== 'function') {
+  window.structuredClone = function(obj) {
+    return JSON.parse(JSON.stringify(obj));
+  };
+}
+
 // Debug mode toggle for rotation/hit-test debugging
 window.DEBUG_ROTATION = false;
 window.toggleRotationDebug = function() {
@@ -1254,10 +1262,10 @@ document.addEventListener('DOMContentLoaded', () => {
     window.imageScaleByLabel[label] = imageData.imageScale;
     window.imagePositionByLabel[label] = imageData.imagePosition ? {...imageData.imagePosition} : {x: 0, y: 0};
     window.lineStrokesByImage[label] = imageData.lineStrokes ? [...imageData.lineStrokes] : [];
-    window.vectorStrokesByImage[label] = imageData.vectorStrokes ? JSON.parse(JSON.stringify(imageData.vectorStrokes)) : {};
+    window.vectorStrokesByImage[label] = imageData.vectorStrokes ? structuredClone(imageData.vectorStrokes) : {};
     window.strokeVisibilityByImage[label] = imageData.strokeVisibility ? {...imageData.strokeVisibility} : {};
     window.strokeLabelVisibility[label] = imageData.strokeLabelVisibility ? {...imageData.strokeLabelVisibility} : {};
-    window.strokeMeasurements[label] = imageData.strokeMeasurements ? JSON.parse(JSON.stringify(imageData.strokeMeasurements)) : {};
+    window.strokeMeasurements[label] = imageData.strokeMeasurements ? structuredClone(imageData.strokeMeasurements) : {};
     window.labelsByImage[label] = imageData.labelsByImage;
     window.undoStackByImage[label] = imageData.undoStack ? [...imageData.undoStack] : [];
     window.redoStackByImage[label] = imageData.redoStack ? [...imageData.redoStack] : [];
@@ -1271,13 +1279,13 @@ document.addEventListener('DOMContentLoaded', () => {
         
     // Restore custom label positions
     Object.keys(imageData.customLabelPositions || {}).forEach(key => {
-      window.customLabelPositions[key] = JSON.parse(JSON.stringify(imageData.customLabelPositions[key]));
+      window.customLabelPositions[key] = structuredClone(imageData.customLabelPositions[key]);
       syncLabelOffsetsToStorage(key, window.customLabelPositions[key]);
     });
         
     // Restore calculated label offsets
     Object.keys(imageData.calculatedLabelOffsets || {}).forEach(key => {
-      window.calculatedLabelOffsets[key] = JSON.parse(JSON.stringify(imageData.calculatedLabelOffsets[key]));
+      window.calculatedLabelOffsets[key] = structuredClone(imageData.calculatedLabelOffsets[key]);
     });
         
     // Restore to pastedImages if it had a URL
@@ -1346,10 +1354,10 @@ document.addEventListener('DOMContentLoaded', () => {
       imageScale: window.imageScaleByLabel[label],
       imagePosition: window.imagePositionByLabel[label] ? {...window.imagePositionByLabel[label]} : null,
       lineStrokes: window.lineStrokesByImage[label] ? [...window.lineStrokesByImage[label]] : [],
-      vectorStrokes: window.vectorStrokesByImage[label] ? JSON.parse(JSON.stringify(window.vectorStrokesByImage[label])) : {},
+      vectorStrokes: window.vectorStrokesByImage[label] ? structuredClone(window.vectorStrokesByImage[label]) : {},
       strokeVisibility: window.strokeVisibilityByImage[label] ? {...window.strokeVisibilityByImage[label]} : {},
       strokeLabelVisibility: window.strokeLabelVisibility[label] ? {...window.strokeLabelVisibility[label]} : {},
-      strokeMeasurements: window.strokeMeasurements[label] ? JSON.parse(JSON.stringify(window.strokeMeasurements[label])) : {},
+      strokeMeasurements: window.strokeMeasurements[label] ? structuredClone(window.strokeMeasurements[label]) : {},
       labelsByImage: window.labelsByImage[label],
       undoStack: window.undoStackByImage[label] ? [...window.undoStackByImage[label]] : [],
       redoStack: window.redoStackByImage[label] ? [...window.redoStackByImage[label]] : [],
@@ -1368,7 +1376,7 @@ document.addEventListener('DOMContentLoaded', () => {
     imageData.customLabelPositions = {};
     Object.keys(window.customLabelPositions || {}).forEach(key => {
       if (key.startsWith(`${label}_`)) {
-        imageData.customLabelPositions[key] = JSON.parse(JSON.stringify(window.customLabelPositions[key]));
+        imageData.customLabelPositions[key] = structuredClone(window.customLabelPositions[key]);
       }
     });
         
@@ -1376,7 +1384,7 @@ document.addEventListener('DOMContentLoaded', () => {
     imageData.calculatedLabelOffsets = {};
     Object.keys(window.calculatedLabelOffsets || {}).forEach(key => {
       if (key.startsWith(`${label}_`)) {
-        imageData.calculatedLabelOffsets[key] = JSON.parse(JSON.stringify(window.calculatedLabelOffsets[key]));
+        imageData.calculatedLabelOffsets[key] = structuredClone(window.calculatedLabelOffsets[key]);
       }
     });
         
@@ -4905,7 +4913,7 @@ document.addEventListener('DOMContentLoaded', () => {
         //                         JSON.stringify(existingMeasurement));
                     
         // Ensure we're not losing data by making a deep copy
-        window.strokeMeasurements[currentImageLabel][strokeLabel] = JSON.parse(JSON.stringify(existingMeasurement));
+        window.strokeMeasurements[currentImageLabel][strokeLabel] = structuredClone(existingMeasurement);
                     
         // Log successful preservation
         //                 console.log(`[createStrokeVisibilityControl] � Successfully preserved measurement for ${strokeLabel}`);
@@ -8051,11 +8059,11 @@ document.addEventListener('DOMContentLoaded', () => {
       // Check if unique stroke label already exists before pushing (shouldn't happen with generateUniqueStrokeName)
       const labelAlreadyExists = lineStrokesByImage[currentImageLabel].includes(strokeLabel);
             
-      //             console.log(`[Save State] BEFORE push: lineStrokesByImage[${currentImageLabel}] =`, JSON.parse(JSON.stringify(lineStrokesByImage[currentImageLabel])));
+      //             console.log(`[Save State] BEFORE push: lineStrokesByImage[${currentImageLabel}] =`, structuredClone(lineStrokesByImage[currentImageLabel]));
             
       if (!labelAlreadyExists && updateStrokeList) {
         lineStrokesByImage[currentImageLabel].push(strokeLabel); // Push the unique label
-        //                 console.log(`[Save State] AFTER push: lineStrokesByImage[${currentImageLabel}] =`, JSON.parse(JSON.stringify(lineStrokesByImage[currentImageLabel])));
+        //                 console.log(`[Save State] AFTER push: lineStrokesByImage[${currentImageLabel}] =`, structuredClone(lineStrokesByImage[currentImageLabel]));
                 
         // NOW increment the label counter after the stroke is pushed
         let nextLabel;
@@ -8111,7 +8119,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const tempStrokeKey = '_drawingStroke';
     let drawnVectorData = null;
     if (strokeLabel && vectorStrokesByImage[currentImageLabel] && vectorStrokesByImage[currentImageLabel][tempStrokeKey]) {
-      drawnVectorData = JSON.parse(JSON.stringify(vectorStrokesByImage[currentImageLabel][tempStrokeKey]));
+      drawnVectorData = structuredClone(vectorStrokesByImage[currentImageLabel][tempStrokeKey]);
       // Assign the drawn data to the final unique stroke label
       vectorStrokesByImage[currentImageLabel][strokeLabel] = drawnVectorData;
       // Remove the temporary data
@@ -8126,7 +8134,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const suggestedLabel = labelsByImage[currentImageLabel]; // Get the label *before* incrementing
       if (vectorStrokesByImage[currentImageLabel] && vectorStrokesByImage[currentImageLabel][suggestedLabel]) {
         //                 console.log(`[Save State] Fallback: Found data under suggested label ${suggestedLabel}`);
-        drawnVectorData = JSON.parse(JSON.stringify(vectorStrokesByImage[currentImageLabel][suggestedLabel]));
+        drawnVectorData = structuredClone(vectorStrokesByImage[currentImageLabel][suggestedLabel]);
         vectorStrokesByImage[currentImageLabel][strokeLabel] = drawnVectorData;
         // Optionally delete the data under suggestedLabel if it shouldn't be there
         // delete vectorStrokesByImage[currentImageLabel][suggestedLabel]; 
@@ -8163,13 +8171,13 @@ document.addEventListener('DOMContentLoaded', () => {
       color: colorPicker.value, 
       width: parseInt(brushSize.value),
       // Store deep copies of label offset data for the current image
-      customLabelPositions: customLabelPositions[currentImageLabel] ? JSON.parse(JSON.stringify(customLabelPositions[currentImageLabel])) : {},
-      calculatedLabelOffsets: calculatedLabelOffsets[currentImageLabel] ? JSON.parse(JSON.stringify(calculatedLabelOffsets[currentImageLabel])) : {},
+      customLabelPositions: customLabelPositions[currentImageLabel] ? structuredClone(customLabelPositions[currentImageLabel]) : {},
+      calculatedLabelOffsets: calculatedLabelOffsets[currentImageLabel] ? structuredClone(calculatedLabelOffsets[currentImageLabel]) : {},
       rotationStamps: window.customLabelOffsetsRotationByImageAndStroke && window.customLabelOffsetsRotationByImageAndStroke[currentImageLabel]
-        ? JSON.parse(JSON.stringify(window.customLabelOffsetsRotationByImageAndStroke[currentImageLabel]))
+        ? structuredClone(window.customLabelOffsetsRotationByImageAndStroke[currentImageLabel])
         : {},
       // CRITICAL FIX: Store complete vector data for all strokes to enable undo of control point modifications
-      allVectorData: vectorStrokesByImage[currentImageLabel] ? JSON.parse(JSON.stringify(vectorStrokesByImage[currentImageLabel])) : {}
+      allVectorData: vectorStrokesByImage[currentImageLabel] ? structuredClone(vectorStrokesByImage[currentImageLabel]) : {}
     };
         
     // Store vector data with the undo action if available
@@ -8352,7 +8360,7 @@ document.addEventListener('DOMContentLoaded', () => {
               if (!vectorStrokesByImage[lastAction.image]) {
                 vectorStrokesByImage[lastAction.image] = {};
               }
-              vectorStrokesByImage[lastAction.image][strokeLabel] = JSON.parse(JSON.stringify(lastAction.vectorData[strokeLabel]));
+              vectorStrokesByImage[lastAction.image][strokeLabel] = structuredClone(lastAction.vectorData[strokeLabel]);
             }
                         
             // Restore visibility - explicitly ensuring it's set to visible
@@ -8379,7 +8387,7 @@ document.addEventListener('DOMContentLoaded', () => {
               if (!strokeMeasurements[lastAction.image]) {
                 strokeMeasurements[lastAction.image] = {};
               }
-              strokeMeasurements[lastAction.image][strokeLabel] = JSON.parse(JSON.stringify(lastAction.measurements[strokeLabel]));
+              strokeMeasurements[lastAction.image][strokeLabel] = structuredClone(lastAction.measurements[strokeLabel]);
             }
                         
             // Restore custom label positions (CRITICAL!)
@@ -8388,7 +8396,7 @@ document.addEventListener('DOMContentLoaded', () => {
               if (!window.customLabelPositions) {
                 window.customLabelPositions = {};
               }
-              window.customLabelPositions[posKey] = JSON.parse(JSON.stringify(lastAction.labelOffsets[strokeLabel]));
+              window.customLabelPositions[posKey] = structuredClone(lastAction.labelOffsets[strokeLabel]);
                             
               // Also sync to localStorage
               syncLabelOffsetsToStorage(posKey, window.customLabelPositions[posKey]);
@@ -8419,7 +8427,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (previousState && previousState.state) {
         // CRITICAL FIX: Restore vector data for control point undo functionality
         if (previousState.allVectorData) {
-          vectorStrokesByImage[currentImageLabel] = JSON.parse(JSON.stringify(previousState.allVectorData));
+          vectorStrokesByImage[currentImageLabel] = structuredClone(previousState.allVectorData);
           // **NEW**: Invalidate anchor cache when vector data is restored from undo
           window.invalidateAnchorCache(currentImageLabel);
           //                     console.log('Vector data restored for undo');
@@ -8434,12 +8442,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Restore label positions if they exist in the state
         if (previousState.customLabelPositions) {
-          customLabelPositions[currentImageLabel] = JSON.parse(JSON.stringify(previousState.customLabelPositions));
+          customLabelPositions[currentImageLabel] = structuredClone(previousState.customLabelPositions);
           // SYNC FIX: Also restore to window.customLabelPositions
           if (!window.customLabelPositions[currentImageLabel]) {
             window.customLabelPositions[currentImageLabel] = {};
           }
-          window.customLabelPositions[currentImageLabel] = JSON.parse(JSON.stringify(previousState.customLabelPositions));
+          window.customLabelPositions[currentImageLabel] = structuredClone(previousState.customLabelPositions);
         } else {
           // If not in state, ensure it's at least an empty object to prevent errors
           customLabelPositions[currentImageLabel] = {};
@@ -8448,7 +8456,7 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         }
         if (previousState.calculatedLabelOffsets) {
-          calculatedLabelOffsets[currentImageLabel] = JSON.parse(JSON.stringify(previousState.calculatedLabelOffsets));
+          calculatedLabelOffsets[currentImageLabel] = structuredClone(previousState.calculatedLabelOffsets);
         } else {
           calculatedLabelOffsets[currentImageLabel] = {};
         }
@@ -8457,7 +8465,7 @@ document.addEventListener('DOMContentLoaded', () => {
           if (!window.customLabelOffsetsRotationByImageAndStroke) {
             window.customLabelOffsetsRotationByImageAndStroke = {};
           }
-          window.customLabelOffsetsRotationByImageAndStroke[currentImageLabel] = JSON.parse(JSON.stringify(previousState.rotationStamps));
+          window.customLabelOffsetsRotationByImageAndStroke[currentImageLabel] = structuredClone(previousState.rotationStamps);
         } else {
           if (!window.customLabelOffsetsRotationByImageAndStroke) {
             window.customLabelOffsetsRotationByImageAndStroke = {};
@@ -8571,12 +8579,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Restore label positions if they exist in the initial state
         if (initialState.customLabelPositions) {
-          customLabelPositions[currentImageLabel] = JSON.parse(JSON.stringify(initialState.customLabelPositions));
+          customLabelPositions[currentImageLabel] = structuredClone(initialState.customLabelPositions);
           // SYNC FIX: Also restore to window.customLabelPositions
           if (!window.customLabelPositions[currentImageLabel]) {
             window.customLabelPositions[currentImageLabel] = {};
           }
-          window.customLabelPositions[currentImageLabel] = JSON.parse(JSON.stringify(initialState.customLabelPositions));
+          window.customLabelPositions[currentImageLabel] = structuredClone(initialState.customLabelPositions);
         } else {
           customLabelPositions[currentImageLabel] = {};
           if (!window.customLabelPositions[currentImageLabel]) {
@@ -8584,7 +8592,7 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         }
         if (initialState.calculatedLabelOffsets) {
-          calculatedLabelOffsets[currentImageLabel] = JSON.parse(JSON.stringify(initialState.calculatedLabelOffsets));
+          calculatedLabelOffsets[currentImageLabel] = structuredClone(initialState.calculatedLabelOffsets);
         } else {
           calculatedLabelOffsets[currentImageLabel] = {};
         }
@@ -8876,12 +8884,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Restore label positions if they exist in the action
         if (actionToRedo.customLabelPositions) {
-          customLabelPositions[currentImageLabel] = JSON.parse(JSON.stringify(actionToRedo.customLabelPositions));
+          customLabelPositions[currentImageLabel] = structuredClone(actionToRedo.customLabelPositions);
           // SYNC FIX: Also restore to window.customLabelPositions
           if (!window.customLabelPositions[currentImageLabel]) {
             window.customLabelPositions[currentImageLabel] = {};
           }
-          window.customLabelPositions[currentImageLabel] = JSON.parse(JSON.stringify(actionToRedo.customLabelPositions));
+          window.customLabelPositions[currentImageLabel] = structuredClone(actionToRedo.customLabelPositions);
         } else {
           // If not in state, ensure it's at least an empty object to prevent errors
           customLabelPositions[currentImageLabel] = {};
@@ -8890,7 +8898,7 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         }
         if (actionToRedo.calculatedLabelOffsets) {
-          calculatedLabelOffsets[currentImageLabel] = JSON.parse(JSON.stringify(actionToRedo.calculatedLabelOffsets));
+          calculatedLabelOffsets[currentImageLabel] = structuredClone(actionToRedo.calculatedLabelOffsets);
         } else {
           calculatedLabelOffsets[currentImageLabel] = {};
         }
@@ -11517,11 +11525,11 @@ document.addEventListener('DOMContentLoaded', () => {
         
     // **CRITICAL FIX**: Preserve stroke data before image replacement
     const preservedStrokeData = {
-      vectorStrokes: window.vectorStrokesByImage[label] ? JSON.parse(JSON.stringify(window.vectorStrokesByImage[label])) : {},
+      vectorStrokes: window.vectorStrokesByImage[label] ? structuredClone(window.vectorStrokesByImage[label]) : {},
       lineStrokes: window.lineStrokesByImage[label] ? [...(window.lineStrokesByImage[label] || [])] : [],
-      strokeVisibility: window.strokeVisibilityByImage[label] ? JSON.parse(JSON.stringify(window.strokeVisibilityByImage[label])) : {},
-      strokeLabelVisibility: window.strokeLabelVisibility[label] ? JSON.parse(JSON.stringify(window.strokeLabelVisibility[label])) : {},
-      strokeMeasurements: window.strokeMeasurements[label] ? JSON.parse(JSON.stringify(window.strokeMeasurements[label])) : {}
+      strokeVisibility: window.strokeVisibilityByImage[label] ? structuredClone(window.strokeVisibilityByImage[label]) : {},
+      strokeLabelVisibility: window.strokeLabelVisibility[label] ? structuredClone(window.strokeLabelVisibility[label]) : {},
+      strokeMeasurements: window.strokeMeasurements[label] ? structuredClone(window.strokeMeasurements[label]) : {}
     };
         
     // If enabled, force-resize the incoming bitmap to the old intrinsic size
@@ -12706,7 +12714,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // This is a single click on a label, not a double click (double click is handled above and returns)
       const currentlyHoveredStroke = hoveredLabel.strokeLabel;
       //             console.log(`Canvas Mousedown: Single click on canvas label: ${currentlyHoveredStroke}.`);
-      //             console.log(`Canvas Mousedown: Selection BEFORE update for ${window.currentImageLabel}:`, window.multipleSelectedStrokesByImage[window.currentImageLabel] ? JSON.parse(JSON.stringify(window.multipleSelectedStrokesByImage[window.currentImageLabel])) : 'undefined');
+      //             console.log(`Canvas Mousedown: Selection BEFORE update for ${window.currentImageLabel}:`, window.multipleSelectedStrokesByImage[window.currentImageLabel] ? structuredClone(window.multipleSelectedStrokesByImage[window.currentImageLabel]) : 'undefined');
 
       // Clear curved line preview state if we're selecting a label while in curved mode
       if (drawingMode === 'curved' && curvedLinePoints.length > 0) {
@@ -12733,7 +12741,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Update the primary selected stroke variable
         window.selectedStrokeByImage[window.currentImageLabel] = currentlyHoveredStroke;
 
-        //                 console.log(`Canvas Mousedown: Selection AFTER update for ${window.currentImageLabel}:`, JSON.parse(JSON.stringify(window.multipleSelectedStrokesByImage[window.currentImageLabel])));
+        //                 console.log(`Canvas Mousedown: Selection AFTER update for ${window.currentImageLabel}:`, structuredClone(window.multipleSelectedStrokesByImage[window.currentImageLabel]));
         //                 console.log(`Canvas Mousedown: Focused/Selected stroke is now ${currentlyHoveredStroke}`);
 
         // If NOT already in edit mode for this stroke, do not enter it on single click.
@@ -16651,7 +16659,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const preDeleteStrokeOrder = lineStrokesByImage[currentImageLabel] ? [...lineStrokesByImage[currentImageLabel]] : [];
 
     // Store original state for the specific strokes being deleted
-    const deletedStrokeLabels = JSON.parse(JSON.stringify(currentSelectedStrokesArray)); // These are the ones being actively deleted
+    const deletedStrokeLabels = structuredClone(currentSelectedStrokesArray); // These are the ones being actively deleted
     const originalVectorData = {};
     const originalVisibility = {};
     const originalLabelVisibility = {};
@@ -16661,7 +16669,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const originalLabelOffsets = {};
     deletedStrokeLabels.forEach(strokeLabel => {
       if (vectorStrokesByImage[currentImageLabel] && vectorStrokesByImage[currentImageLabel][strokeLabel]) {
-        originalVectorData[strokeLabel] = JSON.parse(JSON.stringify(vectorStrokesByImage[currentImageLabel][strokeLabel]));
+        originalVectorData[strokeLabel] = structuredClone(vectorStrokesByImage[currentImageLabel][strokeLabel]);
       }
       if (strokeVisibilityByImage[currentImageLabel]) {
         originalVisibility[strokeLabel] = strokeVisibilityByImage[currentImageLabel][strokeLabel];
@@ -16670,14 +16678,14 @@ document.addEventListener('DOMContentLoaded', () => {
         originalLabelVisibility[strokeLabel] = strokeLabelVisibility[currentImageLabel][strokeLabel];
       }
       if (strokeMeasurements[currentImageLabel]) {
-        originalMeasurements[strokeLabel] = JSON.parse(JSON.stringify(strokeMeasurements[currentImageLabel][strokeLabel] || {}));
+        originalMeasurements[strokeLabel] = structuredClone(strokeMeasurements[currentImageLabel][strokeLabel] || {});
       }
       // Save custom label positions (CRITICAL for undo!)
       const posKey = `${currentImageLabel}_${strokeLabel}`;
       if (window.customLabelPositions && window.customLabelPositions[posKey]) {
-        originalLabelOffsets[strokeLabel] = JSON.parse(JSON.stringify(window.customLabelPositions[posKey]));
+        originalLabelOffsets[strokeLabel] = structuredClone(window.customLabelPositions[posKey]);
       } else if (window.calculatedLabelOffsets && window.calculatedLabelOffsets[posKey]) {
-        originalLabelOffsets[strokeLabel] = JSON.parse(JSON.stringify(window.calculatedLabelOffsets[posKey]));
+        originalLabelOffsets[strokeLabel] = structuredClone(window.calculatedLabelOffsets[posKey]);
       }
     });
 
@@ -18218,14 +18226,14 @@ window.shareProject = async function() {
       projectData.customLabelPositions = {};
       imageLabels.forEach(label => {
         projectData.customLabelPositions[label] = (window.customLabelPositions && window.customLabelPositions[label])
-          ? JSON.parse(JSON.stringify(window.customLabelPositions[label]))
+          ? structuredClone(window.customLabelPositions[label])
           : {};
       });
       if (window.customLabelOffsetsRotationByImageAndStroke) {
         projectData.customLabelRotationStamps = {};
         imageLabels.forEach(label => {
           projectData.customLabelRotationStamps[label] = window.customLabelOffsetsRotationByImageAndStroke[label]
-            ? JSON.parse(JSON.stringify(window.customLabelOffsetsRotationByImageAndStroke[label]))
+            ? structuredClone(window.customLabelOffsetsRotationByImageAndStroke[label])
             : {};
         });
       }
