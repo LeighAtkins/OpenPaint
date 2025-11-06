@@ -8736,9 +8736,9 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
   }
     
   function redo() {
-    //         console.log(`Attempting to redo in ${currentImageLabel} workspace`);
-    //         console.log(`Current redo stack: ${redoStackByImage[currentImageLabel]?.length || 0} items`);
-        
+    console.log(`[redo] Attempting to redo in ${currentImageLabel} workspace`);
+    console.log(`[redo] Current redo stack: ${redoStackByImage[currentImageLabel]?.length || 0} items`);
+
     // Check global redo stack first for image deletions
     if (window.globalRedoStack && window.globalRedoStack.length > 0) {
       const lastGlobalAction = window.globalRedoStack[window.globalRedoStack.length - 1];
@@ -8766,8 +8766,8 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
     if (redoStack && redoStack.length > 0) {
       // Get the action to redo
       const actionToRedo = redoStack.pop();
-      //             console.log(`Redoing action of type: ${actionToRedo.type}, label: ${actionToRedo.label || 'none'}`);
-            
+      console.log(`[redo] Redoing action of type: ${actionToRedo.type}, label: ${actionToRedo.label || 'none'}`);
+
       // Add back to undo stack
       undoStackByImage[currentImageLabel].push(actionToRedo);
             
@@ -9003,7 +9003,7 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
         window.updateNextTagDisplay();
       }
     } else {
-      //             console.log('No redo actions available for this workspace');
+      console.log(`[redo] No redo actions available for workspace: ${currentImageLabel}`);
     }
   }
 
@@ -14537,6 +14537,11 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
   }
     
   // Handle Ctrl+Z for undo and Ctrl+Y for redo
+  // Prevent duplicate event listener registration
+  if (!window.undoRedoKeyboardListenerRegistered) {
+    window.undoRedoKeyboardListenerRegistered = true;
+    console.log('[KEYBOARD] Registering undo/redo keyboard listener (first time only)');
+
   document.addEventListener('keydown', (e) => {
     // Handle undo (Ctrl+Z)
     if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !isDrawingOrPasting) {
@@ -14579,23 +14584,28 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
     // Handle redo (Ctrl+Y)
     if ((e.ctrlKey || e.metaKey) && e.key === 'y' && !isDrawingOrPasting) {
       e.preventDefault();
-      //             console.log('Ctrl+Y pressed, executing redo');
-            
+      console.log('[REDO] Ctrl+Y pressed, executing redo');
+      console.log('[REDO] Current image:', currentImageLabel);
+      console.log('[REDO] Redo stack length:', redoStackByImage[currentImageLabel]?.length || 0);
+
       // Make sure we have valid redo stacks
       if (!redoStackByImage[currentImageLabel]) {
         redoStackByImage[currentImageLabel] = [];
-        //                 console.log(`Created new redo stack for ${currentImageLabel}`);
+        console.log(`[REDO] Created new redo stack for ${currentImageLabel}`);
       }
-            
+
       // Force a redraw after redo to ensure visual consistency
       const performRedo = async () => {
+        console.log('[REDO] Starting redo operation...');
         redo();
+        console.log('[REDO] redo() completed, waiting for state update...');
         // Small delay to ensure state is updated
         await new Promise(resolve => setTimeout(resolve, 10));
-                
+
         // Force redraw with visibility to ensure labels appear immediately
         redrawCanvasWithVisibility();
-                
+        console.log('[REDO] Canvas redrawn');
+
         // Make sure we restore proper label visibility settings for any redone strokes
         if (lineStrokesByImage[currentImageLabel]?.length > 0) {
           const strokes = lineStrokesByImage[currentImageLabel];
@@ -14609,13 +14619,14 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
             }
           }
         }
-                
+
         // Update all UI elements to ensure synchronized state
         updateStrokeCounter();
         updateStrokeVisibilityControls();
         updateSidebarStrokeCounts();
+        console.log('[REDO] All updates completed');
       };
-            
+
       performRedo();
     }
 
@@ -14670,7 +14681,10 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
       }
     }
   });
-    
+  } else {
+    console.log('[KEYBOARD] Undo/redo keyboard listener already registered, skipping duplicate registration');
+  }
+
   // Clear canvas (but keep the background image)
   clearButton.addEventListener('click', () => {
     // Save the current state before clearing
