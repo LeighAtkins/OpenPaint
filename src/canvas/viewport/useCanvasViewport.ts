@@ -1,15 +1,18 @@
 /**
  * Canvas Viewport Controller
- * 
+ *
  * Centralizes all viewport transform math and eliminates coordinate drift.
  * Provides a single source of truth for:
  * - DPR-aware canvas sizing
  * - World <-> Client coordinate transforms
  * - Lock state for maintaining focus during resizes
  * - RAF-batched resize handling
+ *
+ * NOTE: This file is legacy/unused code. The project uses vanilla JavaScript.
+ * React types removed to fix Vercel build errors.
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+// import { useCallback, useEffect, useRef, useState } from 'react';
 
 export interface ViewportTransform {
   scale: number;
@@ -36,8 +39,8 @@ export interface ViewportBounds {
 }
 
 export interface UseCanvasViewportProps {
-  containerRef: React.RefObject<HTMLElement>;
-  canvasRef: React.RefObject<HTMLCanvasElement>;
+  containerRef: { current: HTMLElement | null };
+  canvasRef: { current: HTMLCanvasElement | null };
   frameBounds?: ViewportBounds; // The content bounds to fit
   padding?: number; // Padding around content when fitting
 }
@@ -139,21 +142,28 @@ function toWorld(
   };
 }
 
+/**
+ * LEGACY/UNUSED: This function is commented out as it uses React hooks.
+ * The project uses vanilla JavaScript only. Kept for reference.
+ */
 export function useCanvasViewport({
   containerRef,
   canvasRef,
   frameBounds,
   padding = 20
 }: UseCanvasViewportProps): UseCanvasViewportReturn {
+  throw new Error('useCanvasViewport is legacy code and should not be called');
+
+  /* React hooks removed - this code is not functional
   const [transform, setTransform] = useState<ViewportTransform>({
     scale: 1,
     tx: 0,
     ty: 0
   });
-  
+
   const [dpr, setDpr] = useState(() => window.devicePixelRatio || 1);
   const [lockState, setLockState] = useState<ViewportLockState>({ kind: 'unlocked' });
-  
+
   // RAF batching
   const rafIdRef = useRef<number | null>(null);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
@@ -354,7 +364,7 @@ export function useCanvasViewport({
       }
     };
   }, [containerRef, scheduleLayout]);
-  
+
   return {
     transform,
     dpr,
@@ -365,6 +375,7 @@ export function useCanvasViewport({
     zoomToFrame,
     scheduleLayout
   };
+  */ // End of commented React hook code
 }
 
 // Export helper functions for testing
