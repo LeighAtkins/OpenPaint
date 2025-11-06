@@ -43,10 +43,19 @@ function joinUrl(base, path) {
 const sharedProjects = new Map();
 
 // Ensure uploads directory exists
-const uploadDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-    console.log('Created uploads directory');
+// In serverless environments (Vercel), use /tmp since the filesystem is read-only
+const isServerless = process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.LAMBDA_TASK_ROOT;
+const uploadDir = isServerless ? '/tmp/uploads' : path.join(__dirname, 'uploads');
+
+// Create uploads directory if it doesn't exist
+try {
+    if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+        console.log(`Created uploads directory at: ${uploadDir}`);
+    }
+} catch (err) {
+    console.error(`Warning: Could not create uploads directory at ${uploadDir}:`, err.message);
+    console.log('Uploads may not work correctly. Consider using cloud storage for production.');
 }
 
 // Set up multer for handling file uploads
