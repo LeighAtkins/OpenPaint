@@ -2317,6 +2317,29 @@
                 updatePanelState();
                 window.addEventListener('resize', updatePanelState);
 
+                // Hook into existing toggle buttons to make them minimize to circles on mobile
+                const strokeToggleBtn = document.getElementById('toggleStrokePanel');
+                const imageToggleBtn = document.getElementById('toggleImagePanel');
+
+                function interceptToggleButton(button, panel) {
+                    if (!button) return;
+
+                    button.addEventListener('click', (e) => {
+                        if (!isMobile()) return;
+
+                        // If panel is expanded, minimize it to circle instead of normal toggle
+                        if (panel.classList.contains('expanded')) {
+                            e.stopPropagation();
+                            e.preventDefault();
+                            panel.classList.add('minimized');
+                            panel.classList.remove('expanded');
+                        }
+                    }, true); // Use capture phase to intercept before other handlers
+                }
+
+                interceptToggleButton(strokeToggleBtn, strokePanel);
+                interceptToggleButton(imageToggleBtn, imagePanel);
+
                 // Toggle expand/collapse on click
                 function createPanelToggle(panel) {
                     let isDragging = false;
