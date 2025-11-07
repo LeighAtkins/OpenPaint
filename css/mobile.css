@@ -143,9 +143,9 @@
     }
 
     /* Canvas controls - reduce bottom spacing and make scrollable */
-    #canvasControls {
+    #canvasControls.floating-panel.fixed {
         position: fixed !important;
-        bottom: 0.5rem !important;
+        bottom: 1rem !important;
         left: 50% !important;
         right: auto !important;
         transform: translateX(-50%) !important;
@@ -153,7 +153,8 @@
         max-width: calc(100vw - 1rem) !important;
         overflow-x: auto !important;
         -webkit-overflow-scrolling: touch;
-        z-index: 4000 !important;
+        z-index: 5000 !important;
+        display: block !important;
     }
 
     #canvasControlsContent {
