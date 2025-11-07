@@ -344,9 +344,4 @@ app.use((err, req, res, next) => {
     });
 });
 
-// Catch-all route for any unmatched paths
-app.use((req, res) => {
-    res.status(404).json({ error: 'Route not found', path: req.url });
-});
-
 module.exports = app;
