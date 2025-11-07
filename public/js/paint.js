@@ -11734,6 +11734,12 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
   const fitModeSelect = document.getElementById('fitModeSelect');
   const applyFitCurrentButton = document.getElementById('applyFitCurrent');
   const applyFitAllButton = document.getElementById('applyFitAll');
+
+  console.log('[FIT] Fit control elements:', {
+    fitModeSelect: fitModeSelect ? 'FOUND' : 'NOT FOUND',
+    applyFitCurrentButton: applyFitCurrentButton ? 'FOUND' : 'NOT FOUND',
+    applyFitAllButton: applyFitAllButton ? 'FOUND' : 'NOT FOUND'
+  });
     
   // Fit mode functions
   // **NEW**: Label Offset Model for Resolution Changes
