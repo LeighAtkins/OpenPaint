@@ -667,22 +667,12 @@ app.post('/api/storage/presign', async (req, res) => {
   }
 });
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-    console.error('Server error:', err);
-    res.status(500).json({ success: false, message: 'Server error' });
-});
-
-// export for Vercel
-module.exports = app;
-
-// keep local server only when run directly
-if (require.main === module) {
-  const port = process.env.PORT || 3000;
-  app.listen(port, "0.0.0.0", () => {
-    console.log(`OpenPaint app listening at http://localhost:${port}`);
-  });
-}
+// Error handling middleware (must be after all routes)
+// Note: This is commented out because it needs to be AFTER the SPA fallback route
+// app.use((err, req, res, next) => {
+//     console.error('Server error:', err);
+//     res.status(500).json({ success: false, message: 'Server error' });
+// });
 
 /**
  * Python rembg processing function using inline script execution
@@ -807,7 +797,7 @@ app.get('/src/:filename(*)', (req, res) => {
   });
 });
 
-// SPA fallback (last route)
+// SPA fallback (last route - must be after all other routes)
 app.get('*', (req, res) => {
   const indexPath = path.join(__dirname, 'index.html');
   res.sendFile(indexPath, (err) => {
@@ -819,5 +809,19 @@ app.get('*', (req, res) => {
   });
 });
 
+// Error handling middleware (must be after all routes)
+app.use((err, req, res, next) => {
+    console.error('Server error:', err);
+    res.status(500).json({ success: false, message: 'Server error' });
+});
+
 // Export for Vercel
 module.exports = app;
+
+// Local server startup (only when run directly, not in Vercel)
+if (require.main === module) {
+  const port = process.env.PORT || 3000;
+  app.listen(port, "0.0.0.0", () => {
+    console.log(`OpenPaint app listening at http://localhost:${port}`);
+  });
+}
