@@ -2282,6 +2282,122 @@
                 }
             })();
 
+            // Mobile panel functionality - circular draggable buttons
+            (function initMobilePanels() {
+                const isMobile = () => window.innerWidth <= 768;
+
+                if (!strokePanel || !imagePanel) return;
+
+                // Add toggle icons to panels
+                const strokeIcon = document.createElement('div');
+                strokeIcon.className = 'panel-toggle-icon';
+                strokeIcon.innerHTML = '📐';
+                strokeIcon.title = 'Elements';
+                strokePanel.insertBefore(strokeIcon, strokePanel.firstChild);
+
+                const imageIcon = document.createElement('div');
+                imageIcon.className = 'panel-toggle-icon';
+                imageIcon.innerHTML = '🖼️';
+                imageIcon.title = 'Images';
+                imagePanel.insertBefore(imageIcon, imagePanel.firstChild);
+
+                // Set initial state based on screen size
+                function updatePanelState() {
+                    if (isMobile()) {
+                        strokePanel.classList.add('minimized');
+                        strokePanel.classList.remove('expanded');
+                        imagePanel.classList.add('minimized');
+                        imagePanel.classList.remove('expanded');
+                    } else {
+                        strokePanel.classList.remove('minimized', 'expanded');
+                        imagePanel.classList.remove('minimized', 'expanded');
+                    }
+                }
+
+                updatePanelState();
+                window.addEventListener('resize', updatePanelState);
+
+                // Toggle expand/collapse on click
+                function createPanelToggle(panel) {
+                    let isDragging = false;
+                    let startX, startY, startLeft, startTop;
+
+                    // On mobile, make panel headers close the panel when expanded
+                    const header = panel.querySelector('[id$="Header"], [id$="header"]');
+                    if (header) {
+                        header.addEventListener('click', (e) => {
+                            if (!isMobile()) return;
+                            if (panel.classList.contains('expanded')) {
+                                // Don't close if clicking on buttons within the header
+                                if (e.target.tagName === 'BUTTON' || e.target.closest('button')) {
+                                    return;
+                                }
+                                panel.classList.add('minimized');
+                                panel.classList.remove('expanded');
+                                e.stopPropagation();
+                            }
+                        });
+                    }
+
+                    panel.addEventListener('pointerdown', (e) => {
+                        if (!isMobile()) return;
+
+                        // If minimized, prepare for drag
+                        if (panel.classList.contains('minimized')) {
+                            isDragging = false;
+                            const rect = panel.getBoundingClientRect();
+                            startX = e.clientX;
+                            startY = e.clientY;
+                            startLeft = rect.left;
+                            startTop = rect.top;
+
+                            panel.style.transition = 'none';
+                        }
+                    });
+
+                    panel.addEventListener('pointermove', (e) => {
+                        if (!isMobile() || !panel.classList.contains('minimized')) return;
+
+                        const moveX = Math.abs(e.clientX - startX);
+                        const moveY = Math.abs(e.clientY - startY);
+
+                        if (moveX > 5 || moveY > 5) {
+                            isDragging = true;
+                            const newLeft = startLeft + (e.clientX - startX);
+                            const newTop = startTop + (e.clientY - startY);
+
+                            // Constrain to viewport
+                            const maxX = window.innerWidth - 56;
+                            const maxY = window.innerHeight - 56;
+
+                            panel.style.left = Math.max(0, Math.min(newLeft, maxX)) + 'px';
+                            panel.style.top = Math.max(0, Math.min(newTop, maxY)) + 'px';
+                            panel.style.right = 'auto';
+                            panel.style.bottom = 'auto';
+                        }
+                    });
+
+                    panel.addEventListener('pointerup', (e) => {
+                        if (!isMobile()) return;
+
+                        panel.style.transition = '';
+
+                        // If not dragging, toggle expand/collapse
+                        if (!isDragging) {
+                            if (panel.classList.contains('minimized')) {
+                                panel.classList.remove('minimized');
+                                panel.classList.add('expanded');
+                            }
+                        }
+
+                        isDragging = false;
+                    });
+                }
+
+                createPanelToggle(strokePanel);
+                createPanelToggle(imagePanel);
+            })();
+
             // removed elements resize handle wiring
 
             // Set up Vectors and tags panel button functionality

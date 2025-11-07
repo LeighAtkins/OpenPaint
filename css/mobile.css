@@ -33,19 +33,113 @@
         flex-shrink: 0;
     }
 
-    /* Reduce side panel widths for mobile */
+    /* Transform side panels into circular floating buttons */
     #strokePanel, #imagePanel {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+
+    /* Minimized circle state */
+    #strokePanel.minimized, #imagePanel.minimized {
+        width: 56px !important;
+        height: 56px !important;
+        border-radius: 50% !important;
+        overflow: hidden !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+        cursor: move;
+    }
+
+    #strokePanel.minimized {
+        left: 1rem !important;
+        bottom: 5rem !important;
+        top: auto !important;
+    }
+
+    #imagePanel.minimized {
+        right: 1rem !important;
+        bottom: 5rem !important;
+        top: auto !important;
+    }
+
+    /* Hide panel content when minimized */
+    #strokePanel.minimized > *:not(.panel-toggle-icon),
+    #imagePanel.minimized > *:not(.panel-toggle-icon) {
+        display: none !important;
+    }
+
+    /* Show only icon in minimized state */
+    .panel-toggle-icon {
+        display: none;
+        width: 100%;
+        height: 100%;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        color: white;
+        cursor: pointer;
+        user-select: none;
+    }
+
+    #strokePanel .panel-toggle-icon {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    #imagePanel .panel-toggle-icon {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+
+    #strokePanel.minimized .panel-toggle-icon,
+    #imagePanel.minimized .panel-toggle-icon {
+        display: flex !important;
+    }
+
+    /* Expanded state - full panel */
+    #strokePanel.expanded, #imagePanel.expanded {
         width: 85vw !important;
         max-width: 320px !important;
+        height: auto !important;
+        max-height: min(40rem, calc(100vh - 2rem)) !important;
+        border-radius: 1rem !important;
+        top: 50% !important;
+        transform: translateY(-50%) !important;
+        z-index: 100 !important;
     }
 
-    /* Position panels closer to edges on mobile */
-    #strokePanel {
+    #strokePanel.expanded {
         left: 0.5rem !important;
+        bottom: auto !important;
     }
 
-    #imagePanel {
+    #imagePanel.expanded {
         right: 0.5rem !important;
+        bottom: auto !important;
+    }
+
+    #strokePanel.expanded .panel-toggle-icon,
+    #imagePanel.expanded .panel-toggle-icon {
+        display: none !important;
+    }
+
+    /* Make headers more tappable on mobile when expanded */
+    #strokePanel.expanded [id$="Header"],
+    #strokePanel.expanded [id$="header"],
+    #imagePanel.expanded [id$="Header"],
+    #imagePanel.expanded [id$="header"] {
+        cursor: pointer;
+        min-height: 44px;
+    }
+
+    /* Add visual hint that header is tappable */
+    #strokePanel.expanded [id$="Header"]::after,
+    #imagePanel.expanded [id$="Header"]::after {
+        content: "Tap header to close";
+        font-size: 10px;
+        color: #94a3b8;
+        position: absolute;
+        right: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        pointer-events: none;
+        display: none;
     }
 
     /* Canvas controls - reduce bottom spacing and make scrollable */
