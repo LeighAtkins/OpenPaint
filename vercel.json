@@ -2,7 +2,7 @@
   "version": 2,
   "builds": [
     {
-      "src": "app.js",
+      "src": "server/app.js",
       "use": "@vercel/node"
     },
     {
@@ -13,15 +13,15 @@
   "routes": [
     {
       "src": "^/ai/(.*)$",
-      "dest": "/app.js"
+      "dest": "/server/app.js"
     },
     {
       "src": "^/api/(.*)$",
-      "dest": "/app.js"
+      "dest": "/server/app.js"
     },
     {
       "src": "^/(health|env-check|version)$",
-      "dest": "/app.js"
+      "dest": "/server/app.js"
     },
     {
       "src": "^/js/(.*)$",
@@ -41,7 +41,7 @@
     },
     {
       "src": "^(?!/(ai|api|health|env-check|version|js|css|src|diagnostics-overlay|test-coordinate-system)/).*$",
-      "dest": "/app.js"
+      "dest": "/server/app.js"
     }
   ]
 }
