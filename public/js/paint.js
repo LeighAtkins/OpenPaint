@@ -12202,6 +12202,12 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
     const { scale, position } = calculateFitScale(fitMode);
     console.log(`[applyFitMode] Calculated scale: ${scale.toFixed(3)}, position: (${position.x.toFixed(1)}, ${position.y.toFixed(1)})`);
 
+    // Update per-image scale and position (this is what the rendering code uses!)
+    window.imageScaleByLabel[currentImageLabel] = scale;
+    window.imagePositionByLabel[currentImageLabel] = { x: position.x, y: position.y };
+    console.log(`[applyFitMode] Updated imageScaleByLabel[${currentImageLabel}] = ${scale}`);
+    console.log(`[applyFitMode] Updated imagePositionByLabel[${currentImageLabel}] =`, { x: position.x, y: position.y });
+
     // **NEW**: Use Transform T system for deterministic updates
     const currentT = window.getCurrentTransform();
     const newT = {
@@ -12219,10 +12225,10 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
     if (imageDimensions) {
       window.saveFitSession(currentImageLabel, fitMode, imageDimensions);
     }
-        
+
     // Save state for undo/redo
     saveState(true, false, false);
-        
+
     // Update UI scale text before redraw to keep it in sync
     try { if (typeof updateScaleUI === 'function') updateScaleUI(); } catch(_) {}
     // Redraw with new scale and position
