@@ -1242,6 +1242,56 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     // *** END ADDED BLOCK ***
 
+    // *** ADDED: Update label counters based on loaded image labels to prevent duplicates ***
+    if (dataForFinalSteps.imageLabels && window.labelCounters) {
+      console.log('[Load Project] Scanning loaded image labels to update counters...');
+
+      // Reset paste counters to 1 (they'll be updated based on existing labels)
+      Object.keys(window.labelCounters).forEach(base => {
+        window.labelCounters[base].paste = 1;
+      });
+
+      // Scan all loaded labels and find the highest paste number for each base
+      dataForFinalSteps.imageLabels.forEach(label => {
+        // Match pattern: base_paste_number (e.g., "front_paste_5")
+        const pasteMatch = label.match(/^([^_]+)_paste_(\d+)$/);
+        if (pasteMatch) {
+          const base = pasteMatch[1];
+          const num = parseInt(pasteMatch[2], 10);
+
+          // Initialize counter for this base if it doesn't exist
+          if (!window.labelCounters[base]) {
+            window.labelCounters[base] = { regular: 1, paste: 1 };
+          }
+
+          // Update paste counter to be one more than the highest found
+          if (num >= window.labelCounters[base].paste) {
+            window.labelCounters[base].paste = num + 1;
+            console.log(`  Updated ${base}_paste counter to ${window.labelCounters[base].paste} (found ${label})`);
+          }
+        }
+
+        // Also check for regular numbered labels (e.g., "front_2")
+        const regularMatch = label.match(/^([^_]+)_(\d+)$/);
+        if (regularMatch && !label.includes('paste')) {
+          const base = regularMatch[1];
+          const num = parseInt(regularMatch[2], 10);
+
+          if (!window.labelCounters[base]) {
+            window.labelCounters[base] = { regular: 1, paste: 1 };
+          }
+
+          if (num >= window.labelCounters[base].regular) {
+            window.labelCounters[base].regular = num + 1;
+            console.log(`  Updated ${base} regular counter to ${window.labelCounters[base].regular} (found ${label})`);
+          }
+        }
+      });
+
+      console.log('[Load Project] Updated label counters:', JSON.stringify(window.labelCounters));
+    }
+    // *** END ADDED BLOCK ***
+
     // Force recalculation of centered positions now that all images are loaded
     console.log('[Load Project] Checking resizeCanvas availability:', typeof window.resizeCanvas);
     if (typeof window.resizeCanvas === 'function') {

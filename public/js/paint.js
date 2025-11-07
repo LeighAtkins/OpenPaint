@@ -2028,42 +2028,53 @@ document.addEventListener('DOMContentLoaded', () => {
   function generateMeasurementsList() {
     const projectName = document.getElementById('projectName').value || 'Untitled Project';
     const currentUnit = document.getElementById('unitSelector').value;
-        
+
     let measurementsList = `${projectName} - Measurements List\n`;
     measurementsList += `Generated on: ${new Date().toLocaleDateString()}\n`;
     measurementsList += `Unit: ${currentUnit === 'inch' ? 'Inches' : 'Centimeters'}\n`;
     measurementsList += `${'='.repeat(50)}\n\n`;
-        
+
     // Get all images that have measurements
     const imageLabels = Object.keys(window.strokeMeasurements || {});
-        
+
     if (imageLabels.length === 0) {
       measurementsList += 'No measurements found in this project.\n';
       showMeasurementsDialog(measurementsList);
       return;
     }
-        
+
+    let totalMeasurements = 0;
+    let hasAnyNonZeroMeasurements = false;
+
+    // Collect and process measurements for each image
+    const processedImages = [];
+
     imageLabels.forEach(imageLabel => {
       const measurements = window.strokeMeasurements[imageLabel];
       if (!measurements) return;
-            
+
       const strokeLabels = Object.keys(measurements);
       if (strokeLabels.length === 0) return;
-            
-      // Capitalize and format image label
-      const imageName = imageLabel.charAt(0).toUpperCase() + imageLabel.slice(1);
-      measurementsList += `${imageName} Image:\n`;
-      measurementsList += `${'-'.repeat(imageName.length + 7)}\n`;
-            
+
+      // Filter and collect valid measurements
+      const validMeasurements = [];
+
       strokeLabels.forEach(strokeLabel => {
         const measurement = measurements[strokeLabel];
         if (!measurement) return;
-                
+
+        // Check if measurement has a non-zero value
+        const hasValue = currentUnit === 'inch'
+          ? (measurement.inchWhole > 0 || measurement.inchFraction > 0)
+          : (measurement.cm > 0);
+
+        if (!hasValue) return; // Skip zero measurements
+
         let measurementString = '';
         if (currentUnit === 'inch') {
           const whole = measurement.inchWhole || 0;
           const fraction = measurement.inchFraction || 0;
-                    
+
           let fractionStr = '';
           if (fraction > 0) {
             const fractionMap = {
@@ -2075,19 +2086,63 @@ document.addEventListener('DOMContentLoaded', () => {
               0.75: '3/4',
               0.875: '7/8'
             };
-            fractionStr = ' ' + fractionMap[fraction];
+            fractionStr = ' ' + (fractionMap[fraction] || '');
           }
-          measurementString = `${whole}${fractionStr}"`;
+          measurementString = whole > 0 || fraction > 0 ? `${whole}${fractionStr}"` : '0"';
         } else {
           measurementString = `${measurement.cm.toFixed(1)} cm`;
         }
-                
-        measurementsList += `  ${strokeLabel}: ${measurementString}\n`;
+
+        validMeasurements.push({ label: strokeLabel, value: measurementString });
+        hasAnyNonZeroMeasurements = true;
       });
-            
-      measurementsList += '\n';
+
+      if (validMeasurements.length > 0) {
+        // Sort measurements by label (A1, A2, A3, etc.)
+        validMeasurements.sort((a, b) => a.label.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
+
+        // Capitalize and format image label (replace underscores with spaces)
+        const imageName = imageLabel
+          .split('_')
+          .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(' ');
+
+        processedImages.push({
+          imageName,
+          measurements: validMeasurements
+        });
+
+        totalMeasurements += validMeasurements.length;
+      }
     });
-        
+
+    // Check if we have any valid measurements
+    if (!hasAnyNonZeroMeasurements || processedImages.length === 0) {
+      measurementsList += 'No measurements with values found in this project.\n';
+      measurementsList += '(All measurements are 0" or empty)\n';
+      showMeasurementsDialog(measurementsList);
+      return;
+    }
+
+    // Add summary
+    measurementsList += `Total Measurements: ${totalMeasurements}\n`;
+    measurementsList += `Images with Measurements: ${processedImages.length}\n\n`;
+
+    // Output each image's measurements
+    processedImages.forEach((imageData, index) => {
+      measurementsList += `${imageData.imageName}:\n`;
+      measurementsList += `${'-'.repeat(imageData.imageName.length + 1)}\n`;
+
+      imageData.measurements.forEach(m => {
+        measurementsList += `  ${m.label}: ${m.value}\n`;
+      });
+
+      // Add spacing between images (but not after the last one)
+      if (index < processedImages.length - 1) {
+        measurementsList += '\n';
+      }
+    });
+
     showMeasurementsDialog(measurementsList);
   }
     
