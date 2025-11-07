@@ -12148,12 +12148,8 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
 
     let scale = window.computeScaleForFit(imageNatural, viewportCss, geometryMode);
 
-    // Clamp scale to reasonable bounds
-    const sizeClamp = Math.max(0.01, Math.min(100, scale));
-    const widthScaleLimit = viewportCss.w > 0 ? viewportCss.w / imageNatural.w : Infinity;
-    const heightScaleLimit = viewportCss.h > 0 ? viewportCss.h / imageNatural.h : Infinity;
-    const containScale = Math.min(widthScaleLimit, heightScaleLimit, sizeClamp);
-    scale = Number.isFinite(containScale) && containScale > 0 ? containScale : sizeClamp;
+    // Clamp scale to reasonable bounds (0.01 to 100)
+    scale = Math.max(0.01, Math.min(100, scale));
 
     console.log(`[FIT] ${fitMode}: ${imageNatural.w}x${imageNatural.h} ? ${viewportCss.w}x${viewportCss.h} = scale ${scale.toFixed(3)}`);
 
