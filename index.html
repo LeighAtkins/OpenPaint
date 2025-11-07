@@ -1520,7 +1520,7 @@
     <!-- Canvas Controls (Bottom Panel) -->
     <div id="canvasControls" class="floating-panel fixed bottom-8 rounded-2xl px-3 py-2 transition-all duration-300" style="left: 50%; transform: translateX(-50%); z-index: 4000; display: block !important; opacity: 1 !important; visibility: visible !important; bottom: 80px !important;">
         <div id="canvasControlsContent" class="flex items-center gap-2 text-sm smart-label-scope">
-            <button id="copyCanvasBtn" class="flex items-center gap-1 px-3 py-1 bg-primary-500 hover:bg-primary-600 active:bg-primary-700 text-white text-xs rounded-lg shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-[1.02] active:scale-95" title="Copy image to clipboard" aria-label="Copy Image">
+            <button id="copyCanvasBtn" class="flex items-center gap-1 px-3 py-1 bg-primary-500 hover:bg-primary-600 active:bg-primary-700 text-white text-xs rounded-lg shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-[1.02] active:scale-95" title="Copy image to clipboard" aria-label="Copy Image" style="display: none !important;">
                 <svg class="w-3.5 h-3.5 opacity-90" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16 1H4a2 2 0 00-2 2v12h2V3h12V1zm3 4H8a2 2 0 00-2 2v14a2 2 0 002 2h11a2 2 0 002-2V7a2 2 0 00-2-2zm0 16H8V7h11v14z"></path></svg>
                 <span class="label-long">Copy Image</span>
                 <span class="label-short">Copy</span>
@@ -1540,13 +1540,13 @@
             </div>
 
             <!-- Share/Update next to Copy/Save -->
-            <button id="shareProjectBtn" class="px-3 py-1 bg-white border border-gray-300 text-slate-700 text-xs rounded-lg shadow-sm hover:shadow-md hover:bg-slate-50 transition-all duration-200 transform hover:scale-[1.02] active:scale-95" title="Create shareable URL for customer measurements">
+            <button id="shareProjectBtn" class="px-3 py-1 bg-white border border-gray-300 text-slate-700 text-xs rounded-lg shadow-sm hover:shadow-md hover:bg-slate-50 transition-all duration-200 transform hover:scale-[1.02] active:scale-95" title="Create shareable URL for customer measurements" style="display: none !important;">
                 Share
             </button>
             
 
             <!-- Quick Save with hover menu -->
-            <div id="quickSave" class="relative ml-2">
+            <div id="quickSave" class="relative ml-2" style="display: none !important;">
                 <button id="quickSaveBtn" class="px-3 py-1 bg-success-500 hover:bg-success-600 text-white text-xs rounded-lg">
                     Save
                 </button>
