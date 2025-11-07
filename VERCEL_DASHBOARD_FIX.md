@@ -1,8 +1,23 @@
 # ⚠️ CRITICAL: Vercel Dashboard Manual Fixes Required
 
+## ✅ UPDATE: Code Fix Applied (Commit 8d44419)
+
+**Latest fix:** Removed explicit `functions` configuration from vercel.json to use Vercel's automatic API route detection.
+
+**What changed:**
+- ❌ **Before:** Explicit `functions: { "api/app.js": { "runtime": "nodejs20.x" } }` triggered legacy validation
+- ✅ **Now:** Minimal vercel.json with only rewrites - Vercel auto-detects api/app.js as serverless function
+
+**Result:** This should fix the "Function Runtimes must have a valid version" error.
+
+---
+
 ## Error: "Function Runtimes must have a valid version"
 
-This error indicates **legacy builder configuration is still active in Vercel's dashboard**, even though the code is now clean.
+**Root causes identified:**
+1. ~~Explicit `functions` config in vercel.json~~ ✅ **FIXED** in commit 8d44419
+2. ⚠️ Preview build blocker still active in Vercel dashboard (see logs: `if [ "$VERCEL_ENV" == "preview" ]; then exit 1; else exit 0; fi`)
+3. ⚠️ Possible cached legacy configuration in Vercel's system
 
 ---
 
