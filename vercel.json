@@ -9,6 +9,10 @@
       }
     },
     {
+      "src": "api/rembg.ts",
+      "use": "@vercel/node"
+    },
+    {
       "src": "public/**",
       "use": "@vercel/static"
     },
@@ -41,6 +45,10 @@
     {
       "src": "^/favicon.ico$",
       "dest": "/public/favicon.ico"
+    },
+    {
+      "src": "^/api/rembg$",
+      "dest": "/api/rembg.ts"
     },
     {
       "src": "^/ai/(.*)$",
