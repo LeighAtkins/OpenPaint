@@ -24,7 +24,8 @@ echo "Copying API function..."
 cp api/app.js .vercel/output/functions/api/index.js
 
 # Create function config
-cat > .vercel/output/functions/api/.vc-config.json << 'EOF'
+echo "Creating function config..."
+cat > .vercel/output/functions/api/.vc-config.json <<'EOF'
 {
   "runtime": "nodejs20.x",
   "handler": "index.js",
@@ -34,7 +35,8 @@ cat > .vercel/output/functions/api/.vc-config.json << 'EOF'
 EOF
 
 # Create config
-cat > .vercel/output/config.json << 'EOF'
+echo "Creating deployment config..."
+cat > .vercel/output/config.json <<'EOF'
 {
   "version": 3,
   "routes": [
