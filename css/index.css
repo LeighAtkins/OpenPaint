@@ -66,6 +66,9 @@
     background-color: white;
     cursor: crosshair;
     transition: all 0.3s ease;
+    touch-action: none; /* Enable touch drawing without scrolling */
+    -webkit-user-select: none;
+    user-select: none;
 }
 #canvas.drag-over {
     border: 2px dashed #4CAF50;

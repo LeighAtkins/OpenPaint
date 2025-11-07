@@ -12473,16 +12473,17 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
     console.log('[Event] Canvas element:', canvas);
     console.log('[Event] Canvas ID:', canvas.id);
         
-    // Canvas mouse events
-    canvas.addEventListener('mousedown', onCanvasMouseDown, { signal: eventListeners.signal });
-    canvas.addEventListener('mousemove', onCanvasMouseMove, { signal: eventListeners.signal });
-    canvas.addEventListener('mouseup', onCanvasMouseUp, { signal: eventListeners.signal });
-    canvas.addEventListener('mouseout', onCanvasMouseOut, { signal: eventListeners.signal });
+    // Canvas pointer events (works for both mouse and touch)
+    canvas.addEventListener('pointerdown', onCanvasMouseDown, { signal: eventListeners.signal });
+    canvas.addEventListener('pointermove', onCanvasMouseMove, { signal: eventListeners.signal });
+    canvas.addEventListener('pointerup', onCanvasMouseUp, { signal: eventListeners.signal });
+    canvas.addEventListener('pointercancel', onCanvasMouseOut, { signal: eventListeners.signal });
+    canvas.addEventListener('pointerleave', onCanvasMouseOut, { signal: eventListeners.signal });
     canvas.addEventListener('dblclick', onCanvasDoubleClick, { signal: eventListeners.signal });
     canvas.addEventListener('wheel', onCanvasWheel, { signal: eventListeners.signal, passive: true });
     canvas.addEventListener('scalechange', onCanvasScaleChange, { signal: eventListeners.signal });
     // canvas.addEventListener('contextmenu', onCanvasRightClick, { signal: eventListeners.signal }); // Disabled to allow browser context menu
-    console.log('[Event] Context menu listener bound to canvas');
+    console.log('[Event] Pointer and context menu listeners bound to canvas (supports touch + mouse)');
         
 
         

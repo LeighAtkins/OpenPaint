@@ -1,0 +1,65 @@
+/* Canvas touch support */
+#canvas {
+    touch-action: none;
+    /* Prevent default touch behaviors like scrolling and zooming while drawing */
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+    /* Make toolbar icons larger for touch */
+    .toolbar-btn, .mode-btn {
+        min-width: 44px !important;
+        min-height: 44px !important;
+        font-size: 18px !important;
+    }
+
+    /* Increase control panel touch targets */
+    #canvasControls button,
+    #canvasControls select {
+        min-height: 44px;
+        font-size: 16px;
+    }
+
+    /* Make stroke list items easier to tap */
+    .stroke-visibility-item {
+        min-height: 44px;
+        padding: 8px !important;
+    }
+
+    /* Larger color picker for mobile */
+    #colorPicker {
+        min-width: 44px;
+        min-height: 44px;
+    }
+
+    /* Make edit mode control points larger on mobile */
+    .control-point {
+        width: 20px !important;
+        height: 20px !important;
+    }
+}
+
+/* Tablet adjustments */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .toolbar-btn, .mode-btn {
+        min-width: 40px;
+        min-height: 40px;
+    }
+}
+
+/* Prevent pull-to-refresh on mobile when drawing */
+body {
+    overscroll-behavior-y: contain;
+}
+
+/* Hide certain desktop-only features on small screens */
+@media (max-width: 640px) {
+    /* You can hide less critical UI elements on very small screens */
+    .desktop-only {
+        display: none !important;
+    }
+}
