@@ -1,4 +1,7 @@
 {
+  "buildCommand": "npm run vercel-build",
+  "outputDirectory": ".",
+  "installCommand": "npm install",
   "rewrites": [
     {
       "source": "/js/:path*",
@@ -23,6 +26,5 @@
         }
       ]
     }
-  ],
-  "cleanUrls": true
+  ]
 }
