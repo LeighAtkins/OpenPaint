@@ -1768,17 +1768,61 @@
             // CENTER/BOTTOM: canvas view controls moved to bottom
             reparent('fitModeSelect', bottom);
             reparent('applyFitCurrent', bottom);
-            reparent('rotateLeftCtrl', bottom, el => { 
-                el.classList.add('icon-btn', 'tbtn'); 
-                el.title = 'Rotate Left'; 
-                el.textContent = '↶'; 
+            reparent('rotateLeftCtrl', bottom, el => {
+                el.classList.add('icon-btn', 'tbtn');
+                el.title = 'Rotate Left';
+                el.textContent = '↶';
             });
-            reparent('rotateRightCtrl', bottom, el => { 
-                el.classList.add('icon-btn', 'tbtn'); 
-                el.title = 'Rotate Right'; 
-                el.textContent = '↷'; 
+            reparent('rotateRightCtrl', bottom, el => {
+                el.classList.add('icon-btn', 'tbtn');
+                el.title = 'Rotate Right';
+                el.textContent = '↷';
             });
             reparent('scaleButton', bottom);
+
+            // Wire up fit mode and rotate buttons here to ensure they work
+            const fitModeSelect = document.getElementById('fitModeSelect');
+            const rotateLeftCtrl = document.getElementById('rotateLeftCtrl');
+            const rotateRightCtrl = document.getElementById('rotateRightCtrl');
+
+            if (rotateLeftCtrl) {
+                console.log('[TOOLBAR] Wiring up rotateLeftCtrl button');
+                rotateLeftCtrl.addEventListener('click', () => {
+                    console.log('[TOOLBAR] Rotate left clicked');
+                    const label = window.currentImageLabel || window.paintApp?.state?.currentImageLabel;
+                    if (label && typeof window.transformImageData === 'function') {
+                        const c = document.getElementById('canvas');
+                        const w = c?.width || 800;
+                        const h = c?.height || 600;
+                        window.transformImageData(label, 'rotate', -90, w, h);
+                        if (window.redrawCanvasWithVisibility) window.redrawCanvasWithVisibility();
+                    }
+                });
+            }
+
+            if (rotateRightCtrl) {
+                console.log('[TOOLBAR] Wiring up rotateRightCtrl button');
+                rotateRightCtrl.addEventListener('click', () => {
+                    console.log('[TOOLBAR] Rotate right clicked');
+                    const label = window.currentImageLabel || window.paintApp?.state?.currentImageLabel;
+                    if (label && typeof window.transformImageData === 'function') {
+                        const c = document.getElementById('canvas');
+                        const w = c?.width || 800;
+                        const h = c?.height || 600;
+                        window.transformImageData(label, 'rotate', 90, w, h);
+                        if (window.redrawCanvasWithVisibility) window.redrawCanvasWithVisibility();
+                    }
+                });
+            }
+
+            if (fitModeSelect) {
+                console.log('[TOOLBAR] Wiring up fitModeSelect');
+                fitModeSelect.addEventListener('change', () => {
+                    console.log('[TOOLBAR] Fit mode changed to:', fitModeSelect.value);
+                    // The actual applyFitMode is handled in paint.js, but log here for debugging
+                });
+            }
+
             syncFromState();
 
             // RIGHT: project settings are now pre-populated, just need to wire up functionality

@@ -12181,13 +12181,16 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
   }
     
   function applyFitMode(fitMode) {
+    console.log(`[applyFitMode] Called with fitMode: ${fitMode}, currentImageLabel: ${currentImageLabel}`);
+
     if (!currentImageLabel) {
-      console.warn('No current image selected');
+      console.warn('[applyFitMode] No current image selected');
       return;
     }
-        
+
     const { scale, position } = calculateFitScale(fitMode);
-        
+    console.log(`[applyFitMode] Calculated scale: ${scale.toFixed(3)}, position: (${position.x.toFixed(1)}, ${position.y.toFixed(1)})`);
+
     // **NEW**: Use Transform T system for deterministic updates
     const currentT = window.getCurrentTransform();
     const newT = {
@@ -12197,6 +12200,7 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
       dpr: currentT.dpr
     };
 
+    console.log(`[applyFitMode] Setting new transform:`, newT);
     window.setTransform(newT);
 
     // Save fit session for persistence
@@ -12262,9 +12266,13 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
     
   // Fit control event listeners (with null checks since buttons were removed)
   if (applyFitCurrentButton) {
+    console.log('[FIT] Attaching click listener to applyFitCurrent button');
     applyFitCurrentButton.addEventListener('click', () => {
+      console.log(`[FIT] applyFitCurrent clicked, fitMode: ${fitModeSelect.value}`);
       applyFitMode(fitModeSelect.value);
     });
+  } else {
+    console.warn('[FIT] applyFitCurrent button not found');
   }
     
   if (applyFitAllButton) {
@@ -12275,11 +12283,15 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
     
   // Apply fit mode when selection changes (for immediate feedback on current image)
   if (fitModeSelect) {
+    console.log('[FIT] Attaching change listener to fitModeSelect');
     fitModeSelect.addEventListener('change', () => {
+      console.log(`[FIT] fitModeSelect changed to: ${fitModeSelect.value}`);
       if (fitModeSelect.value !== 'none') {
         applyFitMode(fitModeSelect.value);
       }
     });
+  } else {
+    console.warn('[FIT] fitModeSelect element not found');
   }
 
   // PERFORMANCE OPTIMIZATIONS: Cache variables moved to top of file for early initialization
