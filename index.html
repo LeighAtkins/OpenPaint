@@ -1227,6 +1227,11 @@
             </ol>
         </nav>
     </div>
+
+    <!-- macOS-style Toast Notification -->
+    <div id="undo-redo-toast" class="fixed top-20 left-1/2 transform -translate-x-1/2 px-4 py-2 bg-slate-800/95 text-white text-sm font-medium rounded-lg shadow-2xl backdrop-blur-sm pointer-events-none opacity-0 transition-opacity duration-200 z-[10000]" style="display: none;">
+        <span id="toast-text">Undo</span>
+    </div>
     
     <!-- Project Header Panel -->
     <div id="projectPanel" class="floating-panel fixed top-4 right-4 z-30 rounded-2xl w-80 transition-all duration-300">
@@ -1757,21 +1762,51 @@
                 } catch {}
             });
 
-            // Undo / Redo buttons
-            // Undo/Redo buttons are now pre-populated, just need to wire up functionality
+            // Undo / Redo buttons with macOS-style toast
             const undoBtn = document.getElementById('undoBtn');
             const redoBtn = document.getElementById('redoBtn');
-            
-            if (undoBtn) {
-                undoBtn.addEventListener('click', () => { 
-                    if (typeof window.undo === 'function') window.undo(); 
-                });
+
+            // Toast notification function
+            function showToast(message) {
+                const toast = document.getElementById('undo-redo-toast');
+                const toastText = document.getElementById('toast-text');
+                if (!toast || !toastText) return;
+
+                toastText.textContent = message;
+                toast.style.display = 'block';
+                // Force reflow for animation
+                toast.offsetHeight;
+                toast.style.opacity = '1';
+
+                // Hide after 800ms (macOS-style quick flash)
+                setTimeout(() => {
+                    toast.style.opacity = '0';
+                    setTimeout(() => {
+                        toast.style.display = 'none';
+                    }, 200);
+                }, 800);
             }
-            
+
+            if (undoBtn) {
+                undoBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (typeof window.undo === 'function') {
+                        window.undo();
+                        showToast('Undo');
+                    }
+                }, { passive: false });
+            }
+
             if (redoBtn) {
-                redoBtn.addEventListener('click', () => { 
-                    if (typeof window.redo === 'function') window.redo(); 
-                });
+                redoBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (typeof window.redo === 'function') {
+                        window.redo();
+                        showToast('Redo');
+                    }
+                }, { passive: false });
             }
 
             // CENTER/BOTTOM: canvas view controls moved to bottom
@@ -5265,7 +5300,7 @@
         (function initMiniStepper() {
             // Configuration
             const cfg = {
-                activeClasses: "bg-slate-900 text-white scale-105 shadow-md",
+                activeClasses: "bg-slate-900 text-white font-semibold scale-105 shadow-md",
                 inactiveClasses: "bg-white text-slate-600 border border-slate-300",
                 pillSize: "w-8 h-8",
                 threshold: 0.3
