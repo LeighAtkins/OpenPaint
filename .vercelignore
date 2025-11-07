@@ -1,0 +1,31 @@
+# Exclude Python files that trigger unwanted builds
+*.py
+requirements.txt
+
+# Exclude unnecessary api files - only api/app.js should be deployed
+api/[...all].js
+api/app-simple.js
+api/db.js
+api/index.js
+api/rembg.ts
+api/test.js
+api/images/
+
+# Development files
+fix_console.py
+fix_console_final.py
+
+# Tests and docs
+tests/
+docs/
+
+# Git and IDE
+.git/
+.github/
+.vscode/
+.cursor/
+.roo/
+.taskmaster/
+
+# Node modules are handled by Vercel
+node_modules/
