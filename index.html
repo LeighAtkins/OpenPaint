@@ -1148,7 +1148,7 @@
 </head>
 <body class="bg-gray-50 h-screen overflow-hidden">
     <!-- Top Toolbar -->
-    <div id="topToolbar">
+    <div id="topToolbar" style="opacity: 0; transition: opacity 0.3s ease-in-out;">
         <div class="toolbar-wrap smart-label-scope">
             <div id="tbLeft" class="group-gap smart-label-scope">
                 <!-- Pre-populated toolbar content to prevent flash -->
@@ -1923,6 +1923,14 @@
 
             // Add body padding to prevent toolbar overlap
             document.body.style.paddingTop = '48px';
+
+            // Fade in toolbar after initialization to prevent flash
+            requestAnimationFrame(() => {
+                const toolbar = document.getElementById('topToolbar');
+                if (toolbar) {
+                    toolbar.style.opacity = '1';
+                }
+            });
         }
 
         // Setup quick save hover menu functionality
@@ -5590,7 +5598,6 @@
                     // Update UI
                     stepButtons.forEach(b => {
                         const active = b.dataset.target === label;
-                        b.classList.toggle('aria-current', active);
 
                         if (active) {
                             b.setAttribute('aria-current', 'true');
