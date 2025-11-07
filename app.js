@@ -3,8 +3,13 @@
  * Handles file operations, static file serving, and API endpoints
  */
 
-// Load environment variables from .env file
-require('dotenv').config();
+// Load environment variables from .env file (for local development)
+// In Vercel, environment variables are already available via process.env
+try {
+  require('dotenv').config();
+} catch (err) {
+  // dotenv not available or .env file not found - this is OK in production
+}
 
 const express = require('express');
 const path = require('path');
@@ -46,10 +51,16 @@ function joinUrl(base, path) {
 const sharedProjects = new Map();
 
 // Ensure uploads directory exists
-const uploadDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-    console.log('Created uploads directory');
+// In Vercel, use /tmp directory (only writable location in serverless)
+const uploadDir = process.env.VERCEL ? path.join('/tmp', 'uploads') : path.join(__dirname, 'uploads');
+try {
+    if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+        console.log('Created uploads directory');
+    }
+} catch (err) {
+    console.warn('Could not create uploads directory:', err.message);
+    // Continue anyway - uploads might not be needed for basic functionality
 }
 
 // Set up multer for handling file uploads
