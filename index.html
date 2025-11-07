@@ -1534,9 +1534,22 @@
             </select>
             <button id="applyFitCurrent" class="px-2 py-1 bg-white border border-gray-300 text-slate-700 text-xs rounded-lg hover:bg-slate-50" title="Apply to current image">Apply</button>
             <button id="scaleButton" class="px-2 py-1 bg-white border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50" aria-haspopup="listbox" aria-expanded="false" type="button">100% <svg class="inline w-3 h-3 -mt-0.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M5.25 7.5l4.5 4.5 4.5-4.5H5.25z"/></svg></button>
-            <div class="flex items-center gap-1 ml-2">
+            <div class="flex items-center gap-1 ml-2 relative" id="rotateControlGroup">
                 <button id="rotateLeftCtrl" class="px-2 py-1 bg-white border border-gray-300 text-slate-700 text-xs rounded-lg hover:bg-slate-50" title="Rotate 90° CCW">↶</button>
                 <button id="rotateRightCtrl" class="px-2 py-1 bg-white border border-gray-300 text-slate-700 text-xs rounded-lg hover:bg-slate-50" title="Rotate 90° CW">↷</button>
+
+                <!-- Rotation Slider (appears on hover) -->
+                <div id="rotationSliderPanel" class="hidden absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 bg-white border border-gray-300 rounded-lg shadow-lg p-3 min-w-[240px]" style="z-index: 6000;">
+                    <div class="flex items-center gap-2 mb-2">
+                        <label for="rotationSlider" class="text-xs font-medium text-slate-700 whitespace-nowrap">Fine Tune:</label>
+                        <input type="range" id="rotationSlider" min="-45" max="45" value="0" step="0.5" class="flex-1" />
+                        <span id="rotationValue" class="text-xs font-mono text-slate-600 min-w-[3rem] text-right">0°</span>
+                    </div>
+                    <div class="flex gap-2">
+                        <button id="rotationReset" class="flex-1 px-2 py-1 text-xs bg-slate-100 hover:bg-slate-200 rounded">Reset</button>
+                        <button id="rotationApply" class="flex-1 px-2 py-1 text-xs bg-blue-500 hover:bg-blue-600 text-white rounded">Apply</button>
+                    </div>
+                </div>
             </div>
 
             <!-- Share/Update next to Copy/Save -->
@@ -1785,6 +1798,80 @@
             const rotateLeftCtrl = document.getElementById('rotateLeftCtrl');
             const rotateRightCtrl = document.getElementById('rotateRightCtrl');
 
+            // Rotation controls with fine-tune slider
+            const rotateControlGroup = document.getElementById('rotateControlGroup');
+            const rotationSliderPanel = document.getElementById('rotationSliderPanel');
+            const rotationSlider = document.getElementById('rotationSlider');
+            const rotationValue = document.getElementById('rotationValue');
+            const rotationReset = document.getElementById('rotationReset');
+            const rotationApply = document.getElementById('rotationApply');
+
+            let currentRotationDegrees = 0;
+            let rotationGuideVisible = false;
+
+            // Show/hide slider on hover
+            if (rotateControlGroup && rotationSliderPanel) {
+                rotateControlGroup.addEventListener('mouseenter', () => {
+                    rotationSliderPanel.classList.remove('hidden');
+                });
+                rotateControlGroup.addEventListener('mouseleave', (e) => {
+                    // Only hide if not hovering over the slider panel itself
+                    if (!rotationSliderPanel.contains(e.relatedTarget)) {
+                        rotationSliderPanel.classList.add('hidden');
+                        hideRotationGuide();
+                    }
+                });
+                rotationSliderPanel.addEventListener('mouseleave', (e) => {
+                    if (!rotateControlGroup.contains(e.relatedTarget)) {
+                        rotationSliderPanel.classList.add('hidden');
+                        hideRotationGuide();
+                    }
+                });
+            }
+
+            // Update rotation value display
+            if (rotationSlider && rotationValue) {
+                rotationSlider.addEventListener('input', (e) => {
+                    const degrees = parseFloat(e.target.value);
+                    rotationValue.textContent = degrees + '°';
+                    currentRotationDegrees = degrees;
+                    showRotationGuide();
+                });
+            }
+
+            // Reset rotation
+            if (rotationReset && rotationSlider && rotationValue) {
+                rotationReset.addEventListener('click', () => {
+                    rotationSlider.value = 0;
+                    rotationValue.textContent = '0°';
+                    currentRotationDegrees = 0;
+                    hideRotationGuide();
+                });
+            }
+
+            // Apply rotation
+            if (rotationApply) {
+                rotationApply.addEventListener('click', () => {
+                    const label = window.currentImageLabel || window.paintApp?.state?.currentImageLabel;
+                    if (label && typeof window.transformImageData === 'function') {
+                        const c = document.getElementById('canvas');
+                        const w = c?.width || 800;
+                        const h = c?.height || 600;
+                        console.log(`[ROTATION] Applying ${currentRotationDegrees}° rotation to ${label}`);
+                        window.transformImageData(label, 'rotate', currentRotationDegrees, w, h);
+                        if (window.redrawCanvasWithVisibility) window.redrawCanvasWithVisibility();
+
+                        // Reset slider
+                        rotationSlider.value = 0;
+                        rotationValue.textContent = '0°';
+                        currentRotationDegrees = 0;
+                        rotationSliderPanel.classList.add('hidden');
+                        hideRotationGuide();
+                    }
+                });
+            }
+
+            // Quick rotate buttons (90° increments)
             if (rotateLeftCtrl) {
                 console.log('[TOOLBAR] Wiring up rotateLeftCtrl button');
                 rotateLeftCtrl.addEventListener('click', () => {
@@ -1813,6 +1900,77 @@
                         if (window.redrawCanvasWithVisibility) window.redrawCanvasWithVisibility();
                     }
                 });
+            }
+
+            // Horizontal guide line functions
+            function showRotationGuide() {
+                const canvas = document.getElementById('canvas');
+                if (!canvas || rotationGuideVisible) return;
+
+                // Create guide overlay
+                let guideOverlay = document.getElementById('rotationGuideOverlay');
+                if (!guideOverlay) {
+                    guideOverlay = document.createElement('div');
+                    guideOverlay.id = 'rotationGuideOverlay';
+                    guideOverlay.style.cssText = `
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                        pointer-events: none;
+                        z-index: 5500;
+                    `;
+                    document.body.appendChild(guideOverlay);
+
+                    // Create horizontal line
+                    const line = document.createElement('div');
+                    line.id = 'rotationGuideLine';
+                    line.style.cssText = `
+                        position: absolute;
+                        left: 0;
+                        right: 0;
+                        top: 50%;
+                        height: 2px;
+                        background: rgba(59, 130, 246, 0.8);
+                        box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+                    `;
+                    guideOverlay.appendChild(line);
+
+                    // Create rotation degree indicator
+                    const indicator = document.createElement('div');
+                    indicator.id = 'rotationGuideIndicator';
+                    indicator.style.cssText = `
+                        position: absolute;
+                        top: 50%;
+                        left: 50%;
+                        transform: translate(-50%, -50%);
+                        background: rgba(59, 130, 246, 0.9);
+                        color: white;
+                        padding: 4px 12px;
+                        border-radius: 4px;
+                        font-size: 14px;
+                        font-weight: 600;
+                        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+                    `;
+                    indicator.textContent = currentRotationDegrees + '°';
+                    guideOverlay.appendChild(indicator);
+                }
+
+                guideOverlay.style.display = 'block';
+                const indicator = document.getElementById('rotationGuideIndicator');
+                if (indicator) {
+                    indicator.textContent = currentRotationDegrees + '°';
+                }
+                rotationGuideVisible = true;
+            }
+
+            function hideRotationGuide() {
+                const guideOverlay = document.getElementById('rotationGuideOverlay');
+                if (guideOverlay) {
+                    guideOverlay.style.display = 'none';
+                }
+                rotationGuideVisible = false;
             }
 
             if (fitModeSelect) {
