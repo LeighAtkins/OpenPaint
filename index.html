@@ -19,6 +19,11 @@
         });
     </script>
     <style>
+        /* Layout coordination variables */
+        :root {
+            --nav-container-height: 60px; /* min height of navigation container */
+        }
+
         /* Custom styles for image list and tag system */
         .image-container {
             border-left: 2px solid transparent;
@@ -1522,7 +1527,7 @@
     </div>
 
     <!-- Canvas Controls (Bottom Panel) -->
-    <div id="canvasControls" class="floating-panel fixed rounded-2xl px-3 py-2 transition-all duration-300" style="left: 50%; bottom: 1rem; transform: translateX(-50%); z-index: 4000;">
+    <div id="canvasControls" class="floating-panel fixed rounded-2xl px-3 py-2 transition-all duration-300" style="left: 50%; bottom: calc(var(--nav-container-height) + 1rem); transform: translateX(-50%); z-index: 4000;">
         <div id="canvasControlsContent" class="flex items-center gap-2 text-sm smart-label-scope">
             <button id="copyCanvasBtn" class="flex items-center gap-1 px-3 py-1 bg-primary-500 hover:bg-primary-600 active:bg-primary-700 text-white text-xs rounded-lg shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-[1.02] active:scale-95" title="Copy image to clipboard" aria-label="Copy Image">
                 <svg class="w-3.5 h-3.5 opacity-90" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16 1H4a2 2 0 00-2 2v12h2V3h12V1zm3 4H8a2 2 0 00-2 2v14a2 2 0 002 2h11a2 2 0 002-2V7a2 2 0 00-2-2zm0 16H8V7h11v14z"></path></svg>
@@ -5389,6 +5394,16 @@
                 navContainer.style.right = '0';
                 navContainer.style.width = '100%';
                 navContainer.style.zIndex = '5000';
+
+                // Update CSS variable with actual navigation height for canvas controls positioning
+                const updateNavHeight = () => {
+                    const navHeight = navContainer.offsetHeight;
+                    document.documentElement.style.setProperty('--nav-container-height', `${navHeight}px`);
+                };
+                updateNavHeight();
+                // Update on resize or content changes
+                const navObserver = new ResizeObserver(updateNavHeight);
+                navObserver.observe(navContainer);
 
                 // console.log('[MiniStepper] Positioned nav container:', {
                 //     position: navContainer.style.position,
