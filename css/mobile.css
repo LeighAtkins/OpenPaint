@@ -144,18 +144,22 @@
 
     /* Canvas controls - reduce bottom spacing and make scrollable */
     #canvasControls {
+        position: fixed !important;
         bottom: 0.5rem !important;
-        left: 0.5rem !important;
-        right: 0.5rem !important;
-        transform: none !important;
+        left: 50% !important;
+        right: auto !important;
+        transform: translateX(-50%) !important;
+        width: calc(100vw - 1rem) !important;
         max-width: calc(100vw - 1rem) !important;
         overflow-x: auto !important;
         -webkit-overflow-scrolling: touch;
+        z-index: 4000 !important;
     }
 
     #canvasControlsContent {
         flex-wrap: nowrap !important;
         overflow-x: auto !important;
+        min-width: max-content;
     }
 
     /* Increase control panel touch targets */
