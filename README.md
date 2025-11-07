@@ -45,15 +45,13 @@ OpenPaint/
 npm install
 ```
 
-2. Configure environment variables (for AI features):
+2. Configure environment variables (optional - for background removal feature):
 ```bash
-# Required for AI-powered dimensioning
-CF_ACCOUNT_ID=your_cloudflare_account_id
-CF_IMAGES_API_TOKEN=your_cloudflare_images_api_token
-CF_ACCOUNT_HASH=your_cloudflare_account_hash
-AI_WORKER_URL=https://your-worker.your-subdomain.workers.dev
-AI_WORKER_KEY=your_worker_secret_key
+# Required for background removal feature
+REMBG_ORIGIN=https://sofapaint-api.your-subdomain.workers.dev
 ```
+
+**Note**: To enable the background removal feature, you'll need to deploy the Cloudflare Worker and configure the API keys. See [CLOUDFLARE_SETUP.md](CLOUDFLARE_SETUP.md) for detailed instructions.
 
 3. Start the server:
 ```bash
@@ -86,6 +84,11 @@ npm start
 ### Project Management
 - Save your project with all measurements and organization using the Save Project button
 - Load existing projects with the Load Project button
+
+### Background Removal
+- Click the **Remove BG** button to automatically remove the background from the current image
+- Uses Cloudflare Images API for fast, high-quality background removal
+- Requires Cloudflare Worker setup - see [CLOUDFLARE_SETUP.md](CLOUDFLARE_SETUP.md) for configuration
 
 ### AI-Powered Dimensioning
 1. **Upload an image** of furniture (sofa, chair, etc.) using the Upload Images button
