@@ -1,15 +1,8 @@
 {
-  "version": 2,
-  "functions": {
-    "api/app.js": {
-      "runtime": "nodejs20.x"
-    }
-  },
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "/api/app.js"
+      "destination": "/api/app"
     }
-  ],
-  "cleanUrls": true
+  ]
 }
