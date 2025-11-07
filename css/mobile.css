@@ -174,37 +174,61 @@
         gap: 0.5rem !important;
     }
 
-    /* Ensure canvas controls buttons are visible with proper styling */
-    #canvasControls button:not(#copyCanvasBtn):not(#quickSaveBtn),
-    #canvasControls select {
+    /* Hide share button on mobile */
+    #canvasControls #shareProjectBtn {
+        display: none !important;
+    }
+
+    /* Copy button - ensure blue color is visible */
+    #canvasControls #copyCanvasBtn {
         display: inline-flex !important;
         visibility: visible !important;
         opacity: 1 !important;
-        min-height: 44px;
-        min-width: 44px;
-        font-size: 14px;
-        flex-shrink: 0;
+        min-height: 44px !important;
+        flex-shrink: 0 !important;
+        background-color: #3b82f6 !important;
+        color: white !important;
+    }
+
+    /* Quick Save button - ensure green color is visible */
+    #canvasControls #quickSaveBtn {
+        display: inline-flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        min-height: 44px !important;
+        flex-shrink: 0 !important;
+        background-color: #10b981 !important;
+        color: white !important;
+    }
+
+    /* Other canvas control buttons - gray styling */
+    #canvasControls #applyFitCurrent,
+    #canvasControls #scaleButton,
+    #canvasControls #rotateLeftCtrl,
+    #canvasControls #rotateRightCtrl {
+        display: inline-flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        min-height: 44px !important;
+        min-width: 44px !important;
+        font-size: 14px !important;
+        flex-shrink: 0 !important;
         background-color: #f1f5f9 !important;
         color: #1e293b !important;
         border: 1px solid #cbd5e1 !important;
     }
 
-    /* Copy button styling - keep its blue color */
-    #canvasControls #copyCanvasBtn {
+    /* Fit mode select dropdown */
+    #canvasControls #fitModeSelect {
         display: inline-flex !important;
         visibility: visible !important;
         opacity: 1 !important;
-        min-height: 44px;
-        flex-shrink: 0;
-    }
-
-    /* Quick Save button styling - keep its green color */
-    #canvasControls #quickSaveBtn {
-        display: inline-flex !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-        min-height: 44px;
-        flex-shrink: 0;
+        min-height: 44px !important;
+        font-size: 14px !important;
+        flex-shrink: 0 !important;
+        background-color: white !important;
+        color: #1e293b !important;
+        border: 1px solid #cbd5e1 !important;
     }
 
     /* Make stroke list items easier to tap */
