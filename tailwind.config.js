@@ -4,6 +4,18 @@ module.exports = {
     './js/**/*.{js}',
     './server/**/*.{js}'
   ],
+  safelist: [
+    // Dynamically added pill/tab classes
+    'bg-slate-900',
+    'text-white',
+    'font-semibold',
+    'scale-105',
+    'shadow-md',
+    'bg-white',
+    'text-slate-600',
+    'border',
+    'border-slate-300'
+  ],
   theme: {
     extend: {
       colors: {

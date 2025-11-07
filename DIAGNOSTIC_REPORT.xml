@@ -1,0 +1,356 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<diagnostic-report>
+    <timestamp>2025-11-07T07:30:00Z</timestamp>
+    <session-id>claude/add-rotate-button-hover-011CUsxvpyJsxuEHNfgygopZ</session-id>
+
+    <!-- ISSUE 1: Selected Tab/Pill Visibility -->
+    <issue id="1" severity="high">
+        <title>Selected Tab Text Not Visible</title>
+        <description>
+            User reports they still cannot see the text on the selected tab pill,
+            despite multiple attempts to fix the styling.
+        </description>
+
+        <current-state>
+            <element>
+                <selector>button.step[aria-current="true"]</selector>
+                <classes>
+                    bg-slate-900 text-white font-semibold scale-105 shadow-md
+                </classes>
+                <expected-appearance>
+                    White text (#ffffff) on dark slate background (#0f172a)
+                </expected-appearance>
+                <actual-appearance>
+                    User reports text is not visible
+                </actual-appearance>
+            </element>
+        </current-state>
+
+        <root-causes>
+            <hypothesis id="1.1" likelihood="high">
+                <title>CSS Specificity Conflict</title>
+                <details>
+                    Tailwind classes may be overridden by more specific CSS rules.
+                    The base button classes include "text-slate-600" which appears
+                    earlier in the class string and might be overriding "text-white".
+                </details>
+                <evidence>
+                    - All pills have same base classes before active classes appended
+                    - text-slate-600 appears in base template (line 5449)
+                    - text-white is added via JS after the fact
+                </evidence>
+                <test>
+                    Inspect element in browser DevTools and check:
+                    1. Computed color value for the text
+                    2. Which CSS rule is winning (check strikethrough rules)
+                    3. Whether text-white class is even in the final CSS bundle
+                </test>
+            </hypothesis>
+
+            <hypothesis id="1.2" likelihood="medium">
+                <title>Tailwind CSS Bundle Missing Classes</title>
+                <details>
+                    The built Tailwind CSS (css/tailwind.build.css) may not include
+                    the active state classes because they weren't in the HTML at
+                    build time (they're added dynamically by JavaScript).
+                </details>
+                <evidence>
+                    - Classes are added via JS: cfg.activeClasses (line 5273)
+                    - Tailwind scans HTML at build time for class usage
+                    - Dynamic classes may not be included in final bundle
+                </evidence>
+                <test>
+                    1. Search css/tailwind.build.css for ".bg-slate-900"
+                    2. Search for ".text-white"
+                    3. Search for ".font-semibold"
+                    4. If missing, add safelist to tailwind.config.js
+                </test>
+            </hypothesis>
+
+            <hypothesis id="1.3" likelihood="low">
+                <title>Font Color Inheritance Override</title>
+                <details>
+                    Parent or global styles may be setting color via !important
+                    or through a more specific selector.
+                </details>
+                <evidence>
+                    - #mini-stepper has various styles (line 591-605)
+                    - .step base styles exist in CSS
+                </evidence>
+                <test>
+                    Check for:
+                    1. .step { color: ... !important; }
+                    2. #mini-stepper button { color: ... }
+                    3. Any inherited color from .smart-label-scope
+                </test>
+            </hypothesis>
+        </root-causes>
+
+        <solutions>
+            <solution priority="1">
+                <action>Add Tailwind Safelist</action>
+                <implementation>
+                    Add to tailwind.config.js:
+                    ```
+                    safelist: [
+                      'bg-slate-900',
+                      'text-white',
+                      'font-semibold',
+                      'scale-105',
+                      'shadow-md'
+                    ]
+                    ```
+                    Then rebuild: npm run build:css
+                </implementation>
+            </solution>
+
+            <solution priority="2">
+                <action>Use Inline Styles for Active State</action>
+                <implementation>
+                    In updateActivePill() function, add:
+                    ```javascript
+                    if (active) {
+                        b.style.backgroundColor = '#0f172a';
+                        b.style.color = '#ffffff';
+                        b.style.fontWeight = '600';
+                    } else {
+                        b.style.backgroundColor = '';
+                        b.style.color = '';
+                        b.style.fontWeight = '';
+                    }
+                    ```
+                </implementation>
+            </solution>
+
+            <solution priority="3">
+                <action>Use !important CSS Rule</action>
+                <implementation>
+                    Add to &lt;style&gt; section:
+                    ```css
+                    #mini-stepper .step[aria-current="true"] {
+                        background-color: #0f172a !important;
+                        color: #ffffff !important;
+                        font-weight: 600 !important;
+                    }
+                    ```
+                </implementation>
+            </solution>
+        </solutions>
+    </issue>
+
+    <!-- ISSUE 2: Toolbar Loading Flash -->
+    <issue id="2" severity="medium">
+        <title>Toolbar Still Showing Glitchy Load Behavior</title>
+        <description>
+            Despite implementing opacity fade-in, the toolbar still appears
+            glitchy during page load with elements jumping around.
+        </description>
+
+        <current-state>
+            <element>
+                <selector>#topToolbar</selector>
+                <initial-style>opacity: 0; transition: opacity 0.3s ease-in-out;</initial-style>
+                <final-style>opacity: 1;</final-style>
+                <timing>
+                    Opacity set to 1 via requestAnimationFrame after initializeTopToolbar()
+                </timing>
+            </element>
+        </current-state>
+
+        <root-causes>
+            <hypothesis id="2.1" likelihood="high">
+                <title>Reparenting Happens After Fade-In</title>
+                <details>
+                    The reparent() function moves DOM elements around, causing
+                    visible layout shifts even though opacity transition is smooth.
+                    The fade-in happens too early, before layout is stable.
+                </details>
+                <evidence>
+                    - reparent() calls happen in initializeTopToolbar() (lines 1813-1826)
+                    - Fade-in happens immediately after via requestAnimationFrame
+                    - DOM elements are physically moved, triggering reflow
+                </evidence>
+                <test>
+                    Open DevTools Performance tab:
+                    1. Record page load
+                    2. Look for Layout/Reflow events
+                    3. Check if they occur after paint
+                </test>
+            </hypothesis>
+
+            <hypothesis id="2.2" likelihood="high">
+                <title>Content Not Pre-Positioned</title>
+                <details>
+                    Elements are "pre-populated" in HTML but still need to be
+                    rearranged via JS. This causes visible movement even during
+                    fade-in transition.
+                </details>
+                <evidence>
+                    - Elements exist in tbLeft/tbCenter/tbRight initially
+                    - reparent() moves them to different containers
+                    - Movement happens while opacity transitions from 0 to 1
+                </evidence>
+                <test>
+                    Remove all reparent() calls temporarily and see if
+                    glitching stops. If yes, the issue is the DOM manipulation.
+                </test>
+            </hypothesis>
+
+            <hypothesis id="2.3" likelihood="medium">
+                <title>Timing Race Condition</title>
+                <details>
+                    requestAnimationFrame fires before browser has finished
+                    layout calculations from the reparenting operations.
+                </details>
+                <evidence>
+                    - Single rAF call may not be sufficient
+                    - Browser needs time to calculate final layout
+                    - Opacity change happens in same frame as layout
+                </evidence>
+                <test>
+                    Add delay:
+                    ```javascript
+                    setTimeout(() => {
+                        requestAnimationFrame(() => {
+                            toolbar.style.opacity = '1';
+                        });
+                    }, 100);
+                    ```
+                </test>
+            </hypothesis>
+        </root-causes>
+
+        <solutions>
+            <solution priority="1">
+                <action>Delay Fade-In Until Layout Stable</action>
+                <implementation>
+                    Replace current fade-in code with:
+                    ```javascript
+                    // Wait for all layout to settle
+                    setTimeout(() => {
+                        requestAnimationFrame(() => {
+                            requestAnimationFrame(() => {
+                                const toolbar = document.getElementById('topToolbar');
+                                if (toolbar) {
+                                    toolbar.style.opacity = '1';
+                                }
+                            });
+                        });
+                    }, 50);
+                    ```
+                    Double rAF ensures layout is complete.
+                </implementation>
+            </solution>
+
+            <solution priority="2">
+                <action>Hide Toolbar Container, Not Just Opacity</action>
+                <implementation>
+                    Start with visibility: hidden instead:
+                    ```html
+                    &lt;div id="topToolbar" style="visibility: hidden;"&gt;
+                    ```
+                    Then after layout:
+                    ```javascript
+                    toolbar.style.visibility = 'visible';
+                    toolbar.style.opacity = '0';
+                    requestAnimationFrame(() => {
+                        toolbar.style.transition = 'opacity 0.3s ease-in-out';
+                        toolbar.style.opacity = '1';
+                    });
+                    ```
+                </implementation>
+            </solution>
+
+            <solution priority="3">
+                <action>Skip Animation on First Load</action>
+                <implementation>
+                    Don't fade in - just show immediately after layout:
+                    ```javascript
+                    // Layout complete, show instantly
+                    const toolbar = document.getElementById('topToolbar');
+                    if (toolbar) {
+                        toolbar.style.opacity = '1';
+                        toolbar.style.transition = 'none';
+                    }
+                    ```
+                    This eliminates fade but also eliminates glitch visibility.
+                </implementation>
+            </solution>
+
+            <solution priority="4">
+                <action>Pre-Position Elements in HTML</action>
+                <implementation>
+                    Eliminate reparent() calls by rendering elements in their
+                    final positions from the start. This requires restructuring
+                    the HTML to match the desired layout before any JS runs.
+
+                    Most thorough fix but requires significant HTML changes.
+                </implementation>
+            </solution>
+        </solutions>
+    </issue>
+
+    <!-- DEBUGGING COMMANDS -->
+    <debugging-commands>
+        <command id="check-tailwind-classes">
+            <title>Check if Tailwind classes exist in bundle</title>
+            <shell>grep -E "(bg-slate-900|text-white|font-semibold)" /home/user/OpenPaint/css/tailwind.build.css</shell>
+        </command>
+
+        <command id="check-computed-styles">
+            <title>Browser DevTools Console Command</title>
+            <javascript>
+                // Run in browser console when pill is active
+                const activePill = document.querySelector('[aria-current="true"]');
+                console.log('Classes:', activePill.className);
+                console.log('Computed color:', getComputedStyle(activePill).color);
+                console.log('Computed background:', getComputedStyle(activePill).backgroundColor);
+                console.log('Computed font-weight:', getComputedStyle(activePill).fontWeight);
+            </javascript>
+        </command>
+
+        <command id="timing-test">
+            <title>Test Layout Timing</title>
+            <javascript>
+                // Add to initializeTopToolbar() to measure timing
+                console.time('reparent-operations');
+                // ... reparent calls ...
+                console.timeEnd('reparent-operations');
+
+                console.time('fade-in-delay');
+                requestAnimationFrame(() => {
+                    console.timeEnd('fade-in-delay');
+                    toolbar.style.opacity = '1';
+                });
+            </javascript>
+        </command>
+    </debugging-commands>
+
+    <!-- RECOMMENDED ACTION PLAN -->
+    <action-plan>
+        <step order="1">
+            <title>Verify Tailwind Classes in Bundle</title>
+            <command>grep -E "(bg-slate-900|text-white)" css/tailwind.build.css | wc -l</command>
+            <expected>Should return &gt; 0</expected>
+            <if-fails>Implement Solution 1.1 (Tailwind Safelist)</if-fails>
+        </step>
+
+        <step order="2">
+            <title>Add Inline Style Fallback for Pills</title>
+            <reason>Guaranteed to work regardless of CSS bundle</reason>
+            <implement>Solution 1.2 (Inline Styles)</implement>
+        </step>
+
+        <step order="3">
+            <title>Fix Toolbar Timing</title>
+            <implement>Solution 2.1 (Double RAF + Delay)</implement>
+            <test>Reload page multiple times, observe toolbar load</test>
+        </step>
+
+        <step order="4">
+            <title>Add CSS !important Rule as Safety Net</title>
+            <implement>Solution 1.3 (CSS Override)</implement>
+            <reason>Ensures pills work even if JS fails</reason>
+        </step>
+    </action-plan>
+</diagnostic-report>

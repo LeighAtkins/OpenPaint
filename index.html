@@ -1924,13 +1924,17 @@
             // Add body padding to prevent toolbar overlap
             document.body.style.paddingTop = '48px';
 
-            // Fade in toolbar after initialization to prevent flash
-            requestAnimationFrame(() => {
-                const toolbar = document.getElementById('topToolbar');
-                if (toolbar) {
-                    toolbar.style.opacity = '1';
-                }
-            });
+            // Fade in toolbar after ALL layout is complete (double RAF + small delay)
+            setTimeout(() => {
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        const toolbar = document.getElementById('topToolbar');
+                        if (toolbar) {
+                            toolbar.style.opacity = '1';
+                        }
+                    });
+                });
+            }, 50);
         }
 
         // Setup quick save hover menu functionality
@@ -5327,11 +5331,23 @@
                         btn.classList.remove(...cfg.inactiveClasses.split(' '));
                         btn.classList.add(...cfg.activeClasses.split(' '));
                         btn.setAttribute('aria-current', 'true');
+                        // Force inline styles since Tailwind classes may not be in bundle
+                        btn.style.backgroundColor = '#0f172a'; // slate-900
+                        btn.style.color = '#ffffff'; // white
+                        btn.style.fontWeight = '600'; // semibold
+                        btn.style.transform = 'scale(1.05)';
+                        btn.style.boxShadow = '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1)';
                         activeButton = btn;
                     } else {
                         btn.classList.remove(...cfg.activeClasses.split(' '));
                         btn.classList.add(...cfg.inactiveClasses.split(' '));
                         btn.removeAttribute('aria-current');
+                        // Clear inline styles
+                        btn.style.backgroundColor = '';
+                        btn.style.color = '';
+                        btn.style.fontWeight = '';
+                        btn.style.transform = '';
+                        btn.style.boxShadow = '';
                     }
                 });
                 
@@ -5603,11 +5619,23 @@
                             b.setAttribute('aria-current', 'true');
                             b.classList.remove(...cfg.inactiveClasses.split(' '));
                             b.classList.add(...cfg.activeClasses.split(' '));
+                            // Force inline styles since Tailwind classes may not be in bundle
+                            b.style.backgroundColor = '#0f172a';
+                            b.style.color = '#ffffff';
+                            b.style.fontWeight = '600';
+                            b.style.transform = 'scale(1.05)';
+                            b.style.boxShadow = '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1)';
                             b.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
                         } else {
                             b.removeAttribute('aria-current');
                             b.classList.remove(...cfg.activeClasses.split(' '));
                             b.classList.add(...cfg.inactiveClasses.split(' '));
+                            // Clear inline styles
+                            b.style.backgroundColor = '';
+                            b.style.color = '';
+                            b.style.fontWeight = '';
+                            b.style.transform = '';
+                            b.style.boxShadow = '';
                         }
                     });
 
