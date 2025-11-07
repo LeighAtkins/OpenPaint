@@ -10,18 +10,66 @@
 
 /* Mobile responsive adjustments */
 @media (max-width: 768px) {
+    /* Top toolbar - make scrollable horizontally */
+    #topToolbar {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    #topToolbar .toolbar-wrap {
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+    }
+
+    #tbLeft, #tbRight {
+        flex-shrink: 0 !important;
+    }
+
     /* Make toolbar icons larger for touch */
-    .toolbar-btn, .mode-btn {
+    .toolbar-btn, .mode-btn, .tbtn {
         min-width: 44px !important;
         min-height: 44px !important;
-        font-size: 18px !important;
+        font-size: 14px !important;
+        flex-shrink: 0;
+    }
+
+    /* Reduce side panel widths for mobile */
+    #strokePanel, #imagePanel {
+        width: 85vw !important;
+        max-width: 320px !important;
+    }
+
+    /* Position panels closer to edges on mobile */
+    #strokePanel {
+        left: 0.5rem !important;
+    }
+
+    #imagePanel {
+        right: 0.5rem !important;
+    }
+
+    /* Canvas controls - reduce bottom spacing and make scrollable */
+    #canvasControls {
+        bottom: 0.5rem !important;
+        left: 0.5rem !important;
+        right: 0.5rem !important;
+        transform: none !important;
+        max-width: calc(100vw - 1rem) !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    #canvasControlsContent {
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
     }
 
     /* Increase control panel touch targets */
     #canvasControls button,
     #canvasControls select {
         min-height: 44px;
-        font-size: 16px;
+        font-size: 14px;
+        flex-shrink: 0;
     }
 
     /* Make stroke list items easier to tap */
@@ -40,6 +88,12 @@
     .control-point {
         width: 20px !important;
         height: 20px !important;
+    }
+
+    /* Make color swatches easier to tap */
+    .color-swatches button {
+        min-width: 32px !important;
+        min-height: 32px !important;
     }
 }
 

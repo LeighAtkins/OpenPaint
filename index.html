@@ -1260,7 +1260,7 @@
                     <!-- Hidden inputs for functionality -->
                     <div id="measurementInput" class="hidden">
                         <div id="inchInputs" class="flex items-center gap-2">
-                            <input type="number" id="inchWhole" min="0" value="0" class="w-16 px-2 py-1 border border-gray-300 rounded text-sm">
+                            <input type="number" id="inchWhole" min="0" value="0" inputmode="numeric" class="w-16 px-2 py-1 border border-gray-300 rounded text-sm">
                             <select id="inchFraction" class="px-2 py-1 border border-gray-300 rounded text-sm">
                                 <option value="0">0</option>
                                 <option value="0.125">1/8</option>
@@ -1273,7 +1273,7 @@
                             </select>
                         </div>
                         <div id="cmInputs" class="hidden">
-                            <input type="number" id="cmValue" min="0" step="0.1" value="0.0" class="w-16 px-2 py-1 border border-gray-300 rounded text-sm">
+                            <input type="number" id="cmValue" min="0" step="0.1" value="0.0" inputmode="decimal" class="w-16 px-2 py-1 border border-gray-300 rounded text-sm">
                         </div>
                     </div>
                 </div>
