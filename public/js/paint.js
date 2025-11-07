@@ -9027,6 +9027,10 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
     }
   }
 
+  // Expose undo/redo functions to window for toolbar buttons
+  window.undo = undo;
+  window.redo = redo;
+
   // Save initial blank state
   //    saveState();
 
