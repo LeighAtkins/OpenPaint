@@ -3,10 +3,33 @@
   "builds": [
     {
       "src": "app.js",
-      "use": "@vercel/node"
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": ["index.html", "uploads/**"]
+      }
     },
     {
       "src": "public/**",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "index.html",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "css/**",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "src/**",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "diagnostics-overlay.js",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "test-coordinate-system.js",
       "use": "@vercel/static"
     }
   ],
@@ -20,7 +43,7 @@
       "dest": "/app.js"
     },
     {
-      "src": "^/(health|env-check|version)$",
+      "src": "^/(health|env-check|version|test)$",
       "dest": "/app.js"
     },
     {
@@ -40,7 +63,11 @@
       "dest": "/$1.js"
     },
     {
-      "src": "^(?!/(ai|api|health|env-check|version|js|css|src|diagnostics-overlay|test-coordinate-system)/).*$",
+      "src": "^/$",
+      "dest": "/index.html"
+    },
+    {
+      "src": "^/(?!(?:ai|api|health|env-check|version|test|js|css|src|diagnostics-overlay|test-coordinate-system)(?:/|$)).*$",
       "dest": "/app.js"
     }
   ]
