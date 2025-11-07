@@ -809,7 +809,14 @@ app.get('/src/:filename(*)', (req, res) => {
 
 // SPA fallback (last route)
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
+  const indexPath = path.join(__dirname, 'index.html');
+  res.sendFile(indexPath, (err) => {
+    if (err) {
+      console.error('[SPA Fallback] Failed to serve index.html:', err.message);
+      console.error('[SPA Fallback] Attempted path:', indexPath);
+      res.status(500).send('Failed to load application');
+    }
+  });
 });
 
 // Export for Vercel
