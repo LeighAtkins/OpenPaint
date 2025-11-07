@@ -360,6 +360,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const oldText = removeBgBtn.textContent;
           removeBgBtn.textContent = 'Processing ⏳';
 
+          // Get image blob
           let blob;
           if (srcUrl) {
             try {
@@ -372,42 +373,17 @@ document.addEventListener('DOMContentLoaded', () => {
           }
           if (!blob) throw new Error('No image to process');
 
-          // Step 1: Get direct upload URL from Cloudflare Worker
-          const uploadResp = await fetch('/api/images/direct-upload', { 
-            method: 'POST',
-            headers: { 'x-api-key': 'dev-secret' }
-          });
-          const uploadData = await uploadResp.json();
-          if (!uploadData.success || !uploadData.result?.uploadURL) {
-            throw new Error('Failed to get upload URL');
-          }
-
-          // Step 2: Upload image directly to Cloudflare Images
+          // Call REMBG edge function (handles upload + background removal in one call)
           const formData = new FormData();
           formData.append('file', blob, 'image.png');
-          const imageUploadResp = await fetch(uploadData.result.uploadURL, {
+
+          const bgRemoveResp = await fetch('/api/rembg', {
             method: 'POST',
             body: formData
           });
-          const imageUploadData = await imageUploadResp.json();
-          if (!imageUploadData.success || !imageUploadData.result?.id) {
-            throw new Error('Failed to upload image');
-          }
 
-          // Step 3: Remove background using Cloudflare Images (robust parsing)
-          const bgRemoveResp = await fetch('/api/remove-background', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'x-api-key': 'dev-secret'
-            },
-            body: JSON.stringify({
-              imageId: imageUploadData.result.id,
-              return: 'url'
-            })
-          });
-          const ct = (bgRemoveResp.headers.get('content-type') || '').toLowerCase();
           if (!bgRemoveResp.ok) {
+            const ct = (bgRemoveResp.headers.get('content-type') || '').toLowerCase();
             if (ct.includes('application/json')) {
               const errJson = await bgRemoveResp.json().catch(() => ({}));
               throw new Error(errJson.message || JSON.stringify(errJson));
@@ -416,86 +392,27 @@ document.addEventListener('DOMContentLoaded', () => {
               const text = await bgRemoveResp.text();
               throw new Error(text.slice(0, 300));
             }
-            const ab = await bgRemoveResp.arrayBuffer().catch(() => null);
-            throw new Error(`RemoveBG HTTP ${bgRemoveResp.status}: ${ct || 'unknown'} (${ab ? ab.byteLength : 'no'} bytes)`);
-          }
-          let cutoutUrl;
-          if (ct.includes('application/json')) {
-            const bgRemoveData = await bgRemoveResp.json();
-            if (!bgRemoveData.success || !bgRemoveData.cutoutUrl) {
-              throw new Error(bgRemoveData.message || 'Background removal failed');
-            }
-            cutoutUrl = bgRemoveData.cutoutUrl;
-          } else if (ct.startsWith('image/')) {
-            const blobOut = await bgRemoveResp.blob();
-            cutoutUrl = URL.createObjectURL(blobOut);
-          } else if (ct.startsWith('text/')) {
-            const text = await bgRemoveResp.text();
-            throw new Error(`Unexpected text from remove-background: ${text.slice(0, 300)}`);
-          } else {
-            const buf = await bgRemoveResp.arrayBuffer();
-            const blobOut = new Blob([buf]);
-            cutoutUrl = URL.createObjectURL(blobOut);
+            throw new Error(`RemoveBG HTTP ${bgRemoveResp.status}`);
           }
 
-          // Step 4: Apply the processed image
-          // If cutoutUrl is already a URL (from JSON response), fetch it first to avoid CORS/HTTP2 issues
-          // If it's a blob URL (from binary response), we need to fetch it
-          if (cutoutUrl.startsWith('http')) {
-            // cutoutUrl is already a URL from the API response - fetch it first to convert to blob
-            try {
-              console.log('[BG-REMOVE] Fetching processed image from:', cutoutUrl);
-              const response = await fetch(cutoutUrl, { 
-                mode: 'cors',
-                cache: 'no-cache'
-              });
-                            
-              if (!response.ok) {
-                throw new Error(`Failed to fetch processed image: ${response.status} ${response.statusText}`);
-              }
-                            
-              const blob = await response.blob();
-              console.log('[BG-REMOVE] Successfully fetched processed image blob:', blob.size, 'bytes');
-                            
-              // Use centralized background removal handler if available
-              if (typeof window.onBackgroundRemoved === 'function') {
-                await window.onBackgroundRemoved(label, blob);
-              } else {
-                // Fallback to direct paste
-                const dataUrl = await rembg_blobToDataURL(blob);
-                if (typeof pasteImageFromUrl === 'function') {
-                  await pasteImageFromUrl(dataUrl, label, { preserveCanvasScale: true, preserveBasis: 'width' });
-                }
-              }
-            } catch (fetchError) {
-              console.error('[BG-REMOVE] Failed to fetch processed image from URL:', fetchError);
-              // Try direct URL as fallback
-              console.log('[BG-REMOVE] Attempting direct URL fallback...');
-              if (typeof pasteImageFromUrl === 'function') {
-                await pasteImageFromUrl(cutoutUrl, label, { preserveCanvasScale: true, preserveBasis: 'width' });
-              }
-            }
+          // Get processed image blob
+          const processedBlob = await bgRemoveResp.blob();
+          const cutoutUrl = URL.createObjectURL(processedBlob);
+
+          console.log('[RemoveBG] Successfully processed image, size:', processedBlob.size, 'bytes');
+
+          // Apply the processed image
+          // Use centralized background removal handler if available
+          if (typeof window.onBackgroundRemoved === 'function') {
+            await window.onBackgroundRemoved(label, processedBlob);
           } else {
-            // cutoutUrl is a blob URL - fetch it to get the blob
-            try {
-              const response = await fetch(cutoutUrl);
-              const blob = await response.blob();
-                            
-              // Use centralized background removal handler if available
-              if (typeof window.onBackgroundRemoved === 'function') {
-                await window.onBackgroundRemoved(label, blob);
-              } else {
-                // Fallback to direct paste
-                const dataUrl = await rembg_blobToDataURL(blob);
-                if (typeof pasteImageFromUrl === 'function') {
-                  await pasteImageFromUrl(dataUrl, label, { preserveCanvasScale: true, preserveBasis: 'width' });
-                }
-              }
-            } catch (fetchErr) {
-              console.error('[RemoveBG] Failed to fetch blob URL:', fetchErr);
-              throw new Error('Failed to process background removal result');
+            // Fallback to direct paste
+            const dataUrl = await rembg_blobToDataURL(processedBlob);
+            if (typeof pasteImageFromUrl === 'function') {
+              await pasteImageFromUrl(dataUrl, label, { preserveCanvasScale: true, preserveBasis: 'width' });
             }
           }
+
           // Keep UI scale text and canvas in sync after replace
           try { if (label === window.currentImageLabel && typeof updateScaleUI === 'function') updateScaleUI(); } catch(_) {}
           try { if (typeof redrawCanvasWithVisibility === 'function') redrawCanvasWithVisibility(); } catch(_) {}
