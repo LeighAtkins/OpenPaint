@@ -8,7 +8,7 @@ npm run build:css
 
 # Create Vercel output structure
 mkdir -p .vercel/output/static
-mkdir -p .vercel/output/functions/api
+mkdir -p .vercel/output/functions/api.func
 
 # Copy static files to output root
 echo "Copying static files..."
@@ -22,13 +22,13 @@ cp *.html .vercel/output/static/ 2>/dev/null || true
 echo "Copying public files to root..."
 cp -r public/* .vercel/output/static/ 2>/dev/null || true
 
-# Copy API function
+# Copy API function with correct name
 echo "Copying API function..."
-cp api/app.js .vercel/output/functions/api/index.js
+cp api/app.js .vercel/output/functions/api.func/index.js
 
 # Create function config
 echo "Creating function config..."
-cat > .vercel/output/functions/api/.vc-config.json <<'EOF'
+cat > .vercel/output/functions/api.func/.vc-config.json <<'EOF'
 {
   "runtime": "nodejs20.x",
   "handler": "index.js",
@@ -44,12 +44,12 @@ cat > .vercel/output/config.json <<'EOF'
   "version": 3,
   "routes": [
     {
-      "src": "^/(api|ai)/.*",
-      "dest": "/api"
+      "src": "^/(api|ai)/(.*)$",
+      "dest": "/api?path=$2"
     },
     {
       "src": "^/(health|env-check|version)$",
-      "dest": "/api"
+      "dest": "/api?path=$1"
     },
     {
       "handle": "filesystem"
