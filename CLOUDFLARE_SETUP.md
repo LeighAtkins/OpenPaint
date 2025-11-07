@@ -80,15 +80,15 @@ Update your server's environment variables. If deploying to Vercel:
 
 1. Go to your Vercel project settings
 2. Navigate to **Environment Variables**
-3. Add:
+3. Add for **both Production and Preview** environments:
    ```
-   REMBG_ORIGIN=https://sofapaint-api.your-subdomain.workers.dev
+   REMBG_ORIGIN=https://sofapaint-api.sofapaint-api.workers.dev
    ```
 
 For local development, create a `.env` file in the project root:
 
 ```bash
-REMBG_ORIGIN=https://sofapaint-api.your-subdomain.workers.dev
+REMBG_ORIGIN=https://sofapaint-api.sofapaint-api.workers.dev
 ```
 
 ## Step 7: Test the Setup

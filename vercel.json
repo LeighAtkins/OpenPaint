@@ -1,47 +1,15 @@
 {
   "version": 2,
-  "builds": [
+  "functions": {
+    "api/app.js": {
+      "runtime": "nodejs20.x"
+    }
+  },
+  "rewrites": [
     {
-      "src": "api/app.js",
-      "use": "@vercel/node"
-    },
-    {
-      "src": "public/**",
-      "use": "@vercel/static"
+      "source": "/api/(.*)",
+      "destination": "/api/app.js"
     }
   ],
-  "routes": [
-    {
-      "src": "^/ai/(.*)$",
-      "dest": "/api/app.js"
-    },
-    {
-      "src": "^/api/(.*)$",
-      "dest": "/api/app.js"
-    },
-    {
-      "src": "^/(health|env-check|version)$",
-      "dest": "/api/app.js"
-    },
-    {
-      "src": "^/js/(.*)$",
-      "dest": "/public/js/$1"
-    },
-    {
-      "src": "^/css/(.*)$",
-      "dest": "/css/$1"
-    },
-    {
-      "src": "^/src/(.*)$",
-      "dest": "/src/$1"
-    },
-    {
-      "src": "^/(diagnostics-overlay|test-coordinate-system)\\.js$",
-      "dest": "/$1.js"
-    },
-    {
-      "src": "^(?!/(ai|api|health|env-check|version|js|css|src|diagnostics-overlay|test-coordinate-system)/).*$",
-      "dest": "/api/app.js"
-    }
-  ]
+  "cleanUrls": true
 }
