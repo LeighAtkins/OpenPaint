@@ -171,6 +171,8 @@
       return vw / iw;
     } else if (mode === 'height') {
       return vh / ih;
+    } else if (mode === 'actual') {
+      return 1.0;  // Actual size = 1:1 scale
     } else {
       // contain (default)
       return Math.min(vw / iw, vh / ih);

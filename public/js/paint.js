@@ -12137,7 +12137,16 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
     const imageNatural = { w: imageDimensions.width, h: imageDimensions.height };
     const viewportCss = { w: viewportWidth, h: viewportHeight };
 
-    let scale = window.computeScaleForFit(imageNatural, viewportCss, fitMode);
+    // Convert fit mode format: 'fit-width' -> 'width', 'fit-height' -> 'height', 'fit-canvas' -> 'contain'
+    let geometryMode = fitMode;
+    if (fitMode === 'fit-width') geometryMode = 'width';
+    else if (fitMode === 'fit-height') geometryMode = 'height';
+    else if (fitMode === 'fit-canvas') geometryMode = 'contain';
+    else if (fitMode === 'actual-size') geometryMode = 'actual';
+
+    console.log(`[FIT] Converting fitMode '${fitMode}' to geometry mode '${geometryMode}'`);
+
+    let scale = window.computeScaleForFit(imageNatural, viewportCss, geometryMode);
 
     // Clamp scale to reasonable bounds
     const sizeClamp = Math.max(0.01, Math.min(100, scale));
