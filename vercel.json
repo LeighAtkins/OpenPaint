@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/js/:path*",
+      "destination": "/public/js/:path*"
+    },
+    {
       "source": "/api/:path*",
       "destination": "/api/app"
     }
@@ -19,5 +23,6 @@
         }
       ]
     }
-  ]
+  ],
+  "cleanUrls": true
 }
