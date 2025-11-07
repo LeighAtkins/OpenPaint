@@ -154,18 +154,29 @@
         overflow-x: auto !important;
         -webkit-overflow-scrolling: touch;
         z-index: 5000 !important;
-        display: block !important;
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
     }
 
+    /* Force canvas controls content to be visible and not collapsed */
     #canvasControlsContent {
+        display: flex !important;
         flex-wrap: nowrap !important;
         overflow-x: auto !important;
-        min-width: max-content;
+        min-width: max-content !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        max-height: none !important;
     }
 
-    /* Increase control panel touch targets */
+    /* Ensure canvas controls buttons are visible */
     #canvasControls button,
-    #canvasControls select {
+    #canvasControls select,
+    #canvasControls #quickSave {
+        display: inline-flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
         min-height: 44px;
         font-size: 14px;
         flex-shrink: 0;
