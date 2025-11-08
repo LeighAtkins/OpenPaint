@@ -44,49 +44,53 @@ fi
 echo "⚡ Creating API serverless function..."
 FUNC_DIR=".vercel/output/functions/api__app.func"
 mkdir -p "$FUNC_DIR"
+mkdir -p ".vercel/output/config"
 
-# 3a) Create function entry point that exports the Express app
+# 3a) Create function entry point that exports the Express app (ESM)
 cat > "$FUNC_DIR/index.js" <<'EOF'
-// Vercel serverless function entry point
-// This imports and re-exports the Express app from api/app.js
-const app = require('../../../../api/app');
-module.exports = app;
+// Vercel serverless function entry point (ESM)
+import app from '../../../../api/app.js';
+export default app;
 EOF
 
-# 3b) Function configuration with explicit Node 20.x runtime
-cat > "$FUNC_DIR/config.json" <<'EOF'
+# 3b) Function configuration - MUST be .vc-config.json for Output API v3
+cat > "$FUNC_DIR/.vc-config.json" <<'EOF'
 {
   "runtime": "nodejs20.x",
   "handler": "index.js",
-  "memory": 1024,
-  "maxDuration": 10
+  "launcherType": "Nodejs"
 }
 EOF
 
 echo "✅ Created function at $FUNC_DIR"
 echo "   - Runtime: nodejs20.x"
 echo "   - Handler: index.js"
+echo "   - Config: .vc-config.json"
 
-# 4) Create routes manifest to map /api/* to the function
+# 4) Create routes in config/routes.json (Output API v3 format)
 echo "🔀 Creating routes manifest..."
-cat > ".vercel/output/routes-manifest.json" <<'EOF'
-{
-  "version": 3,
-  "routes": [
-    {
-      "src": "^/api(?:/.*)?$",
-      "dest": "functions/api__app.func"
-    },
-    {
-      "src": "^/health$",
-      "dest": "functions/api__app.func"
-    },
-    {
-      "src": "^/version$",
-      "dest": "functions/api__app.func"
-    }
-  ]
-}
+cat > ".vercel/output/config/routes.json" <<'EOF'
+[
+  {
+    "src": "^/api(?:/(.*))?$",
+    "dest": "functions/api__app.func"
+  },
+  {
+    "src": "^/health$",
+    "dest": "functions/api__app.func"
+  },
+  {
+    "src": "^/version$",
+    "dest": "functions/api__app.func"
+  },
+  {
+    "handle": "filesystem"
+  },
+  {
+    "src": "/(.*)",
+    "dest": "/static/$1"
+  }
+]
 EOF
 
 # 5) Create config.json for the output

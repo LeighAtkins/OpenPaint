@@ -3,7 +3,7 @@
  * Minimal Express app for API endpoints only - no client imports
  */
 
-const express = require('express');
+import express from 'express';
 const app = express();
 
 // Middleware
@@ -89,5 +89,5 @@ app.get('/version', (req, res) => {
   });
 });
 
-// Export for Vercel serverless
-module.exports = app;
+// Export for Vercel serverless (ESM)
+export default app;

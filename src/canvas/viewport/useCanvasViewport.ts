@@ -10,6 +10,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import type { RefObject } from 'react';
 
 export interface ViewportTransform {
   scale: number;
@@ -36,8 +37,8 @@ export interface ViewportBounds {
 }
 
 export interface UseCanvasViewportProps {
-  containerRef: React.RefObject<HTMLElement>;
-  canvasRef: React.RefObject<HTMLCanvasElement>;
+  containerRef: RefObject<HTMLElement>;
+  canvasRef: RefObject<HTMLCanvasElement>;
   frameBounds?: ViewportBounds; // The content bounds to fit
   padding?: number; // Padding around content when fitting
 }
