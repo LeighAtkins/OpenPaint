@@ -383,10 +383,15 @@
         
         /* Only apply hover transform to main panels, not side panels */
         #projectPanel:hover,
-        #toolsPanel:hover,
-        #canvasControls:hover {
+        #toolsPanel:hover {
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
             transform: translateY(-1px);
+        }
+
+        /* Canvas controls needs to preserve horizontal centering */
+        #canvasControls:hover {
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            transform: translateX(-50%) translateY(-1px);
         }
         
         .floating-panel.dragging {
@@ -594,9 +599,15 @@
         }
 
         #mini-stepper .step[aria-current="true"] {
-            transform: scale(1.05);
+            /* Transform is applied via Tailwind class scale-105 */
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
             z-index: 20;
+        }
+
+        /* Ensure step buttons have enough space when scaled */
+        #mini-stepper {
+            padding-top: 0.5rem;
+            padding-bottom: 0.5rem;
         }
 
         /* Ensure pills are always clickable */
