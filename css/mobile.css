@@ -178,7 +178,18 @@
         visibility: visible !important;
         opacity: 1 !important;
         max-height: none !important;
-        gap: 0.5rem !important;
+        gap: 0.25rem !important;
+        align-items: center !important;
+    }
+
+    /* Hide empty divs and reduce spacing */
+    #canvasControlsContent > div:empty {
+        display: none !important;
+    }
+
+    /* Reduce margin on quickSave container */
+    #canvasControls #quickSave {
+        margin-left: 0.25rem !important;
     }
 
     /* Hide share button on mobile */
@@ -189,20 +200,31 @@
     /* Copy button - ensure blue color is visible */
     #canvasControls #copyCanvasBtn {
         display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
         visibility: visible !important;
         opacity: 1 !important;
         min-height: 44px !important;
+        padding: 0.5rem 0.75rem !important;
         flex-shrink: 0 !important;
         background-color: #3b82f6 !important;
         color: white !important;
     }
 
-    /* Quick Save button - ensure green color is visible */
+    /* Hide SVG icon on mobile to reduce squishing */
+    #canvasControls #copyCanvasBtn svg {
+        display: none !important;
+    }
+
+    /* Quick Save button - ensure green color is visible and centered */
     #canvasControls #quickSaveBtn {
         display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
         visibility: visible !important;
         opacity: 1 !important;
         min-height: 44px !important;
+        padding: 0.5rem 0.75rem !important;
         flex-shrink: 0 !important;
         background-color: #10b981 !important;
         color: white !important;
