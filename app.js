@@ -729,17 +729,6 @@ app.use((err, req, res, next) => {
     res.status(500).json({ success: false, message: 'Server error' });
 });
 
-// export for Vercel
-module.exports = app;
-
-// keep local server only when run directly
-if (require.main === module) {
-  const port = process.env.PORT || 3000;
-  app.listen(port, "0.0.0.0", () => {
-    console.log(`OpenPaint app listening at http://localhost:${port}`);
-  });
-}
-
 /**
  * Python rembg processing function using inline script execution
  */
@@ -870,3 +859,11 @@ app.get('*', (req, res) => {
 
 // Export for Vercel
 module.exports = app;
+
+// Keep local server only when run directly
+if (require.main === module) {
+  const port = process.env.PORT || 3000;
+  app.listen(port, "0.0.0.0", () => {
+    console.log(`OpenPaint app listening at http://localhost:${port}`);
+  });
+}
