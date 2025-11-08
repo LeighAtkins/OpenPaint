@@ -305,7 +305,51 @@
             border-radius: 12px;
             border: 1px solid rgb(209, 213, 219);
         }
-        
+
+        #copy {
+            padding: 8px 16px;
+            background: rgb(59, 130, 246);
+            color: white;
+            font-weight: 600;
+            border-radius: 12px;
+            border: none;
+        }
+
+        #copy:hover {
+            background: rgb(37, 99, 235);
+        }
+
+        #save {
+            padding: 8px 16px;
+            background: rgb(34, 197, 94);
+            color: white;
+            font-weight: 600;
+            border-radius: 12px;
+            border: none;
+        }
+
+        #save:hover {
+            background: rgb(22, 163, 74);
+        }
+
+        #copyCanvasBtn {
+            background: rgb(59, 130, 246);
+            color: white;
+        }
+
+        #copyCanvasBtn:hover {
+            background: rgb(37, 99, 235);
+        }
+
+        #quickSaveBtn {
+            background: rgb(34, 197, 94);
+            color: white;
+        }
+
+        #quickSaveBtn:hover {
+            background: rgb(22, 163, 74);
+        }
+
         /* Color swatches */
         .color-swatches {
             display: flex;
@@ -1112,6 +1156,30 @@
         }
         .popover.show {
             display: block;
+        }
+
+        /* Hide share button */
+        #shareProjectBtn {
+            display: none;
+        }
+
+        /* Mobile responsive button styling */
+        @media (max-width: 768px) {
+            /* Increase padding for copy and save buttons on mobile */
+            #copyCanvasBtn {
+                padding: 6px 12px;
+                min-width: 50px;
+            }
+
+            #quickSaveBtn {
+                padding: 6px 12px;
+                min-width: 40px;
+            }
+
+            /* Reduce gap in canvas controls on mobile */
+            #canvasControlsContent {
+                gap: 0.5rem !important;
+            }
         }
     </style>
     
