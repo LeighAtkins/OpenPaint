@@ -1,47 +1,34 @@
 {
   "version": 2,
-  "builds": [
+  "functions": {
+    "api/app.js": {
+      "runtime": "nodejs20.x"
+    }
+  },
+  "rewrites": [
     {
-      "src": "app.js",
-      "use": "@vercel/node"
+      "source": "/api/(.*)",
+      "destination": "/api/app.js"
     },
     {
-      "src": "public/**",
-      "use": "@vercel/static"
+      "source": "/health",
+      "destination": "/api/app.js"
+    },
+    {
+      "source": "/version",
+      "destination": "/api/app.js"
     }
   ],
-  "routes": [
+  "headers": [
     {
-      "src": "^/ai/(.*)$",
-      "dest": "/app.js"
-    },
-    {
-      "src": "^/api/(.*)$",
-      "dest": "/app.js"
-    },
-    {
-      "src": "^/(health|env-check|version)$",
-      "dest": "/app.js"
-    },
-    {
-      "src": "^/js/(.*)$",
-      "dest": "/public/js/$1"
-    },
-    {
-      "src": "^/css/(.*)$",
-      "dest": "/css/$1"
-    },
-    {
-      "src": "^/src/(.*)$",
-      "dest": "/src/$1"
-    },
-    {
-      "src": "^/(diagnostics-overlay|test-coordinate-system)\\.js$",
-      "dest": "/$1.js"
-    },
-    {
-      "src": "^(?!/(ai|api|health|env-check|version|js|css|src|diagnostics-overlay|test-coordinate-system)/).*$",
-      "dest": "/app.js"
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        }
+      ]
     }
-  ]
+  ],
+  "cleanUrls": true
 }
