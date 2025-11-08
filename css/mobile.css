@@ -142,10 +142,10 @@
         display: none;
     }
 
-    /* Canvas controls - positioned well above navigation */
+    /* Canvas controls - positioned well above navigation bar */
     #canvasControls.floating-panel.fixed {
         position: fixed !important;
-        bottom: 7rem !important;
+        bottom: 10rem !important;
         left: 50% !important;
         right: auto !important;
         transform: translateX(-50%) !important;
