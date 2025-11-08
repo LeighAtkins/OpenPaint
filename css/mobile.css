@@ -142,10 +142,10 @@
         display: none;
     }
 
-    /* Canvas controls - positioned at bottom with good visibility */
+    /* Canvas controls - positioned well above navigation */
     #canvasControls.floating-panel.fixed {
         position: fixed !important;
-        bottom: 5rem !important;
+        bottom: 7rem !important;
         left: 50% !important;
         right: auto !important;
         transform: translateX(-50%) !important;
@@ -160,6 +160,7 @@
         background-color: rgba(255, 255, 255, 0.95) !important;
         backdrop-filter: blur(8px) !important;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+        padding: 0.75rem !important;
     }
 
     /* Force canvas controls content to be visible and not collapsed */
