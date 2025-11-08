@@ -8,6 +8,12 @@
     user-select: none;
 }
 
+/* Canvas controls positioning - applies to all screen sizes */
+#canvasControls.floating-panel.fixed {
+    bottom: 5rem !important;
+    z-index: 6000 !important;
+}
+
 /* Mobile responsive adjustments */
 @media (max-width: 768px) {
     /* Top toolbar - make scrollable horizontally */
