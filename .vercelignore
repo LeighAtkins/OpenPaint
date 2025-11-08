@@ -1,0 +1,48 @@
+# Vercel Ignore - Prevent Python detection and unnecessary files
+
+# Python files (local development only)
+requirements.txt
+**/*.py
+*.pyc
+__pycache__/
+venv/
+.venv/
+env/
+.env/
+*.egg-info/
+temp_rembg_script.py
+
+# Development and testing
+node_modules/
+.vercel/
+.git/
+.github/
+tests/
+*.test.js
+*.spec.js
+cypress/
+.cypress/
+
+# Documentation and notes
+*.md
+!README.md
+docs/
+
+# Build artifacts and logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.DS_Store
+*.log
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporary files
+tmp/
+temp/
+*.tmp

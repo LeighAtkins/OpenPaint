@@ -13,8 +13,11 @@ npx --yes @tailwindcss/cli -i "./css/tailwind.css" -o "./css/tailwind.build.css"
 
 # 2) Copy static assets
 echo "📁 Copying static assets..."
+
+# Use cp instead of rsync for portability (rsync not available in Vercel)
 if [ -d public ]; then
-  rsync -a public/ .vercel/output/static/
+  mkdir -p .vercel/output/static
+  cp -R public/. .vercel/output/static/ 2>/dev/null || true
 fi
 
 # Copy root-level static files
@@ -22,9 +25,20 @@ cp -f index.html .vercel/output/static/ 2>/dev/null || true
 cp -f shared.html .vercel/output/static/ 2>/dev/null || true
 
 # Copy CSS, JS, and other directories
-[ -d css ] && rsync -a css/ .vercel/output/static/css/
-[ -d js ] && rsync -a js/ .vercel/output/static/js/
-[ -d src ] && rsync -a src/ .vercel/output/static/src/
+if [ -d css ]; then
+  mkdir -p .vercel/output/static/css
+  cp -R css/. .vercel/output/static/css/ 2>/dev/null || true
+fi
+
+if [ -d js ]; then
+  mkdir -p .vercel/output/static/js
+  cp -R js/. .vercel/output/static/js/ 2>/dev/null || true
+fi
+
+if [ -d src ]; then
+  mkdir -p .vercel/output/static/src
+  cp -R src/. .vercel/output/static/src/ 2>/dev/null || true
+fi
 
 # 3) Build API serverless function
 echo "⚡ Creating API serverless function..."
