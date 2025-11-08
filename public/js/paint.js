@@ -373,11 +373,24 @@ document.addEventListener('DOMContentLoaded', () => {
           if (!blob) throw new Error('No image to process');
 
           // Step 1: Get direct upload URL from Cloudflare Worker
-          const uploadResp = await fetch('/api/images/direct-upload', { 
+          const uploadResp = await fetch('/api/images/direct-upload', {
             method: 'POST',
             headers: { 'x-api-key': 'dev-secret' }
           });
-          const uploadData = await uploadResp.json();
+
+          // Handle non-JSON responses gracefully
+          const uploadText = await uploadResp.text();
+          let uploadData;
+          try {
+            uploadData = JSON.parse(uploadText);
+          } catch (e) {
+            console.error('[RemoveBG] Upstream returned non-JSON:', uploadText.slice(0, 200));
+            throw new Error('Upstream error (non-JSON response). Please check server logs.');
+          }
+
+          if (!uploadResp.ok) {
+            throw new Error(uploadData?.error || 'Failed to get upload URL');
+          }
           if (!uploadData.success || !uploadData.result?.uploadURL) {
             throw new Error('Failed to get upload URL');
           }

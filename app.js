@@ -79,6 +79,15 @@ app.use(express.urlencoded({ extended: true, limit: '200mb' }));
 // Route handlers
 app.get("/health", (req, res) => res.json({ ok: true, ts: Date.now() }));
 
+app.get('/api/healthz', (req, res) => {
+  res.json({
+    ok: true,
+    REMBG_ORIGIN: !!process.env.REMBG_ORIGIN,
+    CF_API_KEY: !!process.env.CF_API_KEY,
+    timestamp: Date.now()
+  });
+});
+
 app.get('/version', (req, res) => {
   res.json({ commit: process.env.VERCEL_GIT_COMMIT_SHA || null, ts: Date.now() });
 });
@@ -594,9 +603,9 @@ app.post('/api/storage/presign', async (req, res) => {
   try {
     // Validate Cloudflare Images configuration
     if (!CF_ACCOUNT_ID || !CF_IMAGES_API_TOKEN) {
-      return res.status(500).json({ 
-        success: false, 
-        message: 'Cloudflare Images not configured. Missing CF_ACCOUNT_ID or CF_IMAGES_API_TOKEN.' 
+      return res.status(500).json({
+        success: false,
+        message: 'Cloudflare Images not configured. Missing CF_ACCOUNT_ID or CF_IMAGES_API_TOKEN.'
       });
     }
 
@@ -607,7 +616,7 @@ app.post('/api/storage/presign', async (req, res) => {
 
     // Call Cloudflare Images Direct Creator Upload API
     const endpoint = `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/images/v2/direct_upload`;
-    
+
     const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
@@ -626,19 +635,19 @@ app.post('/api/storage/presign', async (req, res) => {
     if (!response.ok) {
       const errorText = await response.text();
       console.error('[Cloudflare Images] Upload URL generation failed:', response.status, errorText);
-      return res.status(502).json({ 
-        success: false, 
+      return res.status(502).json({
+        success: false,
         message: 'Failed to generate upload URL',
         detail: errorText
       });
     }
 
     const data = await response.json();
-    
+
     if (!data.success) {
       console.error('[Cloudflare Images] API error:', data.errors);
-      return res.status(502).json({ 
-        success: false, 
+      return res.status(502).json({
+        success: false,
         message: 'Cloudflare Images API error',
         errors: data.errors
       });
@@ -659,10 +668,57 @@ app.post('/api/storage/presign', async (req, res) => {
 
   } catch (error) {
     console.error('Error generating presigned upload URL:', error);
-    return res.status(500).json({ 
-      success: false, 
+    return res.status(500).json({
+      success: false,
       message: 'Server error generating upload URL',
-      detail: error.message 
+      detail: error.message
+    });
+  }
+});
+
+/**
+ * RemoveBG Direct Upload Proxy Endpoint
+ * Forwards requests to Cloudflare Worker for direct upload URL generation
+ */
+app.post('/api/images/direct-upload', async (req, res) => {
+  try {
+    const origin = process.env.REMBG_ORIGIN;
+    if (!origin) {
+      console.error('[RemoveBG] REMBG_ORIGIN not set');
+      return res.status(500).json({ error: 'REMBG_ORIGIN not configured' });
+    }
+
+    console.log('[RemoveBG] Forwarding direct-upload request to Worker:', origin);
+
+    const workerUrl = `${origin}/images/direct-upload`;
+    const r = await fetch(workerUrl, {
+      method: 'POST',
+      headers: {
+        'x-api-key': process.env.CF_API_KEY || 'dev-secret',
+        'Content-Type': 'application/json'
+      }
+    });
+
+    const text = await r.text();
+
+    // Always try to return JSON; if not JSON, wrap as error
+    try {
+      const json = JSON.parse(text);
+      console.log('[RemoveBG] Worker response status:', r.status, 'success:', json.success);
+      return res.status(r.status).json(json);
+    } catch (parseError) {
+      console.error('[RemoveBG] Worker returned non-JSON:', text.slice(0, 200));
+      return res.status(r.status).json({
+        error: 'upstream_non_json',
+        status: r.status,
+        body: text.slice(0, 200)
+      });
+    }
+  } catch (e) {
+    console.error('[RemoveBG] Proxy error:', e);
+    return res.status(500).json({
+      error: 'vercel_proxy_error',
+      message: String(e)
     });
   }
 });
