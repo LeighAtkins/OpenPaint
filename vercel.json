@@ -1,34 +1,5 @@
 {
-  "version": 2,
-  "functions": {
-    "api/app.js": {
-      "runtime": "nodejs22.x"
-    }
-  },
   "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "/api/app.js"
-    },
-    {
-      "source": "/health",
-      "destination": "/api/app.js"
-    },
-    {
-      "source": "/version",
-      "destination": "/api/app.js"
-    }
-  ],
-  "headers": [
-    {
-      "source": "/api/(.*)",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "no-cache, no-store, must-revalidate"
-        }
-      ]
-    }
-  ],
-  "cleanUrls": true
+    { "source": "/api/(.*)", "destination": "/api/app.js" }
+  ]
 }
