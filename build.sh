@@ -1,0 +1,94 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "📦 Building Vercel Output Directory bundle..."
+
+# 0) Clean previous output
+rm -rf .vercel/output
+mkdir -p .vercel/output/{functions,static}
+
+# 1) Build CSS assets
+echo "🎨 Building Tailwind CSS..."
+npx --yes @tailwindcss/cli -i "./css/tailwind.css" -o "./css/tailwind.build.css" --minify || true
+
+# 2) Copy static assets
+echo "📁 Copying static assets..."
+if [ -d public ]; then
+  rsync -a public/ .vercel/output/static/
+fi
+
+# Copy root-level static files
+cp -f index.html .vercel/output/static/ 2>/dev/null || true
+cp -f shared.html .vercel/output/static/ 2>/dev/null || true
+
+# Copy CSS, JS, and other directories
+[ -d css ] && rsync -a css/ .vercel/output/static/css/
+[ -d js ] && rsync -a js/ .vercel/output/static/js/
+[ -d src ] && rsync -a src/ .vercel/output/static/src/
+
+# 3) Build API serverless function
+echo "⚡ Creating API serverless function..."
+FUNC_DIR=".vercel/output/functions/api__app.func"
+mkdir -p "$FUNC_DIR"
+
+# 3a) Create function entry point that exports the Express app
+cat > "$FUNC_DIR/index.js" <<'EOF'
+// Vercel serverless function entry point
+// This imports and re-exports the Express app from api/app.js
+const app = require('../../../../api/app');
+module.exports = app;
+EOF
+
+# 3b) Function configuration with explicit Node 20.x runtime
+cat > "$FUNC_DIR/config.json" <<'EOF'
+{
+  "runtime": "nodejs20.x",
+  "handler": "index.js",
+  "memory": 1024,
+  "maxDuration": 10
+}
+EOF
+
+echo "✅ Created function at $FUNC_DIR"
+echo "   - Runtime: nodejs20.x"
+echo "   - Handler: index.js"
+
+# 4) Create routes manifest to map /api/* to the function
+echo "🔀 Creating routes manifest..."
+cat > ".vercel/output/routes-manifest.json" <<'EOF'
+{
+  "version": 3,
+  "routes": [
+    {
+      "src": "^/api(?:/.*)?$",
+      "dest": "functions/api__app.func"
+    },
+    {
+      "src": "^/health$",
+      "dest": "functions/api__app.func"
+    },
+    {
+      "src": "^/version$",
+      "dest": "functions/api__app.func"
+    }
+  ]
+}
+EOF
+
+# 5) Create config.json for the output
+cat > ".vercel/output/config.json" <<'EOF'
+{
+  "version": 3
+}
+EOF
+
+# 6) Verify the structure
+echo ""
+echo "✅ Build complete! Output structure:"
+echo ""
+tree -L 3 .vercel/output 2>/dev/null || find .vercel/output -type f | head -20
+echo ""
+echo "🔍 Verifying nodejs20.x runtime..."
+grep -r "nodejs20.x" .vercel/output/functions || echo "⚠️  Warning: nodejs20.x not found!"
+echo ""
+echo "🚀 Ready for deployment!"

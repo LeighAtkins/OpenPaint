@@ -1,5 +1,4 @@
 {
-  "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/app.js" }
-  ]
+  "version": 2,
+  "cleanUrls": true
 }
