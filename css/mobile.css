@@ -145,15 +145,15 @@
     /* Canvas controls - positioned at bottom with good visibility */
     #canvasControls.floating-panel.fixed {
         position: fixed !important;
-        bottom: 4rem !important;
+        bottom: 5rem !important;
         left: 50% !important;
         right: auto !important;
         transform: translateX(-50%) !important;
         width: auto !important;
-        max-width: calc(100vw - 1rem) !important;
+        max-width: calc(100vw - 2rem) !important;
         overflow-x: auto !important;
         -webkit-overflow-scrolling: touch;
-        z-index: 5000 !important;
+        z-index: 6000 !important;
         display: flex !important;
         visibility: visible !important;
         opacity: 1 !important;
