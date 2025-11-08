@@ -793,6 +793,20 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (_) {}
   }
 
+  // Helper to convert blob to data URL (for background removal flow)
+  async function rembg_blobToDataURL(blob) {
+    return await new Promise((resolve, reject) => {
+      try {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      } catch (e) {
+        reject(e);
+      }
+    });
+  }
+
   // === LABEL REPROJECTION FEATURE FLAG ===
   function labelReprojectEnabled() {
     try {
