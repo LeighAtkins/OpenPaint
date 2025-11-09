@@ -1,20 +1,6 @@
 {
-  "version": 2,
   "buildCommand": "npm run vercel-build",
-  "rewrites": [
-    {
-      "source": "/js/:path*",
-      "destination": "/public/js/:path*"
-    },
-    {
-      "source": "/css/:path*",
-      "destination": "/css/:path*"
-    },
-    {
-      "source": "/src/:path*",
-      "destination": "/src/:path*"
-    }
-  ],
+  "cleanUrls": true,
   "headers": [
     {
       "source": "/api/(.*)",
@@ -34,10 +20,18 @@
       ]
     }
   ],
-  "functions": {
-    "api/**/*": {
-      "maxDuration": 10
+  "rewrites": [
+    {
+      "source": "/js/:path*",
+      "destination": "/public/js/:path*"
+    },
+    {
+      "source": "/css/:path*",
+      "destination": "/css/:path*"
+    },
+    {
+      "source": "/src/:path*",
+      "destination": "/src/:path*"
     }
-  },
-  "framework": null
+  ]
 }
