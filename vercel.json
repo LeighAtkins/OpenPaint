@@ -2,6 +2,9 @@
   "buildCommand": "npm run vercel-build",
   "outputDirectory": "public",
   "routes": [
+    { "src": "^/api/_env$", "dest": "/app.js" },
+    { "src": "^/api/images/direct-upload$", "dest": "/app.js" },
+    { "src": "^/api/remove-background$", "dest": "/app.js" },
     { "src": "^/api/(.*)$", "dest": "/app.js" }
   ]
 }
