@@ -195,6 +195,20 @@ function envHandler(req, res) {
 // Proxy direct upload to Cloudflare Worker (dual-path mounting)
 app.post(['/api/images/direct-upload', '/images/direct-upload'], directUploadHandler);
 
+// Diagnostic GET route for direct-upload (helps verify routing works)
+app.get(['/api/images/direct-upload', '/images/direct-upload'], (req, res) => {
+    console.log('[Proxy] GET /api/images/direct-upload - diagnostic route hit');
+    res
+        .status(200)
+        .set('content-type', 'application/json; charset=utf-8')
+        .send(JSON.stringify({
+            ok: true,
+            message: 'Routing working - Express app is receiving requests',
+            CF_WORKER_URL: process.env.CF_WORKER_URL ? 'configured' : 'missing',
+            note: 'Use POST method for actual upload URL request'
+        }));
+});
+
 // Proxy background removal (dual-path mounting)
 app.post(['/api/remove-background', '/remove-background'], removeBackgroundHandler);
 
