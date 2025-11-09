@@ -1521,9 +1521,10 @@
         </div>
     </div>
 
-    <!-- Canvas Controls (Bottom Panel) -->
-    <div id="canvasControls" class="floating-panel fixed bottom-16 left-1/2 -translate-x-1/2 rounded-2xl px-3 py-2 bg-white/70 backdrop-blur shadow-lg transition-all duration-300" style="z-index: 4000;">
-        <div id="canvasControlsContent" class="flex items-center gap-2 text-sm smart-label-scope">
+    <!-- Canvas Controls (Bottom Panel) - Rail wrapper prevents off-screen drift -->
+    <div id="controls-rail" class="fixed inset-x-0 bottom-12 z-[4000] flex justify-center pointer-events-none px-2">
+        <div id="canvasControls" class="pointer-events-auto floating-panel rounded-2xl px-3 py-2 bg-white/80 backdrop-blur-md shadow-lg max-w-[min(100vw-1rem,1100px)] w-full sm:w-auto transition-all duration-300">
+            <div id="canvasControlsContent" class="flex flex-wrap items-center gap-2 text-sm smart-label-scope">
             <button id="copyCanvasBtn" class="flex items-center gap-1 px-3 py-1 bg-primary-500 hover:bg-primary-600 active:bg-primary-700 text-white text-xs rounded-lg shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-[1.02] active:scale-95" title="Copy image to clipboard" aria-label="Copy Image">
                 <svg class="w-3.5 h-3.5 opacity-90" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16 1H4a2 2 0 00-2 2v12h2V3h12V1zm3 4H8a2 2 0 00-2 2v14a2 2 0 002 2h11a2 2 0 002-2V7a2 2 0 00-2-2zm0 16H8V7h11v14z"></path></svg>
                 <span class="label-long">Copy Image</span>
@@ -1563,7 +1564,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Status message element for notifications -->
     <div id="statusMessage"></div>
     
@@ -2081,7 +2082,34 @@
             
             // Setup quick save hover menu after toolbar initialization (with small delay)
             setTimeout(setupQuickSaveHover, 100);
-            
+
+            // Setup controls rail viewport handling to prevent off-screen drift
+            (function setupControlsRail() {
+                const rail = document.getElementById('controls-rail');
+                if (!rail) return;
+
+                // Optional: Portal to body to escape transformed ancestors
+                if (rail.parentElement !== document.body) {
+                    document.body.appendChild(rail);
+                }
+
+                // Reposition menu popovers when viewport changes (keyboard, rotation)
+                const onResize = () => {
+                    const menu = document.getElementById('quickSaveMenu');
+                    if (!menu || menu.classList.contains('hidden')) return;
+
+                    const rect = menu.getBoundingClientRect();
+                    const shouldFlip = rect.bottom > window.innerHeight;
+
+                    menu.classList.toggle('bottom-full', !shouldFlip);
+                    menu.classList.toggle('top-full', shouldFlip);
+                };
+
+                window.addEventListener('resize', onResize);
+                window.addEventListener('orientationchange', onResize);
+                document.addEventListener('visibilitychange', onResize);
+            })();
+
             // Initialize smart label system
             setTimeout(initSmartLabels, 200);
             
