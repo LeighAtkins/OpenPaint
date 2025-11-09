@@ -1,14 +1,35 @@
 {
   "version": 2,
-  "buildCommand": "npm run vercel-build",
-  "outputDirectory": "public",
   "builds": [
-    { "src": "app.js", "use": "@vercel/node" }
+    {
+      "src": "app.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "public/**",
+      "use": "@vercel/static"
+    }
   ],
   "routes": [
-    { "src": "^/api/_env$", "dest": "/app.js" },
-    { "src": "^/api/images/direct-upload$", "dest": "/app.js" },
-    { "src": "^/api/remove-background$", "dest": "/app.js" },
-    { "src": "^/api/(.*)$", "dest": "/app.js" }
+    {
+      "src": "^/api/_env$",
+      "dest": "/app.js"
+    },
+    {
+      "src": "^/api/images/direct-upload$",
+      "dest": "/app.js"
+    },
+    {
+      "src": "^/api/remove-background$",
+      "dest": "/app.js"
+    },
+    {
+      "src": "^/api/(.*)$",
+      "dest": "/app.js"
+    },
+    {
+      "src": "^/(.*)",
+      "dest": "/public/$1"
+    }
   ]
 }
