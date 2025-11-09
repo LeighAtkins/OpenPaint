@@ -1522,7 +1522,7 @@
     </div>
 
     <!-- Canvas Controls (Bottom Panel) - Rail wrapper prevents off-screen drift -->
-    <div id="controls-rail" class="fixed inset-x-0 bottom-12 z-[4000] flex justify-center pointer-events-none px-2">
+    <div id="controls-rail" class="fixed inset-x-0 z-[4000] flex justify-center pointer-events-none px-2" style="bottom: calc(env(safe-area-inset-bottom) + 3rem);">
         <div id="canvasControls" class="pointer-events-auto floating-panel rounded-2xl px-3 py-2 bg-white/80 backdrop-blur-md shadow-lg max-w-[min(100vw-1rem,1100px)] w-full sm:w-auto transition-all duration-300">
             <div id="canvasControlsContent" class="flex flex-wrap items-center gap-2 text-sm smart-label-scope">
             <button id="copyCanvasBtn" class="flex items-center gap-1 px-3 py-1 bg-primary-500 hover:bg-primary-600 active:bg-primary-700 text-white text-xs rounded-lg shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-[1.02] active:scale-95" title="Copy image to clipboard" aria-label="Copy Image">
@@ -2088,13 +2088,35 @@
                 const rail = document.getElementById('controls-rail');
                 if (!rail) return;
 
-                // Optional: Portal to body to escape transformed ancestors
+                // Portal to body to escape transformed ancestors
                 if (rail.parentElement !== document.body) {
                     document.body.appendChild(rail);
                 }
 
-                // Reposition menu popovers when viewport changes (keyboard, rotation)
-                const onResize = () => {
+                const BASE_OFFSET_PX = 48; // equals tailwind 'bottom-12' feel (3rem)
+
+                // Get safe-area-inset-bottom from CSS env()
+                function getSafeAreaInset() {
+                    const style = getComputedStyle(document.documentElement);
+                    const value = style.getPropertyValue('padding-bottom') || '0';
+                    return parseInt(value) || 0;
+                }
+
+                // Dynamically adjust bottom position for keyboard and viewport changes
+                function clampBottom() {
+                    if (window.visualViewport) {
+                        const vv = window.visualViewport;
+                        // How much the viewport shrank (keyboard overlay)
+                        const delta = Math.max(0, window.innerHeight - vv.height);
+                        // Effective bottom offset so the bar rises when keyboard overlaps
+                        const px = Math.max(BASE_OFFSET_PX, delta + BASE_OFFSET_PX);
+                        rail.style.bottom = px + 'px';
+                    }
+                    // If no visualViewport, the CSS env() calc handles it
+                }
+
+                // Reposition menu popovers when viewport changes
+                function repositionMenu() {
                     const menu = document.getElementById('quickSaveMenu');
                     if (!menu || menu.classList.contains('hidden')) return;
 
@@ -2103,11 +2125,29 @@
 
                     menu.classList.toggle('bottom-full', !shouldFlip);
                     menu.classList.toggle('top-full', shouldFlip);
-                };
+                }
 
-                window.addEventListener('resize', onResize);
-                window.addEventListener('orientationchange', onResize);
-                document.addEventListener('visibilitychange', onResize);
+                // Combine both handlers
+                function handleViewportChange() {
+                    clampBottom();
+                    repositionMenu();
+                }
+
+                // Listen to viewport events
+                ['resize', 'orientationchange', 'focus', 'blur'].forEach(ev =>
+                    window.addEventListener(ev, handleViewportChange, { passive: true })
+                );
+
+                // VisualViewport events for mobile keyboard
+                if (window.visualViewport) {
+                    window.visualViewport.addEventListener('resize', handleViewportChange, { passive: true });
+                    window.visualViewport.addEventListener('scroll', handleViewportChange, { passive: true });
+                }
+
+                document.addEventListener('visibilitychange', handleViewportChange);
+
+                // Initial positioning
+                clampBottom();
             })();
 
             // Initialize smart label system
