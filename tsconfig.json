@@ -23,8 +23,8 @@
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
 
-    // React and DOM types
-    "types": ["react", "react-dom", "jest"],
+    // React, DOM, and Node types
+    "types": ["node", "react", "react-dom", "jest"],
 
     // Emit options
     "noEmit": true,

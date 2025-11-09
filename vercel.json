@@ -35,8 +35,15 @@
   ],
   "functions": {
     "api/**/*.js": {
+      "runtime": "nodejs22.x",
+      "memory": 1024,
+      "maxDuration": 10
+    },
+    "api/**/*.ts": {
+      "runtime": "nodejs22.x",
       "memory": 1024,
       "maxDuration": 10
     }
-  }
+  },
+  "framework": null
 }

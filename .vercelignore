@@ -1,0 +1,36 @@
+# Prevent Python autodetection - this is a Node.js-only app
+# Background removal is handled by Cloudflare Worker, not local Python
+requirements.txt
+Pipfile
+Pipfile.lock
+poetry.lock
+*.py
+
+# Python tools directory
+tools/
+
+# Development and testing
+*.test.js
+*.spec.js
+tests/
+cypress/
+coverage/
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Local environment
+.env.local
+.env.*.local
+
+# Documentation
+*.md
+!README.md
+
+# Build artifacts
+node_modules/
+.cache/
