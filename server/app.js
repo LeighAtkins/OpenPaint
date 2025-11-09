@@ -30,19 +30,31 @@ async function directUploadHandler(req, res) {
         if (!origin) {
             return res.status(500).json({ success: false, message: 'REMBG_ORIGIN is not configured' });
         }
-        const response = await fetch(`${origin.replace(/\/$/, '')}/images/direct-upload`, {
+
+        const targetUrl = `${origin.replace(/\/$/, '')}/images/direct-upload`;
+        console.log('[Proxy] Requesting signed upload URL from:', targetUrl);
+
+        // Cloudflare Images direct upload expects empty POST to create signed URL
+        const response = await fetch(targetUrl, {
             method: 'POST',
             headers: {
-                'content-type': 'application/json',
-                'x-api-key': 'dev-secret'
-            },
-            body: JSON.stringify(req.body)
+                'x-api-key': req.headers['x-api-key'] || 'dev-secret'
+            }
+            // No body, no content-type - Cloudflare creates signed URL on empty POST
         });
+
         const data = await response.json();
+        console.log('[Proxy] Worker response:', response.status, data.success ? 'success' : 'failed');
+
+        if (!response.ok) {
+            console.error('[Proxy] Worker error:', data);
+            return res.status(response.status).json(data);
+        }
+
         res.status(response.status).json(data);
     } catch (err) {
-        console.error('Proxy /images/direct-upload error:', err);
-        res.status(500).json({ success: false, message: 'Proxy error' });
+        console.error('[Proxy] /images/direct-upload error:', err);
+        res.status(500).json({ success: false, message: 'Proxy error', error: err.message });
     }
 }
 

@@ -372,17 +372,27 @@ document.addEventListener('DOMContentLoaded', () => {
           }
           if (!blob) throw new Error('No image to process');
 
+          console.log('[BG-REMOVE] Starting background removal workflow');
+          console.log('[BG-REMOVE] Image blob ready:', {
+            size: blob.size,
+            type: blob.type,
+            sizeKB: (blob.size / 1024).toFixed(2) + ' KB'
+          });
+
           // Step 1: Get direct upload URL from Cloudflare Worker
-          const uploadResp = await fetch('/api/images/direct-upload', { 
+          console.log('[BG-REMOVE] Step 1: Requesting signed upload URL from /api/images/direct-upload');
+          const uploadResp = await fetch('/api/images/direct-upload', {
             method: 'POST',
             headers: { 'x-api-key': 'dev-secret' }
           });
           const uploadData = await uploadResp.json();
+          console.log('[BG-REMOVE] Step 1 response:', uploadResp.status, uploadData);
           if (!uploadData.success || !uploadData.result?.uploadURL) {
             throw new Error('Failed to get upload URL');
           }
 
           // Step 2: Upload image directly to Cloudflare Images
+          console.log('[BG-REMOVE] Step 2: Uploading image to Cloudflare:', uploadData.result.uploadURL);
           const formData = new FormData();
           formData.append('file', blob, 'image.png');
           const imageUploadResp = await fetch(uploadData.result.uploadURL, {
@@ -390,11 +400,13 @@ document.addEventListener('DOMContentLoaded', () => {
             body: formData
           });
           const imageUploadData = await imageUploadResp.json();
+          console.log('[BG-REMOVE] Step 2 response:', imageUploadResp.status, imageUploadData);
           if (!imageUploadData.success || !imageUploadData.result?.id) {
             throw new Error('Failed to upload image');
           }
 
           // Step 3: Remove background using Cloudflare Images (robust parsing)
+          console.log('[BG-REMOVE] Step 3: Requesting background removal for imageId:', imageUploadData.result.id);
           const bgRemoveResp = await fetch('/api/remove-background', {
             method: 'POST',
             headers: {
