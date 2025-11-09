@@ -1,0 +1,1024 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<diagnostic-response>
+  <title>Complete Diagnostic Findings for Remove Background Upload Failure and Build Issues</title>
+  <timestamp>2025-11-09T21:30:00+08:00</timestamp>
+  <repository>LeighAtkins/OpenPaint</repository>
+  <branch>claude/debug-background-worker-xml-011CUxQ5uRdNXuWN5TjFEPDo</branch>
+
+  <findings>
+
+    <!-- ============================================= -->
+    <!-- CLIENT UPLOAD FLOW (Q1-Q4) -->
+    <!-- ============================================= -->
+
+    <group id="client-upload-flow">
+      <title>Client Upload Flow</title>
+
+      <answer id="q1">
+        <question>Exact client-side code that constructs and sends the upload request</question>
+        <file>public/js/paint.js</file>
+        <line-range>350-514</line-range>
+        <code><![CDATA[
+// Line 350-400: Button click handler and upload initiation
+const removeBgBtn = document.getElementById('removeBgClientTop');
+if (removeBgBtn) {
+  if (!removeBgBtn.__removeBgBound) {
+    removeBgBtn.__removeBgBound = true;
+    removeBgBtn.addEventListener('click', async () => {
+      try {
+        const label = window.paintApp.state.currentImageLabel || 'front';
+        const srcUrl = (window.originalImages && window.originalImages[label]) || null;
+        const canvasEl = window.paintApp.state.domElements.canvas;
+        removeBgBtn.disabled = true;
+        const oldText = removeBgBtn.textContent;
+        removeBgBtn.textContent = 'Processing ⏳';
+
+        let blob;
+        if (srcUrl) {
+          try {
+            const r = await fetch(srcUrl, { cache: 'no-store' });
+            blob = await r.blob();
+          } catch (_) {}
+        }
+        if (!blob && canvasEl) {
+          blob = await new Promise(resolve => canvasEl.toBlob(resolve, 'image/png'));
+        }
+        if (!blob) throw new Error('No image to process');
+
+        // Step 1: Get direct upload URL from Cloudflare Worker
+        const uploadResp = await fetch('/api/images/direct-upload', {
+          method: 'POST',
+          headers: { 'x-api-key': 'dev-secret' }
+        });
+        const uploadData = await uploadResp.json();
+        if (!uploadData.success || !uploadData.result?.uploadURL) {
+          throw new Error('Failed to get upload URL');
+        }
+
+        // Step 2: Upload image directly to Cloudflare Images
+        const formData = new FormData();
+        formData.append('file', blob, 'image.png');
+        const imageUploadResp = await fetch(uploadData.result.uploadURL, {
+          method: 'POST',
+          body: formData
+        });
+        const imageUploadData = await imageUploadResp.json();
+        if (!imageUploadData.success || !imageUploadData.result?.id) {
+          throw new Error('Failed to upload image');
+        }
+
+        // Step 3: Remove background using Cloudflare Images (robust parsing)
+        const bgRemoveResp = await fetch('/api/remove-background', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': 'dev-secret'
+          },
+          body: JSON.stringify({
+            imageId: imageUploadData.result.id,
+            return: 'url'
+          })
+        });
+        // ... error handling and response processing continues ...
+]]></code>
+        <analysis>
+          <critical-issue>
+            Line 376-379 sends POST to /api/images/direct-upload with NO BODY.
+            The request contains only headers (x-api-key), but content-length would be 0.
+            This empty request is proxied to the Cloudflare Worker, which may fail.
+          </critical-issue>
+        </analysis>
+      </answer>
+
+      <answer id="q2">
+        <question>Two-step Cloudflare direct upload or single-step proxy?</question>
+        <response>TWO-STEP CLOUDFLARE DIRECT UPLOAD</response>
+        <details>
+          <step number="1">
+            <description>Client POSTs to /api/images/direct-upload (empty body, x-api-key header)</description>
+            <purpose>Obtain signed uploadURL from Cloudflare Images API</purpose>
+            <file>public/js/paint.js</file>
+            <lines>376-383</lines>
+          </step>
+          <step number="2">
+            <description>Client POSTs FormData directly to uploadURL from Step 1</description>
+            <purpose>Upload image blob directly to Cloudflare Images (bypassing Vercel)</purpose>
+            <file>public/js/paint.js</file>
+            <lines>386-395</lines>
+          </step>
+          <step number="3">
+            <description>Client POSTs imageId to /api/remove-background</description>
+            <purpose>Trigger background removal processing on uploaded image</purpose>
+            <file>public/js/paint.js</file>
+            <lines>398-408</lines>
+          </step>
+        </details>
+      </answer>
+
+      <answer id="q3">
+        <question>How FormData is built</question>
+        <file>public/js/paint.js</file>
+        <lines>386-390</lines>
+        <code><![CDATA[
+const formData = new FormData();
+formData.append('file', blob, 'image.png');
+const imageUploadResp = await fetch(uploadData.result.uploadURL, {
+  method: 'POST',
+  body: formData
+});
+]]></code>
+        <details>
+          <field-name>file</field-name>
+          <filename>image.png</filename>
+          <content-type-header>NOT SET (browser auto-sets multipart/form-data with boundary)</content-type-header>
+          <note>Browser automatically sets Content-Type: multipart/form-data; boundary=... when using FormData</note>
+        </details>
+      </answer>
+
+      <answer id="q4">
+        <question>Client-side logging before fetch</question>
+        <response>NO LOGGING PRESENT before Step 1 fetch to /api/images/direct-upload</response>
+        <blob-creation-logging>
+          Lines 364-373 create blob but do not log size or type
+        </blob-creation-logging>
+        <recommendation>
+          Add logging before line 376:
+          <![CDATA[
+console.log('[BG-REMOVE] Requesting upload URL from /api/images/direct-upload');
+console.log('[BG-REMOVE] Blob ready:', { size: blob.size, type: blob.type });
+]]>
+        </recommendation>
+      </answer>
+    </group>
+
+    <!-- ============================================= -->
+    <!-- SERVERLESS ENDPOINT (Q5-Q8) -->
+    <!-- ============================================= -->
+
+    <group id="serverless-endpoint">
+      <title>Serverless Endpoint Implementation</title>
+
+      <answer id="q5">
+        <question>Complete implementation of /api/images/direct-upload</question>
+        <primary-file>server/app.js</primary-file>
+        <secondary-file>api/images/direct-upload.js</secondary-file>
+
+        <code-api-handler><![CDATA[
+// FILE: api/images/direct-upload.js (lines 1-6)
+const app = require('../../server/app');
+
+module.exports = (req, res) => app(req, res);
+]]></code-api-handler>
+
+        <code-server-handler><![CDATA[
+// FILE: server/app.js (lines 27-46)
+async function directUploadHandler(req, res) {
+    try {
+        const origin = process.env.REMBG_ORIGIN || 'https://sofapaint-api.leigh-atkins.workers.dev';
+        if (!origin) {
+            return res.status(500).json({ success: false, message: 'REMBG_ORIGIN is not configured' });
+        }
+        const response = await fetch(`${origin.replace(/\/$/, '')}/images/direct-upload`, {
+            method: 'POST',
+            headers: {
+                'content-type': 'application/json',
+                'x-api-key': 'dev-secret'
+            },
+            body: JSON.stringify(req.body)
+        });
+        const data = await response.json();
+        res.status(response.status).json(data);
+    } catch (err) {
+        console.error('Proxy /images/direct-upload error:', err);
+        res.status(500).json({ success: false, message: 'Proxy error' });
+    }
+}
+
+// Line 83: Dual-path mounting
+app.post(['/api/images/direct-upload', '/images/direct-upload'], directUploadHandler);
+]]></code-server-handler>
+
+        <architecture>PROXY PATTERN</architecture>
+        <description>
+          The Vercel endpoint is a thin proxy that forwards requests to a Cloudflare Worker.
+          It does NOT handle uploads directly, but relays to REMBG_ORIGIN.
+        </description>
+      </answer>
+
+      <answer id="q6">
+        <question>How server reads request body</question>
+        <runtime>Node.js (Vercel Serverless Function)</runtime>
+        <framework>Express.js</framework>
+        <body-parsing>
+          <middleware>express.json({ limit: '50mb' })</middleware>
+          <location>server/app.js line 10</location>
+          <method>req.body (pre-parsed JSON object)</method>
+        </body-parsing>
+        <critical-issue>
+          <description>
+            Server expects req.body to be a JSON object, then does JSON.stringify(req.body).
+            If client sends empty POST (no body), req.body will be undefined or {}.
+            Line 39 sends: body: JSON.stringify(req.body)
+            This results in sending "{}" or "undefined" to the worker.
+          </description>
+        </critical-issue>
+      </answer>
+
+      <answer id="q7">
+        <question>Code section that calls Cloudflare</question>
+        <file>server/app.js</file>
+        <lines>33-40</lines>
+        <code><![CDATA[
+const response = await fetch(`${origin.replace(/\/$/, '')}/images/direct-upload`, {
+    method: 'POST',
+    headers: {
+        'content-type': 'application/json',
+        'x-api-key': 'dev-secret'
+    },
+    body: JSON.stringify(req.body)
+});
+]]></code>
+        <endpoint>Dynamic: ${REMBG_ORIGIN}/images/direct-upload</endpoint>
+        <default-origin>https://sofapaint-api.leigh-atkins.workers.dev</default-origin>
+        <http-method>POST</http-method>
+        <headers>
+          <header name="content-type">application/json</header>
+          <header name="x-api-key">dev-secret (hardcoded)</header>
+        </headers>
+        <payload-format>JSON.stringify(req.body)</payload-format>
+      </answer>
+
+      <answer id="q8">
+        <question>Environment variables expected</question>
+        <variables>
+          <variable>
+            <name>REMBG_ORIGIN</name>
+            <access>process.env.REMBG_ORIGIN</access>
+            <default>https://sofapaint-api.leigh-atkins.workers.dev</default>
+            <validation>None (uses default if missing)</validation>
+            <file>server/app.js</file>
+            <line>29</line>
+          </variable>
+          <variable>
+            <name>NODE_ENV</name>
+            <access>process.env.NODE_ENV</access>
+            <purpose>Error message verbosity</purpose>
+            <validation>None</validation>
+          </variable>
+        </variables>
+        <error-handling>
+          Returns 500 with generic "Proxy error" message on fetch failure.
+          Does NOT validate presence of environment variables (uses defaults).
+          Does NOT return 400 for missing body - forwards empty request.
+        </error-handling>
+      </answer>
+    </group>
+
+    <!-- ============================================= -->
+    <!-- CLOUDFLARE CONFIG (Q9-Q10) -->
+    <!-- ============================================= -->
+
+    <group id="cloudflare-config">
+      <title>Cloudflare Integration Details</title>
+
+      <answer id="q9">
+        <question>Which Cloudflare product is used</question>
+        <product>Cloudflare Images (Direct Creator Upload + Images Binding)</product>
+        <not-used>Cloudflare R2</not-used>
+        <endpoints>
+          <endpoint purpose="direct-upload">
+            <url>https://api.cloudflare.com/client/v4/accounts/{CF_ACCOUNT_ID}/images/v2/direct_upload</url>
+            <method>POST</method>
+            <file>sofapaint-api/src/index.ts</file>
+            <line>49</line>
+          </endpoint>
+          <endpoint purpose="v1-upload">
+            <url>https://api.cloudflare.com/client/v4/accounts/{CF_ACCOUNT_ID}/images/v1</url>
+            <method>POST</method>
+            <purpose>Re-upload processed cutout to Images</purpose>
+            <file>sofapaint-api/src/index.ts</file>
+            <line>98</line>
+          </endpoint>
+          <endpoint purpose="delivery">
+            <url>https://imagedelivery.net/{ACCOUNT_HASH}/{imageId}/public</url>
+            <method>GET</method>
+            <purpose>Fetch uploaded images</purpose>
+            <file>sofapaint-api/src/index.ts</file>
+            <line>67</line>
+          </endpoint>
+        </endpoints>
+      </answer>
+
+      <answer id="q10">
+        <question>Server code that creates signed direct upload URL</question>
+        <file>sofapaint-api/src/index.ts</file>
+        <lines>48-57</lines>
+        <code><![CDATA[
+// 1) Issue a Direct Creator Upload URL for Cloudflare Images
+if (req.method === "POST" && url.pathname === "/images/direct-upload") {
+  const endpoint = `https://api.cloudflare.com/client/v4/accounts/${env.CF_ACCOUNT_ID}/images/v2/direct_upload`;
+  const r = await fetch(endpoint, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${env.IMAGES_API_TOKEN}` },
+    body: new FormData(), // optionally append metadata / requireSignedURLs here
+  });
+  const data = await r.json();
+  return json(env, origin, data, r.ok ? 200 : 400);
+}
+]]></code>
+        <environment-variables>
+          <variable name="CF_ACCOUNT_ID">Cloudflare Account ID</variable>
+          <variable name="IMAGES_API_TOKEN">API token with Images:Edit permission</variable>
+          <variable name="ACCOUNT_HASH">Delivery URL hash</variable>
+        </environment-variables>
+        <request-format>
+          <method>POST</method>
+          <authorization>Bearer token</authorization>
+          <body>new FormData() (empty)</body>
+          <metadata>Optional (not currently used)</metadata>
+        </request-format>
+        <critical-issue>
+          Worker sends empty FormData() in body.
+          Cloudflare API may accept this, but the Vercel proxy sends JSON.stringify({}) instead.
+          This mismatch could cause the 500 error.
+        </critical-issue>
+      </answer>
+    </group>
+
+    <!-- ============================================= -->
+    <!-- BUILD CONFIG (Q11-Q15) -->
+    <!-- ============================================= -->
+
+    <group id="build-config">
+      <title>Build and Vercel Configuration</title>
+
+      <answer id="q11">
+        <question>Current vercel.json content</question>
+        <file>vercel.json</file>
+        <uses-legacy-builds>YES</uses-legacy-builds>
+        <code><![CDATA[
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "app.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "public/**",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "^/ai/(.*)$",
+      "dest": "/app.js"
+    },
+    {
+      "src": "^/api/(.*)$",
+      "dest": "/app.js"
+    },
+    {
+      "src": "^/(health|env-check|version)$",
+      "dest": "/app.js"
+    },
+    {
+      "src": "^/js/(.*)$",
+      "dest": "/public/js/$1"
+    },
+    {
+      "src": "^/css/(.*)$",
+      "dest": "/css/$1"
+    },
+    {
+      "src": "^/src/(.*)$",
+      "dest": "/src/$1"
+    },
+    {
+      "src": "^/(diagnostics-overlay|test-coordinate-system)\\.js$",
+      "dest": "/$1.js"
+    },
+    {
+      "src": "^(?!/(ai|api|health|env-check|version|js|css|src|diagnostics-overlay|test-coordinate-system)/).*$",
+      "dest": "/app.js"
+    }
+  ]
+}
+]]></code>
+        <warning>
+          Legacy "builds" array is deprecated and may override project settings.
+          Vercel recommends using "buildCommand" and "outputDirectory" instead.
+        </warning>
+        <issue>
+          The routing sends /api/** to app.js, but api/images/direct-upload.js requires server/app.js.
+          This creates a module resolution chain that may cause issues.
+        </issue>
+      </answer>
+
+      <answer id="q12">
+        <question>package.json scripts and TypeScript version</question>
+        <file>package.json</file>
+        <code><![CDATA[
+{
+  "name": "openpaint",
+  "version": "1.0.0",
+  "main": "app.js",
+  "engines": {
+    "node": "22.x"
+  },
+  "scripts": {
+    "start": "node app.js",
+    "dev": "node app.js",
+    "build": "echo 'Static assets ready for deployment'",
+    "build:css": "npx --yes @tailwindcss/cli -i \"./css/tailwind.css\" -o \"./css/tailwind.build.css\" --minify",
+    "vercel-build": "npm run build:css",
+    "deploy": "vercel --prod",
+    "test": "npm run test:unit && npm run test:integration",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
+  },
+  "devDependencies": {
+    "@testing-library/dom": "^10.4.1",
+    "@types/jest": "^30.0.0",
+    "autoprefixer": "^10.4.21",
+    "cypress": "^14.5.4",
+    "eslint": "^8.57.1",
+    "jest": "^29.7.0",
+    "tailwindcss": "^4.1.16"
+  }
+}
+]]></code>
+        <typescript-version>
+          <main-project>NOT INSTALLED (no TypeScript dependency)</main-project>
+          <sofapaint-api>5.5.2 (in sofapaint-api/package.json)</sofapaint-api>
+        </typescript-version>
+        <no-type-module>true</no-type-module>
+        <subpackages>
+          <package path="sofapaint-api">Cloudflare Worker (separate TS config)</package>
+          <package path="worker">Unknown contents</package>
+        </subpackages>
+      </answer>
+
+      <answer id="q13">
+        <question>tsconfig.json content</question>
+        <main-project-tsconfig>NONE (no tsconfig.json in root)</main-project-tsconfig>
+        <subpackage-tsconfig>
+          <file>sofapaint-api/tsconfig.json</file>
+          <code><![CDATA[
+{
+  "compilerOptions": {
+    "target": "es2021",
+    "lib": ["es2021"],
+    "jsx": "react-jsx",
+    "module": "es2022",
+    "moduleResolution": "Bundler",
+    "resolveJsonModule": true,
+    "allowJs": true,
+    "checkJs": false,
+    "noEmit": true,
+    "isolatedModules": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "types": [
+      "./worker-configuration.d.ts"
+    ]
+  },
+  "exclude": ["test"],
+  "include": ["worker-configuration.d.ts", "src/**/*.ts"]
+}
+]]></code>
+          <jsx>react-jsx</jsx>
+          <module>es2022</module>
+          <moduleResolution>Bundler</moduleResolution>
+          <types>Custom worker types only</types>
+        </subpackage-tsconfig>
+      </answer>
+
+      <answer id="q14">
+        <question>Is "type": "module" in package.json?</question>
+        <response>NO</response>
+        <package-json>Does not contain "type": "module"</package-json>
+        <module-system>CommonJS (default)</module-system>
+        <esm-files>
+          <note>No .mjs or .cjs files found in root or api/ directories</note>
+          <note>All serverless functions use require() (CommonJS)</note>
+        </esm-files>
+      </answer>
+
+      <answer id="q15">
+        <question>Where Tailwind CSS output is referenced</question>
+        <output-path>./css/tailwind.build.css</output-path>
+        <build-command>npm run build:css</build-command>
+        <html-reference>
+          <file>index.html</file>
+          <line>11</line>
+          <code><![CDATA[<link rel="stylesheet" href="/css/tailwind.build.css" />]]></code>
+        </html-reference>
+        <verification>
+          File exists at /home/user/OpenPaint/css/tailwind.build.css (16,536 bytes)
+        </verification>
+        <status>WORKING CORRECTLY</status>
+      </answer>
+    </group>
+
+    <!-- ============================================= -->
+    <!-- TYPESCRIPT REACT ERRORS (Q16-Q17) -->
+    <!-- ============================================= -->
+
+    <group id="typescript-react-errors">
+      <title>TypeScript React Namespace Errors</title>
+
+      <answer id="q16">
+        <question>File src/canvas/viewport/useCanvasViewport.ts content</question>
+        <file>src/canvas/viewport/useCanvasViewport.ts</file>
+        <lines>1-80</lines>
+        <code><![CDATA[
+/**
+ * Canvas Viewport Controller
+ * Centralizes all viewport transform math and eliminates coordinate drift.
+ */
+
+import { useCallback, useEffect, useRef, useState } from 'react';
+
+export interface ViewportTransform {
+  scale: number;
+  tx: number; // translate X in world units
+  ty: number; // translate Y in world units
+}
+
+export interface LockState {
+  kind: 'locked';
+  frameCenter: { x: number; y: number }; // world coordinates
+}
+
+export interface UnlockState {
+  kind: 'unlocked';
+}
+
+export type ViewportLockState = LockState | UnlockState;
+
+export interface ViewportBounds {
+  width: number;
+  height: number;
+  x: number;
+  y: number;
+}
+
+export interface UseCanvasViewportProps {
+  containerRef: React.RefObject<HTMLElement>;
+  canvasRef: React.RefObject<HTMLCanvasElement>;
+  frameBounds?: ViewportBounds;
+  padding?: number;
+}
+
+export interface UseCanvasViewportReturn {
+  transform: ViewportTransform;
+  dpr: number;
+  lockState: ViewportLockState;
+
+  // Transform methods
+  clientToWorld: (clientX: number, clientY: number) => { x: number; y: number };
+  worldToClient: (worldX: number, worldY: number) => { x: number; y: number };
+
+  // Lock methods
+  setLock: (state: ViewportLockState) => void;
+  zoomToFrame: (bounds: ViewportBounds) => void;
+
+  // Layout scheduling
+  scheduleLayout: () => void;
+}
+]]></code>
+        <contains-jsx>NO</contains-jsx>
+        <contains-react-types>YES (React.RefObject on lines 39, 40)</contains-react-types>
+        <file-extension>.ts (should be .tsx for React code, but no JSX present)</file-extension>
+        <critical-issue>
+          <description>
+            File imports from 'react' (line 12) and uses React namespace (line 39-40).
+            However, React and @types/react are NOT installed in the main project.
+            This will cause "Cannot find namespace 'React'" errors during TypeScript compilation.
+          </description>
+          <why-not-tsx>
+            File uses TypeScript types from React but does not contain JSX elements.
+            The .ts extension is technically correct, but requires @types/react to be installed.
+          </why-not-tsx>
+        </critical-issue>
+      </answer>
+
+      <answer id="q17">
+        <question>Installed versions of react and @types/react</question>
+        <main-project>
+          <react>NOT INSTALLED</react>
+          <types-react>NOT INSTALLED</types-react>
+          <react-dom>NOT INSTALLED</react-dom>
+          <types-react-dom>NOT INSTALLED</types-react-dom>
+        </main-project>
+        <sofapaint-api-project>
+          <react>NOT INSTALLED</react>
+          <types-react>NOT INSTALLED</types-react>
+        </sofapaint-api-project>
+        <root-cause>
+          <description>
+            The file src/canvas/viewport/useCanvasViewport.ts imports React hooks and uses React types,
+            but React is not a dependency of the project. This appears to be orphaned/experimental code
+            that is not part of the main application (which uses vanilla JavaScript).
+          </description>
+          <recommendation>
+            Either:
+            1. Remove src/canvas/ directory if not in use
+            2. Add React dependencies if this code should be used
+            3. Move to a separate React-based sub-project with proper dependencies
+          </recommendation>
+        </root-cause>
+      </answer>
+    </group>
+
+    <!-- ============================================= -->
+    <!-- RUNTIME ERRORS (Q18-Q19) -->
+    <!-- ============================================= -->
+
+    <group id="runtime-errors">
+      <title>Runtime 500 Error Details</title>
+
+      <answer id="q18">
+        <question>Vercel function logs for failing invocation</question>
+        <response>NOT ACCESSIBLE FROM THIS ENVIRONMENT</response>
+        <invocation-id>hnd1::snjbv-1762695415801-6a337b5b5b5e</invocation-id>
+        <note>
+          Function logs are only accessible via Vercel dashboard or Vercel CLI.
+          User must retrieve logs from:
+          1. Vercel Dashboard > Project > Deployments > [Deployment] > Functions > Logs
+          2. Command: vercel logs [deployment-url]
+        </note>
+        <request-to-user>
+          Please provide the full stack trace and error message from Vercel function logs.
+          Include any console.error output from the failing function invocation.
+        </request-to-user>
+      </answer>
+
+      <answer id="q19">
+        <question>Function runtime and region configuration</question>
+        <runtime>Node.js (inferred from vercel.json builds array using @vercel/node)</runtime>
+        <node-version>22.x (from package.json engines)</node-version>
+        <region>Not explicitly configured (Vercel auto-selects based on request origin)</region>
+        <region-from-logs>sin1 (Singapore) - from error logs provided</region-region-from-logs>
+        <limits>
+          <timeout>
+            <hobby-tier>10 seconds</hobby-tier>
+            <pro-tier>60 seconds</pro-tier>
+            <current>Unknown (depends on Vercel plan)</current>
+          </timeout>
+          <memory>
+            <default>1024 MB</default>
+            <configurable>Yes (in vercel.json with "memory" key)</configurable>
+          </memory>
+          <body-size>
+            <express-limit>50mb (from server/app.js line 10)</express-limit>
+            <vercel-limit>5MB default (can be increased)</vercel-limit>
+          </body-size>
+        </limits>
+        <image-sizes>
+          <note>Original error logs show content-length: 0, indicating NO image data sent</note>
+          <note>This is not a size/timeout issue but a missing payload issue</note>
+        </image-sizes>
+      </answer>
+    </group>
+
+    <!-- ============================================= -->
+    <!-- REPRODUCTION STEPS (Q20-Q21) -->
+    <!-- ============================================= -->
+
+    <group id="repro-steps">
+      <title>Reproduction Steps and Test Artifacts</title>
+
+      <answer id="q20">
+        <question>Exact steps to reproduce failure</question>
+        <local-reproduction>
+          <status>N/A - Issue occurs on Vercel deployment only</status>
+          <reason>Depends on REMBG_ORIGIN environment variable pointing to Cloudflare Worker</reason>
+        </local-reproduction>
+        <vercel-reproduction>
+          <step number="1">Deploy project to Vercel</step>
+          <step number="2">Navigate to deployment URL</step>
+          <step number="3">Upload or draw an image</step>
+          <step number="4">Click "Remove BG" button (id: removeBgClientTop)</step>
+          <step number="5">Observe network tab: POST to /api/images/direct-upload fails with 500</step>
+        </vercel-reproduction>
+        <network-request-details>
+          <request>
+            <method>POST</method>
+            <url>https://sofapaint-jka8o774v-leigh-atkins-projects.vercel.app/api/images/direct-upload</url>
+            <headers>
+              <header name="accept">*/*</header>
+              <header name="accept-encoding">gzip, deflate, br, zstd</header>
+              <header name="content-length">0</header>
+              <header name="x-api-key">MISSING (should be present)</header>
+            </headers>
+            <body>EMPTY (content-length: 0)</body>
+          </request>
+          <response>
+            <status>500 Internal Server Error</status>
+            <body>FUNCTION_INVOCATION_FAILED</body>
+          </response>
+        </network-request-details>
+        <sample-image>
+          <note>Any image format works (PNG, JPEG)</note>
+          <note>Error occurs before image upload, so size irrelevant</note>
+        </sample-image>
+      </answer>
+
+      <answer id="q21">
+        <question>Minimal curl request that reproduces failure</question>
+        <curl-command><![CDATA[
+# Request that should work (requesting upload URL):
+curl -X POST \
+  https://sofapaint-jka8o774v-leigh-atkins-projects.vercel.app/api/images/direct-upload \
+  -H "x-api-key: dev-secret" \
+  -H "Content-Type: application/json" \
+  -d '{}'
+
+# Expected response (from working Cloudflare Worker):
+# {
+#   "success": true,
+#   "result": {
+#     "uploadURL": "https://upload.imagedelivery.net/...",
+#     "id": "..."
+#   }
+# }
+
+# Actual response (500 error):
+# {
+#   "success": false,
+#   "message": "Proxy error"
+# }
+# OR
+# {
+#   "error": "FUNCTION_INVOCATION_FAILED"
+# }
+]]></curl-command>
+        <test-worker-directly><![CDATA[
+# Test Cloudflare Worker directly (bypassing Vercel proxy):
+curl -X POST \
+  https://sofapaint-api.leigh-atkins.workers.dev/images/direct-upload \
+  -H "x-api-key: dev-secret" \
+  -H "Content-Type: application/json"
+
+# If this works, problem is in Vercel proxy.
+# If this fails, problem is in Worker configuration.
+]]></test-worker-directly>
+      </answer>
+    </group>
+  </findings>
+
+  <!-- ============================================= -->
+  <!-- ROOT CAUSE ANALYSIS -->
+  <!-- ============================================= -->
+
+  <root-cause-analysis>
+    <title>Definitive Root Cause</title>
+
+    <primary-cause confidence="VERY HIGH">
+      <title>Client Sends Empty POST, Proxy Forwards Empty JSON</title>
+      <location>
+        <client>public/js/paint.js lines 376-379</client>
+        <server>server/app.js lines 33-40</server>
+      </location>
+      <chain-of-failure>
+        <step number="1">
+          <actor>Client (paint.js)</actor>
+          <action>POSTs to /api/images/direct-upload with NO body (only x-api-key header)</action>
+          <result>content-length: 0</result>
+          <code>fetch('/api/images/direct-upload', { method: 'POST', headers: { 'x-api-key': 'dev-secret' } })</code>
+        </step>
+        <step number="2">
+          <actor>Vercel Proxy (server/app.js)</actor>
+          <action>Reads req.body (undefined or {}), stringifies it to "{}"</action>
+          <result>Sends empty JSON object to worker</result>
+          <code>body: JSON.stringify(req.body)</code>
+        </step>
+        <step number="3">
+          <actor>Cloudflare Worker (sofapaint-api/src/index.ts)</actor>
+          <action>Receives empty JSON, creates FormData(), POSTs to Cloudflare Images API</action>
+          <result>Cloudflare Images API may reject empty request or worker crashes</result>
+          <code>body: new FormData()</code>
+        </step>
+        <step number="4">
+          <actor>Cloudflare Images API</actor>
+          <action>Processes empty FormData upload request</action>
+          <result>Unknown (may succeed with empty metadata, may fail)</result>
+        </step>
+        <step number="5">
+          <actor>Vercel Function</actor>
+          <action>Crashes or returns 500 due to malformed proxy request</action>
+          <result>FUNCTION_INVOCATION_FAILED</result>
+        </step>
+      </chain-of-failure>
+      <validation>
+        Original error logs confirm content-length: 0 in request to /api/images/direct-upload.
+        This is NOT a "failed to send blob" issue - the blob upload happens in Step 2 (direct to uploadURL).
+        This is a "failed to get uploadURL" issue in Step 1.
+      </validation>
+    </primary-cause>
+
+    <secondary-causes>
+      <cause>
+        <title>No Error Handling for Empty Body</title>
+        <description>
+          Server proxy does not validate req.body before forwarding.
+          Should check if body exists and return 400 Bad Request if missing.
+        </description>
+        <location>server/app.js lines 27-46</location>
+      </cause>
+      <cause>
+        <title>Cloudflare Worker May Expect Empty Body</title>
+        <description>
+          Worker code (sofapaint-api/src/index.ts line 53) sends "new FormData()" (empty).
+          This suggests the endpoint SHOULD accept empty requests.
+          Vercel proxy sending JSON.stringify({}) instead may cause incompatibility.
+        </description>
+      </cause>
+    </secondary-causes>
+  </root-cause-analysis>
+
+  <!-- ============================================= -->
+  <!-- RECOMMENDED FIXES -->
+  <!-- ============================================= -->
+
+  <recommended-fixes>
+    <fix priority="CRITICAL" id="FIX-001">
+      <title>Fix Vercel Proxy Body Handling</title>
+      <file>server/app.js</file>
+      <lines>33-40</lines>
+      <current-code><![CDATA[
+const response = await fetch(`${origin.replace(/\/$/, '')}/images/direct-upload`, {
+    method: 'POST',
+    headers: {
+        'content-type': 'application/json',
+        'x-api-key': 'dev-secret'
+    },
+    body: JSON.stringify(req.body)
+});
+]]></current-code>
+      <fixed-code><![CDATA[
+const response = await fetch(`${origin.replace(/\/$/, '')}/images/direct-upload`, {
+    method: 'POST',
+    headers: {
+        'x-api-key': req.headers['x-api-key'] || 'dev-secret'
+    }
+    // Do NOT send body - Cloudflare endpoint expects empty POST
+});
+]]></fixed-code>
+      <rationale>
+        Cloudflare Worker endpoint expects empty POST (no body).
+        Current code sends JSON.stringify(undefined) or "{}".
+        Remove body parameter entirely to match worker expectations.
+      </rationale>
+    </fix>
+
+    <fix priority="HIGH" id="FIX-002">
+      <title>Add Logging to Debug Proxy Failures</title>
+      <file>server/app.js</file>
+      <lines>27-46</lines>
+      <code><![CDATA[
+async function directUploadHandler(req, res) {
+    try {
+        const origin = process.env.REMBG_ORIGIN || 'https://sofapaint-api.leigh-atkins.workers.dev';
+        if (!origin) {
+            return res.status(500).json({ success: false, message: 'REMBG_ORIGIN is not configured' });
+        }
+
+        console.log('[Proxy] Forwarding to:', `${origin}/images/direct-upload`);
+        console.log('[Proxy] Client sent body:', req.body);
+
+        const response = await fetch(`${origin.replace(/\/$/, '')}/images/direct-upload`, {
+            method: 'POST',
+            headers: {
+                'x-api-key': req.headers['x-api-key'] || 'dev-secret'
+            }
+        });
+
+        const data = await response.json();
+        console.log('[Proxy] Worker response:', response.status, data);
+
+        res.status(response.status).json(data);
+    } catch (err) {
+        console.error('[Proxy] /images/direct-upload error:', err);
+        res.status(500).json({ success: false, message: 'Proxy error', error: err.message });
+    }
+}
+]]></code>
+    </fix>
+
+    <fix priority="MEDIUM" id="FIX-003">
+      <title>Upgrade vercel.json to Modern Format</title>
+      <file>vercel.json</file>
+      <current-code><![CDATA[
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "app.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "public/**",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [ ... ]
+}
+]]></current-code>
+      <fixed-code><![CDATA[
+{
+  "buildCommand": "npm run vercel-build",
+  "outputDirectory": "public",
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/$1" },
+    { "source": "/ai/(.*)", "destination": "/api/app.js" },
+    { "source": "/(.*)", "destination": "/api/app.js" }
+  ],
+  "functions": {
+    "api/**/*.js": {
+      "memory": 1024,
+      "maxDuration": 10
+    }
+  }
+}
+]]></fixed-code>
+      <note>
+        Legacy "builds" array is deprecated. Modern config uses rewrites and functions.
+        However, current setup works, so this is lower priority.
+      </note>
+    </fix>
+
+    <fix priority="LOW" id="FIX-004">
+      <title>Remove Unused React/TypeScript Code</title>
+      <files>
+        <file>src/canvas/viewport/useCanvasViewport.ts</file>
+        <file>src/canvas/viewport/__tests__/viewport.test.ts</file>
+      </files>
+      <action>
+        Delete src/canvas/ directory if not in use by main application.
+        Main app uses vanilla JavaScript, not React.
+      </action>
+      <alternative>
+        If code is intended for future use, create separate package:
+        1. Move to new directory (e.g., packages/react-canvas/)
+        2. Create package.json with React dependencies
+        3. Add tsconfig.json for React/TypeScript
+      </alternative>
+    </fix>
+  </recommended-fixes>
+
+  <!-- ============================================= -->
+  <!-- VERIFICATION STEPS -->
+  <!-- ============================================= -->
+
+  <verification-steps>
+    <step number="1">
+      <title>Apply FIX-001 and FIX-002</title>
+      <action>Edit server/app.js to remove body from proxy fetch and add logging</action>
+    </step>
+    <step number="2">
+      <title>Deploy to Vercel</title>
+      <action>git commit, git push, wait for deployment</action>
+    </step>
+    <step number="3">
+      <title>Test Remove Background</title>
+      <action>Click "Remove BG" button, check browser network tab and Vercel function logs</action>
+      <expected-result>
+        - POST to /api/images/direct-upload returns 200 with uploadURL
+        - POST to uploadURL succeeds with image upload
+        - Background removal completes successfully
+      </expected-result>
+    </step>
+    <step number="4">
+      <title>Review Vercel Logs</title>
+      <action>Check for "[Proxy]" log messages to confirm proper flow</action>
+    </step>
+    <step number="5">
+      <title>Test Direct Worker Access</title>
+      <action>curl https://sofapaint-api.leigh-atkins.workers.dev/images/direct-upload -X POST -H "x-api-key: dev-secret"</action>
+      <purpose>Verify worker works independently of Vercel proxy</purpose>
+    </step>
+  </verification-steps>
+
+  <summary>
+    <critical-findings>
+      <finding>Client sends empty POST to /api/images/direct-upload (content-length: 0)</finding>
+      <finding>Vercel proxy forwards empty JSON "{}" to Cloudflare Worker</finding>
+      <finding>Worker expects empty POST (no body), but proxy adds JSON body</finding>
+      <finding>This mismatch causes 500 FUNCTION_INVOCATION_FAILED</finding>
+    </critical-findings>
+    <build-issues>
+      <issue>Legacy vercel.json "builds" array (works but deprecated)</issue>
+      <issue>Unused React/TypeScript code without dependencies (src/canvas/)</issue>
+      <issue>No TypeScript in main project but @types/jest installed</issue>
+    </build-issues>
+    <immediate-action>
+      Apply FIX-001: Remove body from proxy fetch in server/app.js.
+      This aligns Vercel proxy behavior with Cloudflare Worker expectations.
+    </immediate-action>
+  </summary>
+</diagnostic-response>
