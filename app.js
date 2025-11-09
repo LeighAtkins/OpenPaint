@@ -163,57 +163,70 @@ async function removeBackgroundHandler(req, res) {
     }
 }
 
+// API Routes - inline handlers to prevent crashes
+
 // Safe env endpoint that never throws and always returns JSON
-function envHandler(req, res) {
-    try {
-        const val = process.env.CF_WORKER_URL || '';
-        res
-            .status(200)
-            .set('content-type', 'application/json; charset=utf-8')
-            .send(
-                JSON.stringify({
-                    CF_WORKER_URL: val ? 'configured' : 'missing',
-                    CF_WORKER_URL_value_preview: val || '<empty>',
-                    NODE_ENV: process.env.NODE_ENV || 'production'
-                })
-            );
-    } catch (err) {
-        console.error('[Env] Exception', err);
-        res
-            .status(500)
-            .set('content-type', 'application/json; charset=utf-8')
-            .send(
-                JSON.stringify({
-                    ok: false,
-                    error: 'env-handler-exception',
-                    message: String(err)
-                })
-            );
-    }
-}
-
-// Proxy direct upload to Cloudflare Worker (dual-path mounting)
-app.post(['/api/images/direct-upload', '/images/direct-upload'], directUploadHandler);
-
-// Diagnostic GET route for direct-upload (helps verify routing works)
-app.get(['/api/images/direct-upload', '/images/direct-upload'], (req, res) => {
-    console.log('[Proxy] GET /api/images/direct-upload - diagnostic route hit');
+app.get('/api/_env', (req, res) => {
+  try {
+    const val = process.env.CF_WORKER_URL || '';
     res
-        .status(200)
-        .set('content-type', 'application/json; charset=utf-8')
-        .send(JSON.stringify({
-            ok: true,
-            message: 'Routing working - Express app is receiving requests',
-            CF_WORKER_URL: process.env.CF_WORKER_URL ? 'configured' : 'missing',
-            note: 'Use POST method for actual upload URL request'
-        }));
+      .status(200)
+      .set('content-type', 'application/json; charset=utf-8')
+      .send(JSON.stringify({
+        CF_WORKER_URL: val ? 'configured' : 'missing',
+        CF_WORKER_URL_value_preview: val || '<empty>',
+        NODE_ENV: process.env.NODE_ENV || 'production'
+      }));
+  } catch (err) {
+    res
+      .status(500)
+      .set('content-type', 'application/json; charset=utf-8')
+      .send(JSON.stringify({ ok: false, error: 'env-handler-exception', message: String(err) }));
+  }
 });
 
-// Proxy background removal (dual-path mounting)
-app.post(['/api/remove-background', '/remove-background'], removeBackgroundHandler);
+// Hardened direct upload proxy
+app.post('/api/images/direct-upload', async (req, res) => {
+  try {
+    const base = process.env.CF_WORKER_URL || '';
+    if (!base) {
+      return res.status(500).json({
+        ok: false,
+        error: 'missing-CF_WORKER_URL',
+        message: 'Set CF_WORKER_URL to your Worker base URL'
+      });
+    }
+    const url = `${base.replace(/\/$/, '')}/images/direct-upload`;
+    const headers = {};
+    if (req.headers['x-api-key']) headers['x-api-key'] = String(req.headers['x-api-key']);
 
-// Debug endpoint to check environment variables (dual-path mounting)
-app.get(['/api/_env', '/_env'], envHandler);
+    let upstream;
+    try {
+      upstream = await fetch(url, { method: 'POST', headers });
+    } catch (e) {
+      return res.status(502).json({ ok: false, error: 'fetch-exception', message: e.message });
+    }
+
+    const text = await upstream.text().catch(() => '<no body>');
+    if (!upstream.ok) {
+      return res.status(502).json({ ok: false, error: 'upstream-failed', status: upstream.status, body: text.slice(0, 500) });
+    }
+
+    try {
+      return res.status(200).json(JSON.parse(text));
+    } catch {
+      return res
+        .status(200)
+        .set('content-type', upstream.headers.get('content-type') || 'application/json')
+        .send(text);
+    }
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: 'proxy-exception', message: String(err) });
+  }
+});
+
+// Proxy background removal (keep old handler for now)
+app.post(['/api/remove-background', '/remove-background'], removeBackgroundHandler);
 
 /**
  * API endpoint for creating a shareable URL for a project
