@@ -1,0 +1,25 @@
+# Exclude unused React/TypeScript code from Vercel deployment
+src/
+
+# Exclude test files and directories
+**/__tests__/
+**/*.test.ts
+**/*.test.tsx
+**/*.test.js
+tests/
+
+# Exclude development/documentation files
+*.md
+!README.md
+CLAUDE.md
+TESTING-DIAGNOSTICS.md
+diagnostic-findings.xml
+remove-background-error-analysis.xml
+
+# Exclude local development artifacts
+.env
+.env.local
+.DS_Store
+*.log
+coverage/
+.nyc_output/

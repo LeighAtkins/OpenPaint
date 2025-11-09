@@ -1,11 +1,33 @@
 {
   "compilerOptions": {
-    "skipLibCheck": true
+    "target": "ES2020",
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "strict": false,
+    "esModuleInterop": true,
+    "moduleResolution": "node",
+    "noEmit": true
   },
+  "include": [
+    "api/**/*.ts",
+    "api/**/*.tsx",
+    "public/**/*.ts",
+    "public/**/*.tsx",
+    "server/**/*.ts",
+    "server/**/*.tsx",
+    "scripts/**/*.ts",
+    "scripts/**/*.tsx"
+  ],
   "exclude": [
-    "src/canvas/viewport/**",
+    "src/**",
     "**/__tests__/**",
     "**/*.test.ts",
-    "**/*.test.tsx"
+    "**/*.test.tsx",
+    "node_modules",
+    "dist",
+    "build",
+    ".vercel",
+    "sofapaint-api",
+    "worker"
   ]
 }
