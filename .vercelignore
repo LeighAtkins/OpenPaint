@@ -27,3 +27,6 @@ coverage/
 # Exclude Python files (background removal now handled by Cloudflare Worker)
 requirements.txt
 *.py
+
+# Exclude api/ directory (use root app.js via vercel.json routes instead)
+api/
