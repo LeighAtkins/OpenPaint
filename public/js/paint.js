@@ -14602,14 +14602,32 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!baseLabel) baseLabel = IMAGE_LABELS[0]; // Default to front if all are taken
     }
         
-    // Increment the counter for this label type
+    // CRITICAL FIX: Scan existing images to find the next available number
+    // This prevents collisions when uploading files into a loaded project
+    const existingLabels = Object.keys(window.originalImages || {});
+    const regularPattern = new RegExp(`^${baseLabel}_(\\d+)$`);
+    let highestRegularNumber = 0;
+
+    existingLabels.forEach(label => {
+      const match = label.match(regularPattern);
+      if (match) {
+        const num = parseInt(match[1], 10);
+        if (num > highestRegularNumber) {
+          highestRegularNumber = num;
+        }
+      }
+    });
+
+    // Next number is one more than the highest found
+    const nextNumber = highestRegularNumber + 1;
+    const uniqueLabel = `${baseLabel}_${nextNumber}`;
+
+    // Update counter to stay in sync (for legacy code that might still read it)
     if (!window.labelCounters[baseLabel]) {
-      window.labelCounters[baseLabel] = { regular: 1, paste: 1 };
+      window.labelCounters[baseLabel] = { regular: nextNumber + 1, paste: 1 };
+    } else {
+      window.labelCounters[baseLabel].regular = nextNumber + 1;
     }
-        
-    const counter = window.labelCounters[baseLabel].regular;
-    const uniqueLabel = `${baseLabel}_${counter}`;
-    window.labelCounters[baseLabel].regular = counter + 1;
     //         console.log(`Created unique label: ${uniqueLabel} from filename: ${filename}`);
         
     return uniqueLabel;
@@ -16324,16 +16342,36 @@ document.addEventListener('DOMContentLoaded', () => {
           continue; 
         }
         const url = URL.createObjectURL(blob);
-                
+
         // Generate a unique label for the new image
         const baseLabelForPasted = currentImageLabel.split('_')[0] || 'image'; // Use current view's base
-        if (!window.labelCounters[baseLabelForPasted]) {
-          window.labelCounters[baseLabelForPasted] = { regular: 1, paste: 1 };
-        }
 
-        const pasteCounter = window.labelCounters[baseLabelForPasted].paste;
-        const newImageLabel = `${baseLabelForPasted}_paste_${pasteCounter}`;
-        window.labelCounters[baseLabelForPasted].paste = pasteCounter + 1;
+        // CRITICAL FIX: Scan existing images to find the next available paste number
+        // This prevents collisions when pasting into a loaded project
+        const existingLabels = Object.keys(window.originalImages || {});
+        const pastePattern = new RegExp(`^${baseLabelForPasted}_paste_(\\d+)$`);
+        let highestPasteNumber = 0;
+
+        existingLabels.forEach(label => {
+          const match = label.match(pastePattern);
+          if (match) {
+            const num = parseInt(match[1], 10);
+            if (num > highestPasteNumber) {
+              highestPasteNumber = num;
+            }
+          }
+        });
+
+        // Next paste number is one more than the highest found
+        const nextPasteNumber = highestPasteNumber + 1;
+        const newImageLabel = `${baseLabelForPasted}_paste_${nextPasteNumber}`;
+
+        // Update counter to stay in sync (for legacy code that might still read it)
+        if (!window.labelCounters[baseLabelForPasted]) {
+          window.labelCounters[baseLabelForPasted] = { regular: 1, paste: nextPasteNumber + 1 };
+        } else {
+          window.labelCounters[baseLabelForPasted].paste = nextPasteNumber + 1;
+        }
                 
         //                 console.log(`[Paste Handler] Assigned new unique label: ${newImageLabel}`);
                 
