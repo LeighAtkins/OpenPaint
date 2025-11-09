@@ -35,55 +35,55 @@ async function directUploadHandler(req, res) {
         const base = process.env.CF_WORKER_URL || '';
         if (!base) {
             console.error('[Proxy] Missing CF_WORKER_URL');
-            return res.status(500).json({
-                ok: false,
-                error: 'missing-CF_WORKER_URL',
-                message: 'Set CF_WORKER_URL to your Worker base URL'
-            });
+            return res
+                .status(500)
+                .set('content-type', 'application/json; charset=utf-8')
+                .send(JSON.stringify({
+                    ok: false,
+                    error: 'missing-CF_WORKER_URL',
+                    message: 'Set CF_WORKER_URL to your Worker base URL'
+                }));
         }
-        const origin = base.replace(/\/$/, '');
-        const targetUrl = `${origin}/images/direct-upload`;
+        const url = `${base.replace(/\/$/, '')}/images/direct-upload`;
 
         const headers = {};
-        if (req.headers && req.headers['x-api-key']) {
-            headers['x-api-key'] = String(req.headers['x-api-key']);
-        }
+        if (req.headers['x-api-key']) headers['x-api-key'] = String(req.headers['x-api-key']);
 
-        console.log('[Proxy] direct-upload target:', targetUrl);
+        console.log('[Proxy] direct-upload target:', url);
         console.log('[Proxy] x-api-key header present:', Boolean(headers['x-api-key']));
 
         let upstream;
         try {
-            upstream = await fetch(targetUrl, { method: 'POST', headers });
-        } catch (netErr) {
-            console.error('[Proxy] fetch exception:', {
-                name: netErr.name,
-                message: netErr.message
-            });
-            return res.status(502).json({
-                ok: false,
-                error: 'fetch-exception',
-                message: netErr.message
-            });
+            upstream = await fetch(url, { method: 'POST', headers });
+        } catch (e) {
+            console.error('[Proxy] fetch exception:', { name: e.name, message: e.message });
+            return res
+                .status(502)
+                .set('content-type', 'application/json; charset=utf-8')
+                .send(JSON.stringify({ ok: false, error: 'fetch-exception', message: e.message }));
         }
 
-        const status = upstream.status;
         const text = await upstream.text().catch(() => '<no body>');
-        console.log('[Proxy] upstream status:', status);
+        console.log('[Proxy] upstream status:', upstream.status);
 
         if (!upstream.ok) {
-            console.error('[Proxy] upstream non-OK:', status, text.slice(0, 500));
-            return res.status(502).json({
-                ok: false,
-                error: 'upstream-failed',
-                status,
-                body: text.slice(0, 500)
-            });
+            console.error('[Proxy] upstream non-OK:', upstream.status, text.slice(0, 500));
+            return res
+                .status(502)
+                .set('content-type', 'application/json; charset=utf-8')
+                .send(JSON.stringify({
+                    ok: false,
+                    error: 'upstream-failed',
+                    status: upstream.status,
+                    body: text.slice(0, 500)
+                }));
         }
 
         try {
-            const json = JSON.parse(text);
-            return res.status(200).json(json);
+            return res
+                .status(200)
+                .set('content-type', 'application/json; charset=utf-8')
+                .send(JSON.stringify(JSON.parse(text)));
         } catch {
             return res
                 .status(200)
@@ -92,11 +92,14 @@ async function directUploadHandler(req, res) {
         }
     } catch (err) {
         console.error('[Proxy] /images/direct-upload exception:', { message: err.message });
-        return res.status(500).json({
-            ok: false,
-            error: 'proxy-exception',
-            message: String(err)
-        });
+        return res
+            .status(500)
+            .set('content-type', 'application/json; charset=utf-8')
+            .send(JSON.stringify({
+                ok: false,
+                error: 'proxy-exception',
+                message: String(err)
+            }));
     }
 }
 
@@ -105,13 +108,16 @@ async function removeBackgroundHandler(req, res) {
         const base = process.env.CF_WORKER_URL || '';
         if (!base) {
             console.error('[Proxy] Missing CF_WORKER_URL');
-            return res.status(500).json({
-                ok: false,
-                error: 'missing-CF_WORKER_URL'
-            });
+            return res
+                .status(500)
+                .set('content-type', 'application/json; charset=utf-8')
+                .send(JSON.stringify({
+                    ok: false,
+                    error: 'missing-CF_WORKER_URL',
+                    message: 'Set CF_WORKER_URL to your Worker base URL'
+                }));
         }
-        const origin = base.replace(/\/$/, '');
-        const targetUrl = `${origin}/remove-background`;
+        const url = `${base.replace(/\/$/, '')}/remove-background`;
 
         const headers = { 'content-type': 'application/json' };
         if (req.headers['x-api-key']) {
@@ -121,51 +127,68 @@ async function removeBackgroundHandler(req, res) {
         const bodyText = typeof req.body === 'string' ? req.body : JSON.stringify(req.body || {});
         let upstream;
         try {
-            upstream = await fetch(targetUrl, {
+            upstream = await fetch(url, {
                 method: 'POST',
                 headers,
                 body: bodyText
             });
-        } catch (netErr) {
-            console.error('[Proxy] remove-bg fetch exception:', netErr.message);
-            return res.status(502).json({
-                ok: false,
-                error: 'fetch-exception',
-                message: netErr.message
-            });
+        } catch (e) {
+            console.error('[Proxy] remove-bg fetch exception:', e.message);
+            return res
+                .status(502)
+                .set('content-type', 'application/json; charset=utf-8')
+                .send(JSON.stringify({
+                    ok: false,
+                    error: 'fetch-exception',
+                    message: e.message
+                }));
         }
 
         const ct = upstream.headers.get('content-type') || 'application/octet-stream';
         const buf = Buffer.from(await upstream.arrayBuffer());
         if (!upstream.ok) {
-            console.error('[Proxy] remove-bg upstream error:', targetUrl, upstream.status);
+            console.error('[Proxy] remove-bg upstream error:', url, upstream.status);
         }
-        res.status(upstream.status).setHeader('content-type', ct).send(buf);
+        res.status(upstream.status).set('content-type', ct).send(buf);
     } catch (err) {
         console.error('[Proxy] /remove-background exception:', err.message);
-        res.status(500).json({
-            ok: false,
-            error: 'proxy-exception',
-            message: String(err)
-        });
+        res
+            .status(500)
+            .set('content-type', 'application/json; charset=utf-8')
+            .send(JSON.stringify({
+                ok: false,
+                error: 'proxy-exception',
+                message: String(err)
+            }));
     }
 }
 
+// Safe env endpoint that never throws and always returns JSON
 function envHandler(req, res) {
     try {
         const val = process.env.CF_WORKER_URL || '';
-        res.status(200).json({
-            CF_WORKER_URL: val ? 'configured' : 'missing',
-            CF_WORKER_URL_value_preview: val || '<empty>',
-            NODE_ENV: process.env.NODE_ENV || 'development'
-        });
+        res
+            .status(200)
+            .set('content-type', 'application/json; charset=utf-8')
+            .send(
+                JSON.stringify({
+                    CF_WORKER_URL: val ? 'configured' : 'missing',
+                    CF_WORKER_URL_value_preview: val || '<empty>',
+                    NODE_ENV: process.env.NODE_ENV || 'production'
+                })
+            );
     } catch (err) {
         console.error('[Env] Exception', err);
-        res.status(500).json({
-            ok: false,
-            error: 'env-handler-exception',
-            message: String(err)
-        });
+        res
+            .status(500)
+            .set('content-type', 'application/json; charset=utf-8')
+            .send(
+                JSON.stringify({
+                    ok: false,
+                    error: 'env-handler-exception',
+                    message: String(err)
+                })
+            );
     }
 }
 
