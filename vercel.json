@@ -1,5 +1,6 @@
 {
-  "buildCommand": "npm run vercel-build",
+  "framework": null,
+  "outputDirectory": "public",
   "cleanUrls": true,
   "headers": [
     {
@@ -18,20 +19,6 @@
           "value": "Content-Type, Authorization"
         }
       ]
-    }
-  ],
-  "rewrites": [
-    {
-      "source": "/js/:path*",
-      "destination": "/public/js/:path*"
-    },
-    {
-      "source": "/css/:path*",
-      "destination": "/css/:path*"
-    },
-    {
-      "source": "/src/:path*",
-      "destination": "/src/:path*"
     }
   ]
 }

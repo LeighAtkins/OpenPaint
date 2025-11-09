@@ -9,9 +9,9 @@
   "scripts": {
     "start": "node app.js",
     "dev": "node app.js",
-    "build": "echo 'Static assets ready for deployment'",
-    "build:css": "npx --yes @tailwindcss/cli -i \"./css/tailwind.css\" -o \"./css/tailwind.build.css\" --minify",
-    "vercel-build": "npm run build:css",
+    "build": "npm run build:css && node scripts/emit-public.js && node scripts/check-public.js",
+    "build:css": "npx --yes @tailwindcss/cli -i \"./css/tailwind.css\" -o \"./public/tailwind.build.css\" --minify",
+    "vercel-build": "npm run build",
     "deploy": "vercel --prod",
     "deploy:preview": "vercel",
     "lint": "eslint .",
