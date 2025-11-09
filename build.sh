@@ -73,15 +73,15 @@ cat > ".vercel/output/config/routes.json" <<'EOF'
 [
   {
     "src": "^/api/(.*)$",
-    "dest": "/api__app.func"
+    "dest": "api__app.func"
   },
   {
     "src": "^/health$",
-    "dest": "/api__app.func"
+    "dest": "api__app.func"
   },
   {
     "src": "^/version$",
-    "dest": "/api__app.func"
+    "dest": "api__app.func"
   },
   {
     "handle": "filesystem"
