@@ -53,22 +53,26 @@ Updated `tsconfig.json`:
 }
 ```
 
-### 3. Explicit Node.js Runtime Configuration ✅
+### 3. Node.js Runtime Configuration ✅
 
-**Problem:** Vercel might auto-detect runtime or use Edge runtime for some routes.
+**Problem:** Need to ensure Node.js 22 is used (not Edge runtime or other versions).
 
-**Solution:** Explicitly set Node.js 22.x runtime in `vercel.json`:
+**Solution:** Use `package.json` engines field (correct approach for Node):
+
+```json
+{
+  "engines": {
+    "node": "22.x"
+  }
+}
+```
+
+And configure functions in `vercel.json`:
 
 ```json
 {
   "functions": {
-    "api/**/*.js": {
-      "runtime": "nodejs22.x",
-      "memory": 1024,
-      "maxDuration": 10
-    },
-    "api/**/*.ts": {
-      "runtime": "nodejs22.x",
+    "api/**/*": {
       "memory": 1024,
       "maxDuration": 10
     }
@@ -77,11 +81,13 @@ Updated `tsconfig.json`:
 }
 ```
 
+**Important:** Do NOT use `"runtime": "nodejs22.x"` - that syntax is invalid. The `runtime` key is for alternative runtimes like `bun@1.x`. For Node.js, use `package.json` engines or Vercel Project Settings.
+
 **Benefits:**
 - Ensures `process.env` is available
-- Consistent runtime across all API routes
+- Consistent Node.js 22.x across all API routes
 - Prevents Edge runtime autodetection
-- Matches `package.json` engines.node: "22.x"
+- Correct Vercel configuration pattern
 
 ### 4. Prevented Framework Autodetection ✅
 
@@ -181,9 +187,9 @@ Ensure these are set in Vercel Dashboard:
 ## Files Modified
 
 - ✅ `.vercelignore` - Created to prevent Python detection (NEW)
-- ✅ `package.json` - Added `@types/node`
+- ✅ `package.json` - Added `@types/node`, has `engines.node: "22.x"`
 - ✅ `tsconfig.json` - Added Node types
-- ✅ `vercel.json` - Added explicit `nodejs22.x` runtime, `framework: null`
+- ✅ `vercel.json` - Functions config (memory, maxDuration), `framework: null`
 - ✅ `VERCEL_BUILD_CLEANUP.md` - This documentation (NEW)
 
 ## Troubleshooting
@@ -205,9 +211,10 @@ Ensure these are set in Vercel Dashboard:
 ### If API routes fail to deploy:
 
 **Check:**
-1. `vercel.json` has `runtime: "nodejs22.x"` for api/**/*.js
-2. `package.json` has `engines.node: "22.x"`
-3. Vercel Project Settings → Node.js Version = 22.x
+1. `package.json` has `"engines": { "node": "22.x" }`
+2. Vercel Project Settings → Node.js Version = 22.x
+3. `vercel.json` does NOT have invalid `runtime: "nodejs22.x"` (that's an error)
+4. Functions config only has memory and maxDuration settings
 
 ### If you see "ESM compiled to CommonJS" warnings:
 
