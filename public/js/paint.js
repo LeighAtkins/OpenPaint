@@ -373,11 +373,24 @@ document.addEventListener('DOMContentLoaded', () => {
           if (!blob) throw new Error('No image to process');
 
           // Step 1: Get direct upload URL from Cloudflare Worker
-          const uploadResp = await fetch('/api/images/direct-upload', { 
+          const uploadResp = await fetch('/api/images/direct-upload', {
             method: 'POST',
             headers: { 'x-api-key': 'dev-secret' }
           });
-          const uploadData = await uploadResp.json();
+
+          // Defensive parsing: get text first to show proper error messages
+          const uploadText = await uploadResp.text();
+          if (!uploadResp.ok) {
+            throw new Error(`Direct upload failed (${uploadResp.status} ${uploadResp.statusText}): ${uploadText.slice(0, 200)}`);
+          }
+
+          let uploadData;
+          try {
+            uploadData = JSON.parse(uploadText);
+          } catch (parseErr) {
+            throw new Error(`Expected JSON from /api/images/direct-upload but got: ${uploadText.slice(0, 200)}`);
+          }
+
           if (!uploadData.success || !uploadData.result?.uploadURL) {
             throw new Error('Failed to get upload URL');
           }
@@ -389,7 +402,20 @@ document.addEventListener('DOMContentLoaded', () => {
             method: 'POST',
             body: formData
           });
-          const imageUploadData = await imageUploadResp.json();
+
+          // Defensive parsing for Cloudflare Images response
+          const imageUploadText = await imageUploadResp.text();
+          if (!imageUploadResp.ok) {
+            throw new Error(`Image upload failed (${imageUploadResp.status} ${imageUploadResp.statusText}): ${imageUploadText.slice(0, 200)}`);
+          }
+
+          let imageUploadData;
+          try {
+            imageUploadData = JSON.parse(imageUploadText);
+          } catch (parseErr) {
+            throw new Error(`Expected JSON from Cloudflare Images but got: ${imageUploadText.slice(0, 200)}`);
+          }
+
           if (!imageUploadData.success || !imageUploadData.result?.id) {
             throw new Error('Failed to upload image');
           }
