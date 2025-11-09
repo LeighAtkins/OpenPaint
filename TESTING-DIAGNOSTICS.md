@@ -147,7 +147,7 @@ vercel logs https://your-deployment.vercel.app
    ```
 
 **Common Root Causes:**
-- **Missing `REMBG_ORIGIN` env var** → Proxy can't find worker URL
+- **Missing `CF_WORKER_URL` env var** → Proxy can't find worker URL
 - **Missing `x-api-key` header** → Worker returns 401
 - **Worker env vars not set** → Worker fails (CF_ACCOUNT_ID, IMAGES_API_TOKEN, ACCOUNT_HASH)
 - **Network timeout** → Worker takes too long to respond
@@ -205,12 +205,12 @@ vercel logs https://your-deployment.vercel.app
 ### Vercel Environment Variables
 
 Required for proxy to work:
-- `REMBG_ORIGIN` → `https://sofapaint-api.leigh-atkins.workers.dev`
+- `CF_WORKER_URL` → `https://sofapaint-api.leigh-atkins.workers.dev`
 - `NODE_ENV` → `production` (optional, for logging)
 
 **Verify in Vercel Dashboard:**
 1. Project Settings → Environment Variables
-2. Ensure `REMBG_ORIGIN` is set for **Production** environment
+2. Ensure `CF_WORKER_URL` is set for **Production** environment
 3. Redeploy if variables were just added
 
 ---

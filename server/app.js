@@ -26,12 +26,19 @@ app.use((req, res, next) => {
 // Handlers extracted for dual-path mounting during routing migration
 async function directUploadHandler(req, res) {
     try {
-        const origin = process.env.REMBG_ORIGIN || 'https://sofapaint-api.leigh-atkins.workers.dev';
-        if (!origin) {
-            return res.status(500).json({ success: false, message: 'REMBG_ORIGIN is not configured' });
+        const base = process.env.CF_WORKER_URL;
+        if (!base) {
+            console.error('[Proxy] Missing CF_WORKER_URL environment variable');
+            return res.status(500).json({
+                ok: false,
+                error: 'missing-CF_WORKER_URL',
+                message: 'CF_WORKER_URL environment variable is not configured'
+            });
         }
 
-        const targetUrl = `${origin.replace(/\/$/, '')}/images/direct-upload`;
+        const origin = base.replace(/\/$/, ''); // strip trailing slash
+        const targetUrl = `${origin}/images/direct-upload`;
+
         console.log('[Proxy] Requesting signed upload URL from:', targetUrl);
         console.log('[Proxy] Request headers:', { 'x-api-key': req.headers['x-api-key'] ? 'present' : 'missing' });
 
@@ -50,13 +57,9 @@ async function directUploadHandler(req, res) {
         console.log('[Proxy] Worker response status:', response.status);
 
         // Handle non-2xx responses with detailed logging
+        const text = await response.text().catch(() => '<no body>');
         if (!response.ok) {
-            const text = await response.text().catch(() => '<no body>');
-            console.error('[Proxy] Signed URL request failed:', {
-                status: response.status,
-                statusText: response.statusText,
-                body: text.substring(0, 500)
-            });
+            console.error('[Proxy] Upstream error:', targetUrl, response.status, text.substring(0, 500));
 
             // Try to parse as JSON for structured error
             let errorData;
@@ -68,61 +71,98 @@ async function directUploadHandler(req, res) {
 
             return res.status(502).json({
                 ok: false,
-                error: 'signed-url-failed',
+                error: 'upstream-failed',
                 status: response.status,
                 details: errorData
             });
         }
 
         // Parse successful response
-        const json = await response.json();
-        console.log('[Proxy] Worker response:', json.success ? 'success' : 'failed', json.result ? 'has result' : 'no result');
-
-        return res.status(200).json(json);
+        try {
+            const json = JSON.parse(text);
+            console.log('[Proxy] Worker response:', json.success ? 'success' : 'failed', json.result ? 'has result' : 'no result');
+            return res.status(200).json(json);
+        } catch {
+            // If not JSON, return text with upstream content-type
+            return res
+                .status(200)
+                .set('content-type', response.headers.get('content-type') || 'application/json')
+                .send(text);
+        }
     } catch (err) {
-        console.error('[Proxy] /images/direct-upload error:', {
+        console.error('[Proxy] /images/direct-upload exception:', {
             name: err.name,
             message: err.message,
             stack: err.stack
         });
         return res.status(500).json({
-            success: false,
-            message: 'Proxy error',
-            error: err.message,
-            type: err.name
+            ok: false,
+            error: 'proxy-exception',
+            message: String(err)
         });
     }
 }
 
 async function removeBackgroundHandler(req, res) {
     try {
-        const origin = process.env.REMBG_ORIGIN || 'https://sofapaint-api.leigh-atkins.workers.dev';
-        if (!origin) {
-            return res.status(500).json({ success: false, message: 'REMBG_ORIGIN is not configured' });
+        const base = process.env.CF_WORKER_URL;
+        if (!base) {
+            console.error('[Proxy] Missing CF_WORKER_URL environment variable');
+            return res.status(500).json({
+                ok: false,
+                error: 'missing-CF_WORKER_URL',
+                message: 'CF_WORKER_URL environment variable is not configured'
+            });
         }
+
+        const origin = base.replace(/\/$/, ''); // strip trailing slash
+        const targetUrl = `${origin}/remove-background`;
+
+        console.log('[Proxy] Requesting background removal from:', targetUrl);
+
+        const headers = {
+            'content-type': 'application/json'
+        };
+        if (req.headers['x-api-key']) {
+            headers['x-api-key'] = String(req.headers['x-api-key']);
+        }
+
         const bodyText = typeof req.body === 'string' ? req.body : JSON.stringify(req.body || {});
-        const upstream = await fetch(`${origin.replace(/\/$/, '')}/remove-background`, {
+        const upstream = await fetch(targetUrl, {
             method: 'POST',
-            headers: {
-                'content-type': 'application/json',
-                'x-api-key': 'dev-secret'
-            },
+            headers,
             body: bodyText
         });
+
+        console.log('[Proxy] Worker response status:', upstream.status);
+
         const ct = upstream.headers.get('content-type') || 'application/octet-stream';
         const buf = Buffer.from(await upstream.arrayBuffer());
+
+        if (!upstream.ok) {
+            console.error('[Proxy] Background removal upstream error:', targetUrl, upstream.status);
+        }
+
         res.status(upstream.status);
         res.setHeader('content-type', ct);
         res.send(buf);
     } catch (err) {
-        console.error('Proxy /remove-background error:', err);
-        res.status(500).json({ success: false, message: 'Proxy error' });
+        console.error('[Proxy] /remove-background exception:', {
+            name: err.name,
+            message: err.message,
+            stack: err.stack
+        });
+        res.status(500).json({
+            ok: false,
+            error: 'proxy-exception',
+            message: String(err)
+        });
     }
 }
 
 function envHandler(req, res) {
     res.json({
-        REMBG_ORIGIN: process.env.REMBG_ORIGIN ? 'configured' : 'missing',
+        CF_WORKER_URL: process.env.CF_WORKER_URL ? 'configured' : 'missing',
         NODE_ENV: process.env.NODE_ENV || 'development'
     });
 }
