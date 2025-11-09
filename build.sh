@@ -46,10 +46,14 @@ FUNC_DIR=".vercel/output/functions/api__app.func"
 mkdir -p "$FUNC_DIR"
 mkdir -p ".vercel/output/config"
 
-# 3a) Create function entry point that exports the Express app (ESM)
+# 3a) Copy the API app file directly into the function directory
+cp api/app.js "$FUNC_DIR/app.js"
+
+# 3b) Create function entry point wrapper
 cat > "$FUNC_DIR/index.js" <<'EOF'
 // Vercel serverless function entry point (ESM)
-import app from '../../../../api/app.js';
+import app from './app.js';
+
 export default app;
 EOF
 
