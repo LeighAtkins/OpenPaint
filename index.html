@@ -2093,6 +2093,152 @@
             // Setup quick save hover menu after toolbar initialization (with small delay)
             setTimeout(setupQuickSaveHover, 100);
 
+            // Rail hardening utilities - defensive visibility and positioning
+            const RAIL_HARDENING_ENABLED = true; // feature flag
+
+            function ensureRailInBody(rail) {
+                if (rail && rail.parentElement !== document.body) {
+                    document.body.appendChild(rail);
+                }
+            }
+
+            function sanityCheckRootTransforms() {
+                const html = document.documentElement;
+                const body = document.body;
+                const csHtml = getComputedStyle(html);
+                const csBody = getComputedStyle(body);
+                const suspicious = [csHtml.transform, csBody.transform].some(v => v && v !== 'none');
+                if (suspicious) {
+                    html.style.transform = 'none';
+                    body.style.transform = 'none';
+                    console.warn('[rail] Cleared transforms on html/body to stabilise fixed positioning.');
+                }
+            }
+
+            function applyMaxZIndexIfNeeded(rail) {
+                const zi = parseInt(getComputedStyle(rail).zIndex || '0', 10);
+                const threshold = 2147483647; // int32 max
+                // Only escalate when we detect a collision
+                const blockers = [...document.querySelectorAll('*')].filter(el => {
+                    if (el === rail) return false;
+                    const cs = getComputedStyle(el);
+                    if (cs.position !== 'fixed') return false;
+                    const z = parseInt(cs.zIndex || '0', 10);
+                    return Number.isFinite(z) && z >= zi;
+                });
+                if (blockers.length) {
+                    rail.style.zIndex = threshold.toString();
+                    console.warn('[rail] Escalated z-index to top due to fixed-position blockers:', blockers.slice(0, 3));
+                }
+            }
+
+            function visibilitySelfCheck(rail) {
+                if (!rail) return { ok: false, reason: 'missing' };
+                const r = rail.getBoundingClientRect();
+                const style = getComputedStyle(rail);
+                const visible = (
+                    r.width > 0 &&
+                    r.height > 0 &&
+                    r.bottom > 0 &&
+                    r.top < (window.innerHeight || document.documentElement.clientHeight) &&
+                    style.visibility === 'visible' &&
+                    style.opacity !== '0' &&
+                    style.display !== 'none'
+                );
+                return { ok: visible, reason: visible ? 'ok' : 'out-of-viewport-or-hidden', rect: r };
+            }
+
+            function auditPointerEvents(rail) {
+                if (!rail) return;
+                // Rail should be click-through, inner interactive
+                rail.style.pointerEvents = 'none';
+                const inner = document.getElementById('canvasControls');
+                if (inner) inner.style.pointerEvents = 'auto';
+                // Identify full-screen fixed overlays that may eat clicks
+                const overlays = [...document.querySelectorAll('*')].filter(el => {
+                    const cs = getComputedStyle(el);
+                    if (cs.position !== 'fixed' || el === rail) return false;
+                    const rect = el.getBoundingClientRect();
+                    const coversViewport = rect.width >= window.innerWidth - 1 && rect.height >= window.innerHeight - 1;
+                    const pe = cs.pointerEvents !== 'none';
+                    return coversViewport && pe;
+                });
+                overlays.slice(0, 2).forEach(el => {
+                    if (!el.dataset.railPePatched) {
+                        el.style.pointerEvents = 'none';
+                        el.dataset.railPePatched = '1';
+                        console.warn('[rail] Temporarily disabled pointer-events on overlay', el);
+                    }
+                });
+            }
+
+            function observeRail(rail) {
+                const mo = new MutationObserver(() => {
+                    if (rail.parentElement !== document.body) {
+                        console.warn('[rail] Rail moved. Re-portalling to <body>.');
+                        ensureRailInBody(rail);
+                    }
+                });
+                mo.observe(document.documentElement, { childList: true, subtree: true });
+                return mo;
+            }
+
+            // Main rail hardening function - orchestrates all defensive checks
+            function hardenControlsRail() {
+                if (!RAIL_HARDENING_ENABLED) return;
+                const rail = document.getElementById('controls-rail');
+                if (!rail) {
+                    console.warn('[rail] Not found. Hardening skipped.');
+                    return;
+                }
+
+                // 1) Portal to body
+                ensureRailInBody(rail);
+
+                // 2) Remove transforms from html/body
+                sanityCheckRootTransforms();
+
+                // 3) Apply explicit positioning
+                rail.style.position = 'fixed';
+                rail.style.left = '50%';
+                rail.style.transform = 'translateX(-50%)';
+                // bottom is set by clampBottom in setupControlsRail
+
+                // 4) Check visibility
+                const check = visibilitySelfCheck(rail);
+                if (!check.ok) {
+                    console.warn('[rail] Visibility check failed:', check.reason, check.rect);
+                    // Force visibility if needed
+                    rail.style.visibility = 'visible';
+                    rail.style.opacity = '1';
+                    rail.style.display = 'block';
+                }
+
+                // 5) Escalate z-index if blockers detected
+                applyMaxZIndexIfNeeded(rail);
+
+                // 6) Ensure proper pointer-events layering
+                auditPointerEvents(rail);
+
+                // 7) Monitor viewport changes and re-check visibility
+                ['resize', 'orientationchange'].forEach(ev =>
+                    window.addEventListener(ev, () => {
+                        const recheck = visibilitySelfCheck(rail);
+                        if (!recheck.ok) {
+                            console.warn('[rail] Re-check failed on', ev, ':', recheck.reason);
+                            // Re-apply hardening
+                            ensureRailInBody(rail);
+                            applyMaxZIndexIfNeeded(rail);
+                        }
+                    }, { passive: true })
+                );
+
+                // 8) Observe DOM mutations to keep rail in body
+                observeRail(rail);
+
+                console.log('[rail] Hardening complete.');
+            }
+
             // Setup controls rail viewport handling to prevent off-screen drift
             (function setupControlsRail() {
                 const rail = document.getElementById('controls-rail');
@@ -2226,6 +2372,13 @@
                 // Initial
                 computeBottom();
             })();
+
+            // Apply defensive hardening to controls rail after setup completes
+            try {
+                hardenControlsRail();
+            } catch (e) {
+                console.error('[rail] Hardening failed:', e);
+            }
 
             // Initialize smart label system
             setTimeout(initSmartLabels, 200);
