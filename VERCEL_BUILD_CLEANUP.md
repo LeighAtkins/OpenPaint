@@ -71,15 +71,17 @@ And configure functions in `vercel.json`:
 
 ```json
 {
+  "buildCommand": "npm run vercel-build",
   "functions": {
     "api/**/*": {
-      "memory": 1024,
       "maxDuration": 10
     }
   },
   "framework": null
 }
 ```
+
+**Note:** The `memory` setting requires Active CPU billing (paid feature) and has been removed for free tier compatibility.
 
 **Important:** Do NOT use `"runtime": "nodejs22.x"` - that syntax is invalid. The `runtime` key is for alternative runtimes like `bun@1.x`. For Node.js, use `package.json` engines or Vercel Project Settings.
 
@@ -108,10 +110,12 @@ This is a **vanilla Node.js + Express** app with no framework.
 
 ### No Build Loops ✅
 
-**Avoided:**
-- ❌ No `builds` array in vercel.json (removed earlier)
-- ❌ No calling `vercel build` inside npm scripts
-- ❌ No multiple vercel-build invocations
+**Fixed:**
+- ✅ Added explicit `buildCommand` in vercel.json
+- ✅ Prevents Vercel from detecting multiple entry points
+- ✅ No `builds` array in vercel.json (removed earlier)
+- ✅ No calling `vercel build` inside npm scripts
+- ✅ No multiple vercel-build invocations
 
 **Result:** Clean, single-pass build
 
@@ -189,8 +193,12 @@ Ensure these are set in Vercel Dashboard:
 - ✅ `.vercelignore` - Created to prevent Python detection (NEW)
 - ✅ `package.json` - Added `@types/node`, has `engines.node: "22.x"`
 - ✅ `tsconfig.json` - Added Node types
-- ✅ `vercel.json` - Functions config (memory, maxDuration), `framework: null`
+- ✅ `vercel.json` - buildCommand, functions config (maxDuration only), `framework: null`
 - ✅ `VERCEL_BUILD_CLEANUP.md` - This documentation (NEW)
+
+**Free Tier Compatibility:**
+- Removed `memory` setting (requires Active CPU billing)
+- All features work on Vercel free tier
 
 ## Troubleshooting
 
