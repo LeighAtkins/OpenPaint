@@ -1,0 +1,308 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<error-analysis>
+    <title>Remove Background Worker Failure Analysis</title>
+    <timestamp>2025-11-09</timestamp>
+    <deployment-url>https://sofapaint-jka8o774v-leigh-atkins-projects.vercel.app</deployment-url>
+
+    <executive-summary>
+        <status>CRITICAL FAILURE</status>
+        <primary-cause>Server-side function invocation failure during image upload</primary-cause>
+        <impact>Background removal feature non-functional</impact>
+    </executive-summary>
+
+    <request-flow>
+        <step number="1" status="SUCCESS">
+            <operation>Local Blob Creation</operation>
+            <url>blob:https://sofapaint-jka8o774v-leigh-atkins-projects.vercel.app/cb98cbf9-11bd-4b24-959f-d7eed47a17bd</url>
+            <http-status>200 OK</http-status>
+            <description>Successfully created blob URL for processed image in browser memory</description>
+        </step>
+
+        <step number="2" status="FAILURE">
+            <operation>Direct Upload to Server</operation>
+            <url>https://sofapaint-jka8o774v-leigh-atkins-projects.vercel.app/api/images/direct-upload</url>
+            <method>POST</method>
+            <http-status>500 Internal Server Error</http-status>
+            <description>Failed to upload processed image to server endpoint</description>
+        </step>
+    </request-flow>
+
+    <critical-issues>
+        <issue severity="CRITICAL" id="ISS-001">
+            <title>Empty Request Body</title>
+            <evidence>
+                <header>content-length: 0</header>
+            </evidence>
+            <description>
+                The POST request to /api/images/direct-upload contains no body data (content-length: 0).
+                This indicates the image blob was not properly serialized and sent with the request.
+            </description>
+            <probable-causes>
+                <cause>FormData not properly created or populated with blob data</cause>
+                <cause>Blob reference lost during async operation</cause>
+                <cause>Incorrect fetch() API usage - body parameter missing or empty</cause>
+                <cause>CORS or content-type mismatch preventing body transmission</cause>
+            </probable-causes>
+            <location>
+                <file>paint.js</file>
+                <line>415</line>
+                <context>Direct upload initiation in background removal handler</context>
+            </location>
+        </issue>
+
+        <issue severity="CRITICAL" id="ISS-002">
+            <title>Vercel Serverless Function Failure</title>
+            <evidence>
+                <error-message>FUNCTION_INVOCATION_FAILED</error-message>
+                <function-id>sin1::zjgqw-1762695027904-3b76c2fdc808</function-id>
+            </evidence>
+            <description>
+                The Vercel serverless function backing /api/images/direct-upload failed to execute properly.
+                This is a server-side runtime error, not a client-side issue.
+            </description>
+            <probable-causes>
+                <cause>Function timeout (default 10s for Hobby tier, 60s for Pro)</cause>
+                <cause>Memory limit exceeded during image processing</cause>
+                <cause>Missing environment variables or API keys</cause>
+                <cause>Unhandled exception in serverless function code</cause>
+                <cause>Missing dependencies in deployment bundle</cause>
+                <cause>Cold start failure - function initialization error</cause>
+            </probable-causes>
+            <deployment-context>
+                <platform>Vercel</platform>
+                <region>sin1 (Singapore)</region>
+                <note>Edge function or Node.js runtime issue</note>
+            </deployment-context>
+        </issue>
+
+        <issue severity="HIGH" id="ISS-003">
+            <title>Image Processing Pipeline Disconnect</title>
+            <evidence>
+                <log-entry>[Gallery] Added image: {src: 'blob:...', name: 'front_1', original: {...}}</log-entry>
+                <log-entry>[RemoveBG] Error: Direct upload failed (500)</log-entry>
+            </evidence>
+            <description>
+                The local image processing completed successfully (blob created, gallery updated),
+                but the server-side persistence failed. This creates a state where the user sees
+                the processed image but it's not saved/persisted to the backend.
+            </description>
+            <impact>
+                <item>User sees processed image but cannot save project</item>
+                <item>Processed image lost on page refresh</item>
+                <item>Inconsistent application state</item>
+            </impact>
+        </issue>
+    </critical-issues>
+
+    <technical-details>
+        <client-side>
+            <browser-info>
+                <user-agent>Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36</user-agent>
+                <platform>Windows NT 10.0 x64</platform>
+            </browser-info>
+            <request-headers>
+                <header name="accept">*/*</header>
+                <header name="accept-encoding">gzip, deflate, br, zstd</header>
+                <header name="accept-language">en-US,en;q=0.9,ja-JP;q=0.8,ja;q=0.7</header>
+                <header name="content-length">0</header>
+                <header name="dnt">1</header>
+            </request-headers>
+            <notable-observations>
+                <observation>No Content-Type header specified</observation>
+                <observation>No Origin header present (potential CORS issue)</observation>
+                <observation>Empty body despite POST request</observation>
+            </notable-observations>
+        </client-side>
+
+        <server-side>
+            <endpoint>/api/images/direct-upload</endpoint>
+            <method>POST</method>
+            <expected-input>Image blob data (binary or multipart/form-data)</expected-input>
+            <actual-input>Empty body (0 bytes)</actual-input>
+            <error-type>FUNCTION_INVOCATION_FAILED</error-type>
+            <infrastructure>
+                <provider>Vercel</provider>
+                <function-id>sin1::zjgqw-1762695027904-3b76c2fdc808</function-id>
+                <region>Singapore (sin1)</region>
+            </infrastructure>
+        </server-side>
+    </technical-details>
+
+    <background-removal-workflow>
+        <intended-flow>
+            <step>1. User triggers background removal on image</step>
+            <step>2. Client-side processing creates blob with background removed</step>
+            <step>3. Blob sent to /api/images/direct-upload endpoint</step>
+            <step>4. Server processes and stores image</step>
+            <step>5. Server returns persistent URL</step>
+            <step>6. Client updates UI with persistent URL</step>
+        </intended-flow>
+
+        <actual-flow>
+            <step status="success">1. User triggered background removal</step>
+            <step status="success">2. Client-side blob created successfully</step>
+            <step status="failure">3. Empty request sent to server (content-length: 0)</step>
+            <step status="failure">4. Server function failed to execute (500 error)</step>
+            <step status="not-reached">5. No URL returned</step>
+            <step status="not-reached">6. UI updated with local blob (temporary)</step>
+        </actual-flow>
+    </background-removal-workflow>
+
+    <root-cause-hypothesis>
+        <primary-hypothesis confidence="HIGH">
+            <title>Request Body Not Properly Serialized</title>
+            <explanation>
+                The most likely root cause is that the client-side code creates the blob correctly
+                but fails to properly package it into the fetch() request. The content-length of 0
+                indicates the request body is empty, meaning the blob data never made it to the server.
+                This could be due to:
+                - Not awaiting blob.arrayBuffer() or similar async operation
+                - FormData not properly appended with blob
+                - fetch() body parameter set to undefined or null
+                - Race condition where blob is garbage collected before transmission
+            </explanation>
+            <validation-steps>
+                <step>Check paint.js:415 for fetch() body parameter</step>
+                <step>Verify FormData creation and blob appending</step>
+                <step>Confirm Content-Type header is set (multipart/form-data or application/octet-stream)</step>
+                <step>Add logging to verify blob size before transmission</step>
+            </validation-steps>
+        </primary-hypothesis>
+
+        <secondary-hypothesis confidence="MEDIUM">
+            <title>Serverless Function Configuration Issue</title>
+            <explanation>
+                The Vercel function may be misconfigured or missing required dependencies.
+                Even if the request body was empty, a well-designed API should return a 400 Bad Request,
+                not 500 Internal Server Error. The 500 suggests an unhandled exception or configuration issue.
+            </explanation>
+            <validation-steps>
+                <step>Check Vercel function logs for detailed error message</step>
+                <step>Verify function timeout configuration</step>
+                <step>Confirm all dependencies are included in deployment</step>
+                <step>Check environment variables are properly set</step>
+            </validation-steps>
+        </secondary-hypothesis>
+    </root-cause-hypothesis>
+
+    <recommended-actions>
+        <immediate priority="CRITICAL">
+            <action id="ACT-001">
+                <title>Fix Request Body Serialization</title>
+                <description>
+                    Review paint.js:415 and ensure the blob is properly converted to a format
+                    suitable for transmission (FormData with multipart/form-data or raw binary with proper headers).
+                </description>
+                <code-location>public/js/paint.js:415</code-location>
+                <example>
+                    <![CDATA[
+// Correct implementation example:
+const formData = new FormData();
+formData.append('image', blob, 'processed-image.png');
+
+const response = await fetch('/api/images/direct-upload', {
+    method: 'POST',
+    body: formData
+    // Don't set Content-Type - browser will set it with boundary
+});
+                    ]]>
+                </example>
+            </action>
+        </immediate>
+
+        <immediate priority="CRITICAL">
+            <action id="ACT-002">
+                <title>Review Serverless Function Implementation</title>
+                <description>
+                    Check the /api/images/direct-upload endpoint implementation for:
+                    - Proper error handling for empty/missing body
+                    - Try-catch blocks to prevent unhandled exceptions
+                    - Appropriate timeout configuration
+                    - Memory limits for image processing
+                </description>
+                <code-location>api/images/direct-upload.js (or similar)</code-location>
+            </action>
+        </immediate>
+
+        <short-term priority="HIGH">
+            <action id="ACT-003">
+                <title>Add Client-Side Validation</title>
+                <description>
+                    Validate blob exists and has data before attempting upload.
+                    Show clear error messages to user if validation fails.
+                </description>
+            </action>
+
+            <action id="ACT-004">
+                <title>Implement Better Error Handling</title>
+                <description>
+                    Add detailed error logging for both client and server to capture:
+                    - Blob size before transmission
+                    - Request headers and body structure
+                    - Server-side function logs via Vercel dashboard
+                </description>
+            </action>
+        </short-term>
+
+        <long-term priority="MEDIUM">
+            <action id="ACT-005">
+                <title>Add Health Check Endpoint</title>
+                <description>
+                    Create a test endpoint to verify the upload pipeline works independently
+                    of the background removal feature.
+                </description>
+            </action>
+
+            <action id="ACT-006">
+                <title>Implement Fallback Strategy</title>
+                <description>
+                    If server upload fails, keep blob in memory and retry, or allow user
+                    to download processed image directly without server persistence.
+                </description>
+            </action>
+        </long-term>
+    </recommended-actions>
+
+    <verification-checklist>
+        <item priority="1">Review paint.js:415 - verify fetch() includes body parameter with blob data</item>
+        <item priority="1">Check Vercel function logs for detailed error stack trace</item>
+        <item priority="2">Verify Content-Type header is properly set for binary data</item>
+        <item priority="2">Test with smaller images to rule out size/timeout issues</item>
+        <item priority="3">Add console.log statements before fetch() to verify blob size</item>
+        <item priority="3">Test upload endpoint independently with curl or Postman</item>
+        <item priority="4">Review Vercel deployment logs for function build errors</item>
+        <item priority="4">Check Vercel dashboard for function memory/timeout metrics</item>
+    </verification-checklist>
+
+    <additional-notes>
+        <note type="warning">
+            The TouchEvent passive listener warning is unrelated to this failure but should be
+            addressed separately for better scroll performance.
+        </note>
+        <note type="info">
+            The gallery successfully updated with the blob URL, indicating client-side processing
+            is working correctly. The issue is purely with server communication/persistence.
+        </note>
+        <note type="critical">
+            Users may experience data loss - processed images are not persisted and will be lost
+            on page refresh. This should be communicated clearly in the UI until fixed.
+        </note>
+    </additional-notes>
+
+    <conclusion>
+        <summary>
+            The remove background worker fails at the server upload stage due to an empty request body
+            (content-length: 0) combined with a serverless function invocation failure (500 error).
+            The primary issue is likely in paint.js:415 where the blob is not properly serialized
+            into the fetch request body. Secondary concerns include potential Vercel function configuration
+            issues that cause a 500 error instead of proper error handling.
+        </summary>
+        <confidence-level>HIGH</confidence-level>
+        <estimated-fix-effort>2-4 hours</estimated-fix-effort>
+        <dependencies>
+            <dependency>Access to Vercel function logs for detailed error trace</dependency>
+            <dependency>Code review of paint.js background removal handler</dependency>
+            <dependency>Code review of /api/images/direct-upload serverless function</dependency>
+        </dependencies>
+    </conclusion>
+</error-analysis>
