@@ -23,3 +23,7 @@ remove-background-error-analysis.xml
 *.log
 coverage/
 .nyc_output/
+
+# Exclude Python files (background removal now handled by Cloudflare Worker)
+requirements.txt
+*.py
