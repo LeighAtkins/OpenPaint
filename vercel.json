@@ -1,47 +1,42 @@
 {
   "version": 2,
-  "builds": [
+  "rewrites": [
     {
-      "src": "app.js",
-      "use": "@vercel/node"
+      "source": "/js/:path*",
+      "destination": "/public/js/:path*"
     },
     {
-      "src": "public/**",
-      "use": "@vercel/static"
+      "source": "/css/:path*",
+      "destination": "/css/:path*"
+    },
+    {
+      "source": "/src/:path*",
+      "destination": "/src/:path*"
     }
   ],
-  "routes": [
+  "headers": [
     {
-      "src": "^/ai/(.*)$",
-      "dest": "/app.js"
-    },
-    {
-      "src": "^/api/(.*)$",
-      "dest": "/app.js"
-    },
-    {
-      "src": "^/(health|env-check|version)$",
-      "dest": "/app.js"
-    },
-    {
-      "src": "^/js/(.*)$",
-      "dest": "/public/js/$1"
-    },
-    {
-      "src": "^/css/(.*)$",
-      "dest": "/css/$1"
-    },
-    {
-      "src": "^/src/(.*)$",
-      "dest": "/src/$1"
-    },
-    {
-      "src": "^/(diagnostics-overlay|test-coordinate-system)\\.js$",
-      "dest": "/$1.js"
-    },
-    {
-      "src": "^(?!/(ai|api|health|env-check|version|js|css|src|diagnostics-overlay|test-coordinate-system)/).*$",
-      "dest": "/app.js"
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, POST, PUT, DELETE, OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "Content-Type, Authorization"
+        }
+      ]
     }
-  ]
+  ],
+  "functions": {
+    "api/**/*.js": {
+      "memory": 1024,
+      "maxDuration": 10
+    }
+  }
 }
