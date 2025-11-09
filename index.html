@@ -5539,11 +5539,17 @@
                         btn.classList.remove(...cfg.inactiveClasses.split(' '));
                         btn.classList.add(...cfg.activeClasses.split(' '));
                         btn.setAttribute('aria-current', 'true');
+                        // Force background color with inline style since Tailwind v4 doesn't compile bg-slate-900
+                        btn.style.backgroundColor = '#0f172a';
+                        btn.style.color = '#ffffff';
                         activeButton = btn;
                     } else {
                         btn.classList.remove(...cfg.activeClasses.split(' '));
                         btn.classList.add(...cfg.inactiveClasses.split(' '));
                         btn.removeAttribute('aria-current');
+                        // Reset to default background for inactive
+                        btn.style.backgroundColor = '';
+                        btn.style.color = '';
                     }
                 });
                 
@@ -5806,11 +5812,17 @@
                             b.setAttribute('aria-current', 'true');
                             b.classList.remove(...cfg.inactiveClasses.split(' '));
                             b.classList.add(...cfg.activeClasses.split(' '));
+                            // Force background color with inline style since Tailwind v4 doesn't compile bg-slate-900
+                            b.style.backgroundColor = '#0f172a';
+                            b.style.color = '#ffffff';
                             b.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
                         } else {
                             b.removeAttribute('aria-current');
                             b.classList.remove(...cfg.activeClasses.split(' '));
                             b.classList.add(...cfg.inactiveClasses.split(' '));
+                            // Reset to default background for inactive
+                            b.style.backgroundColor = '';
+                            b.style.color = '';
                         }
                     });
 
