@@ -9,6 +9,9 @@ function debugLog(...args) {
 window.disableLegacyMeasurementOverlay = true;
 
 // Load viewport controller modules (safely)
+// DISABLED: These modules are in src/canvas/viewport/ which is excluded from Vercel deployment
+// The app will use the legacy viewport system instead (already implemented as fallback)
+/*
 (function loadViewportModules() {
   try {
     // Load feature flags first
@@ -16,7 +19,7 @@ window.disableLegacyMeasurementOverlay = true;
     featureFlagsScript.src = 'src/canvas/viewport/featureFlags.js';
     featureFlagsScript.onload = function() {
       console.log('[VIEWPORT] Feature flags loaded');
-            
+
       // Initialize feature flags after script loads
       setTimeout(() => {
         try {
@@ -30,7 +33,7 @@ window.disableLegacyMeasurementOverlay = true;
           console.warn('[VIEWPORT] Error initializing feature flags, using legacy system:', e);
         }
       }, 10);
-            
+
       // Load viewport controller after feature flags are ready
       const viewportScript = document.createElement('script');
       viewportScript.src = 'src/canvas/viewport/canvasViewport.js';
@@ -50,6 +53,8 @@ window.disableLegacyMeasurementOverlay = true;
     console.warn('[VIEWPORT] Failed to initialize viewport modules, using legacy system:', e);
   }
 })();
+*/
+console.log('[VIEWPORT] Using legacy viewport system (new modules excluded from deployment)');
 window.paintApp = {
   config: {
     IMAGE_LABELS: ['front', 'side', 'back', 'cushion', 'blank_canvas'],
