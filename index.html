@@ -1522,8 +1522,8 @@
     </div>
 
     <!-- Canvas Controls (Bottom Panel) - Rail wrapper prevents off-screen drift -->
-    <div id="controls-rail" class="fixed inset-x-0 z-[4000] flex justify-center pointer-events-none px-2" style="bottom: calc(env(safe-area-inset-bottom) + 3rem);">
-        <div id="canvasControls" class="pointer-events-auto floating-panel rounded-2xl px-3 py-2 bg-white/80 backdrop-blur-md shadow-lg max-w-[min(100vw-1rem,1100px)] w-full sm:w-auto transition-all duration-300">
+    <div id="controls-rail" class="fixed z-[5000] flex justify-center pointer-events-none px-2" style="left: 50%; transform: translateX(-50%); bottom: max(48px, env(safe-area-inset-bottom));">
+        <div id="canvasControls" class="pointer-events-auto floating-panel rounded-2xl px-3 py-2 bg-white/80 backdrop-blur-md shadow-lg max-w-[min(100vw-1rem,1100px)] w-full sm:w-auto transition-all duration-300" style="opacity: 1; visibility: visible; display: block;">
             <div id="canvasControlsContent" class="flex flex-wrap items-center gap-2 text-sm smart-label-scope">
             <button id="copyCanvasBtn" class="flex items-center gap-1 px-3 py-1 bg-primary-500 hover:bg-primary-600 active:bg-primary-700 text-white text-xs rounded-lg shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-[1.02] active:scale-95" title="Copy image to clipboard" aria-label="Copy Image">
                 <svg class="w-3.5 h-3.5 opacity-90" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16 1H4a2 2 0 00-2 2v12h2V3h12V1zm3 4H8a2 2 0 00-2 2v14a2 2 0 002 2h11a2 2 0 002-2V7a2 2 0 00-2-2zm0 16H8V7h11v14z"></path></svg>
@@ -2108,11 +2108,15 @@
                         const vv = window.visualViewport;
                         // How much the viewport shrank (keyboard overlay)
                         const delta = Math.max(0, window.innerHeight - vv.height);
+                        // Get safe area inset from CSS
+                        const safe = parseInt(getComputedStyle(document.documentElement).getPropertyValue('padding-bottom')) || 0;
                         // Effective bottom offset so the bar rises when keyboard overlaps
-                        const px = Math.max(BASE_OFFSET_PX, delta + BASE_OFFSET_PX);
+                        const px = Math.max(BASE_OFFSET_PX, delta + BASE_OFFSET_PX, safe);
                         rail.style.bottom = px + 'px';
                     }
-                    // If no visualViewport, the CSS env() calc handles it
+                    // Ensure horizontal centering remains intact after bottom changes
+                    rail.style.left = '50%';
+                    rail.style.transform = 'translateX(-50%)';
                 }
 
                 // Reposition menu popovers when viewport changes
