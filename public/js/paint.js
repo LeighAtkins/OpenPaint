@@ -385,10 +385,24 @@ document.addEventListener('DOMContentLoaded', () => {
             method: 'POST',
             headers: { 'x-api-key': 'dev-secret' }
           });
+
+          // Handle Step 1 errors with detailed logging
+          if (!uploadResp.ok) {
+            const errorText = await uploadResp.text().catch(() => '<no body>');
+            console.error('[BG-REMOVE] Step 1 failed:', {
+              status: uploadResp.status,
+              statusText: uploadResp.statusText,
+              body: errorText.substring(0, 500)
+            });
+            throw new Error(`Failed to get upload URL (${uploadResp.status}): ${errorText.substring(0, 200)}`);
+          }
+
           const uploadData = await uploadResp.json();
           console.log('[BG-REMOVE] Step 1 response:', uploadResp.status, uploadData);
+
           if (!uploadData.success || !uploadData.result?.uploadURL) {
-            throw new Error('Failed to get upload URL');
+            console.error('[BG-REMOVE] Step 1 invalid response:', uploadData);
+            throw new Error('Invalid upload URL response: missing uploadURL or id');
           }
 
           // Step 2: Upload image directly to Cloudflare Images
@@ -399,10 +413,24 @@ document.addEventListener('DOMContentLoaded', () => {
             method: 'POST',
             body: formData
           });
+
+          // Handle Step 2 errors with detailed logging
+          if (!imageUploadResp.ok) {
+            const errorText = await imageUploadResp.text().catch(() => '<no body>');
+            console.error('[BG-REMOVE] Step 2 upload failed:', {
+              status: imageUploadResp.status,
+              statusText: imageUploadResp.statusText,
+              body: errorText.substring(0, 500)
+            });
+            throw new Error(`Image upload failed (${imageUploadResp.status}): ${errorText.substring(0, 200)}`);
+          }
+
           const imageUploadData = await imageUploadResp.json();
           console.log('[BG-REMOVE] Step 2 response:', imageUploadResp.status, imageUploadData);
+
           if (!imageUploadData.success || !imageUploadData.result?.id) {
-            throw new Error('Failed to upload image');
+            console.error('[BG-REMOVE] Step 2 invalid response:', imageUploadData);
+            throw new Error('Image upload failed: missing image id in response');
           }
 
           // Step 3: Remove background using Cloudflare Images (robust parsing)

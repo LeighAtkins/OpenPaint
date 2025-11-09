@@ -33,28 +33,64 @@ async function directUploadHandler(req, res) {
 
         const targetUrl = `${origin.replace(/\/$/, '')}/images/direct-upload`;
         console.log('[Proxy] Requesting signed upload URL from:', targetUrl);
+        console.log('[Proxy] Request headers:', { 'x-api-key': req.headers['x-api-key'] ? 'present' : 'missing' });
 
         // Cloudflare Images direct upload expects empty POST to create signed URL
+        const headers = {};
+        if (req.headers['x-api-key']) {
+            headers['x-api-key'] = String(req.headers['x-api-key']);
+        }
+
         const response = await fetch(targetUrl, {
             method: 'POST',
-            headers: {
-                'x-api-key': req.headers['x-api-key'] || 'dev-secret'
-            }
+            headers
             // No body, no content-type - Cloudflare creates signed URL on empty POST
         });
 
-        const data = await response.json();
-        console.log('[Proxy] Worker response:', response.status, data.success ? 'success' : 'failed');
+        console.log('[Proxy] Worker response status:', response.status);
 
+        // Handle non-2xx responses with detailed logging
         if (!response.ok) {
-            console.error('[Proxy] Worker error:', data);
-            return res.status(response.status).json(data);
+            const text = await response.text().catch(() => '<no body>');
+            console.error('[Proxy] Signed URL request failed:', {
+                status: response.status,
+                statusText: response.statusText,
+                body: text.substring(0, 500)
+            });
+
+            // Try to parse as JSON for structured error
+            let errorData;
+            try {
+                errorData = JSON.parse(text);
+            } catch {
+                errorData = { error: 'signed-url-failed', message: text.substring(0, 200) };
+            }
+
+            return res.status(502).json({
+                ok: false,
+                error: 'signed-url-failed',
+                status: response.status,
+                details: errorData
+            });
         }
 
-        res.status(response.status).json(data);
+        // Parse successful response
+        const json = await response.json();
+        console.log('[Proxy] Worker response:', json.success ? 'success' : 'failed', json.result ? 'has result' : 'no result');
+
+        return res.status(200).json(json);
     } catch (err) {
-        console.error('[Proxy] /images/direct-upload error:', err);
-        res.status(500).json({ success: false, message: 'Proxy error', error: err.message });
+        console.error('[Proxy] /images/direct-upload error:', {
+            name: err.name,
+            message: err.message,
+            stack: err.stack
+        });
+        return res.status(500).json({
+            success: false,
+            message: 'Proxy error',
+            error: err.message,
+            type: err.name
+        });
     }
 }
 
