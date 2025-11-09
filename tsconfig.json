@@ -1,33 +1,11 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
-    "module": "ESNext",
-    "lib": ["ES2020"],
-    "moduleResolution": "node",
-    "allowJs": true,
-    "checkJs": false,
-    "noEmit": true,
-    "skipLibCheck": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "strict": false,
-    "forceConsistentCasingInFileNames": true,
-    "resolveJsonModule": true,
-    "isolatedModules": true
+    "skipLibCheck": true
   },
   "exclude": [
-    "node_modules",
-    "dist",
-    "build",
-    ".vercel",
-    "sofapaint-api",
-    "worker",
-    "src/canvas/**",
+    "src/canvas/viewport/**",
+    "**/__tests__/**",
     "**/*.test.ts",
-    "**/*.test.js"
-  ],
-  "include": [
-    "**/*.ts",
-    "**/*.js"
+    "**/*.test.tsx"
   ]
 }
