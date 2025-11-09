@@ -72,16 +72,16 @@ echo "🔀 Creating routes manifest..."
 cat > ".vercel/output/config/routes.json" <<'EOF'
 [
   {
-    "src": "^/api(?:/(.*))?$",
-    "dest": "functions/api__app.func"
+    "src": "^/api/(.*)$",
+    "dest": "/api__app.func"
   },
   {
     "src": "^/health$",
-    "dest": "functions/api__app.func"
+    "dest": "/api__app.func"
   },
   {
     "src": "^/version$",
-    "dest": "functions/api__app.func"
+    "dest": "/api__app.func"
   },
   {
     "handle": "filesystem"
