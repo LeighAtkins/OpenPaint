@@ -3,6 +3,12 @@ const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
 
+// Ensure global fetch availability (Node 22.x should have it, but add polyfill as safeguard)
+if (typeof fetch === 'undefined') {
+    global.fetch = (...args) =>
+        import('node-fetch').then(({ default: f }) => f(...args));
+}
+
 const app = express();
 
 // Middleware
@@ -26,75 +32,66 @@ app.use((req, res, next) => {
 // Handlers extracted for dual-path mounting during routing migration
 async function directUploadHandler(req, res) {
     try {
-        const base = process.env.CF_WORKER_URL;
+        const base = process.env.CF_WORKER_URL || '';
         if (!base) {
-            console.error('[Proxy] Missing CF_WORKER_URL environment variable');
+            console.error('[Proxy] Missing CF_WORKER_URL');
             return res.status(500).json({
                 ok: false,
                 error: 'missing-CF_WORKER_URL',
-                message: 'CF_WORKER_URL environment variable is not configured'
+                message: 'Set CF_WORKER_URL to your Worker base URL'
             });
         }
-
-        const origin = base.replace(/\/$/, ''); // strip trailing slash
+        const origin = base.replace(/\/$/, '');
         const targetUrl = `${origin}/images/direct-upload`;
 
-        console.log('[Proxy] Requesting signed upload URL from:', targetUrl);
-        console.log('[Proxy] Request headers:', { 'x-api-key': req.headers['x-api-key'] ? 'present' : 'missing' });
-
-        // Cloudflare Images direct upload expects empty POST to create signed URL
         const headers = {};
-        if (req.headers['x-api-key']) {
+        if (req.headers && req.headers['x-api-key']) {
             headers['x-api-key'] = String(req.headers['x-api-key']);
         }
 
-        const response = await fetch(targetUrl, {
-            method: 'POST',
-            headers
-            // No body, no content-type - Cloudflare creates signed URL on empty POST
-        });
+        console.log('[Proxy] direct-upload target:', targetUrl);
+        console.log('[Proxy] x-api-key header present:', Boolean(headers['x-api-key']));
 
-        console.log('[Proxy] Worker response status:', response.status);
-
-        // Handle non-2xx responses with detailed logging
-        const text = await response.text().catch(() => '<no body>');
-        if (!response.ok) {
-            console.error('[Proxy] Upstream error:', targetUrl, response.status, text.substring(0, 500));
-
-            // Try to parse as JSON for structured error
-            let errorData;
-            try {
-                errorData = JSON.parse(text);
-            } catch {
-                errorData = { error: 'signed-url-failed', message: text.substring(0, 200) };
-            }
-
+        let upstream;
+        try {
+            upstream = await fetch(targetUrl, { method: 'POST', headers });
+        } catch (netErr) {
+            console.error('[Proxy] fetch exception:', {
+                name: netErr.name,
+                message: netErr.message
+            });
             return res.status(502).json({
                 ok: false,
-                error: 'upstream-failed',
-                status: response.status,
-                details: errorData
+                error: 'fetch-exception',
+                message: netErr.message
             });
         }
 
-        // Parse successful response
+        const status = upstream.status;
+        const text = await upstream.text().catch(() => '<no body>');
+        console.log('[Proxy] upstream status:', status);
+
+        if (!upstream.ok) {
+            console.error('[Proxy] upstream non-OK:', status, text.slice(0, 500));
+            return res.status(502).json({
+                ok: false,
+                error: 'upstream-failed',
+                status,
+                body: text.slice(0, 500)
+            });
+        }
+
         try {
             const json = JSON.parse(text);
-            console.log('[Proxy] Worker response:', json.success ? 'success' : 'failed', json.result ? 'has result' : 'no result');
             return res.status(200).json(json);
         } catch {
-            // If not JSON, return text with upstream content-type
             return res
                 .status(200)
-                .set('content-type', response.headers.get('content-type') || 'application/json')
+                .set('content-type', upstream.headers.get('content-type') || 'application/json')
                 .send(text);
         }
     } catch (err) {
-        console.error('[Proxy] /images/direct-upload exception:', {
-            name: err.name,
-            message: err.message,
-            stack: err.stack
-        });
+        console.error('[Proxy] /images/direct-upload exception:', { message: err.message });
         return res.status(500).json({
             ok: false,
             error: 'proxy-exception',
@@ -105,53 +102,47 @@ async function directUploadHandler(req, res) {
 
 async function removeBackgroundHandler(req, res) {
     try {
-        const base = process.env.CF_WORKER_URL;
+        const base = process.env.CF_WORKER_URL || '';
         if (!base) {
-            console.error('[Proxy] Missing CF_WORKER_URL environment variable');
+            console.error('[Proxy] Missing CF_WORKER_URL');
             return res.status(500).json({
                 ok: false,
-                error: 'missing-CF_WORKER_URL',
-                message: 'CF_WORKER_URL environment variable is not configured'
+                error: 'missing-CF_WORKER_URL'
             });
         }
-
-        const origin = base.replace(/\/$/, ''); // strip trailing slash
+        const origin = base.replace(/\/$/, '');
         const targetUrl = `${origin}/remove-background`;
 
-        console.log('[Proxy] Requesting background removal from:', targetUrl);
-
-        const headers = {
-            'content-type': 'application/json'
-        };
+        const headers = { 'content-type': 'application/json' };
         if (req.headers['x-api-key']) {
             headers['x-api-key'] = String(req.headers['x-api-key']);
         }
 
         const bodyText = typeof req.body === 'string' ? req.body : JSON.stringify(req.body || {});
-        const upstream = await fetch(targetUrl, {
-            method: 'POST',
-            headers,
-            body: bodyText
-        });
-
-        console.log('[Proxy] Worker response status:', upstream.status);
+        let upstream;
+        try {
+            upstream = await fetch(targetUrl, {
+                method: 'POST',
+                headers,
+                body: bodyText
+            });
+        } catch (netErr) {
+            console.error('[Proxy] remove-bg fetch exception:', netErr.message);
+            return res.status(502).json({
+                ok: false,
+                error: 'fetch-exception',
+                message: netErr.message
+            });
+        }
 
         const ct = upstream.headers.get('content-type') || 'application/octet-stream';
         const buf = Buffer.from(await upstream.arrayBuffer());
-
         if (!upstream.ok) {
-            console.error('[Proxy] Background removal upstream error:', targetUrl, upstream.status);
+            console.error('[Proxy] remove-bg upstream error:', targetUrl, upstream.status);
         }
-
-        res.status(upstream.status);
-        res.setHeader('content-type', ct);
-        res.send(buf);
+        res.status(upstream.status).setHeader('content-type', ct).send(buf);
     } catch (err) {
-        console.error('[Proxy] /remove-background exception:', {
-            name: err.name,
-            message: err.message,
-            stack: err.stack
-        });
+        console.error('[Proxy] /remove-background exception:', err.message);
         res.status(500).json({
             ok: false,
             error: 'proxy-exception',
@@ -161,10 +152,21 @@ async function removeBackgroundHandler(req, res) {
 }
 
 function envHandler(req, res) {
-    res.json({
-        CF_WORKER_URL: process.env.CF_WORKER_URL ? 'configured' : 'missing',
-        NODE_ENV: process.env.NODE_ENV || 'development'
-    });
+    try {
+        const val = process.env.CF_WORKER_URL || '';
+        res.status(200).json({
+            CF_WORKER_URL: val ? 'configured' : 'missing',
+            CF_WORKER_URL_value_preview: val || '<empty>',
+            NODE_ENV: process.env.NODE_ENV || 'development'
+        });
+    } catch (err) {
+        console.error('[Env] Exception', err);
+        res.status(500).json({
+            ok: false,
+            error: 'env-handler-exception',
+            message: String(err)
+        });
+    }
 }
 
 // Proxy direct upload to Cloudflare Worker (dual-path mounting)
