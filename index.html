@@ -1533,7 +1533,7 @@
 
     <!-- Canvas Controls (Bottom Panel) - Rail wrapper prevents off-screen drift -->
     <div id="controls-rail" class="fixed z-[5000] flex justify-center pointer-events-none px-2" style="left: 50%; transform: translateX(-50%); bottom: max(48px, env(safe-area-inset-bottom));">
-        <div id="canvasControls" class="pointer-events-auto floating-panel rounded-2xl px-3 py-2 bg-white/80 backdrop-blur-md shadow-lg max-w-[min(100vw-1rem,1100px)] w-full sm:w-auto transition-all duration-300" style="opacity: 1; visibility: visible; display: block;">
+        <div id="canvasControls" class="pointer-events-auto floating-panel rounded-2xl px-3 py-2 shadow-lg max-w-[min(100vw-1rem,1100px)] w-full sm:w-auto transition-all duration-300" style="opacity: 1; visibility: visible; display: block; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid rgba(0, 0, 0, 0.1);">
             <div id="canvasControlsContent" class="flex flex-wrap items-center gap-2 text-sm smart-label-scope">
             <button id="copyCanvasBtn" class="flex items-center gap-1 px-3 py-1 bg-primary-500 hover:bg-primary-600 active:bg-primary-700 text-white text-xs rounded-lg shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-[1.02] active:scale-95" title="Copy image to clipboard" aria-label="Copy Image">
                 <svg class="w-3.5 h-3.5 opacity-90" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16 1H4a2 2 0 00-2 2v12h2V3h12V1zm3 4H8a2 2 0 00-2 2v14a2 2 0 002 2h11a2 2 0 002-2V7a2 2 0 00-2-2zm0 16H8V7h11v14z"></path></svg>
@@ -2204,7 +2204,7 @@
                 rail.style.transform = 'translateX(-50%)';
                 // bottom is set by clampBottom in setupControlsRail
 
-                // 4) Check visibility
+                // 4) Check visibility and force styles on both rail and inner panel
                 const check = visibilitySelfCheck(rail);
                 if (!check.ok) {
                     console.warn('[rail] Visibility check failed:', check.reason, check.rect);
@@ -2212,6 +2212,19 @@
                     rail.style.visibility = 'visible';
                     rail.style.opacity = '1';
                     rail.style.display = 'block';
+                }
+
+                // 4b) Force background visibility on inner panel
+                const inner = document.getElementById('canvasControls');
+                if (inner) {
+                    inner.style.background = 'rgba(255, 255, 255, 0.95)';
+                    inner.style.backdropFilter = 'blur(8px)';
+                    inner.style.webkitBackdropFilter = 'blur(8px)';
+                    inner.style.border = '1px solid rgba(0, 0, 0, 0.1)';
+                    inner.style.visibility = 'visible';
+                    inner.style.opacity = '1';
+                    inner.style.display = 'block';
+                    console.log('[rail] Applied explicit background styles to inner panel');
                 }
 
                 // 5) Escalate z-index if blockers detected
