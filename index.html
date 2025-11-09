@@ -1531,10 +1531,9 @@
         </div>
     </div>
 
-    <!-- Canvas Controls (Bottom Panel) - Rail wrapper prevents off-screen drift -->
-    <div id="controls-rail" class="fixed z-[5000] flex justify-center pointer-events-none px-2" style="left: 50%; transform: translateX(-50%); bottom: max(48px, env(safe-area-inset-bottom));">
-        <div id="canvasControls" class="pointer-events-auto floating-panel rounded-2xl px-3 py-2 shadow-lg max-w-[min(100vw-1rem,1100px)] w-full sm:w-auto transition-all duration-300" style="opacity: 1; visibility: visible; display: block; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid rgba(0, 0, 0, 0.1);">
-            <div id="canvasControlsContent" class="flex flex-wrap items-center gap-2 text-sm smart-label-scope">
+    <!-- Canvas Controls (Bottom Panel) -->
+    <div id="canvasControls" class="floating-panel fixed bottom-16 rounded-2xl px-3 py-2 transition-all duration-300" style="left: 50%; transform: translateX(-50%); z-index: 4000; display: block;">
+        <div id="canvasControlsContent" class="flex items-center gap-2 text-sm smart-label-scope">
             <button id="copyCanvasBtn" class="flex items-center gap-1 px-3 py-1 bg-primary-500 hover:bg-primary-600 active:bg-primary-700 text-white text-xs rounded-lg shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-[1.02] active:scale-95" title="Copy image to clipboard" aria-label="Copy Image">
                 <svg class="w-3.5 h-3.5 opacity-90" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16 1H4a2 2 0 00-2 2v12h2V3h12V1zm3 4H8a2 2 0 00-2 2v14a2 2 0 002 2h11a2 2 0 002-2V7a2 2 0 00-2-2zm0 16H8V7h11v14z"></path></svg>
                 <span class="label-long">Copy Image</span>
@@ -2183,84 +2182,34 @@
                 return mo;
             }
 
-            // Main rail hardening function - orchestrates all defensive checks
+            // Simplified controls hardening - no rail wrapper needed
             function hardenControlsRail() {
                 if (!RAIL_HARDENING_ENABLED) return;
-                const rail = document.getElementById('controls-rail');
-                if (!rail) {
-                    console.warn('[rail] Not found. Hardening skipped.');
+                const controls = document.getElementById('canvasControls');
+                if (!controls) {
+                    console.warn('[controls] Not found. Hardening skipped.');
                     return;
                 }
 
-                // 1) Portal to body
-                ensureRailInBody(rail);
-
-                // 2) Remove transforms from html/body
+                // Remove transforms from html/body
                 sanityCheckRootTransforms();
 
-                // 3) Apply explicit positioning
-                rail.style.position = 'fixed';
-                rail.style.left = '50%';
-                rail.style.transform = 'translateX(-50%)';
-                // bottom is set by clampBottom in setupControlsRail
+                // Apply explicit positioning and visibility
+                controls.style.position = 'fixed';
+                controls.style.left = '50%';
+                controls.style.transform = 'translateX(-50%)';
+                controls.style.visibility = 'visible';
+                controls.style.opacity = '1';
+                controls.style.display = 'block';
+                controls.style.zIndex = '4000';
 
-                // 4) Check visibility and force styles on both rail and inner panel
-                const check = visibilitySelfCheck(rail);
-                if (!check.ok) {
-                    console.warn('[rail] Visibility check failed:', check.reason, check.rect);
-                    // Force visibility if needed
-                    rail.style.visibility = 'visible';
-                    rail.style.opacity = '1';
-                    rail.style.display = 'block';
-                }
-
-                // 4b) Force background visibility on inner panel
-                const inner = document.getElementById('canvasControls');
-                if (inner) {
-                    inner.style.background = 'rgba(255, 255, 255, 0.95)';
-                    inner.style.backdropFilter = 'blur(8px)';
-                    inner.style.webkitBackdropFilter = 'blur(8px)';
-                    inner.style.border = '1px solid rgba(0, 0, 0, 0.1)';
-                    inner.style.visibility = 'visible';
-                    inner.style.opacity = '1';
-                    inner.style.display = 'block';
-                    console.log('[rail] Applied explicit background styles to inner panel');
-                }
-
-                // 5) Escalate z-index if blockers detected
-                applyMaxZIndexIfNeeded(rail);
-
-                // 6) Ensure proper pointer-events layering
-                auditPointerEvents(rail);
-
-                // 7) Monitor viewport changes and re-check visibility
-                ['resize', 'orientationchange'].forEach(ev =>
-                    window.addEventListener(ev, () => {
-                        const recheck = visibilitySelfCheck(rail);
-                        if (!recheck.ok) {
-                            console.warn('[rail] Re-check failed on', ev, ':', recheck.reason);
-                            // Re-apply hardening
-                            ensureRailInBody(rail);
-                            applyMaxZIndexIfNeeded(rail);
-                        }
-                    }, { passive: true })
-                );
-
-                // 8) Observe DOM mutations to keep rail in body
-                observeRail(rail);
-
-                console.log('[rail] Hardening complete.');
+                console.log('[controls] Hardening complete.');
             }
 
-            // Setup controls rail viewport handling to prevent off-screen drift
+            // Setup controls viewport handling (simplified - no rail needed)
             (function setupControlsRail() {
-                const rail = document.getElementById('controls-rail');
-                if (!rail) return;
-
-                // Portal to body to escape transformed ancestors
-                if (rail.parentElement !== document.body) {
-                    document.body.appendChild(rail);
-                }
+                const controls = document.getElementById('canvasControls');
+                if (!controls) return;
 
                 const BASE_OFFSET_PX = 48; // equals tailwind 'bottom-12' feel (3rem)
 
@@ -2281,11 +2230,11 @@
                         const safe = parseInt(getComputedStyle(document.documentElement).getPropertyValue('padding-bottom')) || 0;
                         // Effective bottom offset so the bar rises when keyboard overlaps
                         const px = Math.max(BASE_OFFSET_PX, delta + BASE_OFFSET_PX, safe);
-                        rail.style.bottom = px + 'px';
+                        controls.style.bottom = px + 'px';
                     }
                     // Ensure horizontal centering remains intact after bottom changes
-                    rail.style.left = '50%';
-                    rail.style.transform = 'translateX(-50%)';
+                    controls.style.left = '50%';
+                    controls.style.transform = 'translateX(-50%)';
                 }
 
                 // Reposition menu popovers when viewport changes
@@ -2323,14 +2272,14 @@
                 clampBottom();
             })();
 
-            // Setup mini stepper positioning above controls rail
+            // Setup mini stepper positioning above controls
             (function positionMiniStepper() {
                 const nav = document.getElementById('navigation-container');
                 if (!nav) return;
 
-                const rail = document.getElementById('controls-rail');
-                const BASE_GAP = 8;  // gap between rail and stepper
-                const MIN_FALLBACK = 56; // minimum offset when rail missing
+                const controls = document.getElementById('canvasControls');
+                const BASE_GAP = 8;  // gap between controls and stepper
+                const MIN_FALLBACK = 56; // minimum offset when controls missing
 
                 function safeInsetBottom() {
                     // env() is in CSS, but we can read viewport resize delta as a proxy for keyboards
@@ -2348,18 +2297,18 @@
                 }
 
                 function computeBottom() {
-                    // height of the controls rail if present and visible
-                    let railH = 0;
-                    if (rail) {
-                        const r = rail.getBoundingClientRect();
+                    // height of the controls if present and visible
+                    let controlsH = 0;
+                    if (controls) {
+                        const r = controls.getBoundingClientRect();
                         // if it is fixed at bottom, use its height; if it is off-screen, treat as 0
-                        railH = (r.height && r.bottom > 0) ? r.height : 0;
+                        controlsH = (r.height && r.bottom > 0) ? r.height : 0;
                     }
                     const inset = safeInsetBottom();
                     const lift = currentKeyboardLift();
 
-                    // Stepper sits just above the rail, plus any inset or keyboard lift
-                    const px = Math.max(MIN_FALLBACK, railH + BASE_GAP) + inset + lift;
+                    // Stepper sits just above the controls, plus any inset or keyboard lift
+                    const px = Math.max(MIN_FALLBACK, controlsH + BASE_GAP) + inset + lift;
 
                     nav.style.bottom = px + 'px';
                     // keep full width and topmost stacking
@@ -2378,9 +2327,9 @@
                 }
                 document.addEventListener('visibilitychange', computeBottom, { passive: true });
 
-                // If the rail shows or hides, adapt
+                // If the controls show or hide, adapt
                 const mo = new MutationObserver(computeBottom);
-                if (rail) mo.observe(rail, { attributes: true, attributeFilter: ['style', 'class'] });
+                if (controls) mo.observe(controls, { attributes: true, attributeFilter: ['style', 'class'] });
 
                 // Initial
                 computeBottom();
