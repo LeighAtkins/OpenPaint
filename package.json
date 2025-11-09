@@ -9,8 +9,8 @@
   "scripts": {
     "start": "node app.js",
     "dev": "node app.js",
-    "build": "npm run build:css && node scripts/emit-public.js && node scripts/check-public.js",
-    "build:css": "npx --yes @tailwindcss/cli -i \"./css/tailwind.css\" -o \"./public/tailwind.build.css\" --minify",
+    "build": "npm run build:css && node scripts/emit-public.mjs && node scripts/check-public.mjs",
+    "build:css": "tailwindcss -i ./css/tailwind.css -o ./public/tailwind.build.css --minify",
     "vercel-build": "npm run build",
     "deploy": "vercel --prod",
     "deploy:preview": "vercel",
@@ -38,6 +38,7 @@
     "vercel": "^48.4.0"
   },
   "devDependencies": {
+    "@tailwindcss/cli": "^4.1.17",
     "@testing-library/dom": "^10.4.1",
     "@types/jest": "^30.0.0",
     "@types/node": "^24.10.0",
