@@ -2,7 +2,7 @@
   "version": 2,
   "builds": [
     {
-      "src": "app.js",
+      "src": "test-minimal.js",
       "use": "@vercel/node"
     },
     {
@@ -13,19 +13,15 @@
   "routes": [
     {
       "src": "^/api/_env$",
-      "dest": "/app.js"
+      "dest": "/test-minimal.js"
     },
     {
       "src": "^/api/images/direct-upload$",
-      "dest": "/app.js"
-    },
-    {
-      "src": "^/api/remove-background$",
-      "dest": "/app.js"
+      "dest": "/test-minimal.js"
     },
     {
       "src": "^/api/(.*)$",
-      "dest": "/app.js"
+      "dest": "/test-minimal.js"
     },
     {
       "src": "^/(.*)",
