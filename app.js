@@ -593,6 +593,83 @@ app.post('/ai/analyze-and-dimension', async (req, res) => {
 });
 
 /**
+ * Cloudflare Images Direct Upload Endpoint (Alias for /api/storage/presign)
+ * Used by background removal feature in paint.js
+ */
+app.post('/api/images/direct-upload', async (req, res) => {
+  try {
+    // Validate Cloudflare Images configuration
+    if (!CF_ACCOUNT_ID || !CF_IMAGES_API_TOKEN) {
+      return res.status(500).json({
+        success: false,
+        message: 'Cloudflare Images not configured. Missing CF_ACCOUNT_ID or CF_IMAGES_API_TOKEN.'
+      });
+    }
+
+    // Generate unique image key
+    const timestamp = Date.now();
+    const uuid = crypto.randomUUID();
+    const imageKey = `ai-uploads/${timestamp}-${uuid}`;
+
+    // Call Cloudflare Images Direct Creator Upload API
+    const endpoint = `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/images/v2/direct_upload`;
+
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${CF_IMAGES_API_TOKEN}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        requireSignedURLs: false,
+        metadata: {
+          key: imageKey,
+          purpose: 'background-removal'
+        }
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('[Cloudflare Images] Direct upload URL generation failed:', response.status, errorText);
+      return res.status(502).json({
+        success: false,
+        message: 'Failed to generate upload URL',
+        detail: errorText
+      });
+    }
+
+    const data = await response.json();
+
+    if (!data.success) {
+      console.error('[Cloudflare Images] API error:', data.errors);
+      return res.status(502).json({
+        success: false,
+        message: 'Cloudflare Images API error',
+        errors: data.errors
+      });
+    }
+
+    // Return in format expected by paint.js
+    return res.json({
+      success: true,
+      result: {
+        uploadURL: data.result.uploadURL,
+        id: data.result.id
+      }
+    });
+
+  } catch (error) {
+    console.error('Error generating direct upload URL:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Server error generating upload URL',
+      detail: error.message
+    });
+  }
+});
+
+/**
  * Cloudflare Images Storage Presign Endpoint
  * Generates presigned upload URLs for AI image processing
  */
