@@ -677,7 +677,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function initializeTagUI() {
-    // Add tag button functionality
+    // Add tag button functionality - with guard for removed control
     const addTagsButton = document.getElementById('addTags');
     if (addTagsButton) {
       addTagsButton.addEventListener('click', () => {
@@ -689,18 +689,17 @@ document.addEventListener('DOMContentLoaded', () => {
         const existingTags = window.imageTags[currentLabel] || {};
         window.createTagSelectionDialog(currentLabel, existingTags, (newTags) => {
           window.imageTags[currentLabel] = newTags;
-          updateTagsDisplay(currentLabel); // This function also needs to be robust
-          // console.log(`[TAG-MANAGER] Updated tags for ${currentLabel}:`, newTags);
+          updateTagsDisplay(currentLabel);
         });
       });
     } else {
-      console.log('[TAG-MANAGER] addTags button not found (removed from UI).');
+      console.info('[TAG-MANAGER] addTags control intentionally absent or not yet in DOM');
     }
 
     // Attempt to hook into addImageToSidebar from paint.js
     attemptHookToAddImageToSidebar();
     // Initial call to display tags for any images already loaded by paint.js
-    addTagButtonsToImages(); 
+    addTagButtonsToImages();
   }
 
   function addTagButtonsToImages() {
@@ -723,37 +722,45 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  function updateTagsDisplay(label) {
+  function updateTagsDisplay(label, retryCount = 0) {
+    const MAX_RETRIES = 10;
+    const RETRY_DELAY = 100;
+
     // Check if core objects are ready
-    if (
-      typeof window.imageTags === 'undefined' || 
-            !window.imageTags[label] // Ensure tags for this specific label exist
-    ) {
-      console.warn(`[TAG-MANAGER] updateTagsDisplay: Critical objects not ready for label ${label}, deferring.`);
-      setTimeout(() => updateTagsDisplay(label), 200);
+    if (typeof window.imageTags === 'undefined' || !window.imageTags[label]) {
+      if (retryCount < MAX_RETRIES) {
+        setTimeout(() => updateTagsDisplay(label, retryCount + 1), RETRY_DELAY);
+      } else {
+        console.warn(`[TAG-MANAGER] updateTagsDisplay: Critical objects not ready for label ${label} after ${MAX_RETRIES} retries`);
+      }
       return;
     }
 
-    // console.log(`[updateTagsDisplay] Looking for label element and tags container with selector: .image-container[data-label="${label}"]`);
-        
-    // Find the label element in the sidebar
+    // Find the container element in the sidebar
     const container = document.querySelector(`.image-container[data-label="${label}"]`);
-        
+
     if (!container) {
-      console.warn(`[updateTagsDisplay] Could not find container for label: ${label}`);
-      return; 
+      if (retryCount < MAX_RETRIES) {
+        // DOM not ready yet, schedule retry
+        setTimeout(() => updateTagsDisplay(label, retryCount + 1), RETRY_DELAY);
+      } else {
+        console.warn(`[TAG-MANAGER] updateTagsDisplay: Could not find container for label ${label} after ${MAX_RETRIES} retries`);
+      }
+      return;
     }
-        
-    // Remove tag controls (edit/focus) — no longer used
 
     // Update the label text
     const labelElement = container.querySelector('.image-label');
     if (labelElement) {
       const tagText = generateFilenameFromTags(label, window.imageTags[label]);
       labelElement.textContent = tagText;
-      // console.log(`[updateTagsDisplay] Updated label text for ${label} to: ${tagText}`);
     } else {
-      console.warn(`[updateTagsDisplay] Could not find label element for ${label}`);
+      if (retryCount < MAX_RETRIES) {
+        // Label element not ready yet, schedule retry
+        setTimeout(() => updateTagsDisplay(label, retryCount + 1), RETRY_DELAY);
+      } else {
+        console.warn(`[TAG-MANAGER] updateTagsDisplay: Could not find label element for ${label} after ${MAX_RETRIES} retries`);
+      }
     }
   }
 
@@ -1127,8 +1134,41 @@ window.getTagBasedFilename = function(imageLabel, fallbackName) {
   return fallbackName || imageLabel;
 };
 
-// PERFORMANCE FIX: Simplified initialization without polling
+// Tag Manager Readiness System
 (function() {
+  let isTagManagerReady = false;
+  let readyResolve = null;
+  const readyPromise = new Promise(resolve => {
+    readyResolve = resolve;
+  });
+
+  // Export readiness check
+  window.tagManagerReady = function() {
+    return readyPromise;
+  };
+
+  window.isTagManagerReady = function() {
+    return isTagManagerReady;
+  };
+
+  // Mark tag manager as ready
+  function markTagManagerReady() {
+    if (isTagManagerReady) return;
+
+    isTagManagerReady = true;
+    if (readyResolve) readyResolve();
+
+    // Mark ready in AppInit system if available
+    if (window.AppInit) {
+      window.AppInit.markReady('tagManager');
+    }
+
+    console.log('[TAG-MANAGER] Fully initialized and ready');
+
+    // Perform catch-up refresh after marking ready
+    performCatchupRefresh();
+  }
+
   // Ensure updateTagsDisplay is globally available
   if (typeof window.updateTagsDisplay !== 'function' && typeof updateTagsDisplay === 'function') {
     window.updateTagsDisplay = updateTagsDisplay;
@@ -1138,38 +1178,68 @@ window.getTagBasedFilename = function(imageLabel, fallbackName) {
   function performCatchupRefresh() {
     if (Array.isArray(window.__pendingTagRefresh) && typeof window.updateTagsDisplay === 'function') {
       console.log('[TAG-MANAGER] Performing catch-up refresh for', window.__pendingTagRefresh.length, 'labels');
-      window.__pendingTagRefresh.forEach(label => {
+      const labelsToRefresh = [...window.__pendingTagRefresh];
+      window.__pendingTagRefresh = null;
+
+      labelsToRefresh.forEach(label => {
         if (window.imageTags && window.imageTags[label]) {
-          try { 
-            window.updateTagsDisplay(label); 
+          try {
+            window.updateTagsDisplay(label);
           } catch (e) {
             console.warn(`[TAG-MANAGER] Error in catch-up refresh for ${label}:`, e);
           }
         }
       });
-      window.__pendingTagRefresh = null;
     }
   }
 
-  // Single initialization point - no polling
-  function initializeTagManager() {
-    if (typeof window.updateTagsDisplay === 'function') {
-      performCatchupRefresh();
-    } else {
-      // Wait for paint.js to load using requestIdleCallback
-      if (window.requestIdleCallback) {
-        requestIdleCallback(() => {
-          if (typeof window.updateTagsDisplay === 'function') {
-            performCatchupRefresh();
-          }
-        }, { timeout: 2000 });
-      } else {
-        setTimeout(() => {
-          if (typeof window.updateTagsDisplay === 'function') {
-            performCatchupRefresh();
-          }
-        }, 1000);
+  // Refresh all tags for existing images
+  window.refreshAllTags = function() {
+    if (!isTagManagerReady) {
+      console.warn('[TAG-MANAGER] refreshAllTags called before ready, deferring...');
+      readyPromise.then(() => window.refreshAllTags());
+      return;
+    }
+
+    const containers = document.querySelectorAll('.image-container[data-label]');
+    console.log(`[TAG-MANAGER] Refreshing tags for ${containers.length} images`);
+    containers.forEach(container => {
+      const label = container.dataset.label;
+      if (label && window.imageTags && window.imageTags[label]) {
+        try {
+          window.updateTagsDisplay(label);
+        } catch (e) {
+          console.warn(`[TAG-MANAGER] Error refreshing tags for ${label}:`, e);
+        }
       }
+    });
+  };
+
+  // Single initialization point
+  function initializeTagManager() {
+    // Wait for paint:ready event, then mark tag manager as ready
+    const paintReadyHandler = () => {
+      console.log('[TAG-MANAGER] paint:ready event received');
+      // Give paint.js a moment to finish setup
+      setTimeout(() => {
+        markTagManagerReady();
+      }, 50);
+    };
+
+    if (window.addImageToSidebar && window.addImageToSidebar.isHookedByTagManager) {
+      // Already hooked, mark ready
+      paintReadyHandler();
+    } else {
+      // Wait for paint:ready event
+      window.addEventListener('paint:ready', paintReadyHandler, { once: true });
+
+      // Fallback timeout
+      setTimeout(() => {
+        if (!isTagManagerReady) {
+          console.warn('[TAG-MANAGER] paint:ready timeout, marking ready anyway');
+          markTagManagerReady();
+        }
+      }, 5000);
     }
   }
 

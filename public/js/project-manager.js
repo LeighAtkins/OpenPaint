@@ -1095,23 +1095,34 @@ document.addEventListener('DOMContentLoaded', () => {
                         const labelsForTagRefresh = Array.isArray(dataForFinalSteps.imageLabels) ? dataForFinalSteps.imageLabels.slice() : [];
                         finalizeLoadProcess(dataForFinalSteps);
 
-                        // Non-blocking tag refresh - runs after load completes
-                        (function tryTagRefresh(attempts = 0) {
-                          if (typeof window.updateTagsDisplay === 'function' && typeof window.getTagBasedFilename === 'function') {
-                            //                                                         console.log('[Load Project] Tag manager functions available, refreshing tags...');
+                        // Non-blocking tag refresh - wait for tag manager readiness
+                        (async function refreshTagsAfterLoad() {
+                          try {
+                            // Wait for tag manager to be ready with timeout
+                            if (typeof window.tagManagerReady === 'function') {
+                              await Promise.race([
+                                window.tagManagerReady(),
+                                new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
+                              ]);
+                              console.log('[Load Project] Tag manager ready, refreshing tags...');
+                            } else {
+                              console.warn('[Load Project] Tag manager readiness API not available, using fallback...');
+                              // Fallback: wait a bit and hope for the best
+                              await new Promise(resolve => setTimeout(resolve, 500));
+                            }
+
+                            // Refresh tags for all loaded images
                             labelsForTagRefresh.forEach(label => {
-                              if (window.imageTags[label]) {
-                                try { 
-                                  window.updateTagsDisplay(label); 
+                              if (window.imageTags && window.imageTags[label] && typeof window.updateTagsDisplay === 'function') {
+                                try {
+                                  window.updateTagsDisplay(label);
                                 } catch (e) {
                                   console.warn(`[Load Project] Error refreshing tags for ${label}:`, e);
                                 }
                               }
                             });
-                          } else if (attempts < 20) {
-                            setTimeout(() => tryTagRefresh(attempts + 1), 100);
-                          } else {
-                            console.warn('[Load Project] Tag manager functions unavailable after retries; skipping tag refresh.');
+                          } catch (error) {
+                            console.warn('[Load Project] Tag manager not ready, deferring refresh:', error.message);
                             // Let tag-manager run a catch-up when it initializes
                             window.__pendingTagRefresh = labelsForTagRefresh;
                           }

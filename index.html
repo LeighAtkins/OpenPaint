@@ -5220,25 +5220,28 @@
     <script src="js/geometry.js?v=20250820123456"></script>
     <script src="js/migration.js?v=20250820123456"></script>
 
+    <!-- Application Initialization Manager - MUST load before other modules -->
+    <script src="js/app-init.js"></script>
+
     <!-- Load AI Export Module before paint.js -->
     <script type="module">
         try {
             console.log('[AI Export] Starting to load AI export module...');
             const module = await import('./js/ai-export.js');
             console.log('[AI Export] Module loaded, exports:', Object.keys(module));
-            
+
             const { exportAIEnhancedSVG, assistMeasurement, enhanceAnnotations } = module;
-            
+
             // Make functions available globally
             window.exportAIEnhancedSVG = exportAIEnhancedSVG;
             window.assistMeasurement = assistMeasurement;
             window.enhanceAnnotations = enhanceAnnotations;
-            
+
             // Initialize AI exports storage
             if (!window.aiExports) {
                 window.aiExports = {};
             }
-            
+
             console.log('[AI Export] Functions loaded and available globally');
             console.log('[AI Export] window.exportAIEnhancedSVG:', typeof window.exportAIEnhancedSVG);
         } catch (error) {
