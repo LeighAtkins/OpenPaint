@@ -5011,14 +5011,22 @@
                 if (removedCount > 0) {
                     console.log(`[DEDUP] Removed ${removedCount} duplicate images. Total: ${imageGalleryData.length}`);
 
-                    // Update the gallery UI
+                    // Update the gallery UI by removing duplicates
                     const gallery = document.getElementById('imageGallery');
                     if (gallery) {
                         const thumbnails = Array.from(gallery.querySelectorAll('.image-thumbnail'));
-                        thumbnails.forEach((thumb, index) => {
+                        const seenThumbLabels = new Set();
+
+                        thumbnails.forEach((thumb) => {
                             const thumbLabel = thumb.dataset?.label || thumb.getAttribute('title');
-                            if (thumbLabel && !seenLabels.has(thumbLabel)) {
+
+                            // If we've already seen this label, this is a duplicate - remove it
+                            if (thumbLabel && seenThumbLabels.has(thumbLabel)) {
+                                console.log(`[DEDUP] Removing duplicate thumbnail: ${thumbLabel}`);
                                 thumb.remove();
+                            } else if (thumbLabel) {
+                                // First time seeing this label, keep it
+                                seenThumbLabels.add(thumbLabel);
                             }
                         });
                     }
