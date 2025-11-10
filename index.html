@@ -9,6 +9,44 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/tailwind.build.css" />
+    <link rel="stylesheet" href="/css/mobile.css" />
+    <!-- Eruda Mobile Console - for debugging on mobile devices -->
+    <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+    <script>
+        // Initialize Eruda on mobile or when ?eruda is in URL
+        (function() {
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            const hasErudaParam = window.location.search.includes('eruda');
+            const isSmallScreen = window.innerWidth <= 768;
+
+            if (isMobile || hasErudaParam || isSmallScreen) {
+                eruda.init({
+                    container: document.body,
+                    tool: ['console', 'elements', 'network', 'resources', 'info', 'sources'],
+                    useShadowDom: true,
+                    autoScale: true,
+                    defaults: {
+                        displaySize: 50,
+                        transparency: 0.9,
+                        theme: 'Light'
+                    }
+                });
+
+                // Ensure Eruda button has highest z-index
+                setTimeout(() => {
+                    const erudaEl = document.querySelector('.eruda-container');
+                    if (erudaEl) {
+                        erudaEl.style.zIndex = '99999';
+                    }
+                    const erudaBtn = document.querySelector('.eruda-entry-btn');
+                    if (erudaBtn) {
+                        erudaBtn.style.zIndex = '99999';
+                    }
+                    console.log('Eruda mobile console initialized - look for floating button');
+                }, 500);
+            }
+        })();
+    </script>
     <script>
         // Suppress autofill extension errors
         window.addEventListener('error', (event) => {
@@ -1261,7 +1299,7 @@
                     <!-- Hidden inputs for functionality -->
                     <div id="measurementInput" class="hidden">
                         <div id="inchInputs" class="flex items-center gap-2">
-                            <input type="number" id="inchWhole" min="0" value="0" class="w-16 px-2 py-1 border border-gray-300 rounded text-sm">
+                            <input type="number" id="inchWhole" min="0" value="0" inputmode="numeric" class="w-16 px-2 py-1 border border-gray-300 rounded text-sm">
                             <select id="inchFraction" class="px-2 py-1 border border-gray-300 rounded text-sm">
                                 <option value="0">0</option>
                                 <option value="0.125">1/8</option>
@@ -1274,7 +1312,7 @@
                             </select>
                         </div>
                         <div id="cmInputs" class="hidden">
-                            <input type="number" id="cmValue" min="0" step="0.1" value="0.0" class="w-16 px-2 py-1 border border-gray-300 rounded text-sm">
+                            <input type="number" id="cmValue" min="0" step="0.1" value="0.0" inputmode="decimal" class="w-16 px-2 py-1 border border-gray-300 rounded text-sm">
                         </div>
                     </div>
                 </div>
@@ -2284,6 +2322,145 @@
             })();
 
             // removed elements resize handle wiring
+
+            // Mobile panel functionality - circular draggable buttons
+            (function initMobilePanels() {
+                const isMobile = () => window.innerWidth <= 768;
+
+                if (!strokePanel || !imagePanel) return;
+
+                // Add toggle icons to panels
+                const strokeIcon = document.createElement('div');
+                strokeIcon.className = 'panel-toggle-icon';
+                strokeIcon.innerHTML = '📐';
+                strokeIcon.title = 'Elements';
+                strokePanel.insertBefore(strokeIcon, strokePanel.firstChild);
+
+                const imageIcon = document.createElement('div');
+                imageIcon.className = 'panel-toggle-icon';
+                imageIcon.innerHTML = '🖼️';
+                imageIcon.title = 'Images';
+                imagePanel.insertBefore(imageIcon, imagePanel.firstChild);
+
+                // Set initial state based on screen size
+                function updatePanelState() {
+                    if (isMobile()) {
+                        strokePanel.classList.add('minimized');
+                        strokePanel.classList.remove('expanded');
+                        imagePanel.classList.add('minimized');
+                        imagePanel.classList.remove('expanded');
+                    } else {
+                        strokePanel.classList.remove('minimized', 'expanded');
+                        imagePanel.classList.remove('minimized', 'expanded');
+                    }
+                }
+
+                updatePanelState();
+                window.addEventListener('resize', updatePanelState);
+
+                // Hook into existing toggle buttons to make them minimize to circles on mobile
+                const strokeToggleBtn = document.getElementById('toggleStrokePanel');
+                const imageToggleBtn = document.getElementById('toggleImagePanel');
+
+                function interceptToggleButton(button, panel) {
+                    if (!button) return;
+
+                    button.addEventListener('click', (e) => {
+                        if (!isMobile()) return;
+
+                        // If panel is expanded, minimize it to circle instead of normal toggle
+                        if (panel.classList.contains('expanded')) {
+                            e.stopPropagation();
+                            e.preventDefault();
+                            panel.classList.add('minimized');
+                            panel.classList.remove('expanded');
+                        }
+                    }, true); // Use capture phase to intercept before other handlers
+                }
+
+                interceptToggleButton(strokeToggleBtn, strokePanel);
+                interceptToggleButton(imageToggleBtn, imagePanel);
+
+                // Toggle expand/collapse on click
+                function createPanelToggle(panel) {
+                    let isDragging = false;
+                    let startX, startY, startLeft, startTop;
+
+                    // On mobile, make panel headers close the panel when expanded
+                    const header = panel.querySelector('[id$="Header"], [id$="header"]');
+                    if (header) {
+                        header.addEventListener('click', (e) => {
+                            if (!isMobile()) return;
+                            if (panel.classList.contains('expanded')) {
+                                // Don't close if clicking on buttons within the header
+                                if (e.target.tagName === 'BUTTON' || e.target.closest('button')) {
+                                    return;
+                                }
+                                panel.classList.add('minimized');
+                                panel.classList.remove('expanded');
+                                e.stopPropagation();
+                            }
+                        });
+                    }
+
+                    panel.addEventListener('pointerdown', (e) => {
+                        if (!isMobile()) return;
+
+                        // If minimized, prepare for drag
+                        if (panel.classList.contains('minimized')) {
+                            isDragging = false;
+                            const rect = panel.getBoundingClientRect();
+                            startX = e.clientX;
+                            startY = e.clientY;
+                            startLeft = rect.left;
+                            startTop = rect.top;
+
+                            panel.style.transition = 'none';
+                        }
+                    });
+
+                    panel.addEventListener('pointermove', (e) => {
+                        if (!isMobile() || !panel.classList.contains('minimized')) return;
+
+                        const moveX = Math.abs(e.clientX - startX);
+                        const moveY = Math.abs(e.clientY - startY);
+
+                        if (moveX > 5 || moveY > 5) {
+                            isDragging = true;
+                            const newLeft = startLeft + (e.clientX - startX);
+                            const newTop = startTop + (e.clientY - startY);
+
+                            // Constrain to viewport
+                            const maxX = window.innerWidth - 56;
+                            const maxY = window.innerHeight - 56;
+
+                            panel.style.left = Math.max(0, Math.min(newLeft, maxX)) + 'px';
+                            panel.style.top = Math.max(0, Math.min(newTop, maxY)) + 'px';
+                            panel.style.right = 'auto';
+                            panel.style.bottom = 'auto';
+                        }
+                    });
+
+                    panel.addEventListener('pointerup', (e) => {
+                        if (!isMobile()) return;
+
+                        panel.style.transition = '';
+
+                        // If not dragging, toggle expand/collapse
+                        if (!isDragging) {
+                            if (panel.classList.contains('minimized')) {
+                                panel.classList.remove('minimized');
+                                panel.classList.add('expanded');
+                            }
+                        }
+
+                        isDragging = false;
+                    });
+                }
+
+                createPanelToggle(strokePanel);
+                createPanelToggle(imagePanel);
+            })();
 
             // Set up Vectors and tags panel button functionality
             const selectAllStrokesBtn = document.getElementById('selectAllStrokesBtn');

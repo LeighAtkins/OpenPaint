@@ -1,0 +1,307 @@
+/* Canvas touch support */
+#canvas {
+    touch-action: none;
+    /* Prevent default touch behaviors like scrolling and zooming while drawing */
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+/* Canvas controls positioning - applies to all screen sizes */
+#canvasControls.floating-panel.fixed {
+    bottom: 5rem !important;
+    z-index: 6000 !important;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+    /* Top toolbar - make scrollable horizontally */
+    #topToolbar {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    #topToolbar .toolbar-wrap {
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+    }
+
+    #tbLeft, #tbRight {
+        flex-shrink: 0 !important;
+    }
+
+    /* Make toolbar icons larger for touch */
+    .toolbar-btn, .mode-btn, .tbtn {
+        min-width: 44px !important;
+        min-height: 44px !important;
+        font-size: 14px !important;
+        flex-shrink: 0;
+    }
+
+    /* Transform side panels into circular floating buttons */
+    #strokePanel, #imagePanel {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+
+    /* Minimized circle state */
+    #strokePanel.minimized, #imagePanel.minimized {
+        width: 56px !important;
+        height: 56px !important;
+        border-radius: 50% !important;
+        overflow: hidden !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+        cursor: move;
+    }
+
+    #strokePanel.minimized {
+        left: 1rem !important;
+        bottom: 5rem !important;
+        top: auto !important;
+    }
+
+    #imagePanel.minimized {
+        right: 1rem !important;
+        bottom: 5rem !important;
+        top: auto !important;
+    }
+
+    /* Hide panel content when minimized */
+    #strokePanel.minimized > *:not(.panel-toggle-icon),
+    #imagePanel.minimized > *:not(.panel-toggle-icon) {
+        display: none !important;
+    }
+
+    /* Show only icon in minimized state */
+    .panel-toggle-icon {
+        display: none;
+        width: 100%;
+        height: 100%;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        color: white;
+        cursor: pointer;
+        user-select: none;
+    }
+
+    #strokePanel .panel-toggle-icon {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    #imagePanel .panel-toggle-icon {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+
+    #strokePanel.minimized .panel-toggle-icon,
+    #imagePanel.minimized .panel-toggle-icon {
+        display: flex !important;
+    }
+
+    /* Expanded state - full panel */
+    #strokePanel.expanded, #imagePanel.expanded {
+        width: 85vw !important;
+        max-width: 320px !important;
+        height: auto !important;
+        max-height: min(40rem, calc(100vh - 2rem)) !important;
+        border-radius: 1rem !important;
+        top: 50% !important;
+        transform: translateY(-50%) !important;
+        z-index: 100 !important;
+    }
+
+    #strokePanel.expanded {
+        left: 0.5rem !important;
+        bottom: auto !important;
+    }
+
+    #imagePanel.expanded {
+        right: 0.5rem !important;
+        bottom: auto !important;
+    }
+
+    #strokePanel.expanded .panel-toggle-icon,
+    #imagePanel.expanded .panel-toggle-icon {
+        display: none !important;
+    }
+
+    /* Make headers more tappable on mobile when expanded */
+    #strokePanel.expanded [id$="Header"],
+    #strokePanel.expanded [id$="header"],
+    #imagePanel.expanded [id$="Header"],
+    #imagePanel.expanded [id$="header"] {
+        cursor: pointer;
+        min-height: 44px;
+    }
+
+    /* Add visual hint that header is tappable */
+    #strokePanel.expanded [id$="Header"]::after,
+    #imagePanel.expanded [id$="Header"]::after {
+        content: "Tap header to close";
+        font-size: 10px;
+        color: #94a3b8;
+        position: absolute;
+        right: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        pointer-events: none;
+        display: none;
+    }
+
+    /* Canvas controls - positioned well above navigation bar */
+    #canvasControls.floating-panel.fixed {
+        position: fixed !important;
+        bottom: 10rem !important;
+        left: 50% !important;
+        right: auto !important;
+        transform: translateX(-50%) !important;
+        width: auto !important;
+        max-width: calc(100vw - 2rem) !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+        z-index: 6000 !important;
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        background-color: rgba(255, 255, 255, 0.95) !important;
+        backdrop-filter: blur(8px) !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+        padding: 0.75rem !important;
+    }
+
+    /* Force canvas controls content to be visible and not collapsed */
+    #canvasControlsContent {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        min-width: max-content !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        max-height: none !important;
+        gap: 0.25rem !important;
+        align-items: center !important;
+    }
+
+    /* Hide empty divs and reduce spacing */
+    #canvasControlsContent > div:empty {
+        display: none !important;
+    }
+
+    /* Reduce margin on quickSave container */
+    #canvasControls #quickSave {
+        margin-left: 0.25rem !important;
+    }
+
+    /* Hide share button on mobile */
+    #canvasControls #shareProjectBtn {
+        display: none !important;
+    }
+
+    /* Copy button - ensure blue color is visible */
+    #canvasControls #copyCanvasBtn {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        min-height: 44px !important;
+        padding: 0.5rem 0.75rem !important;
+        flex-shrink: 0 !important;
+        background-color: #3b82f6 !important;
+        color: white !important;
+    }
+
+    /* Hide SVG icon on mobile to reduce squishing */
+    #canvasControls #copyCanvasBtn svg {
+        display: none !important;
+    }
+
+    /* Quick Save button - ensure green color is visible and centered */
+    #canvasControls #quickSaveBtn {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        min-height: 44px !important;
+        padding: 0.5rem 0.75rem !important;
+        flex-shrink: 0 !important;
+        background-color: #10b981 !important;
+        color: white !important;
+    }
+
+    /* Other canvas control buttons - gray styling */
+    #canvasControls #applyFitCurrent,
+    #canvasControls #scaleButton,
+    #canvasControls #rotateLeftCtrl,
+    #canvasControls #rotateRightCtrl {
+        display: inline-flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        min-height: 44px !important;
+        min-width: 44px !important;
+        font-size: 14px !important;
+        flex-shrink: 0 !important;
+        background-color: #f1f5f9 !important;
+        color: #1e293b !important;
+        border: 1px solid #cbd5e1 !important;
+    }
+
+    /* Fit mode select dropdown */
+    #canvasControls #fitModeSelect {
+        display: inline-flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        min-height: 44px !important;
+        font-size: 14px !important;
+        flex-shrink: 0 !important;
+        background-color: white !important;
+        color: #1e293b !important;
+        border: 1px solid #cbd5e1 !important;
+    }
+
+    /* Make stroke list items easier to tap */
+    .stroke-visibility-item {
+        min-height: 44px;
+        padding: 8px !important;
+    }
+
+    /* Larger color picker for mobile */
+    #colorPicker {
+        min-width: 44px;
+        min-height: 44px;
+    }
+
+    /* Make edit mode control points larger on mobile */
+    .control-point {
+        width: 20px !important;
+        height: 20px !important;
+    }
+
+    /* Make color swatches easier to tap */
+    .color-swatches button {
+        min-width: 32px !important;
+        min-height: 32px !important;
+    }
+}
+
+/* Tablet adjustments */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .toolbar-btn, .mode-btn {
+        min-width: 40px;
+        min-height: 40px;
+    }
+}
+
+/* Prevent pull-to-refresh on mobile when drawing */
+body {
+    overscroll-behavior-y: contain;
+}
+
+/* Hide certain desktop-only features on small screens */
+@media (max-width: 640px) {
+    /* You can hide less critical UI elements on very small screens */
+    .desktop-only {
+        display: none !important;
+    }
+}
