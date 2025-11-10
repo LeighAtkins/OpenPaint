@@ -16,6 +16,14 @@
     {
       "src": "src/**",
       "use": "@vercel/static"
+    },
+    {
+      "src": "diagnostics-overlay.js",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "test-coordinate-system.js",
+      "use": "@vercel/static"
     }
   ],
   "routes": [
