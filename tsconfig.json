@@ -1,0 +1,52 @@
+{
+  "compilerOptions": {
+    // React JSX settings
+    "jsx": "react-jsx",
+
+    // Library support
+    "lib": ["dom", "es2021"],
+
+    // Module resolution
+    "target": "es2021",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+
+    // Type checking
+    "strict": true,
+    "isolatedModules": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+
+    // React and DOM types
+    "types": ["react", "react-dom", "jest"],
+
+    // Emit options
+    "noEmit": true,
+    "allowJs": true,
+    "checkJs": false,
+
+    // Path mapping
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    }
+  },
+  "include": [
+    "src/**/*",
+    "public/**/*.ts",
+    "public/**/*.tsx"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    ".vercel",
+    "**/*.spec.ts",
+    "**/*.test.ts"
+  ]
+}
