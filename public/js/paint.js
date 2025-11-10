@@ -1451,8 +1451,27 @@ document.addEventListener('DOMContentLoaded', () => {
     // Update the ordered image labels array after deletion
     updateOrderedImageLabelsArray();
 
-    // Clean up data structures
-    console.log(`[deleteImage PAINT.JS] Cleaning up data structures for label: ${label}`);
+    // Check if any other containers still use this label
+    const remainingContainersWithLabel = imageList ?
+      Array.from(imageList.querySelectorAll('.image-container')).filter(c => c.dataset.label === label) :
+      [];
+
+    console.log(`[deleteImage PAINT.JS] Checking for remaining containers with label "${label}": ${remainingContainersWithLabel.length} found`);
+
+    // Only clean up shared data if NO other containers use this label
+    if (remainingContainersWithLabel.length === 0) {
+      console.log(`[deleteImage PAINT.JS] No other containers use label "${label}", cleaning up data structures...`);
+    } else {
+      console.log(`[deleteImage PAINT.JS] ⚠️ ${remainingContainersWithLabel.length} other container(s) still use label "${label}", SKIPPING data cleanup to preserve their data!`);
+      remainingContainersWithLabel.forEach((c, idx) => {
+        const idx2 = Array.from(imageList.children).indexOf(c);
+        console.log(`[deleteImage PAINT.JS]   - Container ${idx + 1}: index=${idx2}`);
+      });
+    }
+
+    // Clean up data structures ONLY if no other containers use this label
+    if (remainingContainersWithLabel.length === 0) {
+      console.log(`[deleteImage PAINT.JS] Cleaning up data structures for label: ${label}`);
     delete window.imageScaleByLabel[label];
     delete window.imagePositionByLabel[label];
     delete window.lineStrokesByImage[label];
@@ -1480,13 +1499,14 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     delete window.selectedStrokeByImage[label];
     delete window.multipleSelectedStrokesByImage[label];
-        
+
     // Remove from pastedImages array if present (use persistentImageUrl already declared above)
     if (persistentImageUrl) {
       pastedImages = pastedImages.filter(url => url !== persistentImageUrl);
     }
-        
-    // Handle currentImageLabel if it was the deleted image
+    } // End of: if (remainingContainersWithLabel.length === 0)
+
+    // Handle currentImageLabel if it was the deleted image (do this regardless of whether we cleaned up data)
     if (currentImageLabel === label) {
       const imageListEl = document.getElementById('imageList');
       let nextLabelToSwitch = null;
