@@ -1050,9 +1050,21 @@ document.addEventListener('DOMContentLoaded', () => {
                       //                                             console.log('[Load Project] Main UI Update Timeout. ImageLabels:', activeProjectData.imageLabels);
                       document.getElementById('loadingIndicator')?.remove();
 
-                      let targetLabel = activeProjectData.currentImageLabel;
-                      const availableImageKeys = Object.keys(window.originalImages);
-                      if (!targetLabel || !availableImageKeys.includes(targetLabel)) {
+                      // Always start with the first image in gallery order when loading a project
+                      let targetLabel = null;
+
+                      // Get the first image from the gallery in display order
+                      const imageGallery = document.getElementById('imageGallery');
+                      if (imageGallery) {
+                        const firstThumbnail = imageGallery.querySelector('.image-thumbnail');
+                        if (firstThumbnail) {
+                          targetLabel = firstThumbnail.dataset?.label || firstThumbnail.getAttribute('title');
+                        }
+                      }
+
+                      // Fallback to first key in originalImages if gallery not ready
+                      if (!targetLabel) {
+                        const availableImageKeys = Object.keys(window.originalImages);
                         targetLabel = availableImageKeys.length > 0 ? availableImageKeys[0] : 'front';
                       }
                       //                                             console.log(`[Load Project] Initial targetLabel: ${targetLabel}`);
