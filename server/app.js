@@ -3,11 +3,8 @@ const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
 
-// Ensure global fetch availability (Node 22.x should have it, but add polyfill as safeguard)
-if (typeof fetch === 'undefined') {
-    global.fetch = (...args) =>
-        import('node-fetch').then(({ default: f }) => f(...args));
-}
+// Node 22.x has native fetch - no polyfill needed
+// If running on older Node, this will fail fast with a clear error
 
 const app = express();
 
