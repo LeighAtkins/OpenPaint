@@ -1356,8 +1356,31 @@ document.addEventListener('DOMContentLoaded', () => {
     
   // Function to delete an image and clean up all associated data
   async function deleteImage(label, container) {
-    //         console.log(`[deleteImage] Deleting image: ${label}`);
-        
+    console.log(`[deleteImage PAINT.JS] ========== START DELETE ==========`);
+    console.log(`[deleteImage PAINT.JS] Deleting image with label: ${label}`);
+    console.log(`[deleteImage PAINT.JS] Call stack:`, new Error().stack);
+
+    // Get container index for debugging
+    const containerIndex = container.parentElement ? Array.from(container.parentElement.children).indexOf(container) : -1;
+    console.log(`[deleteImage PAINT.JS] Container index: ${containerIndex}`);
+    console.log(`[deleteImage PAINT.JS] Container dataset:`, container.dataset);
+
+    // Check for duplicate labels in imageList
+    const imageList = document.getElementById('imageList');
+    if (imageList) {
+      const allContainers = Array.from(imageList.querySelectorAll('.image-container'));
+      const matchingLabels = allContainers.filter(c => c.dataset.label === label);
+      console.log(`[deleteImage PAINT.JS] Total containers in imageList: ${allContainers.length}`);
+      console.log(`[deleteImage PAINT.JS] Containers with label "${label}": ${matchingLabels.length}`);
+      if (matchingLabels.length > 1) {
+        console.warn(`[deleteImage PAINT.JS] ⚠️ WARNING: Multiple containers found with same label!`);
+        matchingLabels.forEach((c, idx) => {
+          const idx2 = allContainers.indexOf(c);
+          console.log(`[deleteImage PAINT.JS]   - Match ${idx + 1}: index=${idx2}, id=${c.id}, dataset:`, c.dataset);
+        });
+      }
+    }
+
     // Convert blob/object URL to data URL for persistence
     const originalImageUrl = container.dataset.originalImageUrl;
     let persistentImageUrl = originalImageUrl;
@@ -1418,15 +1441,18 @@ document.addEventListener('DOMContentLoaded', () => {
     // Clear global redo stack when new action is performed
     window.globalRedoStack = [];
         
-    console.log(`[deleteImage] Saved undo data for image: ${label}`);
-        
+    console.log(`[deleteImage PAINT.JS] Saved undo data for image: ${label}`);
+
     // Remove from DOM
+    console.log(`[deleteImage PAINT.JS] Removing container from DOM...`);
     container.remove();
-        
+    console.log(`[deleteImage PAINT.JS] Container removed. Remaining containers: ${imageList ? imageList.children.length : 'N/A'}`);
+
     // Update the ordered image labels array after deletion
     updateOrderedImageLabelsArray();
-        
+
     // Clean up data structures
+    console.log(`[deleteImage PAINT.JS] Cleaning up data structures for label: ${label}`);
     delete window.imageScaleByLabel[label];
     delete window.imagePositionByLabel[label];
     delete window.lineStrokesByImage[label];
@@ -1492,8 +1518,9 @@ document.addEventListener('DOMContentLoaded', () => {
         
     // Update UI
     updateSidebarStrokeCounts();
-        
-    //         console.log(`[deleteImage] Successfully deleted image: ${label}`);
+
+    console.log(`[deleteImage PAINT.JS] ========== DELETE COMPLETE ==========`);
+    console.log(`[deleteImage PAINT.JS] Successfully deleted image: ${label}`);
   }
     
   // Function to update the ordered image labels array based on current DOM order

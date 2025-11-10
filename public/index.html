@@ -3739,24 +3739,37 @@
             
             // Delete image function
             function deleteImage(index) {
+                console.log(`[deleteImage INDEX.HTML] ========== START DELETE ==========`);
+                console.log(`[deleteImage INDEX.HTML] Request to delete index: ${index}`);
+                console.log(`[deleteImage INDEX.HTML] Image data:`, imageGalleryData[index]);
+                console.log(`[deleteImage INDEX.HTML] Total images before delete: ${imageGalleryData.length}`);
+
                 if (confirm(`Delete "${imageGalleryData[index]?.name}"?`)) {
-                    console.log(`[Gallery] Deleting image at index ${index}`);
-                    
+                    console.log(`[deleteImage INDEX.HTML] User confirmed deletion`);
+
                     // Remove from data array
                     imageGalleryData.splice(index, 1);
-                    
+                    console.log(`[deleteImage INDEX.HTML] Removed from data array. Remaining: ${imageGalleryData.length}`);
+
                     // Rebuild UI
+                    console.log(`[deleteImage INDEX.HTML] Rebuilding gallery UI...`);
                     rebuildGalleryUI();
-                    
+                    console.log(`[deleteImage INDEX.HTML] Gallery UI rebuilt`);
+
                     // Adjust current index if needed
                     if (currentImageIndex >= index) {
                         currentImageIndex = Math.max(0, currentImageIndex - 1);
+                        console.log(`[deleteImage INDEX.HTML] Adjusted currentImageIndex to: ${currentImageIndex}`);
                     }
-                    
+
                     // Update active image
                     if (imageGalleryData.length > 0) {
+                        console.log(`[deleteImage INDEX.HTML] Updating active image to index: ${Math.min(currentImageIndex, imageGalleryData.length - 1)}`);
                         updateActiveImage(Math.min(currentImageIndex, imageGalleryData.length - 1));
                     }
+                    console.log(`[deleteImage INDEX.HTML] ========== DELETE COMPLETE ==========`);
+                } else {
+                    console.log(`[deleteImage INDEX.HTML] User cancelled deletion`);
                 }
             }
             
@@ -5127,7 +5140,25 @@
                 }
                 
                 console.log('[INIT] ===== Initial setup complete =====');
-                
+
+                // DEBUG: Watch for container removals in imageList
+                const imageListDebug = document.getElementById('imageList');
+                if (imageListDebug) {
+                    const observer = new MutationObserver((mutations) => {
+                        mutations.forEach((mutation) => {
+                            mutation.removedNodes.forEach((node) => {
+                                if (node.classList && node.classList.contains('image-container')) {
+                                    console.warn(`[DEBUG MUTATION] Container removed from imageList!`);
+                                    console.warn(`[DEBUG MUTATION] Label: ${node.dataset?.label}`);
+                                    console.warn(`[DEBUG MUTATION] Stack trace:`, new Error().stack);
+                                }
+                            });
+                        });
+                    });
+                    observer.observe(imageListDebug, { childList: true });
+                    console.log('[DEBUG] MutationObserver installed on imageList to track container removals');
+                }
+
                 // Ensure we always start with the first image
                 if (imageGalleryData.length > 0) {
                     console.log('[INIT] Navigating to first image (index 0)');
