@@ -8,6 +8,7 @@ const path = require('path');
 const multer = require('multer');
 const fs = require('fs');
 const crypto = require('crypto');
+const FormData = require('form-data');
 const app = express();
 const {
     isDbConfigured,
@@ -344,34 +345,124 @@ app.post('/api/upload-project', upload.single('projectFile'), (req, res) => {
 
 /**
  * API endpoint for background removal using integrated Python rembg
- * Accepts multipart form-data with field name 'image'
- * Returns JSON containing URLs to both original and processed images
+ * Supports two modes:
+ * 1. Multipart form-data with field name 'image' (legacy)
+ * 2. JSON with imageId from Cloudflare Images (new)
  */
 app.post('/api/remove-background', upload.single('image'), async (req, res) => {
     try {
-        if (!req.file) {
-            return res.status(400).json({ success: false, message: 'No image uploaded (field name should be "image")' });
+        // Mode 1: Multipart file upload (legacy)
+        if (req.file) {
+            const inputPath = req.file.path;
+            const outputPath = path.join(uploadDir, `processed_${req.file.filename}`);
+
+            await processImageWithRembg(inputPath, outputPath);
+
+            const processedFilename = path.basename(outputPath);
+            const processedImageUrl = `/uploads/${encodeURIComponent(processedFilename)}`;
+            const originalFilename = req.file.filename;
+            const originalImageUrl = `/uploads/${encodeURIComponent(originalFilename)}`;
+
+            return res.json({
+                success: true,
+                original: originalImageUrl,
+                processed: processedImageUrl,
+                url: processedImageUrl
+            });
         }
 
-        const inputPath = req.file.path;
-        const outputPath = path.join(uploadDir, `processed_${req.file.filename}`);
+        // Mode 2: JSON with Cloudflare Images imageId
+        const { imageId } = req.body || {};
+        if (!imageId) {
+            return res.status(400).json({
+                success: false,
+                message: 'No image uploaded and no imageId provided'
+            });
+        }
 
-        await processImageWithRembg(inputPath, outputPath);
+        if (!CF_ACCOUNT_ID || !CF_IMAGES_API_TOKEN || !CF_ACCOUNT_HASH) {
+            return res.status(500).json({
+                success: false,
+                message: 'Cloudflare Images not configured'
+            });
+        }
 
-        const processedFilename = path.basename(outputPath);
-        const processedImageUrl = `/uploads/${encodeURIComponent(processedFilename)}`;
-        const originalFilename = req.file.filename;
-        const originalImageUrl = `/uploads/${encodeURIComponent(originalFilename)}`;
+        // Download image from Cloudflare Images
+        const imageUrl = `https://imagedelivery.net/${CF_ACCOUNT_HASH}/${imageId}/public`;
+        console.log('[BG-REMOVE] Downloading image from Cloudflare:', imageUrl);
+
+        const downloadResp = await fetch(imageUrl);
+        if (!downloadResp.ok) {
+            throw new Error(`Failed to download image: ${downloadResp.status}`);
+        }
+
+        const imageBuffer = Buffer.from(await downloadResp.arrayBuffer());
+        const tempInputPath = path.join(uploadDir, `temp_input_${Date.now()}_${imageId}.png`);
+        const tempOutputPath = path.join(uploadDir, `temp_output_${Date.now()}_${imageId}.png`);
+
+        // Save downloaded image temporarily
+        const fs = require('fs');
+        fs.writeFileSync(tempInputPath, imageBuffer);
+
+        // Process with rembg
+        console.log('[BG-REMOVE] Processing with rembg');
+        await processImageWithRembg(tempInputPath, tempOutputPath);
+
+        // Read processed image
+        const processedBuffer = fs.readFileSync(tempOutputPath);
+
+        // Upload processed image back to Cloudflare Images
+        console.log('[BG-REMOVE] Uploading processed image to Cloudflare');
+        const uploadFormData = new FormData();
+        uploadFormData.append('file', processedBuffer, {
+            filename: 'processed.png',
+            contentType: 'image/png'
+        });
+        uploadFormData.append('metadata', JSON.stringify({
+            originalImageId: imageId,
+            processed: 'rembg',
+            timestamp: Date.now()
+        }));
+
+        const uploadResp = await fetch(
+            `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/images/v1`,
+            {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${CF_IMAGES_API_TOKEN}`,
+                    ...uploadFormData.getHeaders()
+                },
+                body: uploadFormData
+            }
+        );
+
+        const uploadData = await uploadResp.json();
+        if (!uploadData.success || !uploadData.result?.id) {
+            throw new Error('Failed to upload processed image to Cloudflare');
+        }
+
+        const cutoutUrl = `https://imagedelivery.net/${CF_ACCOUNT_HASH}/${uploadData.result.id}/public`;
+
+        // Clean up temp files
+        try {
+            fs.unlinkSync(tempInputPath);
+            fs.unlinkSync(tempOutputPath);
+        } catch (err) {
+            console.warn('[BG-REMOVE] Failed to clean up temp files:', err.message);
+        }
 
         return res.json({
             success: true,
-            original: originalImageUrl,
-            processed: processedImageUrl,
-            url: processedImageUrl
+            cutoutUrl: cutoutUrl,
+            processedImageId: uploadData.result.id
         });
+
     } catch (error) {
-        console.error('Error processing image:', error);
-        return res.status(500).json({ success: false, message: 'Failed to process image' });
+        console.error('[BG-REMOVE] Error processing image:', error);
+        return res.status(500).json({
+            success: false,
+            message: error.message || 'Failed to process image'
+        });
     }
 });
 

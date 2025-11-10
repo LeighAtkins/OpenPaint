@@ -31,6 +31,7 @@
     "@vercel/postgres": "^0.8.0",
     "express": "^4.21.2",
     "file-saver": "^2.0.5",
+    "form-data": "^4.0.1",
     "jsondiffpatch": "^0.7.3",
     "jszip": "^3.10.1",
     "multer": "^1.4.5-lts.2",
