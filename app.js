@@ -43,10 +43,16 @@ function joinUrl(base, path) {
 const sharedProjects = new Map();
 
 // Ensure uploads directory exists
-const uploadDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-    console.log('Created uploads directory');
+// On Vercel (serverless), use /tmp which is writable; locally use ./uploads
+const uploadDir = process.env.VERCEL ? '/tmp/uploads' : path.join(__dirname, 'uploads');
+try {
+    if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+        console.log('Created uploads directory:', uploadDir);
+    }
+} catch (err) {
+    // Log but don't crash if directory creation fails
+    console.warn('Could not create uploads directory:', err.message);
 }
 
 // Set up multer for handling file uploads
