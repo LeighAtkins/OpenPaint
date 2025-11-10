@@ -24,142 +24,6 @@ app.use((req, res, next) => {
     next();
 });
 
-// Route handlers - ALL WITHOUT /api PREFIX
-
-// Handlers extracted for dual-path mounting during routing migration
-async function directUploadHandler(req, res) {
-    try {
-        const base = process.env.CF_WORKER_URL || '';
-        if (!base) {
-            console.error('[Proxy] Missing CF_WORKER_URL');
-            return res
-                .status(500)
-                .set('content-type', 'application/json; charset=utf-8')
-                .send(JSON.stringify({
-                    ok: false,
-                    error: 'missing-CF_WORKER_URL',
-                    message: 'Set CF_WORKER_URL to your Worker base URL'
-                }));
-        }
-        const url = `${base.replace(/\/$/, '')}/images/direct-upload`;
-
-        const headers = {};
-        if (req.headers['x-api-key']) headers['x-api-key'] = String(req.headers['x-api-key']);
-
-        console.log('[Proxy] direct-upload target:', url);
-        console.log('[Proxy] x-api-key header present:', Boolean(headers['x-api-key']));
-
-        let upstream;
-        try {
-            upstream = await fetch(url, { method: 'POST', headers });
-        } catch (e) {
-            console.error('[Proxy] fetch exception:', { name: e.name, message: e.message });
-            return res
-                .status(502)
-                .set('content-type', 'application/json; charset=utf-8')
-                .send(JSON.stringify({ ok: false, error: 'fetch-exception', message: e.message }));
-        }
-
-        const text = await upstream.text().catch(() => '<no body>');
-        console.log('[Proxy] upstream status:', upstream.status);
-
-        if (!upstream.ok) {
-            console.error('[Proxy] upstream non-OK:', upstream.status, text.slice(0, 500));
-            return res
-                .status(502)
-                .set('content-type', 'application/json; charset=utf-8')
-                .send(JSON.stringify({
-                    ok: false,
-                    error: 'upstream-failed',
-                    status: upstream.status,
-                    body: text.slice(0, 500)
-                }));
-        }
-
-        try {
-            return res
-                .status(200)
-                .set('content-type', 'application/json; charset=utf-8')
-                .send(JSON.stringify(JSON.parse(text)));
-        } catch {
-            return res
-                .status(200)
-                .set('content-type', upstream.headers.get('content-type') || 'application/json')
-                .send(text);
-        }
-    } catch (err) {
-        console.error('[Proxy] /images/direct-upload exception:', { message: err.message });
-        return res
-            .status(500)
-            .set('content-type', 'application/json; charset=utf-8')
-            .send(JSON.stringify({
-                ok: false,
-                error: 'proxy-exception',
-                message: String(err)
-            }));
-    }
-}
-
-async function removeBackgroundHandler(req, res) {
-    try {
-        const base = process.env.CF_WORKER_URL || '';
-        if (!base) {
-            console.error('[Proxy] Missing CF_WORKER_URL');
-            return res
-                .status(500)
-                .set('content-type', 'application/json; charset=utf-8')
-                .send(JSON.stringify({
-                    ok: false,
-                    error: 'missing-CF_WORKER_URL',
-                    message: 'Set CF_WORKER_URL to your Worker base URL'
-                }));
-        }
-        const url = `${base.replace(/\/$/, '')}/remove-background`;
-
-        const headers = { 'content-type': 'application/json' };
-        if (req.headers['x-api-key']) {
-            headers['x-api-key'] = String(req.headers['x-api-key']);
-        }
-
-        const bodyText = typeof req.body === 'string' ? req.body : JSON.stringify(req.body || {});
-        let upstream;
-        try {
-            upstream = await fetch(url, {
-                method: 'POST',
-                headers,
-                body: bodyText
-            });
-        } catch (e) {
-            console.error('[Proxy] remove-bg fetch exception:', e.message);
-            return res
-                .status(502)
-                .set('content-type', 'application/json; charset=utf-8')
-                .send(JSON.stringify({
-                    ok: false,
-                    error: 'fetch-exception',
-                    message: e.message
-                }));
-        }
-
-        const ct = upstream.headers.get('content-type') || 'application/octet-stream';
-        const buf = Buffer.from(await upstream.arrayBuffer());
-        if (!upstream.ok) {
-            console.error('[Proxy] remove-bg upstream error:', url, upstream.status);
-        }
-        res.status(upstream.status).set('content-type', ct).send(buf);
-    } catch (err) {
-        console.error('[Proxy] /remove-background exception:', err.message);
-        res
-            .status(500)
-            .set('content-type', 'application/json; charset=utf-8')
-            .send(JSON.stringify({
-                ok: false,
-                error: 'proxy-exception',
-                message: String(err)
-            }));
-    }
-}
-
 // API Routes - inline handlers to prevent crashes
 
 // Safe env endpoint that never throws and always returns JSON
@@ -187,11 +51,14 @@ app.post('/api/images/direct-upload', async (req, res) => {
   try {
     const base = process.env.CF_WORKER_URL || '';
     if (!base) {
-      return res.status(500).json({
-        ok: false,
-        error: 'missing-CF_WORKER_URL',
-        message: 'Set CF_WORKER_URL to your Worker base URL'
-      });
+      return res
+        .status(500)
+        .set('content-type', 'application/json; charset=utf-8')
+        .send(JSON.stringify({
+          ok: false,
+          error: 'missing-CF_WORKER_URL',
+          message: 'Set CF_WORKER_URL to your Worker base URL'
+        }));
     }
     const url = `${base.replace(/\/$/, '')}/images/direct-upload`;
     const headers = {};
@@ -201,16 +68,25 @@ app.post('/api/images/direct-upload', async (req, res) => {
     try {
       upstream = await fetch(url, { method: 'POST', headers });
     } catch (e) {
-      return res.status(502).json({ ok: false, error: 'fetch-exception', message: e.message });
+      return res
+        .status(502)
+        .set('content-type', 'application/json; charset=utf-8')
+        .send(JSON.stringify({ ok: false, error: 'fetch-exception', message: e.message }));
     }
 
     const text = await upstream.text().catch(() => '<no body>');
     if (!upstream.ok) {
-      return res.status(502).json({ ok: false, error: 'upstream-failed', status: upstream.status, body: text.slice(0, 500) });
+      return res
+        .status(502)
+        .set('content-type', 'application/json; charset=utf-8')
+        .send(JSON.stringify({ ok: false, error: 'upstream-failed', status: upstream.status, body: text.slice(0, 500) }));
     }
 
     try {
-      return res.status(200).json(JSON.parse(text));
+      return res
+        .status(200)
+        .set('content-type', 'application/json; charset=utf-8')
+        .send(JSON.stringify(JSON.parse(text)));
     } catch {
       return res
         .status(200)
@@ -218,12 +94,66 @@ app.post('/api/images/direct-upload', async (req, res) => {
         .send(text);
     }
   } catch (err) {
-    return res.status(500).json({ ok: false, error: 'proxy-exception', message: String(err) });
+    return res
+      .status(500)
+      .set('content-type', 'application/json; charset=utf-8')
+      .send(JSON.stringify({ ok: false, error: 'proxy-exception', message: String(err) }));
   }
 });
 
-// Proxy background removal (keep old handler for now)
-app.post(['/api/remove-background', '/remove-background'], removeBackgroundHandler);
+// Proxy background removal - inline handler
+app.post('/api/remove-background', async (req, res) => {
+  try {
+    const base = process.env.CF_WORKER_URL || '';
+    if (!base) {
+      return res
+        .status(500)
+        .set('content-type', 'application/json; charset=utf-8')
+        .send(JSON.stringify({
+          ok: false,
+          error: 'missing-CF_WORKER_URL',
+          message: 'Set CF_WORKER_URL to your Worker base URL'
+        }));
+    }
+    const url = `${base.replace(/\/$/, '')}/remove-background`;
+    const headers = { 'content-type': 'application/json' };
+    if (req.headers['x-api-key']) {
+      headers['x-api-key'] = String(req.headers['x-api-key']);
+    }
+
+    const bodyText = typeof req.body === 'string' ? req.body : JSON.stringify(req.body || {});
+    let upstream;
+    try {
+      upstream = await fetch(url, {
+        method: 'POST',
+        headers,
+        body: bodyText
+      });
+    } catch (e) {
+      return res
+        .status(502)
+        .set('content-type', 'application/json; charset=utf-8')
+        .send(JSON.stringify({
+          ok: false,
+          error: 'fetch-exception',
+          message: e.message
+        }));
+    }
+
+    const ct = upstream.headers.get('content-type') || 'application/octet-stream';
+    const buf = Buffer.from(await upstream.arrayBuffer());
+    res.status(upstream.status).set('content-type', ct).send(buf);
+  } catch (err) {
+    res
+      .status(500)
+      .set('content-type', 'application/json; charset=utf-8')
+      .send(JSON.stringify({
+        ok: false,
+        error: 'proxy-exception',
+        message: String(err)
+      }));
+  }
+});
 
 /**
  * API endpoint for creating a shareable URL for a project
