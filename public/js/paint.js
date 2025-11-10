@@ -8792,16 +8792,19 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
         const imageData = window.globalRedoStack.pop();
         console.log(`[redo] Re-deleting image: ${imageData.label}`);
                 
-        // Find the image container to delete again
+        // Find the image container to delete again using saved index
         const imageList = document.getElementById('imageList');
         if (imageList) {
-          const containers = imageList.querySelectorAll('.image-container');
-          containers.forEach(container => {
-            if (container.dataset.label === imageData.label) {
-              // Delete the image again (this will push to globalUndoStack)
-              deleteImage(imageData.label, container);
-            }
-          });
+          const containers = Array.from(imageList.querySelectorAll('.image-container'));
+          // Use the saved containerIndex to find the exact container
+          const containerToDelete = containers[imageData.containerIndex];
+          if (containerToDelete) {
+            console.log(`[redo] Deleting container at index ${imageData.containerIndex} with label ${imageData.label}`);
+            // Delete the image again (this will push to globalUndoStack)
+            deleteImage(imageData.label, containerToDelete);
+          } else {
+            console.warn(`[redo] Could not find container at index ${imageData.containerIndex}`);
+          }
         }
         return;
       }
