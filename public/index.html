@@ -4972,13 +4972,18 @@
                             filename: labelDiv ? labelDiv.textContent : undefined
                         };
                         
-                        // Check if this image is already in the gallery
-                        const existingIndex = imageGalleryData.findIndex(item => item.src === img.src);
-                        
-                        if (existingIndex === -1) {
+                        // Check if this image is already in the gallery by src OR label
+                        const existingBySrc = imageGalleryData.findIndex(item => item.src === img.src);
+                        const existingByLabel = imageGalleryData.findIndex(item => item.label === label);
+
+                        if (existingBySrc === -1 && existingByLabel === -1) {
                             addImageToGallery(imageData, imageGalleryData.length);
                             console.log(`[SYNC] ✓ Added: ${imageData.name}`);
                             newImagesAdded++;
+                        } else if (existingBySrc >= 0) {
+                            console.log(`[SYNC] ⊘ Skipped duplicate src: ${imageData.name}`);
+                        } else if (existingByLabel >= 0) {
+                            console.log(`[SYNC] ⊘ Skipped duplicate label: ${imageData.name} (${label})`);
                         }
                     }
                 });
@@ -4988,6 +4993,38 @@
                 }
             }
             
+            // Function to remove duplicate labels from gallery
+            function deduplicateGalleryByLabel() {
+                const seenLabels = new Set();
+                const originalLength = imageGalleryData.length;
+
+                imageGalleryData = imageGalleryData.filter(item => {
+                    if (!item.label || seenLabels.has(item.label)) {
+                        console.log(`[DEDUP] Removing duplicate label: ${item.label || 'unlabeled'}`);
+                        return false;
+                    }
+                    seenLabels.add(item.label);
+                    return true;
+                });
+
+                const removedCount = originalLength - imageGalleryData.length;
+                if (removedCount > 0) {
+                    console.log(`[DEDUP] Removed ${removedCount} duplicate images. Total: ${imageGalleryData.length}`);
+
+                    // Update the gallery UI
+                    const gallery = document.getElementById('imageGallery');
+                    if (gallery) {
+                        const thumbnails = Array.from(gallery.querySelectorAll('.image-thumbnail'));
+                        thumbnails.forEach((thumb, index) => {
+                            const thumbLabel = thumb.dataset?.label || thumb.getAttribute('title');
+                            if (thumbLabel && !seenLabels.has(thumbLabel)) {
+                                thumb.remove();
+                            }
+                        });
+                    }
+                }
+            }
+
             // Function to clear demo images
             function clearDemoImages() {
                 console.log('[DEMO] Clearing demo images...');
@@ -5037,7 +5074,10 @@
                 // First, sync any existing legacy images
                 console.log('[INIT] Step 1: Syncing existing legacy images...');
                 syncLegacyImagesToGallery();
-                
+
+                // Remove any duplicate labels
+                deduplicateGalleryByLabel();
+
                 console.log('[INIT] imageGalleryData after sync:', imageGalleryData.length);
                 
                 // Check if we have any real images (non-demo)
@@ -5086,9 +5126,12 @@
                         console.log(`[PERIODIC] Legacy: ${currentLegacyCount} (was ${lastLegacyCount}), Gallery real: ${currentRealImagesCount}`);
                         
                         // No demo images are used anymore; skip clearing
-                        
+
                         syncLegacyImagesToGallery();
-                        
+
+                        // Remove any duplicate labels
+                        deduplicateGalleryByLabel();
+
                         // After adding new images, only load the first one if no image is currently active
                         // This prevents overriding when user pastes a second image
                         if (imageGalleryData.length > 0 && !window.currentImageLabel) {
