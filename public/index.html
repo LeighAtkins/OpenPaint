@@ -5272,12 +5272,22 @@
             function updateActivePill() {
                 const currentLabel = window.currentImageLabel || window.paintApp?.state?.currentImageLabel;
                 if (!currentLabel) return;
-                
+
+                // Find the index of the current image by matching label in the container list
+                const containers = getImageContainers();
+                const currentIndex = containers.findIndex(c => {
+                    const label = c.dataset?.label || c.getAttribute('title') || c.dataset?.imageIndex || c.id;
+                    return label === currentLabel;
+                });
+
+                if (currentIndex === -1) return;
+
                 const stepButtons = Array.from(document.querySelectorAll('#mini-stepper button[data-target]'));
                 let activeButton = null;
-                
+
                 stepButtons.forEach(btn => {
-                    const isActive = btn.dataset.target === currentLabel;
+                    // Match by index instead of label to handle duplicate labels
+                    const isActive = parseInt(btn.dataset.index) === currentIndex;
                     if (isActive) {
                         btn.classList.remove(...cfg.inactiveClasses.split(' '));
                         btn.classList.add(...cfg.activeClasses.split(' '));
@@ -5540,9 +5550,15 @@
 
                     if (!label) return;
 
-                    // Update UI
+                    // Find the index of the visible container to handle duplicate labels
+                    const containers = getImageContainers();
+                    const visibleIndex = containers.indexOf(best.target);
+
+                    if (visibleIndex === -1) return;
+
+                    // Update UI - match by index instead of label
                     stepButtons.forEach(b => {
-                        const active = b.dataset.target === label;
+                        const active = parseInt(b.dataset.index) === visibleIndex;
                         b.classList.toggle('aria-current', active);
 
                         if (active) {
@@ -5558,7 +5574,7 @@
                     });
 
                     // Dispatch event for external listeners
-                    window.dispatchEvent(new CustomEvent('mini-step-change', { detail: { label, index: best.target.dataset?.imageIndex || best.target.dataset?.index } }));
+                    window.dispatchEvent(new CustomEvent('mini-step-change', { detail: { label, index: visibleIndex } }));
                 }, { threshold: [cfg.threshold], rootMargin: '-50% 0px -50% 0px' });
 
                 // Observe all image containers
