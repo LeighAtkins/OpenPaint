@@ -8,7 +8,6 @@ const path = require('path');
 const multer = require('multer');
 const fs = require('fs');
 const crypto = require('crypto');
-const FormData = require('form-data');
 const app = express();
 const {
     isDbConfigured,
@@ -26,17 +25,8 @@ const AI_WORKER_URL = (process.env.CF_WORKER_URL || process.env.AI_WORKER_URL ||
   .trim();
 const AI_WORKER_KEY = (process.env.AI_WORKER_KEY || "").trim();
 
-// Cloudflare Images configuration
-// Support both IMAGES_API_TOKEN (Vercel env) and CF_IMAGES_API_TOKEN (legacy)
-const CF_ACCOUNT_ID = (process.env.CF_ACCOUNT_ID || "").trim();
-const CF_IMAGES_API_TOKEN = (process.env.IMAGES_API_TOKEN || process.env.CF_IMAGES_API_TOKEN || "").trim();
-const CF_ACCOUNT_HASH = (process.env.CF_ACCOUNT_HASH || "").trim();
-
 console.log("[AI Relay] Using AI_WORKER_URL:", JSON.stringify(AI_WORKER_URL));
 console.log("[AI Relay] Has KEY:", AI_WORKER_KEY ? "yes" : "no");
-console.log("[Cloudflare Images] Account ID:", CF_ACCOUNT_ID ? "configured" : "missing");
-console.log("[Cloudflare Images] API Token:", CF_IMAGES_API_TOKEN ? "configured" : "missing");
-console.log("[Cloudflare Images] Account Hash:", CF_ACCOUNT_HASH ? "configured" : "missing");
 
 function joinUrl(base, path) {
   return `${String(base).replace(/\/+$/, "")}/${String(path).replace(/^\/+/, "")}`;
@@ -350,86 +340,56 @@ app.post('/api/upload-project', upload.single('projectFile'), (req, res) => {
  * Forwards request to AI Worker for processing
  */
 app.post('/api/remove-background', async (req, res) => {
-    try {
-        const { imageId } = req.body || {};
-        if (!imageId) {
-            return res.status(400).json({
-                success: false,
-                message: 'imageId is required'
-            });
-        }
-
-        if (!CF_ACCOUNT_ID || !CF_IMAGES_API_TOKEN || !CF_ACCOUNT_HASH) {
-            console.error('[BG-REMOVE] Missing Cloudflare config');
-            return res.status(500).json({
-                success: false,
-                message: 'Cloudflare configuration missing'
-            });
-        }
-
-        if (!AI_WORKER_URL) {
-            console.error('[BG-REMOVE] AI Worker URL not configured');
-            return res.status(500).json({
-                success: false,
-                message: 'AI Worker not configured'
-            });
-        }
-
-        // Construct image URL
-        const imageUrl = `https://imagedelivery.net/${CF_ACCOUNT_HASH}/${imageId}/public`;
-        console.log('[BG-REMOVE] Image URL:', imageUrl);
-
-        // Forward to AI Worker - ensure proper URL format with trailing slash
-        const workerBaseUrl = AI_WORKER_URL.replace(/\/+$/, ''); // Remove trailing slashes
-        const workerUrl = `${workerBaseUrl}/ai/remove-background`;
-        console.log('[BG-REMOVE] Calling AI Worker:', workerUrl);
-
-        const workerResp = await fetch(workerUrl, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'x-api-key': 'dev-secret'
-            },
-            body: JSON.stringify({
-                imageUrl: imageUrl,
-                accountId: CF_ACCOUNT_ID,
-                apiToken: CF_IMAGES_API_TOKEN,
-                accountHash: CF_ACCOUNT_HASH
-            })
-        });
-
-        if (!workerResp.ok) {
-            const errorText = await workerResp.text().catch(() => 'Unknown error');
-            console.error('[BG-REMOVE] Worker error:', workerResp.status, errorText);
-            return res.status(workerResp.status).json({
-                success: false,
-                message: `AI Worker error: ${errorText}`
-            });
-        }
-
-        const workerData = await workerResp.json();
-        console.log('[BG-REMOVE] Worker response:', workerData);
-
-        if (!workerData.success) {
-            return res.status(500).json({
-                success: false,
-                message: workerData.message || 'Background removal failed'
-            });
-        }
-
-        return res.json({
-            success: true,
-            cutoutUrl: workerData.cutoutUrl,
-            processedImageId: workerData.processedImageId
-        });
-
-    } catch (error) {
-        console.error('[BG-REMOVE] Error:', error);
-        return res.status(500).json({
-            success: false,
-            message: error.message || 'Failed to remove background'
+  try {
+    const base = process.env.CF_WORKER_URL || AI_WORKER_URL || '';
+    if (!base) {
+      return res
+        .status(500)
+        .set('content-type', 'application/json; charset=utf-8')
+        .json({
+          ok: false,
+          error: 'missing-CF_WORKER_URL',
+          message: 'Set CF_WORKER_URL to your Worker base URL'
         });
     }
+    const url = `${base.replace(/\/$/, '')}/remove-background`;
+    const headers = { 'content-type': 'application/json' };
+    if (req.headers['x-api-key']) {
+      headers['x-api-key'] = String(req.headers['x-api-key']);
+    }
+
+    const bodyText = typeof req.body === 'string' ? req.body : JSON.stringify(req.body || {});
+    let upstream;
+    try {
+      upstream = await fetch(url, {
+        method: 'POST',
+        headers,
+        body: bodyText
+      });
+    } catch (e) {
+      return res
+        .status(502)
+        .set('content-type', 'application/json; charset=utf-8')
+        .json({
+          ok: false,
+          error: 'fetch-exception',
+          message: e.message
+        });
+    }
+
+    const ct = upstream.headers.get('content-type') || 'application/octet-stream';
+    const buf = Buffer.from(await upstream.arrayBuffer());
+    res.status(upstream.status).set('content-type', ct).send(buf);
+  } catch (err) {
+    res
+      .status(500)
+      .set('content-type', 'application/json; charset=utf-8')
+      .json({
+        ok: false,
+        error: 'proxy-exception',
+        message: String(err)
+      });
+  }
 });
 
 /**
@@ -655,74 +615,55 @@ app.post('/ai/analyze-and-dimension', async (req, res) => {
  */
 app.post('/api/images/direct-upload', async (req, res) => {
   try {
-    // Validate Cloudflare Images configuration
-    if (!CF_ACCOUNT_ID || !CF_IMAGES_API_TOKEN) {
-      return res.status(500).json({
-        success: false,
-        message: 'Cloudflare Images not configured. Missing CF_ACCOUNT_ID or CF_IMAGES_API_TOKEN.'
-      });
+    const base = process.env.CF_WORKER_URL || AI_WORKER_URL || '';
+    if (!base) {
+      return res
+        .status(500)
+        .set('content-type', 'application/json; charset=utf-8')
+        .json({
+          ok: false,
+          error: 'missing-CF_WORKER_URL',
+          message: 'Set CF_WORKER_URL to your Worker base URL'
+        });
+    }
+    const url = `${base.replace(/\/$/, '')}/images/direct-upload`;
+    const headers = {};
+    if (req.headers['x-api-key']) headers['x-api-key'] = String(req.headers['x-api-key']);
+
+    let upstream;
+    try {
+      upstream = await fetch(url, { method: 'POST', headers });
+    } catch (e) {
+      return res
+        .status(502)
+        .set('content-type', 'application/json; charset=utf-8')
+        .json({ ok: false, error: 'fetch-exception', message: e.message });
     }
 
-    // Generate unique image key
-    const timestamp = Date.now();
-    const uuid = crypto.randomUUID();
-    const imageKey = `ai-uploads/${timestamp}-${uuid}`;
-
-    // Call Cloudflare Images Direct Creator Upload API
-    const endpoint = `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/images/v2/direct_upload`;
-
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${CF_IMAGES_API_TOKEN}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        requireSignedURLs: false,
-        metadata: {
-          key: imageKey,
-          purpose: 'background-removal'
-        }
-      })
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('[Cloudflare Images] Direct upload URL generation failed:', response.status, errorText);
-      return res.status(502).json({
-        success: false,
-        message: 'Failed to generate upload URL',
-        detail: errorText
-      });
+    const text = await upstream.text().catch(() => '<no body>');
+    if (!upstream.ok) {
+      return res
+        .status(502)
+        .set('content-type', 'application/json; charset=utf-8')
+        .json({ ok: false, error: 'upstream-failed', status: upstream.status, body: text.slice(0, 500) });
     }
 
-    const data = await response.json();
-
-    if (!data.success) {
-      console.error('[Cloudflare Images] API error:', data.errors);
-      return res.status(502).json({
-        success: false,
-        message: 'Cloudflare Images API error',
-        errors: data.errors
-      });
+    try {
+      return res
+        .status(200)
+        .set('content-type', 'application/json; charset=utf-8')
+        .json(JSON.parse(text));
+    } catch {
+      return res
+        .status(200)
+        .set('content-type', upstream.headers.get('content-type') || 'application/json')
+        .send(text);
     }
-
-    // Return in format expected by paint.js
-    return res.json({
-      success: true,
-      result: {
-        uploadURL: data.result.uploadURL,
-        id: data.result.id
-      }
-    });
-
-  } catch (error) {
-    console.error('Error generating direct upload URL:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Server error generating upload URL',
-      detail: error.message
-    });
+  } catch (err) {
+    return res
+      .status(500)
+      .set('content-type', 'application/json; charset=utf-8')
+      .json({ ok: false, error: 'proxy-exception', message: String(err) });
   }
 });
 
@@ -732,78 +673,55 @@ app.post('/api/images/direct-upload', async (req, res) => {
  */
 app.post('/api/storage/presign', async (req, res) => {
   try {
-    // Validate Cloudflare Images configuration
-    if (!CF_ACCOUNT_ID || !CF_IMAGES_API_TOKEN) {
-      return res.status(500).json({ 
-        success: false, 
-        message: 'Cloudflare Images not configured. Missing CF_ACCOUNT_ID or CF_IMAGES_API_TOKEN.' 
-      });
+    const base = process.env.CF_WORKER_URL || AI_WORKER_URL || '';
+    if (!base) {
+      return res
+        .status(500)
+        .set('content-type', 'application/json; charset=utf-8')
+        .json({
+          ok: false,
+          error: 'missing-CF_WORKER_URL',
+          message: 'Set CF_WORKER_URL to your Worker base URL'
+        });
+    }
+    const url = `${base.replace(/\/$/, '')}/images/direct-upload`;
+    const headers = {};
+    if (req.headers['x-api-key']) headers['x-api-key'] = String(req.headers['x-api-key']);
+
+    let upstream;
+    try {
+      upstream = await fetch(url, { method: 'POST', headers });
+    } catch (e) {
+      return res
+        .status(502)
+        .set('content-type', 'application/json; charset=utf-8')
+        .json({ ok: false, error: 'fetch-exception', message: e.message });
     }
 
-    // Generate unique image key
-    const timestamp = Date.now();
-    const uuid = crypto.randomUUID();
-    const imageKey = `ai-uploads/${timestamp}-${uuid}`;
-
-    // Call Cloudflare Images Direct Creator Upload API
-    const endpoint = `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/images/v2/direct_upload`;
-    
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${CF_IMAGES_API_TOKEN}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        requireSignedURLs: false,
-        metadata: {
-          key: imageKey,
-          purpose: 'ai-furniture-dimensioning'
-        }
-      })
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('[Cloudflare Images] Upload URL generation failed:', response.status, errorText);
-      return res.status(502).json({ 
-        success: false, 
-        message: 'Failed to generate upload URL',
-        detail: errorText
-      });
+    const text = await upstream.text().catch(() => '<no body>');
+    if (!upstream.ok) {
+      return res
+        .status(502)
+        .set('content-type', 'application/json; charset=utf-8')
+        .json({ ok: false, error: 'upstream-failed', status: upstream.status, body: text.slice(0, 500) });
     }
 
-    const data = await response.json();
-    
-    if (!data.success) {
-      console.error('[Cloudflare Images] API error:', data.errors);
-      return res.status(502).json({ 
-        success: false, 
-        message: 'Cloudflare Images API error',
-        errors: data.errors
-      });
+    try {
+      return res
+        .status(200)
+        .set('content-type', 'application/json; charset=utf-8')
+        .json(JSON.parse(text));
+    } catch {
+      return res
+        .status(200)
+        .set('content-type', upstream.headers.get('content-type') || 'application/json')
+        .send(text);
     }
-
-    const { uploadURL, id: imageId } = data.result;
-    const deliveryUrl = `https://imagedelivery.net/${CF_ACCOUNT_HASH}/${imageId}/public`;
-
-    console.log(`[Cloudflare Images] Generated presign for key: ${imageKey}, imageId: ${imageId}`);
-
-    return res.json({
-      success: true,
-      key: imageKey,
-      uploadUrl: uploadURL,
-      imageId: imageId,
-      deliveryUrl: deliveryUrl
-    });
-
-  } catch (error) {
-    console.error('Error generating presigned upload URL:', error);
-    return res.status(500).json({ 
-      success: false, 
-      message: 'Server error generating upload URL',
-      detail: error.message 
-    });
+  } catch (err) {
+    return res
+      .status(500)
+      .set('content-type', 'application/json; charset=utf-8')
+      .json({ ok: false, error: 'proxy-exception', message: String(err) });
   }
 });
 
