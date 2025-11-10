@@ -20,14 +20,16 @@ const { spawn } = require('child_process');
 const port = process.env.PORT || 3000;
 
 // AI Worker configuration with startup logging
-const AI_WORKER_URL = (process.env.AI_WORKER_URL || "http://localhost:8787")
+// Support both CF_WORKER_URL (Vercel env) and AI_WORKER_URL (legacy)
+const AI_WORKER_URL = (process.env.CF_WORKER_URL || process.env.AI_WORKER_URL || "http://localhost:8787")
   .replace(/^\s*-\s*/, "") // strip accidental "- "
   .trim();
 const AI_WORKER_KEY = (process.env.AI_WORKER_KEY || "").trim();
 
 // Cloudflare Images configuration
+// Support both IMAGES_API_TOKEN (Vercel env) and CF_IMAGES_API_TOKEN (legacy)
 const CF_ACCOUNT_ID = (process.env.CF_ACCOUNT_ID || "").trim();
-const CF_IMAGES_API_TOKEN = (process.env.CF_IMAGES_API_TOKEN || "").trim();
+const CF_IMAGES_API_TOKEN = (process.env.IMAGES_API_TOKEN || process.env.CF_IMAGES_API_TOKEN || "").trim();
 const CF_ACCOUNT_HASH = (process.env.CF_ACCOUNT_HASH || "").trim();
 
 console.log("[AI Relay] Using AI_WORKER_URL:", JSON.stringify(AI_WORKER_URL));
