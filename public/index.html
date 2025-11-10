@@ -4993,39 +4993,63 @@
                 }
             }
             
-            // Function to remove duplicate labels from gallery
+            // Function to rename duplicate labels in gallery
             function deduplicateGalleryByLabel() {
                 const seenLabels = new Set();
-                const originalLength = imageGalleryData.length;
+                const labelCounts = {};
+                let renamedCount = 0;
 
-                imageGalleryData = imageGalleryData.filter(item => {
-                    if (!item.label || seenLabels.has(item.label)) {
-                        console.log(`[DEDUP] Removing duplicate label: ${item.label || 'unlabeled'}`);
-                        return false;
+                // First pass: rename duplicates in data array
+                imageGalleryData.forEach((item, index) => {
+                    if (!item.label) return;
+
+                    if (seenLabels.has(item.label)) {
+                        // This is a duplicate - rename it
+                        const originalLabel = item.label;
+
+                        // Count how many times we've seen this label
+                        labelCounts[originalLabel] = (labelCounts[originalLabel] || 1) + 1;
+                        const newLabel = `${originalLabel}_${labelCounts[originalLabel]}`;
+
+                        console.log(`[DEDUP] Renaming duplicate label: ${originalLabel} → ${newLabel}`);
+                        item.label = newLabel;
+                        item.name = newLabel;
+                        renamedCount++;
                     }
+
                     seenLabels.add(item.label);
-                    return true;
                 });
 
-                const removedCount = originalLength - imageGalleryData.length;
-                if (removedCount > 0) {
-                    console.log(`[DEDUP] Removed ${removedCount} duplicate images. Total: ${imageGalleryData.length}`);
+                if (renamedCount > 0) {
+                    console.log(`[DEDUP] Renamed ${renamedCount} duplicate images. Total: ${imageGalleryData.length}`);
 
-                    // Update the gallery UI by removing duplicates
+                    // Second pass: update DOM thumbnails to match renamed data
                     const gallery = document.getElementById('imageGallery');
                     if (gallery) {
                         const thumbnails = Array.from(gallery.querySelectorAll('.image-thumbnail'));
                         const seenThumbLabels = new Set();
 
-                        thumbnails.forEach((thumb) => {
+                        thumbnails.forEach((thumb, index) => {
                             const thumbLabel = thumb.dataset?.label || thumb.getAttribute('title');
 
-                            // If we've already seen this label, this is a duplicate - remove it
                             if (thumbLabel && seenThumbLabels.has(thumbLabel)) {
-                                console.log(`[DEDUP] Removing duplicate thumbnail: ${thumbLabel}`);
-                                thumb.remove();
+                                // This is a duplicate thumbnail - rename it to match the data
+                                const originalLabel = thumbLabel;
+                                labelCounts[originalLabel] = (labelCounts[originalLabel] || 1);
+                                const newLabel = `${originalLabel}_${labelCounts[originalLabel]}`;
+
+                                console.log(`[DEDUP] Renaming duplicate thumbnail: ${originalLabel} → ${newLabel}`);
+
+                                // Update the thumbnail's label attributes
+                                if (thumb.dataset) thumb.dataset.label = newLabel;
+                                thumb.setAttribute('title', newLabel);
+
+                                // Update the overlay text if it exists
+                                const overlay = thumb.querySelector('.image-overlay');
+                                if (overlay) overlay.textContent = newLabel;
+
+                                seenThumbLabels.add(newLabel);
                             } else if (thumbLabel) {
-                                // First time seeing this label, keep it
                                 seenThumbLabels.add(thumbLabel);
                             }
                         });
