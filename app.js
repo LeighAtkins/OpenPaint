@@ -344,124 +344,88 @@ app.post('/api/upload-project', upload.single('projectFile'), (req, res) => {
 });
 
 /**
- * API endpoint for background removal using integrated Python rembg
- * Supports two modes:
- * 1. Multipart form-data with field name 'image' (legacy)
- * 2. JSON with imageId from Cloudflare Images (new)
+ * API endpoint for background removal using Cloudflare Workers AI
+ * Forwards request to AI Worker for processing
  */
-app.post('/api/remove-background', upload.single('image'), async (req, res) => {
+app.post('/api/remove-background', async (req, res) => {
     try {
-        // Mode 1: Multipart file upload (legacy)
-        if (req.file) {
-            const inputPath = req.file.path;
-            const outputPath = path.join(uploadDir, `processed_${req.file.filename}`);
-
-            await processImageWithRembg(inputPath, outputPath);
-
-            const processedFilename = path.basename(outputPath);
-            const processedImageUrl = `/uploads/${encodeURIComponent(processedFilename)}`;
-            const originalFilename = req.file.filename;
-            const originalImageUrl = `/uploads/${encodeURIComponent(originalFilename)}`;
-
-            return res.json({
-                success: true,
-                original: originalImageUrl,
-                processed: processedImageUrl,
-                url: processedImageUrl
-            });
-        }
-
-        // Mode 2: JSON with Cloudflare Images imageId
         const { imageId } = req.body || {};
         if (!imageId) {
             return res.status(400).json({
                 success: false,
-                message: 'No image uploaded and no imageId provided'
+                message: 'imageId is required'
             });
         }
 
         if (!CF_ACCOUNT_ID || !CF_IMAGES_API_TOKEN || !CF_ACCOUNT_HASH) {
+            console.error('[BG-REMOVE] Missing Cloudflare config');
             return res.status(500).json({
                 success: false,
-                message: 'Cloudflare Images not configured'
+                message: 'Cloudflare configuration missing'
             });
         }
 
-        // Download image from Cloudflare Images
+        if (!AI_WORKER_URL) {
+            console.error('[BG-REMOVE] AI Worker URL not configured');
+            return res.status(500).json({
+                success: false,
+                message: 'AI Worker not configured'
+            });
+        }
+
+        // Construct image URL
         const imageUrl = `https://imagedelivery.net/${CF_ACCOUNT_HASH}/${imageId}/public`;
-        console.log('[BG-REMOVE] Downloading image from Cloudflare:', imageUrl);
+        console.log('[BG-REMOVE] Image URL:', imageUrl);
 
-        const downloadResp = await fetch(imageUrl);
-        if (!downloadResp.ok) {
-            throw new Error(`Failed to download image: ${downloadResp.status}`);
-        }
+        // Forward to AI Worker - ensure proper URL format with trailing slash
+        const workerBaseUrl = AI_WORKER_URL.replace(/\/+$/, ''); // Remove trailing slashes
+        const workerUrl = `${workerBaseUrl}/ai/remove-background`;
+        console.log('[BG-REMOVE] Calling AI Worker:', workerUrl);
 
-        const imageBuffer = Buffer.from(await downloadResp.arrayBuffer());
-        const tempInputPath = path.join(uploadDir, `temp_input_${Date.now()}_${imageId}.png`);
-        const tempOutputPath = path.join(uploadDir, `temp_output_${Date.now()}_${imageId}.png`);
-
-        // Save downloaded image temporarily
-        const fs = require('fs');
-        fs.writeFileSync(tempInputPath, imageBuffer);
-
-        // Process with rembg
-        console.log('[BG-REMOVE] Processing with rembg');
-        await processImageWithRembg(tempInputPath, tempOutputPath);
-
-        // Read processed image
-        const processedBuffer = fs.readFileSync(tempOutputPath);
-
-        // Upload processed image back to Cloudflare Images
-        console.log('[BG-REMOVE] Uploading processed image to Cloudflare');
-        const uploadFormData = new FormData();
-        uploadFormData.append('file', processedBuffer, {
-            filename: 'processed.png',
-            contentType: 'image/png'
+        const workerResp = await fetch(workerUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-api-key': 'dev-secret'
+            },
+            body: JSON.stringify({
+                imageUrl: imageUrl,
+                accountId: CF_ACCOUNT_ID,
+                apiToken: CF_IMAGES_API_TOKEN,
+                accountHash: CF_ACCOUNT_HASH
+            })
         });
-        uploadFormData.append('metadata', JSON.stringify({
-            originalImageId: imageId,
-            processed: 'rembg',
-            timestamp: Date.now()
-        }));
 
-        const uploadResp = await fetch(
-            `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/images/v1`,
-            {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${CF_IMAGES_API_TOKEN}`,
-                    ...uploadFormData.getHeaders()
-                },
-                body: uploadFormData
-            }
-        );
-
-        const uploadData = await uploadResp.json();
-        if (!uploadData.success || !uploadData.result?.id) {
-            throw new Error('Failed to upload processed image to Cloudflare');
+        if (!workerResp.ok) {
+            const errorText = await workerResp.text().catch(() => 'Unknown error');
+            console.error('[BG-REMOVE] Worker error:', workerResp.status, errorText);
+            return res.status(workerResp.status).json({
+                success: false,
+                message: `AI Worker error: ${errorText}`
+            });
         }
 
-        const cutoutUrl = `https://imagedelivery.net/${CF_ACCOUNT_HASH}/${uploadData.result.id}/public`;
+        const workerData = await workerResp.json();
+        console.log('[BG-REMOVE] Worker response:', workerData);
 
-        // Clean up temp files
-        try {
-            fs.unlinkSync(tempInputPath);
-            fs.unlinkSync(tempOutputPath);
-        } catch (err) {
-            console.warn('[BG-REMOVE] Failed to clean up temp files:', err.message);
+        if (!workerData.success) {
+            return res.status(500).json({
+                success: false,
+                message: workerData.message || 'Background removal failed'
+            });
         }
 
         return res.json({
             success: true,
-            cutoutUrl: cutoutUrl,
-            processedImageId: uploadData.result.id
+            cutoutUrl: workerData.cutoutUrl,
+            processedImageId: workerData.processedImageId
         });
 
     } catch (error) {
-        console.error('[BG-REMOVE] Error processing image:', error);
+        console.error('[BG-REMOVE] Error:', error);
         return res.status(500).json({
             success: false,
-            message: error.message || 'Failed to process image'
+            message: error.message || 'Failed to remove background'
         });
     }
 });
