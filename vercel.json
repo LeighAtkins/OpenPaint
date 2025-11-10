@@ -2,7 +2,7 @@
   "version": 2,
   "builds": [
     {
-      "src": "test-minimal.js",
+      "src": "api-proxy.js",
       "use": "@vercel/node"
     },
     {
@@ -13,15 +13,19 @@
   "routes": [
     {
       "src": "^/api/_env$",
-      "dest": "/test-minimal.js"
+      "dest": "/api-proxy.js"
     },
     {
       "src": "^/api/images/direct-upload$",
-      "dest": "/test-minimal.js"
+      "dest": "/api-proxy.js"
+    },
+    {
+      "src": "^/api/remove-background$",
+      "dest": "/api-proxy.js"
     },
     {
       "src": "^/api/(.*)$",
-      "dest": "/test-minimal.js"
+      "dest": "/api-proxy.js"
     },
     {
       "src": "^/(.*)",
