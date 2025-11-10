@@ -28,7 +28,11 @@
       "dest": "/app.js"
     },
     {
-      "src": "^/.*$",
+      "src": "^/projects/(.*)$",
+      "dest": "/app.js"
+    },
+    {
+      "src": "^/$",
       "dest": "/app.js"
     }
   ]
