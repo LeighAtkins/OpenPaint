@@ -9342,11 +9342,23 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
     
   // Enhanced coordinate transform that works with both systems
   window.getPointerCoords = function getPointerCoords(event) {
-    // Always use legacy system for coordinate transforms
-    const canvasCoords = { x: event.offsetX, y: event.offsetY };
+    // Support both mouse events (offsetX/Y) and pointer/touch events (clientX/Y)
+    let offsetX, offsetY;
+
+    if (event.offsetX !== undefined && event.offsetY !== undefined) {
+      // Mouse events have offsetX/offsetY
+      offsetX = event.offsetX;
+      offsetY = event.offsetY;
+    } else {
+      // Pointer/touch events use clientX/Y - calculate offset from canvas bounds
+      const rect = canvas.getBoundingClientRect();
+      offsetX = event.clientX - rect.left;
+      offsetY = event.clientY - rect.top;
+    }
+
+    const canvasCoords = { x: offsetX, y: offsetY };
     const imageCoords = getTransformedCoords(canvasCoords.x, canvasCoords.y);
-    
-        
+
     return {
       client: canvasCoords,
       world: imageCoords,
@@ -12473,11 +12485,12 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
     console.log('[Event] Canvas element:', canvas);
     console.log('[Event] Canvas ID:', canvas.id);
         
-    // Canvas mouse events
-    canvas.addEventListener('mousedown', onCanvasMouseDown, { signal: eventListeners.signal });
-    canvas.addEventListener('mousemove', onCanvasMouseMove, { signal: eventListeners.signal });
-    canvas.addEventListener('mouseup', onCanvasMouseUp, { signal: eventListeners.signal });
-    canvas.addEventListener('mouseout', onCanvasMouseOut, { signal: eventListeners.signal });
+    // Canvas pointer events (supports mouse, touch, and pen)
+    canvas.addEventListener('pointerdown', onCanvasMouseDown, { signal: eventListeners.signal });
+    canvas.addEventListener('pointermove', onCanvasMouseMove, { signal: eventListeners.signal });
+    canvas.addEventListener('pointerup', onCanvasMouseUp, { signal: eventListeners.signal });
+    canvas.addEventListener('pointerout', onCanvasMouseOut, { signal: eventListeners.signal });
+    canvas.addEventListener('pointercancel', onCanvasMouseUp, { signal: eventListeners.signal });
     canvas.addEventListener('dblclick', onCanvasDoubleClick, { signal: eventListeners.signal });
     canvas.addEventListener('wheel', onCanvasWheel, { signal: eventListeners.signal, passive: true });
     canvas.addEventListener('scalechange', onCanvasScaleChange, { signal: eventListeners.signal });
@@ -12513,6 +12526,14 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
 
   // Canvas event handlers
   function onCanvasMouseDown(e) {
+    // Only handle primary pointer (ignore multi-touch)
+    if (e.pointerType !== undefined && !e.isPrimary) {
+      return;
+    }
+
+    // Get pointer coordinates early for consistent use throughout function
+    const coords = window.getPointerCoords(e);
+
     // Check if this is a right-click (button 2) - prevent default context menu
     if (e.button === 2) {
       // Prevent default browser context menu
@@ -12520,12 +12541,12 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
       e.stopPropagation();
       return;
     }
-        
+
     // First, check if we should be dragging the image (shift key pressed)
     if (isShiftPressed) {
       isDraggingImage = true;
-      lastMouseX = e.offsetX;
-      lastMouseY = e.offsetY;
+      lastMouseX = coords.canvas.x;
+      lastMouseY = coords.canvas.y;
       canvas.style.cursor = 'grabbing';
             
       // CRITICAL FIX: Don't exit edit mode when panning - preserve the edit state
@@ -12540,8 +12561,7 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
     const isClickOnStrokeTag = e.target.closest('.stroke-visibility-item') !== null;
         
     // Check if clicking on a canvas label (stroke tag drawn on canvas)
-    // Use new coordinate system if available
-    const coords = window.getPointerCoords(e);
+    // Use coordinate system (coords already defined at function start)
     // Transform coordinates to match how labels are positioned
     const currentImageLabel = window.currentImageLabel || window.paintApp?.state?.currentImageLabel || 'front';
     const transformParams = getTransformationParams(currentImageLabel);
@@ -13064,16 +13084,16 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
       // Then, allow label dragging to proceed
       isDraggingLabel = true;
       draggedLabelStroke = hoveredLabel.strokeLabel; // Store just the stroke label string
-      dragStartX = e.offsetX;
-      dragStartY = e.offsetY;
+      dragStartX = coords.canvas.x;
+      dragStartY = coords.canvas.y;
       canvas.style.cursor = 'grabbing'; // Cursor for dragging
       e.preventDefault(); // Prevent drawing from starting if a label is clicked
       return; // Important to return after handling label click + potential drag start
     }
-        
+
     // Check if we clicked directly on a stroke (not a label)
     if (!hoveredLabel) {
-      const strokeAtPoint = checkForStrokeAtPoint(e.offsetX, e.offsetY);
+      const strokeAtPoint = checkForStrokeAtPoint(coords.canvas.x, coords.canvas.y);
       if (strokeAtPoint) {
         //                 console.log(`Canvas Mousedown: Clicked on stroke ${strokeAtPoint.label} (type: ${strokeAtPoint.type})`);
                 
@@ -13228,8 +13248,8 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
         
     if (isBlankCanvas) {
       // Constrain drawing to canvas boundaries
-      if (e.offsetX < 0 || e.offsetX >= canvas.width || e.offsetY < 0 || e.offsetY >= canvas.height) {
-        console.log(`[Input] Drawing prevented outside canvas bounds: (${e.offsetX}, ${e.offsetY}) not in 0-${canvas.width-1} x 0-${canvas.height-1}`);
+      if (coords.canvas.x < 0 || coords.canvas.x >= canvas.width || coords.canvas.y < 0 || coords.canvas.y >= canvas.height) {
+        console.log(`[Input] Drawing prevented outside canvas bounds: (${coords.canvas.x}, ${coords.canvas.y}) not in 0-${canvas.width-1} x 0-${canvas.height-1}`);
         return;
       }
     }
@@ -13271,19 +13291,19 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
         time: Date.now()
       };
       curvedLinePoints.push(controlPoint);
-      //             console.log(`Added control point ${curvedLinePoints.length} at (${e.offsetX}, ${e.offsetY})`);
-            
+      //             console.log(`Added control point ${curvedLinePoints.length} at (${coords.canvas.x}, ${coords.canvas.y})`);
+
       // Draw a visual indicator for the control point
       ctx.beginPath();
       const scale = window.imageScaleByLabel[currentImageLabel] || 1.0;
       const pointRadius = 4 * scale;
-      ctx.arc(e.offsetX, e.offsetY, pointRadius, 0, Math.PI * 2);
+      ctx.arc(coords.canvas.x, coords.canvas.y, pointRadius, 0, Math.PI * 2);
       ctx.fillStyle = colorPicker.value;
       ctx.fill();
       ctx.strokeStyle = '#ffffff';
       ctx.lineWidth = 2;
       ctx.stroke();
-            
+
       // Prevent normal drawing mode from activating
       isDrawing = false;
       isDrawingOrPasting = false;
@@ -13294,23 +13314,23 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
         console.log('[DRAW GUARD] Blocking draw - text drag in progress');
         return;
       }
-            
+
       // For freehand, add first point
-      const { x: imgX, y: imgY } = getTransformedCoords(e.offsetX, e.offsetY);
+      const { x: imgX, y: imgY } = getTransformedCoords(coords.canvas.x, coords.canvas.y);
       const firstPoint = {
         x: imgX,             // Image space X
         y: imgY,             // Image space Y
-        canvasX: e.offsetX,  // Canvas space X
-        canvasY: e.offsetY,  // Canvas space Y
+        canvasX: coords.canvas.x,  // Canvas space X
+        canvasY: coords.canvas.y,  // Canvas space Y
         time: Date.now()
       };
       points.push(firstPoint);
-        
+
       // Draw a dot at the start point (important for single clicks)
       ctx.beginPath();
       const scale = window.imageScaleByLabel[currentImageLabel] || 1.0;
       const dotRadius = parseInt(brushSize.value) * scale / 2;
-      ctx.arc(e.offsetX, e.offsetY, dotRadius, 0, Math.PI * 2);
+      ctx.arc(coords.canvas.x, coords.canvas.y, dotRadius, 0, Math.PI * 2);
       ctx.fillStyle = colorPicker.value;
       ctx.fill();
             
@@ -13321,6 +13341,11 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
     
   // PERFORMANCE: Throttled mousemove event handler using requestAnimationFrame
   function onCanvasMouseMove(e) {
+    // Only handle primary pointer (ignore multi-touch)
+    if (e.pointerType !== undefined && !e.isPrimary) {
+      return;
+    }
+
     const coords = window.getPointerCoords(e);
     const x = coords.canvas.x;
     const y = coords.canvas.y;
@@ -13599,24 +13624,24 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
         
     if (isDraggingImage) {
       // Calculate the distance moved
-      const deltaX = e.offsetX - lastMouseX;
-      const deltaY = e.offsetY - lastMouseY;
-            
+      const deltaX = x - lastMouseX;
+      const deltaY = y - lastMouseY;
+
       // Update last positions
-      lastMouseX = e.offsetX;
-      lastMouseY = e.offsetY;
-            
+      lastMouseX = x;
+      lastMouseY = y;
+
       // Move the image
       moveImage(deltaX, deltaY);
       return;
     }
-        
+
     // Handle drawing based on mode
     if (isDrawing) {
       if (drawingMode === 'straight') {
         // For straight line (using arrow line implementation), draw a preview with optional arrowheads
         if (straightLineStart) {
-          const endPoint = { x: e.offsetX, y: e.offsetY };
+          const endPoint = { x: x, y: y };
           drawArrowLinePreview(straightLineStart, endPoint);
         }
       } else {
@@ -13624,22 +13649,30 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
         draw(e);
       }
     }
-        
+
     // Handle curved line preview when not actively drawing but have control points
     if (!isDrawing && !isDraggingImage && !isDraggingLabel && drawingMode === 'curved' && curvedLinePoints.length > 0) {
-      const mousePos = { x: e.offsetX, y: e.offsetY };
+      const mousePos = { x: x, y: y };
       drawCurvedLinePreview(curvedLinePoints, mousePos);
     }
   }
     
   function onCanvasMouseUp(e) {
+    // Only handle primary pointer (ignore multi-touch)
+    if (e.pointerType !== undefined && !e.isPrimary) {
+      return;
+    }
+
+    // Get pointer coordinates early for consistent use throughout function
+    const coords = window.getPointerCoords(e);
+
     // Check if this is a right-click (button 2) - don't process in mouseup
     if (e.button === 2) {
       e.preventDefault();
       e.stopPropagation();
       return; // Don't process right-clicks in mouseup
     }
-        
+
     // Check if we were drawing when mouseup occurred
     const wasDrawing = isDrawing;
         
@@ -13653,37 +13686,37 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
       }
       dragCurveStroke = null;
       dragAnchorIndex = -1;
-            
+
       // CRITICAL FIX: Restore cursor intelligently based on current mouse position
-      restoreCursorAfterDrag(e.offsetX, e.offsetY);
+      restoreCursorAfterDrag(coords.canvas.x, coords.canvas.y);
       return;
     }
-        
+
     if (isDraggingControlPoint) {
       isDraggingControlPoint = false;
-            
+
       // Save state to enable undo/redo
       if (draggedControlPointInfo) {
         saveState(true, false); // Save without incrementing label
         //                 console.log(`Finished dragging control point ${draggedControlPointInfo.pointIndex} of stroke ${draggedControlPointInfo.strokeLabel}`);
       }
-            
+
       draggedControlPointInfo = null;
-            
+
       // CRITICAL FIX: Restore cursor intelligently based on current mouse position
-      restoreCursorAfterDrag(e.offsetX, e.offsetY);
+      restoreCursorAfterDrag(coords.canvas.x, coords.canvas.y);
       return;
     }
-        
+
     if (isDraggingLabel) {
       isDraggingLabel = false;
       draggedLabelStroke = null;
-            
+
       // Save state to enable undo/redo for label position changes
       saveState(true, false); // Save without incrementing label
-            
+
       // IMPROVED: Restore cursor intelligently based on current mouse position
-      restoreCursorAfterDrag(e.offsetX, e.offsetY);
+      restoreCursorAfterDrag(coords.canvas.x, coords.canvas.y);
       return;
     }
         
@@ -13908,7 +13941,12 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
     mouseDownPosition = null;
   }
     
-  function onCanvasMouseOut() {
+  function onCanvasMouseOut(e) {
+    // Only handle primary pointer (ignore multi-touch)
+    if (e && e.pointerType !== undefined && !e.isPrimary) {
+      return;
+    }
+
     // CRITICAL FIX: Do NOT interrupt control point dragging when mouse leaves canvas
     // Allow the drag to continue until mouseup occurs, enabling dragging outside canvas bounds
     if (isDraggingControlPoint) {
