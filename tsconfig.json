@@ -9,7 +9,7 @@
     // Module resolution
     "target": "es2021",
     "module": "esnext",
-    "moduleResolution": "bundler",
+    "moduleResolution": "node",
 
     // Type checking
     "strict": true,
