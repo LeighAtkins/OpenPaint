@@ -2375,8 +2375,11 @@
                     resizeTimeout = setTimeout(updatePanelState, 250);
                 });
 
-                // Toggle expand/collapse on click
+                // Toggle expand/collapse and drag icon
                 function createPanelToggle(panel) {
+                    const icon = panel.querySelector('.panel-toggle-icon');
+                    if (!icon) return;
+
                     let isDragging = false;
                     let startX, startY, startLeft, startTop;
 
@@ -2397,21 +2400,9 @@
                         });
                     }
 
-                    panel.addEventListener('pointerdown', (e) => {
+                    // Icon drag and toggle handlers
+                    const handleMove = (e) => {
                         if (!isMobileDevice()) return;
-                        if (panel.classList.contains('minimized')) {
-                            isDragging = false;
-                            const rect = panel.getBoundingClientRect();
-                            startX = e.clientX;
-                            startY = e.clientY;
-                            startLeft = rect.left;
-                            startTop = rect.top;
-                            panel.style.transition = 'none';
-                        }
-                    });
-
-                    panel.addEventListener('pointermove', (e) => {
-                        if (!isMobileDevice() || !panel.classList.contains('minimized')) return;
                         const moveX = Math.abs(e.clientX - startX);
                         const moveY = Math.abs(e.clientY - startY);
 
@@ -2421,25 +2412,46 @@
                             const newTop = startTop + (e.clientY - startY);
                             const maxX = window.innerWidth - 56;
                             const maxY = window.innerHeight - 56;
-                            panel.style.left = Math.max(0, Math.min(newLeft, maxX)) + 'px';
-                            panel.style.top = Math.max(0, Math.min(newTop, maxY)) + 'px';
-                            panel.style.right = 'auto';
-                            panel.style.bottom = 'auto';
+                            icon.style.left = Math.max(0, Math.min(newLeft, maxX)) + 'px';
+                            icon.style.top = Math.max(0, Math.min(newTop, maxY)) + 'px';
+                            icon.style.right = 'auto';
+                            icon.style.bottom = 'auto';
                         }
-                    });
+                    };
 
-                    panel.addEventListener('pointerup', (e) => {
+                    const handleUp = (e) => {
                         if (!isMobileDevice()) return;
-                        panel.style.transition = '';
+                        window.removeEventListener('pointermove', handleMove);
+                        window.removeEventListener('pointerup', handleUp);
+
+                        icon.style.transition = '';
 
                         // If not dragging, toggle expand/collapse
                         if (!isDragging) {
                             if (panel.classList.contains('minimized')) {
                                 panel.classList.remove('minimized');
                                 panel.classList.add('expanded');
+                            } else if (panel.classList.contains('expanded')) {
+                                panel.classList.add('minimized');
+                                panel.classList.remove('expanded');
                             }
                         }
                         isDragging = false;
+                    };
+
+                    // Use window listeners for smoother dragging
+                    icon.addEventListener('pointerdown', (e) => {
+                        if (!isMobileDevice()) return;
+                        e.stopPropagation();
+                        isDragging = false;
+                        const rect = icon.getBoundingClientRect();
+                        startX = e.clientX;
+                        startY = e.clientY;
+                        startLeft = rect.left;
+                        startTop = rect.top;
+                        icon.style.transition = 'none';
+                        window.addEventListener('pointermove', handleMove);
+                        window.addEventListener('pointerup', handleUp);
                     });
                 }
 

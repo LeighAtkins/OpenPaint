@@ -72,30 +72,38 @@
         display: none !important;
     }
 
-    /* Show only icon in minimized state */
+    /* Show icon in all states - always visible */
     .panel-toggle-icon {
-        display: none;
-        width: 100%;
-        height: 100%;
+        display: flex;
+        position: fixed;
+        width: 56px;
+        height: 56px;
         align-items: center;
         justify-content: center;
         font-size: 24px;
         color: white;
         cursor: pointer;
         user-select: none;
+        border-radius: 50%;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        z-index: 200;
+        transition: transform 0.2s ease;
+    }
+
+    .panel-toggle-icon:active {
+        transform: scale(0.95);
     }
 
     #strokePanel .panel-toggle-icon {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        left: 1rem;
+        bottom: 5rem;
     }
 
     #imagePanel .panel-toggle-icon {
         background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    }
-
-    #strokePanel.minimized .panel-toggle-icon,
-    #imagePanel.minimized .panel-toggle-icon {
-        display: flex !important;
+        right: 1rem;
+        bottom: 5rem;
     }
 
     /* Expanded state - full panel */
@@ -118,11 +126,6 @@
     #imagePanel.expanded {
         right: 0.5rem !important;
         bottom: auto !important;
-    }
-
-    #strokePanel.expanded .panel-toggle-icon,
-    #imagePanel.expanded .panel-toggle-icon {
-        display: none !important;
     }
 
     /* Make headers more tappable on mobile when expanded */
