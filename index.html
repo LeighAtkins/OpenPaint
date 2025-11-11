@@ -2354,6 +2354,12 @@
                             imageIcon.style.display = 'flex';
                             imageIcon.classList.add('minimized');
                         }
+
+                        // Set up mobile panel toggles only on first mobile init
+                        if (!initialized) {
+                            createPanelToggle('strokePanel');
+                            createPanelToggle('imagePanel');
+                        }
                     } else {
                         // Remove mobile classes and attributes on desktop (always, not just if initialized)
                         strokePanel.classList.remove('minimized', 'expanded');
@@ -2571,9 +2577,6 @@
                     icon.addEventListener('touchmove', doDrag, { passive: false });
                     icon.addEventListener('touchend', endDrag);
                 }
-
-                createPanelToggle('strokePanel');
-                createPanelToggle('imagePanel');
             })();
 
             // Set up Vectors and tags panel button functionality
