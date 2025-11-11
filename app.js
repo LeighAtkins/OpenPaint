@@ -387,6 +387,20 @@ app.post('/api/remove-background', async (req, res) => {
 
     const ct = upstream.headers.get('content-type') || 'application/octet-stream';
     const buf = Buffer.from(await upstream.arrayBuffer());
+
+    // If upstream returned an error status and HTML, convert to JSON error
+    if (!upstream.ok && ct.includes('text/html')) {
+      return res
+        .status(upstream.status)
+        .set('content-type', 'application/json; charset=utf-8')
+        .json({
+          ok: false,
+          error: 'upstream-error',
+          message: `Worker returned ${upstream.status}: ${upstream.statusText}`,
+          workerUrl: url
+        });
+    }
+
     res.status(upstream.status).set('content-type', ct).send(buf);
   } catch (err) {
     res
@@ -397,6 +411,64 @@ app.post('/api/remove-background', async (req, res) => {
         error: 'proxy-exception',
         message: String(err)
       });
+  }
+});
+
+/**
+ * API endpoint for Cloudflare Images direct upload
+ * Proxies to CF Worker to get upload URL
+ */
+app.post('/api/images/direct-upload', async (req, res) => {
+  try {
+    const base = process.env.CF_WORKER_URL || AI_WORKER_URL || '';
+    if (!base) {
+      return res
+        .status(500)
+        .set('content-type', 'application/json; charset=utf-8')
+        .json({
+          ok: false,
+          error: 'missing-CF_WORKER_URL',
+          message: 'Set CF_WORKER_URL to your Worker base URL'
+        });
+    }
+    const url = `${base.replace(/\/$/, '')}/images/direct-upload`;
+    const headers = {};
+    if (req.headers['x-api-key']) headers['x-api-key'] = String(req.headers['x-api-key']);
+
+    let upstream;
+    try {
+      upstream = await fetch(url, { method: 'POST', headers });
+    } catch (e) {
+      return res
+        .status(502)
+        .set('content-type', 'application/json; charset=utf-8')
+        .json({ ok: false, error: 'fetch-exception', message: e.message });
+    }
+
+    const text = await upstream.text().catch(() => '<no body>');
+    if (!upstream.ok) {
+      return res
+        .status(502)
+        .set('content-type', 'application/json; charset=utf-8')
+        .json({ ok: false, error: 'upstream-failed', status: upstream.status, body: text.slice(0, 500) });
+    }
+
+    try {
+      return res
+        .status(200)
+        .set('content-type', 'application/json; charset=utf-8')
+        .json(JSON.parse(text));
+    } catch {
+      return res
+        .status(200)
+        .set('content-type', upstream.headers.get('content-type') || 'application/json')
+        .send(text);
+    }
+  } catch (err) {
+    return res
+      .status(500)
+      .set('content-type', 'application/json; charset=utf-8')
+      .json({ ok: false, error: 'proxy-exception', message: String(err) });
   }
 });
 
