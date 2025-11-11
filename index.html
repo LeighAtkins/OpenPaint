@@ -9,6 +9,22 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/tailwind.build.css" />
+    <link rel="stylesheet" href="/css/mobile.css" />
+    <!-- Eruda Mobile Console - for debugging on mobile devices -->
+    <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+    <script>
+        // Initialize Eruda on mobile or when ?eruda is in URL
+        (function() {
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            const hasErudaParam = window.location.search.includes('eruda');
+            const isSmallScreen = window.innerWidth <= 768;
+
+            if (isMobile || hasErudaParam || isSmallScreen) {
+                eruda.init();
+                console.log('[Eruda] Initialized for mobile debugging');
+            }
+        })();
+    </script>
     <script>
         // Suppress autofill extension errors
         window.addEventListener('error', (event) => {
