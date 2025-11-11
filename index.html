@@ -2425,6 +2425,17 @@
                         } else {
                             icon.classList.add('minimized');
                             panel.classList.add('minimized');
+
+                            // Clear inline positioning styles when minimizing - let CSS take over
+                            panel.style.left = '';
+                            panel.style.top = '';
+                            panel.style.right = '';
+                            panel.style.bottom = '';
+                            panel.style.transform = '';
+                            icon.style.left = '';
+                            icon.style.top = '';
+                            icon.style.right = '';
+                            icon.style.bottom = '';
                         }
                     };
 
@@ -2485,43 +2496,12 @@
                         });
                     }
 
-                    // Mobile drag functionality for expanded panels with RAF for 1:1 movement
+                    // Mobile drag functionality for expanded panels - true 1:1 movement
                     let isDragging = false;
                     let dragStartPos = { x: 0, y: 0 };
                     let panelStartPos = { x: 0, y: 0 };
-                    let currentTouchPos = { x: 0, y: 0 };
                     let hasMoved = false;
-                    let rafId = null;
                     let dragTarget = null; // Track what initiated the drag
-
-                    const updatePanelPosition = () => {
-                        if (!isDragging) {
-                            rafId = null;
-                            return;
-                        }
-
-                        const deltaX = currentTouchPos.x - dragStartPos.x;
-                        const deltaY = currentTouchPos.y - dragStartPos.y;
-
-                        // Immediate 1:1 position update
-                        const newX = Math.max(0, Math.min(window.innerWidth - panel.offsetWidth, panelStartPos.x + deltaX));
-                        const newY = Math.max(0, Math.min(window.innerHeight - panel.offsetHeight, panelStartPos.y + deltaY));
-
-                        panel.style.left = newX + 'px';
-                        panel.style.top = newY + 'px';
-                        panel.style.transform = 'none';
-
-                        // Update icon position to follow panel
-                        if (panelId === 'strokePanel') {
-                            icon.style.left = newX + 8 + 'px';
-                            icon.style.top = newY + 'px';
-                        } else {
-                            icon.style.right = (window.innerWidth - newX - panel.offsetWidth + 8) + 'px';
-                            icon.style.top = newY + 'px';
-                        }
-
-                        rafId = requestAnimationFrame(updatePanelPosition);
-                    };
 
                     const startDrag = (e) => {
                         if (!isMobileDevice()) return;
@@ -2538,14 +2518,9 @@
                         hasMoved = false;
                         dragTarget = e.currentTarget; // Track whether icon or header
                         dragStartPos = { x: touch.clientX, y: touch.clientY };
-                        currentTouchPos = { x: touch.clientX, y: touch.clientY };
 
                         const rect = panel.getBoundingClientRect();
                         panelStartPos = { x: rect.left, y: rect.top };
-
-                        // Start RAF loop
-                        if (rafId) cancelAnimationFrame(rafId);
-                        rafId = requestAnimationFrame(updatePanelPosition);
 
                         e.preventDefault();
                     };
@@ -2554,14 +2529,29 @@
                         if (!isDragging) return;
 
                         const touch = e.touches ? e.touches[0] : e;
-                        currentTouchPos = { x: touch.clientX, y: touch.clientY };
-
-                        const deltaX = currentTouchPos.x - dragStartPos.x;
-                        const deltaY = currentTouchPos.y - dragStartPos.y;
+                        const deltaX = touch.clientX - dragStartPos.x;
+                        const deltaY = touch.clientY - dragStartPos.y;
 
                         // Mark as moved if more than 5px
                         if (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5) {
                             hasMoved = true;
+                        }
+
+                        // Update position immediately - true 1:1 tracking
+                        const newX = Math.max(0, Math.min(window.innerWidth - panel.offsetWidth, panelStartPos.x + deltaX));
+                        const newY = Math.max(0, Math.min(window.innerHeight - panel.offsetHeight, panelStartPos.y + deltaY));
+
+                        panel.style.left = newX + 'px';
+                        panel.style.top = newY + 'px';
+                        panel.style.transform = 'none';
+
+                        // Update icon position to follow panel
+                        if (panelId === 'strokePanel') {
+                            icon.style.left = newX + 8 + 'px';
+                            icon.style.top = newY + 'px';
+                        } else {
+                            icon.style.right = (window.innerWidth - newX - panel.offsetWidth + 8) + 'px';
+                            icon.style.top = newY + 'px';
                         }
 
                         e.preventDefault();
@@ -2570,12 +2560,6 @@
                     const endDrag = (e) => {
                         if (isDragging) {
                             isDragging = false;
-
-                            // Cancel RAF
-                            if (rafId) {
-                                cancelAnimationFrame(rafId);
-                                rafId = null;
-                            }
 
                             // If it was just a tap (not a drag) on the ICON, close the panel
                             if (!hasMoved && dragTarget === icon) {
