@@ -144,6 +144,23 @@
         .slider { -webkit-tap-highlight-color: transparent; }
         .slider:focus, .slider:focus-visible { outline: none !important; box-shadow: none; }
         .slider::-moz-focus-outer { border: 0; }
+
+        /* Copy button icon animation */
+        #copyCanvasBtn .copy-icon {
+            opacity: 1;
+        }
+
+        #copyCanvasBtn .check-icon {
+            opacity: 0;
+        }
+
+        #copyCanvasBtn.copied .copy-icon {
+            opacity: 0;
+        }
+
+        #copyCanvasBtn.copied .check-icon {
+            opacity: 1;
+        }
     </style>
     
     <!-- Loading optimization and debug gate -->
@@ -1524,8 +1541,17 @@
     <!-- Canvas Controls (Bottom Panel) -->
     <div id="canvasControls" class="floating-panel fixed bottom-16 rounded-2xl px-3 py-2 transition-all duration-300" style="left: 50%; transform: translateX(-50%); z-index: 4000;">
         <div id="canvasControlsContent" class="flex items-center gap-2 text-sm smart-label-scope">
-            <button id="copyCanvasBtn" class="flex items-center gap-1 px-3 py-1 bg-primary-500 hover:bg-primary-600 active:bg-primary-700 text-white text-xs rounded-lg shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-[1.02] active:scale-95" title="Copy image to clipboard" aria-label="Copy Image">
-                <svg class="w-3.5 h-3.5 opacity-90" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16 1H4a2 2 0 00-2 2v12h2V3h12V1zm3 4H8a2 2 0 00-2 2v14a2 2 0 002 2h11a2 2 0 002-2V7a2 2 0 00-2-2zm0 16H8V7h11v14z"></path></svg>
+            <button id="copyCanvasBtn" class="flex items-center gap-1.5 px-4 py-1.5 bg-primary-500 hover:bg-primary-600 active:bg-primary-700 text-white text-xs rounded-lg shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-[1.02] active:scale-95" title="Copy image to clipboard" aria-label="Copy Image">
+                <div class="relative w-4 h-4">
+                    <!-- Copy Icon (default) -->
+                    <svg class="copy-icon absolute inset-0 w-4 h-4 transition-opacity duration-300 opacity-100" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                        <path d="M16 1H4a2 2 0 00-2 2v12h2V3h12V1zm3 4H8a2 2 0 00-2 2v14a2 2 0 002 2h11a2 2 0 002-2V7a2 2 0 00-2-2zm0 16H8V7h11v14z"></path>
+                    </svg>
+                    <!-- Checkmark Icon (shown after copy) -->
+                    <svg class="check-icon absolute inset-0 w-4 h-4 transition-opacity duration-300 opacity-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"></path>
+                    </svg>
+                </div>
                 <span class="label-long">Copy Image</span>
                 <span class="label-short">Copy</span>
             </button>

@@ -14785,6 +14785,14 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
   if (copyCanvasBtn) {
     copyCanvasBtn.addEventListener('click', () => {
       copyCurrentViewToClipboard();
+
+      // Trigger icon animation: copy -> checkmark -> copy
+      copyCanvasBtn.classList.add('copied');
+
+      // Fade back to copy icon after 1.5 seconds
+      setTimeout(() => {
+        copyCanvasBtn.classList.remove('copied');
+      }, 1500);
     });
     console.log('[PAINT.JS] Canvas copy button event listener added');
   } else {
