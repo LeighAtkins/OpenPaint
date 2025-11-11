@@ -2355,13 +2355,11 @@
                             imageIcon.classList.add('minimized');
                         }
                     } else {
-                        // Remove mobile classes and attributes on desktop
-                        if (initialized) {
-                            strokePanel.classList.remove('minimized', 'expanded');
-                            imagePanel.classList.remove('minimized', 'expanded');
-                            strokePanel.removeAttribute('data-mobile-state');
-                            imagePanel.removeAttribute('data-mobile-state');
-                        }
+                        // Remove mobile classes and attributes on desktop (always, not just if initialized)
+                        strokePanel.classList.remove('minimized', 'expanded');
+                        imagePanel.classList.remove('minimized', 'expanded');
+                        strokePanel.removeAttribute('data-mobile-state');
+                        imagePanel.removeAttribute('data-mobile-state');
 
                         // Ensure panels are visible on desktop
                         strokePanel.style.display = '';
