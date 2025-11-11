@@ -1,0 +1,6 @@
+# Exclude client-side ES modules from Vercel's ESM → CommonJS compilation
+public/js/ai-export.js
+public/js/ai-schemas.js
+public/js/ai-style-guide.js
+public/js/ai-worker-mock.js
+public/js/coordinate-validator.js
