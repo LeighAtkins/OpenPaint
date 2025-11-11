@@ -106,10 +106,10 @@
         top: auto;
     }
 
-    /* Position at top of panel when expanded */
+    /* Position at top of panel when expanded - overlapping the top edge */
     #strokePanelIcon.expanded {
         left: 0.5rem;
-        top: 0.5rem;
+        top: 0rem;
         bottom: auto;
     }
 
@@ -126,10 +126,10 @@
         top: auto;
     }
 
-    /* Position at top of panel when expanded */
+    /* Position at top of panel when expanded - overlapping the top edge */
     #imagePanelIcon.expanded {
         right: 0.5rem;
-        top: 0.5rem;
+        top: 0rem;
         left: auto;
         bottom: auto;
     }
@@ -144,7 +144,7 @@
         top: 50% !important;
         transform: translateY(-50%) !important;
         z-index: 150 !important;
-        padding-top: 4rem !important;
+        padding-top: 3rem !important;
     }
 
     #strokePanel.expanded {
@@ -160,8 +160,11 @@
     /* Adjust header position when expanded to accommodate icon */
     #strokePanel.expanded [id$="Header"],
     #imagePanel.expanded [id$="Header"] {
-        margin-top: -4rem !important;
-        padding-top: 4rem !important;
+        margin-top: -3rem !important;
+        padding-top: 3rem !important;
+        padding-left: 0.5rem !important;
+        padding-right: 0.5rem !important;
+        padding-bottom: 0.5rem !important;
     }
 
     /* Make headers more tappable on mobile when expanded */
@@ -169,7 +172,7 @@
     #strokePanel.expanded [id$="header"],
     #imagePanel.expanded [id$="Header"],
     #imagePanel.expanded [id$="header"] {
-        cursor: pointer;
+        cursor: move;
         min-height: 44px;
     }
 

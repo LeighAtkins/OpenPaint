@@ -2449,13 +2449,19 @@
                         syncIconState();
                     });
 
-                    // Disable the desktop chevron toggle button on mobile to prevent conflicts
+                    // Wire chevron button to close panel on mobile
                     const chevronButton = panel.querySelector('[id^="toggle"]');
                     if (chevronButton) {
                         chevronButton.addEventListener('click', (e) => {
                             if (isMobileDevice()) {
                                 e.preventDefault();
                                 e.stopPropagation();
+
+                                // Close panel if expanded
+                                if (panel.getAttribute('data-mobile-state') === 'expanded') {
+                                    panel.setAttribute('data-mobile-state', 'minimized');
+                                    syncIconState();
+                                }
                                 return false;
                             }
                         }, true); // Use capture phase to intercept before other handlers
@@ -2478,6 +2484,88 @@
                             }
                         });
                     }
+
+                    // Mobile drag functionality for expanded panels
+                    let isDragging = false;
+                    let dragStartPos = { x: 0, y: 0 };
+                    let panelStartPos = { x: 0, y: 0 };
+                    let hasMoved = false;
+
+                    const startDrag = (e) => {
+                        if (!isMobileDevice()) return;
+                        const isOpen = panel.getAttribute('data-mobile-state') === 'expanded';
+                        if (!isOpen) return;
+
+                        // Don't start drag on buttons
+                        if (e.target.tagName === 'BUTTON' || e.target.closest('button')) {
+                            return;
+                        }
+
+                        const touch = e.touches ? e.touches[0] : e;
+                        isDragging = true;
+                        hasMoved = false;
+                        dragStartPos = { x: touch.clientX, y: touch.clientY };
+
+                        const rect = panel.getBoundingClientRect();
+                        panelStartPos = { x: rect.left, y: rect.top };
+
+                        e.preventDefault();
+                    };
+
+                    const doDrag = (e) => {
+                        if (!isDragging) return;
+
+                        const touch = e.touches ? e.touches[0] : e;
+                        const deltaX = touch.clientX - dragStartPos.x;
+                        const deltaY = touch.clientY - dragStartPos.y;
+
+                        // Only consider it a drag if moved more than 5px
+                        if (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5) {
+                            hasMoved = true;
+                        }
+
+                        if (hasMoved) {
+                            const newX = Math.max(0, Math.min(window.innerWidth - panel.offsetWidth, panelStartPos.x + deltaX));
+                            const newY = Math.max(0, Math.min(window.innerHeight - panel.offsetHeight, panelStartPos.y + deltaY));
+
+                            panel.style.left = newX + 'px';
+                            panel.style.top = newY + 'px';
+                            panel.style.transform = 'none';
+
+                            // Update icon position to follow panel
+                            if (panelId === 'strokePanel') {
+                                icon.style.left = newX + 8 + 'px';
+                                icon.style.top = newY + 'px';
+                            } else {
+                                icon.style.right = (window.innerWidth - newX - panel.offsetWidth + 8) + 'px';
+                                icon.style.top = newY + 'px';
+                            }
+                        }
+
+                        e.preventDefault();
+                    };
+
+                    const endDrag = (e) => {
+                        if (isDragging) {
+                            isDragging = false;
+
+                            // If it was just a tap (not a drag), allow click events
+                            if (!hasMoved) {
+                                // Let the click event propagate for tap-to-close
+                            }
+                        }
+                    };
+
+                    // Add drag handlers to both header and icon
+                    if (header) {
+                        header.addEventListener('touchstart', startDrag, { passive: false });
+                        header.addEventListener('touchmove', doDrag, { passive: false });
+                        header.addEventListener('touchend', endDrag);
+                    }
+
+                    icon.addEventListener('touchstart', startDrag, { passive: false });
+                    icon.addEventListener('touchmove', doDrag, { passive: false });
+                    icon.addEventListener('touchend', endDrag);
                 }
 
                 createPanelToggle('strokePanel');
