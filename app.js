@@ -343,36 +343,61 @@ app.post('/api/upload-project', upload.single('projectFile'), (req, res) => {
 });
 
 /**
- * API endpoint for background removal using integrated Python rembg
- * Accepts multipart form-data with field name 'image'
- * Returns JSON containing URLs to both original and processed images
+ * API endpoint for background removal - proxies to Cloudflare Worker
+ * Accepts JSON with imageUrl or base64 data
+ * Returns processed image from AI Worker
  */
-app.post('/api/remove-background', upload.single('image'), async (req, res) => {
-    try {
-        if (!req.file) {
-            return res.status(400).json({ success: false, message: 'No image uploaded (field name should be "image")' });
-        }
-
-        const inputPath = req.file.path;
-        const outputPath = path.join(uploadDir, `processed_${req.file.filename}`);
-
-        await processImageWithRembg(inputPath, outputPath);
-
-        const processedFilename = path.basename(outputPath);
-        const processedImageUrl = `/uploads/${encodeURIComponent(processedFilename)}`;
-        const originalFilename = req.file.filename;
-        const originalImageUrl = `/uploads/${encodeURIComponent(originalFilename)}`;
-
-        return res.json({
-            success: true,
-            original: originalImageUrl,
-            processed: processedImageUrl,
-            url: processedImageUrl
+app.post('/api/remove-background', async (req, res) => {
+  try {
+    const base = process.env.CF_WORKER_URL || AI_WORKER_URL || '';
+    if (!base) {
+      return res
+        .status(500)
+        .set('content-type', 'application/json; charset=utf-8')
+        .json({
+          ok: false,
+          error: 'missing-CF_WORKER_URL',
+          message: 'Set CF_WORKER_URL to your Worker base URL'
         });
-    } catch (error) {
-        console.error('Error processing image:', error);
-        return res.status(500).json({ success: false, message: 'Failed to process image' });
     }
+    const url = `${base.replace(/\/$/, '')}/remove-background`;
+    const headers = { 'content-type': 'application/json' };
+    if (req.headers['x-api-key']) {
+      headers['x-api-key'] = String(req.headers['x-api-key']);
+    }
+
+    const bodyText = typeof req.body === 'string' ? req.body : JSON.stringify(req.body || {});
+    let upstream;
+    try {
+      upstream = await fetch(url, {
+        method: 'POST',
+        headers,
+        body: bodyText
+      });
+    } catch (e) {
+      return res
+        .status(502)
+        .set('content-type', 'application/json; charset=utf-8')
+        .json({
+          ok: false,
+          error: 'fetch-exception',
+          message: e.message
+        });
+    }
+
+    const ct = upstream.headers.get('content-type') || 'application/octet-stream';
+    const buf = Buffer.from(await upstream.arrayBuffer());
+    res.status(upstream.status).set('content-type', ct).send(buf);
+  } catch (err) {
+    res
+      .status(500)
+      .set('content-type', 'application/json; charset=utf-8')
+      .json({
+        ok: false,
+        error: 'proxy-exception',
+        message: String(err)
+      });
+  }
 });
 
 /**
@@ -688,71 +713,6 @@ if (require.main === module) {
   app.listen(port, "0.0.0.0", () => {
     console.log(`OpenPaint app listening at http://localhost:${port}`);
   });
-}
-
-/**
- * Python rembg processing function using inline script execution
- */
-async function processImageWithRembg(inputPath, outputPath) {
-    return new Promise((resolve, reject) => {
-        const fs = require('fs');
-        const tempScriptPath = path.join(__dirname, 'temp_rembg_script.py');
-        const pythonScript = `
-import sys
-import os
-from rembg import remove
-from PIL import Image
-import io
-
-def main():
-    try:
-        input_path = sys.argv[1]
-        output_path = sys.argv[2]
-
-        if not os.path.exists(input_path):
-            print(f"Input file does not exist: {input_path}", file=sys.stderr)
-            sys.exit(1)
-
-        with open(input_path, 'rb') as f:
-            input_data = f.read()
-
-        try:
-            Image.open(io.BytesIO(input_data))
-        except Exception:
-            pass
-
-        output_data = remove(input_data)
-
-        out_dir = os.path.dirname(output_path)
-        if out_dir and not os.path.exists(out_dir):
-            os.makedirs(out_dir, exist_ok=True)
-
-        with open(output_path, 'wb') as f:
-            f.write(output_data)
-
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        sys.exit(1)
-
-if __name__ == "__main__":
-    if len(sys.argv) != 3:
-        print("Usage: python script.py <input_path> <output_path>", file=sys.stderr)
-        sys.exit(1)
-    main()
-`;
-
-        fs.writeFileSync(tempScriptPath, pythonScript);
-
-        const py = spawn('python3', [tempScriptPath, inputPath, outputPath], { stdio: 'inherit' });
-        let failed = false;
-        py.on('error', (err) => { failed = true; try { fs.unlinkSync(tempScriptPath); } catch (_) {}; reject(err); });
-        py.on('close', (code) => {
-            try { fs.unlinkSync(tempScriptPath); } catch (_) {}
-            if (!failed && code === 0) return resolve();
-            reject(new Error(`Python process exited with code ${code}`));
-        });
-    });
 }
 
 // Serve static files with proper MIME types
