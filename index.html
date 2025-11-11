@@ -2111,6 +2111,18 @@
             // Panel visibility toggles
             const strokePanel = document.getElementById('strokePanel');
             const imagePanel = document.getElementById('imagePanel');
+
+            // Ensure panels are visible on desktop at startup
+            // (Mobile code will handle showing/hiding for mobile devices)
+            if (strokePanel) {
+                strokePanel.classList.remove('hidden');
+                strokePanel.style.display = '';
+            }
+            if (imagePanel) {
+                imagePanel.classList.remove('hidden');
+                imagePanel.style.display = '';
+            }
+
             const captureOverlay = document.getElementById('captureOverlay');
             const captureFrame = document.getElementById('captureFrame');
             // Per-image capture frame storage and helpers
