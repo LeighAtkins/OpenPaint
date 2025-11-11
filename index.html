@@ -2383,14 +2383,13 @@
                         strokePanel.style.display = '';
                         imagePanel.style.display = '';
 
-                        // Clear any drag positioning from mobile
+                        // Clear only drag positioning from mobile (left/right for horizontal, transform)
+                        // Keep the original 'top' positioning from HTML as it's needed for panel visibility
                         strokePanel.style.left = '';
-                        strokePanel.style.top = '';
                         strokePanel.style.right = '';
                         strokePanel.style.bottom = '';
                         strokePanel.style.transform = '';
                         imagePanel.style.left = '';
-                        imagePanel.style.top = '';
                         imagePanel.style.right = '';
                         imagePanel.style.bottom = '';
                         imagePanel.style.transform = '';
