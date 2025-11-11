@@ -2375,15 +2375,28 @@
                     resizeTimeout = setTimeout(updatePanelState, 250);
                 });
 
-                // Toggle expand/collapse and drag icon
+                // Simple toggle button - like Facebook Messenger
                 function createPanelToggle(panel) {
                     const icon = panel.querySelector('.panel-toggle-icon');
                     if (!icon) return;
 
-                    let isDragging = false;
-                    let startX, startY, startLeft, startTop;
+                    // Click icon to toggle panel open/closed
+                    icon.addEventListener('click', (e) => {
+                        if (!isMobileDevice()) return;
+                        e.stopPropagation();
 
-                    // On mobile, make panel headers close the panel when expanded
+                        if (panel.classList.contains('minimized')) {
+                            // Open panel
+                            panel.classList.remove('minimized');
+                            panel.classList.add('expanded');
+                        } else if (panel.classList.contains('expanded')) {
+                            // Close panel
+                            panel.classList.add('minimized');
+                            panel.classList.remove('expanded');
+                        }
+                    });
+
+                    // Optional: click panel header to close
                     const header = panel.querySelector('[id$="Header"], [id$="header"]');
                     if (header) {
                         header.addEventListener('click', (e) => {
@@ -2399,60 +2412,6 @@
                             }
                         });
                     }
-
-                    // Icon drag and toggle handlers
-                    const handleMove = (e) => {
-                        if (!isMobileDevice()) return;
-                        const moveX = Math.abs(e.clientX - startX);
-                        const moveY = Math.abs(e.clientY - startY);
-
-                        if (moveX > 5 || moveY > 5) {
-                            isDragging = true;
-                            const newLeft = startLeft + (e.clientX - startX);
-                            const newTop = startTop + (e.clientY - startY);
-                            const maxX = window.innerWidth - 56;
-                            const maxY = window.innerHeight - 56;
-                            icon.style.left = Math.max(0, Math.min(newLeft, maxX)) + 'px';
-                            icon.style.top = Math.max(0, Math.min(newTop, maxY)) + 'px';
-                            icon.style.right = 'auto';
-                            icon.style.bottom = 'auto';
-                        }
-                    };
-
-                    const handleUp = (e) => {
-                        if (!isMobileDevice()) return;
-                        window.removeEventListener('pointermove', handleMove);
-                        window.removeEventListener('pointerup', handleUp);
-
-                        icon.style.transition = '';
-
-                        // If not dragging, toggle expand/collapse
-                        if (!isDragging) {
-                            if (panel.classList.contains('minimized')) {
-                                panel.classList.remove('minimized');
-                                panel.classList.add('expanded');
-                            } else if (panel.classList.contains('expanded')) {
-                                panel.classList.add('minimized');
-                                panel.classList.remove('expanded');
-                            }
-                        }
-                        isDragging = false;
-                    };
-
-                    // Use window listeners for smoother dragging
-                    icon.addEventListener('pointerdown', (e) => {
-                        if (!isMobileDevice()) return;
-                        e.stopPropagation();
-                        isDragging = false;
-                        const rect = icon.getBoundingClientRect();
-                        startX = e.clientX;
-                        startY = e.clientY;
-                        startLeft = rect.left;
-                        startTop = rect.top;
-                        icon.style.transition = 'none';
-                        window.addEventListener('pointermove', handleMove);
-                        window.addEventListener('pointerup', handleUp);
-                    });
                 }
 
                 createPanelToggle(strokePanel);
