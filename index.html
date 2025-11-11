@@ -2325,6 +2325,115 @@
 
             // removed elements resize handle wiring
 
+            // Mobile panel management - collapsible circular buttons
+            (() => {
+                const isMobileDevice = () => /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
+
+                function updatePanelState() {
+                    if (isMobileDevice()) {
+                        // Start in minimized state on mobile
+                        if (!strokePanel.classList.contains('minimized') && !strokePanel.classList.contains('expanded')) {
+                            strokePanel.classList.add('minimized');
+                        }
+                        if (!imagePanel.classList.contains('minimized') && !imagePanel.classList.contains('expanded')) {
+                            imagePanel.classList.add('minimized');
+                        }
+
+                        // Add toggle icons if not present
+                        if (!strokePanel.querySelector('.panel-toggle-icon')) {
+                            const strokeIcon = document.createElement('div');
+                            strokeIcon.className = 'panel-toggle-icon';
+                            strokeIcon.innerHTML = '✏️';
+                            strokePanel.insertBefore(strokeIcon, strokePanel.firstChild);
+                        }
+                        if (!imagePanel.querySelector('.panel-toggle-icon')) {
+                            const imageIcon = document.createElement('div');
+                            imageIcon.className = 'panel-toggle-icon';
+                            imageIcon.innerHTML = '🖼️';
+                            imagePanel.insertBefore(imageIcon, imagePanel.firstChild);
+                        }
+                    } else {
+                        // Remove mobile classes on desktop
+                        strokePanel.classList.remove('minimized', 'expanded');
+                        imagePanel.classList.remove('minimized', 'expanded');
+                    }
+                }
+
+                updatePanelState();
+                window.addEventListener('resize', updatePanelState);
+
+                // Toggle expand/collapse on click
+                function createPanelToggle(panel) {
+                    let isDragging = false;
+                    let startX, startY, startLeft, startTop;
+
+                    // On mobile, make panel headers close the panel when expanded
+                    const header = panel.querySelector('[id$="Header"], [id$="header"]');
+                    if (header) {
+                        header.addEventListener('click', (e) => {
+                            if (!isMobileDevice()) return;
+                            if (panel.classList.contains('expanded')) {
+                                // Don't close if clicking on buttons within the header
+                                if (e.target.tagName === 'BUTTON' || e.target.closest('button')) {
+                                    return;
+                                }
+                                panel.classList.add('minimized');
+                                panel.classList.remove('expanded');
+                                e.stopPropagation();
+                            }
+                        });
+                    }
+
+                    panel.addEventListener('pointerdown', (e) => {
+                        if (!isMobileDevice()) return;
+                        if (panel.classList.contains('minimized')) {
+                            isDragging = false;
+                            const rect = panel.getBoundingClientRect();
+                            startX = e.clientX;
+                            startY = e.clientY;
+                            startLeft = rect.left;
+                            startTop = rect.top;
+                            panel.style.transition = 'none';
+                        }
+                    });
+
+                    panel.addEventListener('pointermove', (e) => {
+                        if (!isMobileDevice() || !panel.classList.contains('minimized')) return;
+                        const moveX = Math.abs(e.clientX - startX);
+                        const moveY = Math.abs(e.clientY - startY);
+
+                        if (moveX > 5 || moveY > 5) {
+                            isDragging = true;
+                            const newLeft = startLeft + (e.clientX - startX);
+                            const newTop = startTop + (e.clientY - startY);
+                            const maxX = window.innerWidth - 56;
+                            const maxY = window.innerHeight - 56;
+                            panel.style.left = Math.max(0, Math.min(newLeft, maxX)) + 'px';
+                            panel.style.top = Math.max(0, Math.min(newTop, maxY)) + 'px';
+                            panel.style.right = 'auto';
+                            panel.style.bottom = 'auto';
+                        }
+                    });
+
+                    panel.addEventListener('pointerup', (e) => {
+                        if (!isMobileDevice()) return;
+                        panel.style.transition = '';
+
+                        // If not dragging, toggle expand/collapse
+                        if (!isDragging) {
+                            if (panel.classList.contains('minimized')) {
+                                panel.classList.remove('minimized');
+                                panel.classList.add('expanded');
+                            }
+                        }
+                        isDragging = false;
+                    });
+                }
+
+                createPanelToggle(strokePanel);
+                createPanelToggle(imagePanel);
+            })();
+
             // Set up Vectors and tags panel button functionality
             const selectAllStrokesBtn = document.getElementById('selectAllStrokesBtn');
             const showAllMeasurementsBtn = document.getElementById('showAllMeasurementsBtn');
