@@ -2341,10 +2341,29 @@
                     if (isMobileDevice()) {
                         // On first init, start in minimized state
                         if (!initialized) {
+                            // Set data attributes to track mobile state
+                            strokePanel.setAttribute('data-mobile-state', 'minimized');
+                            imagePanel.setAttribute('data-mobile-state', 'minimized');
+                            // Remove any existing classes
+                            strokePanel.classList.remove('minimized', 'expanded');
+                            imagePanel.classList.remove('minimized', 'expanded');
+                            // Add minimized class
                             strokePanel.classList.add('minimized');
                             imagePanel.classList.add('minimized');
                             initialized = true;
                         }
+
+                        // Reset inline positioning styles from drag operations (they can position panels off-screen)
+                        strokePanel.style.left = '';
+                        strokePanel.style.top = '';
+                        strokePanel.style.right = '';
+                        strokePanel.style.bottom = '';
+                        strokePanel.style.transform = '';
+                        imagePanel.style.left = '';
+                        imagePanel.style.top = '';
+                        imagePanel.style.right = '';
+                        imagePanel.style.bottom = '';
+                        imagePanel.style.transform = '';
 
                         // Ensure panels are visible on mobile
                         strokePanel.style.display = '';
@@ -2353,13 +2372,21 @@
                         // Show toggle icons on mobile (they're in the HTML outside the panels)
                         const strokeIcon = document.getElementById('strokePanelIcon');
                         const imageIcon = document.getElementById('imagePanelIcon');
-                        if (strokeIcon) strokeIcon.style.display = 'flex';
-                        if (imageIcon) imageIcon.style.display = 'flex';
+                        if (strokeIcon) {
+                            strokeIcon.style.display = 'flex';
+                            strokeIcon.classList.add('minimized');
+                        }
+                        if (imageIcon) {
+                            imageIcon.style.display = 'flex';
+                            imageIcon.classList.add('minimized');
+                        }
                     } else {
-                        // Remove mobile classes on desktop
+                        // Remove mobile classes and attributes on desktop
                         if (initialized) {
                             strokePanel.classList.remove('minimized', 'expanded');
                             imagePanel.classList.remove('minimized', 'expanded');
+                            strokePanel.removeAttribute('data-mobile-state');
+                            imagePanel.removeAttribute('data-mobile-state');
                         }
                         // Hide toggle icons on desktop
                         const strokeIcon = document.getElementById('strokePanelIcon');
@@ -2386,14 +2413,25 @@
 
                     // Sync icon state with panel state
                     const syncIconState = () => {
-                        if (panel.classList.contains('minimized')) {
-                            icon.classList.remove('expanded');
-                            icon.classList.add('minimized');
-                        } else if (panel.classList.contains('expanded')) {
-                            icon.classList.remove('minimized');
+                        // Always clear both states first to avoid conflicts
+                        icon.classList.remove('minimized', 'expanded');
+                        panel.classList.remove('minimized', 'expanded');
+
+                        // Determine current state and apply it
+                        const isOpen = panel.getAttribute('data-mobile-state') === 'expanded';
+                        if (isOpen) {
                             icon.classList.add('expanded');
+                            panel.classList.add('expanded');
+                        } else {
+                            icon.classList.add('minimized');
+                            panel.classList.add('minimized');
                         }
                     };
+
+                    // Initialize state attribute if not set
+                    if (!panel.getAttribute('data-mobile-state')) {
+                        panel.setAttribute('data-mobile-state', 'minimized');
+                    }
 
                     // Initial sync
                     syncIconState();
@@ -2403,32 +2441,38 @@
                         if (!isMobileDevice()) return;
                         e.stopPropagation();
 
-                        if (panel.classList.contains('minimized')) {
-                            // Open panel
-                            panel.classList.remove('minimized');
-                            panel.classList.add('expanded');
-                        } else if (panel.classList.contains('expanded')) {
-                            // Close panel
-                            panel.classList.add('minimized');
-                            panel.classList.remove('expanded');
-                        }
+                        // Toggle state
+                        const isCurrentlyOpen = panel.getAttribute('data-mobile-state') === 'expanded';
+                        panel.setAttribute('data-mobile-state', isCurrentlyOpen ? 'minimized' : 'expanded');
 
-                        // Sync icon state after toggle
+                        // Sync classes
                         syncIconState();
                     });
+
+                    // Disable the desktop chevron toggle button on mobile to prevent conflicts
+                    const chevronButton = panel.querySelector('[id^="toggle"]');
+                    if (chevronButton) {
+                        chevronButton.addEventListener('click', (e) => {
+                            if (isMobileDevice()) {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                return false;
+                            }
+                        }, true); // Use capture phase to intercept before other handlers
+                    }
 
                     // Optional: click panel header to close
                     const header = panel.querySelector('[id$="Header"], [id$="header"]');
                     if (header) {
                         header.addEventListener('click', (e) => {
                             if (!isMobileDevice()) return;
-                            if (panel.classList.contains('expanded')) {
+                            const isOpen = panel.getAttribute('data-mobile-state') === 'expanded';
+                            if (isOpen) {
                                 // Don't close if clicking on buttons within the header
                                 if (e.target.tagName === 'BUTTON' || e.target.closest('button')) {
                                     return;
                                 }
-                                panel.classList.add('minimized');
-                                panel.classList.remove('expanded');
+                                panel.setAttribute('data-mobile-state', 'minimized');
                                 syncIconState();
                                 e.stopPropagation();
                             }
@@ -3244,13 +3288,19 @@
                 let lastMousePos = { x: 0, y: 0 };
                 let rafId = null;
                 let elementWidth, elementHeight; // Cache dimensions
-                
+
                 handle.addEventListener('mousedown', (e) => {
+                    // Disable dragging on mobile devices
+                    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
+                    if (isMobile) {
+                        return;
+                    }
+
                     // Don't start drag if clicking on buttons or inputs
                     if (e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.closest('button')) {
                         return;
                     }
-                    
+
                     e.preventDefault();
                     e.stopPropagation();
                     
