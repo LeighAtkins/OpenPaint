@@ -1469,6 +1469,9 @@
         </div>
     </div>
 
+    <!-- Mobile toggle icon for Elements panel (outside panel to avoid clipping) -->
+    <div id="strokePanelIcon" class="panel-toggle-icon" data-panel="strokePanel">✏️</div>
+
     <!-- Image Gallery Panel -->
     <div id="imagePanel" class="floating-panel fixed right-4 z-30 rounded-2xl w-72 transition-all duration-300 overflow-hidden" style="top: clamp(1rem, 50vh - 20rem, calc(100vh - 40rem - 1rem)); max-height: min(40rem, calc(100vh - 2rem));">
         <div id="imagePanelHeader" class="flex items-center justify-between p-3 cursor-move border-b border-gray-200/50 bg-white rounded-t-2xl">
@@ -1506,6 +1509,9 @@
             <!-- Navigation controls removed -->
         </div>
     </div>
+
+    <!-- Mobile toggle icon for Images panel (outside panel to avoid clipping) -->
+    <div id="imagePanelIcon" class="panel-toggle-icon" data-panel="imagePanel">🖼️</div>
 
     <!-- Capture Frame -->
     <div id="captureOverlay" class="fixed inset-0 pointer-events-none" style="z-index: 15;">
@@ -2344,25 +2350,22 @@
                         strokePanel.style.display = '';
                         imagePanel.style.display = '';
 
-                        // Add toggle icons if not present
-                        if (!strokePanel.querySelector('.panel-toggle-icon')) {
-                            const strokeIcon = document.createElement('div');
-                            strokeIcon.className = 'panel-toggle-icon';
-                            strokeIcon.innerHTML = '✏️';
-                            strokePanel.insertBefore(strokeIcon, strokePanel.firstChild);
-                        }
-                        if (!imagePanel.querySelector('.panel-toggle-icon')) {
-                            const imageIcon = document.createElement('div');
-                            imageIcon.className = 'panel-toggle-icon';
-                            imageIcon.innerHTML = '🖼️';
-                            imagePanel.insertBefore(imageIcon, imagePanel.firstChild);
-                        }
+                        // Show toggle icons on mobile (they're in the HTML outside the panels)
+                        const strokeIcon = document.getElementById('strokePanelIcon');
+                        const imageIcon = document.getElementById('imagePanelIcon');
+                        if (strokeIcon) strokeIcon.style.display = 'flex';
+                        if (imageIcon) imageIcon.style.display = 'flex';
                     } else {
                         // Remove mobile classes on desktop
                         if (initialized) {
                             strokePanel.classList.remove('minimized', 'expanded');
                             imagePanel.classList.remove('minimized', 'expanded');
                         }
+                        // Hide toggle icons on desktop
+                        const strokeIcon = document.getElementById('strokePanelIcon');
+                        const imageIcon = document.getElementById('imagePanelIcon');
+                        if (strokeIcon) strokeIcon.style.display = 'none';
+                        if (imageIcon) imageIcon.style.display = 'none';
                     }
                 }
 
@@ -2376,9 +2379,24 @@
                 });
 
                 // Simple toggle button - like Facebook Messenger
-                function createPanelToggle(panel) {
-                    const icon = panel.querySelector('.panel-toggle-icon');
-                    if (!icon) return;
+                function createPanelToggle(panelId) {
+                    const panel = document.getElementById(panelId);
+                    const icon = document.getElementById(panelId + 'Icon');
+                    if (!icon || !panel) return;
+
+                    // Sync icon state with panel state
+                    const syncIconState = () => {
+                        if (panel.classList.contains('minimized')) {
+                            icon.classList.remove('expanded');
+                            icon.classList.add('minimized');
+                        } else if (panel.classList.contains('expanded')) {
+                            icon.classList.remove('minimized');
+                            icon.classList.add('expanded');
+                        }
+                    };
+
+                    // Initial sync
+                    syncIconState();
 
                     // Click icon to toggle panel open/closed
                     icon.addEventListener('click', (e) => {
@@ -2394,6 +2412,9 @@
                             panel.classList.add('minimized');
                             panel.classList.remove('expanded');
                         }
+
+                        // Sync icon state after toggle
+                        syncIconState();
                     });
 
                     // Optional: click panel header to close
@@ -2408,14 +2429,15 @@
                                 }
                                 panel.classList.add('minimized');
                                 panel.classList.remove('expanded');
+                                syncIconState();
                                 e.stopPropagation();
                             }
                         });
                     }
                 }
 
-                createPanelToggle(strokePanel);
-                createPanelToggle(imagePanel);
+                createPanelToggle('strokePanel');
+                createPanelToggle('imagePanel');
             })();
 
             // Set up Vectors and tags panel button functionality

@@ -67,14 +67,14 @@
     }
 
     /* Hide panel content when minimized */
-    #strokePanel.minimized > *:not(.panel-toggle-icon),
-    #imagePanel.minimized > *:not(.panel-toggle-icon) {
+    #strokePanel.minimized > *,
+    #imagePanel.minimized > * {
         display: none !important;
     }
 
-    /* Show icon in all states - always visible */
+    /* Show icon in all states - always visible (icons are now outside panels) */
     .panel-toggle-icon {
-        display: flex !important;
+        display: none; /* Hidden by default, shown via JS on mobile */
         position: fixed;
         width: 56px;
         height: 56px;
@@ -94,16 +94,32 @@
         transform: scale(0.95);
     }
 
-    /* Default position when panel is minimized */
-    #strokePanel.minimized .panel-toggle-icon {
+    /* Stroke panel icon positioning */
+    #strokePanelIcon {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    /* Default position when panel is minimized */
+    #strokePanelIcon.minimized {
         left: 1rem;
         bottom: 5rem;
         top: auto;
     }
 
-    #imagePanel.minimized .panel-toggle-icon {
+    /* Position at top of panel when expanded */
+    #strokePanelIcon.expanded {
+        left: 0.5rem;
+        top: 0.5rem;
+        bottom: auto;
+    }
+
+    /* Image panel icon positioning */
+    #imagePanelIcon {
         background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+
+    /* Default position when panel is minimized */
+    #imagePanelIcon.minimized {
         right: 1rem;
         bottom: 5rem;
         left: auto;
@@ -111,15 +127,7 @@
     }
 
     /* Position at top of panel when expanded */
-    #strokePanel.expanded .panel-toggle-icon {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        left: 0.5rem;
-        top: 0.5rem;
-        bottom: auto;
-    }
-
-    #imagePanel.expanded .panel-toggle-icon {
-        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    #imagePanelIcon.expanded {
         right: 0.5rem;
         top: 0.5rem;
         left: auto;
