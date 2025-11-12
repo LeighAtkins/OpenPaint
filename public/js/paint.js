@@ -12473,24 +12473,25 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
     console.log('[Event] Canvas element:', canvas);
     console.log('[Event] Canvas ID:', canvas.id);
         
-    // Canvas mouse events
-    canvas.addEventListener('mousedown', onCanvasMouseDown, { signal: eventListeners.signal });
-    canvas.addEventListener('mousemove', onCanvasMouseMove, { signal: eventListeners.signal });
-    canvas.addEventListener('mouseup', onCanvasMouseUp, { signal: eventListeners.signal });
-    canvas.addEventListener('mouseout', onCanvasMouseOut, { signal: eventListeners.signal });
+    // Canvas pointer events (supports both mouse and touch)
+    canvas.addEventListener('pointerdown', onCanvasMouseDown, { signal: eventListeners.signal });
+    canvas.addEventListener('pointermove', onCanvasMouseMove, { signal: eventListeners.signal });
+    canvas.addEventListener('pointerup', onCanvasMouseUp, { signal: eventListeners.signal });
+    canvas.addEventListener('pointerout', onCanvasMouseOut, { signal: eventListeners.signal });
+    canvas.addEventListener('pointercancel', onCanvasMouseUp, { signal: eventListeners.signal });
     canvas.addEventListener('dblclick', onCanvasDoubleClick, { signal: eventListeners.signal });
     canvas.addEventListener('wheel', onCanvasWheel, { signal: eventListeners.signal, passive: true });
     canvas.addEventListener('scalechange', onCanvasScaleChange, { signal: eventListeners.signal });
     // canvas.addEventListener('contextmenu', onCanvasRightClick, { signal: eventListeners.signal }); // Disabled to allow browser context menu
     console.log('[Event] Context menu listener bound to canvas');
-        
 
-        
+
+
     // Allow standard browser context menu on canvas for image operations
-        
-    // Window mouse events for global dragging
-    window.addEventListener('mousemove', onWindowMouseMove, { signal: eventListeners.signal });
-    window.addEventListener('mouseup', onWindowMouseUp, { signal: eventListeners.signal });
+
+    // Window pointer events for global dragging (supports both mouse and touch)
+    window.addEventListener('pointermove', onWindowMouseMove, { signal: eventListeners.signal });
+    window.addEventListener('pointerup', onWindowMouseUp, { signal: eventListeners.signal });
         
     window.paintApp.state.listenersBound = true;
     console.warn('[PAINT.JS] Event listeners bound successfully');
@@ -12664,11 +12665,11 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
               break;
           }
 
-          // Make resize handles functional
-          handleEl.addEventListener('mousedown', (ev) => {
+          // Make resize handles functional (supports both mouse and touch)
+          handleEl.addEventListener('pointerdown', (ev) => {
             ev.stopPropagation();
             ev.preventDefault();
-                        
+
             const startX = ev.clientX;
             const startY = ev.clientY;
             const startWidth = editBox.offsetWidth;
@@ -12705,12 +12706,12 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
             };
 
             const handleResizeUp = () => {
-              document.removeEventListener('mousemove', handleResizeMove);
-              document.removeEventListener('mouseup', handleResizeUp);
+              document.removeEventListener('pointermove', handleResizeMove);
+              document.removeEventListener('pointerup', handleResizeUp);
             };
 
-            document.addEventListener('mousemove', handleResizeMove);
-            document.addEventListener('mouseup', handleResizeUp);
+            document.addEventListener('pointermove', handleResizeMove);
+            document.addEventListener('pointerup', handleResizeUp);
           });
 
           editBox.appendChild(handleEl);
@@ -12740,8 +12741,8 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
                 `;
         editBox.appendChild(dragHandle);
 
-        // Make drag handle draggable
-        dragHandle.addEventListener('mousedown', (ev) => {
+        // Make drag handle draggable (supports both mouse and touch)
+        dragHandle.addEventListener('pointerdown', (ev) => {
           // Clear any text selection immediately
           if (window.getSelection) {
             window.getSelection().removeAllRanges();
@@ -12757,9 +12758,9 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
           editBox.style.cursor = 'move';
           editBox.style.userSelect = 'none';
           document.body.style.userSelect = 'none';
-                    
-          document.addEventListener('mousemove', handleEditMove);
-          document.addEventListener('mouseup', handleEditUp);
+
+          document.addEventListener('pointermove', handleEditMove);
+          document.addEventListener('pointerup', handleEditUp);
           ev.preventDefault();
           ev.stopPropagation();
         });
@@ -12853,11 +12854,11 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
             document.body.style.userSelect = '';
           }
           editDragStart = null;
-          document.removeEventListener('mousemove', handleEditMove);
-          document.removeEventListener('mouseup', handleEditUp);
+          document.removeEventListener('pointermove', handleEditMove);
+          document.removeEventListener('pointerup', handleEditUp);
         };
 
-        editBox.addEventListener('mousedown', (ev) => {
+        editBox.addEventListener('pointerdown', (ev) => {
           // Don't start drag if clicking on resize handles or drag handle
           if (ev.target.classList.contains('resize-handle') ||
                         ev.target.classList.contains('drag-handle')) {
@@ -12879,9 +12880,9 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
           editBox.style.cursor = 'move';
           editBox.style.userSelect = 'none';
           document.body.style.userSelect = 'none';
-                    
-          document.addEventListener('mousemove', handleEditMove);
-          document.addEventListener('mouseup', handleEditUp);
+
+          document.addEventListener('pointermove', handleEditMove);
+          document.addEventListener('pointerup', handleEditUp);
           ev.preventDefault();
           ev.stopPropagation();
         });
@@ -19190,40 +19191,40 @@ function createTextBox(x, y) {
   let dragStart = null;
   let isDragging = false;
     
-  textBoxWrapper.addEventListener('mousedown', (ev) => {
+  textBoxWrapper.addEventListener('pointerdown', (ev) => {
     // Allow dragging from wrapper, but not from text box itself when typing
     if (ev.target === textBoxWrapper || ev.target.closest('.text-box') === null) {
       dragStart = { mx: ev.clientX, my: ev.clientY, x: container.offsetLeft, y: container.offsetTop };
       isDragging = false;
     }
   });
-    
+
   const handleMouseMove = (ev) => {
     if (!dragStart) return;
-        
+
     const dx = ev.clientX - dragStart.mx;
     const dy = ev.clientY - dragStart.my;
-        
+
     // Only start dragging if moved more than 3 pixels (prevents accidental drags while clicking)
     if (!isDragging && (Math.abs(dx) > 3 || Math.abs(dy) > 3)) {
       isDragging = true;
     }
-        
+
     if (isDragging) {
       container.style.left = (dragStart.x + dx) + 'px';
       container.style.top = (dragStart.y + dy) + 'px';
     }
   };
-    
+
   const handleMouseUp = () => {
     dragStart = null;
     isDragging = false;
-    document.removeEventListener('mousemove', handleMouseMove);
-    document.removeEventListener('mouseup', handleMouseUp);
+    document.removeEventListener('pointermove', handleMouseMove);
+    document.removeEventListener('pointerup', handleMouseUp);
   };
-    
-  document.addEventListener('mousemove', handleMouseMove);
-  document.addEventListener('mouseup', handleMouseUp);
+
+  document.addEventListener('pointermove', handleMouseMove);
+  document.addEventListener('pointerup', handleMouseUp);
 
   // Save text element when user finishes editing
   const saveTextElement = () => {
