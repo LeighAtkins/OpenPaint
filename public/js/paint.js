@@ -9342,11 +9342,33 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
     
   // Enhanced coordinate transform that works with both systems
   window.getPointerCoords = function getPointerCoords(event) {
-    // Always use legacy system for coordinate transforms
-    const canvasCoords = { x: event.offsetX, y: event.offsetY };
+    // Handle both mouse and touch events properly
+    let canvasCoords;
+
+    if (event.touches && event.touches.length > 0) {
+      // Touch event - calculate offset from canvas bounds
+      const touch = event.touches[0];
+      const rect = canvas.getBoundingClientRect();
+      canvasCoords = {
+        x: touch.clientX - rect.left,
+        y: touch.clientY - rect.top
+      };
+    } else if (event.changedTouches && event.changedTouches.length > 0) {
+      // Touch end event - use changedTouches
+      const touch = event.changedTouches[0];
+      const rect = canvas.getBoundingClientRect();
+      canvasCoords = {
+        x: touch.clientX - rect.left,
+        y: touch.clientY - rect.top
+      };
+    } else {
+      // Mouse event - use offsetX/offsetY
+      canvasCoords = { x: event.offsetX, y: event.offsetY };
+    }
+
     const imageCoords = getTransformedCoords(canvasCoords.x, canvasCoords.y);
-    
-        
+
+
     return {
       client: canvasCoords,
       world: imageCoords,
@@ -12483,14 +12505,67 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
     canvas.addEventListener('scalechange', onCanvasScaleChange, { signal: eventListeners.signal });
     // canvas.addEventListener('contextmenu', onCanvasRightClick, { signal: eventListeners.signal }); // Disabled to allow browser context menu
     console.log('[Event] Context menu listener bound to canvas');
-        
 
-        
+    // Canvas touch events - map to mouse event handlers
+    // Add offsetX/offsetY properties to touch events for compatibility
+    canvas.addEventListener('touchstart', (e) => {
+      e.preventDefault(); // Prevent scrolling while drawing
+      const touch = e.touches[0];
+      if (touch) {
+        const rect = canvas.getBoundingClientRect();
+        e.offsetX = touch.clientX - rect.left;
+        e.offsetY = touch.clientY - rect.top;
+      }
+      onCanvasMouseDown(e);
+    }, { signal: eventListeners.signal, passive: false });
+
+    canvas.addEventListener('touchmove', (e) => {
+      e.preventDefault(); // Prevent scrolling while drawing
+      const touch = e.touches[0];
+      if (touch) {
+        const rect = canvas.getBoundingClientRect();
+        e.offsetX = touch.clientX - rect.left;
+        e.offsetY = touch.clientY - rect.top;
+      }
+      onCanvasMouseMove(e);
+    }, { signal: eventListeners.signal, passive: false });
+
+    canvas.addEventListener('touchend', (e) => {
+      e.preventDefault(); // Prevent scrolling while drawing
+      const touch = e.changedTouches[0];
+      if (touch) {
+        const rect = canvas.getBoundingClientRect();
+        e.offsetX = touch.clientX - rect.left;
+        e.offsetY = touch.clientY - rect.top;
+      }
+      onCanvasMouseUp(e);
+    }, { signal: eventListeners.signal, passive: false });
+
+    canvas.addEventListener('touchcancel', (e) => {
+      e.preventDefault();
+      const touch = e.changedTouches[0];
+      if (touch) {
+        const rect = canvas.getBoundingClientRect();
+        e.offsetX = touch.clientX - rect.left;
+        e.offsetY = touch.clientY - rect.top;
+      }
+      onCanvasMouseOut(e);
+    }, { signal: eventListeners.signal, passive: false });
+
     // Allow standard browser context menu on canvas for image operations
-        
+
     // Window mouse events for global dragging
     window.addEventListener('mousemove', onWindowMouseMove, { signal: eventListeners.signal });
     window.addEventListener('mouseup', onWindowMouseUp, { signal: eventListeners.signal });
+
+    // Window touch events for global dragging
+    window.addEventListener('touchmove', (e) => {
+      onWindowMouseMove(e);
+    }, { signal: eventListeners.signal, passive: true });
+
+    window.addEventListener('touchend', (e) => {
+      onWindowMouseUp(e);
+    }, { signal: eventListeners.signal, passive: true });
         
     window.paintApp.state.listenersBound = true;
     console.warn('[PAINT.JS] Event listeners bound successfully');
