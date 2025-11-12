@@ -9,16 +9,18 @@ module.exports = async (req, res) => {
     }
 
     try {
-        const origin = process.env.REMBG_ORIGIN || 'https://sofapaint-api.leigh-atkins.workers.dev';
+        const origin = process.env.CF_WORKER_URL || process.env.REMBG_ORIGIN || 'https://sofapaint-api.leigh-atkins.workers.dev';
+        const apiKey = process.env.CF_API_KEY || 'dev-secret';
+
         if (!origin) {
-            return res.status(500).json({ success: false, message: 'REMBG_ORIGIN is not configured' });
+            return res.status(500).json({ success: false, message: 'CF_WORKER_URL is not configured' });
         }
 
         const response = await fetch(`${origin.replace(/\/$/, '')}/images/direct-upload`, {
             method: 'POST',
             headers: {
                 'content-type': 'application/json',
-                'x-api-key': 'dev-secret'
+                'x-api-key': apiKey
             },
             body: JSON.stringify(req.body)
         });
