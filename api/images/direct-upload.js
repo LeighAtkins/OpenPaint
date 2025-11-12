@@ -9,8 +9,7 @@ module.exports = async (req, res) => {
     }
 
     try {
-        const origin = process.env.CF_WORKER_URL || process.env.REMBG_ORIGIN || 'https://sofapaint-api.leigh-atkins.workers.dev';
-        const apiKey = process.env.CF_API_KEY || 'dev-secret';
+        const origin = process.env.CF_WORKER_URL || 'https://sofapaint-api.leigh-atkins.workers.dev';
 
         if (!origin) {
             return res.status(500).json({ success: false, message: 'CF_WORKER_URL is not configured' });
@@ -19,8 +18,7 @@ module.exports = async (req, res) => {
         const response = await fetch(`${origin.replace(/\/$/, '')}/images/direct-upload`, {
             method: 'POST',
             headers: {
-                'content-type': 'application/json',
-                'x-api-key': apiKey
+                'content-type': 'application/json'
             },
             body: JSON.stringify(req.body)
         });
