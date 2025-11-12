@@ -22,10 +22,12 @@ const port = process.env.PORT || 3000;
 const sharedProjects = new Map();
 
 // Ensure uploads directory exists
-const uploadDir = path.join(__dirname, 'uploads');
+// In serverless environments (Vercel), use /tmp as it's the only writable directory
+const isVercelServerless = process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME;
+const uploadDir = isVercelServerless ? '/tmp/uploads' : path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
-    console.log('Created uploads directory');
+    console.log('Created uploads directory:', uploadDir);
 }
 
 // Set up multer for handling file uploads
@@ -45,10 +47,12 @@ const upload = multer({
 });
 
 // Middleware setup
-// Serve static files from public directory
-app.use(express.static('public'));
+// Serve static files from public directory (relative to project root)
+const publicDir = path.join(__dirname, '..', 'public');
+const rootDir = path.join(__dirname, '..');
+app.use(express.static(publicDir));
 // Serve static files from root directory
-app.use(express.static('./'));
+app.use(express.static(rootDir));
 // Serve uploaded files under /uploads
 app.use('/uploads', express.static(uploadDir));
 // Parse JSON request bodies (increase limit for large projects)
@@ -58,7 +62,8 @@ app.use(express.urlencoded({ extended: true, limit: '200mb' }));
 // Route handlers
 // Serve the main page
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+    // In serverless, __dirname is /var/task/api/, so go up one level to find index.html
+    res.sendFile(path.join(__dirname, '..', 'index.html'));
 });
 app.get("/health", (req, res) => res.json({ ok: true }));
 
