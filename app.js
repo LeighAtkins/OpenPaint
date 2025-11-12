@@ -43,11 +43,9 @@ function joinUrl(base, path) {
 const sharedProjects = new Map();
 
 // Ensure uploads directory exists
-// Use /tmp on serverless environments (Vercel, AWS Lambda, etc.) since they're read-only
-const uploadDir = process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME
-    ? '/tmp/uploads'
-    : path.join(__dirname, 'uploads');
-
+// In serverless environments (Vercel), use /tmp as it's the only writable directory
+const isVercelServerless = process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME;
+const uploadDir = isVercelServerless ? '/tmp/uploads' : path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
     console.log('Created uploads directory:', uploadDir);
@@ -341,36 +339,131 @@ app.post('/api/upload-project', upload.single('projectFile'), (req, res) => {
 });
 
 /**
- * API endpoint for background removal using integrated Python rembg
- * Accepts multipart form-data with field name 'image'
- * Returns JSON containing URLs to both original and processed images
+ * API endpoint for background removal - proxies to CF Worker
  */
-app.post('/api/remove-background', upload.single('image'), async (req, res) => {
-    try {
-        if (!req.file) {
-            return res.status(400).json({ success: false, message: 'No image uploaded (field name should be "image")' });
-        }
-
-        const inputPath = req.file.path;
-        const outputPath = path.join(uploadDir, `processed_${req.file.filename}`);
-
-        await processImageWithRembg(inputPath, outputPath);
-
-        const processedFilename = path.basename(outputPath);
-        const processedImageUrl = `/uploads/${encodeURIComponent(processedFilename)}`;
-        const originalFilename = req.file.filename;
-        const originalImageUrl = `/uploads/${encodeURIComponent(originalFilename)}`;
-
-        return res.json({
-            success: true,
-            original: originalImageUrl,
-            processed: processedImageUrl,
-            url: processedImageUrl
+app.post('/api/remove-background', async (req, res) => {
+  try {
+    const base = process.env.CF_WORKER_URL || AI_WORKER_URL || '';
+    if (!base) {
+      return res
+        .status(500)
+        .set('content-type', 'application/json; charset=utf-8')
+        .json({
+          ok: false,
+          error: 'missing-CF_WORKER_URL',
+          message: 'Set CF_WORKER_URL to your Worker base URL'
         });
-    } catch (error) {
-        console.error('Error processing image:', error);
-        return res.status(500).json({ success: false, message: 'Failed to process image' });
     }
+    const url = `${base.replace(/\/$/, '')}/remove-background`;
+    const headers = { 'content-type': 'application/json' };
+    if (req.headers['x-api-key']) {
+      headers['x-api-key'] = String(req.headers['x-api-key']);
+    }
+
+    const bodyText = typeof req.body === 'string' ? req.body : JSON.stringify(req.body || {});
+    let upstream;
+    try {
+      upstream = await fetch(url, {
+        method: 'POST',
+        headers,
+        body: bodyText
+      });
+    } catch (e) {
+      return res
+        .status(502)
+        .set('content-type', 'application/json; charset=utf-8')
+        .json({
+          ok: false,
+          error: 'fetch-exception',
+          message: e.message
+        });
+    }
+
+    const ct = upstream.headers.get('content-type') || 'application/octet-stream';
+    const buf = Buffer.from(await upstream.arrayBuffer());
+
+    // If upstream returned an error status and HTML, convert to JSON error
+    if (!upstream.ok && ct.includes('text/html')) {
+      return res
+        .status(upstream.status)
+        .set('content-type', 'application/json; charset=utf-8')
+        .json({
+          ok: false,
+          error: 'upstream-error',
+          message: `Worker returned ${upstream.status}: ${upstream.statusText}`,
+          workerUrl: url
+        });
+    }
+
+    res.status(upstream.status).set('content-type', ct).send(buf);
+  } catch (err) {
+    res
+      .status(500)
+      .set('content-type', 'application/json; charset=utf-8')
+      .json({
+        ok: false,
+        error: 'proxy-exception',
+        message: String(err)
+      });
+  }
+});
+
+/**
+ * API endpoint for Cloudflare Images direct upload
+ * Proxies to CF Worker to get upload URL
+ */
+app.post('/api/images/direct-upload', async (req, res) => {
+  try {
+    const base = process.env.CF_WORKER_URL || AI_WORKER_URL || '';
+    if (!base) {
+      return res
+        .status(500)
+        .set('content-type', 'application/json; charset=utf-8')
+        .json({
+          ok: false,
+          error: 'missing-CF_WORKER_URL',
+          message: 'Set CF_WORKER_URL to your Worker base URL'
+        });
+    }
+    const url = `${base.replace(/\/$/, '')}/images/direct-upload`;
+    const headers = {};
+    if (req.headers['x-api-key']) headers['x-api-key'] = String(req.headers['x-api-key']);
+
+    let upstream;
+    try {
+      upstream = await fetch(url, { method: 'POST', headers });
+    } catch (e) {
+      return res
+        .status(502)
+        .set('content-type', 'application/json; charset=utf-8')
+        .json({ ok: false, error: 'fetch-exception', message: e.message });
+    }
+
+    const text = await upstream.text().catch(() => '<no body>');
+    if (!upstream.ok) {
+      return res
+        .status(502)
+        .set('content-type', 'application/json; charset=utf-8')
+        .json({ ok: false, error: 'upstream-failed', status: upstream.status, body: text.slice(0, 500) });
+    }
+
+    try {
+      return res
+        .status(200)
+        .set('content-type', 'application/json; charset=utf-8')
+        .json(JSON.parse(text));
+    } catch {
+      return res
+        .status(200)
+        .set('content-type', upstream.headers.get('content-type') || 'application/json')
+        .send(text);
+    }
+  } catch (err) {
+    return res
+      .status(500)
+      .set('content-type', 'application/json; charset=utf-8')
+      .json({ ok: false, error: 'proxy-exception', message: String(err) });
+  }
 });
 
 /**

@@ -8,6 +8,18 @@
     {
       "src": "public/**",
       "use": "@vercel/static"
+    },
+    {
+      "src": "css/**",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "js/**",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "src/**",
+      "use": "@vercel/static"
     }
   ],
   "routes": [
@@ -20,7 +32,7 @@
       "dest": "/app.js"
     },
     {
-      "src": "^/(health|env-check|version)$",
+      "src": "^/(health|env-check|version|test)$",
       "dest": "/app.js"
     },
     {
@@ -36,11 +48,15 @@
       "dest": "/src/$1"
     },
     {
-      "src": "^/(diagnostics-overlay|test-coordinate-system)\\.js$",
-      "dest": "/$1.js"
+      "src": "^/uploads/(.*)$",
+      "dest": "/app.js"
     },
     {
-      "src": "^(?!/(ai|api|health|env-check|version|js|css|src|diagnostics-overlay|test-coordinate-system)/).*$",
+      "src": "^/projects/(.*)$",
+      "dest": "/app.js"
+    },
+    {
+      "src": "^/.*$",
       "dest": "/app.js"
     }
   ]
