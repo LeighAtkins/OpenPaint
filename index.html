@@ -189,28 +189,6 @@
             align-items: center;
         }
 
-        /* Mobile: make toolbar scrollable horizontally */
-        @media (max-width: 768px) {
-            #tbLeft {
-                overflow-x: auto;
-                overflow-y: hidden;
-                -webkit-overflow-scrolling: touch;
-                scrollbar-width: none; /* Firefox */
-                -ms-overflow-style: none; /* IE/Edge */
-                flex: 1;
-                min-width: 0;
-            }
-
-            #tbLeft::-webkit-scrollbar {
-                display: none; /* Chrome/Safari */
-            }
-
-            .toolbar-wrap {
-                justify-content: flex-start;
-                gap: 8px;
-            }
-        }
-        
         .group-gap > * {
             margin-right: 6px;
         }
