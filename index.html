@@ -664,11 +664,22 @@
         #navigation-container {
             background: white;
             box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
-            position: relative;
-            z-index: 100;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 10050;
             width: 100%;
             display: block !important;
             visibility: visible !important;
+        }
+
+        /* On desktop, position below toolbar */
+        @media (min-width: 769px) {
+            #navigation-container {
+                position: relative;
+                z-index: 100;
+            }
         }
 
         /* Ensure the navigation strip is always visible */
