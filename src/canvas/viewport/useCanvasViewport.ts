@@ -9,7 +9,7 @@
  * - RAF-batched resize handling
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 export interface ViewportTransform {
   scale: number;
