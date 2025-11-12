@@ -1,0 +1,43 @@
+# Ignore client-side JavaScript directories from serverless function detection
+js/
+src/
+
+# Ignore test files
+test-*.js
+*.test.js
+*.spec.js
+tests/
+cypress/
+coverage/
+
+# Ignore configuration files
+jest.config.js
+cypress.config.js
+tailwind.config.js
+postcss.config.js
+
+# Ignore debug and diagnostic files
+debug-*.js
+diagnostics-*.js
+
+# Ignore documentation
+*.md
+CLAUDE.md
+
+# Ignore local development files
+uploads/
+node_modules/
+.git/
+.env
+.env.local
+
+# Ignore backup and temp files
+*_backup.js
+*_temp.js
+*_corrupted.js
+*_refactored.js
+*_final.js
+
+# Keep only the main app.js and api/ directory for serverless functions
+!app.js
+!api/
