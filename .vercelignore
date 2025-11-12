@@ -11,8 +11,20 @@ public/js/ai-export.js
 public/js/coordinate-validator.js
 public/js/ai-worker-mock.js
 
-# Exclude TypeScript source files that shouldn't be built
+# Exclude unused API files (only api/[...all].js should be built as a serverless function)
+api/app.js
+api/app-simple.js
+api/db.js
+api/index.js
+api/test.js
+api/rembg.ts
+api/images/
+
+# Exclude TypeScript source files and tests
+src/**/*.test.ts
+src/**/__tests__/
 src/canvas/viewport/useCanvasViewport.ts
+src/canvas/viewport/__tests__/
 
 # Exclude test and development files
 test-*.js
