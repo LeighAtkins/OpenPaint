@@ -1,51 +1,4 @@
 {
-  "version": 2,
-  "builds": [
-    {
-      "src": "app.js",
-      "use": "@vercel/node"
-    },
-    {
-      "src": "public/**",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "js/**",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "src/**",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "css/**",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "index.html",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "shared.html",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "diagnostics-overlay.js",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "test-coordinate-system.js",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "shared.js",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "favicon.ico",
-      "use": "@vercel/static"
-    }
-  ],
   "routes": [
     {
       "src": "^/favicon.ico$",
@@ -53,15 +6,19 @@
     },
     {
       "src": "^/ai/(.*)$",
-      "dest": "/app.js"
+      "dest": "/api/[...all].js"
     },
     {
       "src": "^/api/(.*)$",
-      "dest": "/app.js"
+      "dest": "/api/[...all].js"
     },
     {
-      "src": "^/(health|env-check|version)$",
-      "dest": "/app.js"
+      "src": "^/(health|env-check|version|test)$",
+      "dest": "/api/[...all].js"
+    },
+    {
+      "src": "^/shared/(.*)$",
+      "dest": "/api/[...all].js"
     },
     {
       "src": "^/js/(.*)$",
@@ -80,12 +37,12 @@
       "dest": "/public/$1"
     },
     {
-      "src": "^/(diagnostics-overlay|test-coordinate-system)\\.js$",
-      "dest": "/$1.js"
+      "src": "^/(.*\\.(js|css|html|ico|png|jpg|jpeg|gif|svg|json))$",
+      "dest": "/$1"
     },
     {
-      "src": "^(?!/(ai|api|health|env-check|version|js|css|src|diagnostics-overlay|test-coordinate-system)/).*$",
-      "dest": "/app.js"
+      "src": "^/(.*)$",
+      "dest": "/api/[...all].js"
     }
   ]
 }
