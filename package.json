@@ -10,7 +10,7 @@
     "start": "node app.js",
     "dev": "node app.js",
     "build": "echo 'Static assets ready for deployment'",
-    "build:css": "npx --yes @tailwindcss/cli -i \"./css/tailwind.input.css\" -o \"./css/tailwind.build.css\" --minify",
+    "build:css": "npx --yes @tailwindcss/cli -i \"./css/tailwind.css\" -o \"./css/tailwind.build.css\" --minify",
     "vercel-build": "npm run build:css",
     "deploy": "vercel --prod",
     "deploy:preview": "vercel",
