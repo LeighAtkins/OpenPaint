@@ -533,8 +533,15 @@
 
         /* Ensure image panel maintains proper height when content changes */
         #imagePanel {
-            display: flex !important;
+            display: flex;
             flex-direction: column !important;
+        }
+
+        /* On mobile, allow JavaScript to control visibility */
+        @media (max-width: 768px) {
+            #imagePanel[style*="display: none"] {
+                display: none !important;
+            }
         }
 
         /* Ensure content area doesn't affect header visibility */
