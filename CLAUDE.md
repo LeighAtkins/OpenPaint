@@ -64,3 +64,35 @@ The application uses a centralized state object `window.paintApp` with:
 - Project data is stored in structured objects by image label
 - Event handling uses modern browser APIs with proper cleanup
 - Multiple backup files exist in `public/js/` - use `paint.js` as the main file
+
+## Common Project Issues
+
+### Tailwind CSS Build Not Generating Utility Classes
+
+**Problem**: The Tailwind CSS build process wasn't generating all the utility classes used in the HTML. The old input file (`css/tailwind.css`) was a pre-built CSS file instead of a proper Tailwind v4 input file, so when the build ran, it just copied the old CSS without generating new classes like:
+
+- `bottom-16` (for positioning)
+- `bg-blue-700`, `bg-blue-800` (for button hover/active states)
+- `bg-green-600`, `bg-green-700` (for Save button colors)
+- `bg-gray-600`, `bg-gray-700` (for other button colors)
+
+This resulted in invisible panels and buttons with incorrect colors.
+
+**Solution**:
+
+1. **Created proper Tailwind v4 input file** at `css/tailwind.input.css`:
+   ```css
+   @import "tailwindcss";
+   ```
+
+2. **Updated the build script** in `package.json`:
+   ```json
+   "build:css": "npx --yes @tailwindcss/cli -i \"./css/tailwind.input.css\" -o \"./css/tailwind.build.css\" --minify"
+   ```
+
+3. **Rebuild CSS** to generate all utility classes:
+   ```bash
+   npm run build:css
+   ```
+
+**Note**: Tailwind v4 requires a proper input file with the `@import "tailwindcss"` directive. It scans the codebase (configured in `tailwind.config.js`) and generates only the utility classes that are actually used in the HTML files.
