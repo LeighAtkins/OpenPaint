@@ -188,7 +188,7 @@
             display: flex;
             align-items: center;
         }
-        
+
         .group-gap > * {
             margin-right: 6px;
         }
@@ -311,8 +311,9 @@
             display: flex;
             align-items: center;
             gap: 4px;
+            flex-wrap: wrap;
         }
-        
+
         .color-swatches button {
             width: 20px;
             height: 20px;
@@ -324,7 +325,7 @@
             cursor: pointer;
             transition: all 0.2s ease;
         }
-        
+
         .color-swatches button:hover {
             transform: scale(1.1);
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
@@ -533,8 +534,15 @@
 
         /* Ensure image panel maintains proper height when content changes */
         #imagePanel {
-            display: flex !important;
+            display: flex;
             flex-direction: column !important;
+        }
+
+        /* On mobile, allow JavaScript to control visibility */
+        @media (max-width: 768px) {
+            #imagePanel[style*="display: none"] {
+                display: none !important;
+            }
         }
 
         /* Ensure content area doesn't affect header visibility */
@@ -542,6 +550,68 @@
             flex: 1 1 auto !important;
             min-height: 0 !important;
             overflow: hidden !important;
+        }
+
+        /* Panel toggle icons for mobile */
+        .panel-toggle-icon {
+            position: fixed;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            display: none; /* Hidden by default, shown via JS on mobile */
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            cursor: pointer;
+            z-index: 10100;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            user-select: none;
+            pointer-events: auto;
+        }
+
+        .panel-toggle-icon:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .panel-toggle-icon:active {
+            transform: scale(0.95);
+        }
+
+        #strokePanelIcon {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        #imagePanelIcon {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        /* Position when minimized */
+        #strokePanelIcon.minimized {
+            left: 1rem;
+            bottom: 5rem;
+            top: auto;
+        }
+
+        #imagePanelIcon.minimized {
+            right: 1rem;
+            bottom: 5rem;
+            top: auto;
+        }
+
+        /* Position when expanded */
+        #strokePanelIcon.expanded {
+            left: 0.5rem;
+            top: 0.5rem;
+            bottom: auto;
+        }
+
+        #imagePanelIcon.expanded {
+            right: 0.5rem;
+            top: 0.5rem;
+            left: auto;
+            bottom: auto;
         }
 
         /* Minimal Numeric Pill Strip Styling */
@@ -908,7 +978,7 @@
             box-shadow: 0 0 0 3px rgba(255, 255, 255, 1), 0 0 0 6px #1f2937 !important;
             transform: scale(1.15);
         }
-        
+
         /* Image Gallery Styling */
         #imageGallery {
             scrollbar-width: thin;
@@ -1474,6 +1544,10 @@
         </div>
     </div>
 
+    <!-- Mobile panel toggle icons (outside panels to avoid overflow clipping) -->
+    <div id="strokePanelIcon" class="panel-toggle-icon minimized" data-panel="strokePanel" style="display: flex;">✏️</div>
+    <div id="imagePanelIcon" class="panel-toggle-icon minimized" data-panel="imagePanel" style="display: flex;">🖼️</div>
+
     <!-- Capture Frame -->
     <div id="captureOverlay" class="fixed inset-0 pointer-events-none" style="z-index: 15;">
         <!-- Capture frame -->
@@ -1522,9 +1596,9 @@
     </div>
 
     <!-- Canvas Controls (Bottom Panel) -->
-    <div id="canvasControls" class="floating-panel fixed bottom-16 rounded-2xl px-3 py-2 transition-all duration-300" style="left: 50%; transform: translateX(-50%); z-index: 4000;">
+    <div id="canvasControls" class="floating-panel fixed rounded-2xl px-3 py-2 transition-all duration-300" style="bottom: 4rem; left: 50%; transform: translateX(-50%); z-index: 10000; display: block;">
         <div id="canvasControlsContent" class="flex items-center gap-2 text-sm smart-label-scope">
-            <button id="copyCanvasBtn" class="flex items-center gap-1 px-3 py-1 bg-primary-500 hover:bg-primary-600 active:bg-primary-700 text-white text-xs rounded-lg shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-[1.02] active:scale-95" title="Copy image to clipboard" aria-label="Copy Image">
+            <button id="copyCanvasBtn" class="flex items-center gap-1 px-3 py-1 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs rounded-lg shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-[1.02] active:scale-95" title="Copy image to clipboard" aria-label="Copy Image">
                 <svg class="w-3.5 h-3.5 opacity-90" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16 1H4a2 2 0 00-2 2v12h2V3h12V1zm3 4H8a2 2 0 00-2 2v14a2 2 0 002 2h11a2 2 0 002-2V7a2 2 0 00-2-2zm0 16H8V7h11v14z"></path></svg>
                 <span class="label-long">Copy Image</span>
                 <span class="label-short">Copy</span>
@@ -1551,7 +1625,7 @@
 
             <!-- Quick Save with hover menu -->
             <div id="quickSave" class="relative ml-2">
-                <button id="quickSaveBtn" class="px-3 py-1 bg-success-500 hover:bg-success-600 text-white text-xs rounded-lg">
+                <button id="quickSaveBtn" class="px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-xs rounded-lg">
                     Save
                 </button>
                 <div id="quickSaveMenu"
@@ -1630,8 +1704,6 @@
             // Hide the color picker since we're using swatches
             const colorInput = document.getElementById('colorPicker');
             if (colorInput) colorInput.classList.add('hidden');
-
-            
 
             // Arrow and line style controls are now pre-populated, just need to wire up functionality
             const arrowStartBtn = document.getElementById('arrowStartBtn');
@@ -2280,6 +2352,97 @@
                     elementsBody.style.maxHeight = 'none';
                 }
             })();
+
+            // Mobile panel toggle icons functionality
+            function isMobileDevice() {
+                return window.innerWidth <= 768;
+            }
+
+            function initializePanelToggleIcons() {
+                const strokePanel = document.getElementById('strokePanel');
+                const imagePanel = document.getElementById('imagePanel');
+                const strokeIcon = document.getElementById('strokePanelIcon');
+                const imageIcon = document.getElementById('imagePanelIcon');
+
+                if (!strokePanel || !imagePanel || !strokeIcon || !imageIcon) {
+                    console.warn('Panel toggle icons or panels not found');
+                    return;
+                }
+
+                // Initialize panel states
+                if (!strokePanel.getAttribute('data-mobile-state')) {
+                    strokePanel.setAttribute('data-mobile-state', 'minimized');
+                }
+                if (!imagePanel.getAttribute('data-mobile-state')) {
+                    imagePanel.setAttribute('data-mobile-state', 'minimized');
+                }
+
+                // Sync icon visual state with panel state
+                function syncIconState(panel, icon) {
+                    icon.classList.remove('minimized', 'expanded');
+                    panel.classList.remove('minimized', 'expanded');
+
+                    const isOpen = panel.getAttribute('data-mobile-state') === 'expanded';
+                    if (isOpen) {
+                        icon.classList.add('expanded');
+                        panel.classList.add('expanded');
+                        panel.style.display = 'flex';
+                    } else {
+                        icon.classList.add('minimized');
+                        panel.classList.add('minimized');
+                        // On mobile, hide the panel when minimized
+                        if (isMobileDevice()) {
+                            panel.style.display = 'none';
+                        }
+                    }
+                }
+
+                // Toggle panel on icon click
+                function setupIconToggle(panel, icon) {
+                    icon.addEventListener('click', (e) => {
+                        if (!isMobileDevice()) return;
+                        e.stopPropagation();
+
+                        const isCurrentlyOpen = panel.getAttribute('data-mobile-state') === 'expanded';
+                        panel.setAttribute('data-mobile-state', isCurrentlyOpen ? 'minimized' : 'expanded');
+                        syncIconState(panel, icon);
+                    });
+                }
+
+                // Show/hide icons and panels based on device type
+                function updatePanelVisibility() {
+                    const isMobile = isMobileDevice();
+
+                    // Show icons only on mobile
+                    strokeIcon.style.display = isMobile ? 'flex' : 'none';
+                    imageIcon.style.display = isMobile ? 'flex' : 'none';
+
+                    // On desktop, always show panels
+                    if (!isMobile) {
+                        strokePanel.style.display = 'flex';
+                        imagePanel.style.display = 'flex';
+                    } else {
+                        // On mobile, respect the current state
+                        syncIconState(strokePanel, strokeIcon);
+                        syncIconState(imagePanel, imageIcon);
+                    }
+                }
+
+                // Initialize
+                setupIconToggle(strokePanel, strokeIcon);
+                setupIconToggle(imagePanel, imageIcon);
+                updatePanelVisibility();
+
+                // Update on window resize
+                let resizeTimeout;
+                window.addEventListener('resize', () => {
+                    clearTimeout(resizeTimeout);
+                    resizeTimeout = setTimeout(updatePanelVisibility, 150);
+                });
+            }
+
+            // Initialize panel toggle icons after a short delay to ensure DOM is ready
+            setTimeout(initializePanelToggleIcons, 100);
 
             // removed elements resize handle wiring
 
@@ -3513,7 +3676,8 @@
                     
                     // Don't set display:block as it can interfere with drag positioning
                     // The panel is visible by default; just ensure no hidden class
-                    if (imagePanel.style.display === 'none') {
+                    // On mobile, respect the user's toggle state - don't force the panel open
+                    if (imagePanel.style.display === 'none' && !isMobileDevice()) {
                         imagePanel.style.display = '';
                     }
                     
@@ -5358,13 +5522,13 @@
 
                     // For sidebar image-container buttons, they don't have images themselves but represent images
                     const isSidebarContainer = container.classList && container.classList.contains('image-container');
-                    
+
                     // Accept if: (visible container with label) OR (has actual image)
-                    const isValid = label && !label.includes('Demo') && !label.includes('Blank') && 
+                    const isValid = label && !label.includes('Demo') && !label.includes('Blank') &&
                                    (isSidebarContainer ? isVisible : (hasImage && isVisible));
 
                     // Debug logging removed - validation is working correctly
-                    
+
                     return isValid;
                 });
 
