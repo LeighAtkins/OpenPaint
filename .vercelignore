@@ -1,38 +1,7 @@
-# Exclude client-side JavaScript from serverless function detection
-# These files should be served as static assets, not compiled as serverless functions
-js/ai-schemas.js
-js/ai-style-guide.js
-js/ai-export.js
-js/coordinate-validator.js
-js/ai-worker-mock.js
-public/js/ai-schemas.js
-public/js/ai-style-guide.js
-public/js/ai-export.js
-public/js/coordinate-validator.js
-public/js/ai-worker-mock.js
-
-# Exclude unused API files
+# Only exclude specific API files that shouldn't be serverless functions
 api/test.js
 api/app-simple.js
 
-# Exclude backup files
+# Exclude API backup files
 api/**/*.backup
 api/**/backup
-
-# Exclude JS backup/temp files (but allow HTML test files)
-js/*_backup.js
-js/*_temp.js
-js/*_corrupted.js
-public/js/*_backup.js
-public/js/*_temp.js
-public/js/*_corrupted.js
-
-# Exclude JS test files (but allow HTML test files)
-js/*.test.js
-js/*.spec.js
-public/js/*.test.js
-public/js/*.spec.js
-
-# Exclude test directories
-tests/
-cypress/
