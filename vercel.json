@@ -8,9 +8,49 @@
     {
       "src": "public/**",
       "use": "@vercel/static"
+    },
+    {
+      "src": "js/**",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "src/**",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "css/**",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "index.html",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "shared.html",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "diagnostics-overlay.js",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "test-coordinate-system.js",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "shared.js",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "favicon.ico",
+      "use": "@vercel/static"
     }
   ],
   "routes": [
+    {
+      "src": "^/favicon.ico$",
+      "dest": "/favicon.ico"
+    },
     {
       "src": "^/ai/(.*)$",
       "dest": "/app.js"
@@ -25,7 +65,7 @@
     },
     {
       "src": "^/js/(.*)$",
-      "dest": "/public/js/$1"
+      "dest": "/js/$1"
     },
     {
       "src": "^/css/(.*)$",
@@ -34,6 +74,10 @@
     {
       "src": "^/src/(.*)$",
       "dest": "/src/$1"
+    },
+    {
+      "src": "^/public/(.*)$",
+      "dest": "/public/$1"
     },
     {
       "src": "^/(diagnostics-overlay|test-coordinate-system)\\.js$",
