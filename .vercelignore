@@ -11,32 +11,28 @@ public/js/ai-export.js
 public/js/coordinate-validator.js
 public/js/ai-worker-mock.js
 
-# Exclude unused API files (only api/[...all].js should be built as a serverless function)
-api/app.js
-api/app-simple.js
-api/db.js
-api/index.js
+# Exclude unused API files
 api/test.js
-api/rembg.ts
-api/images/
+api/app-simple.js
 
-# Exclude TypeScript source files and tests
-src/**/*.test.ts
-src/**/__tests__/
-src/canvas/viewport/useCanvasViewport.ts
-src/canvas/viewport/__tests__/
+# Exclude backup files
+api/**/*.backup
+api/**/backup
 
-# Exclude test and development files
-test-*.js
-debug-*.js
-*_backup.js
-*_temp.js
-*_corrupted.js
-*.test.js
-*.spec.js
+# Exclude JS backup/temp files (but allow HTML test files)
+js/*_backup.js
+js/*_temp.js
+js/*_corrupted.js
+public/js/*_backup.js
+public/js/*_temp.js
+public/js/*_corrupted.js
+
+# Exclude JS test files (but allow HTML test files)
+js/*.test.js
+js/*.spec.js
+public/js/*.test.js
+public/js/*.spec.js
+
+# Exclude test directories
 tests/
 cypress/
-
-# Exclude documentation
-*.md
-CLAUDE.md
