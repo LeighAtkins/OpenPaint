@@ -1,13 +1,39 @@
 {
-  "functions": {
-    "api/**/*.js": {
-      "includeFiles": "{css/**,js/**,public/**,*.html,favicon.ico,src/**/*.{ts,js,css}}"
+  "version": 2,
+  "builds": [
+    {
+      "src": "api/app.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "public/**",
+      "use": "@vercel/static"
     }
-  },
+  ],
   "routes": [
     {
       "src": "^/api/(.*)$",
       "dest": "/api/app.js"
+    },
+    {
+      "src": "^/(health|env-check|version)$",
+      "dest": "/api/app.js"
+    },
+    {
+      "src": "^/js/(.*)$",
+      "dest": "/public/js/$1"
+    },
+    {
+      "src": "^/css/(.*)$",
+      "dest": "/css/$1"
+    },
+    {
+      "src": "^/src/(.*)$",
+      "dest": "/src/$1"
+    },
+    {
+      "src": "^/(.*\\.(html|js|css|png|jpg|jpeg|gif|svg|ico))$",
+      "dest": "/$1"
     },
     {
       "src": "^/(.*)$",
