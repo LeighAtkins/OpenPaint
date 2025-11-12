@@ -5565,6 +5565,9 @@
                 // First try the specific image containers
                 const imageList = document.getElementById('imageList');
                 const imageGallery = document.getElementById('imageGallery');
+                const imagePanel = document.getElementById('imagePanel');
+                const isMobile = window.innerWidth <= 768;
+                const isPanelHidden = imagePanel && imagePanel.style.display === 'none';
 
                 let containers = [];
 
@@ -5620,13 +5623,18 @@
 
                     // For sidebar image-container buttons, they don't have images themselves but represent images
                     const isSidebarContainer = container.classList && container.classList.contains('image-container');
-                    
+
+                    // On mobile with hidden panel, don't filter by visibility - just check if it has a valid label
+                    if (isMobile && isPanelHidden && isSidebarContainer && label) {
+                        return label && !label.includes('Demo') && !label.includes('Blank');
+                    }
+
                     // Accept if: (visible container with label) OR (has actual image)
-                    const isValid = label && !label.includes('Demo') && !label.includes('Blank') && 
+                    const isValid = label && !label.includes('Demo') && !label.includes('Blank') &&
                                    (isSidebarContainer ? isVisible : (hasImage && isVisible));
 
                     // Debug logging removed - validation is working correctly
-                    
+
                     return isValid;
                 });
 
