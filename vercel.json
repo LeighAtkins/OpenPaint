@@ -7,9 +7,17 @@
       "config": {
         "includeFiles": ["index.html", "css/**", "js/**", "public/**", "src/**", "*.html", "*.js"]
       }
+    },
+    {
+      "src": "api/images/direct-upload.js",
+      "use": "@vercel/node"
     }
   ],
   "routes": [
+    {
+      "src": "/api/images/direct-upload",
+      "dest": "/api/images/direct-upload.js"
+    },
     {
       "src": "/(.*)",
       "dest": "/app.js"
