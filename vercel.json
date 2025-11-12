@@ -2,7 +2,7 @@
   "version": 2,
   "builds": [
     {
-      "src": "api/app.js",
+      "src": "app.js",
       "use": "@vercel/node"
     },
     {
@@ -12,12 +12,20 @@
   ],
   "routes": [
     {
-      "src": "^/api/(.*)$",
-      "dest": "/api/app.js"
+      "src": "^/ai/(.*)$",
+      "dest": "/app.js"
     },
     {
-      "src": "^/(health|env-check|version)$",
-      "dest": "/api/app.js"
+      "src": "^/api/(.*)$",
+      "dest": "/app.js"
+    },
+    {
+      "src": "^/(health|env-check|version|test)$",
+      "dest": "/app.js"
+    },
+    {
+      "src": "^/shared/(.*)$",
+      "dest": "/app.js"
     },
     {
       "src": "^/js/(.*)$",
@@ -32,12 +40,12 @@
       "dest": "/src/$1"
     },
     {
-      "src": "^/(.*\\.(html|js|css|png|jpg|jpeg|gif|svg|ico))$",
-      "dest": "/$1"
+      "src": "^/(diagnostics-overlay|test-coordinate-system)\\.js$",
+      "dest": "/$1.js"
     },
     {
-      "src": "^/(.*)$",
-      "dest": "/api/app.js"
+      "src": "^(?!/(ai|api|health|env-check|version|test|shared|js|css|src|diagnostics-overlay|test-coordinate-system)/).*$",
+      "dest": "/app.js"
     }
   ]
 }
