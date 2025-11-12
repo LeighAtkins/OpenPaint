@@ -404,9 +404,9 @@ document.addEventListener('DOMContentLoaded', () => {
           if (!blob) throw new Error('No image to process');
 
           // Step 1: Get direct upload URL from Cloudflare Worker
-          const uploadResp = await fetch('/api/images/direct-upload', { 
+          const uploadResp = await fetch('/api/images/direct-upload', {
             method: 'POST',
-            headers: { 'x-api-key': 'dev-secret' }
+            headers: { 'Content-Type': 'application/json' }
           });
           const uploadData = await uploadResp.json();
           if (!uploadData.success || !uploadData.result?.uploadURL) {
