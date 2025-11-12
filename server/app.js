@@ -26,22 +26,15 @@ app.use((req, res, next) => {
 // Handlers extracted for dual-path mounting during routing migration
 async function directUploadHandler(req, res) {
     try {
-        const origin = process.env.CF_WORKER_URL || 'https://openpaint-ai-worker.sofapaint-api.workers.dev';
-        const apiKey = process.env.CF_API_KEY;
-
+        const origin = process.env.REMBG_ORIGIN || 'https://sofapaint-api.leigh-atkins.workers.dev';
         if (!origin) {
-            return res.status(500).json({ success: false, message: 'CF_WORKER_URL is not configured' });
+            return res.status(500).json({ success: false, message: 'REMBG_ORIGIN is not configured' });
         }
-
-        if (!apiKey) {
-            return res.status(500).json({ success: false, message: 'CF_API_KEY is not configured' });
-        }
-
         const response = await fetch(`${origin.replace(/\/$/, '')}/images/direct-upload`, {
             method: 'POST',
             headers: {
                 'content-type': 'application/json',
-                'x-api-key': apiKey
+                'x-api-key': 'dev-secret'
             },
             body: JSON.stringify(req.body)
         });
@@ -55,23 +48,16 @@ async function directUploadHandler(req, res) {
 
 async function removeBackgroundHandler(req, res) {
     try {
-        const origin = process.env.CF_WORKER_URL || 'https://openpaint-ai-worker.sofapaint-api.workers.dev';
-        const apiKey = process.env.CF_API_KEY;
-
+        const origin = process.env.REMBG_ORIGIN || 'https://sofapaint-api.leigh-atkins.workers.dev';
         if (!origin) {
-            return res.status(500).json({ success: false, message: 'CF_WORKER_URL is not configured' });
+            return res.status(500).json({ success: false, message: 'REMBG_ORIGIN is not configured' });
         }
-
-        if (!apiKey) {
-            return res.status(500).json({ success: false, message: 'CF_API_KEY is not configured' });
-        }
-
         const bodyText = typeof req.body === 'string' ? req.body : JSON.stringify(req.body || {});
         const upstream = await fetch(`${origin.replace(/\/$/, '')}/remove-background`, {
             method: 'POST',
             headers: {
                 'content-type': 'application/json',
-                'x-api-key': apiKey
+                'x-api-key': 'dev-secret'
             },
             body: bodyText
         });
@@ -88,8 +74,7 @@ async function removeBackgroundHandler(req, res) {
 
 function envHandler(req, res) {
     res.json({
-        CF_WORKER_URL: process.env.CF_WORKER_URL ? 'configured' : 'missing',
-        CF_API_KEY: process.env.CF_API_KEY ? 'configured' : 'missing',
+        REMBG_ORIGIN: process.env.REMBG_ORIGIN ? 'configured' : 'missing',
         NODE_ENV: process.env.NODE_ENV || 'development'
     });
 }

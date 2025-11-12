@@ -314,41 +314,6 @@
             flex-wrap: wrap;
         }
 
-        /* Mobile color picker button */
-        #mobileColorPicker {
-            display: none;
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            border: 2px solid white;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        @media (max-width: 768px) {
-            #mobileColorPicker {
-                display: block;
-            }
-
-            .color-swatches {
-                display: none;
-                position: absolute;
-                top: 48px;
-                left: 0;
-                right: 0;
-                background: white;
-                padding: 8px;
-                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-                z-index: 100;
-                justify-content: center;
-            }
-
-            .color-swatches.expanded {
-                display: flex;
-            }
-        }
-
         .color-swatches button {
             width: 20px;
             height: 20px;
@@ -664,22 +629,11 @@
         #navigation-container {
             background: white;
             box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            z-index: 10050;
+            position: relative;
+            z-index: 100;
             width: 100%;
             display: block !important;
             visibility: visible !important;
-        }
-
-        /* On desktop, position below toolbar */
-        @media (min-width: 769px) {
-            #navigation-container {
-                position: relative;
-                z-index: 100;
-            }
         }
 
         /* Ensure the navigation strip is always visible */
@@ -1025,11 +979,6 @@
             transform: scale(1.15);
         }
 
-        /* Ensure toolbar wrapper has relative positioning for color swatches dropdown */
-        .toolbar-wrap {
-            position: relative;
-        }
-        
         /* Image Gallery Styling */
         #imageGallery {
             scrollbar-width: thin;
@@ -1278,7 +1227,6 @@
                 <button id="textModeToggle" class="tbtn" title="Text Tool" aria-label="Text Tool">
                     <span class="label-long">Text</span><span class="label-short">Text</span>
                 </button>
-                <button id="mobileColorPicker" style="background-color: rgb(59, 130, 246);" title="Select Color" aria-label="Select Color"></button>
                 <div class="color-swatches">
                     <button class="active" data-color="#3b82f6" style="background-color: rgb(59, 130, 246);" title="Blue"></button>
                     <button data-color="#22c55e" style="background-color: rgb(34, 197, 94);" title="Green"></button>
@@ -1756,52 +1704,6 @@
             // Hide the color picker since we're using swatches
             const colorInput = document.getElementById('colorPicker');
             if (colorInput) colorInput.classList.add('hidden');
-
-            // Mobile color picker toggle
-            const mobileColorPicker = document.getElementById('mobileColorPicker');
-            const colorSwatches = document.querySelector('.color-swatches');
-
-            if (mobileColorPicker && colorSwatches) {
-                // Toggle swatches when mobile color picker is clicked
-                mobileColorPicker.addEventListener('click', () => {
-                    colorSwatches.classList.toggle('expanded');
-                });
-
-                // Update mobile color picker when a color is selected
-                const updateMobileColorPicker = () => {
-                    const activeColor = document.querySelector('[data-color].active');
-                    if (activeColor && mobileColorPicker) {
-                        const color = activeColor.getAttribute('data-color');
-                        const bgStyle = activeColor.style.backgroundColor;
-                        mobileColorPicker.style.backgroundColor = bgStyle || color;
-
-                        // Close swatches after selection on mobile
-                        if (window.innerWidth <= 768) {
-                            colorSwatches.classList.remove('expanded');
-                        }
-                    }
-                };
-
-                // Update on color button clicks
-                colorButtons.forEach(button => {
-                    const originalHandler = button.onclick;
-                    button.addEventListener('click', updateMobileColorPicker);
-                });
-
-                // Close swatches when clicking outside
-                document.addEventListener('click', (e) => {
-                    if (window.innerWidth <= 768 &&
-                        !mobileColorPicker.contains(e.target) &&
-                        !colorSwatches.contains(e.target)) {
-                        colorSwatches.classList.remove('expanded');
-                    }
-                });
-
-                // Initial update
-                updateMobileColorPicker();
-            }
-
-
 
             // Arrow and line style controls are now pre-populated, just need to wire up functionality
             const arrowStartBtn = document.getElementById('arrowStartBtn');
@@ -5565,9 +5467,6 @@
                 // First try the specific image containers
                 const imageList = document.getElementById('imageList');
                 const imageGallery = document.getElementById('imageGallery');
-                const imagePanel = document.getElementById('imagePanel');
-                const isMobile = window.innerWidth <= 768;
-                const isPanelHidden = imagePanel && imagePanel.style.display === 'none';
 
                 let containers = [];
 
@@ -5623,11 +5522,6 @@
 
                     // For sidebar image-container buttons, they don't have images themselves but represent images
                     const isSidebarContainer = container.classList && container.classList.contains('image-container');
-
-                    // On mobile with hidden panel, don't filter by visibility - just check if it has a valid label
-                    if (isMobile && isPanelHidden && isSidebarContainer && label) {
-                        return label && !label.includes('Demo') && !label.includes('Blank');
-                    }
 
                     // Accept if: (visible container with label) OR (has actual image)
                     const isValid = label && !label.includes('Demo') && !label.includes('Blank') &&
