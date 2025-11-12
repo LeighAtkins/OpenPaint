@@ -1,7 +1,7 @@
 {
   "functions": {
     "api/**/*.js": {
-      "includeFiles": "**"
+      "includeFiles": "{css/**,js/**,public/**,*.html,favicon.ico,src/**/*.{ts,js,css}}"
     }
   },
   "routes": [
