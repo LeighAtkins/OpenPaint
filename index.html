@@ -544,6 +544,68 @@
             overflow: hidden !important;
         }
 
+        /* Panel toggle icons for mobile */
+        .panel-toggle-icon {
+            position: fixed;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            display: none; /* Hidden by default, shown via JS on mobile */
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            cursor: pointer;
+            z-index: 50;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            user-select: none;
+            pointer-events: auto;
+        }
+
+        .panel-toggle-icon:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .panel-toggle-icon:active {
+            transform: scale(0.95);
+        }
+
+        #strokePanelIcon {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        #imagePanelIcon {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        /* Position when minimized */
+        #strokePanelIcon.minimized {
+            left: 1rem;
+            bottom: 5rem;
+            top: auto;
+        }
+
+        #imagePanelIcon.minimized {
+            right: 1rem;
+            bottom: 5rem;
+            top: auto;
+        }
+
+        /* Position when expanded */
+        #strokePanelIcon.expanded {
+            left: 0.5rem;
+            top: 0.5rem;
+            bottom: auto;
+        }
+
+        #imagePanelIcon.expanded {
+            right: 0.5rem;
+            top: 0.5rem;
+            left: auto;
+            bottom: auto;
+        }
+
         /* Minimal Numeric Pill Strip Styling */
         #mini-stepper {
             scrollbar-width: none;
@@ -1474,6 +1536,10 @@
         </div>
     </div>
 
+    <!-- Mobile panel toggle icons (outside panels to avoid overflow clipping) -->
+    <div id="strokePanelIcon" class="panel-toggle-icon minimized" data-panel="strokePanel" style="display: flex;">✏️</div>
+    <div id="imagePanelIcon" class="panel-toggle-icon minimized" data-panel="imagePanel" style="display: flex;">🖼️</div>
+
     <!-- Capture Frame -->
     <div id="captureOverlay" class="fixed inset-0 pointer-events-none" style="z-index: 15;">
         <!-- Capture frame -->
@@ -2280,6 +2346,97 @@
                     elementsBody.style.maxHeight = 'none';
                 }
             })();
+
+            // Mobile panel toggle icons functionality
+            function isMobileDevice() {
+                return window.innerWidth <= 768;
+            }
+
+            function initializePanelToggleIcons() {
+                const strokePanel = document.getElementById('strokePanel');
+                const imagePanel = document.getElementById('imagePanel');
+                const strokeIcon = document.getElementById('strokePanelIcon');
+                const imageIcon = document.getElementById('imagePanelIcon');
+
+                if (!strokePanel || !imagePanel || !strokeIcon || !imageIcon) {
+                    console.warn('Panel toggle icons or panels not found');
+                    return;
+                }
+
+                // Initialize panel states
+                if (!strokePanel.getAttribute('data-mobile-state')) {
+                    strokePanel.setAttribute('data-mobile-state', 'minimized');
+                }
+                if (!imagePanel.getAttribute('data-mobile-state')) {
+                    imagePanel.setAttribute('data-mobile-state', 'minimized');
+                }
+
+                // Sync icon visual state with panel state
+                function syncIconState(panel, icon) {
+                    icon.classList.remove('minimized', 'expanded');
+                    panel.classList.remove('minimized', 'expanded');
+
+                    const isOpen = panel.getAttribute('data-mobile-state') === 'expanded';
+                    if (isOpen) {
+                        icon.classList.add('expanded');
+                        panel.classList.add('expanded');
+                        panel.style.display = 'flex';
+                    } else {
+                        icon.classList.add('minimized');
+                        panel.classList.add('minimized');
+                        // On mobile, hide the panel when minimized
+                        if (isMobileDevice()) {
+                            panel.style.display = 'none';
+                        }
+                    }
+                }
+
+                // Toggle panel on icon click
+                function setupIconToggle(panel, icon) {
+                    icon.addEventListener('click', (e) => {
+                        if (!isMobileDevice()) return;
+                        e.stopPropagation();
+
+                        const isCurrentlyOpen = panel.getAttribute('data-mobile-state') === 'expanded';
+                        panel.setAttribute('data-mobile-state', isCurrentlyOpen ? 'minimized' : 'expanded');
+                        syncIconState(panel, icon);
+                    });
+                }
+
+                // Show/hide icons and panels based on device type
+                function updatePanelVisibility() {
+                    const isMobile = isMobileDevice();
+
+                    // Show icons only on mobile
+                    strokeIcon.style.display = isMobile ? 'flex' : 'none';
+                    imageIcon.style.display = isMobile ? 'flex' : 'none';
+
+                    // On desktop, always show panels
+                    if (!isMobile) {
+                        strokePanel.style.display = 'flex';
+                        imagePanel.style.display = 'flex';
+                    } else {
+                        // On mobile, respect the current state
+                        syncIconState(strokePanel, strokeIcon);
+                        syncIconState(imagePanel, imageIcon);
+                    }
+                }
+
+                // Initialize
+                setupIconToggle(strokePanel, strokeIcon);
+                setupIconToggle(imagePanel, imageIcon);
+                updatePanelVisibility();
+
+                // Update on window resize
+                let resizeTimeout;
+                window.addEventListener('resize', () => {
+                    clearTimeout(resizeTimeout);
+                    resizeTimeout = setTimeout(updatePanelVisibility, 150);
+                });
+            }
+
+            // Initialize panel toggle icons after a short delay to ensure DOM is ready
+            setTimeout(initializePanelToggleIcons, 100);
 
             // removed elements resize handle wiring
 
