@@ -1,6 +1,7 @@
 # Only exclude specific API files that shouldn't be serverless functions
 api/test.js
 api/app-simple.js
+api/images/
 
 # Exclude API backup files
 api/**/*.backup
