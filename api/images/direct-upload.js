@@ -9,16 +9,22 @@ module.exports = async (req, res) => {
     }
 
     try {
-        const origin = process.env.CF_WORKER_URL || 'https://sofapaint-api.leigh-atkins.workers.dev';
+        const origin = process.env.CF_WORKER_URL || 'https://openpaint-ai-worker.sofapaint-api.workers.dev';
+        const apiKey = process.env.CF_API_KEY;
 
         if (!origin) {
             return res.status(500).json({ success: false, message: 'CF_WORKER_URL is not configured' });
         }
 
+        if (!apiKey) {
+            return res.status(500).json({ success: false, message: 'CF_API_KEY is not configured' });
+        }
+
         const response = await fetch(`${origin.replace(/\/$/, '')}/images/direct-upload`, {
             method: 'POST',
             headers: {
-                'content-type': 'application/json'
+                'content-type': 'application/json',
+                'x-api-key': apiKey
             },
             body: JSON.stringify(req.body)
         });
