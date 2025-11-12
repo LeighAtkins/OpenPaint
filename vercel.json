@@ -3,48 +3,15 @@
   "builds": [
     {
       "src": "app.js",
-      "use": "@vercel/node"
-    },
-    {
-      "src": "public/**",
-      "use": "@vercel/static"
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": ["css/**", "js/**", "public/**", "src/**", "*.html", "*.js"]
+      }
     }
   ],
   "routes": [
     {
-      "src": "^/ai/(.*)$",
-      "dest": "/app.js"
-    },
-    {
-      "src": "^/api/(.*)$",
-      "dest": "/app.js"
-    },
-    {
-      "src": "^/(health|env-check|version|test)$",
-      "dest": "/app.js"
-    },
-    {
-      "src": "^/shared/(.*)$",
-      "dest": "/app.js"
-    },
-    {
-      "src": "^/js/(.*)$",
-      "dest": "/public/js/$1"
-    },
-    {
-      "src": "^/css/(.*)$",
-      "dest": "/css/$1"
-    },
-    {
-      "src": "^/src/(.*)$",
-      "dest": "/src/$1"
-    },
-    {
-      "src": "^/(diagnostics-overlay|test-coordinate-system)\\.js$",
-      "dest": "/$1.js"
-    },
-    {
-      "src": "^(?!/(ai|api|health|env-check|version|test|shared|js|css|src|diagnostics-overlay|test-coordinate-system)/).*$",
+      "src": "/(.*)",
       "dest": "/app.js"
     }
   ]
