@@ -350,11 +350,22 @@
                 display: inline;
             }
 
+            /* Constrain panel widths on mobile to trigger scrolling */
+            #toolsPanel {
+                max-width: calc(100vw - 2rem);
+                left: 1rem !important;
+            }
+
+            #canvasControls {
+                max-width: calc(100vw - 2rem);
+            }
+
             /* Enable horizontal scrolling for toolsPanel and canvasControls on mobile */
             #toolsPanelContent > div > div.flex.items-center,
             #canvasControlsContent {
-                overflow-x: auto;
-                overflow-y: hidden;
+                overflow-x: auto !important;
+                overflow-y: hidden !important;
+                flex-wrap: nowrap;
                 -webkit-overflow-scrolling: touch;
                 scrollbar-width: thin;
             }
