@@ -9900,9 +9900,24 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
 
     let reservedTop = 0;
     const topToolbar = document.getElementById('topToolbar');
-    if (isVisible(topToolbar)) {
-      const toolbarRect = topToolbar.getBoundingClientRect();
-      reservedTop = Math.max(reservedTop, Math.ceil(toolbarRect.bottom));
+    // Check if toolbar is ready (even if currently hidden) or visible
+    const toolbarReady = topToolbar && topToolbar.classList.contains('toolbar-ready');
+    if (topToolbar && (isVisible(topToolbar) || toolbarReady)) {
+      // If toolbar-ready but not yet visible, force a layout calculation
+      if (toolbarReady && !isVisible(topToolbar)) {
+        // Temporarily make it visible to measure
+        const originalDisplay = topToolbar.style.display;
+        topToolbar.style.display = 'block';
+        topToolbar.style.visibility = 'visible';
+        void topToolbar.offsetWidth; // Force layout
+        const toolbarRect = topToolbar.getBoundingClientRect();
+        reservedTop = Math.max(reservedTop, Math.ceil(toolbarRect.bottom));
+        // Restore original display
+        topToolbar.style.display = originalDisplay;
+      } else {
+        const toolbarRect = topToolbar.getBoundingClientRect();
+        reservedTop = Math.max(reservedTop, Math.ceil(toolbarRect.bottom));
+      }
     }
 
     let reservedBottom = 16;
@@ -9946,7 +9961,6 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
     ctx.lineJoin = 'round';
 
     const available = getAvailableCanvasSize();
-    console.log(`[applyResize] Called with available: ${available.width}x${available.height}`);
 
     // Canvas should fill the entire available space (no 4:3 constraint on canvas element)
     let targetWidth = typeof width === 'number' ? width : available.width;
@@ -10087,7 +10101,18 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
   // Expose resizeCanvas globally so project manager can call it after loading
   window.resizeCanvas = resizeCanvas;
     
-  applyResize();
+  // Wait for toolbar to be ready before initial resize to get accurate dimensions
+  const waitForToolbarAndResize = () => {
+    const topToolbar = document.getElementById('topToolbar');
+    if (topToolbar && topToolbar.classList.contains('toolbar-ready')) {
+      applyResize();
+    } else {
+      // Check again after a short delay
+      setTimeout(waitForToolbarAndResize, 10);
+    }
+  };
+  waitForToolbarAndResize();
+  
   window.addEventListener('resize', resizeCanvas);
 
   // Drawing state - use references to uiState for centralized management

@@ -637,9 +637,8 @@ window.showTagDialogForImage = function(imageLabel, callback) {
           labelElement.textContent = newText;
         }
       }
-    } else {
-      console.warn(`[updateTagsDisplay] Could not find labelElement for label: ${imageLabel}`);
     }
+    // Silently skip if label element doesn't exist (e.g., default labels without images, or during reordering)
         
     // Call the callback if provided (for updating display from paint.js)
     if (callback && typeof callback === 'function') {
@@ -752,9 +751,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const tagText = generateFilenameFromTags(label, window.imageTags[label]);
       labelElement.textContent = tagText;
       // console.log(`[updateTagsDisplay] Updated label text for ${label} to: ${tagText}`);
-    } else {
-      console.warn(`[updateTagsDisplay] Could not find label element for ${label}`);
     }
+    // Silently skip if label element doesn't exist (e.g., default labels without images, or during reordering)
   }
 
   function showEditDialog(label) {
