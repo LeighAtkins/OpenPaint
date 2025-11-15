@@ -12,6 +12,7 @@ window.aiDrawBot = {
     config: {
         classifierWorkerUrl: 'https://sofa-classify.sofapaint-api.workers.dev/api/sofa-classify',
         drawBotWorkerUrl: 'https://draw-bot.sofapaint-api.workers.dev/api/draw-bot',
+        feedbackWorkerUrl: 'https://feedback.sofapaint-api.workers.dev/api/feedback',
         authToken: null
     },
 
@@ -197,6 +198,71 @@ window.aiDrawBot = {
     },
 
     /**
+     * Queue feedback about a stroke for later submission
+     * @param {Object} event - Feedback event with source, imageLabel, measurementCode, viewpoint, stroke, etc.
+     */
+    queueFeedback(event) {
+        // Check if feedback is enabled
+        const feedbackEnabled = document.getElementById('aiFeedbackEnabled');
+        if (feedbackEnabled && !feedbackEnabled.checked) {
+            console.log('[aiDrawBot] Feedback disabled, skipping queue');
+            return;
+        }
+
+        if (!window.aiFeedbackQueue) {
+            window.aiFeedbackQueue = [];
+        }
+
+        // Build payload from event
+        const payload = {
+            projectId: event.projectId || document.getElementById('projectName')?.value || 'unknown',
+            imageLabel: event.imageLabel,
+            viewpoint: event.viewpoint || (window.imageTags?.[event.imageLabel]?.viewpoint) || 'unknown',
+            measurementCode: event.measurementCode,
+            stroke: {
+                points: event.stroke?.points || [],
+                width: event.stroke?.width || 2,
+                source: event.source || 'manual'
+            },
+            labels: event.labels || [],
+            meta: {
+                ...event.meta,
+            }
+        };
+
+        // Add canvas dimensions if available
+        const canvas = document.getElementById('canvas');
+        if (canvas && !payload.meta.canvas) {
+            payload.meta.canvas = {
+                width: canvas.width,
+                height: canvas.height
+            };
+        }
+
+        // Add to queue with retry metadata
+        window.aiFeedbackQueue.push({
+            payload,
+            attempts: 0,
+            lastAttempt: null,
+            queuedAt: new Date().toISOString()
+        });
+
+        // Persist to localStorage
+        try {
+            localStorage.setItem('aiFeedbackQueue', JSON.stringify(window.aiFeedbackQueue));
+        } catch (e) {
+            console.warn('[aiDrawBot] Failed to persist feedback queue:', e);
+        }
+
+        // Trigger flush if not already scheduled
+        if (!window.aiFeedbackFlushScheduled) {
+            scheduleFeedbackFlush();
+        }
+
+        console.log('[aiDrawBot] Queued feedback:', payload);
+    },
+
+    /**
      * Submit feedback about a stroke (for dataset enrichment)
      * @param {string} imageLabel - Image label
      * @param {string} measurementCode - Measurement code
@@ -204,14 +270,98 @@ window.aiDrawBot = {
      * @param {Object} strokeData - The actual stroke data that was used
      */
     async submitFeedback(imageLabel, measurementCode, viewpointTag, strokeData) {
-        // TODO: Implement feedback endpoint in Worker
-        // For now, just log it
-        console.log('[aiDrawBot] Feedback submitted:', {
+        this.queueFeedback({
             imageLabel,
             measurementCode,
-            viewpointTag,
-            strokeData
+            viewpoint: viewpointTag,
+            stroke: strokeData,
+            source: 'manual'
         });
+    },
+
+    /**
+     * Flush queued feedback to the server
+     */
+    async flushFeedbackQueue() {
+        if (!window.aiFeedbackQueue || window.aiFeedbackQueue.length === 0) {
+            return { sent: 0, failed: 0 };
+        }
+
+        const feedbackWorkerUrl = this.config.feedbackWorkerUrl || 
+            'https://feedback.sofapaint-api.workers.dev/api/feedback';
+
+        let sent = 0;
+        let failed = 0;
+        const maxRetries = 3;
+        const retryDelay = 1000; // 1 second
+
+        // Process queue
+        const remaining = [];
+        for (const item of window.aiFeedbackQueue) {
+            // Skip if too many attempts
+            if (item.attempts >= maxRetries) {
+                console.warn('[aiDrawBot] Dropping feedback after max retries:', item.payload);
+                failed++;
+                continue;
+            }
+
+            // Skip if recently attempted (exponential backoff)
+            if (item.lastAttempt) {
+                const timeSinceLastAttempt = Date.now() - new Date(item.lastAttempt).getTime();
+                const backoffDelay = retryDelay * Math.pow(2, item.attempts);
+                if (timeSinceLastAttempt < backoffDelay) {
+                    remaining.push(item);
+                    continue;
+                }
+            }
+
+            try {
+                const response = await fetch(feedbackWorkerUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(this.config.authToken && { 'x-api-key': this.config.authToken })
+                    },
+                    body: JSON.stringify(item.payload)
+                });
+
+                if (response.ok) {
+                    sent++;
+                    console.log('[aiDrawBot] Feedback sent successfully:', item.payload.measurementCode);
+                } else {
+                    item.attempts++;
+                    item.lastAttempt = new Date().toISOString();
+                    remaining.push(item);
+                    console.warn('[aiDrawBot] Feedback submission failed:', response.statusText);
+                }
+            } catch (error) {
+                item.attempts++;
+                item.lastAttempt = new Date().toISOString();
+                remaining.push(item);
+                console.error('[aiDrawBot] Feedback submission error:', error);
+            }
+        }
+
+        // Update queue
+        window.aiFeedbackQueue = remaining;
+
+        // Persist updated queue
+        try {
+            if (remaining.length > 0) {
+                localStorage.setItem('aiFeedbackQueue', JSON.stringify(remaining));
+            } else {
+                localStorage.removeItem('aiFeedbackQueue');
+            }
+        } catch (e) {
+            console.warn('[aiDrawBot] Failed to persist feedback queue:', e);
+        }
+
+        // Limit queue size (drop oldest if exceeds 1000)
+        if (window.aiFeedbackQueue.length > 1000) {
+            window.aiFeedbackQueue = window.aiFeedbackQueue.slice(-1000);
+        }
+
+        return { sent, failed, remaining: remaining.length };
     }
 };
 
@@ -225,6 +375,7 @@ if (typeof window !== 'undefined' && window.location) {
             if (config.workerBaseUrl) {
                 window.aiDrawBot.config.classifierWorkerUrl = `${config.workerBaseUrl}/api/sofa-classify`;
                 window.aiDrawBot.config.drawBotWorkerUrl = `${config.workerBaseUrl}/api/draw-bot`;
+                window.aiDrawBot.config.feedbackWorkerUrl = `${config.workerBaseUrl}/api/feedback`;
             }
             if (config.workerAuthToken) {
                 window.aiDrawBot.config.authToken = config.workerAuthToken;
@@ -233,7 +384,42 @@ if (typeof window !== 'undefined' && window.location) {
             console.warn('[aiDrawBot] Failed to parse worker config:', e);
         }
     }
-};
+}
+
+// Initialize feedback queue from localStorage
+if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+    try {
+        const stored = localStorage.getItem('aiFeedbackQueue');
+        if (stored) {
+            window.aiFeedbackQueue = JSON.parse(stored);
+        }
+    } catch (e) {
+        console.warn('[aiDrawBot] Failed to load feedback queue from localStorage:', e);
+    }
+}
+
+// Schedule feedback flush function
+function scheduleFeedbackFlush() {
+    if (window.aiFeedbackFlushScheduled) return;
+    window.aiFeedbackFlushScheduled = true;
+
+    // Use requestIdleCallback if available, otherwise setTimeout
+    if (typeof requestIdleCallback !== 'undefined') {
+        requestIdleCallback(() => {
+            window.aiFeedbackFlushScheduled = false;
+            if (window.aiDrawBot && window.aiFeedbackQueue && window.aiFeedbackQueue.length > 0) {
+                window.aiDrawBot.flushFeedbackQueue();
+            }
+        }, { timeout: 5000 });
+    } else {
+        setTimeout(() => {
+            window.aiFeedbackFlushScheduled = false;
+            if (window.aiDrawBot && window.aiFeedbackQueue && window.aiFeedbackQueue.length > 0) {
+                window.aiDrawBot.flushFeedbackQueue();
+            }
+        }, 2000);
+    }
+}
 
 // Signal that aiDrawBot is ready
 console.log('[aiDrawBot] Initialization complete, window.aiDrawBot available:', typeof window.aiDrawBot !== 'undefined');
