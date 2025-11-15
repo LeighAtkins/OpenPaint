@@ -284,7 +284,7 @@ window.aiDrawBot = {
      */
     async flushFeedbackQueue() {
         if (!window.aiFeedbackQueue || window.aiFeedbackQueue.length === 0) {
-            return { sent: 0, failed: 0 };
+            return { sent: 0, failed: 0, remaining: 0 };
         }
 
         const feedbackWorkerUrl = this.config.feedbackWorkerUrl || 
