@@ -29,6 +29,7 @@
   },
   "dependencies": {
     "@vercel/postgres": "^0.8.0",
+    "cors": "^2.8.5",
     "debug": "^4.4.3",
     "express": "^4.21.2",
     "file-saver": "^2.0.5",
