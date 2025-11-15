@@ -6,6 +6,10 @@
       "use": "@vercel/node"
     },
     {
+      "src": "index.html",
+      "use": "@vercel/static"
+    },
+    {
       "src": "public/**",
       "use": "@vercel/static"
     },
@@ -54,6 +58,14 @@
     {
       "src": "^/projects/(.*)$",
       "dest": "/app.js"
+    },
+    {
+      "src": "^/(.*\\.(js|css|ico|png|jpg|jpeg|gif|svg|woff|woff2|ttf|eot))$",
+      "dest": "/$1"
+    },
+    {
+      "src": "^/(?!api|ai|uploads|projects|js|css|src|health|env-check|version|test).*$",
+      "dest": "/index.html"
     },
     {
       "src": "^/.*$",
