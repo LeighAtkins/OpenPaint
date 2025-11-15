@@ -380,6 +380,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     projectData.imagePositions[label] = { x: 0, y: 0 }; // Default position
                 }
+
+                // Save rotation (radians)
+                if (window.imageRotationByLabel && window.imageRotationByLabel[label] !== undefined) {
+                    projectData.imageRotations[label] = window.imageRotationByLabel[label];
+                    console.log(`[Save Project] Saving rotation for ${label}: ${window.imageRotationByLabel[label]} rad`);
+                } else {
+                    projectData.imageRotations[label] = 0;
+                }
                 
                 // Add image rotation
                 if (window.imageRotationByLabel && window.imageRotationByLabel[label] !== undefined) {
@@ -652,6 +660,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 window.originalImages = {};
                                 window.originalImageDimensions = {};
                                 window.imageTags = {};
+<<<<<<< HEAD:js/project-manager.js
                                 window.customImageNames = {};
 
                                 // PERFORMANCE FIX: Clear any legacy sync timers during load
@@ -659,6 +668,9 @@ document.addEventListener('DOMContentLoaded', () => {
                                     clearInterval(window.legacySyncTimer);
                                     window.legacySyncTimer = null;
                                 }
+=======
+                                window.imageRotationByLabel = {}; // Initialize new field
+>>>>>>> ee3bfcf (tag marking for fix):public/js/project-manager.js
 
                                 if (parsedProjectData.folderStructure) {
                                     window.folderStructure = JSON.parse(JSON.stringify(parsedProjectData.folderStructure));
@@ -736,7 +748,11 @@ document.addEventListener('DOMContentLoaded', () => {
                                                 }
                                                 if (parsedProjectData.imageScales && parsedProjectData.imageScales[label] !== undefined) window.imageScaleByLabel[label] = parsedProjectData.imageScales[label]; else window.imageScaleByLabel[label] = 1.0;
                                                 if (parsedProjectData.imagePositions && parsedProjectData.imagePositions[label]) window.imagePositionByLabel[label] = parsedProjectData.imagePositions[label]; else window.imagePositionByLabel[label] = { x: 0, y: 0 };
+<<<<<<< HEAD:js/project-manager.js
                 if (parsedProjectData.imageRotations && parsedProjectData.imageRotations[label] !== undefined) window.imageRotationByLabel[label] = parsedProjectData.imageRotations[label]; else window.imageRotationByLabel[label] = 0;
+=======
+                                                if (parsedProjectData.imageRotations && parsedProjectData.imageRotations[label] !== undefined) window.imageRotationByLabel[label] = parsedProjectData.imageRotations[label]; else window.imageRotationByLabel[label] = 0;
+>>>>>>> ee3bfcf (tag marking for fix):public/js/project-manager.js
                                                 if (parsedProjectData.strokeSequence && parsedProjectData.strokeSequence[label]) window.lineStrokesByImage[label] = Array.isArray(parsedProjectData.strokeSequence[label]) ? parsedProjectData.strokeSequence[label].slice() : []; else window.lineStrokesByImage[label] = [];
                                                 if (parsedProjectData.nextLabels && parsedProjectData.nextLabels[label]) window.labelsByImage[label] = parsedProjectData.nextLabels[label]; else window.labelsByImage[label] = 'A1';
                                                 
@@ -812,6 +828,9 @@ document.addEventListener('DOMContentLoaded', () => {
                                             if (activeProjectData.imagePositions && activeProjectData.imagePositions[currentActiveLabel]) {
                                                 window.imagePositionByLabel[currentActiveLabel] = activeProjectData.imagePositions[currentActiveLabel];
                                             } else window.imagePositionByLabel[currentActiveLabel] = { x: 0, y: 0 };
+                                            if (activeProjectData.imageRotations && activeProjectData.imageRotations[currentActiveLabel] !== undefined) {
+                                                window.imageRotationByLabel[currentActiveLabel] = activeProjectData.imageRotations[currentActiveLabel];
+                                            }
                                             if (typeof window.updateScaleUI === 'function') window.updateScaleUI();
 
                                             if (typeof window.redrawCanvasWithVisibility === 'function') {
@@ -998,6 +1017,56 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         window.isLoadingProject = false;
+<<<<<<< HEAD:js/project-manager.js
+=======
+        
+        // Sync legacy references after project loading
+        console.log('[Load Project] Project loading completed, syncing references...');
+        if (typeof window.syncLegacyReferences === 'function') {
+            window.syncLegacyReferences();
+        } else {
+            console.error('[Load Project] syncLegacyReferences function not available!');
+        }
+        
+        // Migrate strokes from old keys to composite keys
+        console.log('[Load Project] Migrating strokes to composite keys...');
+        if (typeof window.migrateStrokesToCompositeKeys === 'function') {
+            window.migrateStrokesToCompositeKeys();
+        } else {
+            console.error('[Load Project] migrateStrokesToCompositeKeys function not available!');
+        }
+        
+        // Fix current image label if needed
+        console.log('[Load Project] Fixing current image label...');
+        if (typeof window.fixCurrentImageLabel === 'function') {
+            window.fixCurrentImageLabel();
+        } else {
+            console.error('[Load Project] fixCurrentImageLabel function not available!');
+        }
+        
+        // Load tag customization settings
+        if (dataForFinalSteps.tagCustomization) {
+            console.log('[Load Project] Loading tag customization settings');
+            window.tagCustomization = JSON.parse(JSON.stringify(dataForFinalSteps.tagCustomization));
+            
+            // Apply the loaded customization
+            if (typeof applyTagCustomization === 'function') {
+                applyTagCustomization();
+            }
+            
+            // Persist customization to localStorage
+            if (typeof persistTagCustomization === 'function') {
+                persistTagCustomization();
+            }
+        }
+        
+        // Persist loaded tags to localStorage
+        if (typeof persistTags === 'function') {
+            persistTags();
+            console.log('[Load Project] Tags persisted to localStorage');
+        }
+        
+>>>>>>> ee3bfcf (tag marking for fix):public/js/project-manager.js
         showStatusMessage('Project loaded successfully.', 'success');
 //         console.log('[Load Project] Complete.');
     }
