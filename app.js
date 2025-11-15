@@ -68,9 +68,18 @@ const upload = multer({
 });
 
 // Middleware setup
+// IMPORTANT: Handle index.html FIRST via catch-all route to prevent static middleware from serving cached version
+// This must be BEFORE static middleware
+app.get('/', (req, res) => {
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
+
 // Serve static files from public directory
 app.use(express.static('public'));
-// Serve static files from root directory
+// Serve static files from root directory (but index.html is handled by route above)
 app.use(express.static('./'));
 // Serve uploaded files under /uploads
 app.use('/uploads', express.static(uploadDir));
@@ -906,6 +915,10 @@ app.get('/src/:filename(*)', (req, res) => {
 
 // SPA fallback (last route)
 app.get('*', (req, res) => {
+  // Disable caching for index.html during development
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 

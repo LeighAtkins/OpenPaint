@@ -4,6 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OpenPaint</title>
+    <script>
+        // Toolbar initialization - MUST run first to set data-toolbar-mode before CSS renders
+        (function() {
+            document.documentElement.classList.add('app-loading');
+            const windowWidth = window.innerWidth || 1920;
+            const isMobile = windowWidth <= 768;
+            const toolbarMode = isMobile ? 'compact' : 'full';
+            document.documentElement.setAttribute('data-toolbar-mode', toolbarMode);
+            document.documentElement.setAttribute('data-toolbar-initial', toolbarMode);
+        })();
+    </script>
     <link rel="icon" href="/favicon.ico" sizes="any">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -153,11 +164,26 @@
             visibility: hidden !important; 
         }
         
-        /* Hide toolbar specifically during loading to prevent flash */
-        .app-loading #topToolbar {
-            opacity: 0;
-            transition: opacity 0.3s ease;
+        /* Hide toolbar completely until ready - prevents any flicker */
+        #topToolbar:not(.toolbar-ready) {
+            display: none !important; /* Completely remove from layout */
         }
+        
+        /* Show toolbar only when ready */
+        #topToolbar.toolbar-ready {
+            display: block !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+            transition: none !important; /* Disable transitions during initialization to prevent flicker */
+        }
+        
+        /* After initialization completes, enable smooth transitions */
+        #topToolbar.toolbar-ready.toolbar-stable {
+            transition: opacity 0.2s ease, visibility 0s;
+        }
+        
+        /* Panels load immediately - no hiding during app-loading */
+        /* They start expanded and visible by default */
         
         /* Ensure stable toolbar layout from the start */
         #topToolbar {
@@ -187,6 +213,158 @@
             position: relative;
             display: flex;
             align-items: center;
+            flex-shrink: 0; /* Prevent shrinking that causes layout shifts */
+            min-width: 0; /* Allow flex items to shrink below content size if needed */
+        }
+        
+        /* Stabilize button widths to prevent jumping */
+        #tbLeft .tbtn, #tbRight .tbtn {
+            min-width: fit-content; /* Ensure buttons don't collapse */
+            white-space: nowrap; /* Prevent text wrapping */
+        }
+        
+        /* Ensure label spans don't cause width changes */
+        .label-long, .label-short {
+            display: inline-block; /* Use inline-block for more stable layout */
+            white-space: nowrap;
+        }
+
+        /* Mobile: Make toolbar horizontally scrollable by default */
+        @media (max-width: 768px) {
+            .toolbar-wrap {
+                overflow-x: auto;
+                overflow-y: hidden;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: thin;
+                scrollbar-color: rgba(148, 163, 184, 0.5) transparent;
+                justify-content: flex-start;
+                gap: 12px;
+                padding: 0 8px;
+                position: relative;
+                cursor: pointer;
+            }
+            
+            .toolbar-wrap::-webkit-scrollbar {
+                height: 4px;
+            }
+            
+            .toolbar-wrap::-webkit-scrollbar-track {
+                background: transparent;
+            }
+            
+            .toolbar-wrap::-webkit-scrollbar-thumb {
+                background: rgba(148, 163, 184, 0.5);
+                border-radius: 2px;
+            }
+            
+            .toolbar-wrap::-webkit-scrollbar-thumb:hover {
+                background: rgba(148, 163, 184, 0.7);
+            }
+            
+            /* Prevent toolbar groups from wrapping in scrollable mode */
+            .toolbar-wrap:not(.expanded) #tbLeft,
+            .toolbar-wrap:not(.expanded) #tbCenter,
+            .toolbar-wrap:not(.expanded) #tbRight {
+                flex-shrink: 0;
+                flex-wrap: nowrap;
+            }
+            
+            /* Ensure buttons don't shrink in scrollable mode */
+            .toolbar-wrap:not(.expanded) .tbtn,
+            .toolbar-wrap:not(.expanded) .tinput,
+            .toolbar-wrap:not(.expanded) .color-swatches,
+            .toolbar-wrap:not(.expanded) .slider {
+                flex-shrink: 0;
+            }
+            
+            /* Expanded/wrapped mode - up to 5 rows */
+            .toolbar-wrap.expanded {
+                overflow-x: visible;
+                overflow-y: visible;
+                flex-wrap: wrap;
+                align-content: flex-start;
+                height: auto;
+                max-height: calc(5 * (32px + 6px)); /* 5 rows: button height + gap */
+                padding: 8px;
+                gap: 6px;
+            }
+            
+            /* In expanded mode, flatten groups so items wrap together */
+            .toolbar-wrap.expanded #tbLeft,
+            .toolbar-wrap.expanded #tbCenter,
+            .toolbar-wrap.expanded #tbRight {
+                flex-wrap: wrap;
+                flex-shrink: 1;
+                gap: 6px;
+                display: contents; /* Flatten structure so items wrap together */
+            }
+            
+            /* Ensure items maintain spacing in expanded mode */
+            .toolbar-wrap.expanded .group-gap > * {
+                margin-right: 6px;
+                margin-bottom: 0;
+            }
+            
+            .toolbar-wrap.expanded .tbtn,
+            .toolbar-wrap.expanded .tinput,
+            .toolbar-wrap.expanded .color-swatches,
+            .toolbar-wrap.expanded .slider {
+                flex-shrink: 0;
+            }
+            
+            /* Visual indicator at bottom for tap area */
+            .toolbar-wrap::after {
+                content: '';
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                height: 8px;
+                background: linear-gradient(to top, rgba(148, 163, 184, 0.1), transparent);
+                pointer-events: none;
+                opacity: 0.5;
+                transition: opacity 0.2s;
+            }
+            
+            .toolbar-wrap.expanded::after {
+                opacity: 0;
+            }
+            
+            /* Blue glow animation when expandable */
+            @keyframes blueGlow {
+                0%, 100% {
+                    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+                }
+                50% {
+                    box-shadow: 0 0 12px 4px rgba(59, 130, 246, 0.6);
+                }
+            }
+            
+            .toolbar-wrap.expandable {
+                animation: blueGlow 0.5s ease-in-out;
+                animation-fill-mode: none; /* Don't persist animation state */
+            }
+            
+            .toolbar-wrap.tapped {
+                animation: blueGlow 1s ease-in-out;
+                animation-fill-mode: none; /* Don't persist animation state */
+            }
+            
+            /* Glow on hover only if expandable (when scrollable) */
+            .toolbar-wrap:not(.expanded)[data-scrollable="true"]:hover:not(.no-glow) {
+                box-shadow: 0 0 12px 4px rgba(59, 130, 246, 0.6);
+                transition: box-shadow 0.2s ease-in-out;
+            }
+            
+            /* Ensure no glow when not hovering (even if scrollable) */
+            .toolbar-wrap:not(.expanded)[data-scrollable="true"]:not(:hover):not(.expandable):not(.tapped) {
+                box-shadow: none !important;
+            }
+            
+            /* Force no glow when no-glow class is present */
+            .toolbar-wrap.no-glow {
+                box-shadow: none !important;
+            }
         }
 
         .group-gap > * {
@@ -334,11 +512,13 @@
         
         /* Responsive text labels */
         .label-long {
-            display: inline;
+            display: inline-block;
+            white-space: nowrap;
         }
         
         .label-short {
             display: none;
+            white-space: nowrap;
         }
         
         @media (max-width: 768px) {
@@ -347,7 +527,7 @@
             }
 
             .label-short {
-                display: inline;
+                display: inline-block;
             }
 
             /* Constrain panel widths on mobile to trigger scrolling */
@@ -358,6 +538,9 @@
 
             #canvasControls {
                 max-width: calc(100vw - 2rem);
+                overflow-x: auto;
+                overflow-y: hidden;
+                -webkit-overflow-scrolling: touch;
             }
 
             /* Enable horizontal scrolling for panel content on mobile */
@@ -367,8 +550,12 @@
                 overflow-y: visible !important;
                 -webkit-overflow-scrolling: touch;
                 scrollbar-width: thin;
-                /* Debug: add border to confirm styles are applying */
-                border: 2px solid rgba(255, 0, 0, 0.3) !important;
+                flex-wrap: nowrap !important;
+            }
+            
+            /* Ensure buttons don't shrink */
+            #canvasControlsContent > * {
+                flex-shrink: 0;
             }
 
             /* Prevent wrapping on flex rows inside panels */
@@ -553,11 +740,32 @@
             min-height: 140px !important; /* Header + name box + some padding */
         }
         
-        /* Ensure Images header is always visible */
-        #imagePanelHeader {
-            display: flex !important;
-            visibility: visible !important;
-            opacity: 1 !important;
+        /* Ensure entire panels load simultaneously - no sequential loading */
+        #imagePanel,
+        #strokePanel {
+            display: flex;
+            flex-direction: column !important;
+        }
+        
+        /* Ensure all panel parts load together (no header-first loading) */
+        #imagePanelHeader,
+        #imagePanel > .px-3.bg-white.border-b.border-slate-200.py-2,
+        #imagePanelContent,
+        #elementsHeader,
+        #elementsBody {
+            visibility: visible;
+            opacity: 1;
+        }
+        
+        /* Disable transitions on initial load to prevent sequential appearance */
+        #imagePanel:not([data-loaded]),
+        #strokePanel:not([data-loaded]) {
+            transition: none !important;
+        }
+        
+        #imagePanelContent:not([data-loaded]),
+        #elementsBody:not([data-loaded]) {
+            transition: none !important;
         }
 
         /* Ensure image name header is always visible and not squished */
@@ -567,21 +775,12 @@
             position: relative !important;
             z-index: 10 !important;
             display: block !important;
-            visibility: visible !important;
         }
 
         /* Ensure the image name input is always visible */
         #currentImageNameBox {
             display: block !important;
-            visibility: visible !important;
-            opacity: 1 !important;
             width: 100% !important;
-        }
-
-        /* Ensure image panel maintains proper height when content changes */
-        #imagePanel {
-            display: flex;
-            flex-direction: column !important;
         }
 
         /* On mobile, allow JavaScript to control visibility */
@@ -611,9 +810,16 @@
             cursor: pointer;
             z-index: 10100;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             user-select: none;
             pointer-events: auto;
+            opacity: 0; /* Start hidden to prevent pop-in */
+        }
+        
+        /* Smooth fade-in when shown */
+        .panel-toggle-icon[style*="display: flex"] {
+            opacity: 1;
+            transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .panel-toggle-icon:hover {
@@ -645,6 +851,15 @@
             bottom: 5rem;
             top: auto;
         }
+        
+        /* Mobile: Position canvasControls above the panel toggle icons */
+        @media (max-width: 768px) {
+            #canvasControls {
+                bottom: calc(5rem + 56px + 1rem) !important; /* Above icons (5rem) + icon height (56px) + spacing (1rem) */
+                left: 50% !important;
+                transform: translateX(-50%) !important;
+            }
+        }
 
         /* Position when expanded */
         #strokePanelIcon.expanded {
@@ -671,21 +886,41 @@
             display: none;
         }
 
-        /* Navigation container styling */
+        /* Navigation container styling - Always visible, independent of panel state */
         #navigation-container {
             background: white;
             box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
-            position: relative;
-            z-index: 100;
-            width: 100%;
+            position: fixed !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            z-index: 5000 !important;
+            width: 100% !important;
             display: block !important;
             visibility: visible !important;
+            opacity: 1 !important;
+        }
+
+        /* Ensure navigation container stays visible even when imagePanel is minimized */
+        #imagePanel.minimized ~ #navigation-container,
+        #imagePanel:has(#imagePanelContent.hidden) ~ #navigation-container,
+        body:has(#imagePanel.minimized) #navigation-container,
+        body:has(#imagePanel:has(#imagePanelContent.hidden)) #navigation-container {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
         }
 
         /* Ensure the navigation strip is always visible */
         nav[aria-label="Image quick nav"] {
             display: block !important;
             visibility: visible !important;
+        }
+        
+        /* Ensure navigation container is never affected by panel collapse */
+        #navigation-container,
+        #navigation-container * {
+            pointer-events: auto !important;
         }
 
         #mini-stepper .step {
@@ -725,8 +960,19 @@
             justify-content: center !important;
         }
 
-        /* Ensure stepper is always visible */
+        /* Ensure stepper is always visible - independent of panel state */
         #mini-stepper {
+            display: flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            pointer-events: auto !important;
+        }
+        
+        /* Ensure stepper stays visible when imagePanel is minimized */
+        #imagePanel.minimized ~ #navigation-container #mini-stepper,
+        #imagePanel:has(#imagePanelContent.hidden) ~ #navigation-container #mini-stepper,
+        body:has(#imagePanel.minimized) #mini-stepper,
+        body:has(#imagePanel:has(#imagePanelContent.hidden)) #mini-stepper {
             display: flex !important;
             visibility: visible !important;
             opacity: 1 !important;
@@ -781,23 +1027,157 @@
             transform: scale(1.1);
         }
         
-        /* Allow overflow for canvas controls to show hover menu */
-        #canvasControlsContent { 
-            overflow: visible !important; 
+        /* Make canvasControls scrollable on all screen sizes */
+        #canvasControls {
+            overflow-x: auto;
+            overflow-y: hidden;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(148, 163, 184, 0.5) transparent;
         }
         
-        /* Smart label system for responsive button text */
-        .label-short { 
-            display: none; 
+        #canvasControls::-webkit-scrollbar {
+            height: 4px;
         }
-        .label-long, .label-short {
+        
+        #canvasControls::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        #canvasControls::-webkit-scrollbar-thumb {
+            background: rgba(148, 163, 184, 0.5);
+            border-radius: 2px;
+        }
+        
+        #canvasControls::-webkit-scrollbar-thumb:hover {
+            background: rgba(148, 163, 184, 0.7);
+        }
+        
+        /* Allow overflow for canvas controls to show hover menu and enable scrolling */
+        #canvasControlsContent { 
+            overflow-x: auto;
+            overflow-y: hidden;
+            -webkit-overflow-scrolling: touch;
+            flex-wrap: nowrap !important;
+            min-width: max-content;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(148, 163, 184, 0.5) transparent;
+        }
+        
+        #canvasControlsContent::-webkit-scrollbar {
+            height: 4px;
+        }
+        
+        #canvasControlsContent::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        #canvasControlsContent::-webkit-scrollbar-thumb {
+            background: rgba(148, 163, 184, 0.5);
+            border-radius: 2px;
+        }
+        
+        #canvasControlsContent::-webkit-scrollbar-thumb:hover {
+            background: rgba(148, 163, 184, 0.7);
+        }
+        
+        /* Ensure buttons and controls don't shrink */
+        #canvasControlsContent > * {
+            flex-shrink: 0;
+        }
+        
+        /* Note: overflow-x: auto takes precedence for horizontal scrolling */
+        /* Vertical overflow remains visible for dropdown menus */
+        
+        /* STEP 2: CSS variants - Use data-toolbar-mode to control label display */
+        /* 
+         * Toolbar Label Sizing System:
+         * 
+         * This system uses a global data-toolbar-mode attribute on <html> to control
+         * toolbar label display, preventing flicker and pop-in during page load.
+         * 
+         * How it works:
+         * 1. Early script (in <head>) sets data-toolbar-mode='full' or 'compact' based on viewport width
+         * 2. CSS reads this attribute to show/hide .label-long and .label-short spans
+         * 3. JS fallback recalculates after fonts load and on window resize
+         * 4. ResizeObserver is disabled for toolbar containers to prevent flicker loops
+         * 
+         * Benefits:
+         * - No DOM rewrites (only attribute changes)
+         * - CSS handles display immediately (no JS delay)
+         * - Prevents flicker by determining size before toolbar becomes visible
+         * - Works on both desktop and mobile
+         */
+        /* Base state: show long labels, hide short labels */
+        .label-long { 
+            display: inline-block;
             white-space: nowrap;
         }
-        .smart-label-scope.compact .label-long { 
+        .label-short { 
+            display: none;
+            white-space: nowrap;
+        }
+        
+        /* When toolbar mode is 'compact', show short labels instead */
+        [data-toolbar-mode="compact"] .smart-label-scope .label-long,
+        [data-toolbar-mode="compact"] .toolbar-wrap .label-long {
+            display: none !important;
+        }
+        [data-toolbar-mode="compact"] .smart-label-scope .label-short,
+        [data-toolbar-mode="compact"] .toolbar-wrap .label-short {
+            display: inline-block !important;
+        }
+        
+        /* When toolbar mode is 'full', ensure full labels show (override any compact classes) */
+        [data-toolbar-mode="full"] .smart-label-scope .label-long,
+        [data-toolbar-mode="full"] .toolbar-wrap .label-long,
+        [data-toolbar-mode="full"] .smart-label-scope.compact .label-long,
+        [data-toolbar-mode="full"] .toolbar-wrap.compact .label-long {
+            display: inline-block !important;
+        }
+        [data-toolbar-mode="full"] .smart-label-scope .label-short,
+        [data-toolbar-mode="full"] .toolbar-wrap .label-short,
+        [data-toolbar-mode="full"] .smart-label-scope.compact .label-short,
+        [data-toolbar-mode="full"] .toolbar-wrap.compact .label-short {
+            display: none !important;
+        }
+        
+        /* Legacy support: Keep old compact class behavior for non-toolbar elements */
+        .smart-label-scope.compact:not(.toolbar-wrap):not([id^="tb"]) .label-long { 
             display: none; 
         }
-        .smart-label-scope.compact .label-short { 
-            display: inline; 
+        .smart-label-scope.compact:not(.toolbar-wrap):not([id^="tb"]) .label-short { 
+            display: inline-block; 
+        }
+        
+        /* Button width reservations to prevent layout shift */
+        #paste {
+            min-width: 60px; /* "Upload" short label width */
+            max-width: 140px; /* "Upload Images" long label width */
+        }
+        #saveProjectTop {
+            min-width: 50px; /* "Save" short label width */
+            max-width: 120px; /* "Save Project" long label width */
+        }
+        #loadProject {
+            min-width: 50px; /* "Load" short label width */
+            max-width: 120px; /* "Load Project" long label width */
+        }
+        #exportAISVG {
+            min-width: 70px; /* "AI SVG" short label width */
+            max-width: 130px; /* "AI SVG Export" long label width */
+        }
+        #drawingModeToggle {
+            min-width: 70px; /* "Straight" short label width */
+            max-width: 120px; /* "Straight Line" long label width */
+        }
+        #textModeToggle {
+            min-width: 40px; /* "Text" short label width */
+            max-width: 60px; /* "Text" long label width */
+        }
+        #projectName {
+            min-width: 100px;
+            max-width: 200px;
         }
         
         /* Text mode active state */
@@ -873,6 +1253,8 @@
             flex: 1 1 auto;
             min-height: 0; /* allows flex child to shrink for scrolling in Firefox */
             overflow-y: auto !important;
+            /* Remove transition that causes flickering */
+            transition: none !important;
         }
         
         /* Header dragging styles */
@@ -1231,36 +1613,87 @@
         }
     </style>
     
+    
     <script>
-        // Add loading class as early as possible to prevent UI flash
-        document.documentElement.classList.add('app-loading');
-
-        // Debug gate: enable with ?debug=1 or localStorage.debug='1'
-        (function () {
-            try {
-                const params = new URLSearchParams(location.search);
-                const debug = params.has('debug') || localStorage.getItem('debug') === '1';
-                window.__DEBUG__ = !!debug;
+        // STEP 3: JS fallback - Re-check sizing after fonts load and on resize
+        // This updates the global data-toolbar-mode attribute (no DOM rewrites)
+        (function() {
+            let resizeTimer = null;
+            let isCalculating = false;
+            
+            const calculateToolbarMode = () => {
+                // Prevent concurrent calculations
+                if (isCalculating) return;
+                isCalculating = true;
                 
-                if (!window.__DEBUG__) {
-                    // Silence non-essential logs in production
-                    const noop = () => {};
-                    console.log = noop;
-                    console.debug = noop;
-                    console.warn = noop;
-                    // Keep console.error visible for real issues
+                const toolbarWrap = document.getElementById('toolbarWrap') || document.querySelector('.toolbar-wrap');
+                if (!toolbarWrap) {
+                    isCalculating = false;
+                    return;
                 }
-            } catch (_) {
-                // Fallback if localStorage access fails
-                window.__DEBUG__ = false;
+                
+                const windowWidth = window.innerWidth;
+                const isMobile = windowWidth <= 768;
+                
+                // Desktop: always use full mode
+                if (!isMobile) {
+                    document.documentElement.setAttribute('data-toolbar-mode', 'full');
+                    isCalculating = false;
+                    return;
+                }
+                
+                // Mobile: Measure if compact is needed
+                // Temporarily set to full mode for measurement
+                document.documentElement.setAttribute('data-toolbar-mode', 'full');
+                
+                // Force layout calculation
+                void toolbarWrap.offsetWidth;
+                
+                // Measure if content overflows
+                const toolbarWidth = toolbarWrap.clientWidth;
+                const toolbarScrollWidth = toolbarWrap.scrollWidth;
+                const needsCompact = toolbarScrollWidth > toolbarWidth;
+                
+                // Set the correct mode based on measurement
+                document.documentElement.setAttribute('data-toolbar-mode', needsCompact ? 'compact' : 'full');
+                
+                isCalculating = false;
+            };
+            
+            // Calculate immediately when toolbar exists
+            const initCalculation = () => {
+                const toolbarWrap = document.getElementById('toolbarWrap') || document.querySelector('.toolbar-wrap');
+                if (toolbarWrap) {
+                    calculateToolbarMode();
+                } else if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', initCalculation);
+                } else {
+                    setTimeout(initCalculation, 0);
+                }
+            };
+            
+            // Start calculation
+            initCalculation();
+            
+            // Recalculate after fonts load (for accurate text measurement)
+            if (document.fonts && document.fonts.ready) {
+                document.fonts.ready.then(() => {
+                    setTimeout(calculateToolbarMode, 50);
+                });
             }
+            
+            // Recalculate on window resize (throttled)
+            window.addEventListener('resize', () => {
+                if (resizeTimer) clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(calculateToolbarMode, 150);
+            });
         })();
     </script>
 </head>
 <body class="bg-gray-50 h-screen overflow-hidden">
     <!-- Top Toolbar -->
     <div id="topToolbar">
-        <div class="toolbar-wrap smart-label-scope">
+        <div class="toolbar-wrap smart-label-scope" id="toolbarWrap">
             <div id="tbLeft" class="group-gap smart-label-scope">
                 <!-- Pre-populated toolbar content to prevent flash -->
                 <button id="paste" class="tbtn" title="Upload Images" aria-label="Upload Images">
@@ -1315,6 +1748,39 @@
                     </div>
                 </div>
     </div>
+    
+    <script>
+        // Mark toolbar as ready - size should already be calculated by previous script
+        (function() {
+            const markToolbarReady = () => {
+                try {
+                    const topToolbar = document.getElementById('topToolbar');
+                    const toolbarWrap = document.getElementById('toolbarWrap') || document.querySelector('.toolbar-wrap');
+                    
+                    if (topToolbar && toolbarWrap) {
+                        // Toolbar size should already be set by the calculation script
+                        // Just mark it as ready to make it visible
+                        topToolbar.classList.add('toolbar-ready');
+                        toolbarWrap.classList.add('toolbar-ready');
+                        // Toolbar is now ready - CSS will make it visible
+                        window.__toolbarReady = true;
+                    }
+                } catch(e) {
+                    console.error('[TOOLBAR-INIT] Error marking toolbar ready:', e);
+                }
+            };
+            
+            // Try immediately
+            markToolbarReady();
+            
+            // Also try on DOMContentLoaded
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', markToolbarReady);
+            } else {
+                setTimeout(markToolbarReady, 0);
+            }
+        })();
+    </script>
 
     <!-- Fullscreen Canvas -->
     <canvas id="canvas"></canvas>
@@ -1538,6 +2004,9 @@
                     <input id="toggleShowMeasurements" type="checkbox" class="accent-blue-600" checked>
                     Show measurements
                 </label>
+                <button id="toggleReviewOnly" title="Show only measurements under review" class="px-2 py-1 text-xs bg-slate-50 border border-slate-200 rounded-lg hover:bg-slate-100 transition-colors">
+                    Review only
+                </button>
                 <div class="flex items-center gap-1 text-xs bg-slate-50 border border-slate-200 px-2 py-1 rounded-lg">
                     <span class="text-slate-600">Tag Size:</span>
                     <button id="decreaseAllTagSize" title="Decrease tag size for all tags on this image" class="w-5 h-5 bg-white border border-slate-300 rounded hover:bg-slate-50 flex items-center justify-center text-slate-600 hover:text-slate-800 transition-colors">−</button>
@@ -1548,7 +2017,7 @@
                 <button id="labelShapeToggleBtn" class="px-2 py-1 text-xs bg-white border border-gray-300 rounded-lg hover:bg-gray-50" title="Toggle tag shape" aria-pressed="true">■</button>
             </div>
         </div>
-        <div id="strokeVisibilityControls" class="px-3 pt-2 pb-2 transition-all duration-300 overflow-y-auto overflow-x-hidden" style="box-sizing: border-box;"></div>
+        <div id="strokeVisibilityControls" class="px-3 pt-2 pb-2 overflow-y-auto overflow-x-hidden" style="box-sizing: border-box;"></div>
         </div>
     </div>
 
@@ -1591,8 +2060,8 @@
     </div>
 
     <!-- Mobile panel toggle icons (outside panels to avoid overflow clipping) -->
-    <div id="strokePanelIcon" class="panel-toggle-icon minimized" data-panel="strokePanel" style="display: flex;">✏️</div>
-    <div id="imagePanelIcon" class="panel-toggle-icon minimized" data-panel="imagePanel" style="display: flex;">🖼️</div>
+    <div id="strokePanelIcon" class="panel-toggle-icon" data-panel="strokePanel" style="display: none; opacity: 0;">✏️</div>
+    <div id="imagePanelIcon" class="panel-toggle-icon" data-panel="imagePanel" style="display: none; opacity: 0;">🖼️</div>
 
     <!-- Capture Frame -->
     <div id="captureOverlay" class="fixed inset-0 pointer-events-none" style="z-index: 15;">
@@ -2065,8 +2534,104 @@
             }
         }
 
+        // Extracted helper function to check if container needs compact mode
+        // NOTE: Toolbar containers are now handled by data-toolbar-mode attribute
+        // This function only applies to non-toolbar smart-label-scope containers
+        const compactStateCache = new Map(); // Track previous state to prevent thrashing
+        
+            function applyCompactLabels(container) {
+                if (!container) return;
+                
+                // Skip toolbar containers - they're handled by data-toolbar-mode
+                if (container.closest('#topToolbar')) {
+                    return;
+                }
+                
+                // Check if we're on desktop - never add compact class on desktop
+                const isMobile = window.innerWidth <= 768;
+                
+                // Skip smart labels on desktop - always show full labels
+                if (!isMobile) {
+                    container.classList.remove('compact');
+                    return;
+                }
+                
+                // Simpler, more reliable overflow detection with hysteresis
+                const containerWidth = container.clientWidth;
+                const containerScrollWidth = container.scrollWidth;
+                
+                // Add 2px threshold to prevent rapid toggling near the boundary
+                const threshold = 2;
+                const needsCompact = containerScrollWidth > (containerWidth + threshold);
+                const wasCompact = container.classList.contains('compact');
+                const cachedState = compactStateCache.get(container);
+                
+                // Only toggle if state actually changed and difference is significant
+                if (needsCompact !== wasCompact) {
+                    // Check if we're near the boundary - if so, keep current state to prevent thrashing
+                    const nearBoundary = Math.abs(containerScrollWidth - containerWidth) < threshold * 2;
+                    if (nearBoundary && cachedState === wasCompact) {
+                        // Near boundary and state hasn't changed - keep current state
+                        return;
+                    }
+                    
+                    // Update state
+                    if (needsCompact) {
+                        container.classList.add('compact');
+                    } else {
+                        container.classList.remove('compact');
+                    }
+                    compactStateCache.set(container, needsCompact);
+                }
+        }
+
+        // Pre-calculate toolbar layout before making it visible
+        // NOTE: Toolbar label sizing is now handled by data-toolbar-mode attribute
+        // This function now only handles final layout stabilization
+        function calculateInitialToolbarLayout() {
+            const toolbarWrap = document.querySelector('.toolbar-wrap');
+            if (!toolbarWrap) {
+                return;
+            }
+            
+            // Toolbar mode should already be set by the earlier script
+            // Just ensure layout is stable
+            
+            // Force initial layout calculation to ensure all styles are applied
+            void toolbarWrap.offsetWidth;
+            
+            // Final layout stabilization - force calculation on all toolbar elements
+            const allButtons = toolbarWrap.querySelectorAll('button, input, select');
+            allButtons.forEach(el => {
+                void el.offsetWidth; // Force layout calculation
+            });
+            
+            // One final layout calculation to ensure everything is stable
+            void toolbarWrap.offsetWidth;
+            
+            // Toolbar-ready class should already be added (done earlier to prevent opacity transitions)
+            // But ensure it's set here as well for consistency
+            const topToolbar = document.getElementById('topToolbar');
+            if (topToolbar && !topToolbar.classList.contains('toolbar-ready')) {
+                topToolbar.classList.add('toolbar-ready');
+            }
+            if (!toolbarWrap.classList.contains('toolbar-ready')) {
+                toolbarWrap.classList.add('toolbar-ready');
+            }
+            
+            // After layout is stable, enable smooth transitions
+            setTimeout(() => {
+                if (topToolbar) {
+                    topToolbar.classList.add('toolbar-stable');
+                }
+                if (toolbarWrap) {
+                    toolbarWrap.classList.add('toolbar-stable');
+                }
+            }, 100);
+        }
+
         // Smart label system for responsive button text
-        function initSmartLabels() {
+        function initSmartLabels(skipInitialCheck = false) {
             // Helper to wrap button with smart label spans
             function wrapSmartLabel(buttonEl, longText, shortText) {
                 if (!buttonEl || buttonEl.querySelector('.label-long')) return; // Already wrapped
@@ -2076,30 +2641,46 @@
                 buttonEl.setAttribute('aria-label', longText);
             }
             
-            // Helper to check if container needs compact mode
-            function applyCompactLabels(container) {
-                if (!container) return;
-                
-                // Simpler, more reliable overflow detection
-                const containerWidth = container.clientWidth;
-                const containerScrollWidth = container.scrollWidth;
-                const needsCompact = containerScrollWidth > containerWidth;
-                
-                if (needsCompact) {
-                    container.classList.add('compact');
-                } else {
-                    container.classList.remove('compact');
-                }
-            }
-            
             // Setup ResizeObserver for each smart-label-scope container
             const containers = document.querySelectorAll('.smart-label-scope');
             const observers = new Map();
             
+            // Flag to prevent ResizeObserver from firing during initial setup
+            let isInitializing = !skipInitialCheck;
+            const initStartTime = Date.now();
+            
             containers.forEach(container => {
                 let debounceTimer = null;
-                const debouncedApply = () => {
+                let lastWidth = 0;
+                let lastHeight = 0;
+                let isProcessing = false; // Prevent concurrent processing
+                
+                const debouncedApply = (entries) => {
+                    // Skip if we're still initializing or already processing
+                    if (isInitializing || isProcessing) return;
+                    
+                    // Check if enough time has passed since initialization started
+                    const timeSinceInit = Date.now() - initStartTime;
+                    if (timeSinceInit < 800) return; // Wait 800ms before allowing ResizeObserver to fire
+                    
+                    // Check if size actually changed significantly (prevent micro-adjustments)
+                    const entry = entries && entries[0];
+                    if (entry) {
+                        const { width, height } = entry.contentRect;
+                        const widthDiff = Math.abs(width - lastWidth);
+                        const heightDiff = Math.abs(height - lastHeight);
+                        
+                        // Only process if change is significant (more than 2px to prevent micro-adjustments)
+                        if (widthDiff < 2 && heightDiff < 2) {
+                            return;
+                        }
+                        
+                        lastWidth = width;
+                        lastHeight = height;
+                    }
+                    
                     if (debounceTimer) clearTimeout(debounceTimer);
+                    isProcessing = true;
                     debounceTimer = setTimeout(() => {
                         applyCompactLabels(container);
                         // Also check parent containers
@@ -2107,16 +2688,42 @@
                         if (parent && parent !== container) {
                             applyCompactLabels(parent);
                         }
-                    }, 50); // Reduced debounce time for better responsiveness
+                        isProcessing = false;
+                    }, 200); // Increased debounce time to prevent rapid toggling
                 };
                 
+                // STEP 4: Performance guardrails - Don't observe toolbar containers
+                // Toolbar sizing is handled by data-toolbar-mode attribute, not ResizeObserver
+                // This prevents flicker loops and performance issues
+                const isToolbarContainer = container.closest('#topToolbar') !== null;
+                
+                if (isToolbarContainer) {
+                    // Skip ResizeObserver for toolbar - data-toolbar-mode handles sizing
+                    return; // Don't observe toolbar containers at all
+                }
+                
+                // For non-toolbar containers, set up ResizeObserver normally
                 const observer = new ResizeObserver(debouncedApply);
                 observer.observe(container);
                 observers.set(container, observer);
                 
-                // Initial check with immediate execution
-                applyCompactLabels(container);
+                // Store initial dimensions
+                const rect = container.getBoundingClientRect();
+                lastWidth = rect.width;
+                lastHeight = rect.height;
+                
+                // Initial check with immediate execution (skip if already calculated)
+                if (!skipInitialCheck) {
+                    applyCompactLabels(container);
+                }
             });
+            
+            // Clear initialization flag after a longer delay to ensure everything is stable
+            if (isInitializing) {
+                setTimeout(() => {
+                    isInitializing = false;
+                }, 1000); // Increased to 1 second
+            }
             
             // Setup buttons that get created dynamically by toolbar initialization
             setTimeout(() => {
@@ -2138,7 +2745,8 @@
                     saveBtn.style.padding = '8px 16px';
                 }
                 
-                // Immediate check for all containers
+                // Immediate check for all containers (skip if already calculated)
+                if (!skipInitialCheck) {
                 containers.forEach(container => {
                     applyCompactLabels(container);
                 });
@@ -2149,6 +2757,7 @@
                         applyCompactLabels(container);
                     });
                 }, 100);
+                }
             }, 150);
             
             // Global function to update drawing mode toggle labels
@@ -2194,14 +2803,51 @@
 
         // New UI functionality for modular panels and capture frame
         document.addEventListener('DOMContentLoaded', () => {
-            // Initialize top toolbar by moving existing controls
+            // 1. Initialize top toolbar structure first (so elements are in place)
             initializeTopToolbar();
+            
+            // 2. Toolbar-ready should already be added (done in inline script before DOMContentLoaded)
+            // Just ensure it's set and mark as stable after initialization
+            const topToolbar = document.getElementById('topToolbar');
+            const toolbarWrap = document.querySelector('.toolbar-wrap');
+            if (topToolbar && toolbarWrap) {
+                // Ensure toolbar-ready is set
+                topToolbar.classList.add('toolbar-ready');
+                toolbarWrap.classList.add('toolbar-ready');
+            }
+            
+            // 3. Calculate layout AFTER toolbar initialization completes (use RAF to ensure DOM is ready)
+            requestAnimationFrame(() => {
+                const doLayoutCalculation = () => {
+                    // Force a layout calculation to ensure all styles are applied
+                    const toolbarWrap = document.querySelector('.toolbar-wrap');
+                    if (toolbarWrap) {
+                        void toolbarWrap.offsetWidth; // Force layout
+                    }
+                    
+                    // Now calculate layout (toolbar is already visible, but we need to stabilize it)
+                    calculateInitialToolbarLayout();
+                    
+                    // 4. Setup smart labels (skip initial check since we already calculated)
+                    initSmartLabels(true); // Pass true to skip initial check
+                };
+                
+                // Wait for fonts to load to ensure accurate text measurements
+                if (document.fonts && document.fonts.ready) {
+                    // Check if fonts are already loaded
+                    if (document.fonts.status === 'loaded') {
+                        doLayoutCalculation();
+                    } else {
+                        document.fonts.ready.then(doLayoutCalculation);
+                    }
+                } else {
+                    // Fallback if fonts API not available - use small delay
+                    setTimeout(doLayoutCalculation, 50);
+                }
+            });
             
             // Setup quick save hover menu after toolbar initialization (with small delay)
             setTimeout(setupQuickSaveHover, 100);
-            
-            // Initialize smart label system
-            setTimeout(initSmartLabels, 200);
             
             // (Sketchbook toggle removed per request)
             // Panel visibility toggles
@@ -2327,6 +2973,254 @@
                 });
             });
             
+            // Mobile toolbar expand/collapse functionality
+            (function initToolbarToggle() {
+                const toolbarWrap = document.querySelector('.toolbar-wrap');
+                if (!toolbarWrap) return;
+                
+                function isMobileDevice() {
+                    return window.innerWidth <= 768;
+                }
+                
+                // Track if we've shown the initial glow (only once per page load)
+                let hasShownInitialGlow = false;
+                let wasScrollable = false;
+                let wasExpanded = false;
+                
+                // Check if toolbar is scrollable (can be expanded)
+                function checkIfExpandable() {
+                    const isMobile = isMobileDevice();
+                    const isExpanded = toolbarWrap.classList.contains('expanded');
+                    
+                    
+                    if (!isMobile || isExpanded) {
+                        toolbarWrap.removeAttribute('data-scrollable');
+                        toolbarWrap.classList.remove('expandable');
+                        // Don't reset flags when expanded - preserve state for when collapsed
+                        if (!isMobile) {
+                            hasShownInitialGlow = false;
+                            wasScrollable = false;
+                        }
+                        wasExpanded = isExpanded;
+                        return;
+                    }
+                    
+                    // Check if content overflows
+                    const isScrollable = toolbarWrap.scrollWidth > toolbarWrap.clientWidth;
+                    const hadScrollable = toolbarWrap.hasAttribute('data-scrollable');
+                    
+                    
+                    // Set data attribute for CSS hover detection
+                    if (isScrollable) {
+                        toolbarWrap.setAttribute('data-scrollable', 'true');
+                        
+                        // Show glow once when transitioning from non-scrollable to scrollable
+                        // BUT only if we haven't shown it before AND we're not coming from expanded state
+                        const shouldShowGlow = !wasScrollable && !hasShownInitialGlow && !wasExpanded;
+                        
+                        if (shouldShowGlow) {
+                            // Remove inline style to allow animation
+                            toolbarWrap.style.removeProperty('box-shadow');
+                            toolbarWrap.classList.add('expandable');
+                            hasShownInitialGlow = true;
+                            
+                            // Remove the class after animation completes and clear inline style
+                            setTimeout(() => {
+                                toolbarWrap.classList.remove('expandable');
+                                // Clear inline style so hover can work
+                                toolbarWrap.style.removeProperty('box-shadow');
+                            }, 500);
+                        } else {
+                            // Only clear inline style if not hovering and not animating
+                            if (!toolbarWrap.matches(':hover') && !toolbarWrap.classList.contains('expanded') && !toolbarWrap.classList.contains('expandable') && !toolbarWrap.classList.contains('tapped')) {
+                                toolbarWrap.style.removeProperty('box-shadow');
+                            }
+                        }
+                    } else {
+                        toolbarWrap.removeAttribute('data-scrollable');
+                        toolbarWrap.classList.remove('expandable');
+                        // Reset glow flag when not scrollable (but preserve if we were expanded)
+                        if (!wasExpanded) {
+                            hasShownInitialGlow = false;
+                        }
+                    }
+                    
+                    // Update previous state
+                    wasScrollable = isScrollable;
+                    wasExpanded = isExpanded;
+                }
+                
+                // Initial check and periodic checks
+                setTimeout(() => {
+                    checkIfExpandable();
+                }, 500);
+                
+                // Only run periodic checks on mobile (where expand/collapse matters)
+                const checkInterval = isMobileDevice() ? setInterval(() => {
+                    checkIfExpandable();
+                }, 2000) : null;
+                
+                // Clean up interval if not needed
+                if (!checkInterval && !isMobileDevice()) {
+                    // On desktop, only check once after initial setup
+                    setTimeout(() => {
+                        checkIfExpandable();
+                    }, 1000);
+                }
+                
+                // Also check on scroll
+                toolbarWrap.addEventListener('scroll', () => {
+                    clearTimeout(checkIfExpandable.timeout);
+                    checkIfExpandable.timeout = setTimeout(() => {
+                        checkIfExpandable();
+                    }, 300);
+                });
+                
+                function handleToolbarTap(e) {
+                    if (!isMobileDevice()) {
+                        return;
+                    }
+                    
+                    // Only process if the event target is the toolbar or a child of the toolbar
+                    const target = e.target;
+                    if (!toolbarWrap.contains(target) && target !== toolbarWrap) {
+                        return; // Not a toolbar event, let it pass through
+                    }
+                    
+                    const rect = toolbarWrap.getBoundingClientRect();
+                    const tapY = e.clientY || (e.changedTouches && e.changedTouches[0]?.clientY) || 0;
+                    const tapX = e.clientX || (e.changedTouches && e.changedTouches[0]?.clientX) || 0;
+                    
+                    // Check if tap is in the bottom 12px of the toolbar
+                    const bottomThreshold = 12;
+                    const isBottomTap = tapY >= rect.bottom - bottomThreshold && tapY <= rect.bottom;
+                    
+                    // Also check if tap is on the toolbar itself (not on a button)
+                    const isToolbarArea = tapY >= rect.top && tapY <= rect.bottom && 
+                                         tapX >= rect.left && tapX <= rect.right;
+                    
+                    // Don't toggle if clicking on a button or input
+                    const isInteractiveElement = target.tagName === 'BUTTON' || 
+                                                target.tagName === 'INPUT' || 
+                                                target.closest('button') || 
+                                                target.closest('input') ||
+                                                target.closest('.color-swatches');
+                    
+                    
+                    if (isBottomTap && isToolbarArea && !isInteractiveElement) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        const wasExpanded = toolbarWrap.classList.contains('expanded');
+                        
+                        // Add glow animation on tap
+                        toolbarWrap.classList.remove('tapped');
+                        // Remove inline style to allow animation
+                        toolbarWrap.style.removeProperty('box-shadow');
+                        void toolbarWrap.offsetWidth; // Force reflow
+                        toolbarWrap.classList.add('tapped');
+                        
+                        // Remove tapped class after animation and clear inline style
+                        setTimeout(() => {
+                            toolbarWrap.classList.remove('tapped');
+                            // Clear inline style so hover can work
+                            toolbarWrap.style.removeProperty('box-shadow');
+                        }, 1000);
+                        
+                        toolbarWrap.classList.toggle('expanded');
+                        
+                        // Update topToolbar height
+                        const topToolbar = document.getElementById('topToolbar');
+                        if (topToolbar) {
+                            if (toolbarWrap.classList.contains('expanded')) {
+                                topToolbar.style.height = 'auto';
+                                topToolbar.style.maxHeight = 'calc(5 * (32px + 6px) + 16px)'; // 5 rows + padding
+                            } else {
+                                topToolbar.style.height = '48px';
+                                topToolbar.style.maxHeight = 'none';
+                                // Remove animation classes and clear inline style
+                                toolbarWrap.classList.remove('expandable', 'tapped');
+                                // Add no-glow class to prevent hover glow from persisting
+                                toolbarWrap.classList.add('no-glow');
+                                // Temporarily remove data-scrollable to clear any hover glow
+                                toolbarWrap.removeAttribute('data-scrollable');
+                                toolbarWrap.style.removeProperty('box-shadow');
+                                // Force clear any glow immediately
+                                toolbarWrap.style.boxShadow = 'none';
+                                
+                                // Check if mouse is already outside the toolbar (not hovering)
+                                const isCurrentlyHovered = toolbarWrap.matches(':hover');
+                                
+                                // If mouse is already outside, remove no-glow immediately
+                                if (!isCurrentlyHovered) {
+                                    setTimeout(() => {
+                                        toolbarWrap.classList.remove('no-glow');
+                                    }, 100); // Small delay to ensure collapse animation completes
+                                } else {
+                                    // Remove no-glow class when mouse leaves (to allow hover glow again)
+                                    const removeNoGlowOnLeave = () => {
+                                        if (toolbarWrap.classList.contains('no-glow')) {
+                                            toolbarWrap.classList.remove('no-glow');
+                                        }
+                                    };
+                                    toolbarWrap.addEventListener('mouseleave', removeNoGlowOnLeave, { once: true });
+                                    
+                                    // Also remove after a delay as fallback (for touch devices or if mouseleave doesn't fire)
+                                    setTimeout(() => {
+                                        if (toolbarWrap.classList.contains('no-glow')) {
+                                            toolbarWrap.classList.remove('no-glow');
+                                            toolbarWrap.removeEventListener('mouseleave', removeNoGlowOnLeave);
+                                        }
+                                    }, 1000);
+                                }
+                            }
+                        }
+                        
+                        // Recheck expandability after toggle
+                        setTimeout(() => {
+                            // Double-check glow is cleared after collapse
+                            if (!toolbarWrap.classList.contains('expanded')) {
+                                toolbarWrap.style.boxShadow = 'none';
+                                toolbarWrap.style.removeProperty('box-shadow');
+                                // Don't remove data-scrollable if no-glow is active (it will prevent glow anyway)
+                                if (!toolbarWrap.classList.contains('no-glow')) {
+                                    toolbarWrap.removeAttribute('data-scrollable');
+                                }
+                                // Force reflow to ensure CSS applies
+                                void toolbarWrap.offsetWidth;
+                            }
+                            checkIfExpandable();
+                        }, 150);
+                    }
+                }
+                
+                // Add event listeners for both click and touch
+                toolbarWrap.addEventListener('click', handleToolbarTap);
+                toolbarWrap.addEventListener('touchend', handleToolbarTap);
+                
+                // Handle window resize
+                let resizeTimeout;
+                window.addEventListener('resize', () => {
+                    clearTimeout(resizeTimeout);
+                    resizeTimeout = setTimeout(() => {
+                        if (!isMobileDevice() && toolbarWrap.classList.contains('expanded')) {
+                            toolbarWrap.classList.remove('expanded');
+                            const topToolbar = document.getElementById('topToolbar');
+                            if (topToolbar) {
+                                topToolbar.style.height = '48px';
+                                topToolbar.style.maxHeight = 'none';
+                            }
+                        }
+                        checkIfExpandable();
+                    }, 150);
+                });
+                
+                // Cleanup interval on page unload
+                window.addEventListener('beforeunload', () => {
+                    clearInterval(checkInterval);
+                });
+            })();
+            
             // Enhanced panel toggle functionality with minimize-to-header behavior
             function createPanelToggle(panelId, contentId, buttonId) {
                 const panel = document.getElementById(panelId);
@@ -2341,6 +3235,25 @@
                     // Use the specified content element
                     const body = content;
                     const isMinimized = body.classList.contains('hidden');
+                    
+                    // Special handling for imagePanel: ensure navigation container stays visible
+                    if (panelId === 'imagePanel') {
+                        const navContainer = document.getElementById('navigation-container');
+                        const miniStepper = document.getElementById('mini-stepper');
+                        if (navContainer) {
+                            // Explicitly ensure navigation container stays visible
+                            navContainer.style.display = 'block';
+                            navContainer.style.visibility = 'visible';
+                            navContainer.style.opacity = '1';
+                            navContainer.style.pointerEvents = 'auto';
+                        }
+                        if (miniStepper) {
+                            miniStepper.style.display = 'flex';
+                            miniStepper.style.visibility = 'visible';
+                            miniStepper.style.opacity = '1';
+                            miniStepper.style.pointerEvents = 'auto';
+                        }
+                    }
                     
                     if (isMinimized) {
                         // Expand panel
@@ -2369,6 +3282,22 @@
                         icon.style.transform = 'rotate(-90deg)';
                         panel.classList.add('minimized');
                         panel.setAttribute('aria-expanded', 'false');
+                        
+                        // For imagePanel, ensure navigation stays visible after collapse
+                        if (panelId === 'imagePanel') {
+                            const navContainer = document.getElementById('navigation-container');
+                            const miniStepper = document.getElementById('mini-stepper');
+                            if (navContainer) {
+                                navContainer.style.display = 'block';
+                                navContainer.style.visibility = 'visible';
+                                navContainer.style.opacity = '1';
+                            }
+                            if (miniStepper) {
+                                miniStepper.style.display = 'flex';
+                                miniStepper.style.visibility = 'visible';
+                                miniStepper.style.opacity = '1';
+                            }
+                        }
                     }
                 });
             }
@@ -2380,23 +3309,89 @@
             createPanelToggle('imagePanel', 'imagePanelContent', 'toggleImagePanel');
             createPanelToggle('canvasControls', 'canvasControlsContent', 'toggleCanvasControls');
 
-            // Ensure Vectors and tags and Images are open by default
+            // Ensure Vectors and tags and Images are open by default on desktop, closed on mobile
+            // Run immediately and also after a short delay to catch any late initialization
             (function expandByDefault() {
+                function isMobileDevice() {
+                    return window.innerWidth <= 768;
+                }
+                
+                function ensurePanelsExpanded() {
+                    const strokePanel = document.getElementById('strokePanel');
+                    const imagePanel = document.getElementById('imagePanel');
                 const strokeContent = document.getElementById('elementsBody');
-                const strokeButton = document.getElementById('toggleStrokePanel');
                 const imageContent = document.getElementById('imagePanelContent');
-                const imageButton = document.getElementById('toggleImagePanel');
-                if (strokeContent && strokeButton && strokeContent.classList.contains('hidden')) {
-                    strokeButton.click();
+                    const isMobile = isMobileDevice();
+                    
+                    if (!strokePanel || !imagePanel) {
+                        return;
+                    }
+                    
+                    // On mobile: start minimized (closed), on desktop: start expanded (open)
+                    if (isMobile) {
+                        // Mobile: minimize panels by default
+                        strokePanel.classList.remove('expanded');
+                        strokePanel.classList.add('minimized');
+                        strokePanel.setAttribute('data-mobile-state', 'minimized');
+                        strokePanel.setAttribute('aria-expanded', 'false');
+                        strokePanel.style.display = 'none'; // Hide on mobile when minimized
+                        
+                        imagePanel.classList.remove('expanded');
+                        imagePanel.classList.add('minimized');
+                        imagePanel.setAttribute('data-mobile-state', 'minimized');
+                        imagePanel.setAttribute('aria-expanded', 'false');
+                        imagePanel.style.display = 'none'; // Hide on mobile when minimized
+                        
+                        // Hide content on mobile when minimized
+                        if (strokeContent) {
+                            strokeContent.classList.add('hidden');
+                        }
+                        if (imageContent) {
+                            imageContent.classList.add('hidden');
                 }
-                if (imageContent && imageButton && imageContent.classList.contains('hidden')) {
-                    imageButton.click();
+                    } else {
+                        // Desktop: expand panels by default
+                        strokePanel.classList.remove('minimized', 'expanded');
+                        strokePanel.setAttribute('data-mobile-state', 'expanded');
+                        strokePanel.setAttribute('aria-expanded', 'true');
+                        strokePanel.style.display = 'flex';
+                        
+                        imagePanel.classList.remove('minimized', 'expanded');
+                        imagePanel.setAttribute('data-mobile-state', 'expanded');
+                        imagePanel.setAttribute('aria-expanded', 'true');
+                        imagePanel.style.display = 'flex';
+                        
+                        // Aggressively ensure content is visible on desktop
+                        if (strokeContent) {
+                            strokeContent.classList.remove('hidden');
+                            strokeContent.style.maxHeight = 'none';
+                            strokeContent.style.display = '';
+                            strokeContent.style.visibility = '';
+                            strokeContent.style.opacity = '';
+                        }
+                        if (imageContent) {
+                            imageContent.classList.remove('hidden');
+                            imageContent.style.maxHeight = 'none';
+                            imageContent.style.display = '';
+                            imageContent.style.visibility = '';
+                            imageContent.style.opacity = '';
+                        }
+                    }
+                
+                // Mark panels as loaded to enable transitions after initial render
+                strokePanel.setAttribute('data-loaded', 'true');
+                imagePanel.setAttribute('data-loaded', 'true');
+                if (strokeContent) strokeContent.setAttribute('data-loaded', 'true');
+                if (imageContent) imageContent.setAttribute('data-loaded', 'true');
+                    
                 }
-                // Ensure Elements body has no artificial cap when expanded
-                const elementsBody = document.getElementById('elementsBody');
-                if (elementsBody && !elementsBody.classList.contains('hidden')) {
-                    elementsBody.style.maxHeight = 'none';
-                }
+                
+                // Run immediately
+                ensurePanelsExpanded();
+                
+                // Also run after a short delay to catch any late initialization
+                setTimeout(ensurePanelsExpanded, 50);
+                setTimeout(ensurePanelsExpanded, 200);
             })();
 
             // Mobile panel toggle icons functionality
@@ -2415,12 +3410,13 @@
                     return;
                 }
 
-                // Initialize panel states
+                // Initialize panel states - start minimized on mobile, expanded on desktop
+                const isMobile = isMobileDevice();
                 if (!strokePanel.getAttribute('data-mobile-state')) {
-                    strokePanel.setAttribute('data-mobile-state', 'minimized');
+                    strokePanel.setAttribute('data-mobile-state', isMobile ? 'minimized' : 'expanded');
                 }
                 if (!imagePanel.getAttribute('data-mobile-state')) {
-                    imagePanel.setAttribute('data-mobile-state', 'minimized');
+                    imagePanel.setAttribute('data-mobile-state', isMobile ? 'minimized' : 'expanded');
                 }
 
                 // Sync icon visual state with panel state
@@ -2433,6 +3429,13 @@
                         icon.classList.add('expanded');
                         panel.classList.add('expanded');
                         panel.style.display = 'flex';
+                        // Ensure panel content is visible
+                        const contentId = panel.id === 'strokePanel' ? 'elementsBody' : 'imagePanelContent';
+                        const content = document.getElementById(contentId);
+                        if (content) {
+                            content.classList.remove('hidden');
+                            content.style.maxHeight = 'none';
+                        }
                     } else {
                         icon.classList.add('minimized');
                         panel.classList.add('minimized');
@@ -2459,16 +3462,34 @@
                 function updatePanelVisibility() {
                     const isMobile = isMobileDevice();
 
-                    // Show icons only on mobile
-                    strokeIcon.style.display = isMobile ? 'flex' : 'none';
-                    imageIcon.style.display = isMobile ? 'flex' : 'none';
-
-                    // On desktop, always show panels
+                    // On desktop, always show panels and ensure content is visible
                     if (!isMobile) {
                         strokePanel.style.display = 'flex';
                         imagePanel.style.display = 'flex';
+                        // Hide icons on desktop
+                        strokeIcon.style.display = 'none';
+                        imageIcon.style.display = 'none';
+                        // Ensure content is visible on desktop
+                        const strokeContent = document.getElementById('elementsBody');
+                        const imageContent = document.getElementById('imagePanelContent');
+                        if (strokeContent) {
+                            strokeContent.classList.remove('hidden');
+                            strokeContent.style.maxHeight = 'none';
+                        }
+                        if (imageContent) {
+                            imageContent.classList.remove('hidden');
+                            imageContent.style.maxHeight = 'none';
+                        }
                     } else {
-                        // On mobile, respect the current state
+                        // On mobile, show icons with smooth fade-in
+                        strokeIcon.style.display = 'flex';
+                        imageIcon.style.display = 'flex';
+                        // Fade in icons smoothly
+                        requestAnimationFrame(() => {
+                            strokeIcon.style.opacity = '1';
+                            imageIcon.style.opacity = '1';
+                        });
+                        // Sync panel state with icons
                         syncIconState(strokePanel, strokeIcon);
                         syncIconState(imagePanel, imageIcon);
                     }
@@ -4862,11 +5883,8 @@
             // Reveal UI once initialization is complete
             document.documentElement.classList.remove('app-loading');
             
-            // Ensure toolbar is visible after loading
-            const topToolbar = document.getElementById('topToolbar');
-            if (topToolbar) {
-                topToolbar.style.opacity = '1';
-            }
+            // Toolbar visibility is handled by CSS via toolbar-ready class
+            // No need to set inline styles here
             
             // Store reference to original addImageToSidebar if it exists
             const originalAddImageToSidebar = window.addImageToSidebar;
@@ -5510,7 +6528,80 @@
             }
 
             function getImageContainers() {
-                // First try the specific image containers
+                // Use window.originalImages as the source of truth for which images exist
+                // This ensures we can detect images even when the panel is collapsed
+                const imageLabelsFromState = window.originalImages ? Object.keys(window.originalImages).filter(label => 
+                    !label.includes('Demo') && !label.includes('Blank')
+                ) : [];
+                
+                // If we have state, use it as the primary source and find matching containers
+                if (imageLabelsFromState.length > 0) {
+                    const imagePanelContent = document.getElementById('imagePanelContent');
+                    const imagePanel = document.getElementById('imagePanel');
+                    const isPanelCollapsed = (imagePanelContent && imagePanelContent.classList.contains('hidden')) ||
+                                           (imagePanel && imagePanel.classList.contains('minimized')) ||
+                                           (imagePanel && imagePanel.style.display === 'none');
+                    
+                    // Map each label to its container, preferring visible ones
+                    const labelToContainer = new Map();
+                    
+                    // First, try to find containers in the expected locations
+                    const imageList = document.getElementById('imageList');
+                    const imageGallery = document.getElementById('imageGallery');
+                    
+                    // Collect all potential containers
+                    const allContainers = [];
+                    if (imageList) {
+                        allContainers.push(...Array.from(imageList.querySelectorAll('.image-container, .image-thumbnail')));
+                    }
+                    if (imageGallery) {
+                        allContainers.push(...Array.from(imageGallery.querySelectorAll('.image-container, .image-thumbnail')));
+                    }
+                    
+                    // Also search broadly if needed
+                    if (allContainers.length === 0) {
+                        allContainers.push(...Array.from(document.querySelectorAll('.image-container, .image-thumbnail')));
+                    }
+                    
+                    // Map labels to containers, preferring visible ones
+                    imageLabelsFromState.forEach(label => {
+                        // Find all containers with this label
+                        const matchingContainers = allContainers.filter(container => {
+                            const cLabel = container.dataset?.label || container.getAttribute('title') || container.dataset?.imageIndex || container.id;
+                            return cLabel === label;
+                        });
+                        
+                        if (matchingContainers.length > 0) {
+                            // Prefer visible containers, but if panel is collapsed, accept any
+                            const visible = matchingContainers.find(c => c.offsetWidth > 0 && c.offsetHeight > 0);
+                            const container = visible || (isPanelCollapsed ? matchingContainers[0] : null);
+                            
+                            if (container && !labelToContainer.has(label)) {
+                                labelToContainer.set(label, container);
+                            }
+                        }
+                    });
+                    
+                    // Return containers in the order of imageLabelsFromState, deduplicated
+                    // If panel is collapsed and we have state but no containers, return empty array
+                    // updatePills() will handle creating virtual containers from state
+                    const result = [];
+                    const seenContainers = new Set();
+                    
+                    imageLabelsFromState.forEach(label => {
+                        const container = labelToContainer.get(label);
+                        if (container && !seenContainers.has(container)) {
+                            seenContainers.add(container);
+                            result.push(container);
+                        }
+                    });
+                    
+                    // If we have state but no containers found (panel closed), return empty array
+                    // This will trigger the fallback in updatePills() to use state directly
+                    return result;
+                }
+                
+                // Fallback: if no state, use the old method but deduplicate
                 const imageList = document.getElementById('imageList');
                 const imageGallery = document.getElementById('imageGallery');
 
@@ -5526,60 +6617,34 @@
                     containers.push(...galleryContainers);
                 }
 
-                // If no containers found in specific locations, search more broadly
-                if (containers.length === 0) {
-                    // console.log('[MiniStepper] No containers in specific locations, searching broadly...');
-                    const allPossibleContainers = Array.from(document.querySelectorAll('*')).filter(el => {
-                        // Convert className to string (it might be a DOMTokenList)
-                        const className = (typeof el.className === 'string') ? el.className : (el.className ? el.className.toString() : '');
-                        const id = el.id || '';
-                        const hasImageData = el.dataset && (el.dataset.label || el.dataset.imageIndex || el.dataset.src);
-
-                        return (
-                            className.includes('image') ||
-                            id.includes('image') ||
-                            hasImageData ||
-                            el.tagName === 'IMG' ||
-                            (el.style && el.style.backgroundImage && (
-                                el.style.backgroundImage.includes('data:image') ||
-                                el.style.backgroundImage.includes('blob:') ||
-                                el.style.backgroundImage.includes('http')
-                            ))
-                        );
-                    });
-
-                    containers.push(...allPossibleContainers);
-                }
-
-                // console.log('[MiniStepper] Found', containers.length, 'total containers');
-
-                // Filter to valid image containers
-                const validContainers = containers.filter(container => {
+                // Filter to valid image containers and deduplicate by label
+                const imagePanelContent = document.getElementById('imagePanelContent');
+                const isPanelCollapsed = imagePanelContent && imagePanelContent.classList.contains('hidden');
+                
+                const labelToContainer = new Map();
+                const seenContainers = new Set();
+                
+                containers.forEach(container => {
                     const label = container.dataset?.label || container.getAttribute('title') || container.dataset?.imageIndex || container.id;
                     const isVisible = container.offsetWidth > 0 && container.offsetHeight > 0;
-                    const bgImage = container.style && container.style.backgroundImage;
-                    const hasImage = container.tagName === 'IMG' ||
-                                   (bgImage && (
-                                       bgImage.includes('data:image') ||
-                                       bgImage.includes('blob:') ||
-                                       bgImage.includes('http')
-                                   )) ||
-                                   container.dataset?.src;
-
-                    // For sidebar image-container buttons, they don't have images themselves but represent images
                     const isSidebarContainer = container.classList && container.classList.contains('image-container');
 
-                    // Accept if: (visible container with label) OR (has actual image)
+                    // Accept if valid and (visible OR panel collapsed)
                     const isValid = label && !label.includes('Demo') && !label.includes('Blank') &&
-                                   (isSidebarContainer ? isVisible : (hasImage && isVisible));
-
-                    // Debug logging removed - validation is working correctly
-
-                    return isValid;
+                                   (isVisible || isPanelCollapsed) &&
+                                   (isSidebarContainer || container.tagName === 'IMG' || container.dataset?.src);
+                    
+                    if (isValid && !seenContainers.has(container)) {
+                        // Prefer visible containers for each label
+                        if (!labelToContainer.has(label) || isVisible) {
+                            labelToContainer.set(label, container);
+                        }
+                        seenContainers.add(container);
+                    }
                 });
-
-                // console.log('[MiniStepper] Filtered to', validContainers.length, 'valid image containers');
-                return validContainers;
+                
+                // Return deduplicated containers
+                return Array.from(labelToContainer.values());
             }
 
             function positionNavigationContainer() {
@@ -5587,7 +6652,6 @@
                 const navContainer = document.getElementById('navigation-container');
 
                 if (!frameCapture || !navContainer) {
-                    console.log('[MiniStepper] Missing elements for positioning');
                     return;
                 }
 
@@ -5600,14 +6664,6 @@
                 navContainer.style.width = '100%';
                 navContainer.style.zIndex = '5000';
 
-                // console.log('[MiniStepper] Positioned nav container:', {
-                //     position: navContainer.style.position,
-                //     bottom: navContainer.style.bottom,
-                //     left: navContainer.style.left,
-                //     width: navContainer.style.width,
-                //     zIndex: navContainer.style.zIndex,
-                //     frameRect: frameRect
-                // });
             }
 
             function updatePills() {
@@ -5615,26 +6671,54 @@
                 const stepper = document.getElementById('mini-stepper');
 
                 if (!stepper) {
-                    console.log('[MiniStepper] No stepper element found');
                     return []; // Return empty array instead of undefined
                 }
 
-                if (imageContainers.length === 0) {
-                    console.log('[MiniStepper] No images found yet');
+                // Fallback: if no containers found but we have images in state, use state directly
+                // This ensures pills load even when the image panel is closed
+                let containersToUse = imageContainers;
+                if (imageContainers.length === 0 && window.originalImages && Object.keys(window.originalImages).length > 0) {
+                    // Create virtual containers from state
+                    const imageLabels = Object.keys(window.originalImages).filter(label => 
+                        !label.includes('Demo') && !label.includes('Blank')
+                    );
+                    
+                    if (imageLabels.length > 0) {
+                        // Try to find containers even if hidden/closed
+                        containersToUse = imageLabels.map(label => {
+                            const container = Array.from(document.querySelectorAll('.image-container, .image-thumbnail'))
+                                .find(c => {
+                                    const cLabel = c.dataset?.label || c.getAttribute('title') || c.dataset?.imageIndex || c.id;
+                                    return cLabel === label;
+                                });
+                            return container;
+                        }).filter(Boolean);
+                        
+                        // If still no containers (panel closed), create virtual containers from labels
+                        if (containersToUse.length === 0) {
+                            containersToUse = imageLabels.map(label => ({ 
+                                dataset: { label: label },
+                                getAttribute: (attr) => attr === 'title' ? label : null,
+                                id: label,
+                                tagName: 'DIV'
+                            }));
+                        }
+                    }
+                }
+
+                if (containersToUse.length === 0) {
                     stepper.innerHTML = '<li class="px-4 py-2 text-slate-500 text-sm">No images yet</li>';
                     // Ensure base classes are applied even when empty
                     stepper.className = 'flex gap-3 px-4 py-3 overflow-x-auto snap-x snap-mandatory justify-center items-center min-h-[60px]';
                     return []; // Return empty array instead of undefined
                 }
 
-                console.log('[MiniStepper] Found', imageContainers.length, 'images');
-                console.log('[MiniStepper] Image labels:', imageContainers.map(c => c.dataset.label || c.getAttribute('title') || c.dataset.imageIndex));
 
                 // Ensure stepper has base classes
                 stepper.className = 'flex gap-3 px-4 py-3 overflow-x-auto snap-x snap-mandatory justify-center items-center min-h-[60px]';
 
                 // Build pills for each image
-                const pillsHTML = imageContainers.map((container, idx) => {
+                const pillsHTML = containersToUse.map((container, idx) => {
                     const label = container.dataset?.label || container.getAttribute('title') || container.dataset?.imageIndex || container.id || `Image ${idx + 1}`;
                     const n = idx + 1;
                     return `
@@ -5650,18 +6734,14 @@
                         </li>`;
                 }).join('');
 
-                console.log('[MiniStepper] Generated pills HTML:', pillsHTML);
                 stepper.innerHTML = pillsHTML;
 
                 const stepButtons = Array.from(stepper.querySelectorAll('button[data-target]'));
 
-                console.log('[MiniStepper] Created', stepButtons.length, 'pill buttons');
-                console.log('[MiniStepper] Stepper HTML after generation:', stepper.innerHTML);
 
                 // Initialise states - all start as inactive
                 stepButtons.forEach(btn => {
                     btn.classList.add(...cfg.inactiveClasses.split(' '));
-                    console.log('[MiniStepper] Applied classes to button:', btn.className, 'data-target:', btn.dataset.target);
                 });
                 
                 // Update active state immediately after creating pills
@@ -5671,11 +6751,9 @@
                 stepButtons.forEach(btn => {
                     btn.addEventListener('click', () => {
                         const label = btn.dataset.target;
-                        console.log('[MiniStepper] Clicking pill for label:', label);
                         if (window.switchToImage && typeof window.switchToImage === 'function') {
                             try {
                                 window.switchToImage(label);
-                                console.log('[MiniStepper] Successfully switched to image:', label);
                                 // Center the pill
                                 btn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
                                 
@@ -5770,13 +6848,6 @@
 
                 // Observe all image containers
                 getImageContainers().forEach(container => {
-                    const label = container.dataset?.label || container.getAttribute('title') || container.dataset?.imageIndex || container.id;
-                    console.log('[MiniStepper] Observing container:', {
-                        tag: container.tagName,
-                        className: container.className,
-                        id: container.id,
-                        label: label
-                    });
                     io.observe(container);
                 });
             }
@@ -5786,7 +6857,6 @@
                 if (typeof window.switchToImage === 'function') {
                     initialize();
                 } else {
-                    console.log('[MiniStepper] Waiting for paint.js to load...');
                     setTimeout(initializeWhenReady, 500);
                 }
             }
@@ -5817,7 +6887,6 @@
                         const currentButtons = Array.from(document.querySelectorAll('#mini-stepper button[data-target]'));
                         const currentContainers = getImageContainers();
                         if (currentButtons.length !== currentContainers.length) {
-                            console.log('[MiniStepper] Image count changed, updating pills');
                             const newButtons = updatePills();
                             initIntersectionObserver(newButtons);
                         }
@@ -5827,8 +6896,6 @@
                     });
                 };
                 setInterval(checkForChanges, 2000); // Check less frequently (every 2 seconds)
-
-                console.log('[MiniStepper] Initialized and monitoring for image changes');
             }
 
             // Reduced motion preference
@@ -5841,13 +6908,11 @@
 
             // Example listeners for external integration
             window.addEventListener('mini-step-change', e => {
-                const { label, index } = e.detail;
-                console.log(`[MiniStepper] Active image changed to: ${label} (index: ${index})`);
+                // Event fired when active image changes
             });
 
             window.addEventListener('mini-step-click', e => {
-                const { label, index } = e.detail;
-                console.log(`[MiniStepper] Image clicked: ${label} (index: ${index})`);
+                // Event fired when image pill is clicked
             });
         })();
     </script>

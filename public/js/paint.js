@@ -1,4 +1,11 @@
-﻿// Define core application structure for better state management
+﻿// CRITICAL: Initialize core globals IMMEDIATELY at the top of the file
+// before any other code runs, so tag-manager.js can access them
+// These will be properly initialized from paintApp below, but this ensures they exist
+window.IMAGE_LABELS = window.IMAGE_LABELS || ['front', 'side', 'back', 'cushion', 'blank_canvas'];
+window.currentImageLabel = window.currentImageLabel || 'front';
+window.imageTags = window.imageTags || {};
+
+// Define core application structure for better state management
 
 // Simple debug logging function
 function debugLog(...args) {
@@ -148,6 +155,35 @@ window.paintApp = {
   }
 };
 
+// CRITICAL: Initialize core globals immediately after paintApp is defined
+// so other scripts like tag-manager.js can access them immediately
+// Use safe assignment to ensure they're always defined
+if (window.paintApp && window.paintApp.config && window.paintApp.config.IMAGE_LABELS) {
+  window.IMAGE_LABELS = window.paintApp.config.IMAGE_LABELS;
+} else {
+  window.IMAGE_LABELS = window.IMAGE_LABELS || ['front', 'side', 'back', 'cushion', 'blank_canvas'];
+}
+
+if (window.paintApp && window.paintApp.state) {
+  window.currentImageLabel = window.paintApp.state.currentImageLabel || 'front';
+  window.imageTags = window.paintApp.state.imageTags || {};
+} else {
+  window.currentImageLabel = window.currentImageLabel || 'front';
+  window.imageTags = window.imageTags || {};
+}
+window.vectorStrokesByImage = window.paintApp.state.vectorStrokesByImage;
+window.strokeVisibilityByImage = window.paintApp.state.strokeVisibilityByImage;
+window.strokeLabelVisibility = window.paintApp.state.strokeLabelVisibility;
+window.strokeMeasurements = window.paintApp.state.strokeMeasurements;
+window.imageScaleByLabel = window.paintApp.state.imageScaleByLabel;
+window.imagePositionByLabel = window.paintApp.state.imagePositionByLabel;
+window.lineStrokesByImage = window.paintApp.state.lineStrokesByImage;
+window.labelsByImage = window.paintApp.state.labelsByImage;
+window.originalImages = window.paintApp.state.originalImages;
+window.originalImageDimensions = window.paintApp.state.originalImageDimensions;
+window.isLoadingProject = window.paintApp.state.isLoadingProject;
+window.tagSizesByImage = window.tagSizesByImage || {};
+
 // Maintain backward compatibility by keeping global references
 // These will be gradually migrated to use the paintApp structure
 // Moved to DOMContentLoaded event handler to ensure proper initialization
@@ -255,8 +291,9 @@ let dragAnchorIndex = window.paintApp.uiState.dragAnchorIndex;
 const ANCHOR_SIZE = window.paintApp.config.ANCHOR_SIZE;
 const CLICK_AREA = window.paintApp.config.CLICK_AREA;
 
+
 document.addEventListener('DOMContentLoaded', () => {
-  // Initialize global variables from paintApp state
+  // Re-initialize global variables from paintApp state (in case they weren't set above)
   window.IMAGE_LABELS = window.paintApp.config.IMAGE_LABELS;
   window.currentImageLabel = window.paintApp.state.currentImageLabel;
   window.vectorStrokesByImage = window.paintApp.state.vectorStrokesByImage;
@@ -282,6 +319,22 @@ document.addEventListener('DOMContentLoaded', () => {
   if (toggleShowMeasurements) {
     toggleShowMeasurements.addEventListener('change', () => {
       // Redraw canvas to update label display
+      redrawCanvasWithVisibility();
+    });
+  }
+  
+  // Initialize review only filter toggle
+  window.showReviewOnly = false;
+  const toggleReviewOnly = document.getElementById('toggleReviewOnly');
+  if (toggleReviewOnly) {
+    toggleReviewOnly.addEventListener('click', () => {
+      window.showReviewOnly = !window.showReviewOnly;
+      toggleReviewOnly.style.backgroundColor = window.showReviewOnly ? '#FFEB3B' : '';
+      toggleReviewOnly.style.fontWeight = window.showReviewOnly ? 'bold' : '';
+      // Update stroke visibility controls and redraw
+      if (typeof window.updateStrokeVisibilityControls === 'function') {
+        window.updateStrokeVisibilityControls();
+      }
       redrawCanvasWithVisibility();
     });
   }
@@ -1123,6 +1176,9 @@ document.addEventListener('DOMContentLoaded', () => {
       e.dataTransfer.setData('text/plain', label);
       e.dataTransfer.effectAllowed = 'move';
       container.classList.add('dragging');
+      
+      // Suppress scroll detection during drag to prevent feedback loops
+      window.__imageListProgrammaticScrollUntil = Date.now() + 5000; // 5 second suppression
     });
         
     container.addEventListener('dragover', (e) => {
@@ -1159,6 +1215,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const imageList = document.getElementById('imageList');
         const rect = container.getBoundingClientRect();
         const midpoint = rect.top + rect.height / 2;
+        
+        // Suppress scroll detection during DOM manipulation
+        window.__imageListProgrammaticScrollUntil = Date.now() + 1000;
                 
         if (e.clientY < midpoint) {
           // Insert before this container
@@ -1177,11 +1236,11 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       draggedImageItem = null;
             
-      // Update ordered image labels after drag-and-drop reordering
+      // Update ordered image labels after drag-and-drop reordering (only once)
       updateOrderedImageLabelsArray();
-            
-      // Update the ordered image labels array after reordering
-      updateOrderedImageLabelsArray();
+      
+      // Suppress scroll detection for a short time after drag ends to prevent feedback loops
+      window.__imageListProgrammaticScrollUntil = Date.now() + 500;
     });
         
     // Finally add to the sidebar
@@ -1311,7 +1370,9 @@ document.addEventListener('DOMContentLoaded', () => {
     
   // Function to delete an image and clean up all associated data
   async function deleteImage(label, container) {
-    //         console.log(`[deleteImage] Deleting image: ${label}`);
+    console.log(`[DEBUG DELETE] ===== Deleting Image: ${label} =====`);
+    console.log(`[DEBUG DELETE]   Container index: ${Array.from(container.parentElement.children).indexOf(container)}`);
+    console.log(`[DEBUG DELETE]   Was current image: ${currentImageLabel === label}`);
         
     // Convert blob/object URL to data URL for persistence
     const originalImageUrl = container.dataset.originalImageUrl;
@@ -1373,10 +1434,18 @@ document.addEventListener('DOMContentLoaded', () => {
     // Clear global redo stack when new action is performed
     window.globalRedoStack = [];
         
-    console.log(`[deleteImage] Saved undo data for image: ${label}`);
+    console.log(`[DEBUG DELETE]   Saved undo data for image: ${label}`);
+    console.log(`[DEBUG DELETE]   Data summary:`, {
+      strokes: imageData.lineStrokes?.length || 0,
+      vectorStrokes: Object.keys(imageData.vectorStrokes || {}).length,
+      measurements: Object.keys(imageData.strokeMeasurements || {}).length,
+      hasImage: !!imageData.originalImage,
+      hasDimensions: !!imageData.originalImageDimensions
+    });
         
     // Remove from DOM
     container.remove();
+    console.log(`[DEBUG DELETE]   Removed container from DOM`);
         
     // Update the ordered image labels array after deletion
     updateOrderedImageLabelsArray();
@@ -1448,7 +1517,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Update UI
     updateSidebarStrokeCounts();
         
-    //         console.log(`[deleteImage] Successfully deleted image: ${label}`);
+    console.log(`[DEBUG DELETE] ===== Image Deletion Complete: ${label} =====`);
+    const remainingImages = Object.keys(window.originalImages || {}).length;
+    console.log(`[DEBUG DELETE]   Remaining images: ${remainingImages}`);
   }
     
   // Function to update the ordered image labels array based on current DOM order
@@ -1762,13 +1833,21 @@ document.addEventListener('DOMContentLoaded', () => {
           currentStroke = cloneImageData(newState);
         }
             
-        // Initialize the undo stack if needed
+        // Ensure all image structures are initialized for this label
+        if (typeof initializeNewImageStructures === 'function') {
+          initializeNewImageStructures(label);
+        }
+        
+        // Initialize the undo stack if needed (fallback if initializeNewImageStructures wasn't called)
         if (!undoStackByImage[label] || undoStackByImage[label].length === 0) {
-          undoStackByImage[label] = [{
+          if (!undoStackByImage[label]) {
+            undoStackByImage[label] = [];
+          }
+          undoStackByImage[label].push({
             state: cloneImageData(newState),
             type: 'initial',
             label: null
-          }];
+          });
           //                     console.log(`[pasteImageFromUrl] Initialized undo stack for ${label}`);
         }
             
@@ -4713,6 +4792,29 @@ document.addEventListener('DOMContentLoaded', () => {
       //             console.log(`[createEditableMeasureText] INFO: parentItem is null/undefined for stroke ${strokeLabel}. Caller will handle DOM insertion.`);
     }
 
+    // Make measurement always clickable/editable (not just when selected)
+    measureText.style.cursor = 'pointer';
+    measureText.title = 'Click to edit measurement';
+    
+    // Add click handler to make it editable
+    measureText.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (measureText.contentEditable !== 'true') {
+        measureText.contentEditable = 'true';
+        measureText.dataset.originalMeasurementString = measureText.textContent;
+        measureText.focus();
+        
+        // Select all text
+        const selection = window.getSelection();
+        if (selection) {
+          const range = document.createRange();
+          range.selectNodeContents(measureText);
+          selection.removeAllRanges();
+          selection.addRange(range);
+        }
+      }
+    });
+
     if (isSelected) {
       measureText.contentEditable = 'true';
       measureText.dataset.originalMeasurementString = currentFormattedMeasurement;
@@ -4767,9 +4869,75 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
 
+      // Handle '?' key to mark for review
+      if (event.key === '?' && !event.ctrlKey && !event.shiftKey && !event.altKey) {
+        event.preventDefault();
+        event.stopPropagation();
+        
+        // Mark this stroke as under review
+        if (!window.strokeMeasurements[currentImageLabel]) {
+          window.strokeMeasurements[currentImageLabel] = {};
+        }
+        if (!window.strokeMeasurements[currentImageLabel][strokeLabel]) {
+          window.strokeMeasurements[currentImageLabel][strokeLabel] = {
+            inchWhole: 0,
+            inchFraction: 0,
+            cm: 0.0,
+            underReview: false
+          };
+        }
+        
+        const measurementData = window.strokeMeasurements[currentImageLabel][strokeLabel];
+        if (!measurementData.underReview) {
+          // Store current measurement as original
+          const currentMeasurement = getMeasurementString(strokeLabel);
+          if (currentMeasurement) {
+            measurementData.originalMeasurement = currentMeasurement;
+          }
+          measurementData.originalMeasurementValues = {
+            inchWhole: measurementData.inchWhole || 0,
+            inchFraction: measurementData.inchFraction || 0,
+            cm: measurementData.cm || 0.0
+          };
+          measurementData.reviewMeasurement = '?';
+          measurementData.underReview = true;
+          
+          // Save state and update UI
+          try { saveState(true, false, false); } catch(_) {}
+          updateStrokeVisibilityControls();
+          redrawCanvasWithVisibility();
+          
+          // Focus the review measurement input if it exists
+          setTimeout(() => {
+            const reviewInput = document.querySelector(`.stroke-review-measurement`);
+            if (reviewInput) {
+              reviewInput.click(); // Trigger edit mode
+            }
+          }, 100);
+        }
+        return;
+      }
+
       if (event.key === 'Enter' && !event.ctrlKey && !event.shiftKey) {
         event.preventDefault();
+        // Check if this stroke is under review - if so, focus review input after committing
+        const measurementData = window.strokeMeasurements && 
+                              window.strokeMeasurements[currentImageLabel] &&
+                              window.strokeMeasurements[currentImageLabel][strokeLabel];
+        const isUnderReview = measurementData && measurementData.underReview === true;
+        
         measureText.blur();
+        
+        // If under review, focus the review measurement input
+        if (isUnderReview) {
+          setTimeout(() => {
+            const reviewInput = document.querySelector(`.stroke-review-measurement[data-stroke="${strokeLabel}"]`) ||
+                                document.querySelector(`.stroke-visibility-item[data-stroke="${strokeLabel}"] .stroke-review-measurement`);
+            if (reviewInput) {
+              reviewInput.click(); // Trigger edit mode
+            }
+          }, 50);
+        }
       } else if (event.key === 'Escape') {
         event.preventDefault();
         measureText.textContent = measureText.dataset.originalMeasurementString || '';
@@ -4825,10 +4993,47 @@ document.addEventListener('DOMContentLoaded', () => {
             if (parseSuccess) {
               measureText.textContent = getMeasurementString(strokeLabel) || '';
               //                             console.log(`[measureText blur - PARSE SUCCESS] ${strokeLabel} updated to: "${measureText.textContent}".`);
+              
+              // Check if this stroke is under review - if so, focus review input after committing
+              const measurementData = window.strokeMeasurements && 
+                                    window.strokeMeasurements[currentImageLabel] &&
+                                    window.strokeMeasurements[currentImageLabel][strokeLabel];
+              const isUnderReview = measurementData && measurementData.underReview === true;
+              
+              // Check if we need to mark as under review after entering measurement (from star click with 0")
+              if (measurementData && measurementData._pendingReviewAfterInput) {
+                // Mark as under review and store current measurement as original
+                const newMeasurement = getMeasurementString(strokeLabel);
+                measurementData.originalMeasurement = newMeasurement;
+                measurementData.originalMeasurementValues = {
+                  inchWhole: measurementData.inchWhole || 0,
+                  inchFraction: measurementData.inchFraction || 0,
+                  cm: measurementData.cm || 0.0
+                };
+                measurementData.reviewMeasurement = '?';
+                measurementData.underReview = true;
+                delete measurementData._pendingReviewAfterInput;
+                
+                // Save state
+                try { saveState(true, false, false); } catch(_) {}
+              }
+              
               // Calls to update UI are now here, after successful parse and visual update of measureText
               updateStrokeVisibilityControls();
               setTimeout(() => { // Defer canvas redraw to next tick
                 redrawCanvasWithVisibility();
+                
+                // If under review (or just marked as under review), focus the review measurement input
+                const finalIsUnderReview = measurementData && measurementData.underReview === true;
+                if (finalIsUnderReview) {
+                  setTimeout(() => {
+                    const reviewInput = document.querySelector(`.stroke-review-measurement[data-stroke="${strokeLabel}"]`) ||
+                                        document.querySelector(`.stroke-visibility-item[data-stroke="${strokeLabel}"] .stroke-review-measurement`);
+                    if (reviewInput) {
+                      reviewInput.click(); // Trigger edit mode
+                    }
+                  }, 50);
+                }
               }, 0);
             } else {
               // Parse failed, revert to original text
@@ -4903,10 +5108,15 @@ document.addEventListener('DOMContentLoaded', () => {
       window.strokeMeasurements[currentImageLabel][strokeLabel] = {
         inchWhole: 0,
         inchFraction: 0,
-        cm: 0.0
+        cm: 0.0,
+        underReview: false
       };
       //             console.log(`[createStrokeVisibilityControl] Setting default measurement for ${strokeLabel}`);
     } else {
+      // Ensure underReview flag exists (for backward compatibility)
+      if (window.strokeMeasurements[currentImageLabel][strokeLabel].underReview === undefined) {
+        window.strokeMeasurements[currentImageLabel][strokeLabel].underReview = false;
+      }
       //             console.log(`[createStrokeVisibilityControl] Using existing measurement for ${strokeLabel}:`, 
       //                     JSON.stringify(window.strokeMeasurements[currentImageLabel][strokeLabel]));
     }
@@ -4914,6 +5124,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const isVisible = strokeVisibilityByImage[currentImageLabel][strokeLabel];
     const isLabelVisible = strokeLabelVisibility[currentImageLabel][strokeLabel];
     const measurement = getMeasurementString(strokeLabel);
+    const isUnderReview = window.strokeMeasurements[currentImageLabel] && 
+                          window.strokeMeasurements[currentImageLabel][strokeLabel] &&
+                          window.strokeMeasurements[currentImageLabel][strokeLabel].underReview === true;
             
     // Check if this stroke is selected in the multi-selection array
     const isMultiSelected = multipleSelectedStrokesByImage[currentImageLabel].includes(strokeLabel);
@@ -5147,15 +5360,40 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     };
             
-    // Create delete button (x)
+    // Create delete button (x) - hover-only circular button
     const deleteBtn = document.createElement('button');
-    deleteBtn.className = 'stroke-delete-btn';
-    deleteBtn.innerHTML = '&times;';
+    deleteBtn.className = 'delete-image-btn opacity-0 group-hover:opacity-100 transition-opacity';
+    deleteBtn.innerHTML = '×';
     deleteBtn.title = 'Delete this stroke';
+    deleteBtn.style.position = 'absolute';
+    deleteBtn.style.top = '6px';
+    deleteBtn.style.right = '6px';
+    deleteBtn.style.cursor = 'pointer';
+    deleteBtn.style.background = 'rgba(255, 255, 255, 0.9)';
+    deleteBtn.style.border = '1px solid rgb(204, 204, 204)';
+    deleteBtn.style.borderRadius = '50%';
+    deleteBtn.style.width = '20px';
+    deleteBtn.style.height = '20px';
+    deleteBtn.style.fontSize = '12px';
+    deleteBtn.style.fontWeight = 'bold';
+    deleteBtn.style.fontFamily = 'Arial, sans-serif';
+    deleteBtn.style.display = 'flex';
+    deleteBtn.style.alignItems = 'center';
+    deleteBtn.style.justifyContent = 'center';
+    deleteBtn.style.zIndex = '10';
+    deleteBtn.style.color = 'rgb(102, 102, 102)';
+    deleteBtn.style.lineHeight = '1';
+    deleteBtn.style.padding = '0px';
+    deleteBtn.style.margin = '0px';
+    deleteBtn.style.textAlign = 'center';
     deleteBtn.onclick = (e) => {
       e.stopPropagation(); // Prevent triggering the item's click event
       deleteStroke(strokeLabel);
     };
+    
+    // Make item a group for hover effect and ensure positioning context
+    item.classList.add('group');
+    item.style.position = 'relative'; // Ensure positioning context for absolute delete button
             
     // Create label toggle button
     const labelToggleBtn = document.createElement('button');
@@ -5168,9 +5406,134 @@ document.addEventListener('DOMContentLoaded', () => {
       e.stopPropagation();
       toggleLabelVisibility(strokeLabel);
     };
+    
+    // Create review toggle button (star icon, stylish)
+    const reviewToggleBtn = document.createElement('button');
+    reviewToggleBtn.className = 'stroke-review-toggle-btn';
+    reviewToggleBtn.innerHTML = '★'; // Star icon
+    reviewToggleBtn.title = isUnderReview ? 'Remove from review' : 'Mark for review';
+    reviewToggleBtn.style.fontSize = '14px';
+    reviewToggleBtn.style.padding = '2px 6px';
+    reviewToggleBtn.style.borderRadius = '3px';
+    reviewToggleBtn.style.border = 'none';
+    reviewToggleBtn.style.cursor = 'pointer';
+    reviewToggleBtn.style.transition = 'all 0.2s';
+    if (isUnderReview) {
+      reviewToggleBtn.style.backgroundColor = '#FFEB3B';
+      reviewToggleBtn.style.color = '#000';
+      reviewToggleBtn.style.fontWeight = 'bold';
+    }
+    reviewToggleBtn.onclick = (e) => {
+      console.log(`[REVIEW TOGGLE BTN] Clicked review toggle for ${strokeLabel} on ${currentImageLabel}`);
+      e.stopPropagation();
+      
+      // Initialize measurement data if needed
+      if (!window.strokeMeasurements[currentImageLabel]) {
+        window.strokeMeasurements[currentImageLabel] = {};
+      }
+      if (!window.strokeMeasurements[currentImageLabel][strokeLabel]) {
+        window.strokeMeasurements[currentImageLabel][strokeLabel] = {
+          inchWhole: 0,
+          inchFraction: 0,
+          cm: 0.0,
+          underReview: false
+        };
+      }
+      
+      const measurementData = window.strokeMeasurements[currentImageLabel][strokeLabel];
+      const isCurrentlyUnderReview = measurementData.underReview === true;
+      const hasReviewMeasurement = measurementData.reviewMeasurement && measurementData.reviewMeasurement !== '?';
+      
+      // If already under review and has a review measurement, check if user wants to accept it
+      if (isCurrentlyUnderReview && hasReviewMeasurement) {
+        const shouldAccept = confirm(`Accept the new measurement "${measurementData.reviewMeasurement}" and replace the original "${measurementData.originalMeasurement || getMeasurementString(strokeLabel)}"?`);
+        if (shouldAccept) {
+          // Replace original with review measurement
+          const reviewValue = measurementData.reviewMeasurement;
+          // Parse and apply the review measurement to the actual measurement values
+          const parseSuccess = parseAndSaveMeasurement(strokeLabel, reviewValue);
+          if (parseSuccess) {
+            // Clear review state
+            measurementData.underReview = false;
+            delete measurementData.originalMeasurement;
+            delete measurementData.originalMeasurementValues;
+            delete measurementData.reviewMeasurement;
+            
+            // Update UI
+            try { saveState(true, false, false); } catch(_) {}
+            updateStrokeVisibilityControls();
+            redrawCanvasWithVisibility();
+          }
+        }
+        return;
+      }
+      
+      // If under review but no review measurement yet, focus the review input
+      if (isCurrentlyUnderReview) {
+        setTimeout(() => {
+          const reviewInput = document.querySelector(`.stroke-visibility-item[data-stroke="${strokeLabel}"] .stroke-review-measurement`);
+          if (reviewInput) {
+            reviewInput.click(); // Trigger edit mode
+          }
+        }, 50);
+        return;
+      }
+      
+      // If not under review, check if measurement is default (0") - if so, focus primary measurement first
+      const currentMeasurement = getMeasurementString(strokeLabel) || '0"';
+      const isDefaultMeasurement = currentMeasurement === '0"' || currentMeasurement === '0' || !currentMeasurement || currentMeasurement.trim() === '';
+      
+      if (isDefaultMeasurement) {
+        // If no default measurement, mark as pending review and focus the primary measurement input first
+        // Set a flag so we know to mark as under review after the measurement is entered
+        measurementData._pendingReviewAfterInput = true;
+        
+        setTimeout(() => {
+          const primaryInput = document.querySelector(`.stroke-visibility-item[data-stroke="${strokeLabel}"] .stroke-measurement:not(.stroke-review-measurement)`);
+          if (primaryInput) {
+            primaryInput.click(); // Make it editable
+          }
+        }, 50);
+        return;
+      }
+      
+      // Otherwise, prompt to confirm using current value as original
+      const confirmMessage = `Use "${currentMeasurement}" as the original measurement and enter a corrected value?`;
+      if (confirm(confirmMessage)) {
+        // Store current measurement as original
+        measurementData.originalMeasurement = currentMeasurement;
+        measurementData.originalMeasurementValues = {
+          inchWhole: measurementData.inchWhole || 0,
+          inchFraction: measurementData.inchFraction || 0,
+          cm: measurementData.cm || 0.0
+        };
+        measurementData.reviewMeasurement = '?';
+        measurementData.underReview = true;
+        
+        // Update UI
+        try { saveState(true, false, false); } catch(_) {}
+        updateStrokeVisibilityControls();
+        redrawCanvasWithVisibility();
+        
+        // Focus the review measurement input
+        setTimeout(() => {
+          const reviewInput = document.querySelector(`.stroke-visibility-item[data-stroke="${strokeLabel}"] .stroke-review-measurement`);
+          if (reviewInput) {
+            reviewInput.click(); // Trigger edit mode
+          }
+        }, 100);
+      }
+    };
             
     labelContainer.appendChild(strokeName); // Add stroke name first
     labelContainer.appendChild(labelToggleBtn);
+    
+    // Apply neon yellow background with red outline if under review
+    if (isUnderReview) {
+      item.style.backgroundColor = '#FFFF00'; // Neon yellow
+      item.style.border = '2px solid #FF0000'; // Thick red outline
+      item.style.borderRadius = '4px';
+    }
 
     // Correctly use the helper function for measureText
     const measureTextElement = createEditableMeasureText(strokeLabel, isSelected, labelContainer);
@@ -5178,6 +5541,179 @@ document.addEventListener('DOMContentLoaded', () => {
     // Make sure we only append if not already appended (which happens in createEditableMeasureText for newly created strokes)
     if (!measureTextElement.parentNode) {
       labelContainer.appendChild(measureTextElement);
+    }
+    
+    // Add review measurement input if under review, with toggle button next to it
+    if (isUnderReview) {
+      const reviewMeasureText = document.createElement('span');
+      reviewMeasureText.className = 'stroke-measurement stroke-review-measurement';
+      reviewMeasureText.setAttribute('data-stroke', strokeLabel); // Add data attribute for easier selection
+      const measurementData = window.strokeMeasurements[currentImageLabel][strokeLabel];
+      let reviewMeasurement = measurementData && measurementData.reviewMeasurement ? measurementData.reviewMeasurement : '?';
+      
+      // Ensure unit is formatted correctly for display
+      if (reviewMeasurement && reviewMeasurement !== '?') {
+        const unit = document.getElementById('unitSelector')?.value || 'inch';
+        const hasInchQuote = reviewMeasurement.endsWith('"');
+        const hasCm = reviewMeasurement.toLowerCase().includes('cm');
+        
+        if (unit === 'inch' && !hasInchQuote && !hasCm) {
+          reviewMeasurement = reviewMeasurement + '"';
+        } else if (unit === 'cm' && !hasCm && !hasInchQuote) {
+          reviewMeasurement = reviewMeasurement + ' cm';
+        }
+      }
+      
+      reviewMeasureText.textContent = reviewMeasurement;
+      reviewMeasureText.title = 'Click to edit review measurement';
+      
+      // Apply smaller font size for cm units
+      const unit = document.getElementById('unitSelector')?.value || 'inch';
+      if (unit === 'cm' && reviewMeasurement !== '?') {
+        const baseFontSize = parseFloat(window.getComputedStyle(reviewMeasureText).fontSize) || 14;
+        reviewMeasureText.style.fontSize = `${Math.max(6, baseFontSize - 8)}px`;
+      }
+      reviewMeasureText.style.marginLeft = '8px';
+      reviewMeasureText.style.padding = '2px 6px';
+      reviewMeasureText.style.minWidth = '40px';
+      reviewMeasureText.style.display = 'inline-block';
+      reviewMeasureText.style.color = '#666';
+      reviewMeasureText.style.cursor = 'pointer';
+      reviewMeasureText.style.borderBottom = '1px dashed #999';
+      reviewMeasureText.style.borderRadius = '3px';
+      reviewMeasureText.style.transition = 'background-color 0.2s';
+      
+      // Create a wrapper for the review controls
+      const reviewWrapper = document.createElement('span');
+      reviewWrapper.style.display = 'inline-flex';
+      reviewWrapper.style.alignItems = 'center';
+      reviewWrapper.style.gap = '4px';
+      
+      // Clone the review toggle button for placement next to review measurement
+      const reviewToggleBtnClone = reviewToggleBtn.cloneNode(true);
+      // Make clicking the icon next to review measurement open the review editor or prompt for acceptance
+      reviewToggleBtnClone.onclick = (e) => {
+        e.stopPropagation();
+        // Check if review measurement has a value (not just '?')
+        const measurementData = window.strokeMeasurements[currentImageLabel][strokeLabel];
+        const hasReviewValue = measurementData && measurementData.reviewMeasurement && measurementData.reviewMeasurement !== '?';
+        
+        if (hasReviewValue) {
+          // If has review value, prompt to accept it (use the main handler)
+          reviewToggleBtn.onclick(e);
+        } else {
+          // Otherwise, enter edit mode
+          reviewMeasureText.contentEditable = 'true';
+          reviewMeasureText.dataset.originalReviewMeasurement = reviewMeasureText.textContent;
+          reviewMeasureText.style.borderBottom = '1px solid #666';
+          reviewMeasureText.style.backgroundColor = '#f0f0f0';
+          reviewMeasureText.style.color = '#000';
+          reviewMeasureText.focus();
+          
+          // Select all text
+          const selection = window.getSelection();
+          if (selection) {
+            const range = document.createRange();
+            range.selectNodeContents(reviewMeasureText);
+            selection.removeAllRanges();
+            selection.addRange(range);
+          }
+        }
+      };
+      
+      reviewWrapper.appendChild(reviewToggleBtnClone);
+      reviewWrapper.appendChild(reviewMeasureText);
+      labelContainer.appendChild(reviewWrapper);
+      
+      // Make it editable on click (but don't toggle review mode)
+      reviewMeasureText.addEventListener('click', (e) => {
+        e.stopPropagation();
+        reviewMeasureText.contentEditable = 'true';
+        reviewMeasureText.dataset.originalReviewMeasurement = reviewMeasureText.textContent;
+        reviewMeasureText.style.borderBottom = '1px solid #666';
+        reviewMeasureText.style.backgroundColor = '#f0f0f0';
+        reviewMeasureText.style.color = '#000';
+        reviewMeasureText.focus();
+        
+        // Select all text
+        const selection = window.getSelection();
+        if (selection) {
+          const range = document.createRange();
+          range.selectNodeContents(reviewMeasureText);
+          selection.removeAllRanges();
+          selection.addRange(range);
+        }
+      });
+      
+      // Handle keydown events
+      reviewMeasureText.addEventListener('keydown', (event) => {
+        if (reviewMeasureText.contentEditable !== 'true') return;
+        
+        if (event.key === 'Enter' && !event.ctrlKey && !event.shiftKey) {
+          event.preventDefault();
+          reviewMeasureText.blur();
+        } else if (event.key === 'Escape') {
+          event.preventDefault();
+          reviewMeasureText.textContent = reviewMeasureText.dataset.originalReviewMeasurement || '?';
+          reviewMeasureText.dataset.escapeReverted = 'true';
+          reviewMeasureText.blur();
+        }
+      });
+      
+      // Handle blur to save the review measurement
+      reviewMeasureText.addEventListener('blur', () => {
+        reviewMeasureText.contentEditable = 'false';
+        reviewMeasureText.style.borderBottom = '1px dashed #999';
+        reviewMeasureText.style.backgroundColor = '';
+        reviewMeasureText.style.color = '#666';
+        
+        if (reviewMeasureText.dataset.escapeReverted === 'true') {
+          reviewMeasureText.removeAttribute('data-escape-reverted');
+          return;
+        }
+        
+        let newValue = reviewMeasureText.textContent.trim();
+        const originalValue = reviewMeasureText.dataset.originalReviewMeasurement || '?';
+        
+        // Ensure unit is appended if missing
+        if (newValue && newValue !== '?') {
+          const unit = document.getElementById('unitSelector')?.value || 'inch';
+          const hasInchQuote = newValue.endsWith('"');
+          const hasCm = newValue.toLowerCase().includes('cm');
+          
+          if (unit === 'inch' && !hasInchQuote && !hasCm) {
+            newValue = newValue + '"';
+          } else if (unit === 'cm' && !hasCm && !hasInchQuote) {
+            newValue = newValue + ' cm';
+          }
+        }
+        
+        if (newValue !== originalValue) {
+          // Update the review measurement
+          if (!window.strokeMeasurements[currentImageLabel]) {
+            window.strokeMeasurements[currentImageLabel] = {};
+          }
+          if (!window.strokeMeasurements[currentImageLabel][strokeLabel]) {
+            window.strokeMeasurements[currentImageLabel][strokeLabel] = {
+              inchWhole: 0,
+              inchFraction: 0,
+              cm: 0.0,
+              underReview: true
+            };
+          }
+          window.strokeMeasurements[currentImageLabel][strokeLabel].reviewMeasurement = newValue || '?';
+          reviewMeasureText.textContent = newValue || '?';
+          
+          // Save state and redraw
+          try { saveState(true, false, false); } catch(_) {}
+          redrawCanvasWithVisibility();
+        }
+        
+        reviewMeasureText.removeAttribute('data-original-review-measurement');
+      });
+    } else {
+      // When not under review, show the toggle button in its normal position
+      labelContainer.appendChild(reviewToggleBtn);
     }
             
     // If this is the selected stroke or newly created stroke, focus on it
@@ -5243,12 +5779,12 @@ document.addEventListener('DOMContentLoaded', () => {
       // If multiple are selected, ensure selectedStrokeByImage is one of them (e.g., the first) or null.
       // For simplicity, if it's not in the array, set it to the first element.
       if (!currentSelectionArray.includes(selectedStrokeByImage[currentImageLabel])) {
-        console.warn(`[updateStrokeVisibilityControls] Correcting selectedStrokeByImage for multi-select. Was: ${selectedStrokeByImage[currentImageLabel]}, multiple was: ${JSON.stringify(currentSelectionArray)}. Setting to: ${currentSelectionArray[0] || null}`);
+        // Silently correct state synchronization (harmless operation)
         selectedStrokeByImage[currentImageLabel] = currentSelectionArray[0] || null;
       }
     } else { // 0 selected in multipleSelectedStrokesByImage
       if (selectedStrokeByImage[currentImageLabel] !== null) {
-        console.warn(`[updateStrokeVisibilityControls] Correcting selectedStrokeByImage. Was: ${selectedStrokeByImage[currentImageLabel]}, multiple was empty. Setting to: null`);
+        // Silently correct state synchronization (harmless operation)
         selectedStrokeByImage[currentImageLabel] = null;
       }
     }
@@ -5256,7 +5792,24 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- End Synchronization Logic ---
 
     const controlsContainer = document.getElementById('strokeVisibilityControls');
+    if (!controlsContainer) return;
+    
     controlsContainer.innerHTML = ''; // Clear existing controls
+    
+    // Get strokes and text elements to determine if we should show the container
+    const strokes = lineStrokesByImage[currentImageLabel] || [];
+    const currentLabel = window.paintApp.state.currentImageLabel || window.currentImageLabel || 'front';
+    const textElementsByImage = window.paintApp.state.textElementsByImage || {};
+    const textList = textElementsByImage[currentLabel] || [];
+    
+    // Hide container if there are no strokes and no text elements
+    if (strokes.length === 0 && textList.length === 0) {
+      controlsContainer.style.display = 'none';
+      return;
+    }
+    
+    // Show container if there are strokes or text elements
+    controlsContainer.style.display = '';
         
     // Add a separator at the top
     const topSeparator = document.createElement('hr');
@@ -5277,11 +5830,18 @@ document.addEventListener('DOMContentLoaded', () => {
     strokesList.id = 'strokesList';
     controlsContainer.appendChild(strokesList);
         
-    // Get strokes for current image
-    const strokes = lineStrokesByImage[currentImageLabel] || [];
-        
     // Create a sorted array of stroke labels we can use for index-based operations
-    const sortedStrokeLabels = Object.keys(lineStrokesByImage[currentImageLabel] || {});
+    let sortedStrokeLabels = Object.keys(lineStrokesByImage[currentImageLabel] || {});
+    
+    // Filter to show only review strokes if filter is active
+    if (window.showReviewOnly) {
+      sortedStrokeLabels = sortedStrokeLabels.filter(strokeLabel => {
+        const measurementData = window.strokeMeasurements && 
+                                 window.strokeMeasurements[currentImageLabel] &&
+                                 window.strokeMeasurements[currentImageLabel][strokeLabel];
+        return measurementData && measurementData.underReview === true;
+      });
+    }
         
     // Text elements section
     const textHeader = document.createElement('h4');
@@ -5290,10 +5850,6 @@ document.addEventListener('DOMContentLoaded', () => {
     textHeader.style.fontSize = '13px';
     textHeader.style.color = '#475569';
     strokesList.appendChild(textHeader);
-
-    const currentLabel = window.paintApp.state.currentImageLabel || window.currentImageLabel || 'front';
-    const textElementsByImage = window.paintApp.state.textElementsByImage || {};
-    const textList = textElementsByImage[currentLabel] || [];
     if (textList.length === 0) {
       const p = document.createElement('p');
       p.textContent = 'No text elements';
@@ -6278,6 +6834,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // Reset label positions and stroke paths for this redraw
     currentLabelPositions = [];
     currentStrokePaths = [];
+    
+    // Note: Review box positions are no longer used (unified tag format)
+    // Keeping this cleanup for backward compatibility
+    if (window.reviewBoxPositions && window.reviewBoxPositions[currentImageLabel]) {
+      window.reviewBoxPositions[currentImageLabel] = {};
+    }
         
     // Create a copy of custom label positions for tracking which ones were actually used
     const usedCustomPositions = {};
@@ -7471,7 +8033,7 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
     // Apply each visible stroke using vector data if available
     // SAFETY CHECK: Ensure vectorStrokesByImage is properly initialized
     if (!vectorStrokesByImage[currentImageLabel]) {
-      console.warn(`[applyVisibleStrokes] vectorStrokesByImage[${currentImageLabel}] was undefined, initializing...`);
+      // Silently initialize if undefined (normal for new images)
       vectorStrokesByImage[currentImageLabel] = {};
     }
             
@@ -7573,17 +8135,106 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
       const vectorData = strokes[strokeLabel];
 
       if (isStrokeVisible && isLabelVisible && vectorData && vectorData.points.length > 0) {
+        // Skip rendering if review-only filter is active and this stroke is not under review
+        if (window.showReviewOnly) {
+          const measurementDataForReview = window.strokeMeasurements && 
+                                window.strokeMeasurements[currentImageLabel] &&
+                                window.strokeMeasurements[currentImageLabel][strokeLabel];
+          const isUnderReview = measurementDataForReview && measurementDataForReview.underReview === true;
+          if (!isUnderReview) {
+            return; // Skip this stroke (use return in forEach, not continue)
+          }
+        }
+        
         // Determine shape and build label text rules
         const shape = (window.paintApp?.state?.labelShape) || 'square';
         const measurement = getMeasurementString(strokeLabel);
         const showMeasurements = document.getElementById('toggleShowMeasurements') ? document.getElementById('toggleShowMeasurements').checked : true;
         console.log(`[ShowMeasurements] Checkbox checked: ${showMeasurements}, Measurement: ${measurement}, Label: ${strokeLabel}`);
+        
+        // Check if this stroke is under review
+        const measurementDataForReview = window.strokeMeasurements && 
+                              window.strokeMeasurements[currentImageLabel] &&
+                              window.strokeMeasurements[currentImageLabel][strokeLabel]
+                              ? window.strokeMeasurements[currentImageLabel][strokeLabel]
+                              : null;
+        const isUnderReview = measurementDataForReview && measurementDataForReview.underReview === true;
+        if (isUnderReview) {
+          console.log(`[REVIEW CHECK] ${strokeLabel} is under review. Measurement data:`, measurementDataForReview);
+        }
+        
+        // Get original measurement and review measurement if under review
+        let originalMeasurement = null;
+        let reviewMeasurement = null;
+        if (isUnderReview && window.strokeMeasurements[currentImageLabel][strokeLabel]) {
+          const measurementData = window.strokeMeasurements[currentImageLabel][strokeLabel];
+          // Use stored originalMeasurement if available
+          if (measurementData.originalMeasurement) {
+            originalMeasurement = measurementData.originalMeasurement;
+          } else if (measurementData.originalMeasurementValues) {
+            // Fallback: reconstruct from originalMeasurementValues if originalMeasurement string is missing
+            // This handles backward compatibility with old projects
+            const origValues = measurementData.originalMeasurementValues;
+            if (typeof getMeasurementString === 'function') {
+              // Temporarily swap values to get the original measurement string
+              const tempInchWhole = measurementData.inchWhole;
+              const tempInchFraction = measurementData.inchFraction;
+              const tempCm = measurementData.cm;
+              measurementData.inchWhole = origValues.inchWhole;
+              measurementData.inchFraction = origValues.inchFraction;
+              measurementData.cm = origValues.cm;
+              originalMeasurement = getMeasurementString(strokeLabel);
+              // Restore current values
+              measurementData.inchWhole = tempInchWhole;
+              measurementData.inchFraction = tempInchFraction;
+              measurementData.cm = tempCm;
+              // Cache the reconstructed value
+              measurementData.originalMeasurement = originalMeasurement;
+            }
+          }
+          // Get review measurement (editable value)
+          reviewMeasurement = measurementData.reviewMeasurement || null;
+          
+          // Ensure review measurement has proper unit formatting
+          if (reviewMeasurement && reviewMeasurement !== '?') {
+            const unit = document.getElementById('unitSelector')?.value || 'inch';
+            // Check if review measurement already has unit suffix
+            const hasInchQuote = reviewMeasurement.endsWith('"');
+            const hasCm = reviewMeasurement.toLowerCase().includes('cm');
+            
+            if (unit === 'inch' && !hasInchQuote && !hasCm) {
+              // Add inch quote if missing
+              reviewMeasurement = reviewMeasurement + '"';
+            } else if (unit === 'cm' && !hasCm && !hasInchQuote) {
+              // Add cm suffix if missing
+              reviewMeasurement = reviewMeasurement + ' cm';
+            }
+          }
+        }
                     
         // Build label text based on measurement visibility (same for both circle and square)
         let labelText;
+        let needsStrikethrough = false;
         if (showMeasurements && measurement) {
-          // Show measurement: "A1=0""
-          labelText = `${strokeLabel}=${measurement}`;
+          if (isUnderReview) {
+            // Under review: show combined format A1=31"/30" or A1=31"/? if no review measurement yet
+            if (originalMeasurement) {
+              if (reviewMeasurement && reviewMeasurement !== '?') {
+                // Both original and new measurement: show with strikethrough on original
+                labelText = `${strokeLabel}=${originalMeasurement}/${reviewMeasurement}`;
+                needsStrikethrough = true;
+              } else {
+                // Only original, show with /? placeholder
+                labelText = `${strokeLabel}=${originalMeasurement}/?`;
+              }
+            } else {
+              // Fallback if no original stored yet
+              labelText = `${strokeLabel}=${measurement}/?`;
+            }
+          } else {
+            // Show measurement: "A1=0""
+            labelText = `${strokeLabel}=${measurement}`;
+          }
         } else {
           // Hide measurement: just "A1"
           labelText = strokeLabel;
@@ -7627,9 +8278,26 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
         ctx.textAlign = 'center';
         ctx.textBaseline = 'bottom';
 
-        const metrics = ctx.measureText(labelText);
-        const labelHeight = 48; 
-        const labelWidth = Math.max(metrics.width + 12, labelHeight); // ensure at least a square for short text
+        // Measure label text width (accounting for combined format if under review)
+        let metrics;
+        if (needsStrikethrough && isUnderReview && originalMeasurement && reviewMeasurement) {
+          // Calculate total width for combined format
+          const prefix = `${strokeLabel}=`;
+          const prefixWidth = ctx.measureText(prefix).width;
+          const originalWidth = ctx.measureText(originalMeasurement).width;
+          const separator = '/';
+          const separatorWidth = ctx.measureText(separator).width;
+          const reviewWidth = ctx.measureText(reviewMeasurement).width;
+          const totalWidth = prefixWidth + originalWidth + separatorWidth + reviewWidth;
+          metrics = { width: totalWidth };
+        } else {
+          metrics = ctx.measureText(labelText);
+        }
+        const labelHeight = Math.max(48, tagSize * 2.4); // Scale height with tag size, minimum 48px
+        // For square tags, make width shrink with tag size (rectangular instead of square)
+        // For circle tags, adapt width to text content
+        const minWidthForSquare = shape === 'square' ? Math.max(metrics.width + 12, tagSize * 1.5) : labelHeight;
+        const labelWidth = shape === 'circle' ? Math.max(metrics.width + 12, labelHeight) : Math.max(metrics.width + 12, minWidthForSquare);
                     
         // Initial labelRect definition (center-based reference)
         // We will treat (x, y) as the CENTER of the label for placement and connector math
@@ -7906,10 +8574,27 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
 
         if (shape === 'circle') {
           // Circle or rounded pill depending on length
-          const radius = Math.max(10, (labelHeight / 2));
-          ctx.fillStyle = 'white';
-          const tm = ctx.measureText(labelText);
-          const textFitsInCircle = tm.width <= radius * 1.6; // heuristic: two chars fit in circle
+          // Measure text width (accounting for combined format if under review)
+          let tm;
+          if (needsStrikethrough && isUnderReview && originalMeasurement && reviewMeasurement) {
+            // Calculate total width for combined format
+            const prefix = `${strokeLabel}=`;
+            const prefixWidth = ctx.measureText(prefix).width;
+            const originalWidth = ctx.measureText(originalMeasurement).width;
+            const separator = '/';
+            const separatorWidth = ctx.measureText(separator).width;
+            const reviewWidth = ctx.measureText(reviewMeasurement).width;
+            const totalWidth = prefixWidth + originalWidth + separatorWidth + reviewWidth;
+            tm = { width: totalWidth };
+          } else {
+            tm = ctx.measureText(labelText);
+          }
+          
+          // Adapt circle width to text content with minimal padding
+          const textWidth = tm.width;
+          const minRadius = Math.max(10, tagSize * 0.6); // Minimum radius based on tag size
+          const radius = Math.max(minRadius, (textWidth + 12) / 2); // Radius adapts to text width
+          const textFitsInCircle = textWidth <= radius * 1.6; // heuristic: two chars fit in circle
 
           // Counter-rotate the entire label (shape + text) so the tag never flips
           // BUT: Skip counter-rotation for blank canvas (no image) - labels should stay fixed
@@ -7920,16 +8605,26 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
           if (shouldCounterRotate) ctx.rotate(-currentRotation);
           window.__skipTextCounterRotate = true;
 
+          // Draw neon yellow fill with thick red outline if under review
+          if (isUnderReview) {
+            // No shadow/glow - we'll use fill and stroke instead
+          }
+
           if (textFitsInCircle) {
             ctx.beginPath();
             ctx.arc(0, 0, radius, 0, Math.PI * 2);
+            if (isUnderReview) {
+              ctx.fillStyle = '#FFFF00'; // Neon yellow fill
+            } else {
+              ctx.fillStyle = 'white';
+            }
             ctx.fill();
-            ctx.strokeStyle = labelOutlineColor;
-            ctx.lineWidth = 1;
+            ctx.strokeStyle = isUnderReview ? '#FF0000' : labelOutlineColor; // Red outline when under review
+            ctx.lineWidth = isUnderReview ? 3 : 1; // Thick red outline
             ctx.stroke();
           } else {
-            // Draw pill (oblong) to contain text
-            const pillW = Math.max(tm.width + 14, radius * 2);
+            // Draw pill (oblong) to contain text - width adapts to text
+            const pillW = Math.max(textWidth + 14, radius * 2);
             const pillH = radius * 2;
             const x = -pillW / 2;
             const y = -pillH / 2;
@@ -7941,16 +8636,97 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
             ctx.lineTo(x + r, y + pillH);
             ctx.arc(x + r, y + r, r, Math.PI / 2, -Math.PI / 2);
             ctx.closePath();
+            if (isUnderReview) {
+              ctx.fillStyle = '#FFFF00'; // Neon yellow fill
+            } else {
+              ctx.fillStyle = 'white';
+            }
             ctx.fill();
-            ctx.strokeStyle = labelOutlineColor;
-            ctx.lineWidth = 1;
+            ctx.strokeStyle = isUnderReview ? '#FF0000' : labelOutlineColor; // Red outline when under review
+            ctx.lineWidth = isUnderReview ? 3 : 1; // Thick red outline
             ctx.stroke();
           }
+          
+          // Clear shadow after drawing shape
+          if (isUnderReview) {
+            ctx.shadowColor = 'transparent';
+            ctx.shadowBlur = 0;
+          }
+          
           // Label text centered (includes measurement if enabled)
-          ctx.fillStyle = labelTextColor;
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText(labelText, 0, 0);
+          // If under review with strikethrough needed, draw text in parts
+          if (needsStrikethrough && isUnderReview && originalMeasurement && reviewMeasurement) {
+            // Check unit and apply smaller font for cm units
+            const unit = document.getElementById('unitSelector')?.value || 'inch';
+            const isCmUnit = unit === 'cm';
+            const cmFontSize = isCmUnit ? Math.max(6, tagSize - 8) : tagSize;
+            
+            if (isCmUnit) {
+              ctx.font = `${cmFontSize}px Arial`;
+            }
+            
+            // Draw text with strikethrough on original measurement
+            ctx.fillStyle = labelTextColor;
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            
+            // Calculate text positions
+            const prefix = `${strokeLabel}=`;
+            const prefixWidth = ctx.measureText(prefix).width;
+            const originalWidth = ctx.measureText(originalMeasurement).width;
+            const separator = '/';
+            const separatorWidth = ctx.measureText(separator).width;
+            const reviewWidth = ctx.measureText(reviewMeasurement).width;
+            
+            const totalWidth = prefixWidth + originalWidth + separatorWidth + reviewWidth;
+            const startX = -totalWidth / 2;
+            let currentX = startX;
+            
+            // Draw prefix (A1=)
+            ctx.fillText(prefix, currentX, 0);
+            currentX += prefixWidth;
+            
+            // Draw original measurement with strikethrough
+            const originalY = 0;
+            ctx.fillText(originalMeasurement, currentX, originalY);
+            // Draw strikethrough line
+            ctx.strokeStyle = labelTextColor;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            const strikethroughY = originalY - (isCmUnit ? cmFontSize : tagSize) * 0.15;
+            ctx.moveTo(currentX, strikethroughY);
+            ctx.lineTo(currentX + originalWidth, strikethroughY);
+            ctx.stroke();
+            currentX += originalWidth;
+            
+            // Draw separator (/)
+            ctx.fillText(separator, currentX, 0);
+            currentX += separatorWidth;
+            
+            // Draw review measurement
+            ctx.fillText(reviewMeasurement, currentX, 0);
+            
+            // Restore font size if changed
+            if (isCmUnit) {
+              ctx.font = `${tagSize}px Arial`;
+            }
+          } else {
+            // Normal text rendering - check if cm and apply smaller font
+            const unit = document.getElementById('unitSelector')?.value || 'inch';
+            const isCmUnit = unit === 'cm';
+            if (isCmUnit) {
+              const cmFontSize = Math.max(6, tagSize - 8);
+              ctx.font = `${cmFontSize}px Arial`;
+            }
+            ctx.fillStyle = labelTextColor;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(labelText, 0, 0);
+            // Restore font size if changed
+            if (isCmUnit) {
+              ctx.font = `${tagSize}px Arial`;
+            }
+          }
           window.__skipTextCounterRotate = false;
           ctx.restore();
         } else {
@@ -7963,24 +8739,107 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
           if (shouldCounterRotate) ctx.rotate(-currentRotation);
           window.__skipTextCounterRotate = true;
 
-          ctx.fillStyle = 'white';
+          // Draw neon yellow fill with thick red outline if under review
+          if (isUnderReview) {
+            // No shadow/glow - we'll use fill and stroke instead
+          }
+
+          if (isUnderReview) {
+            ctx.fillStyle = '#FFFF00'; // Neon yellow fill
+          } else {
+            ctx.fillStyle = 'white';
+          }
           ctx.fillRect(-labelWidth / 2, -labelHeight / 2, labelWidth, labelHeight);
-          ctx.strokeStyle = labelOutlineColor;
-          ctx.lineWidth = 1;
+          ctx.strokeStyle = isUnderReview ? '#FF0000' : labelOutlineColor; // Red outline when under review
+          ctx.lineWidth = isUnderReview ? 3 : 1; // Thick red outline
           ctx.strokeRect(-labelWidth / 2, -labelHeight / 2, labelWidth, labelHeight);
+          
+          // Clear shadow after drawing shape
+          if (isUnderReview) {
+            ctx.shadowColor = 'transparent';
+            ctx.shadowBlur = 0;
+          }
+          
           // Center tag text inside the square
-          ctx.fillStyle = labelTextColor;
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText(labelText, 0, 0);
+          // If under review with strikethrough needed, draw text in parts
+          if (needsStrikethrough && isUnderReview && originalMeasurement && reviewMeasurement) {
+            // Check unit and apply smaller font for cm units
+            const unit = document.getElementById('unitSelector')?.value || 'inch';
+            const isCmUnit = unit === 'cm';
+            const cmFontSize = isCmUnit ? Math.max(6, tagSize - 8) : tagSize;
+            
+            if (isCmUnit) {
+              ctx.font = `${cmFontSize}px Arial`;
+            }
+            
+            // Draw text with strikethrough on original measurement
+            ctx.fillStyle = labelTextColor;
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            
+            // Calculate text positions
+            const prefix = `${strokeLabel}=`;
+            const prefixWidth = ctx.measureText(prefix).width;
+            const originalWidth = ctx.measureText(originalMeasurement).width;
+            const separator = '/';
+            const separatorWidth = ctx.measureText(separator).width;
+            const reviewWidth = ctx.measureText(reviewMeasurement).width;
+            
+            const totalWidth = prefixWidth + originalWidth + separatorWidth + reviewWidth;
+            const startX = -totalWidth / 2;
+            let currentX = startX;
+            
+            // Draw prefix (A1=)
+            ctx.fillText(prefix, currentX, 0);
+            currentX += prefixWidth;
+            
+            // Draw original measurement with strikethrough
+            const originalY = 0;
+            ctx.fillText(originalMeasurement, currentX, originalY);
+            // Draw strikethrough line
+            ctx.strokeStyle = labelTextColor;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            const strikethroughY = originalY - (isCmUnit ? cmFontSize : tagSize) * 0.15;
+            ctx.moveTo(currentX, strikethroughY);
+            ctx.lineTo(currentX + originalWidth, strikethroughY);
+            ctx.stroke();
+            currentX += originalWidth;
+            
+            // Draw separator (/)
+            ctx.fillText(separator, currentX, 0);
+            currentX += separatorWidth;
+            
+            // Draw review measurement
+            ctx.fillText(reviewMeasurement, currentX, 0);
+            
+            // Restore font size if changed
+            if (isCmUnit) {
+              ctx.font = `${tagSize}px Arial`;
+            }
+          } else {
+            // Normal text rendering - check if cm and apply smaller font
+            const unit = document.getElementById('unitSelector')?.value || 'inch';
+            const isCmUnit = unit === 'cm';
+            if (isCmUnit) {
+              const cmFontSize = Math.max(6, tagSize - 8);
+              ctx.font = `${cmFontSize}px Arial`;
+            }
+            ctx.fillStyle = labelTextColor;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(labelText, 0, 0);
+            // Restore font size if changed
+            if (isCmUnit) {
+              ctx.font = `${tagSize}px Arial`;
+            }
+          }
           window.__skipTextCounterRotate = false;
           ctx.restore();
         }
 
         // Measurement text is already included in labelText for square mode.
         // Do not render separate black measurement overlay.
-      } else {
-        // ... existing code ...
       }
     });
     // console.log(`--- Redraw: Finished Drawing Labels ---`);
@@ -9014,8 +9873,11 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
   let pendingResizeFrame = null;
   let pendingResizeWidth = null;
   let pendingResizeHeight = null;
+  let getAvailableCanvasSizeCallCount = 0;
 
   function getAvailableCanvasSize() {
+    getAvailableCanvasSizeCallCount++;
+    console.log(`[getAvailableCanvasSize] FUNCTION CALLED (#${getAvailableCanvasSizeCallCount})`);
     const parent = canvas.parentElement;
     const rect = parent ? parent.getBoundingClientRect() : null;
     const margin = 16;
@@ -9059,8 +9921,16 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
     const widthFromParent = rect ? Math.max(1, Math.floor(rect.width)) : 0;
     const heightFromParent = rect ? Math.max(1, Math.floor(rect.height)) : 0;
 
+    // Debug: Log actual window size vs calculated size
+    console.log(`[getAvailableCanvasSize #${getAvailableCanvasSizeCallCount}] window.innerWidth: ${window.innerWidth}, window.innerHeight: ${window.innerHeight}`);
+    console.log(`[getAvailableCanvasSize #${getAvailableCanvasSizeCallCount}] leftReserve: ${leftReserve}, rightReserve: ${rightReserve}, reservedTop: ${reservedTop}, reservedBottom: ${reservedBottom}`);
+    console.log(`[getAvailableCanvasSize #${getAvailableCanvasSizeCallCount}] widthByWindow: ${widthByWindow}, heightByWindow: ${heightByWindow}`);
+    console.log(`[getAvailableCanvasSize #${getAvailableCanvasSizeCallCount}] widthFromParent: ${widthFromParent}, heightFromParent: ${heightFromParent}`);
+
     const width = Math.max(1, widthByWindow || widthFromParent);
     const height = Math.max(1, heightByWindow || heightFromParent);
+
+    console.log(`[getAvailableCanvasSize #${getAvailableCanvasSizeCallCount}] Final: width: ${width}, height: ${height}`);
 
     return {
       width,
@@ -9086,6 +9956,11 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
 
+    // Ensure getAvailableCanvasSize is defined before calling it
+    if (typeof getAvailableCanvasSize !== 'function') {
+      console.error('[applyResize] getAvailableCanvasSize is not defined!');
+      return;
+    }
     const available = getAvailableCanvasSize();
     console.log(`[applyResize] Called with available: ${available.width}x${available.height}`);
 
@@ -9217,10 +10092,17 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
     pendingResizeWidth = width;
     pendingResizeHeight = height;
 
+    // Debounce resize calls to prevent multiple rapid calls
+    // Only queue one resize operation at a time
     if (!pendingResizeFrame) {
       pendingResizeFrame = requestAnimationFrame(() => {
         pendingResizeFrame = null;
-        applyResize(pendingResizeWidth, pendingResizeHeight);
+        // Only apply if dimensions actually changed or this is the first call
+        if (pendingResizeWidth !== null && pendingResizeHeight !== null) {
+          applyResize(pendingResizeWidth, pendingResizeHeight);
+        }
+        pendingResizeWidth = null;
+        pendingResizeHeight = null;
       });
     }
   }
@@ -9228,8 +10110,11 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
   // Expose resizeCanvas globally so project manager can call it after loading
   window.resizeCanvas = resizeCanvas;
     
+  // Initial resize on load
   applyResize();
-  window.addEventListener('resize', resizeCanvas);
+  
+  // NOTE: Resize listener will be set up after handleWindowResize function is defined (see line 16830)
+  // This prevents duplicate resize calls by consolidating canvas resize and sidebar checking
 
   // Drawing state - use references to uiState for centralized management
   let isDrawing = window.paintApp.uiState.isDrawing;
@@ -12482,6 +13367,37 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
     
     return null;
   }
+  
+  // Helper function to find if a point is inside a review box
+  function findReviewBoxAtPoint(x, y) {
+    console.log(`[REVIEW BOX FIND] Checking point (${x.toFixed(1)}, ${y.toFixed(1)}) for currentImageLabel: ${currentImageLabel}`);
+    if (!window.reviewBoxPositions || !window.reviewBoxPositions[currentImageLabel]) {
+      console.log(`[REVIEW BOX FIND] No review box positions found for ${currentImageLabel}`);
+      return null;
+    }
+    
+    const boxes = window.reviewBoxPositions[currentImageLabel];
+    console.log(`[REVIEW BOX FIND] Found ${Object.keys(boxes).length} review boxes for ${currentImageLabel}:`, Object.keys(boxes));
+    
+    for (const [strokeLabel, box] of Object.entries(boxes)) {
+      const left = box.x - box.width / 2;
+      const top = box.y - box.height / 2;
+      const right = box.x + box.width / 2;
+      const bottom = box.y + box.height / 2;
+      
+      console.log(`[REVIEW BOX FIND] Checking ${strokeLabel}: box center(${box.x.toFixed(1)}, ${box.y.toFixed(1)}), size(${box.width.toFixed(1)}, ${box.height.toFixed(1)}), bounds(${left.toFixed(1)}, ${top.toFixed(1)}, ${right.toFixed(1)}, ${bottom.toFixed(1)})`);
+      
+      const isHit = x >= left && x <= right && y >= top && y <= bottom;
+      
+      if (isHit) {
+        console.log(`[REVIEW BOX FIND] Hit! Point (${x.toFixed(1)}, ${y.toFixed(1)}) is inside ${strokeLabel} review box`);
+        return { strokeLabel, box };
+      }
+    }
+    
+    console.log(`[REVIEW BOX FIND] No hit found`);
+    return null;
+  }
     
   // Centralized canvas event binding function
   function bindCanvasListeners() {
@@ -13286,6 +14202,12 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
     // Handle drawing (default when Shift is not pressed)
     // Save the state before starting a new stroke
     if (!strokeInProgress) {
+      // Ensure undo stack is initialized for this image label
+      if (!window.undoStackByImage) window.undoStackByImage = {};
+      if (!window.undoStackByImage[currentImageLabel]) {
+        window.undoStackByImage[currentImageLabel] = [];
+      }
+      
       const currentState = getCanvasState();
       currentStroke = cloneImageData(currentState);
       // Save the state before we start drawing
@@ -13422,12 +14344,13 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
               const refreshedControlPoints = refreshControlPointCanvasCoords(vectorData.controlPoints);
               const newSplinePoints = generateCatmullRomSpline(refreshedControlPoints, 50);
                             
-              // CRITICAL FIX: Convert spline canvas coordinates to world coordinates for storage
+              // CRITICAL FIX: Convert spline canvas coordinates to image coordinates for storage
+              // Use getTransformedCoords for consistency with other coordinate conversions
               vectorData.points = newSplinePoints.map(splinePoint => {
-                const worldCoords = window.clientToWorld(splinePoint.x, splinePoint.y);
+                const { x: imgX, y: imgY } = getTransformedCoords(splinePoint.x, splinePoint.y);
                 return {
-                  x: worldCoords.x,  // World coordinate
-                  y: worldCoords.y,  // World coordinate
+                  x: imgX,  // Image coordinate
+                  y: imgY,  // Image coordinate
                   time: Date.now()
                 };
               });
@@ -13560,12 +14483,13 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
         const refreshedControlPoints = refreshControlPointCanvasCoords(vectorData.controlPoints);
         const newSplinePoints = generateCatmullRomSpline(refreshedControlPoints, 50);
                 
-        // CRITICAL FIX: Convert spline canvas coordinates to world coordinates for storage
+        // CRITICAL FIX: Convert spline canvas coordinates to image coordinates for storage
+        // Use getTransformedCoords for consistency with other coordinate conversions
         vectorData.points = newSplinePoints.map(splinePoint => {
-          const worldCoords = window.clientToWorld(splinePoint.x, splinePoint.y);
+          const { x: imgX, y: imgY } = getTransformedCoords(splinePoint.x, splinePoint.y);
           return {
-            x: worldCoords.x,  // World coordinate
-            y: worldCoords.y,  // World coordinate
+            x: imgX,  // Image coordinate
+            y: imgY,  // Image coordinate
             time: Date.now()
           };
         });
@@ -14541,35 +15465,64 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
       // *** MODIFICATION END ***
 
     } else if (window.originalImages[label]) {
-      //             console.log(`No state exists for ${label}, pasting original image: ${window.originalImages[label].substring(0, 30)}...`);
-      pasteImageFromUrl(window.originalImages[label], label)
-        .then(() => {
-          //                     console.log(`[switchToImage] pasteImageFromUrl COMPLETED for ${label}. Now updating UI.`);
-          // Update UI elements first
-          updateActiveImageInSidebar();
-          updateStrokeCounter();
-          updateStrokeVisibilityControls();
-          updateScaleUI();
-          // Update next tag display
-          if (typeof window.updateNextTagDisplay === 'function') {
-            window.updateNextTagDisplay();
-          } 
-          // Explicitly redraw AFTER all UI updates and state changes triggered by them
-          //                     console.log(`[switchToImage] Explicitly calling final redraw for ${label}`);
-          redrawCanvasWithVisibility(); 
-        })
-        .catch(err => {
-          console.error(`[switchToImage] Error during pasteImageFromUrl for ${label}:`, err);
-          // Fallback UI updates even on error
-          updateActiveImageInSidebar();
-          updateStrokeCounter();
-          updateStrokeVisibilityControls();
-          updateScaleUI();
-          // Update next tag display
-          if (typeof window.updateNextTagDisplay === 'function') {
-            window.updateNextTagDisplay();
-          }
-        });
+      // CRITICAL: Check if this image already has stroke data before calling pasteImageFromUrl
+      // which would clear it via initializeNewImageStructures
+      const hasExistingStrokes = (window.vectorStrokesByImage && window.vectorStrokesByImage[label] && Object.keys(window.vectorStrokesByImage[label]).length > 0) ||
+                                 (window.lineStrokesByImage && window.lineStrokesByImage[label] && window.lineStrokesByImage[label].length > 0);
+      
+      if (hasExistingStrokes) {
+        // Image has strokes, just redraw without calling pasteImageFromUrl (which would clear them)
+        console.log(`[switchToImage] Image ${label} has existing strokes, skipping pasteImageFromUrl to preserve them`);
+        
+        // Ensure image is drawn on canvas (redrawCanvasWithVisibility should handle this, but be explicit)
+        // Update UI elements first
+        updateActiveImageInSidebar();
+        updateStrokeCounter();
+        updateStrokeVisibilityControls();
+        updateScaleUI();
+        // Update next tag display
+        if (typeof window.updateNextTagDisplay === 'function') {
+          window.updateNextTagDisplay();
+        }
+        // Trigger resize to recalculate fit scale (this ensures image dimensions are correct)
+        if (typeof window.resizeCanvas === 'function') {
+          window.resizeCanvas();
+        }
+        // Explicitly redraw to show image and existing strokes
+        // redrawCanvasWithVisibility should draw both the image and strokes
+        redrawCanvasWithVisibility();
+      } else {
+        // No existing strokes, safe to call pasteImageFromUrl
+        //             console.log(`No state exists for ${label}, pasting original image: ${window.originalImages[label].substring(0, 30)}...`);
+        pasteImageFromUrl(window.originalImages[label], label)
+          .then(() => {
+            //                     console.log(`[switchToImage] pasteImageFromUrl COMPLETED for ${label}. Now updating UI.`);
+            // Update UI elements first
+            updateActiveImageInSidebar();
+            updateStrokeCounter();
+            updateStrokeVisibilityControls();
+            updateScaleUI();
+            // Update next tag display
+            if (typeof window.updateNextTagDisplay === 'function') {
+              window.updateNextTagDisplay();
+            } 
+            // Explicitly redraw AFTER all UI updates and state changes triggered by them
+            //                     console.log(`[switchToImage] Explicitly calling final redraw for ${label}`);
+            redrawCanvasWithVisibility(); 
+          })
+          .catch(err => {
+            console.error(`[switchToImage] Error during pasteImageFromUrl for ${label}:`, err);
+            // Fallback UI updates even on error
+            updateActiveImageInSidebar();
+            updateStrokeCounter();
+            updateStrokeVisibilityControls();
+            updateScaleUI();
+            // Update next tag display
+            if (typeof window.updateNextTagDisplay === 'function') {
+              window.updateNextTagDisplay();
+            }
+          });
+      }
     } else {
       //             console.log(`No state or image found for ${label}, clearing canvas`);
       ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -14949,13 +15902,27 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
       if (!baseLabel) baseLabel = IMAGE_LABELS[0]; // Default to front if all are taken
     }
         
-    // Increment the counter for this label type
+    // Initialize counter for this label type if needed
     if (!window.labelCounters[baseLabel]) {
       window.labelCounters[baseLabel] = { regular: 1, paste: 1 };
     }
         
-    const counter = window.labelCounters[baseLabel].regular;
-    const uniqueLabel = `${baseLabel}_${counter}`;
+    // Ensure we have a reference to originalImages to check for existing labels
+    if (!window.originalImages) {
+      window.originalImages = {};
+    }
+        
+    // Find a unique label by checking if it already exists
+    let counter = window.labelCounters[baseLabel].regular;
+    let uniqueLabel = `${baseLabel}_${counter}`;
+    
+    // Keep incrementing until we find a label that doesn't exist
+    while (window.originalImages[uniqueLabel] !== undefined) {
+      counter++;
+      uniqueLabel = `${baseLabel}_${counter}`;
+    }
+    
+    // Update the counter to the next available value for future use
     window.labelCounters[baseLabel].regular = counter + 1;
     //         console.log(`Created unique label: ${uniqueLabel} from filename: ${filename}`);
         
@@ -14964,8 +15931,12 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
     
   // Handle file drop
   const handleFiles = (files) => {
-    //         console.log('[handleFiles] Processing files:', files); // Add log
+    console.log('[DEBUG LOAD] ===== handleFiles: Loading Images =====');
+    console.log(`[DEBUG LOAD]   Processing ${files.length} file(s)`);
     const fileArray = Array.from(files);
+    const imageFiles = fileArray.filter(f => f.type.indexOf('image') !== -1);
+    console.log(`[DEBUG LOAD]   Found ${imageFiles.length} image file(s):`, imageFiles.map(f => f.name));
+    
     const sortedFiles = fileArray.sort((a, b) => {
       const aName = a.name.toLowerCase();
       const bName = b.name.toLowerCase();
@@ -14986,10 +15957,11 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
 
     sortedFiles.forEach((file, index) => {
       if (file.type.indexOf('image') !== -1) {
-        //                 console.log(`[handleFiles] Processing image file: ${file.name}`); // Add log
+        console.log(`[DEBUG LOAD]   Processing image file ${index + 1}/${imageFiles.length}: ${file.name}`);
         const url = URL.createObjectURL(file);
         const label = getLabelFromFilename(file.name); // This now generates unique labels like 'front_1', 'front_2'
         const filename = file.name.replace(/\.[^/.]+$/, '');
+        console.log(`[DEBUG LOAD]     Generated label: ${label} from filename: ${file.name}`);
 
         // Track the actual label created
         actualNewImageLabels.push(label);
@@ -15005,11 +15977,12 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
         if (window.getTagBasedFilename && typeof window.getTagBasedFilename === 'function') {
           displayName = window.getTagBasedFilename(label, filename);
         }
-        //                 console.log(`[handleFiles] Adding to sidebar: URL created for ${file.name}, label=${label}, displayName=${displayName}`);
+        console.log(`[DEBUG LOAD]     Adding to sidebar: label=${label}, displayName=${displayName}`);
                 
         addImageToSidebar(url, label, displayName);
         if (!pastedImages.includes(url)) pastedImages.push(url);
         window.originalImages[label] = url;
+        console.log(`[DEBUG LOAD]     ✓ Image ${label} added to originalImages`);
                 
         // No need to initialize imageStates, undoStackByImage etc. here as initializeNewImageStructures handles it
 
@@ -15025,7 +15998,9 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
 
     Promise.all(loadPromises)
       .then(() => {
-        //                 console.log('[handleFiles] All image processing promises resolved.');
+        console.log(`[DEBUG LOAD]   All ${loadPromises.length} image processing promise(s) resolved`);
+        console.log(`[DEBUG LOAD]   Successfully initialized ${actualNewImageLabels.length} image(s):`, actualNewImageLabels);
+        console.log('[DEBUG LOAD] ===== handleFiles: Complete =====');
                 
         // Apply default fit mode to all newly loaded images (AFTER they've loaded)
         if (actualNewImageLabels.length > 0) {
@@ -15847,31 +16822,41 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
     }
   }
     
-  // Adjust canvas size when window resizes to account for sidebars
-  window.addEventListener('resize', () => {
-    resizeCanvas();
-        
+  // Sidebar overlap checking function (called after resize)
+  function checkSidebarOverlap() {
     // Check if sidebars are overlapping canvas and adjust if needed
     const canvasRect = canvas.getBoundingClientRect();
-    const imageSidebar = document.getElementById('imageSidebar'); // Get elements directly
+    const imageSidebar = document.getElementById('imageSidebar');
     const strokeSidebar = document.getElementById('strokeSidebar');
 
-    if (imageSidebar && strokeSidebar) { // Check if elements exist
+    if (imageSidebar && strokeSidebar) {
       const imageSidebarRect = imageSidebar.getBoundingClientRect();
       const strokeSidebarRect = strokeSidebar.getBoundingClientRect();
             
       // If image sidebar is overlapping canvas on the right
-      if (imageSidebarRect.left < canvasRect.right && imageSidebarRect.right > canvasRect.left) { // Added check for actual overlap
-        imageSidebar.style.left = 'auto'; // Reset left
+      if (imageSidebarRect.left < canvasRect.right && imageSidebarRect.right > canvasRect.left) {
+        imageSidebar.style.left = 'auto';
         imageSidebar.style.right = '20px';
       }
             
       // If stroke sidebar is overlapping canvas on the left
-      if (strokeSidebarRect.right > canvasRect.left && strokeSidebarRect.left < canvasRect.right) { // Added check for actual overlap
+      if (strokeSidebarRect.right > canvasRect.left && strokeSidebarRect.left < canvasRect.right) {
         strokeSidebar.style.left = '20px';
       }
     }
-  });
+  }
+  
+  // Consolidated resize handler - combines canvas resize and sidebar checking
+  // This replaces the duplicate resize listener that was calling resizeCanvas directly
+  function handleWindowResize() {
+    resizeCanvas();
+    // Check sidebar overlap after canvas resize completes
+    requestAnimationFrame(checkSidebarOverlap);
+  }
+  
+  // Set up the single consolidated resize listener (replaces duplicate at line 10095)
+  // This prevents applyResize from being called twice on every window resize
+  window.addEventListener('resize', handleWindowResize);
 
   // Function to find an optimal position for a label
   function findOptimalLabelPosition(labelRect, anchorPoint, strokeInfo) {
@@ -16861,16 +17846,33 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
         const url = URL.createObjectURL(blob);
                 
         // Generate a unique label for the new image
+        console.log('[DEBUG PASTE] ===== Paste Handler: Processing Image =====');
         const baseLabelForPasted = currentImageLabel.split('_')[0] || 'image'; // Use current view's base
+        console.log(`[DEBUG PASTE]   Base label from current image: ${baseLabelForPasted}`);
+        
         if (!window.labelCounters[baseLabelForPasted]) {
           window.labelCounters[baseLabelForPasted] = { regular: 1, paste: 1 };
         }
 
-        const pasteCounter = window.labelCounters[baseLabelForPasted].paste;
-        const newImageLabel = `${baseLabelForPasted}_paste_${pasteCounter}`;
+        // Ensure we have a reference to originalImages to check for existing labels
+        if (!window.originalImages) {
+          window.originalImages = {};
+        }
+
+        // Find a unique label by checking if it already exists
+        let pasteCounter = window.labelCounters[baseLabelForPasted].paste;
+        let newImageLabel = `${baseLabelForPasted}_paste_${pasteCounter}`;
+        
+        // Keep incrementing until we find a label that doesn't exist
+        while (window.originalImages[newImageLabel] !== undefined) {
+          pasteCounter++;
+          newImageLabel = `${baseLabelForPasted}_paste_${pasteCounter}`;
+        }
+        
+        // Update the counter to the next available value for future use
         window.labelCounters[baseLabelForPasted].paste = pasteCounter + 1;
                 
-        //                 console.log(`[Paste Handler] Assigned new unique label: ${newImageLabel}`);
+        console.log(`[DEBUG PASTE]   Assigned unique label: ${newImageLabel}`);
                 
         // Initialize all necessary structures for this new image
         initializeNewImageStructures(newImageLabel);
@@ -16885,6 +17887,7 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
                 
         if (!pastedImages.includes(url)) pastedImages.push(url);
         window.originalImages[newImageLabel] = url;
+        console.log(`[DEBUG PASTE]   ✓ Added ${newImageLabel} to originalImages`);
                 
         // CRITICAL: Update current image label IMMEDIATELY before async operations
         // This ensures tag calculations use the correct image label
@@ -16933,8 +17936,9 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
           // This prevents scale mismatch warnings and ensures scaling is visually applied
           updateScaleUI();
           redrawCanvasWithVisibility();
+          console.log(`[DEBUG PASTE] ===== Paste Handler: Complete for ${newImageLabel} =====`);
         }).catch(err => {
-          console.error(`[Paste Handler] Error in pasteImageFromUrl for ${newImageLabel}:`, err);
+          console.error(`[DEBUG PASTE] ✗ Error in pasteImageFromUrl for ${newImageLabel}:`, err);
         });
                 
         imageFoundAndProcessed = true;
@@ -16943,7 +17947,7 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
     }
 
     if (!imageFoundAndProcessed) {
-      //             console.log('[Paste Handler] No image data found in clipboard items or failed to process.');
+      console.log('[DEBUG PASTE] No image data found in clipboard items or failed to process.');
     }
   });
 
@@ -16955,7 +17959,11 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
   // Initialize new image structures
   function initializeNewImageStructures(label) {
     // THIS FUNCTION NEEDS TO BE ROBUST
-    //         console.log(`[initializeNewImageStructures] Initializing for new label: ${label}`);
+    console.log(`[DEBUG INIT] ===== Initializing Image Structures: ${label} =====`);
+    const stackTrace = new Error().stack;
+    const caller = stackTrace.split('\n')[2]?.trim() || 'unknown';
+    console.log(`[DEBUG INIT]   Called from: ${caller}`);
+    
     if (!window.imageScaleByLabel) window.imageScaleByLabel = {};
     if (!window.imagePositionByLabel) window.imagePositionByLabel = {};
     if (!window.lineStrokesByImage) window.lineStrokesByImage = {};
@@ -16974,19 +17982,46 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
     if (!window.customLabelAbsolutePositions) window.customLabelAbsolutePositions = {};
     window.customLabelAbsolutePositions[label] = {}; // Initialize absolute positions for this image
 
-    window.imageScaleByLabel[label] = 1.0;
-    window.imagePositionByLabel[label] = { x: 0, y: 0 };
-    window.lineStrokesByImage[label] = [];
-    window.vectorStrokesByImage[label] = {};
-    window.strokeVisibilityByImage[label] = {};
-    window.strokeLabelVisibility[label] = {};
-    window.customLabelRelativePositions[label] = {}; // Initialize relative positions for this image
-    window.labelsByImage[label] = 'A1'; // Default initial stroke label for a new image
-    window.undoStackByImage[label] = [];
-    window.redoStackByImage[label] = [];
-    window.imageStates[label] = null;
-    window.originalImageDimensions[label] = { width: 0, height: 0 };
-    window.customLabelPositions[label] = {}; // Initialize for the new label
+    // CRITICAL: During project load, preserve existing stroke data instead of clearing it
+    const isLoadingProject = window.isLoadingProject === true;
+    const hasExistingStrokes = window.vectorStrokesByImage[label] && Object.keys(window.vectorStrokesByImage[label]).length > 0;
+    const hasExistingLineStrokes = window.lineStrokesByImage[label] && window.lineStrokesByImage[label].length > 0;
+    
+    if (isLoadingProject && (hasExistingStrokes || hasExistingLineStrokes)) {
+      console.log(`[DEBUG INIT]   Preserving existing stroke data for ${label} during project load (${hasExistingStrokes ? Object.keys(window.vectorStrokesByImage[label]).length + ' vector strokes' : ''}${hasExistingStrokes && hasExistingLineStrokes ? ', ' : ''}${hasExistingLineStrokes ? window.lineStrokesByImage[label].length + ' line strokes' : ''})`);
+      // Preserve stroke data
+      const preservedVectorStrokes = window.vectorStrokesByImage[label] ? JSON.parse(JSON.stringify(window.vectorStrokesByImage[label])) : {};
+      const preservedLineStrokes = window.lineStrokesByImage[label] ? [...window.lineStrokesByImage[label]] : [];
+      const preservedVisibility = window.strokeVisibilityByImage[label] ? JSON.parse(JSON.stringify(window.strokeVisibilityByImage[label])) : {};
+      const preservedLabelVisibility = window.strokeLabelVisibility[label] ? JSON.parse(JSON.stringify(window.strokeLabelVisibility[label])) : {};
+      const preservedLabelsByImage = window.labelsByImage[label] || 'A1';
+      
+      // Initialize defaults (will be overwritten by preserved data below)
+      window.imageScaleByLabel[label] = window.imageScaleByLabel[label] || 1.0;
+      window.imagePositionByLabel[label] = window.imagePositionByLabel[label] || { x: 0, y: 0 };
+      window.lineStrokesByImage[label] = preservedLineStrokes; // Restore preserved data
+      window.vectorStrokesByImage[label] = preservedVectorStrokes; // Restore preserved data
+      window.strokeVisibilityByImage[label] = preservedVisibility; // Restore preserved data
+      window.strokeLabelVisibility[label] = preservedLabelVisibility; // Restore preserved data
+      window.customLabelRelativePositions[label] = window.customLabelRelativePositions[label] || {}; // Initialize relative positions for this image
+      window.labelsByImage[label] = preservedLabelsByImage; // Restore preserved data
+    } else {
+      // Normal initialization - clear and set defaults
+      window.imageScaleByLabel[label] = 1.0;
+      window.imagePositionByLabel[label] = { x: 0, y: 0 };
+      window.lineStrokesByImage[label] = [];
+      window.vectorStrokesByImage[label] = {};
+      window.strokeVisibilityByImage[label] = {};
+      window.strokeLabelVisibility[label] = {};
+      window.customLabelRelativePositions[label] = {}; // Initialize relative positions for this image
+      window.labelsByImage[label] = 'A1'; // Default initial stroke label for a new image
+    }
+    
+    window.undoStackByImage[label] = window.undoStackByImage[label] || [];
+    window.redoStackByImage[label] = window.redoStackByImage[label] || [];
+    window.imageStates[label] = window.imageStates[label] || null;
+    window.originalImageDimensions[label] = window.originalImageDimensions[label] || { width: 0, height: 0 };
+    window.customLabelPositions[label] = window.customLabelPositions[label] || {}; // Initialize for the new label
         
     // CRITICAL FIX: Initialize selection state for new images
     if (!window.paintApp.state.selectedStrokeByImage) window.paintApp.state.selectedStrokeByImage = {};
@@ -17033,7 +18068,8 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
       furnitureType: 'sofa', // Default furniture type ID
       viewType: defaultViewTagId
     };
-    //         console.log(`[initializeNewImageStructures] Initialized tags for ${label}:`, JSON.stringify(window.imageTags[label]));
+    console.log(`[DEBUG INIT]   Initialized tags for ${label}:`, JSON.stringify(window.imageTags[label]));
+    console.log(`[DEBUG INIT] ===== Image Structures Initialized: ${label} =====`);
   }
 
   // *** NEW FUNCTION: Parse and save measurement string ***
