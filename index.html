@@ -4429,7 +4429,7 @@
             }
         }, 2000);
     </script>
-    <script src="public/js/ai-draw-bot.js?v=20250907113000"></script>
+    <script src="js/ai-draw-bot.js?v=20250907113000"></script>
     <script>
         // Dynamically load paint.js with cache-busting in debug mode
         (function(){
@@ -4440,7 +4440,7 @@
                 console.log('[INDEX] Loading AI Draw Bot integration...');
                 // Try multiple paths
                 const paths = [
-                    `public/js/ai-draw-bot-integration.js?v=${version}`,
+                    `js/ai-draw-bot-integration.js?v=${version}`,
                     `/js/ai-draw-bot-integration.js?v=${version}`,
                     `js/ai-draw-bot-integration.js?v=${version}`
                 ];
@@ -4469,7 +4469,7 @@
             }
             
             const s = document.createElement('script');
-            s.src = `public/js/paint.js?v=${version}`;
+            s.src = `js/paint.js?v=${version}`;
             s.onload = function() {
                 console.log('[INDEX] ✅ paint.js loaded, loading AI integration...');
                 // Wait a bit for paint.js to fully initialize
@@ -4490,14 +4490,14 @@
             document.currentScript.parentNode.insertBefore(s, document.currentScript);
         })();
     </script>
-    <script src="public/js/project-manager.js?v=20250907090300"></script>
-    <script src="public/js/tag-manager.js?v=20250907090300"></script>
+    <script src="js/project-manager.js?v=20250907090300"></script>
+    <script src="js/tag-manager.js?v=20250907090300"></script>
     <!-- Load AI Draw Bot Integration directly -->
     <script>
         (function() {
             console.log('[INDEX] Attempting to load AI Draw Bot integration directly...');
             const script = document.createElement('script');
-            script.src = 'public/js/ai-draw-bot-integration.js?v=' + (Date.now());
+            script.src = 'js/ai-draw-bot-integration.js?v=' + (Date.now());
             script.onload = () => console.log('[INDEX] ✅ AI Draw Bot integration loaded directly');
             script.onerror = () => {
                 console.error('[INDEX] ❌ Direct load failed, trying /js/ path...');
