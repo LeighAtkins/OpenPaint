@@ -4429,17 +4429,86 @@
             }
         }, 2000);
     </script>
+    <script src="public/js/ai-draw-bot.js?v=20250907113000"></script>
     <script>
         // Dynamically load paint.js with cache-busting in debug mode
         (function(){
             const isDebug = /[?&]debug(=|&|$)/i.test(location.search);
             const version = isDebug ? Date.now() : '20250907113000';
+            
+            function loadAIIntegration() {
+                console.log('[INDEX] Loading AI Draw Bot integration...');
+                // Try multiple paths
+                const paths = [
+                    `public/js/ai-draw-bot-integration.js?v=${version}`,
+                    `/js/ai-draw-bot-integration.js?v=${version}`,
+                    `js/ai-draw-bot-integration.js?v=${version}`
+                ];
+                
+                let currentPathIndex = 0;
+                const tryNextPath = () => {
+                    if (currentPathIndex >= paths.length) {
+                        console.error('[INDEX] All paths failed for AI Draw Bot integration');
+                        return;
+                    }
+                    
+                    const script = document.createElement('script');
+                    script.src = paths[currentPathIndex];
+                    script.onload = function() {
+                        console.log('[INDEX] ✅ AI Draw Bot integration loaded from:', paths[currentPathIndex]);
+                    };
+                    script.onerror = function() {
+                        console.warn('[INDEX] ❌ Failed to load from:', paths[currentPathIndex]);
+                        currentPathIndex++;
+                        tryNextPath();
+                    };
+                    document.body.appendChild(script);
+                };
+                
+                tryNextPath();
+            }
+            
             const s = document.createElement('script');
             s.src = `public/js/paint.js?v=${version}`;
+            s.onload = function() {
+                console.log('[INDEX] ✅ paint.js loaded, loading AI integration...');
+                // Wait a bit for paint.js to fully initialize
+                setTimeout(loadAIIntegration, 1000);
+            };
+            s.onerror = function() {
+                console.error('[INDEX] ❌ Failed to load paint.js');
+            };
+            
+            // Also try loading AI integration after a delay as fallback
+            setTimeout(function() {
+                if (!document.getElementById('aiDrawBotToggle')) {
+                    console.log('[INDEX] Fallback: Loading AI integration (button not found)...');
+                    loadAIIntegration();
+                }
+            }, 3000);
+            
             document.currentScript.parentNode.insertBefore(s, document.currentScript);
         })();
     </script>
     <script src="public/js/project-manager.js?v=20250907090300"></script>
     <script src="public/js/tag-manager.js?v=20250907090300"></script>
+    <!-- Load AI Draw Bot Integration directly -->
+    <script>
+        (function() {
+            console.log('[INDEX] Attempting to load AI Draw Bot integration directly...');
+            const script = document.createElement('script');
+            script.src = 'public/js/ai-draw-bot-integration.js?v=' + (Date.now());
+            script.onload = () => console.log('[INDEX] ✅ AI Draw Bot integration loaded directly');
+            script.onerror = () => {
+                console.error('[INDEX] ❌ Direct load failed, trying /js/ path...');
+                const script2 = document.createElement('script');
+                script2.src = '/js/ai-draw-bot-integration.js?v=' + (Date.now());
+                script2.onload = () => console.log('[INDEX] ✅ AI Draw Bot integration loaded from /js/');
+                script2.onerror = () => console.error('[INDEX] ❌ Both paths failed for AI Draw Bot integration');
+                document.body.appendChild(script2);
+            };
+            document.body.appendChild(script);
+        })();
+    </script>
 </body>
 </html>

@@ -1,0 +1,101 @@
+# Test files - not needed in production
+tests/
+**/*.test.js
+**/*.test.ts
+**/*.spec.js
+**/*.spec.ts
+**/*.cy.js
+**/__tests__/
+**/__tests__/**/*
+src/**/__tests__/
+src/**/*.test.ts
+src/**/*.test.js
+
+# Test configuration
+cypress.config.js
+jest.config.js
+cypress/
+coverage/
+
+# Cloudflare Workers - deployed separately
+workers/
+worker/
+wrangler.toml
+
+# Development and build files
+node_modules/
+.env
+.env.local
+.env.*.local
+*.log
+logs/
+dist/
+build/
+.cache/
+.parcel-cache/
+
+# Documentation (optional - include if you want docs deployed)
+# docs/
+
+# Development scripts
+scripts/
+fix_*.py
+test_*.html
+debug_*.html
+tmp_*.txt
+*.py
+
+# Task Master files
+tasks.json
+tasks/
+.taskmaster/
+
+# IDE and editor files
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Git files
+.git/
+.gitignore
+
+# Docker files (if not using Docker on Vercel)
+docker-compose.yml
+Dockerfile
+
+# Requirements and other non-Node files
+requirements.txt
+
+# Backup files - exclude all backup variants
+**/*backup*
+**/*backup*.js
+**/*corrupted*
+**/*_backup*
+**/*.backup
+**/*.bak
+**/*.fixed
+**/*.temp
+**/*.old
+public/js/paint_backup.js
+public/js/paint_backup_corrupted.js
+public/js/paint_final.js
+public/js/paint_fixed.js
+public/js/paint_refactored.js
+public/js/paint_temp.js
+public/js/paint.js.backup
+public/js/paint.js.bak
+public/js/paint.js.fixed
+public/js/paint.js.new
+
+# Project management
+CLAUDE.md
+DEPLOYMENT_NOTES.md
+

@@ -53,6 +53,11 @@ app.use(express.static('./'));
 app.use('/uploads', express.static(uploadDir));
 
 // Route handlers
+// Serve favicon
+app.get('/favicon.ico', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'favicon.ico'));
+});
+
 // Serve the main page
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
@@ -245,7 +250,12 @@ app.use((err, req, res, next) => {
     res.status(500).json({ success: false, message: 'Server error' });
 });
 
-// Start the server
-app.listen(port, () => {
-    console.log(`OpenPaint app listening at http://localhost:${port}`);
-});
+// Export the app for Vercel serverless functions
+// For local development, start the server
+if (require.main === module) {
+    app.listen(port, () => {
+        console.log(`OpenPaint app listening at http://localhost:${port}`);
+    });
+}
+
+module.exports = app;
