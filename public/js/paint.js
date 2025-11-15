@@ -9073,6 +9073,48 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
       // **NEW**: Invalidate anchor cache when stroke is completed
       window.invalidateAnchorCache(currentImageLabel);
       //             console.log(`[Save State] Moved vector data from ${tempStrokeKey} to ${strokeLabel}`);
+
+      // **AI FEEDBACK**: Queue stroke for feedback if AI Draw Bot is available and enabled
+      const feedbackEnabled = document.getElementById('aiFeedbackEnabled');
+      if (typeof window.aiDrawBot !== 'undefined' && window.aiDrawBot.queueFeedback && drawnVectorData && drawnVectorData.points && (!feedbackEnabled || feedbackEnabled.checked)) {
+        try {
+          const canvas = document.getElementById('canvas');
+          const originalDims = window.originalImageDimensions?.[currentImageLabel] || { width: canvas?.width || 800, height: canvas?.height || 600 };
+          
+          // Convert image-relative points to canvas coordinates for feedback
+          const canvasPoints = drawnVectorData.points.map(point => {
+            const scale = window.imageScaleByLabel?.[currentImageLabel] || 1.0;
+            const position = window.imagePositionByLabel?.[currentImageLabel] || { x: 0, y: 0 };
+            const centerX = (canvas.width - originalDims.width * scale) / 2;
+            const centerY = (canvas.height - originalDims.height * scale) / 2;
+            return {
+              x: point.x * originalDims.width * scale + position.x + centerX,
+              y: point.y * originalDims.height * scale + position.y + centerY,
+              t: point.time || 0
+            };
+          });
+
+          window.aiDrawBot.queueFeedback({
+            imageLabel: currentImageLabel,
+            measurementCode: strokeLabel,
+            stroke: {
+              points: canvasPoints,
+              width: drawnVectorData.width || parseInt(brushSize.value) || 2
+            },
+            source: 'manual',
+            meta: {
+              canvas: {
+                width: canvas?.width || 800,
+                height: canvas?.height || 600
+              },
+              originalDimensions: originalDims,
+              type: drawnVectorData.type || 'freehand'
+            }
+          });
+        } catch (e) {
+          console.warn('[Paint.js] Failed to queue feedback for stroke:', e);
+        }
+      }
     } else if (strokeLabel) {
       console.warn(`[Save State] No temporary vector data found at ${tempStrokeKey} for stroke ${strokeLabel}`);
       // Attempt to find vector data if it somehow got assigned to the suggested label during draw (fallback)

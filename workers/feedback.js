@@ -1,0 +1,220 @@
+/**
+ * Cloudflare Worker for receiving feedback about strokes and images
+ * Endpoint: /api/feedback
+ * 
+ * Accepts: { 
+ *   projectId?: string,
+ *   imageLabel: string,
+ *   viewpoint?: string,
+ *   measurementCode: string,
+ *   stroke: { points: Array<{x, y, t}>, width: number, source: string },
+ *   labels?: string[],
+ *   meta?: object
+ * }
+ * Returns: { success: boolean, feedbackId: string }
+ */
+
+export default {
+  async fetch(request, env) {
+    const url = new URL(request.url);
+    
+    // Route to /api/feedback endpoint
+    if (url.pathname !== '/api/feedback' && url.pathname !== '/') {
+      return new Response('Not Found', { status: 404 });
+    }
+
+    // CORS headers for Vercel frontend
+    const corsHeaders = {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, x-api-key',
+    };
+
+    // Handle preflight
+    if (request.method === 'OPTIONS') {
+      return new Response(null, { headers: corsHeaders });
+    }
+
+    // Only accept POST requests
+    if (request.method !== 'POST') {
+      return new Response(
+        JSON.stringify({ error: 'Method not allowed. Use POST.' }),
+        { 
+          status: 405,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
+    try {
+      const body = await request.json();
+      const { projectId, imageLabel, viewpoint, measurementCode, stroke, labels, meta } = body;
+
+      // Validate required fields
+      if (!imageLabel || !measurementCode || !stroke || !stroke.points) {
+        return new Response(
+          JSON.stringify({ error: 'imageLabel, measurementCode, and stroke.points are required' }),
+          { 
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          }
+        );
+      }
+
+      // Normalize and validate stroke data
+      const normalizedStroke = normalizeStrokeData(stroke, meta?.canvas);
+      if (!normalizedStroke) {
+        return new Response(
+          JSON.stringify({ error: 'Invalid stroke data' }),
+          { 
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          }
+        );
+      }
+
+      // Derive metadata
+      const metadata = deriveStrokeMetadata(normalizedStroke);
+      
+      // Create feedback entry
+      const feedbackId = `feedback-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      const feedbackEntry = {
+        id: feedbackId,
+        projectId: projectId || 'unknown',
+        imageLabel,
+        viewpoint: viewpoint || 'unknown',
+        measurementCode,
+        stroke: normalizedStroke,
+        labels: labels || [],
+        metadata,
+        meta: {
+          ...meta,
+          userAgent: request.headers.get('user-agent'),
+          timestamp: new Date().toISOString(),
+          source: stroke.source || 'manual'
+        }
+      };
+
+      // Store raw feedback in KV
+      const feedbackKey = `feedback:${measurementCode}:${viewpoint || 'unknown'}:${feedbackId}`;
+      await env.SOFA_TAGS.put(feedbackKey, JSON.stringify(feedbackEntry));
+
+      // Update index for promotion job
+      const indexKey = `feedback:index:${measurementCode}:${viewpoint || 'unknown'}`;
+      const existingIndex = await env.SOFA_TAGS.get(indexKey, { type: 'json' }) || { count: 0, lastUpdated: null, feedbackIds: [] };
+      existingIndex.count += 1;
+      existingIndex.lastUpdated = new Date().toISOString();
+      existingIndex.feedbackIds.push(feedbackId);
+      // Keep only last 1000 IDs to prevent unbounded growth
+      if (existingIndex.feedbackIds.length > 1000) {
+        existingIndex.feedbackIds = existingIndex.feedbackIds.slice(-1000);
+      }
+      await env.SOFA_TAGS.put(indexKey, JSON.stringify(existingIndex));
+
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          feedbackId,
+          message: 'Feedback received and stored'
+        }),
+        {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    } catch (error) {
+      console.error('Feedback error:', error);
+      return new Response(
+        JSON.stringify({ 
+          error: 'Feedback submission failed',
+          message: error.message 
+        }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+  }
+};
+
+/**
+ * Normalize stroke data to 0-1 coordinates
+ * @param {Object} stroke - Stroke data with points
+ * @param {{width: number, height: number}} canvas - Canvas dimensions
+ * @returns {Object|null} Normalized stroke or null if invalid
+ */
+function normalizeStrokeData(stroke, canvas) {
+  if (!stroke.points || stroke.points.length < 2) {
+    return null;
+  }
+
+  const canvasWidth = canvas?.width || 800;
+  const canvasHeight = canvas?.height || 600;
+  const smallerDim = Math.min(canvasWidth, canvasHeight);
+
+  // Normalize points to 0-1 range
+  const normalizedPoints = stroke.points.map(point => ({
+    x: point.x / canvasWidth,
+    y: point.y / canvasHeight,
+    t: point.t || 0
+  }));
+
+  // Normalize width relative to smaller dimension
+  const normalizedWidth = stroke.width / smallerDim;
+
+  return {
+    points: normalizedPoints,
+    width: normalizedWidth,
+    source: stroke.source || 'manual'
+  };
+}
+
+/**
+ * Derive metadata from normalized stroke
+ * @param {Object} normalizedStroke - Normalized stroke data
+ * @returns {Object} Metadata object
+ */
+function deriveStrokeMetadata(normalizedStroke) {
+  const points = normalizedStroke.points;
+  
+  // Calculate bounding box
+  const xs = points.map(p => p.x);
+  const ys = points.map(p => p.y);
+  const bbox = {
+    minX: Math.min(...xs),
+    maxX: Math.max(...xs),
+    minY: Math.min(...ys),
+    maxY: Math.max(...ys),
+    width: Math.max(...xs) - Math.min(...xs),
+    height: Math.max(...ys) - Math.min(...ys)
+  };
+
+  // Calculate approximate length
+  let length = 0;
+  for (let i = 1; i < points.length; i++) {
+    const dx = points[i].x - points[i-1].x;
+    const dy = points[i].y - points[i-1].y;
+    length += Math.sqrt(dx * dx + dy * dy);
+  }
+
+  // Calculate average angle (simplified)
+  const angles = [];
+  for (let i = 1; i < points.length; i++) {
+    const dx = points[i].x - points[i-1].x;
+    const dy = points[i].y - points[i-1].y;
+    const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+    angles.push(angle);
+  }
+  const avgAngle = angles.length > 0 
+    ? angles.reduce((a, b) => a + b, 0) / angles.length 
+    : 0;
+
+  return {
+    bbox,
+    length,
+    avgAngle,
+    pointCount: points.length
+  };
+}
+

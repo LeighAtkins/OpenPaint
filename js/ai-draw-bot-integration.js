@@ -159,6 +159,24 @@ console.log('[AI Draw Bot Integration] Script file loaded');
             tagsDisplay.className = 'text-xs text-gray-600 mt-3 pt-3 border-t border-gray-200';
             panel.appendChild(tagsDisplay);
 
+            // Feedback sync section
+            const feedbackGroup = document.createElement('div');
+            feedbackGroup.className = 'mt-3 pt-3 border-t border-gray-200';
+            feedbackGroup.innerHTML = `
+                <div class="flex items-center justify-between mb-2">
+                    <label class="text-xs font-medium text-gray-700">AI Learning</label>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="aiFeedbackEnabled" class="sr-only peer" checked>
+                        <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-500"></div>
+                    </label>
+                </div>
+                <div id="aiFeedbackStatus" class="text-xs text-gray-500 mb-2">Ready to learn</div>
+                <button id="aiSyncFeedbackBtn" class="w-full px-2 py-1 text-xs bg-gray-500 text-white rounded hover:bg-gray-600">
+                    Sync Feedback Now
+                </button>
+            `;
+            panel.appendChild(feedbackGroup);
+
             document.body.appendChild(panel);
 
             // Event listeners
@@ -171,6 +189,7 @@ console.log('[AI Draw Bot Integration] Script file loaded');
             document.getElementById('aiGetSuggestionBtn').addEventListener('click', getSuggestion);
             document.getElementById('aiAcceptBtn').addEventListener('click', acceptSuggestion);
             document.getElementById('aiDismissBtn').addEventListener('click', dismissSuggestion);
+            document.getElementById('aiSyncFeedbackBtn').addEventListener('click', syncFeedback);
 
             // Update suggestion button state
             const viewpointSelect = document.getElementById('aiViewpointSelect');
@@ -365,6 +384,8 @@ console.log('[AI Draw Bot Integration] Script file loaded');
             const imageLabel = window.currentImageLabel;
             const measurementSelect = document.getElementById('aiMeasurementSelect');
             const measurementCode = measurementSelect.value;
+            const viewpointSelect = document.getElementById('aiViewpointSelect');
+            const viewpoint = viewpointSelect.value;
 
             // Stop ghost rendering
             dismissSuggestion();
@@ -376,6 +397,29 @@ console.log('[AI Draw Bot Integration] Script file loaded');
                 imageLabel,
                 measurementCode
             );
+
+            // Queue feedback for accepted suggestion
+            const feedbackEnabled = document.getElementById('aiFeedbackEnabled');
+            if (window.aiDrawBot && window.aiDrawBot.queueFeedback && (!feedbackEnabled || feedbackEnabled.checked)) {
+                const canvas = document.getElementById('canvas');
+                window.aiDrawBot.queueFeedback({
+                    imageLabel,
+                    measurementCode,
+                    viewpoint: viewpoint || (window.imageTags?.[imageLabel]?.viewpoint) || 'unknown',
+                    stroke: {
+                        points: currentSuggestion.points,
+                        width: currentSuggestion.width
+                    },
+                    source: 'accepted',
+                    meta: {
+                        canvas: {
+                            width: canvas?.width || 800,
+                            height: canvas?.height || 600
+                        },
+                        confidence: currentSuggestion.confidence
+                    }
+                });
+            }
 
             const statusEl = document.getElementById('aiSuggestionStatus');
             statusEl.textContent = 'Suggestion accepted!';
@@ -431,6 +475,66 @@ console.log('[AI Draw Bot Integration] Script file loaded');
 
             displayEl.textContent = parts.length > 0 ? parts.join(' | ') : 'No classification data';
         }
+
+        /**
+         * Sync feedback queue
+         */
+        async function syncFeedback() {
+            const statusEl = document.getElementById('aiFeedbackStatus');
+            const syncBtn = document.getElementById('aiSyncFeedbackBtn');
+            
+            if (!window.aiDrawBot || !window.aiDrawBot.flushFeedbackQueue) {
+                statusEl.textContent = 'AI Draw Bot not available';
+                return;
+            }
+
+            syncBtn.disabled = true;
+            syncBtn.textContent = 'Syncing...';
+            statusEl.textContent = 'Sending feedback...';
+
+            try {
+                const result = await window.aiDrawBot.flushFeedbackQueue();
+                statusEl.textContent = `Sent: ${result.sent}, Failed: ${result.failed}, Queued: ${result.remaining}`;
+                
+                if (result.sent > 0) {
+                    setTimeout(() => {
+                        statusEl.textContent = 'Ready to learn';
+                    }, 3000);
+                }
+            } catch (error) {
+                console.error('[AI Integration] Sync error:', error);
+                statusEl.textContent = `Error: ${error.message}`;
+            } finally {
+                syncBtn.disabled = false;
+                syncBtn.textContent = 'Sync Feedback Now';
+            }
+        }
+
+        /**
+         * Update feedback status display
+         */
+        function updateFeedbackStatus() {
+            const statusEl = document.getElementById('aiFeedbackStatus');
+            if (!statusEl) return;
+
+            const queueSize = window.aiFeedbackQueue?.length || 0;
+            const enabled = document.getElementById('aiFeedbackEnabled')?.checked !== false;
+
+            if (!enabled) {
+                statusEl.textContent = 'Learning disabled';
+                return;
+            }
+
+            if (queueSize === 0) {
+                statusEl.textContent = 'Ready to learn';
+            } else {
+                statusEl.textContent = `${queueSize} feedback item(s) queued`;
+            }
+        }
+
+        // Update feedback status periodically
+        setInterval(updateFeedbackStatus, 5000);
+        updateFeedbackStatus();
 
         // Initialize UI
         createAIToggleButton();
