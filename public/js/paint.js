@@ -70,6 +70,13 @@ window.paintApp = {
   },
   state: {
     currentImageLabel: 'front',
+    // Instance-based architecture for independent image management
+    currentImageInstanceId: null,
+    imageInstances: {}, // instanceId -> { label, url, dimensions, tags, etc. }
+    instanceIdsByLabel: {}, // label -> [instanceId1, instanceId2, ...]
+    labelByInstanceId: {}, // instanceId -> label
+    nextInstanceId: 1,
+    // Legacy storage - maintained for backward compatibility
     vectorStrokesByImage: {},
     strokeVisibilityByImage: {},
     strokeLabelVisibility: {},
@@ -115,7 +122,6 @@ window.paintApp = {
     lastClickTime: 0,
     lastCanvasClickTime: 0,
     orderedImageLabels: [],
-    imageLabels: [],
     // Text elements per image label (moved from uiState since it's persistent data)
     textElementsByImage: {}
   },
@@ -272,6 +278,185 @@ document.addEventListener('DOMContentLoaded', () => {
   window.imageTags = window.paintApp.state.imageTags;
   window.isLoadingProject = window.paintApp.state.isLoadingProject;
   window.tagSizesByImage = window.tagSizesByImage || {};
+  
+  // Instance Management Functions
+  window.createImageInstance = function(label, imageData = {}) {
+    const instanceId = `instance_${window.paintApp.state.nextInstanceId++}`;
+    
+    // Create instance record
+    window.paintApp.state.imageInstances[instanceId] = {
+      label: label,
+      url: imageData.url || null,
+      dimensions: imageData.dimensions || { width: 0, height: 0 },
+      tags: imageData.tags || {},
+      scale: imageData.scale || window.paintApp.config.defaultScale,
+      position: imageData.position || { ...window.paintApp.config.defaultPosition },
+      createdAt: new Date().toISOString()
+    };
+    
+    // Update mappings
+    if (!window.paintApp.state.instanceIdsByLabel[label]) {
+      window.paintApp.state.instanceIdsByLabel[label] = [];
+    }
+    window.paintApp.state.instanceIdsByLabel[label].push(instanceId);
+    window.paintApp.state.labelByInstanceId[instanceId] = label;
+    
+    // Initialize storage for this instance
+    const compositeKey = `${label}#${instanceId}`;
+    window.paintApp.state.vectorStrokesByImage[compositeKey] = [];
+    window.paintApp.state.strokeVisibilityByImage[compositeKey] = {};
+    window.paintApp.state.lineStrokesByImage[compositeKey] = [];
+    window.paintApp.state.labelsByImage[compositeKey] = [];
+    
+    console.log(`[Instance] Created instance ${instanceId} for label "${label}"`);
+    return instanceId;
+  };
+  
+  window.getInstanceById = function(instanceId) {
+    return window.paintApp.state.imageInstances[instanceId] || null;
+  };
+  
+  window.switchToInstance = function(instanceId) {
+    const instance = window.getInstanceById(instanceId);
+    if (!instance) {
+      console.error(`[Instance] Cannot switch to instance ${instanceId} - not found`);
+      return false;
+    }
+    
+    window.paintApp.state.currentImageInstanceId = instanceId;
+    window.paintApp.state.currentImageLabel = instance.label;
+    window.currentImageLabel = instance.label;
+    
+    console.log(`[Instance] Switched to instance ${instanceId} (label: "${instance.label}")`);
+    return true;
+  };
+  
+  window.getActiveCompositeKey = function() {
+    if (window.paintApp.state.currentImageInstanceId) {
+      const label = window.paintApp.state.currentImageLabel;
+      const instanceId = window.paintApp.state.currentImageInstanceId;
+      const compositeKey = `${label}#${instanceId}`;
+      console.log(`[COMPOSITE-KEY-DEBUG] Using composite key: ${compositeKey}`);
+      return compositeKey;
+    }
+    // Fallback to legacy label-only key
+    const fallback = window.paintApp.state.currentImageLabel;
+    console.warn(`[COMPOSITE-KEY-DEBUG] ⚠️ Using fallback label-only key: ${fallback} (currentImageInstanceId is ${window.paintApp.state.currentImageInstanceId})`);
+    return fallback;
+  };
+  
+  window.getInstancesForLabel = function(label) {
+    const instanceIds = window.paintApp.state.instanceIdsByLabel[label] || [];
+    return instanceIds.map(id => ({
+      id: id,
+      ...window.paintApp.state.imageInstances[id]
+    }));
+  };
+  
+  window.getVectorStrokesForCurrentImage = function() {
+    const compositeKey = window.getActiveCompositeKey();
+    return window.paintApp.state.vectorStrokesByImage[compositeKey] || {};
+  };
+  
+  window.migrateExistingDataToInstances = function() {
+    // Create instances for existing data that uses label-only keys
+    const processedLabels = new Set();
+    
+    const vectorKeys = Object.keys(window.paintApp.state.vectorStrokesByImage);
+    console.log(`[Migration] DEBUG: vectorStrokesByImage keys (${vectorKeys.length}):`, vectorKeys);
+    console.log(`[Migration] DEBUG: strokeVisibilityByImage keys:`, Object.keys(window.paintApp.state.strokeVisibilityByImage || {}));
+    console.log(`[Migration] DEBUG: lineStrokesByImage keys:`, Object.keys(window.paintApp.state.lineStrokesByImage || {}));
+    
+    // Debug each key
+    vectorKeys.forEach(key => {
+      const hasHash = key.includes('#');
+      const strokeCount = Object.keys(window.paintApp.state.vectorStrokesByImage[key] || {}).length;
+      console.log(`[Migration] DEBUG: Key "${key}" - hasHash: ${hasHash}, strokeCount: ${strokeCount}`);
+    });
+    
+    // Check for label-only keys in vectorStrokesByImage
+    Object.keys(window.paintApp.state.vectorStrokesByImage).forEach(key => {
+      if (!key.includes('#')) { // Legacy label-only key
+        if (!processedLabels.has(key)) {
+          console.log(`[Migration] Creating instance for existing label: ${key}`);
+          const instanceId = window.createImageInstance(key, {
+            url: window.paintApp.state.originalImages[key],
+            dimensions: window.paintApp.state.originalImageDimensions[key],
+            tags: window.paintApp.state.imageTags[key],
+            scale: window.paintApp.state.imageScaleByLabel[key],
+            position: window.paintApp.state.imagePositionByLabel[key]
+          });
+          
+          // Move data to composite key
+          const compositeKey = `${key}#${instanceId}`;
+          window.paintApp.state.vectorStrokesByImage[compositeKey] = window.paintApp.state.vectorStrokesByImage[key];
+          delete window.paintApp.state.vectorStrokesByImage[key];
+          
+          // Also migrate other related data structures
+          if (window.paintApp.state.strokeVisibilityByImage[key]) {
+            window.paintApp.state.strokeVisibilityByImage[compositeKey] = window.paintApp.state.strokeVisibilityByImage[key];
+            delete window.paintApp.state.strokeVisibilityByImage[key];
+          }
+          
+          if (window.paintApp.state.lineStrokesByImage[key]) {
+            window.paintApp.state.lineStrokesByImage[compositeKey] = window.paintApp.state.lineStrokesByImage[key];
+            delete window.paintApp.state.lineStrokesByImage[key];
+          }
+          
+          if (window.paintApp.state.labelsByImage[key]) {
+            window.paintApp.state.labelsByImage[compositeKey] = window.paintApp.state.labelsByImage[key];
+            delete window.paintApp.state.labelsByImage[key];
+          }
+          
+          // Set as current if this is the current label
+          if (key === window.paintApp.state.currentImageLabel) {
+            window.switchToInstance(instanceId);
+          }
+          
+          processedLabels.add(key);
+        }
+      }
+    });
+    
+    // Handle duplicate labels in imageLabels array by creating separate instances
+    if (window.paintApp.state.imageLabels && Array.isArray(window.paintApp.state.imageLabels)) {
+      const labelCounts = {};
+      const duplicateLabels = [];
+      
+      // Count occurrences of each label
+      window.paintApp.state.imageLabels.forEach(label => {
+        labelCounts[label] = (labelCounts[label] || 0) + 1;
+        if (labelCounts[label] > 1) {
+          duplicateLabels.push(label);
+        }
+      });
+      
+      // Create additional instances for duplicate labels
+      duplicateLabels.forEach(label => {
+        const existingInstances = window.getInstancesForLabel(label);
+        const expectedCount = labelCounts[label];
+        const additionalNeeded = expectedCount - existingInstances.length;
+        
+        console.log(`[Migration] Label "${label}" appears ${expectedCount} times, has ${existingInstances.length} instances, creating ${additionalNeeded} more`);
+        
+        for (let i = 0; i < additionalNeeded; i++) {
+          const instanceId = window.createImageInstance(label, {
+            url: window.paintApp.state.originalImages[label],
+            dimensions: window.paintApp.state.originalImageDimensions[label],
+            tags: window.paintApp.state.imageTags[label],
+            scale: window.paintApp.state.imageScaleByLabel[label],
+            position: window.paintApp.state.imagePositionByLabel[label]
+          });
+          console.log(`[Migration] Created additional instance ${instanceId} for duplicate label "${label}"`);
+        }
+      });
+    }
+  };
+  
+  // Run initial migration for any existing data on startup
+  console.log('[App Init] Running instance migration for existing data...');
+  window.migrateExistingDataToInstances();
+  console.log('[App Init] Instance migration completed');
     
   // Initialize unit selectors
   const unitSelector = document.getElementById('unitSelector');
@@ -950,6 +1135,41 @@ document.addEventListener('DOMContentLoaded', () => {
     container.dataset.label = label;
     container.dataset.originalImageUrl = imageUrl; // Store the original image URL for later restoration
     container.draggable = true; // Enable drag-and-drop
+    
+    // Create an instance for this image if one doesn't exist
+    console.log(`[INSTANCE-CREATE-DEBUG] ===== Creating instance for label: ${label} =====`);
+    const existingInstances = window.getInstancesForLabel(label);
+    console.log(`[INSTANCE-CREATE-DEBUG] Existing instances for ${label}:`, existingInstances.length);
+    console.log(`[INSTANCE-CREATE-DEBUG] Current imageInstances:`, Object.keys(window.paintApp.state.imageInstances || {}));
+    console.log(`[INSTANCE-CREATE-DEBUG] Current instanceIdsByLabel:`, window.paintApp.state.instanceIdsByLabel);
+    
+    let instanceId;
+    if (existingInstances.length === 0) {
+      // Create new instance for new image
+      instanceId = window.createImageInstance(label, {
+        url: imageUrl,
+        dimensions: window.originalImageDimensions[label],
+        tags: window.imageTags && window.imageTags[label],
+        scale: window.imageScaleByLabel[label],
+        position: window.imagePositionByLabel[label]
+      });
+      console.log(`[INSTANCE-CREATE-DEBUG] ✓ Created new instance ${instanceId} for label: ${label}`);
+      console.log(`[INSTANCE-CREATE-DEBUG] ✓ Updated imageInstances:`, Object.keys(window.paintApp.state.imageInstances || {}));
+      console.log(`[INSTANCE-CREATE-DEBUG] ✓ Updated instanceIdsByLabel:`, window.paintApp.state.instanceIdsByLabel);
+    } else {
+      // For duplicate images, create a new instance
+      instanceId = window.createImageInstance(label, {
+        url: imageUrl,
+        dimensions: window.originalImageDimensions[label],
+        tags: window.imageTags && window.imageTags[label],
+        scale: window.imageScaleByLabel[label],
+        position: window.imagePositionByLabel[label]
+      });
+      console.log(`[INSTANCE-CREATE-DEBUG] Created duplicate instance ${instanceId} for existing label: ${label}`);
+    }
+    
+    // Store the instance ID in the container for deletion tracking
+    container.dataset.instanceId = instanceId;
         
     // Determine display name: custom name > tag-based name > fallback
     function getDisplayName() {
@@ -1089,7 +1309,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Generate a high-quality thumbnail that includes current vectors
     try {
-      generateImageThumbnail(label, 320).then((dataUrl) => {
+      generateImageThumbnail(label, 320, instanceId).then((dataUrl) => {
         if (dataUrl) {
           img.src = dataUrl;
         } else if (imageUrl) {
@@ -1102,7 +1322,24 @@ document.addEventListener('DOMContentLoaded', () => {
     // Set up click handler: switch image and auto-scroll this item to center
     container.onclick = () => {
       saveState();
+      
+      // Set the current instance ID before switching
+      console.log(`[INSTANCE-SWITCH-DEBUG] ===== CONTAINER CLICK =====`);
+      console.log(`[INSTANCE-SWITCH-DEBUG] Clicked container with instanceId: ${instanceId}, label: ${label}`);
+      console.log(`[INSTANCE-SWITCH-DEBUG] Before - currentImageInstanceId: ${window.paintApp.state.currentImageInstanceId}`);
+      console.log(`[INSTANCE-SWITCH-DEBUG] Before - currentImageLabel: ${window.paintApp.state.currentImageLabel}`);
+      
+      window.paintApp.state.currentImageInstanceId = instanceId;
+      window.paintApp.state.currentImageLabel = label;
+      
+      console.log(`[INSTANCE-SWITCH-DEBUG] After setting - currentImageInstanceId: ${window.paintApp.state.currentImageInstanceId}`);
+      console.log(`[INSTANCE-SWITCH-DEBUG] After setting - currentImageLabel: ${window.paintApp.state.currentImageLabel}`);
+      console.log(`[INSTANCE-SWITCH-DEBUG] Calling switchToImage(${label})...`);
+      
       switchToImage(label);
+      
+      console.log(`[INSTANCE-SWITCH-DEBUG] After switchToImage - currentImageInstanceId: ${window.paintApp.state.currentImageInstanceId}`);
+      console.log(`[INSTANCE-SWITCH-DEBUG] Final composite key: ${window.getActiveCompositeKey()}`);
       const list = document.getElementById('imageList');
       if (list) {
         const listRect = list.getBoundingClientRect();
@@ -1311,7 +1548,31 @@ document.addEventListener('DOMContentLoaded', () => {
     
   // Function to delete an image and clean up all associated data
   async function deleteImage(label, container) {
-    //         console.log(`[deleteImage] Deleting image: ${label}`);
+    console.log(`[INSTANCE-DELETE-DEBUG] ========== STARTING DELETE OPERATION ==========`);
+    console.log(`[INSTANCE-DELETE-DEBUG] Deleting image label: ${label}`);
+    console.log(`[INSTANCE-DELETE-DEBUG] Container element:`, container);
+    
+    // CRITICAL: Determine which instance is being deleted from the container
+    const instanceToDelete = container.dataset.instanceId;
+    const instancesForLabel = window.getInstancesForLabel(label);
+    
+    console.log(`[INSTANCE-DELETE-DEBUG] Container instance ID: ${instanceToDelete}`);
+    console.log(`[INSTANCE-DELETE-DEBUG] All instances for label "${label}":`, instancesForLabel.map(i => ({ id: i.id, label: i.label })));
+    console.log(`[INSTANCE-DELETE-DEBUG] Total instances found: ${instancesForLabel.length}`);
+    
+    if (!instanceToDelete) {
+      console.error(`[INSTANCE-DELETE-DEBUG] ❌ No instance ID found in container for label: ${label}`);
+      console.error(`[INSTANCE-DELETE-DEBUG] Container dataset:`, container.dataset);
+      return;
+    }
+    
+    // Verify the instance exists in our tracking
+    if (!window.paintApp.state.imageInstances[instanceToDelete]) {
+      console.error(`[INSTANCE-DELETE-DEBUG] ❌ Instance ${instanceToDelete} not found in imageInstances`);
+      return;
+    }
+    
+    console.log(`[INSTANCE-DELETE-DEBUG] ✓ Selected instance to delete: ${instanceToDelete}`);
         
     // Convert blob/object URL to data URL for persistence
     const originalImageUrl = container.dataset.originalImageUrl;
@@ -1323,29 +1584,42 @@ document.addEventListener('DOMContentLoaded', () => {
       persistentImageUrl = await imageUrlToDataUrl(originalImageUrl);
     }
         
-    // Save all image data for undo BEFORE deletion
+    // Get composite key for the instance being deleted
+    const compositeKey = `${label}#${instanceToDelete}`;
+    console.log(`[INSTANCE-DELETE-DEBUG] Using composite key: ${compositeKey}`);
+    
+    // Log what data exists before deletion
+    console.log(`[INSTANCE-DELETE-DEBUG] Data before deletion:`);
+    console.log(`[INSTANCE-DELETE-DEBUG] - lineStrokesByImage[${compositeKey}]:`, window.lineStrokesByImage[compositeKey]?.length || 0, 'strokes');
+    console.log(`[INSTANCE-DELETE-DEBUG] - vectorStrokesByImage[${compositeKey}]:`, Object.keys(window.vectorStrokesByImage[compositeKey] || {}).length, 'vectors');
+    console.log(`[INSTANCE-DELETE-DEBUG] - labelsByImage[${compositeKey}]:`, window.labelsByImage[compositeKey]?.length || 0, 'labels');
+    
+    // Save instance-specific data for undo BEFORE deletion
     const imageData = {
-      type: 'delete-image',
+      type: 'delete-instance',
       label: label,
-      imageScale: window.imageScaleByLabel[label],
-      imagePosition: window.imagePositionByLabel[label] ? {...window.imagePositionByLabel[label]} : null,
-      lineStrokes: window.lineStrokesByImage[label] ? [...window.lineStrokesByImage[label]] : [],
-      vectorStrokes: window.vectorStrokesByImage[label] ? JSON.parse(JSON.stringify(window.vectorStrokesByImage[label])) : {},
-      strokeVisibility: window.strokeVisibilityByImage[label] ? {...window.strokeVisibilityByImage[label]} : {},
-      strokeLabelVisibility: window.strokeLabelVisibility[label] ? {...window.strokeLabelVisibility[label]} : {},
-      strokeMeasurements: window.strokeMeasurements[label] ? JSON.parse(JSON.stringify(window.strokeMeasurements[label])) : {},
-      labelsByImage: window.labelsByImage[label],
-      undoStack: window.undoStackByImage[label] ? [...window.undoStackByImage[label]] : [],
-      redoStack: window.redoStackByImage[label] ? [...window.redoStackByImage[label]] : [],
-      imageState: window.imageStates[label],
-      originalImage: window.originalImages[label],
+      instanceId: instanceToDelete,
+      compositeKey: compositeKey,
+      imageScale: window.imageScaleByLabel[label], // Scale shared by label
+      imagePosition: window.imagePositionByLabel[label] ? {...window.imagePositionByLabel[label]} : null, // Position shared by label
+      lineStrokes: window.lineStrokesByImage[compositeKey] ? [...window.lineStrokesByImage[compositeKey]] : [],
+      vectorStrokes: window.vectorStrokesByImage[compositeKey] ? JSON.parse(JSON.stringify(window.vectorStrokesByImage[compositeKey])) : {},
+      strokeVisibility: window.strokeVisibilityByImage[compositeKey] ? {...window.strokeVisibilityByImage[compositeKey]} : {},
+      strokeLabelVisibility: window.strokeLabelVisibility[compositeKey] ? {...window.strokeLabelVisibility[compositeKey]} : {},
+      strokeMeasurements: window.strokeMeasurements[compositeKey] ? JSON.parse(JSON.stringify(window.strokeMeasurements[compositeKey])) : {},
+      labelsByImage: window.labelsByImage[compositeKey],
+      undoStack: window.undoStackByImage[label] ? [...window.undoStackByImage[label]] : [], // Undo stack still by label
+      redoStack: window.redoStackByImage[label] ? [...window.redoStackByImage[label]] : [], // Redo stack still by label
+      imageState: window.imageStates[label], // Image state still by label
+      originalImage: window.originalImages[label], // Original image still by label
       originalImageDimensions: window.originalImageDimensions[label] ? {...window.originalImageDimensions[label]} : null,
       imageTags: (window.imageTags && window.imageTags[label] && Array.isArray(window.imageTags[label])) ? [...window.imageTags[label]] : [],
       customImageName: window.customImageNames[label],
       containerHTML: container.outerHTML, // Save full container HTML for DOM restoration
       containerIndex: Array.from(container.parentElement.children).indexOf(container), // Save position
       originalImageUrl: persistentImageUrl, // Use converted data URL instead of blob URL
-      wasCurrentImage: currentImageLabel === label
+      wasCurrentImage: currentImageLabel === label,
+      instanceData: window.paintApp.state.imageInstances[instanceToDelete] // Save instance metadata
     };
         
     // Save custom label positions for this image
@@ -1373,45 +1647,97 @@ document.addEventListener('DOMContentLoaded', () => {
     // Clear global redo stack when new action is performed
     window.globalRedoStack = [];
         
-    console.log(`[deleteImage] Saved undo data for image: ${label}`);
+    console.log(`[INSTANCE-DELETE-DEBUG] ✓ Saved undo data for image: ${label}`);
         
     // Remove from DOM
+    console.log(`[INSTANCE-DELETE-DEBUG] ========== REMOVING FROM DOM ==========`);
     container.remove();
+    console.log(`[INSTANCE-DELETE-DEBUG] ✓ Removed container from DOM`);
         
     // Update the ordered image labels array after deletion
     updateOrderedImageLabelsArray();
         
-    // Clean up data structures
-    delete window.imageScaleByLabel[label];
-    delete window.imagePositionByLabel[label];
-    delete window.lineStrokesByImage[label];
-    delete window.vectorStrokesByImage[label];
-    delete window.strokeVisibilityByImage[label];
-    delete window.strokeLabelVisibility[label];
-    delete window.strokeMeasurements[label];
-    delete window.labelsByImage[label];
-    delete window.undoStackByImage[label];
-    delete window.redoStackByImage[label];
-    delete window.imageStates[label];
-    delete window.originalImages[label];
-    delete window.originalImageDimensions[label];
-    if (window.imageTags && window.imageTags[label]) {
-      delete window.imageTags[label];
-    }
-    delete window.customLabelPositions[label];
-    delete window.calculatedLabelOffsets[label];
-    delete window.customImageNames[label]; // Clean up custom names
-    // Clear the persistence flags for this image label
-    Object.keys(window.clearedMassiveOffsets).forEach(key => {
-      if (key.startsWith(`${label}_`)) {
-        delete window.clearedMassiveOffsets[key];
+    // Clean up instance-specific data structures using composite key
+    console.log(`[INSTANCE-DELETE-DEBUG] ========== CLEANING UP INSTANCE DATA ==========`);
+    console.log(`[INSTANCE-DELETE-DEBUG] Deleting instance-specific data for: ${compositeKey}`);
+    
+    delete window.lineStrokesByImage[compositeKey];
+    delete window.vectorStrokesByImage[compositeKey];
+    delete window.strokeVisibilityByImage[compositeKey];
+    delete window.strokeLabelVisibility[compositeKey];
+    delete window.strokeMeasurements[compositeKey];
+    delete window.labelsByImage[compositeKey];
+    delete window.selectedStrokeByImage[compositeKey];
+    delete window.multipleSelectedStrokesByImage[compositeKey];
+    
+    console.log(`[INSTANCE-DELETE-DEBUG] ✓ Deleted instance-specific data for composite key: ${compositeKey}`);
+    
+    // Remove instance from instance tracking
+    delete window.paintApp.state.imageInstances[instanceToDelete];
+    delete window.paintApp.state.labelByInstanceId[instanceToDelete];
+    
+    // Remove from instanceIdsByLabel array
+    if (window.paintApp.state.instanceIdsByLabel[label]) {
+      const index = window.paintApp.state.instanceIdsByLabel[label].indexOf(instanceToDelete);
+      if (index > -1) {
+        window.paintApp.state.instanceIdsByLabel[label].splice(index, 1);
+        console.log(`[INSTANCE-DELETE-DEBUG] ✓ Removed ${instanceToDelete} from instanceIdsByLabel[${label}]`);
+      } else {
+        console.warn(`[INSTANCE-DELETE-DEBUG] ⚠️ Instance ${instanceToDelete} not found in instanceIdsByLabel[${label}]`);
       }
-    });
-    delete window.selectedStrokeByImage[label];
-    delete window.multipleSelectedStrokesByImage[label];
+    }
+    
+    console.log(`[INSTANCE-DELETE-DEBUG] ✓ Removed instance from tracking: ${instanceToDelete}`);
+    
+    // Only clean up label-based data if this is the last instance of this label
+    const remainingInstances = window.getInstancesForLabel(label);
+    const isLastInstance = remainingInstances.length === 0; // No instances left for this label
+    
+    console.log(`[INSTANCE-DELETE-DEBUG] Remaining instances for label "${label}": ${remainingInstances.length}`);
+    console.log(`[INSTANCE-DELETE-DEBUG] Is last instance? ${isLastInstance}`);
+    
+    if (isLastInstance) {
+      console.log(`[INSTANCE-DELETE-DEBUG] ========== CLEANING UP LABEL DATA (LAST INSTANCE) ==========`);
+      delete window.imageScaleByLabel[label];
+      delete window.imagePositionByLabel[label];
+      delete window.undoStackByImage[label];
+      delete window.redoStackByImage[label];
+      delete window.imageStates[label];
+      delete window.originalImages[label];
+      delete window.originalImageDimensions[label];
+      if (window.imageTags && window.imageTags[label]) {
+        delete window.imageTags[label];
+      }
+      delete window.customImageNames[label]; // Clean up custom names
+      
+      // Clean up label-specific positioning data
+      Object.keys(window.customLabelPositions || {}).forEach(key => {
+        if (key.startsWith(`${label}_`)) {
+          delete window.customLabelPositions[key];
+        }
+      });
+      Object.keys(window.calculatedLabelOffsets || {}).forEach(key => {
+        if (key.startsWith(`${label}_`)) {
+          delete window.calculatedLabelOffsets[key];
+        }
+      });
+      console.log(`[INSTANCE-DELETE-DEBUG] ✓ Cleaned up all label-based data for: ${label}`);
+    } else {
+      console.log(`[INSTANCE-DELETE-DEBUG] ⚠️ NOT cleaning up label data - other instances exist for: ${label}`);
+      console.log(`[INSTANCE-DELETE-DEBUG] Remaining instances:`, remainingInstances.map(i => i.id));
+    }
+    
+    // Clear the persistence flags for this image label (only if last instance)
+    if (isLastInstance) {
+      Object.keys(window.clearedMassiveOffsets).forEach(key => {
+        if (key.startsWith(`${label}_`)) {
+          delete window.clearedMassiveOffsets[key];
+        }
+      });
+    }
         
-    // Remove from pastedImages array if present (use persistentImageUrl already declared above)
-    if (persistentImageUrl) {
+    // Remove from pastedImages array if present and this is the last instance
+    if (persistentImageUrl && isLastInstance) {
       pastedImages = pastedImages.filter(url => url !== persistentImageUrl);
     }
         
@@ -1448,7 +1774,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // Update UI
     updateSidebarStrokeCounts();
         
-    //         console.log(`[deleteImage] Successfully deleted image: ${label}`);
+    console.log(`[INSTANCE-DELETE-DEBUG] ========== DELETE OPERATION COMPLETE ==========`);
+    console.log(`[INSTANCE-DELETE-DEBUG] Successfully deleted instance ${instanceToDelete} of image: ${label}`);
+    
+    // Final state check
+    const finalInstances = window.getInstancesForLabel(label);
+    console.log(`[INSTANCE-DELETE-DEBUG] Final check - instances remaining for "${label}":`, finalInstances.length);
+    if (finalInstances.length > 0) {
+      console.log(`[INSTANCE-DELETE-DEBUG] Remaining instance IDs:`, finalInstances.map(i => i.id));
+    }
   }
     
   // Function to update the ordered image labels array based on current DOM order
@@ -2272,7 +2606,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
     
   // Function to generate thumbnail for an image
-  function generateImageThumbnail(imageLabel, size = 200) {
+  function generateImageThumbnail(imageLabel, size = 200, instanceId = null) {
     return new Promise((resolve) => {
       const originalImages = window.originalImages || window.paintApp.state.originalImages || {};
       const originalImageUrl = originalImages[imageLabel];
@@ -2317,9 +2651,26 @@ document.addEventListener('DOMContentLoaded', () => {
         thumbCtx.drawImage(img, offsetX, offsetY, scaledWidth, scaledHeight);
                 
         // Draw visible strokes with better quality
-        const vectorStrokes = window.vectorStrokesByImage[imageLabel] || {};
-        const strokeVisibility = window.strokeVisibilityByImage[imageLabel] || {};
-        const strokeOrder = window.lineStrokesByImage[imageLabel] || [];
+        // Use composite key for instance-specific stroke data
+        let compositeKey = imageLabel; // fallback to label for legacy data
+        if (instanceId) {
+          // Use the specified instance
+          compositeKey = `${imageLabel}#${instanceId}`;
+          console.log(`[THUMBNAIL-DEBUG] Generating thumbnail for specific instance: ${compositeKey}`);
+        } else {
+          // Fall back to first instance if no specific instance provided
+          const instances = window.getInstancesForLabel(imageLabel);
+          if (instances.length > 0) {
+            compositeKey = `${imageLabel}#${instances[0].id}`;
+            console.log(`[THUMBNAIL-DEBUG] Generating thumbnail for first instance: ${compositeKey}`);
+          } else {
+            console.log(`[THUMBNAIL-DEBUG] Generating thumbnail with legacy label-only key: ${compositeKey}`);
+          }
+        }
+        
+        const vectorStrokes = window.vectorStrokesByImage[compositeKey] || {};
+        const strokeVisibility = window.strokeVisibilityByImage[compositeKey] || {};
+        const strokeOrder = window.lineStrokesByImage[compositeKey] || [];
                 
         // Draw strokes in proper order
         strokeOrder.forEach(strokeLabel => {
@@ -7062,6 +7413,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     // --- End Shadow/Glow Effect ---
 
+    // Debug: Check canvas state before stroking
+    console.log(`[STROKE-DRAW-DEBUG] ✓ About to stroke ${strokeLabel}: color=${ctx.strokeStyle}, width=${ctx.lineWidth}, hasPath=${!ctx.isPointInPath}`);
+    
     ctx.stroke();
 
     // --- Reset Shadow/Glow Effect ---
@@ -7453,10 +7807,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- End Control Point Indicators ---
   }
 
-function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
+  function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
   // Set a scoped flag to inform coordinate transforms that context is pre-rotated
-  const prevCtxRotatedFlag = window.__renderContextRotatedForStrokes;
-  window.__renderContextRotatedForStrokes = !!contextRotated;
+    const prevCtxRotatedFlag = window.__renderContextRotatedForStrokes;
+    window.__renderContextRotatedForStrokes = !!contextRotated;
     //             console.log(`\n--- applyVisibleStrokes ---`); // ADDED LOG
     //             console.log(`  Target Label: ${currentImageLabel}`); // ADDED LOG
     //             console.log(`  Scale: ${scale}, ImageX: ${imageX}, ImageY: ${imageY}`); // ADDED LOG
@@ -7469,15 +7823,22 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
     }
         
     // Apply each visible stroke using vector data if available
+    // Get composite key for current instance
+    const compositeKey = window.getActiveCompositeKey();
+    console.log(`[RENDER-DEBUG] ===== RENDERING STROKES =====`);
+    console.log(`[RENDER-DEBUG] Using composite key for rendering: ${compositeKey}`);
+    
     // SAFETY CHECK: Ensure vectorStrokesByImage is properly initialized
-    if (!vectorStrokesByImage[currentImageLabel]) {
-      console.warn(`[applyVisibleStrokes] vectorStrokesByImage[${currentImageLabel}] was undefined, initializing...`);
-      vectorStrokesByImage[currentImageLabel] = {};
+    if (!vectorStrokesByImage[compositeKey]) {
+      console.warn(`[RENDER-DEBUG] vectorStrokesByImage[${compositeKey}] was undefined, initializing...`);
+      vectorStrokesByImage[compositeKey] = {};
     }
             
-    const strokes = vectorStrokesByImage[currentImageLabel] || {};
-    const strokeOrder = lineStrokesByImage[currentImageLabel] || [];
-    const visibility = strokeVisibilityByImage[currentImageLabel] || {};
+    const strokes = vectorStrokesByImage[compositeKey] || {};
+    const strokeOrder = lineStrokesByImage[compositeKey] || [];
+    const visibility = strokeVisibilityByImage[compositeKey] || {};
+    
+    console.log(`[RENDER-DEBUG] Found ${Object.keys(strokes).length} strokes, ${strokeOrder.length} in order`);
 
     // *** ADDED LOGGING ***
     //             console.log(`  Stroke Order (${strokeOrder.length}): [${strokeOrder.join(', ')}]`);
@@ -7515,30 +7876,33 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
     };
             
     // Draw strokes using the dedicated stroke rendering function
+    console.log(`[STROKE-DRAW-DEBUG] ===== DRAWING ${strokeOrder.length} STROKES =====`);
     strokeOrder.forEach((strokeLabel) => {
       const isVisible = visibility[strokeLabel];
-      // *** ADDED LOGGING ***
-      //                 console.log(`\n  Processing Stroke: ${strokeLabel}`);
-      //                 console.log(`    Is Visible? ${isVisible}`);
-      // *** END LOGGING ***
+      console.log(`[STROKE-DRAW-DEBUG] Processing Stroke: ${strokeLabel}, isVisible: ${isVisible}`);
 
-      if (!isVisible) return; // Skip invisible strokes
+      if (!isVisible) {
+        console.log(`[STROKE-DRAW-DEBUG] ⚠️ Skipping ${strokeLabel} - not visible`);
+        return; // Skip invisible strokes
+      }
                 
       const vectorData = strokes[strokeLabel];
-      // *** ADDED LOGGING ***
       if (!vectorData) {
-        console.warn(`    Vector data MISSING for ${strokeLabel}! Skipping draw.`);
+        console.warn(`[STROKE-DRAW-DEBUG] ⚠️ Vector data MISSING for ${strokeLabel}! Skipping draw.`);
         return;
       } 
       if (!vectorData.points || vectorData.points.length === 0) {
-        console.warn(`    Vector data for ${strokeLabel} has NO POINTS! Skipping draw.`);
+        console.warn(`[STROKE-DRAW-DEBUG] ⚠️ Vector data for ${strokeLabel} has NO POINTS! Skipping draw.`);
         return;
       }
-      //                 console.log(`    Vector Data Found: ${vectorData.points.length} points, type: ${vectorData.type}, color: ${vectorData.color}, width: ${vectorData.width}`);
-      // *** END LOGGING ***
+      console.log(`[STROKE-DRAW-DEBUG] ✓ Drawing ${strokeLabel}: ${vectorData.points.length} points, type: ${vectorData.type}, color: ${vectorData.color}, width: ${vectorData.width}`);
+      console.log(`[STROKE-DRAW-DEBUG] ✓ First point:`, vectorData.points[0]);
+      console.log(`[STROKE-DRAW-DEBUG] ✓ Last point:`, vectorData.points[vectorData.points.length - 1]);
                 
       // Use the existing drawSingleStroke function
+      console.log(`[STROKE-DRAW-DEBUG] ✓ Calling drawSingleStroke for ${strokeLabel}`);
       const strokePath = drawSingleStroke(ctx, strokeLabel, vectorData, scale, imageX, imageY, currentImageLabel, isBlankCanvas, canvasCenter);
+      console.log(`[STROKE-DRAW-DEBUG] ✓ drawSingleStroke returned:`, strokePath ? 'valid path' : 'null/undefined');
                         
       // Store the path for this stroke (for label positioning)
       if (strokePath) {
@@ -8024,6 +8388,13 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
   }
 
   function saveState(force = false, incrementLabel = true, updateStrokeList = true, isDrawingOrPasting = false, strokeInProgress = false) {
+    // Get composite key for current instance - NEEDED EARLY
+    console.log(`[SAVE-STATE-DEBUG] ===== SAVE STATE CALLED =====`);
+    console.log(`[SAVE-STATE-DEBUG] currentImageInstanceId: ${window.paintApp.state.currentImageInstanceId}`);
+    console.log(`[SAVE-STATE-DEBUG] currentImageLabel: ${window.paintApp.state.currentImageLabel}`);
+    const compositeKey = window.getActiveCompositeKey();
+    console.log(`[SAVE-STATE-DEBUG] Using composite key: ${compositeKey}`);
+
     // PERFORMANCE FIX: Don't save state during project loading to prevent side effects
     if (window.isLoadingProject) {
       console.log('[Save State] Skipped during project loading');
@@ -8137,18 +8508,19 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
       };
             
       // Only add the *unique* stroke label to the strokes list
-      if (!lineStrokesByImage[currentImageLabel]) {
-        //                 console.log(`[Save State] Initializing lineStrokesByImage[${currentImageLabel}] as []`);
-        lineStrokesByImage[currentImageLabel] = []; // Initialize if it doesn't exist
+      if (!lineStrokesByImage[compositeKey]) {
+        console.log(`[STROKE-ORDER-DEBUG] Initializing lineStrokesByImage[${compositeKey}] as []`);
+        lineStrokesByImage[compositeKey] = []; // Initialize if it doesn't exist
       }
             
       // Check if unique stroke label already exists before pushing (shouldn't happen with generateUniqueStrokeName)
-      const labelAlreadyExists = lineStrokesByImage[currentImageLabel].includes(strokeLabel);
+      const labelAlreadyExists = lineStrokesByImage[compositeKey].includes(strokeLabel);
             
       //             console.log(`[Save State] BEFORE push: lineStrokesByImage[${currentImageLabel}] =`, JSON.parse(JSON.stringify(lineStrokesByImage[currentImageLabel])));
             
       if (!labelAlreadyExists && updateStrokeList) {
-        lineStrokesByImage[currentImageLabel].push(strokeLabel); // Push the unique label
+        console.log(`[STROKE-ORDER-DEBUG] Adding ${strokeLabel} to lineStrokesByImage[${compositeKey}]`);
+        lineStrokesByImage[compositeKey].push(strokeLabel); // Push the unique label
         //                 console.log(`[Save State] AFTER push: lineStrokesByImage[${currentImageLabel}] =`, JSON.parse(JSON.stringify(lineStrokesByImage[currentImageLabel])));
                 
         // NOW increment the label counter after the stroke is pushed
@@ -8187,15 +8559,16 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
         console.warn(`[Save State] Generated unique stroke label "${strokeLabel}" already exists? Not pushing again.`);
       }
             
-      // Initialize visibility, data etc. using the unique strokeLabel
-      strokeVisibilityByImage[currentImageLabel] = strokeVisibilityByImage[currentImageLabel] || {};
-      strokeVisibilityByImage[currentImageLabel][strokeLabel] = true;
+      // Initialize visibility, data etc. using the unique strokeLabel - USE COMPOSITE KEY
+      strokeVisibilityByImage[compositeKey] = strokeVisibilityByImage[compositeKey] || {};
+      strokeVisibilityByImage[compositeKey][strokeLabel] = true;
+      console.log(`[SAVE-STATE-DEBUG] ✓ Set visibility for ${strokeLabel} in ${compositeKey}: true`);
             
-      strokeLabelVisibility[currentImageLabel] = strokeLabelVisibility[currentImageLabel] || {};
-      strokeLabelVisibility[currentImageLabel][strokeLabel] = true;
+      strokeLabelVisibility[compositeKey] = strokeLabelVisibility[compositeKey] || {};
+      strokeLabelVisibility[compositeKey][strokeLabel] = true;
             
-      strokeDataByImage[currentImageLabel] = strokeDataByImage[currentImageLabel] || {};
-      strokeDataByImage[currentImageLabel][strokeLabel] = {
+      strokeDataByImage[compositeKey] = strokeDataByImage[compositeKey] || {};
+      strokeDataByImage[compositeKey][strokeLabel] = {
         preState: currentStroke ? cloneImageData(currentStroke) : null,
         postState: cloneImageData(currentState)
       };
@@ -8204,12 +8577,13 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
     // --- FIX: Handle temporary vector data --- 
     const tempStrokeKey = '_drawingStroke';
     let drawnVectorData = null;
-    if (strokeLabel && vectorStrokesByImage[currentImageLabel] && vectorStrokesByImage[currentImageLabel][tempStrokeKey]) {
-      drawnVectorData = JSON.parse(JSON.stringify(vectorStrokesByImage[currentImageLabel][tempStrokeKey]));
+    
+    if (strokeLabel && vectorStrokesByImage[compositeKey] && vectorStrokesByImage[compositeKey][tempStrokeKey]) {
+      drawnVectorData = JSON.parse(JSON.stringify(vectorStrokesByImage[compositeKey][tempStrokeKey]));
       // Assign the drawn data to the final unique stroke label
-      vectorStrokesByImage[currentImageLabel][strokeLabel] = drawnVectorData;
+      vectorStrokesByImage[compositeKey][strokeLabel] = drawnVectorData;
       // Remove the temporary data
-      delete vectorStrokesByImage[currentImageLabel][tempStrokeKey];
+      delete vectorStrokesByImage[compositeKey][tempStrokeKey];
 
       // **NEW**: Invalidate anchor cache when stroke is completed
       window.invalidateAnchorCache(currentImageLabel);
@@ -8218,12 +8592,12 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
       console.warn(`[Save State] No temporary vector data found at ${tempStrokeKey} for stroke ${strokeLabel}`);
       // Attempt to find vector data if it somehow got assigned to the suggested label during draw (fallback)
       const suggestedLabel = labelsByImage[currentImageLabel]; // Get the label *before* incrementing
-      if (vectorStrokesByImage[currentImageLabel] && vectorStrokesByImage[currentImageLabel][suggestedLabel]) {
+      if (vectorStrokesByImage[compositeKey] && vectorStrokesByImage[compositeKey][suggestedLabel]) {
         //                 console.log(`[Save State] Fallback: Found data under suggested label ${suggestedLabel}`);
-        drawnVectorData = JSON.parse(JSON.stringify(vectorStrokesByImage[currentImageLabel][suggestedLabel]));
-        vectorStrokesByImage[currentImageLabel][strokeLabel] = drawnVectorData;
+        drawnVectorData = JSON.parse(JSON.stringify(vectorStrokesByImage[compositeKey][suggestedLabel]));
+        vectorStrokesByImage[compositeKey][strokeLabel] = drawnVectorData;
         // Optionally delete the data under suggestedLabel if it shouldn't be there
-        // delete vectorStrokesByImage[currentImageLabel][suggestedLabel]; 
+        // delete vectorStrokesByImage[compositeKey][suggestedLabel]; 
       }
     }
     // --- END FIX ---
@@ -12588,6 +12962,11 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
 
   // Canvas event handlers
   function onCanvasMouseDown(e) {
+    // Debug current instance state when drawing starts
+    console.log(`[MOUSE-DEBUG] ===== MOUSE DOWN ON CANVAS =====`);
+    console.log(`[MOUSE-DEBUG] currentImageInstanceId: ${window.paintApp.state.currentImageInstanceId}`);
+    console.log(`[MOUSE-DEBUG] currentImageLabel: ${window.paintApp.state.currentImageLabel}`);
+    
     // Check if this is a right-click (button 2) - prevent default context menu
     if (e.button === 2) {
       // Prevent default browser context menu
@@ -13824,9 +14203,12 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
           const strokeColor = colorPicker.value;
           const strokeWidth = parseInt(brushSize.value);
 
+          // Get composite key for current instance
+          const compositeKey = window.getActiveCompositeKey();
+          
           // Initialize if needed
-          if (!vectorStrokesByImage[currentImageLabel]) {
-            vectorStrokesByImage[currentImageLabel] = {};
+          if (!vectorStrokesByImage[compositeKey]) {
+            vectorStrokesByImage[compositeKey] = {};
           }
 
           // Get world coordinates for both start and end points
@@ -13837,7 +14219,7 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
           //                     console.log(`Straight line to canvas (${endPoint.x}, ${endPoint.y}) -> image (${endTransformed.x}, ${endTransformed.y})`);
 
           // Create a vector representation under the temporary key
-          vectorStrokesByImage[currentImageLabel][tempStrokeKey] = {
+          vectorStrokesByImage[compositeKey][tempStrokeKey] = {
             points: [
               { x: startWorldCoords.x, y: startWorldCoords.y },
               { x: endWorldCoords.x, y: endWorldCoords.y }
@@ -14433,6 +14815,36 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
   function switchToImage(label) {
     // Start a new session for this image to fence writes until stable
     try { bumpImageSession(label); } catch(_) {}
+    
+    // Ensure we have a valid instance for this label
+    console.log(`[SWITCH-IMAGE-DEBUG] Switching to label: ${label}`);
+    const instances = window.getInstancesForLabel(label);
+    console.log(`[SWITCH-IMAGE-DEBUG] Available instances for ${label}:`, instances.length);
+    
+    if (instances.length > 0) {
+      // If we don't have a current instance or it's not for this label, pick the first instance
+      const currentLabel = window.paintApp.state.currentImageLabel;
+      const currentInstanceId = window.paintApp.state.currentImageInstanceId;
+      
+      // Check if current instance exists for this label
+      const instanceExists = instances.some(inst => inst.id === currentInstanceId);
+      const needsNewInstance = !currentInstanceId || currentLabel !== label || !instanceExists;
+      
+      if (needsNewInstance) {
+        const targetInstance = instances[0].id;
+        console.log(`[SWITCH-IMAGE-DEBUG] Setting current instance to: ${targetInstance} (was: ${currentInstanceId})`);
+        window.paintApp.state.currentImageInstanceId = targetInstance;
+        window.paintApp.state.currentImageLabel = label;
+      } else {
+        console.log(`[SWITCH-IMAGE-DEBUG] Keeping current instance: ${currentInstanceId} for label: ${label}`);
+      }
+    } else {
+      console.warn(`[SWITCH-IMAGE-DEBUG] ⚠️ No instances found for label: ${label}`);
+      // Clear current instance since we're switching to a label with no instances
+      window.paintApp.state.currentImageInstanceId = null;
+      window.paintApp.state.currentImageLabel = label;
+    }
+    
     if (currentImageLabel === label && !window.isLoadingProject) { // Allow forcing a switch during project load
       //             console.log(`[switchToImage] Already on ${label}, no switch needed unless loading project.`);
       // Even if not switching, ensure UI is consistent if forced by project load
@@ -14450,11 +14862,15 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
         
     // Save current state before switching (if not loading, during load state is managed by project-manager)
     if (!window.isLoadingProject) {
-      const currentStrokes = [...(lineStrokesByImage[currentImageLabel] || [])];
+      // Use composite key for current state before switching
+      const currentCompositeKey = window.getActiveCompositeKey();
+      console.log(`[SWITCH-IMAGE-DEBUG] Saving state for: ${currentCompositeKey}`);
+      
+      const currentStrokes = [...(lineStrokesByImage[currentCompositeKey] || [])];
       const currentState = getCanvasState();
       // Ensure per-image undo stack exists
-      if (!undoStackByImage[currentImageLabel]) undoStackByImage[currentImageLabel] = [];
-      undoStackByImage[currentImageLabel].push({
+      if (!undoStackByImage[currentCompositeKey]) undoStackByImage[currentCompositeKey] = [];
+      undoStackByImage[currentCompositeKey].push({
         state: cloneImageData(currentState),
         type: 'snapshot',
         strokes: currentStrokes
@@ -15073,6 +15489,21 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
         if (firstImageLabel) {
           //                     console.log(`[handleFiles] Switching to first image: ${firstImageLabel}`);
           // REMOVED: currentImageLabel = firstImageLabel; 
+          
+          // Set the instance ID before switching to ensure composite keys work
+          console.log(`[HANDLE-FILES-DEBUG] ===== SETTING INITIAL INSTANCE =====`);
+          console.log(`[HANDLE-FILES-DEBUG] firstImageLabel: ${firstImageLabel}`);
+          const instances = window.getInstancesForLabel(firstImageLabel);
+          console.log(`[HANDLE-FILES-DEBUG] Available instances:`, instances.length, instances.map(i => i.id));
+          if (instances.length > 0) {
+            console.log(`[HANDLE-FILES-DEBUG] ✓ Setting initial instance ${instances[0].id} for label ${firstImageLabel}`);
+            window.paintApp.state.currentImageInstanceId = instances[0].id;
+            console.log(`[HANDLE-FILES-DEBUG] ✓ currentImageInstanceId set to: ${window.paintApp.state.currentImageInstanceId}`);
+            console.log(`[HANDLE-FILES-DEBUG] ✓ getActiveCompositeKey() now returns: ${window.getActiveCompositeKey()}`);
+          } else {
+            console.error(`[HANDLE-FILES-DEBUG] ⚠️ No instances found for firstImageLabel: ${firstImageLabel}`);
+          }
+          
           switchToImage(firstImageLabel); // switchToImage will handle setting currentImageLabel
         } else {
           //                     console.log('[handleFiles] No first image label identified, or no image files were processed.');

@@ -1,5 +1,7 @@
 ﻿// Define core application structure for better state management
 
+/* global JSZip, showPDFExportDialog */
+
 // Debug mode toggle for rotation/hit-test debugging
 window.DEBUG_ROTATION = false;
 window.toggleRotationDebug = function() {
@@ -87,6 +89,13 @@ window.paintApp = {
   },
   state: {
     currentImageLabel: 'front',
+    currentImageInstanceId: null,
+    // Instance-based architecture for independent image handling
+    imageInstances: {}, // instanceId -> { label, url, dimensions, tags, etc. }
+    instanceIdsByLabel: {}, // label -> [instanceId1, instanceId2, ...] (for UI grouping)
+    labelByInstanceId: {}, // instanceId -> label (reverse lookup)
+    nextInstanceId: 1,
+    // Legacy label-based storage (will be migrated to instance-based)
     vectorStrokesByImage: {},
     strokeVisibilityByImage: {},
     strokeLabelVisibility: {},
@@ -132,7 +141,6 @@ window.paintApp = {
     lastClickTime: 0,
     lastCanvasClickTime: 0,
     orderedImageLabels: [],
-    imageLabels: [],
     // Text elements per image label (moved from uiState since it's persistent data)
     textElementsByImage: {}
   },
@@ -339,25 +347,25 @@ document.addEventListener('DOMContentLoaded', () => {
     
   if (cmValue) {
     cmValue.addEventListener('change', () => {
-    const cm = parseFloat(cmValue.value) || 0;
-    const inches = cm / window.paintApp.config.INCHES_TO_CM;
+      const cm = parseFloat(cmValue.value) || 0;
+      const inches = cm / window.paintApp.config.INCHES_TO_CM;
         
-    // Update inch values
-    if (inchWhole) inchWhole.value = Math.floor(inches);
+      // Update inch values
+      if (inchWhole) inchWhole.value = Math.floor(inches);
         
-    // Find closest fraction
-    const fractionPart = inches - Math.floor(inches);
-    const fractions = window.paintApp.config.FRACTION_VALUES;
-    let closestFraction = 0;
-    let minDiff = 1;
+      // Find closest fraction
+      const fractionPart = inches - Math.floor(inches);
+      const fractions = window.paintApp.config.FRACTION_VALUES;
+      let closestFraction = 0;
+      let minDiff = 1;
         
-    for (const fraction of fractions) {
-      const diff = Math.abs(fractionPart - fraction);
-      if (diff < minDiff) {
-        minDiff = diff;
-        closestFraction = fraction;
+      for (const fraction of fractions) {
+        const diff = Math.abs(fractionPart - fraction);
+        if (diff < minDiff) {
+          minDiff = diff;
+          closestFraction = fraction;
+        }
       }
-    }
         
       if (inchFraction) inchFraction.value = closestFraction;
           
@@ -396,7 +404,9 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
               const r = await fetch(srcUrl, { cache: 'no-store' });
               blob = await r.blob();
-            } catch (_) {}
+            } catch (_) {
+              // Ignore fetch errors, fallback to canvas
+            }
           }
           if (!blob && canvasEl) {
             blob = await new Promise(resolve => canvasEl.toBlob(resolve, 'image/png'));
@@ -528,8 +538,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
           }
           // Keep UI scale text and canvas in sync after replace
-          try { if (label === window.currentImageLabel && typeof updateScaleUI === 'function') updateScaleUI(); } catch(_) {}
-          try { if (typeof redrawCanvasWithVisibility === 'function') redrawCanvasWithVisibility(); } catch(_) {}
+          try { if (label === window.currentImageLabel && typeof updateScaleUI === 'function') updateScaleUI(); } catch(_) {
+            // Ignore UI update errors
+          }
+          try { if (typeof redrawCanvasWithVisibility === 'function') redrawCanvasWithVisibility(); } catch(_) {
+            // Ignore redraw errors
+          }
           if (!window.originalImages) window.originalImages = {};
           // Only set originalImages if we used the fallback path
           if (typeof window.onBackgroundRemoved !== 'function') {
@@ -966,6 +980,41 @@ document.addEventListener('DOMContentLoaded', () => {
     container.dataset.label = label;
     container.dataset.originalImageUrl = imageUrl; // Store the original image URL for later restoration
     container.draggable = true; // Enable drag-and-drop
+    
+    // Create an instance for this image if one doesn't exist
+    console.log(`[INSTANCE-CREATE-DEBUG] ===== Creating instance for label: ${label} =====`);
+    const existingInstances = window.getInstancesForLabel(label);
+    console.log(`[INSTANCE-CREATE-DEBUG] Existing instances for ${label}:`, existingInstances.length);
+    console.log(`[INSTANCE-CREATE-DEBUG] Current imageInstances:`, Object.keys(window.paintApp.state.imageInstances || {}));
+    console.log(`[INSTANCE-CREATE-DEBUG] Current instanceIdsByLabel:`, window.paintApp.state.instanceIdsByLabel);
+    
+    let instanceId;
+    if (existingInstances.length === 0) {
+      // Create new instance for new image
+      instanceId = window.createImageInstance(label, {
+        url: imageUrl,
+        dimensions: window.originalImageDimensions[label],
+        tags: window.imageTags && window.imageTags[label],
+        scale: window.imageScaleByLabel[label],
+        position: window.imagePositionByLabel[label]
+      });
+      console.log(`[INSTANCE-CREATE-DEBUG] ✓ Created new instance ${instanceId} for label: ${label}`);
+      console.log(`[INSTANCE-CREATE-DEBUG] ✓ Updated imageInstances:`, Object.keys(window.paintApp.state.imageInstances || {}));
+      console.log(`[INSTANCE-CREATE-DEBUG] ✓ Updated instanceIdsByLabel:`, window.paintApp.state.instanceIdsByLabel);
+    } else {
+      // For duplicate images, create a new instance
+      instanceId = window.createImageInstance(label, {
+        url: imageUrl,
+        dimensions: window.originalImageDimensions[label],
+        tags: window.imageTags && window.imageTags[label],
+        scale: window.imageScaleByLabel[label],
+        position: window.imagePositionByLabel[label]
+      });
+      console.log(`[INSTANCE-CREATE-DEBUG] ✓ Created duplicate instance ${instanceId} for existing label: ${label}`);
+    }
+    
+    // Store the instance ID in the container for deletion tracking
+    container.dataset.instanceId = instanceId;
         
     // Determine display name: custom name > tag-based name > fallback
     function getDisplayName() {
@@ -1118,7 +1167,24 @@ document.addEventListener('DOMContentLoaded', () => {
     // Set up click handler: switch image and auto-scroll this item to center
     container.onclick = () => {
       saveState();
+      
+      // Set the current instance ID before switching
+      console.log(`[INSTANCE-SWITCH-DEBUG] ===== CONTAINER CLICK =====`);
+      console.log(`[INSTANCE-SWITCH-DEBUG] Clicked container with instanceId: ${instanceId}, label: ${label}`);
+      console.log(`[INSTANCE-SWITCH-DEBUG] Before - currentImageInstanceId: ${window.paintApp.state.currentImageInstanceId}`);
+      console.log(`[INSTANCE-SWITCH-DEBUG] Before - currentImageLabel: ${window.paintApp.state.currentImageLabel}`);
+      
+      window.paintApp.state.currentImageInstanceId = instanceId;
+      window.paintApp.state.currentImageLabel = label;
+      
+      console.log(`[INSTANCE-SWITCH-DEBUG] After setting - currentImageInstanceId: ${window.paintApp.state.currentImageInstanceId}`);
+      console.log(`[INSTANCE-SWITCH-DEBUG] After setting - currentImageLabel: ${window.paintApp.state.currentImageLabel}`);
+      console.log(`[INSTANCE-SWITCH-DEBUG] Calling switchToImage(${label})...`);
+      
       switchToImage(label);
+      
+      console.log(`[INSTANCE-SWITCH-DEBUG] After switchToImage - currentImageInstanceId: ${window.paintApp.state.currentImageInstanceId}`);
+      console.log(`[INSTANCE-SWITCH-DEBUG] Final composite key: ${window.getActiveCompositeKey()}`);
       const list = document.getElementById('imageList');
       if (list) {
         const listRect = list.getBoundingClientRect();
@@ -1472,9 +1538,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const imageListEl = document.getElementById('imageList');
     if (imageListEl) {
       const currentOrder = window.orderedImageLabels ? [...window.orderedImageLabels] : [];
-      window.orderedImageLabels = Array.from(imageListEl.children)
+      
+      // Get labels from DOM and deduplicate them
+      const labelsFromDOM = Array.from(imageListEl.children)
         .map(container => container.dataset.label)
         .filter(label => label); // Ensure only valid labels are included
+      
+      // Remove duplicates while preserving order (keep first occurrence)
+      const seen = new Set();
+      window.orderedImageLabels = labelsFromDOM.filter(label => {
+        if (seen.has(label)) {
+          console.warn(`[updateOrderedImageLabelsArray] Duplicate label detected: ${label}, skipping duplicate`);
+          return false;
+        }
+        seen.add(label);
+        return true;
+      });
             
       // Log for debugging image order discrepancies
       if (JSON.stringify(currentOrder) !== JSON.stringify(window.orderedImageLabels)) {
@@ -6300,7 +6379,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ? (window.imageRotationByLabel[currentImageLabel] * 180 / Math.PI).toFixed(1) 
         : '0';
       console.group(`🎨 Redrawing Canvas (${currentImageLabel}, rotation: ${rotation}°)`);
-      console.log(`🧹 Cleared currentLabelPositions - will rebuild with new coordinates`);
+      console.log('🧹 Cleared currentLabelPositions - will rebuild with new coordinates');
     }
         
     // Create a copy of custom label positions for tracking which ones were actually used
@@ -7415,16 +7494,26 @@ document.addEventListener('DOMContentLoaded', () => {
     }
         
     // Apply each visible stroke using vector data if available
+    // Get composite key for current instance
+    const compositeKey = window.getActiveCompositeKey();
+    console.log(`[RENDER-DEBUG] ===== RENDERING STROKES =====`);
+    console.log(`[RENDER-DEBUG] Using composite key for rendering: ${compositeKey}`);
+    
     // SAFETY CHECK: Ensure vectorStrokesByImage is properly initialized
-    if (!vectorStrokesByImage[currentImageLabel]) {
-      console.warn(`[applyVisibleStrokes] vectorStrokesByImage[${currentImageLabel}] was undefined, initializing...`);
-      vectorStrokesByImage[currentImageLabel] = {};
+    if (!vectorStrokesByImage[compositeKey]) {
+      console.warn(`[RENDER-DEBUG] vectorStrokesByImage[${compositeKey}] was undefined, initializing...`);
+      vectorStrokesByImage[compositeKey] = {};
     }
             
-    const strokes = vectorStrokesByImage[currentImageLabel] || {};
-    const strokeOrder = lineStrokesByImage[currentImageLabel] || [];
-    const visibility = strokeVisibilityByImage[currentImageLabel] || {};
+    const strokes = vectorStrokesByImage[compositeKey] || {};
+    const strokeOrder = lineStrokesByImage[compositeKey] || [];
+    const visibility = strokeVisibilityByImage[compositeKey] || {};
+    
+    console.log(`[RENDER-DEBUG] Found ${Object.keys(strokes).length} strokes, ${strokeOrder.length} in order`);
 
+    // DEBUG: Check if we continue execution
+    console.log(`[DEBUG-FLOW] About to continue with stroke rendering...`);
+    
     // *** ADDED LOGGING ***
     //             console.log(`  Stroke Order (${strokeOrder.length}): [${strokeOrder.join(', ')}]`);
     //             console.log(`  Vector Strokes Available (${Object.keys(strokes).length}):`, Object.keys(strokes));
@@ -7461,30 +7550,34 @@ document.addEventListener('DOMContentLoaded', () => {
     };
             
     // Draw strokes using the dedicated stroke rendering function
+    console.log(`[DEBUG-FLOW] Reached stroke drawing section...`);
+    console.log(`[STROKE-DRAW-DEBUG] ===== DRAWING ${strokeOrder.length} STROKES =====`);
     strokeOrder.forEach((strokeLabel) => {
       const isVisible = visibility[strokeLabel];
-      // *** ADDED LOGGING ***
-      //                 console.log(`\n  Processing Stroke: ${strokeLabel}`);
-      //                 console.log(`    Is Visible? ${isVisible}`);
-      // *** END LOGGING ***
+      console.log(`[STROKE-DRAW-DEBUG] Processing Stroke: ${strokeLabel}, isVisible: ${isVisible}`);
 
-      if (!isVisible) return; // Skip invisible strokes
+      if (!isVisible) {
+        console.log(`[STROKE-DRAW-DEBUG] ⚠️ Skipping ${strokeLabel} - not visible`);
+        return; // Skip invisible strokes
+      }
                 
       const vectorData = strokes[strokeLabel];
-      // *** ADDED LOGGING ***
       if (!vectorData) {
-        console.warn(`    Vector data MISSING for ${strokeLabel}! Skipping draw.`);
+        console.warn(`[STROKE-DRAW-DEBUG] ⚠️ Vector data MISSING for ${strokeLabel}! Skipping draw.`);
         return;
       } 
       if (!vectorData.points || vectorData.points.length === 0) {
-        console.warn(`    Vector data for ${strokeLabel} has NO POINTS! Skipping draw.`);
+        console.warn(`[STROKE-DRAW-DEBUG] ⚠️ Vector data for ${strokeLabel} has NO POINTS! Skipping draw.`);
         return;
       }
-      //                 console.log(`    Vector Data Found: ${vectorData.points.length} points, type: ${vectorData.type}, color: ${vectorData.color}, width: ${vectorData.width}`);
-      // *** END LOGGING ***
+      console.log(`[STROKE-DRAW-DEBUG] ✓ Drawing ${strokeLabel}: ${vectorData.points.length} points, type: ${vectorData.type}, color: ${vectorData.color}, width: ${vectorData.width}`);
+      console.log(`[STROKE-DRAW-DEBUG] ✓ First point:`, vectorData.points[0]);
+      console.log(`[STROKE-DRAW-DEBUG] ✓ Last point:`, vectorData.points[vectorData.points.length - 1]);
                 
       // Use the existing drawSingleStroke function
+      console.log(`[STROKE-DRAW-DEBUG] ✓ Calling drawSingleStroke for ${strokeLabel}`);
       const strokePath = drawSingleStroke(ctx, strokeLabel, vectorData, scale, imageX, imageY, currentImageLabel, isBlankCanvas, canvasCenter);
+      console.log(`[STROKE-DRAW-DEBUG] ✓ drawSingleStroke returned:`, strokePath ? 'valid path' : 'null/undefined');
                         
       // Store the path for this stroke (for label positioning)
       if (strokePath) {
@@ -12164,7 +12257,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
     
-    console.log(`❌ No label found`);
+    console.log('❌ No label found');
     console.groupEnd();
     return null;
   }
@@ -14581,8 +14674,46 @@ document.addEventListener('DOMContentLoaded', () => {
       window.labelCounters[baseLabel] = { regular: 1, paste: 1 };
     }
         
-    const counter = window.labelCounters[baseLabel].regular;
-    const uniqueLabel = `${baseLabel}_${counter}`;
+    let counter = window.labelCounters[baseLabel].regular;
+    let uniqueLabel = `${baseLabel}_${counter}`;
+    
+    // Ensure the label is truly unique by checking existing labels
+    const getAllExistingLabels = () => {
+      const existingLabels = new Set();
+      
+      // Check orderedImageLabels
+      if (window.orderedImageLabels) {
+        window.orderedImageLabels.forEach(label => existingLabels.add(label));
+      }
+      
+      // Check originalImages keys
+      if (window.originalImages) {
+        Object.keys(window.originalImages).forEach(label => existingLabels.add(label));
+      }
+      
+      // Check DOM containers
+      const imageList = document.getElementById('imageList');
+      if (imageList) {
+        Array.from(imageList.children).forEach(container => {
+          if (container.dataset.label) {
+            existingLabels.add(container.dataset.label);
+          }
+        });
+      }
+      
+      return existingLabels;
+    };
+    
+    const existingLabels = getAllExistingLabels();
+    
+    // If label already exists, increment until we find a unique one
+    while (existingLabels.has(uniqueLabel)) {
+      counter++;
+      uniqueLabel = `${baseLabel}_${counter}`;
+      console.warn(`[getLabelFromFilename] Label conflict detected, trying: ${uniqueLabel}`);
+    }
+    
+    // Update counter to be beyond the used value
     window.labelCounters[baseLabel].regular = counter + 1;
     //         console.log(`Created unique label: ${uniqueLabel} from filename: ${filename}`);
         
@@ -14700,6 +14831,21 @@ document.addEventListener('DOMContentLoaded', () => {
         if (firstImageLabel) {
           //                     console.log(`[handleFiles] Switching to first image: ${firstImageLabel}`);
           // REMOVED: currentImageLabel = firstImageLabel; 
+          
+          // Set the instance ID before switching to ensure composite keys work
+          console.log(`[HANDLE-FILES-DEBUG] ===== SETTING INITIAL INSTANCE =====`);
+          console.log(`[HANDLE-FILES-DEBUG] firstImageLabel: ${firstImageLabel}`);
+          const instances = window.getInstancesForLabel(firstImageLabel);
+          console.log(`[HANDLE-FILES-DEBUG] Available instances:`, instances.length, instances.map(i => i.id));
+          if (instances.length > 0) {
+            console.log(`[HANDLE-FILES-DEBUG] ✓ Setting initial instance ${instances[0].id} for label ${firstImageLabel}`);
+            window.paintApp.state.currentImageInstanceId = instances[0].id;
+            console.log(`[HANDLE-FILES-DEBUG] ✓ currentImageInstanceId set to: ${window.paintApp.state.currentImageInstanceId}`);
+            console.log(`[HANDLE-FILES-DEBUG] ✓ getActiveCompositeKey() now returns: ${window.getActiveCompositeKey()}`);
+          } else {
+            console.error(`[HANDLE-FILES-DEBUG] ⚠️ No instances found for firstImageLabel: ${firstImageLabel}`);
+          }
+          
           switchToImage(firstImageLabel); // switchToImage will handle setting currentImageLabel
         } else {
           //                     console.log('[handleFiles] No first image label identified, or no image files were processed.');
@@ -14858,7 +15004,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (window.DEBUG_ROTATION) {
       console.group(`🔄 Rotating Image ${currentLabel}`);
       console.log(`📐 ${(currentRotation * 180 / Math.PI).toFixed(1)}° + ${degrees}° = ${(window.imageRotationByLabel[currentLabel] * 180 / Math.PI).toFixed(1)}°`);
-      console.log(`🔄 About to redraw canvas - this will update tag positions`);
+      console.log('🔄 About to redraw canvas - this will update tag positions');
       console.groupEnd();
     }
         

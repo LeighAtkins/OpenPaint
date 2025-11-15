@@ -892,7 +892,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         // Ensure rotation system is initialized for old projects
                         if (!window.imageRotationByLabel) {
                           window.imageRotationByLabel = {};
-                          console.log(`[Legacy Migration] Initialized window.imageRotationByLabel for old project`);
+                          console.log('[Legacy Migration] Initialized window.imageRotationByLabel for old project');
                         }
                         if (typeof window.imageRotationByLabel[label] === 'undefined') {
                           window.imageRotationByLabel[label] = 0;
@@ -1013,6 +1013,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Update progress
                     if (progressBar) progressBar.style.width = '80%';
                     //                                         console.log('All image files processed. OriginalImageDimensions:', JSON.stringify(window.originalImageDimensions));
+                    
+                    // CRITICAL: Migrate legacy label-based data to instance-based architecture
+                    console.log('[Project Load] Running instance migration for loaded project data...');
+                    if (typeof window.migrateExistingDataToInstances === 'function') {
+                      window.migrateExistingDataToInstances();
+                      console.log('[Project Load] Instance migration completed');
+                    } else {
+                      console.warn('[Project Load] Migration function not available');
+                    }
                                         
                     // Load AI exports if they exist
                     if (!window.aiExports) window.aiExports = {};

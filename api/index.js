@@ -18,12 +18,12 @@ app.use('/public', express.static(path.join(__dirname, '..', 'public')));
 app.use(express.static(path.join(__dirname, '..')));
 
 // Simple test endpoint
-app.get("/test", (req, res) => {
-  res.json({ status: "ok", timestamp: new Date().toISOString() });
+app.get('/test', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
 // Health check
-app.get("/health", (req, res) => {
+app.get('/health', (req, res) => {
   res.json({ ok: true, ts: Date.now() });
 });
 
