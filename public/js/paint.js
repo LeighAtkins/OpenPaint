@@ -9873,11 +9873,8 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
   let pendingResizeFrame = null;
   let pendingResizeWidth = null;
   let pendingResizeHeight = null;
-  let getAvailableCanvasSizeCallCount = 0;
 
   function getAvailableCanvasSize() {
-    getAvailableCanvasSizeCallCount++;
-    console.log(`[getAvailableCanvasSize] FUNCTION CALLED (#${getAvailableCanvasSizeCallCount})`);
     const parent = canvas.parentElement;
     const rect = parent ? parent.getBoundingClientRect() : null;
     const margin = 16;
@@ -9903,9 +9900,24 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
 
     let reservedTop = 0;
     const topToolbar = document.getElementById('topToolbar');
-    if (isVisible(topToolbar)) {
-      const toolbarRect = topToolbar.getBoundingClientRect();
-      reservedTop = Math.max(reservedTop, Math.ceil(toolbarRect.bottom));
+    // Check if toolbar is ready (even if currently hidden) or visible
+    const toolbarReady = topToolbar && topToolbar.classList.contains('toolbar-ready');
+    if (topToolbar && (isVisible(topToolbar) || toolbarReady)) {
+      // If toolbar-ready but not yet visible, force a layout calculation
+      if (toolbarReady && !isVisible(topToolbar)) {
+        // Temporarily make it visible to measure
+        const originalDisplay = topToolbar.style.display;
+        topToolbar.style.display = 'block';
+        topToolbar.style.visibility = 'visible';
+        void topToolbar.offsetWidth; // Force layout
+        const toolbarRect = topToolbar.getBoundingClientRect();
+        reservedTop = Math.max(reservedTop, Math.ceil(toolbarRect.bottom));
+        // Restore original display
+        topToolbar.style.display = originalDisplay;
+      } else {
+        const toolbarRect = topToolbar.getBoundingClientRect();
+        reservedTop = Math.max(reservedTop, Math.ceil(toolbarRect.bottom));
+      }
     }
 
     let reservedBottom = 16;
@@ -9921,16 +9933,8 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
     const widthFromParent = rect ? Math.max(1, Math.floor(rect.width)) : 0;
     const heightFromParent = rect ? Math.max(1, Math.floor(rect.height)) : 0;
 
-    // Debug: Log actual window size vs calculated size
-    console.log(`[getAvailableCanvasSize #${getAvailableCanvasSizeCallCount}] window.innerWidth: ${window.innerWidth}, window.innerHeight: ${window.innerHeight}`);
-    console.log(`[getAvailableCanvasSize #${getAvailableCanvasSizeCallCount}] leftReserve: ${leftReserve}, rightReserve: ${rightReserve}, reservedTop: ${reservedTop}, reservedBottom: ${reservedBottom}`);
-    console.log(`[getAvailableCanvasSize #${getAvailableCanvasSizeCallCount}] widthByWindow: ${widthByWindow}, heightByWindow: ${heightByWindow}`);
-    console.log(`[getAvailableCanvasSize #${getAvailableCanvasSizeCallCount}] widthFromParent: ${widthFromParent}, heightFromParent: ${heightFromParent}`);
-
     const width = Math.max(1, widthByWindow || widthFromParent);
     const height = Math.max(1, heightByWindow || heightFromParent);
-
-    console.log(`[getAvailableCanvasSize #${getAvailableCanvasSizeCallCount}] Final: width: ${width}, height: ${height}`);
 
     return {
       width,
@@ -9956,13 +9960,7 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
 
-    // Ensure getAvailableCanvasSize is defined before calling it
-    if (typeof getAvailableCanvasSize !== 'function') {
-      console.error('[applyResize] getAvailableCanvasSize is not defined!');
-      return;
-    }
     const available = getAvailableCanvasSize();
-    console.log(`[applyResize] Called with available: ${available.width}x${available.height}`);
 
     // Canvas should fill the entire available space (no 4:3 constraint on canvas element)
     let targetWidth = typeof width === 'number' ? width : available.width;
@@ -10110,8 +10108,17 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
   // Expose resizeCanvas globally so project manager can call it after loading
   window.resizeCanvas = resizeCanvas;
     
-  // Initial resize on load
-  applyResize();
+  // Wait for toolbar to be ready before initial resize to get accurate dimensions
+  const waitForToolbarAndResize = () => {
+    const topToolbar = document.getElementById('topToolbar');
+    if (topToolbar && topToolbar.classList.contains('toolbar-ready')) {
+      applyResize();
+    } else {
+      // Check again after a short delay
+      setTimeout(waitForToolbarAndResize, 10);
+    }
+  };
+  waitForToolbarAndResize();
   
   // NOTE: Resize listener will be set up after handleWindowResize function is defined (see line 16830)
   // This prevents duplicate resize calls by consolidating canvas resize and sidebar checking
