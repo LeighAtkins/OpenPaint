@@ -22,7 +22,7 @@
       "use": "@vercel/static"
     },
     {
-      "src": "src/**",
+      "src": "src/**/*.{js,ts,css,json}",
       "use": "@vercel/static"
     }
   ],

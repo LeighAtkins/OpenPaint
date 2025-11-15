@@ -1,0 +1,13 @@
+node_modules
+*.test.js
+*.test.ts
+tests/
+.git
+.gitignore
+CLAUDE.md
+README.md
+deploy*.sh
+test-*.js
+public/js/paint_backup*.js
+public/js/paint_temp.js
+public/js/paint_refactored.js
