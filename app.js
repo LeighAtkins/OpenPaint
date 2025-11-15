@@ -4,6 +4,7 @@
  */
 
 const express = require('express');
+const cors = require('cors');
 const path = require('path');
 const multer = require('multer');
 const fs = require('fs');
@@ -68,6 +69,9 @@ const upload = multer({
 });
 
 // Middleware setup
+// Enable CORS for all routes
+app.use(cors());
+
 // IMPORTANT: Handle index.html FIRST via catch-all route to prevent static middleware from serving cached version
 // This must be BEFORE static middleware
 app.get('/', (req, res) => {
