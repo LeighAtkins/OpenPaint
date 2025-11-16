@@ -337,20 +337,60 @@
   }
 
   /**
+   * Extract base description (without viewpoint) from full description
+   */
+  function extractBaseDescription(fullDescription) {
+    if (!fullDescription) return '';
+    
+    // List of viewpoint terms to remove from the end
+    const viewpointTerms = [
+      'front', 'front-center', 'front-arm', 'front arm', 'arm front',
+      'side-arm', 'side arm', 'side', 'side view', 'side facing',
+      'back', 'back view', 'back facing', 'rear',
+      'top', 'top view', 'top down', 'overhead', 'above',
+      '3/4', 'three quarter', 'three-quarter', '3 quarter', 'three quarters'
+    ];
+    
+    let base = fullDescription.trim();
+    
+    // Remove viewpoint terms from the end (with or without leading dash/hyphen)
+    for (const term of viewpointTerms) {
+      // Match at end: "description - front" or "description front"
+      const patterns = [
+        new RegExp(`\\s*-\\s*${term}\\s*$`, 'i'),
+        new RegExp(`\\s+${term}\\s*$`, 'i')
+      ];
+      
+      for (const pattern of patterns) {
+        if (pattern.test(base)) {
+          base = base.replace(pattern, '').trim();
+          break;
+        }
+      }
+    }
+    
+    return base;
+  }
+
+  /**
    * Load tags for current image
    */
   async function loadTagsForCurrentImage(input, chipsContainer) {
     const imageLabel = window.currentImageLabel;
-    if (!imageLabel || !window.imageTags || !window.imageTags[imageLabel]) {
-      input.value = '';
-      chipsContainer.innerHTML = '';
+    
+    // Clear input and chips first
+    input.value = '';
+    chipsContainer.innerHTML = '';
+    
+    if (!imageLabel) {
       return;
     }
 
-    const tags = window.imageTags[imageLabel];
+    // Check if this image has existing tags
+    const tags = window.imageTags?.[imageLabel];
     
-    // Reconstruct description from facets if available
-    if (tags.facets) {
+    if (tags && tags.facets) {
+      // Reconstruct description from facets if available
       const parts = [];
       if (tags.facets.category) parts.push(tags.facets.category);
       if (tags.facets.armStyle) parts.push(tags.facets.armStyle + ' arm');
@@ -367,11 +407,23 @@
       if (description) {
         input.value = description;
         input.dispatchEvent(new Event('input'));
+      } else if (tags.viewpoint) {
+        // Fallback to just viewpoint
+        input.value = tags.viewpoint;
+        input.dispatchEvent(new Event('input'));
       }
-    } else if (tags.viewpoint) {
-      // Fallback to just viewpoint
-      input.value = tags.viewpoint;
-      input.dispatchEvent(new Event('input'));
+    } else {
+      // No tags for this image - check for base description from previous image
+      try {
+        const lastBaseDescription = localStorage.getItem('nlTagLastBaseDescription');
+        if (lastBaseDescription) {
+          input.value = lastBaseDescription;
+          // Trigger input event to show chips
+          input.dispatchEvent(new Event('input'));
+        }
+      } catch (e) {
+        console.warn('[NL Tag UI] Failed to load base description:', e);
+      }
     }
   }
 
@@ -405,13 +457,24 @@
     window.imageTags[imageLabel].facets = parsedResult.facets;
     window.imageTags[imageLabel].freeform = parsedResult.freeform;
 
+    // Extract and save base description (without viewpoint) for next image
+    const baseDescription = extractBaseDescription(text);
+    if (baseDescription) {
+      try {
+        localStorage.setItem('nlTagLastBaseDescription', baseDescription);
+      } catch (e) {
+        console.warn('[NL Tag UI] Failed to save base description:', e);
+      }
+    }
+
     // Add to recent combos
     addToRecentCombo(text, parsedResult);
 
     console.log('[NL Tag UI] Saved tags:', {
       imageLabel,
       viewpoint: parsedResult.viewpoint,
-      facets: parsedResult.facets
+      facets: parsedResult.facets,
+      baseDescription: baseDescription
     });
 
     // Update chips in image thumbnail
