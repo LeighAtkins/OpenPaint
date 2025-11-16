@@ -216,16 +216,20 @@ console.log('[AI Draw Bot Integration] Script file loaded');
             });
             viewpointSelect.addEventListener('change', function() {
                 updateSuggestionButtonState();
-                // Save viewpoint to imageTags when changed
+                // Save viewpoint to imageTags when changed (dedupe logs)
                 const imageLabel = window.currentImageLabel;
                 if (imageLabel && viewpointSelect.value.trim()) {
                     if (!window.imageTags) window.imageTags = {};
                     if (!window.imageTags[imageLabel]) window.imageTags[imageLabel] = {};
-                    window.imageTags[imageLabel].viewpoint = viewpointSelect.value.trim();
-                    console.log('[AI Integration] Saved viewpoint:', {
-                        imageLabel: imageLabel,
-                        viewpoint: viewpointSelect.value.trim()
-                    });
+                    const newViewpoint = viewpointSelect.value.trim();
+                    // Only log if value actually changed
+                    if (window.imageTags[imageLabel].viewpoint !== newViewpoint) {
+                        window.imageTags[imageLabel].viewpoint = newViewpoint;
+                        console.log('[AI Integration] Saved viewpoint:', {
+                            imageLabel: imageLabel,
+                            viewpoint: newViewpoint
+                        });
+                    }
                 }
             });
             measurementSelect.addEventListener('input', updateSuggestionButtonState);
@@ -316,16 +320,22 @@ console.log('[AI Draw Bot Integration] Script file loaded');
                         : null);
                 
                 if (selectedViewpoint) {
-                    viewpointSelect.value = selectedViewpoint;
-                    // Save to imageTags
+                    // Normalize viewpoint before saving (dedupe front/front-center)
+                    const normalizedViewpoint = window.aiDrawBot?.normalizeViewpoint?.(selectedViewpoint) || selectedViewpoint;
+                    viewpointSelect.value = normalizedViewpoint;
+                    
+                    // Save to imageTags (only once, avoid duplicate logs)
                     if (imageLabel) {
                         if (!window.imageTags) window.imageTags = {};
                         if (!window.imageTags[imageLabel]) window.imageTags[imageLabel] = {};
-                        window.imageTags[imageLabel].viewpoint = selectedViewpoint;
-                        console.log('[AI Integration] Saved viewpoint from classification:', {
-                            imageLabel: imageLabel,
-                            viewpoint: selectedViewpoint
-                        });
+                        // Only log if value actually changed
+                        if (window.imageTags[imageLabel].viewpoint !== normalizedViewpoint) {
+                            window.imageTags[imageLabel].viewpoint = normalizedViewpoint;
+                            console.log('[AI Integration] Saved viewpoint from classification:', {
+                                imageLabel: imageLabel,
+                                viewpoint: normalizedViewpoint
+                            });
+                        }
                     }
                     // Trigger input and change events to update UI state
                     viewpointSelect.dispatchEvent(new Event('input'));
@@ -387,7 +397,9 @@ console.log('[AI Draw Bot Integration] Script file loaded');
 
             try {
                 statusEl.textContent = 'Predicting measurements...';
-                const predictions = await window.aiDrawBot.predictMeasurements(viewpoint, imageLabel, viewport);
+                // Normalize viewpoint before calling predictMeasurements
+                const normalizedViewpoint = window.aiDrawBot?.normalizeViewpoint?.(viewpoint) || viewpoint;
+                const predictions = await window.aiDrawBot.predictMeasurements(normalizedViewpoint, imageLabel, viewport);
                 
                 if (predictions && predictions.length > 0) {
                     // Sort by confidence (highest first)

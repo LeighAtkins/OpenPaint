@@ -3,12 +3,92 @@
  * Handles communication with Cloudflare Workers for viewpoint classification and stroke suggestions
  */
 
+console.log('[aiDrawBot] Script file loaded and executing...');
+console.log('[aiDrawBot] Window object available:', typeof window !== 'undefined');
+
+// Enable debug mode by setting window.DEBUG_AI_FEEDBACK = true in console
+// This will show detailed condition checks in paint.js feedback block
+
+try {
 window.aiDrawBot = {
     // Configuration - will be set from environment or defaults
     config: {
         classifierWorkerUrl: 'https://sofa-classify.sofapaint-api.workers.dev/api/sofa-classify',
         drawBotWorkerUrl: 'https://draw-bot.sofapaint-api.workers.dev/api/draw-bot',
+        feedbackWorkerUrl: 'https://feedback.sofapaint-api.workers.dev/api/feedback',
         authToken: null
+    },
+
+    /**
+     * Capture image snapshot as base64 for classification
+     * @param {string} imageUrl - Image URL or data URL
+     * @returns {Promise<{imageBase64: string, imageHash: string}>}
+     */
+    async captureImageSnapshot(imageUrl) {
+        try {
+            // If already a data URL, extract base64
+            if (imageUrl.startsWith('data:')) {
+                const base64 = imageUrl.split(',')[1];
+                const hash = await this.hashString(base64);
+                return { imageBase64: base64, imageHash: hash };
+            }
+
+            // Convert image URL to data URL
+            const img = new Image();
+            img.crossOrigin = 'Anonymous';
+            
+            return new Promise((resolve, reject) => {
+                img.onload = async () => {
+                    try {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0);
+                        
+                        // Use JPEG with quality 0.7 for smaller size
+                        const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                        const base64 = dataUrl.split(',')[1];
+                        const hash = await this.hashString(base64);
+                        resolve({ imageBase64: base64, imageHash: hash });
+                    } catch (e) {
+                        console.warn('[aiDrawBot] Failed to capture snapshot, using URL:', e);
+                        resolve({ imageBase64: null, imageHash: null, imageUrl });
+                    }
+                };
+                img.onerror = () => {
+                    console.warn('[aiDrawBot] Failed to load image for snapshot');
+                    resolve({ imageBase64: null, imageHash: null, imageUrl });
+                };
+                img.src = imageUrl;
+            });
+        } catch (error) {
+            console.warn('[aiDrawBot] Error capturing snapshot:', error);
+            return { imageBase64: null, imageHash: null, imageUrl };
+        }
+    },
+
+    /**
+     * Simple hash function for image deduplication
+     * @param {string} str - String to hash
+     * @returns {Promise<string>} Hash string
+     */
+    async hashString(str) {
+        if (typeof crypto !== 'undefined' && crypto.subtle) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(str);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+        // Fallback: simple hash
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+            const char = str.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash;
+        }
+        return Math.abs(hash).toString(16);
     },
 
     /**
@@ -19,6 +99,9 @@ window.aiDrawBot = {
      */
     async classifyImage(imageUrl, imageLabel) {
         try {
+            // Capture image snapshot for better classification
+            const snapshot = await this.captureImageSnapshot(imageUrl);
+            
             const response = await fetch(this.config.classifierWorkerUrl, {
                 method: 'POST',
                 headers: {
@@ -26,7 +109,9 @@ window.aiDrawBot = {
                     ...(this.config.authToken && { 'x-api-key': this.config.authToken })
                 },
                 body: JSON.stringify({
-                    imageUrl: imageUrl,
+                    imageUrl: snapshot.imageUrl || imageUrl,
+                    imageBase64: snapshot.imageBase64,
+                    imageHash: snapshot.imageHash,
                     imageLabel: imageLabel
                 })
             });
@@ -45,11 +130,122 @@ window.aiDrawBot = {
             window.imageTags[imageLabel].tags = result.tags;
             window.imageTags[imageLabel].confidence = result.confidence;
             window.imageTags[imageLabel].classifiedAt = new Date().toISOString();
+            window.imageTags[imageLabel].imageHash = snapshot.imageHash;
 
             return result;
         } catch (error) {
             console.error('[aiDrawBot] Classification error:', error);
             throw error;
+        }
+    },
+
+    /**
+     * Normalize freeform viewpoint to worker-supported format
+     * Maps user input to known worker viewpoints
+     */
+    normalizeViewpoint(viewpoint) {
+        if (!viewpoint) return null;
+        const normalized = viewpoint.trim().toLowerCase();
+        
+        // Map common variations to worker-supported viewpoints
+        const mapping = {
+            'front': 'front-center',
+            'front view': 'front-center',
+            'front facing': 'front-center',
+            'front-center': 'front-center',
+            'frontcenter': 'front-center',
+            
+            'front-arm': 'front-arm',
+            'front arm': 'front-arm',
+            'arm front': 'front-arm',
+            
+            'side': 'side-arm',
+            'side-arm': 'side-arm',
+            'side arm': 'side-arm',
+            'side view': 'side-arm',
+            'side facing': 'side-arm',
+            
+            'back': 'back-view',
+            'back-view': 'back-view',
+            'backview': 'back-view',
+            'back view': 'back-view',
+            'back facing': 'back-view',
+            'rear': 'back-view',
+            
+            'top': 'top',
+            'top view': 'top',
+            'top down': 'top',
+            'overhead': 'top',
+            'above': 'top',
+            
+            '3/4': '3/4',
+            'three quarter': '3/4',
+            'three-quarter': '3/4',
+            '3 quarter': '3/4'
+        };
+        
+        return mapping[normalized] || viewpoint; // Return original if no mapping found
+    },
+
+    /**
+     * Predict measurements for an image based on viewpoint
+     * @param {string} viewpointTag - Viewpoint tag (e.g., "front-center", "front-arm")
+     * @param {string} imageLabel - Current image label
+     * @param {{width: number, height: number}} viewport - Canvas viewport dimensions
+     * @returns {Promise<Array<{code: string, stroke: object, confidence: number}>>}
+     */
+    async predictMeasurements(viewpointTag, imageLabel, viewport) {
+        // Normalize viewpoint before sending to worker
+        const normalizedViewpoint = this.normalizeViewpoint(viewpointTag);
+        try {
+            // Get image snapshot for context
+            const imageUrl = window.originalImages?.[imageLabel];
+            const snapshot = imageUrl ? await this.captureImageSnapshot(imageUrl) : null;
+            
+            const response = await fetch(this.config.drawBotWorkerUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(this.config.authToken && { 'x-api-key': this.config.authToken })
+                },
+                body: JSON.stringify({
+                    action: 'predict',
+                    viewpointTag: normalizedViewpoint || viewpointTag, // Use normalized, fallback to original
+                    imageLabel: imageLabel,
+                    imageHash: snapshot?.imageHash,
+                    imageBase64: snapshot?.imageBase64,
+                    viewport: viewport || { width: 800, height: 600 }
+                })
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                let errorBody;
+                try {
+                    errorBody = JSON.parse(errorText);
+                } catch (e) {
+                    errorBody = { message: errorText };
+                }
+                
+                console.error('[aiDrawBot] Prediction failed:', {
+                    status: response.status,
+                    statusText: response.statusText,
+                    body: errorBody,
+                    viewpointTag: viewpointTag,
+                    imageLabel: imageLabel
+                });
+                
+                if (response.status === 404) {
+                    return []; // No predictions found
+                }
+                throw new Error(`Prediction failed: ${response.status} ${response.statusText} - ${JSON.stringify(errorBody)}`);
+            }
+
+            const result = await response.json();
+            return result.predictions || [];
+        } catch (error) {
+            console.error('[aiDrawBot] Prediction error:', error);
+            return [];
         }
     },
 
@@ -70,6 +266,7 @@ window.aiDrawBot = {
                     ...(this.config.authToken && { 'x-api-key': this.config.authToken })
                 },
                 body: JSON.stringify({
+                    action: 'suggest',
                     measurementCode: measurementCode,
                     viewpointTag: viewpointTag,
                     imageLabel: imageLabel,
@@ -193,6 +390,142 @@ window.aiDrawBot = {
     },
 
     /**
+     * Queue feedback about a stroke for later submission
+     * @param {Object} event - Feedback event with source, imageLabel, measurementCode, viewpoint, stroke, etc.
+     */
+    async queueFeedback(event) {
+        console.log('[aiDrawBot] queueFeedback invoked', {
+            imageLabel: event.imageLabel,
+            measurementCode: event.measurementCode,
+            source: event.source
+        });
+        // Check if feedback is enabled
+        const feedbackEnabled = document.getElementById('aiFeedbackEnabled');
+        if (feedbackEnabled && !feedbackEnabled.checked) {
+            console.log('[aiDrawBot] Feedback disabled via toggle, skipping queue');
+            return;
+        }
+
+        if (!window.aiFeedbackQueue) {
+            window.aiFeedbackQueue = [];
+        }
+
+        // Capture image snapshot for visual context
+        const imageUrl = window.originalImages?.[event.imageLabel];
+        const snapshot = imageUrl ? await this.captureImageSnapshot(imageUrl) : null;
+        console.log('[aiDrawBot] Snapshot result', {
+            hasImage: !!imageUrl,
+            capturedBase64: !!snapshot?.imageBase64,
+            hash: snapshot?.imageHash
+        });
+
+        // Build payload from event
+        const imageTags = window.imageTags?.[event.imageLabel] || {};
+        const payload = {
+            projectId: event.projectId || document.getElementById('projectName')?.value || 'unknown',
+            imageLabel: event.imageLabel,
+            viewpoint: event.viewpoint || imageTags.viewpoint || 'unknown',
+            facets: event.facets || imageTags.facets || null,
+            measurementCode: event.measurementCode,
+            stroke: {
+                points: event.stroke?.points || [],
+                width: event.stroke?.width || 2,
+                source: event.source || 'manual'
+            },
+            labels: event.labels || [],
+            imageHash: snapshot?.imageHash,
+            imageBase64: snapshot?.imageBase64, // Include compressed image for training
+            meta: {
+                ...event.meta,
+            }
+        };
+
+        // Add canvas dimensions if available
+        const canvas = document.getElementById('canvas');
+        if (canvas && !payload.meta.canvas) {
+            payload.meta.canvas = {
+                width: canvas.width,
+                height: canvas.height
+            };
+        }
+
+        // Add to queue with retry metadata
+        window.aiFeedbackQueue.push({
+            payload,
+            attempts: 0,
+            lastAttempt: null,
+            queuedAt: new Date().toISOString()
+        });
+        console.log('[aiDrawBot] Feedback queued. Queue length:', window.aiFeedbackQueue.length);
+
+        // Persist to localStorage
+        try {
+            localStorage.setItem('aiFeedbackQueue', JSON.stringify(window.aiFeedbackQueue));
+            console.log('[aiDrawBot] LocalStorage updated with queue size:', window.aiFeedbackQueue.length);
+        } catch (e) {
+            console.warn('[aiDrawBot] Failed to persist feedback queue:', e);
+        }
+
+        // Trigger flush if not already scheduled
+        if (!window.aiFeedbackFlushScheduled) {
+            scheduleFeedbackFlush();
+        }
+
+        console.log('[aiDrawBot] Queued feedback:', {
+            ...payload,
+            imageBase64: payload.imageBase64 ? `present (${payload.imageBase64.length} chars)` : 'missing'
+        });
+    },
+
+    /**
+     * Debug helper: Check current feedback queue state
+     * Call from console: window.aiDrawBot.debugQueue()
+     */
+    debugQueue() {
+        const queue = window.aiFeedbackQueue || [];
+        const stored = (() => {
+            try {
+                return JSON.parse(localStorage.getItem('aiFeedbackQueue') || '[]');
+            } catch (e) {
+                return null;
+            }
+        })();
+        
+        const feedbackToggle = document.getElementById('aiFeedbackEnabled');
+        
+        console.group('[aiDrawBot] Queue Debug Report');
+        console.log('In-memory queue:', queue);
+        console.log('LocalStorage queue:', stored);
+        console.log('Queue lengths - Memory:', queue.length, '| Storage:', stored?.length || 0);
+        console.log('Feedback toggle:', {
+            exists: !!feedbackToggle,
+            checked: feedbackToggle?.checked ?? true,
+            element: feedbackToggle
+        });
+        console.log('Queue items:', queue.map((item, idx) => ({
+            index: idx,
+            measurementCode: item.payload?.measurementCode,
+            imageLabel: item.payload?.imageLabel,
+            viewpoint: item.payload?.viewpoint,
+            attempts: item.attempts,
+            queuedAt: item.queuedAt,
+            hasImage: !!item.payload?.imageBase64
+        })));
+        console.groupEnd();
+        
+        return {
+            memoryQueue: queue,
+            storageQueue: stored,
+            toggleEnabled: feedbackToggle?.checked ?? true,
+            summary: {
+                memoryCount: queue.length,
+                storageCount: stored?.length || 0,
+                syncNeeded: queue.length > 0
+            }
+        };
+    },
+
+    /**
      * Submit feedback about a stroke (for dataset enrichment)
      * @param {string} imageLabel - Image label
      * @param {string} measurementCode - Measurement code
@@ -200,14 +533,152 @@ window.aiDrawBot = {
      * @param {Object} strokeData - The actual stroke data that was used
      */
     async submitFeedback(imageLabel, measurementCode, viewpointTag, strokeData) {
-        // TODO: Implement feedback endpoint in Worker
-        // For now, just log it
-        console.log('[aiDrawBot] Feedback submitted:', {
+        this.queueFeedback({
             imageLabel,
             measurementCode,
-            viewpointTag,
-            strokeData
+            viewpoint: viewpointTag,
+            stroke: strokeData,
+            source: 'manual'
         });
+    },
+
+    /**
+     * Flush queued feedback to the server
+     */
+    async flushFeedbackQueue() {
+        if (!window.aiFeedbackQueue || window.aiFeedbackQueue.length === 0) {
+            return { sent: 0, failed: 0, remaining: 0 };
+        }
+
+        const feedbackWorkerUrl = this.config.feedbackWorkerUrl || 
+            'https://feedback.sofapaint-api.workers.dev/api/feedback';
+
+        let sent = 0;
+        let failed = 0;
+        const maxRetries = 3;
+        const retryDelay = 1000; // 1 second
+
+        // Process queue
+        const remaining = [];
+        for (const item of window.aiFeedbackQueue) {
+            // Skip if too many attempts
+            if (item.attempts >= maxRetries) {
+                console.warn('[aiDrawBot] Dropping feedback after max retries:', item.payload);
+                failed++;
+                continue;
+            }
+
+            // Skip if recently attempted (exponential backoff)
+            if (item.lastAttempt) {
+                const timeSinceLastAttempt = Date.now() - new Date(item.lastAttempt).getTime();
+                const backoffDelay = retryDelay * Math.pow(2, item.attempts);
+                if (timeSinceLastAttempt < backoffDelay) {
+                    remaining.push(item);
+                    continue;
+                }
+            }
+
+            try {
+                const requestPayload = {
+                    ...item.payload,
+                    // Truncate base64 for logging (too large otherwise)
+                    imageBase64: item.payload.imageBase64 ? 
+                        `${item.payload.imageBase64.substring(0, 50)}... (${item.payload.imageBase64.length} chars)` : 
+                        null
+                };
+                console.log('[aiDrawBot][DEBUG] Sending feedback request:', {
+                    url: feedbackWorkerUrl,
+                    measurementCode: item.payload.measurementCode,
+                    imageLabel: item.payload.imageLabel,
+                    viewpoint: item.payload.viewpoint,
+                    payloadSize: JSON.stringify(item.payload).length,
+                    hasImageBase64: !!item.payload.imageBase64
+                });
+                
+                const response = await fetch(feedbackWorkerUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(this.config.authToken && { 'x-api-key': this.config.authToken })
+                    },
+                    body: JSON.stringify(item.payload)
+                });
+
+                console.log('[aiDrawBot][DEBUG] Response received:', {
+                    status: response.status,
+                    statusText: response.statusText,
+                    ok: response.ok,
+                    headers: Object.fromEntries(response.headers.entries())
+                });
+
+                if (response.ok) {
+                    const result = await response.json().catch(() => ({}));
+                    sent++;
+                    console.log('[aiDrawBot] Feedback sent successfully:', {
+                        measurementCode: item.payload.measurementCode,
+                        feedbackId: result.feedbackId,
+                        kv: result.kv || { stored: 'unknown', indexCount: 'unknown' },
+                        response: result
+                    });
+                    
+                    // Log KV verification details if available
+                    if (result.kv) {
+                        console.log('[aiDrawBot][KV] Storage verification:', {
+                            feedbackKey: result.kv.feedbackKey,
+                            indexKey: result.kv.indexKey,
+                            stored: result.kv.stored ? '✓ YES' : '✗ NO',
+                            indexCount: result.kv.indexCount
+                        });
+                    }
+                } else {
+                    const errorText = await response.text().catch(() => response.statusText);
+                    item.attempts++;
+                    item.lastAttempt = new Date().toISOString();
+                    remaining.push(item);
+                    console.error('[aiDrawBot] Feedback submission failed:', {
+                        status: response.status,
+                        statusText: response.statusText,
+                        error: errorText,
+                        attempt: item.attempts,
+                        payload: requestPayload
+                    });
+                }
+            } catch (error) {
+                item.attempts++;
+                item.lastAttempt = new Date().toISOString();
+                remaining.push(item);
+                console.error('[aiDrawBot] Feedback submission error:', {
+                    error: error.message,
+                    stack: error.stack,
+                    attempt: item.attempts,
+                    payload: {
+                        ...item.payload,
+                        imageBase64: item.payload.imageBase64 ? 'present' : 'missing'
+                    }
+                });
+            }
+        }
+
+        // Update queue
+        window.aiFeedbackQueue = remaining;
+
+        // Persist updated queue
+        try {
+            if (remaining.length > 0) {
+                localStorage.setItem('aiFeedbackQueue', JSON.stringify(remaining));
+            } else {
+                localStorage.removeItem('aiFeedbackQueue');
+            }
+        } catch (e) {
+            console.warn('[aiDrawBot] Failed to persist feedback queue:', e);
+        }
+
+        // Limit queue size (drop oldest if exceeds 1000)
+        if (window.aiFeedbackQueue.length > 1000) {
+            window.aiFeedbackQueue = window.aiFeedbackQueue.slice(-1000);
+        }
+
+        return { sent, failed, remaining: remaining.length };
     }
 };
 
@@ -221,6 +692,7 @@ if (typeof window !== 'undefined' && window.location) {
             if (config.workerBaseUrl) {
                 window.aiDrawBot.config.classifierWorkerUrl = `${config.workerBaseUrl}/api/sofa-classify`;
                 window.aiDrawBot.config.drawBotWorkerUrl = `${config.workerBaseUrl}/api/draw-bot`;
+                window.aiDrawBot.config.feedbackWorkerUrl = `${config.workerBaseUrl}/api/feedback`;
             }
             if (config.workerAuthToken) {
                 window.aiDrawBot.config.authToken = config.workerAuthToken;
@@ -229,5 +701,57 @@ if (typeof window !== 'undefined' && window.location) {
             console.warn('[aiDrawBot] Failed to parse worker config:', e);
         }
     }
+}
+
+// Initialize feedback queue from localStorage
+if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+    try {
+        const stored = localStorage.getItem('aiFeedbackQueue');
+        if (stored) {
+            window.aiFeedbackQueue = JSON.parse(stored);
+        }
+    } catch (e) {
+        console.warn('[aiDrawBot] Failed to load feedback queue from localStorage:', e);
+    }
+}
+
+// Schedule feedback flush function
+function scheduleFeedbackFlush() {
+    if (window.aiFeedbackFlushScheduled) return;
+    window.aiFeedbackFlushScheduled = true;
+
+    // Use requestIdleCallback if available, otherwise setTimeout
+    if (typeof requestIdleCallback !== 'undefined') {
+        requestIdleCallback(() => {
+            window.aiFeedbackFlushScheduled = false;
+            if (window.aiDrawBot && window.aiFeedbackQueue && window.aiFeedbackQueue.length > 0) {
+                window.aiDrawBot.flushFeedbackQueue();
+            }
+        }, { timeout: 5000 });
+    } else {
+        setTimeout(() => {
+            window.aiFeedbackFlushScheduled = false;
+            if (window.aiDrawBot && window.aiFeedbackQueue && window.aiFeedbackQueue.length > 0) {
+                window.aiDrawBot.flushFeedbackQueue();
+            }
+        }, 2000);
+    }
+}
+
+// Signal that aiDrawBot is ready
+console.log('[aiDrawBot] Initialization complete, window.aiDrawBot available:', typeof window.aiDrawBot !== 'undefined');
+if (typeof window !== 'undefined' && window.dispatchEvent) {
+    try {
+        window.dispatchEvent(new CustomEvent('aiDrawBotReady'));
+        console.log('[aiDrawBot] Dispatched aiDrawBotReady event');
+    } catch (e) {
+        console.error('[aiDrawBot] Failed to dispatch event:', e);
+    }
+} else {
+    console.warn('[aiDrawBot] Cannot dispatch event - window or dispatchEvent not available');
+}
+} catch (error) {
+    console.error('[aiDrawBot] Fatal error during initialization:', error);
+    throw error;
 }
 

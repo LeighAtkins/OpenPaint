@@ -140,6 +140,54 @@ window.aiDrawBot = {
     },
 
     /**
+     * Normalize freeform viewpoint to worker-supported format
+     * Maps user input to known worker viewpoints
+     */
+    normalizeViewpoint(viewpoint) {
+        if (!viewpoint) return null;
+        const normalized = viewpoint.trim().toLowerCase();
+        
+        // Map common variations to worker-supported viewpoints
+        const mapping = {
+            'front': 'front-center',
+            'front view': 'front-center',
+            'front facing': 'front-center',
+            'front-center': 'front-center',
+            'frontcenter': 'front-center',
+            
+            'front-arm': 'front-arm',
+            'front arm': 'front-arm',
+            'arm front': 'front-arm',
+            
+            'side': 'side-arm',
+            'side-arm': 'side-arm',
+            'side arm': 'side-arm',
+            'side view': 'side-arm',
+            'side facing': 'side-arm',
+            
+            'back': 'back-view',
+            'back-view': 'back-view',
+            'backview': 'back-view',
+            'back view': 'back-view',
+            'back facing': 'back-view',
+            'rear': 'back-view',
+            
+            'top': 'top',
+            'top view': 'top',
+            'top down': 'top',
+            'overhead': 'top',
+            'above': 'top',
+            
+            '3/4': '3/4',
+            'three quarter': '3/4',
+            'three-quarter': '3/4',
+            '3 quarter': '3/4'
+        };
+        
+        return mapping[normalized] || viewpoint; // Return original if no mapping found
+    },
+
+    /**
      * Predict measurements for an image based on viewpoint
      * @param {string} viewpointTag - Viewpoint tag (e.g., "front-center", "front-arm")
      * @param {string} imageLabel - Current image label
@@ -147,6 +195,8 @@ window.aiDrawBot = {
      * @returns {Promise<Array<{code: string, stroke: object, confidence: number}>>}
      */
     async predictMeasurements(viewpointTag, imageLabel, viewport) {
+        // Normalize viewpoint before sending to worker
+        const normalizedViewpoint = this.normalizeViewpoint(viewpointTag);
         try {
             // Get image snapshot for context
             const imageUrl = window.originalImages?.[imageLabel];
@@ -160,7 +210,7 @@ window.aiDrawBot = {
                 },
                 body: JSON.stringify({
                     action: 'predict',
-                    viewpointTag: viewpointTag,
+                    viewpointTag: normalizedViewpoint || viewpointTag, // Use normalized, fallback to original
                     imageLabel: imageLabel,
                     imageHash: snapshot?.imageHash,
                     imageBase64: snapshot?.imageBase64,
@@ -169,10 +219,26 @@ window.aiDrawBot = {
             });
 
             if (!response.ok) {
+                const errorText = await response.text();
+                let errorBody;
+                try {
+                    errorBody = JSON.parse(errorText);
+                } catch (e) {
+                    errorBody = { message: errorText };
+                }
+                
+                console.error('[aiDrawBot] Prediction failed:', {
+                    status: response.status,
+                    statusText: response.statusText,
+                    body: errorBody,
+                    viewpointTag: viewpointTag,
+                    imageLabel: imageLabel
+                });
+                
                 if (response.status === 404) {
                     return []; // No predictions found
                 }
-                throw new Error(`Prediction failed: ${response.statusText}`);
+                throw new Error(`Prediction failed: ${response.status} ${response.statusText} - ${JSON.stringify(errorBody)}`);
             }
 
             const result = await response.json();
