@@ -202,7 +202,20 @@ console.log('[AI Draw Bot Integration] Script file loaded');
                 btn.disabled = !(hasViewpoint && hasMeasurement);
             }
 
-            viewpointSelect.addEventListener('change', updateSuggestionButtonState);
+            viewpointSelect.addEventListener('change', function() {
+                updateSuggestionButtonState();
+                // Save viewpoint to imageTags when changed
+                const imageLabel = window.currentImageLabel;
+                if (imageLabel && viewpointSelect.value) {
+                    if (!window.imageTags) window.imageTags = {};
+                    if (!window.imageTags[imageLabel]) window.imageTags[imageLabel] = {};
+                    window.imageTags[imageLabel].viewpoint = viewpointSelect.value;
+                    console.log('[AI Integration] Saved viewpoint:', {
+                        imageLabel: imageLabel,
+                        viewpoint: viewpointSelect.value
+                    });
+                }
+            });
             measurementSelect.addEventListener('change', updateSuggestionButtonState);
 
             // Load saved viewpoint if available and auto-classify on image switch
@@ -282,17 +295,26 @@ console.log('[AI Draw Bot Integration] Script file loaded');
                 
                 // Auto-set viewpoint selector based on classification result
                 const viewpointSelect = document.getElementById('aiViewpointSelect');
-                if (result.viewpoint && viewpointOptions.includes(result.viewpoint)) {
-                    viewpointSelect.value = result.viewpoint;
+                const selectedViewpoint = result.viewpoint && viewpointOptions.includes(result.viewpoint) 
+                    ? result.viewpoint 
+                    : (result.tags && result.tags.length > 0 
+                        ? result.tags.find(t => viewpointOptions.includes(t)) 
+                        : null);
+                
+                if (selectedViewpoint) {
+                    viewpointSelect.value = selectedViewpoint;
+                    // Save to imageTags
+                    if (imageLabel) {
+                        if (!window.imageTags) window.imageTags = {};
+                        if (!window.imageTags[imageLabel]) window.imageTags[imageLabel] = {};
+                        window.imageTags[imageLabel].viewpoint = selectedViewpoint;
+                        console.log('[AI Integration] Saved viewpoint from classification:', {
+                            imageLabel: imageLabel,
+                            viewpoint: selectedViewpoint
+                        });
+                    }
                     // Trigger change event to update UI state
                     viewpointSelect.dispatchEvent(new Event('change'));
-                } else if (result.tags && result.tags.length > 0) {
-                    // Try to match first tag
-                    const matchedTag = result.tags.find(t => viewpointOptions.includes(t));
-                    if (matchedTag) {
-                        viewpointSelect.value = matchedTag;
-                        viewpointSelect.dispatchEvent(new Event('change'));
-                    }
                 }
 
                 // Show confidence in status
