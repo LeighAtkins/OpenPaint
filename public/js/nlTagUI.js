@@ -152,6 +152,11 @@
           
           // Update suggestions (top 3)
           updateSuggestions(suggestionsContainer, parsed, text);
+          
+          // Auto-populate viewpoint dropdown
+          if (parsed && parsed.viewpoint) {
+            updateViewpointDropdown(parsed.viewpoint);
+          }
         }
       }, 150);
     });
@@ -224,18 +229,21 @@
     // Watch for external updates to the input (from paint.js updateNameBox)
     // Use MutationObserver to detect when value changes programmatically
     let lastInputValue = input.value;
-    const checkInputValue = () => {
+    const checkInputValue = async () => {
       if (input.value !== lastInputValue) {
         lastInputValue = input.value;
         // If value changed externally, parse and show chips
         if (input.value.trim() && window.nlTagParser) {
-          window.nlTagParser.parseTags(input.value).then(parsed => {
-            if (parsed) {
-              currentParsedResult = parsed;
-              updateChips(chipsContainer, parsed);
-              updateSuggestions(suggestionsContainer, parsed, input.value);
+          const parsed = await window.nlTagParser.parseTags(input.value);
+          if (parsed) {
+            currentParsedResult = parsed;
+            updateChips(chipsContainer, parsed);
+            updateSuggestions(suggestionsContainer, parsed, input.value);
+            // Auto-update viewpoint dropdown
+            if (parsed.viewpoint) {
+              updateViewpointDropdown(parsed.viewpoint);
             }
-          });
+          }
         } else {
           chipsContainer.innerHTML = '';
           suggestionsContainer.innerHTML = '';
@@ -276,6 +284,47 @@
   }
 
   /**
+   * Map parser viewpoint values to dropdown values
+   */
+  function mapViewpointToDropdown(parserViewpoint) {
+    const mapping = {
+      'front': 'front-center',
+      'front-arm': 'front-arm',
+      'side-arm': 'side-arm',
+      'back': 'back-view',
+      'top': 'top',
+      '3/4': '3/4',
+      'round-arm': 'round-arm',
+      'square-arm': 'square-arm',
+      'high-back': 'high-back',
+      'short-back': 'short-back'
+    };
+    return mapping[parserViewpoint] || parserViewpoint;
+  }
+
+  /**
+   * Update viewpoint dropdown from parsed result
+   */
+  function updateViewpointDropdown(parserViewpoint) {
+    const viewpointSelect = document.getElementById('aiViewpointSelect');
+    if (viewpointSelect && parserViewpoint) {
+      const dropdownValue = mapViewpointToDropdown(parserViewpoint);
+      if (dropdownValue && viewpointSelect.querySelector(`option[value="${dropdownValue}"]`)) {
+        viewpointSelect.value = dropdownValue;
+        viewpointSelect.dispatchEvent(new Event('change'));
+        
+        // Also save to imageTags
+        const imageLabel = window.currentImageLabel;
+        if (imageLabel) {
+          if (!window.imageTags) window.imageTags = {};
+          if (!window.imageTags[imageLabel]) window.imageTags[imageLabel] = {};
+          window.imageTags[imageLabel].viewpoint = parserViewpoint;
+        }
+      }
+    }
+  }
+
+  /**
    * Update chip display
    */
   function updateChips(container, parsedResult) {
@@ -286,6 +335,11 @@
 
     const chips = window.nlTagParser.generateChips(parsedResult);
     container.innerHTML = '';
+    
+    if (chips.length === 0) {
+      container.innerHTML = '<span class="text-[10px] text-slate-400 italic">No tags detected</span>';
+      return;
+    }
     
     chips.forEach(chip => {
       const chipEl = document.createElement('span');

@@ -317,6 +317,25 @@ console.log('[AI Draw Bot Integration] Script file loaded');
                     viewpointSelect.dispatchEvent(new Event('change'));
                 }
 
+                // Prefill name box with classification result if empty
+                const nameBox = document.getElementById('currentImageNameBox');
+                if (nameBox && !nameBox.value.trim()) {
+                    // Build description from classification tags
+                    const parts = [];
+                    if (result.tags && result.tags.length > 0) {
+                        parts.push(...result.tags.filter(t => !viewpointOptions.includes(t)));
+                    }
+                    if (selectedViewpoint) {
+                        parts.push(selectedViewpoint.replace(/-/g, ' '));
+                    }
+                    if (parts.length > 0) {
+                        const description = parts.join(' ').toLowerCase();
+                        nameBox.value = description;
+                        // Trigger input event to parse and show chips
+                        nameBox.dispatchEvent(new Event('input'));
+                    }
+                }
+
                 // Show confidence in status
                 const confidencePercent = (result.confidence * 100).toFixed(0);
                 statusEl.textContent = `Classified: ${result.viewpoint || result.tags.join(', ')} (${confidencePercent}% confidence)`;
@@ -687,6 +706,13 @@ console.log('[AI Draw Bot Integration] Script file loaded');
                             }
                         }
                     } else if (imageLabel && window.originalImages && window.originalImages[imageLabel]) {
+                        // Clear any ghost stroke rendering when switching images
+                        if (ghostStrokeInterval) {
+                            clearInterval(ghostStrokeInterval);
+                            ghostStrokeInterval = null;
+                            currentSuggestion = null;
+                        }
+                        
                         // Auto-classify if no tags exist yet
                         setTimeout(() => {
                             classifyCurrentImage();
