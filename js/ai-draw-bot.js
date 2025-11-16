@@ -343,7 +343,7 @@ window.aiDrawBot = {
      * @param {string} imageLabel - Image label
      * @param {string} measurementCode - Measurement code for the stroke
      */
-    acceptSuggestion(points, width, imageLabel, measurementCode) {
+    acceptSuggestion(points, width, imageLabel, measurementCode, viewport) {
         if (!points || points.length < 2) {
             console.warn('[aiDrawBot] Cannot accept suggestion: insufficient points');
             return;
@@ -364,17 +364,44 @@ window.aiDrawBot = {
             'A1';
         const strokeLabel = this.generateUniqueStrokeLabel(targetImage, baseLabel);
 
+        const canvasEl = document.getElementById('canvas');
+        const viewportInfo = viewport || { width: canvasEl?.width || 800, height: canvasEl?.height || 600 };
+        const transformParams = window.getTransformationParams
+            ? window.getTransformationParams(targetImage)
+            : null;
+        const originalDims = transformParams?.dimensions
+            || window.originalImageDimensions?.[targetImage]
+            || { width: canvasEl?.width || 800, height: canvasEl?.height || 600 };
+
         // Store points in image-relative coordinates (matches paint.js expectations)
-        const relativePoints = points.map(point => ({
-            x: Number(point.x) || 0,
-            y: Number(point.y) || 0,
-            time: point.t ?? point.time ?? 0
-        }));
+        const relativePoints = points.map(point => {
+            const canvasX = Number(point.x) || 0;
+            const canvasY = Number(point.y) || 0;
+            let imageCoords = { x: canvasX, y: canvasY };
+
+            if (typeof window.canvasToImageCoords === 'function' && transformParams) {
+                imageCoords = window.canvasToImageCoords(canvasX, canvasY, transformParams);
+            }
+
+            const clampedX = Math.max(0, Math.min(imageCoords.x, originalDims.width));
+            const clampedY = Math.max(0, Math.min(imageCoords.y, originalDims.height));
+
+            return {
+                x: clampedX,
+                y: clampedY,
+                time: point.t ?? point.time ?? 0
+            };
+        });
+
+        const viewportMin = Math.max(1, Math.min(viewportInfo.width || 800, viewportInfo.height || 600));
+        const normalizedWidth = (width || 2) / viewportMin;
+        const imageMinDim = Math.max(1, Math.min(originalDims.width, originalDims.height));
+        const imageSpaceWidth = normalizedWidth * imageMinDim;
 
         const strokeData = {
             points: relativePoints,
             color: window.currentColor || '#000000',
-            width: width || (window.brushSize ? Number(window.brushSize.value) : 2),
+            width: imageSpaceWidth || (window.brushSize ? Number(window.brushSize.value) : 2),
             type: 'ai-suggestion',
             source: 'ai-draw-bot',
             measurementCode: measurementCode || strokeLabel,
