@@ -316,12 +316,15 @@
       viewpointSelect.dispatchEvent(new Event('input'));
       viewpointSelect.dispatchEvent(new Event('change'));
       
-      // Also save to imageTags
+      // Also save to imageTags (dedupe - only log if changed)
       const imageLabel = window.currentImageLabel;
       if (imageLabel) {
         if (!window.imageTags) window.imageTags = {};
         if (!window.imageTags[imageLabel]) window.imageTags[imageLabel] = {};
-        window.imageTags[imageLabel].viewpoint = parserViewpoint;
+        const currentViewpoint = window.imageTags[imageLabel].viewpoint;
+        if (currentViewpoint !== parserViewpoint) {
+          window.imageTags[imageLabel].viewpoint = parserViewpoint;
+        }
       }
     }
   }

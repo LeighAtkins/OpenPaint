@@ -72,7 +72,7 @@ console.log('[AI Draw Bot Integration] Script file loaded');
         // Measurement codes (can be expanded)
         const measurementCodes = ['A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'A7', 'A8', 'A9', 'A10'];
         
-        // Viewpoint options
+        // Viewpoint options (camera angles only - back styles are in facets.json)
         const viewpointOptions = [
             'front-center',
             'front-arm',
@@ -80,8 +80,8 @@ console.log('[AI Draw Bot Integration] Script file loaded');
             'back-view',
             'round-arm',
             'square-arm',
-            'high-back',
-            'short-back'
+            'top',
+            '3/4'
         ];
 
         /**
@@ -328,8 +328,9 @@ console.log('[AI Draw Bot Integration] Script file loaded');
                     if (imageLabel) {
                         if (!window.imageTags) window.imageTags = {};
                         if (!window.imageTags[imageLabel]) window.imageTags[imageLabel] = {};
-                        // Only log if value actually changed
-                        if (window.imageTags[imageLabel].viewpoint !== normalizedViewpoint) {
+                        // Only log if value actually changed (dedupe)
+                        const currentViewpoint = window.imageTags[imageLabel].viewpoint;
+                        if (currentViewpoint !== normalizedViewpoint) {
                             window.imageTags[imageLabel].viewpoint = normalizedViewpoint;
                             console.log('[AI Integration] Saved viewpoint from classification:', {
                                 imageLabel: imageLabel,
@@ -399,7 +400,17 @@ console.log('[AI Draw Bot Integration] Script file loaded');
                 statusEl.textContent = 'Predicting measurements...';
                 // Normalize viewpoint before calling predictMeasurements
                 const normalizedViewpoint = window.aiDrawBot?.normalizeViewpoint?.(viewpoint) || viewpoint;
-                const predictions = await window.aiDrawBot.predictMeasurements(normalizedViewpoint, imageLabel, viewport);
+                
+                // Get measurement code from input if available (worker requires it)
+                const measurementSelect = document.getElementById('aiMeasurementSelect');
+                const measurementCode = measurementSelect?.value?.trim() || null;
+                
+                const predictions = await window.aiDrawBot.predictMeasurements(
+                    normalizedViewpoint, 
+                    imageLabel, 
+                    viewport,
+                    measurementCode
+                );
                 
                 if (predictions && predictions.length > 0) {
                     // Sort by confidence (highest first)

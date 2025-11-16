@@ -192,9 +192,10 @@ window.aiDrawBot = {
      * @param {string} viewpointTag - Viewpoint tag (e.g., "front-center", "front-arm")
      * @param {string} imageLabel - Current image label
      * @param {{width: number, height: number}} viewport - Canvas viewport dimensions
+     * @param {string} measurementCode - Optional measurement code to filter predictions
      * @returns {Promise<Array<{code: string, stroke: object, confidence: number}>>}
      */
-    async predictMeasurements(viewpointTag, imageLabel, viewport) {
+    async predictMeasurements(viewpointTag, imageLabel, viewport, measurementCode = null) {
         // Normalize viewpoint before sending to worker
         const normalizedViewpoint = this.normalizeViewpoint(viewpointTag);
         try {
@@ -202,20 +203,27 @@ window.aiDrawBot = {
             const imageUrl = window.originalImages?.[imageLabel];
             const snapshot = imageUrl ? await this.captureImageSnapshot(imageUrl) : null;
             
+            const payload = {
+                action: 'predict',
+                viewpointTag: normalizedViewpoint || viewpointTag, // Use normalized, fallback to original
+                imageLabel: imageLabel,
+                imageHash: snapshot?.imageHash,
+                imageBase64: snapshot?.imageBase64,
+                viewport: viewport || { width: 800, height: 600 }
+            };
+            
+            // Include measurementCode if provided (worker requires it for filtering)
+            if (measurementCode) {
+                payload.measurementCode = measurementCode;
+            }
+            
             const response = await fetch(this.config.drawBotWorkerUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     ...(this.config.authToken && { 'x-api-key': this.config.authToken })
                 },
-                body: JSON.stringify({
-                    action: 'predict',
-                    viewpointTag: normalizedViewpoint || viewpointTag, // Use normalized, fallback to original
-                    imageLabel: imageLabel,
-                    imageHash: snapshot?.imageHash,
-                    imageBase64: snapshot?.imageBase64,
-                    viewport: viewport || { width: 800, height: 600 }
-                })
+                body: JSON.stringify(payload)
             });
 
             if (!response.ok) {
