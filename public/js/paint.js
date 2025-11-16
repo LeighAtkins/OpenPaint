@@ -9111,16 +9111,19 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
             };
           });
 
-          // Get viewpoint from dropdown or imageTags
+          // Get viewpoint and facets from dropdown or imageTags
           const viewpointSelect = document.getElementById('aiViewpointSelect');
+          const imageTags = window.imageTags?.[currentImageLabel] || {};
           const viewpoint = viewpointSelect?.value || 
-                           window.imageTags?.[currentImageLabel]?.viewpoint || 
+                           imageTags.viewpoint || 
                            'unknown';
+          const facets = imageTags.facets || null;
           
           console.log('[Paint.js][AI Feedback] Queueing stroke for AI learning:', {
             imageLabel: currentImageLabel,
             measurementCode: strokeLabel,
             viewpoint: viewpoint,
+            facets: facets,
             points: drawnVectorData.points?.length || 0,
             width: drawnVectorData.width,
             type: drawnVectorData.type
@@ -9130,6 +9133,7 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
             imageLabel: currentImageLabel,
             measurementCode: strokeLabel,
             viewpoint: viewpoint,
+            facets: facets,
             stroke: {
               points: canvasPoints,
               width: drawnVectorData.width || parseInt(brushSize.value) || 2

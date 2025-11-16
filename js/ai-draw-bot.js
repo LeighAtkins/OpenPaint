@@ -354,10 +354,12 @@ window.aiDrawBot = {
         });
 
         // Build payload from event
+        const imageTags = window.imageTags?.[event.imageLabel] || {};
         const payload = {
             projectId: event.projectId || document.getElementById('projectName')?.value || 'unknown',
             imageLabel: event.imageLabel,
-            viewpoint: event.viewpoint || (window.imageTags?.[event.imageLabel]?.viewpoint) || 'unknown',
+            viewpoint: event.viewpoint || imageTags.viewpoint || 'unknown',
+            facets: event.facets || imageTags.facets || null,
             measurementCode: event.measurementCode,
             stroke: {
                 points: event.stroke?.points || [],
