@@ -1,0 +1,395 @@
+{
+    "facets": {
+        "category": {
+            "options": [
+                "sofa",
+                "sectional",
+                "chair",
+                "ottoman",
+                "cushion",
+                "chaise",
+                "loveseat"
+            ],
+            "synonyms": {
+                "sofa": [
+                    "sofa",
+                    "couch",
+                    "settee"
+                ],
+                "sectional": [
+                    "sectional",
+                    "modular",
+                    "L-shaped",
+                    "corner"
+                ],
+                "chair": [
+                    "chair",
+                    "armchair",
+                    "single"
+                ],
+                "ottoman": [
+                    "ottoman",
+                    "footstool",
+                    "pouf"
+                ],
+                "cushion": [
+                    "cushion",
+                    "pillow"
+                ],
+                "chaise": [
+                    "chaise",
+                    "chaise lounge",
+                    "chaise longue"
+                ],
+                "loveseat": [
+                    "loveseat",
+                    "two-seater",
+                    "2-seater"
+                ]
+            }
+        },
+        "viewpoint": {
+            "options": [
+                "front",
+                "front-arm",
+                "side-arm",
+                "back",
+                "top",
+                "3/4"
+            ],
+            "synonyms": {
+                "front": [
+                    "front",
+                    "front-center",
+                    "front view",
+                    "front facing"
+                ],
+                "front-arm": [
+                    "front-arm",
+                    "front arm",
+                    "arm front"
+                ],
+                "side-arm": [
+                    "side-arm",
+                    "side arm",
+                    "side",
+                    "side view",
+                    "side facing"
+                ],
+                "back": [
+                    "back",
+                    "back view",
+                    "back facing",
+                    "rear"
+                ],
+                "top": [
+                    "top",
+                    "top view",
+                    "top down",
+                    "overhead",
+                    "above"
+                ],
+                "3/4": [
+                    "3/4",
+                    "three quarter",
+                    "three-quarter",
+                    "3 quarter",
+                    "three quarters"
+                ]
+            }
+        },
+        "arms": {
+            "options": [
+                "none",
+                "1-arm-left",
+                "1-arm-right",
+                "2-arms"
+            ],
+            "synonyms": {
+                "none": [
+                    "no arms",
+                    "armless",
+                    "no arm",
+                    "armless sofa"
+                ],
+                "1-arm-left": [
+                    "1 arm left",
+                    "one arm left",
+                    "left arm",
+                    "single arm left"
+                ],
+                "1-arm-right": [
+                    "1 arm right",
+                    "one arm right",
+                    "right arm",
+                    "single arm right"
+                ],
+                "2-arms": [
+                    "2 arms",
+                    "two arms",
+                    "double arm",
+                    "both arms",
+                    "arms"
+                ]
+            }
+        },
+        "armStyle": {
+            "options": [
+                "square",
+                "roll",
+                "round",
+                "track",
+                "slope"
+            ],
+            "synonyms": {
+                "square": [
+                    "square",
+                    "square arm",
+                    "boxy",
+                    "track arm",
+                    "straight arm",
+                    "box arm"
+                ],
+                "roll": [
+                    "roll",
+                    "rolled",
+                    "rolled arm",
+                    "roll arm"
+                ],
+                "round": [
+                    "round",
+                    "round arm",
+                    "curved arm",
+                    "rounded"
+                ],
+                "track": [
+                    "track",
+                    "track arm",
+                    "boxy",
+                    "square"
+                ],
+                "slope": [
+                    "slope",
+                    "sloped",
+                    "sloped arm",
+                    "slanted arm"
+                ]
+            }
+        },
+        "back": {
+            "options": [
+                "high",
+                "low",
+                "curved",
+                "tight",
+                "pillow",
+                "tufted"
+            ],
+            "synonyms": {
+                "high": [
+                    "high",
+                    "high back",
+                    "tall back",
+                    "tall",
+                    "high-backed"
+                ],
+                "low": [
+                    "low",
+                    "low back",
+                    "short back",
+                    "short",
+                    "low-backed"
+                ],
+                "curved": [
+                    "curved",
+                    "curved back",
+                    "curved-back",
+                    "bent"
+                ],
+                "tight": [
+                    "tight",
+                    "tight back",
+                    "tight-back",
+                    "fixed"
+                ],
+                "pillow": [
+                    "pillow",
+                    "pillow back",
+                    "pillowed",
+                    "loose"
+                ],
+                "tufted": [
+                    "tufted",
+                    "tufted back",
+                    "button",
+                    "buttoned"
+                ]
+            }
+        },
+        "cushions": {
+            "seat": {
+                "options": [
+                    "knife",
+                    "box",
+                    "half-knife",
+                    "T-cushion",
+                    "bench"
+                ],
+                "synonyms": {
+                    "knife": [
+                        "knife",
+                        "knife edge",
+                        "knife-edge",
+                        "knife edge seat"
+                    ],
+                    "box": [
+                        "box",
+                        "box cushion",
+                        "boxed",
+                        "box seat"
+                    ],
+                    "half-knife": [
+                        "half knife",
+                        "half-knife",
+                        "half knife edge",
+                        "semi knife"
+                    ],
+                    "T-cushion": [
+                        "T-cushion",
+                        "T cushion",
+                        "T seat",
+                        "tee cushion"
+                    ],
+                    "bench": [
+                        "bench",
+                        "bench seat",
+                        "bench cushion",
+                        "fixed seat"
+                    ]
+                }
+            },
+            "back": {
+                "options": [
+                    "knife",
+                    "box",
+                    "half-knife",
+                    "T-cushion",
+                    "bench"
+                ],
+                "synonyms": {
+                    "knife": [
+                        "knife",
+                        "knife edge",
+                        "knife-edge",
+                        "knife edge back"
+                    ],
+                    "box": [
+                        "box",
+                        "box cushion",
+                        "boxed",
+                        "box back"
+                    ],
+                    "half-knife": [
+                        "half knife",
+                        "half-knife",
+                        "half knife edge",
+                        "semi knife"
+                    ],
+                    "T-cushion": [
+                        "T-cushion",
+                        "T cushion",
+                        "T back",
+                        "tee cushion"
+                    ],
+                    "bench": [
+                        "bench",
+                        "bench back",
+                        "bench cushion",
+                        "fixed back"
+                    ]
+                }
+            }
+        },
+        "seats": {
+            "options": [
+                "1",
+                "2",
+                "3",
+                "4+"
+            ],
+            "synonyms": {
+                "1": [
+                    "1 seat",
+                    "one seat",
+                    "single seat"
+                ],
+                "2": [
+                    "2 seats",
+                    "two seats",
+                    "2-seater",
+                    "two-seater"
+                ],
+                "3": [
+                    "3 seats",
+                    "three seats",
+                    "3-seater",
+                    "three-seater"
+                ],
+                "4+": [
+                    "4 seats",
+                    "four seats",
+                    "4+",
+                    "4 or more",
+                    "multiple seats"
+                ]
+            }
+        },
+        "orientation": {
+            "options": [
+                "left",
+                "right"
+            ],
+            "synonyms": {
+                "left": [
+                    "left",
+                    "L left",
+                    "left facing",
+                    "left side"
+                ],
+                "right": [
+                    "right",
+                    "L right",
+                    "right facing",
+                    "right side"
+                ]
+            }
+        }
+    },
+    "patterns": [
+        {
+            "pattern": "(knife|knife-edge|knife edge)\\s+(edge\\s+)?(cushion|seat)",
+            "extract": {
+                "cushions.seat": "knife"
+            }
+        },
+        {
+            "pattern": "(half|semi)\\s+(knife|knife-edge|knife edge)",
+            "extract": {
+                "cushions.back": "half-knife"
+            }
+        },
+        {
+            "pattern": "(\\d+)\\s*(arm|arms)",
+            "extract": {
+                "arms": "$1-arms"
+            }
+        },
+        {
+            "pattern": "(sectional|L-shaped|corner)\\s+(L|left|right)",
+            "extract": {
+                "category": "sectional",
+                "orientation": "$2"
+            }
+        }
+    ]
+}
