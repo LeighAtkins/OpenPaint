@@ -107,30 +107,38 @@ console.log('[AI Draw Bot Integration] Script file loaded');
             `;
             panel.appendChild(header);
 
-            // Viewpoint selector
+            // Viewpoint selector (freeform input with datalist)
             const viewpointGroup = document.createElement('div');
             viewpointGroup.className = 'mb-3';
+            const viewpointDatalistId = 'aiViewpointOptions';
             viewpointGroup.innerHTML = `
                 <label class="block text-xs font-medium text-gray-700 mb-1">Viewpoint</label>
-                <select id="aiViewpointSelect" class="w-full px-2 py-1 text-sm border border-gray-300 rounded">
-                    <option value="">Select viewpoint...</option>
+                <input type="text" id="aiViewpointSelect" list="${viewpointDatalistId}" 
+                       class="w-full px-2 py-1 text-sm border border-gray-300 rounded" 
+                       placeholder="Type or select viewpoint...">
+                <datalist id="${viewpointDatalistId}">
                     ${viewpointOptions.map(v => `<option value="${v}">${v}</option>`).join('')}
-                </select>
+                </datalist>
                 <button id="aiClassifyBtn" class="mt-1 w-full px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600">
                     Auto-Classify Image
                 </button>
             `;
             panel.appendChild(viewpointGroup);
 
-            // Measurement code selector
+            // Measurement code selector (freeform input with datalist)
             const measurementGroup = document.createElement('div');
             measurementGroup.className = 'mb-3';
+            const measurementDatalistId = 'aiMeasurementOptions';
+            // Add common measurement codes to datalist
+            const commonCodes = [...measurementCodes, 'A', 'B', 'C', 'D', 'E', 'F', 'F1', 'F2', 'F3', 'F4'];
             measurementGroup.innerHTML = `
                 <label class="block text-xs font-medium text-gray-700 mb-1">Measurement Code</label>
-                <select id="aiMeasurementSelect" class="w-full px-2 py-1 text-sm border border-gray-300 rounded">
-                    <option value="">Select code...</option>
-                    ${measurementCodes.map(c => `<option value="${c}">${c}</option>`).join('')}
-                </select>
+                <input type="text" id="aiMeasurementSelect" list="${measurementDatalistId}" 
+                       class="w-full px-2 py-1 text-sm border border-gray-300 rounded" 
+                       placeholder="Type or select code (e.g., A1, A2, B, F1)...">
+                <datalist id="${measurementDatalistId}">
+                    ${commonCodes.map(c => `<option value="${c}">${c}</option>`).join('')}
+                </datalist>
             `;
             panel.appendChild(measurementGroup);
 
@@ -202,20 +210,25 @@ console.log('[AI Draw Bot Integration] Script file loaded');
                 btn.disabled = !(hasViewpoint && hasMeasurement);
             }
 
+            // Use 'input' event for text inputs (fires on typing), 'change' for when focus leaves
+            viewpointSelect.addEventListener('input', function() {
+                updateSuggestionButtonState();
+            });
             viewpointSelect.addEventListener('change', function() {
                 updateSuggestionButtonState();
                 // Save viewpoint to imageTags when changed
                 const imageLabel = window.currentImageLabel;
-                if (imageLabel && viewpointSelect.value) {
+                if (imageLabel && viewpointSelect.value.trim()) {
                     if (!window.imageTags) window.imageTags = {};
                     if (!window.imageTags[imageLabel]) window.imageTags[imageLabel] = {};
-                    window.imageTags[imageLabel].viewpoint = viewpointSelect.value;
+                    window.imageTags[imageLabel].viewpoint = viewpointSelect.value.trim();
                     console.log('[AI Integration] Saved viewpoint:', {
                         imageLabel: imageLabel,
-                        viewpoint: viewpointSelect.value
+                        viewpoint: viewpointSelect.value.trim()
                     });
                 }
             });
+            measurementSelect.addEventListener('input', updateSuggestionButtonState);
             measurementSelect.addEventListener('change', updateSuggestionButtonState);
 
             // Load saved viewpoint if available and auto-classify on image switch
@@ -295,10 +308,11 @@ console.log('[AI Draw Bot Integration] Script file loaded');
                 
                 // Auto-set viewpoint selector based on classification result
                 const viewpointSelect = document.getElementById('aiViewpointSelect');
-                const selectedViewpoint = result.viewpoint && viewpointOptions.includes(result.viewpoint) 
+                // Accept any viewpoint from result, or try to find one in tags
+                const selectedViewpoint = result.viewpoint 
                     ? result.viewpoint 
                     : (result.tags && result.tags.length > 0 
-                        ? result.tags.find(t => viewpointOptions.includes(t)) 
+                        ? result.tags.find(t => t && t.trim()) 
                         : null);
                 
                 if (selectedViewpoint) {
@@ -313,7 +327,8 @@ console.log('[AI Draw Bot Integration] Script file loaded');
                             viewpoint: selectedViewpoint
                         });
                     }
-                    // Trigger change event to update UI state
+                    // Trigger input and change events to update UI state
+                    viewpointSelect.dispatchEvent(new Event('input'));
                     viewpointSelect.dispatchEvent(new Event('change'));
                 }
 
@@ -382,8 +397,8 @@ console.log('[AI Draw Bot Integration] Script file loaded');
                     const measurementSelect = document.getElementById('aiMeasurementSelect');
                     const topPrediction = predictions[0];
                     
-                    // Set the highest confidence measurement as default
-                    if (topPrediction.code && measurementCodes.includes(topPrediction.code)) {
+                    // Set the highest confidence measurement as default (accept any code, not just preset ones)
+                    if (topPrediction.code) {
                         measurementSelect.value = topPrediction.code;
                         measurementSelect.dispatchEvent(new Event('change'));
                         
@@ -428,11 +443,11 @@ console.log('[AI Draw Bot Integration] Script file loaded');
             const measurementSelect = document.getElementById('aiMeasurementSelect');
             const statusEl = document.getElementById('aiSuggestionStatus');
 
-            const viewpoint = viewpointSelect.value;
-            const measurementCode = measurementSelect.value;
+            const viewpoint = viewpointSelect.value.trim();
+            const measurementCode = measurementSelect.value.trim();
 
             if (!viewpoint || !measurementCode) {
-                alert('Please select both viewpoint and measurement code');
+                alert('Please enter both viewpoint and measurement code');
                 return;
             }
 
@@ -694,8 +709,9 @@ console.log('[AI Draw Bot Integration] Script file loaded');
                     
                     if (imageLabel && window.imageTags && window.imageTags[imageLabel]) {
                         const tags = window.imageTags[imageLabel];
-                        if (viewpointSelect && tags.viewpoint && viewpointOptions.includes(tags.viewpoint)) {
+                        if (viewpointSelect && tags.viewpoint) {
                             viewpointSelect.value = tags.viewpoint;
+                            viewpointSelect.dispatchEvent(new Event('input'));
                             viewpointSelect.dispatchEvent(new Event('change'));
                             
                             // Auto-predict measurements for this viewpoint
