@@ -455,19 +455,34 @@ window.aiDrawBot = {
                 });
 
                 if (response.ok) {
+                    const result = await response.json().catch(() => ({}));
                     sent++;
-                    console.log('[aiDrawBot] Feedback sent successfully:', item.payload.measurementCode);
+                    console.log('[aiDrawBot] Feedback sent successfully:', {
+                        measurementCode: item.payload.measurementCode,
+                        feedbackId: result.feedbackId,
+                        response: result
+                    });
                 } else {
+                    const errorText = await response.text().catch(() => response.statusText);
                     item.attempts++;
                     item.lastAttempt = new Date().toISOString();
                     remaining.push(item);
-                    console.warn('[aiDrawBot] Feedback submission failed:', response.statusText);
+                    console.warn('[aiDrawBot] Feedback submission failed:', {
+                        status: response.status,
+                        statusText: response.statusText,
+                        error: errorText,
+                        payload: item.payload
+                    });
                 }
             } catch (error) {
                 item.attempts++;
                 item.lastAttempt = new Date().toISOString();
                 remaining.push(item);
-                console.error('[aiDrawBot] Feedback submission error:', error);
+                console.error('[aiDrawBot] Feedback submission error:', {
+                    error: error.message,
+                    stack: error.stack,
+                    payload: item.payload
+                });
             }
         }
 

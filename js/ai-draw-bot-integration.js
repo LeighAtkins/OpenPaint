@@ -589,12 +589,18 @@ console.log('[AI Draw Bot Integration] Script file loaded');
 
             try {
                 const result = await window.aiDrawBot.flushFeedbackQueue();
-                statusEl.textContent = `Sent: ${result.sent}, Failed: ${result.failed}, Queued: ${result.remaining}`;
+                console.log('[AI Integration] Sync result:', result);
+                statusEl.textContent = `Sent: ${result.sent}, Failed: ${result.failed}, Remaining: ${result.remaining}`;
                 
                 if (result.sent > 0) {
+                    statusEl.textContent = `✓ Sent ${result.sent} feedback item(s) successfully`;
                     setTimeout(() => {
                         statusEl.textContent = 'Ready to learn';
                     }, 3000);
+                } else if (result.failed > 0) {
+                    statusEl.textContent = `⚠ ${result.failed} failed, ${result.remaining} queued. Check console for details.`;
+                } else if (result.remaining === 0) {
+                    statusEl.textContent = 'No feedback to sync';
                 }
             } catch (error) {
                 console.error('[AI Integration] Sync error:', error);

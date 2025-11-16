@@ -1,0 +1,73 @@
+{
+    "version": "1.0.0",
+    "taxonomy": {
+        "measurementCodes": {
+            "A1": "Top of sofa seam",
+            "A2": "Inner arm seam",
+            "A3": "Outer arm seam",
+            "A4": "Front arm to back arm",
+            "A5": "Bottom seam"
+        },
+        "viewpoints": [
+            "front-center",
+            "front-arm",
+            "side-arm",
+            "back-view"
+        ],
+        "armShapes": [
+            "round-arm",
+            "square-arm",
+            "tuxedo-arm"
+        ],
+        "backHeights": [
+            "high-back",
+            "short-back",
+            "mid-back"
+        ]
+    },
+    "strokes": [
+        {
+            "id": "example-1",
+            "measurementCode": "A1",
+            "viewpoint": "front-center",
+            "armShape": "round-arm",
+            "backHeight": "high-back",
+            "direction": "horizontal",
+            "priority": 1,
+            "points": [
+                {
+                    "x": 0.1,
+                    "y": 0.2,
+                    "t": 0
+                },
+                {
+                    "x": 0.3,
+                    "y": 0.2,
+                    "t": 100
+                },
+                {
+                    "x": 0.5,
+                    "y": 0.2,
+                    "t": 200
+                },
+                {
+                    "x": 0.7,
+                    "y": 0.2,
+                    "t": 300
+                },
+                {
+                    "x": 0.9,
+                    "y": 0.2,
+                    "t": 400
+                }
+            ],
+            "width": 0.002,
+            "pressure": 0.8
+        }
+    ],
+    "metadata": {
+        "lastUpdated": "2024-01-01T00:00:00Z",
+        "totalStrokes": 1,
+        "source": "manual"
+    }
+}
