@@ -9073,6 +9073,60 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
       // **NEW**: Invalidate anchor cache when stroke is completed
       window.invalidateAnchorCache(currentImageLabel);
       //             console.log(`[Save State] Moved vector data from ${tempStrokeKey} to ${strokeLabel}`);
+
+      // **AI FEEDBACK**: Queue stroke for feedback if AI Draw Bot is available and enabled
+      const feedbackEnabled = document.getElementById('aiFeedbackEnabled');
+      if (typeof window.aiDrawBot !== 'undefined' && window.aiDrawBot.queueFeedback && drawnVectorData && drawnVectorData.points && (!feedbackEnabled || feedbackEnabled.checked)) {
+        try {
+          const canvas = document.getElementById('canvas');
+          const originalDims = window.originalImageDimensions?.[currentImageLabel] || { width: canvas?.width || 800, height: canvas?.height || 600 };
+          
+          // Convert image-relative points to canvas coordinates for feedback
+          const canvasPoints = drawnVectorData.points.map(point => {
+            const scale = window.imageScaleByLabel?.[currentImageLabel] || 1.0;
+            const position = window.imagePositionByLabel?.[currentImageLabel] || { x: 0, y: 0 };
+            const centerX = (canvas.width - originalDims.width * scale) / 2;
+            const centerY = (canvas.height - originalDims.height * scale) / 2;
+            return {
+              x: point.x * originalDims.width * scale + position.x + centerX,
+              y: point.y * originalDims.height * scale + position.y + centerY,
+              t: point.time || 0
+            };
+          });
+
+          console.log('[Paint.js][AI Feedback] Queueing stroke for AI learning:', {
+            imageLabel: currentImageLabel,
+            measurementCode: strokeLabel,
+            points: drawnVectorData.points?.length || 0
+          });
+          // queueFeedback is async; attach logging for diagnostics
+          window.aiDrawBot.queueFeedback({
+            imageLabel: currentImageLabel,
+            measurementCode: strokeLabel,
+            stroke: {
+              points: canvasPoints,
+              width: drawnVectorData.width || parseInt(brushSize.value) || 2
+            },
+            source: 'manual',
+            meta: {
+              canvas: {
+                width: canvas?.width || 800,
+                height: canvas?.height || 600
+              },
+              originalDimensions: originalDims,
+              type: drawnVectorData.type || 'freehand'
+            }
+          })
+          .then(() => {
+            console.log('[Paint.js][AI Feedback] queueFeedback resolved. Current queue size:', window.aiFeedbackQueue?.length || 0);
+          })
+          .catch(err => {
+            console.warn('[Paint.js] Failed to queue feedback:', err);
+          });
+        } catch (e) {
+          console.warn('[Paint.js] Failed to queue feedback for stroke:', e);
+        }
+      }
     } else if (strokeLabel) {
       console.warn(`[Save State] No temporary vector data found at ${tempStrokeKey} for stroke ${strokeLabel}`);
       // Attempt to find vector data if it somehow got assigned to the suggested label during draw (fallback)
@@ -10090,10 +10144,17 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
     pendingResizeWidth = width;
     pendingResizeHeight = height;
 
+    // Debounce resize calls to prevent multiple rapid calls
+    // Only queue one resize operation at a time
     if (!pendingResizeFrame) {
       pendingResizeFrame = requestAnimationFrame(() => {
         pendingResizeFrame = null;
-        applyResize(pendingResizeWidth, pendingResizeHeight);
+        // Only apply if dimensions actually changed or this is the first call
+        if (pendingResizeWidth !== null && pendingResizeHeight !== null) {
+          applyResize(pendingResizeWidth, pendingResizeHeight);
+        }
+        pendingResizeWidth = null;
+        pendingResizeHeight = null;
       });
     }
   }
@@ -10113,7 +10174,8 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
   };
   waitForToolbarAndResize();
   
-  window.addEventListener('resize', resizeCanvas);
+  // NOTE: Resize listener will be set up after handleWindowResize function is defined (see line 16830)
+  // This prevents duplicate resize calls by consolidating canvas resize and sidebar checking
 
   // Drawing state - use references to uiState for centralized management
   let isDrawing = window.paintApp.uiState.isDrawing;
@@ -16821,31 +16883,41 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
     }
   }
     
-  // Adjust canvas size when window resizes to account for sidebars
-  window.addEventListener('resize', () => {
-    resizeCanvas();
-        
+  // Sidebar overlap checking function (called after resize)
+  function checkSidebarOverlap() {
     // Check if sidebars are overlapping canvas and adjust if needed
     const canvasRect = canvas.getBoundingClientRect();
-    const imageSidebar = document.getElementById('imageSidebar'); // Get elements directly
+    const imageSidebar = document.getElementById('imageSidebar');
     const strokeSidebar = document.getElementById('strokeSidebar');
 
-    if (imageSidebar && strokeSidebar) { // Check if elements exist
+    if (imageSidebar && strokeSidebar) {
       const imageSidebarRect = imageSidebar.getBoundingClientRect();
       const strokeSidebarRect = strokeSidebar.getBoundingClientRect();
             
       // If image sidebar is overlapping canvas on the right
-      if (imageSidebarRect.left < canvasRect.right && imageSidebarRect.right > canvasRect.left) { // Added check for actual overlap
-        imageSidebar.style.left = 'auto'; // Reset left
+      if (imageSidebarRect.left < canvasRect.right && imageSidebarRect.right > canvasRect.left) {
+        imageSidebar.style.left = 'auto';
         imageSidebar.style.right = '20px';
       }
             
       // If stroke sidebar is overlapping canvas on the left
-      if (strokeSidebarRect.right > canvasRect.left && strokeSidebarRect.left < canvasRect.right) { // Added check for actual overlap
+      if (strokeSidebarRect.right > canvasRect.left && strokeSidebarRect.left < canvasRect.right) {
         strokeSidebar.style.left = '20px';
       }
     }
-  });
+  }
+  
+  // Consolidated resize handler - combines canvas resize and sidebar checking
+  // This replaces the duplicate resize listener that was calling resizeCanvas directly
+  function handleWindowResize() {
+    resizeCanvas();
+    // Check sidebar overlap after canvas resize completes
+    requestAnimationFrame(checkSidebarOverlap);
+  }
+  
+  // Set up the single consolidated resize listener (replaces duplicate at line 10095)
+  // This prevents applyResize from being called twice on every window resize
+  window.addEventListener('resize', handleWindowResize);
 
   // Function to find an optimal position for a label
   function findOptimalLabelPosition(labelRect, anchorPoint, strokeInfo) {
