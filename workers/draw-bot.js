@@ -10,9 +10,20 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     
-    // Route to /api/draw-bot endpoint
-    if (url.pathname !== '/api/draw-bot' && url.pathname !== '/') {
-      return new Response('Not Found', { status: 404 });
+    // Route to /api/draw-bot endpoint or root
+    // Support both /api/draw-bot and / paths for flexibility
+    const isValidPath = url.pathname === '/api/draw-bot' || 
+                        url.pathname === '/' || 
+                        url.pathname === '/api/draw-bot/';
+    
+    if (!isValidPath) {
+      return new Response(
+        JSON.stringify({ error: 'Not Found', path: url.pathname }),
+        { 
+          status: 404,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
     }
 
     // CORS headers for Vercel frontend
