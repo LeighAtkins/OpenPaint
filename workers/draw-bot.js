@@ -157,18 +157,11 @@ async function predictMeasurements(viewpointTag, imageHash, imageBase64, viewpor
       const strokeData = await kvNamespace.get(key, { type: 'json' });
       if (strokeData) {
         // Scale points to viewport
-        const scaledPoints = strokeData.points.map(point => ({
-          x: point.x * (viewport?.width || 800),
-          y: point.y * (viewport?.height || 600),
-          t: point.t
-        }));
+        const scaled = scaleStrokeToViewport(strokeData, viewport);
         
         predictions.push({
           code,
-          stroke: {
-            points: scaledPoints,
-            width: strokeData.width * Math.min(viewport?.width || 800, viewport?.height || 600)
-          },
+          stroke: scaled,
           confidence: strokeData.confidence || 0.8
         });
       }
@@ -209,23 +202,53 @@ async function getStrokeSuggestion(measurementCode, viewpointTag, viewport, kvNa
 
     // Scale points to viewport dimensions
     // Points are stored normalized (0-1), so scale them
-    const scaledPoints = strokeData.points.map(point => ({
-      x: point.x * (viewport?.width || 800),
-      y: point.y * (viewport?.height || 600),
-      t: point.t
-    }));
+    const scaled = scaleStrokeToViewport(strokeData, viewport);
 
     return {
       strokeId: strokeData.id || `suggested-${Date.now()}`,
       measurementCode: strokeData.measurementCode || measurementCode,
       viewpoint: strokeData.viewpoint || viewpointTag,
       confidence: strokeData.confidence || 0.8,
-      points: scaledPoints,
-      width: strokeData.width * Math.min(viewport?.width || 800, viewport?.height || 600)
+      points: scaled.points,
+      width: scaled.width
     };
   } catch (error) {
     console.error('Error fetching stroke suggestion:', error);
     return null;
   }
+}
+
+function clamp01(value) {
+  if (typeof value !== 'number' || Number.isNaN(value)) return 0;
+  if (value < 0) return 0;
+  if (value > 1) return 1;
+  return value;
+}
+
+function clampPositive(value, fallback = 0) {
+  if (typeof value !== 'number' || Number.isNaN(value)) return fallback;
+  return Math.max(0, value);
+}
+
+function scaleStrokeToViewport(strokeData, viewport) {
+  const widthPx = Math.max(1, viewport?.width || 800);
+  const heightPx = Math.max(1, viewport?.height || 600);
+  const minDim = Math.max(1, Math.min(widthPx, heightPx));
+
+  const normalizedPoints = Array.isArray(strokeData.points) ? strokeData.points : [];
+  const scaledPoints = normalizedPoints.map(point => ({
+    x: clamp01(point?.x) * widthPx,
+    y: clamp01(point?.y) * heightPx,
+    t: point?.t ?? 0
+  }));
+
+  const normalizedWidth = clampPositive(strokeData.width || 0.01, 0.01);
+  const widthRatio = normalizedWidth <= 1 ? normalizedWidth : normalizedWidth / minDim;
+  const scaledWidth = Math.max(1, widthRatio * minDim);
+
+  return {
+    points: scaledPoints,
+    width: scaledWidth
+  };
 }
 
