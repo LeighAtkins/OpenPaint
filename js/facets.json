@@ -62,7 +62,8 @@
                     "front",
                     "front-center",
                     "front view",
-                    "front facing"
+                    "front facing",
+                    "front view"
                 ],
                 "front-arm": [
                     "front-arm",
@@ -154,7 +155,10 @@
                     "roll",
                     "rolled",
                     "rolled arm",
-                    "roll arm"
+                    "roll arm",
+                    "english roll arm",
+                    "english roll",
+                    "roll arm sofa"
                 ],
                 "round": [
                     "round",
