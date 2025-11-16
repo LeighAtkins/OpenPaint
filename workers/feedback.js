@@ -134,10 +134,22 @@ export default {
       // Store raw feedback in KV
       const feedbackKey = `feedback:${measurementCode}:${viewpoint || 'unknown'}:${feedbackId}`;
       try {
-        await env.SOFA_TAGS.put(feedbackKey, JSON.stringify(feedbackEntry));
+        console.log(`[Feedback Worker] Attempting to store feedback entry: ${feedbackKey}`);
+        console.log(`[Feedback Worker] KV namespace available:`, !!env.SOFA_TAGS);
+        const kvResult = await env.SOFA_TAGS.put(feedbackKey, JSON.stringify(feedbackEntry));
+        console.log(`[Feedback Worker] KV put result:`, kvResult);
         console.log(`[Feedback Worker] Stored feedback entry: ${feedbackKey}`);
+        
+        // Verify it was stored
+        const verify = await env.SOFA_TAGS.get(feedbackKey);
+        console.log(`[Feedback Worker] Verification read:`, verify ? 'SUCCESS' : 'FAILED - key not found');
       } catch (kvError) {
         console.error(`[Feedback Worker] Failed to store feedback in KV:`, kvError);
+        console.error(`[Feedback Worker] Error details:`, {
+          message: kvError.message,
+          stack: kvError.stack,
+          name: kvError.name
+        });
         return new Response(
           JSON.stringify({ 
             error: 'Failed to store feedback',
