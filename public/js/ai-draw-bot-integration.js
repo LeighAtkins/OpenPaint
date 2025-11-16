@@ -243,10 +243,15 @@ console.log('[AI Draw Bot Integration] Script file loaded');
                         viewpointSelect.value = tags.viewpoint;
                         viewpointSelect.dispatchEvent(new Event('change'));
                         
-                        // Auto-predict measurements if viewpoint is set
+                        // Auto-predict measurements if viewpoint is set AND measurement code is provided
+                        // (predictMeasurementsForViewpoint will check for measurement code)
                         if (tags.viewpoint) {
                             setTimeout(() => {
-                                predictMeasurementsForViewpoint(tags.viewpoint);
+                                // Only auto-predict if measurement code is already set
+                                const measurementSelect = document.getElementById('aiMeasurementSelect');
+                                if (measurementSelect?.value?.trim()) {
+                                    predictMeasurementsForViewpoint(tags.viewpoint);
+                                }
                             }, 300);
                         }
                     }
@@ -370,11 +375,15 @@ console.log('[AI Draw Bot Integration] Script file loaded');
                 updateTagsDisplay();
                 
                 // If viewpoint was set, optionally trigger measurement prediction
+                // Only if measurement code is also provided (predictMeasurementsForViewpoint will check)
                 if (viewpointSelect.value) {
-                    // Auto-predict measurements after a short delay
-                    setTimeout(() => {
-                        predictMeasurementsForViewpoint(viewpointSelect.value);
-                    }, 500);
+                    const measurementSelect = document.getElementById('aiMeasurementSelect');
+                    if (measurementSelect?.value?.trim()) {
+                        // Auto-predict measurements after a short delay
+                        setTimeout(() => {
+                            predictMeasurementsForViewpoint(viewpointSelect.value);
+                        }, 500);
+                    }
                 }
             } catch (error) {
                 console.error('[AI Integration] Classification error:', error);
@@ -389,6 +398,15 @@ console.log('[AI Draw Bot Integration] Script file loaded');
             const imageLabel = window.currentImageLabel;
             if (!imageLabel || !viewpoint) return;
 
+            // Guard: Skip prediction if measurement code is not provided (worker requires both)
+            const measurementSelect = document.getElementById('aiMeasurementSelect');
+            const measurementCode = measurementSelect?.value?.trim() || null;
+            
+            if (!measurementCode) {
+                // Silently skip - don't show error, just don't make the call
+                return;
+            }
+
             const statusEl = document.getElementById('aiSuggestionStatus');
             const canvas = document.getElementById('canvas');
             const viewport = {
@@ -400,10 +418,6 @@ console.log('[AI Draw Bot Integration] Script file loaded');
                 statusEl.textContent = 'Predicting measurements...';
                 // Normalize viewpoint before calling predictMeasurements
                 const normalizedViewpoint = window.aiDrawBot?.normalizeViewpoint?.(viewpoint) || viewpoint;
-                
-                // Get measurement code from input if available (worker requires it)
-                const measurementSelect = document.getElementById('aiMeasurementSelect');
-                const measurementCode = measurementSelect?.value?.trim() || null;
                 
                 const predictions = await window.aiDrawBot.predictMeasurements(
                     normalizedViewpoint, 
@@ -434,21 +448,38 @@ console.log('[AI Draw Bot Integration] Script file loaded');
                                 measurementCode: topPrediction.code
                             };
                             
-                            // Enable accept/dismiss buttons
-                            document.getElementById('aiAcceptBtn').disabled = false;
-                            document.getElementById('aiDismissBtn').disabled = false;
+                            // Enable accept/dismiss buttons only when suggestion exists
+                            const acceptBtn = document.getElementById('aiAcceptBtn');
+                            const dismissBtn = document.getElementById('aiDismissBtn');
+                            if (acceptBtn) acceptBtn.disabled = false;
+                            if (dismissBtn) dismissBtn.disabled = false;
                             
                             // Start rendering ghost stroke
                             startGhostStrokeRendering(currentSuggestion);
                             
                             statusEl.textContent = `Predicted: ${topPrediction.code} (${((topPrediction.confidence || 0) * 100).toFixed(0)}% confidence)`;
                         } else {
+                            // No stroke data, disable buttons
+                            const acceptBtn = document.getElementById('aiAcceptBtn');
+                            const dismissBtn = document.getElementById('aiDismissBtn');
+                            if (acceptBtn) acceptBtn.disabled = true;
+                            if (dismissBtn) dismissBtn.disabled = true;
                             statusEl.textContent = `Predicted: ${predictions.map(p => p.code).join(', ')}`;
                         }
                     } else {
+                        // No code, disable buttons
+                        const acceptBtn = document.getElementById('aiAcceptBtn');
+                        const dismissBtn = document.getElementById('aiDismissBtn');
+                        if (acceptBtn) acceptBtn.disabled = true;
+                        if (dismissBtn) dismissBtn.disabled = true;
                         statusEl.textContent = `Found ${predictions.length} prediction(s)`;
                     }
                 } else {
+                    // No predictions, disable buttons
+                    const acceptBtn = document.getElementById('aiAcceptBtn');
+                    const dismissBtn = document.getElementById('aiDismissBtn');
+                    if (acceptBtn) acceptBtn.disabled = true;
+                    if (dismissBtn) dismissBtn.disabled = true;
                     statusEl.textContent = 'No predictions available';
                 }
             } catch (error) {
@@ -490,17 +521,24 @@ console.log('[AI Draw Bot Integration] Script file loaded');
                     viewport
                 );
 
-                if (!suggestion) {
+                if (!suggestion || !suggestion.points) {
                     statusEl.textContent = 'No suggestion found for this combination';
+                    // Ensure buttons are disabled when no suggestion
+                    const acceptBtn = document.getElementById('aiAcceptBtn');
+                    const dismissBtn = document.getElementById('aiDismissBtn');
+                    if (acceptBtn) acceptBtn.disabled = true;
+                    if (dismissBtn) dismissBtn.disabled = true;
                     return;
                 }
 
                 currentSuggestion = suggestion;
                 statusEl.textContent = `Suggestion ready (${(suggestion.confidence * 100).toFixed(0)}% confidence)`;
 
-                // Enable accept/dismiss buttons
-                document.getElementById('aiAcceptBtn').disabled = false;
-                document.getElementById('aiDismissBtn').disabled = false;
+                // Enable accept/dismiss buttons only when suggestion exists
+                const acceptBtn = document.getElementById('aiAcceptBtn');
+                const dismissBtn = document.getElementById('aiDismissBtn');
+                if (acceptBtn) acceptBtn.disabled = false;
+                if (dismissBtn) dismissBtn.disabled = false;
 
                 // Start rendering ghost stroke
                 startGhostStrokeRendering(suggestion);
@@ -521,8 +559,14 @@ console.log('[AI Draw Bot Integration] Script file loaded');
 
             // Render ghost stroke periodically
             ghostStrokeInterval = setInterval(() => {
-                if (!currentSuggestion) {
+                if (!currentSuggestion || !currentSuggestion.points) {
                     clearInterval(ghostStrokeInterval);
+                    ghostStrokeInterval = null;
+                    // Ensure buttons are disabled when suggestion is cleared
+                    const acceptBtn = document.getElementById('aiAcceptBtn');
+                    const dismissBtn = document.getElementById('aiDismissBtn');
+                    if (acceptBtn) acceptBtn.disabled = true;
+                    if (dismissBtn) dismissBtn.disabled = true;
                     return;
                 }
 
@@ -551,21 +595,38 @@ console.log('[AI Draw Bot Integration] Script file loaded');
          * Accept the current suggestion
          */
         function acceptSuggestion() {
-            if (!currentSuggestion) return;
+            // Guard against null or missing points
+            if (!currentSuggestion || !currentSuggestion.points) {
+                console.warn('[AI Integration] No suggestion available to accept.');
+                // Ensure buttons are disabled
+                const acceptBtn = document.getElementById('aiAcceptBtn');
+                const dismissBtn = document.getElementById('aiDismissBtn');
+                if (acceptBtn) acceptBtn.disabled = true;
+                if (dismissBtn) dismissBtn.disabled = true;
+                return;
+            }
+
+            // Save suggestion data before clearing it
+            const suggestionData = {
+                points: currentSuggestion.points,
+                width: currentSuggestion.width,
+                confidence: currentSuggestion.confidence || 0.8,
+                measurementCode: currentSuggestion.measurementCode
+            };
 
             const imageLabel = window.currentImageLabel;
             const measurementSelect = document.getElementById('aiMeasurementSelect');
-            const measurementCode = measurementSelect.value;
+            const measurementCode = measurementSelect?.value || suggestionData.measurementCode;
             const viewpointSelect = document.getElementById('aiViewpointSelect');
-            const viewpoint = viewpointSelect.value;
+            const viewpoint = viewpointSelect?.value || 'unknown';
 
-            // Stop ghost rendering
+            // Stop ghost rendering (this clears currentSuggestion)
             dismissSuggestion();
 
-            // Accept the suggestion
+            // Accept the suggestion using saved data
             window.aiDrawBot.acceptSuggestion(
-                currentSuggestion.points,
-                currentSuggestion.width,
+                suggestionData.points,
+                suggestionData.width,
                 imageLabel,
                 measurementCode
             );
@@ -579,8 +640,8 @@ console.log('[AI Draw Bot Integration] Script file loaded');
                     measurementCode,
                     viewpoint: viewpoint || (window.imageTags?.[imageLabel]?.viewpoint) || 'unknown',
                     stroke: {
-                        points: currentSuggestion.points,
-                        width: currentSuggestion.width
+                        points: suggestionData.points,
+                        width: suggestionData.width
                     },
                     source: 'accepted',
                     meta: {
@@ -588,7 +649,7 @@ console.log('[AI Draw Bot Integration] Script file loaded');
                             width: canvas?.width || 800,
                             height: canvas?.height || 600
                         },
-                        confidence: currentSuggestion.confidence
+                        confidence: suggestionData.confidence
                     }
                 }).catch(err => {
                     console.warn('[AI Integration] Failed to queue feedback:', err);
@@ -596,10 +657,7 @@ console.log('[AI Draw Bot Integration] Script file loaded');
             }
 
             const statusEl = document.getElementById('aiSuggestionStatus');
-            statusEl.textContent = 'Suggestion accepted!';
-
-            // Clear suggestion
-            currentSuggestion = null;
+            if (statusEl) statusEl.textContent = 'Suggestion accepted!';
         }
 
         /**
@@ -738,10 +796,14 @@ console.log('[AI Draw Bot Integration] Script file loaded');
                             viewpointSelect.dispatchEvent(new Event('change'));
                             
                             // Auto-predict measurements for this viewpoint
+                            // Only if measurement code is also provided (predictMeasurementsForViewpoint will check)
                             if (tags.viewpoint) {
-                                setTimeout(() => {
-                                    predictMeasurementsForViewpoint(tags.viewpoint);
-                                }, 300);
+                                const measurementSelect = document.getElementById('aiMeasurementSelect');
+                                if (measurementSelect?.value?.trim()) {
+                                    setTimeout(() => {
+                                        predictMeasurementsForViewpoint(tags.viewpoint);
+                                    }, 300);
+                                }
                             }
                         }
                     } else if (imageLabel && window.originalImages && window.originalImages[imageLabel]) {
