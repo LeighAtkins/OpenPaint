@@ -541,6 +541,49 @@
   }
 
   /**
+   * Ensure description starts with a category (sofa/armchair/chaise/loveseat)
+   */
+  function ensureCategoryFirst(text, parsedResult) {
+    const categories = ['sofa', 'armchair', 'chaise', 'loveseat', 'chair', 'sectional', 'ottoman', 'cushion'];
+    const words = text.trim().toLowerCase().split(/\s+/);
+    
+    // Check if first word is a category
+    const firstWord = words[0];
+    if (categories.includes(firstWord)) {
+      return text; // Already starts with category
+    }
+    
+    // Try to get category from parsed facets
+    const category = parsedResult?.facets?.category;
+    if (category && categories.includes(category.toLowerCase())) {
+      // Prepend category if not already present
+      if (!words.includes(category.toLowerCase())) {
+        return `${category} ${text}`;
+      }
+      // If category exists but not first, move it to front
+      const withoutCategory = words.filter(w => w !== category.toLowerCase()).join(' ');
+      return `${category} ${withoutCategory}`;
+    }
+    
+    // Fallback: try to get from last saved description
+    try {
+      const lastBase = localStorage.getItem('nlTagLastBaseDescription');
+      if (lastBase) {
+        const lastWords = lastBase.toLowerCase().split(/\s+/);
+        const lastCategory = lastWords.find(w => categories.includes(w));
+        if (lastCategory && !words.includes(lastCategory)) {
+          return `${lastCategory} ${text}`;
+        }
+      }
+    } catch (e) {
+      // Ignore localStorage errors
+    }
+    
+    // If no category found, return as-is (user can fix manually)
+    return text;
+  }
+
+  /**
    * Save tags to imageTags and update viewpoint
    */
   async function saveTags(text, parsedResult) {
@@ -550,18 +593,37 @@
       return;
     }
 
+    // Ensure category-first naming
+    const normalizedText = ensureCategoryFirst(text, parsedResult);
+    if (normalizedText !== text) {
+      // Update input if we modified the text
+      const nameBox = document.getElementById('currentImageNameBox');
+      if (nameBox) {
+        nameBox.value = normalizedText;
+        // Re-parse with normalized text
+        if (window.nlTagParser) {
+          const reParsed = await window.nlTagParser.parseTags(normalizedText);
+          if (reParsed) {
+            parsedResult = reParsed;
+          }
+        }
+      }
+    }
+
     // Initialize imageTags if needed
     if (!window.imageTags) window.imageTags = {};
     if (!window.imageTags[imageLabel]) window.imageTags[imageLabel] = {};
 
-    // Save viewpoint
+    // Save viewpoint (normalize to avoid duplicates)
     if (parsedResult.viewpoint) {
-      window.imageTags[imageLabel].viewpoint = parsedResult.viewpoint;
+      const normalizedViewpoint = window.aiDrawBot?.normalizeViewpoint?.(parsedResult.viewpoint) || parsedResult.viewpoint;
+      window.imageTags[imageLabel].viewpoint = normalizedViewpoint;
       
       // Update viewpoint dropdown if it exists
       const viewpointSelect = document.getElementById('aiViewpointSelect');
       if (viewpointSelect) {
-        viewpointSelect.value = parsedResult.viewpoint;
+        viewpointSelect.value = normalizedViewpoint;
+        viewpointSelect.dispatchEvent(new Event('input'));
         viewpointSelect.dispatchEvent(new Event('change'));
       }
     }
@@ -572,10 +634,10 @@
 
     // Also save to customImageNames (for compatibility with existing image name system)
     if (!window.customImageNames) window.customImageNames = {};
-    window.customImageNames[imageLabel] = text;
+    window.customImageNames[imageLabel] = normalizedText;
 
     // Extract and save base description (without viewpoint) for next image
-    const baseDescription = extractBaseDescription(text);
+    const baseDescription = extractBaseDescription(normalizedText);
     if (baseDescription) {
       try {
         localStorage.setItem('nlTagLastBaseDescription', baseDescription);
