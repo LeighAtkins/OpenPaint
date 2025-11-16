@@ -51,87 +51,74 @@
   }
 
   /**
-   * Create the NL tag input UI - positioned above canvas controls
+   * Create the NL tag UI - integrates with existing Image name field
    */
   function createNLTagUI() {
-    // Check if already exists
-    if (document.getElementById('nlTagInputContainer')) {
+    // Check if already initialized
+    if (window.__nlTagUIInitialized) {
       return;
     }
 
-    const container = document.createElement('div');
-    container.id = 'nlTagInputContainer';
-    container.className = 'floating-panel fixed rounded-2xl px-3 py-2 transition-all duration-300 bg-white shadow-lg border border-slate-200';
-    // Position above canvas controls (canvasControls is at bottom: 4rem, so we place this at bottom: 8rem)
-    // Match the canvas controls styling: centered, fixed position
-    // Responsive: on mobile, use full width with margins; on desktop, max-width 600px
-    const isMobile = window.innerWidth <= 768;
-    container.style.cssText = `bottom: ${isMobile ? '7rem' : '8rem'}; left: 50%; transform: translateX(-50%); z-index: 9999; display: block; max-width: ${isMobile ? 'calc(100% - 2rem)' : '600px'}; min-width: ${isMobile ? 'auto' : '400px'}; width: ${isMobile ? 'calc(100% - 2rem)' : 'auto'};`;
-
-    // Input box
-    const inputGroup = document.createElement('div');
-    inputGroup.className = 'mb-2';
-    
-    const label = document.createElement('label');
-    label.setAttribute('for', 'nlTagInput');
-    label.className = 'block text-[10px] text-slate-500 mb-1 font-medium';
-    label.textContent = 'Describe this view (e.g., "square arm high back sofa 2 arms")';
-    
-    const input = document.createElement('input');
-    input.id = 'nlTagInput';
-    input.type = 'text';
-    input.className = 'w-full px-3 py-2 border border-slate-300 rounded-lg text-[13px] focus:outline-none focus:ring-2 focus:ring-primary-300 focus:border-primary-400';
-    input.placeholder = 'Type description...';
-    
-    inputGroup.appendChild(label);
-    inputGroup.appendChild(input);
-    container.appendChild(inputGroup);
-
-    // Chip preview container
-    const chipsContainer = document.createElement('div');
-    chipsContainer.id = 'nlTagChips';
-    chipsContainer.className = 'flex flex-wrap gap-1 mb-2 min-h-[24px]';
-    container.appendChild(chipsContainer);
-
-    // Quick suggestions (top 3 predicted facets)
-    const suggestionsContainer = document.createElement('div');
-    suggestionsContainer.id = 'nlTagSuggestions';
-    suggestionsContainer.className = 'flex flex-wrap gap-1 mb-2 text-[10px]';
-    container.appendChild(suggestionsContainer);
-
-    // Recent combos dropdown
-    const recentContainer = document.createElement('div');
-    recentContainer.id = 'nlTagRecent';
-    recentContainer.className = 'hidden mb-2';
-    
-    const recentLabel = document.createElement('div');
-    recentLabel.className = 'text-[10px] text-slate-500 mb-1 font-medium';
-    recentLabel.textContent = 'Recent:';
-    recentContainer.appendChild(recentLabel);
-    
-    const recentList = document.createElement('div');
-    recentList.id = 'nlTagRecentList';
-    recentList.className = 'flex flex-col gap-1';
-    recentContainer.appendChild(recentList);
-    
-    container.appendChild(recentContainer);
-
-    // Insert into body, positioned above canvas controls
-    document.body.appendChild(container);
-
-    // Update position on window resize
-    function updatePosition() {
-      const isMobile = window.innerWidth <= 768;
-      container.style.bottom = isMobile ? '7rem' : '8rem';
-      container.style.maxWidth = isMobile ? 'calc(100% - 2rem)' : '600px';
-      container.style.minWidth = isMobile ? 'auto' : '400px';
-      container.style.width = isMobile ? 'calc(100% - 2rem)' : 'auto';
+    const nameBox = document.getElementById('currentImageNameBox');
+    if (!nameBox) {
+      console.warn('[NL Tag UI] currentImageNameBox not found, retrying...');
+      setTimeout(createNLTagUI, 100);
+      return;
     }
-    
-    window.addEventListener('resize', updatePosition);
 
-    // Setup event handlers
-    setupInputHandlers(input, chipsContainer, suggestionsContainer, recentContainer, recentList);
+    // Find the container that holds the image name box
+    const nameBoxContainer = nameBox.closest('.px-3.bg-white.border-b');
+    if (!nameBoxContainer) {
+      console.warn('[NL Tag UI] Could not find name box container');
+      return;
+    }
+
+    // Update placeholder to indicate tagging capability
+    nameBox.placeholder = 'Describe this view (e.g., "square arm high back sofa 2 arms")';
+
+    // Create chips container below the input
+    let chipsContainer = document.getElementById('nlTagChips');
+    if (!chipsContainer) {
+      chipsContainer = document.createElement('div');
+      chipsContainer.id = 'nlTagChips';
+      chipsContainer.className = 'flex flex-wrap gap-1 mt-1 min-h-[20px]';
+      nameBoxContainer.appendChild(chipsContainer);
+    }
+
+    // Create suggestions container
+    let suggestionsContainer = document.getElementById('nlTagSuggestions');
+    if (!suggestionsContainer) {
+      suggestionsContainer = document.createElement('div');
+      suggestionsContainer.id = 'nlTagSuggestions';
+      suggestionsContainer.className = 'flex flex-wrap gap-1 mt-1 text-[10px]';
+      nameBoxContainer.appendChild(suggestionsContainer);
+    }
+
+    // Recent combos dropdown (hidden by default)
+    let recentContainer = document.getElementById('nlTagRecent');
+    if (!recentContainer) {
+      recentContainer = document.createElement('div');
+      recentContainer.id = 'nlTagRecent';
+      recentContainer.className = 'hidden mt-2';
+      
+      const recentLabel = document.createElement('div');
+      recentLabel.className = 'text-[10px] text-slate-500 mb-1 font-medium';
+      recentLabel.textContent = 'Recent:';
+      recentContainer.appendChild(recentLabel);
+      
+      const recentList = document.createElement('div');
+      recentList.id = 'nlTagRecentList';
+      recentList.className = 'flex flex-col gap-1';
+      recentContainer.appendChild(recentList);
+      
+      nameBoxContainer.appendChild(recentContainer);
+    }
+
+    // Setup event handlers using the existing nameBox
+    setupInputHandlers(nameBox, chipsContainer, suggestionsContainer, recentContainer, recentContainer.querySelector('#nlTagRecentList'));
+
+    window.__nlTagUIInitialized = true;
+    console.log('[NL Tag UI] Initialized - Integrated with Image name field');
   }
 
   /**
@@ -140,6 +127,7 @@
   function setupInputHandlers(input, chipsContainer, suggestionsContainer, recentContainer, recentList) {
     let currentParsedResult = null;
     let suggestionIndex = -1;
+    let lastLoadedImageLabel = null; // Track which image we last loaded tags for
 
     // Debounce parsing
     let parseTimeout = null;
@@ -168,19 +156,32 @@
       }, 150);
     });
 
+    // Save tags on blur/change (when user finishes editing)
+    input.addEventListener('blur', async () => {
+      const text = input.value.trim();
+      if (text && currentParsedResult) {
+        await saveTags(text, currentParsedResult);
+      }
+    });
+
+    // Also save on change event (for compatibility with existing paint.js handler)
+    input.addEventListener('change', async () => {
+      const text = input.value.trim();
+      if (text && currentParsedResult) {
+        await saveTags(text, currentParsedResult);
+      }
+    });
+
     // Keyboard shortcuts
     input.addEventListener('keydown', async (e) => {
-      // Enter: confirm and save
+      // Enter: confirm and save (but don't clear - keep the value)
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
         const text = input.value.trim();
         if (text && currentParsedResult) {
           await saveTags(text, currentParsedResult);
-          input.value = '';
-          chipsContainer.innerHTML = '';
-          suggestionsContainer.innerHTML = '';
-          currentParsedResult = null;
-          suggestionIndex = -1;
+          // Don't clear - keep the value visible
+          input.blur(); // Move focus away
         }
       }
       
@@ -220,20 +221,57 @@
       updateRecentCombos(recentList, recentContainer);
     });
 
+    // Watch for external updates to the input (from paint.js updateNameBox)
+    // Use MutationObserver to detect when value changes programmatically
+    let lastInputValue = input.value;
+    const checkInputValue = () => {
+      if (input.value !== lastInputValue) {
+        lastInputValue = input.value;
+        // If value changed externally, parse and show chips
+        if (input.value.trim() && window.nlTagParser) {
+          window.nlTagParser.parseTags(input.value).then(parsed => {
+            if (parsed) {
+              currentParsedResult = parsed;
+              updateChips(chipsContainer, parsed);
+              updateSuggestions(suggestionsContainer, parsed, input.value);
+            }
+          });
+        } else {
+          chipsContainer.innerHTML = '';
+          suggestionsContainer.innerHTML = '';
+          currentParsedResult = null;
+        }
+      }
+    };
+    
+    // Check periodically for external value changes
+    setInterval(checkInputValue, 200);
+
     // Load existing tags when image changes
     if (typeof window.switchToImage === 'function') {
       const originalSwitchToImage = window.switchToImage;
       window.switchToImage = function(...args) {
         originalSwitchToImage.apply(this, args);
         setTimeout(() => {
-          loadTagsForCurrentImage(input, chipsContainer);
+          const newImageLabel = window.currentImageLabel;
+          // Only reload if image actually changed
+          if (newImageLabel !== lastLoadedImageLabel) {
+            lastInputValue = ''; // Reset to trigger check
+            loadTagsForCurrentImage(input, chipsContainer, () => {
+              lastLoadedImageLabel = newImageLabel;
+              lastInputValue = input.value; // Update tracked value
+            });
+          }
         }, 100);
       };
     }
 
     // Initial load
     setTimeout(() => {
-      loadTagsForCurrentImage(input, chipsContainer);
+      loadTagsForCurrentImage(input, chipsContainer, () => {
+        lastLoadedImageLabel = window.currentImageLabel;
+        lastInputValue = input.value; // Update tracked value
+      });
     }, 500);
   }
 
@@ -375,56 +413,75 @@
   /**
    * Load tags for current image
    */
-  async function loadTagsForCurrentImage(input, chipsContainer) {
+  async function loadTagsForCurrentImage(input, chipsContainer, onComplete) {
     const imageLabel = window.currentImageLabel;
     
-    // Clear input and chips first
-    input.value = '';
+    // Don't clear input - let paint.js updateNameBox handle it
+    // Just clear chips
     chipsContainer.innerHTML = '';
     
     if (!imageLabel) {
+      if (onComplete) onComplete();
       return;
     }
 
-    // Check if this image has existing tags
-    const tags = window.imageTags?.[imageLabel];
-    
-    if (tags && tags.facets) {
-      // Reconstruct description from facets if available
-      const parts = [];
-      if (tags.facets.category) parts.push(tags.facets.category);
-      if (tags.facets.armStyle) parts.push(tags.facets.armStyle + ' arm');
-      if (tags.facets.back) parts.push(tags.facets.back + ' back');
-      if (tags.facets.arms) parts.push(tags.facets.arms);
-      if (tags.facets.cushions?.seat) parts.push(tags.facets.cushions.seat + ' cushion');
-      if (tags.facets.seats) parts.push(tags.facets.seats + ' seats');
-      if (tags.facets.orientation) parts.push(tags.facets.orientation);
-      if (tags.facets.extras && tags.facets.extras.length > 0) {
-        parts.push(...tags.facets.extras);
-      }
+    // Wait a bit for paint.js to update the nameBox value
+    setTimeout(async () => {
+      const currentValue = input.value.trim();
       
-      const description = parts.join(' ');
-      if (description) {
-        input.value = description;
-        input.dispatchEvent(new Event('input'));
-      } else if (tags.viewpoint) {
-        // Fallback to just viewpoint
-        input.value = tags.viewpoint;
-        input.dispatchEvent(new Event('input'));
+      // If there's already a value in the box (from paint.js updateNameBox), use it
+      if (currentValue) {
+        // Parse it to show chips
+        if (window.nlTagParser) {
+          const parsed = await window.nlTagParser.parseTags(currentValue);
+          updateChips(chipsContainer, parsed);
+        }
+        if (onComplete) onComplete();
+        return;
       }
-    } else {
-      // No tags for this image - check for base description from previous image
-      try {
-        const lastBaseDescription = localStorage.getItem('nlTagLastBaseDescription');
-        if (lastBaseDescription) {
-          input.value = lastBaseDescription;
-          // Trigger input event to show chips
+
+      // Otherwise, check if this image has existing tags
+      const tags = window.imageTags?.[imageLabel];
+      
+      if (tags && tags.facets) {
+        // Reconstruct description from facets if available
+        const parts = [];
+        if (tags.facets.category) parts.push(tags.facets.category);
+        if (tags.facets.armStyle) parts.push(tags.facets.armStyle + ' arm');
+        if (tags.facets.back) parts.push(tags.facets.back + ' back');
+        if (tags.facets.arms) parts.push(tags.facets.arms);
+        if (tags.facets.cushions?.seat) parts.push(tags.facets.cushions.seat + ' cushion');
+        if (tags.facets.seats) parts.push(tags.facets.seats + ' seats');
+        if (tags.facets.orientation) parts.push(tags.facets.orientation);
+        if (tags.facets.extras && tags.facets.extras.length > 0) {
+          parts.push(...tags.facets.extras);
+        }
+        
+        const description = parts.join(' ');
+        if (description) {
+          input.value = description;
+          input.dispatchEvent(new Event('input'));
+        } else if (tags.viewpoint) {
+          // Fallback to just viewpoint
+          input.value = tags.viewpoint;
           input.dispatchEvent(new Event('input'));
         }
-      } catch (e) {
-        console.warn('[NL Tag UI] Failed to load base description:', e);
+      } else {
+        // No tags for this image - check for base description from previous image
+        try {
+          const lastBaseDescription = localStorage.getItem('nlTagLastBaseDescription');
+          if (lastBaseDescription) {
+            input.value = lastBaseDescription;
+            // Trigger input event to show chips
+            input.dispatchEvent(new Event('input'));
+          }
+        } catch (e) {
+          console.warn('[NL Tag UI] Failed to load base description:', e);
+        }
       }
-    }
+      
+      if (onComplete) onComplete();
+    }, 150); // Wait for paint.js to update
   }
 
   /**
@@ -457,6 +514,10 @@
     window.imageTags[imageLabel].facets = parsedResult.facets;
     window.imageTags[imageLabel].freeform = parsedResult.freeform;
 
+    // Also save to customImageNames (for compatibility with existing image name system)
+    if (!window.customImageNames) window.customImageNames = {};
+    window.customImageNames[imageLabel] = text;
+
     // Extract and save base description (without viewpoint) for next image
     const baseDescription = extractBaseDescription(text);
     if (baseDescription) {
@@ -474,7 +535,8 @@
       imageLabel,
       viewpoint: parsedResult.viewpoint,
       facets: parsedResult.facets,
-      baseDescription: baseDescription
+      baseDescription: baseDescription,
+      customName: text
     });
 
     // Update chips in image thumbnail
@@ -515,10 +577,10 @@
   function init() {
     // Wait for DOM and nlTagParser
     function tryInit() {
-      if (document.getElementById('canvasControls') && window.nlTagParser) {
+      if (document.getElementById('currentImageNameBox') && window.nlTagParser) {
         createNLTagUI();
         loadRecentCombos();
-        console.log('[NL Tag UI] Initialized - Tagging tray positioned above canvas controls');
+        console.log('[NL Tag UI] Initialized - Integrated with Image name field');
       } else {
         setTimeout(tryInit, 100);
       }
