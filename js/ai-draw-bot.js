@@ -549,8 +549,19 @@ window.aiDrawBot = {
                     console.log('[aiDrawBot] Feedback sent successfully:', {
                         measurementCode: item.payload.measurementCode,
                         feedbackId: result.feedbackId,
+                        kv: result.kv || { stored: 'unknown', indexCount: 'unknown' },
                         response: result
                     });
+                    
+                    // Log KV verification details if available
+                    if (result.kv) {
+                        console.log('[aiDrawBot][KV] Storage verification:', {
+                            feedbackKey: result.kv.feedbackKey,
+                            indexKey: result.kv.indexKey,
+                            stored: result.kv.stored ? '✓ YES' : '✗ NO',
+                            indexCount: result.kv.indexCount
+                        });
+                    }
                 } else {
                     const errorText = await response.text().catch(() => response.statusText);
                     item.attempts++;
