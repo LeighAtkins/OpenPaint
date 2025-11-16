@@ -9111,9 +9111,16 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
             };
           });
 
+          // Get viewpoint from dropdown or imageTags
+          const viewpointSelect = document.getElementById('aiViewpointSelect');
+          const viewpoint = viewpointSelect?.value || 
+                           window.imageTags?.[currentImageLabel]?.viewpoint || 
+                           'unknown';
+          
           console.log('[Paint.js][AI Feedback] Queueing stroke for AI learning:', {
             imageLabel: currentImageLabel,
             measurementCode: strokeLabel,
+            viewpoint: viewpoint,
             points: drawnVectorData.points?.length || 0,
             width: drawnVectorData.width,
             type: drawnVectorData.type
@@ -9122,6 +9129,7 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
           window.aiDrawBot.queueFeedback({
             imageLabel: currentImageLabel,
             measurementCode: strokeLabel,
+            viewpoint: viewpoint,
             stroke: {
               points: canvasPoints,
               width: drawnVectorData.width || parseInt(brushSize.value) || 2
