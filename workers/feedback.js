@@ -180,11 +180,21 @@ export default {
         // Don't fail the request if index update fails, but log it
       }
 
+      // Final verification before returning
+      const finalVerify = await env.SOFA_TAGS.get(feedbackKey);
+      const indexVerify = await env.SOFA_TAGS.get(indexKey, { type: 'json' });
+      
       return new Response(
         JSON.stringify({ 
           success: true, 
           feedbackId,
-          message: 'Feedback received and stored'
+          message: 'Feedback received and stored',
+          kv: {
+            feedbackKey,
+            indexKey,
+            stored: !!finalVerify,
+            indexCount: indexVerify?.count || 0
+          }
         }),
         {
           status: 200,
