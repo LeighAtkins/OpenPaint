@@ -91,11 +91,15 @@ async function promoteFeedback(kvNamespace) {
   
   try {
     const manifestData = await kvNamespace.get(manifestKey, { type: 'json' });
+    console.log('[Promote] Manifest data:', manifestData);
     if (manifestData && manifestData.indexKeys) {
       manifest = manifestData.indexKeys;
+      console.log(`[Promote] Found manifest with ${manifest.length} index keys:`, manifest);
+    } else {
+      console.warn('[Promote] Manifest exists but has no indexKeys');
     }
   } catch (e) {
-    console.warn('No feedback manifest found, will scan for index keys');
+    console.warn('[Promote] No feedback manifest found:', e.message);
   }
 
   // If no manifest, try to discover index keys by pattern
@@ -104,12 +108,16 @@ async function promoteFeedback(kvNamespace) {
   
   // Process each index key
   const indexKeys = manifest || [];
+  console.log(`[Promote] Processing ${indexKeys.length} index keys`);
   
   for (const indexKey of indexKeys) {
     try {
+      console.log(`[Promote] Processing index key: ${indexKey}`);
       const index = await kvNamespace.get(indexKey, { type: 'json' });
+      console.log(`[Promote] Index data for ${indexKey}:`, index ? { count: index.count, feedbackIds: index.feedbackIds?.length } : 'not found');
       if (!index || !index.feedbackIds || index.feedbackIds.length === 0) {
         skipped.push({ key: indexKey, reason: 'No feedback entries' });
+        console.log(`[Promote] Skipping ${indexKey}: No feedback entries`);
         continue;
       }
 
