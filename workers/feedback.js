@@ -133,19 +133,40 @@ export default {
 
       // Store raw feedback in KV
       const feedbackKey = `feedback:${measurementCode}:${viewpoint || 'unknown'}:${feedbackId}`;
-      await env.SOFA_TAGS.put(feedbackKey, JSON.stringify(feedbackEntry));
+      try {
+        await env.SOFA_TAGS.put(feedbackKey, JSON.stringify(feedbackEntry));
+        console.log(`[Feedback Worker] Stored feedback entry: ${feedbackKey}`);
+      } catch (kvError) {
+        console.error(`[Feedback Worker] Failed to store feedback in KV:`, kvError);
+        return new Response(
+          JSON.stringify({ 
+            error: 'Failed to store feedback',
+            message: kvError.message 
+          }),
+          { 
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          }
+        );
+      }
 
       // Update index for promotion job
       const indexKey = `feedback:index:${measurementCode}:${viewpoint || 'unknown'}`;
-      const existingIndex = await env.SOFA_TAGS.get(indexKey, { type: 'json' }) || { count: 0, lastUpdated: null, feedbackIds: [] };
-      existingIndex.count += 1;
-      existingIndex.lastUpdated = new Date().toISOString();
-      existingIndex.feedbackIds.push(feedbackId);
-      // Keep only last 1000 IDs to prevent unbounded growth
-      if (existingIndex.feedbackIds.length > 1000) {
-        existingIndex.feedbackIds = existingIndex.feedbackIds.slice(-1000);
+      try {
+        const existingIndex = await env.SOFA_TAGS.get(indexKey, { type: 'json' }) || { count: 0, lastUpdated: null, feedbackIds: [] };
+        existingIndex.count += 1;
+        existingIndex.lastUpdated = new Date().toISOString();
+        existingIndex.feedbackIds.push(feedbackId);
+        // Keep only last 1000 IDs to prevent unbounded growth
+        if (existingIndex.feedbackIds.length > 1000) {
+          existingIndex.feedbackIds = existingIndex.feedbackIds.slice(-1000);
+        }
+        await env.SOFA_TAGS.put(indexKey, JSON.stringify(existingIndex));
+        console.log(`[Feedback Worker] Updated index: ${indexKey}, count: ${existingIndex.count}`);
+      } catch (indexError) {
+        console.error(`[Feedback Worker] Failed to update index:`, indexError);
+        // Don't fail the request if index update fails, but log it
       }
-      await env.SOFA_TAGS.put(indexKey, JSON.stringify(existingIndex));
 
       return new Response(
         JSON.stringify({ 
