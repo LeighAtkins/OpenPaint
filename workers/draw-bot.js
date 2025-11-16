@@ -40,8 +40,38 @@ export default {
 
     try {
       const body = await request.json();
-      const { measurementCode, viewpointTag, imageLabel, viewport } = body;
+      const { action, measurementCode, viewpointTag, imageLabel, viewport, imageHash, imageBase64 } = body;
 
+      // Handle prediction action
+      if (action === 'predict') {
+        if (!viewpointTag) {
+          return new Response(
+            JSON.stringify({ error: 'viewpointTag is required for prediction' }),
+            { 
+              status: 400,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            }
+          );
+        }
+
+        const predictions = await predictMeasurements(
+          viewpointTag,
+          imageHash,
+          imageBase64,
+          viewport,
+          env.SOFA_TAGS
+        );
+
+        return new Response(
+          JSON.stringify({ predictions }),
+          {
+            status: 200,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          }
+        );
+      }
+
+      // Handle suggestion action (default)
       if (!measurementCode || !viewpointTag) {
         return new Response(
           JSON.stringify({ error: 'measurementCode and viewpointTag are required' }),
@@ -92,6 +122,55 @@ export default {
     }
   }
 };
+
+/**
+ * Predict measurements for a viewpoint
+ * 
+ * @param {string} viewpointTag - Viewpoint tag
+ * @param {string} imageHash - Image hash for context
+ * @param {string} imageBase64 - Image base64 data
+ * @param {{width: number, height: number}} viewport - Viewport dimensions
+ * @param {KVNamespace} kvNamespace - SOFA_TAGS KV namespace
+ * @returns {Promise<Array<{code: string, stroke: object, confidence: number}>>}
+ */
+async function predictMeasurements(viewpointTag, imageHash, imageBase64, viewport, kvNamespace) {
+  const predictions = [];
+  
+  // Common measurement codes for sofas
+  const commonCodes = ['A1', 'A2', 'A3', 'A4', 'A5'];
+  
+  // Try to find strokes for each code
+  for (const code of commonCodes) {
+    const key = `stroke:${code}:${viewpointTag}`;
+    try {
+      const strokeData = await kvNamespace.get(key, { type: 'json' });
+      if (strokeData) {
+        // Scale points to viewport
+        const scaledPoints = strokeData.points.map(point => ({
+          x: point.x * (viewport?.width || 800),
+          y: point.y * (viewport?.height || 600),
+          t: point.t
+        }));
+        
+        predictions.push({
+          code,
+          stroke: {
+            points: scaledPoints,
+            width: strokeData.width * Math.min(viewport?.width || 800, viewport?.height || 600)
+          },
+          confidence: strokeData.confidence || 0.8
+        });
+      }
+    } catch (e) {
+      console.warn(`Failed to fetch stroke for ${code}:`, e);
+    }
+  }
+  
+  // Sort by confidence (highest first)
+  predictions.sort((a, b) => (b.confidence || 0) - (a.confidence || 0));
+  
+  return predictions;
+}
 
 /**
  * Get stroke suggestion based on measurement code and viewpoint

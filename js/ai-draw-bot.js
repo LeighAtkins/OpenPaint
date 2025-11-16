@@ -17,6 +17,78 @@ window.aiDrawBot = {
     },
 
     /**
+     * Capture image snapshot as base64 for classification
+     * @param {string} imageUrl - Image URL or data URL
+     * @returns {Promise<{imageBase64: string, imageHash: string}>}
+     */
+    async captureImageSnapshot(imageUrl) {
+        try {
+            // If already a data URL, extract base64
+            if (imageUrl.startsWith('data:')) {
+                const base64 = imageUrl.split(',')[1];
+                const hash = await this.hashString(base64);
+                return { imageBase64: base64, imageHash: hash };
+            }
+
+            // Convert image URL to data URL
+            const img = new Image();
+            img.crossOrigin = 'Anonymous';
+            
+            return new Promise((resolve, reject) => {
+                img.onload = async () => {
+                    try {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0);
+                        
+                        // Use JPEG with quality 0.7 for smaller size
+                        const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                        const base64 = dataUrl.split(',')[1];
+                        const hash = await this.hashString(base64);
+                        resolve({ imageBase64: base64, imageHash: hash });
+                    } catch (e) {
+                        console.warn('[aiDrawBot] Failed to capture snapshot, using URL:', e);
+                        resolve({ imageBase64: null, imageHash: null, imageUrl });
+                    }
+                };
+                img.onerror = () => {
+                    console.warn('[aiDrawBot] Failed to load image for snapshot');
+                    resolve({ imageBase64: null, imageHash: null, imageUrl });
+                };
+                img.src = imageUrl;
+            });
+        } catch (error) {
+            console.warn('[aiDrawBot] Error capturing snapshot:', error);
+            return { imageBase64: null, imageHash: null, imageUrl };
+        }
+    },
+
+    /**
+     * Simple hash function for image deduplication
+     * @param {string} str - String to hash
+     * @returns {Promise<string>} Hash string
+     */
+    async hashString(str) {
+        if (typeof crypto !== 'undefined' && crypto.subtle) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(str);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+        // Fallback: simple hash
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+            const char = str.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash;
+        }
+        return Math.abs(hash).toString(16);
+    },
+
+    /**
      * Classify an image's viewpoint using the Cloudflare Worker
      * @param {string} imageUrl - URL or base64 string of the image
      * @param {string} imageLabel - Label identifier for the image
@@ -24,6 +96,9 @@ window.aiDrawBot = {
      */
     async classifyImage(imageUrl, imageLabel) {
         try {
+            // Capture image snapshot for better classification
+            const snapshot = await this.captureImageSnapshot(imageUrl);
+            
             const response = await fetch(this.config.classifierWorkerUrl, {
                 method: 'POST',
                 headers: {
@@ -31,7 +106,9 @@ window.aiDrawBot = {
                     ...(this.config.authToken && { 'x-api-key': this.config.authToken })
                 },
                 body: JSON.stringify({
-                    imageUrl: imageUrl,
+                    imageUrl: snapshot.imageUrl || imageUrl,
+                    imageBase64: snapshot.imageBase64,
+                    imageHash: snapshot.imageHash,
                     imageLabel: imageLabel
                 })
             });
@@ -50,11 +127,56 @@ window.aiDrawBot = {
             window.imageTags[imageLabel].tags = result.tags;
             window.imageTags[imageLabel].confidence = result.confidence;
             window.imageTags[imageLabel].classifiedAt = new Date().toISOString();
+            window.imageTags[imageLabel].imageHash = snapshot.imageHash;
 
             return result;
         } catch (error) {
             console.error('[aiDrawBot] Classification error:', error);
             throw error;
+        }
+    },
+
+    /**
+     * Predict measurements for an image based on viewpoint
+     * @param {string} viewpointTag - Viewpoint tag (e.g., "front-center", "front-arm")
+     * @param {string} imageLabel - Current image label
+     * @param {{width: number, height: number}} viewport - Canvas viewport dimensions
+     * @returns {Promise<Array<{code: string, stroke: object, confidence: number}>>}
+     */
+    async predictMeasurements(viewpointTag, imageLabel, viewport) {
+        try {
+            // Get image snapshot for context
+            const imageUrl = window.originalImages?.[imageLabel];
+            const snapshot = imageUrl ? await this.captureImageSnapshot(imageUrl) : null;
+            
+            const response = await fetch(this.config.drawBotWorkerUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(this.config.authToken && { 'x-api-key': this.config.authToken })
+                },
+                body: JSON.stringify({
+                    action: 'predict',
+                    viewpointTag: viewpointTag,
+                    imageLabel: imageLabel,
+                    imageHash: snapshot?.imageHash,
+                    imageBase64: snapshot?.imageBase64,
+                    viewport: viewport || { width: 800, height: 600 }
+                })
+            });
+
+            if (!response.ok) {
+                if (response.status === 404) {
+                    return []; // No predictions found
+                }
+                throw new Error(`Prediction failed: ${response.statusText}`);
+            }
+
+            const result = await response.json();
+            return result.predictions || [];
+        } catch (error) {
+            console.error('[aiDrawBot] Prediction error:', error);
+            return [];
         }
     },
 
@@ -75,6 +197,7 @@ window.aiDrawBot = {
                     ...(this.config.authToken && { 'x-api-key': this.config.authToken })
                 },
                 body: JSON.stringify({
+                    action: 'suggest',
                     measurementCode: measurementCode,
                     viewpointTag: viewpointTag,
                     imageLabel: imageLabel,
@@ -201,7 +324,7 @@ window.aiDrawBot = {
      * Queue feedback about a stroke for later submission
      * @param {Object} event - Feedback event with source, imageLabel, measurementCode, viewpoint, stroke, etc.
      */
-    queueFeedback(event) {
+    async queueFeedback(event) {
         // Check if feedback is enabled
         const feedbackEnabled = document.getElementById('aiFeedbackEnabled');
         if (feedbackEnabled && !feedbackEnabled.checked) {
@@ -212,6 +335,10 @@ window.aiDrawBot = {
         if (!window.aiFeedbackQueue) {
             window.aiFeedbackQueue = [];
         }
+
+        // Capture image snapshot for visual context
+        const imageUrl = window.originalImages?.[event.imageLabel];
+        const snapshot = imageUrl ? await this.captureImageSnapshot(imageUrl) : null;
 
         // Build payload from event
         const payload = {
@@ -225,6 +352,8 @@ window.aiDrawBot = {
                 source: event.source || 'manual'
             },
             labels: event.labels || [],
+            imageHash: snapshot?.imageHash,
+            imageBase64: snapshot?.imageBase64, // Include compressed image for training
             meta: {
                 ...event.meta,
             }
