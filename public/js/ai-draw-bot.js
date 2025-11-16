@@ -349,52 +349,158 @@ window.aiDrawBot = {
             return;
         }
 
-        // Convert points to canvas coordinates
-        const scale = window.imageScaleByLabel?.[imageLabel] || 1.0;
-        const position = window.imagePositionByLabel?.[imageLabel] || { x: 0, y: 0 };
-        const originalDims = window.originalImageDimensions?.[imageLabel] || { width: 800, height: 600 };
-        const canvas = document.getElementById('canvas');
-        if (!canvas) return;
+        const targetImage = imageLabel || window.currentImageLabel;
+        if (!targetImage) {
+            console.warn('[aiDrawBot] Cannot accept suggestion: no image label provided');
+            return;
+        }
 
-        const canvasPoints = points.map(point => {
-            const x = (point.x / originalDims.width) * originalDims.width * scale + position.x + (canvas.width - originalDims.width * scale) / 2;
-            const y = (point.y / originalDims.height) * originalDims.height * scale + position.y + (canvas.height - originalDims.height * scale) / 2;
-            return { x, y, t: point.t || 0 };
-        });
+        // Ensure paint.js collections exist (mirrors manual stroke creation)
+        this.ensureStrokeCollections(targetImage);
 
-        // Create a vector stroke object matching the app's format
-        const stroke = {
-            points: canvasPoints,
-            width: width || 2,
+        // Generate a unique stroke label (prefer measurement code when provided)
+        const baseLabel = (measurementCode && measurementCode.trim()) ||
+            window.labelsByImage?.[targetImage] ||
+            'A1';
+        const strokeLabel = this.generateUniqueStrokeLabel(targetImage, baseLabel);
+
+        // Store points in image-relative coordinates (matches paint.js expectations)
+        const relativePoints = points.map(point => ({
+            x: Number(point.x) || 0,
+            y: Number(point.y) || 0,
+            time: point.t ?? point.time ?? 0
+        }));
+
+        const strokeData = {
+            points: relativePoints,
             color: window.currentColor || '#000000',
-            measurement: measurementCode || 'A1',
-            source: 'ai-suggestion',
+            width: width || (window.brushSize ? Number(window.brushSize.value) : 2),
+            type: 'ai-suggestion',
+            source: 'ai-draw-bot',
+            measurementCode: measurementCode || strokeLabel,
             timestamp: Date.now()
         };
 
-        // Add to vector strokes
-        if (!window.vectorStrokesByImage) window.vectorStrokesByImage = {};
-        if (!window.vectorStrokesByImage[imageLabel]) {
-            window.vectorStrokesByImage[imageLabel] = [];
-        }
-        window.vectorStrokesByImage[imageLabel].push(stroke);
+        // Persist vector data
+        window.vectorStrokesByImage[targetImage][strokeLabel] = strokeData;
 
-        // Update label counter if needed
-        if (window.labelsByImage && window.labelsByImage[imageLabel]) {
-            // Increment label counter logic here if needed
+        // Track stroke label list
+        if (!window.lineStrokesByImage[targetImage].includes(strokeLabel)) {
+            window.lineStrokesByImage[targetImage].push(strokeLabel);
         }
 
-        // Redraw canvas
+        // Visibility + selection state
+        window.strokeVisibilityByImage[targetImage][strokeLabel] = true;
+        window.strokeLabelVisibility[targetImage][strokeLabel] = true;
+        window.selectedStrokeByImage[targetImage] = strokeLabel;
+        window.multipleSelectedStrokesByImage[targetImage] = [strokeLabel];
+
+        // Measurement metadata (basic scaffold so UI can edit later)
+        if (!window.strokeMeasurements[targetImage][strokeLabel]) {
+            window.strokeMeasurements[targetImage][strokeLabel] = {
+                measurement: measurementCode || strokeLabel,
+                value: '',
+                units: window.currentMeasurementUnits || '"'
+            };
+        }
+
+        // Minimal stroke data record for compatibility
+        window.strokeDataByImage[targetImage][strokeLabel] = window.strokeDataByImage[targetImage][strokeLabel] || {
+            source: 'ai-draw-bot'
+        };
+
+        // Bump next-label tracking so future strokes continue sequence
+        if (window.labelsByImage) {
+            if (typeof window.calculateNextTagFrom === 'function') {
+                window.labelsByImage[targetImage] = window.calculateNextTagFrom(strokeLabel);
+            } else if (typeof window.getNextLabel === 'function') {
+                window.labelsByImage[targetImage] = window.getNextLabel(targetImage);
+            }
+        }
+        if (typeof window.updateNextTagDisplay === 'function') {
+            window.updateNextTagDisplay();
+        }
+
+        if (typeof window.updateStrokeVisibilityControls === 'function') {
+            window.updateStrokeVisibilityControls();
+        }
+
+        // Redraw canvas to include the accepted stroke
         if (typeof window.redrawCanvasWithVisibility === 'function') {
-            window.redrawCanvasWithVisibility(imageLabel);
+            window.redrawCanvasWithVisibility(targetImage);
         }
 
-        // Save state for undo/redo
+        // Persist undo state
         if (typeof window.saveState === 'function') {
-            window.saveState();
+            window.saveState(false, true, true);
         }
 
-        console.log('[aiDrawBot] Accepted suggestion and added stroke');
+        console.log('[aiDrawBot] Accepted suggestion and stored vector stroke', {
+            imageLabel: targetImage,
+            strokeLabel,
+            measurementCode
+        });
+    },
+
+    /**
+     * Ensure paint.js stroke collections exist for an image
+     * @param {string} imageLabel
+     */
+    ensureStrokeCollections(imageLabel) {
+        window.lineStrokesByImage = window.lineStrokesByImage || {};
+        window.lineStrokesByImage[imageLabel] = window.lineStrokesByImage[imageLabel] || [];
+
+        window.vectorStrokesByImage = window.vectorStrokesByImage || {};
+        const existingVectors = window.vectorStrokesByImage[imageLabel];
+        if (!existingVectors || Array.isArray(existingVectors)) {
+            const converted = {};
+            if (Array.isArray(existingVectors)) {
+                existingVectors.forEach((stroke, index) => {
+                    const fallbackKey = stroke?.measurement || stroke?.measurementCode || `stroke_${index + 1}`;
+                    converted[fallbackKey] = stroke;
+                });
+            }
+            window.vectorStrokesByImage[imageLabel] = converted;
+        }
+
+        window.strokeVisibilityByImage = window.strokeVisibilityByImage || {};
+        window.strokeVisibilityByImage[imageLabel] = window.strokeVisibilityByImage[imageLabel] || {};
+
+        window.strokeLabelVisibility = window.strokeLabelVisibility || {};
+        window.strokeLabelVisibility[imageLabel] = window.strokeLabelVisibility[imageLabel] || {};
+
+        window.strokeMeasurements = window.strokeMeasurements || {};
+        window.strokeMeasurements[imageLabel] = window.strokeMeasurements[imageLabel] || {};
+
+        window.strokeDataByImage = window.strokeDataByImage || {};
+        window.strokeDataByImage[imageLabel] = window.strokeDataByImage[imageLabel] || {};
+
+        window.selectedStrokeByImage = window.selectedStrokeByImage || {};
+        window.multipleSelectedStrokesByImage = window.multipleSelectedStrokesByImage || {};
+    },
+
+    /**
+     * Generate a unique stroke label for a given image
+     * @param {string} imageLabel
+     * @param {string} baseName
+     * @returns {string}
+     */
+    generateUniqueStrokeLabel(imageLabel, baseName) {
+        const existing = window.lineStrokesByImage?.[imageLabel] || [];
+        let candidate = (baseName && baseName.trim()) || 'A1';
+        if (!existing.includes(candidate)) {
+            return candidate;
+        }
+
+        const match = candidate.match(/^(.+?)(?:\((\d+)\))?$/);
+        const root = match ? match[1] : candidate;
+        let counter = match && match[2] ? parseInt(match[2], 10) + 1 : 1;
+        do {
+            candidate = `${root}(${counter})`;
+            counter += 1;
+        } while (existing.includes(candidate));
+
+        return candidate;
     },
 
     /**
