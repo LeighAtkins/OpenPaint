@@ -40,7 +40,7 @@ export default {
 
     try {
       const body = await request.json();
-      const { imageUrl, imageBase64 } = body;
+      const { imageUrl, imageBase64, imageHash, imageLabel } = body;
 
       if (!imageUrl && !imageBase64) {
         return new Response(
@@ -52,10 +52,13 @@ export default {
         );
       }
 
+      // Use imageHash for deduplication if available
       // For now, use simple rule-based classification
       // TODO: Enhance with Cloudflare AI Vision or exemplar matching
       const classification = await classifySofaViewpoint(
         imageUrl || imageBase64,
+        imageHash,
+        imageLabel,
         env.SOFA_TAGS,
         env.SOFA_REFERENCE
       );
@@ -87,11 +90,26 @@ export default {
  * Classify sofa viewpoint using exemplar matching from KV
  * 
  * @param {string} imageInput - Image URL or base64 string
+ * @param {string} imageHash - SHA-256 hash of the image for deduplication
+ * @param {string} imageLabel - Image label identifier
  * @param {KVNamespace} kvNamespace - SOFA_TAGS KV namespace
  * @param {R2Bucket} r2Bucket - SOFA_REFERENCE R2 bucket
  * @returns {Promise<{tags: string[], confidence: number, viewpoint?: string}>}
  */
-async function classifySofaViewpoint(imageInput, kvNamespace, r2Bucket) {
+async function classifySofaViewpoint(imageInput, imageHash, imageLabel, kvNamespace, r2Bucket) {
+  // Check if we've classified this image before (by hash)
+  if (imageHash) {
+    const cachedKey = `classification:hash:${imageHash}`;
+    try {
+      const cached = await kvNamespace.get(cachedKey, { type: 'json' });
+      if (cached) {
+        console.log('Returning cached classification for hash:', imageHash);
+        return cached;
+      }
+    } catch (e) {
+      console.warn('Failed to check cache:', e);
+    }
+  }
   // Try to fetch exemplar metadata from KV
   // Key format: "exemplar:<viewpoint>:<arm-shape>:<back-height>"
   // Example: "exemplar:front-arm:round-arm:high-back"
@@ -118,11 +136,23 @@ async function classifySofaViewpoint(imageInput, kvNamespace, r2Bucket) {
   // 2. Compare features (color histograms, edge detection, etc.)
   // 3. Use Cloudflare AI Vision for more sophisticated matching
   
-  return {
+  const result = {
     tags: ['front-center', 'round-arm', 'high-back'],
     confidence: 0.75,
     viewpoint: 'front-center'
   };
+  
+  // Cache the result by hash if available
+  if (imageHash) {
+    const cachedKey = `classification:hash:${imageHash}`;
+    try {
+      await kvNamespace.put(cachedKey, JSON.stringify(result), { expirationTtl: 86400 * 30 }); // 30 days
+    } catch (e) {
+      console.warn('Failed to cache classification:', e);
+    }
+  }
+  
+  return result;
 }
 
 /**

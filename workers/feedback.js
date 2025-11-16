@@ -48,7 +48,7 @@ export default {
 
     try {
       const body = await request.json();
-      const { projectId, imageLabel, viewpoint, measurementCode, stroke, labels, meta } = body;
+      const { projectId, imageLabel, viewpoint, measurementCode, stroke, labels, meta, imageHash, imageBase64 } = body;
 
       // Validate required fields
       if (!imageLabel || !measurementCode || !stroke || !stroke.points) {
@@ -59,6 +59,40 @@ export default {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
           }
         );
+      }
+      
+      // Store image data in R2 if available (for future training)
+      let imageStorageKey = null;
+      if (imageBase64 && imageHash) {
+        try {
+          // Store compressed image in R2 for training data
+          // Key format: images/<hash>.jpg
+          imageStorageKey = `images/${imageHash}.jpg`;
+          
+          // Convert base64 to buffer (handle both raw base64 and data URL format)
+          let base64Data = imageBase64;
+          if (imageBase64.includes(',')) {
+            base64Data = imageBase64.split(',')[1];
+          }
+          
+          const binaryString = atob(base64Data);
+          const imageBuffer = new Uint8Array(binaryString.length);
+          for (let i = 0; i < binaryString.length; i++) {
+            imageBuffer[i] = binaryString.charCodeAt(i);
+          }
+          
+          if (env.SOFA_REFERENCE) {
+            await env.SOFA_REFERENCE.put(imageStorageKey, imageBuffer, {
+              httpMetadata: {
+                contentType: 'image/jpeg',
+                cacheControl: 'public, max-age=31536000'
+              }
+            });
+          }
+        } catch (e) {
+          console.warn('Failed to store image in R2:', e);
+          // Continue without image storage
+        }
       }
 
       // Normalize and validate stroke data
@@ -87,6 +121,8 @@ export default {
         stroke: normalizedStroke,
         labels: labels || [],
         metadata,
+        imageHash: imageHash || null,
+        imageStorageKey: imageStorageKey || null, // Reference to R2 storage
         meta: {
           ...meta,
           userAgent: request.headers.get('user-agent'),

@@ -140,12 +140,23 @@ async function promoteFeedback(kvNamespace) {
         try {
           const entry = await kvNamespace.get(feedbackKey, { type: 'json' });
           if (entry && entry.stroke && entry.stroke.points) {
-            feedbackEntries.push(entry);
+            // Include image hash/storage key for visual validation
+            feedbackEntries.push({
+              ...entry,
+              hasImage: !!(entry.imageHash || entry.imageStorageKey)
+            });
           }
         } catch (e) {
           console.warn(`Failed to fetch feedback ${feedbackId}:`, e);
         }
       }
+      
+      // Prefer entries with image data for better quality promotion
+      feedbackEntries.sort((a, b) => {
+        if (a.hasImage && !b.hasImage) return -1;
+        if (!a.hasImage && b.hasImage) return 1;
+        return 0;
+      });
 
       if (feedbackEntries.length === 0) {
         skipped.push({ key: indexKey, reason: 'No valid feedback entries' });

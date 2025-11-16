@@ -205,13 +205,28 @@ console.log('[AI Draw Bot Integration] Script file loaded');
             viewpointSelect.addEventListener('change', updateSuggestionButtonState);
             measurementSelect.addEventListener('change', updateSuggestionButtonState);
 
-            // Load saved viewpoint if available
-            if (window.currentImageLabel && window.imageTags && window.imageTags[window.currentImageLabel]) {
-                const tags = window.imageTags[window.currentImageLabel];
-                if (tags.viewpoint) {
-                    viewpointSelect.value = tags.viewpoint;
+            // Load saved viewpoint if available and auto-classify on image switch
+            function loadViewpointForCurrentImage() {
+                if (window.currentImageLabel && window.imageTags && window.imageTags[window.currentImageLabel]) {
+                    const tags = window.imageTags[window.currentImageLabel];
+                    if (tags.viewpoint && viewpointOptions.includes(tags.viewpoint)) {
+                        viewpointSelect.value = tags.viewpoint;
+                        viewpointSelect.dispatchEvent(new Event('change'));
+                        
+                        // Auto-predict measurements if viewpoint is set
+                        if (tags.viewpoint) {
+                            setTimeout(() => {
+                                predictMeasurementsForViewpoint(tags.viewpoint);
+                            }, 300);
+                        }
+                    }
                 }
             }
+            
+            // Load on panel creation
+            loadViewpointForCurrentImage();
+            
+            // Also load when image changes (hooked into switchToImage below)
         }
 
         /**
@@ -249,7 +264,7 @@ console.log('[AI Draw Bot Integration] Script file loaded');
         }
 
         /**
-         * Classify the current image
+         * Classify the current image and auto-set viewpoint
          */
         async function classifyCurrentImage() {
             const imageLabel = window.currentImageLabel;
@@ -265,23 +280,101 @@ console.log('[AI Draw Bot Integration] Script file loaded');
             try {
                 const result = await window.aiDrawBot.classifyImage(imageUrl, imageLabel);
                 
-                // Update viewpoint selector
+                // Auto-set viewpoint selector based on classification result
                 const viewpointSelect = document.getElementById('aiViewpointSelect');
                 if (result.viewpoint && viewpointOptions.includes(result.viewpoint)) {
                     viewpointSelect.value = result.viewpoint;
+                    // Trigger change event to update UI state
+                    viewpointSelect.dispatchEvent(new Event('change'));
                 } else if (result.tags && result.tags.length > 0) {
                     // Try to match first tag
                     const matchedTag = result.tags.find(t => viewpointOptions.includes(t));
                     if (matchedTag) {
                         viewpointSelect.value = matchedTag;
+                        viewpointSelect.dispatchEvent(new Event('change'));
                     }
                 }
 
-                statusEl.textContent = `Classified: ${result.viewpoint || result.tags.join(', ')} (${(result.confidence * 100).toFixed(0)}% confidence)`;
+                // Show confidence in status
+                const confidencePercent = (result.confidence * 100).toFixed(0);
+                statusEl.textContent = `Classified: ${result.viewpoint || result.tags.join(', ')} (${confidencePercent}% confidence)`;
+                
+                // Update tags display
                 updateTagsDisplay();
+                
+                // If viewpoint was set, optionally trigger measurement prediction
+                if (viewpointSelect.value) {
+                    // Auto-predict measurements after a short delay
+                    setTimeout(() => {
+                        predictMeasurementsForViewpoint(viewpointSelect.value);
+                    }, 500);
+                }
             } catch (error) {
                 console.error('[AI Integration] Classification error:', error);
                 statusEl.textContent = `Error: ${error.message}`;
+            }
+        }
+
+        /**
+         * Predict measurements for a viewpoint and populate UI
+         */
+        async function predictMeasurementsForViewpoint(viewpoint) {
+            const imageLabel = window.currentImageLabel;
+            if (!imageLabel || !viewpoint) return;
+
+            const statusEl = document.getElementById('aiSuggestionStatus');
+            const canvas = document.getElementById('canvas');
+            const viewport = {
+                width: canvas ? canvas.width : 800,
+                height: canvas ? canvas.height : 600
+            };
+
+            try {
+                statusEl.textContent = 'Predicting measurements...';
+                const predictions = await window.aiDrawBot.predictMeasurements(viewpoint, imageLabel, viewport);
+                
+                if (predictions && predictions.length > 0) {
+                    // Sort by confidence (highest first)
+                    predictions.sort((a, b) => (b.confidence || 0) - (a.confidence || 0));
+                    
+                    // Update measurement selector with predicted codes
+                    const measurementSelect = document.getElementById('aiMeasurementSelect');
+                    const topPrediction = predictions[0];
+                    
+                    // Set the highest confidence measurement as default
+                    if (topPrediction.code && measurementCodes.includes(topPrediction.code)) {
+                        measurementSelect.value = topPrediction.code;
+                        measurementSelect.dispatchEvent(new Event('change'));
+                        
+                        // Auto-render the top prediction as a ghost stroke
+                        if (topPrediction.stroke && topPrediction.stroke.points) {
+                            currentSuggestion = {
+                                points: topPrediction.stroke.points,
+                                width: topPrediction.stroke.width || 2,
+                                confidence: topPrediction.confidence || 0.8,
+                                measurementCode: topPrediction.code
+                            };
+                            
+                            // Enable accept/dismiss buttons
+                            document.getElementById('aiAcceptBtn').disabled = false;
+                            document.getElementById('aiDismissBtn').disabled = false;
+                            
+                            // Start rendering ghost stroke
+                            startGhostStrokeRendering(currentSuggestion);
+                            
+                            statusEl.textContent = `Predicted: ${topPrediction.code} (${((topPrediction.confidence || 0) * 100).toFixed(0)}% confidence)`;
+                        } else {
+                            statusEl.textContent = `Predicted: ${predictions.map(p => p.code).join(', ')}`;
+                        }
+                    } else {
+                        statusEl.textContent = `Found ${predictions.length} prediction(s)`;
+                    }
+                } else {
+                    statusEl.textContent = 'No predictions available';
+                }
+            } catch (error) {
+                console.error('[AI Integration] Prediction error:', error);
+                statusEl.textContent = `Prediction error: ${error.message}`;
             }
         }
 
@@ -418,6 +511,8 @@ console.log('[AI Draw Bot Integration] Script file loaded');
                         },
                         confidence: currentSuggestion.confidence
                     }
+                }).catch(err => {
+                    console.warn('[AI Integration] Failed to queue feedback:', err);
                 });
             }
 
@@ -539,7 +634,7 @@ console.log('[AI Draw Bot Integration] Script file loaded');
         // Initialize UI
         createAIToggleButton();
 
-        // Update tags display when image changes
+        // Update tags display when image changes and auto-classify
         if (typeof window.switchToImage === 'function') {
             const originalSwitchToImage = window.switchToImage;
             window.switchToImage = function(...args) {
@@ -548,12 +643,26 @@ console.log('[AI Draw Bot Integration] Script file loaded');
                     updateTagsDisplay();
                     // Update viewpoint selector if tags exist
                     const imageLabel = window.currentImageLabel;
+                    const viewpointSelect = document.getElementById('aiViewpointSelect');
+                    
                     if (imageLabel && window.imageTags && window.imageTags[imageLabel]) {
                         const tags = window.imageTags[imageLabel];
-                        const viewpointSelect = document.getElementById('aiViewpointSelect');
-                        if (viewpointSelect && tags.viewpoint) {
+                        if (viewpointSelect && tags.viewpoint && viewpointOptions.includes(tags.viewpoint)) {
                             viewpointSelect.value = tags.viewpoint;
+                            viewpointSelect.dispatchEvent(new Event('change'));
+                            
+                            // Auto-predict measurements for this viewpoint
+                            if (tags.viewpoint) {
+                                setTimeout(() => {
+                                    predictMeasurementsForViewpoint(tags.viewpoint);
+                                }, 300);
+                            }
                         }
+                    } else if (imageLabel && window.originalImages && window.originalImages[imageLabel]) {
+                        // Auto-classify if no tags exist yet
+                        setTimeout(() => {
+                            classifyCurrentImage();
+                        }, 500);
                     }
                 }, 100);
             };

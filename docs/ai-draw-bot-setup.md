@@ -103,12 +103,17 @@ wrangler kv key put --binding=SOFA_TAGS "stroke:A1:front-center" '{"points":[...
 
 1. **Manual Classification**: Select viewpoint from dropdown
 2. **Auto Classification**: Click "Auto-Classify Image" button
-   - Sends image to classifier Worker
+   - Captures image snapshot (JPEG compressed) for better classification
+   - Generates SHA-256 hash for deduplication
+   - Sends image data to classifier Worker
    - Updates viewpoint dropdown automatically
    - Stores result in `window.imageTags[label]`
+   - Auto-triggers measurement prediction after classification
+3. **Automatic Classification**: When switching images, if no tags exist, auto-classification runs automatically
 
 ### Getting Stroke Suggestions
 
+**Method 1: Manual Selection**
 1. Ensure both viewpoint and measurement code are selected
 2. Click "Get Suggestion"
 3. Ghost stroke appears on canvas (semi-transparent blue, dashed)
@@ -116,6 +121,13 @@ wrangler kv key put --binding=SOFA_TAGS "stroke:A1:front-center" '{"points":[...
 5. Either:
    - **Accept**: Converts ghost stroke to real stroke
    - **Dismiss**: Removes ghost stroke
+
+**Method 2: Automatic Prediction (NEW)**
+1. After auto-classification, measurements are automatically predicted
+2. Top prediction (highest confidence) is automatically selected and rendered
+3. Measurement dropdown is auto-populated with predicted codes
+4. Ghost stroke appears automatically for the top prediction
+5. Accept or dismiss as needed
 
 ### Adding Your Own Exemplars
 
@@ -151,6 +163,8 @@ Example stroke format:
 ```json
 {
   "imageUrl": "https://example.com/image.jpg",
+  "imageBase64": "base64-encoded-jpeg-data",
+  "imageHash": "sha256-hash-of-image",
   "imageLabel": "front_1"
 }
 ```
@@ -164,13 +178,19 @@ Example stroke format:
 }
 ```
 
+**Notes:**
+- `imageBase64`: Compressed JPEG (quality 0.7) for better classification
+- `imageHash`: SHA-256 hash for caching and deduplication
+- Results are cached by hash for 30 days
+
 ### Draw Bot API
 
 **Endpoint:** `POST /api/draw-bot`
 
-**Request:**
+**Action: `suggest` (Get single stroke suggestion)**
 ```json
 {
+  "action": "suggest",
   "measurementCode": "A1",
   "viewpointTag": "front-center",
   "imageLabel": "front_1",
@@ -190,6 +210,39 @@ Example stroke format:
     { "x": 300, "y": 200, "t": 100 }
   ],
   "width": 2
+}
+```
+
+**Action: `predict` (Predict multiple measurements)**
+```json
+{
+  "action": "predict",
+  "viewpointTag": "front-center",
+  "imageLabel": "front_1",
+  "imageHash": "sha256-hash",
+  "imageBase64": "base64-data",
+  "viewport": { "width": 800, "height": 600 }
+}
+```
+
+**Response:**
+```json
+{
+  "predictions": [
+    {
+      "code": "A1",
+      "stroke": {
+        "points": [{ "x": 100, "y": 200, "t": 0 }],
+        "width": 2
+      },
+      "confidence": 0.9
+    },
+    {
+      "code": "A2",
+      "stroke": { ... },
+      "confidence": 0.85
+    }
+  ]
 }
 ```
 
@@ -234,19 +287,28 @@ The AI Draw Bot includes a feedback loop that automatically learns from your dra
   "measurementCode": "A1",
   "stroke": {
     "points": [
-      { "x": 100, "y": 200, "t": 0 },
-      { "x": 300, "y": 200, "t": 100 }
+      { "x": 0.125, "y": 0.333, "t": 0 },
+      { "x": 0.375, "y": 0.333, "t": 100 }
     ],
-    "width": 2,
+    "width": 0.002,
     "source": "manual|accepted|modified"
   },
   "labels": [],
+  "imageHash": "sha256-hash-of-image",
+  "imageBase64": "compressed-jpeg-base64",
   "meta": {
     "canvas": { "width": 800, "height": 600 },
-    "confidence": 0.8
+    "confidence": 0.8,
+    "originalDimensions": { "width": 1920, "height": 1080 }
   }
 }
 ```
+
+**Notes:**
+- Stroke points are normalized to 0-1 range for consistent storage
+- Image data is included for visual context in training
+- Images are stored in R2 bucket with key format: `images/<hash>.jpg`
+- Image hash enables deduplication and visual validation during promotion
 
 ### Deploying Feedback Workers
 
@@ -262,16 +324,19 @@ wrangler deploy --config wrangler.promote.toml
 
 - Toggle "AI Learning" switch in the AI panel to enable/disable feedback collection
 - Feedback queue is stored locally and only sent when you click "Sync Feedback Now" or when idle
-- No image data is sent, only stroke coordinates and metadata
+- Image data is compressed (JPEG quality 0.7) and only sent if feedback is enabled
+- Images are stored in R2 for training purposes but can be deleted if needed
 
 ### Promotion Process
 
 The promotion worker runs daily at 2 AM UTC and:
 1. Reads feedback entries from KV storage
-2. Aggregates strokes by (measurementCode, viewpoint) combination
-3. Requires minimum 3 samples before promoting
-4. Creates production stroke keys used by `draw-bot.js`
-5. Updates confidence scores based on sample count
+2. Prioritizes entries with image data for better quality
+3. Aggregates strokes by (measurementCode, viewpoint) combination
+4. Requires minimum 3 samples before promoting
+5. Creates production stroke keys used by `draw-bot.js`
+6. Updates confidence scores based on sample count
+7. Uses image hash/storage keys for visual validation (future enhancement)
 
 ## Next Steps
 
