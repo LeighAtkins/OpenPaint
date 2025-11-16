@@ -308,18 +308,20 @@
   function updateViewpointDropdown(parserViewpoint) {
     const viewpointSelect = document.getElementById('aiViewpointSelect');
     if (viewpointSelect && parserViewpoint) {
+      // For text input, try to map to a known value, but accept any value
       const dropdownValue = mapViewpointToDropdown(parserViewpoint);
-      if (dropdownValue && viewpointSelect.querySelector(`option[value="${dropdownValue}"]`)) {
-        viewpointSelect.value = dropdownValue;
-        viewpointSelect.dispatchEvent(new Event('change'));
-        
-        // Also save to imageTags
-        const imageLabel = window.currentImageLabel;
-        if (imageLabel) {
-          if (!window.imageTags) window.imageTags = {};
-          if (!window.imageTags[imageLabel]) window.imageTags[imageLabel] = {};
-          window.imageTags[imageLabel].viewpoint = parserViewpoint;
-        }
+      const valueToSet = dropdownValue || parserViewpoint;
+      
+      viewpointSelect.value = valueToSet;
+      viewpointSelect.dispatchEvent(new Event('input'));
+      viewpointSelect.dispatchEvent(new Event('change'));
+      
+      // Also save to imageTags
+      const imageLabel = window.currentImageLabel;
+      if (imageLabel) {
+        if (!window.imageTags) window.imageTags = {};
+        if (!window.imageTags[imageLabel]) window.imageTags[imageLabel] = {};
+        window.imageTags[imageLabel].viewpoint = parserViewpoint;
       }
     }
   }

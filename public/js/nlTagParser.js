@@ -75,36 +75,57 @@
     const numbers = fullText.match(/\b(\d+)\b/g);
     
     // Check each facet category
-    for (const [facetKey, facetConfig] of Object.entries(facetsConfig.facets)) {
-      if (facetKey === 'cushions') {
-        // Handle nested cushions
-        for (const [cushionType, cushionConfig] of Object.entries(facetConfig)) {
-          for (const [option, synonyms] of Object.entries(cushionConfig.synonyms)) {
-            for (const synonym of synonyms) {
-              const pattern = new RegExp(`\\b${synonym.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
-              if (pattern.test(fullText)) {
-                result.facets.cushions[cushionType] = option;
-                break;
+    if (facetsConfig.facets) {
+      for (const [facetKey, facetConfig] of Object.entries(facetsConfig.facets)) {
+        if (!facetConfig || !facetConfig.synonyms) continue;
+        
+        if (facetKey === 'cushions') {
+          // Handle nested cushions
+          if (facetConfig.seat && facetConfig.seat.synonyms) {
+            for (const [option, synonyms] of Object.entries(facetConfig.seat.synonyms)) {
+              if (!Array.isArray(synonyms)) continue;
+              for (const synonym of synonyms) {
+                const pattern = new RegExp(`\\b${synonym.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+                if (pattern.test(fullText)) {
+                  result.facets.cushions.seat = option;
+                  break;
+                }
               }
-            }
-            if (result.facets.cushions[cushionType]) break;
-          }
-        }
-      } else {
-        // Regular facets
-        for (const [option, synonyms] of Object.entries(facetConfig.synonyms)) {
-          for (const synonym of synonyms) {
-            const pattern = new RegExp(`\\b${synonym.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
-            if (pattern.test(fullText)) {
-              if (facetKey === 'viewpoint') {
-                result.viewpoint = option;
-              } else {
-                result.facets[facetKey] = option;
-              }
-              break;
+              if (result.facets.cushions.seat) break;
             }
           }
-          if ((facetKey === 'viewpoint' && result.viewpoint) || result.facets[facetKey]) break;
+          if (facetConfig.back && facetConfig.back.synonyms) {
+            for (const [option, synonyms] of Object.entries(facetConfig.back.synonyms)) {
+              if (!Array.isArray(synonyms)) continue;
+              for (const synonym of synonyms) {
+                const pattern = new RegExp(`\\b${synonym.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+                if (pattern.test(fullText)) {
+                  result.facets.cushions.back = option;
+                  break;
+                }
+              }
+              if (result.facets.cushions.back) break;
+            }
+          }
+        } else {
+          // Regular facets
+          if (facetConfig.synonyms) {
+            for (const [option, synonyms] of Object.entries(facetConfig.synonyms)) {
+              if (!Array.isArray(synonyms)) continue;
+              for (const synonym of synonyms) {
+                const pattern = new RegExp(`\\b${synonym.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+                if (pattern.test(fullText)) {
+                  if (facetKey === 'viewpoint') {
+                    result.viewpoint = option;
+                  } else {
+                    result.facets[facetKey] = option;
+                  }
+                  break;
+                }
+              }
+              if ((facetKey === 'viewpoint' && result.viewpoint) || result.facets[facetKey]) break;
+            }
+          }
         }
       }
     }
@@ -163,16 +184,27 @@
     const matchedTerms = new Set();
     for (const [facetKey, facetConfig] of Object.entries(facetsConfig.facets)) {
       if (facetKey === 'cushions') continue;
-      for (const synonyms of Object.values(facetConfig.synonyms)) {
-        synonyms.forEach(s => matchedTerms.add(s.toLowerCase()));
+      if (facetConfig && facetConfig.synonyms) {
+        for (const synonyms of Object.values(facetConfig.synonyms)) {
+          if (Array.isArray(synonyms)) {
+            synonyms.forEach(s => matchedTerms.add(s.toLowerCase()));
+          }
+        }
       }
     }
     
-    tokens.tokens.forEach(token => {
-      if (!matchedTerms.has(token) && token.length > 2) {
-        result.freeform.push(token);
-      }
-    });
+    // Ensure extras array exists
+    if (!result.facets.extras) {
+      result.facets.extras = [];
+    }
+    
+    if (tokens && tokens.tokens && Array.isArray(tokens.tokens)) {
+      tokens.tokens.forEach(token => {
+        if (!matchedTerms.has(token) && token.length > 2) {
+          result.freeform.push(token);
+        }
+      });
+    }
 
     return result;
   }
@@ -262,9 +294,11 @@
       chips.push({ type: 'orientation', label: parsedResult.facets.orientation, value: parsedResult.facets.orientation });
     }
     
-    parsedResult.facets.extras.forEach((extra, idx) => {
-      chips.push({ type: 'extra', label: extra, value: extra, index: idx });
-    });
+    if (parsedResult.facets.extras && Array.isArray(parsedResult.facets.extras)) {
+      parsedResult.facets.extras.forEach((extra, idx) => {
+        chips.push({ type: 'extra', label: extra, value: extra, index: idx });
+      });
+    }
 
     return chips;
   }
