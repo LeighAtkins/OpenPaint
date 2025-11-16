@@ -6,6 +6,9 @@
 console.log('[aiDrawBot] Script file loaded and executing...');
 console.log('[aiDrawBot] Window object available:', typeof window !== 'undefined');
 
+// Enable debug mode by setting window.DEBUG_AI_FEEDBACK = true in console
+// This will show detailed condition checks in paint.js feedback block
+
 try {
 window.aiDrawBot = {
     // Configuration - will be set from environment or defaults
@@ -400,7 +403,58 @@ window.aiDrawBot = {
             scheduleFeedbackFlush();
         }
 
-        console.log('[aiDrawBot] Queued feedback:', payload);
+        console.log('[aiDrawBot] Queued feedback:', {
+            ...payload,
+            imageBase64: payload.imageBase64 ? `present (${payload.imageBase64.length} chars)` : 'missing'
+        });
+    },
+
+    /**
+     * Debug helper: Check current feedback queue state
+     * Call from console: window.aiDrawBot.debugQueue()
+     */
+    debugQueue() {
+        const queue = window.aiFeedbackQueue || [];
+        const stored = (() => {
+            try {
+                return JSON.parse(localStorage.getItem('aiFeedbackQueue') || '[]');
+            } catch (e) {
+                return null;
+            }
+        })();
+        
+        const feedbackToggle = document.getElementById('aiFeedbackEnabled');
+        
+        console.group('[aiDrawBot] Queue Debug Report');
+        console.log('In-memory queue:', queue);
+        console.log('LocalStorage queue:', stored);
+        console.log('Queue lengths - Memory:', queue.length, '| Storage:', stored?.length || 0);
+        console.log('Feedback toggle:', {
+            exists: !!feedbackToggle,
+            checked: feedbackToggle?.checked ?? true,
+            element: feedbackToggle
+        });
+        console.log('Queue items:', queue.map((item, idx) => ({
+            index: idx,
+            measurementCode: item.payload?.measurementCode,
+            imageLabel: item.payload?.imageLabel,
+            viewpoint: item.payload?.viewpoint,
+            attempts: item.attempts,
+            queuedAt: item.queuedAt,
+            hasImage: !!item.payload?.imageBase64
+        })));
+        console.groupEnd();
+        
+        return {
+            memoryQueue: queue,
+            storageQueue: stored,
+            toggleEnabled: feedbackToggle?.checked ?? true,
+            summary: {
+                memoryCount: queue.length,
+                storageCount: stored?.length || 0,
+                syncNeeded: queue.length > 0
+            }
+        };
     },
 
     /**
@@ -457,6 +511,22 @@ window.aiDrawBot = {
             }
 
             try {
+                const requestPayload = {
+                    ...item.payload,
+                    // Truncate base64 for logging (too large otherwise)
+                    imageBase64: item.payload.imageBase64 ? 
+                        `${item.payload.imageBase64.substring(0, 50)}... (${item.payload.imageBase64.length} chars)` : 
+                        null
+                };
+                console.log('[aiDrawBot][DEBUG] Sending feedback request:', {
+                    url: feedbackWorkerUrl,
+                    measurementCode: item.payload.measurementCode,
+                    imageLabel: item.payload.imageLabel,
+                    viewpoint: item.payload.viewpoint,
+                    payloadSize: JSON.stringify(item.payload).length,
+                    hasImageBase64: !!item.payload.imageBase64
+                });
+                
                 const response = await fetch(feedbackWorkerUrl, {
                     method: 'POST',
                     headers: {
@@ -464,6 +534,13 @@ window.aiDrawBot = {
                         ...(this.config.authToken && { 'x-api-key': this.config.authToken })
                     },
                     body: JSON.stringify(item.payload)
+                });
+
+                console.log('[aiDrawBot][DEBUG] Response received:', {
+                    status: response.status,
+                    statusText: response.statusText,
+                    ok: response.ok,
+                    headers: Object.fromEntries(response.headers.entries())
                 });
 
                 if (response.ok) {
@@ -479,11 +556,12 @@ window.aiDrawBot = {
                     item.attempts++;
                     item.lastAttempt = new Date().toISOString();
                     remaining.push(item);
-                    console.warn('[aiDrawBot] Feedback submission failed:', {
+                    console.error('[aiDrawBot] Feedback submission failed:', {
                         status: response.status,
                         statusText: response.statusText,
                         error: errorText,
-                        payload: item.payload
+                        attempt: item.attempts,
+                        payload: requestPayload
                     });
                 }
             } catch (error) {
@@ -493,7 +571,11 @@ window.aiDrawBot = {
                 console.error('[aiDrawBot] Feedback submission error:', {
                     error: error.message,
                     stack: error.stack,
-                    payload: item.payload
+                    attempt: item.attempts,
+                    payload: {
+                        ...item.payload,
+                        imageBase64: item.payload.imageBase64 ? 'present' : 'missing'
+                    }
                 });
             }
         }

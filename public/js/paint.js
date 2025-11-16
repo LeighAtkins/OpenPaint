@@ -9076,6 +9076,23 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
 
       // **AI FEEDBACK**: Queue stroke for feedback if AI Draw Bot is available and enabled
       const feedbackEnabled = document.getElementById('aiFeedbackEnabled');
+      
+      // Debug: Log all conditions to diagnose why queueing might fail
+      const debugInfo = {
+        hasAiDrawBot: typeof window.aiDrawBot !== 'undefined',
+        hasQueueFeedback: typeof window.aiDrawBot?.queueFeedback === 'function',
+        hasDrawnVectorData: !!drawnVectorData,
+        hasPoints: !!(drawnVectorData?.points?.length),
+        feedbackToggleExists: !!feedbackEnabled,
+        feedbackToggleChecked: feedbackEnabled?.checked ?? true,
+        currentImageLabel: currentImageLabel,
+        strokeLabel: strokeLabel
+      };
+      
+      if (window.DEBUG_AI_FEEDBACK) {
+        console.log('[Paint.js][AI Feedback][DEBUG] Condition check:', debugInfo);
+      }
+      
       if (typeof window.aiDrawBot !== 'undefined' && window.aiDrawBot.queueFeedback && drawnVectorData && drawnVectorData.points && (!feedbackEnabled || feedbackEnabled.checked)) {
         try {
           const canvas = document.getElementById('canvas');
@@ -9097,7 +9114,9 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
           console.log('[Paint.js][AI Feedback] Queueing stroke for AI learning:', {
             imageLabel: currentImageLabel,
             measurementCode: strokeLabel,
-            points: drawnVectorData.points?.length || 0
+            points: drawnVectorData.points?.length || 0,
+            width: drawnVectorData.width,
+            type: drawnVectorData.type
           });
           // queueFeedback is async; attach logging for diagnostics
           window.aiDrawBot.queueFeedback({
@@ -9121,10 +9140,29 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
             console.log('[Paint.js][AI Feedback] queueFeedback resolved. Current queue size:', window.aiFeedbackQueue?.length || 0);
           })
           .catch(err => {
-            console.warn('[Paint.js] Failed to queue feedback:', err);
+            console.error('[Paint.js][AI Feedback] queueFeedback promise rejected:', err);
           });
         } catch (e) {
-          console.warn('[Paint.js] Failed to queue feedback for stroke:', e);
+          console.error('[Paint.js][AI Feedback] Exception in feedback block:', e, {
+            error: e.message,
+            stack: e.stack,
+            currentImageLabel,
+            strokeLabel,
+            hasDrawnVectorData: !!drawnVectorData
+          });
+        }
+      } else {
+        // Log why feedback was NOT queued (for debugging)
+        if (window.DEBUG_AI_FEEDBACK) {
+          console.warn('[Paint.js][AI Feedback] Skipped queueing - conditions not met:', {
+            ...debugInfo,
+            reason: !debugInfo.hasAiDrawBot ? 'aiDrawBot undefined' :
+                    !debugInfo.hasQueueFeedback ? 'queueFeedback not a function' :
+                    !debugInfo.hasDrawnVectorData ? 'drawnVectorData missing' :
+                    !debugInfo.hasPoints ? 'no points in drawnVectorData' :
+                    (feedbackEnabled && !feedbackEnabled.checked) ? 'feedback toggle disabled' :
+                    'unknown'
+          });
         }
       }
     } else if (strokeLabel) {
