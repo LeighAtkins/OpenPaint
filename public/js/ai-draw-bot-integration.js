@@ -440,12 +440,13 @@ console.log('[AI Draw Bot Integration] Script file loaded');
                         measurementSelect.dispatchEvent(new Event('change'));
                         
                         // Auto-render the top prediction as a ghost stroke
-                        if (topPrediction.stroke && topPrediction.stroke.points) {
+                    if (topPrediction.stroke && topPrediction.stroke.points) {
                             currentSuggestion = {
                                 points: topPrediction.stroke.points,
                                 width: topPrediction.stroke.width || 2,
                                 confidence: topPrediction.confidence || 0.8,
-                                measurementCode: topPrediction.code
+                            measurementCode: topPrediction.code,
+                            viewport
                             };
                             
                             // Enable accept/dismiss buttons only when suggestion exists
@@ -531,6 +532,7 @@ console.log('[AI Draw Bot Integration] Script file loaded');
                     return;
                 }
 
+                suggestion.viewport = viewport;
                 currentSuggestion = suggestion;
                 statusEl.textContent = `Suggestion ready (${(suggestion.confidence * 100).toFixed(0)}% confidence)`;
 
@@ -611,7 +613,8 @@ console.log('[AI Draw Bot Integration] Script file loaded');
                 points: currentSuggestion.points,
                 width: currentSuggestion.width,
                 confidence: currentSuggestion.confidence || 0.8,
-                measurementCode: currentSuggestion.measurementCode
+                measurementCode: currentSuggestion.measurementCode,
+                viewport: currentSuggestion.viewport || null
             };
 
             const imageLabel = window.currentImageLabel;
@@ -628,7 +631,8 @@ console.log('[AI Draw Bot Integration] Script file loaded');
                 suggestionData.points,
                 suggestionData.width,
                 imageLabel,
-                measurementCode
+                measurementCode,
+                suggestionData.viewport
             );
 
             // Queue feedback for accepted suggestion
