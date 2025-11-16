@@ -51,7 +51,7 @@
   }
 
   /**
-   * Create the NL tag input UI
+   * Create the NL tag input UI - positioned above canvas controls
    */
   function createNLTagUI() {
     // Check if already exists
@@ -61,7 +61,12 @@
 
     const container = document.createElement('div');
     container.id = 'nlTagInputContainer';
-    container.className = 'px-3 py-2 bg-white border-b border-slate-200';
+    container.className = 'floating-panel fixed rounded-2xl px-3 py-2 transition-all duration-300 bg-white shadow-lg border border-slate-200';
+    // Position above canvas controls (canvasControls is at bottom: 4rem, so we place this at bottom: 8rem)
+    // Match the canvas controls styling: centered, fixed position
+    // Responsive: on mobile, use full width with margins; on desktop, max-width 600px
+    const isMobile = window.innerWidth <= 768;
+    container.style.cssText = `bottom: ${isMobile ? '7rem' : '8rem'}; left: 50%; transform: translateX(-50%); z-index: 9999; display: block; max-width: ${isMobile ? 'calc(100% - 2rem)' : '600px'}; min-width: ${isMobile ? 'auto' : '400px'}; width: ${isMobile ? 'calc(100% - 2rem)' : 'auto'};`;
 
     // Input box
     const inputGroup = document.createElement('div');
@@ -69,13 +74,13 @@
     
     const label = document.createElement('label');
     label.setAttribute('for', 'nlTagInput');
-    label.className = 'block text-[10px] text-slate-500 mb-1';
+    label.className = 'block text-[10px] text-slate-500 mb-1 font-medium';
     label.textContent = 'Describe this view (e.g., "square arm high back sofa 2 arms")';
     
     const input = document.createElement('input');
     input.id = 'nlTagInput';
     input.type = 'text';
-    input.className = 'w-full px-2 py-1.5 border border-slate-300 rounded-md text-[12px] focus:outline-none focus:ring-2 focus:ring-primary-300';
+    input.className = 'w-full px-3 py-2 border border-slate-300 rounded-lg text-[13px] focus:outline-none focus:ring-2 focus:ring-primary-300 focus:border-primary-400';
     input.placeholder = 'Type description...';
     
     inputGroup.appendChild(label);
@@ -100,7 +105,7 @@
     recentContainer.className = 'hidden mb-2';
     
     const recentLabel = document.createElement('div');
-    recentLabel.className = 'text-[10px] text-slate-500 mb-1';
+    recentLabel.className = 'text-[10px] text-slate-500 mb-1 font-medium';
     recentLabel.textContent = 'Recent:';
     recentContainer.appendChild(recentLabel);
     
@@ -111,17 +116,19 @@
     
     container.appendChild(recentContainer);
 
-    // Insert before imagePanelContent
-    const imagePanelContent = document.getElementById('imagePanelContent');
-    if (imagePanelContent) {
-      imagePanelContent.insertBefore(container, imagePanelContent.firstChild);
-    } else {
-      // Fallback: append to imagePanel
-      const imagePanel = document.getElementById('imagePanel');
-      if (imagePanel) {
-        imagePanel.appendChild(container);
-      }
+    // Insert into body, positioned above canvas controls
+    document.body.appendChild(container);
+
+    // Update position on window resize
+    function updatePosition() {
+      const isMobile = window.innerWidth <= 768;
+      container.style.bottom = isMobile ? '7rem' : '8rem';
+      container.style.maxWidth = isMobile ? 'calc(100% - 2rem)' : '600px';
+      container.style.minWidth = isMobile ? 'auto' : '400px';
+      container.style.width = isMobile ? 'calc(100% - 2rem)' : 'auto';
     }
+    
+    window.addEventListener('resize', updatePosition);
 
     // Setup event handlers
     setupInputHandlers(input, chipsContainer, suggestionsContainer, recentContainer, recentList);
@@ -445,10 +452,10 @@
   function init() {
     // Wait for DOM and nlTagParser
     function tryInit() {
-      if (document.getElementById('imagePanel') && window.nlTagParser) {
+      if (document.getElementById('canvasControls') && window.nlTagParser) {
         createNLTagUI();
         loadRecentCombos();
-        console.log('[NL Tag UI] Initialized');
+        console.log('[NL Tag UI] Initialized - Tagging tray positioned above canvas controls');
       } else {
         setTimeout(tryInit, 100);
       }
