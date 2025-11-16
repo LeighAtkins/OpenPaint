@@ -325,10 +325,15 @@ window.aiDrawBot = {
      * @param {Object} event - Feedback event with source, imageLabel, measurementCode, viewpoint, stroke, etc.
      */
     async queueFeedback(event) {
+        console.log('[aiDrawBot] queueFeedback invoked', {
+            imageLabel: event.imageLabel,
+            measurementCode: event.measurementCode,
+            source: event.source
+        });
         // Check if feedback is enabled
         const feedbackEnabled = document.getElementById('aiFeedbackEnabled');
         if (feedbackEnabled && !feedbackEnabled.checked) {
-            console.log('[aiDrawBot] Feedback disabled, skipping queue');
+            console.log('[aiDrawBot] Feedback disabled via toggle, skipping queue');
             return;
         }
 
@@ -339,6 +344,11 @@ window.aiDrawBot = {
         // Capture image snapshot for visual context
         const imageUrl = window.originalImages?.[event.imageLabel];
         const snapshot = imageUrl ? await this.captureImageSnapshot(imageUrl) : null;
+        console.log('[aiDrawBot] Snapshot result', {
+            hasImage: !!imageUrl,
+            capturedBase64: !!snapshot?.imageBase64,
+            hash: snapshot?.imageHash
+        });
 
         // Build payload from event
         const payload = {
@@ -375,10 +385,12 @@ window.aiDrawBot = {
             lastAttempt: null,
             queuedAt: new Date().toISOString()
         });
+        console.log('[aiDrawBot] Feedback queued. Queue length:', window.aiFeedbackQueue.length);
 
         // Persist to localStorage
         try {
             localStorage.setItem('aiFeedbackQueue', JSON.stringify(window.aiFeedbackQueue));
+            console.log('[aiDrawBot] LocalStorage updated with queue size:', window.aiFeedbackQueue.length);
         } catch (e) {
             console.warn('[aiDrawBot] Failed to persist feedback queue:', e);
         }

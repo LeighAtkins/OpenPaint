@@ -9094,7 +9094,12 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
             };
           });
 
-          // queueFeedback is now async, but we don't need to await it
+          console.log('[Paint.js][AI Feedback] Queueing stroke for AI learning:', {
+            imageLabel: currentImageLabel,
+            measurementCode: strokeLabel,
+            points: drawnVectorData.points?.length || 0
+          });
+          // queueFeedback is async; attach logging for diagnostics
           window.aiDrawBot.queueFeedback({
             imageLabel: currentImageLabel,
             measurementCode: strokeLabel,
@@ -9111,7 +9116,11 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
               originalDimensions: originalDims,
               type: drawnVectorData.type || 'freehand'
             }
-          }).catch(err => {
+          })
+          .then(() => {
+            console.log('[Paint.js][AI Feedback] queueFeedback resolved. Current queue size:', window.aiFeedbackQueue?.length || 0);
+          })
+          .catch(err => {
             console.warn('[Paint.js] Failed to queue feedback:', err);
           });
         } catch (e) {
