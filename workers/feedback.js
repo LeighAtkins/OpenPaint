@@ -166,6 +166,7 @@ export default {
       const indexKey = `feedback:index:${measurementCode}:${viewpoint || 'unknown'}`;
       try {
         const existingIndex = await env.SOFA_TAGS.get(indexKey, { type: 'json' }) || { count: 0, lastUpdated: null, feedbackIds: [] };
+        const isNewIndex = existingIndex.count === 0;
         existingIndex.count += 1;
         existingIndex.lastUpdated = new Date().toISOString();
         existingIndex.feedbackIds.push(feedbackId);
@@ -175,6 +176,23 @@ export default {
         }
         await env.SOFA_TAGS.put(indexKey, JSON.stringify(existingIndex));
         console.log(`[Feedback Worker] Updated index: ${indexKey}, count: ${existingIndex.count}`);
+        
+        // Update manifest if this is a new index key
+        if (isNewIndex) {
+          try {
+            const manifestKey = 'feedback:manifest';
+            const manifest = await env.SOFA_TAGS.get(manifestKey, { type: 'json' }) || { indexKeys: [] };
+            if (!manifest.indexKeys.includes(indexKey)) {
+              manifest.indexKeys.push(indexKey);
+              manifest.lastUpdated = new Date().toISOString();
+              await env.SOFA_TAGS.put(manifestKey, JSON.stringify(manifest));
+              console.log(`[Feedback Worker] Added ${indexKey} to manifest`);
+            }
+          } catch (manifestError) {
+            console.warn(`[Feedback Worker] Failed to update manifest:`, manifestError);
+            // Don't fail the request if manifest update fails
+          }
+        }
       } catch (indexError) {
         console.error(`[Feedback Worker] Failed to update index:`, indexError);
         // Don't fail the request if index update fails, but log it
