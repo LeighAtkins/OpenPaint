@@ -1982,6 +1982,9 @@
                 <button id="showAllMeasurementsBtn" title="Show all measurements in a list" class="flex-1 px-2 py-1 text-xs bg-green-100 hover:bg-green-200 text-green-700 rounded-lg transition-all font-medium">
                     Show List
                 </button>
+                <button id="importMeasurementsBtn" title="Import measurements from customer data" class="flex-1 px-2 py-1 text-xs bg-orange-100 hover:bg-orange-200 text-orange-700 rounded-lg transition-all font-medium">
+                    Import List
+                </button>
                 <button id="viewSubmittedMeasurementsBtn" title="View submitted measurements from shared projects" class="flex-1 px-2 py-1 text-xs bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg transition-all font-medium">
                     View Submitted
                 </button>
@@ -2441,9 +2444,12 @@
                     labelShapeToggleBtn.setAttribute('aria-pressed', String(isSquare));
                 };
                 labelShapeToggleBtn.addEventListener('click', () => {
-                    const shape = (window.paintApp?.state?.labelShape) || 'square';
-                    applyShape(shape === 'circle' ? 'square' : 'circle');
+                    const oldShape = (window.paintApp?.state?.labelShape) || 'square';
+                    const newShape = oldShape === 'circle' ? 'square' : 'circle';
+                    console.log('[SHAPE DEBUG] Toggle clicked:', oldShape, '->', newShape);
+                    applyShape(newShape);
                     syncShapeBtn();
+                    console.log('[SHAPE DEBUG] State after toggle:', window.paintApp?.state?.labelShape);
                 });
                 syncShapeBtn();
             }
@@ -2456,15 +2462,22 @@
                     if (window.redrawCanvasWithVisibility) window.redrawCanvasWithVisibility();
                 };
                 if (labelBackgroundToggleBtn) {
+                    const backgroundStates = ['solid', 'clear-black', 'clear-selected', 'clear-white'];
+                    const stateLabels = ['Solid', 'Clear Black', 'Clear Color', 'Clear White'];
+                    
                     const syncBackgroundBtn = () => {
                         const background = (window.paintApp?.state?.labelBackground) || 'solid';
-                        const isSolid = background === 'solid';
-                        labelBackgroundToggleBtn.textContent = isSolid ? 'Clear' : 'Solid';
-                        labelBackgroundToggleBtn.setAttribute('aria-pressed', String(!isSolid));
+                        const stateIndex = backgroundStates.indexOf(background);
+                        const currentIndex = stateIndex >= 0 ? stateIndex : 0;
+                        labelBackgroundToggleBtn.textContent = stateLabels[currentIndex];
+                        labelBackgroundToggleBtn.setAttribute('aria-pressed', background !== 'solid' ? 'true' : 'false');
                     };
+                    
                     labelBackgroundToggleBtn.addEventListener('click', () => {
                         const background = (window.paintApp?.state?.labelBackground) || 'solid';
-                        applyBackground(background === 'solid' ? 'clear' : 'solid');
+                        const currentIndex = backgroundStates.indexOf(background);
+                        const nextIndex = (currentIndex + 1) % backgroundStates.length;
+                        applyBackground(backgroundStates[nextIndex]);
                         syncBackgroundBtn();
                     });
                     syncBackgroundBtn();
@@ -3603,6 +3616,16 @@
                 showAllMeasurementsBtn.addEventListener('click', () => {
                     if (typeof window.generateMeasurementsList === 'function') {
                         window.generateMeasurementsList();
+                    }
+                });
+            }
+
+            // Import Measurements functionality
+            const importMeasurementsBtn = document.getElementById('importMeasurementsBtn');
+            if (importMeasurementsBtn) {
+                importMeasurementsBtn.addEventListener('click', () => {
+                    if (typeof window.showImportMeasurementsDialog === 'function') {
+                        window.showImportMeasurementsDialog();
                     }
                 });
             }
