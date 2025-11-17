@@ -1,4 +1,5 @@
 name = "feedback"
+account_id = "665aca072a7cddbc216be6b25a6fd951"
 main = "workers/feedback.js"
 compatibility_date = "2024-01-01"
 
