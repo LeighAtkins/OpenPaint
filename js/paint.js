@@ -97,6 +97,9 @@ window.paintApp = {
     // Event listener management
     listenersBound: false,
     eventListeners: new AbortController(),
+    // Label styling options
+    labelShape: 'square',
+    labelBackground: 'solid',
     folderStructure: {
       'root': {
         id: 'root',
@@ -951,7 +954,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize with a blank state when the image is first created
     const blankState = ctx.createImageData(canvas.width, canvas.height);
     imageStates[label] = blankState;
-    undoStackByImage[label].push({
+    addToUndoStack(label, {
       state: cloneImageData(blankState),
       type: 'initial',
       label: null
@@ -1459,6 +1462,8 @@ document.addEventListener('DOMContentLoaded', () => {
     delete window.strokeLabelVisibility[label];
     delete window.strokeMeasurements[label];
     delete window.labelsByImage[label];
+    // Clear memory properly before deleting
+    clearImageMemory(label);
     delete window.undoStackByImage[label];
     delete window.redoStackByImage[label];
     delete window.imageStates[label];
@@ -1843,7 +1848,7 @@ document.addEventListener('DOMContentLoaded', () => {
           if (!undoStackByImage[label]) {
             undoStackByImage[label] = [];
           }
-          undoStackByImage[label].push({
+          addToUndoStack(label, {
             state: cloneImageData(newState),
             type: 'initial',
             label: null
@@ -5571,7 +5576,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const unit = document.getElementById('unitSelector')?.value || 'inch';
       if (unit === 'cm' && reviewMeasurement !== '?') {
         const baseFontSize = parseFloat(window.getComputedStyle(reviewMeasureText).fontSize) || 14;
-        reviewMeasureText.style.fontSize = `${Math.max(6, baseFontSize - 8)}px`;
+        reviewMeasureText.style.fontSize = `${Math.max(12, baseFontSize - 2)}px`;
       }
       reviewMeasureText.style.marginLeft = '8px';
       reviewMeasureText.style.padding = '2px 6px';
@@ -8274,7 +8279,10 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
         // Use grey outline for white strokes, black text for all
         const isWhiteStroke = vectorData.color === '#ffffff' || vectorData.color === 'white' || vectorData.color === 'rgb(255, 255, 255)';
         const labelOutlineColor = isWhiteStroke ? '#666666' : (vectorData.color || '#000');
-        const labelTextColor = '#000000'; // Black text for all tags
+        // Use stroke color for text when in clear background mode, black otherwise
+        const backgroundState = window.paintApp?.state?.labelBackground || 'solid';
+        const isClearBackground = backgroundState === 'clear';
+        const labelTextColor = isClearBackground ? (vectorData.color || '#000000') : '#000000';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'bottom';
 
@@ -8293,11 +8301,19 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
         } else {
           metrics = ctx.measureText(labelText);
         }
-        const labelHeight = Math.max(48, tagSize * 2.4); // Scale height with tag size, minimum 48px
+        // Check unit and scale height proportionally for CM
+        const unit = document.getElementById('unitSelector')?.value || 'inch';
+        const isCmUnit = unit === 'cm';
+        // Only reduce font size for larger fonts, keep small fonts as-is
+        const effectiveTagSize = isCmUnit && tagSize > 14 ? Math.max(12, tagSize - 2) : tagSize;
+        const heightMultiplier = isCmUnit ? 2.2 : 2.2;  // Keep same ratio for now
+        const paddingSize = isCmUnit ? Math.max(6, tagSize * 0.4) : 8;  // Scale padding with font size
+        
+        const labelHeight = Math.max(36, effectiveTagSize * heightMultiplier); // Scale height with effective tag size
         // For square tags, make width shrink with tag size (rectangular instead of square)
         // For circle tags, adapt width to text content
-        const minWidthForSquare = shape === 'square' ? Math.max(metrics.width + 12, tagSize * 1.5) : labelHeight;
-        const labelWidth = shape === 'circle' ? Math.max(metrics.width + 12, labelHeight) : Math.max(metrics.width + 12, minWidthForSquare);
+        const minWidthForSquare = shape === 'square' ? Math.max(metrics.width + paddingSize, effectiveTagSize * 1.4) : labelHeight;
+        const labelWidth = shape === 'circle' ? Math.max(metrics.width + paddingSize, labelHeight) : Math.max(metrics.width + paddingSize, minWidthForSquare);
                     
         // Initial labelRect definition (center-based reference)
         // We will treat (x, y) as the CENTER of the label for placement and connector math
@@ -8613,15 +8629,23 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
           if (textFitsInCircle) {
             ctx.beginPath();
             ctx.arc(0, 0, radius, 0, Math.PI * 2);
-            if (isUnderReview) {
-              ctx.fillStyle = '#FFFF00'; // Neon yellow fill
-            } else {
-              ctx.fillStyle = 'white';
+            
+            // Check background state for circle
+            const backgroundState = window.paintApp?.state?.labelBackground || 'solid';
+            const isClearBackground = backgroundState === 'clear';
+            
+            if (!isClearBackground) {
+              // Draw background only if not in clear mode
+              if (isUnderReview) {
+                ctx.fillStyle = '#FFFF00'; // Neon yellow fill
+              } else {
+                ctx.fillStyle = 'white';
+              }
+              ctx.fill();
+              ctx.strokeStyle = isUnderReview ? '#FF0000' : labelOutlineColor; // Red outline when under review
+              ctx.lineWidth = isUnderReview ? 3 : 1; // Thick red outline
+              ctx.stroke();
             }
-            ctx.fill();
-            ctx.strokeStyle = isUnderReview ? '#FF0000' : labelOutlineColor; // Red outline when under review
-            ctx.lineWidth = isUnderReview ? 3 : 1; // Thick red outline
-            ctx.stroke();
           } else {
             // Draw pill (oblong) to contain text - width adapts to text
             const pillW = Math.max(textWidth + 14, radius * 2);
@@ -8636,15 +8660,23 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
             ctx.lineTo(x + r, y + pillH);
             ctx.arc(x + r, y + r, r, Math.PI / 2, -Math.PI / 2);
             ctx.closePath();
-            if (isUnderReview) {
-              ctx.fillStyle = '#FFFF00'; // Neon yellow fill
-            } else {
-              ctx.fillStyle = 'white';
+            
+            // Check background state for pill shape
+            const backgroundState = window.paintApp?.state?.labelBackground || 'solid';
+            const isClearBackground = backgroundState === 'clear';
+            
+            if (!isClearBackground) {
+              // Draw background only if not in clear mode
+              if (isUnderReview) {
+                ctx.fillStyle = '#FFFF00'; // Neon yellow fill
+              } else {
+                ctx.fillStyle = 'white';
+              }
+              ctx.fill();
+              ctx.strokeStyle = isUnderReview ? '#FF0000' : labelOutlineColor; // Red outline when under review
+              ctx.lineWidth = isUnderReview ? 3 : 1; // Thick red outline
+              ctx.stroke();
             }
-            ctx.fill();
-            ctx.strokeStyle = isUnderReview ? '#FF0000' : labelOutlineColor; // Red outline when under review
-            ctx.lineWidth = isUnderReview ? 3 : 1; // Thick red outline
-            ctx.stroke();
           }
           
           // Clear shadow after drawing shape
@@ -8659,7 +8691,7 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
             // Check unit and apply smaller font for cm units
             const unit = document.getElementById('unitSelector')?.value || 'inch';
             const isCmUnit = unit === 'cm';
-            const cmFontSize = isCmUnit ? Math.max(6, tagSize - 8) : tagSize;
+            const cmFontSize = isCmUnit && tagSize > 14 ? Math.max(12, tagSize - 2) : tagSize;
             
             if (isCmUnit) {
               ctx.font = `${cmFontSize}px Arial`;
@@ -8715,7 +8747,7 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
             const unit = document.getElementById('unitSelector')?.value || 'inch';
             const isCmUnit = unit === 'cm';
             if (isCmUnit) {
-              const cmFontSize = Math.max(6, tagSize - 8);
+              const cmFontSize = tagSize > 14 ? Math.max(12, tagSize - 2) : tagSize;
               ctx.font = `${cmFontSize}px Arial`;
             }
             ctx.fillStyle = labelTextColor;
@@ -8744,15 +8776,22 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
             // No shadow/glow - we'll use fill and stroke instead
           }
 
-          if (isUnderReview) {
-            ctx.fillStyle = '#FFFF00'; // Neon yellow fill
-          } else {
-            ctx.fillStyle = 'white';
+          // Check background state
+          const backgroundState = window.paintApp?.state?.labelBackground || 'solid';
+          const isClearBackground = backgroundState === 'clear';
+          
+          if (!isClearBackground) {
+            // Draw background only if not in clear mode
+            if (isUnderReview) {
+              ctx.fillStyle = '#FFFF00'; // Neon yellow fill
+            } else {
+              ctx.fillStyle = 'white';
+            }
+            ctx.fillRect(-labelWidth / 2, -labelHeight / 2, labelWidth, labelHeight);
+            ctx.strokeStyle = isUnderReview ? '#FF0000' : labelOutlineColor; // Red outline when under review
+            ctx.lineWidth = isUnderReview ? 3 : 1; // Thick red outline
+            ctx.strokeRect(-labelWidth / 2, -labelHeight / 2, labelWidth, labelHeight);
           }
-          ctx.fillRect(-labelWidth / 2, -labelHeight / 2, labelWidth, labelHeight);
-          ctx.strokeStyle = isUnderReview ? '#FF0000' : labelOutlineColor; // Red outline when under review
-          ctx.lineWidth = isUnderReview ? 3 : 1; // Thick red outline
-          ctx.strokeRect(-labelWidth / 2, -labelHeight / 2, labelWidth, labelHeight);
           
           // Clear shadow after drawing shape
           if (isUnderReview) {
@@ -8766,7 +8805,7 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
             // Check unit and apply smaller font for cm units
             const unit = document.getElementById('unitSelector')?.value || 'inch';
             const isCmUnit = unit === 'cm';
-            const cmFontSize = isCmUnit ? Math.max(6, tagSize - 8) : tagSize;
+            const cmFontSize = isCmUnit && tagSize > 14 ? Math.max(12, tagSize - 2) : tagSize;
             
             if (isCmUnit) {
               ctx.font = `${cmFontSize}px Arial`;
@@ -8822,7 +8861,7 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
             const unit = document.getElementById('unitSelector')?.value || 'inch';
             const isCmUnit = unit === 'cm';
             if (isCmUnit) {
-              const cmFontSize = Math.max(6, tagSize - 8);
+              const cmFontSize = tagSize > 14 ? Math.max(12, tagSize - 2) : tagSize;
               ctx.font = `${cmFontSize}px Arial`;
             }
             ctx.fillStyle = labelTextColor;
@@ -8857,6 +8896,75 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
       imageData.height
     );
   }
+
+  // Helper function to add to undo stack with proper memory management
+  function addToUndoStack(imageLabel, undoAction) {
+    if (!undoStackByImage[imageLabel]) {
+      undoStackByImage[imageLabel] = [];
+    }
+    
+    undoStackByImage[imageLabel].push(undoAction);
+    
+    // Enforce history limit to prevent memory leaks
+    while (undoStackByImage[imageLabel].length > MAX_HISTORY) {
+      const removed = undoStackByImage[imageLabel].shift();
+      // Help garbage collection by nullifying references
+      if (removed && removed.state) {
+        removed.state = null;
+      }
+    }
+  }
+
+  // Helper function to clear all memory for an image
+  function clearImageMemory(imageLabel) {
+    if (undoStackByImage[imageLabel]) {
+      undoStackByImage[imageLabel].forEach(action => {
+        if (action && action.state) {
+          action.state = null;
+        }
+      });
+      undoStackByImage[imageLabel] = [];
+    }
+    if (redoStackByImage[imageLabel]) {
+      redoStackByImage[imageLabel].forEach(action => {
+        if (action && action.state) {
+          action.state = null;
+        }
+      });
+      redoStackByImage[imageLabel] = [];
+    }
+    if (imageStates[imageLabel]) {
+      imageStates[imageLabel] = null;
+    }
+    if (currentStroke) {
+      currentStroke = null;
+    }
+  }
+
+  // Global function to reduce memory usage by clearing old history
+  window.cleanupMemory = function() {
+    const cleanedImages = [];
+    Object.keys(undoStackByImage).forEach(imageLabel => {
+      if (undoStackByImage[imageLabel] && undoStackByImage[imageLabel].length > 5) {
+        // Keep only the last 5 states for each image
+        const toRemove = undoStackByImage[imageLabel].splice(0, undoStackByImage[imageLabel].length - 5);
+        toRemove.forEach(action => {
+          if (action && action.state) {
+            action.state = null;
+          }
+        });
+        cleanedImages.push(imageLabel);
+      }
+    });
+    
+    // Force garbage collection hint
+    if (window.gc) {
+      window.gc();
+    }
+    
+    console.log(`[Memory Cleanup] Reduced history for ${cleanedImages.length} images: ${cleanedImages.join(', ')}`);
+    return cleanedImages.length;
+  };
 
   // Shared with viewer: convert measurement string/number to desired units
   function formatMeasurementForUnits(raw, units) {
@@ -8928,7 +9036,7 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
       if (!undoStackByImage[currentImageLabel]) {
         undoStackByImage[currentImageLabel] = [];
       }
-      undoStackByImage[currentImageLabel].push({
+      addToUndoStack(currentImageLabel, {
         state: cloneImageData(currentState),
         type: 'initial',
         label: null
@@ -9111,16 +9219,19 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
             };
           });
 
-          // Get viewpoint from dropdown or imageTags
+          // Get viewpoint and facets from dropdown or imageTags
           const viewpointSelect = document.getElementById('aiViewpointSelect');
+          const imageTags = window.imageTags?.[currentImageLabel] || {};
           const viewpoint = viewpointSelect?.value || 
-                           window.imageTags?.[currentImageLabel]?.viewpoint || 
+                           imageTags.viewpoint || 
                            'unknown';
+          const facets = imageTags.facets || null;
           
           console.log('[Paint.js][AI Feedback] Queueing stroke for AI learning:', {
             imageLabel: currentImageLabel,
             measurementCode: strokeLabel,
             viewpoint: viewpoint,
+            facets: facets,
             points: drawnVectorData.points?.length || 0,
             width: drawnVectorData.width,
             type: drawnVectorData.type
@@ -9130,6 +9241,7 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
             imageLabel: currentImageLabel,
             measurementCode: strokeLabel,
             viewpoint: viewpoint,
+            facets: facets,
             stroke: {
               points: canvasPoints,
               width: drawnVectorData.width || parseInt(brushSize.value) || 2
@@ -9231,12 +9343,7 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
       undoAction.vectorData = drawnVectorData; 
     }
         
-    undoStackByImage[currentImageLabel].push(undoAction);
-        
-    // Remove oldest state if we've reached max history
-    if (undoStackByImage[currentImageLabel].length >= MAX_HISTORY) {
-      undoStackByImage[currentImageLabel].shift();
-    }
+    addToUndoStack(currentImageLabel, undoAction);
 
     // Clear redo stack when a new action is performed
     redoStackByImage[currentImageLabel] = [];
@@ -14318,7 +14425,7 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
       const currentState = getCanvasState();
       currentStroke = cloneImageData(currentState);
       // Save the state before we start drawing
-      undoStackByImage[currentImageLabel].push({
+      addToUndoStack(currentImageLabel, {
         state: cloneImageData(currentState),
         type: 'pre-stroke',
         label: null
@@ -15485,7 +15592,7 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
       const currentState = getCanvasState();
       // Ensure per-image undo stack exists
       if (!undoStackByImage[currentImageLabel]) undoStackByImage[currentImageLabel] = [];
-      undoStackByImage[currentImageLabel].push({
+      addToUndoStack(currentImageLabel, {
         state: cloneImageData(currentState),
         type: 'snapshot',
         strokes: currentStrokes
@@ -15810,7 +15917,7 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
   clearButton.addEventListener('click', () => {
     // Save the current state before clearing
     const currentState = getCanvasState();
-    undoStackByImage[currentImageLabel].push({
+    addToUndoStack(currentImageLabel, {
       state: cloneImageData(currentState),
       type: 'clear',
       label: null
@@ -18432,7 +18539,7 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
         
     // Push to undo stack
     undoStackByImage[currentImageLabel] = undoStackByImage[currentImageLabel] || [];
-    undoStackByImage[currentImageLabel].push(deleteAction);
+    addToUndoStack(currentImageLabel, deleteAction);
         
     // Clear redo stack
     redoStackByImage[currentImageLabel] = [];
