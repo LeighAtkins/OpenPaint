@@ -250,7 +250,27 @@ window.aiDrawBot = {
             }
 
             const result = await response.json();
-            return result.predictions || [];
+            const predictions = result.predictions || [];
+            
+            // Filter out corrupted predictions with identical points
+            const validPredictions = predictions.filter(prediction => {
+                const points = prediction.stroke?.points;
+                if (!points || points.length < 2) return false;
+                
+                // Check if points have variation
+                const firstPoint = points[0];
+                const hasVariation = points.some(p => 
+                    Math.abs(p.x - firstPoint.x) > 1 || Math.abs(p.y - firstPoint.y) > 1
+                );
+                
+                if (!hasVariation) {
+                    console.warn('[aiDrawBot] Filtered out corrupted prediction for', prediction.code, 'with identical points:', points);
+                }
+                
+                return hasVariation;
+            });
+            
+            return validPredictions;
         } catch (error) {
             console.error('[aiDrawBot] Prediction error:', error);
             return [];
@@ -346,6 +366,18 @@ window.aiDrawBot = {
     acceptSuggestion(points, width, imageLabel, measurementCode, viewport) {
         if (!points || points.length < 2) {
             console.warn('[aiDrawBot] Cannot accept suggestion: insufficient points');
+            return;
+        }
+
+        // Validate that points are not all identical (corrupted data)
+        const firstPoint = points[0];
+        const hasVariation = points.some(p => 
+            Math.abs(p.x - firstPoint.x) > 1 || Math.abs(p.y - firstPoint.y) > 1
+        );
+        
+        if (!hasVariation) {
+            console.warn('[aiDrawBot] Cannot accept suggestion: all points are identical (corrupted stroke data)');
+            console.log('[aiDrawBot] Corrupted points:', points);
             return;
         }
 
