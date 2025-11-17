@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Clear Button</title>
+</head>
+<body>
+    <h1>Clear Button Test</h1>
+    <p>Open browser console and visit: <a href="https://sofapaint-a5n6vyhn3-leigh-atkins-projects.vercel.app" target="_blank">https://sofapaint-a5n6vyhn3-leigh-atkins-projects.vercel.app</a></p>
+    
+    <h2>Test Steps:</h2>
+    <ol>
+        <li>Load an image and draw some measurements</li>
+        <li>Open browser console (F12)</li>
+        <li>Run: <code>console.log(window.paintApp?.state?.labelBackground)</code></li>
+        <li>Click the "Clear" button</li>
+        <li>Run: <code>console.log(window.paintApp?.state?.labelBackground)</code> again</li>
+        <li>Check if label backgrounds disappeared</li>
+    </ol>
+    
+    <h2>Debugging Commands:</h2>
+    <pre>
+// Check if state exists
+console.log('State:', window.paintApp?.state?.labelBackground);
+
+// Check if button exists
+console.log('Button:', document.getElementById('labelBackgroundToggleBtn'));
+
+// Test state change manually
+if (window.paintApp?.state) {
+    window.paintApp.state.labelBackground = 'clear';
+    if (window.redrawCanvasWithVisibility) window.redrawCanvasWithVisibility();
+}
+    </pre>
+</body>
+</html>
