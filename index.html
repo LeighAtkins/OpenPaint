@@ -2144,8 +2144,8 @@
                     Save
                 </button>
                 <div id="quickSaveMenu"
-                     class="hidden absolute bottom-full mb-1 left-0 bg-white border border-gray-200 rounded-xl shadow-lg min-w-[120px]"
-                     style="white-space: nowrap; z-index: 5000;">
+                     class="absolute bottom-full mb-1 left-0 bg-white border border-gray-200 rounded-xl shadow-lg min-w-[120px]"
+                     style="white-space: nowrap; z-index: 99999;">
                     <button class="block w-full text-left px-3 py-2 text-xs hover:bg-slate-50 rounded-t-xl transition-colors" data-action="pdf">Save as PDF</button>
                     <button class="block w-full text-left px-3 py-2 text-xs hover:bg-slate-50 rounded-b-xl transition-colors" data-action="multiple">Save Multiple</button>
                 </div>
@@ -2474,6 +2474,7 @@
 
         // Setup quick save hover menu functionality
         function setupQuickSaveHover() {
+            console.log('setupQuickSaveHover function called');
             // Quick Save hover menu (bottom panel)
             const quickSave = document.getElementById('quickSave');
             const quickSaveBtn = document.getElementById('quickSaveBtn');
@@ -2482,9 +2483,21 @@
             console.log('Setting up quick save hover:', { quickSave, quickSaveBtn, quickSaveMenu });
 
             if (quickSave && quickSaveBtn && quickSaveMenu) {
+                // Move menu to body to escape container clipping
+                document.body.appendChild(quickSaveMenu);
+                quickSaveMenu.className = 'fixed bg-white border border-gray-200 rounded-xl shadow-lg min-w-[120px]';
+                quickSaveMenu.style.cssText = 'white-space: nowrap; z-index: 99999; display: none;';
+                console.log('Quicksave menu moved to body and initialized as hidden');
+                
                 // Click: Save current image (reuses existing 'save' button)
-                quickSaveBtn.addEventListener('click', () => {
+                quickSaveBtn.addEventListener('click', (e) => {
                     console.log('Quick save clicked');
+                    // Test: temporarily show menu on click for debugging
+                    if (e.shiftKey) {
+                        console.log('Shift+click detected, toggling menu visibility');
+                        quickSaveMenu.style.display = quickSaveMenu.style.display === 'none' ? 'block' : 'none';
+                        return;
+                    }
                     const saveButton = document.getElementById('save');
                     if (saveButton) saveButton.click();
                 });
@@ -2492,19 +2505,34 @@
                 let hideTimer = null;
                 const showMenu = () => {
                     if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
-                    quickSaveMenu.classList.remove('hidden');
+                    console.log('Showing quicksave menu');
+                    
+                    // Position menu above the Save button
+                    const btnRect = quickSaveBtn.getBoundingClientRect();
+                    quickSaveMenu.style.left = btnRect.left + 'px';
+                    quickSaveMenu.style.top = (btnRect.top - 70) + 'px'; // 70px above button
+                    quickSaveMenu.style.display = 'block';
+                    
+                    console.log('Menu positioned at:', { left: btnRect.left, top: btnRect.top - 70 });
                 };
                 const scheduleHide = () => {
                     if (hideTimer) clearTimeout(hideTimer);
                     hideTimer = setTimeout(() => {
-                        quickSaveMenu.classList.add('hidden');
+                        console.log('Hiding quicksave menu');
+                        quickSaveMenu.style.display = 'none';
                         hideTimer = null;
                     }, 200); // small delay prevents flicker when moving cursor to menu
                 };
 
                 // Hover to show menu on the trigger container
-                quickSave.addEventListener('mouseenter', showMenu);
-                quickSave.addEventListener('mouseleave', scheduleHide);
+                quickSave.addEventListener('mouseenter', () => {
+                    console.log('Mouse entered quickSave area');
+                    showMenu();
+                });
+                quickSave.addEventListener('mouseleave', () => {
+                    console.log('Mouse left quickSave area');
+                    scheduleHide();
+                });
 
                 // Keep the menu open while hovering the menu; hide after leaving it
                 quickSaveMenu.addEventListener('mouseenter', showMenu);
