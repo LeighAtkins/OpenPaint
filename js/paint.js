@@ -2134,10 +2134,16 @@ document.addEventListener('DOMContentLoaded', () => {
       const strokeLabels = Object.keys(measurements);
       if (strokeLabels.length === 0) return;
             
-      // Capitalize and format image label
-      const imageName = imageLabel.charAt(0).toUpperCase() + imageLabel.slice(1);
-      measurementsList += `${imageName} Image:\n`;
-      measurementsList += `${'-'.repeat(imageName.length + 7)}\n`;
+      // Use user-friendly image name (custom name > tag-based > fallback)
+      let imageName = (typeof window.getUserFacingImageName === 'function')
+        ? window.getUserFacingImageName(imageLabel)
+        : imageLabel.charAt(0).toUpperCase() + imageLabel.slice(1);
+      
+      // Clean up the image name (remove "Image" suffix if present)
+      imageName = imageName.replace(/\s+Image\s*$/i, '');
+      
+      measurementsList += `${imageName}:\n`;
+      measurementsList += `${'-'.repeat(imageName.length + 1)}\n`;
             
       strokeLabels.forEach(strokeLabel => {
         const measurement = measurements[strokeLabel];
@@ -2173,6 +2179,300 @@ document.addEventListener('DOMContentLoaded', () => {
     });
         
     showMeasurementsDialog(measurementsList);
+  }
+
+  // Function to parse customer measurement data and map to project images
+  function parseMeasurementData(text) {
+    const sections = [];
+    const lines = text.split('\n');
+    let currentSection = null;
+    
+    for (let line of lines) {
+      line = line.trim();
+      if (!line) continue;
+      
+      // Detect section headers (lines ending with colon or containing "----")
+      if (line.includes('---') || line.endsWith(':')) {
+        if (currentSection && currentSection.measurements.length > 0) {
+          sections.push(currentSection);
+        }
+        
+        // Clean section name (remove colons, dashes, extra spaces)
+        const sectionName = line.replace(/[:\-\s]+/g, ' ').trim();
+        currentSection = {
+          name: sectionName,
+          original: line,
+          measurements: []
+        };
+      }
+      // Detect measurement lines (format: "Label: Value" with optional units)
+      else if (line.match(/^[A-Z]\d*\s*:\s*[\d.]+/i)) {
+        if (currentSection) {
+          const match = line.match(/^([A-Z]\d*)\s*:\s*([\d.]+)\s*([a-zA-Z"]*)/i);
+          if (match) {
+            currentSection.measurements.push({
+              label: match[1].toUpperCase(),
+              value: parseFloat(match[2]),
+              unit: match[3].replace(/["']/g, '').trim() || 'inches',
+              original: line
+            });
+          }
+        }
+      }
+    }
+    
+    // Add the last section
+    if (currentSection && currentSection.measurements.length > 0) {
+      sections.push(currentSection);
+    }
+    
+    return sections;
+  }
+
+  // Function to map parsed sections to project images using smart matching
+  function mapSectionsToImages(sections) {
+    const imageLabels = Object.keys(window.strokeMeasurements || {});
+    const mappings = [];
+    
+    for (const section of sections) {
+      let bestMatch = null;
+      let bestScore = 0;
+      
+      for (const imageLabel of imageLabels) {
+        const imageName = window.getUserFacingImageName ? 
+          window.getUserFacingImageName(imageLabel) : imageLabel;
+        
+        // Calculate similarity score
+        let score = calculateSimilarity(section.name.toLowerCase(), imageName.toLowerCase());
+        
+        if (score > bestScore) {
+          bestScore = score;
+          bestMatch = imageLabel;
+        }
+      }
+      
+      mappings.push({
+        section: section,
+        imageLabel: bestMatch,
+        confidence: bestScore,
+        imageName: bestMatch ? (window.getUserFacingImageName ? 
+          window.getUserFacingImageName(bestMatch) : bestMatch) : 'No match'
+      });
+    }
+    
+    return mappings;
+  }
+
+  // Simple similarity scoring for text matching
+  function calculateSimilarity(str1, str2) {
+    const keywords = ['front', 'back', 'side', 'arm', 'cushion', 'sofa', 'chair', 'bench', 'seat'];
+    let score = 0;
+    
+    // Check for common keywords
+    for (const keyword of keywords) {
+      if (str1.includes(keyword) && str2.includes(keyword)) {
+        score += 0.3;
+      }
+    }
+    
+    // Check for partial matches
+    if (str1.includes(str2) || str2.includes(str1)) {
+      score += 0.4;
+    }
+    
+    // Check for word overlap
+    const words1 = str1.split(/\s+/);
+    const words2 = str2.split(/\s+/);
+    const overlap = words1.filter(word => words2.includes(word));
+    score += (overlap.length / Math.max(words1.length, words2.length)) * 0.3;
+    
+    return score;
+  }
+
+  // Function to show import measurements dialog
+  function showImportMeasurementsDialog() {
+    // Create overlay
+    const overlay = document.createElement('div');
+    overlay.id = 'importMeasurementsOverlay';
+    overlay.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+    
+    // Create dialog
+    const dialog = document.createElement('div');
+    dialog.className = 'bg-white rounded-lg shadow-xl w-11/12 max-w-4xl max-h-[90vh] overflow-hidden flex flex-col';
+    
+    dialog.innerHTML = `
+      <div class="flex items-center justify-between p-4 border-b border-gray-200">
+        <h3 class="text-lg font-semibold text-gray-800">Import Customer Measurements</h3>
+        <button id="closeImportDialog" class="text-gray-400 hover:text-gray-600 text-xl">&times;</button>
+      </div>
+      
+      <div class="flex-1 overflow-hidden flex">
+        <!-- Left side: Input -->
+        <div class="w-1/2 p-4 border-r border-gray-200">
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            Paste Customer Measurements:
+          </label>
+          <textarea id="measurementInput" 
+            class="w-full h-64 p-3 border border-gray-300 rounded-md text-sm font-mono resize-none"
+            placeholder="Paste customer measurements here, e.g.:
+
+Sofa - Front:
+A1: 76
+A2: 70
+B1: 27
+
+Sofa - Back:
+L1: 70
+L2: 70.5"></textarea>
+          
+          <div class="mt-4 flex gap-2">
+            <button id="parseButton" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+              Parse & Map
+            </button>
+            <button id="clearInputButton" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">
+              Clear
+            </button>
+          </div>
+        </div>
+        
+        <!-- Right side: Preview -->
+        <div class="w-1/2 p-4">
+          <h4 class="text-sm font-medium text-gray-700 mb-2">Mapping Preview:</h4>
+          <div id="mappingPreview" class="text-sm text-gray-500">
+            Click "Parse & Map" to see how measurements will be applied.
+          </div>
+        </div>
+      </div>
+      
+      <div class="p-4 border-t border-gray-200 flex justify-end gap-2">
+        <button id="cancelImport" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">
+          Cancel
+        </button>
+        <button id="applyImport" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700" disabled>
+          Apply Measurements
+        </button>
+      </div>
+    `;
+    
+    overlay.appendChild(dialog);
+    document.body.appendChild(overlay);
+    
+    // Add event listeners
+    const measurementInput = dialog.querySelector('#measurementInput');
+    const parseButton = dialog.querySelector('#parseButton');
+    const clearInputButton = dialog.querySelector('#clearInputButton');
+    const mappingPreview = dialog.querySelector('#mappingPreview');
+    const applyButton = dialog.querySelector('#applyImport');
+    const cancelButton = dialog.querySelector('#cancelImport');
+    const closeButton = dialog.querySelector('#closeImportDialog');
+    
+    let currentMappings = [];
+    
+    // Parse and preview functionality
+    parseButton.addEventListener('click', () => {
+      const inputText = measurementInput.value.trim();
+      if (!inputText) {
+        mappingPreview.innerHTML = '<div class="text-red-500">Please enter measurement data first.</div>';
+        return;
+      }
+      
+      const sections = parseMeasurementData(inputText);
+      if (sections.length === 0) {
+        mappingPreview.innerHTML = '<div class="text-red-500">No valid measurements found. Please check the format.</div>';
+        return;
+      }
+      
+      currentMappings = mapSectionsToImages(sections);
+      
+      // Display preview
+      let previewHTML = '<div class="space-y-3 max-h-48 overflow-y-auto">';
+      for (const mapping of currentMappings) {
+        const confidenceColor = mapping.confidence > 0.7 ? 'text-green-600' : 
+                               mapping.confidence > 0.3 ? 'text-yellow-600' : 'text-red-600';
+        
+        previewHTML += `
+          <div class="border border-gray-200 rounded p-2">
+            <div class="font-medium">${mapping.section.name}</div>
+            <div class="text-xs ${confidenceColor}">→ ${mapping.imageName} (${Math.round(mapping.confidence * 100)}% match)</div>
+            <div class="text-xs text-gray-500">${mapping.section.measurements.length} measurements</div>
+          </div>
+        `;
+      }
+      previewHTML += '</div>';
+      
+      mappingPreview.innerHTML = previewHTML;
+      applyButton.disabled = false;
+    });
+    
+    // Clear input
+    clearInputButton.addEventListener('click', () => {
+      measurementInput.value = '';
+      mappingPreview.innerHTML = 'Click "Parse & Map" to see how measurements will be applied.';
+      currentMappings = [];
+      applyButton.disabled = true;
+    });
+    
+    // Apply measurements
+    applyButton.addEventListener('click', () => {
+      if (currentMappings.length === 0) return;
+      
+      let applied = 0;
+      for (const mapping of currentMappings) {
+        if (!mapping.imageLabel || mapping.confidence < 0.2) continue;
+        
+        for (const measurement of mapping.section.measurements) {
+          // Apply measurement to the project
+          if (!window.strokeMeasurements[mapping.imageLabel]) {
+            window.strokeMeasurements[mapping.imageLabel] = {};
+          }
+          
+          const currentUnit = document.getElementById('unitSelector')?.value || 'inch';
+          
+          // Convert value if needed (assuming input is inches, convert to cm if needed)
+          let value = measurement.value;
+          if (currentUnit === 'cm' && (measurement.unit === 'inches' || measurement.unit === '"' || measurement.unit === '')) {
+            value = value * 2.54; // Convert inches to cm
+          }
+          
+          // Store measurement
+          if (currentUnit === 'inch') {
+            const whole = Math.floor(value);
+            const fraction = value - whole;
+            window.strokeMeasurements[mapping.imageLabel][measurement.label] = {
+              inchWhole: whole,
+              inchFraction: fraction,
+              cm: value * 2.54
+            };
+          } else {
+            window.strokeMeasurements[mapping.imageLabel][measurement.label] = {
+              inchWhole: Math.floor(value / 2.54),
+              inchFraction: (value / 2.54) % 1,
+              cm: value
+            };
+          }
+          applied++;
+        }
+      }
+      
+      // Close dialog
+      document.body.removeChild(overlay);
+      
+      // Update UI and notify user
+      updateStrokeVisibilityControls();
+      redrawCanvasWithVisibility();
+      alert(`Successfully imported ${applied} measurements!`);
+    });
+    
+    // Close dialog handlers
+    const closeDialog = () => document.body.removeChild(overlay);
+    cancelButton.addEventListener('click', closeDialog);
+    closeButton.addEventListener('click', closeDialog);
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) closeDialog();
+    });
+    
+    // Focus the input
+    measurementInput.focus();
   }
     
   // Function to view submitted measurements from shared projects
@@ -4776,6 +5076,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Make functions globally accessible
   window.generateMeasurementsList = generateMeasurementsList;
+  window.showImportMeasurementsDialog = showImportMeasurementsDialog;
   window.viewSubmittedMeasurements = viewSubmittedMeasurements;
   window.saveAllImages = saveAllImages;
 
@@ -8279,10 +8580,19 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
         // Use grey outline for white strokes, black text for all
         const isWhiteStroke = vectorData.color === '#ffffff' || vectorData.color === 'white' || vectorData.color === 'rgb(255, 255, 255)';
         const labelOutlineColor = isWhiteStroke ? '#666666' : (vectorData.color || '#000');
-        // Use stroke color for text when in clear background mode, black otherwise
+        
+        // Handle different background states for text color
         const backgroundState = window.paintApp?.state?.labelBackground || 'solid';
-        const isClearBackground = backgroundState === 'clear';
-        const labelTextColor = isClearBackground ? (vectorData.color || '#000000') : '#000000';
+        const isClearBackground = backgroundState !== 'solid';
+        let labelTextColor = '#000000'; // Default black for solid
+        
+        if (backgroundState === 'clear-black') {
+          labelTextColor = '#000000'; // Black text
+        } else if (backgroundState === 'clear-selected') {
+          labelTextColor = vectorData.color || '#000000'; // Selected stroke color
+        } else if (backgroundState === 'clear-white') {
+          labelTextColor = '#ffffff'; // White text
+        }
         ctx.textAlign = 'center';
         ctx.textBaseline = 'bottom';
 
@@ -8310,10 +8620,9 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
         const paddingSize = isCmUnit ? Math.max(6, tagSize * 0.4) : 8;  // Scale padding with font size
         
         const labelHeight = Math.max(36, effectiveTagSize * heightMultiplier); // Scale height with effective tag size
-        // For square tags, make width shrink with tag size (rectangular instead of square)
-        // For circle tags, adapt width to text content
-        const minWidthForSquare = shape === 'square' ? Math.max(metrics.width + paddingSize, effectiveTagSize * 1.4) : labelHeight;
-        const labelWidth = shape === 'circle' ? Math.max(metrics.width + paddingSize, labelHeight) : Math.max(metrics.width + paddingSize, minWidthForSquare);
+        // Use consistent sizing for all shapes (always oblong/rectangular)
+        const minWidthForSquare = Math.max(metrics.width + paddingSize, effectiveTagSize * 1.4);
+        const labelWidth = Math.max(metrics.width + paddingSize, minWidthForSquare);
                     
         // Initial labelRect definition (center-based reference)
         // We will treat (x, y) as the CENTER of the label for placement and connector math
@@ -8585,10 +8894,11 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
         const rectY = finalPositionCanvas.y - labelHeight / 2;
 
         // Shape toggle (already determined above as 'shape')
+        console.log('[SHAPE DEBUG] Rendering label with shape:', shape, 'labelShape state:', window.paintApp?.state?.labelShape);
         const unitsSelect = document.getElementById('unitsSelect');
         const units = unitsSelect ? (unitsSelect.value === 'cm' ? 'cm' : 'in') : 'in';
 
-        if (shape === 'circle') {
+        if (false) { // Disable circle mode - always use oblong/square rendering
           // Circle or rounded pill depending on length
           // Measure text width (accounting for combined format if under review)
           let tm;
@@ -8626,27 +8936,8 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
             // No shadow/glow - we'll use fill and stroke instead
           }
 
-          if (textFitsInCircle) {
-            ctx.beginPath();
-            ctx.arc(0, 0, radius, 0, Math.PI * 2);
-            
-            // Check background state for circle
-            const backgroundState = window.paintApp?.state?.labelBackground || 'solid';
-            const isClearBackground = backgroundState === 'clear';
-            
-            if (!isClearBackground) {
-              // Draw background only if not in clear mode
-              if (isUnderReview) {
-                ctx.fillStyle = '#FFFF00'; // Neon yellow fill
-              } else {
-                ctx.fillStyle = 'white';
-              }
-              ctx.fill();
-              ctx.strokeStyle = isUnderReview ? '#FF0000' : labelOutlineColor; // Red outline when under review
-              ctx.lineWidth = isUnderReview ? 3 : 1; // Thick red outline
-              ctx.stroke();
-            }
-          } else {
+          // Always draw oblong/pill shape (no perfect circles)
+          {
             // Draw pill (oblong) to contain text - width adapts to text
             const pillW = Math.max(textWidth + 14, radius * 2);
             const pillH = radius * 2;
@@ -8663,7 +8954,7 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
             
             // Check background state for pill shape
             const backgroundState = window.paintApp?.state?.labelBackground || 'solid';
-            const isClearBackground = backgroundState === 'clear';
+            const isClearBackground = backgroundState !== 'solid';
             
             if (!isClearBackground) {
               // Draw background only if not in clear mode
@@ -8762,6 +9053,8 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
           window.__skipTextCounterRotate = false;
           ctx.restore();
         } else {
+          // Square/Rectangle rendering path
+          console.log('[SHAPE DEBUG] Using square/rectangle rendering path');
           // Counter-rotate the entire square label so the box stays horizontal
           // BUT: Skip counter-rotation for blank canvas (no image) - labels should stay fixed
           const currentRotation = window.imageRotationByLabel ? (window.imageRotationByLabel[currentImageLabel] || 0) : 0;
@@ -8778,7 +9071,7 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
 
           // Check background state
           const backgroundState = window.paintApp?.state?.labelBackground || 'solid';
-          const isClearBackground = backgroundState === 'clear';
+          const isClearBackground = backgroundState !== 'solid';
           
           if (!isClearBackground) {
             // Draw background only if not in clear mode
@@ -8787,10 +9080,94 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
             } else {
               ctx.fillStyle = 'white';
             }
-            ctx.fillRect(-labelWidth / 2, -labelHeight / 2, labelWidth, labelHeight);
-            ctx.strokeStyle = isUnderReview ? '#FF0000' : labelOutlineColor; // Red outline when under review
-            ctx.lineWidth = isUnderReview ? 3 : 1; // Thick red outline
-            ctx.strokeRect(-labelWidth / 2, -labelHeight / 2, labelWidth, labelHeight);
+            
+            // Check if we should draw rounded corners (oblongs) for circle mode
+            const isCircleMode = window.paintApp?.state?.labelShape === 'circle';
+            console.log('[SHAPE DEBUG] isCircleMode:', isCircleMode, 'will draw:', isCircleMode ? 'rounded rectangle' : 'sharp rectangle');
+            
+            if (isCircleMode) {
+              // Calculate the actual font size being used (accounting for CM scaling)
+              const unit = document.getElementById('unitSelector')?.value || 'inch';
+              const isCmUnit = unit === 'cm';
+              const actualFontSize = isCmUnit && tagSize > 14 ? Math.max(12, tagSize - 2) : tagSize;
+              
+              // Set the font to measure the actual text width
+              const originalFont = ctx.font;
+              ctx.font = `${actualFontSize}px Arial`;
+              
+              // Measure the actual text being displayed (could be just "A1" or full measurement)
+              const textMetrics = ctx.measureText(labelText);
+              const actualTextWidth = textMetrics.width;
+              
+              // Calculate pill dimensions based on actual text size with appropriate padding
+              const horizontalPadding = 8;
+              const verticalPadding = 16; // Even more height for pill mode to look better
+              const pillHeight = actualFontSize + verticalPadding;
+              
+              // For short text (like A1), make it more square/circular by using minimum width
+              const minWidth = pillHeight * 0.9; // Make it nearly square for short text
+              const naturalWidth = actualTextWidth + (horizontalPadding * 2);
+              const pillWidth = Math.max(minWidth, naturalWidth);
+              
+              console.log('[SHAPE DEBUG] Pill sizing - text:', labelText, 'textWidth:', actualTextWidth, 'pillSize:', pillWidth, 'x', pillHeight);
+              
+              // Draw pill shape with half-circle end caps
+              const x = -pillWidth / 2;
+              const y = -pillHeight / 2;
+              const radius = pillHeight / 2; // Half the height for perfect semicircle ends
+              
+              ctx.beginPath();
+              // If width is less than height, draw a perfect circle
+              if (pillWidth <= pillHeight) {
+                ctx.arc(0, 0, radius, 0, Math.PI * 2);
+              } else {
+                // Draw pill: left semicircle + rectangle + right semicircle
+                ctx.arc(x + radius, y + radius, radius, Math.PI / 2, -Math.PI / 2, false); // Left semicircle
+                ctx.lineTo(x + pillWidth - radius, y); // Top line
+                ctx.arc(x + pillWidth - radius, y + radius, radius, -Math.PI / 2, Math.PI / 2, false); // Right semicircle
+                ctx.lineTo(x + radius, y + pillHeight); // Bottom line
+              }
+              ctx.closePath();
+              ctx.fill();
+              
+              // Restore original font
+              ctx.font = originalFont;
+              
+              ctx.strokeStyle = isUnderReview ? '#FF0000' : labelOutlineColor;
+              ctx.lineWidth = isUnderReview ? 3 : 1;
+              ctx.stroke();
+            } else {
+              // Draw sharp rectangle with tighter sizing for square mode
+              // Calculate the actual font size being used (accounting for CM scaling)
+              const unit = document.getElementById('unitSelector')?.value || 'inch';
+              const isCmUnit = unit === 'cm';
+              const actualFontSize = isCmUnit && tagSize > 14 ? Math.max(12, tagSize - 2) : tagSize;
+              
+              // Set the font to measure the actual text width
+              const originalFont = ctx.font;
+              ctx.font = `${actualFontSize}px Arial`;
+              
+              // Measure the actual text being displayed
+              const textMetrics = ctx.measureText(labelText);
+              const actualTextWidth = textMetrics.width;
+              
+              // Calculate rectangle dimensions with moderate vertical padding
+              const horizontalPadding = 8;
+              const verticalPadding = 12; // More height for square mode
+              const rectWidth = actualTextWidth + (horizontalPadding * 2);
+              const rectHeight = actualFontSize + verticalPadding;
+              
+              console.log('[SHAPE DEBUG] Rectangle sizing - text:', labelText, 'rectSize:', rectWidth, 'x', rectHeight);
+              
+              // Restore original font
+              ctx.font = originalFont;
+              
+              // Draw sharp rectangle
+              ctx.fillRect(-rectWidth / 2, -rectHeight / 2, rectWidth, rectHeight);
+              ctx.strokeStyle = isUnderReview ? '#FF0000' : labelOutlineColor; // Red outline when under review
+              ctx.lineWidth = isUnderReview ? 3 : 1; // Thick red outline
+              ctx.strokeRect(-rectWidth / 2, -rectHeight / 2, rectWidth, rectHeight);
+            }
           }
           
           // Clear shadow after drawing shape
