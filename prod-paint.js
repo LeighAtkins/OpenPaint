@@ -2015,6 +2015,7 @@
                 </div>
                 <button id="unitToggleBtnSecondary" class="px-2 py-1 text-xs bg-white border border-gray-300 rounded-lg hover:bg-gray-50" title="Toggle units">inches</button>
                 <button id="labelShapeToggleBtn" class="px-2 py-1 text-xs bg-white border border-gray-300 rounded-lg hover:bg-gray-50" title="Toggle tag shape" aria-pressed="true">■</button>
+                <button id="labelBackgroundToggleBtn" class="px-2 py-1 text-xs bg-white border border-gray-300 rounded-lg hover:bg-gray-50" title="Toggle label background" aria-pressed="false">Clear</button>
             </div>
         </div>
         <div id="strokeVisibilityControls" class="px-3 pt-2 pb-2 overflow-y-auto overflow-x-hidden" style="box-sizing: border-box;"></div>
@@ -2445,6 +2446,27 @@
                     syncShapeBtn();
                 });
                 syncShapeBtn();
+            }
+
+            // Elements panel background toggle functionality
+            const labelBackgroundToggleBtn = document.getElementById('labelBackgroundToggleBtn');
+            const applyBackground = (val) => {
+                if (window.paintApp?.state) window.paintApp.state.labelBackground = val;
+                if (window.redrawCanvasWithVisibility) window.redrawCanvasWithVisibility();
+            };
+            if (labelBackgroundToggleBtn) {
+                const syncBackgroundBtn = () => {
+                    const background = (window.paintApp?.state?.labelBackground) || 'solid';
+                    const isSolid = background === 'solid';
+                    labelBackgroundToggleBtn.textContent = isSolid ? 'Clear' : 'Solid';
+                    labelBackgroundToggleBtn.setAttribute('aria-pressed', String(!isSolid));
+                };
+                labelBackgroundToggleBtn.addEventListener('click', () => {
+                    const background = (window.paintApp?.state?.labelBackground) || 'solid';
+                    applyBackground(background === 'solid' ? 'clear' : 'solid');
+                    syncBackgroundBtn();
+                });
+                syncBackgroundBtn();
             }
 
             // Auto-update shared project when state saves (debounced)
