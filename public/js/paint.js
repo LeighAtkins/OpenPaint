@@ -954,7 +954,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize with a blank state when the image is first created
     const blankState = ctx.createImageData(canvas.width, canvas.height);
     imageStates[label] = blankState;
-    undoStackByImage[label].push({
+    addToUndoStack(label, {
       state: cloneImageData(blankState),
       type: 'initial',
       label: null
@@ -1462,6 +1462,8 @@ document.addEventListener('DOMContentLoaded', () => {
     delete window.strokeLabelVisibility[label];
     delete window.strokeMeasurements[label];
     delete window.labelsByImage[label];
+    // Clear memory properly before deleting
+    clearImageMemory(label);
     delete window.undoStackByImage[label];
     delete window.redoStackByImage[label];
     delete window.imageStates[label];
@@ -1846,7 +1848,7 @@ document.addEventListener('DOMContentLoaded', () => {
           if (!undoStackByImage[label]) {
             undoStackByImage[label] = [];
           }
-          undoStackByImage[label].push({
+          addToUndoStack(label, {
             state: cloneImageData(newState),
             type: 'initial',
             label: null
@@ -8895,6 +8897,75 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
     );
   }
 
+  // Helper function to add to undo stack with proper memory management
+  function addToUndoStack(imageLabel, undoAction) {
+    if (!undoStackByImage[imageLabel]) {
+      undoStackByImage[imageLabel] = [];
+    }
+    
+    undoStackByImage[imageLabel].push(undoAction);
+    
+    // Enforce history limit to prevent memory leaks
+    while (undoStackByImage[imageLabel].length > MAX_HISTORY) {
+      const removed = undoStackByImage[imageLabel].shift();
+      // Help garbage collection by nullifying references
+      if (removed && removed.state) {
+        removed.state = null;
+      }
+    }
+  }
+
+  // Helper function to clear all memory for an image
+  function clearImageMemory(imageLabel) {
+    if (undoStackByImage[imageLabel]) {
+      undoStackByImage[imageLabel].forEach(action => {
+        if (action && action.state) {
+          action.state = null;
+        }
+      });
+      undoStackByImage[imageLabel] = [];
+    }
+    if (redoStackByImage[imageLabel]) {
+      redoStackByImage[imageLabel].forEach(action => {
+        if (action && action.state) {
+          action.state = null;
+        }
+      });
+      redoStackByImage[imageLabel] = [];
+    }
+    if (imageStates[imageLabel]) {
+      imageStates[imageLabel] = null;
+    }
+    if (currentStroke) {
+      currentStroke = null;
+    }
+  }
+
+  // Global function to reduce memory usage by clearing old history
+  window.cleanupMemory = function() {
+    const cleanedImages = [];
+    Object.keys(undoStackByImage).forEach(imageLabel => {
+      if (undoStackByImage[imageLabel] && undoStackByImage[imageLabel].length > 5) {
+        // Keep only the last 5 states for each image
+        const toRemove = undoStackByImage[imageLabel].splice(0, undoStackByImage[imageLabel].length - 5);
+        toRemove.forEach(action => {
+          if (action && action.state) {
+            action.state = null;
+          }
+        });
+        cleanedImages.push(imageLabel);
+      }
+    });
+    
+    // Force garbage collection hint
+    if (window.gc) {
+      window.gc();
+    }
+    
+    console.log(`[Memory Cleanup] Reduced history for ${cleanedImages.length} images: ${cleanedImages.join(', ')}`);
+    return cleanedImages.length;
+  };
+
   // Shared with viewer: convert measurement string/number to desired units
   function formatMeasurementForUnits(raw, units) {
     if (typeof raw === 'string') {
@@ -8965,7 +9036,7 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
       if (!undoStackByImage[currentImageLabel]) {
         undoStackByImage[currentImageLabel] = [];
       }
-      undoStackByImage[currentImageLabel].push({
+      addToUndoStack(currentImageLabel, {
         state: cloneImageData(currentState),
         type: 'initial',
         label: null
@@ -9272,12 +9343,7 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
       undoAction.vectorData = drawnVectorData; 
     }
         
-    undoStackByImage[currentImageLabel].push(undoAction);
-        
-    // Remove oldest state if we've reached max history
-    if (undoStackByImage[currentImageLabel].length >= MAX_HISTORY) {
-      undoStackByImage[currentImageLabel].shift();
-    }
+    addToUndoStack(currentImageLabel, undoAction);
 
     // Clear redo stack when a new action is performed
     redoStackByImage[currentImageLabel] = [];
@@ -14359,7 +14425,7 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
       const currentState = getCanvasState();
       currentStroke = cloneImageData(currentState);
       // Save the state before we start drawing
-      undoStackByImage[currentImageLabel].push({
+      addToUndoStack(currentImageLabel, {
         state: cloneImageData(currentState),
         type: 'pre-stroke',
         label: null
@@ -15526,7 +15592,7 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
       const currentState = getCanvasState();
       // Ensure per-image undo stack exists
       if (!undoStackByImage[currentImageLabel]) undoStackByImage[currentImageLabel] = [];
-      undoStackByImage[currentImageLabel].push({
+      addToUndoStack(currentImageLabel, {
         state: cloneImageData(currentState),
         type: 'snapshot',
         strokes: currentStrokes
@@ -15851,7 +15917,7 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
   clearButton.addEventListener('click', () => {
     // Save the current state before clearing
     const currentState = getCanvasState();
-    undoStackByImage[currentImageLabel].push({
+    addToUndoStack(currentImageLabel, {
       state: cloneImageData(currentState),
       type: 'clear',
       label: null
@@ -18473,7 +18539,7 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
         
     // Push to undo stack
     undoStackByImage[currentImageLabel] = undoStackByImage[currentImageLabel] || [];
-    undoStackByImage[currentImageLabel].push(deleteAction);
+    addToUndoStack(currentImageLabel, deleteAction);
         
     // Clear redo stack
     redoStackByImage[currentImageLabel] = [];

@@ -2448,26 +2448,38 @@
                 syncShapeBtn();
             }
 
-            // Elements panel background toggle functionality
-            const labelBackgroundToggleBtn = document.getElementById('labelBackgroundToggleBtn');
-            const applyBackground = (val) => {
-                if (window.paintApp?.state) window.paintApp.state.labelBackground = val;
-                if (window.redrawCanvasWithVisibility) window.redrawCanvasWithVisibility();
-            };
-            if (labelBackgroundToggleBtn) {
-                const syncBackgroundBtn = () => {
-                    const background = (window.paintApp?.state?.labelBackground) || 'solid';
-                    const isSolid = background === 'solid';
-                    labelBackgroundToggleBtn.textContent = isSolid ? 'Clear' : 'Solid';
-                    labelBackgroundToggleBtn.setAttribute('aria-pressed', String(!isSolid));
+            // Elements panel background toggle functionality - wait for paint.js to load
+            function initLabelBackgroundToggle() {
+                const labelBackgroundToggleBtn = document.getElementById('labelBackgroundToggleBtn');
+                const applyBackground = (val) => {
+                    if (window.paintApp?.state) window.paintApp.state.labelBackground = val;
+                    if (window.redrawCanvasWithVisibility) window.redrawCanvasWithVisibility();
                 };
-                labelBackgroundToggleBtn.addEventListener('click', () => {
-                    const background = (window.paintApp?.state?.labelBackground) || 'solid';
-                    applyBackground(background === 'solid' ? 'clear' : 'solid');
+                if (labelBackgroundToggleBtn) {
+                    const syncBackgroundBtn = () => {
+                        const background = (window.paintApp?.state?.labelBackground) || 'solid';
+                        const isSolid = background === 'solid';
+                        labelBackgroundToggleBtn.textContent = isSolid ? 'Clear' : 'Solid';
+                        labelBackgroundToggleBtn.setAttribute('aria-pressed', String(!isSolid));
+                    };
+                    labelBackgroundToggleBtn.addEventListener('click', () => {
+                        const background = (window.paintApp?.state?.labelBackground) || 'solid';
+                        applyBackground(background === 'solid' ? 'clear' : 'solid');
+                        syncBackgroundBtn();
+                    });
                     syncBackgroundBtn();
-                });
-                syncBackgroundBtn();
+                }
             }
+            
+            // Wait for paint.js to load before initializing background toggle
+            function waitForPaintApp() {
+                if (window.paintApp?.state) {
+                    initLabelBackgroundToggle();
+                } else {
+                    setTimeout(waitForPaintApp, 100);
+                }
+            }
+            waitForPaintApp();
 
             // Auto-update shared project when state saves (debounced)
             if (window.updateSharedProject && window.saveState && !window.__autoUpdateSharePatched) {
