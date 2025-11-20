@@ -1387,6 +1387,41 @@ document.addEventListener('DOMContentLoaded', () => {
     // Set message and type
     statusElement.textContent = message;
     statusElement.style.opacity = '1';
+    
+    // Add spinner for loading type
+    if (type === 'loading') {
+      if (!statusElement.querySelector('.spinner')) {
+        const spinner = document.createElement('div');
+        spinner.className = 'spinner';
+        spinner.style.cssText = `
+          display: inline-block;
+          width: 16px;
+          height: 16px;
+          border: 2px solid rgba(255,255,255,0.3);
+          border-top-color: white;
+          border-radius: 50%;
+          animation: spin 0.8s linear infinite;
+          margin-right: 8px;
+          vertical-align: middle;
+        `;
+        // Add spin animation if not already in document
+        if (!document.getElementById('spinner-style')) {
+          const style = document.createElement('style');
+          style.id = 'spinner-style';
+          style.textContent = `
+            @keyframes spin {
+              to { transform: rotate(360deg); }
+            }
+          `;
+          document.head.appendChild(style);
+        }
+        statusElement.insertBefore(spinner, statusElement.firstChild);
+      }
+    } else {
+      // Remove spinner if present
+      const spinner = statusElement.querySelector('.spinner');
+      if (spinner) spinner.remove();
+    }
         
     // Set color based on message type
     switch (type) {
@@ -1396,17 +1431,22 @@ document.addEventListener('DOMContentLoaded', () => {
       case 'error':
         statusElement.style.backgroundColor = '#F44336';
         break;
+      case 'loading':
+        statusElement.style.backgroundColor = '#FF9800';
+        break;
       case 'info':
       default:
         statusElement.style.backgroundColor = '#2196F3';
         break;
     }
         
-    // Hide after a timeout
+    // Hide after a timeout (don't auto-hide loading messages)
     clearTimeout(statusElement.timer);
-    statusElement.timer = setTimeout(() => {
-      statusElement.style.opacity = '0';
-    }, 3000);
+    if (type !== 'loading') {
+      statusElement.timer = setTimeout(() => {
+        statusElement.style.opacity = '0';
+      }, 3000);
+    }
   }
     
   // Make these functions available globally if needed
