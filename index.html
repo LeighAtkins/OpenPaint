@@ -595,9 +595,96 @@
         /* Fullscreen canvas styles */
         #canvas {
             position: fixed;
-            z-index: 1;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 5; /* Above background (z-1) but below UI panels (z-30) */
             cursor: crosshair;
             background: #f8f9fa;
+            touch-action: none; /* Prevent scrolling on touch devices */
+        }
+        
+        /* Fabric.js wrappers need the same fullscreen treatment */
+        .canvas-container,
+        .canvas-container canvas {
+            position: fixed !important;
+            top: 0;
+            left: 0;
+            width: 100vw !important;
+            height: 100vh !important;
+        }
+        
+        .canvas-container {
+            z-index: 5;
+            pointer-events: none; /* Upper canvas will capture events */
+        }
+        
+        .canvas-container .lower-canvas {
+            z-index: 5;
+        }
+        
+        .canvas-container .upper-canvas {
+            z-index: 6;
+            pointer-events: auto;
+        }
+        
+        /* Keep placeholder content visible without needing to scroll */
+        #frame-capture {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            min-height: 100vh;
+            z-index: 7;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+        }
+        
+        #frame-content {
+            pointer-events: auto;
+        }
+
+        /* Fabric.js containers ensure event surface aligns with original canvas */
+        .canvas-container,
+        .canvas-container canvas {
+            position: fixed !important;
+            top: 0;
+            left: 0;
+            width: 100vw !important;
+            height: 100vh !important;
+        }
+
+        .canvas-container {
+            z-index: 5;
+            pointer-events: none; /* let upper canvas capture events */
+        }
+
+        .canvas-container .upper-canvas {
+            z-index: 6;
+            pointer-events: auto;
+        }
+
+        .canvas-container .lower-canvas {
+            z-index: 5;
+        }
+
+        /* Frame capture placeholder sits centered behind canvas */
+        #frame-capture {
+            position: absolute;
+            inset: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        #frame-content {
+            pointer-events: auto;
         }
         
         /* Modern floating panel base styles */
@@ -1690,7 +1777,7 @@
         })();
     </script>
 </head>
-<body class="bg-gray-50 h-screen overflow-hidden">
+<body class="bg-gray-50 h-screen overflow-hidden" data-heic-worker-url="https://openpaint-heic-converter.sofapaint-api.workers.dev">
     <!-- Top Toolbar -->
     <div id="topToolbar">
         <div class="toolbar-wrap smart-label-scope" id="toolbarWrap">
@@ -1707,14 +1794,14 @@
                     <span class="label-long">Text</span><span class="label-short">Text</span>
                 </button>
                 <div class="color-swatches">
-                    <button class="active" data-color="#3b82f6" style="background-color: rgb(59, 130, 246);" title="Blue"></button>
-                    <button data-color="#22c55e" style="background-color: rgb(34, 197, 94);" title="Green"></button>
-                    <button data-color="#ef4444" style="background-color: rgb(239, 68, 68);" title="Red"></button>
-                    <button data-color="#f59e0b" style="background-color: rgb(245, 158, 11);" title="Yellow"></button>
-                    <button data-color="#a855f7" style="background-color: rgb(168, 85, 247);" title="Purple"></button>
-                    <button data-color="#1f2937" style="background-color: rgb(31, 41, 55);" title="Dark Gray"></button>
-                    <button data-color="#ffffff" style="background-color: rgb(255, 255, 255); box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3); border: 1px solid #ccc;" title="White"></button>
-                    <button data-color="#10b981" style="background-color: rgb(16, 185, 129);" title="#10b981"></button>
+                    <button class="active tbtn" data-color="#3b82f6" style="background-color: #3b82f6; box-shadow: 0 0 10px rgba(59, 130, 246, 0.6);" title="Bright Blue"></button>
+                    <button data-color="#22c55e" style="background-color: #22c55e; box-shadow: 0 0 10px rgba(34, 197, 94, 0.6);" title="Bright Green" class="tbtn"></button>
+                    <button data-color="#ef4444" style="background-color: #ef4444; box-shadow: 0 0 10px rgba(239, 68, 68, 0.6);" title="Bright Red" class="tbtn"></button>
+                    <button data-color="#f59e0b" style="background-color: #f59e0b; box-shadow: 0 0 10px rgba(245, 158, 11, 0.6);" title="Bright Yellow" class="tbtn"></button>
+                    <button data-color="#a855f7" style="background-color: #a855f7; box-shadow: 0 0 10px rgba(168, 85, 247, 0.6);" title="Bright Purple" class="tbtn"></button>
+                    <button data-color="#1f2937" style="background-color: #1f2937;" title="Dark Gray" class="tbtn"></button>
+                    <button data-color="#ffffff" style="background-color: rgb(255, 255, 255); box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3); border: 1px solid #ccc;" title="White" class="tbtn"></button>
+                    <button data-color="#10b981" style="background-color: #10b981; box-shadow: 0 0 10px rgba(16, 185, 129, 0.6);" title="Bright Emerald" class="tbtn"></button>
                 </div>
                 <input
                     type="range"
@@ -1786,7 +1873,7 @@
     <canvas id="canvas"></canvas>
 
     <!-- Main Content Container for Frame Capture -->
-    <div id="frame-capture" class="w-full" style="min-height: 100vh; overflow-y: visible; position: relative;">
+    <div id="frame-capture" class="w-full">
         <!-- Content will be dynamically generated based on images -->
         <div id="frame-content" class="min-h-screen flex items-center justify-center">
             <div class="text-center p-8">
@@ -1795,6 +1882,25 @@
             </div>
         </div>
     </div>
+    <script>
+        (function () {
+            const frameCapture = document.getElementById('frame-capture');
+            if (!frameCapture) return;
+
+            function toggleFramePlaceholder() {
+                const hasImages = window.originalImages && Object.keys(window.originalImages).length > 0;
+                frameCapture.classList.toggle('hidden', !!hasImages);
+            }
+
+            window.__hideFrameCapture = toggleFramePlaceholder;
+
+            if (document.readyState === 'complete') {
+                toggleFramePlaceholder();
+            } else {
+                window.addEventListener('load', toggleFramePlaceholder, { once: true });
+            }
+        })();
+    </script>
 
     <!-- Minimal Numeric Pill Strip Navigation - Positioned under frame capture -->
     <div id="navigation-container" class="w-full" style="background: white; border-top: 1px solid #cbd5e1; position: relative; z-index: 10; display: block;">
@@ -1903,11 +2009,11 @@
                 <div class="flex items-center gap-3">
                     <span class="text-sm font-semibold text-slate-700">Color:</span>
                     <div class="flex gap-2">
-                        <button class="w-10 h-10 rounded-full border-2 border-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-110 active" data-color="#3b82f6" style="background-color: #3b82f6;" title="Blue"></button>
-                        <button class="w-10 h-10 rounded-full border-2 border-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-110" data-color="#22c55e" style="background-color: #22c55e;" title="Green"></button>
-                        <button class="w-10 h-10 rounded-full border-2 border-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-110" data-color="#ef4444" style="background-color: #ef4444;" title="Red"></button>
-                        <button class="w-10 h-10 rounded-full border-2 border-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-110" data-color="#f59e0b" style="background-color: #f59e0b;" title="Yellow"></button>
-                        <button class="w-10 h-10 rounded-full border-2 border-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-110" data-color="#a855f7" style="background-color: #a855f7;" title="Purple"></button>
+                        <button class="w-10 h-10 rounded-full border-2 border-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-110 active" data-color="#3b82f6" style="background-color: #3b82f6; box-shadow: 0 0 10px rgba(59, 130, 246, 0.6);" title="Bright Blue"></button>
+                        <button class="w-10 h-10 rounded-full border-2 border-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-110" data-color="#22c55e" style="background-color: #22c55e; box-shadow: 0 0 10px rgba(34, 197, 94, 0.6);" title="Bright Green"></button>
+                        <button class="w-10 h-10 rounded-full border-2 border-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-110" data-color="#ef4444" style="background-color: #ef4444; box-shadow: 0 0 10px rgba(239, 68, 68, 0.6);" title="Bright Red"></button>
+                        <button class="w-10 h-10 rounded-full border-2 border-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-110" data-color="#f59e0b" style="background-color: #f59e0b; box-shadow: 0 0 10px rgba(245, 158, 11, 0.6);" title="Bright Yellow"></button>
+                        <button class="w-10 h-10 rounded-full border-2 border-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-110" data-color="#a855f7" style="background-color: #a855f7; box-shadow: 0 0 10px rgba(168, 85, 247, 0.6);" title="Bright Purple"></button>
                         <button class="w-10 h-10 rounded-full border-2 border-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-110" data-color="#1f2937" style="background-color: #1f2937;" title="Dark Gray"></button>
                     </div>
                     <input type="color" id="colorPicker" value="#3b82f6" class="hidden">
@@ -1935,6 +2041,7 @@
                         <span class="text-sm font-semibold text-slate-700">Style:</span>
                         <select id="dashStyleSelect" class="px-3 py-2 border border-gray-300 rounded-xl text-sm bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 shadow-sm">
                             <option value="solid">Solid</option>
+                            <option value="dotted">Dotted</option>
                             <option value="small">Small Dash</option>
                             <option value="medium">Medium Dash</option>
                             <option value="large">Large Dash</option>
@@ -2026,6 +2133,11 @@
         <div id="imagePanelHeader" class="flex items-center justify-between p-3 cursor-move border-b border-gray-200/50 bg-white rounded-t-2xl">
             <h3 class="text-sm font-semibold text-slate-800">Images</h3>
             <div class="flex items-center gap-2">
+                <label class="flex items-center gap-1 text-[11px] font-medium text-slate-600 bg-slate-100 border border-slate-200 rounded-lg px-2 py-1 select-none" title="Toggle whether scrolling selects images automatically">
+                    <input type="checkbox" id="scrollSelectToggle" class="accent-blue-600" checked>
+                    <span>Scroll selects</span>
+                    <span class="text-[10px] uppercase tracking-wide text-blue-600" id="scrollSelectModeLabel">Auto</span>
+                </label>
                 <button id="toggleImagePanel" class="text-slate-500 hover:text-slate-700 rounded-lg p-1 transition-all" title="Minimize/Expand Panel">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
@@ -2040,7 +2152,7 @@
         </div>
         <div id="imagePanelContent" class="p-3 transition-all duration-300" style="position: relative;">
             <!-- Legacy image list for backwards compatibility -->
-            <div id="imageList" class="space-y-4 mb-0 h-[60vh] overflow-y-auto overflow-x-hidden pr-0 snap-y snap-mandatory scroll-smooth pt-[28vh] pb-[28vh]"></div>
+                <div id="imageList" class="space-y-4 mb-0 h-[60vh] overflow-y-auto overflow-x-hidden pr-0 snap-y snap-mandatory scroll-smooth" style="padding-top: calc(30vh - 5rem); padding-bottom: calc(30vh - 5rem);"></div>
 
             <!-- Snap guide line -->
             <div class="pointer-events-none absolute left-0 right-0 top-1/2 -translate-y-1/2 border-t border-slate-300/70"></div>
@@ -4722,6 +4834,29 @@
                 imageGalleryData[index] = normalizedData;
                 updateGalleryControls();
                 
+                // Trigger mini-stepper update if function exists
+                // This ensures the bottom navigation shows all images
+                if (typeof updatePills === 'function') {
+                    setTimeout(() => {
+                        try {
+                            updatePills();
+                            console.log('[Gallery] Updated mini-stepper pills');
+                        } catch (e) {
+                            console.warn('[Gallery] Error updating pills:', e);
+                        }
+                    }, 100);
+                }
+                if (typeof updateActivePill === 'function') {
+                    setTimeout(() => {
+                        try {
+                            updateActivePill();
+                            console.log('[Gallery] Updated active pill');
+                        } catch (e) {
+                            console.warn('[Gallery] Error updating active pill:', e);
+                        }
+                    }, 150);
+                }
+                
                 console.log('[Gallery] Added image:', normalizedData);
                 
                 // Ensure the image panel is visible when adding any image
@@ -4779,6 +4914,12 @@
                     }
                 }
             }
+
+            // Expose a lightweight compat hook for module-based uploads
+            window.addImageToGalleryCompat = function addImageToGalleryCompat(imageData) {
+                const index = imageGalleryData.length;
+                addImageToGallery(imageData, index);
+            };
             
             // Navigate to specific image
             function navigateToImage(index) {
@@ -4800,12 +4941,16 @@
                     const label = imageData.original.label;
                     console.log(`[Gallery] Switching to image with label: ${label}`);
                     
-                    // Try to switch to the image using the legacy system
-                    if (window.switchToImage && typeof window.switchToImage === 'function') {
+                    // Try to switch using new ProjectManager system first
+                    if (window.projectManager && typeof window.projectManager.switchView === 'function') {
+                        window.projectManager.switchView(label);
+                        console.log(`[Gallery] Called projectManager.switchView(${label})`);
+                    } else if (window.switchToImage && typeof window.switchToImage === 'function') {
+                        // Fallback to legacy system
                         window.switchToImage(label);
                         console.log(`[Gallery] Called switchToImage(${label})`);
                     } else {
-                        console.warn('[Gallery] switchToImage function not available');
+                        console.warn('[Gallery] No image switching function available');
                     }
                 }
                 
@@ -4915,9 +5060,24 @@
             
             // Helper function to add all event listeners to a thumbnail
             function addThumbnailEventListeners(thumbnail, index) {
-                // Click handler
+                // Click handler - switch to the image using ProjectManager
                 thumbnail.addEventListener('click', () => {
+                    const imageData = imageGalleryData[index];
+                    if (imageData && imageData.original && imageData.original.label) {
+                        const label = imageData.original.label;
+                        console.log(`[Gallery] Thumbnail clicked, switching to label: ${label}`);
+                        
+                        // Use ProjectManager to switch views
+                        if (window.projectManager && typeof window.projectManager.switchView === 'function') {
+                            window.projectManager.switchView(label);
+                        } else {
+                            // Fallback to gallery navigation
                     navigateToImage(index);
+                        }
+                    } else {
+                        // Fallback to gallery navigation if no label
+                        navigateToImage(index);
+                    }
                 });
                 
                 // Drag and drop handlers
@@ -5890,6 +6050,7 @@
             const originalAddImageToSidebar = window.addImageToSidebar;
             
             // Enhanced compatibility function that works with both new and old formats
+            // NOTE: This is replaced by the [HOOK] wrapper when paint.js loads
             window.addImageToSidebar = function(imageUrl, label, filename) {
                 console.log('[COMPAT] addImageToSidebar called with:', { imageUrl: imageUrl?.substring?.(0, 50) || imageUrl, label, filename });
                 
@@ -5897,9 +6058,18 @@
                 if (originalAddImageToSidebar && typeof originalAddImageToSidebar === 'function') {
                     try {
                         originalAddImageToSidebar.apply(this, arguments);
+                        
+                        // Verify imageList was updated
+                        const imageList = document.getElementById('imageList');
+                        if (imageList) {
+                            const containers = imageList.querySelectorAll('.image-container');
+                            console.log(`[COMPAT] imageList has ${containers.length} containers after original function`);
+                        }
                     } catch (error) {
                         console.warn('[COMPAT] Original addImageToSidebar failed:', error);
                     }
+                } else {
+                    console.warn('[COMPAT] No original addImageToSidebar function available');
                 }
                 
                 // Add to new gallery
@@ -5923,10 +6093,27 @@
                 }
             };
             
-            window.switchToImage = function(imageIndex) {
-                if (typeof imageIndex === 'number') {
-                    navigateToImage(imageIndex);
-                    console.log('[COMPAT] Switched to image:', imageIndex);
+            window.switchToImage = function(imageIndexOrLabel) {
+                // If it's a number, treat as gallery index
+                if (typeof imageIndexOrLabel === 'number') {
+                    navigateToImage(imageIndexOrLabel);
+                    console.log('[COMPAT] Switched to image index:', imageIndexOrLabel);
+                } 
+                // If it's a string (label), use ProjectManager
+                else if (typeof imageIndexOrLabel === 'string') {
+                    const label = imageIndexOrLabel;
+                    console.log('[COMPAT] Switched to image label:', label);
+                    
+                    // Try ProjectManager first
+                    if (window.projectManager && typeof window.projectManager.switchView === 'function') {
+                        window.projectManager.switchView(label);
+                    } 
+                    // Fallback to legacy system
+                    else if (window.switchToImageLegacy && typeof window.switchToImageLegacy === 'function') {
+                        window.switchToImageLegacy(label);
+                    } else {
+                        console.warn('[COMPAT] No switchToImage implementation available');
+                    }
                 }
             };
             
@@ -6135,8 +6322,153 @@
                     window.addImageToSidebar = function(imageUrl, label, filename) {
                         console.log('[HOOK] Intercepted addImageToSidebar call:', { imageUrl: imageUrl?.substring?.(0, 50) || imageUrl, label, filename });
                         
+                        // Ensure imageList exists before calling original function
+                        const imageList = document.getElementById('imageList');
+                        if (!imageList) {
+                            console.error('[HOOK] imageList element not found!');
+                        }
+                        
                         // Call the original paint.js function
-                        const result = paintJsAddImageToSidebar.apply(this, arguments);
+                        let result;
+                        try {
+                            result = paintJsAddImageToSidebar.apply(this, arguments);
+                            
+                            // Verify the container was added for this specific label
+                            const imageListAfter = document.getElementById('imageList');
+                            if (imageListAfter) {
+                                const containers = imageListAfter.querySelectorAll('.image-container');
+                                const containerForLabel = imageListAfter.querySelector(`[data-label="${label}"]`);
+                                console.log(`[HOOK] imageList now has ${containers.length} containers after addImageToSidebar`);
+                                
+                                // If no container exists for this label, create one manually
+                                if (!containerForLabel && imageUrl && label) {
+                                    console.warn(`[HOOK] No container found for label "${label}", creating one manually`);
+                                    const container = document.createElement('button');
+                                    container.type = 'button';
+                                    container.draggable = true;
+                                    container.className = 'image-container group w-full text-left relative flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 transition-colors snap-center';
+                                    container.dataset.label = label;
+                                    container.dataset.originalImageUrl = imageUrl;
+                                    
+                                    const img = document.createElement('img');
+                                    img.src = imageUrl;
+                                    img.className = 'pasted-image w-full h-40 rounded-lg object-contain bg-slate-100 shadow-sm';
+                                    img.alt = `${label} view`;
+                                    
+                                    container.appendChild(img);
+
+                                    // Add delete button
+                                    const deleteBtn = document.createElement('button');
+                                    deleteBtn.className = 'delete-image-btn opacity-0 group-hover:opacity-100 transition-opacity';
+                                    deleteBtn.title = 'Delete image';
+                                    deleteBtn.textContent = '×';
+                                    // Inline styles to match reference
+                                    deleteBtn.style.cssText = 'position: absolute; top: 6px; right: 6px; cursor: pointer; background: rgba(255, 255, 255, 0.9); border: 1px solid rgb(204, 204, 204); border-radius: 50%; width: 20px; height: 20px; font-size: 12px; font-weight: bold; font-family: Arial, sans-serif; display: flex; align-items: center; justify-content: center; z-index: 10; color: rgb(102, 102, 102); line-height: 1; padding: 0px; margin: 0px; text-align: center;';
+                                    
+                                    deleteBtn.addEventListener('click', (e) => {
+                                        e.stopPropagation();
+                                        if (confirm('Delete this image?')) {
+                                            container.remove();
+                                            if (window.projectManager && typeof window.projectManager.deleteImage === 'function') {
+                                                window.projectManager.deleteImage(label);
+                                            }
+                                            
+                                            // Update pills
+                                            if (typeof updatePills === 'function') updatePills();
+                                            if (typeof updateActivePill === 'function') updateActivePill();
+                                            if (typeof updateImageListPadding === 'function') updateImageListPadding();
+                                        }
+                                    });
+                                    
+                                    container.appendChild(deleteBtn);
+
+                                    container.onclick = () => {
+                                        if (window.projectManager && typeof window.projectManager.switchView === 'function') {
+                                            window.projectManager.switchView(label);
+                                        }
+                                        // Scroll this container to center
+                                        container.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+                                        
+                                        // Temporarily disable scroll-driven switching to prevent fighting
+                                        window.__imageListProgrammaticScrollUntil = Date.now() + 500;
+                                    };
+                                    
+                                    imageListAfter.appendChild(container);
+                                    console.log(`[HOOK] Manually added container to imageList for label "${label}"`);
+
+                                    if (typeof window.ensureImageListObserver === 'function') {
+                                        window.ensureImageListObserver();
+                                    } else {
+                                        window.__pendingImageListObserverInit = true;
+                                    }
+                                    
+                                    if (typeof updateImageListPadding === 'function') {
+                                        updateImageListPadding();
+                                    }
+                                    
+                                    // Initialize observer if not already done, or observe this new container
+                                    if (typeof initImageListCenteringObserver === 'function') {
+                                        // Initialize observer if it doesn't exist yet
+                                        if (!window.__imageListCenteringObserver) {
+                                            initImageListCenteringObserver();
+                                        }
+                                        // Observer will automatically pick up new containers via MutationObserver
+                                        // But we can also explicitly observe this one immediately
+                                        if (window.__imageListCenteringObserver) {
+                                            window.__imageListCenteringObserver.observe(container);
+                                        }
+                                    }
+                                    
+                                    // Center the newly added image and switch to it if it's the first image
+                                    setTimeout(() => {
+                                        const allContainers = Array.from(imageListAfter.querySelectorAll('.image-container'));
+                                        const isFirst = allContainers.length === 1 && allContainers[0] === container;
+                                        
+                                        if (isFirst) {
+                                            console.log(`[HOOK] First image "${label}" added, centering and switching to it`);
+                                            
+                                            // Center the container
+                                            window.__imageListProgrammaticScrollUntil = Date.now() + 1000;
+                                            container.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+                                            
+                                            // Switch to this view
+                                            if (window.projectManager && typeof window.projectManager.switchView === 'function') {
+                                                window.projectManager.switchView(label);
+                                            }
+                                        }
+                                        
+                                        // Trigger mini-stepper update after adding to sidebar
+                                        if (typeof updatePills === 'function') {
+                                            updatePills();
+                                        }
+                                        if (typeof updateActivePill === 'function') {
+                                            updateActivePill();
+                                        }
+                                    }, 100);
+                                } else if (containerForLabel) {
+                                    console.log(`[HOOK] Container for label "${label}" already exists in imageList`);
+                                    
+                                    // Update pills only, don't switch views for existing containers
+                                    setTimeout(() => {
+                                        if (typeof updatePills === 'function') {
+                                            updatePills();
+                                        }
+                                        if (typeof updateActivePill === 'function') {
+                                            updateActivePill();
+                                        }
+                                    }, 100);
+
+                                    if (typeof updateImageListPadding === 'function') {
+                                        updateImageListPadding();
+                                    }
+                                }
+                            } else if (!imageListAfter) {
+                                console.error('[HOOK] imageList element not found after addImageToSidebar call!');
+                            }
+                        } catch (error) {
+                            console.error('[HOOK] Error calling original addImageToSidebar:', error);
+                            // Don't throw - try to continue with gallery addition
+                        }
                         
                         // Add to our new gallery
                         if (imageUrl) {
@@ -6211,6 +6543,10 @@
                 if (newImagesAdded > 0) {
                     console.log(`[SYNC] Added ${newImagesAdded} new images. Total: ${imageGalleryData.length}`);
                 }
+
+                if (typeof updateImageListPadding === 'function') {
+                    updateImageListPadding();
+                }
             }
             
             // Function to clear demo images
@@ -6281,13 +6617,50 @@
                 
                 console.log('[INIT] ===== Initial setup complete =====');
                 
+                // Initialize image list centering observer (if function exists and imageList has containers)
+                const imageList = document.getElementById('imageList');
+                if (imageList && imageList.querySelectorAll('.image-container').length > 0) {
+                    if (typeof initImageListCenteringObserver === 'function') {
+                        initImageListCenteringObserver();
+                    } else {
+                        console.warn('[INIT] initImageListCenteringObserver not available yet, will initialize when images are added');
+                    }
+                } else {
+                    console.log('[INIT] No images yet, observer will initialize when first image is added');
+                }
+                
                 // Ensure we always start with the first image
-                if (imageGalleryData.length > 0) {
-                    console.log('[INIT] Navigating to first image (index 0)');
+                if (imageList) {
+                    const firstContainer = imageList.querySelector('.image-container');
+                    if (firstContainer) {
+                        const firstLabel = firstContainer.dataset.label;
+                        if (firstLabel) {
+                            console.log('[INIT] Centering and selecting first image:', firstLabel);
+                            
+                            // Center the first container
+                            window.__imageListProgrammaticScrollUntil = Date.now() + 1000;
+                            firstContainer.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+                            
+                            // Switch to the first image view
                     setTimeout(() => {
-                        navigateToImage(0);
-                        updateActiveImage(0);
-                    }, 100); // Small delay to ensure everything is ready
+                                if (window.projectManager && typeof window.projectManager.switchView === 'function') {
+                                    window.projectManager.switchView(firstLabel);
+                                }
+                                
+                                // Update pills
+                                if (typeof updatePills === 'function') {
+                                    updatePills();
+                                }
+                                if (typeof updateActivePill === 'function') {
+                                    updateActivePill();
+                                }
+                            }, 300);
+                        }
+                    }
+                    
+                    if (typeof updateImageListPadding === 'function') {
+                        updateImageListPadding();
+                    }
                 }
             }, 2000);
             
@@ -6314,36 +6687,22 @@
                         
                         syncLegacyImagesToGallery();
                         
-                        // After adding new images, only load the first one if no image is currently active
-                        // This prevents overriding when user pastes a second image
-                        if (imageGalleryData.length > 0 && !window.currentImageLabel) {
-                            const firstImage = imageGalleryData[0];
-                            const firstLabel = firstImage?.name || firstImage?.label;
-                            
-                            if (firstLabel) {
-                                console.log('[PERIODIC] Loading first image silently:', firstLabel);
+                        // Don't automatically switch views during periodic sync
+                        // Let ProjectManager handle view switching based on user interaction
+                        // Only update pills to reflect new images
+                        if (typeof updatePills === 'function') {
                             setTimeout(() => {
-                                    // Directly update canvas without scrolling thumbnail
-                                    if (window.pastedImages && window.pastedImages[firstLabel]) {
-                                        window.currentImageLabel = firstLabel;
-                                        const imgElement = window.pastedImages[firstLabel];
-                                        if (imgElement && imgElement.complete) {
-                                            window.redrawCanvasWithVisibility();
-                                            // Update active state without scrolling
-                                            const thumbnails = document.querySelectorAll('.image-container');
-                                            thumbnails.forEach((thumb, idx) => {
-                                                if (thumb.dataset.label === firstLabel || thumb.getAttribute('title') === firstLabel) {
-                                                    thumb.classList.add('active');
-                                                    thumb.setAttribute('aria-selected', 'true');
-                                                } else {
-                                                    thumb.classList.remove('active');
-                                                    thumb.removeAttribute('aria-selected');
-                                                }
-                                            });
-                                        }
+                                updatePills();
+                                if (typeof updateActivePill === 'function') {
+                                    updateActivePill();
+                                }
+                            }, 100);
+
+                                    if (typeof window.ensureImageListObserver === 'function') {
+                                        window.ensureImageListObserver();
+                                    } else {
+                                        window.__pendingImageListObserverInit = true;
                                     }
-                            }, 200);
-                            }
                         }
                         
                         lastLegacyCount = currentLegacyCount;
@@ -6479,12 +6838,190 @@
         }
     </script>
 
-    <script src="js/paint.js?v=20250912134000"></script>
-    <script src="js/project-manager.js?v=20250912113000"></script>
-    <script src="js/tag-manager.js?v=20250912113000"></script>
+    <!-- Fabric.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+    
+    <!-- New Modules -->
+    <script type="module" src="js/modules/main.js"></script>
+
+    <!-- Legacy Scripts (Commented out for refactor) -->
+    <!-- <script src="js/paint.js?v=20250912134000"></script> -->
+    <!-- <script src="js/project-manager.js?v=20250912113000"></script> -->
+    <!-- <script src="js/tag-manager.js?v=20250912113000"></script> -->
 
     <!-- Minimal Numeric Pill Strip Implementation -->
     <script>
+        function updateImageListPadding() {
+            const imageList = document.getElementById('imageList');
+            if (!imageList) return;
+
+            const sampleContainer = imageList.querySelector('.image-container');
+            if (!sampleContainer) {
+                // Fall back to default padding if no samples
+                imageList.style.paddingTop = 'calc(30vh - 5rem)';
+                imageList.style.paddingBottom = 'calc(30vh - 5rem)';
+                return;
+            }
+
+            const listHeight = imageList.getBoundingClientRect().height;
+            const itemHeight = sampleContainer.getBoundingClientRect().height;
+
+            if (!listHeight || !itemHeight) return;
+
+            const padding = Math.max(0, (listHeight / 2) - (itemHeight / 2));
+
+            imageList.style.paddingTop = `${padding}px`;
+            imageList.style.paddingBottom = `${padding}px`;
+        }
+        window.updateImageListPadding = updateImageListPadding;
+
+        let __imageListPaddingResizeTimeout = null;
+        window.addEventListener('resize', () => {
+            if (__imageListPaddingResizeTimeout) {
+                clearTimeout(__imageListPaddingResizeTimeout);
+            }
+            __imageListPaddingResizeTimeout = setTimeout(() => {
+                __imageListPaddingResizeTimeout = null;
+                updateImageListPadding();
+            }, 150);
+        });
+
+        const SCROLL_SELECT_STORAGE_KEY = 'scrollSelectEnabled';
+        const SCROLL_SWITCH_DEBOUNCE_MS = 70;
+
+        function loadScrollSelectState() {
+            try {
+                const stored = localStorage.getItem(SCROLL_SELECT_STORAGE_KEY);
+                if (stored === null) return true;
+                return stored === 'true';
+            } catch (error) {
+                return true;
+            }
+        }
+
+        function persistScrollSelectState(enabled) {
+            try {
+                localStorage.setItem(SCROLL_SELECT_STORAGE_KEY, String(enabled));
+            } catch (error) {
+                // Ignore storage errors (e.g., private mode)
+            }
+        }
+
+        function setScrollSelectEnabled(enabled, source = 'auto') {
+            window.scrollToSelectEnabled = enabled;
+            persistScrollSelectState(enabled);
+            console.debug(`[ScrollSelect] Mode set to ${enabled ? 'AUTO' : 'MANUAL'} (source: ${source})`);
+            if (document?.body) {
+                document.body.setAttribute('data-scroll-select', enabled ? 'auto' : 'manual');
+            }
+            const modeLabel = document.getElementById('scrollSelectModeLabel');
+            if (modeLabel) {
+                modeLabel.textContent = enabled ? 'Auto' : 'Manual';
+                modeLabel.classList.toggle('text-blue-600', enabled);
+                modeLabel.classList.toggle('text-slate-500', !enabled);
+            }
+            const toggle = document.getElementById('scrollSelectToggle');
+            if (toggle) {
+                toggle.checked = enabled;
+            }
+        }
+
+        function isScrollSelectEnabled() {
+            return window.scrollToSelectEnabled !== false;
+        }
+
+        const MIN_CENTER_TOLERANCE = 8;
+        const MAX_CENTER_TOLERANCE = 48;
+
+        function getListCenterMetrics(listRect) {
+            if (!listRect) {
+                return { center: 0, tolerance: MIN_CENTER_TOLERANCE };
+            }
+            const center = listRect.top + listRect.height / 2;
+            const tolerance = Math.max(
+                MIN_CENTER_TOLERANCE,
+                Math.min(MAX_CENTER_TOLERANCE, listRect.height * 0.04)
+            );
+            return { center, tolerance };
+        }
+
+        function getAlignedImageContainer(imageList) {
+            if (!imageList) return null;
+            const listRect = imageList.getBoundingClientRect();
+            if (!listRect || !listRect.height) return null;
+            const { center, tolerance } = getListCenterMetrics(listRect);
+            let closest = null;
+            let closestDistance = Infinity;
+            imageList.querySelectorAll('.image-container').forEach(container => {
+                const rect = container.getBoundingClientRect();
+                if (!rect || rect.height === 0) return;
+                const containerCenter = rect.top + rect.height / 2;
+                const distance = Math.abs(containerCenter - center);
+                const isVisible = rect.bottom > listRect.top && rect.top < listRect.bottom;
+                if (isVisible && distance < closestDistance) {
+                    closestDistance = distance;
+                    closest = container;
+                }
+            });
+            if (closest && closestDistance <= tolerance) {
+                console.debug(`[ScrollSelect] Candidate ${closest.dataset.label} within tolerance (${closestDistance.toFixed(1)} <= ${tolerance.toFixed(1)})`);
+                return {
+                    container: closest,
+                    distance: closestDistance,
+                    tolerance,
+                    center
+                };
+            }
+            if (closest) {
+                console.debug(`[ScrollSelect] No centered thumbnail (best ${closest.dataset.label} at ${closestDistance.toFixed(1)}px, tolerance ${tolerance.toFixed(1)}px)`);
+            } else {
+                console.debug('[ScrollSelect] No thumbnail candidates found while scanning list');
+            }
+            return null;
+        }
+
+        function syncSelectionToCenteredThumbnail() {
+            if (!isScrollSelectEnabled()) return;
+            const imageList = document.getElementById('imageList');
+            if (!imageList) return;
+            const alignedInfo = getAlignedImageContainer(imageList);
+            if (!alignedInfo) return;
+            const { container: aligned, distance, tolerance } = alignedInfo;
+            const label = aligned.dataset.label;
+            console.debug(`[ScrollSelect] Centered thumbnail ${label} (distance ${distance.toFixed(1)}px / tolerance ${tolerance.toFixed(1)}px)`);
+            if (label && window.projectManager && typeof window.projectManager.switchView === 'function' && window.projectManager.currentViewId !== label) {
+                console.debug(`[ScrollSelect] syncSelectionToCenteredThumbnail switching to ${label}`);
+                window.projectManager.switchView(label);
+                setTimeout(() => {
+                    if (typeof window.updateActivePill === 'function') {
+                        window.updateActivePill();
+                    }
+                }, 30);
+            }
+        }
+        window.syncSelectionToCenteredThumbnail = syncSelectionToCenteredThumbnail;
+
+        function initScrollSelectToggle() {
+            const initial = loadScrollSelectState();
+            setScrollSelectEnabled(initial, 'init');
+            const toggle = document.getElementById('scrollSelectToggle');
+            if (toggle) {
+                toggle.addEventListener('change', () => {
+                    setScrollSelectEnabled(toggle.checked, 'toggle');
+                    if (toggle.checked) {
+                        updateImageListPadding();
+                        syncSelectionToCenteredThumbnail();
+                    }
+                });
+            }
+        }
+
+        initScrollSelectToggle();
+
+        if (typeof window.__miniStepperProgrammaticScrollUntil !== 'number') {
+            window.__miniStepperProgrammaticScrollUntil = 0;
+        }
+
         (function initMiniStepper() {
             // Configuration
             const cfg = {
@@ -6494,11 +7031,42 @@
                 threshold: 0.3
             };
 
+            window.updateActiveImageInSidebar = function() {
+                const imageList = document.getElementById('imageList');
+                if (!imageList) return;
+
+                const currentViewId = window.projectManager?.currentViewId;
+                if (!currentViewId) return;
+
+                const containers = imageList.querySelectorAll('.image-container');
+                containers.forEach(container => {
+                    const isActive = container.dataset.label === currentViewId;
+                    
+                    // Toggle active class
+                    container.classList.toggle('active', isActive);
+                    container.setAttribute('aria-selected', isActive);
+                    
+                    // Visual styling for active state
+                    if (isActive) {
+                        container.classList.add('bg-slate-50', 'ring-1', 'ring-slate-200');
+                    } else {
+                        container.classList.remove('bg-slate-50', 'ring-1', 'ring-slate-200');
+                    }
+                });
+            };
+
             function updateActivePill() {
-                const currentLabel = window.currentImageLabel || window.paintApp?.state?.currentImageLabel;
+                // Update sidebar active state as well
+                if (typeof window.updateActiveImageInSidebar === 'function') {
+                    window.updateActiveImageInSidebar();
+                }
+
+                // Get current label from ProjectManager if available, otherwise fallback to legacy
+                const currentLabel = window.projectManager?.currentViewId || window.currentImageLabel || window.paintApp?.state?.currentImageLabel;
                 if (!currentLabel) return;
                 
-                const stepButtons = Array.from(document.querySelectorAll('#mini-stepper button[data-target]'));
+                const stepper = document.getElementById('mini-stepper');
+                const stepButtons = Array.from(stepper?.querySelectorAll('button[data-target]') || []);
                 let activeButton = null;
                 
                 stepButtons.forEach(btn => {
@@ -6515,16 +7083,386 @@
                     }
                 });
                 
-                // Auto-scroll the active pill to center using the same approach as thumbnail clicks
-                if (activeButton) {
-                    const stepper = document.getElementById('mini-stepper');
-                    if (stepper) {
+                // Auto-scroll the active pill to center
+                if (activeButton && stepper) {
                         const stepperRect = stepper.getBoundingClientRect();
                         const btnRect = activeButton.getBoundingClientRect();
                         const delta = (btnRect.left - stepperRect.left) + (btnRect.width / 2) - (stepperRect.width / 2);
+                        if (Math.abs(delta) > 1) {
+                            window.__miniStepperProgrammaticScrollUntil = Date.now() + 400;
                         stepper.scrollBy({ left: delta, behavior: 'smooth' });
                     }
                 }
+                }
+
+            window.updateActivePill = updateActivePill;
+
+            // Track which image container is centered in the sidebar and switch to that image
+            // Initialize observer only once - guard against multiple initializations
+            function initImageListCenteringObserver() {
+                // If observer already exists, don't reinitialize
+                if (window.__imageListCenteringObserver) {
+                    console.log('[ImageList] Observer already initialized, skipping');
+                    return;
+                }
+                
+                const imageList = document.getElementById('imageList');
+                if (!imageList) {
+                    console.warn('[ImageList] imageList element not found, cannot initialize observer');
+                    return;
+                }
+                
+                console.log('[ImageList] Initializing centering observer');
+
+                if (typeof updateImageListPadding === 'function') {
+                    updateImageListPadding();
+                }
+                
+                // Debounce to avoid rapid switching
+                let switchTimeout = null;
+                const debouncedSwitch = (label, reason = 'unknown') => {
+                    if (!isScrollSelectEnabled()) return;
+                    if (switchTimeout) clearTimeout(switchTimeout);
+                    switchTimeout = setTimeout(() => {
+                        if (!isScrollSelectEnabled()) return;
+                        // Skip if this is a programmatic scroll
+                        if (window.__imageListProgrammaticScrollUntil && Date.now() < window.__imageListProgrammaticScrollUntil) {
+                            return;
+                        }
+                        
+                        if (label && window.projectManager && window.projectManager.currentViewId !== label) {
+                            console.log(`[ScrollSelect] ${reason} requesting switch to ${label}`);
+                            const switchResult = window.projectManager.switchView(label);
+                            Promise.resolve(switchResult).then(() => {
+                                if (typeof window.updateActivePill === 'function') {
+                                    setTimeout(() => window.updateActivePill(), 30);
+                                }
+                            });
+                        }
+                    }, SCROLL_SWITCH_DEBOUNCE_MS);
+                };
+                
+                // Function to find which container is closest to center
+                const findCenteredContainer = () => {
+                    const info = getAlignedImageContainer(imageList);
+                    return info ? info.container : null;
+                };
+                
+                // Use IntersectionObserver with a center-focused rootMargin
+                const imageObserver = new IntersectionObserver((entries) => {
+                    // Skip if this is a programmatic scroll
+                    if (window.__imageListProgrammaticScrollUntil && Date.now() < window.__imageListProgrammaticScrollUntil) {
+                        return;
+                    }
+                    
+                    const alignedInfo = getAlignedImageContainer(imageList);
+                    if (!alignedInfo) return;
+                    const { container: alignedContainer, distance, tolerance } = alignedInfo;
+                    
+                    const matchesObserver = entries.some(entry => entry.target === alignedContainer && entry.intersectionRatio > 0.1);
+                    if (matchesObserver) {
+                        const label = alignedContainer.dataset.label;
+                        if (label) {
+                            console.log(`[ImageList] IntersectionObserver confirmed centered image: ${label} (distance ${distance.toFixed(1)} / tol ${tolerance.toFixed(1)})`);
+                            debouncedSwitch(label, 'observer');
+                        }
+                    } else {
+                        const label = alignedContainer.dataset.label;
+                        if (label) {
+                            console.log(`[ImageList] Fallback detected centered image: ${label} (distance ${distance.toFixed(1)} / tol ${tolerance.toFixed(1)})`);
+                            debouncedSwitch(label, 'observer-fallback');
+                        }
+                    }
+                }, {
+                    root: imageList,
+                    rootMargin: '-40% 0px -40% 0px', // Create a center zone (20% top/bottom margin = 60% center zone)
+                    threshold: [0.1, 0.3, 0.5, 0.7, 1.0]
+                });
+                
+                // Also listen to scroll events for manual scrolling and scroll-snap completion
+                let scrollTimeout = null;
+                let lastScrollTop = imageList.scrollTop;
+                let scrollEndTimeout = null;
+                
+                const handleScrollEnd = () => {
+                    // Skip if this is a programmatic scroll
+                    if (window.__imageListProgrammaticScrollUntil && Date.now() < window.__imageListProgrammaticScrollUntil) {
+                        return;
+                    }
+                    
+                    const closest = findCenteredContainer();
+                    if (closest && isScrollSelectEnabled()) {
+                        const label = closest.dataset.label;
+                        if (label) {
+                            console.log(`[ImageList] Scroll ended, centered image: ${label}`);
+                            debouncedSwitch(label, 'scroll-end');
+                        }
+                    }
+                    
+                    syncSelectionToCenteredThumbnail();
+                };
+                
+                // Track scroll state for better snap detection
+                let isScrolling = false;
+                let scrollCheckInterval = null;
+                
+                imageList.addEventListener('scroll', () => {
+                    // Skip if this is a programmatic scroll
+                    if (window.__imageListProgrammaticScrollUntil && Date.now() < window.__imageListProgrammaticScrollUntil) {
+                        return;
+                    }
+                    
+                    // Mark as scrolling
+                    if (!isScrolling) {
+                        isScrolling = true;
+                    }
+                    
+                    // Clear any pending timeouts
+                    if (scrollTimeout) clearTimeout(scrollTimeout);
+                    if (scrollEndTimeout) clearTimeout(scrollEndTimeout);
+                    
+                    // Detect when scrolling has stopped (for scroll-snap completion)
+                    const currentScrollTop = imageList.scrollTop;
+                    const scrollChanged = currentScrollTop !== lastScrollTop;
+                    lastScrollTop = currentScrollTop;
+                    
+                    if (scrollChanged) {
+                        // While scrolling, continuously check for snap completion
+                        scrollTimeout = setTimeout(() => {
+                            // Check if scroll position has stabilized (snap completed)
+                            const newScrollTop = imageList.scrollTop;
+                            if (newScrollTop === lastScrollTop) {
+                                isScrolling = false;
+                                // Scroll has stopped, check for centered container after snap
+                                setTimeout(() => {
+                                    handleScrollEnd();
+                                }, 100); // Allow time for scroll-snap to complete
+                            } else {
+                                // Still scrolling, check again
+                                lastScrollTop = newScrollTop;
+                                scrollTimeout = setTimeout(() => {
+                                    handleScrollEnd();
+                                }, 50);
+                            }
+                        }, 100);
+                    }
+                }, { passive: true });
+                
+                // Listen for scrollend event (if browser supports it) for immediate detection
+                if ('onscrollend' in window) {
+                    imageList.addEventListener('scrollend', () => {
+                        // Skip if this is a programmatic scroll
+                        if (window.__imageListProgrammaticScrollUntil && Date.now() < window.__imageListProgrammaticScrollUntil) {
+                            return;
+                        }
+                        
+                        // Clear any pending timeouts
+                        if (scrollTimeout) clearTimeout(scrollTimeout);
+                        if (scrollEndTimeout) clearTimeout(scrollEndTimeout);
+                        
+                        // Immediately check which image is centered after scroll-snap
+                        setTimeout(() => {
+                            handleScrollEnd();
+                        }, 50); // Small delay to ensure DOM has updated
+                    }, { passive: true });
+                }
+                
+                // Observe all existing containers
+                const observeContainers = () => {
+                    const containers = imageList.querySelectorAll('.image-container');
+                    containers.forEach(container => {
+                        imageObserver.observe(container);
+                    });
+                };
+                
+                // Observe existing containers
+                observeContainers();
+                
+                // Watch for new containers being added and observe them automatically
+                const containerObserver = new MutationObserver((mutations) => {
+                    mutations.forEach((mutation) => {
+                        mutation.addedNodes.forEach((node) => {
+                            if (node.nodeType === 1) { // Element node
+                                // Check if it's an image container or contains one
+                                const container = node.classList?.contains('image-container') 
+                                    ? node 
+                                    : node.querySelector?.('.image-container');
+                                
+                                if (container && container.classList?.contains('image-container')) {
+                                    console.log(`[ImageList] New container detected, observing: ${container.dataset.label || 'unknown'}`);
+                                    imageObserver.observe(container);
+
+                                if (typeof updateImageListPadding === 'function') {
+                                    updateImageListPadding();
+                                }
+                                }
+                            }
+                        });
+                    });
+                });
+                
+                containerObserver.observe(imageList, {
+                    childList: true,
+                    subtree: true
+                });
+                
+                // Store observers for cleanup if needed
+                window.__imageListCenteringObserver = imageObserver;
+                window.__imageListContainerObserver = containerObserver;
+                
+                console.log('[ImageList] Observer initialized successfully');
+            }
+
+            function ensureImageListObserver() {
+                if (window.__imageListCenteringObserver) {
+                    return;
+                }
+                const imageList = document.getElementById('imageList');
+                if (!imageList) return;
+                const hasThumb = !!imageList.querySelector('.image-container');
+                if (hasThumb) {
+                    console.log('[ImageList] Auto-starting centering observer (content detected)');
+                    initImageListCenteringObserver();
+                    return;
+                }
+                if (!window.__imageListObserverBootstrap) {
+                    window.__imageListObserverBootstrap = new MutationObserver(() => {
+                        if (imageList.querySelector('.image-container')) {
+                            console.log('[ImageList] Detected first thumbnail, starting centering observer');
+                            if (window.__imageListObserverBootstrap) {
+                                window.__imageListObserverBootstrap.disconnect();
+                                window.__imageListObserverBootstrap = null;
+                            }
+                            initImageListCenteringObserver();
+                        }
+                    });
+                    window.__imageListObserverBootstrap.observe(imageList, { childList: true });
+                    console.log('[ImageList] Waiting for thumbnails to bootstrap centering observer');
+                }
+            }
+            window.ensureImageListObserver = ensureImageListObserver;
+            if (window.__pendingImageListObserverInit) {
+                delete window.__pendingImageListObserverInit;
+                ensureImageListObserver();
+            }
+            
+            // Track which pill is centered and switch to that image
+            function initPillCenteringObserver(stepButtons) {
+                if (stepButtons.length === 0) return;
+                
+                const stepper = document.getElementById('mini-stepper');
+                if (!stepper) return;
+                
+                // Debounce to avoid rapid switching
+                let switchTimeout = null;
+                const debouncedSwitch = (label, reason = 'mini-stepper') => {
+                    if (!isScrollSelectEnabled()) return;
+                    if (window.__miniStepperProgrammaticScrollUntil && Date.now() < window.__miniStepperProgrammaticScrollUntil) {
+                        return;
+                    }
+                    if (switchTimeout) clearTimeout(switchTimeout);
+                    switchTimeout = setTimeout(() => {
+                        if (!isScrollSelectEnabled()) return;
+                        if (window.__miniStepperProgrammaticScrollUntil && Date.now() < window.__miniStepperProgrammaticScrollUntil) {
+                            return;
+                        }
+                        if (label && window.projectManager && window.projectManager.currentViewId !== label) {
+                            console.log(`[ScrollSelect] ${reason} requesting switch to ${label}`);
+                            window.projectManager.switchView(label);
+                        }
+                    }, 150); // Small delay to avoid rapid switching
+                };
+                
+                // Function to find which pill is closest to center
+                const findCenteredPill = () => {
+                    const stepperRect = stepper.getBoundingClientRect();
+                    const stepperCenter = stepperRect.left + stepperRect.width / 2;
+                    
+                    let closestPill = null;
+                    let closestDistance = Infinity;
+                    const tolerance = Math.max(8, Math.min(40, stepperRect.width * 0.05));
+                    
+                    stepButtons.forEach(btn => {
+                        const btnRect = btn.getBoundingClientRect();
+                        const btnCenter = btnRect.left + btnRect.width / 2;
+                        const distance = Math.abs(btnCenter - stepperCenter);
+                        
+                        // Only consider pills that are at least partially visible
+                        if (btnRect.right > stepperRect.left && btnRect.left < stepperRect.right) {
+                            if (distance < closestDistance) {
+                                closestDistance = distance;
+                                closestPill = btn;
+                            }
+                        }
+                    });
+                    
+                    if (closestPill && closestDistance <= tolerance) {
+                        return closestPill;
+                    }
+                    return null;
+                };
+                
+                // Use IntersectionObserver with a center-focused rootMargin
+                // This creates a "center zone" that pills must intersect
+                const pillObserver = new IntersectionObserver((entries) => {
+                    // Find pills that intersect the center zone
+                    const centeredPills = entries.filter(entry => entry.intersectionRatio > 0.3);
+                    
+                    if (centeredPills.length > 0) {
+                        // Find the one closest to center
+                        const centeredPill = centeredPills.reduce((best, current) => {
+                            const stepperRect = stepper.getBoundingClientRect();
+                            const stepperCenter = stepperRect.left + stepperRect.width / 2;
+                            const bestCenter = Math.abs(best.boundingClientRect.left + best.boundingClientRect.width / 2 - stepperCenter);
+                            const currentCenter = Math.abs(current.boundingClientRect.left + current.boundingClientRect.width / 2 - stepperCenter);
+                            return currentCenter < bestCenter ? current : best;
+                        });
+                        
+                        const label = centeredPill.target.dataset.target;
+                        if (label) {
+                            debouncedSwitch(label, 'mini-stepper-observer');
+                        }
+                    } else {
+                        // Fallback: find closest pill if none intersect center zone
+                        const closest = findCenteredPill();
+                        if (closest) {
+                            const label = closest.dataset.target;
+                            if (label) {
+                                debouncedSwitch(label, 'mini-stepper-fallback');
+                            }
+                        }
+                    }
+                }, {
+                    root: stepper,
+                    rootMargin: '-40% 0px -40% 0px', // Create a center zone (20% top/bottom margin = 60% center zone)
+                    threshold: [0.1, 0.3, 0.5, 0.7, 1.0]
+                });
+                
+                // Also listen to scroll events for manual scrolling
+                let scrollTimeout = null;
+                stepper.addEventListener('scroll', () => {
+                    if (window.__miniStepperProgrammaticScrollUntil && Date.now() < window.__miniStepperProgrammaticScrollUntil) {
+                        return;
+                    }
+                    if (scrollTimeout) clearTimeout(scrollTimeout);
+                    scrollTimeout = setTimeout(() => {
+                        const closest = findCenteredPill();
+                        if (closest) {
+                            const label = closest.dataset.target;
+                            if (label) {
+                                debouncedSwitch(label, 'mini-stepper-scroll');
+                            }
+                        }
+                    }, 100);
+                }, { passive: true });
+                
+                // Observe all pills
+                stepButtons.forEach(btn => {
+                    pillObserver.observe(btn);
+                });
+                
+                // Store observer for cleanup if needed
+                window.__pillCenteringObserver = pillObserver;
             }
 
             function getImageContainers() {
@@ -6667,59 +7605,90 @@
             }
 
             function updatePills() {
-                const imageContainers = getImageContainers();
                 const stepper = document.getElementById('mini-stepper');
 
                 if (!stepper) {
                     return []; // Return empty array instead of undefined
                 }
 
-                // Fallback: if no containers found but we have images in state, use state directly
-                // This ensures pills load even when the image panel is closed
-                let containersToUse = imageContainers;
-                if (imageContainers.length === 0 && window.originalImages && Object.keys(window.originalImages).length > 0) {
-                    // Create virtual containers from state
-                    const imageLabels = Object.keys(window.originalImages).filter(label => 
-                        !label.includes('Demo') && !label.includes('Blank')
-                    );
-                    
-                    if (imageLabels.length > 0) {
-                        // Try to find containers even if hidden/closed
-                        containersToUse = imageLabels.map(label => {
-                            const container = Array.from(document.querySelectorAll('.image-container, .image-thumbnail'))
-                                .find(c => {
-                                    const cLabel = c.dataset?.label || c.getAttribute('title') || c.dataset?.imageIndex || c.id;
-                                    return cLabel === label;
-                                });
-                            return container;
-                        }).filter(Boolean);
-                        
-                        // If still no containers (panel closed), create virtual containers from labels
-                        if (containersToUse.length === 0) {
-                            containersToUse = imageLabels.map(label => ({ 
-                                dataset: { label: label },
-                                getAttribute: (attr) => attr === 'title' ? label : null,
-                                id: label,
-                                tagName: 'DIV'
-                            }));
-                        }
-                    }
+                let imageLabels = [];
+
+                // Primary source: actual sidebar thumbnail order
+                const imageList = document.getElementById('imageList');
+                if (imageList) {
+                    const seenLabels = new Set();
+                    imageLabels = Array.from(imageList.querySelectorAll('.image-container'))
+                        .map(container => container.dataset?.label?.trim())
+                        .filter(label => {
+                            if (!label || label.includes('Demo') || label.includes('Blank')) return false;
+                            if (seenLabels.has(label)) return false;
+                            seenLabels.add(label);
+                            return true;
+                        });
                 }
 
-                if (containersToUse.length === 0) {
+                // Fallback to ProjectManager views if sidebar empty (e.g., before DOM sync)
+                if (imageLabels.length === 0 && window.projectManager && window.projectManager.views) {
+                    imageLabels = Object.keys(window.projectManager.views)
+                        .filter(viewId => {
+                            const view = window.projectManager.views[viewId];
+                            return view && view.image && !viewId.includes('Demo') && !viewId.includes('Blank');
+                        })
+                        .sort((a, b) => {
+                            const preference = ['front', 'side', 'back', 'cushion'];
+                            const aIdx = preference.indexOf(a);
+                            const bIdx = preference.indexOf(b);
+                            if (aIdx !== -1 && bIdx !== -1) return aIdx - bIdx;
+                            if (aIdx !== -1) return -1;
+                            if (bIdx !== -1) return 1;
+                            return a.localeCompare(b);
+                        });
+                }
+                
+                // Fallback to gallery data
+                if (imageLabels.length === 0 && typeof imageGalleryData !== 'undefined' && imageGalleryData.length > 0) {
+                    const seenLabels = new Set();
+                    imageLabels = imageGalleryData
+                        .filter(item => {
+                            const label = item?.original?.label || item?.label;
+                            if (!label || label.includes('Demo') || label.includes('Blank')) return false;
+                            if (seenLabels.has(label)) return false; // Deduplicate
+                            seenLabels.add(label);
+                            return true;
+                        })
+                        .map(item => item?.original?.label || item?.label)
+                        .filter(Boolean);
+                }
+                
+                // Final fallback to DOM containers (legacy helper)
+                if (imageLabels.length === 0) {
+                    const imageContainers = getImageContainers();
+                    const seenLabels = new Set();
+                    imageLabels = imageContainers
+                        .map(container => {
+                            const label = container.dataset?.label || container.getAttribute('title') || container.dataset?.imageIndex || container.id;
+                            return label;
+                        })
+                        .filter(label => {
+                            if (!label || label.includes('Demo') || label.includes('Blank')) return false;
+                            if (seenLabels.has(label)) return false;
+                            seenLabels.add(label);
+                            return true;
+                        });
+                }
+
+                if (imageLabels.length === 0) {
                     stepper.innerHTML = '<li class="px-4 py-2 text-slate-500 text-sm">No images yet</li>';
                     // Ensure base classes are applied even when empty
                     stepper.className = 'flex gap-3 px-4 py-3 overflow-x-auto snap-x snap-mandatory justify-center items-center min-h-[60px]';
                     return []; // Return empty array instead of undefined
                 }
 
-
                 // Ensure stepper has base classes
                 stepper.className = 'flex gap-3 px-4 py-3 overflow-x-auto snap-x snap-mandatory justify-center items-center min-h-[60px]';
 
-                // Build pills for each image
-                const pillsHTML = containersToUse.map((container, idx) => {
-                    const label = container.dataset?.label || container.getAttribute('title') || container.dataset?.imageIndex || container.id || `Image ${idx + 1}`;
+                // Build pills for each unique image label
+                const pillsHTML = imageLabels.map((label, idx) => {
                     const n = idx + 1;
                     return `
                         <li class="snap-center">
@@ -6747,15 +7716,27 @@
                 // Update active state immediately after creating pills
                 setTimeout(() => updateActivePill(), 100);
 
-                // Click to switch to image
+                // Initialize pill centering observer to track which pill is centered
+                initPillCenteringObserver(stepButtons);
+
+                // Click to switch to image and center the pill
                 stepButtons.forEach(btn => {
                     btn.addEventListener('click', () => {
                         const label = btn.dataset.target;
+                        const stepper = document.getElementById('mini-stepper');
+                        
+                        if (!stepper) return;
+                        
+                        // First, center the pill in the stepper
+                        const stepperRect = stepper.getBoundingClientRect();
+                        const btnRect = btn.getBoundingClientRect();
+                        const delta = (btnRect.left - stepperRect.left) + (btnRect.width / 2) - (stepperRect.width / 2);
+                        stepper.scrollBy({ left: delta, behavior: 'smooth' });
+                        
+                        // Then switch to the image
                         if (window.switchToImage && typeof window.switchToImage === 'function') {
                             try {
                                 window.switchToImage(label);
-                                // Center the pill
-                                btn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
                                 
                                 // Also scroll the sidebar to center the corresponding thumbnail
                                 const list = document.getElementById('imageList');
@@ -6766,7 +7747,7 @@
                                         const elRect = container.getBoundingClientRect();
                                         const delta = (elRect.top - listRect.top) + (elRect.height / 2) - (listRect.height / 2);
                                         // Suppress scroll-driven switching during this smooth scroll
-                                        window.__imageListProgrammaticScrollUntil = Date.now() + 250;
+                                    window.__imageListProgrammaticScrollUntil = Date.now() + 500;
                                         list.scrollBy({ top: delta, behavior: 'smooth' });
                                     }
                                 }
@@ -6775,6 +7756,7 @@
                                 setTimeout(() => updateActivePill(), 50);
                                 // Dispatch event
                                 window.dispatchEvent(new CustomEvent('mini-step-click', { detail: { label, index: btn.dataset.index } }));
+                                console.debug(`[ScrollSelect] mini-step click switched to ${label}`);
                             } catch (error) {
                                 console.error('[MiniStepper] Error switching to image:', label, error);
                             }
@@ -6867,6 +7849,8 @@
                 initializeWhenReady();
             }
 
+        ensureImageListObserver();
+
             function initialize() {
                 positionNavigationContainer();
 
@@ -6887,8 +7871,14 @@
                         const currentButtons = Array.from(document.querySelectorAll('#mini-stepper button[data-target]'));
                         const currentContainers = getImageContainers();
                         if (currentButtons.length !== currentContainers.length) {
+                            // Clean up old observer if it exists
+                            if (window.__pillCenteringObserver) {
+                                window.__pillCenteringObserver.disconnect();
+                            }
                             const newButtons = updatePills();
                             initIntersectionObserver(newButtons);
+                            // Re-initialize pill centering observer
+                            initPillCenteringObserver(newButtons);
                         }
                         // Update active pill on each check
                         updateActivePill();
@@ -7014,6 +8004,106 @@
 
     <!-- Load AI Integration Module -->
     <script src="js/ai-integration.js"></script>
+    
+    <script>
+        // Enhanced status message with loading support
+        window.showStatusMessage = function(message, type = 'info') {
+            // Get or create status element
+            let statusElement = document.getElementById('statusMessage');
+            if (!statusElement) {
+                statusElement = document.createElement('div');
+                statusElement.id = 'statusMessage';
+                statusElement.style.cssText = `
+                    position: fixed;
+                    bottom: 80px; /* Moved up to avoid bottom navigation */
+                    left: 50%;
+                    transform: translateX(-50%);
+                    padding: 12px 24px;
+                    border-radius: 50px;
+                    color: white;
+                    font-weight: 500;
+                    font-size: 14px;
+                    z-index: 9999;
+                    opacity: 0;
+                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                    max-width: 80%;
+                    text-align: center;
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    backdrop-filter: blur(8px);
+                `;
+                document.body.appendChild(statusElement);
+            }
+            
+            // Reset any previous styles
+            statusElement.className = '';
+            statusElement.innerHTML = ''; // Clear content
+            
+            // Set content based on type
+            if (type === 'loading') {
+                // Spinner SVG
+                const spinner = document.createElement('div');
+                spinner.innerHTML = `<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>`;
+                statusElement.appendChild(spinner.firstChild);
+                
+                const text = document.createElement('span');
+                text.textContent = message;
+                statusElement.appendChild(text);
+                
+                statusElement.style.backgroundColor = 'rgba(59, 130, 246, 0.9)'; // Blue for loading
+            } else {
+                statusElement.textContent = message;
+                
+                // Set color based on message type
+                switch (type) {
+                    case 'success':
+                        statusElement.style.backgroundColor = 'rgba(34, 197, 94, 0.95)'; // Green
+                        break;
+                    case 'error':
+                        statusElement.style.backgroundColor = 'rgba(239, 68, 68, 0.95)'; // Red
+                        break;
+                    case 'info':
+                    default:
+                        statusElement.style.backgroundColor = 'rgba(31, 41, 55, 0.95)'; // Dark Gray
+                        break;
+                }
+            }
+            
+            // Show
+            requestAnimationFrame(() => {
+                statusElement.style.opacity = '1';
+                statusElement.style.transform = 'translateX(-50%) translateY(0)';
+            });
+            
+            // Clear existing timer
+            if (statusElement.timer) {
+                clearTimeout(statusElement.timer);
+                statusElement.timer = null;
+            }
+            
+            // Hide after timeout (longer for loading, or manual clear)
+            if (type !== 'loading') {
+                statusElement.timer = setTimeout(() => {
+                    statusElement.style.opacity = '0';
+                    statusElement.style.transform = 'translateX(-50%) translateY(10px)';
+                }, 4000);
+            }
+        };
+        
+        // Helper to hide status message manually (useful for finishing loading states)
+        window.hideStatusMessage = function() {
+            const statusElement = document.getElementById('statusMessage');
+            if (statusElement) {
+                statusElement.style.opacity = '0';
+                statusElement.style.transform = 'translateX(-50%) translateY(10px)';
+            }
+        };
+    </script>
 
 </body>
 </html>

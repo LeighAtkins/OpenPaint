@@ -1,4 +1,4 @@
-﻿// CRITICAL: Initialize core globals IMMEDIATELY at the top of the file
+// CRITICAL: Initialize core globals IMMEDIATELY at the top of the file
 // before any other code runs, so tag-manager.js can access them
 // These will be properly initialized from paintApp below, but this ensures they exist
 window.IMAGE_LABELS = window.IMAGE_LABELS || ['front', 'side', 'back', 'cushion', 'blank_canvas'];
