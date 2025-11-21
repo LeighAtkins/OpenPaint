@@ -1029,7 +1029,7 @@ document.addEventListener('DOMContentLoaded', () => {
   waitFor(() => typeof window.addImageToSidebar === 'function')
     .then(() => window.dispatchEvent(new CustomEvent('paint:ready', {
       detail: { addImageToSidebar: window.addImageToSidebar,
-                calculateNextTagFrom: window.calculateNextTagFrom }
+        calculateNextTagFrom: window.calculateNextTagFrom }
     })))
     .catch(() => console.warn('[TAG-MANAGER] fallback wait timed out'));
 });

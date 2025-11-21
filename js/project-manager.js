@@ -971,7 +971,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         // Ensure rotation system is initialized for old projects
                         if (!window.imageRotationByLabel) {
                           window.imageRotationByLabel = {};
-                          console.log(`[Legacy Migration] Initialized window.imageRotationByLabel for old project`);
+                          console.log('[Legacy Migration] Initialized window.imageRotationByLabel for old project');
                         }
                         if (typeof window.imageRotationByLabel[label] === 'undefined') {
                           window.imageRotationByLabel[label] = 0;
@@ -1144,7 +1144,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (progressBar) progressBar.style.width = '80%';
                     const loadedImages = Object.keys(window.originalImages || {}).length;
                     console.log(`[DEBUG LOAD]   All image files processed. Total loaded: ${loadedImages}`);
-                    console.log(`[DEBUG LOAD]   Loaded image labels:`, Object.keys(window.originalImages || {}));
+                    console.log('[DEBUG LOAD]   Loaded image labels:', Object.keys(window.originalImages || {}));
                     console.log('[DEBUG LOAD] ===== loadProject: Images Loaded =====');
                                         
                     // Load AI exports if they exist

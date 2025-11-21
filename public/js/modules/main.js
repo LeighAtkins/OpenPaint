@@ -232,6 +232,23 @@ class App {
             });
         }
         
+        // Image fit mode control (affects background image, not capture frame)
+        const fitModeSelect = document.getElementById('fitModeSelect');
+        
+        if (fitModeSelect) {
+            fitModeSelect.addEventListener('change', () => {
+                const fitMode = fitModeSelect.value;
+                console.log(`[ImageFit] Applying fit mode: ${fitMode}`);
+                this.applyImageFitMode(fitMode);
+            });
+        }
+        
+        // Setup keyboard shortcuts and help system
+        this.setupKeyboardControls();
+        
+        // Create help hint
+        this.createHelpHint();
+        
             // Make metadata manager available globally for compatibility
             window.metadataManager = this.metadataManager;
             window.vectorStrokesByImage = this.metadataManager.vectorStrokesByImage;
@@ -304,6 +321,254 @@ class App {
             } else {
                 shortSpan.textContent = text;
             }
+        }
+    }
+    
+    applyImageFitMode(fitMode) {
+        const currentView = this.projectManager.views[this.projectManager.currentViewId];
+        
+        if (!currentView || !currentView.image) {
+            console.warn('No current image available for fit mode');
+            return;
+        }
+        
+        // Simply call the project manager's setBackgroundImage with the fit mode
+        this.projectManager.setBackgroundImage(currentView.image, fitMode);
+    }
+    
+    setupKeyboardControls() {
+        // Create +/- buttons for resizing capture frame
+        this.captureFrameScale = 1.0;
+        
+        document.addEventListener('keydown', (e) => {
+            // Don't interfere if typing in input fields
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) {
+                return;
+            }
+            
+            // Handle capture frame resize shortcuts
+            let scaleChange = 0;
+            
+            if (e.key === '+' || e.key === '=') {
+                scaleChange = 0.1; // Increase by 10%
+            } else if (e.key === '-') {
+                scaleChange = -0.1; // Decrease by 10%
+            }
+            
+            if (scaleChange !== 0) {
+                e.preventDefault();
+                this.resizeCaptureFrameProportionally(scaleChange);
+                return;
+            }
+            
+            // Handle help menu toggle
+            if (e.key === 'h' || e.key === 'H') {
+                e.preventDefault();
+                this.toggleHelpMenu();
+            }
+        });
+    }
+    
+    resizeCaptureFrameProportionally(scaleChange) {
+        const captureFrame = document.getElementById('captureFrame');
+        if (!captureFrame) return;
+        
+        this.captureFrameScale = Math.max(0.2, Math.min(3.0, this.captureFrameScale + scaleChange));
+        
+        const baseWidth = 800;
+        const baseHeight = 600;
+        const aspectRatio = 4 / 3;
+        
+        const newWidth = baseWidth * this.captureFrameScale;
+        const newHeight = baseHeight * this.captureFrameScale;
+        
+        // Ensure frame fits within viewport
+        const maxWidth = window.innerWidth * 0.9;
+        const maxHeight = window.innerHeight * 0.9;
+        
+        let frameWidth = newWidth;
+        let frameHeight = newHeight;
+        
+        if (frameWidth > maxWidth) {
+            frameWidth = maxWidth;
+            frameHeight = frameWidth / aspectRatio;
+            this.captureFrameScale = frameWidth / baseWidth;
+        }
+        
+        if (frameHeight > maxHeight) {
+            frameHeight = maxHeight;
+            frameWidth = frameHeight * aspectRatio;
+            this.captureFrameScale = frameHeight / baseHeight;
+        }
+        
+        // Center the frame
+        const left = (window.innerWidth - frameWidth) / 2;
+        const top = (window.innerHeight - frameHeight) / 2;
+        
+        // Apply the new size and position
+        captureFrame.style.left = `${left}px`;
+        captureFrame.style.top = `${top}px`;
+        captureFrame.style.width = `${frameWidth}px`;
+        captureFrame.style.height = `${frameHeight}px`;
+        
+        // Save the new capture frame position for the current image
+        if (window.saveCurrentCaptureFrameForLabel) {
+            window.saveCurrentCaptureFrameForLabel(this.projectManager.currentViewId);
+        }
+        
+        console.log(`[CaptureFrame] Proportional resize: ${(this.captureFrameScale * 100).toFixed(0)}% (${frameWidth.toFixed(0)}x${frameHeight.toFixed(0)})`);
+    }
+    
+    createHelpHint() {
+        // Create help hint in bottom right corner
+        const helpHint = document.createElement('div');
+        helpHint.id = 'helpHint';
+        helpHint.innerHTML = 'Press <kbd>H</kbd> for help';
+        helpHint.style.cssText = `
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            z-index: 1000;
+            pointer-events: none;
+        `;
+        
+        // Style the kbd element
+        const kbd = helpHint.querySelector('kbd');
+        if (kbd) {
+            kbd.style.cssText = `
+                background: rgba(255, 255, 255, 0.2);
+                border: 1px solid rgba(255, 255, 255, 0.3);
+                border-radius: 3px;
+                padding: 2px 4px;
+                font-size: 11px;
+                font-weight: bold;
+            `;
+        }
+        
+        document.body.appendChild(helpHint);
+    }
+    
+    createHelpMenu() {
+        const helpOverlay = document.createElement('div');
+        helpOverlay.id = 'helpOverlay';
+        helpOverlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        `;
+        
+        const helpMenu = document.createElement('div');
+        helpMenu.style.cssText = `
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        `;
+        
+        helpMenu.innerHTML = `
+            <h2 style="margin-top: 0; margin-bottom: 20px; color: #333; font-size: 24px; font-weight: 600;">Keyboard Shortcuts</h2>
+            
+            <div style="margin-bottom: 20px;">
+                <h3 style="color: #555; font-size: 16px; margin-bottom: 10px; font-weight: 600;">Drawing Tools</h3>
+                <div style="display: grid; grid-template-columns: auto 1fr; gap: 8px 16px; font-size: 14px;">
+                    <kbd>Tab</kbd><span>Cycle through drawing modes (Line → Curve → Select)</span>
+                </div>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <h3 style="color: #555; font-size: 16px; margin-bottom: 10px; font-weight: 600;">Capture Frame</h3>
+                <div style="display: grid; grid-template-columns: auto 1fr; gap: 8px 16px; font-size: 14px;">
+                    <kbd>+</kbd><span>Increase capture frame size</span>
+                    <kbd>-</kbd><span>Decrease capture frame size</span>
+                </div>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <h3 style="color: #555; font-size: 16px; margin-bottom: 10px; font-weight: 600;">General</h3>
+                <div style="display: grid; grid-template-columns: auto 1fr; gap: 8px 16px; font-size: 14px;">
+                    <kbd>H</kbd><span>Show/hide this help menu</span>
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 25px;">
+                <button id="closeHelp" style="
+                    background: #3b82f6;
+                    color: white;
+                    border: none;
+                    padding: 10px 20px;
+                    border-radius: 6px;
+                    font-size: 14px;
+                    font-weight: 500;
+                    cursor: pointer;
+                    transition: background 0.2s;
+                ">Close</button>
+            </div>
+        `;
+        
+        // Style all kbd elements
+        const kbdElements = helpMenu.querySelectorAll('kbd');
+        kbdElements.forEach(kbd => {
+            kbd.style.cssText = `
+                background: #f3f4f6;
+                border: 1px solid #d1d5db;
+                border-radius: 4px;
+                padding: 2px 6px;
+                font-size: 12px;
+                font-weight: bold;
+                color: #374151;
+                font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            `;
+        });
+        
+        helpOverlay.appendChild(helpMenu);
+        document.body.appendChild(helpOverlay);
+        
+        // Close help menu handlers
+        const closeBtn = helpMenu.querySelector('#closeHelp');
+        closeBtn.addEventListener('click', () => {
+            document.body.removeChild(helpOverlay);
+        });
+        
+        // Close on overlay click
+        helpOverlay.addEventListener('click', (e) => {
+            if (e.target === helpOverlay) {
+                document.body.removeChild(helpOverlay);
+            }
+        });
+        
+        // Close on Escape key
+        const handleEscape = (e) => {
+            if (e.key === 'Escape') {
+                document.body.removeChild(helpOverlay);
+                document.removeEventListener('keydown', handleEscape);
+            }
+        };
+        document.addEventListener('keydown', handleEscape);
+    }
+    
+    toggleHelpMenu() {
+        const existingOverlay = document.getElementById('helpOverlay');
+        if (existingOverlay) {
+            document.body.removeChild(existingOverlay);
+        } else {
+            this.createHelpMenu();
         }
     }
 }

@@ -53,6 +53,13 @@ export class CurveTool extends BaseTool {
     onMouseDown(o) {
         if (!this.isActive) return;
         
+        // Don't start drawing if this is a pan gesture (Alt, Shift, or touch gesture)
+        const evt = o.e;
+        if (evt.altKey || evt.shiftKey || this.canvas.isGestureActive) {
+            console.log('[CurveTool] Ignoring mousedown - pan gesture detected');
+            return;
+        }
+        
         // Don't start drawing if clicking on an existing object (allow dragging/moving)
         // Exception: label text objects (evented: false) should allow drawing through
         if (o.target && o.target.evented !== false) {
@@ -187,6 +194,23 @@ export class CurveTool extends BaseTool {
             this.cancelDrawing();
             return;
         }
+
+        // Calculate curve length to prevent tiny accidental curves
+        let totalLength = 0;
+        for (let i = 1; i < this.points.length; i++) {
+            const dx = this.points[i].x - this.points[i-1].x;
+            const dy = this.points[i].y - this.points[i-1].y;
+            totalLength += Math.sqrt(dx * dx + dy * dy);
+        }
+        
+        const minStrokeLength = 10; // pixels (larger for curves)
+        if (totalLength < minStrokeLength) {
+            console.log(`[CurveTool] Curve too short (${totalLength.toFixed(1)}px < ${minStrokeLength}px) - cancelling`);
+            this.cancelDrawing();
+            return;
+        }
+        
+        console.log(`[CurveTool] Valid curve created (${totalLength.toFixed(1)}px)`);
 
         // Remove preview and markers
         if (this.previewPath) {

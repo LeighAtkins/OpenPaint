@@ -151,7 +151,12 @@ window.paintApp = {
     isDraggingLabel: false,
     draggedLabelStroke: null, // Store stroke label string
     dragStartX: 0,
-    dragStartY: 0
+    dragStartY: 0,
+    // Touch input state
+    activeTouches: new Map(), // Track active touches by identifier
+    isTwoFingerPan: false,
+    lastTwoFingerCenter: null, // { x, y }
+    twoFingerStartDistance: null // For potential future pinch-zoom support
   }
 };
 
@@ -932,7 +937,6 @@ document.addEventListener('DOMContentLoaded', () => {
     
   // Add UI state variables to paintApp.uiState
   window.paintApp.uiState.isShiftPressed = false;
-  let isShiftPressed = window.paintApp.uiState.isShiftPressed;
 
   // Initialize states for default images
   IMAGE_LABELS.forEach(label => {
@@ -1435,7 +1439,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.globalRedoStack = [];
         
     console.log(`[DEBUG DELETE]   Saved undo data for image: ${label}`);
-    console.log(`[DEBUG DELETE]   Data summary:`, {
+    console.log('[DEBUG DELETE]   Data summary:', {
       strokes: imageData.lineStrokes?.length || 0,
       vectorStrokes: Object.keys(imageData.vectorStrokes || {}).length,
       measurements: Object.keys(imageData.strokeMeasurements || {}).length,
@@ -1445,7 +1449,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
     // Remove from DOM
     container.remove();
-    console.log(`[DEBUG DELETE]   Removed container from DOM`);
+    console.log('[DEBUG DELETE]   Removed container from DOM');
         
     // Update the ordered image labels array after deletion
     updateOrderedImageLabelsArray();
@@ -4909,7 +4913,7 @@ document.addEventListener('DOMContentLoaded', () => {
           
           // Focus the review measurement input if it exists
           setTimeout(() => {
-            const reviewInput = document.querySelector(`.stroke-review-measurement`);
+            const reviewInput = document.querySelector('.stroke-review-measurement');
             if (reviewInput) {
               reviewInput.click(); // Trigger edit mode
             }
@@ -8015,10 +8019,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- End Control Point Indicators ---
   }
 
-function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
+  function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
   // Set a scoped flag to inform coordinate transforms that context is pre-rotated
-  const prevCtxRotatedFlag = window.__renderContextRotatedForStrokes;
-  window.__renderContextRotatedForStrokes = !!contextRotated;
+    const prevCtxRotatedFlag = window.__renderContextRotatedForStrokes;
+    window.__renderContextRotatedForStrokes = !!contextRotated;
     //             console.log(`\n--- applyVisibleStrokes ---`); // ADDED LOG
     //             console.log(`  Target Label: ${currentImageLabel}`); // ADDED LOG
     //             console.log(`  Scale: ${scale}, ImageX: ${imageX}, ImageY: ${imageY}`); // ADDED LOG
@@ -8156,8 +8160,8 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
         const measurementDataForReview = window.strokeMeasurements && 
                               window.strokeMeasurements[currentImageLabel] &&
                               window.strokeMeasurements[currentImageLabel][strokeLabel]
-                              ? window.strokeMeasurements[currentImageLabel][strokeLabel]
-                              : null;
+          ? window.strokeMeasurements[currentImageLabel][strokeLabel]
+          : null;
         const isUnderReview = measurementDataForReview && measurementDataForReview.underReview === true;
         if (isUnderReview) {
           console.log(`[REVIEW CHECK] ${strokeLabel} is under review. Measurement data:`, measurementDataForReview);
@@ -11223,7 +11227,7 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
     }
         
     // Default cursor based on mode
-    canvas.style.cursor = isShiftPressed ? 'grab' : 'crosshair';
+    canvas.style.cursor = window.paintApp.uiState.isShiftPressed ? 'grab' : 'crosshair';
   }
 
   // Helper function to restore previous drawing mode after text mode exit (made global for createTextBox)
@@ -13394,8 +13398,114 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
       }
     }
     
-    console.log(`[REVIEW BOX FIND] No hit found`);
+    console.log('[REVIEW BOX FIND] No hit found');
     return null;
+  }
+
+  // Touch gesture helper functions
+  function getTwoFingerCenter(touches) {
+    if (touches.length < 2) return null;
+    const touch1 = touches[0];
+    const touch2 = touches[1];
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: (touch1.clientX + touch2.clientX) / 2 - rect.left,
+      y: (touch1.clientY + touch2.clientY) / 2 - rect.top
+    };
+  }
+
+  function getTwoFingerDistance(touches) {
+    if (touches.length < 2) return null;
+    const touch1 = touches[0];
+    const touch2 = touches[1];
+    const dx = touch1.clientX - touch2.clientX;
+    const dy = touch1.clientY - touch2.clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+
+  function handleTouchStart(e) {
+    const uiState = window.paintApp.uiState;
+    
+    // Update active touches
+    for (let i = 0; i < e.touches.length; i++) {
+      const touch = e.touches[i];
+      uiState.activeTouches.set(touch.identifier, {
+        x: touch.clientX,
+        y: touch.clientY,
+        startTime: Date.now()
+      });
+    }
+
+    if (e.touches.length === 2) {
+      // Two finger gesture detected
+      uiState.isTwoFingerPan = true;
+      uiState.lastTwoFingerCenter = getTwoFingerCenter(e.touches);
+      uiState.twoFingerStartDistance = getTwoFingerDistance(e.touches);
+      e.preventDefault(); // Prevent default two-finger behaviors
+      return;
+    } else if (e.touches.length === 1 && !uiState.isTwoFingerPan) {
+      // Single touch - proceed with normal drawing logic
+      const touch = e.touches[0];
+      const rect = canvas.getBoundingClientRect();
+      e.offsetX = touch.clientX - rect.left;
+      e.offsetY = touch.clientY - rect.top;
+      onCanvasMouseDown(e);
+    }
+  }
+
+  function handleTouchMove(e) {
+    const uiState = window.paintApp.uiState;
+
+    if (uiState.isTwoFingerPan && e.touches.length === 2) {
+      // Handle two-finger pan
+      const currentCenter = getTwoFingerCenter(e.touches);
+      if (uiState.lastTwoFingerCenter && currentCenter) {
+        const deltaX = currentCenter.x - uiState.lastTwoFingerCenter.x;
+        const deltaY = currentCenter.y - uiState.lastTwoFingerCenter.y;
+        
+        // Use the existing moveImage function for panning
+        moveImage(deltaX, deltaY);
+        
+        uiState.lastTwoFingerCenter = currentCenter;
+      }
+      e.preventDefault();
+      return;
+    } else if (e.touches.length === 1 && !uiState.isTwoFingerPan) {
+      // Single touch move - normal drawing
+      const touch = e.touches[0];
+      const rect = canvas.getBoundingClientRect();
+      e.offsetX = touch.clientX - rect.left;
+      e.offsetY = touch.clientY - rect.top;
+      onCanvasMouseMove(e);
+    }
+  }
+
+  function handleTouchEnd(e) {
+    const uiState = window.paintApp.uiState;
+    
+    // Remove ended touches from active touches
+    for (let i = 0; i < e.changedTouches.length; i++) {
+      const touch = e.changedTouches[i];
+      uiState.activeTouches.delete(touch.identifier);
+    }
+
+    // If we were in two-finger mode and now have less than 2 touches, exit two-finger mode
+    if (uiState.isTwoFingerPan && e.touches.length < 2) {
+      uiState.isTwoFingerPan = false;
+      uiState.lastTwoFingerCenter = null;
+      uiState.twoFingerStartDistance = null;
+    }
+
+    // If down to single touch or no touches, handle as normal touch end
+    if (e.touches.length <= 1 && !uiState.isTwoFingerPan) {
+      const touch = e.changedTouches[0];
+      if (touch) {
+        const rect = canvas.getBoundingClientRect();
+        e.offsetX = touch.clientX - rect.left;
+        e.offsetY = touch.clientY - rect.top;
+      }
+      onCanvasMouseUp(e);
+    }
   }
     
   // Centralized canvas event binding function
@@ -13421,42 +13531,20 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
     // canvas.addEventListener('contextmenu', onCanvasRightClick, { signal: eventListeners.signal }); // Disabled to allow browser context menu
     console.log('[Event] Context menu listener bound to canvas');
 
-    // Canvas touch events - map to mouse event handlers
-    // Add offsetX/offsetY properties to touch events for compatibility
-    canvas.addEventListener('touchstart', (e) => {
-      e.preventDefault(); // Prevent scrolling while drawing
-      const touch = e.touches[0];
-      if (touch) {
-        const rect = canvas.getBoundingClientRect();
-        e.offsetX = touch.clientX - rect.left;
-        e.offsetY = touch.clientY - rect.top;
-      }
-      onCanvasMouseDown(e);
-    }, { signal: eventListeners.signal, passive: false });
-
-    canvas.addEventListener('touchmove', (e) => {
-      e.preventDefault(); // Prevent scrolling while drawing
-      const touch = e.touches[0];
-      if (touch) {
-        const rect = canvas.getBoundingClientRect();
-        e.offsetX = touch.clientX - rect.left;
-        e.offsetY = touch.clientY - rect.top;
-      }
-      onCanvasMouseMove(e);
-    }, { signal: eventListeners.signal, passive: false });
-
-    canvas.addEventListener('touchend', (e) => {
-      e.preventDefault(); // Prevent scrolling while drawing
-      const touch = e.changedTouches[0];
-      if (touch) {
-        const rect = canvas.getBoundingClientRect();
-        e.offsetX = touch.clientX - rect.left;
-        e.offsetY = touch.clientY - rect.top;
-      }
-      onCanvasMouseUp(e);
-    }, { signal: eventListeners.signal, passive: false });
-
+    // Canvas touch events - enhanced with multi-touch gesture support
+    canvas.addEventListener('touchstart', handleTouchStart, { signal: eventListeners.signal, passive: false });
+    canvas.addEventListener('touchmove', handleTouchMove, { signal: eventListeners.signal, passive: false });
+    canvas.addEventListener('touchend', handleTouchEnd, { signal: eventListeners.signal, passive: false });
+    
     canvas.addEventListener('touchcancel', (e) => {
+      // Reset touch state on cancel
+      const uiState = window.paintApp.uiState;
+      uiState.activeTouches.clear();
+      uiState.isTwoFingerPan = false;
+      uiState.lastTwoFingerCenter = null;
+      uiState.twoFingerStartDistance = null;
+      
+      // Handle as mouse out for drawing cleanup
       e.preventDefault();
       const touch = e.changedTouches[0];
       if (touch) {
@@ -13481,6 +13569,27 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
     window.addEventListener('touchend', (e) => {
       onWindowMouseUp(e);
     }, { signal: eventListeners.signal, passive: true });
+
+    // Track shift key for image movement
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Shift') {
+        window.paintApp.uiState.isShiftPressed = true;
+        console.log('[SHIFT] Shift key pressed, isShiftPressed =', window.paintApp.uiState.isShiftPressed);
+        if (!window.paintApp.uiState.isDrawing && !isDraggingImage) {
+          updateCursor('grab', 'shift pressed');
+        }
+      }
+    }, { signal: eventListeners.signal });
+      
+    document.addEventListener('keyup', (e) => {
+      if (e.key === 'Shift') {
+        window.paintApp.uiState.isShiftPressed = false;
+        console.log('[SHIFT] Shift key released, isShiftPressed =', window.paintApp.uiState.isShiftPressed);
+        if (!window.paintApp.uiState.isDrawing && !isDraggingImage) {
+          updateCursor('crosshair', 'shift released');
+        }
+      }
+    }, { signal: eventListeners.signal });
         
     window.paintApp.state.listenersBound = true;
     console.warn('[PAINT.JS] Event listeners bound successfully');
@@ -13512,7 +13621,8 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
     }
         
     // First, check if we should be dragging the image (shift key pressed)
-    if (isShiftPressed) {
+    if (window.paintApp.uiState.isShiftPressed) {
+      console.log('[SHIFT] Mouse down with shift pressed, starting image drag');
       isDraggingImage = true;
       lastMouseX = e.offsetX;
       lastMouseY = e.offsetY;
@@ -14119,7 +14229,7 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
         
     // If edit mode is active AND the click was NOT on the label of the stroke in edit mode, clear edit mode.
     // CRITICAL FIX: Do NOT exit edit mode during shift+click panning
-    if (window.selectedStrokeInEditMode && !isShiftPressed && (!hoveredLabel || window.selectedStrokeInEditMode !== hoveredLabel.strokeLabel)) { 
+    if (window.selectedStrokeInEditMode && !window.paintApp.uiState.isShiftPressed && (!hoveredLabel || window.selectedStrokeInEditMode !== hoveredLabel.strokeLabel)) { 
       const prevEditStrokeLabel = window.selectedStrokeInEditMode;
       window.selectedStrokeInEditMode = null;
       // Optionally clear selection too, or just exit edit mode
@@ -14713,7 +14823,7 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
         
     if (isDraggingImage) {
       isDraggingImage = false;
-      canvas.style.cursor = isShiftPressed ? 'grab' : 'crosshair';
+      canvas.style.cursor = window.paintApp.uiState.isShiftPressed ? 'grab' : 'crosshair';
             
       // Deselect all strokes when shift-drag ends
       //             console.log('Shift-drag canvas completed - deselecting all strokes');
@@ -14924,7 +15034,7 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
         
     if (isDraggingImage) {
       isDraggingImage = false;
-      canvas.style.cursor = isShiftPressed ? 'grab' : 'crosshair';
+      canvas.style.cursor = window.paintApp.uiState.isShiftPressed ? 'grab' : 'crosshair';
       return;
     }
         
@@ -14979,7 +15089,7 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
       case 'default':
       default:
         document.body.style.cursor = 'default';
-        canvas.style.cursor = isShiftPressed ? 'grab' : 'crosshair';
+        canvas.style.cursor = window.paintApp.uiState.isShiftPressed ? 'grab' : 'crosshair';
         break;
     }
   }
@@ -15093,7 +15203,7 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
         restoreCursorAfterDrag(canvasX, canvasY);
       } else {
         // Outside canvas - set cursor based on shift state
-        canvas.style.cursor = isShiftPressed ? 'grab' : 'crosshair';
+        canvas.style.cursor = window.paintApp.uiState.isShiftPressed ? 'grab' : 'crosshair';
         document.body.style.cursor = 'default';
       }
       return;
@@ -15121,31 +15231,13 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
         restoreCursorAfterDrag(canvasX, canvasY);
       } else {
         // Outside canvas - set cursor based on shift state
-        canvas.style.cursor = isShiftPressed ? 'grab' : 'crosshair';
+        canvas.style.cursor = window.paintApp.uiState.isShiftPressed ? 'grab' : 'crosshair';
         document.body.style.cursor = 'default';
       }
       return;
     }
   }
     
-  // Track shift key for image movement
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Shift') {
-      isShiftPressed = true;
-      if (!isDrawing && !isDraggingImage) {
-        updateCursor('grab', 'shift pressed');
-      }
-    }
-  });
-    
-  document.addEventListener('keyup', (e) => {
-    if (e.key === 'Shift') {
-      isShiftPressed = false;
-      if (!isDrawing && !isDraggingImage) {
-        updateCursor('crosshair', 'shift released');
-      }
-    }
-  });
 
   // Tab key cycling through drawing modes
   document.addEventListener('keydown', (e) => {
@@ -18654,6 +18746,7 @@ function applyVisibleStrokes(scale, imageX, imageY, contextRotated) {
   }
 
   // Initialize canvas event listeners
+  console.log('[EVENT] About to bind canvas listeners, canvas element:', document.getElementById('canvas'));
   bindCanvasListeners();
   console.log('[Event] Canvas listeners bound successfully');
     

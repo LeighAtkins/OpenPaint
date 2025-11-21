@@ -45,6 +45,13 @@ export class LineTool extends BaseTool {
     onMouseDown(o) {
         if (!this.isActive) return;
         
+        // Don't start drawing if this is a pan gesture (Alt, Shift, or touch gesture)
+        const evt = o.e;
+        if (evt.altKey || evt.shiftKey || this.canvas.isGestureActive) {
+            console.log('[LineTool] Ignoring mousedown - pan gesture detected');
+            return;
+        }
+        
         // Don't start drawing if clicking on an existing object (allow dragging/moving)
         // Exception: label text objects (evented: false) should allow drawing through
         if (o.target && o.target.evented !== false) {
@@ -82,7 +89,46 @@ export class LineTool extends BaseTool {
 
     onMouseUp(o) {
         if (!this.isDrawing) return;
+        
+        // Don't complete drawing if this is the end of a touch gesture
+        if (this.canvas.isGestureActive) {
+            console.log('[LineTool] Ignoring mouseup - touch gesture ending');
+            this.isDrawing = false;
+            
+            // Clean up the line that was created during the gesture
+            if (this.line) {
+                this.canvas.remove(this.line);
+                this.line = null;
+            }
+            
+            // Re-enable selection
+            this.canvas.selection = true;
+            this.canvas.requestRenderAll();
+            return;
+        }
+        
         this.isDrawing = false;
+        
+        // Calculate stroke length to prevent tiny accidental strokes
+        const endPointer = this.canvas.getPointer(o.e);
+        const deltaX = endPointer.x - this.startX;
+        const deltaY = endPointer.y - this.startY;
+        const strokeLength = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+        const minStrokeLength = 5; // pixels
+        
+        if (strokeLength < minStrokeLength) {
+            console.log(`[LineTool] Stroke too short (${strokeLength.toFixed(1)}px < ${minStrokeLength}px) - removing`);
+            // Remove the line if it's too short
+            this.canvas.remove(this.line);
+            this.line = null;
+            
+            // Re-enable selection for the canvas
+            this.canvas.selection = true;
+            this.canvas.requestRenderAll();
+            return;
+        }
+        
+        console.log(`[LineTool] Valid stroke created (${strokeLength.toFixed(1)}px)`);
         
         // Make line selectable and interactive now that drawing is complete
         this.line.set({

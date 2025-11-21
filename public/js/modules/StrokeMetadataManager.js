@@ -50,6 +50,11 @@ export class StrokeMetadataManager {
         
         this.strokeVisibilityByImage[imageLabel][strokeLabel] = true;
         this.strokeLabelVisibility[imageLabel][strokeLabel] = true;
+        
+        // Update visibility controls when new stroke is added
+        setTimeout(() => {
+            this.updateStrokeVisibilityControls();
+        }, 50);
     }
     
     // Get metadata for an object
@@ -218,6 +223,101 @@ export class StrokeMetadataManager {
         }
     }
     
+    // Update the stroke visibility controls panel
+    updateStrokeVisibilityControls() {
+        const controlsContainer = document.getElementById('strokeVisibilityControls');
+        if (!controlsContainer) return;
+        
+        const currentViewId = window.app?.projectManager?.currentViewId || 'front';
+        const strokes = this.vectorStrokesByImage[currentViewId] || {};
+        
+        controlsContainer.innerHTML = ''; // Clear existing controls
+        
+        // If no strokes, hide the panel
+        if (Object.keys(strokes).length === 0) {
+            controlsContainer.style.display = 'none';
+            return;
+        }
+        
+        controlsContainer.style.display = 'block';
+        
+        // Add title
+        const title = document.createElement('h4');
+        title.className = 'text-sm font-medium text-gray-700 mb-2';
+        title.textContent = 'Measurements';
+        controlsContainer.appendChild(title);
+        
+        // Add controls for each stroke
+        Object.entries(strokes).forEach(([strokeLabel, strokeObj]) => {
+            const strokeItem = document.createElement('div');
+            strokeItem.className = 'flex items-center justify-between py-1 px-2 hover:bg-gray-50';
+            
+            // Stroke label and measurement display
+            const labelDiv = document.createElement('div');
+            labelDiv.className = 'flex-1';
+            
+            const label = document.createElement('span');
+            label.className = 'font-mono text-sm font-medium';
+            label.textContent = strokeLabel;
+            
+            const measurement = this.getMeasurement(currentViewId, strokeLabel);
+            const measurementSpan = document.createElement('span');
+            measurementSpan.className = 'text-xs text-gray-500 ml-2';
+            measurementSpan.textContent = measurement ? `${measurement.value}${measurement.unit}` : '';
+            
+            labelDiv.appendChild(label);
+            labelDiv.appendChild(measurementSpan);
+            
+            // Visibility toggles
+            const togglesDiv = document.createElement('div');
+            togglesDiv.className = 'flex items-center gap-1';
+            
+            // Stroke visibility toggle
+            const strokeToggle = document.createElement('button');
+            strokeToggle.className = 'w-6 h-6 text-xs border rounded hover:bg-gray-100';
+            strokeToggle.title = 'Toggle stroke visibility';
+            const strokeVisible = this.strokeVisibilityByImage[currentViewId]?.[strokeLabel] !== false;
+            strokeToggle.textContent = strokeVisible ? '👁' : '👁‍🗨';
+            strokeToggle.style.opacity = strokeVisible ? '1' : '0.5';
+            
+            strokeToggle.addEventListener('click', () => {
+                const newVisibility = !strokeVisible;
+                this.setStrokeVisibility(currentViewId, strokeLabel, newVisibility);
+                if (window.app?.tagManager) {
+                    window.app.tagManager.updateTagVisibility(strokeLabel, currentViewId, newVisibility);
+                }
+                if (window.app?.canvasManager?.fabricCanvas) {
+                    window.app.canvasManager.fabricCanvas.renderAll();
+                }
+                this.updateStrokeVisibilityControls(); // Refresh UI
+            });
+            
+            // Label visibility toggle
+            const labelToggle = document.createElement('button');
+            labelToggle.className = 'w-6 h-6 text-xs border rounded hover:bg-gray-100';
+            labelToggle.title = 'Toggle label visibility';
+            const labelVisible = this.strokeLabelVisibility[currentViewId]?.[strokeLabel] !== false;
+            labelToggle.textContent = labelVisible ? 'L' : 'L';
+            labelToggle.style.opacity = labelVisible ? '1' : '0.5';
+            
+            labelToggle.addEventListener('click', () => {
+                const newVisibility = !labelVisible;
+                this.setLabelVisibility(currentViewId, strokeLabel, newVisibility);
+                if (window.app?.tagManager) {
+                    window.app.tagManager.updateTagVisibility(strokeLabel, currentViewId, newVisibility);
+                }
+                this.updateStrokeVisibilityControls(); // Refresh UI
+            });
+            
+            togglesDiv.appendChild(strokeToggle);
+            togglesDiv.appendChild(labelToggle);
+            
+            strokeItem.appendChild(labelDiv);
+            strokeItem.appendChild(togglesDiv);
+            controlsContainer.appendChild(strokeItem);
+        });
+    }
+    
     // Clear metadata for an image
     clearImageMetadata(imageLabel) {
         delete this.vectorStrokesByImage[imageLabel];
@@ -226,6 +326,9 @@ export class StrokeMetadataManager {
         delete this.strokeMeasurements[imageLabel];
         delete this.customLabelPositions[imageLabel];
         delete this.calculatedLabelOffsets[imageLabel];
+        
+        // Update controls after clearing
+        this.updateStrokeVisibilityControls();
     }
 }
 
