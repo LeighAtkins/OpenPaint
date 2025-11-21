@@ -496,40 +496,40 @@ function showAIMessage(message, type = 'info') {
  * @returns {Promise<Object>} Cleaned SVG and vectors
  */
 async function cleanupStrokesWithAI(strokes, image, units = null) {
-    try {
-        const response = await fetch('/ai/generate-svg', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                image: image,
-                strokes: strokes,
-                units: units,
-                styleGuide: {
-                    colors: {
-                        stroke: '#0B84F3',
-                        labelText: '#111111',
-                        labelBg: '#FFFFFF'
-                    },
-                    fonts: {
-                        family: 'Arial, sans-serif',
-                        size: 14
-                    }
-                }
-            })
-        });
-
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error?.message || 'AI stroke cleanup failed');
+  try {
+    const response = await fetch('/ai/generate-svg', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        image: image,
+        strokes: strokes,
+        units: units,
+        styleGuide: {
+          colors: {
+            stroke: '#0B84F3',
+            labelText: '#111111',
+            labelBg: '#FFFFFF'
+          },
+          fonts: {
+            family: 'Arial, sans-serif',
+            size: 14
+          }
         }
+      })
+    });
 
-        return await response.json();
-    } catch (error) {
-        console.error('Stroke cleanup failed:', error);
-        throw error;
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error?.message || 'AI stroke cleanup failed');
     }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Stroke cleanup failed:', error);
+    throw error;
+  }
 }
 
 // Export functions to global scope

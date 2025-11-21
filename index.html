@@ -2231,13 +2231,11 @@
                 <span class="label-short">Copy</span>
             </button>
             <select id="fitModeSelect" class="px-2 py-1 border border-gray-300 rounded-lg bg-white focus:outline-none hover:bg-gray-50">
-                <option value="none">Manual</option>
                 <option value="fit-width" selected>Fit Width</option>
                 <option value="fit-height">Fit Height</option>
                 <option value="fit-canvas">Fit Canvas</option>
                 <option value="actual-size">Actual Size</option>
             </select>
-            <button id="applyFitCurrent" class="px-2 py-1 bg-white border border-gray-300 text-slate-700 text-xs rounded-lg hover:bg-slate-50" title="Apply to current image">Apply</button>
             <button id="scaleButton" class="px-2 py-1 bg-white border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50" aria-haspopup="listbox" aria-expanded="false" type="button">100% <svg class="inline w-3 h-3 -mt-0.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M5.25 7.5l4.5 4.5 4.5-4.5H5.25z"/></svg></button>
             <div class="flex items-center gap-1 ml-2">
                 <button id="rotateLeftCtrl" class="px-2 py-1 bg-white border border-gray-300 text-slate-700 text-xs rounded-lg hover:bg-slate-50" title="Rotate 90° CCW">↶</button>
@@ -2470,7 +2468,6 @@
 
             // CENTER/BOTTOM: canvas view controls moved to bottom
             reparent('fitModeSelect', bottom);
-            reparent('applyFitCurrent', bottom);
             reparent('rotateLeftCtrl', bottom, el => { 
                 el.classList.add('icon-btn', 'tbtn'); 
                 el.title = 'Rotate Left'; 

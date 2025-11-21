@@ -45,6 +45,13 @@ export class ArrowTool extends BaseTool {
     onMouseDown(o) {
         if (!this.isActive) return;
         
+        // Don't start drawing if this is a pan gesture (Alt, Shift, or touch gesture)
+        const evt = o.e;
+        if (evt.altKey || evt.shiftKey || this.canvas.isGestureActive) {
+            console.log('[ArrowTool] Ignoring mousedown - pan gesture detected');
+            return;
+        }
+        
         // Don't start drawing if clicking on an existing object (allow dragging/moving)
         // Exception: label text objects (evented: false) should allow drawing through
         if (o.target && o.target.evented !== false) {
@@ -109,7 +116,51 @@ export class ArrowTool extends BaseTool {
 
     onMouseUp(o) {
         if (!this.isDrawing) return;
+        
+        // Don't complete drawing if this is the end of a touch gesture
+        if (this.canvas.isGestureActive) {
+            console.log('[ArrowTool] Ignoring mouseup - touch gesture ending');
+            this.isDrawing = false;
+            
+            // Clean up the arrow parts that were created during the gesture
+            if (this.line) {
+                this.canvas.remove(this.line);
+                this.line = null;
+            }
+            if (this.head) {
+                this.canvas.remove(this.head);
+                this.head = null;
+            }
+            
+            // Re-enable selection
+            this.canvas.selection = true;
+            this.canvas.requestRenderAll();
+            return;
+        }
+        
         this.isDrawing = false;
+        
+        // Calculate arrow length to prevent tiny accidental arrows
+        const endPointer = this.canvas.getPointer(o.e);
+        const deltaX = endPointer.x - this.startX;
+        const deltaY = endPointer.y - this.startY;
+        const arrowLength = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+        const minStrokeLength = 5; // pixels
+        
+        if (arrowLength < minStrokeLength) {
+            console.log(`[ArrowTool] Arrow too short (${arrowLength.toFixed(1)}px < ${minStrokeLength}px) - removing`);
+            // Remove the arrow if it's too short
+            this.canvas.remove(this.line, this.head);
+            this.line = null;
+            this.head = null;
+            
+            // Re-enable selection for the canvas
+            this.canvas.selection = true;
+            this.canvas.requestRenderAll();
+            return;
+        }
+        
+        console.log(`[ArrowTool] Valid arrow created (${arrowLength.toFixed(1)}px)`);
         
         // Group them together for easier selection/moving
         const group = new fabric.Group([this.line, this.head], {

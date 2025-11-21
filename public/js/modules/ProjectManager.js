@@ -117,27 +117,58 @@ export class ProjectManager {
         }
     }
     
-    async setBackgroundImage(url) {
+    async setBackgroundImage(url, fitMode = 'fit-canvas') {
         return new Promise((resolve) => {
             fabric.Image.fromURL(url, (img) => {
                 const canvas = this.canvasManager.fabricCanvas;
                 if (!canvas) return resolve();
                 
-                // Scale image to fit canvas (contain)
                 const canvasWidth = canvas.width;
                 const canvasHeight = canvas.height;
                 const imgWidth = img.width;
                 const imgHeight = img.height;
                 
-                const scale = Math.min(canvasWidth / imgWidth, canvasHeight / imgHeight);
+                let scale = 1;
+                let left = canvasWidth / 2;
+                let top = canvasHeight / 2;
+                
+                switch (fitMode) {
+                    case 'fit-width':
+                        scale = canvasWidth / imgWidth;
+                        console.log(`[Image Fit Width] Canvas: ${canvasWidth}x${canvasHeight}, Image: ${imgWidth}x${imgHeight}, Scale: ${scale.toFixed(3)}`);
+                        break;
+                        
+                    case 'fit-height':
+                        scale = canvasHeight / imgHeight;
+                        console.log(`[Image Fit Height] Canvas: ${canvasWidth}x${canvasHeight}, Image: ${imgWidth}x${imgHeight}, Scale: ${scale.toFixed(3)}`);
+                        break;
+                        
+                    case 'fit-canvas':
+                        scale = Math.min(canvasWidth / imgWidth, canvasHeight / imgHeight);
+                        console.log(`[Image Fit Canvas] Canvas: ${canvasWidth}x${canvasHeight}, Image: ${imgWidth}x${imgHeight}, Scale: ${scale.toFixed(3)}`);
+                        break;
+                        
+                    case 'actual-size':
+                        scale = 1;
+                        console.log(`[Image Actual Size] Canvas: ${canvasWidth}x${canvasHeight}, Image: ${imgWidth}x${imgHeight}, Scale: 1.000`);
+                        break;
+                        
+                    default:
+                        // Default to fit canvas
+                        scale = Math.min(canvasWidth / imgWidth, canvasHeight / imgHeight);
+                        console.log(`[Image Default] Canvas: ${canvasWidth}x${canvasHeight}, Image: ${imgWidth}x${imgHeight}, Scale: ${scale.toFixed(3)}`);
+                        break;
+                }
                 
                 img.set({
                     originX: 'center',
                     originY: 'center',
-                    left: canvasWidth / 2,
-                    top: canvasHeight / 2,
+                    left: left,
+                    top: top,
                     scaleX: scale,
-                    scaleY: scale
+                    scaleY: scale,
+                    selectable: false,
+                    evented: false
                 });
                 
                 canvas.setBackgroundImage(img, canvas.requestRenderAll.bind(canvas));
@@ -145,6 +176,7 @@ export class ProjectManager {
             }, { crossOrigin: 'anonymous' });
         });
     }
+    
     
     getViewList() {
         return Object.keys(this.views);
