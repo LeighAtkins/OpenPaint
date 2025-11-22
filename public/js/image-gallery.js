@@ -7,7 +7,7 @@
 
     // Gallery state
     let currentImageIndex = 0;
-    let imageGalleryData = [];
+    window.imageGalleryData = window.imageGalleryData || [];
     let intersectionObserver = null;
 
     /**
