@@ -169,3 +169,1668 @@
         display: inline;
     }
 } 
+/* === CONSOLIDATED FROM index.html === */
+        /* Custom styles for image list and tag system */
+        .image-container {
+            border-left: 2px solid transparent;
+            transition: all 0.2s ease;
+        }
+        
+        .image-container:hover {
+            border-left-color: #3b82f6;
+            background-color: #f8fafc;
+        }
+        
+        .image-container[aria-selected="true"] {
+            border-left-color: #3b82f6;
+            background-color: #eff6ff;
+        }
+        
+        .tag-badge {
+            display: inline-block;
+            background-color: #e0e7ff;
+            color: #3730a3;
+            font-size: 10px;
+            font-weight: 500;
+            padding: 2px 6px;
+            border-radius: 6px;
+            line-height: 1;
+        }
+        
+        .no-tags {
+            font-size: 10px;
+            color: #9ca3af;
+            font-style: italic;
+        }
+        
+        .image-label:hover {
+            background-color: #f1f5f9 !important;
+        }
+
+        /* Modern slider styling (align with original OpenPaint) */
+        .slider {
+            --accent: #3b82f6;
+            --p: 0;            /* 0..1 progress (set by JS) */
+            --filled: 30%;     /* legacy percent for compatibility */
+            --track-h: 6px;    /* track height */
+            --thumb: 16px;     /* thumb diameter (px) */
+            /* align fill end exactly under thumb center across browsers */
+            --pos: calc((var(--p) * (100% - var(--thumb))) + (var(--thumb) / 2));
+            -webkit-appearance: none;
+            appearance: none;
+            outline: none;
+            border-radius: 9999px;
+            height: var(--track-h);
+            background: transparent; /* let track draw the background */
+        }
+
+        /* WebKit/Blink track + thumb */
+        .slider::-webkit-slider-runnable-track {
+            height: var(--track-h);
+            border-radius: 9999px;
+            background: linear-gradient(
+                to right,
+                var(--accent) 0,
+                var(--accent) var(--pos),
+                #e5e7eb   var(--pos),
+                #e5e7eb 100%
+            );
+            }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: var(--thumb);
+            height: var(--thumb);
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+            /* keep a subtle depth but pull the blue glow inside the thumb */
+            box-shadow: inset 0 0 0 3px rgba(59, 130, 246, 0.45), 0 1px 2px rgba(0, 0, 0, 0.07);
+            transition: all 0.2s ease;
+            /* center the thumb on a thin track */
+            margin-top: calc((var(--track-h) - var(--thumb)) / 2);
+        }
+
+        
+
+        .slider::-webkit-slider-thumb:hover {
+            transform: scale(1.08);
+            box-shadow: inset 0 0 0 4px rgba(59, 130, 246, 0.55), 0 2px 3px rgba(0, 0, 0, 0.08);
+        }
+
+        /* Firefox track + thumb + progress */
+        .slider::-moz-range-track {
+            height: var(--track-h);
+            border-radius: 9999px;
+            background: #e5e7eb;
+        }
+
+        .slider::-moz-range-progress {
+            height: var(--track-h);
+            border-radius: 9999px;
+            background: var(--accent);
+        }
+
+        .slider::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+            border: none;
+            box-shadow: inset 0 0 0 3px rgba(59, 130, 246, 0.45), 0 1px 2px rgba(0, 0, 0, 0.07);
+            transition: all 0.2s ease;
+        }
+
+        .slider::-moz-range-thumb:hover {
+            transform: scale(1.08);
+            box-shadow: inset 0 0 0 4px rgba(59, 130, 246, 0.55), 0 2px 3px rgba(0, 0, 0, 0.08);
+        }
+        
+        /* Match original OpenPaint slider width */
+        #brushSize { width: 120px; margin: 0; }
+
+        /* Remove native focus outline while keeping custom inset ring */
+        .slider { -webkit-tap-highlight-color: transparent; }
+        .slider:focus, .slider:focus-visible { outline: none !important; box-shadow: none; }
+        .slider::-moz-focus-outer { border: 0; }
+        /* Hide UI until initialization completes to prevent flash */
+        .app-loading body { 
+            visibility: hidden !important; 
+        }
+        
+        /* Hide toolbar completely until ready - prevents any flicker */
+        #topToolbar:not(.toolbar-ready) {
+            display: none !important; /* Completely remove from layout */
+        }
+        
+        /* Show toolbar only when ready */
+        #topToolbar.toolbar-ready {
+            display: block !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+            transition: none !important; /* Disable transitions during initialization to prevent flicker */
+        }
+        
+        /* After initialization completes, enable smooth transitions */
+        #topToolbar.toolbar-ready.toolbar-stable {
+            transition: opacity 0.2s ease, visibility 0s;
+        }
+        
+        /* Panels load immediately - no hiding during app-loading */
+        /* They start expanded and visible by default */
+        
+        /* Ensure stable toolbar layout from the start */
+        #topToolbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 40;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border-bottom: 1px solid rgb(226, 232, 240);
+            height: 48px;
+        }
+        
+        .toolbar-wrap {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 48px;
+        }
+        
+        #tbLeft, #tbCenter, #tbRight {
+            position: relative;
+            display: flex;
+            align-items: center;
+            flex-shrink: 0; /* Prevent shrinking that causes layout shifts */
+            min-width: 0; /* Allow flex items to shrink below content size if needed */
+        }
+        
+        /* Stabilize button widths to prevent jumping */
+        #tbLeft .tbtn, #tbRight .tbtn {
+            min-width: fit-content; /* Ensure buttons don't collapse */
+            white-space: nowrap; /* Prevent text wrapping */
+        }
+        
+        /* Ensure label spans don't cause width changes */
+        .label-long, .label-short {
+            display: inline-block; /* Use inline-block for more stable layout */
+            white-space: nowrap;
+        }
+
+        /* Mobile: Make toolbar horizontally scrollable by default */
+        @media (max-width: 768px) {
+            .toolbar-wrap {
+                overflow-x: auto;
+                overflow-y: hidden;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: thin;
+                scrollbar-color: rgba(148, 163, 184, 0.5) transparent;
+                justify-content: flex-start;
+                gap: 12px;
+                padding: 0 8px;
+                position: relative;
+                cursor: pointer;
+            }
+            
+            .toolbar-wrap::-webkit-scrollbar {
+                height: 4px;
+            }
+            
+            .toolbar-wrap::-webkit-scrollbar-track {
+                background: transparent;
+            }
+            
+            .toolbar-wrap::-webkit-scrollbar-thumb {
+                background: rgba(148, 163, 184, 0.5);
+                border-radius: 2px;
+            }
+            
+            .toolbar-wrap::-webkit-scrollbar-thumb:hover {
+                background: rgba(148, 163, 184, 0.7);
+            }
+            
+            /* Prevent toolbar groups from wrapping in scrollable mode */
+            .toolbar-wrap:not(.expanded) #tbLeft,
+            .toolbar-wrap:not(.expanded) #tbCenter,
+            .toolbar-wrap:not(.expanded) #tbRight {
+                flex-shrink: 0;
+                flex-wrap: nowrap;
+            }
+            
+            /* Ensure buttons don't shrink in scrollable mode */
+            .toolbar-wrap:not(.expanded) .tbtn,
+            .toolbar-wrap:not(.expanded) .tinput,
+            .toolbar-wrap:not(.expanded) .color-swatches,
+            .toolbar-wrap:not(.expanded) .slider {
+                flex-shrink: 0;
+            }
+            
+            /* Expanded/wrapped mode - up to 5 rows */
+            .toolbar-wrap.expanded {
+                overflow-x: visible;
+                overflow-y: visible;
+                flex-wrap: wrap;
+                align-content: flex-start;
+                height: auto;
+                max-height: calc(5 * (32px + 6px)); /* 5 rows: button height + gap */
+                padding: 8px;
+                gap: 6px;
+            }
+            
+            /* In expanded mode, flatten groups so items wrap together */
+            .toolbar-wrap.expanded #tbLeft,
+            .toolbar-wrap.expanded #tbCenter,
+            .toolbar-wrap.expanded #tbRight {
+                flex-wrap: wrap;
+                flex-shrink: 1;
+                gap: 6px;
+                display: contents; /* Flatten structure so items wrap together */
+            }
+            
+            /* Ensure items maintain spacing in expanded mode */
+            .toolbar-wrap.expanded .group-gap > * {
+                margin-right: 6px;
+                margin-bottom: 0;
+            }
+            
+            .toolbar-wrap.expanded .tbtn,
+            .toolbar-wrap.expanded .tinput,
+            .toolbar-wrap.expanded .color-swatches,
+            .toolbar-wrap.expanded .slider {
+                flex-shrink: 0;
+            }
+            
+            /* Visual indicator at bottom for tap area */
+            .toolbar-wrap::after {
+                content: '';
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                height: 8px;
+                background: linear-gradient(to top, rgba(148, 163, 184, 0.1), transparent);
+                pointer-events: none;
+                opacity: 0.5;
+                transition: opacity 0.2s;
+            }
+            
+            .toolbar-wrap.expanded::after {
+                opacity: 0;
+            }
+            
+            /* Blue glow animation when expandable */
+            @keyframes blueGlow {
+                0%, 100% {
+                    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+                }
+                50% {
+                    box-shadow: 0 0 12px 4px rgba(59, 130, 246, 0.6);
+                }
+            }
+            
+            .toolbar-wrap.expandable {
+                animation: blueGlow 0.5s ease-in-out;
+                animation-fill-mode: none; /* Don't persist animation state */
+            }
+            
+            .toolbar-wrap.tapped {
+                animation: blueGlow 1s ease-in-out;
+                animation-fill-mode: none; /* Don't persist animation state */
+            }
+            
+            /* Glow on hover only if expandable (when scrollable) */
+            .toolbar-wrap:not(.expanded)[data-scrollable="true"]:hover:not(.no-glow) {
+                box-shadow: 0 0 12px 4px rgba(59, 130, 246, 0.6);
+                transition: box-shadow 0.2s ease-in-out;
+            }
+            
+            /* Ensure no glow when not hovering (even if scrollable) */
+            .toolbar-wrap:not(.expanded)[data-scrollable="true"]:not(:hover):not(.expandable):not(.tapped) {
+                box-shadow: none !important;
+            }
+            
+            /* Force no glow when no-glow class is present */
+            .toolbar-wrap.no-glow {
+                box-shadow: none !important;
+            }
+        }
+
+        .group-gap > * {
+            margin-right: 6px;
+        }
+        
+        .group-gap > *:last-child {
+            margin-right: 0;
+        }
+        
+        /* Ensure all toolbar buttons have consistent sizing */
+        .tbtn {
+            height: 32px;
+            padding: 0 10px;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border: 1px solid rgba(148, 163, 184, 0.6);
+            background: #fff;
+            font-size: 12px;
+            line-height: 1;
+            transition: all 0.15s ease;
+            white-space: nowrap;
+        }
+        
+        .tinput {
+            height: 32px;
+            padding: 0 10px;
+            border-radius: 8px;
+            border: 1px solid rgba(148, 163, 184, 0.6);
+            background: #fff;
+            font-size: 12px;
+            line-height: 1;
+            transition: all 0.15s ease;
+        }
+        
+        .icon-btn {
+            width: 32px;
+            justify-content: center;
+            padding: 0;
+        }
+        
+        /* Specific button styles to prevent layout shifts */
+        #paste {
+            padding: 8px 16px;
+            background: rgb(59, 130, 246);
+            color: white;
+            font-weight: 600;
+            border-radius: 12px;
+            border: none;
+        }
+        
+        #clear {
+            padding: 8px 16px;
+            background: rgb(239, 68, 68);
+            color: white;
+            font-weight: 600;
+            border-radius: 12px;
+            border: none;
+        }
+        
+        #drawingModeToggle {
+            padding: 8px 16px;
+            background: white;
+            color: rgb(34, 197, 94);
+            font-weight: 600;
+            border-radius: 12px;
+            border: 2px solid rgb(34, 197, 94);
+        }
+        
+        #projectName {
+            width: 140px;
+            padding: 8px 12px;
+            border: 1px solid rgb(209, 213, 219);
+            border-radius: 12px;
+            background: white;
+            font-size: 14px;
+        }
+        
+        #loadProject {
+            padding: 8px 16px;
+            background: white;
+            color: rgb(51, 65, 85);
+            font-weight: 600;
+            border-radius: 12px;
+            border: 1px solid rgb(209, 213, 219);
+            font-size: 12px;
+        }
+        
+        #saveProjectTop {
+            padding: 8px 16px;
+            background: rgb(59, 130, 246);
+            color: white;
+            font-weight: 700;
+            border-radius: 12px;
+            border: 1px solid rgb(37, 99, 235);
+            font-size: 14px;
+        }
+        
+        #updateShareBtn {
+            padding: 6px 12px;
+            background: rgb(14, 165, 233);
+            color: white;
+            font-weight: 600;
+            border-radius: 12px;
+            border: 1px solid rgb(2, 132, 199);
+            margin-left: 8px;
+        }
+        
+        #unitToggleBtn {
+            padding: 6px 12px;
+            background: white;
+            color: rgb(51, 65, 85);
+            font-weight: 600;
+            border-radius: 12px;
+            border: 1px solid rgb(209, 213, 219);
+        }
+        
+        /* Color swatches */
+        .color-swatches {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .color-swatches button {
+            width: 20px;
+            height: 20px;
+            border-radius: 9999px;
+            border: 2px solid white;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+            margin: 0;
+            padding: 0;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .color-swatches button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
+        }
+        
+
+        
+        /* Responsive text labels */
+        .label-long {
+            display: inline-block;
+            white-space: nowrap;
+        }
+        
+        .label-short {
+            display: none;
+            white-space: nowrap;
+        }
+        
+        @media (max-width: 768px) {
+            .label-long {
+                display: none;
+            }
+
+            .label-short {
+                display: inline-block;
+            }
+
+            /* Constrain panel widths on mobile to trigger scrolling */
+            #toolsPanel {
+                max-width: calc(100vw - 2rem);
+                left: 1rem !important;
+            }
+
+            #canvasControls {
+                max-width: calc(100vw - 2rem);
+                overflow-x: auto;
+                overflow-y: hidden;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            /* Enable horizontal scrolling for panel content on mobile */
+            #toolsPanelContent,
+            #canvasControlsContent {
+                overflow-x: auto !important;
+                overflow-y: visible !important;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: thin;
+                flex-wrap: nowrap !important;
+            }
+            
+            /* Ensure buttons don't shrink */
+            #canvasControlsContent > * {
+                flex-shrink: 0;
+            }
+
+            /* Prevent wrapping on flex rows inside panels */
+            #toolsPanelContent .flex.items-center,
+            #toolsPanelContent > div,
+            #canvasControlsContent.flex {
+                flex-wrap: nowrap !important;
+            }
+
+            /* Ensure buttons don't shrink */
+            #toolsPanelContent button,
+            #canvasControlsContent button,
+            #canvasControlsContent select {
+                flex-shrink: 0;
+            }
+
+            /* Hide scrollbars for cleaner look */
+            #toolsPanelContent::-webkit-scrollbar,
+            #canvasControlsContent::-webkit-scrollbar {
+                height: 4px;
+            }
+
+            #toolsPanelContent::-webkit-scrollbar-thumb,
+            #canvasControlsContent::-webkit-scrollbar-thumb {
+                background: rgba(0, 0, 0, 0.2);
+                border-radius: 2px;
+            }
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+        
+        /* Fullscreen canvas styles */
+        #canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 5; /* Above background (z-1) but below UI panels (z-30) */
+            cursor: crosshair;
+            background: #f8f9fa;
+            touch-action: none; /* Prevent scrolling on touch devices */
+        }
+        
+        /* Fabric.js wrappers need the same fullscreen treatment */
+        .canvas-container,
+        .canvas-container canvas {
+            position: fixed !important;
+            top: 0;
+            left: 0;
+            width: 100vw !important;
+            height: 100vh !important;
+        }
+        
+        .canvas-container {
+            z-index: 5;
+            pointer-events: none; /* Upper canvas will capture events */
+        }
+        
+        .canvas-container .lower-canvas {
+            z-index: 5;
+        }
+        
+        .canvas-container .upper-canvas {
+            z-index: 6;
+            pointer-events: auto;
+        }
+        
+        /* Keep placeholder content visible without needing to scroll */
+        #frame-capture {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            min-height: 100vh;
+            z-index: 7;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+        }
+        
+        #frame-content {
+            pointer-events: auto;
+        }
+
+        /* Fabric.js containers ensure event surface aligns with original canvas */
+        .canvas-container,
+        .canvas-container canvas {
+            position: fixed !important;
+            top: 0;
+            left: 0;
+            width: 100vw !important;
+            height: 100vh !important;
+        }
+
+        .canvas-container {
+            z-index: 5;
+            pointer-events: none; /* let upper canvas capture events */
+        }
+
+        .canvas-container .upper-canvas {
+            z-index: 6;
+            pointer-events: auto;
+        }
+
+        .canvas-container .lower-canvas {
+            z-index: 5;
+        }
+
+        /* Frame capture placeholder sits centered behind canvas */
+        #frame-capture {
+            position: absolute;
+            inset: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        #frame-content {
+            pointer-events: auto;
+        }
+        
+        /* Modern floating panel base styles */
+        .floating-panel {
+            backdrop-filter: blur(20px);
+            background: rgba(255, 255, 255, 0.98);
+            box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 
+                       0 4px 6px -2px rgba(0, 0, 0, 0.05),
+                       0 0 0 1px rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .floating-panel:hover {
+            background: rgba(255, 255, 255, 0.99);
+        }
+        
+        /* Only apply hover transform to main panels, not side panels */
+        #projectPanel:hover,
+        #toolsPanel:hover,
+        #canvasControls:hover {
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            transform: translateY(-1px);
+        }
+        
+        .floating-panel.dragging {
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            transform: none !important;
+            transition: none !important;
+        }
+        
+        /* Modern capture frame styles */
+        #captureOverlay {
+            backdrop-filter: none;
+        }
+        
+        .capture-frame {
+            background: transparent;
+            transition: none !important;
+        }
+        
+        .capture-frame.locked {
+            cursor: default;
+        }
+        
+        .capture-frame.unlocked {
+            cursor: move;
+        }
+        
+        /* Capture frame dragging - no transitions for 1:1 movement */
+        .capture-frame.dragging {
+            transition: none !important;
+        }
+        
+        /* Modern resize handles - smaller and more discrete */
+        .resize-handle {
+            position: absolute;
+            opacity: 0;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+        
+        .capture-frame.unlocked:hover .resize-handle,
+        .capture-frame.unlocked .resize-handle:hover {
+            opacity: 1;
+        }
+        
+        .resize-handle:hover {
+            transform: scale(1.3);
+            background: #3b82f6 !important;
+            border-color: white !important;
+        }
+        
+        /* Dark overlay - no transitions for instant response */
+        #darkOverlay {
+            transition: none;
+        }
+        
+        /* macOS style popup */
+        #lockPopup {
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        #lockPopup.show {
+            display: flex !important;
+            animation: fadeInOut 1.5s ease-in-out;
+        }
+        
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+            20% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            80% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+        }
+        
+        /* Lock button states */
+        #captureLockButton .locked-icon {
+            display: none;
+        }
+        
+        #captureLockButton .unlocked-icon {
+            display: block;
+        }
+        
+        #captureLockButton.locked .locked-icon {
+            display: block;
+        }
+        
+        #captureLockButton.locked .unlocked-icon {
+            display: none;
+        }
+        
+        /* Hide resize handles when locked */
+        .capture-frame.locked .resize-handles {
+            display: none;
+        }
+        
+        /* Drag over canvas effects */
+        #canvas.drag-over {
+            background: rgba(76, 175, 80, 0.05);
+        }
+        
+        /* Panel minimization styles */
+        .floating-panel.minimized {
+            max-height: none !important;
+            height: auto !important; /* Override any inline height when minimized */
+        }
+        
+        .floating-panel.minimized .cursor-move {
+            border-bottom: none;
+        }
+        
+        /* When elementsBody is hidden, ensure panel shrinks to header only */
+        #strokePanel:has(#elementsBody.hidden) {
+            height: auto !important;
+        }
+        
+        #imagePanel:has(#imagePanelContent.hidden) {
+            height: auto !important;
+            min-height: 140px !important; /* Header + name box + some padding */
+        }
+        
+        /* Ensure entire panels load simultaneously - no sequential loading */
+        #imagePanel,
+        #strokePanel {
+            display: flex;
+            flex-direction: column !important;
+        }
+        
+        /* Ensure all panel parts load together (no header-first loading) */
+        #imagePanelHeader,
+        #imagePanel > .px-3.bg-white.border-b.border-slate-200.py-2,
+        #imagePanelContent,
+        #elementsHeader,
+        #elementsBody {
+            visibility: visible;
+            opacity: 1;
+        }
+        
+        /* Disable transitions on initial load to prevent sequential appearance */
+        #imagePanel:not([data-loaded]),
+        #strokePanel:not([data-loaded]) {
+            transition: none !important;
+        }
+        
+        #imagePanelContent:not([data-loaded]),
+        #elementsBody:not([data-loaded]) {
+            transition: none !important;
+        }
+
+        /* Ensure image name header is always visible and not squished */
+        #imagePanel > .px-3.bg-white.border-b.border-slate-200.py-2 {
+            flex-shrink: 0 !important;
+            min-height: 60px !important;
+            position: relative !important;
+            z-index: 10 !important;
+            display: block !important;
+        }
+
+        /* Ensure the image name input is always visible */
+        #currentImageNameBox {
+            display: block !important;
+            width: 100% !important;
+        }
+
+        /* On mobile, allow JavaScript to control visibility */
+        @media (max-width: 768px) {
+            #imagePanel[style*="display: none"] {
+                display: none !important;
+            }
+        }
+
+        /* Ensure content area doesn't affect header visibility */
+        #imagePanelContent {
+            flex: 1 1 auto !important;
+            min-height: 0 !important;
+            overflow: hidden !important;
+        }
+
+        /* Panel toggle icons for mobile */
+        .panel-toggle-icon {
+            position: fixed;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            display: none; /* Hidden by default, shown via JS on mobile */
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            cursor: pointer;
+            z-index: 10100;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            user-select: none;
+            pointer-events: auto;
+            opacity: 0; /* Start hidden to prevent pop-in */
+        }
+        
+        /* Smooth fade-in when shown */
+        .panel-toggle-icon[style*="display: flex"] {
+            opacity: 1;
+            transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .panel-toggle-icon:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .panel-toggle-icon:active {
+            transform: scale(0.95);
+        }
+
+        #strokePanelIcon {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        #imagePanelIcon {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        /* Position when minimized */
+        #strokePanelIcon.minimized {
+            left: 1rem;
+            bottom: 5rem;
+            top: auto;
+        }
+
+        #imagePanelIcon.minimized {
+            right: 1rem;
+            bottom: 5rem;
+            top: auto;
+        }
+        
+        /* Mobile: Position canvasControls above the panel toggle icons */
+        @media (max-width: 768px) {
+            #canvasControls {
+                bottom: calc(5rem + 56px + 1rem) !important; /* Above icons (5rem) + icon height (56px) + spacing (1rem) */
+                left: 50% !important;
+                transform: translateX(-50%) !important;
+            }
+        }
+
+        /* Position when expanded */
+        #strokePanelIcon.expanded {
+            left: 0.5rem;
+            top: 0.5rem;
+            bottom: auto;
+        }
+
+        #imagePanelIcon.expanded {
+            right: 0.5rem;
+            top: 0.5rem;
+            left: auto;
+            bottom: auto;
+        }
+
+        /* Minimal Numeric Pill Strip Styling */
+        #mini-stepper {
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            min-height: 60px;
+        }
+
+        #mini-stepper::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* Navigation container styling - Always visible, independent of panel state */
+        #navigation-container {
+            background: white;
+            box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
+            position: fixed !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            z-index: 5000 !important;
+            width: 100% !important;
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+
+        /* Ensure navigation container stays visible even when imagePanel is minimized */
+        #imagePanel.minimized ~ #navigation-container,
+        #imagePanel:has(#imagePanelContent.hidden) ~ #navigation-container,
+        body:has(#imagePanel.minimized) #navigation-container,
+        body:has(#imagePanel:has(#imagePanelContent.hidden)) #navigation-container {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+
+        /* Ensure the navigation strip is always visible */
+        nav[aria-label="Image quick nav"] {
+            display: block !important;
+            visibility: visible !important;
+        }
+        
+        /* Ensure navigation container is never affected by panel collapse */
+        #navigation-container,
+        #navigation-container * {
+            pointer-events: auto !important;
+        }
+
+        #mini-stepper .step {
+            min-width: 2rem;
+            min-height: 2rem;
+            border: 1px solid transparent;
+            cursor: pointer;
+            position: relative;
+            z-index: 10;
+        }
+
+        #mini-stepper .step:hover {
+            transform: scale(1.05);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            z-index: 20;
+        }
+
+        #mini-stepper .step:focus {
+            outline: 2px solid #3b82f6;
+            outline-offset: 2px;
+            z-index: 20;
+        }
+
+        #mini-stepper .step[aria-current="true"] {
+            transform: scale(1.05);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+            z-index: 20;
+        }
+
+        /* Ensure pills are always clickable */
+        #mini-stepper button {
+            pointer-events: auto !important;
+            user-select: none;
+            cursor: pointer;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+
+        /* Ensure stepper is always visible - independent of panel state */
+        #mini-stepper {
+            display: flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            pointer-events: auto !important;
+        }
+        
+        /* Ensure stepper stays visible when imagePanel is minimized */
+        #imagePanel.minimized ~ #navigation-container #mini-stepper,
+        #imagePanel:has(#imagePanelContent.hidden) ~ #navigation-container #mini-stepper,
+        body:has(#imagePanel.minimized) #mini-stepper,
+        body:has(#imagePanel:has(#imagePanelContent.hidden)) #mini-stepper {
+            display: flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+
+        /* Ensure frame capture container allows scrolling */
+        #frame-capture {
+            scroll-behavior: smooth;
+        }
+
+        /* Section styling for better visual separation */
+        #frame-capture section {
+            scroll-margin-top: 2rem;
+        }
+
+        /* Responsive adjustments for mobile */
+        @media (max-width: 768px) {
+            #mini-stepper .step {
+                min-width: 2.5rem;
+                min-height: 2.5rem;
+                font-size: 0.875rem;
+            }
+
+            #mini-stepper {
+                gap: 0.75rem;
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+        }
+        
+        /* Smooth transitions for all panel content */
+        .floating-panel [id$='Content'],
+        .floating-panel [id$='Controls'],
+        #elementsBody {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+        }
+        
+        .floating-panel [id$='Content'].hidden,
+        .floating-panel [id$='Controls'].hidden,
+        #elementsBody.hidden {
+            max-height: 0 !important;
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+            margin-top: 0 !important;
+            margin-bottom: 0 !important;
+            opacity: 0;
+        }
+        
+        /* Enhanced button hover effects */
+        .floating-panel button[id^='toggle']:hover svg {
+            transform: scale(1.1);
+        }
+        
+        /* Make canvasControls scrollable on all screen sizes */
+        #canvasControls {
+            overflow-x: auto;
+            overflow-y: hidden;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(148, 163, 184, 0.5) transparent;
+        }
+        
+        #canvasControls::-webkit-scrollbar {
+            height: 4px;
+        }
+        
+        #canvasControls::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        #canvasControls::-webkit-scrollbar-thumb {
+            background: rgba(148, 163, 184, 0.5);
+            border-radius: 2px;
+        }
+        
+        #canvasControls::-webkit-scrollbar-thumb:hover {
+            background: rgba(148, 163, 184, 0.7);
+        }
+        
+        /* Allow overflow for canvas controls to show hover menu and enable scrolling */
+        #canvasControlsContent { 
+            overflow-x: auto;
+            overflow-y: hidden;
+            -webkit-overflow-scrolling: touch;
+            flex-wrap: nowrap !important;
+            min-width: max-content;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(148, 163, 184, 0.5) transparent;
+        }
+        
+        #canvasControlsContent::-webkit-scrollbar {
+            height: 4px;
+        }
+        
+        #canvasControlsContent::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        #canvasControlsContent::-webkit-scrollbar-thumb {
+            background: rgba(148, 163, 184, 0.5);
+            border-radius: 2px;
+        }
+        
+        #canvasControlsContent::-webkit-scrollbar-thumb:hover {
+            background: rgba(148, 163, 184, 0.7);
+        }
+        
+        /* Ensure buttons and controls don't shrink */
+        #canvasControlsContent > * {
+            flex-shrink: 0;
+        }
+        
+        /* Note: overflow-x: auto takes precedence for horizontal scrolling */
+        /* Vertical overflow remains visible for dropdown menus */
+        
+        /* STEP 2: CSS variants - Use data-toolbar-mode to control label display */
+        /* 
+         * Toolbar Label Sizing System:
+         * 
+         * This system uses a global data-toolbar-mode attribute on <html> to control
+         * toolbar label display, preventing flicker and pop-in during page load.
+         * 
+         * How it works:
+         * 1. Early script (in <head>) sets data-toolbar-mode='full' or 'compact' based on viewport width
+         * 2. CSS reads this attribute to show/hide .label-long and .label-short spans
+         * 3. JS fallback recalculates after fonts load and on window resize
+         * 4. ResizeObserver is disabled for toolbar containers to prevent flicker loops
+         * 
+         * Benefits:
+         * - No DOM rewrites (only attribute changes)
+         * - CSS handles display immediately (no JS delay)
+         * - Prevents flicker by determining size before toolbar becomes visible
+         * - Works on both desktop and mobile
+         */
+        /* Base state: show long labels, hide short labels */
+        .label-long { 
+            display: inline-block;
+            white-space: nowrap;
+        }
+        .label-short { 
+            display: none;
+            white-space: nowrap;
+        }
+        
+        /* When toolbar mode is 'compact', show short labels instead */
+        [data-toolbar-mode="compact"] .smart-label-scope .label-long,
+        [data-toolbar-mode="compact"] .toolbar-wrap .label-long {
+            display: none !important;
+        }
+        [data-toolbar-mode="compact"] .smart-label-scope .label-short,
+        [data-toolbar-mode="compact"] .toolbar-wrap .label-short {
+            display: inline-block !important;
+        }
+        
+        /* When toolbar mode is 'full', ensure full labels show (override any compact classes) */
+        [data-toolbar-mode="full"] .smart-label-scope .label-long,
+        [data-toolbar-mode="full"] .toolbar-wrap .label-long,
+        [data-toolbar-mode="full"] .smart-label-scope.compact .label-long,
+        [data-toolbar-mode="full"] .toolbar-wrap.compact .label-long {
+            display: inline-block !important;
+        }
+        [data-toolbar-mode="full"] .smart-label-scope .label-short,
+        [data-toolbar-mode="full"] .toolbar-wrap .label-short,
+        [data-toolbar-mode="full"] .smart-label-scope.compact .label-short,
+        [data-toolbar-mode="full"] .toolbar-wrap.compact .label-short {
+            display: none !important;
+        }
+        
+        /* Legacy support: Keep old compact class behavior for non-toolbar elements */
+        .smart-label-scope.compact:not(.toolbar-wrap):not([id^="tb"]) .label-long { 
+            display: none; 
+        }
+        .smart-label-scope.compact:not(.toolbar-wrap):not([id^="tb"]) .label-short { 
+            display: inline-block; 
+        }
+        
+        /* Button width reservations to prevent layout shift */
+        #paste {
+            min-width: 60px; /* "Upload" short label width */
+            max-width: 140px; /* "Upload Images" long label width */
+        }
+        #saveProjectTop {
+            min-width: 50px; /* "Save" short label width */
+            max-width: 120px; /* "Save Project" long label width */
+        }
+        #loadProject {
+            min-width: 50px; /* "Load" short label width */
+            max-width: 120px; /* "Load Project" long label width */
+        }
+        #exportAISVG {
+            min-width: 70px; /* "AI SVG" short label width */
+            max-width: 130px; /* "AI SVG Export" long label width */
+        }
+        #drawingModeToggle {
+            min-width: 70px; /* "Straight" short label width */
+            max-width: 120px; /* "Straight Line" long label width */
+        }
+        #textModeToggle {
+            min-width: 40px; /* "Text" short label width */
+            max-width: 60px; /* "Text" long label width */
+        }
+        #projectName {
+            min-width: 100px;
+            max-width: 200px;
+        }
+        
+        /* Text mode active state */
+        .text-mode-active {
+            background: #3b82f6 !important;
+            color: white !important;
+            border-color: #2563eb !important;
+        }
+        
+        /* Active state for minimized panels */
+        .floating-panel.minimized {
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Enhanced arrow button styling */
+        #startArrow.active, #endArrow.active,
+        #arrowStartBtn.active, #arrowEndBtn.active {
+            background: linear-gradient(135deg, #3b82f6, #2563eb) !important;
+            color: white !important;
+            transform: scale(1.05) !important;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4) !important;
+            border: 2px solid #1d4ed8 !important;
+            font-weight: 600 !important;
+        }
+
+        #startArrow.active:hover, #endArrow.active:hover,
+        #arrowStartBtn.active:hover, #arrowEndBtn.active:hover {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
+            transform: scale(1.08) !important;
+            box-shadow: 0 6px 16px rgba(59, 130, 246, 0.5) !important;
+        }
+
+        /* Arrow button transitions */
+        #startArrow, #endArrow, #arrowStartBtn, #arrowEndBtn {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        }
+        
+        .floating-panel:not(.minimized) {
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Ensure proper dragging behavior */
+        .floating-panel.dragging {
+            z-index: 9999 !important;
+            transform: none !important;
+            transition: none !important;
+        }
+
+        /* Keep Elements header always visible; body uses remaining space */
+        #strokePanel {
+            display: flex;
+            flex-direction: column;
+            /* Let the panel grow to near full viewport height while preserving drag behavior */
+            max-height: calc(100vh - 24px) !important;
+        }
+        #elementsHeader {
+            flex: 0 0 auto;
+        }
+        #elementsBody {
+            flex: 1 1 auto;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        /* removed elementsResizeHandle */
+        #elementsControls {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: white;
+        }
+        #strokeVisibilityControls {
+            flex: 1 1 auto;
+            min-height: 0; /* allows flex child to shrink for scrolling in Firefox */
+            overflow-y: auto !important;
+            /* Remove transition that causes flickering */
+            transition: none !important;
+        }
+        
+        /* Header dragging styles */
+        .cursor-move:active {
+            cursor: grabbing !important;
+        }
+        
+        /* Fix stroke visibility item layout */
+        .stroke-visibility-item {
+            display: flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            padding: 8px !important;
+            margin-bottom: 4px !important;
+            background: white !important;
+            border-radius: 6px !important;
+            border: 1px solid #e5e7eb !important;
+            transition: all 0.2s ease !important;
+        }
+
+        /* Ensure the strokes list flows vertically and doesn't overlap */
+        #strokesList { display: flex; flex-direction: column; gap: 6px; }
+        .stroke-actions-panel { display: block; margin: 6px 0; }
+        .stroke-actions-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
+
+        /* Make the strokes area adjustable but constrained so new items never overlap headers */
+        #strokeVisibilityControls {
+            min-height: 60px;
+            max-height: min(60vh, 24rem) !important; /* cap to viewport or panel max-h-96 */
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            box-sizing: border-box;
+            position: relative;
+        }
+        #strokeVisibilityControls hr { margin: 6px 0; }
+        
+        .stroke-visibility-item:hover {
+            background-color: #f9fafb !important;
+            border-color: #d1d5db !important;
+        }
+        
+        .stroke-label-container {
+            display: flex !important;
+            align-items: center !important;
+            gap: 6px !important;
+            flex: 1 !important;
+        }
+        
+        .stroke-name {
+            font-weight: 600 !important;
+            font-size: 14px !important;
+            padding: 2px 6px !important;
+            border-radius: 4px !important;
+            border: 1px solid currentColor !important;
+            min-width: auto !important;
+        }
+        
+        .stroke-label-toggle-btn {
+            background: none !important;
+            border: none !important;
+            cursor: pointer !important;
+            font-size: 16px !important;
+            line-height: 1 !important;
+            padding: 2px !important;
+            opacity: 0.8 !important;
+        }
+        
+        .stroke-label-toggle-btn:hover {
+            opacity: 1 !important;
+        }
+        
+        .stroke-measurement {
+            font-size: 13px !important;
+            color: #6b7280 !important;
+            font-weight: 500 !important;
+        }
+        
+        .stroke-delete-btn {
+            background: none !important;
+            border: none !important;
+            color: #ef4444 !important;
+            cursor: pointer !important;
+            font-size: 16px !important;
+            font-weight: bold !important;
+            padding: 2px 6px !important;
+            border-radius: 4px !important;
+            opacity: 0.7 !important;
+            transition: all 0.2s ease !important;
+        }
+        
+        .stroke-delete-btn:hover {
+            opacity: 1 !important;
+            background-color: #fef2f2 !important;
+        }
+        
+        /* Force scrollbars to always show when content overflows */
+        #strokeVisibilityControls {
+            scroll-behavior: smooth;
+            overflow-y: scroll !important;
+            scrollbar-width: auto !important;
+            scrollbar-color: #9ca3af #f3f4f6 !important;
+        }
+        
+        /* Ensure outer image panel content never scrolls; inner #imageList handles scrolling */
+        #imagePanelContent { 
+            overflow: hidden !important; 
+        }
+        
+        #strokeVisibilityControls::-webkit-scrollbar {
+            width: 8px !important;
+            display: block !important;
+        }
+        
+        #strokeVisibilityControls::-webkit-scrollbar-track {
+            background: #f3f4f6 !important;
+            border-radius: 4px !important;
+        }
+        
+        #strokeVisibilityControls::-webkit-scrollbar-thumb {
+            background: #9ca3af !important;
+            border-radius: 4px !important;
+            border: 1px solid #f3f4f6 !important;
+        }
+        
+        #strokeVisibilityControls::-webkit-scrollbar-thumb:hover {
+            background: #6b7280 !important;
+        }
+        
+        /* Keep focus treatment tidy */
+        #brushSize:focus-visible {
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(59,130,246,0.15);
+        }
+        
+        /* Modern input styling */
+        input[type="text"], input[type="number"], select {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        input[type="text"]:focus, input[type="number"]:focus, select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px #3b82f6, 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        /* Enhanced color picker active state */
+        [data-color].active {
+            border-color: #1f2937 !important;
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 1), 0 0 0 6px #1f2937 !important;
+            transform: scale(1.15);
+        }
+
+        /* Image Gallery Styling */
+        #imageGallery {
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e1 #f1f5f9;
+        }
+        
+        #imageGallery::-webkit-scrollbar {
+            height: 6px;
+        }
+        
+        #imageGallery::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 3px;
+        }
+        
+        #imageGallery::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        
+        #imageGallery::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        
+        /* Image thumbnail styling */
+        .image-thumbnail {
+            flex-shrink: 0;
+            width: 120px;
+            height: 120px;
+            border-radius: 12px;
+            border: 2px solid transparent;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            scroll-snap-align: center;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .image-thumbnail:hover {
+            border-color: #cbd5e1;
+            transform: scale(1.05);
+            box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .image-thumbnail.active {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2), 0 10px 25px -3px rgba(0, 0, 0, 0.15);
+            transform: scale(1.05);
+        }
+        
+        .image-thumbnail.dragging {
+            opacity: 0.5;
+            transform: rotate(5deg);
+            z-index: 1000;
+        }
+        
+        .image-thumbnail.drag-over {
+            border-color: #10b981;
+            box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.5);
+            transform: translateY(-1px) scale(1.05);
+        }
+        
+        .image-thumbnail .image-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
+            color: white;
+            padding: 8px;
+            font-size: 11px;
+            font-weight: 500;
+            text-align: center;
+            border-radius: 0 0 10px 10px;
+        }
+        
+        .thumbnail-controls {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            display: none;
+            flex-direction: column;
+            gap: 2px;
+        }
+        
+        .delete-control {
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            display: none;
+        }
+        
+        .image-thumbnail:hover .thumbnail-controls,
+        .image-thumbnail:hover .delete-control {
+            display: flex;
+        }
+        
+        .control-btn {
+            width: 24px;
+            height: 24px;
+            border: none;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.9);
+            color: #374151;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .control-btn:hover {
+            background: white;
+            transform: scale(1.1);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+        
+        .delete-btn {
+            background: #dc2626 !important;
+            color: white !important;
+            font-weight: bold;
+        }
+        
+        .delete-btn:hover {
+            background: #b91c1c !important;
+            transform: scale(1.1);
+        }
+        
+        .rotate-btn:hover {
+            background: #dbeafe;
+            color: #2563eb;
+        }
+        
+        .flip-btn:hover {
+            background: #d1fae5;
+            color: #059669;
+        }
+        
+        /* Navigation dots styling */
+        .nav-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #cbd5e1;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        
+        .nav-dot:hover {
+            background: #94a3b8;
+            transform: scale(1.2);
+        }
+        
+        .nav-dot.active {
+            background: #3b82f6;
+            transform: scale(1.3);
+        }
+
+        /* Modernize panel chrome and add optional sketchbook vibe */
+        .floating-panel {
+            border: 1px solid rgba(15, 23, 42, 0.06);
+            box-shadow: 0 12px 28px rgba(2, 6, 23, 0.08);
+        }
+        .floating-panel .cursor-move {
+            border-bottom: 1px solid rgba(15, 23, 42, 0.06) !important;
+        }
+        /* Tone down button effects for a cleaner feel */
+        .floating-panel button {
+            box-shadow: 0 1px 2px rgba(2,6,23,0.06) !important;
+            transform: none !important;
+        }
+        .floating-panel button:hover {
+            transform: translateY(-1px) !important;
+        }
+        /* Minimal divider */
+        .panel-divider { border-top: 1px solid rgba(15,23,42,0.08); }
+
+        /* Top toolbar styles - now handled by comprehensive CSS above */
+        .tbtn.active { border-color: rgba(59,130,246,.9); background: #eff6ff; color: #1e40af; }
+        .tbtn:hover, .tselect:hover, .tinput:hover {
+            border-color: rgba(59,130,246,.8);
+            box-shadow: 0 2px 4px rgba(59,130,246,.1);
+        }
+        .popover {
+            position: absolute;
+            top: 40px;
+            left: 0;
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            box-shadow: 0 8px 24px rgba(2,6,23,.12);
+            padding: 12px;
+            display: none;
+            z-index: 60;
+            min-width: 120px;
+        }
+        .popover.show {
+            display: block;
+        }
