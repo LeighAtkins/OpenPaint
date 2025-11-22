@@ -1,5 +1,6 @@
 // Arrow Tool
 import { BaseTool } from './BaseTool.js';
+import { FabricControls } from '../utils/FabricControls.js';
 
 export class ArrowTool extends BaseTool {
     constructor(canvasManager) {
@@ -172,6 +173,10 @@ export class ArrowTool extends BaseTool {
         
         this.canvas.remove(this.line, this.head);
         this.canvas.add(group);
+        
+        // Add custom controls
+        FabricControls.createArrowControls(group);
+        
         group.setCoords();
         
         // Re-enable selection for the canvas

@@ -5,8 +5,11 @@ import { ProjectManager } from './ProjectManager.js';
 import { HistoryManager } from './HistoryManager.js';
 import { StrokeMetadataManager } from './StrokeMetadataManager.js';
 import { setupDebugHelpers } from './DebugHelpers.js';
-import { TagManager } from './TagManager.js';
+import { TagManager } from './TagManager.js?v=cachebust15';
 import { UploadManager } from './UploadManager.js';
+import { MeasurementSystem } from './MeasurementSystem.js';
+import { MeasurementDialog } from './MeasurementDialog.js';
+import { MeasurementExporter } from './MeasurementExporter.js';
 
 class App {
     constructor() {
@@ -17,6 +20,11 @@ class App {
         this.tagManager = new TagManager(this.canvasManager, this.metadataManager);
         this.projectManager = new ProjectManager(this.canvasManager, this.historyManager);
         this.uploadManager = new UploadManager(this.projectManager);
+
+        // Measurement system
+        this.measurementSystem = new MeasurementSystem(this.metadataManager);
+        this.measurementDialog = new MeasurementDialog(this.measurementSystem);
+        this.measurementExporter = new MeasurementExporter(this.measurementSystem, this.projectManager);
 
         this.init();
     }
@@ -208,8 +216,8 @@ class App {
                     'medium': [10, 5],
                     'large': [15, 5],
                     'dot-dash': [5, 5, 1, 5],
-                    'dotted': [2, 5], // Dotted line option
-                    'custom': [5, 5] // Default custom pattern
+                    'dotted': [2, 5],
+                    'custom': [5, 5]
                 };
                 
                 const pattern = patterns[style] || [];
@@ -232,9 +240,8 @@ class App {
             });
         }
         
-        // Image fit mode control (affects background image, not capture frame)
+        // Image fit mode control
         const fitModeSelect = document.getElementById('fitModeSelect');
-        
         if (fitModeSelect) {
             fitModeSelect.addEventListener('change', () => {
                 const fitMode = fitModeSelect.value;
@@ -249,19 +256,102 @@ class App {
         // Create help hint
         this.createHelpHint();
         
-            // Make metadata manager available globally for compatibility
-            window.metadataManager = this.metadataManager;
-            window.vectorStrokesByImage = this.metadataManager.vectorStrokesByImage;
-            window.strokeVisibilityByImage = this.metadataManager.strokeVisibilityByImage;
-            window.strokeLabelVisibility = this.metadataManager.strokeLabelVisibility;
-            window.strokeMeasurements = this.metadataManager.strokeMeasurements;
+        // Setup unit toggle buttons
+        this.setupUnitToggle();
+        
+        // Make metadata manager available globally for compatibility
+        window.metadataManager = this.metadataManager;
+        window.vectorStrokesByImage = this.metadataManager.vectorStrokesByImage;
+        window.strokeVisibilityByImage = this.metadataManager.strokeVisibilityByImage;
+        window.strokeLabelVisibility = this.metadataManager.strokeLabelVisibility;
+        window.strokeMeasurements = this.metadataManager.strokeMeasurements;
+        
+        // Make project manager available globally for image switching
+        window.projectManager = this.projectManager;
+        window.app = this;
+        
+        // Setup debug helpers
+        setupDebugHelpers(this);
+    }
+    
+    setupUnitToggle() {
+        const unitToggle = document.getElementById('unitToggleBtn');
+        const unitToggleSecondary = document.getElementById('unitToggleBtnSecondary');
+        const unitSelector = document.getElementById('unitSelector');
+        
+        // Initialize currentUnit state
+        this.currentUnit = 'inch';
+        
+        // Sync initial state
+        if (unitSelector) {
+            // Force reset to inch to avoid browser form restoration issues
+            unitSelector.value = 'inch';
             
-            // Make project manager available globally for image switching
-            window.projectManager = this.projectManager;
-            window.app = this; // Make app available globally
+            const unitLabel = 'inches';
+            if (unitToggle) unitToggle.textContent = unitLabel;
+            if (unitToggleSecondary) unitToggleSecondary.textContent = unitLabel;
+        }
+        
+        const toggleUnits = () => {
+            // Toggle between inch and cm using our state
+            this.currentUnit = this.currentUnit === 'inch' ? 'cm' : 'inch';
             
-            // Setup debug helpers
-            setupDebugHelpers(this);
+            // Sync selector if it exists
+            if (unitSelector) {
+                unitSelector.value = this.currentUnit;
+            }
+            
+            // Update button labels
+            const unitLabel = this.currentUnit === 'inch' ? 'inches' : 'cm';
+            if (unitToggle) unitToggle.textContent = unitLabel;
+            if (unitToggleSecondary) unitToggleSecondary.textContent = unitLabel;
+            
+            // Refresh all measurement displays
+            if (this.metadataManager) {
+                this.metadataManager.refreshAllMeasurements();
+            }
+        };
+        
+        if (unitToggle) {
+            unitToggle.addEventListener('click', toggleUnits);
+        }
+        
+        if (unitToggleSecondary) {
+            unitToggleSecondary.addEventListener('click', toggleUnits);
+        }
+        
+        // Also listen for direct changes to unit selector
+        if (unitSelector) {
+            unitSelector.addEventListener('change', () => {
+                this.currentUnit = unitSelector.value;
+                const unitLabel = this.currentUnit === 'inch' ? 'inches' : 'cm';
+                if (unitToggle) unitToggle.textContent = unitLabel;
+                if (unitToggleSecondary) unitToggleSecondary.textContent = unitLabel;
+                
+                if (this.metadataManager) {
+                    this.metadataManager.refreshAllMeasurements();
+                }
+            });
+        }
+        
+        // Setup Show Measurements toggle
+        const showMeasurementsCheckbox = document.getElementById('toggleShowMeasurements');
+        if (showMeasurementsCheckbox) {
+            showMeasurementsCheckbox.addEventListener('change', (e) => {
+                const showMeasurements = e.target.checked;
+                console.log(`[ShowMeasurements] Toggle: ${showMeasurements}`);
+                
+                // Update all tags to show/hide measurements
+                if (this.tagManager) {
+                    this.tagManager.setShowMeasurements(showMeasurements);
+                }
+            });
+            
+            // Set initial state
+            if (this.tagManager) {
+                this.tagManager.setShowMeasurements(showMeasurementsCheckbox.checked);
+            }
+        }
     }
     
     setupKeyboardShortcuts() {

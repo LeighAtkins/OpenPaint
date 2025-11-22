@@ -1,5 +1,7 @@
 // Curve Tool (Point-based curved line)
 import { BaseTool } from './BaseTool.js';
+import { PathUtils } from '../utils/PathUtils.js';
+import { FabricControls } from '../utils/FabricControls.js';
 
 export class CurveTool extends BaseTool {
     constructor(canvasManager) {
@@ -135,7 +137,7 @@ export class CurveTool extends BaseTool {
 
         // Create path string for smooth curve through points
         const allPoints = tempPoint ? [...this.points, tempPoint] : this.points;
-        const pathString = this.createSmoothPath(allPoints);
+        const pathString = PathUtils.createSmoothPath(allPoints);
 
         // Create preview path
         this.previewPath = new fabric.Path(pathString, {
@@ -152,41 +154,6 @@ export class CurveTool extends BaseTool {
 
         this.canvas.add(this.previewPath);
         this.canvas.renderAll();
-    }
-
-    createSmoothPath(points) {
-        if (points.length < 2) return '';
-
-        // Start path
-        let path = `M ${points[0].x} ${points[0].y}`;
-
-        if (points.length === 2) {
-            // Simple line for 2 points
-            path += ` L ${points[1].x} ${points[1].y}`;
-        } else {
-            // Create smooth bezier curves through points
-            for (let i = 1; i < points.length; i++) {
-                const prev = points[i - 1];
-                const curr = points[i];
-                const next = points[i + 1] || curr;
-
-                // Calculate control points for smooth curve
-                const dx1 = (curr.x - prev.x) * 0.3;
-                const dy1 = (curr.y - prev.y) * 0.3;
-                const dx2 = (next.x - curr.x) * 0.3;
-                const dy2 = (next.y - curr.y) * 0.3;
-
-                const cp1x = prev.x + dx1;
-                const cp1y = prev.y + dy1;
-                const cp2x = curr.x - dx2;
-                const cp2y = curr.y - dy2;
-
-                // Use cubic bezier curve
-                path += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${curr.x} ${curr.y}`;
-            }
-        }
-
-        return path;
     }
 
     completeCurve() {
@@ -221,7 +188,7 @@ export class CurveTool extends BaseTool {
         this.pointMarkers = [];
 
         // Create final curve path
-        const pathString = this.createSmoothPath(this.points);
+        const pathString = PathUtils.createSmoothPath(this.points);
         const curve = new fabric.Path(pathString, {
             stroke: this.strokeColor,
             strokeWidth: this.strokeWidth,
@@ -232,6 +199,13 @@ export class CurveTool extends BaseTool {
         });
 
         this.canvas.add(curve);
+        
+        // Store original points for editing
+        curve.customPoints = [...this.points];
+        
+        // Add custom controls
+        FabricControls.createCurveControls(curve);
+        
         curve.setCoords();
 
         // Attach metadata (label) to the curve

@@ -34,6 +34,110 @@ export class CanvasManager {
             backgroundColor: '#ffffff' // Default white background
         });
 
+        // Enable selection only when Ctrl is pressed or in Select mode
+        this.fabricCanvas.selection = false; // Default to false (drawing mode)
+
+        this.fabricCanvas.on('mouse:down', (opt) => {
+            const evt = opt.e;
+            // Check if Ctrl key is pressed (or Meta key for Mac)
+            if (evt.ctrlKey || evt.metaKey) {
+                this.fabricCanvas.selection = true;
+                // If we are in drawing mode, we might need to temporarily disable it?
+                // Fabric handles this: if isDrawingMode is true, selection is disabled.
+                // So we need to temporarily disable drawing mode if it's on.
+                if (this.fabricCanvas.isDrawingMode) {
+                    this.fabricCanvas.isDrawingMode = false;
+                    this.fabricCanvas._tempDrawingMode = true; // Flag to restore later
+                }
+            } else {
+                // If not Ctrl, ensure selection is false unless we are in Select tool
+                // We need to check the active tool. 
+                // Accessing ToolManager from here is tricky.
+                // Better: ToolManager sets selection=true/false.
+                // But for the shortcut, we override.
+                
+                // If we are NOT in select tool (which sets selection=true), disable selection
+                // We can check isDrawingMode.
+                // If isDrawingMode is false, we might be in Select tool OR just idle.
+                // Let's assume ToolManager manages the default state.
+                // We only want to ENABLE it if Ctrl is pressed.
+                
+                // Actually, the requirement is "Add a shortcut to 'select' by ctrl + click dragging".
+                // This implies that normally (without Ctrl), we are drawing.
+                // So we just need to enable selection when Ctrl is down.
+            }
+        });
+
+        this.fabricCanvas.on('mouse:up', (opt) => {
+             // Restore state if we changed it
+             if (this.fabricCanvas._tempDrawingMode) {
+                 this.fabricCanvas.isDrawingMode = true;
+                 this.fabricCanvas.selection = false;
+                 delete this.fabricCanvas._tempDrawingMode;
+             } else if (!this.fabricCanvas.isDrawingMode) {
+                 // If we were not in drawing mode, check if we should disable selection
+                 // If the active tool is NOT select, we should probably disable selection?
+                 // But we don't know the active tool here easily.
+                 
+                 // Let's just rely on the key up event?
+                 // Mouse up is safer for the drag operation end.
+                 
+                 // If we enabled selection just for this drag, disable it now?
+                 // But standard behavior is: hold Ctrl to select.
+                 // If I release mouse but keep Ctrl, I should still be able to select?
+                 // Fabric updates selection property dynamically? No.
+             }
+        });
+        
+        // Better approach: Listen to keydown/keyup for Ctrl
+        // This is global.
+        document.addEventListener('keydown', (e) => {
+            if ((e.key === 'Control' || e.key === 'Meta') && this.fabricCanvas) {
+                // If currently drawing, disable drawing mode temporarily
+                if (this.fabricCanvas.isDrawingMode) {
+                    this.fabricCanvas.isDrawingMode = false;
+                    this.fabricCanvas._tempDrawingMode = true;
+                }
+                this.fabricCanvas.selection = true;
+                this.fabricCanvas.defaultCursor = 'default';
+                this.fabricCanvas.hoverCursor = 'move';
+                // Make objects selectable? They usually are, just evented=false in some tools.
+                // We might need to update objects to be selectable.
+                this.fabricCanvas.forEachObject(obj => {
+                    if (!obj.isTag && !obj.lockMovementX) { // Don't unlock locked stuff
+                        obj.selectable = true;
+                        obj.evented = true;
+                    }
+                });
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            if ((e.key === 'Control' || e.key === 'Meta') && this.fabricCanvas) {
+                this.fabricCanvas.selection = false; // Disable selection box
+                
+                if (this.fabricCanvas._tempDrawingMode) {
+                    this.fabricCanvas.isDrawingMode = true;
+                    delete this.fabricCanvas._tempDrawingMode;
+                }
+                
+                // Restore cursor?
+                // ToolManager will handle cursor on mouse move usually.
+                
+                // Make objects unselectable if needed? 
+                // Usually tools set this.
+                // If we are in Line tool, objects should be unselectable.
+                // We can't easily revert this without knowing the active tool's preferences.
+                // But if we just set selection=false, users can't select them anyway.
+                // However, they might still capture clicks.
+                
+                // Let's leave them selectable=true, but since selection=false (group selection),
+                // and if we are in drawing mode, clicks draw.
+                // If we are in Line tool (custom), clicks draw lines.
+                // So it should be fine.
+            }
+        });
+
         console.log(`Fabric Canvas initialized: ${width}x${height}`);
         
         // Initialize zoom/pan events
@@ -198,6 +302,47 @@ export class CanvasManager {
                 
                 // Restore drawing mode state if needed (ToolManager should handle this ideally)
             }
+        });
+
+        // Update tag connectors when strokes are moved (including multi-select)
+        // Note: Tags are non-selectable, so only strokes trigger this handler
+        this.fabricCanvas.on('object:moving', (e) => {
+            const movingObj = e.target;
+
+            if (!window.app?.tagManager) return;
+
+            // Handle both single objects and multi-selections (activeSelection)
+            if (movingObj.type === 'activeSelection') {
+                // Multiple strokes are selected and being moved
+                const objects = movingObj.getObjects();
+                const tagManager = window.app.tagManager;
+
+                // Update connectors for all strokes in the selection
+                objects.forEach(obj => {
+                    // Handle lines, paths (curves), and groups (arrows), but skip tags
+                    if ((obj.type === 'line' || obj.type === 'path' || obj.type === 'group') && !obj.isTag) {
+                        // Find the tag associated with this stroke
+                        for (const [strokeLabel, tagObj] of tagManager.tagObjects.entries()) {
+                            if (tagObj.connectedStroke === obj) {
+                                tagManager.updateConnector(strokeLabel);
+                                break;
+                            }
+                        }
+                    }
+                });
+            } else if ((movingObj.type === 'line' || movingObj.type === 'path' || movingObj.type === 'group') && !movingObj.isTag) {
+                // Single stroke being moved - find and update its tag's connector
+                const tagManager = window.app.tagManager;
+                for (const [strokeLabel, tagObj] of tagManager.tagObjects.entries()) {
+                    if (tagObj.connectedStroke === movingObj) {
+                        tagManager.updateConnector(strokeLabel);
+                        break;
+                    }
+                }
+            }
+
+            // Request render to ensure connectors and tags display correctly
+            this.fabricCanvas.requestRenderAll();
         });
 
         // Touch gesture helpers

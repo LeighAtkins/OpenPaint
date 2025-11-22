@@ -67,9 +67,11 @@ export class ProjectManager {
                     window.app.metadataManager.vectorStrokesByImage[viewId] = view.metadata.vectorStrokesByImage || {};
                     window.app.metadataManager.strokeVisibilityByImage[viewId] = view.metadata.strokeVisibilityByImage || {};
                     window.app.metadataManager.strokeLabelVisibility[viewId] = view.metadata.strokeLabelVisibility || {};
-                    window.app.metadataManager.strokeMeasurements[viewId] = view.metadata.strokeMeasurements || {};
+
+                    // Deserialize measurements with validation
+                    this.deserializeMeasurements(viewId, view.metadata.strokeMeasurements || {});
                 }
-                
+
                 // After loading, update history initial state
                 this.historyManager.saveState();
             });
@@ -86,14 +88,49 @@ export class ProjectManager {
         const json = this.canvasManager.toJSON();
         if (this.views[this.currentViewId]) {
             this.views[this.currentViewId].canvasData = json;
-            
+
             // Also save metadata for this view
             if (window.app?.metadataManager) {
                 this.views[this.currentViewId].metadata = {
                     vectorStrokesByImage: JSON.parse(JSON.stringify(window.app.metadataManager.vectorStrokesByImage[this.currentViewId] || {})),
                     strokeVisibilityByImage: JSON.parse(JSON.stringify(window.app.metadataManager.strokeVisibilityByImage[this.currentViewId] || {})),
                     strokeLabelVisibility: JSON.parse(JSON.stringify(window.app.metadataManager.strokeLabelVisibility[this.currentViewId] || {})),
-                    strokeMeasurements: JSON.parse(JSON.stringify(window.app.metadataManager.strokeMeasurements[this.currentViewId] || {}))
+                    strokeMeasurements: this.serializeMeasurements(this.currentViewId)
+                };
+            }
+        }
+    }
+
+    // Serialize measurements for a view (deep copy)
+    serializeMeasurements(viewId) {
+        if (!window.app?.metadataManager?.strokeMeasurements) {
+            return {};
+        }
+
+        const measurements = window.app.metadataManager.strokeMeasurements[viewId] || {};
+        return JSON.parse(JSON.stringify(measurements));
+    }
+
+    // Deserialize measurements for a view
+    deserializeMeasurements(viewId, measurements) {
+        if (!window.app?.metadataManager) {
+            return;
+        }
+
+        if (!measurements || typeof measurements !== 'object') {
+            return;
+        }
+
+        // Validate and restore each measurement
+        window.app.metadataManager.strokeMeasurements[viewId] = {};
+
+        for (const [strokeLabel, measurement] of Object.entries(measurements)) {
+            // Ensure proper structure
+            if (measurement && typeof measurement === 'object') {
+                window.app.metadataManager.strokeMeasurements[viewId][strokeLabel] = {
+                    inchWhole: typeof measurement.inchWhole === 'number' ? measurement.inchWhole : 0,
+                    inchFraction: typeof measurement.inchFraction === 'number' ? measurement.inchFraction : 0,
+                    cm: typeof measurement.cm === 'number' ? measurement.cm : 0
                 };
             }
         }

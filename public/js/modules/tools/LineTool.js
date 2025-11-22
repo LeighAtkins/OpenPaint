@@ -1,5 +1,6 @@
 // Line Tool
 import { BaseTool } from './BaseTool.js';
+import { FabricControls } from '../utils/FabricControls.js';
 
 export class LineTool extends BaseTool {
     constructor(canvasManager) {
@@ -135,6 +136,9 @@ export class LineTool extends BaseTool {
             selectable: true,
             evented: true
         });
+        
+        // Add custom controls
+        FabricControls.createLineControls(this.line);
         
         this.line.setCoords();
         

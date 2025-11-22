@@ -10,6 +10,7 @@ export class TagManager {
         this.tagSize = 20; // Default tag font size
         this.tagShape = 'square'; // 'square' or 'circle'
         this.tagMode = 'letters+numbers'; // 'letters' or 'letters+numbers'
+        this.showMeasurements = true; // Show measurements by default
         
         // Initialize tag prediction system integration
         this.initTagPrediction();
@@ -150,6 +151,7 @@ export class TagManager {
                 textAlign: 'center',
                 originX: 'center',
                 originY: 'center',
+                textBaseline: 'middle',
                 selectable: false, // Will be controlled by group
                 evented: true, // Allow editing
                 hasControls: false, // Controlled by group
@@ -219,7 +221,7 @@ export class TagManager {
                 originX: 'center',
                 originY: 'center',
                 selectable: false,
-                evented: false
+                evented: true
             });
         } else {
             // Square/rectangle
@@ -234,7 +236,7 @@ export class TagManager {
                 originX: 'center',
                 originY: 'center',
                 selectable: false,
-                evented: false
+                evented: true
             });
         }
         
@@ -247,45 +249,35 @@ export class TagManager {
             originY: 'center',
             selectable: true,
             evented: true,
-            hasControls: true,
-            hasBorders: true,
+            hasControls: false,
+            hasBorders: false,
             lockRotation: true,
+            hoverCursor: 'move',
             // Custom properties
             isTag: true,
             strokeLabel: strokeLabel,
             imageLabel: imageLabel,
-            connectedStroke: strokeObject
+            connectedStroke: strokeObject,
+            tagOffset: { x: 20, y: -10 } // Default offset
         });
         
         // Update connector line when tag moves
         tagGroup.on('moving', () => {
+            // Update offset based on new position
+            const strokeBounds = strokeObject.getBoundingRect(true);
+            const strokeCenter = {
+                x: strokeBounds.left + strokeBounds.width / 2,
+                y: strokeBounds.top + strokeBounds.height / 2
+            };
+            
+            tagGroup.tagOffset = {
+                x: tagGroup.left - strokeCenter.x,
+                y: tagGroup.top - strokeCenter.y
+            };
+            
             this.updateConnector(strokeLabel);
         });
         
-        // Update connector line when tag is modified/resized
-        tagGroup.on('modified', () => {
-            this.updateConnector(strokeLabel);
-            // Update background size when text changes
-            const textObj = tagGroup.getObjects().find(obj => obj.isTagText);
-            if (textObj) {
-                const bgObj = tagGroup.getObjects().find(obj => !obj.isTagText);
-                if (bgObj) {
-                    const padding = 4;
-                    const textWidth = textObj.width || 30;
-                    const textHeight = textObj.height || this.tagSize;
-                    if (this.tagShape === 'circle') {
-                        const radius = Math.max(textWidth, textHeight) / 2 + padding;
-                        bgObj.set('radius', radius);
-                    } else {
-                        bgObj.set({
-                            width: textWidth + padding * 2,
-                            height: textHeight + padding * 2
-                        });
-                    }
-                    tagGroup.setCoords();
-                }
-            }
-        });
         
         // Update connector when connected stroke moves
         if (strokeObject) {
@@ -303,8 +295,48 @@ export class TagManager {
             });
         }
         
+        // Click on tag to focus measurement input in sidebar
+        // Use both fabric mouse:down and native mousedown for better compatibility
+        tagGroup.on('mouse:down', (e) => {
+            // Only if not already editing the text
+            if (!tagText.isEditing) {
+                // Focus the measurement input for this stroke
+                if (this.metadataManager && this.metadataManager.focusMeasurementInput) {
+                    this.metadataManager.focusMeasurementInput(strokeLabel);
+                } else {
+                    console.warn('[TagManager] metadataManager or focusMeasurementInput not available');
+                }
+            }
+        });
+        
+        // Also try selection event
+        tagGroup.on('selected', () => {
+            if (!tagText.isEditing && this.metadataManager && this.metadataManager.focusMeasurementInput) {
+                this.metadataManager.focusMeasurementInput(strokeLabel);
+            }
+        });
+        
         canvas.add(tagGroup);
         this.tagObjects.set(strokeLabel, tagGroup);
+        
+        // Register global click handler for tags (fallback if object events don't fire)
+        // This ensures clicks work even when drawing tools are active
+        if (!this._globalTagClickHandlerRegistered) {
+            canvas.on('mouse:down', (options) => {
+                const target = options.target;
+                if (target && target.isTag) {
+                    const strokeLabel = target.strokeLabel;
+                    const textObj = target.getObjects().find(obj => obj.isTagText);
+                    // Only focus if not editing the text inline
+                    if (textObj && !textObj.isEditing) {
+                        if (this.metadataManager?.focusMeasurementInput) {
+                            this.metadataManager.focusMeasurementInput(strokeLabel);
+                        }
+                    }
+                }
+            });
+            this._globalTagClickHandlerRegistered = true;
+        }
         
         // Create connector line
         this.updateConnector(strokeLabel);
@@ -325,7 +357,7 @@ export class TagManager {
                 return this.getClosestPointOnGroupLine(strokeObj, lineObj, targetPoint);
             }
         } else if (strokeObj.type === 'path') {
-            // For paths (curves, freehand), approximate with bounding box edges
+            // For paths (curves, freehand), use actual path points
             return this.getClosestPointOnPath(strokeObj, targetPoint);
         }
         
@@ -339,44 +371,90 @@ export class TagManager {
     
     // Find closest point on a line to target point
     getClosestPointOnLine(lineObj, targetPoint) {
-        // Simple bounding box approach - get closest edge point
-        const bounds = lineObj.getBoundingRect();
+        // Get line endpoints in canvas coordinates
+        const points = lineObj.calcLinePoints();
         
-        // Calculate distances to each edge midpoint
-        const edgePoints = [
-            { x: bounds.left, y: bounds.top + bounds.height / 2 }, // left edge
-            { x: bounds.left + bounds.width, y: bounds.top + bounds.height / 2 }, // right edge
-            { x: bounds.left + bounds.width / 2, y: bounds.top }, // top edge
-            { x: bounds.left + bounds.width / 2, y: bounds.top + bounds.height } // bottom edge
-        ];
-        
-        let closestPoint = edgePoints[0];
-        let minDistance = this.getDistance(edgePoints[0], targetPoint);
-        
-        for (let i = 1; i < edgePoints.length; i++) {
-            const distance = this.getDistance(edgePoints[i], targetPoint);
-            if (distance < minDistance) {
-                minDistance = distance;
-                closestPoint = edgePoints[i];
-            }
+        // Calculate absolute center of the line
+        let center = lineObj.getCenterPoint();
+        if (lineObj.group) {
+            const groupMatrix = lineObj.group.calcTransformMatrix();
+            center = fabric.util.transformPoint(center, groupMatrix);
         }
         
-        console.log(`[Connector] Line bounds: ${bounds.left.toFixed(1)},${bounds.top.toFixed(1)} ${bounds.width.toFixed(1)}x${bounds.height.toFixed(1)}`);
-        console.log(`[Connector] Target: (${targetPoint.x.toFixed(1)}, ${targetPoint.y.toFixed(1)}), Closest edge: (${closestPoint.x.toFixed(1)}, ${closestPoint.y.toFixed(1)})`);
+        // Calculate the vector from center to endpoints using the matrix for rotation/scale only
+        // We do this by transforming (0,0) and (x,y) and taking the difference
+        // This avoids any translation issues in the matrix multiplication
         
-        return { x: closestPoint.x, y: closestPoint.y };
+        // 1. Get the total transform matrix
+        let matrix = lineObj.calcTransformMatrix();
+        if (lineObj.group) {
+            const groupMatrix = lineObj.group.calcTransformMatrix();
+            matrix = fabric.util.multiplyTransformMatrices(groupMatrix, matrix);
+        }
+        
+        // 2. Calculate vectors
+        const origin = fabric.util.transformPoint({ x: 0, y: 0 }, matrix);
+        const p1_transformed = fabric.util.transformPoint({ x: points.x1, y: points.y1 }, matrix);
+        const p2_transformed = fabric.util.transformPoint({ x: points.x2, y: points.y2 }, matrix);
+        
+        const vec1 = { x: p1_transformed.x - origin.x, y: p1_transformed.y - origin.y };
+        const vec2 = { x: p2_transformed.x - origin.x, y: p2_transformed.y - origin.y };
+        
+        // 3. Apply vectors to the correct absolute center
+        const point1 = { x: center.x + vec1.x, y: center.y + vec1.y };
+        const point2 = { x: center.x + vec2.x, y: center.y + vec2.y };
+
+        // Project targetPoint onto line segment using vector math
+        const A = targetPoint.x - point1.x;
+        const B = targetPoint.y - point1.y;
+        const C = point2.x - point1.x;
+        const D = point2.y - point1.y;
+
+        const dot = A * C + B * D;
+        const lenSq = C * C + D * D;
+
+        let param = -1;
+        if (lenSq !== 0) {
+            param = dot / lenSq;
+        }
+
+        let closestX, closestY;
+
+        if (param < 0) {
+            closestX = point1.x;
+            closestY = point1.y;
+        } else if (param > 1) {
+            closestX = point2.x;
+            closestY = point2.y;
+        } else {
+            closestX = point1.x + param * C;
+            closestY = point1.y + param * D;
+        }
+
+        return { x: closestX, y: closestY };
     }
     
     // Find closest point on a line within a group (for arrows)
     getClosestPointOnGroupLine(groupObj, lineObj, targetPoint) {
-        // Get group transform
-        const groupMatrix = groupObj.calcTransformMatrix();
-        const lineMatrix = lineObj.calcTransformMatrix();
-        const combinedMatrix = fabric.util.multiplyTransformMatrices(groupMatrix, lineMatrix);
+        // Use calcLinePoints to get coordinates relative to the line's center
+        const points = lineObj.calcLinePoints();
         
-        // Transform line endpoints
-        const point1 = fabric.util.transformPoint({ x: lineObj.x1, y: lineObj.y1 }, combinedMatrix);
-        const point2 = fabric.util.transformPoint({ x: lineObj.x2, y: lineObj.y2 }, combinedMatrix);
+        // Step 1: Transform from Line Local to Group Local
+        const lineMatrix = lineObj.calcTransformMatrix();
+        let point1 = fabric.util.transformPoint({ x: points.x1, y: points.y1 }, lineMatrix);
+        let point2 = fabric.util.transformPoint({ x: points.x2, y: points.y2 }, lineMatrix);
+        
+        // Step 2: Transform from Group Local to Parent Space (Canvas or ActiveSelection)
+        const groupMatrix = groupObj.calcTransformMatrix();
+        point1 = fabric.util.transformPoint(point1, groupMatrix);
+        point2 = fabric.util.transformPoint(point2, groupMatrix);
+        
+        // Step 3: If group is in another group (activeSelection), transform to Canvas Space
+        if (groupObj.group) {
+            const parentMatrix = groupObj.group.calcTransformMatrix();
+            point1 = fabric.util.transformPoint(point1, parentMatrix);
+            point2 = fabric.util.transformPoint(point2, parentMatrix);
+        }
         
         // Find closest point on line segment
         const A = targetPoint.x - point1.x;
@@ -405,46 +483,227 @@ export class TagManager {
             closestY = point1.y + param * D;
         }
         
-        console.log(`[Connector] Arrow line: (${point1.x.toFixed(1)}, ${point1.y.toFixed(1)}) to (${point2.x.toFixed(1)}, ${point2.y.toFixed(1)})`);
-        console.log(`[Connector] Target: (${targetPoint.x.toFixed(1)}, ${targetPoint.y.toFixed(1)}), Closest: (${closestX.toFixed(1)}, ${closestY.toFixed(1)})`);
-        
         return { x: closestX, y: closestY };
     }
-    
-    // Find closest point on a path (approximate using bounding box edges)
+
+    // Find closest point on a path (curves, freehand drawings)
     getClosestPointOnPath(pathObj, targetPoint) {
+        // Option A: Use customPoints if available (CurveTool curves have these)
+        // Disabled because customPoints might be stale if object is moved/transformed
+        /* if (pathObj.customPoints && pathObj.customPoints.length > 0) {
+            return this.getClosestPointFromArray(pathObj.customPoints, targetPoint);
+        } */
+
+        // Option B: Sample SVG path for freehand drawings and other paths
+        if (pathObj.path && pathObj.path.length > 0) {
+            const sampledPoints = this.samplePathPoints(pathObj, 30);
+            if (sampledPoints.length > 0) {
+                return this.getClosestPointFromArray(sampledPoints, targetPoint);
+            }
+        }
+
+        // Option C: Fallback to bounding box edges
+        return this.getClosestPointOnBoundingBox(pathObj, targetPoint);
+    }
+
+    // Find closest point from an array of points
+    getClosestPointFromArray(points, targetPoint) {
+        if (points.length === 0) return targetPoint;
+
+        let closestPoint = points[0];
+        let minDistance = this.calculateDistance(points[0], targetPoint);
+
+        for (let i = 1; i < points.length; i++) {
+            const distance = this.calculateDistance(points[i], targetPoint);
+            if (distance < minDistance) {
+                minDistance = distance;
+                closestPoint = points[i];
+            }
+        }
+
+        return { x: closestPoint.x || closestPoint.x === 0 ? closestPoint.x : 0,
+                 y: closestPoint.y || closestPoint.y === 0 ? closestPoint.y : 0 };
+    }
+
+    // Sample points along an SVG path
+    samplePathPoints(pathObj, numSamples = 30) {
+        const points = [];
+        const pathData = pathObj.path;
+        
+        // 1. Calculate the correct absolute center
+        let centerAbs = pathObj.getCenterPoint();
+        if (pathObj.group) {
+            const groupMatrix = pathObj.group.calcTransformMatrix();
+            centerAbs = fabric.util.transformPoint(centerAbs, groupMatrix);
+        }
+        
+        // 2. Calculate the "buggy" center (using matrix multiplication which doubles translation)
+        // For fabric.Path, (pathOffset.x, pathOffset.y) is the center in local path coordinates
+        const pathCenterLocal = { x: pathObj.pathOffset.x, y: pathObj.pathOffset.y };
+        
+        let matrix = pathObj.calcTransformMatrix();
+        if (pathObj.group) {
+            const groupMatrix = pathObj.group.calcTransformMatrix();
+            matrix = fabric.util.multiplyTransformMatrices(groupMatrix, matrix);
+        }
+        
+        const centerBuggy = fabric.util.transformPoint(pathCenterLocal, matrix);
+        
+        // Helper to transform point to absolute coordinates using vector from center
+        const transformToAbsolute = (p) => {
+            // Transform point using the "buggy" matrix
+            const pBuggy = fabric.util.transformPoint(p, matrix);
+            
+            // Calculate vector from center
+            const vec = { 
+                x: pBuggy.x - centerBuggy.x, 
+                y: pBuggy.y - centerBuggy.y 
+            };
+            
+            // Add vector to the correct absolute center
+            return { 
+                x: centerAbs.x + vec.x, 
+                y: centerAbs.y + vec.y 
+            };
+        };
+
+        let currentPoint = { x: 0, y: 0 };
+
+        for (const segment of pathData) {
+            const command = segment[0];
+
+            if (command === 'M') {
+                currentPoint = { x: segment[1], y: segment[2] };
+                const absPoint = transformToAbsolute(currentPoint);
+                points.push(absPoint);
+            } else if (command === 'L') {
+                const endPoint = { x: segment[1], y: segment[2] };
+                const samples = this.sampleLine(currentPoint, endPoint, 5);
+                samples.forEach(p => {
+                    const absPoint = transformToAbsolute(p);
+                    points.push(absPoint);
+                });
+                currentPoint = endPoint;
+            } else if (command === 'C') {
+                const cp1 = { x: segment[1], y: segment[2] };
+                const cp2 = { x: segment[3], y: segment[4] };
+                const endPoint = { x: segment[5], y: segment[6] };
+
+                const samples = this.sampleCubicBezier(currentPoint, cp1, cp2, endPoint, 10);
+                samples.forEach(p => {
+                    const absPoint = transformToAbsolute(p);
+                    points.push(absPoint);
+                });
+                currentPoint = endPoint;
+            } else if (command === 'Q') {
+                const cp = { x: segment[1], y: segment[2] };
+                const endPoint = { x: segment[3], y: segment[4] };
+
+                const samples = this.sampleQuadraticBezier(currentPoint, cp, endPoint, 10);
+                samples.forEach(p => {
+                    const absPoint = fabric.util.transformPoint(p, matrix);
+                    points.push(absPoint);
+                });
+                currentPoint = endPoint;
+            }
+        }
+
+        return points;
+    }
+
+    // Sample points along a line
+    sampleLine(p0, p1, numSamples = 5) {
+        const points = [];
+        for (let i = 0; i <= numSamples; i++) {
+            const t = i / numSamples;
+            points.push({
+                x: p0.x + t * (p1.x - p0.x),
+                y: p0.y + t * (p1.y - p0.y)
+            });
+        }
+        return points;
+    }
+
+    // Sample points along a cubic Bezier curve
+    sampleCubicBezier(p0, cp1, cp2, p1, numSamples = 10) {
+        const points = [];
+        for (let i = 0; i <= numSamples; i++) {
+            const t = i / numSamples;
+            points.push(this.cubicBezierPoint(p0, cp1, cp2, p1, t));
+        }
+        return points;
+    }
+
+    // Calculate point on cubic Bezier curve at parameter t (0 to 1)
+    cubicBezierPoint(p0, cp1, cp2, p1, t) {
+        const t2 = t * t;
+        const t3 = t2 * t;
+        const mt = 1 - t;
+        const mt2 = mt * mt;
+        const mt3 = mt2 * mt;
+
+        return {
+            x: mt3 * p0.x + 3 * mt2 * t * cp1.x + 3 * mt * t2 * cp2.x + t3 * p1.x,
+            y: mt3 * p0.y + 3 * mt2 * t * cp1.y + 3 * mt * t2 * cp2.y + t3 * p1.y
+        };
+    }
+
+    // Sample points along a quadratic Bezier curve
+    sampleQuadraticBezier(p0, cp, p1, numSamples = 10) {
+        const points = [];
+        for (let i = 0; i <= numSamples; i++) {
+            const t = i / numSamples;
+            points.push(this.quadraticBezierPoint(p0, cp, p1, t));
+        }
+        return points;
+    }
+
+    // Calculate point on quadratic Bezier curve at parameter t (0 to 1)
+    quadraticBezierPoint(p0, cp, p1, t) {
+        const mt = 1 - t;
+        const mt2 = mt * mt;
+        const t2 = t * t;
+
+        return {
+            x: mt2 * p0.x + 2 * mt * t * cp.x + t2 * p1.x,
+            y: mt2 * p0.y + 2 * mt * t * cp.y + t2 * p1.y
+        };
+    }
+
+    // Get closest point on bounding box (fallback)
+    getClosestPointOnBoundingBox(pathObj, targetPoint) {
         const bounds = pathObj.getBoundingRect();
-        
-        // Use edge midpoints as approximation for paths/curves
+        const centerX = bounds.left + bounds.width / 2;
+        const centerY = bounds.top + bounds.height / 2;
+
         const edgePoints = [
-            {x: bounds.left, y: bounds.top + bounds.height / 2}, // left edge
-            {x: bounds.left + bounds.width, y: bounds.top + bounds.height / 2}, // right edge
-            {x: bounds.left + bounds.width / 2, y: bounds.top}, // top edge
-            {x: bounds.left + bounds.width / 2, y: bounds.top + bounds.height} // bottom edge
+            { x: bounds.left, y: centerY },
+            { x: bounds.left + bounds.width, y: centerY },
+            { x: centerX, y: bounds.top },
+            { x: centerX, y: bounds.top + bounds.height }
         ];
-        
+
         let closestPoint = edgePoints[0];
-        let minDistance = this.getDistance(edgePoints[0], targetPoint);
-        
+        let minDistance = this.calculateDistance(edgePoints[0], targetPoint);
+
         for (let i = 1; i < edgePoints.length; i++) {
-            const distance = this.getDistance(edgePoints[i], targetPoint);
+            const distance = this.calculateDistance(edgePoints[i], targetPoint);
             if (distance < minDistance) {
                 minDistance = distance;
                 closestPoint = edgePoints[i];
             }
         }
-        
-        console.log(`[Connector] Path closest edge point: (${closestPoint.x.toFixed(1)}, ${closestPoint.y.toFixed(1)})`);
+
         return closestPoint;
     }
-    
+
     // Calculate distance between two points
-    getDistance(point1, point2) {
-        const dx = point1.x - point2.x;
-        const dy = point1.y - point2.y;
+    calculateDistance(p1, p2) {
+        const dx = p1.x - p2.x;
+        const dy = p1.y - p2.y;
         return Math.sqrt(dx * dx + dy * dy);
     }
-    
+
     // Create a manipulatable connector line
     createManipulatableConnector(tagObj, strokeObj, strokeLabel) {
         const canvas = this.canvas;
@@ -460,15 +719,15 @@ export class TagManager {
         // Get closest stroke endpoint
         const strokeEndpoint = this.getClosestStrokeEndpoint(strokeObj, tagCenter);
         
-        // Create the connector line with control points
+        // Create the connector line (non-interactive, just visual feedback)
         const connector = new fabric.Line([tagCenter.x, tagCenter.y, strokeEndpoint.x, strokeEndpoint.y], {
             stroke: '#666666',
             strokeWidth: 2,
             strokeDashArray: [8, 4],
-            selectable: true,
-            evented: true,
-            hasControls: true,
-            hasBorders: true,
+            selectable: false,
+            evented: false,
+            hasControls: false,
+            hasBorders: false,
             lockRotation: true,
             lockScalingFlip: true,
             excludeFromExport: true,
@@ -477,71 +736,7 @@ export class TagManager {
             connectedStroke: strokeObj,
             strokeLabel: strokeLabel
         });
-        
-        // Override control points to only allow endpoint manipulation
-        connector.setControlsVisibility({
-            mt: false, // top center
-            mb: false, // bottom center  
-            ml: false, // left center
-            mr: false, // right center
-            tl: false, // top left corner
-            tr: false, // top right corner
-            bl: false, // bottom left corner
-            br: false  // bottom right corner
-        });
-        
-        // Custom controls for line endpoints
-        connector.controls = {
-            ...connector.controls,
-            p1: new fabric.Control({
-                positionHandler: function(dim, finalMatrix, fabricObject) {
-                    return new fabric.Point(fabricObject.x1, fabricObject.y1);
-                },
-                actionHandler: function(eventData, fabricObject, x, y) {
-                    fabricObject.set({x1: x, y1: y});
-                    return true;
-                },
-                cursorStyleHandler: function() {
-                    return 'pointer';
-                },
-                actionName: 'modifyLine',
-                render: function(ctx, left, top, styleOverride, fabricObject) {
-                    ctx.save();
-                    ctx.fillStyle = '#FF6B6B';
-                    ctx.beginPath();
-                    ctx.arc(left, top, 5, 0, 2 * Math.PI);
-                    ctx.fill();
-                    ctx.restore();
-                }
-            }),
-            p2: new fabric.Control({
-                positionHandler: function(dim, finalMatrix, fabricObject) {
-                    return new fabric.Point(fabricObject.x2, fabricObject.y2);
-                },
-                actionHandler: function(eventData, fabricObject, x, y) {
-                    fabricObject.set({x2: x, y2: y});
-                    return true;
-                },
-                cursorStyleHandler: function() {
-                    return 'pointer';
-                },
-                actionName: 'modifyLine',
-                render: function(ctx, left, top, styleOverride, fabricObject) {
-                    ctx.save();
-                    ctx.fillStyle = '#4ECDC4';
-                    ctx.beginPath();
-                    ctx.arc(left, top, 5, 0, 2 * Math.PI);
-                    ctx.fill();
-                    ctx.restore();
-                }
-            })
-        };
-        
-        // Update connector when it's modified
-        connector.on('modified', () => {
-            console.log(`[Connector] Line modified for ${strokeLabel}`);
-        });
-        
+
         return connector;
     }
     
@@ -549,34 +744,116 @@ export class TagManager {
     updateConnector(strokeLabel) {
         const canvas = this.canvas;
         if (!canvas) return;
-        
+
         const tagObj = this.tagObjects.get(strokeLabel);
         if (!tagObj) return;
-        
-        const strokeObj = tagObj.connectedStroke;
-        if (!strokeObj) return;
-        
-        // Remove old connector if exists
-        const oldConnector = tagObj.connectorLine;
-        if (oldConnector) {
-            canvas.remove(oldConnector);
-            tagObj.connectorLine = null;
+        const connectedStrokeObj = tagObj.connectedStroke;
+        if (!connectedStrokeObj) return;
+
+        // Reposition tag to maintain its offset from the stroke
+        // Only if tag is NOT part of an active selection (multi-select)
+        // If it IS in active selection, Fabric handles the movement
+        const activeObject = canvas.getActiveObject();
+        const isTagInSelection = activeObject && 
+                               activeObject.type === 'activeSelection' && 
+                               activeObject.getObjects().includes(tagObj);
+
+        if (!isTagInSelection) {
+            let strokeCenter;
+            
+            // Calculate absolute stroke center
+            if (connectedStrokeObj.group) {
+                // Stroke is in a group (activeSelection)
+                // getCenterPoint() returns coordinates relative to the group center
+                const centerRelative = connectedStrokeObj.getCenterPoint();
+                const groupMatrix = connectedStrokeObj.group.calcTransformMatrix();
+                
+                // Transform to absolute canvas coordinates
+                strokeCenter = fabric.util.transformPoint(centerRelative, groupMatrix);
+            } else {
+                // Stroke is directly on canvas
+                strokeCenter = connectedStrokeObj.getCenterPoint();
+            }
+
+            if (strokeCenter) {
+                // Use stored offset or default
+                const tagOffset = tagObj.tagOffset || { x: 20, y: -10 };
+                const newTagLeft = strokeCenter.x + tagOffset.x;
+                const newTagTop = strokeCenter.y + tagOffset.y;
+
+                // Update tag position to maintain offset from stroke
+                tagObj.set({
+                    left: newTagLeft,
+                    top: newTagTop
+                });
+                tagObj.setCoords();
+            }
         }
+
+        // Get tag center in canvas space
+        let tagCenter;
         
-        // Create new manipulatable connector
-        const connector = this.createManipulatableConnector(tagObj, strokeObj, strokeLabel);
-        if (connector) {
+        if (tagObj.group) {
+            // Tag is in a group (activeSelection)
+            // getCenterPoint() returns coordinates relative to the group center
+            const centerRelative = tagObj.getCenterPoint();
+            const groupMatrix = tagObj.group.calcTransformMatrix();
+            
+            // Transform to absolute canvas coordinates
+            tagCenter = fabric.util.transformPoint(centerRelative, groupMatrix);
+        } else {
+            // Tag is directly on canvas
+            tagCenter = tagObj.getCenterPoint();
+        }
+
+        // Get closest stroke endpoint
+        const strokeEndpoint = this.getClosestStrokeEndpoint(connectedStrokeObj, tagCenter);
+        
+        console.log(`[ConnectorDebug] ${strokeLabel} Tag: (${tagCenter.x.toFixed(0)}, ${tagCenter.y.toFixed(0)}) Stroke: (${strokeEndpoint.x.toFixed(0)}, ${strokeEndpoint.y.toFixed(0)})`);
+        
+        // Check if connector already exists
+        let connector = tagObj.connectorLine;
+        
+        if (connector && canvas.contains(connector)) {
+            // For fabric.Line objects, updating endpoints requires proper recreation
+            // Just setting x1,y1,x2,y2 doesn't update the line's visual position correctly
+
+            // Remove the old connector and create a new one
+            canvas.remove(connector);
+
+            // Create new connector with updated endpoints
+            connector = new fabric.Line([tagCenter.x, tagCenter.y, strokeEndpoint.x, strokeEndpoint.y], {
+                stroke: '#666666',
+                strokeWidth: 2,
+                strokeDashArray: [8, 4],
+                selectable: false,
+                evented: false,
+                hasControls: false,
+                hasBorders: false,
+                lockRotation: true,
+                lockScalingFlip: true,
+                excludeFromExport: true,
+                isConnectorLine: true,
+                connectedTag: tagObj,
+                connectedStroke: connectedStrokeObj,
+                strokeLabel: strokeLabel
+            });
+
             canvas.add(connector);
-            connector.sendToBack(); // Put connector behind everything
-            
-            // Store reference
+            connector.sendToBack();
             tagObj.connectorLine = connector;
-            
-            // Force re-render
-            setTimeout(() => {
-                canvas.requestRenderAll();
-            }, 10);
+        } else {
+            // Create new connector
+            connector = this.createManipulatableConnector(tagObj, connectedStrokeObj, strokeLabel);
+            if (connector) {
+                canvas.add(connector);
+                connector.sendToBack();
+                tagObj.connectorLine = connector;
+            }
         }
+        
+        // Request render (debounced by Fabric)
+        canvas.requestRenderAll();
     }
     
     // Remove a tag
@@ -594,6 +871,86 @@ export class TagManager {
             canvas.remove(tagObj);
             this.tagObjects.delete(strokeLabel);
         }
+    }
+    
+    // Update tag text when measurement changes
+    updateTagText(strokeLabel, imageLabel) {
+        const tagObj = this.tagObjects.get(strokeLabel);
+        if (!tagObj) {
+            console.warn(`[TagManager] No tag found for ${strokeLabel}`);
+            return;
+        }
+        
+        // Get the text object from the tag group
+        const textObj = tagObj.getObjects().find(obj => obj.isTagText);
+        if (!textObj) {
+            console.warn(`[TagManager] No text object found in tag for ${strokeLabel}`);
+            return;
+        }
+        
+        // Get the updated measurement
+        const measurementString = this.metadataManager.getMeasurementString(imageLabel, strokeLabel);
+        
+        // Only show measurement if showMeasurements is true and measurement exists
+        let fullText;
+        if (this.showMeasurements && measurementString) {
+            fullText = `${strokeLabel} = ${measurementString}`;
+        } else {
+            fullText = strokeLabel;
+        }
+        
+
+        
+        // Update the text
+        textObj.set('text', fullText);
+        
+        // Force text to recalculate dimensions
+        textObj.initDimensions();
+        textObj.setCoords();
+        
+        // Update background size to match new text
+        const bgObj = tagObj.getObjects().find(obj => !obj.isTagText);
+        if (bgObj) {
+            const padding = 4;
+            const textWidth = textObj.width || 30;
+            const textHeight = textObj.height || this.tagSize;
+            
+            if (this.tagShape === 'circle') {
+                const radius = Math.max(textWidth, textHeight) / 2 + padding;
+                bgObj.set('radius', radius);
+            } else {
+                bgObj.set({
+                    width: textWidth + padding * 2,
+                    height: textHeight + padding * 2
+                });
+            }
+        }
+
+        // Recalculate group bounds to fit resized background
+        // Must preserve the tag's position on canvas while resizing internal bounds
+        const savedLeft = tagObj.left;
+        const savedTop = tagObj.top;
+
+        tagObj._restoreObjectsState();
+        tagObj._calcBounds();
+        tagObj._updateObjectsCoords();
+
+        // Restore position
+        tagObj.set({
+            left: savedLeft,
+            top: savedTop
+        });
+        tagObj.setCoords();
+
+        // Update connector line if needed
+        this.updateConnector(strokeLabel);
+
+        // Force canvas re-render
+        if (this.canvas) {
+            this.canvas.requestRenderAll();
+        }
+
+
     }
     
     // Update all tags (e.g., when tag mode or shape changes)
@@ -687,6 +1044,21 @@ export class TagManager {
         Object.keys(strokes).forEach(strokeLabel => {
             this.removeTag(strokeLabel);
         });
+    }
+    
+    // Toggle showing measurements on all tags
+    setShowMeasurements(show) {
+        this.showMeasurements = show;
+        
+        // Update all existing tags
+        const currentViewId = window.app?.projectManager?.currentViewId || 'front';
+        const strokes = this.metadataManager.vectorStrokesByImage[currentViewId] || {};
+        
+        Object.keys(strokes).forEach(strokeLabel => {
+            this.updateTagText(strokeLabel, currentViewId);
+        });
+        
+
     }
     
     // Update tags when stroke visibility changes
