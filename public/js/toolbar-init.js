@@ -299,42 +299,29 @@
             syncShapeBtn();
         }
 
-        // Label background style toggle buttons
-        const labelBackgroundButtons = {
-            'solid': document.getElementById('labelBackgroundSolidBtn'),
-            'clear-black': document.getElementById('labelBackgroundClearBlackBtn'),
-            'clear-color': document.getElementById('labelBackgroundClearColorBtn'),
-            'clear-white': document.getElementById('labelBackgroundClearWhiteBtn')
+        // Label background style toggle button
+        const labelBackgroundToggleBtn = document.getElementById('labelBackgroundToggleBtn');
+        const backgroundStyles = ['solid', 'clear-black', 'clear-color', 'clear-white'];
+        const backgroundLabels = {
+            'solid': 'Solid',
+            'clear-black': 'Clear Black',
+            'clear-color': 'Clear Color',
+            'clear-white': 'Clear White'
         };
 
-        const updateBackgroundButtons = (activeStyle) => {
-            Object.entries(labelBackgroundButtons).forEach(([style, btn]) => {
-                if (btn) {
-                    btn.setAttribute('aria-pressed', String(style === activeStyle));
-                    if (style === activeStyle) {
-                        btn.classList.add('bg-blue-100', 'border-blue-400');
-                        btn.classList.remove('bg-white', 'border-gray-300');
-                    } else {
-                        btn.classList.remove('bg-blue-100', 'border-blue-400');
-                        btn.classList.add('bg-white', 'border-gray-300');
-                    }
+        if (labelBackgroundToggleBtn) {
+            labelBackgroundToggleBtn.addEventListener('click', () => {
+                if (window.app?.tagManager) {
+                    const currentStyle = window.app.tagManager.tagBackgroundStyle || 'solid';
+                    const currentIndex = backgroundStyles.indexOf(currentStyle);
+                    const nextIndex = (currentIndex + 1) % backgroundStyles.length;
+                    const nextStyle = backgroundStyles[nextIndex];
+
+                    window.app.tagManager.setBackgroundStyle(nextStyle);
+                    labelBackgroundToggleBtn.textContent = backgroundLabels[nextStyle];
                 }
             });
-        };
-
-        Object.entries(labelBackgroundButtons).forEach(([style, btn]) => {
-            if (btn) {
-                btn.addEventListener('click', () => {
-                    if (window.app?.tagManager) {
-                        window.app.tagManager.setBackgroundStyle(style);
-                        updateBackgroundButtons(style);
-                    }
-                });
-            }
-        });
-
-        // Initialize button states
-        updateBackgroundButtons('solid');
+        }
 
         // Auto-update shared project when state saves (debounced)
         if (window.updateSharedProject && window.saveState && !window.__autoUpdateSharePatched) {
