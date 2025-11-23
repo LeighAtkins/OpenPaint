@@ -10,6 +10,8 @@ export class TagManager {
         this.tagSize = 20; // Default tag font size
         this.tagShape = 'square'; // 'square' or 'circle'
         this.tagMode = 'letters+numbers'; // 'letters' or 'letters+numbers'
+        this.tagBackgroundStyle = 'solid'; // 'solid', 'clear-black', 'clear-color', 'clear-white'
+        this.strokeColor = '#3b82f6'; // Default stroke color for clear-color style
 
         // Initialize showMeasurements from checkbox state if available, otherwise default to true
         const showMeasurementsCheckbox = document.getElementById('toggleShowMeasurements');
@@ -171,6 +173,30 @@ export class TagManager {
         const height = textHeight + padding * 2;
         const radius = this.tagShape === 'circle' ? height / 2 : 2; // Full rounding for circle, minimal for square
 
+        // Determine background style properties
+        let bgFill = '#ffffff';
+        let bgStroke = '#000000';
+        let bgStrokeWidth = 1;
+        let textFill = '#000000';
+
+        if (this.tagBackgroundStyle === 'clear-black') {
+            bgFill = 'transparent';
+            bgStroke = '#000000';
+            bgStrokeWidth = 1;
+            textFill = '#000000';
+        } else if (this.tagBackgroundStyle === 'clear-color') {
+            bgFill = 'transparent';
+            bgStroke = this.strokeColor || '#3b82f6';
+            bgStrokeWidth = 1;
+            textFill = this.strokeColor || '#3b82f6';
+        } else if (this.tagBackgroundStyle === 'clear-white') {
+            bgFill = 'transparent';
+            bgStroke = '#ffffff';
+            bgStrokeWidth = 1;
+            textFill = '#ffffff';
+        }
+        // 'solid' style uses defaults
+
         background = new fabric.Rect({
             left: 0,
             top: 0,
@@ -178,14 +204,17 @@ export class TagManager {
             height: height,
             rx: radius, // Horizontal radius for rounded corners
             ry: radius, // Vertical radius for rounded corners
-            fill: '#ffffff',
-            stroke: '#000000',
-            strokeWidth: 1,
+            fill: bgFill,
+            stroke: bgStroke,
+            strokeWidth: bgStrokeWidth,
             originX: 'center',
             originY: 'center',
             selectable: false,
             evented: true
         });
+
+        // Update text color based on background style
+        tagText.set('fill', textFill);
         
         // Group tag text and background
         // Position group at stroke center + offset
@@ -986,7 +1015,41 @@ export class TagManager {
         
         canvas.renderAll();
     }
-    
+
+    // Set the background style for all tags
+    setBackgroundStyle(style) {
+        this.tagBackgroundStyle = style; // 'solid', 'clear-black', 'clear-color', 'clear-white'
+
+        const currentViewId = window.app?.projectManager?.currentViewId || 'front';
+        const strokes = this.metadataManager.vectorStrokesByImage[currentViewId] || {};
+
+        Object.entries(strokes).forEach(([strokeLabel, strokeObj]) => {
+            const tagObj = this.tagObjects.get(strokeLabel);
+            if (tagObj) {
+                // Recreate tag with new background style
+                this.createTag(strokeLabel, currentViewId, strokeObj);
+            }
+        });
+    }
+
+    // Set the stroke color for clear-color style
+    setStrokeColor(color) {
+        this.strokeColor = color;
+
+        // If using clear-color style, update all tags
+        if (this.tagBackgroundStyle === 'clear-color') {
+            const currentViewId = window.app?.projectManager?.currentViewId || 'front';
+            const strokes = this.metadataManager.vectorStrokesByImage[currentViewId] || {};
+
+            Object.entries(strokes).forEach(([strokeLabel, strokeObj]) => {
+                const tagObj = this.tagObjects.get(strokeLabel);
+                if (tagObj) {
+                    this.createTag(strokeLabel, currentViewId, strokeObj);
+                }
+            });
+        }
+    }
+
     // Create tag for a stroke when metadata is attached
     createTagForStroke(strokeLabel, imageLabel, strokeObject) {
         // Check if label should be visible
