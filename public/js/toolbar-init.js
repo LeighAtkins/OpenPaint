@@ -322,6 +322,7 @@
 
                     window.app.tagManager.setBackgroundStyle(nextStyle);
                     labelBackgroundToggleBtn.textContent = backgroundLabels[nextStyle];
+                    labelBackgroundToggleBtn.setAttribute('aria-pressed', String(nextStyle !== 'solid'));
                     console.log('[TagBackground] Updated to:', nextStyle);
                 } else {
                     console.warn('[TagBackground] Button clicked but tagManager not available');
