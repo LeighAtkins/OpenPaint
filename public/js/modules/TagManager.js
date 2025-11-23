@@ -992,13 +992,18 @@ export class TagManager {
         // Check if label should be visible
         const isLabelVisible = this.metadataManager.strokeLabelVisibility[imageLabel]?.[strokeLabel] !== false;
         if (!isLabelVisible) return;
-        
+
         this.createTag(strokeLabel, imageLabel, strokeObject);
-        
+
         // Update stroke visibility controls to show the new stroke
         if (this.metadataManager.updateStrokeVisibilityControls) {
             setTimeout(() => {
                 this.metadataManager.updateStrokeVisibilityControls();
+
+                // Focus the measurement input after controls are updated
+                if (this.metadataManager.focusMeasurementInput) {
+                    this.metadataManager.focusMeasurementInput(strokeLabel);
+                }
             }, 100); // Small delay to ensure all metadata is properly set
         }
     }
