@@ -299,6 +299,43 @@
             syncShapeBtn();
         }
 
+        // Label background style toggle buttons
+        const labelBackgroundButtons = {
+            'solid': document.getElementById('labelBackgroundSolidBtn'),
+            'clear-black': document.getElementById('labelBackgroundClearBlackBtn'),
+            'clear-color': document.getElementById('labelBackgroundClearColorBtn'),
+            'clear-white': document.getElementById('labelBackgroundClearWhiteBtn')
+        };
+
+        const updateBackgroundButtons = (activeStyle) => {
+            Object.entries(labelBackgroundButtons).forEach(([style, btn]) => {
+                if (btn) {
+                    btn.setAttribute('aria-pressed', String(style === activeStyle));
+                    if (style === activeStyle) {
+                        btn.classList.add('bg-blue-100', 'border-blue-400');
+                        btn.classList.remove('bg-white', 'border-gray-300');
+                    } else {
+                        btn.classList.remove('bg-blue-100', 'border-blue-400');
+                        btn.classList.add('bg-white', 'border-gray-300');
+                    }
+                }
+            });
+        };
+
+        Object.entries(labelBackgroundButtons).forEach(([style, btn]) => {
+            if (btn) {
+                btn.addEventListener('click', () => {
+                    if (window.app?.tagManager) {
+                        window.app.tagManager.setBackgroundStyle(style);
+                        updateBackgroundButtons(style);
+                    }
+                });
+            }
+        });
+
+        // Initialize button states
+        updateBackgroundButtons('solid');
+
         // Auto-update shared project when state saves (debounced)
         if (window.updateSharedProject && window.saveState && !window.__autoUpdateSharePatched) {
             window.__autoUpdateSharePatched = true;
