@@ -27,9 +27,9 @@ export class CurveTool extends BaseTool {
             console.error('CurveTool: Canvas not available');
             return;
         }
-        // Keep selection enabled so objects can be dragged
-        // We'll prevent drawing when clicking on objects in onMouseDown
-        this.canvas.selection = true;
+        // Disable group selection box while drawing to prevent accidental selection
+        // Individual object selection is handled by onMouseDown check
+        this.canvas.selection = false;
         this.canvas.defaultCursor = 'crosshair';
         this.canvas.on('mouse:down', this.onMouseDown);
         this.canvas.on('mouse:move', this.onMouseMove);
@@ -56,9 +56,10 @@ export class CurveTool extends BaseTool {
         if (!this.isActive) return;
         
         // Don't start drawing if this is a pan gesture (Alt, Shift, or touch gesture)
+        // Also ignore if Ctrl is pressed (allow selection/panning)
         const evt = o.e;
-        if (evt.altKey || evt.shiftKey || this.canvas.isGestureActive) {
-            console.log('[CurveTool] Ignoring mousedown - pan gesture detected');
+        if (evt.altKey || evt.shiftKey || evt.ctrlKey || this.canvas.isGestureActive) {
+            console.log('[CurveTool] Ignoring mousedown - modifier key or gesture detected');
             return;
         }
         
@@ -192,10 +193,11 @@ export class CurveTool extends BaseTool {
         const curve = new fabric.Path(pathString, {
             stroke: this.strokeColor,
             strokeWidth: this.strokeWidth,
-            fill: '',
+            fill: 'transparent',
             strokeDashArray: this.dashPattern.length > 0 ? this.dashPattern : null,
             selectable: true,
-            evented: true
+            evented: true,
+            perPixelTargetFind: true // Only select when clicking the actual line
         });
 
         this.canvas.add(curve);

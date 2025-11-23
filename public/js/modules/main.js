@@ -199,9 +199,20 @@ class App {
         // Line width/thickness control
         const brushSizeSlider = document.getElementById('brushSize');
         if (brushSizeSlider) {
+            const updateSliderVisual = (val) => {
+                const min = parseFloat(brushSizeSlider.min) || 1;
+                const max = parseFloat(brushSizeSlider.max) || 50;
+                const p = (val - min) / (max - min);
+                brushSizeSlider.style.setProperty('--p', p);
+            };
+
+            // Initialize visual state
+            updateSliderVisual(parseFloat(brushSizeSlider.value) || 5);
+
             brushSizeSlider.addEventListener('input', (e) => {
                 const width = parseInt(e.target.value, 10);
                 this.toolManager.updateSettings({ width: width });
+                updateSliderVisual(width);
             });
         }
         
@@ -356,9 +367,13 @@ class App {
     
     setupKeyboardShortcuts() {
         // Tab key cycles through drawing modes: Straight Line -> Curved Line -> Select -> Straight Line
-        document.addEventListener('keydown', (e) => {
+        // Tab key cycles through drawing modes: Straight Line -> Curved Line -> Select -> Straight Line
+        // Use capture phase to ensure we catch it before anything else
+        window.addEventListener('keydown', (e) => {
             // Don't cycle if typing in an input/textarea or if text tool is active
-            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) {
+            // Exception: Allow cycling if the target is a measurement span (user wants to tab out of it)
+            const isMeasurement = e.target.classList && e.target.classList.contains('stroke-measurement');
+            if ((e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) && !isMeasurement) {
                 return;
             }
             
@@ -368,7 +383,14 @@ class App {
             }
             
             if (e.key === 'Tab') {
+                // Prevent default tab behavior (focus switching)
                 e.preventDefault();
+                e.stopPropagation();
+                
+                // Blur any active element to ensure focus doesn't get stuck
+                if (document.activeElement && document.activeElement !== document.body) {
+                    document.activeElement.blur();
+                }
                 
                 const currentTool = this.toolManager.activeTool;
                 const drawingModeToggle = document.getElementById('drawingModeToggle');
@@ -393,7 +415,7 @@ class App {
                     }
                 }
             }
-        });
+        }, true); // Use capture phase
     }
     
     updateToggleLabel(button, text) {

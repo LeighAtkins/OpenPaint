@@ -28,6 +28,7 @@ export class FabricControls {
 
         // Define the position handler for the starting point (x1, y1)
         const positionHandlerStart = (dim, finalMatrix, fabricObject) => {
+            if (!fabricObject.canvas) return { x: 0, y: 0 };
             const points = fabricObject.calcLinePoints();
             const x = points.x1;
             const y = points.y1;
@@ -69,6 +70,7 @@ export class FabricControls {
 
         // Define the position handler for the ending point (x2, y2)
         const positionHandlerEnd = (dim, finalMatrix, fabricObject) => {
+            if (!fabricObject.canvas) return { x: 0, y: 0 };
             const points = fabricObject.calcLinePoints();
             const x = points.x2;
             const y = points.y2;
@@ -118,10 +120,10 @@ export class FabricControls {
     static createCurveControls(path) {
         if (!path || !path.customPoints) return;
 
-        // Hide standard controls
+        // Hide standard controls but enable custom ones
         path.set({
             hasBorders: false,
-            hasControls: false,
+            hasControls: true,
             cornerSize: 8,
             transparentCorners: false,
             cornerColor: '#ffffff',
@@ -136,6 +138,7 @@ export class FabricControls {
         // Create a control for each point
         path.customPoints.forEach((point, index) => {
             const positionHandler = (dim, finalMatrix, fabricObject) => {
+                if (!fabricObject.canvas) return { x: 0, y: 0 };
                 // The point coordinates are absolute canvas coordinates
                 // We need to transform them to screen coordinates for the control
                 
@@ -278,6 +281,7 @@ export class FabricControls {
 
         // Position handler for Start (Tail)
         const positionHandlerStart = (dim, finalMatrix, fabricObject) => {
+            if (!fabricObject.canvas) return { x: 0, y: 0 };
             // We need the coordinates of the line's start point relative to the group
             // The line is centered in the group usually?
             // Actually, in ArrowTool, we group them. The group's center is the center of the bounding box.
@@ -533,6 +537,7 @@ export class FabricControls {
 
         // Position handler for End (Head)
         const positionHandlerEnd = (dim, finalMatrix, fabricObject) => {
+            if (!fabricObject.canvas) return { x: 0, y: 0 };
             const line = fabricObject.getObjects()[0];
             if (!line) return { x: 0, y: 0 };
 

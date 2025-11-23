@@ -443,7 +443,13 @@ export class StrokeMetadataManager {
             measurementSpan.style.cursor = 'pointer';
             
             const measurementString = this.getMeasurementString(currentViewId, strokeLabel);
-            measurementSpan.textContent = measurementString || '';
+            
+            if (measurementString) {
+                measurementSpan.textContent = measurementString;
+            } else {
+                measurementSpan.textContent = '';
+                measurementSpan.classList.add('empty-measurement');
+            }
             
             // Click to edit measurement
             let originalMeasurement = '';
@@ -451,6 +457,8 @@ export class StrokeMetadataManager {
                 if (measurementSpan.contentEditable === 'true') return; // Already editing
                 
                 originalMeasurement = measurementSpan.textContent;
+                measurementSpan.classList.remove('empty-measurement');
+                
                 measurementSpan.contentEditable = 'true';
                 measurementSpan.focus();
                 
@@ -471,6 +479,14 @@ export class StrokeMetadataManager {
                     if (!success) {
                         // Restore original if parsing failed
                         measurementSpan.textContent = originalMeasurement;
+                        if (!originalMeasurement) {
+                            measurementSpan.classList.add('empty-measurement');
+                        }
+                    }
+                } else {
+                    // No change, restore empty class if it was empty
+                    if (!newValue) {
+                        measurementSpan.classList.add('empty-measurement');
                     }
                 }
             });
@@ -481,6 +497,9 @@ export class StrokeMetadataManager {
                     measurementSpan.blur();
                 } else if (e.key === 'Escape') {
                     measurementSpan.textContent = originalMeasurement;
+                    if (!originalMeasurement) {
+                        measurementSpan.classList.add('empty-measurement');
+                    }
                     measurementSpan.blur();
                 }
             });
@@ -492,52 +511,9 @@ export class StrokeMetadataManager {
             
             console.log(`[Auto-Focus DEBUG] Stroke: ${strokeLabel}, isNewest: ${isNewestStroke}, shouldAutoFocus: ${this._shouldAutoFocus}`);
             
+            // Auto-focus logic removed to allow immediate deletion via keyboard
             if (isNewestStroke && this._shouldAutoFocus) {
-                console.log('[Auto-Focus DEBUG] Starting auto-focus sequence');
-                // Auto-focus after ensuring DOM is ready
-                // Use requestAnimationFrame to ensure element is painted
-                requestAnimationFrame(() => {
-                    console.log('[Auto-Focus DEBUG] requestAnimationFrame callback');
-                    setTimeout(() => {
-                        console.log('[Auto-Focus DEBUG] setTimeout callback');
-                        console.log('[Auto-Focus DEBUG] Flag still set?', this._shouldAutoFocus);
-                        
-                        // Reset flag now that we're attempting to focus
-                        this._shouldAutoFocus = false;
-                        
-                        // Double-check element is in document
-                        if (!document.contains(measurementSpan)) {
-                            console.warn('[Auto-Focus] Element not in document yet, skipping');
-                            return;
-                        }
-                        
-                        console.log('[Auto-Focus DEBUG] Element is in document, proceeding');
-                        console.log('[Auto-Focus DEBUG] Element:', measurementSpan);
-                        console.log('[Auto-Focus DEBUG] Current text:', measurementSpan.textContent);
-                        console.log('[Auto-Focus DEBUG] Currently focused element:', document.activeElement);
-                        
-                        originalMeasurement = measurementSpan.textContent;
-                        measurementSpan.contentEditable = 'true';
-                        measurementSpan.focus();
-                        
-                        console.log('[Auto-Focus DEBUG] After focus, activeElement:', document.activeElement);
-                        console.log('[Auto-Focus DEBUG] Is focused element our span?', document.activeElement === measurementSpan);
-                        
-                        // Select all text so typing replaces it
-                        try {
-                            const range = document.createRange();
-                            range.selectNodeContents(measurementSpan);
-                            const sel = window.getSelection();
-                            sel.removeAllRanges();
-                            sel.addRange(range);
-                            console.log('[Auto-Focus] ✅ Measurement field focused and ready for input');
-                            console.log('[Auto-Focus DEBUG] Selection:', sel.toString());
-                        } catch (e) {
-                            console.warn('[Auto-Focus] Failed to select text:', e);
-                        }
-                    }, 200); // Increased delay to ensure DOM is ready
-                });
-                // DON'T reset flag here - wait until we actually attempt to focus
+                this._shouldAutoFocus = false;
             }
             
             // Review toggle button (★)
@@ -552,21 +528,11 @@ export class StrokeMetadataManager {
             reviewBtn.style.transition = '0.2s';
             reviewBtn.textContent = '★';
             
-            // Add all elements to label container
-            labelContainer.appendChild(strokeName);
-            labelContainer.appendChild(labelToggleBtn);
-            labelContainer.appendChild(measurementSpan);
-            labelContainer.appendChild(reviewBtn);
-            
-            strokeItem.appendChild(labelContainer);
-            
             // Delete button (×)
             const deleteBtn = document.createElement('button');
             deleteBtn.className = 'delete-image-btn opacity-0 group-hover:opacity-100 transition-opacity';
             deleteBtn.title = 'Delete this stroke';
-            deleteBtn.style.position = 'absolute';
-            deleteBtn.style.top = '6px';
-            deleteBtn.style.right = '6px';
+            // Removed absolute positioning
             deleteBtn.style.cursor = 'pointer';
             deleteBtn.style.background = 'rgba(255, 255, 255, 0.9)';
             deleteBtn.style.border = '1px solid rgb(204, 204, 204)';
@@ -579,13 +545,22 @@ export class StrokeMetadataManager {
             deleteBtn.style.display = 'flex';
             deleteBtn.style.alignItems = 'center';
             deleteBtn.style.justifyContent = 'center';
-            deleteBtn.style.zIndex = '10';
             deleteBtn.style.color = 'rgb(102, 102, 102)';
             deleteBtn.style.lineHeight = '1';
             deleteBtn.style.padding = '0px';
-            deleteBtn.style.margin = '0px';
+            deleteBtn.style.margin = '0px 0px 0px 4px'; // Add left margin
             deleteBtn.style.textAlign = 'center';
             deleteBtn.textContent = '×';
+
+            // Add all elements to label container
+            labelContainer.appendChild(strokeName);
+            labelContainer.appendChild(labelToggleBtn);
+            labelContainer.appendChild(measurementSpan);
+            labelContainer.appendChild(reviewBtn);
+            labelContainer.appendChild(deleteBtn); // Append delete button here
+            
+            strokeItem.appendChild(labelContainer);
+            // Removed appending deleteBtn to strokeItem
             
             deleteBtn.addEventListener('click', () => {
                 // Delete stroke from canvas

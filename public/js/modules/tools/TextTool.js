@@ -38,7 +38,6 @@ export class TextTool extends BaseTool {
             fontFamily: 'Arial',
             fill: this.textColor,
             fontSize: this.fontSize,
-            textBaseline: 'alphabetic', // Fix Fabric.js warning
             selectable: true,
             evented: true
         });

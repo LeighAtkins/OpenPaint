@@ -184,6 +184,31 @@ export class CanvasManager {
             }
         });
         
+        // Listen for object removal to update stroke list
+        this.fabricCanvas.on('object:removed', (e) => {
+            const obj = e.target;
+            if (obj && window.app && window.app.metadataManager) {
+                // We need to check if this object has metadata and remove it
+                // Or simply refresh the list.
+                // Since metadata is attached to the object, if the object is gone, 
+                // we should probably remove it from our tracking or at least update the UI.
+                
+                // However, StrokeMetadataManager tracks strokes by image label.
+                // If we delete an object, we should probably remove it from the manager too.
+                // But the manager usually iterates over canvas objects to build the list.
+                // So calling updateStrokeVisibilityControls() should be enough if it re-scans.
+                
+                // Let's check updateStrokeVisibilityControls implementation.
+                // It iterates over canvas objects. So refreshing is correct.
+                
+                // Debounce the update to avoid multiple refreshes when deleting multiple objects
+                if (this._updateTimeout) clearTimeout(this._updateTimeout);
+                this._updateTimeout = setTimeout(() => {
+                    window.app.metadataManager.updateStrokeVisibilityControls();
+                }, 50);
+            }
+        });
+        
         // Ensure canvas is visible
         canvasEl.style.display = 'block';
     }
@@ -192,7 +217,11 @@ export class CanvasManager {
         // Delete key handler
         document.addEventListener('keydown', (e) => {
             // Don't delete if typing in an input
-            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) {
+            // Don't delete if typing in an input
+            const isInput = e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA';
+            const isContentEditable = e.target.isContentEditable;
+            
+            if (isInput || isContentEditable) {
                 return;
             }
             
@@ -201,11 +230,44 @@ export class CanvasManager {
                 if (activeObjects.length > 0) {
                     e.preventDefault();
                     activeObjects.forEach(obj => {
+                        // Clean up stroke metadata before removing from canvas
+                        if (obj.strokeMetadata) {
+                            const strokeLabel = obj.strokeMetadata.strokeLabel;
+                            const imageLabel = obj.strokeMetadata.imageLabel;
+
+                            // Remove from metadata manager
+                            if (window.app?.metadataManager) {
+                                const metadata = window.app.metadataManager;
+                                if (metadata.vectorStrokesByImage[imageLabel]) {
+                                    delete metadata.vectorStrokesByImage[imageLabel][strokeLabel];
+                                }
+                                if (metadata.strokeVisibilityByImage[imageLabel]) {
+                                    delete metadata.strokeVisibilityByImage[imageLabel][strokeLabel];
+                                }
+                                if (metadata.strokeLabelVisibility[imageLabel]) {
+                                    delete metadata.strokeLabelVisibility[imageLabel][strokeLabel];
+                                }
+                                if (metadata.strokeMeasurements[imageLabel]) {
+                                    delete metadata.strokeMeasurements[imageLabel][strokeLabel];
+                                }
+                            }
+
+                            // Remove tag
+                            if (window.app?.tagManager) {
+                                window.app.tagManager.removeTag(strokeLabel);
+                            }
+                        }
+
                         this.fabricCanvas.remove(obj);
                     });
                     this.fabricCanvas.discardActiveObject();
                     this.fabricCanvas.requestRenderAll();
-                    
+
+                    // Update visibility panel after metadata cleanup
+                    if (window.app?.metadataManager) {
+                        window.app.metadataManager.updateStrokeVisibilityControls();
+                    }
+
                     // Trigger history save
                     if (window.app && window.app.historyManager) {
                         window.app.historyManager.saveState();
