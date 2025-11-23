@@ -134,10 +134,23 @@ export class CurveTool extends BaseTool {
             this.previewPath = null;
         }
 
-        if (this.points.length < 2) return;
+        if (this.points.length < 1) return; // Need at least 1 point to show something (if tempPoint exists)
+
+        let allPoints = [...this.points];
+        
+        if (tempPoint) {
+            // Check distance to last point to avoid "hook" effect in preview
+            const last = this.points[this.points.length - 1];
+            const dist = Math.sqrt(Math.pow(tempPoint.x - last.x, 2) + Math.pow(tempPoint.y - last.y, 2));
+            
+            if (dist > 5) {
+                allPoints.push(tempPoint);
+            }
+        }
+        
+        if (allPoints.length < 2) return;
 
         // Create path string for smooth curve through points
-        const allPoints = tempPoint ? [...this.points, tempPoint] : this.points;
         const pathString = PathUtils.createSmoothPath(allPoints);
 
         // Create preview path
@@ -153,11 +166,34 @@ export class CurveTool extends BaseTool {
             opacity: tempPoint ? 0.6 : 1.0 // Dimmer if temporary
         });
 
+        if (window.app && window.app.arrowManager) {
+            window.app.arrowManager.applyArrows(this.previewPath);
+        }
+
         this.canvas.add(this.previewPath);
         this.canvas.renderAll();
     }
 
     completeCurve() {
+        // Check for double-click artifact (last point very close to previous point)
+        if (this.points.length >= 2) {
+            const last = this.points[this.points.length - 1];
+            const prev = this.points[this.points.length - 2];
+            const dist = Math.sqrt(Math.pow(last.x - prev.x, 2) + Math.pow(last.y - prev.y, 2));
+            
+            // If points are very close (likely double-click), remove the last one
+            if (dist < 5) {
+                console.log('[CurveTool] Removed duplicate point from double-click');
+                this.points.pop();
+                
+                // Remove the marker for this point
+                const marker = this.pointMarkers.pop();
+                if (marker) {
+                    this.canvas.remove(marker);
+                }
+            }
+        }
+
         if (this.points.length < 2) {
             this.cancelDrawing();
             return;
@@ -200,62 +236,100 @@ export class CurveTool extends BaseTool {
             perPixelTargetFind: true // Only select when clicking the actual line
         });
 
+        // Store points on the object for editing
+        curve.customPoints = this.points.map(p => ({ x: p.x, y: p.y }));
+        
+        // Initialize tracking for movement
+        curve.lastLeft = curve.left;
+        curve.lastTop = curve.top;
+        
+        // Add listener to update customPoints when curve is moved
+        curve.on('moving', () => {
+            // Skip if we're editing a control point - the control point handler updates customPoints directly
+            if (curve.isEditingControlPoint) {
+                console.log('[CurveMoveDebug] Skipping move update - editing control point');
+                return;
+            }
+            
+            const dx = curve.left - curve.lastLeft;
+            const dy = curve.top - curve.lastTop;
+            
+            if (dx !== 0 || dy !== 0) {
+                console.log(`[CurveMoveDebug] Moving whole curve by dx=${dx.toFixed(1)}, dy=${dy.toFixed(1)}`);
+                
+                // Update all custom points
+                curve.customPoints.forEach(p => {
+                    p.x += dx;
+                    p.y += dy;
+                });
+                
+                // Update tracking
+                curve.lastLeft = curve.left;
+                curve.lastTop = curve.top;
+            }
+        });
+
+        // Add custom controls for point editing
+        FabricControls.createCurveControls(curve);
+
+        // Add to canvas
         this.canvas.add(curve);
         
-        // Store original points for editing
-        curve.customPoints = [...this.points];
+        // Add arrowheads if enabled
+        if (window.app && window.app.arrowManager) {
+            window.app.arrowManager.applyArrows(curve);
+        }
         
-        // Add custom controls
-        FabricControls.createCurveControls(curve);
-        
-        curve.setCoords();
-
-        // Attach metadata (label) to the curve
-        if (window.app && window.app.metadataManager && window.app.projectManager) {
-            const imageLabel = window.app.projectManager.currentViewId || 'front';
-            
-            // Set currentImageLabel for tag prediction system
-            window.currentImageLabel = imageLabel;
-            
+        // Add metadata for labeling
+        if (window.app && window.app.metadataManager) {
+            // Get current view ID - must match what StrokeMetadataManager uses for consistency
+            const imageLabel = window.app.projectManager?.currentViewId || window.currentImageLabel || 'front';
             const strokeLabel = window.app.metadataManager.getNextLabel(imageLabel);
+            
+            console.log(`[CurveTool] Attaching metadata: label=${strokeLabel}, image=${imageLabel}`);
             window.app.metadataManager.attachMetadata(curve, imageLabel, strokeLabel);
-            console.log(`Curve created with label: ${strokeLabel}`);
-
-            // Create tag for the curve
+            
+            // Create tag
             if (window.app.tagManager) {
-                setTimeout(() => {
-                    window.app.tagManager.createTagForStroke(strokeLabel, imageLabel, curve);
-                }, 50);
+                try {
+                    console.log(`[CurveTool] Creating tag for ${strokeLabel}`);
+                    window.app.tagManager.createTag(strokeLabel, imageLabel, curve);
+                } catch (e) {
+                    console.error('[CurveTool] Error creating tag:', e);
+                }
             }
+        } else {
+            console.warn('[CurveTool] No app or metadataManager available!');
         }
-
-        // Save state after drawing completes
-        if (window.app && window.app.historyManager) {
-            window.app.historyManager.saveState();
-        }
-
-        // Reset for next curve
+        
+        this.canvas.renderAll();
+        
+        // Reset
         this.points = [];
         this.isDrawing = false;
-        this.canvas.renderAll();
+        this.canvas.selection = true; // Re-enable selection
+        
+        // Fire object:added event
+        console.log('[CurveTool] Firing object:added event');
+        this.canvas.fire('object:added', { target: curve });
     }
 
     cancelDrawing() {
-        // Remove preview
+        // Clean up preview and markers
         if (this.previewPath) {
             this.canvas.remove(this.previewPath);
             this.previewPath = null;
         }
-
-        // Remove point markers
         this.pointMarkers.forEach(marker => this.canvas.remove(marker));
         this.pointMarkers = [];
-
+        
         // Reset state
         this.points = [];
         this.isDrawing = false;
+        this.canvas.selection = true;
         this.canvas.renderAll();
     }
+
 
     setColor(color) {
         this.strokeColor = color;

@@ -10,6 +10,7 @@ import { UploadManager } from './UploadManager.js';
 import { MeasurementSystem } from './MeasurementSystem.js';
 import { MeasurementDialog } from './MeasurementDialog.js';
 import { MeasurementExporter } from './MeasurementExporter.js';
+import { ArrowManager } from './utils/ArrowManager.js';
 
 class App {
     constructor() {
@@ -20,6 +21,7 @@ class App {
         this.tagManager = new TagManager(this.canvasManager, this.metadataManager);
         this.projectManager = new ProjectManager(this.canvasManager, this.historyManager);
         this.uploadManager = new UploadManager(this.projectManager);
+        this.arrowManager = new ArrowManager(this.canvasManager);
 
         // Measurement system
         this.measurementSystem = new MeasurementSystem(this.metadataManager);
@@ -45,6 +47,7 @@ class App {
             this.historyManager.init();
             this.projectManager.init();
             this.uploadManager.init();
+            this.arrowManager.init();
             
         // Initialize drawing mode toggle button label
         const drawingModeToggle = document.getElementById('drawingModeToggle');
@@ -213,6 +216,18 @@ class App {
                 const width = parseInt(e.target.value, 10);
                 this.toolManager.updateSettings({ width: width });
                 updateSliderVisual(width);
+                
+                // Update selected object if any
+                const activeObject = this.canvasManager.fabricCanvas.getActiveObject();
+                if (activeObject && (activeObject.type === 'line' || activeObject.type === 'path')) {
+                    activeObject.set('strokeWidth', width);
+                    
+                    // If it has arrows, we might need to re-render to update arrow size if it's proportional
+                    // But ArrowManager handles this in _render automatically if we use strokeWidth
+                    // However, we should trigger a render
+                    activeObject.dirty = true;
+                    this.canvasManager.fabricCanvas.requestRenderAll();
+                }
             });
         }
         
