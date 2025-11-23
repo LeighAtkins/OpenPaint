@@ -311,16 +311,24 @@
 
         if (labelBackgroundToggleBtn) {
             labelBackgroundToggleBtn.addEventListener('click', () => {
+                console.log('[TagBackground] Button clicked, app.tagManager available:', !!window.app?.tagManager);
                 if (window.app?.tagManager) {
                     const currentStyle = window.app.tagManager.tagBackgroundStyle || 'solid';
+                    console.log('[TagBackground] Current style:', currentStyle);
                     const currentIndex = backgroundStyles.indexOf(currentStyle);
                     const nextIndex = (currentIndex + 1) % backgroundStyles.length;
                     const nextStyle = backgroundStyles[nextIndex];
+                    console.log('[TagBackground] Next style:', nextStyle);
 
                     window.app.tagManager.setBackgroundStyle(nextStyle);
                     labelBackgroundToggleBtn.textContent = backgroundLabels[nextStyle];
+                    console.log('[TagBackground] Updated to:', nextStyle);
+                } else {
+                    console.warn('[TagBackground] Button clicked but tagManager not available');
                 }
             });
+        } else {
+            console.warn('[TagBackground] Button element not found');
         }
 
         // Auto-update shared project when state saves (debounced)
