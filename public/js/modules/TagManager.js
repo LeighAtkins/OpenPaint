@@ -138,7 +138,7 @@ export class TagManager {
             }
             originalError.apply(console, args);
         };
-        
+
         let tagText;
         try {
             // Text positioned at (0, 0) relative to group center
@@ -151,7 +151,9 @@ export class TagManager {
                 textAlign: 'center',
                 originX: 'center',
                 originY: 'center',
-                textBaseline: 'middle',
+                originX: 'center',
+                originY: 'center',
+                // textBaseline: 'middle', // Removed to prevent warning
                 selectable: false, // Will be controlled by group
                 evented: true, // Allow editing
                 hasControls: false, // Controlled by group
@@ -163,7 +165,7 @@ export class TagManager {
                 strokeLabel: strokeLabel,
                 imageLabel: imageLabel
             });
-            
+
             // Small delay to catch any async warnings
             setTimeout(() => {
                 // Set valid textBaseline after creation
@@ -180,7 +182,7 @@ export class TagManager {
             setTimeout(() => {
                 console.warn = originalWarn;
                 console.error = originalError;
-            }, 500);
+            }, 2000);
         }
         
         // Allow editing tag text (double-click to edit)

@@ -25,9 +25,9 @@ export class LineTool extends BaseTool {
             console.error('LineTool: Canvas not available');
             return;
         }
-        // Keep selection enabled so objects can be dragged
-        // We'll prevent drawing when clicking on objects in onMouseDown
-        this.canvas.selection = true;
+        // Disable group selection box while drawing to prevent accidental selection
+        // Individual object selection is handled by onMouseDown check
+        this.canvas.selection = false;
         this.canvas.on('mouse:down', this.onMouseDown);
         this.canvas.on('mouse:move', this.onMouseMove);
         this.canvas.on('mouse:up', this.onMouseUp);
@@ -47,9 +47,10 @@ export class LineTool extends BaseTool {
         if (!this.isActive) return;
         
         // Don't start drawing if this is a pan gesture (Alt, Shift, or touch gesture)
+        // Also ignore if Ctrl is pressed (allow selection/panning)
         const evt = o.e;
-        if (evt.altKey || evt.shiftKey || this.canvas.isGestureActive) {
-            console.log('[LineTool] Ignoring mousedown - pan gesture detected');
+        if (evt.altKey || evt.shiftKey || evt.ctrlKey || this.canvas.isGestureActive) {
+            console.log('[LineTool] Ignoring mousedown - modifier key or gesture detected');
             return;
         }
         
