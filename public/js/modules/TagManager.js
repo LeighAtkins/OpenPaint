@@ -274,7 +274,10 @@ export class TagManager {
         
         canvas.add(tagGroup);
         this.tagObjects.set(strokeLabel, tagGroup);
-        
+
+        // Update tag text to include measurement if showMeasurements is enabled
+        this.updateTagText(strokeLabel, imageLabel);
+
         // Register global click handler for tags (fallback if object events don't fire)
         // This ensures clicks work even when drawing tools are active
         if (!this._globalTagClickHandlerRegistered) {
@@ -283,13 +286,13 @@ export class TagManager {
                 if (target && target.isTag) {
                     const strokeLabel = target.strokeLabel;
                     const textObj = target.getObjects().find(obj => obj.isTagText);
-                    
+
                     // Select the connected stroke
                     if (target.connectedStroke) {
                         canvas.setActiveObject(target.connectedStroke);
                         canvas.requestRenderAll();
                     }
-                    
+
                     // Only focus if not editing the text inline
                     if (textObj && !textObj.isEditing) {
                         if (this.metadataManager?.focusMeasurementInput) {
@@ -300,10 +303,10 @@ export class TagManager {
             });
             this._globalTagClickHandlerRegistered = true;
         }
-        
+
         // Create connector line
         this.updateConnector(strokeLabel);
-        
+
         return tagGroup;
     }
     
