@@ -79,6 +79,11 @@ export class LineTool extends BaseTool {
             evented: false // Not interactive during drawing
         });
 
+        // Apply arrow settings if available
+        if (window.app && window.app.arrowManager) {
+            window.app.arrowManager.applyArrows(this.line);
+        }
+
         this.canvas.add(this.line);
     }
 

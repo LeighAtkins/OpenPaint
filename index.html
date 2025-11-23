@@ -1946,7 +1946,7 @@
                 <div class="flex flex-col gap-3">
                     <input 
                         type="text" 
-                        id="projectName" 
+                        id="projectNamePanel" 
                         placeholder="Project Name" 
                         value="New Sofa" 
                         class="px-3 py-2.5 border border-gray-300 rounded-xl text-sm bg-white w-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 shadow-sm"
@@ -2052,8 +2052,21 @@
                 <div class="flex items-center gap-4">
                     <div id="arrowControls" class="flex items-center gap-3">
                         <span class="text-sm font-semibold text-slate-700">Arrows:</span>
-                        <button id="startArrow" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 text-sm font-medium rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-sm" title="Toggle start arrow">◀</button>
-                        <button id="endArrow" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 text-sm font-medium rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-sm" title="Toggle end arrow">▶</button>
+                        <button id="arrowStartBtn" class="tbtn icon-btn" title="Start Arrow">◀</button>
+                        <button id="arrowEndBtn" class="tbtn icon-btn" title="End Arrow">▶</button>
+                        
+                        <div class="w-px h-6 bg-slate-200 mx-1"></div>
+                        
+                        <div class="flex items-center gap-2" title="Arrow Size">
+                            <span class="text-xs text-slate-500">Size:</span>
+                            <input type="range" id="arrowSize" min="5" max="50" value="15" class="w-20 accent-blue-500">
+                        </div>
+                        
+                        <select id="arrowStyle" class="text-xs border border-slate-300 rounded px-1 py-1 bg-white text-slate-700 focus:outline-none focus:border-blue-500">
+                            <option value="triangular">Triangular</option>
+                            <option value="filled">Filled</option>
+                            <option value="curved">Curved</option>
+                        </select>
                     </div>
                     <div id="dashControls" class="flex items-center gap-3">
                         <span class="text-sm font-semibold text-slate-700">Style:</span>

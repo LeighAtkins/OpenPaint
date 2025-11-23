@@ -21,6 +21,7 @@ export class StrokeMetadataManager {
             this.vectorStrokesByImage[imageLabel] = {};
         }
         this.vectorStrokesByImage[imageLabel][strokeLabel] = obj;
+        console.log(`[StrokeMetadata] Stored ${strokeLabel} in vectorStrokesByImage[${imageLabel}], type=${obj.type}`);
         
         // Also update legacy window.lineStrokesByImage for tag prediction system compatibility
         window.lineStrokesByImage = window.lineStrokesByImage || {};
@@ -303,8 +304,12 @@ export class StrokeMetadataManager {
 
     // Update the stroke visibility controls panel
     updateStrokeVisibilityControls() {
+        console.log('[StrokeMetadata] updateStrokeVisibilityControls called');
         const controlsContainer = document.getElementById('strokeVisibilityControls');
-        if (!controlsContainer) return;
+        if (!controlsContainer) {
+            console.warn('[StrokeMetadata] strokeVisibilityControls container not found!');
+            return;
+        }
         
         // Set flag to prevent infinite loop with MutationObserver
         this.isUpdatingControls = true;
@@ -338,6 +343,7 @@ export class StrokeMetadataManager {
         
         const currentViewId = window.app?.projectManager?.currentViewId || 'front';
         const strokes = this.vectorStrokesByImage[currentViewId] || {};
+        console.log(`[StrokeMetadata] vectorStrokesByImage[${currentViewId}]:`, Object.keys(strokes), strokes);
         
         // Create strokesList container if it doesn't exist
         let strokesList = controlsContainer.querySelector('#strokesList');

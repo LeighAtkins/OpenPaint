@@ -124,7 +124,7 @@ export class FabricControls {
         path.set({
             hasBorders: false,
             hasControls: true,
-            cornerSize: 8,
+            cornerSize: 12, // Increased from 8 to make controls easier to grab
             transparentCorners: false,
             cornerColor: '#ffffff',
             cornerStrokeColor: '#3b82f6',
@@ -174,6 +174,11 @@ export class FabricControls {
                 const pathObj = transform.target;
                 const canvas = pathObj.canvas;
                 const pointer = canvas.getPointer(eventData.e);
+                
+                console.log(`[CurveControlDebug] Dragging control point ${index} to (${pointer.x.toFixed(0)}, ${pointer.y.toFixed(0)})`);
+                
+                // Set flag to suppress moving event listener
+                pathObj.isEditingControlPoint = true;
                 
                 // Update the point
                 point.x = pointer.x;
@@ -241,8 +246,19 @@ export class FabricControls {
                     'center'
                 );
                 
-                pathObj.fire('moving');
-                pathObj.fire('moving');
+                // Mark object as dirty and request canvas redraw to prevent artifacts
+                pathObj.dirty = true;
+                pathObj.setCoords();
+                canvas.requestRenderAll();
+                
+                // Clear the flag after a brief moment
+                setTimeout(() => {
+                    pathObj.isEditingControlPoint = false;
+                }, 0);
+                
+                // These moving events were causing the whole curve to move - removed
+                // pathObj.fire('moving');
+                // pathObj.fire('moving');
                 return true;
             };
 

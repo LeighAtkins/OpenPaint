@@ -271,6 +271,9 @@
             if (window.redrawCanvasWithVisibility) window.redrawCanvasWithVisibility();
         };
         if (labelShapeToggleBtn) {
+            // Add transition styles for smooth morphing animation
+            labelShapeToggleBtn.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.15s ease-out';
+
             const syncShapeBtn = () => {
                 const shape = (window.paintApp?.state?.labelShape) || 'square';
                 const isSquare = shape !== 'circle';
@@ -278,9 +281,20 @@
                 labelShapeToggleBtn.setAttribute('aria-pressed', String(isSquare));
             };
             labelShapeToggleBtn.addEventListener('click', () => {
-                const shape = (window.paintApp?.state?.labelShape) || 'square';
-                applyShape(shape === 'circle' ? 'square' : 'circle');
-                syncShapeBtn();
+                // Animate button with morphing effect: scale down (fade), swap icon, scale up (reveal)
+                labelShapeToggleBtn.style.opacity = '0.3';
+                labelShapeToggleBtn.style.transform = 'scale(0.7)';
+
+                setTimeout(() => {
+                    // Swap icon at midpoint of animation
+                    const shape = (window.paintApp?.state?.labelShape) || 'square';
+                    applyShape(shape === 'circle' ? 'square' : 'circle');
+                    syncShapeBtn();
+
+                    // Immediately start scaling back up
+                    labelShapeToggleBtn.style.opacity = '1';
+                    labelShapeToggleBtn.style.transform = 'scale(1)';
+                }, 150); // Mid-animation swap
             });
             syncShapeBtn();
         }

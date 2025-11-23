@@ -10,8 +10,11 @@ export class TagManager {
         this.tagSize = 20; // Default tag font size
         this.tagShape = 'square'; // 'square' or 'circle'
         this.tagMode = 'letters+numbers'; // 'letters' or 'letters+numbers'
-        this.showMeasurements = true; // Show measurements by default
-        
+
+        // Initialize showMeasurements from checkbox state if available, otherwise default to true
+        const showMeasurementsCheckbox = document.getElementById('toggleShowMeasurements');
+        this.showMeasurements = showMeasurementsCheckbox ? showMeasurementsCheckbox.checked : true;
+
         // Initialize tag prediction system integration
         this.initTagPrediction();
     }
@@ -111,34 +114,6 @@ export class TagManager {
         const centerY = bounds.top + bounds.height / 2;
         
         // Create tag text (editable IText)
-        // Temporarily suppress Fabric.js textBaseline warning during creation
-        const originalWarn = console.warn;
-        const originalError = console.error;
-        
-        // Suppress warnings/errors about textBaseline
-        const suppressTextBaselineWarning = (message) => {
-            const msg = typeof message === 'string' ? message : String(message);
-            return (msg.includes('alphabetical') && msg.includes('CanvasTextBaseline')) || 
-                   msg.includes('alphabetical') ||
-                   msg.includes('CanvasTextBaseline');
-        };
-        
-        console.warn = (...args) => {
-            const message = args.map(a => String(a)).join(' ');
-            if (suppressTextBaselineWarning(message)) {
-                return; // Suppress this specific warning
-            }
-            originalWarn.apply(console, args);
-        };
-        
-        console.error = (...args) => {
-            const message = args.map(a => String(a)).join(' ');
-            if (suppressTextBaselineWarning(message)) {
-                return; // Suppress this specific error
-            }
-            originalError.apply(console, args);
-        };
-
         let tagText;
         try {
             // Text positioned at (0, 0) relative to group center
@@ -151,38 +126,17 @@ export class TagManager {
                 textAlign: 'center',
                 originX: 'center',
                 originY: 'center',
-                originX: 'center',
-                originY: 'center',
                 // textBaseline: 'middle', // Removed to prevent warning
                 selectable: false, // Will be controlled by group
                 evented: true, // Allow editing
                 hasControls: false, // Controlled by group
                 hasBorders: false, // Controlled by group
-                lockRotation: true,
-                lockScalingFlip: true,
-                // Custom properties
-                isTagText: true,
-                strokeLabel: strokeLabel,
-                imageLabel: imageLabel
+                isTagText: true
             });
-
-            // Small delay to catch any async warnings
-            setTimeout(() => {
-                // Set valid textBaseline after creation
-                try {
-                    // Use 'middle' instead of 'alphabetic' which is causing warnings
-                    tagText.set('textBaseline', 'middle');
-                } catch (e) {
-                    // Ignore if property doesn't exist
-                }
-            }, 0);
-        } finally {
-            // Restore console methods after a longer delay to catch async warnings
-            // Fabric.js may trigger warnings asynchronously during initialization and rendering
-            setTimeout(() => {
-                console.warn = originalWarn;
-                console.error = originalError;
-            }, 2000);
+        } catch (e) {
+            console.error('TagManager: Error creating text object', e);
+            // Fallback
+            tagText = new fabric.Text(strokeLabel, { fontSize: this.tagSize });
         }
         
         // Allow editing tag text (double-click to edit)
@@ -211,36 +165,27 @@ export class TagManager {
         const textHeight = tagText.height || this.tagSize;
         
         let background;
-        if (this.tagShape === 'circle') {
-            const radius = Math.max(textWidth, textHeight) / 2 + padding;
-            background = new fabric.Circle({
-                left: 0,
-                top: 0,
-                radius: radius,
-                fill: '#ffffff',
-                stroke: '#000000',
-                strokeWidth: 1,
-                originX: 'center',
-                originY: 'center',
-                selectable: false,
-                evented: true
-            });
-        } else {
-            // Square/rectangle
-            background = new fabric.Rect({
-                left: 0,
-                top: 0,
-                width: textWidth + padding * 2,
-                height: textHeight + padding * 2,
-                fill: '#ffffff',
-                stroke: '#000000',
-                strokeWidth: 1,
-                originX: 'center',
-                originY: 'center',
-                selectable: false,
-                evented: true
-            });
-        }
+        // Both square and circle modes use a rounded rectangle (capsule shape)
+        // Circle mode just has more rounding
+        const width = textWidth + padding * 2;
+        const height = textHeight + padding * 2;
+        const radius = this.tagShape === 'circle' ? height / 2 : 2; // Full rounding for circle, minimal for square
+
+        background = new fabric.Rect({
+            left: 0,
+            top: 0,
+            width: width,
+            height: height,
+            rx: radius, // Horizontal radius for rounded corners
+            ry: radius, // Vertical radius for rounded corners
+            fill: '#ffffff',
+            stroke: '#000000',
+            strokeWidth: 1,
+            originX: 'center',
+            originY: 'center',
+            selectable: false,
+            evented: true
+        });
         
         // Group tag text and background
         // Position group at stroke center + offset
@@ -302,6 +247,15 @@ export class TagManager {
         tagGroup.on('mouse:down', (e) => {
             // Only if not already editing the text
             if (!tagText.isEditing) {
+                // Select the connected stroke
+                if (strokeObject && canvas) {
+                    canvas.setActiveObject(strokeObject);
+                    canvas.requestRenderAll();
+                    // Trigger selection created event manually if needed, 
+                    // but setActiveObject should trigger 'selection:created' or 'selection:updated'
+                    // which main.js listens to for updating UI.
+                }
+
                 // Focus the measurement input for this stroke
                 if (this.metadataManager && this.metadataManager.focusMeasurementInput) {
                     this.metadataManager.focusMeasurementInput(strokeLabel);
@@ -329,6 +283,13 @@ export class TagManager {
                 if (target && target.isTag) {
                     const strokeLabel = target.strokeLabel;
                     const textObj = target.getObjects().find(obj => obj.isTagText);
+                    
+                    // Select the connected stroke
+                    if (target.connectedStroke) {
+                        canvas.setActiveObject(target.connectedStroke);
+                        canvas.requestRenderAll();
+                    }
+                    
                     // Only focus if not editing the text inline
                     if (textObj && !textObj.isEditing) {
                         if (this.metadataManager?.focusMeasurementInput) {
@@ -811,7 +772,7 @@ export class TagManager {
         // Get closest stroke endpoint
         const strokeEndpoint = this.getClosestStrokeEndpoint(connectedStrokeObj, tagCenter);
         
-        console.log(`[ConnectorDebug] ${strokeLabel} Tag: (${tagCenter.x.toFixed(0)}, ${tagCenter.y.toFixed(0)}) Stroke: (${strokeEndpoint.x.toFixed(0)}, ${strokeEndpoint.y.toFixed(0)})`);
+        // console.log(`[ConnectorDebug] ${strokeLabel} Tag: (${tagCenter.x.toFixed(0)}, ${tagCenter.y.toFixed(0)}) Stroke: (${strokeEndpoint.x.toFixed(0)}, ${strokeEndpoint.y.toFixed(0)})`);
         
         // Check if connector already exists
         let connector = tagObj.connectorLine;
@@ -916,16 +877,16 @@ export class TagManager {
             const padding = 4;
             const textWidth = textObj.width || 30;
             const textHeight = textObj.height || this.tagSize;
-            
-            if (this.tagShape === 'circle') {
-                const radius = Math.max(textWidth, textHeight) / 2 + padding;
-                bgObj.set('radius', radius);
-            } else {
-                bgObj.set({
-                    width: textWidth + padding * 2,
-                    height: textHeight + padding * 2
-                });
-            }
+            const width = textWidth + padding * 2;
+            const height = textHeight + padding * 2;
+            const radius = this.tagShape === 'circle' ? height / 2 : 2; // Full rounding for circle, minimal for square
+
+            bgObj.set({
+                width: width,
+                height: height,
+                rx: radius,
+                ry: radius
+            });
         }
 
         // Recalculate group bounds to fit resized background
@@ -993,18 +954,18 @@ export class TagManager {
                         const padding = 4;
                         const textWidth = Math.max(textObj.width || 30, textObj.text.length * (this.tagSize * 0.6));
                         const textHeight = textObj.height || this.tagSize;
-                        
+                        const width = textWidth + padding * 2;
+                        const height = textHeight + padding * 2;
+                        const radius = this.tagShape === 'circle' ? height / 2 : 2; // Full rounding for circle, minimal for square
+
                         // Update background dimensions
-                        if (this.tagShape === 'circle') {
-                            const radius = Math.max(textWidth, textHeight) / 2 + padding;
-                            bgObj.set('radius', radius);
-                        } else {
-                            bgObj.set({
-                                width: textWidth + padding * 2,
-                                height: textHeight + padding * 2
-                            });
-                        }
-                        
+                        bgObj.set({
+                            width: width,
+                            height: height,
+                            rx: radius,
+                            ry: radius
+                        });
+
                         // Update group coordinates and render
                         tagObj.setCoords();
                         this.updateConnector(strokeLabel);
