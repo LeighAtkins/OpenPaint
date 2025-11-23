@@ -2589,6 +2589,39 @@
                 syncShapeBtn();
             }
 
+            // Label background style toggle button
+            const labelBackgroundToggleBtn = document.getElementById('labelBackgroundToggleBtn');
+            const backgroundStyles = ['solid', 'clear-black', 'clear-color', 'clear-white'];
+            const backgroundLabels = {
+                'solid': 'Solid',
+                'clear-black': 'Clear Black',
+                'clear-color': 'Clear Color',
+                'clear-white': 'Clear White'
+            };
+
+            if (labelBackgroundToggleBtn) {
+                labelBackgroundToggleBtn.addEventListener('click', () => {
+                    console.log('[TagBackground] Button clicked, app.tagManager available:', !!window.app?.tagManager);
+                    if (window.app?.tagManager) {
+                        const currentStyle = window.app.tagManager.tagBackgroundStyle || 'solid';
+                        console.log('[TagBackground] Current style:', currentStyle);
+                        const currentIndex = backgroundStyles.indexOf(currentStyle);
+                        const nextIndex = (currentIndex + 1) % backgroundStyles.length;
+                        const nextStyle = backgroundStyles[nextIndex];
+                        console.log('[TagBackground] Next style:', nextStyle);
+
+                        window.app.tagManager.setBackgroundStyle(nextStyle);
+                        labelBackgroundToggleBtn.textContent = backgroundLabels[nextStyle];
+                        labelBackgroundToggleBtn.setAttribute('aria-pressed', String(nextStyle !== 'solid'));
+                        console.log('[TagBackground] Updated to:', nextStyle);
+                    } else {
+                        console.warn('[TagBackground] Button clicked but tagManager not available');
+                    }
+                });
+            } else {
+                console.warn('[TagBackground] Button element not found');
+            }
+
             // Auto-update shared project when state saves (debounced)
             if (window.updateSharedProject && window.saveState && !window.__autoUpdateSharePatched) {
                 window.__autoUpdateSharePatched = true;
