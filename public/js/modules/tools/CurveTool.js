@@ -294,6 +294,13 @@ export class CurveTool extends BaseTool {
                 try {
                     console.log(`[CurveTool] Creating tag for ${strokeLabel}`);
                     window.app.tagManager.createTag(strokeLabel, imageLabel, curve);
+
+                    // Focus measurement input after tag is created
+                    setTimeout(() => {
+                        if (window.app.metadataManager?.focusMeasurementInput) {
+                            window.app.metadataManager.focusMeasurementInput(strokeLabel);
+                        }
+                    }, 50);
                 } catch (e) {
                     console.error('[CurveTool] Error creating tag:', e);
                 }
