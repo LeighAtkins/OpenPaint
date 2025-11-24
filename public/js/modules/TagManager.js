@@ -276,28 +276,35 @@ export class TagManager {
         tagGroup.on('mouse:down', (e) => {
             // Only if not already editing the text
             if (!tagText.isEditing) {
+                // Check if multiple strokes are currently selected
+                const activeObjects = canvas.getActiveObjects();
+                const isMultipleSelected = activeObjects.length > 1;
+
+                // Check if this stroke is part of the current multi-selection
+                const isStrokeInSelection = strokeObject && activeObjects.includes(strokeObject);
+
                 // Select the connected stroke
                 if (strokeObject && canvas) {
-                    canvas.setActiveObject(strokeObject);
-                    canvas.requestRenderAll();
-                    // Trigger selection created event manually if needed, 
-                    // but setActiveObject should trigger 'selection:created' or 'selection:updated'
-                    // which main.js listens to for updating UI.
+                    // If multiple strokes are selected and this stroke is already selected,
+                    // keep the multi-selection and show measurement input
+                    // Otherwise, select just this stroke
+                    if (!(isMultipleSelected && isStrokeInSelection)) {
+                        canvas.setActiveObject(strokeObject);
+                        canvas.requestRenderAll();
+                    }
                 }
 
-                // Focus the measurement input for this stroke
-                if (this.metadataManager && this.metadataManager.focusMeasurementInput) {
+                // Only show measurement input if:
+                // - Single stroke is selected, OR
+                // - Multiple strokes are selected AND this stroke is in the selection
+                // This prevents input from appearing when clicking a different tag
+                const shouldShowMeasurement = !isMultipleSelected || isStrokeInSelection;
+
+                if (shouldShowMeasurement && this.metadataManager && this.metadataManager.focusMeasurementInput) {
                     this.metadataManager.focusMeasurementInput(strokeLabel);
-                } else {
-                    console.warn('[TagManager] metadataManager or focusMeasurementInput not available');
+                } else if (!shouldShowMeasurement) {
+                    console.log('[TagManager] Clicked tag outside multi-selection - no measurement input');
                 }
-            }
-        });
-        
-        // Also try selection event
-        tagGroup.on('selected', () => {
-            if (!tagText.isEditing && this.metadataManager && this.metadataManager.focusMeasurementInput) {
-                this.metadataManager.focusMeasurementInput(strokeLabel);
             }
         });
         
