@@ -246,25 +246,14 @@ class App {
         });
         
         // Line width/thickness control
-        const brushSizeSlider = document.getElementById('brushSize');
-        if (brushSizeSlider) {
-            const updateSliderVisual = (val) => {
-                const min = parseFloat(brushSizeSlider.min) || 1;
-                const max = parseFloat(brushSizeSlider.max) || 50;
-                const p = (val - min) / (max - min);
-                brushSizeSlider.style.setProperty('--p', p);
-            };
-
-            // Initialize visual state
-            updateSliderVisual(parseFloat(brushSizeSlider.value) || 5);
-
-            brushSizeSlider.addEventListener('input', (e) => {
+        const brushSizeSelect = document.getElementById('brushSize');
+        if (brushSizeSelect) {
+            brushSizeSelect.addEventListener('change', (e) => {
                 const width = parseInt(e.target.value, 10);
-                
+
                 // Update tool settings for new strokes
                 this.toolManager.updateSettings({ width: width });
-                updateSliderVisual(width);
-                
+
                 // Update selected strokes if any are selected (handles both single and multi-selection)
                 this.updateSelectedStrokes('strokeWidth', width);
             });

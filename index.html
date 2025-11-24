@@ -1822,15 +1822,19 @@
                     <button data-color="#ffffff" style="background-color: rgb(255, 255, 255); box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3); border: 1px solid #ccc;" title="White" class="tbtn"></button>
                     <button data-color="#10b981" style="background-color: #10b981; box-shadow: 0 0 10px rgba(16, 185, 129, 0.6);" title="Bright Emerald" class="tbtn"></button>
                 </div>
-                <input
-                    type="range"
+                <select
                     id="brushSize"
-                    class="h-2 rounded-lg appearance-none cursor-pointer slider"
-                    min="1"
-                    max="50"
-                    value="5"
-                    style="width: 120px; margin: 0;"
-                />
+                    class="px-2 py-1 border border-gray-300 rounded text-sm"
+                    style="height: 34px; margin: 0; cursor: pointer;"
+                >
+                    <option value="2">2px</option>
+                    <option value="4">4px</option>
+                    <option value="6">6px</option>
+                    <option value="8">8px</option>
+                    <option value="10" selected>10px</option>
+                    <option value="15">15px</option>
+                    <option value="20">20px</option>
+                </select>
                 <button id="arrowStartBtn" class="tbtn icon-btn" title="Start Arrow">◀</button>
                 <button id="arrowEndBtn" class="tbtn icon-btn" title="End Arrow">▶</button>
                 <button id="dottedBtn" class="tbtn" title="Line Style"><svg width="34" height="12" viewBox="0 0 34 12" aria-hidden="true"><line x1="2" y1="6" x2="32" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round"></line></svg></button>

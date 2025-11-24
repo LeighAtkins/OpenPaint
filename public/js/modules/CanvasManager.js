@@ -34,8 +34,8 @@ export class CanvasManager {
             backgroundColor: '#ffffff' // Default white background
         });
 
-        // Enable selection only when Ctrl is pressed or in Select mode
-        this.fabricCanvas.selection = false; // Default to false (drawing mode)
+        // Selection state is managed by tools (SelectTool enables, drawing tools disable as needed)
+        // Don't set a default here - let tools control it
 
         this.fabricCanvas.on('mouse:down', (opt) => {
             const evt = opt.e;
@@ -178,6 +178,9 @@ export class CanvasManager {
             
             if ((e.key === 'Delete' || e.key === 'Backspace') && this.fabricCanvas) {
                 const activeObjects = this.fabricCanvas.getActiveObjects();
+                console.log(`[Delete] Key pressed, found ${activeObjects.length} active objects`);
+                console.log(`[Delete] canvas.selection = ${this.fabricCanvas.selection}`);
+
                 if (activeObjects.length > 0) {
                     e.preventDefault();
                     activeObjects.forEach(obj => {
