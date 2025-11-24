@@ -30,9 +30,10 @@ export class LineTool extends BaseTool {
         this.canvas.selection = false;
         
         // Disable events on all objects to preserve crosshair cursor and prevent dragging
-        // Store original evented and selectable states for full restoration
+        // Store original evented, selectable, and perPixelTargetFind states for full restoration
         this.originalEventedStates = new Map();
         this.originalSelectableStates = new Map();
+        this.originalPerPixelTargetFindStates = new Map();
         this.canvas.forEachObject(obj => {
             // Skip label text objects (they should remain non-interactive)
             if (obj.evented === false && obj.selectable === false) {
@@ -40,8 +41,10 @@ export class LineTool extends BaseTool {
             }
             this.originalEventedStates.set(obj, obj.evented);
             this.originalSelectableStates.set(obj, obj.selectable);
+            this.originalPerPixelTargetFindStates.set(obj, obj.perPixelTargetFind);
             obj.set('evented', false);
             obj.set('selectable', false);
+            obj.set('perPixelTargetFind', false);
         });
 
         // Listen for new objects being added and disable their events
@@ -58,17 +61,22 @@ export class LineTool extends BaseTool {
     deactivate() {
         super.deactivate();
 
-        // Restore original evented and selectable states for all objects
+        // Restore original evented, selectable, and perPixelTargetFind states for all objects
         if (this.originalEventedStates) {
             this.originalEventedStates.forEach((originalEvented, obj) => {
                 const originalSelectable = this.originalSelectableStates.get(obj);
+                const originalPerPixelTargetFind = this.originalPerPixelTargetFindStates.get(obj);
                 obj.set('evented', originalEvented);
                 obj.set('selectable', originalSelectable !== undefined ? originalSelectable : true);
+                obj.set('perPixelTargetFind', originalPerPixelTargetFind !== undefined ? originalPerPixelTargetFind : false);
             });
             this.originalEventedStates.clear();
         }
         if (this.originalSelectableStates) {
             this.originalSelectableStates.clear();
+        }
+        if (this.originalPerPixelTargetFindStates) {
+            this.originalPerPixelTargetFindStates.clear();
         }
 
         this.canvas.selection = true;
@@ -88,9 +96,11 @@ export class LineTool extends BaseTool {
             if (!this.originalEventedStates.has(obj)) {
                 this.originalEventedStates.set(obj, obj.evented); // Store current evented state
                 this.originalSelectableStates.set(obj, obj.selectable); // Store current selectable state
+                this.originalPerPixelTargetFindStates.set(obj, obj.perPixelTargetFind); // Store perPixelTargetFind state
             }
             obj.set('evented', false);
             obj.set('selectable', false);
+            obj.set('perPixelTargetFind', false);
         }
     }
 
@@ -110,14 +120,16 @@ export class LineTool extends BaseTool {
         // Enforce draw-only mode: disable all object interactions before drawing
         // (objects may have been made interactive after previous drawing)
         this.canvas.forEachObject(obj => {
-            if (obj.evented !== false || obj.selectable !== false) {
+            if (obj.evented !== false || obj.selectable !== false || obj.perPixelTargetFind !== false) {
                 // Update the tracking maps in case this is a new or re-enabled object
                 if (!this.originalEventedStates.has(obj)) {
                     this.originalEventedStates.set(obj, obj.evented);
                     this.originalSelectableStates.set(obj, obj.selectable);
+                    this.originalPerPixelTargetFindStates.set(obj, obj.perPixelTargetFind);
                 }
                 obj.set('evented', false);
                 obj.set('selectable', false);
+                obj.set('perPixelTargetFind', false);
             }
         });
 
