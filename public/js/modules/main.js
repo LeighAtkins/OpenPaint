@@ -70,13 +70,23 @@ class App {
             // Setup label rendering on object changes
             if (this.canvasManager.fabricCanvas) {
                 this.canvasManager.fabricCanvas.on('object:added', (e) => {
-                    // Ensure new objects are selectable (except label text)
                     const obj = e.target;
                     if (obj && obj.evented !== false && !obj.isTag) {
-                        obj.set({
-                            selectable: true,
-                            evented: true
-                        });
+                        // Check if we're in a drawing tool - if so, don't auto-enable objects
+                        // (drawing tools will manage object states to prevent accidental dragging)
+                        const activeTool = this.toolManager?.activeTool;
+                        const isDrawingTool = activeTool &&
+                            (activeTool.constructor.name === 'LineTool' ||
+                             activeTool.constructor.name === 'CurveTool' ||
+                             activeTool.constructor.name === 'ArrowTool');
+
+                        // Only make interactive if NOT in drawing mode
+                        if (!isDrawingTool) {
+                            obj.set({
+                                selectable: true,
+                                evented: true
+                            });
+                        }
                     }
                 });
                 this.canvasManager.fabricCanvas.on('object:removed', (e) => {
