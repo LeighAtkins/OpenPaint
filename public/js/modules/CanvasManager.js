@@ -93,18 +93,18 @@ export class CanvasManager {
         // This is global.
         document.addEventListener('keydown', (e) => {
             if ((e.key === 'Control' || e.key === 'Meta') && this.fabricCanvas) {
-                // If currently drawing, disable drawing mode temporarily
+                // Save drawing mode state to restore on keyup
                 if (this.fabricCanvas.isDrawingMode) {
                     this.fabricCanvas.isDrawingMode = false;
                     this.fabricCanvas._tempDrawingMode = true;
                 }
+                // Enable selection temporarily for multi-select
                 this.fabricCanvas.selection = true;
                 this.fabricCanvas.defaultCursor = 'default';
                 this.fabricCanvas.hoverCursor = 'move';
-                // Make objects selectable? They usually are, just evented=false in some tools.
-                // We might need to update objects to be selectable.
+                // Re-enable objects for multi-select (drawing tools disabled them)
                 this.fabricCanvas.forEachObject(obj => {
-                    if (!obj.isTag && !obj.lockMovementX) { // Don't unlock locked stuff
+                    if (!obj.isTag && !obj.lockMovementX) {
                         obj.selectable = true;
                         obj.evented = true;
                     }
@@ -114,41 +114,25 @@ export class CanvasManager {
 
         document.addEventListener('keyup', (e) => {
             if ((e.key === 'Control' || e.key === 'Meta') && this.fabricCanvas) {
-                // Check if multi-select was made BEFORE disabling selection
+                // Check if multi-select was made
                 const activeObj = this.fabricCanvas.getActiveObject();
                 const hasMultiSelection = activeObj && activeObj.type === 'activeSelection';
 
-                this.fabricCanvas.selection = false; // Disable selection box
+                // Disable selection box (let individual tools manage it)
+                this.fabricCanvas.selection = false;
 
+                // Restore drawing mode if we had saved it
                 if (this.fabricCanvas._tempDrawingMode) {
                     this.fabricCanvas.isDrawingMode = true;
                     delete this.fabricCanvas._tempDrawingMode;
                 }
 
-                // Auto-switch to Select tool if multi-select was made while in drawing mode
-                if (hasMultiSelection) {
-                    // Multi-selection exists, switch to Select tool for manipulation
-                    if (window.app && window.app.toolManager) {
-                        console.log('[CanvasManager] Auto-switching to Select tool after multi-select');
-                        window.app.toolManager.selectTool('select');
-                    }
-                } else {
-                    // No multi-selection made - restore drawing tool's object event states
-                    // Objects should be unselectable/unevented if we're in a drawing tool
-                    if (window.app && window.app.toolManager) {
-                        const activeTool = window.app.toolManager.activeTool;
-                        if (activeTool && (activeTool.constructor.name === 'LineTool' || activeTool.constructor.name === 'CurveTool')) {
-                            // We're in a drawing tool, restore the strict draw-only mode
-                            this.fabricCanvas.forEachObject(obj => {
-                                if (!obj.isTag && !obj.lockMovementX) {
-                                    obj.selectable = false;
-                                    obj.evented = false;
-                                }
-                            });
-                            console.log('[CanvasManager] Restored draw-only mode (no multi-select made)');
-                        }
-                    }
+                // If multi-select was made, switch to Select tool to allow manipulation
+                if (hasMultiSelection && window.app && window.app.toolManager) {
+                    console.log('[CanvasManager] Auto-switching to Select tool after multi-select');
+                    window.app.toolManager.selectTool('select');
                 }
+                // Otherwise, active tool will manage object states on next action
             }
         });
 
