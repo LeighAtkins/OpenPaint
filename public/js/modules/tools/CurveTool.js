@@ -31,11 +31,10 @@ export class CurveTool extends BaseTool {
         // Disable group selection while drawing
         this.canvas.selection = false;
 
-        // Disable all objects - this tool is draw-only
-        // (SelectTool will re-enable them when activated)
+        // Enable objects for dragging (hybrid mode: drag objects, draw on empty space)
         this.canvas.forEachObject(obj => {
-            obj.set('selectable', false);
-            obj.set('evented', false);
+            obj.set('selectable', true);
+            obj.set('evented', true);
         });
 
         this.canvas.defaultCursor = 'crosshair';
