@@ -96,10 +96,24 @@ export class CurveTool extends BaseTool {
             console.log('[CurveTool] Ignoring mousedown - modifier key or gesture detected');
             return;
         }
-        
+
+        // Enforce draw-only mode: disable all object interactions before drawing
+        // (objects may have been made interactive after previous drawing)
+        this.canvas.forEachObject(obj => {
+            if (obj.evented !== false || obj.selectable !== false) {
+                // Update the tracking maps in case this is a new or re-enabled object
+                if (!this.originalEventedStates.has(obj)) {
+                    this.originalEventedStates.set(obj, obj.evented);
+                    this.originalSelectableStates.set(obj, obj.selectable);
+                }
+                obj.set('evented', false);
+                obj.set('selectable', false);
+            }
+        });
+
         // Allow drawing through all objects for curve point placement
         // (Curves should be able to start anywhere)
-        
+
         const pointer = this.canvas.getPointer(o.e);
         this.points.push({ x: pointer.x, y: pointer.y });
         
