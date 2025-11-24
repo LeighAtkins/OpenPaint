@@ -51,8 +51,8 @@ export class ArrowManager {
         }
         
         // Listen for selection changes to update button state
-        this.canvas.on('selection:created', (e) => this.updateButtonState(e.selected[0]));
-        this.canvas.on('selection:updated', (e) => this.updateButtonState(e.selected[0]));
+        this.canvas.on('selection:created', (e) => this.updateButtonState(e.selected));
+        this.canvas.on('selection:updated', (e) => this.updateButtonState(e.selected));
         this.canvas.on('selection:cleared', () => this.updateButtonState(null));
         
         // Listen for object creation to apply default settings
@@ -68,24 +68,34 @@ export class ArrowManager {
     }
     
     toggleArrow(side) {
-        const activeObject = this.canvas.getActiveObject();
-        
-        if (activeObject && (activeObject.type === 'line' || activeObject.type === 'path')) {
-            // Toggle on selected object
-            if (!activeObject.arrowSettings) {
-                activeObject.arrowSettings = { ...this.defaultSettings };
+        const activeObjects = this.canvas.getActiveObjects();
+
+        if (activeObjects.length > 0) {
+            // Filter to only valid drawable objects
+            const validObjects = activeObjects.filter(obj =>
+                obj.type === 'line' || obj.type === 'path'
+            );
+
+            if (validObjects.length > 0) {
+                // Toggle on all selected objects
+                validObjects.forEach(obj => {
+                    if (!obj.arrowSettings) {
+                        obj.arrowSettings = { ...this.defaultSettings };
+                    }
+
+                    if (side === 'start') {
+                        obj.arrowSettings.startArrow = !obj.arrowSettings.startArrow;
+                    } else {
+                        obj.arrowSettings.endArrow = !obj.arrowSettings.endArrow;
+                    }
+
+                    this.attachArrowRendering(obj);
+                    obj.dirty = true;
+                });
+
+                this.canvas.requestRenderAll();
+                this.updateButtonState(validObjects);
             }
-            
-            if (side === 'start') {
-                activeObject.arrowSettings.startArrow = !activeObject.arrowSettings.startArrow;
-            } else {
-                activeObject.arrowSettings.endArrow = !activeObject.arrowSettings.endArrow;
-            }
-            
-            this.attachArrowRendering(activeObject);
-            activeObject.dirty = true;
-            this.canvas.requestRenderAll();
-            this.updateButtonState(activeObject);
         } else {
             // Toggle default settings for next line
             if (side === 'start') {
@@ -98,63 +108,120 @@ export class ArrowManager {
     }
     
     updateSetting(key, value) {
-        const activeObject = this.canvas.getActiveObject();
-        
-        if (activeObject && (activeObject.type === 'line' || activeObject.type === 'path')) {
-            // Update selected object
-            if (!activeObject.arrowSettings) {
-                activeObject.arrowSettings = { ...this.defaultSettings };
+        const activeObjects = this.canvas.getActiveObjects();
+
+        if (activeObjects.length > 0) {
+            // Filter to only valid drawable objects
+            const validObjects = activeObjects.filter(obj =>
+                obj.type === 'line' || obj.type === 'path'
+            );
+
+            if (validObjects.length > 0) {
+                // Update all selected objects
+                validObjects.forEach(obj => {
+                    if (!obj.arrowSettings) {
+                        obj.arrowSettings = { ...this.defaultSettings };
+                    }
+
+                    obj.arrowSettings[key] = value;
+                    this.attachArrowRendering(obj);
+                    obj.dirty = true;
+                });
+
+                this.canvas.requestRenderAll();
+                this.updateButtonState(validObjects);
             }
-            
-            activeObject.arrowSettings[key] = value;
-            this.attachArrowRendering(activeObject);
-            activeObject.dirty = true;
-            this.canvas.requestRenderAll();
         } else {
             // Update default settings
             this.defaultSettings[key] = value;
         }
     }
     
-    updateButtonState(obj) {
+    updateButtonState(objOrArray) {
         const startBtn = document.getElementById('arrowStartBtn');
         const endBtn = document.getElementById('arrowEndBtn');
         const sizeInput = document.getElementById('arrowSize');
         const styleSelect = document.getElementById('arrowStyle');
-        
+
         let startActive = false;
+        let startMixed = false;
         let endActive = false;
+        let endMixed = false;
         let size = 15;
         let style = 'triangular';
-        
-        if (obj && (obj.type === 'line' || obj.type === 'path')) {
-            // Use object settings
-            const settings = obj.arrowSettings || { startArrow: false, endArrow: false, arrowSize: 15, arrowStyle: 'triangular' };
+        let isMixedSize = false;
+        let isMixedStyle = false;
+
+        // Handle array of objects (multi-selection)
+        if (Array.isArray(objOrArray) && objOrArray.length > 0) {
+            const validObjects = objOrArray.filter(obj =>
+                obj.type === 'line' || obj.type === 'path'
+            );
+
+            if (validObjects.length > 0) {
+                // Check start arrow state
+                const startStates = validObjects.map(obj => obj.arrowSettings?.startArrow ?? false);
+                const endStates = validObjects.map(obj => obj.arrowSettings?.endArrow ?? false);
+                const sizes = validObjects.map(obj => obj.arrowSettings?.arrowSize ?? 15);
+                const styles = validObjects.map(obj => obj.arrowSettings?.arrowStyle ?? 'triangular');
+
+                // All true, all false, or mixed
+                startActive = startStates.every(s => s === true);
+                startMixed = startStates.some(s => s) && !startActive;
+
+                endActive = endStates.every(s => s === true);
+                endMixed = endStates.some(s => s) && !endActive;
+
+                // Size and style - use first value if all match, otherwise mixed
+                size = sizes[0];
+                isMixedSize = !sizes.every(s => s === size);
+
+                style = styles[0];
+                isMixedStyle = !styles.every(s => s === style);
+            }
+        }
+        // Handle single object
+        else if (objOrArray && (objOrArray.type === 'line' || objOrArray.type === 'path')) {
+            const settings = objOrArray.arrowSettings || { startArrow: false, endArrow: false, arrowSize: 15, arrowStyle: 'triangular' };
             startActive = settings.startArrow;
             endActive = settings.endArrow;
             size = settings.arrowSize || 15;
             style = settings.arrowStyle || 'triangular';
-        } else {
-            // Use default settings
+        }
+        // Default settings when nothing is selected
+        else {
             startActive = this.defaultSettings.startArrow;
             endActive = this.defaultSettings.endArrow;
             size = this.defaultSettings.arrowSize || 15;
             style = this.defaultSettings.arrowStyle || 'triangular';
         }
-        
+
+        // Update start arrow button
         if (startBtn) {
-            startBtn.classList.toggle('active', startActive);
-            startBtn.style.backgroundColor = startActive ? '#e0e7ff' : '';
+            startBtn.classList.toggle('active', startActive && !startMixed);
+            startBtn.classList.toggle('mixed', startMixed);
+            startBtn.style.backgroundColor = startActive && !startMixed ? '#e0e7ff' : (startMixed ? '#f3e8ff' : '');
+            startBtn.style.opacity = startMixed ? '0.6' : '';
         }
+
+        // Update end arrow button
         if (endBtn) {
-            endBtn.classList.toggle('active', endActive);
-            endBtn.style.backgroundColor = endActive ? '#e0e7ff' : '';
+            endBtn.classList.toggle('active', endActive && !endMixed);
+            endBtn.classList.toggle('mixed', endMixed);
+            endBtn.style.backgroundColor = endActive && !endMixed ? '#e0e7ff' : (endMixed ? '#f3e8ff' : '');
+            endBtn.style.opacity = endMixed ? '0.6' : '';
         }
+
+        // Update size input
         if (sizeInput) {
             sizeInput.value = size;
+            sizeInput.style.opacity = isMixedSize ? '0.6' : '';
         }
+
+        // Update style select
         if (styleSelect) {
             styleSelect.value = style;
+            styleSelect.style.opacity = isMixedStyle ? '0.6' : '';
         }
     }
     
