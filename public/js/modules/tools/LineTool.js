@@ -29,11 +29,10 @@ export class LineTool extends BaseTool {
         // Disable group selection while drawing
         this.canvas.selection = false;
 
-        // Disable all objects - this tool is draw-only
-        // (SelectTool will re-enable them when activated)
+        // Enable objects for dragging (hybrid mode: drag objects, draw on empty space)
         this.canvas.forEachObject(obj => {
-            obj.set('selectable', false);
-            obj.set('evented', false);
+            obj.set('selectable', true);
+            obj.set('evented', true);
         });
 
         this.canvas.on('mouse:down', this.onMouseDown);
@@ -57,6 +56,11 @@ export class LineTool extends BaseTool {
 
     onMouseDown(o) {
         if (!this.isActive) return;
+
+        // If clicking on existing object, let Fabric handle dragging
+        if (o.target) {
+            return;
+        }
 
         // Don't start drawing if this is a pan gesture (Alt, Shift, or touch gesture)
         const evt = o.e;

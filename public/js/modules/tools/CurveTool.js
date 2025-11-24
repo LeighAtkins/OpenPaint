@@ -65,10 +65,14 @@ export class CurveTool extends BaseTool {
     onMouseDown(o) {
         if (!this.isActive) return;
 
+        // If clicking on existing object, let Fabric handle dragging
+        if (o.target) {
+            return;
+        }
+
         // Don't start drawing if this is a pan gesture (Alt, Shift, or touch gesture)
-        // Also ignore if Ctrl is pressed (allow selection/panning)
         const evt = o.e;
-        if (evt.altKey || evt.shiftKey || evt.ctrlKey || this.canvas.isGestureActive) {
+        if (evt.altKey || evt.shiftKey || this.canvas.isGestureActive) {
             console.log('[CurveTool] Ignoring mousedown - modifier key or gesture detected');
             return;
         }
