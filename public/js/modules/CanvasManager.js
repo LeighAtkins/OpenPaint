@@ -115,26 +115,21 @@ export class CanvasManager {
         document.addEventListener('keyup', (e) => {
             if ((e.key === 'Control' || e.key === 'Meta') && this.fabricCanvas) {
                 this.fabricCanvas.selection = false; // Disable selection box
-                
+
                 if (this.fabricCanvas._tempDrawingMode) {
                     this.fabricCanvas.isDrawingMode = true;
                     delete this.fabricCanvas._tempDrawingMode;
                 }
-                
-                // Restore cursor?
-                // ToolManager will handle cursor on mouse move usually.
-                
-                // Make objects unselectable if needed? 
-                // Usually tools set this.
-                // If we are in Line tool, objects should be unselectable.
-                // We can't easily revert this without knowing the active tool's preferences.
-                // But if we just set selection=false, users can't select them anyway.
-                // However, they might still capture clicks.
-                
-                // Let's leave them selectable=true, but since selection=false (group selection),
-                // and if we are in drawing mode, clicks draw.
-                // If we are in Line tool (custom), clicks draw lines.
-                // So it should be fine.
+
+                // Auto-switch to Select tool if multi-select was made while in drawing mode
+                // Check if there's an activeSelection (indicates a successful multi-select)
+                if (this.fabricCanvas.getActiveObject() && this.fabricCanvas.getActiveObject().type === 'activeSelection') {
+                    // Multi-selection exists, switch to Select tool for manipulation
+                    if (window.app && window.app.toolManager) {
+                        console.log('[CanvasManager] Auto-switching to Select tool after multi-select');
+                        window.app.toolManager.selectTool('select');
+                    }
+                }
             }
         });
 
