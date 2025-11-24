@@ -112,6 +112,33 @@ class App {
         }, 0);
     }
 
+    // Helper function to update properties of selected strokes
+    updateSelectedStrokes(property, value) {
+        if (!this.canvasManager.fabricCanvas) return;
+        
+        const activeObjects = this.canvasManager.fabricCanvas.getActiveObjects();
+        if (activeObjects.length === 0) return;
+        
+        let updatedCount = 0;
+        activeObjects.forEach(obj => {
+            // Only update drawable strokes (lines, paths, and curves)
+            if (obj && (obj.type === 'line' || obj.type === 'path')) {
+                if (property === 'color') {
+                    obj.set('stroke', value);
+                } else if (property === 'strokeWidth') {
+                    obj.set('strokeWidth', value);
+                }
+                obj.dirty = true;
+                updatedCount++;
+            }
+        });
+        
+        if (updatedCount > 0) {
+            this.canvasManager.fabricCanvas.requestRenderAll();
+            console.log(`Updated ${property} for ${updatedCount} selected strokes`);
+        }
+    }
+
     setupUI() {
         // Undo/Redo
         const undoBtn = document.getElementById('undoBtn');
@@ -183,15 +210,24 @@ class App {
         
         if (colorPicker) {
             colorPicker.addEventListener('input', (e) => {
+                // Update tool settings for new strokes
                 this.toolManager.updateSettings({ color: e.target.value });
+                
+                // Update selected strokes if any are selected
+                this.updateSelectedStrokes('color', e.target.value);
             });
         }
         
         colorButtons.forEach(btn => {
             btn.addEventListener('click', () => {
                 const color = btn.getAttribute('data-color');
+                
+                // Update tool settings for new strokes
                 this.toolManager.updateSettings({ color: color });
                 if (colorPicker) colorPicker.value = color;
+                
+                // Update selected strokes if any are selected
+                this.updateSelectedStrokes('color', color);
                 
                 // Update active state
                 colorButtons.forEach(b => b.classList.remove('active', 'transform', 'scale-110'));
@@ -214,20 +250,13 @@ class App {
 
             brushSizeSlider.addEventListener('input', (e) => {
                 const width = parseInt(e.target.value, 10);
+                
+                // Update tool settings for new strokes
                 this.toolManager.updateSettings({ width: width });
                 updateSliderVisual(width);
                 
-                // Update selected object if any
-                const activeObject = this.canvasManager.fabricCanvas.getActiveObject();
-                if (activeObject && (activeObject.type === 'line' || activeObject.type === 'path')) {
-                    activeObject.set('strokeWidth', width);
-                    
-                    // If it has arrows, we might need to re-render to update arrow size if it's proportional
-                    // But ArrowManager handles this in _render automatically if we use strokeWidth
-                    // However, we should trigger a render
-                    activeObject.dirty = true;
-                    this.canvasManager.fabricCanvas.requestRenderAll();
-                }
+                // Update selected strokes if any are selected (handles both single and multi-selection)
+                this.updateSelectedStrokes('strokeWidth', width);
             });
         }
         

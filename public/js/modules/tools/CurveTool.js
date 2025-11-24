@@ -63,11 +63,8 @@ export class CurveTool extends BaseTool {
             return;
         }
         
-        // Don't start drawing if clicking on an existing object (allow dragging/moving)
-        // Exception: label text objects (evented: false) should allow drawing through
-        if (o.target && o.target.evented !== false) {
-            return;
-        }
+        // Allow drawing through all objects for curve point placement
+        // (Curves should be able to start anywhere)
         
         const pointer = this.canvas.getPointer(o.e);
         this.points.push({ x: pointer.x, y: pointer.y });
