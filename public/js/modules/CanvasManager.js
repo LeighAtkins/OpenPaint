@@ -98,41 +98,40 @@ export class CanvasManager {
                     this.fabricCanvas.isDrawingMode = false;
                     this.fabricCanvas._tempDrawingMode = true;
                 }
-                // Enable selection temporarily for multi-select
-                this.fabricCanvas.selection = true;
-                this.fabricCanvas.defaultCursor = 'default';
-                this.fabricCanvas.hoverCursor = 'move';
-                // Re-enable objects for multi-select (drawing tools disabled them)
+                // Enable dragging while Ctrl is held
+                // Re-enable objects so they can be dragged
                 this.fabricCanvas.forEachObject(obj => {
                     if (!obj.isTag && !obj.lockMovementX) {
                         obj.selectable = true;
                         obj.evented = true;
                     }
                 });
+                this.fabricCanvas.defaultCursor = 'default';
+                this.fabricCanvas.hoverCursor = 'move';
             }
         });
 
         document.addEventListener('keyup', (e) => {
             if ((e.key === 'Control' || e.key === 'Meta') && this.fabricCanvas) {
-                // Check if multi-select was made
-                const activeObj = this.fabricCanvas.getActiveObject();
-                const hasMultiSelection = activeObj && activeObj.type === 'activeSelection';
-
-                // Disable selection box (let individual tools manage it)
-                this.fabricCanvas.selection = false;
-
                 // Restore drawing mode if we had saved it
                 if (this.fabricCanvas._tempDrawingMode) {
                     this.fabricCanvas.isDrawingMode = true;
                     delete this.fabricCanvas._tempDrawingMode;
                 }
 
-                // If multi-select was made, switch to Select tool to allow manipulation
-                if (hasMultiSelection && window.app && window.app.toolManager) {
-                    console.log('[CanvasManager] Auto-switching to Select tool after multi-select');
-                    window.app.toolManager.selectTool('select');
+                // Re-disable objects if still in a drawing tool (restore draw-only mode)
+                if (window.app && window.app.toolManager) {
+                    const activeTool = window.app.toolManager.activeTool;
+                    if (activeTool && (activeTool.constructor.name === 'LineTool' || activeTool.constructor.name === 'CurveTool')) {
+                        // Back to draw-only mode
+                        this.fabricCanvas.forEachObject(obj => {
+                            if (!obj.isTag && !obj.lockMovementX) {
+                                obj.selectable = false;
+                                obj.evented = false;
+                            }
+                        });
+                    }
                 }
-                // Otherwise, active tool will manage object states on next action
             }
         });
 
