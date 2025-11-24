@@ -106,10 +106,24 @@ export class LineTool extends BaseTool {
 
         // Strict draw-only mode: all modifier keys just ignore the click
         // Ctrl, Shift, Alt are already handled above or reserved for other features
-        
+
+        // Enforce draw-only mode: disable all object interactions before drawing
+        // (objects may have been made interactive after previous drawing)
+        this.canvas.forEachObject(obj => {
+            if (obj.evented !== false || obj.selectable !== false) {
+                // Update the tracking maps in case this is a new or re-enabled object
+                if (!this.originalEventedStates.has(obj)) {
+                    this.originalEventedStates.set(obj, obj.evented);
+                    this.originalSelectableStates.set(obj, obj.selectable);
+                }
+                obj.set('evented', false);
+                obj.set('selectable', false);
+            }
+        });
+
         // Temporarily disable selection to prevent new line from being selected during drawing
         this.canvas.selection = false;
-        
+
         this.isDrawing = true;
         const pointer = this.canvas.getPointer(o.e);
         this.startX = pointer.x;
