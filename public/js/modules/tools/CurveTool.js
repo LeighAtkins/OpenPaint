@@ -27,30 +27,16 @@ export class CurveTool extends BaseTool {
             console.error('CurveTool: Canvas not available');
             return;
         }
-        // Disable group selection box while drawing to prevent accidental selection
+
+        // Disable group selection while drawing
         this.canvas.selection = false;
 
-        // Disable events on all objects to preserve crosshair cursor and prevent dragging
-        // Store original evented, selectable, and perPixelTargetFind states for full restoration
-        this.originalEventedStates = new Map();
-        this.originalSelectableStates = new Map();
-        this.originalPerPixelTargetFindStates = new Map();
+        // Disable all objects - this tool is draw-only
+        // (SelectTool will re-enable them when activated)
         this.canvas.forEachObject(obj => {
-            // Skip label text objects (they should remain non-interactive)
-            if (obj.evented === false && obj.selectable === false) {
-                return;
-            }
-            this.originalEventedStates.set(obj, obj.evented);
-            this.originalSelectableStates.set(obj, obj.selectable);
-            this.originalPerPixelTargetFindStates.set(obj, obj.perPixelTargetFind);
-            obj.set('evented', false);
             obj.set('selectable', false);
-            obj.set('perPixelTargetFind', false);
+            obj.set('evented', false);
         });
-
-        // Listen for new objects being added and disable their events
-        this.onObjectAdded = this.onObjectAdded.bind(this);
-        this.canvas.on('object:added', this.onObjectAdded);
 
         this.canvas.defaultCursor = 'crosshair';
         this.canvas.on('mouse:down', this.onMouseDown);
@@ -67,27 +53,9 @@ export class CurveTool extends BaseTool {
         super.deactivate();
         this.cancelDrawing();
 
-        // Restore original evented, selectable, and perPixelTargetFind states for all objects
-        if (this.originalEventedStates) {
-            this.originalEventedStates.forEach((originalEvented, obj) => {
-                const originalSelectable = this.originalSelectableStates.get(obj);
-                const originalPerPixelTargetFind = this.originalPerPixelTargetFindStates.get(obj);
-                obj.set('evented', originalEvented);
-                obj.set('selectable', originalSelectable !== undefined ? originalSelectable : true);
-                obj.set('perPixelTargetFind', originalPerPixelTargetFind !== undefined ? originalPerPixelTargetFind : false);
-            });
-            this.originalEventedStates.clear();
-        }
-        if (this.originalSelectableStates) {
-            this.originalSelectableStates.clear();
-        }
-        if (this.originalPerPixelTargetFindStates) {
-            this.originalPerPixelTargetFindStates.clear();
-        }
-
-        this.canvas.selection = true;
+        // Cleanup events - don't restore object states
+        // (next tool will set what it needs)
         this.canvas.defaultCursor = 'default';
-        this.canvas.off('object:added', this.onObjectAdded);
         this.canvas.off('mouse:down', this.onMouseDown);
         this.canvas.off('mouse:move', this.onMouseMove);
         this.canvas.off('mouse:dblclick', this.onDoubleClick);
@@ -96,7 +64,7 @@ export class CurveTool extends BaseTool {
 
     onMouseDown(o) {
         if (!this.isActive) return;
-        
+
         // Don't start drawing if this is a pan gesture (Alt, Shift, or touch gesture)
         // Also ignore if Ctrl is pressed (allow selection/panning)
         const evt = o.e;
@@ -105,28 +73,9 @@ export class CurveTool extends BaseTool {
             return;
         }
 
-        // Enforce draw-only mode: disable all object interactions before drawing
-        // (objects may have been made interactive after previous drawing)
-        this.canvas.forEachObject(obj => {
-            if (obj.evented !== false || obj.selectable !== false || obj.perPixelTargetFind !== false) {
-                // Update the tracking maps in case this is a new or re-enabled object
-                if (!this.originalEventedStates.has(obj)) {
-                    this.originalEventedStates.set(obj, obj.evented);
-                    this.originalSelectableStates.set(obj, obj.selectable);
-                    this.originalPerPixelTargetFindStates.set(obj, obj.perPixelTargetFind);
-                }
-                obj.set('evented', false);
-                obj.set('selectable', false);
-                obj.set('perPixelTargetFind', false);
-            }
-        });
-
-        // Allow drawing through all objects for curve point placement
-        // (Curves should be able to start anywhere)
-
         const pointer = this.canvas.getPointer(o.e);
         this.points.push({ x: pointer.x, y: pointer.y });
-        
+
         // Add visual marker for the point
         const marker = new fabric.Circle({
             left: pointer.x,
@@ -142,38 +91,22 @@ export class CurveTool extends BaseTool {
         });
         this.canvas.add(marker);
         this.pointMarkers.push(marker);
-        
+
         this.isDrawing = true;
-        
+
         // If we have at least 2 points, create/update the curve preview
         if (this.points.length >= 2) {
             this.updatePreview();
         }
-        
-        this.canvas.renderAll();
-    }
 
-    onObjectAdded(e) {
-        const obj = e.target;
-        // Disable events on newly added objects (except label text)
-        if (obj && (obj.evented !== false || obj.selectable !== false)) {
-            // Store the original states if we haven't seen this object before
-            if (!this.originalEventedStates.has(obj)) {
-                this.originalEventedStates.set(obj, obj.evented); // Store current evented state
-                this.originalSelectableStates.set(obj, obj.selectable); // Store current selectable state
-                this.originalPerPixelTargetFindStates.set(obj, obj.perPixelTargetFind); // Store perPixelTargetFind state
-            }
-            obj.set('evented', false);
-            obj.set('selectable', false);
-            obj.set('perPixelTargetFind', false);
-        }
+        this.canvas.renderAll();
     }
 
     onMouseMove(o) {
         if (!this.isDrawing || this.points.length === 0) return;
-        
+
         const pointer = this.canvas.getPointer(o.e);
-        
+
         // Update preview with current mouse position as temporary point
         if (this.points.length >= 1) {
             this.updatePreview(pointer);
@@ -187,7 +120,7 @@ export class CurveTool extends BaseTool {
 
     onKeyDown(e) {
         if (!this.isActive) return;
-        
+
         // ESC cancels current drawing
         if (e.key === 'Escape') {
             this.cancelDrawing();
@@ -208,17 +141,17 @@ export class CurveTool extends BaseTool {
         if (this.points.length < 1) return; // Need at least 1 point to show something (if tempPoint exists)
 
         let allPoints = [...this.points];
-        
+
         if (tempPoint) {
             // Check distance to last point to avoid "hook" effect in preview
             const last = this.points[this.points.length - 1];
             const dist = Math.sqrt(Math.pow(tempPoint.x - last.x, 2) + Math.pow(tempPoint.y - last.y, 2));
-            
+
             if (dist > 5) {
                 allPoints.push(tempPoint);
             }
         }
-        
+
         if (allPoints.length < 2) return;
 
         // Create path string for smooth curve through points
@@ -251,12 +184,12 @@ export class CurveTool extends BaseTool {
             const last = this.points[this.points.length - 1];
             const prev = this.points[this.points.length - 2];
             const dist = Math.sqrt(Math.pow(last.x - prev.x, 2) + Math.pow(last.y - prev.y, 2));
-            
+
             // If points are very close (likely double-click), remove the last one
             if (dist < 5) {
                 console.log('[CurveTool] Removed duplicate point from double-click');
                 this.points.pop();
-                
+
                 // Remove the marker for this point
                 const marker = this.pointMarkers.pop();
                 if (marker) {
@@ -277,14 +210,14 @@ export class CurveTool extends BaseTool {
             const dy = this.points[i].y - this.points[i-1].y;
             totalLength += Math.sqrt(dx * dx + dy * dy);
         }
-        
+
         const minStrokeLength = 10; // pixels (larger for curves)
         if (totalLength < minStrokeLength) {
             console.log(`[CurveTool] Curve too short (${totalLength.toFixed(1)}px < ${minStrokeLength}px) - cancelling`);
             this.cancelDrawing();
             return;
         }
-        
+
         console.log(`[CurveTool] Valid curve created (${totalLength.toFixed(1)}px)`);
 
         // Remove preview and markers
@@ -309,11 +242,11 @@ export class CurveTool extends BaseTool {
 
         // Store points on the object for editing
         curve.customPoints = this.points.map(p => ({ x: p.x, y: p.y }));
-        
+
         // Initialize tracking for movement
         curve.lastLeft = curve.left;
         curve.lastTop = curve.top;
-        
+
         // Add listener to update customPoints when curve is moved
         curve.on('moving', () => {
             // Skip if we're editing a control point - the control point handler updates customPoints directly
@@ -321,19 +254,19 @@ export class CurveTool extends BaseTool {
                 console.log('[CurveMoveDebug] Skipping move update - editing control point');
                 return;
             }
-            
+
             const dx = curve.left - curve.lastLeft;
             const dy = curve.top - curve.lastTop;
-            
+
             if (dx !== 0 || dy !== 0) {
                 console.log(`[CurveMoveDebug] Moving whole curve by dx=${dx.toFixed(1)}, dy=${dy.toFixed(1)}`);
-                
+
                 // Update all custom points
                 curve.customPoints.forEach(p => {
                     p.x += dx;
                     p.y += dy;
                 });
-                
+
                 // Update tracking
                 curve.lastLeft = curve.left;
                 curve.lastTop = curve.top;
@@ -345,21 +278,21 @@ export class CurveTool extends BaseTool {
 
         // Add to canvas
         this.canvas.add(curve);
-        
+
         // Add arrowheads if enabled
         if (window.app && window.app.arrowManager) {
             window.app.arrowManager.applyArrows(curve);
         }
-        
+
         // Add metadata for labeling
         if (window.app && window.app.metadataManager) {
             // Get current view ID - must match what StrokeMetadataManager uses for consistency
             const imageLabel = window.app.projectManager?.currentViewId || window.currentImageLabel || 'front';
             const strokeLabel = window.app.metadataManager.getNextLabel(imageLabel);
-            
+
             console.log(`[CurveTool] Attaching metadata: label=${strokeLabel}, image=${imageLabel}`);
             window.app.metadataManager.attachMetadata(curve, imageLabel, strokeLabel);
-            
+
             // Create tag
             if (window.app.tagManager) {
                 try {
@@ -379,14 +312,14 @@ export class CurveTool extends BaseTool {
         } else {
             console.warn('[CurveTool] No app or metadataManager available!');
         }
-        
+
         this.canvas.renderAll();
-        
+
         // Reset
         this.points = [];
         this.isDrawing = false;
         this.canvas.selection = true; // Re-enable selection
-        
+
         // Fire object:added event
         console.log('[CurveTool] Firing object:added event');
         this.canvas.fire('object:added', { target: curve });
@@ -400,14 +333,13 @@ export class CurveTool extends BaseTool {
         }
         this.pointMarkers.forEach(marker => this.canvas.remove(marker));
         this.pointMarkers = [];
-        
+
         // Reset state
         this.points = [];
         this.isDrawing = false;
         this.canvas.selection = true;
         this.canvas.renderAll();
     }
-
 
     setColor(color) {
         this.strokeColor = color;
@@ -416,7 +348,7 @@ export class CurveTool extends BaseTool {
     setWidth(width) {
         this.strokeWidth = parseInt(width, 10);
     }
-    
+
     setDashPattern(pattern) {
         // Update dash pattern for curves
         // Note: Curves use Path objects, dash patterns are applied via strokeDashArray
@@ -428,4 +360,3 @@ export class CurveTool extends BaseTool {
         }
     }
 }
-
