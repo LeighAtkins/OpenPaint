@@ -88,53 +88,6 @@ export class CanvasManager {
                  // Fabric updates selection property dynamically? No.
              }
         });
-        
-        // Better approach: Listen to keydown/keyup for Ctrl
-        // This is global.
-        document.addEventListener('keydown', (e) => {
-            if ((e.key === 'Control' || e.key === 'Meta') && this.fabricCanvas) {
-                // Save drawing mode state to restore on keyup
-                if (this.fabricCanvas.isDrawingMode) {
-                    this.fabricCanvas.isDrawingMode = false;
-                    this.fabricCanvas._tempDrawingMode = true;
-                }
-                // Enable selection temporarily for multi-select
-                this.fabricCanvas.selection = true;
-                this.fabricCanvas.defaultCursor = 'default';
-                this.fabricCanvas.hoverCursor = 'move';
-                // Re-enable objects for multi-select (drawing tools disabled them)
-                this.fabricCanvas.forEachObject(obj => {
-                    if (!obj.isTag && !obj.lockMovementX) {
-                        obj.selectable = true;
-                        obj.evented = true;
-                    }
-                });
-            }
-        });
-
-        document.addEventListener('keyup', (e) => {
-            if ((e.key === 'Control' || e.key === 'Meta') && this.fabricCanvas) {
-                // Check if multi-select was made
-                const activeObj = this.fabricCanvas.getActiveObject();
-                const hasMultiSelection = activeObj && activeObj.type === 'activeSelection';
-
-                // Disable selection box (let individual tools manage it)
-                this.fabricCanvas.selection = false;
-
-                // Restore drawing mode if we had saved it
-                if (this.fabricCanvas._tempDrawingMode) {
-                    this.fabricCanvas.isDrawingMode = true;
-                    delete this.fabricCanvas._tempDrawingMode;
-                }
-
-                // If multi-select was made, switch to Select tool to allow manipulation
-                if (hasMultiSelection && window.app && window.app.toolManager) {
-                    console.log('[CanvasManager] Auto-switching to Select tool after multi-select');
-                    window.app.toolManager.selectTool('select');
-                }
-                // Otherwise, active tool will manage object states on next action
-            }
-        });
 
         console.log(`Fabric Canvas initialized: ${width}x${height}`);
         
