@@ -30,17 +30,20 @@ export class LineTool extends BaseTool {
         this.canvas.selection = false;
         
         // Disable events on all objects to preserve crosshair cursor and prevent dragging
-        // Store original evented state for restoration
+        // Store original evented and selectable states for full restoration
         this.originalEventedStates = new Map();
+        this.originalSelectableStates = new Map();
         this.canvas.forEachObject(obj => {
             // Skip label text objects (they should remain non-interactive)
             if (obj.evented === false && obj.selectable === false) {
                 return;
             }
             this.originalEventedStates.set(obj, obj.evented);
+            this.originalSelectableStates.set(obj, obj.selectable);
             obj.set('evented', false);
+            obj.set('selectable', false);
         });
-        
+
         // Listen for new objects being added and disable their events
         this.onObjectAdded = this.onObjectAdded.bind(this);
         this.canvas.on('object:added', this.onObjectAdded);
@@ -54,15 +57,20 @@ export class LineTool extends BaseTool {
 
     deactivate() {
         super.deactivate();
-        
-        // Restore original evented states for all objects
+
+        // Restore original evented and selectable states for all objects
         if (this.originalEventedStates) {
             this.originalEventedStates.forEach((originalEvented, obj) => {
+                const originalSelectable = this.originalSelectableStates.get(obj);
                 obj.set('evented', originalEvented);
+                obj.set('selectable', originalSelectable !== undefined ? originalSelectable : true);
             });
             this.originalEventedStates.clear();
         }
-        
+        if (this.originalSelectableStates) {
+            this.originalSelectableStates.clear();
+        }
+
         this.canvas.selection = true;
         this.canvas.off('object:added', this.onObjectAdded);
         this.canvas.off('mouse:down', this.onMouseDown);
@@ -75,56 +83,29 @@ export class LineTool extends BaseTool {
     onObjectAdded(e) {
         const obj = e.target;
         // Disable events on newly added objects (except label text)
-        if (obj && obj.evented !== false && obj.selectable !== false) {
-            // Store the original state if we haven't seen this object before
+        if (obj && (obj.evented !== false || obj.selectable !== false)) {
+            // Store the original states if we haven't seen this object before
             if (!this.originalEventedStates.has(obj)) {
-                this.originalEventedStates.set(obj, true); // New objects default to evented: true
+                this.originalEventedStates.set(obj, obj.evented); // Store current evented state
+                this.originalSelectableStates.set(obj, obj.selectable); // Store current selectable state
             }
             obj.set('evented', false);
+            obj.set('selectable', false);
         }
-    }
-
-    enableObjectEventsForSelection() {
-        // Temporarily enable events on all objects for Ctrl+click selection
-        this.originalEventedStates.forEach((originalEvented, obj) => {
-            obj.set('evented', true);
-        });
-        this.canvas.renderAll();
-        
-        // Re-disable after a short delay to handle the selection
-        setTimeout(() => {
-            if (this.isActive) {
-                this.disableObjectEvents();
-            }
-        }, 100);
-    }
-
-    disableObjectEvents() {
-        // Disable events on all tracked objects
-        this.originalEventedStates.forEach((originalEvented, obj) => {
-            obj.set('evented', false);
-        });
-        this.canvas.renderAll();
     }
 
     onMouseDown(o) {
         if (!this.isActive) return;
-        
+
         // Don't start drawing if this is a pan gesture (Alt, Shift, or touch gesture)
         const evt = o.e;
         if (evt.altKey || evt.shiftKey || this.canvas.isGestureActive) {
             console.log('[LineTool] Ignoring mousedown - modifier key or gesture detected');
             return;
         }
-        
-        // If Ctrl is pressed, temporarily enable object events for selection
-        if (evt.ctrlKey || evt.metaKey) {
-            console.log('[LineTool] Ctrl+click detected - enabling selection temporarily');
-            this.enableObjectEventsForSelection();
-            return; // Let CanvasManager handle the selection
-        }
-        
-        // Drawing only - no selection logic needed
+
+        // Strict draw-only mode: all modifier keys just ignore the click
+        // Ctrl, Shift, Alt are already handled above or reserved for other features
         
         // Temporarily disable selection to prevent new line from being selected during drawing
         this.canvas.selection = false;

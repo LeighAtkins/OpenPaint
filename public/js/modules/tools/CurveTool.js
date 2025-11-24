@@ -28,24 +28,58 @@ export class CurveTool extends BaseTool {
             return;
         }
         // Disable group selection box while drawing to prevent accidental selection
-        // Individual object selection is handled by onMouseDown check
         this.canvas.selection = false;
+
+        // Disable events on all objects to preserve crosshair cursor and prevent dragging
+        // Store original evented and selectable states for full restoration
+        this.originalEventedStates = new Map();
+        this.originalSelectableStates = new Map();
+        this.canvas.forEachObject(obj => {
+            // Skip label text objects (they should remain non-interactive)
+            if (obj.evented === false && obj.selectable === false) {
+                return;
+            }
+            this.originalEventedStates.set(obj, obj.evented);
+            this.originalSelectableStates.set(obj, obj.selectable);
+            obj.set('evented', false);
+            obj.set('selectable', false);
+        });
+
+        // Listen for new objects being added and disable their events
+        this.onObjectAdded = this.onObjectAdded.bind(this);
+        this.canvas.on('object:added', this.onObjectAdded);
+
         this.canvas.defaultCursor = 'crosshair';
         this.canvas.on('mouse:down', this.onMouseDown);
         this.canvas.on('mouse:move', this.onMouseMove);
         this.canvas.on('mouse:dblclick', this.onDoubleClick);
-        
+
         // Listen for ESC key to cancel
         document.addEventListener('keydown', this.onKeyDown);
-        
+
         console.log(`CurveTool activated: color=${this.strokeColor}, width=${this.strokeWidth}`);
     }
 
     deactivate() {
         super.deactivate();
         this.cancelDrawing();
+
+        // Restore original evented and selectable states for all objects
+        if (this.originalEventedStates) {
+            this.originalEventedStates.forEach((originalEvented, obj) => {
+                const originalSelectable = this.originalSelectableStates.get(obj);
+                obj.set('evented', originalEvented);
+                obj.set('selectable', originalSelectable !== undefined ? originalSelectable : true);
+            });
+            this.originalEventedStates.clear();
+        }
+        if (this.originalSelectableStates) {
+            this.originalSelectableStates.clear();
+        }
+
         this.canvas.selection = true;
         this.canvas.defaultCursor = 'default';
+        this.canvas.off('object:added', this.onObjectAdded);
         this.canvas.off('mouse:down', this.onMouseDown);
         this.canvas.off('mouse:move', this.onMouseMove);
         this.canvas.off('mouse:dblclick', this.onDoubleClick);
@@ -93,6 +127,20 @@ export class CurveTool extends BaseTool {
         }
         
         this.canvas.renderAll();
+    }
+
+    onObjectAdded(e) {
+        const obj = e.target;
+        // Disable events on newly added objects (except label text)
+        if (obj && (obj.evented !== false || obj.selectable !== false)) {
+            // Store the original states if we haven't seen this object before
+            if (!this.originalEventedStates.has(obj)) {
+                this.originalEventedStates.set(obj, obj.evented); // Store current evented state
+                this.originalSelectableStates.set(obj, obj.selectable); // Store current selectable state
+            }
+            obj.set('evented', false);
+            obj.set('selectable', false);
+        }
     }
 
     onMouseMove(o) {
