@@ -1,19 +1,31 @@
 import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
 import prettier from 'eslint-config-prettier';
+import globals from 'globals';
 
 export default tseslint.config(
-  js.configs.recommended,
-  ...tseslint.configs.strictTypeChecked,
-  ...tseslint.configs.stylisticTypeChecked,
-  prettier,
   {
+    ignores: [
+      'dist/',
+      'node_modules/',
+      '*.config.js',
+      'coverage/',
+      'supabase/',
+      '**/__tests__/**',
+    ],
+  },
+  js.configs.recommended,
+  {
+    files: ['**/*.ts', '**/*.tsx'],
+    extends: [
+      ...tseslint.configs.strictTypeChecked,
+      ...tseslint.configs.stylisticTypeChecked,
+    ],
     languageOptions: {
       ecmaVersion: 'latest',
       sourceType: 'module',
       parserOptions: {
         project: ['./tsconfig.json', './tsconfig.node.json'],
-        tsconfigRootDir: import.meta.dirname,
       },
     },
     rules: {
@@ -21,7 +33,7 @@ export default tseslint.config(
       '@typescript-eslint/explicit-function-return-type': 'warn',
       '@typescript-eslint/explicit-module-boundary-types': 'warn',
       '@typescript-eslint/no-explicit-any': 'error',
-      '@typescript-eslint/no-unused-vars': ['error', { 
+      '@typescript-eslint/no-unused-vars': ['error', {
         argsIgnorePattern: '^_',
         varsIgnorePattern: '^_',
       }],
@@ -35,21 +47,29 @@ export default tseslint.config(
         fixStyle: 'inline-type-imports',
       }],
       '@typescript-eslint/consistent-type-exports': 'error',
-      
-      // Best practices
+    },
+  },
+  {
+    files: ['**/*.js', '**/*.jsx'],
+    extends: [tseslint.configs.disableTypeChecked],
+    languageOptions: {
+      globals: {
+        ...globals.browser,
+        ...globals.node,
+      },
+    },
+    rules: {
+      // JS specific overrides if needed
+    },
+  },
+  {
+    // General rules for all files
+    rules: {
       'no-console': ['warn', { allow: ['warn', 'error'] }],
       'prefer-const': 'error',
       'no-var': 'error',
       'eqeqeq': ['error', 'always'],
     },
   },
-  {
-    ignores: [
-      'dist/',
-      'node_modules/',
-      '*.config.js',
-      'coverage/',
-      'supabase/',
-    ],
-  }
+  prettier,
 );
