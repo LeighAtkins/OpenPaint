@@ -94,13 +94,13 @@ export interface FabricGroup extends FabricObjectBase {
   objects: FabricObject[];
 }
 
-export type FabricObject = 
-  | FabricPath 
-  | FabricRect 
-  | FabricCircle 
-  | FabricImage 
-  | FabricText 
-  | FabricGroup 
+export type FabricObject =
+  | FabricPath
+  | FabricRect
+  | FabricCircle
+  | FabricImage
+  | FabricText
+  | FabricGroup
   | (FabricObjectBase & { type: string });
 
 export interface FabricCanvasJSON {
@@ -114,7 +114,7 @@ export interface FabricCanvasJSON {
 // CANVAS STATE TYPES
 // ═══════════════════════════════════════════════════════════════════════════
 
-export type ToolType = 
+export type ToolType =
   | 'select'
   | 'pencil'
   | 'brush'
@@ -183,30 +183,96 @@ export interface CanvasEvent<T = unknown> {
 export enum ErrorCode {
   // Supabase errors
   SUPABASE_NOT_CONFIGURED = 'SUPABASE_NOT_CONFIGURED',
-  SUPABASE_AUTH_ERROR = 'SUPABASE_AUTH_ERROR',
-  SUPABASE_QUERY_ERROR = 'SUPABASE_QUERY_ERROR',
-  SUPABASE_STORAGE_ERROR = 'SUPABASE_STORAGE_ERROR',
-  
+  SUPABASE_CONNECTION_FAILED = 'SUPABASE_CONNECTION_FAILED',
+  DATABASE_ERROR = 'DATABASE_ERROR',
+  STORAGE_ERROR = 'STORAGE_ERROR',
+
+  // Authentication errors
+  AUTH_ERROR = 'AUTH_ERROR',
+  INVALID_CREDENTIALS = 'INVALID_CREDENTIALS',
+  EMAIL_NOT_CONFIRMED = 'EMAIL_NOT_CONFIRMED',
+  EMAIL_ALREADY_EXISTS = 'EMAIL_ALREADY_EXISTS',
+
   // Canvas errors
   CANVAS_NOT_FOUND = 'CANVAS_NOT_FOUND',
   CANVAS_SAVE_FAILED = 'CANVAS_SAVE_FAILED',
   CANVAS_LOAD_FAILED = 'CANVAS_LOAD_FAILED',
   CANVAS_INVALID_STATE = 'CANVAS_INVALID_STATE',
-  
+
   // Validation errors
   VALIDATION_ERROR = 'VALIDATION_ERROR',
   INVALID_INPUT = 'INVALID_INPUT',
-  
+  OPTIMISTIC_LOCK_ERROR = 'OPTIMISTIC_LOCK_ERROR',
+
   // Generic
   UNKNOWN_ERROR = 'UNKNOWN_ERROR',
   NETWORK_ERROR = 'NETWORK_ERROR',
 }
 
-export interface AppError {
-  code: ErrorCode;
-  message: string;
-  details?: unknown;
-  cause?: Error;
+/**
+ * Application error class with structured error handling
+ */
+export class AppError extends Error {
+  public readonly code: ErrorCode;
+  public readonly details?: unknown;
+  public readonly cause?: Error;
+
+  constructor(code: ErrorCode, message: string, details?: unknown, cause?: Error) {
+    super(message);
+    this.name = 'AppError';
+    this.code = code;
+    this.details = details;
+    this.cause = cause;
+
+    // Maintains proper stack trace for where our error was thrown (only available on V8)
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, AppError);
+    }
+  }
+
+  /**
+   * Create a JSON representation of the error
+   */
+  toJSON(): Record<string, unknown> {
+    return {
+      name: this.name,
+      code: this.code,
+      message: this.message,
+      details: this.details,
+      stack: this.stack,
+    };
+  }
+
+  /**
+   * Check if this error has a specific error code
+   */
+  hasCode(code: ErrorCode): boolean {
+    return this.code === code;
+  }
+
+  /**
+   * Create a user-friendly error message
+   */
+  getUserMessage(): string {
+    switch (this.code) {
+      case ErrorCode.SUPABASE_NOT_CONFIGURED:
+        return 'Application is not configured correctly. Please contact support.';
+      case ErrorCode.INVALID_CREDENTIALS:
+        return 'Invalid email or password. Please try again.';
+      case ErrorCode.EMAIL_NOT_CONFIRMED:
+        return 'Please check your email and confirm your account before signing in.';
+      case ErrorCode.EMAIL_ALREADY_EXISTS:
+        return 'An account with this email already exists. Try signing in instead.';
+      case ErrorCode.VALIDATION_ERROR:
+        return this.message; // Validation messages are already user-friendly
+      case ErrorCode.CANVAS_SAVE_FAILED:
+        return 'Failed to save your work. Please try again.';
+      case ErrorCode.STORAGE_ERROR:
+        return 'Failed to upload file. Please check your connection and try again.';
+      default:
+        return 'An unexpected error occurred. Please try again.';
+    }
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════

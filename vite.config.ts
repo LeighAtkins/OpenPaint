@@ -21,7 +21,7 @@ export default defineConfig(({ mode }) => {
       //   },
       // }),
     ],
-    
+
     // Serve static files from public directory
     publicDir: 'public',
 
@@ -55,15 +55,22 @@ export default defineConfig(({ mode }) => {
       rollupOptions: {
         output: {
           manualChunks: {
-            'supabase': ['@supabase/supabase-js'],
+            supabase: ['@supabase/supabase-js'],
           },
         },
         external: ['fabric'], // Fabric.js is loaded via CDN
       },
     },
-    
+
     optimizeDeps: {
-      exclude: ['fabric'], // Don't try to bundle Fabric.js
+      exclude: [
+        'fabric', // Don't try to bundle Fabric.js
+        // Exclude public JS files from dependency scanning
+        '/js/modules/main.js',
+        'js/modules/main.js',
+        '/js/typescript-bridge.js',
+        'js/typescript-bridge.js',
+      ],
     },
 
     server: {
@@ -83,13 +90,7 @@ export default defineConfig(({ mode }) => {
       coverage: {
         provider: 'v8',
         reporter: ['text', 'json', 'html'],
-        exclude: [
-          'node_modules/',
-          'src/__tests__/',
-          '**/*.d.ts',
-          '**/*.test.ts',
-          '**/*.spec.ts',
-        ],
+        exclude: ['node_modules/', 'src/__tests__/', '**/*.d.ts', '**/*.test.ts', '**/*.spec.ts'],
       },
     },
   };
