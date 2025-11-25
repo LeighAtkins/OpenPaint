@@ -5,7 +5,7 @@ import { ProjectManager } from './ProjectManager.js';
 import { HistoryManager } from './HistoryManager.js';
 import { StrokeMetadataManager } from './StrokeMetadataManager.js';
 import { setupDebugHelpers } from './DebugHelpers.js';
-import { TagManager } from './TagManager.js?v=cachebust15';
+import { TagManager } from './TagManager.js';
 import { UploadManager } from './UploadManager.js';
 import { MeasurementSystem } from './MeasurementSystem.js';
 import { MeasurementDialog } from './MeasurementDialog.js';
@@ -33,40 +33,40 @@ class App {
 
     init() {
         console.log('OpenPaint (Fabric.js) Initializing...');
-        
+
         // Wait a tick to ensure DOM is fully ready
         setTimeout(() => {
             // Initialize managers
             this.canvasManager.init();
-            
+
             // Resize immediately after init
             this.canvasManager.resize();
-            
+
             // Initialize other managers
             this.toolManager.init();
             this.historyManager.init();
             this.projectManager.init();
             this.uploadManager.init();
             this.arrowManager.init();
-            
-        // Initialize drawing mode toggle button label
-        const drawingModeToggle = document.getElementById('drawingModeToggle');
-        if (drawingModeToggle) {
-            this.updateToggleLabel(drawingModeToggle, 'Straight Line');
-        }
-        
-        // Set default color to bright blue and activate first color button
-        const firstColorBtn = document.querySelector('[data-color="#3b82f6"]');
-        if (firstColorBtn) {
-            firstColorBtn.classList.add('active', 'transform', 'scale-110');
-        }
-        
-        // Initialize color picker to default color
-        const colorPicker = document.getElementById('colorPicker');
-        if (colorPicker) {
-            colorPicker.value = '#3b82f6';
-        }
-            
+
+            // Initialize drawing mode toggle button label
+            const drawingModeToggle = document.getElementById('drawingModeToggle');
+            if (drawingModeToggle) {
+                this.updateToggleLabel(drawingModeToggle, 'Straight Line');
+            }
+
+            // Set default color to bright blue and activate first color button
+            const firstColorBtn = document.querySelector('[data-color="#3b82f6"]');
+            if (firstColorBtn) {
+                firstColorBtn.classList.add('active', 'transform', 'scale-110');
+            }
+
+            // Initialize color picker to default color
+            const colorPicker = document.getElementById('colorPicker');
+            if (colorPicker) {
+                colorPicker.value = '#3b82f6';
+            }
+
             // Setup label rendering on object changes
             if (this.canvasManager.fabricCanvas) {
                 this.canvasManager.fabricCanvas.on('object:added', (e) => {
@@ -77,8 +77,8 @@ class App {
                         const activeTool = this.toolManager?.activeTool;
                         const isDrawingTool = activeTool &&
                             (activeTool.constructor.name === 'LineTool' ||
-                             activeTool.constructor.name === 'CurveTool' ||
-                             activeTool.constructor.name === 'ArrowTool');
+                                activeTool.constructor.name === 'CurveTool' ||
+                                activeTool.constructor.name === 'ArrowTool');
 
                         // Only make interactive if NOT in drawing mode
                         if (!isDrawingTool) {
@@ -97,20 +97,20 @@ class App {
                     }
                 });
             }
-            
+
             // Setup UI bindings
             this.setupUI();
-            
+
             // Add Tab key handler to cycle through drawing modes
             this.setupKeyboardShortcuts();
-            
+
             // Add resize listener
             window.addEventListener('resize', () => {
                 this.canvasManager.resize();
             });
-            
+
             console.log('OpenPaint initialization complete');
-            
+
             // Debug: Verify canvas is accessible
             const canvasEl = document.getElementById('canvas');
             if (canvasEl) {
@@ -125,10 +125,10 @@ class App {
     // Helper function to update properties of selected strokes
     updateSelectedStrokes(property, value) {
         if (!this.canvasManager.fabricCanvas) return;
-        
+
         const activeObjects = this.canvasManager.fabricCanvas.getActiveObjects();
         if (activeObjects.length === 0) return;
-        
+
         let updatedCount = 0;
         activeObjects.forEach(obj => {
             // Only update drawable strokes (lines, paths, and curves)
@@ -142,7 +142,7 @@ class App {
                 updatedCount++;
             }
         });
-        
+
         if (updatedCount > 0) {
             this.canvasManager.fabricCanvas.requestRenderAll();
             console.log(`Updated ${property} for ${updatedCount} selected strokes`);
@@ -153,7 +153,7 @@ class App {
         // Undo/Redo
         const undoBtn = document.getElementById('undoBtn');
         const redoBtn = document.getElementById('redoBtn');
-        
+
         if (undoBtn) undoBtn.addEventListener('click', () => this.historyManager.undo());
         if (redoBtn) redoBtn.addEventListener('click', () => this.historyManager.redo());
 
@@ -161,7 +161,7 @@ class App {
         const drawingModeToggle = document.getElementById('drawingModeToggle');
         const textModeToggle = document.getElementById('textModeToggle');
         const clearBtn = document.getElementById('clear');
-        
+
         if (drawingModeToggle) {
             drawingModeToggle.addEventListener('click', () => {
                 // Cycle through: Straight Line -> Curved Line -> Select -> Straight Line
@@ -181,13 +181,13 @@ class App {
                 }
             });
         }
-        
+
         if (textModeToggle) {
             textModeToggle.addEventListener('click', () => {
                 this.toolManager.selectTool('text');
             });
         }
-        
+
         // Arrows - select Arrow tool
         const startArrowBtn = document.getElementById('startArrow');
         const endArrowBtn = document.getElementById('endArrow');
@@ -217,34 +217,34 @@ class App {
         // Color Picker
         const colorPicker = document.getElementById('colorPicker');
         const colorButtons = document.querySelectorAll('[data-color]');
-        
+
         if (colorPicker) {
             colorPicker.addEventListener('input', (e) => {
                 // Update tool settings for new strokes
                 this.toolManager.updateSettings({ color: e.target.value });
-                
+
                 // Update selected strokes if any are selected
                 this.updateSelectedStrokes('color', e.target.value);
             });
         }
-        
+
         colorButtons.forEach(btn => {
             btn.addEventListener('click', () => {
                 const color = btn.getAttribute('data-color');
-                
+
                 // Update tool settings for new strokes
                 this.toolManager.updateSettings({ color: color });
                 if (colorPicker) colorPicker.value = color;
-                
+
                 // Update selected strokes if any are selected
                 this.updateSelectedStrokes('color', color);
-                
+
                 // Update active state
                 colorButtons.forEach(b => b.classList.remove('active', 'transform', 'scale-110'));
                 btn.classList.add('active', 'transform', 'scale-110');
             });
         });
-        
+
         // Line width/thickness control
         const brushSizeSelect = document.getElementById('brushSize');
         if (brushSizeSelect) {
@@ -258,7 +258,7 @@ class App {
                 this.updateSelectedStrokes('strokeWidth', width);
             });
         }
-        
+
         // Dash style control (dotted lines)
         const dashStyleSelect = document.getElementById('dashStyleSelect');
         if (dashStyleSelect) {
@@ -273,14 +273,14 @@ class App {
                     'dotted': [2, 5],
                     'custom': [5, 5]
                 };
-                
+
                 const pattern = patterns[style] || [];
-                
+
                 // Apply to all tools that support dash patterns
                 if (this.toolManager.activeTool && this.toolManager.activeTool.setDashPattern) {
                     this.toolManager.activeTool.setDashPattern(pattern);
                 }
-                
+
                 // Apply to all line-based tools
                 if (this.toolManager.tools.line) {
                     this.toolManager.tools.line.setDashPattern(pattern);
@@ -293,7 +293,7 @@ class App {
                 }
             });
         }
-        
+
         // Image fit mode control
         const fitModeSelect = document.getElementById('fitModeSelect');
         if (fitModeSelect) {
@@ -303,77 +303,77 @@ class App {
                 this.applyImageFitMode(fitMode);
             });
         }
-        
+
         // Setup keyboard shortcuts and help system
         this.setupKeyboardControls();
-        
+
         // Create help hint
         this.createHelpHint();
-        
+
         // Setup unit toggle buttons
         this.setupUnitToggle();
-        
+
         // Make metadata manager available globally for compatibility
         window.metadataManager = this.metadataManager;
         window.vectorStrokesByImage = this.metadataManager.vectorStrokesByImage;
         window.strokeVisibilityByImage = this.metadataManager.strokeVisibilityByImage;
         window.strokeLabelVisibility = this.metadataManager.strokeLabelVisibility;
         window.strokeMeasurements = this.metadataManager.strokeMeasurements;
-        
+
         // Make project manager available globally for image switching
         window.projectManager = this.projectManager;
         window.app = this;
-        
+
         // Setup debug helpers
         setupDebugHelpers(this);
     }
-    
+
     setupUnitToggle() {
         const unitToggle = document.getElementById('unitToggleBtn');
         const unitToggleSecondary = document.getElementById('unitToggleBtnSecondary');
         const unitSelector = document.getElementById('unitSelector');
-        
+
         // Initialize currentUnit state
         this.currentUnit = 'inch';
-        
+
         // Sync initial state
         if (unitSelector) {
             // Force reset to inch to avoid browser form restoration issues
             unitSelector.value = 'inch';
-            
+
             const unitLabel = 'inches';
             if (unitToggle) unitToggle.textContent = unitLabel;
             if (unitToggleSecondary) unitToggleSecondary.textContent = unitLabel;
         }
-        
+
         const toggleUnits = () => {
             // Toggle between inch and cm using our state
             this.currentUnit = this.currentUnit === 'inch' ? 'cm' : 'inch';
-            
+
             // Sync selector if it exists
             if (unitSelector) {
                 unitSelector.value = this.currentUnit;
             }
-            
+
             // Update button labels
             const unitLabel = this.currentUnit === 'inch' ? 'inches' : 'cm';
             if (unitToggle) unitToggle.textContent = unitLabel;
             if (unitToggleSecondary) unitToggleSecondary.textContent = unitLabel;
-            
+
             // Refresh all measurement displays
             if (this.metadataManager) {
                 this.metadataManager.refreshAllMeasurements();
             }
         };
-        
+
         if (unitToggle) {
             unitToggle.addEventListener('click', toggleUnits);
         }
-        
+
         if (unitToggleSecondary) {
             unitToggleSecondary.addEventListener('click', toggleUnits);
         }
-        
+
         // Also listen for direct changes to unit selector
         if (unitSelector) {
             unitSelector.addEventListener('change', () => {
@@ -381,33 +381,33 @@ class App {
                 const unitLabel = this.currentUnit === 'inch' ? 'inches' : 'cm';
                 if (unitToggle) unitToggle.textContent = unitLabel;
                 if (unitToggleSecondary) unitToggleSecondary.textContent = unitLabel;
-                
+
                 if (this.metadataManager) {
                     this.metadataManager.refreshAllMeasurements();
                 }
             });
         }
-        
+
         // Setup Show Measurements toggle
         const showMeasurementsCheckbox = document.getElementById('toggleShowMeasurements');
         if (showMeasurementsCheckbox) {
             showMeasurementsCheckbox.addEventListener('change', (e) => {
                 const showMeasurements = e.target.checked;
                 console.log(`[ShowMeasurements] Toggle: ${showMeasurements}`);
-                
+
                 // Update all tags to show/hide measurements
                 if (this.tagManager) {
                     this.tagManager.setShowMeasurements(showMeasurements);
                 }
             });
-            
+
             // Set initial state
             if (this.tagManager) {
                 this.tagManager.setShowMeasurements(showMeasurementsCheckbox.checked);
             }
         }
     }
-    
+
     setupKeyboardShortcuts() {
         // Tab key cycles through drawing modes: Straight Line -> Curved Line -> Select -> Straight Line
         // Tab key cycles through drawing modes: Straight Line -> Curved Line -> Select -> Straight Line
@@ -419,25 +419,25 @@ class App {
             if ((e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) && !isMeasurement) {
                 return;
             }
-            
+
             // Don't cycle if text tool is active (user might be typing)
             if (this.toolManager.activeTool === this.toolManager.tools.text) {
                 return;
             }
-            
+
             if (e.key === 'Tab') {
                 // Prevent default tab behavior (focus switching)
                 e.preventDefault();
                 e.stopPropagation();
-                
+
                 // Blur any active element to ensure focus doesn't get stuck
                 if (document.activeElement && document.activeElement !== document.body) {
                     document.activeElement.blur();
                 }
-                
+
                 const currentTool = this.toolManager.activeTool;
                 const drawingModeToggle = document.getElementById('drawingModeToggle');
-                
+
                 if (currentTool === this.toolManager.tools.line) {
                     // Straight Line -> Curved Line
                     this.toolManager.selectTool('curve');
@@ -460,7 +460,7 @@ class App {
             }
         }, true); // Use capture phase
     }
-    
+
     updateToggleLabel(button, text) {
         const longSpan = button.querySelector('.label-long');
         const shortSpan = button.querySelector('.label-short');
@@ -478,44 +478,44 @@ class App {
             }
         }
     }
-    
+
     applyImageFitMode(fitMode) {
         const currentView = this.projectManager.views[this.projectManager.currentViewId];
-        
+
         if (!currentView || !currentView.image) {
             console.warn('No current image available for fit mode');
             return;
         }
-        
+
         // Simply call the project manager's setBackgroundImage with the fit mode
         this.projectManager.setBackgroundImage(currentView.image, fitMode);
     }
-    
+
     setupKeyboardControls() {
         // Create +/- buttons for resizing capture frame
         this.captureFrameScale = 1.0;
-        
+
         document.addEventListener('keydown', (e) => {
             // Don't interfere if typing in input fields
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) {
                 return;
             }
-            
+
             // Handle capture frame resize shortcuts
             let scaleChange = 0;
-            
+
             if (e.key === '+' || e.key === '=') {
                 scaleChange = 0.1; // Increase by 10%
             } else if (e.key === '-') {
                 scaleChange = -0.1; // Decrease by 10%
             }
-            
+
             if (scaleChange !== 0) {
                 e.preventDefault();
                 this.resizeCaptureFrameProportionally(scaleChange);
                 return;
             }
-            
+
             // Handle help menu toggle
             if (e.key === 'h' || e.key === 'H') {
                 e.preventDefault();
@@ -523,57 +523,57 @@ class App {
             }
         });
     }
-    
+
     resizeCaptureFrameProportionally(scaleChange) {
         const captureFrame = document.getElementById('captureFrame');
         if (!captureFrame) return;
-        
+
         this.captureFrameScale = Math.max(0.2, Math.min(3.0, this.captureFrameScale + scaleChange));
-        
+
         const baseWidth = 800;
         const baseHeight = 600;
         const aspectRatio = 4 / 3;
-        
+
         const newWidth = baseWidth * this.captureFrameScale;
         const newHeight = baseHeight * this.captureFrameScale;
-        
+
         // Ensure frame fits within viewport
         const maxWidth = window.innerWidth * 0.9;
         const maxHeight = window.innerHeight * 0.9;
-        
+
         let frameWidth = newWidth;
         let frameHeight = newHeight;
-        
+
         if (frameWidth > maxWidth) {
             frameWidth = maxWidth;
             frameHeight = frameWidth / aspectRatio;
             this.captureFrameScale = frameWidth / baseWidth;
         }
-        
+
         if (frameHeight > maxHeight) {
             frameHeight = maxHeight;
             frameWidth = frameHeight * aspectRatio;
             this.captureFrameScale = frameHeight / baseHeight;
         }
-        
+
         // Center the frame
         const left = (window.innerWidth - frameWidth) / 2;
         const top = (window.innerHeight - frameHeight) / 2;
-        
+
         // Apply the new size and position
         captureFrame.style.left = `${left}px`;
         captureFrame.style.top = `${top}px`;
         captureFrame.style.width = `${frameWidth}px`;
         captureFrame.style.height = `${frameHeight}px`;
-        
+
         // Save the new capture frame position for the current image
         if (window.saveCurrentCaptureFrameForLabel) {
             window.saveCurrentCaptureFrameForLabel(this.projectManager.currentViewId);
         }
-        
+
         console.log(`[CaptureFrame] Proportional resize: ${(this.captureFrameScale * 100).toFixed(0)}% (${frameWidth.toFixed(0)}x${frameHeight.toFixed(0)})`);
     }
-    
+
     createHelpHint() {
         // Create help hint in bottom right corner
         const helpHint = document.createElement('div');
@@ -592,7 +592,7 @@ class App {
             z-index: 1000;
             pointer-events: none;
         `;
-        
+
         // Style the kbd element
         const kbd = helpHint.querySelector('kbd');
         if (kbd) {
@@ -605,10 +605,10 @@ class App {
                 font-weight: bold;
             `;
         }
-        
+
         document.body.appendChild(helpHint);
     }
-    
+
     createHelpMenu() {
         const helpOverlay = document.createElement('div');
         helpOverlay.id = 'helpOverlay';
@@ -624,7 +624,7 @@ class App {
             align-items: center;
             justify-content: center;
         `;
-        
+
         const helpMenu = document.createElement('div');
         helpMenu.style.cssText = `
             background: white;
@@ -636,7 +636,7 @@ class App {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
         `;
-        
+
         helpMenu.innerHTML = `
             <h2 style="margin-top: 0; margin-bottom: 20px; color: #333; font-size: 24px; font-weight: 600;">Keyboard Shortcuts</h2>
             
@@ -676,7 +676,7 @@ class App {
                 ">Close</button>
             </div>
         `;
-        
+
         // Style all kbd elements
         const kbdElements = helpMenu.querySelectorAll('kbd');
         kbdElements.forEach(kbd => {
@@ -691,23 +691,23 @@ class App {
                 font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
             `;
         });
-        
+
         helpOverlay.appendChild(helpMenu);
         document.body.appendChild(helpOverlay);
-        
+
         // Close help menu handlers
         const closeBtn = helpMenu.querySelector('#closeHelp');
         closeBtn.addEventListener('click', () => {
             document.body.removeChild(helpOverlay);
         });
-        
+
         // Close on overlay click
         helpOverlay.addEventListener('click', (e) => {
             if (e.target === helpOverlay) {
                 document.body.removeChild(helpOverlay);
             }
         });
-        
+
         // Close on Escape key
         const handleEscape = (e) => {
             if (e.key === 'Escape') {
@@ -717,7 +717,7 @@ class App {
         };
         document.addEventListener('keydown', handleEscape);
     }
-    
+
     toggleHelpMenu() {
         const existingOverlay = document.getElementById('helpOverlay');
         if (existingOverlay) {

@@ -2,20 +2,24 @@
   "compilerOptions": {
     // Target modern browsers
     "target": "ES2022",
-    "lib": ["ES2022", "DOM", "DOM.Iterable", "WebWorker"],
-    "types": ["vite/client"],
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable",
+      "WebWorker"
+    ],
+    "types": [
+      "vite/client"
+    ],
     "module": "ESNext",
-    "moduleResolution": "bundler",
+    "moduleResolution": "node",
     "useDefineForClassFields": true,
-    
     // Output settings
     "noEmit": true,
     "isolatedModules": true,
-    "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-    
     // STRICT MODE - ALL THE WAY TO 11
     "strict": true,
     "noImplicitAny": true,
@@ -26,7 +30,6 @@
     "noImplicitThis": true,
     "useUnknownInCatchVariables": true,
     "alwaysStrict": true,
-    
     // Additional strict checks
     "noUnusedLocals": true,
     "noUnusedParameters": true,
@@ -37,31 +40,50 @@
     "noImplicitOverride": true,
     "noPropertyAccessFromIndexSignature": true,
     "forceConsistentCasingInFileNames": true,
-    
     // Interop
     "skipLibCheck": true,
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
-    
     // Path mapping
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"],
-      "@/types": ["src/types/index"],
-      "@/types/*": ["src/types/*"],
-      "@/services": ["src/services/index"],
-      "@/services/*": ["src/services/*"],
-      "@/utils": ["src/utils/index"],
-      "@/utils/*": ["src/utils/*"],
-      "@/stores/*": ["src/stores/*"],
-      "@/constants": ["src/constants/index"],
-      "@/hooks/*": ["src/hooks/*"]
+      "@/*": [
+        "src/*"
+      ],
+      "@/types": [
+        "src/types/index"
+      ],
+      "@/types/*": [
+        "src/types/*"
+      ],
+      "@/services": [
+        "src/services/index"
+      ],
+      "@/services/*": [
+        "src/services/*"
+      ],
+      "@/utils": [
+        "src/utils/index"
+      ],
+      "@/utils/*": [
+        "src/utils/*"
+      ],
+      "@/stores/*": [
+        "src/stores/*"
+      ],
+      "@/constants": [
+        "src/constants/index"
+      ],
+      "@/hooks/*": [
+        "src/hooks/*"
+      ]
     },
-    
     // Plugins
     "plugins": [
-      { "name": "typescript-plugin-css-modules" }
+      {
+        "name": "typescript-plugin-css-modules"
+      }
     ]
   },
   "include": [
@@ -76,6 +98,8 @@
     "**/*.test.ts"
   ],
   "references": [
-    { "path": "./tsconfig.node.json" }
+    {
+      "path": "./tsconfig.node.json"
+    }
   ]
 }
