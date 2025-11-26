@@ -1,10 +1,9 @@
 // Measurement rendering service for canvas visualization
 import { fabricIntegrationService } from './fabric-integration.service';
-import { canvasStateService } from './canvas-state.service';
-import { measurementsService } from './measurements.service';
+import { measurementsService, type CreateMeasurementData } from './measurements.service';
 import { Result } from '@/utils/result';
 import { AppError, ErrorCode } from '@/types/app.types';
-import type { MeasurementData, CreateMeasurementData } from '@/types/supabase.types';
+import type { MeasurementData } from '@/types/supabase.types';
 import type { Position } from '@/types/app.types';
 
 // Measurement visual style
@@ -83,7 +82,6 @@ export class MeasurementRenderingService {
     line: {
       stroke: '#ff0000',
       strokeWidth: 2,
-      strokeDashArray: undefined,
       opacity: 1,
     },
     label: {
@@ -313,7 +311,12 @@ export class MeasurementRenderingService {
           start: startPoint,
           end: startPoint, // Will be updated as user drags
         },
-        style: this.DEFAULT_STYLE.line,
+        style: {
+          color: this.DEFAULT_STYLE.line.stroke,
+          strokeWidth: this.DEFAULT_STYLE.line.strokeWidth,
+          fontSize: this.DEFAULT_STYLE.label.fontSize,
+          labelPosition: 'above' as const,
+        },
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
@@ -467,7 +470,7 @@ export class MeasurementRenderingService {
       const interactionState = this.interactionStates.get(canvasKey);
       if (interactionState) {
         interactionState.isCreating = false;
-        interactionState.activeHandle = undefined;
+        delete interactionState.activeHandle;
       }
 
       return Result.ok(createResult.data);
@@ -498,7 +501,7 @@ export class MeasurementRenderingService {
       const interactionState = this.interactionStates.get(canvasKey);
       if (interactionState) {
         interactionState.isCreating = false;
-        interactionState.activeHandle = undefined;
+        delete interactionState.activeHandle;
       }
 
       return Result.ok(true);
@@ -548,7 +551,9 @@ export class MeasurementRenderingService {
       }
 
       // Remove from our tracking
-      measurementMap.delete(measurementId);
+      if (measurementMap) {
+        measurementMap.delete(measurementId);
+      }
 
       fabricCanvas.renderAll();
       return Result.ok(true);
@@ -859,7 +864,7 @@ export class MeasurementRenderingService {
 
       // Count by type (would need measurement type from stored data)
       // For now, assume all are line measurements
-      stats.measurementTypes.line = measurements.length;
+      stats.measurementTypes['line'] = measurements.length;
 
       return Result.ok(stats);
     } catch (error) {

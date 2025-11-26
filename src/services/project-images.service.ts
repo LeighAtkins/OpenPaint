@@ -1,14 +1,13 @@
 // Project image management service
-import { SupabaseService } from './supabase.service';
-import { storageService } from './storage.service';
-import { authService } from './auth.service';
-import { projectService } from './project.service';
-import { DATABASE_TABLES, STORAGE_BUCKETS } from '@/config/supabase.config';
+import { SupabaseService } from './supabase/client';
+import { storageService } from './supabase/storage.service';
+import { authService } from './auth/authService';
+import { projectService } from './supabase/project.service';
+import { DATABASE_TABLES } from '@/config/supabase.config';
 import { Result } from '@/utils/result';
 import { AppError, ErrorCode } from '@/types/app.types';
 import type {
   ProjectImageRow,
-  ProjectImageInsert,
   ProjectImageUpdate,
   ImageData,
   ImageMetadata,
@@ -111,7 +110,7 @@ export class ProjectImagesService extends SupabaseService {
       // Insert image record
       const insertResult = await this.insert<ProjectImageRow>(
         DATABASE_TABLES.PROJECT_IMAGES,
-        uploadResult.data
+        uploadResult.data as any
       );
 
       if (!insertResult.success) {
@@ -183,7 +182,10 @@ export class ProjectImagesService extends SupabaseService {
 
       // Upload files sequentially to avoid overwhelming the system
       for (let i = 0; i < files.length; i++) {
-        const { label, file } = files[i];
+        const fileEntry = files[i];
+        if (!fileEntry) continue;
+
+        const { label, file } = fileEntry;
 
         try {
           onProgress?.(i, files.length, file.name);
@@ -365,8 +367,11 @@ export class ProjectImagesService extends SupabaseService {
       await storageService.deleteFile('PROJECT_IMAGES', image.storage_path);
 
       // Delete thumbnail if exists
-      if (image.metadata?.thumbnailPath) {
-        await storageService.deleteFile('PROJECT_THUMBNAILS', image.metadata.thumbnailPath);
+      if (image.metadata?.['thumbnailPath']) {
+        await storageService.deleteFile(
+          'PROJECT_THUMBNAILS',
+          image.metadata['thumbnailPath'] as string
+        );
       }
 
       // Delete from database
@@ -546,23 +551,23 @@ export class ProjectImagesService extends SupabaseService {
       }
 
       // Get thumbnail URL if available
-      let thumbnailUrl: string | undefined;
-      if (image.metadata?.thumbnailPath) {
+      const resultData: { image: ProjectImageRow; signedUrl: string; thumbnailUrl?: string } = {
+        image,
+        signedUrl: signedUrlResult.data,
+      };
+
+      if (image.metadata?.['thumbnailPath']) {
         const thumbnailResult = await storageService.getSignedUrl(
           'PROJECT_THUMBNAILS',
-          image.metadata.thumbnailPath,
+          image.metadata['thumbnailPath'] as string,
           3600
         );
         if (thumbnailResult.success) {
-          thumbnailUrl = thumbnailResult.data;
+          resultData.thumbnailUrl = thumbnailResult.data;
         }
       }
 
-      return Result.ok({
-        image,
-        signedUrl: signedUrlResult.data,
-        thumbnailUrl,
-      });
+      return Result.ok(resultData);
     } catch (error) {
       return Result.err(
         new AppError(
@@ -748,7 +753,6 @@ export class ProjectImagesService extends SupabaseService {
         const imageData: ImageData = {
           label,
           filename: imageRecord.filename,
-          storageUrl: imageRecord.metadata?.publicUrl,
           width: imageRecord.width,
           height: imageRecord.height,
           objects: [],
@@ -756,10 +760,15 @@ export class ProjectImagesService extends SupabaseService {
           tags: [],
           metadata: {
             uploadedAt: imageRecord.uploaded_at,
+            originalSize: imageRecord.size_bytes,
             processedSize: imageRecord.size_bytes,
-            thumbnailGenerated: !!imageRecord.metadata?.thumbnailUrl,
+            thumbnailGenerated: !!imageRecord.metadata?.['thumbnailUrl'],
           },
         };
+
+        if (imageRecord.metadata?.['publicUrl']) {
+          imageData.storageUrl = imageRecord.metadata['publicUrl'] as string;
+        }
 
         const updatedData: ProjectData = {
           ...project.data,
@@ -801,7 +810,8 @@ export class ProjectImagesService extends SupabaseService {
         // Also remove associated measurements
         const updatedMeasurements = { ...project.data.measurements };
         Object.keys(updatedMeasurements).forEach(measurementId => {
-          if (updatedMeasurements[measurementId].imageLabel === label) {
+          const measurement = updatedMeasurements[measurementId];
+          if (measurement && measurement.imageLabel === label) {
             delete updatedMeasurements[measurementId];
           }
         });

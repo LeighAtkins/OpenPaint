@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { type Result, Result as R } from './result';
-import { type ErrorCode, type AppError } from '@/types/app.types';
+import { AppError, ErrorCode } from '@/types/app.types';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // ZOD SCHEMAS
@@ -60,21 +60,16 @@ export const SaveCanvasPayloadSchema = z.object({
 // VALIDATION HELPERS
 // ═══════════════════════════════════════════════════════════════════════════
 
-export function validate<T>(
-  schema: z.ZodSchema<T>,
-  data: unknown
-): Result<T, AppError> {
+export function validate<T>(schema: z.ZodSchema<T>, data: unknown): Result<T, AppError> {
   const result = schema.safeParse(data);
-  
+
   if (result.success) {
     return R.ok(result.data);
   }
-  
-  return R.err({
-    code: 'VALIDATION_ERROR' as ErrorCode,
-    message: 'Validation failed',
-    details: result.error.flatten(),
-  });
+
+  return R.err(
+    new AppError(ErrorCode.VALIDATION_ERROR, 'Validation failed', result.error.flatten())
+  );
 }
 
 export function validateAsync<T>(

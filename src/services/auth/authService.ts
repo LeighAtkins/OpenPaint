@@ -1,5 +1,5 @@
 // Authentication service with comprehensive user management
-import { SupabaseClient, User, Session, AuthError } from '@supabase/supabase-js';
+import { SupabaseClient, User, Session, AuthError, AuthChangeEvent } from '@supabase/supabase-js';
 import { getSupabaseClient, DATABASE_TABLES, type Database } from '@/config/supabase.config';
 import { Result } from '@/utils/result';
 import { AppError, ErrorCode } from '@/types/app.types';
@@ -82,7 +82,7 @@ export class AuthService {
   private setupAuthListener(): void {
     if (!this.client) return;
 
-    this.client.auth.onAuthStateChange(async (event, session) => {
+    this.client.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session | null) => {
       switch (event) {
         case 'SIGNED_IN':
           if (session?.user) {
@@ -175,10 +175,14 @@ export class AuthService {
         id: user.id,
         email: user.email || '',
         emailConfirmed: user.email_confirmed_at !== null,
-        lastSignInAt: user.last_sign_in_at || undefined,
         createdAt: user.created_at,
-        profile: profile || undefined,
       };
+      if (user.last_sign_in_at) {
+        authUser.lastSignInAt = user.last_sign_in_at;
+      }
+      if (profile) {
+        authUser.profile = profile;
+      }
 
       return Result.ok(authUser);
     } catch (error) {
@@ -211,15 +215,18 @@ export class AuthService {
       }
 
       // Sign up with Supabase Auth
+      const signUpOptions: { emailRedirectTo?: string; data?: object } = {};
+      if (credentials.redirectUrl) {
+        signUpOptions.emailRedirectTo = credentials.redirectUrl;
+      }
+      if (credentials.displayName) {
+        signUpOptions.data = { display_name: credentials.displayName };
+      }
+
       const { data, error } = await clientResult.data.auth.signUp({
         email: credentials.email,
         password: credentials.password,
-        options: {
-          emailRedirectTo: credentials.redirectUrl,
-          data: {
-            display_name: credentials.displayName,
-          },
-        },
+        ...(Object.keys(signUpOptions).length > 0 ? { options: signUpOptions } : {}),
       });
 
       if (error) {
@@ -231,11 +238,15 @@ export class AuthService {
       }
 
       // Create user profile
-      const profileResult = await this.createUserProfile(data.user.id, {
+      const profileData: UserProfileInsert = {
+        id: data.user.id,
         email: credentials.email,
-        display_name: credentials.displayName,
         preferences: DEFAULT_USER_PREFERENCES,
-      });
+      };
+      if (credentials.displayName) {
+        profileData.display_name = credentials.displayName;
+      }
+      const profileResult = await this.createUserProfile(data.user.id, profileData);
 
       if (!profileResult.success) {
         // Log error but don't fail signup
@@ -346,9 +357,15 @@ export class AuthService {
         return Result.err(clientResult.error);
       }
 
-      const { error } = await clientResult.data.auth.resetPasswordForEmail(credentials.email, {
-        redirectTo: credentials.redirectUrl,
-      });
+      const resetOptions: { redirectTo?: string } = {};
+      if (credentials.redirectUrl) {
+        resetOptions.redirectTo = credentials.redirectUrl;
+      }
+
+      const { error } = await clientResult.data.auth.resetPasswordForEmail(
+        credentials.email,
+        Object.keys(resetOptions).length > 0 ? resetOptions : undefined
+      );
 
       if (error) {
         return Result.err(this.mapAuthError(error));
@@ -474,7 +491,7 @@ export class AuthService {
 
       const { data: profile, error } = await clientResult.data
         .from(DATABASE_TABLES.USER_PROFILES)
-        .update(updateData)
+        .update(updateData as unknown as never)
         .eq('id', this.currentUser.id)
         .select()
         .single();
@@ -526,7 +543,7 @@ export class AuthService {
 
       const { data: profile, error } = await clientResult.data
         .from(DATABASE_TABLES.USER_PROFILES)
-        .insert(profileData)
+        .insert(profileData as any)
         .select()
         .single();
 
@@ -561,7 +578,7 @@ export class AuthService {
 
       await clientResult.data
         .from(DATABASE_TABLES.USER_PROFILES)
-        .update({ last_login_at: new Date().toISOString() })
+        .update({ last_login_at: new Date().toISOString() } as unknown as never)
         .eq('id', userId);
     } catch (error) {
       // Log but don't fail authentication

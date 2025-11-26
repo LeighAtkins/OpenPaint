@@ -9,7 +9,7 @@ vi.mock('fabric', () => ({
       renderAll: vi.fn(),
       toJSON: vi.fn().mockReturnValue({ version: '5.3.0', objects: [] }),
       toDataURL: vi.fn().mockReturnValue('data:image/png;base64,'),
-      loadFromJSON: vi.fn((_json, callback) => callback()),
+      loadFromJSON: vi.fn((_json: unknown, callback: () => void) => callback()),
       getObjects: vi.fn().mockReturnValue([]),
       getActiveObject: vi.fn().mockReturnValue(null),
       setActiveObject: vi.fn(),

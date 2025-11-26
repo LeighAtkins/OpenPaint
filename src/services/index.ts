@@ -2,17 +2,17 @@
 // Central export for all application services
 
 // Core services
-export { default as SupabaseService } from './supabase.service';
+export { default as SupabaseService } from './supabase/client';
 export {
   StorageService,
   storageService,
   StoragePathBuilder,
   UPLOAD_CONFIGS,
-} from './storage.service';
-export { AuthService, authService } from './auth.service';
+} from './supabase/storage.service';
+export { AuthService, authService } from './auth/authService';
 
 // Project management services
-export { ProjectService, projectService } from './project.service';
+export { ProjectService, projectService } from './supabase/project.service';
 export { ProjectImagesService, projectImagesService } from './project-images.service';
 export { MeasurementsService, measurementsService } from './measurements.service';
 export { ProjectExportService, projectExportService } from './project-export.service';
@@ -25,19 +25,19 @@ export type {
   ResetPasswordCredentials,
   UpdateProfileData,
   AuthUser,
-} from './auth.service';
+} from './auth/authService';
 
 export type {
   // Storage types
   UploadConfig,
-} from './storage.service';
+} from './supabase/storage.service';
 
 export type {
   // Project types
   ProjectQueryOptions,
   CreateProjectData,
   UpdateProjectData,
-} from './project.service';
+} from './supabase/project.service';
 
 export type {
   // Image types

@@ -14,7 +14,7 @@ import type { StorageObject, ProjectImageInsert } from '@/types/supabase.types';
 // File upload configuration
 export interface UploadConfig {
   maxFileSizeMB: number;
-  allowedMimeTypes: string[];
+  allowedMimeTypes: readonly string[];
   generateThumbnail: boolean;
   compressionQuality: number;
 }
@@ -54,7 +54,6 @@ export const UPLOAD_CONFIGS = {
 export class StoragePathBuilder {
   static projectImage(userId: string, projectId: string, filename: string): string {
     const timestamp = Date.now();
-    const extension = filename.split('.').pop();
     const cleanName = filename.replace(/[^a-zA-Z0-9.-]/g, '_');
     return `${userId}/${projectId}/images/${timestamp}_${cleanName}`;
   }
@@ -102,7 +101,7 @@ export class StorageService {
   /**
    * Validate file before upload
    */
-  private validateFile(file: File, config: UploadConfig): Result<true, AppError> {
+  private async validateFile(file: File, config: UploadConfig): Promise<Result<true, AppError>> {
     // Check file size
     const fileSizeMB = file.size / (1024 * 1024);
     if (fileSizeMB > config.maxFileSizeMB) {
@@ -129,7 +128,7 @@ export class StorageService {
     // Additional validation for images
     if (file.type.startsWith('image/')) {
       // Check if it's actually an image by trying to load it
-      return this.validateImageFile(file);
+      return await this.validateImageFile(file);
     }
 
     return Result.ok(true);
@@ -138,8 +137,8 @@ export class StorageService {
   /**
    * Validate that a file is actually a valid image
    */
-  private validateImageFile(file: File): Result<true, AppError> {
-    return new Promise(resolve => {
+  private validateImageFile(file: File): Promise<Result<true, AppError>> {
+    return new Promise<Result<true, AppError>>(resolve => {
       const img = new Image();
       const url = URL.createObjectURL(file);
 
@@ -174,7 +173,7 @@ export class StorageService {
           )
         );
       }, 5000);
-    }) as Result<true, AppError>;
+    });
   }
 
   /**
@@ -604,11 +603,20 @@ export class StorageService {
 
       const bucketName = STORAGE_BUCKETS[bucket];
 
-      const { data, error } = await clientResult.data.storage.from(bucketName).list(path, {
-        limit: options?.limit,
-        offset: options?.offset,
-        search: options?.search,
-      });
+      const listOptions: { limit?: number; offset?: number; search?: string } = {};
+      if (options?.limit !== undefined) {
+        listOptions.limit = options.limit;
+      }
+      if (options?.offset !== undefined) {
+        listOptions.offset = options.offset;
+      }
+      if (options?.search !== undefined) {
+        listOptions.search = options.search;
+      }
+
+      const { data, error } = await clientResult.data.storage
+        .from(bucketName)
+        .list(path, listOptions);
 
       if (error) {
         return Result.err(
@@ -651,8 +659,8 @@ export class StorageService {
       const destBucketName = STORAGE_BUCKETS[destinationBucket];
 
       const { data, error } = await clientResult.data.storage
-        .from(destBucketName)
-        .copy(destinationPath, sourceBucketName, sourcePath);
+        .from(sourceBucketName)
+        .copy(sourcePath, destinationPath);
 
       if (error) {
         return Result.err(
@@ -707,7 +715,7 @@ export class StorageService {
           const bucketStats = files.reduce(
             (acc, file) => ({
               files: acc.files + 1,
-              sizeBytes: acc.sizeBytes + (file.metadata?.size || 0),
+              sizeBytes: acc.sizeBytes + ((file.metadata?.['size'] as number) || 0),
             }),
             { files: 0, sizeBytes: 0 }
           );

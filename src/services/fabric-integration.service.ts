@@ -1,18 +1,9 @@
 // Fabric.js integration service that bridges with TypeScript canvas state
-import { canvasStateService } from './canvas-state.service';
-import { measurementsService } from './measurements.service';
-import { projectService } from './project.service';
-import { authService } from './auth.service';
+import { canvasStateService } from './canvas/canvasManager';
 import { Result } from '@/utils/result';
 import { AppError, ErrorCode } from '@/types/app.types';
-import type {
-  FabricObject,
-  FabricCanvasJSON,
-  ToolType,
-  BrushSettings,
-  Position,
-} from '@/types/app.types';
-import type { CreateMeasurementData, FabricObjectData } from '@/types/supabase.types';
+import type { FabricCanvasJSON, ToolType, BrushSettings, Position } from '@/types/app.types';
+import type { FabricObjectData } from '@/types/supabase.types';
 
 // Fabric.js canvas wrapper interface (for the global fabric object)
 declare global {
@@ -29,6 +20,7 @@ declare global {
       Image: any;
       PencilBrush: any;
       PatternBrush: any;
+      Point: any;
       util: any;
     };
   }
@@ -127,11 +119,22 @@ export class FabricIntegrationService {
       }
 
       // Initialize canvas state in our service
-      const stateResult = await canvasStateService.initializeCanvasState(projectId, imageLabel, {
-        width: options?.width,
-        height: options?.height,
-        backgroundColor: options?.backgroundColor,
-      });
+      const canvasConfig: Partial<{ width: number; height: number; backgroundColor: string }> = {};
+      if (options?.width !== undefined) {
+        canvasConfig.width = options.width;
+      }
+      if (options?.height !== undefined) {
+        canvasConfig.height = options.height;
+      }
+      if (options?.backgroundColor !== undefined) {
+        canvasConfig.backgroundColor = options.backgroundColor;
+      }
+
+      const stateResult = await canvasStateService.initializeCanvasState(
+        projectId,
+        imageLabel,
+        canvasConfig
+      );
 
       if (!stateResult.success) {
         return Result.err(stateResult.error);
@@ -358,47 +361,47 @@ export class FabricIntegrationService {
       switch (objectType) {
         case 'rect':
           fabricObject = new window.fabric.Rect({
-            left: options.left || 100,
-            top: options.top || 100,
-            width: options.width || 100,
-            height: options.height || 100,
-            fill: options.fill || 'transparent',
-            stroke: options.stroke || '#000000',
-            strokeWidth: options.strokeWidth || 2,
+            left: options['left'] || 100,
+            top: options['top'] || 100,
+            width: options['width'] || 100,
+            height: options['height'] || 100,
+            fill: options['fill'] || 'transparent',
+            stroke: options['stroke'] || '#000000',
+            strokeWidth: options['strokeWidth'] || 2,
             ...options,
           });
           break;
 
         case 'circle':
           fabricObject = new window.fabric.Circle({
-            left: options.left || 100,
-            top: options.top || 100,
-            radius: options.radius || 50,
-            fill: options.fill || 'transparent',
-            stroke: options.stroke || '#000000',
-            strokeWidth: options.strokeWidth || 2,
+            left: options['left'] || 100,
+            top: options['top'] || 100,
+            radius: options['radius'] || 50,
+            fill: options['fill'] || 'transparent',
+            stroke: options['stroke'] || '#000000',
+            strokeWidth: options['strokeWidth'] || 2,
             ...options,
           });
           break;
 
         case 'line':
           fabricObject = new window.fabric.Line(
-            [options.x1 || 50, options.y1 || 50, options.x2 || 150, options.y2 || 150],
+            [options['x1'] || 50, options['y1'] || 50, options['x2'] || 150, options['y2'] || 150],
             {
-              stroke: options.stroke || '#000000',
-              strokeWidth: options.strokeWidth || 2,
+              stroke: options['stroke'] || '#000000',
+              strokeWidth: options['strokeWidth'] || 2,
               ...options,
             }
           );
           break;
 
         case 'text':
-          fabricObject = new window.fabric.Text(options.text || 'Sample Text', {
-            left: options.left || 100,
-            top: options.top || 100,
-            fontSize: options.fontSize || 20,
-            fontFamily: options.fontFamily || 'Arial',
-            fill: options.fill || '#000000',
+          fabricObject = new window.fabric.Text(options['text'] || 'Sample Text', {
+            left: options['left'] || 100,
+            top: options['top'] || 100,
+            fontSize: options['fontSize'] || 20,
+            fontFamily: options['fontFamily'] || 'Arial',
+            fill: options['fill'] || '#000000',
             ...options,
           });
           break;
@@ -866,7 +869,7 @@ export class FabricIntegrationService {
   /**
    * Setup shape drawing tool
    */
-  private setupShapeDrawing(canvasInstance: CanvasInstance, shape: ToolType): void {
+  private setupShapeDrawing(_canvasInstance: CanvasInstance, _shape: ToolType): void {
     // This would setup mouse event handlers for drawing shapes
     // Implementation depends on the specific shape drawing requirements
   }
@@ -874,7 +877,7 @@ export class FabricIntegrationService {
   /**
    * Setup text tool
    */
-  private setupTextTool(canvasInstance: CanvasInstance): void {
+  private setupTextTool(_canvasInstance: CanvasInstance): void {
     // This would setup text input functionality
     // Implementation depends on text editing requirements
   }
@@ -882,7 +885,7 @@ export class FabricIntegrationService {
   /**
    * Setup pan tool
    */
-  private setupPanTool(canvasInstance: CanvasInstance): void {
+  private setupPanTool(_canvasInstance: CanvasInstance): void {
     // This would setup panning functionality
     // Implementation depends on pan interaction requirements
   }
@@ -890,7 +893,7 @@ export class FabricIntegrationService {
   /**
    * Setup zoom tool
    */
-  private setupZoomTool(canvasInstance: CanvasInstance): void {
+  private setupZoomTool(_canvasInstance: CanvasInstance): void {
     // This would setup zoom functionality
     // Implementation depends on zoom interaction requirements
   }

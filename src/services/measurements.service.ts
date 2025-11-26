@@ -1,7 +1,7 @@
 // Measurement persistence and management service
-import { SupabaseService } from './supabase.service';
-import { authService } from './auth.service';
-import { projectService } from './project.service';
+import { SupabaseService } from './supabase/client';
+import { authService } from './auth/authService';
+import { projectService } from './supabase/project.service';
 import { DATABASE_TABLES } from '@/config/supabase.config';
 import { Result } from '@/utils/result';
 import { AppError, ErrorCode } from '@/types/app.types';
@@ -823,13 +823,11 @@ export class MeasurementsService extends SupabaseService {
       };
 
       // Update image's measurement list
-      if (updatedData.images[measurement.imageLabel]) {
+      const imageData = updatedData.images[measurement.imageLabel];
+      if (imageData) {
         updatedData.images[measurement.imageLabel] = {
-          ...updatedData.images[measurement.imageLabel],
-          measurements: [
-            ...updatedData.images[measurement.imageLabel].measurements,
-            measurement.id,
-          ],
+          ...imageData,
+          measurements: [...imageData.measurements, measurement.id],
         };
       }
 
@@ -923,13 +921,14 @@ export class MeasurementsService extends SupabaseService {
       };
 
       // Remove from image's measurement list
-      if (measurement && updatedData.images[measurement.imageLabel]) {
-        updatedData.images[measurement.imageLabel] = {
-          ...updatedData.images[measurement.imageLabel],
-          measurements: updatedData.images[measurement.imageLabel].measurements.filter(
-            id => id !== measurementId
-          ),
-        };
+      if (measurement) {
+        const imageData = updatedData.images[measurement.imageLabel];
+        if (imageData) {
+          updatedData.images[measurement.imageLabel] = {
+            ...imageData,
+            measurements: imageData.measurements.filter(id => id !== measurementId),
+          };
+        }
       }
 
       const updateResult = await this.update(
