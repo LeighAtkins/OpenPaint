@@ -217,7 +217,8 @@ describe('Storage Service', () => {
 
   it('should generate correct storage paths', async () => {
     // Import using dynamic import for better test compatibility
-    const { StoragePathBuilder } = await import('@/services/storage.service');
+    const { StoragePathBuilder } = await import('@/services/supabase/storage.service');
+    const { UPLOAD_CONFIGS } = await import('@/services/supabase/storage.service');
 
     const userId = 'user123';
     const projectId = 'project456';

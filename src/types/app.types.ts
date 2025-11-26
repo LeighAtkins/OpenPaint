@@ -1,8 +1,24 @@
 // ═══════════════════════════════════════════════════════════════════════════
+// GLOBAL TYPE EXTENSIONS
+// ═══════════════════════════════════════════════════════════════════════════
+
+declare global {
+  interface ErrorConstructor {
+    captureStackTrace?(targetObject: object, constructorOpt?: Function): void;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 // FABRIC.JS TYPES
 // ═══════════════════════════════════════════════════════════════════════════
 
 export interface FabricObjectBase {
+  // Custom properties
+  id?: string;
+  selectable?: boolean;
+  evented?: boolean;
+
+  // Standard Fabric.js properties
   type: string;
   version: string;
   originX: 'left' | 'center' | 'right';
@@ -158,20 +174,39 @@ export interface BoundingBox extends Position, Dimensions {}
 // EVENT TYPES
 // ═══════════════════════════════════════════════════════════════════════════
 
-export type CanvasEventType =
+// Fabric.js native events
+export type FabricEventType =
   | 'object:added'
   | 'object:modified'
   | 'object:removed'
   | 'selection:created'
   | 'selection:updated'
   | 'selection:cleared'
+  | 'path:created'
+  | 'mouse:down'
+  | 'mouse:move'
+  | 'mouse:up';
+
+// Canvas lifecycle events
+export type CanvasEventType =
+  | 'canvas:state-changed'
+  | 'canvas:tool-changed'
+  | 'canvas:brush-changed'
+  | 'canvas:viewport-changed'
+  | 'canvas:selection-changed'
+  | 'canvas:drawing-started'
+  | 'canvas:drawing-ended'
   | 'canvas:saved'
-  | 'canvas:loaded'
-  | 'history:undo'
-  | 'history:redo';
+  | 'canvas:loaded';
+
+// History events
+export type HistoryEventType = 'history:undo' | 'history:redo';
+
+// Combined type for all application events
+export type AppEventType = FabricEventType | CanvasEventType | HistoryEventType;
 
 export interface CanvasEvent<T = unknown> {
-  type: CanvasEventType;
+  type: AppEventType;
   timestamp: number;
   data: T;
 }
@@ -184,6 +219,8 @@ export enum ErrorCode {
   // Supabase errors
   SUPABASE_NOT_CONFIGURED = 'SUPABASE_NOT_CONFIGURED',
   SUPABASE_CONNECTION_FAILED = 'SUPABASE_CONNECTION_FAILED',
+  SUPABASE_QUERY_ERROR = 'SUPABASE_QUERY_ERROR',
+  SUPABASE_STORAGE_ERROR = 'SUPABASE_STORAGE_ERROR',
   DATABASE_ERROR = 'DATABASE_ERROR',
   STORAGE_ERROR = 'STORAGE_ERROR',
 
@@ -213,13 +250,13 @@ export enum ErrorCode {
  * Application error class with structured error handling
  */
 export class AppError extends Error {
+  public override readonly name = 'AppError';
   public readonly code: ErrorCode;
   public readonly details?: unknown;
-  public readonly cause?: Error;
+  public override readonly cause: Error | undefined;
 
   constructor(code: ErrorCode, message: string, details?: unknown, cause?: Error) {
     super(message);
-    this.name = 'AppError';
     this.code = code;
     this.details = details;
     this.cause = cause;

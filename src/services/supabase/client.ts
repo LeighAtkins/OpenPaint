@@ -1,26 +1,9 @@
 // Core Supabase service layer with comprehensive error handling
 import { SupabaseClient } from '@supabase/supabase-js';
-import {
-  getSupabaseClient,
-  STORAGE_BUCKETS,
-  DATABASE_TABLES,
-  type Database,
-} from '@/config/supabase.config';
+import { getSupabaseClient, DATABASE_TABLES, type Database } from '@/config/supabase.config';
 import { Result } from '@/utils/result';
 import { AppError, ErrorCode } from '@/types/app.types';
-import type {
-  ProjectRow,
-  ProjectInsert,
-  ProjectUpdate,
-  ProjectImageRow,
-  ProjectImageInsert,
-  ProjectImageUpdate,
-  UserProfileRow,
-  UserProfileInsert,
-  UserProfileUpdate,
-  ProjectSummary,
-  PaginatedResponse,
-} from '@/types/supabase.types';
+import type { PaginatedResponse } from '@/types/supabase.types';
 
 /**
  * Base Supabase service with common database operations
@@ -57,7 +40,7 @@ export class SupabaseService {
 
       const { data: result, error } = await clientResult.data
         .from(table)
-        .insert(data)
+        .insert(data as any)
         .select()
         .single();
 
@@ -98,7 +81,10 @@ export class SupabaseService {
         return Result.err(clientResult.error);
       }
 
-      let query = clientResult.data.from(table).update(data).eq('id', id);
+      let query = clientResult.data
+        .from(table)
+        .update(data as unknown as never)
+        .eq('id', id);
 
       // Add version check for optimistic concurrency control
       if (version !== undefined) {
@@ -377,12 +363,21 @@ export class SupabaseService {
       }
 
       // Get paginated data
-      const dataResult = await this.select<T>(table, filters, {
+      const selectOptions: {
+        limit?: number;
+        offset?: number;
+        orderBy?: string;
+        ascending?: boolean;
+        select?: string;
+      } = {
         limit: pageSize,
         offset,
-        orderBy,
         ascending,
-      });
+      };
+      if (orderBy) {
+        selectOptions.orderBy = orderBy;
+      }
+      const dataResult = await this.select<T>(table, filters, selectOptions);
 
       if (!dataResult.success) {
         return Result.err(dataResult.error);
@@ -426,7 +421,10 @@ export class SupabaseService {
         return Result.ok([]);
       }
 
-      const { data: result, error } = await clientResult.data.from(table).insert(data).select();
+      const { data: result, error } = await clientResult.data
+        .from(table)
+        .insert(data as any)
+        .select();
 
       if (error) {
         return Result.err(
@@ -463,7 +461,9 @@ export class SupabaseService {
         return Result.err(clientResult.error);
       }
 
-      const { data, error } = await clientResult.data.rpc(functionName, params);
+      const { data, error } = params
+        ? await clientResult.data.rpc(functionName, params as any)
+        : await clientResult.data.rpc(functionName);
 
       if (error) {
         return Result.err(

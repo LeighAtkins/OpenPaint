@@ -1,20 +1,18 @@
 // Canvas synchronization service that bridges canvas state with project data
-import { canvasStateService } from './canvas-state.service';
+import { canvasStateService } from './canvas/canvasManager';
 import { fabricIntegrationService } from './fabric-integration.service';
-import { projectService } from './project.service';
+import { projectService } from './supabase/project.service';
 import { measurementsService } from './measurements.service';
-import { projectImagesService } from './project-images.service';
-import { authService } from './auth.service';
+import { authService } from './auth/authService';
 import { Result } from '@/utils/result';
 import { AppError, ErrorCode } from '@/types/app.types';
 import type {
   ProjectRow,
-  ProjectData,
   ImageData,
   MeasurementData,
   FabricObjectData,
 } from '@/types/supabase.types';
-import type { FabricCanvasJSON, CanvasState } from '@/types/app.types';
+import type { FabricCanvasJSON } from '@/types/app.types';
 
 // Synchronization conflict types
 export interface SyncConflict {
@@ -330,8 +328,6 @@ export class CanvasSyncService {
     imageLabel: string,
     interval: number = 30000 // 30 seconds
   ): () => void {
-    const syncKey = `${projectId}:${imageLabel}`;
-
     const intervalId = setInterval(async () => {
       try {
         await this.pushCanvasChanges(projectId, imageLabel);
@@ -397,10 +393,10 @@ export class CanvasSyncService {
    * Synchronize canvas objects
    */
   private async synchronizeObjects(
-    project: ProjectRow,
+    _project: ProjectRow,
     imageData: ImageData,
     canvasJSON: FabricCanvasJSON,
-    options: SyncOptions
+    _options: SyncOptions
   ): Promise<Result<{ conflicts: SyncConflict[]; applied: number }, AppError>> {
     try {
       const conflicts: SyncConflict[] = [];
@@ -432,7 +428,7 @@ export class CanvasSyncService {
       }
 
       // Check for locally added objects
-      for (const [id, localObj] of localObjects) {
+      for (const [id, _localObj] of localObjects) {
         if (!remoteObjects.has(id)) {
           // Object exists locally but not remotely - will be pushed
           applied++;
@@ -456,7 +452,7 @@ export class CanvasSyncService {
   private async synchronizeMeasurements(
     projectId: string,
     imageLabel: string,
-    options: SyncOptions
+    _options: SyncOptions
   ): Promise<Result<{ conflicts: SyncConflict[]; applied: number }, AppError>> {
     try {
       const conflicts: SyncConflict[] = [];
@@ -550,7 +546,7 @@ export class CanvasSyncService {
    */
   private async applyConflictResolutions(
     projectId: string,
-    imageLabel: string,
+    _imageLabel: string,
     resolvedConflicts: SyncConflict[]
   ): Promise<void> {
     for (const conflict of resolvedConflicts) {
@@ -584,7 +580,7 @@ export class CanvasSyncService {
   private async createCanvasDelta(
     projectId: string,
     imageLabel: string,
-    canvasJSON: FabricCanvasJSON
+    _canvasJSON: FabricCanvasJSON
   ): Promise<Result<CanvasDelta, AppError>> {
     try {
       // This is a simplified implementation
@@ -669,7 +665,7 @@ export class CanvasSyncService {
     return compareProps.some(prop => {
       const localVal = local[prop];
       const remoteVal = remote[prop as keyof FabricObjectData];
-      return Math.abs((localVal || 0) - (remoteVal || 0)) > 0.01; // Small tolerance for floating point
+      return Math.abs(((localVal as number) || 0) - ((remoteVal as number) || 0)) > 0.01; // Small tolerance for floating point
     });
   }
 

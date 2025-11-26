@@ -1,10 +1,9 @@
 // Project export and import service with comprehensive format support
-import { SupabaseService } from './supabase.service';
-import { authService } from './auth.service';
-import { projectService } from './project.service';
+import { SupabaseService } from './supabase/client';
+import { authService } from './auth/authService';
+import { projectService } from './supabase/project.service';
 import { projectImagesService } from './project-images.service';
 import { measurementsService } from './measurements.service';
-import { storageService } from './storage.service';
 import { Result } from '@/utils/result';
 import { AppError, ErrorCode } from '@/types/app.types';
 import type {
@@ -536,8 +535,6 @@ export class ProjectExportService extends SupabaseService {
     options: ImportOptions
   ): Promise<Result<ImportResult, AppError>> {
     try {
-      const currentUser = authService.getCurrentUser()!;
-
       // Read file content
       const content = await this.readFileAsText(file);
       if (!content.success) {
@@ -646,8 +643,8 @@ export class ProjectExportService extends SupabaseService {
    * Import project from ZIP file
    */
   private async importFromZIP(
-    file: File,
-    options: ImportOptions
+    _file: File,
+    _options: ImportOptions
   ): Promise<Result<ImportResult, AppError>> {
     try {
       // TODO: Implement ZIP import functionality
@@ -741,11 +738,9 @@ export class ProjectExportService extends SupabaseService {
     projectId: string,
     format: string,
     options: ExportOptions,
-    size: number
+    _size: number
   ): Promise<void> {
     try {
-      const currentUser = authService.getCurrentUser()!;
-
       const exportRecord: ExportRecord = {
         timestamp: new Date().toISOString(),
         format,

@@ -37,7 +37,7 @@ const mockUser = {
 };
 
 // Mock Supabase operations
-vi.mock('@/services/supabase.service', () => ({
+vi.mock('@/services/supabase/client', () => ({
   SupabaseService: class MockSupabaseService {
     async insert(table: string, data: any) {
       return Result.ok({
@@ -89,6 +89,7 @@ vi.mock('@/services/supabase.service', () => ({
         id,
         ...data,
         updated_at: new Date().toISOString(),
+        updated_by: 'test-user-id',
         version: (version || 0) + 1,
       });
     }

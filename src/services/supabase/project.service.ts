@@ -1,8 +1,8 @@
 // Project management service with comprehensive CRUD operations
-import { SupabaseService } from './supabase.service';
+import { SupabaseService } from './client';
 import { storageService } from './storage.service';
-import { authService } from './auth.service';
-import { DATABASE_TABLES, STORAGE_BUCKETS } from '@/config/supabase.config';
+import { authService } from '../auth/authService';
+import { DATABASE_TABLES } from '@/config/supabase.config';
 import { Result } from '@/utils/result';
 import { AppError, ErrorCode } from '@/types/app.types';
 import type {
@@ -14,7 +14,6 @@ import type {
   ProjectData,
   ProjectSettings,
   ProjectMetadata,
-  ImageData,
   MeasurementData,
   PaginatedResponse,
   ProjectSummary,
@@ -110,14 +109,16 @@ export class ProjectService extends SupabaseService {
       const projectInsert: ProjectInsert = {
         user_id: currentUser.id,
         name: data.name.trim(),
-        description: data.description?.trim(),
         data: projectData,
         tags: data.tags || [],
         is_public: data.isPublic || false,
         version: 1,
       };
+      if (data.description?.trim()) {
+        projectInsert.description = data.description.trim();
+      }
 
-      const result = await this.insert<ProjectRow>(DATABASE_TABLES.PROJECTS, projectInsert);
+      const result = await this.insert<ProjectRow>(DATABASE_TABLES.PROJECTS, projectInsert as any);
       if (!result.success) {
         return Result.err(result.error);
       }
@@ -392,18 +393,25 @@ export class ProjectService extends SupabaseService {
       }
 
       // Transform to summaries
-      const summaries: ProjectSummary[] = result.data.data.map(project => ({
-        id: project.id,
-        name: project.name,
-        description: project.description,
-        thumbnail_url: project.thumbnail_url,
-        tags: project.tags,
-        created_at: project.created_at,
-        updated_at: project.updated_at,
-        image_count: project.data.metadata.totalImages,
-        measurement_count: project.data.metadata.totalMeasurements,
-        is_public: project.is_public,
-      }));
+      const summaries: ProjectSummary[] = result.data.data.map(project => {
+        const summary: ProjectSummary = {
+          id: project.id,
+          name: project.name,
+          tags: project.tags,
+          created_at: project.created_at,
+          updated_at: project.updated_at,
+          image_count: project.data.metadata.totalImages,
+          measurement_count: project.data.metadata.totalMeasurements,
+          is_public: project.is_public,
+        };
+        if (project.description) {
+          summary.description = project.description;
+        }
+        if (project.thumbnail_url) {
+          summary.thumbnail_url = project.thumbnail_url;
+        }
+        return summary;
+      });
 
       // Apply client-side filtering
       let filteredSummaries = summaries;
@@ -554,18 +562,25 @@ export class ProjectService extends SupabaseService {
         totalImages: projects.reduce((sum, p) => sum + p.data.metadata.totalImages, 0),
         totalMeasurements: projects.reduce((sum, p) => sum + p.data.metadata.totalMeasurements, 0),
         storageUsed: projects.reduce((sum, p) => sum + p.data.metadata.projectSize, 0),
-        recentActivity: projects.slice(0, 5).map(project => ({
-          id: project.id,
-          name: project.name,
-          description: project.description,
-          thumbnail_url: project.thumbnail_url,
-          tags: project.tags,
-          created_at: project.created_at,
-          updated_at: project.updated_at,
-          image_count: project.data.metadata.totalImages,
-          measurement_count: project.data.metadata.totalMeasurements,
-          is_public: project.is_public,
-        })),
+        recentActivity: projects.slice(0, 5).map(project => {
+          const summary: ProjectSummary = {
+            id: project.id,
+            name: project.name,
+            tags: project.tags,
+            created_at: project.created_at,
+            updated_at: project.updated_at,
+            image_count: project.data.metadata.totalImages,
+            measurement_count: project.data.metadata.totalMeasurements,
+            is_public: project.is_public,
+          };
+          if (project.description) {
+            summary.description = project.description;
+          }
+          if (project.thumbnail_url) {
+            summary.thumbnail_url = project.thumbnail_url;
+          }
+          return summary;
+        }),
       };
 
       return Result.ok(stats);
@@ -714,11 +729,18 @@ export class ProjectService extends SupabaseService {
         );
       }
 
-      // Upload thumbnail
-      const uploadResult = await storageService.uploadProjectThumbnail(
-        currentUser.id,
-        projectId,
-        thumbnailFile
+      // Upload thumbnail using uploadFile with thumbnail config
+      const storagePath = `${currentUser.id}/${projectId}/thumbnails/${Date.now()}_${thumbnailFile.name}`;
+      const uploadResult = await storageService['uploadFile'](
+        'PROJECT_THUMBNAILS',
+        storagePath,
+        thumbnailFile,
+        {
+          maxFileSizeMB: 5,
+          allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp'],
+          generateThumbnail: false,
+          compressionQuality: 0.75,
+        }
       );
 
       if (!uploadResult.success) {
@@ -726,7 +748,7 @@ export class ProjectService extends SupabaseService {
       }
 
       // Return the public URL
-      return Result.ok(uploadResult.data.metadata.publicUrl);
+      return Result.ok(uploadResult.data.url);
     } catch (error) {
       return Result.err(
         new AppError(
@@ -780,12 +802,14 @@ export class ProjectService extends SupabaseService {
         size_bytes: originalImage.size_bytes,
         width: originalImage.width,
         height: originalImage.height,
-        metadata: originalImage.metadata,
       };
+      if (originalImage.metadata) {
+        newImageData.metadata = originalImage.metadata;
+      }
 
       const insertResult = await this.insert<ProjectImageRow>(
         DATABASE_TABLES.PROJECT_IMAGES,
-        newImageData
+        newImageData as any
       );
 
       return insertResult;

@@ -228,6 +228,7 @@ export interface ProjectSettings {
   units: 'px' | 'mm' | 'cm' | 'in';
   defaultStrokeWidth: number;
   defaultColor: string;
+  backgroundColor?: string;
   autoSave: boolean;
   showGrid: boolean;
   snapToGrid: boolean;

@@ -623,187 +623,6 @@
         body {
             margin: 0;
             padding: 0;
-            overflow: hidden;
-            font-family: system-ui, -apple-system, sans-serif;
-        }
-
-        /* Fullscreen canvas styles */
-        #canvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            z-index: 5;
-            /* Above background (z-1) but below UI panels (z-30) */
-            cursor: crosshair;
-            background: #f8f9fa;
-            touch-action: none;
-            /* Prevent scrolling on touch devices */
-        }
-
-        /* Fabric.js wrappers need the same fullscreen treatment */
-        .canvas-container,
-        .canvas-container canvas {
-            position: fixed !important;
-            top: 0;
-            left: 0;
-            width: 100vw !important;
-            height: 100vh !important;
-        }
-
-        .canvas-container {
-            z-index: 5;
-            pointer-events: none;
-            /* Upper canvas will capture events */
-        }
-
-        .canvas-container .lower-canvas {
-            z-index: 5;
-        }
-
-        .canvas-container .upper-canvas {
-            z-index: 6;
-            pointer-events: auto;
-        }
-
-        /* Keep placeholder content visible without needing to scroll */
-        #frame-capture {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            min-height: 100vh;
-            z-index: 7;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            pointer-events: none;
-        }
-
-        #frame-content {
-            pointer-events: auto;
-        }
-
-        /* Fabric.js containers ensure event surface aligns with original canvas */
-        .canvas-container,
-        .canvas-container canvas {
-            position: fixed !important;
-            top: 0;
-            left: 0;
-            width: 100vw !important;
-            height: 100vh !important;
-        }
-
-        .canvas-container {
-            z-index: 5;
-            pointer-events: none;
-            /* let upper canvas capture events */
-        }
-
-        .canvas-container .upper-canvas {
-            z-index: 6;
-            pointer-events: auto;
-        }
-
-        .canvas-container .lower-canvas {
-            z-index: 5;
-        }
-
-        /* Frame capture placeholder sits centered behind canvas */
-        #frame-capture {
-            position: absolute;
-            inset: 0;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            pointer-events: none;
-            z-index: 2;
-        }
-
-        #frame-content {
-            pointer-events: auto;
-        }
-
-        /* Modern floating panel base styles */
-        .floating-panel {
-            backdrop-filter: blur(20px);
-            background: rgba(255, 255, 255, 0.98);
-            box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1),
-                0 4px 6px -2px rgba(0, 0, 0, 0.05),
-                0 0 0 1px rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .floating-panel:hover {
-            background: rgba(255, 255, 255, 0.99);
-        }
-
-        /* Only apply hover transform to main panels, not side panels */
-        #projectPanel:hover,
-        #toolsPanel:hover,
-        #canvasControls:hover {
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-            transform: translateY(-1px);
-        }
-
-        .floating-panel.dragging {
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-            transform: none !important;
-            transition: none !important;
-        }
-
-        /* Modern capture frame styles */
-        #captureOverlay {
-            backdrop-filter: none;
-        }
-
-        .capture-frame {
-            background: transparent;
-            transition: none !important;
-        }
-
-        .capture-frame.locked {
-            cursor: default;
-        }
-
-        .capture-frame.unlocked {
-            cursor: move;
-        }
-
-        /* Capture frame dragging - no transitions for 1:1 movement */
-        .capture-frame.dragging {
-            transition: none !important;
-        }
-
-        /* Modern resize handles - smaller and more discrete */
-        .resize-handle {
-            position: absolute;
-            opacity: 0;
-            transition: opacity 0.2s ease, transform 0.2s ease;
-        }
-
-        .capture-frame.unlocked:hover .resize-handle,
-        .capture-frame.unlocked .resize-handle:hover {
-            opacity: 1;
-        }
-
-        .resize-handle:hover {
-            transform: scale(1.3);
-            background: #3b82f6 !important;
-            border-color: white !important;
-        }
-
-        /* Dark overlay - no transitions for instant response */
-        #darkOverlay {
-            transition: none;
-        }
-
-        /* macOS style popup */
-        #lockPopup {
-            font-size: 14px;
             font-weight: 500;
         }
 
@@ -861,11 +680,13 @@
             background: rgba(76, 175, 80, 0.05);
         }
 
-        /* Panel minimization styles */
+        /* Panel minimization styles - consolidated from multiple rules */
         .floating-panel.minimized {
-            max-height: none !important;
+            width: auto !important;
             height: auto !important;
-            /* Override any inline height when minimized */
+            max-height: none !important;
+            overflow: hidden;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
         }
 
         .floating-panel.minimized .cursor-move {
@@ -1040,7 +861,7 @@
             bottom: 0 !important;
             left: 0 !important;
             right: 0 !important;
-            z-index: 5000 !important;
+            z-index: 40 !important;
             width: 100% !important;
             display: block !important;
             visibility: visible !important;
@@ -1067,27 +888,7 @@
         #navigation-container,
         #navigation-container * {
             pointer-events: auto !important;
-        }
-
-        #mini-stepper .step {
-            min-width: 2rem;
-            min-height: 2rem;
-            border: 1px solid transparent;
-            cursor: pointer;
-            position: relative;
-            z-index: 10;
-        }
-
-        #mini-stepper .step:hover {
-            transform: scale(1.05);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            z-index: 20;
-        }
-
-        #mini-stepper .step:focus {
-            outline: 2px solid #3b82f6;
-            outline-offset: 2px;
-            z-index: 20;
+            /* outline removed - was debug styling */
         }
 
         #mini-stepper .step[aria-current="true"] {
@@ -1347,10 +1148,7 @@
             border-color: #2563eb !important;
         }
 
-        /* Active state for minimized panels */
-        .floating-panel.minimized {
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
-        }
+        /* Removed duplicate - merged into main .floating-panel.minimized rule */
 
         /* Enhanced arrow button styling */
         #startArrow.active,
@@ -1386,12 +1184,7 @@
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
         }
 
-        /* Ensure proper dragging behavior */
-        .floating-panel.dragging {
-            z-index: 9999 !important;
-            transform: none !important;
-            transition: none !important;
-        }
+        /* Removed duplicate - merged with other .dragging rule below */
 
         /* Keep Elements header always visible; body uses remaining space */
         #strokePanel {
@@ -1579,6 +1372,23 @@
         /* Ensure outer image panel content never scrolls; inner #imageList handles scrolling */
         #imagePanelContent {
             overflow: hidden !important;
+            position: relative !important;
+            z-index: 70 !important;
+        }
+
+        #imageList {
+            position: relative;
+            z-index: 70;
+        }
+
+        #elementsBody {
+            position: relative !important;
+            z-index: 70 !important;
+        }
+
+        #strokeVisibilityControls {
+            position: relative !important;
+            z-index: 70 !important;
         }
 
         #strokeVisibilityControls::-webkit-scrollbar {
@@ -1694,163 +1504,159 @@
             transform: translateY(-1px) scale(1.05);
         }
 
-        .image-thumbnail .image-overlay {
-            position: absolute;
-            bottom: 0;
+        /* --- UI Layering System --- */
+        body {
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+        }
+
+        #canvas {
+            z-index: 0;
+            position: fixed;
+            top: 0;
             left: 0;
-            right: 0;
-            background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
-            color: white;
-            padding: 8px;
-            font-size: 11px;
-            font-weight: 500;
-            text-align: center;
-            border-radius: 0 0 10px 10px;
+            width: 100vw;
+            height: 100vh;
+            cursor: crosshair;
+            background: #f8f9fa;
+            touch-action: none;
         }
 
-        .thumbnail-controls {
-            position: absolute;
-            top: 4px;
-            right: 4px;
-            display: none;
-            flex-direction: column;
-            gap: 2px;
+        .canvas-container {
+            z-index: 10;
+            position: fixed !important;
+            top: 0;
+            left: 0;
+            width: 100vw !important;
+            height: 100vh !important;
+            pointer-events: none;
         }
 
-        .delete-control {
-            position: absolute;
-            top: 4px;
-            left: 4px;
-            display: none;
+        .canvas-container canvas {
+            pointer-events: auto;
         }
 
-        .image-thumbnail:hover .thumbnail-controls,
-        .image-thumbnail:hover .delete-control {
-            display: flex;
+        .canvas-container .upper-canvas {
+            z-index: 11;
+            pointer-events: auto;
         }
 
-        .control-btn {
-            width: 24px;
-            height: 24px;
-            border: none;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.9);
-            color: #374151;
-            font-size: 12px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.15s ease;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        .canvas-container .lower-canvas {
+            z-index: 10;
         }
 
-        .control-btn:hover {
-            background: white;
-            transform: scale(1.1);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        #frame-capture {
+            z-index: -1 !important;  /* Behind everything - placeholder only shows when no images */
+            pointer-events: none;
+            opacity: 0.3;  /* Make placeholder subtle */
         }
 
-        .delete-btn {
-            background: #dc2626 !important;
-            color: white !important;
-            font-weight: bold;
+        #frame-content {
+            pointer-events: auto;
         }
 
-        .delete-btn:hover {
-            background: #b91c1c !important;
-            transform: scale(1.1);
+        #navigation-container {
+            z-index: 40;
         }
 
-        .rotate-btn:hover {
-            background: #dbeafe;
-            color: #2563eb;
+        #topToolbar {
+            z-index: 50;
         }
 
-        .flip-btn:hover {
-            background: #d1fae5;
-            color: #059669;
-        }
-
-        /* Navigation dots styling */
-        .nav-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: #cbd5e1;
-            transition: all 0.2s ease;
-            cursor: pointer;
-        }
-
-        .nav-dot:hover {
-            background: #94a3b8;
-            transform: scale(1.2);
-        }
-
-        .nav-dot.active {
-            background: #3b82f6;
-            transform: scale(1.3);
-        }
-
-        /* Modernize panel chrome and add optional sketchbook vibe */
+        /* Floating Panels - Force fixed positioning */
         .floating-panel {
-            border: 1px solid rgba(15, 23, 42, 0.06);
-            box-shadow: 0 12px 28px rgba(2, 6, 23, 0.08);
+            position: fixed !important;  /* Fix: Tailwind 'fixed' class not applying */
+            z-index: var(--panel-z-index, 60);
         }
 
-        .floating-panel .cursor-move {
-            border-bottom: 1px solid rgba(15, 23, 42, 0.06) !important;
+        /* Only apply hover transform to main panels, not side panels */
+        #projectPanel:hover,
+        #toolsPanel:hover,
+        #canvasControls:hover {
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            transform: translateY(-1px);
         }
 
-        /* Tone down button effects for a cleaner feel */
-        .floating-panel button {
-            box-shadow: 0 1px 2px rgba(2, 6, 23, 0.06) !important;
+        .floating-panel.dragging {
+            z-index: 9999 !important;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
             transform: none !important;
+            transition: none !important;
         }
 
-        .floating-panel button:hover {
-            transform: translateY(-1px) !important;
+        /* Panel toggle icons (Mobile) */
+        .panel-toggle-icon {
+            z-index: 65;
         }
 
-        /* Minimal divider */
-        .panel-divider {
-            border-top: 1px solid rgba(15, 23, 42, 0.08);
+        /* Overlays & Dialogs */
+        #captureOverlay {
+            z-index: 30 !important;
+            backdrop-filter: none;
         }
 
-        /* Top toolbar styles - now handled by comprehensive CSS above */
-        .tbtn.active {
-            border-color: rgba(59, 130, 246, .9);
-            background: #eff6ff;
-            color: #1e40af;
+        .capture-frame {
+            background: transparent;
+            transition: none !important;
         }
 
-        .tbtn:hover,
-        .tselect:hover,
-        .tinput:hover {
-            border-color: rgba(59, 130, 246, .8);
-            box-shadow: 0 2px 4px rgba(59, 130, 246, .1);
+        .capture-frame.locked {
+            cursor: default;
         }
 
-        .popover {
+        .capture-frame.unlocked {
+            cursor: move;
+        }
+
+        .capture-frame.dragging {
+            transition: none !important;
+        }
+
+        .resize-handle {
             position: absolute;
-            top: 40px;
-            left: 0;
-            background: #fff;
-            border: 1px solid #e2e8f0;
-            border-radius: 10px;
-            box-shadow: 0 8px 24px rgba(2, 6, 23, .12);
-            padding: 12px;
-            display: none;
-            z-index: 60;
-            min-width: 120px;
+            opacity: 0;
+            transition: opacity 0.2s ease, transform 0.2s ease;
         }
 
-        .popover.show {
-            display: block;
+        .capture-frame.unlocked:hover .resize-handle,
+        .capture-frame.unlocked .resize-handle:hover {
+            opacity: 1;
+        }
+
+        .resize-handle:hover {
+            transform: scale(1.3);
+            background: #3b82f6 !important;
+            border-color: white !important;
+        }
+
+        #measurementDialogOverlay {
+            z-index: 100;
+        }
+
+        #lockPopup {
+            z-index: 110;
+        }
+
+        #aiPreviewModal {
+            z-index: 120;
+        }
+
+        #scaleDropdown {
+            z-index: 130;
+        }
+
+        /* Visibility States (minimized rule moved up to line ~684) */
+
+        .floating-panel.hidden,
+        .hidden {
+            display: none !important;
+        }
+
+        #darkOverlay {
+            transition: none;
         }
     </style>
-
-
     <script>
         // STEP 3: JS fallback - Re-check sizing after fonts load and on resize
         // This updates the global data-toolbar-mode attribute (no DOM rewrites)
@@ -1928,7 +1734,7 @@
     </script>
 </head>
 
-<body class="bg-gray-50 h-screen overflow-hidden"
+<body class="bg-gray-50 h-screen overflow-hidden" style="padding-top: 48px;"
     data-heic-worker-url="https://openpaint-heic-converter.sofapaint-api.workers.dev">
     <!-- Top Toolbar -->
     <div id="topToolbar">
@@ -2045,10 +1851,10 @@
     </script>
 
     <!-- Fullscreen Canvas -->
-    <canvas id="canvas"></canvas>
+    <canvas id="canvas" style="cursor: crosshair; width: 1141px; height: 889px; left: 0px; top: 0px; position: fixed; max-width: none; max-height: none; min-width: 1141px; min-height: 889px;" width="1141" height="889"></canvas>
 
     <!-- Main Content Container for Frame Capture -->
-    <div id="frame-capture" class="w-full">
+    <div id="frame-capture" class="w-full" style="min-height: 100vh; overflow-y: visible; position: relative;">
         <!-- Content will be dynamically generated based on images -->
         <div id="frame-content" class="min-h-screen flex items-center justify-center">
             <div class="text-center p-8">
@@ -2089,7 +1895,7 @@
     </div>
 
     <!-- Project Header Panel -->
-    <div id="projectPanel" class="floating-panel fixed top-4 right-4 z-30 rounded-2xl w-80 transition-all duration-300">
+    <div id="projectPanel" class="floating-panel fixed top-4 right-4 z-30 rounded-2xl w-80 transition-all duration-300 hidden">
         <div class="flex items-center justify-between p-4 cursor-move border-b border-gray-200/50">
             <h3 class="text-base font-bold text-slate-800">Project Settings</h3>
             <button id="toggleProjectPanel"
@@ -2153,7 +1959,7 @@
     </div>
 
     <!-- Drawing Tools Panel -->
-    <div id="toolsPanel" class="floating-panel fixed top-4 left-4 z-30 rounded-2xl transition-all duration-300">
+    <div id="toolsPanel" class="floating-panel fixed top-4 left-4 z-30 rounded-2xl transition-all duration-300 hidden">
         <div class="flex items-center justify-between p-4 cursor-move border-b border-gray-200/50">
             <h3 class="text-base font-bold text-slate-800">Drawing Tools</h3>
             <button id="toggleToolsPanel"
@@ -2319,7 +2125,7 @@
             </button>
         </div>
         <!-- Panel Body (collapsible) -->
-        <div id="elementsBody" role="region" aria-labelledby="elementsHeader">
+        <div id="elementsBody" role="region" aria-labelledby="elementsHeader" style="position: relative; z-index: 70;">
             <div id="elementsControls" class="px-3 pt-3 pb-1 border-b border-gray-100">
                 <div class="flex gap-2 mb-2">
                     <button id="selectAllStrokesBtn" title="Select/Deselect all elements"
@@ -2378,8 +2184,8 @@
                         title="Toggle label background" aria-pressed="false">Solid</button>
                 </div>
             </div>
-            <div id="strokeVisibilityControls" class="px-3 pt-2 pb-2 overflow-y-auto overflow-x-hidden"
-                style="box-sizing: border-box;"></div>
+            <div id="strokeVisibilityControls" class="px-3 pt-2 pb-2 overflow-x-hidden"
+                style="box-sizing: border-box; position: relative; z-index: 70;"></div>
         </div>
     </div>
 
@@ -2414,15 +2220,15 @@
                 class="w-full px-2 py-1 border border-slate-300 rounded-md text-[12px] focus:outline-none focus:ring-2 focus:ring-primary-300"
                 placeholder="Rename current image" />
         </div>
-        <div id="imagePanelContent" class="p-3 transition-all duration-300" style="position: relative;">
+        <div id="imagePanelContent" class="p-3 transition-all duration-300" style="position: relative; z-index: 70;">
             <!-- Legacy image list for backwards compatibility -->
             <div id="imageList"
                 class="space-y-4 mb-0 h-[60vh] overflow-y-auto overflow-x-hidden pr-0 snap-y snap-mandatory scroll-smooth"
-                style="padding-top: calc(30vh - 5rem); padding-bottom: calc(30vh - 5rem);"></div>
+                style="padding-top: calc(30vh - 5rem); padding-bottom: calc(30vh - 5rem); position: relative; z-index: 70;"></div>
 
             <!-- Snap guide line -->
             <div
-                class="pointer-events-none absolute left-0 right-0 top-1/2 -translate-y-1/2 border-t border-slate-300/70">
+                class="pointer-events-none absolute left-0 right-0 top-1/2 -translate-y-1/2 border-t border-slate-300/70 z-[80]">
             </div>
 
 
@@ -2446,7 +2252,7 @@
     </div>
 
     <!-- Capture Frame -->
-    <div id="captureOverlay" class="fixed inset-0 pointer-events-none" style="z-index: 15;">
+    <div id="captureOverlay" class="fixed inset-0 pointer-events-none" style="z-index: 30;">
         <!-- Capture frame -->
         <div id="captureFrame" class="capture-frame absolute border-2 border-gray-400 bg-transparent"
             style="left: calc(50% - 400px); top: calc(50% - 300px); width: 800px; height: 600px; pointer-events: none;">
@@ -2492,7 +2298,7 @@
 
     <!-- Instruction Text for Unlocked Mode -->
     <div id="unlockInstructions"
-        class="fixed top-4 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-80 text-white px-4 py-2 rounded-lg shadow-xl hidden backdrop-blur-sm z-40">
+        class="fixed top-20 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-80 text-white px-4 py-2 rounded-lg shadow-xl hidden backdrop-blur-sm z-40">
         <div class="text-sm font-medium text-center">
             Press <kbd class="px-1 py-0.5 bg-white bg-opacity-20 rounded text-xs">L</kbd> or click lock icon to exit
             positioning mode
@@ -7064,6 +6870,17 @@
                     startSyncInterval();
                 }
             });
+
+            // Force Show Panels (Fix for stuck hidden state)
+            const mainPanels = ['strokePanel', 'imagePanel', 'canvasControls', 'topToolbar'];
+            mainPanels.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.classList.remove('hidden');
+                    el.style.display = 'flex';
+                    el.setAttribute('data-loaded', 'true');
+                }
+            });
         });
 
         // View Measurements toggle functionality
@@ -7189,11 +7006,24 @@
     <!-- Fabric.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
 
+    <!-- Extracted UI Modules (MUST load in this order - see EXTRACTION_SUMMARY.md) -->
+    <script src="js/toolbar-layout.js"></script>
+    <script src="js/frame-capture-visibility.js"></script>
+    <script src="js/toolbar-init.js"></script>
+    <script src="js/smart-labels.js"></script>
+    <script src="js/panel-management.js"></script>
+    <script src="js/tag-system.js"></script>
+    <script src="js/capture-frame.js"></script>
+    <script src="js/image-gallery.js"></script>
+    <script src="js/scroll-select-system.js"></script>
+    <script src="js/mini-stepper.js"></script>
+    <script src="js/status-message.js"></script>
+
     <!-- New Modules -->
-    <script type="module" src="js/modules/main.js"></script>
-    
+    <!-- <script type="module" src="js/modules/main.js"></script> -->
+
     <!-- TypeScript Bridge (Migration) -->
-    <script type="module" src="js/typescript-bridge.js"></script>
+    <script type="module" src="/js/typescript-bridge.js"></script>
 
     <!-- Legacy Scripts (Commented out for refactor) -->
     <!-- <script src="js/paint.js?v=20250912134000"></script> -->

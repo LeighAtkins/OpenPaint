@@ -3,19 +3,21 @@
  * Handles file operations, static file serving, and API endpoints
  */
 
-const express = require('express');
-const path = require('path');
-const multer = require('multer');
-const fs = require('fs');
-const crypto = require('crypto');
+import dotenv from 'dotenv';
+dotenv.config({ path: process.env.NODE_ENV === 'production' ? '.env' : '.env.development' });
+import express from 'express';
+import path from 'path';
+import multer from 'multer';
+import fs from 'fs';
+import crypto from 'crypto';
+import { fileURLToPath } from 'url';
+import { isDbConfigured, ensureSchema, createOrUpdateProject, getProjectBySlug } from './api/db.js';
+import { spawn } from 'child_process';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const app = express();
-const {
-  isDbConfigured,
-  ensureSchema,
-  createOrUpdateProject,
-  getProjectBySlug
-} = require('./api/db');
-const { spawn } = require('child_process');
 const port = process.env.PORT || 3000;
 
 // AI Worker configuration with startup logging
@@ -53,18 +55,18 @@ if (!fs.existsSync(uploadDir)) {
 
 // Set up multer for handling file uploads
 const storage = multer.diskStorage({
-  destination: function(req, file, cb) {
+  destination: function (req, file, cb) {
     cb(null, uploadDir);
   },
-  filename: function(req, file, cb) {
+  filename: function (req, file, cb) {
     // Use a timestamp to ensure unique filenames
     cb(null, Date.now() + '-' + file.originalname);
-  }
+  },
 });
 
-const upload = multer({ 
+const upload = multer({
   storage: storage,
-  limits: { fileSize: 200 * 1024 * 1024 } // 200MB limit
+  limits: { fileSize: 200 * 1024 * 1024 }, // 200MB limit
 });
 
 // Middleware setup
@@ -102,7 +104,7 @@ app.get('/env-check', (req, res) => {
   res.json({
     AI_WORKER_URL: (process.env.AI_WORKER_URL || '').trim(),
     HAS_AI_WORKER_KEY: Boolean((process.env.AI_WORKER_KEY || '').trim()),
-    ROUTES_MOUNTED: true
+    ROUTES_MOUNTED: true,
   });
 });
 
@@ -131,10 +133,12 @@ app.post('/api/share-project', async (req, res) => {
       editToken,
       projectData,
       createdAt: new Date(),
-      expiresAt: shareOptions.expiresAt ? new Date(shareOptions.expiresAt) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      expiresAt: shareOptions.expiresAt
+        ? new Date(shareOptions.expiresAt)
+        : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
       isPublic: shareOptions.isPublic || false,
       allowEditing: shareOptions.allowEditing || false,
-      measurements: shareOptions.measurements || {}
+      measurements: shareOptions.measurements || {},
     };
 
     if (isDbConfigured()) {
@@ -151,7 +155,7 @@ app.post('/api/share-project', async (req, res) => {
       shareId,
       editToken,
       shareUrl: `${req.protocol}://${req.get('host')}/shared/${shareId}`,
-      expiresAt: shareRecord.expiresAt
+      expiresAt: shareRecord.expiresAt,
     });
   } catch (error) {
     console.error('Error creating share link:', error);
@@ -197,12 +201,14 @@ app.get('/api/shared/:shareId', async (req, res) => {
         createdAt: shareRecord.createdAt,
         expiresAt: shareRecord.expiresAt,
         allowEditing: shareRecord.allowEditing,
-        measurements: shareRecord.measurements
-      }
+        measurements: shareRecord.measurements,
+      },
     });
   } catch (error) {
     console.error('Error retrieving shared project:', error);
-    return res.status(500).json({ success: false, message: 'Server error retrieving shared project' });
+    return res
+      .status(500)
+      .json({ success: false, message: 'Server error retrieving shared project' });
   }
 });
 
@@ -248,7 +254,7 @@ app.post('/api/shared/:shareId/measurements', async (req, res) => {
       measurements: measurements,
       customerInfo: customerInfo,
       submittedAt: new Date(),
-      shareId: shareId
+      shareId: shareId,
     };
 
     if (!Array.isArray(shareRecord.submissions)) {
@@ -257,21 +263,30 @@ app.post('/api/shared/:shareId/measurements', async (req, res) => {
     shareRecord.submissions.push(submission);
 
     if (isDbConfigured()) {
-      await createOrUpdateProject({ slug: shareId, title: null, data: shareRecord, editToken: null });
+      await createOrUpdateProject({
+        slug: shareId,
+        title: null,
+        data: shareRecord,
+        editToken: null,
+      });
     } else {
       sharedProjects.set(shareId, shareRecord);
     }
 
-    console.log(`Received measurements for share ${shareId}: ${submissionId} (db=${isDbConfigured()})`);
+    console.log(
+      `Received measurements for share ${shareId}: ${submissionId} (db=${isDbConfigured()})`
+    );
 
     return res.json({
       success: true,
       submissionId: submissionId,
-      message: 'Measurements submitted successfully'
+      message: 'Measurements submitted successfully',
     });
   } catch (error) {
     console.error('Error submitting measurements:', error);
-    return res.status(500).json({ success: false, message: 'Server error submitting measurements' });
+    return res
+      .status(500)
+      .json({ success: false, message: 'Server error submitting measurements' });
   }
 });
 
@@ -293,27 +308,34 @@ app.get('/api/shared/:shareId/measurements', async (req, res) => {
     if (isDbConfigured()) {
       await ensureSchema();
       const dbRow = await getProjectBySlug(shareId);
-      if (!dbRow) return res.status(404).json({ success: false, message: 'Shared project not found' });
-      if (dbRow.edit_token !== editToken) return res.status(403).json({ success: false, message: 'Invalid edit token' });
+      if (!dbRow)
+        return res.status(404).json({ success: false, message: 'Shared project not found' });
+      if (dbRow.edit_token !== editToken)
+        return res.status(403).json({ success: false, message: 'Invalid edit token' });
       shareRecord = dbRow.data;
     } else {
       shareRecord = sharedProjects.get(shareId);
-      if (!shareRecord) return res.status(404).json({ success: false, message: 'Shared project not found' });
+      if (!shareRecord)
+        return res.status(404).json({ success: false, message: 'Shared project not found' });
       if (shareRecord.editToken && shareRecord.editToken !== editToken) {
         return res.status(403).json({ success: false, message: 'Invalid edit token' });
       }
     }
 
     const measurements = shareRecord.measurements || {};
-        
-    return res.json({ 
-      success: true, 
+    const submissions = shareRecord.submissions || [];
+
+    return res.json({
+      success: true,
       measurements: measurements,
-      totalSubmissions: Object.keys(measurements).length
+      submissions: submissions,
+      totalSubmissions: submissions.length,
     });
   } catch (error) {
     console.error('Error retrieving measurements:', error);
-    return res.status(500).json({ success: false, message: 'Server error retrieving measurements' });
+    return res
+      .status(500)
+      .json({ success: false, message: 'Server error retrieving measurements' });
   }
 });
 
@@ -326,6 +348,13 @@ app.get('/shared/:shareId', (req, res) => {
 });
 
 /**
+ * Serve the production team view page
+ */
+app.get('/production/:shareId', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public/production.html'));
+});
+
+/**
  * API endpoint for uploading project files
  * Accepts a project ZIP file and stores it in the uploads directory
  */
@@ -334,12 +363,12 @@ app.post('/api/upload-project', upload.single('projectFile'), (req, res) => {
     if (!req.file) {
       return res.status(400).json({ success: false, message: 'No file uploaded' });
     }
-        
+
     // Just return the file path - client will handle extraction
-    return res.json({ 
-      success: true, 
+    return res.json({
+      success: true,
       filePath: req.file.path,
-      fileName: req.file.originalname
+      fileName: req.file.originalname,
     });
   } catch (error) {
     console.error('Error handling project upload:', error);
@@ -354,14 +383,11 @@ app.post('/api/remove-background', async (req, res) => {
   try {
     const base = process.env.CF_WORKER_URL || AI_WORKER_URL || '';
     if (!base) {
-      return res
-        .status(500)
-        .set('content-type', 'application/json; charset=utf-8')
-        .json({
-          ok: false,
-          error: 'missing-CF_WORKER_URL',
-          message: 'Set CF_WORKER_URL to your Worker base URL'
-        });
+      return res.status(500).set('content-type', 'application/json; charset=utf-8').json({
+        ok: false,
+        error: 'missing-CF_WORKER_URL',
+        message: 'Set CF_WORKER_URL to your Worker base URL',
+      });
     }
     const url = `${base.replace(/\/$/, '')}/remove-background`;
     const headers = { 'content-type': 'application/json' };
@@ -375,17 +401,14 @@ app.post('/api/remove-background', async (req, res) => {
       upstream = await fetch(url, {
         method: 'POST',
         headers,
-        body: bodyText
+        body: bodyText,
       });
     } catch (e) {
-      return res
-        .status(502)
-        .set('content-type', 'application/json; charset=utf-8')
-        .json({
-          ok: false,
-          error: 'fetch-exception',
-          message: e.message
-        });
+      return res.status(502).set('content-type', 'application/json; charset=utf-8').json({
+        ok: false,
+        error: 'fetch-exception',
+        message: e.message,
+      });
     }
 
     const ct = upstream.headers.get('content-type') || 'application/octet-stream';
@@ -400,7 +423,7 @@ app.post('/api/remove-background', async (req, res) => {
           ok: false,
           error: 'upstream-error',
           message: `Worker returned ${upstream.status}: ${upstream.statusText}`,
-          workerUrl: url
+          workerUrl: url,
         });
     }
 
@@ -412,7 +435,7 @@ app.post('/api/remove-background', async (req, res) => {
       .json({
         ok: false,
         error: 'proxy-exception',
-        message: String(err)
+        message: String(err),
       });
   }
 });
@@ -425,14 +448,11 @@ app.post('/api/images/direct-upload', async (req, res) => {
   try {
     const base = process.env.CF_WORKER_URL || AI_WORKER_URL || '';
     if (!base) {
-      return res
-        .status(500)
-        .set('content-type', 'application/json; charset=utf-8')
-        .json({
-          ok: false,
-          error: 'missing-CF_WORKER_URL',
-          message: 'Set CF_WORKER_URL to your Worker base URL'
-        });
+      return res.status(500).set('content-type', 'application/json; charset=utf-8').json({
+        ok: false,
+        error: 'missing-CF_WORKER_URL',
+        message: 'Set CF_WORKER_URL to your Worker base URL',
+      });
     }
     const url = `${base.replace(/\/$/, '')}/images/direct-upload`;
     const headers = {};
@@ -453,7 +473,12 @@ app.post('/api/images/direct-upload', async (req, res) => {
       return res
         .status(502)
         .set('content-type', 'application/json; charset=utf-8')
-        .json({ ok: false, error: 'upstream-failed', status: upstream.status, body: text.slice(0, 500) });
+        .json({
+          ok: false,
+          error: 'upstream-failed',
+          status: upstream.status,
+          body: text.slice(0, 500),
+        });
     }
 
     try {
@@ -493,12 +518,15 @@ app.patch('/api/shared/:shareId', async (req, res) => {
     if (isDbConfigured()) {
       await ensureSchema();
       dbRow = await getProjectBySlug(shareId);
-      if (!dbRow) return res.status(404).json({ success: false, message: 'Shared project not found' });
-      if (dbRow.edit_token !== editToken) return res.status(403).json({ success: false, message: 'Invalid edit token' });
+      if (!dbRow)
+        return res.status(404).json({ success: false, message: 'Shared project not found' });
+      if (dbRow.edit_token !== editToken)
+        return res.status(403).json({ success: false, message: 'Invalid edit token' });
       shareRecord = dbRow.data;
     } else {
       shareRecord = sharedProjects.get(shareId);
-      if (!shareRecord) return res.status(404).json({ success: false, message: 'Shared project not found' });
+      if (!shareRecord)
+        return res.status(404).json({ success: false, message: 'Shared project not found' });
       if (shareRecord.editToken && shareRecord.editToken !== editToken) {
         return res.status(403).json({ success: false, message: 'Invalid edit token' });
       }
@@ -511,7 +539,8 @@ app.patch('/api/shared/:shareId', async (req, res) => {
     if (shareOptions && typeof shareOptions === 'object') {
       if (shareOptions.expiresAt) shareRecord.expiresAt = new Date(shareOptions.expiresAt);
       if (typeof shareOptions.isPublic === 'boolean') shareRecord.isPublic = shareOptions.isPublic;
-      if (typeof shareOptions.allowEditing === 'boolean') shareRecord.allowEditing = shareOptions.allowEditing;
+      if (typeof shareOptions.allowEditing === 'boolean')
+        shareRecord.allowEditing = shareOptions.allowEditing;
     }
 
     // Persist
@@ -524,7 +553,9 @@ app.patch('/api/shared/:shareId', async (req, res) => {
     return res.json({ success: true });
   } catch (error) {
     console.error('Error updating shared project:', error);
-    return res.status(500).json({ success: false, message: 'Server error updating shared project' });
+    return res
+      .status(500)
+      .json({ success: false, message: 'Server error updating shared project' });
   }
 });
 
@@ -543,15 +574,15 @@ const AI_RATE_WINDOW = 60 * 1000; // 1 minute
 function checkAIRateLimit(ip) {
   const now = Date.now();
   const record = aiRequestCounts.get(ip) || { count: 0, resetTime: now + AI_RATE_WINDOW };
-    
+
   if (now > record.resetTime) {
     record.count = 0;
     record.resetTime = now + AI_RATE_WINDOW;
   }
-    
+
   record.count++;
   aiRequestCounts.set(ip, record);
-    
+
   return record.count <= AI_RATE_LIMIT;
 }
 
@@ -564,9 +595,9 @@ app.post('/ai/generate-svg', async (req, res) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-API-Key': AI_WORKER_KEY
+        'X-API-Key': AI_WORKER_KEY,
       },
-      body: JSON.stringify(req.body)
+      body: JSON.stringify(req.body),
     });
     const text = await r.text();
     return res.status(r.status).type('application/json').send(text);
@@ -671,18 +702,21 @@ app.post('/ai/enhance-placement', async (req, res) => {
  * Forwards requests to Cloudflare Worker for furniture dimensioning
  */
 app.post('/ai/analyze-and-dimension', async (req, res) => {
-  try { 
-    console.log('[AI Relay] analyze req keys:', Object.keys(req.body || {})); 
-  } catch (_){}
   try {
-    const r = await fetch(joinUrl((process.env.AI_WORKER_URL || '').trim(), '/analyze-and-dimension'), {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-API-Key': (process.env.AI_WORKER_KEY || '').trim()
-      },
-      body: JSON.stringify(req.body || {})
-    });
+    console.log('[AI Relay] analyze req keys:', Object.keys(req.body || {}));
+  } catch (_) {}
+  try {
+    const r = await fetch(
+      joinUrl((process.env.AI_WORKER_URL || '').trim(), '/analyze-and-dimension'),
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': (process.env.AI_WORKER_KEY || '').trim(),
+        },
+        body: JSON.stringify(req.body || {}),
+      }
+    );
     const text = await r.text();
     console.log('[AI Relay] analyze status:', r.status);
     return res.status(r.status).type('application/json').send(text);
@@ -700,9 +734,9 @@ app.post('/api/storage/presign', async (req, res) => {
   try {
     // Validate Cloudflare Images configuration
     if (!CF_ACCOUNT_ID || !CF_IMAGES_API_TOKEN) {
-      return res.status(500).json({ 
-        success: false, 
-        message: 'Cloudflare Images not configured. Missing CF_ACCOUNT_ID or CF_IMAGES_API_TOKEN.' 
+      return res.status(500).json({
+        success: false,
+        message: 'Cloudflare Images not configured. Missing CF_ACCOUNT_ID or CF_IMAGES_API_TOKEN.',
       });
     }
 
@@ -713,40 +747,44 @@ app.post('/api/storage/presign', async (req, res) => {
 
     // Call Cloudflare Images Direct Creator Upload API
     const endpoint = `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/images/v2/direct_upload`;
-    
+
     const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${CF_IMAGES_API_TOKEN}`,
-        'Content-Type': 'application/json'
+        Authorization: `Bearer ${CF_IMAGES_API_TOKEN}`,
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         requireSignedURLs: false,
         metadata: {
           key: imageKey,
-          purpose: 'ai-furniture-dimensioning'
-        }
-      })
+          purpose: 'ai-furniture-dimensioning',
+        },
+      }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('[Cloudflare Images] Upload URL generation failed:', response.status, errorText);
-      return res.status(502).json({ 
-        success: false, 
+      console.error(
+        '[Cloudflare Images] Upload URL generation failed:',
+        response.status,
+        errorText
+      );
+      return res.status(502).json({
+        success: false,
         message: 'Failed to generate upload URL',
-        detail: errorText
+        detail: errorText,
       });
     }
 
     const data = await response.json();
-    
+
     if (!data.success) {
       console.error('[Cloudflare Images] API error:', data.errors);
-      return res.status(502).json({ 
-        success: false, 
+      return res.status(502).json({
+        success: false,
         message: 'Cloudflare Images API error',
-        errors: data.errors
+        errors: data.errors,
       });
     }
 
@@ -760,15 +798,14 @@ app.post('/api/storage/presign', async (req, res) => {
       key: imageKey,
       uploadUrl: uploadURL,
       imageId: imageId,
-      deliveryUrl: deliveryUrl
+      deliveryUrl: deliveryUrl,
     });
-
   } catch (error) {
     console.error('Error generating presigned upload URL:', error);
-    return res.status(500).json({ 
-      success: false, 
+    return res.status(500).json({
+      success: false,
       message: 'Server error generating upload URL',
-      detail: error.message 
+      detail: error.message,
     });
   }
 });
@@ -780,10 +817,11 @@ app.use((err, req, res, next) => {
 });
 
 // export for Vercel
-module.exports = app;
+// export for Vercel
+export default app;
 
 // keep local server only when run directly
-if (require.main === module) {
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const port = process.env.PORT || 3000;
   app.listen(port, '0.0.0.0', () => {
     console.log(`OpenPaint app listening at http://localhost:${port}`);
@@ -795,7 +833,7 @@ if (require.main === module) {
  */
 async function processImageWithRembg(inputPath, outputPath) {
   return new Promise((resolve, reject) => {
-    const fs = require('fs');
+    // fs is already imported at the top level
     const tempScriptPath = path.join(__dirname, 'temp_rembg_script.py');
     const pythonScript = `
 import sys
@@ -846,9 +884,17 @@ if __name__ == "__main__":
 
     const py = spawn('python3', [tempScriptPath, inputPath, outputPath], { stdio: 'inherit' });
     let failed = false;
-    py.on('error', (err) => { failed = true; try { fs.unlinkSync(tempScriptPath); } catch (_) {} reject(err); });
-    py.on('close', (code) => {
-      try { fs.unlinkSync(tempScriptPath); } catch (_) {}
+    py.on('error', err => {
+      failed = true;
+      try {
+        fs.unlinkSync(tempScriptPath);
+      } catch (_) {}
+      reject(err);
+    });
+    py.on('close', code => {
+      try {
+        fs.unlinkSync(tempScriptPath);
+      } catch (_) {}
       if (!failed && code === 0) return resolve();
       reject(new Error(`Python process exited with code ${code}`));
     });
@@ -859,7 +905,7 @@ if __name__ == "__main__":
 app.get('/js/:filename(*)', (req, res) => {
   const filePath = path.join(__dirname, 'js', req.params.filename);
   res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
-  res.sendFile(filePath, (err) => {
+  res.sendFile(filePath, err => {
     if (err) {
       console.error('[Static] Failed to serve JS file:', req.path, err.message);
       res.status(404).send('File not found');
@@ -870,7 +916,7 @@ app.get('/js/:filename(*)', (req, res) => {
 app.get('/css/:filename(*)', (req, res) => {
   const filePath = path.join(__dirname, 'css', req.params.filename);
   res.setHeader('Content-Type', 'text/css; charset=utf-8');
-  res.sendFile(filePath, (err) => {
+  res.sendFile(filePath, err => {
     if (err) {
       console.error('[Static] Failed to serve CSS file:', req.path, err.message);
       res.status(404).send('File not found');
@@ -888,7 +934,7 @@ app.get('/diagnostics-overlay.js', (req, res) => {
 app.get('/js/ai-export.js', (req, res) => {
   const filePath = path.join(__dirname, 'js', 'ai-export.js');
   res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
-  res.sendFile(filePath, (err) => {
+  res.sendFile(filePath, err => {
     if (err) {
       console.error('[Static] Failed to serve ai-export.js:', err.message);
       res.status(404).send('File not found');
@@ -905,7 +951,7 @@ app.get('/test-coordinate-system.js', (req, res) => {
 app.get('/src/:filename(*)', (req, res) => {
   const filePath = path.join(__dirname, 'src', req.params.filename);
   res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
-  res.sendFile(filePath, (err) => {
+  res.sendFile(filePath, err => {
     if (err) {
       console.error('[Static] Failed to serve src file:', req.path, err.message);
       res.status(404).send('File not found');
@@ -921,6 +967,3 @@ app.get('*', (req, res) => {
   res.setHeader('Expires', '0');
   res.sendFile(path.join(__dirname, 'index.html'));
 });
-
-// Export for Vercel
-module.exports = app;

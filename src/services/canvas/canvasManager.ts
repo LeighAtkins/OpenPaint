@@ -1,8 +1,8 @@
 // Canvas state management service with Fabric.js integration
-import { SupabaseService } from './supabase.service';
-import { authService } from './auth.service';
-import { projectService } from './project.service';
-import { measurementsService } from './measurements.service';
+import { SupabaseService } from '../supabase/client';
+import { authService } from '../auth/authService';
+import { projectService } from '../supabase/project.service';
+import { measurementsService } from '../measurements.service';
 import { Result } from '@/utils/result';
 import { AppError, ErrorCode } from '@/types/app.types';
 import type {
@@ -10,19 +10,13 @@ import type {
   ToolType,
   BrushSettings,
   Position,
-  Dimensions,
   BoundingBox,
   CanvasEvent,
-  CanvasEventType,
+  AppEventType,
   FabricObject,
   FabricCanvasJSON,
 } from '@/types/app.types';
-import type {
-  ProjectRow,
-  MeasurementData,
-  ImageData,
-  FabricObjectData,
-} from '@/types/supabase.types';
+import type { MeasurementData, FabricObjectData } from '@/types/supabase.types';
 
 // Canvas viewport state
 export interface ViewportState {
@@ -77,7 +71,7 @@ export interface CanvasStateSnapshot {
  */
 export class CanvasStateService extends SupabaseService {
   private canvasStates = new Map<string, CanvasState>();
-  private eventHandlers = new Map<CanvasEventType, Set<CanvasEventHandler>>();
+  private eventHandlers = new Map<AppEventType, Set<CanvasEventHandler>>();
   private stateHistory = new Map<string, CanvasStateSnapshot[]>();
   private currentHistoryIndex = new Map<string, number>();
 
@@ -243,10 +237,11 @@ export class CanvasStateService extends SupabaseService {
     imageLabel: string,
     tool: ToolType
   ): Promise<Result<CanvasState, AppError>> {
-    const updateResult = await this.updateCanvasState(projectId, imageLabel, {
-      currentTool: tool,
-      selectedObjectIds: tool !== 'select' ? [] : undefined, // Clear selection when switching from select tool
-    });
+    const stateUpdate: Partial<CanvasState> = { currentTool: tool };
+    if (tool !== 'select') {
+      stateUpdate.selectedObjectIds = []; // Clear selection when switching from select tool
+    }
+    const updateResult = await this.updateCanvasState(projectId, imageLabel, stateUpdate);
 
     if (updateResult.success) {
       this.emitEvent('canvas:tool-changed', {
@@ -583,8 +578,13 @@ export class CanvasStateService extends SupabaseService {
       this.currentHistoryIndex.set(canvasId, newIndex);
 
       const snapshot = history[newIndex];
+      if (!snapshot) {
+        return Result.err(
+          new AppError(ErrorCode.CANVAS_INVALID_STATE, 'Undo failed: snapshot not found')
+        );
+      }
 
-      this.emitEvent('canvas:undo', {
+      this.emitEvent('history:undo', {
         projectId,
         imageLabel,
         snapshotId: snapshot.id,
@@ -624,8 +624,13 @@ export class CanvasStateService extends SupabaseService {
       this.currentHistoryIndex.set(canvasId, newIndex);
 
       const snapshot = history[newIndex];
+      if (!snapshot) {
+        return Result.err(
+          new AppError(ErrorCode.CANVAS_INVALID_STATE, 'Redo failed: snapshot not found')
+        );
+      }
 
-      this.emitEvent('canvas:redo', {
+      this.emitEvent('history:redo', {
         projectId,
         imageLabel,
         snapshotId: snapshot.id,
@@ -674,10 +679,7 @@ export class CanvasStateService extends SupabaseService {
   /**
    * Subscribe to canvas events
    */
-  addEventListener<T = any>(
-    eventType: CanvasEventType,
-    handler: CanvasEventHandler<T>
-  ): () => void {
+  addEventListener<T = any>(eventType: AppEventType, handler: CanvasEventHandler<T>): () => void {
     if (!this.eventHandlers.has(eventType)) {
       this.eventHandlers.set(eventType, new Set());
     }
@@ -696,7 +698,7 @@ export class CanvasStateService extends SupabaseService {
   /**
    * Emit canvas event
    */
-  private emitEvent<T = any>(eventType: CanvasEventType, data: T): void {
+  private emitEvent<T = any>(eventType: AppEventType, data: T): void {
     const handlers = this.eventHandlers.get(eventType);
     if (!handlers) return;
 
@@ -725,7 +727,7 @@ export class CanvasStateService extends SupabaseService {
   /**
    * Check if state change is significant (requires marking as dirty)
    */
-  private isSignificantChange(current: CanvasState, updates: Partial<CanvasState>): boolean {
+  private isSignificantChange(_current: CanvasState, updates: Partial<CanvasState>): boolean {
     // Tool and brush changes don't make canvas dirty
     if (updates.currentTool !== undefined || updates.brushSettings !== undefined) {
       return false;
@@ -761,8 +763,8 @@ export class CanvasStateService extends SupabaseService {
       angle: obj.angle,
       visible: obj.visible,
       selectable: obj.selectable !== false,
-      fill: obj.fill,
-      stroke: obj.stroke,
+      fill: obj.fill || 'transparent',
+      stroke: obj.stroke || 'transparent',
       strokeWidth: obj.strokeWidth,
       // Add type-specific properties as needed
       ...(obj.type === 'path' && { path: (obj as any).path }),
@@ -813,8 +815,8 @@ export class CanvasStateService extends SupabaseService {
    * Get current canvas JSON (placeholder - would integrate with actual Fabric.js canvas)
    */
   private async getCurrentCanvasJSON(
-    projectId: string,
-    imageLabel: string
+    _projectId: string,
+    _imageLabel: string
   ): Promise<FabricCanvasJSON> {
     // This would integrate with the actual Fabric.js canvas instance
     // For now, return a basic structure

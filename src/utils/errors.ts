@@ -1,4 +1,4 @@
-import { type AppError, ErrorCode } from '@/types/app.types';
+import { AppError, ErrorCode } from '@/types/app.types';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // ERROR FACTORY
@@ -10,7 +10,7 @@ export function createAppError(
   details?: unknown,
   cause?: Error
 ): AppError {
-  return { code, message, ...(details !== undefined && { details }), ...(cause !== undefined && { cause }) };
+  return new AppError(code, message, details, cause);
 }
 
 export const AppErrors = {
@@ -60,12 +60,7 @@ export function normalizeError(error: unknown): AppError {
   }
 
   if (error instanceof Error) {
-    return createAppError(
-      ErrorCode.UNKNOWN_ERROR,
-      error.message,
-      undefined,
-      error
-    );
+    return createAppError(ErrorCode.UNKNOWN_ERROR, error.message, undefined, error);
   }
 
   if (typeof error === 'string') {
@@ -76,12 +71,7 @@ export function normalizeError(error: unknown): AppError {
 }
 
 function isAppError(error: unknown): error is AppError {
-  return (
-    typeof error === 'object' &&
-    error !== null &&
-    'code' in error &&
-    'message' in error
-  );
+  return typeof error === 'object' && error !== null && 'code' in error && 'message' in error;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -124,7 +114,7 @@ class Logger {
 
     if (this.isDev) {
       const prefix = `[${entry.timestamp}] [${level.toUpperCase()}] [${context}]`;
-      
+
       switch (level) {
         case 'debug':
           console.debug(prefix, message, data ?? '');
