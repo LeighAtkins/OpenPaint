@@ -5,6 +5,20 @@ export class CanvasManager {
   constructor(canvasId) {
     this.canvasId = canvasId;
     this.fabricCanvas = null;
+
+    // Resize state
+    this.pendingResizeFrame = null;
+    this.pendingResizeWidth = null;
+    this.pendingResizeHeight = null;
+    this.lastCanvasSize = { width: 0, height: 0 };
+
+    // Resize overlay for smooth transitions
+    this.resizeOverlayCanvas = null;
+    this.resizeOverlayCleanupId = null;
+
+    // Store capture frame in image-relative coordinates to prevent drift
+    // These are ratios (0-1) of the background image dimensions
+    this.captureFrameImageRatios = null;
   }
 
   init() {
@@ -21,9 +35,12 @@ export class CanvasManager {
       return;
     }
 
-    // Set initial dimensions before creating Fabric canvas
-    const width = window.innerWidth;
-    const height = window.innerHeight;
+    // Calculate initial dimensions (same logic as resize to prevent warping)
+    const availableSize = this.calculateAvailableSize();
+    const width = availableSize.width;
+    const height = availableSize.height;
+
+    console.log(`[CanvasManager] Initializing with size: ${width}x${height}`);
 
     this.fabricCanvas = new fabric.Canvas(this.canvasId, {
       width: width,
@@ -33,6 +50,9 @@ export class CanvasManager {
       preserveObjectStacking: true,
       backgroundColor: '#ffffff', // Default white background
     });
+
+    // Store initial size
+    this.lastCanvasSize = { width, height };
 
     // Selection state is managed by tools (SelectTool enables, drawing tools disable as needed)
     // Don't set a default here - let tools control it
@@ -227,14 +247,456 @@ export class CanvasManager {
     });
   }
 
-  resize() {
-    if (!this.fabricCanvas) return;
+  /**
+   * Calculate available canvas size (works before fabricCanvas is initialized)
+   */
+  calculateAvailableSize() {
+    const margin = 16;
+    const isVisible = el => el && el.offsetParent !== null;
 
-    // Canvas is always fullscreen
-    this.fabricCanvas.setWidth(window.innerWidth);
-    this.fabricCanvas.setHeight(window.innerHeight);
+    let leftReserve = 0;
+    ['toolsPanel', 'strokePanel'].forEach(id => {
+      const el = document.getElementById(id);
+      if (isVisible(el)) {
+        const elRect = el.getBoundingClientRect();
+        leftReserve = Math.max(leftReserve, elRect.width + margin);
+      }
+    });
 
+    let rightReserve = 0;
+    ['imagePanel'].forEach(id => {
+      const el = document.getElementById(id);
+      if (isVisible(el)) {
+        const elRect = el.getBoundingClientRect();
+        rightReserve = Math.max(rightReserve, elRect.width + margin);
+      }
+    });
+
+    let topReserve = 0;
+    const topToolbar = document.getElementById('topToolbar');
+    if (isVisible(topToolbar)) {
+      topReserve = topToolbar.getBoundingClientRect().height;
+    }
+
+    const width = window.innerWidth - leftReserve - rightReserve;
+    const height = window.innerHeight - topReserve;
+
+    return {
+      width: Math.max(100, width),
+      height: Math.max(100, height),
+    };
+  }
+
+  /**
+   * Show resize overlay to maintain visual continuity during canvas resize
+   */
+  showResizeOverlay(targetWidth, targetHeight) {
+    const canvasEl = this.fabricCanvas?.lowerCanvasEl;
+    if (!canvasEl || !canvasEl.parentElement) return;
+
+    const canvasRect = canvasEl.getBoundingClientRect();
+
+    if (!this.resizeOverlayCanvas) {
+      this.resizeOverlayCanvas = document.createElement('canvas');
+      this.resizeOverlayCanvas.style.pointerEvents = 'none';
+      this.resizeOverlayCanvas.style.position = 'absolute';
+      const zIndex = parseInt(window.getComputedStyle(canvasEl).zIndex || '0', 10) || 0;
+      this.resizeOverlayCanvas.style.zIndex = String(zIndex + 1);
+      canvasEl.parentElement.appendChild(this.resizeOverlayCanvas);
+    }
+
+    const parentRect = canvasEl.parentElement.getBoundingClientRect();
+    this.resizeOverlayCanvas.style.left = `${canvasRect.left - parentRect.left}px`;
+    this.resizeOverlayCanvas.style.top = `${canvasRect.top - parentRect.top}px`;
+
+    this.resizeOverlayCanvas.width = Math.max(1, Math.floor(canvasRect.width));
+    this.resizeOverlayCanvas.height = Math.max(1, Math.floor(canvasRect.height));
+
+    const overlayCtx = this.resizeOverlayCanvas.getContext('2d');
+    overlayCtx.clearRect(0, 0, this.resizeOverlayCanvas.width, this.resizeOverlayCanvas.height);
+    try {
+      overlayCtx.drawImage(
+        canvasEl,
+        0,
+        0,
+        this.resizeOverlayCanvas.width,
+        this.resizeOverlayCanvas.height
+      );
+    } catch (_) {
+      // Ignore drawImage failures (e.g., tainted canvas)
+    }
+
+    this.resizeOverlayCanvas.style.width = `${targetWidth}px`;
+    this.resizeOverlayCanvas.style.height = `${targetHeight}px`;
+  }
+
+  /**
+   * Hide resize overlay after redraw completes
+   */
+  hideResizeOverlay() {
+    if (this.resizeOverlayCleanupId) {
+      cancelAnimationFrame(this.resizeOverlayCleanupId);
+    }
+
+    this.resizeOverlayCleanupId = requestAnimationFrame(() => {
+      this.resizeOverlayCleanupId = null;
+      if (this.resizeOverlayCanvas && this.resizeOverlayCanvas.parentElement) {
+        this.resizeOverlayCanvas.parentElement.removeChild(this.resizeOverlayCanvas);
+      }
+      this.resizeOverlayCanvas = null;
+    });
+  }
+
+  /**
+   * Calculate available canvas size considering sidebars and panels
+   * (Wrapper for calculateAvailableSize for consistency)
+   */
+  getAvailableCanvasSize() {
+    return this.calculateAvailableSize();
+  }
+
+  /**
+   * Update capture frame position and size during resize
+   */
+  updateCaptureFrameOnResize(targetWidth, targetHeight) {
+    const captureFrame = document.getElementById('captureFrame');
+    if (!captureFrame) {
+      console.log('[Frame Debug] No capture frame element found');
+      return;
+    }
+
+    const currentImageLabel = window.app?.projectManager?.currentViewId;
+    if (!currentImageLabel) {
+      console.log('[Frame Debug] No current image label');
+      return;
+    }
+
+    console.log(`[Frame Debug] Updating frame for image: ${currentImageLabel}`);
+    console.log(`[Frame Debug] Target canvas size: ${targetWidth}x${targetHeight}`);
+    console.log(
+      `[Frame Debug] Current frame position: ${captureFrame.style.left}, ${captureFrame.style.top}`
+    );
+    console.log(
+      `[Frame Debug] Current frame size: ${captureFrame.style.width}, ${captureFrame.style.height}`
+    );
+
+    // Check if manual ratios are saved for this image
+    const savedRatios = window.manualFrameRatios && window.manualFrameRatios[currentImageLabel];
+    console.log(`[Frame Debug] All saved ratios:`, window.manualFrameRatios);
+
+    if (savedRatios) {
+      console.log('[Frame Debug] Using saved manual ratios:', savedRatios);
+
+      // Frame was manually resized - apply saved ratios to current canvas size
+      const frameWidth = targetWidth * savedRatios.widthRatio;
+      const frameHeight = targetHeight * savedRatios.heightRatio;
+      const frameLeft = targetWidth * savedRatios.leftRatio;
+      const frameTop = targetHeight * savedRatios.topRatio;
+
+      console.log(
+        `[Frame Debug] Calculated from ratios: ${frameWidth.toFixed(1)}x${frameHeight.toFixed(1)} at (${frameLeft.toFixed(1)}, ${frameTop.toFixed(1)})`
+      );
+
+      // Ensure frame stays within canvas bounds
+      const maxLeft = Math.max(0, targetWidth - frameWidth);
+      const maxTop = Math.max(0, targetHeight - frameHeight);
+      const boundedLeft = Math.max(0, Math.min(maxLeft, frameLeft));
+      const boundedTop = Math.max(0, Math.min(maxTop, frameTop));
+
+      if (boundedLeft !== frameLeft || boundedTop !== frameTop) {
+        console.log(
+          `[Frame Debug] Bounded position: (${boundedLeft.toFixed(1)}, ${boundedTop.toFixed(1)})`
+        );
+      }
+
+      captureFrame.style.width = `${frameWidth}px`;
+      captureFrame.style.height = `${frameHeight}px`;
+      captureFrame.style.left = `${boundedLeft}px`;
+      captureFrame.style.top = `${boundedTop}px`;
+
+      // Verify the ratios are reasonable
+      const actualRatios = {
+        widthRatio: frameWidth / targetWidth,
+        heightRatio: frameHeight / targetHeight,
+        leftRatio: boundedLeft / targetWidth,
+        topRatio: boundedTop / targetHeight,
+      };
+
+      console.log(
+        `[Frame Debug] ✓ Applied manual frame: ${frameWidth.toFixed(1)}x${frameHeight.toFixed(1)} at (${boundedLeft.toFixed(1)}, ${boundedTop.toFixed(1)})\n` +
+          `[Frame Debug] Actual ratios after apply: w=${(actualRatios.widthRatio * 100).toFixed(1)}%, h=${(actualRatios.heightRatio * 100).toFixed(1)}%`
+      );
+    } else {
+      console.log('[Frame Debug] No saved ratios, using default sizing');
+
+      // No manual resize - use default 800x600 or fit to canvas
+      let frameWidth = 800;
+      let frameHeight = 600;
+
+      // If canvas is smaller than 800x600, scale down to fit
+      if (targetWidth < 800 || targetHeight < 600) {
+        const aspectRatio = 4 / 3;
+        console.log(
+          `[Frame Debug] Canvas smaller than 800x600, scaling to fit (aspect: ${aspectRatio})`
+        );
+
+        if (targetWidth / targetHeight > aspectRatio) {
+          frameHeight = targetHeight * 0.9;
+          frameWidth = frameHeight * aspectRatio;
+          console.log(`[Frame Debug] Wide canvas: using 90% height`);
+        } else {
+          frameWidth = targetWidth * 0.9;
+          frameHeight = frameWidth / aspectRatio;
+          console.log(`[Frame Debug] Tall canvas: using 90% width`);
+        }
+      }
+
+      // Center the frame on the canvas
+      const frameLeft = (targetWidth - frameWidth) / 2;
+      const frameTop = (targetHeight - frameHeight) / 2;
+
+      console.log(
+        `[Frame Debug] Centered frame: ${frameWidth.toFixed(1)}x${frameHeight.toFixed(1)} at (${frameLeft.toFixed(1)}, ${frameTop.toFixed(1)})`
+      );
+
+      captureFrame.style.width = `${frameWidth}px`;
+      captureFrame.style.height = `${frameHeight}px`;
+      captureFrame.style.left = `${frameLeft}px`;
+      captureFrame.style.top = `${frameTop}px`;
+
+      console.log(
+        `[Frame Debug] ✓ Applied default frame: ${frameWidth.toFixed(1)}x${frameHeight.toFixed(1)} at (${frameLeft.toFixed(1)}, ${frameTop.toFixed(1)})`
+      );
+    }
+  }
+
+  /**
+   * Apply resize with debouncing and smooth transitions
+   */
+  applyResize() {
+    if (!this.fabricCanvas) {
+      return;
+    }
+    if (this.pendingResizeWidth === null || this.pendingResizeHeight === null) {
+      return;
+    }
+
+    const targetWidth = this.pendingResizeWidth;
+    const targetHeight = this.pendingResizeHeight;
+
+    const sizeChanged =
+      this.lastCanvasSize.width !== targetWidth || this.lastCanvasSize.height !== targetHeight;
+
+    // Get background image info if available
+    const bgImage = this.fabricCanvas.backgroundImage;
+
+    // Show overlay before resize for smooth transition
+    if (sizeChanged) {
+      this.showResizeOverlay(targetWidth, targetHeight);
+    }
+
+    // Update Fabric.js canvas dimensions
+    this.fabricCanvas.setWidth(targetWidth);
+    this.fabricCanvas.setHeight(targetHeight);
+
+    // CRITICAL FIX: Remove min-width/min-height constraints that cause stretching
+    // These CSS constraints force the canvas to display larger than its actual size
+    const canvasEl = this.fabricCanvas.lowerCanvasEl;
+    if (canvasEl) {
+      canvasEl.style.minWidth = 'unset';
+      canvasEl.style.minHeight = 'unset';
+    }
+    const upperCanvasEl = this.fabricCanvas.upperCanvasEl;
+    if (upperCanvasEl) {
+      upperCanvasEl.style.minWidth = 'unset';
+      upperCanvasEl.style.minHeight = 'unset';
+    }
+
+    // Update last known size
+    this.lastCanvasSize = { width: targetWidth, height: targetHeight };
+
+    // Recalculate background image fit if one exists
+    if (bgImage && sizeChanged) {
+      // Get current fit mode from project manager if available
+      const currentViewId = window.app?.projectManager?.currentViewId;
+      const savedFitMode =
+        window.app?.projectManager?.views?.[currentViewId]?.fitMode || 'fit-canvas';
+
+      // Recalculate scale based on new canvas size
+      const imgWidth = bgImage.width;
+      const imgHeight = bgImage.height;
+      let scale = 1;
+
+      switch (savedFitMode) {
+        case 'fit-width':
+          scale = targetWidth / imgWidth;
+          break;
+        case 'fit-height':
+          scale = targetHeight / imgHeight;
+          break;
+        case 'fit-canvas':
+          scale = Math.min(targetWidth / imgWidth, targetHeight / imgHeight);
+          break;
+        case 'actual-size':
+          scale = 1;
+          break;
+        default:
+          scale = Math.min(targetWidth / imgWidth, targetHeight / imgHeight);
+      }
+
+      const oldScale = bgImage.scaleX;
+      const oldLeft = bgImage.left;
+      const oldTop = bgImage.top;
+
+      // Calculate scaled dimensions
+      const scaledWidth = imgWidth * scale;
+      const scaledHeight = imgHeight * scale;
+
+      // Center the image in the canvas
+      // Since originX/originY are 'center', left/top should be canvas center
+      const centerX = targetWidth / 2;
+      const centerY = targetHeight / 2;
+
+      // Update scale AND position to center the image
+      bgImage.set({
+        scaleX: scale,
+        scaleY: scale,
+        left: centerX,
+        top: centerY,
+      });
+
+      // CRITICAL: Transform all stroke objects to maintain position relative to background image
+      // Calculate the transformation delta
+      const scaleRatio = scale / oldScale;
+
+      // Transform all objects (strokes, arrows, tags, etc.) except the background image
+      const objects = this.fabricCanvas.getObjects();
+      let transformedCount = 0;
+      objects.forEach(obj => {
+        // Skip only the background image itself
+        if (obj === bgImage) return;
+
+        // Calculate new position relative to background image center
+        // 1. Get position relative to old background center
+        const relX = obj.left - oldLeft;
+        const relY = obj.top - oldTop;
+
+        // 2. Scale the relative position
+        const newRelX = relX * scaleRatio;
+        const newRelY = relY * scaleRatio;
+
+        // 3. Add new background center
+        const newLeft = centerX + newRelX;
+        const newTop = centerY + newRelY;
+
+        // Update object position and scale
+        obj.set({
+          left: newLeft,
+          top: newTop,
+          scaleX: (obj.scaleX || 1) * scaleRatio,
+          scaleY: (obj.scaleY || 1) * scaleRatio,
+        });
+
+        obj.setCoords(); // Update object coordinates for interactions
+        transformedCount++;
+      });
+
+      // Transform capture frame to stick with the background image
+      const captureFrame = document.getElementById('captureFrame');
+      if (captureFrame) {
+        const oldFrameLeft = parseFloat(captureFrame.style.left) || 0;
+        const oldFrameTop = parseFloat(captureFrame.style.top) || 0;
+        const oldFrameWidth = parseFloat(captureFrame.style.width) || 0;
+        const oldFrameHeight = parseFloat(captureFrame.style.height) || 0;
+
+        // Store frame ratios relative to OLD image if not already stored
+        // This prevents cumulative drift by always calculating from the same reference
+        if (!this.captureFrameImageRatios) {
+          // Calculate frame center relative to old image center
+          const frameCenterX = oldFrameLeft + oldFrameWidth / 2;
+          const frameCenterY = oldFrameTop + oldFrameHeight / 2;
+
+          // Position relative to old background center
+          const relX = frameCenterX - oldLeft;
+          const relY = frameCenterY - oldTop;
+
+          // Convert to ratios of the OLD image's scaled size
+          const oldScaledWidth = imgWidth * oldScale;
+          const oldScaledHeight = imgHeight * oldScale;
+
+          this.captureFrameImageRatios = {
+            // Frame center position as ratio of image size (-0.5 to 0.5 for centered)
+            centerXRatio: relX / oldScaledWidth,
+            centerYRatio: relY / oldScaledHeight,
+            // Frame size as ratio of image size
+            widthRatio: oldFrameWidth / oldScaledWidth,
+            heightRatio: oldFrameHeight / oldScaledHeight,
+          };
+        }
+
+        // Calculate NEW frame position from stored ratios and NEW image position
+        const newScaledWidth = imgWidth * scale;
+        const newScaledHeight = imgHeight * scale;
+
+        // Calculate frame size from ratios
+        const newFrameWidth = newScaledWidth * this.captureFrameImageRatios.widthRatio;
+        const newFrameHeight = newScaledHeight * this.captureFrameImageRatios.heightRatio;
+
+        // Calculate frame center position
+        const frameCenterX = centerX + newScaledWidth * this.captureFrameImageRatios.centerXRatio;
+        const frameCenterY = centerY + newScaledHeight * this.captureFrameImageRatios.centerYRatio;
+
+        // Calculate top-left position from center
+        const newFrameLeft = frameCenterX - newFrameWidth / 2;
+        const newFrameTop = frameCenterY - newFrameHeight / 2;
+
+        // Round to whole pixels to prevent sub-pixel jitter
+        const roundedLeft = Math.round(newFrameLeft);
+        const roundedTop = Math.round(newFrameTop);
+        const roundedWidth = Math.round(newFrameWidth);
+        const roundedHeight = Math.round(newFrameHeight);
+
+        // Update frame position and size
+        captureFrame.style.left = `${roundedLeft}px`;
+        captureFrame.style.top = `${roundedTop}px`;
+        captureFrame.style.width = `${roundedWidth}px`;
+        captureFrame.style.height = `${roundedHeight}px`;
+      }
+    }
+
+    // Redraw canvas
     this.fabricCanvas.renderAll();
+
+    // Hide overlay after redraw
+    if (sizeChanged) {
+      this.hideResizeOverlay();
+    }
+
+    // Clear pending resize
+    this.pendingResizeWidth = null;
+    this.pendingResizeHeight = null;
+  }
+
+  /**
+   * Debounced resize method - queues resize with requestAnimationFrame
+   */
+  resize() {
+    if (!this.fabricCanvas) {
+      return;
+    }
+
+    const { width, height } = this.getAvailableCanvasSize();
+
+    this.pendingResizeWidth = width;
+    this.pendingResizeHeight = height;
+
+    // Debounce resize calls to prevent multiple rapid calls
+    if (!this.pendingResizeFrame) {
+      this.pendingResizeFrame = requestAnimationFrame(() => {
+        this.pendingResizeFrame = null;
+        this.applyResize();
+      });
+    }
   }
 
   initZoomPan() {

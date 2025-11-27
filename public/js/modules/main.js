@@ -110,6 +110,11 @@ class App {
         this.canvasManager.resize();
       });
 
+      // Expose resize globally
+      window.resizeCanvas = () => {
+        return this.canvasManager.resize();
+      };
+
       console.log('OpenPaint initialization complete');
 
       // Debug: Verify canvas is accessible
