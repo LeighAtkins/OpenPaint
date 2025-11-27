@@ -323,6 +323,17 @@ class App {
     window.strokeLabelVisibility = this.metadataManager.strokeLabelVisibility;
     window.strokeMeasurements = this.metadataManager.strokeMeasurements;
 
+    // Expose updateStrokeVisibilityControls function globally
+    window.updateStrokeVisibilityControls = () =>
+      this.metadataManager.updateStrokeVisibilityControls();
+
+    // Initialize the stroke visibility controls
+    setTimeout(() => {
+      if (this.metadataManager) {
+        this.metadataManager.updateStrokeVisibilityControls();
+      }
+    }, 100);
+
     // Make project manager available globally for image switching
     window.projectManager = this.projectManager;
     window.shareProject = () => this.projectManager.shareProject();

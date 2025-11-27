@@ -969,9 +969,14 @@
             opacity: 0;
         }
 
-        /* Enhanced button hover effects */
+        /* Enhanced button hover effects - with stacking context isolation */
+        .floating-panel button[id^='toggle'] svg {
+            isolation: isolate;
+        }
+        
         .floating-panel button[id^='toggle']:hover svg {
             transform: scale(1.1);
+            isolation: isolate;
         }
 
         /* Make canvasControls scrollable on all screen sizes */
@@ -1227,7 +1232,7 @@
             cursor: grabbing !important;
         }
 
-        /* Fix stroke visibility item layout */
+        /* Fix stroke visibility item layout - with stacking context isolation */
         .stroke-visibility-item {
             display: flex !important;
             align-items: center !important;
@@ -1238,6 +1243,8 @@
             border-radius: 6px !important;
             border: 1px solid #e5e7eb !important;
             transition: all 0.2s ease !important;
+            isolation: isolate;
+            transform: translateZ(0);
         }
 
         /* Ensure the strokes list flows vertically and doesn't overlap */
@@ -1373,22 +1380,85 @@
         #imagePanelContent {
             overflow: hidden !important;
             position: relative !important;
-            z-index: 70 !important;
+            z-index: 100 !important;
         }
 
         #imageList {
             position: relative;
-            z-index: 70;
+            z-index: 100;
         }
 
         #elementsBody {
             position: relative !important;
-            z-index: 70 !important;
+            z-index: 10200 !important;
+            isolation: isolate !important;
+        }
+        
+        #strokePanel {
+            z-index: 10200 !important;
+            isolation: isolate !important;
+            background: white !important;
+        }
+        
+        #elementsBody {
+            background: white !important;
+        }
+        
+        #imagePanel {
+            z-index: 10200 !important;
+            isolation: isolate !important;
+        }
+        
+        .floating-panel {
+            z-index: 10200 !important;
+            isolation: isolate !important;
+        }
+        
+        #topToolbar {
+            z-index: 1000 !important;
+        }
+        
+        #navigation-container {
+            background: white !important;
+            z-index: 10300 !important;
+            position: fixed !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+        }
+        
+        #mini-stepper {
+            background: white !important;
+            z-index: 10300 !important;
+        }
+        
+        #imagePanelContent {
+            background: white !important;
+        }
+        
+        #imageList {
+            background: white !important;
+        }
+        
+        /* Snap guide line should be above image list content */
+        .border-t.border-slate-300\/70 {
+            z-index: 10250 !important;
         }
 
         #strokeVisibilityControls {
             position: relative !important;
-            z-index: 70 !important;
+            z-index: 10200 !important;
+            isolation: isolate;
+            transform: translateZ(0);
+        }
+        
+        /* Force GPU acceleration and stacking context isolation for all toggle SVGs */
+        .floating-panel svg,
+        button svg,
+        [id*="toggle"] svg {
+            transform: translateZ(0);
+            isolation: isolate;
+            will-change: transform;
         }
 
         #strokeVisibilityControls::-webkit-scrollbar {
@@ -1592,7 +1662,7 @@
 
         /* Overlays & Dialogs */
         #captureOverlay {
-            z-index: 30 !important;
+            z-index: 50 !important;
             backdrop-filter: none;
         }
 
@@ -1851,10 +1921,10 @@
     </script>
 
     <!-- Fullscreen Canvas -->
-    <canvas id="canvas" style="cursor: crosshair; width: 1141px; height: 889px; left: 0px; top: 0px; position: fixed; max-width: none; max-height: none; min-width: 1141px; min-height: 889px;" width="1141" height="889"></canvas>
+    <canvas id="canvas" style="cursor: crosshair; width: 1141px; height: 889px; left: 0px; top: 0px; position: fixed; max-width: none; max-height: none; min-width: 1141px; min-height: 889px; z-index: 1;" width="1141" height="889"></canvas>
 
     <!-- Main Content Container for Frame Capture -->
-    <div id="frame-capture" class="w-full" style="min-height: 100vh; overflow-y: visible; position: relative;">
+    <div id="frame-capture" class="w-full" style="min-height: 100vh; overflow-y: visible; position: relative; z-index: -1; pointer-events: none;">
         <!-- Content will be dynamically generated based on images -->
         <div id="frame-content" class="min-h-screen flex items-center justify-center">
             <div class="text-center p-8">
@@ -1885,7 +1955,7 @@
 
     <!-- Minimal Numeric Pill Strip Navigation - Positioned under frame capture -->
     <div id="navigation-container" class="w-full"
-        style="background: white; border-top: 1px solid #cbd5e1; position: relative; z-index: 10; display: block;">
+        style="background: white; border-top: 1px solid #cbd5e1; position: relative; z-index: 10300; display: block;">
         <nav aria-label="Image quick nav" class="w-full">
             <ol id="mini-stepper"
                 class="flex gap-3 px-4 py-3 overflow-x-auto snap-x snap-mandatory justify-center items-center min-h-[60px]">
@@ -2106,8 +2176,8 @@
 
     <!-- Vectors and Tags Panel -->
     <div id="strokePanel"
-        class="floating-panel fixed left-4 z-30 rounded-2xl w-64 transition-all duration-300 overflow-hidden"
-        style="top: clamp(1rem, 50vh - 20rem, calc(100vh - 40rem - 1rem)); max-height: min(40rem, calc(100vh - 2rem));">
+        class="floating-panel fixed left-4 z-40 rounded-2xl w-64 transition-all duration-300 overflow-hidden"
+        style="z-index: 10200 !important; top: clamp(1rem, 50vh - 20rem, calc(100vh - 40rem - 1rem)); max-height: min(40rem, calc(100vh - 2rem));">
         <div id="elementsHeader"
             class="flex items-center justify-between p-3 cursor-move border-b border-gray-200/50 bg-white rounded-t-2xl">
             <div class="flex items-center gap-2">
@@ -2119,13 +2189,13 @@
             </div>
             <button id="toggleStrokePanel" class="text-slate-500 hover:text-slate-700 rounded-lg p-1 transition-all"
                 title="Minimize/Expand Panel">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="isolation: isolate; transform: translateZ(0);">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                 </svg>
             </button>
         </div>
         <!-- Panel Body (collapsible) -->
-        <div id="elementsBody" role="region" aria-labelledby="elementsHeader" style="position: relative; z-index: 70;">
+        <div id="elementsBody" role="region" aria-labelledby="elementsHeader" style="position: relative; z-index: 100;">
             <div id="elementsControls" class="px-3 pt-3 pb-1 border-b border-gray-100">
                 <div class="flex gap-2 mb-2">
                     <button id="selectAllStrokesBtn" title="Select/Deselect all elements"
@@ -2185,7 +2255,7 @@
                 </div>
             </div>
             <div id="strokeVisibilityControls" class="px-3 pt-2 pb-2 overflow-x-hidden"
-                style="box-sizing: border-box; position: relative; z-index: 70;"></div>
+                style="box-sizing: border-box; position: relative; z-index: 100;"></div>
         </div>
     </div>
 
@@ -2220,11 +2290,11 @@
                 class="w-full px-2 py-1 border border-slate-300 rounded-md text-[12px] focus:outline-none focus:ring-2 focus:ring-primary-300"
                 placeholder="Rename current image" />
         </div>
-        <div id="imagePanelContent" class="p-3 transition-all duration-300" style="position: relative; z-index: 70;">
+        <div id="imagePanelContent" class="p-3 transition-all duration-300" style="position: relative; z-index: 100;">
             <!-- Legacy image list for backwards compatibility -->
             <div id="imageList"
                 class="space-y-4 mb-0 h-[60vh] overflow-y-auto overflow-x-hidden pr-0 snap-y snap-mandatory scroll-smooth"
-                style="padding-top: calc(30vh - 5rem); padding-bottom: calc(30vh - 5rem); position: relative; z-index: 70;"></div>
+                style="padding-top: calc(30vh - 5rem); padding-bottom: calc(30vh - 5rem); position: relative; z-index: 100;"></div>
 
             <!-- Snap guide line -->
             <div
@@ -2252,13 +2322,14 @@
     </div>
 
     <!-- Capture Frame -->
-    <div id="captureOverlay" class="fixed inset-0 pointer-events-none" style="z-index: 30;">
+    <div id="captureOverlay" class="fixed inset-0 pointer-events-none" style="z-index: 1;">
         <!-- Capture frame -->
-        <div id="captureFrame" class="capture-frame absolute border-2 border-gray-400 bg-transparent"
-            style="left: calc(50% - 400px); top: calc(50% - 300px); width: 800px; height: 600px; pointer-events: none;">
+        <div id="captureFrame" class="capture-frame absolute bg-transparent"
+            style="left: calc(50% - 400px); top: calc(50% - 300px); width: 800px; height: 600px; pointer-events: none; border: 2px solid #3b82f6 !important;">
             <!-- Lock button -->
             <button id="captureLockButton"
                 class="absolute -bottom-8 -right-8 w-8 h-8 bg-white border border-gray-300 rounded shadow-md hover:bg-gray-50 transition-colors flex items-center justify-center text-gray-600"
+                style="pointer-events: auto;"
                 title="Lock/Unlock frame (L)">
                 <!-- Locked icon -->
                 <svg class="locked-icon w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -3484,295 +3555,7 @@
                 });
             })();
 
-            // Enhanced panel toggle functionality with minimize-to-header behavior
-            function createPanelToggle(panelId, contentId, buttonId) {
-                const panel = document.getElementById(panelId);
-                const content = document.getElementById(contentId);
-                const button = document.getElementById(buttonId);
-                const icon = button?.querySelector('svg');
-
-                if (!panel || !content || !button || !icon) return;
-
-                button.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    // Use the specified content element
-                    const body = content;
-                    const isMinimized = body.classList.contains('hidden');
-
-                    // Special handling for imagePanel: ensure navigation container stays visible
-                    if (panelId === 'imagePanel') {
-                        const navContainer = document.getElementById('navigation-container');
-                        const miniStepper = document.getElementById('mini-stepper');
-                        if (navContainer) {
-                            // Explicitly ensure navigation container stays visible
-                            navContainer.style.display = 'block';
-                            navContainer.style.visibility = 'visible';
-                            navContainer.style.opacity = '1';
-                            navContainer.style.pointerEvents = 'auto';
-                        }
-                        if (miniStepper) {
-                            miniStepper.style.display = 'flex';
-                            miniStepper.style.visibility = 'visible';
-                            miniStepper.style.opacity = '1';
-                            miniStepper.style.pointerEvents = 'auto';
-                        }
-                    }
-
-                    if (isMinimized) {
-                        // Expand panel
-                        // starting from hidden (max-height:0), set explicit height to animate open
-                        body.classList.remove('hidden');
-                        body.style.maxHeight = body.scrollHeight + 'px';
-                        // after transition completes, allow natural growth
-                        const onEnd = () => {
-                            body.style.maxHeight = 'none';
-                            body.removeEventListener('transitionend', onEnd);
-                        };
-                        body.addEventListener('transitionend', onEnd);
-                        icon.style.transform = 'rotate(0deg)';
-                        panel.classList.remove('minimized');
-                        panel.setAttribute('aria-expanded', 'true');
-                    } else {
-                        // Minimize panel
-                        // if maxHeight is none (auto), set current height to enable smooth collapse
-                        if (!body.style.maxHeight || body.style.maxHeight === 'none') {
-                            body.style.maxHeight = body.scrollHeight + 'px';
-                            // force reflow
-                            void body.offsetHeight;
-                        }
-                        // add hidden to animate to max-height:0 via CSS
-                        body.classList.add('hidden');
-                        icon.style.transform = 'rotate(-90deg)';
-                        panel.classList.add('minimized');
-                        panel.setAttribute('aria-expanded', 'false');
-
-                        // For imagePanel, ensure navigation stays visible after collapse
-                        if (panelId === 'imagePanel') {
-                            const navContainer = document.getElementById('navigation-container');
-                            const miniStepper = document.getElementById('mini-stepper');
-                            if (navContainer) {
-                                navContainer.style.display = 'block';
-                                navContainer.style.visibility = 'visible';
-                                navContainer.style.opacity = '1';
-                            }
-                            if (miniStepper) {
-                                miniStepper.style.display = 'flex';
-                                miniStepper.style.visibility = 'visible';
-                                miniStepper.style.opacity = '1';
-                            }
-                        }
-                    }
-                });
-            }
-
-            // Apply toggle functionality to all panels (default open for Stroke & Images)
-            createPanelToggle('projectPanel', 'projectPanelContent', 'toggleProjectPanel');
-            createPanelToggle('toolsPanel', 'toolsPanelContent', 'toggleToolsPanel');
-            createPanelToggle('strokePanel', 'elementsBody', 'toggleStrokePanel');
-            createPanelToggle('imagePanel', 'imagePanelContent', 'toggleImagePanel');
-            createPanelToggle('canvasControls', 'canvasControlsContent', 'toggleCanvasControls');
-
-            // Ensure Vectors and tags and Images are open by default on desktop, closed on mobile
-            // Run immediately and also after a short delay to catch any late initialization
-            (function expandByDefault() {
-                function isMobileDevice() {
-                    return window.innerWidth <= 768;
-                }
-
-                function ensurePanelsExpanded() {
-                    const strokePanel = document.getElementById('strokePanel');
-                    const imagePanel = document.getElementById('imagePanel');
-                    const strokeContent = document.getElementById('elementsBody');
-                    const imageContent = document.getElementById('imagePanelContent');
-                    const isMobile = isMobileDevice();
-
-                    if (!strokePanel || !imagePanel) {
-                        return;
-                    }
-
-                    // On mobile: start minimized (closed), on desktop: start expanded (open)
-                    if (isMobile) {
-                        // Mobile: minimize panels by default
-                        strokePanel.classList.remove('expanded');
-                        strokePanel.classList.add('minimized');
-                        strokePanel.setAttribute('data-mobile-state', 'minimized');
-                        strokePanel.setAttribute('aria-expanded', 'false');
-                        strokePanel.style.display = 'none'; // Hide on mobile when minimized
-
-                        imagePanel.classList.remove('expanded');
-                        imagePanel.classList.add('minimized');
-                        imagePanel.setAttribute('data-mobile-state', 'minimized');
-                        imagePanel.setAttribute('aria-expanded', 'false');
-                        imagePanel.style.display = 'none'; // Hide on mobile when minimized
-
-                        // Hide content on mobile when minimized
-                        if (strokeContent) {
-                            strokeContent.classList.add('hidden');
-                        }
-                        if (imageContent) {
-                            imageContent.classList.add('hidden');
-                        }
-                    } else {
-                        // Desktop: expand panels by default
-                        strokePanel.classList.remove('minimized', 'expanded');
-                        strokePanel.setAttribute('data-mobile-state', 'expanded');
-                        strokePanel.setAttribute('aria-expanded', 'true');
-                        strokePanel.style.display = 'flex';
-
-                        imagePanel.classList.remove('minimized', 'expanded');
-                        imagePanel.setAttribute('data-mobile-state', 'expanded');
-                        imagePanel.setAttribute('aria-expanded', 'true');
-                        imagePanel.style.display = 'flex';
-
-                        // Aggressively ensure content is visible on desktop
-                        if (strokeContent) {
-                            strokeContent.classList.remove('hidden');
-                            strokeContent.style.maxHeight = 'none';
-                            strokeContent.style.display = '';
-                            strokeContent.style.visibility = '';
-                            strokeContent.style.opacity = '';
-                        }
-                        if (imageContent) {
-                            imageContent.classList.remove('hidden');
-                            imageContent.style.maxHeight = 'none';
-                            imageContent.style.display = '';
-                            imageContent.style.visibility = '';
-                            imageContent.style.opacity = '';
-                        }
-                    }
-
-                    // Mark panels as loaded to enable transitions after initial render
-                    strokePanel.setAttribute('data-loaded', 'true');
-                    imagePanel.setAttribute('data-loaded', 'true');
-                    if (strokeContent) strokeContent.setAttribute('data-loaded', 'true');
-                    if (imageContent) imageContent.setAttribute('data-loaded', 'true');
-
-                }
-
-                // Run immediately
-                ensurePanelsExpanded();
-
-                // Also run after a short delay to catch any late initialization
-                setTimeout(ensurePanelsExpanded, 50);
-                setTimeout(ensurePanelsExpanded, 200);
-            })();
-
-            // Mobile panel toggle icons functionality
-            function isMobileDevice() {
-                return window.innerWidth <= 768;
-            }
-
-            function initializePanelToggleIcons() {
-                const strokePanel = document.getElementById('strokePanel');
-                const imagePanel = document.getElementById('imagePanel');
-                const strokeIcon = document.getElementById('strokePanelIcon');
-                const imageIcon = document.getElementById('imagePanelIcon');
-
-                if (!strokePanel || !imagePanel || !strokeIcon || !imageIcon) {
-                    console.warn('Panel toggle icons or panels not found');
-                    return;
-                }
-
-                // Initialize panel states - start minimized on mobile, expanded on desktop
-                const isMobile = isMobileDevice();
-                if (!strokePanel.getAttribute('data-mobile-state')) {
-                    strokePanel.setAttribute('data-mobile-state', isMobile ? 'minimized' : 'expanded');
-                }
-                if (!imagePanel.getAttribute('data-mobile-state')) {
-                    imagePanel.setAttribute('data-mobile-state', isMobile ? 'minimized' : 'expanded');
-                }
-
-                // Sync icon visual state with panel state
-                function syncIconState(panel, icon) {
-                    icon.classList.remove('minimized', 'expanded');
-                    panel.classList.remove('minimized', 'expanded');
-
-                    const isOpen = panel.getAttribute('data-mobile-state') === 'expanded';
-                    if (isOpen) {
-                        icon.classList.add('expanded');
-                        panel.classList.add('expanded');
-                        panel.style.display = 'flex';
-                        // Ensure panel content is visible
-                        const contentId = panel.id === 'strokePanel' ? 'elementsBody' : 'imagePanelContent';
-                        const content = document.getElementById(contentId);
-                        if (content) {
-                            content.classList.remove('hidden');
-                            content.style.maxHeight = 'none';
-                        }
-                    } else {
-                        icon.classList.add('minimized');
-                        panel.classList.add('minimized');
-                        // On mobile, hide the panel when minimized
-                        if (isMobileDevice()) {
-                            panel.style.display = 'none';
-                        }
-                    }
-                }
-
-                // Toggle panel on icon click
-                function setupIconToggle(panel, icon) {
-                    icon.addEventListener('click', (e) => {
-                        if (!isMobileDevice()) return;
-                        e.stopPropagation();
-
-                        const isCurrentlyOpen = panel.getAttribute('data-mobile-state') === 'expanded';
-                        panel.setAttribute('data-mobile-state', isCurrentlyOpen ? 'minimized' : 'expanded');
-                        syncIconState(panel, icon);
-                    });
-                }
-
-                // Show/hide icons and panels based on device type
-                function updatePanelVisibility() {
-                    const isMobile = isMobileDevice();
-
-                    // On desktop, always show panels and ensure content is visible
-                    if (!isMobile) {
-                        strokePanel.style.display = 'flex';
-                        imagePanel.style.display = 'flex';
-                        // Hide icons on desktop
-                        strokeIcon.style.display = 'none';
-                        imageIcon.style.display = 'none';
-                        // Ensure content is visible on desktop
-                        const strokeContent = document.getElementById('elementsBody');
-                        const imageContent = document.getElementById('imagePanelContent');
-                        if (strokeContent) {
-                            strokeContent.classList.remove('hidden');
-                            strokeContent.style.maxHeight = 'none';
-                        }
-                        if (imageContent) {
-                            imageContent.classList.remove('hidden');
-                            imageContent.style.maxHeight = 'none';
-                        }
-                    } else {
-                        // On mobile, show icons with smooth fade-in
-                        strokeIcon.style.display = 'flex';
-                        imageIcon.style.display = 'flex';
-                        // Fade in icons smoothly
-                        requestAnimationFrame(() => {
-                            strokeIcon.style.opacity = '1';
-                            imageIcon.style.opacity = '1';
-                        });
-                        // Sync panel state with icons
-                        syncIconState(strokePanel, strokeIcon);
-                        syncIconState(imagePanel, imageIcon);
-                    }
-                }
-
-                // Initialize
-                setupIconToggle(strokePanel, strokeIcon);
-                setupIconToggle(imagePanel, imageIcon);
-                updatePanelVisibility();
-
-                // Update on window resize
-                let resizeTimeout;
-                window.addEventListener('resize', () => {
-                    clearTimeout(resizeTimeout);
-                    resizeTimeout = setTimeout(updatePanelVisibility, 150);
-                });
-            }
-
-            // Initialize panel toggle icons after a short delay to ensure DOM is ready
-            setTimeout(initializePanelToggleIcons, 100);
+            // Panel management is now handled by external panel-management.js file
 
             // removed elements resize handle wiring
 
