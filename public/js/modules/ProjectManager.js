@@ -170,17 +170,29 @@ export class ProjectManager {
   }
 
   async setBackgroundImage(url, fitMode = 'fit-canvas') {
+    console.log(`\n[Image Debug] ===== SET BACKGROUND IMAGE =====`);
+    console.log(`[Image Debug] URL: ${url?.substring?.(0, 50)}...`);
+    console.log(`[Image Debug] Fit mode: ${fitMode}`);
+
     return new Promise(resolve => {
       fabric.Image.fromURL(
         url,
         img => {
           const canvas = this.canvasManager.fabricCanvas;
-          if (!canvas) return resolve();
+          if (!canvas) {
+            console.log('[Image Debug] ❌ No canvas available');
+            return resolve();
+          }
 
           const canvasWidth = canvas.width;
           const canvasHeight = canvas.height;
           const imgWidth = img.width;
           const imgHeight = img.height;
+
+          console.log(
+            `[Image Debug] Canvas: ${canvasWidth}x${canvasHeight} (aspect: ${(canvasWidth / canvasHeight).toFixed(3)})\n` +
+              `[Image Debug] Image:  ${imgWidth}x${imgHeight} (aspect: ${(imgWidth / imgHeight).toFixed(3)})`
+          );
 
           let scale = 1;
           let left = canvasWidth / 2;
@@ -235,7 +247,26 @@ export class ProjectManager {
             evented: false,
           });
 
+          console.log(
+            `[Image Debug] Applied settings:\n` +
+              `  Position: (${left}, ${top})\n` +
+              `  Scale: ${scale.toFixed(3)}x${scale.toFixed(3)}\n` +
+              `  Scaled size: ${(imgWidth * scale).toFixed(1)}x${(imgHeight * scale).toFixed(1)}`
+          );
+
           canvas.setBackgroundImage(img, canvas.requestRenderAll.bind(canvas));
+
+          // Save fit mode for this view so resize can use it
+          if (this.currentViewId && this.views[this.currentViewId]) {
+            this.views[this.currentViewId].fitMode = fitMode;
+            console.log(
+              `[Image Debug] Saved fit mode '${fitMode}' for view: ${this.currentViewId}`
+            );
+          }
+
+          console.log('[Image Debug] ✓ Background image set and rendered');
+          console.log('[Image Debug] ===== BACKGROUND IMAGE SET COMPLETE =====\n');
+
           resolve();
         },
         { crossOrigin: 'anonymous' }
@@ -301,13 +332,11 @@ export class ProjectManager {
         window.imageGallery &&
         typeof window.imageGallery.getData === 'function'
       ) {
-        console.log('[Share] Trying window.imageGallery.getData()');
         galleryData = window.imageGallery.getData();
       }
 
       // Strategy 3: Scrape DOM if data is still missing
       if (!galleryData || galleryData.length === 0) {
-        console.warn('[Share] No gallery data found in globals. Attempting DOM scrape...');
         const thumbnails = document.querySelectorAll('.image-thumbnail');
         if (thumbnails.length > 0) {
           galleryData = [];
@@ -329,13 +358,11 @@ export class ProjectManager {
               });
             }
           });
-          console.log(`[Share] Scraped ${galleryData.length} images from DOM`);
         }
       }
 
       // Apply found data
       if (galleryData && galleryData.length > 0) {
-        console.log('[Share] Syncing images from found data. Count:', galleryData.length);
         window.originalImages = window.originalImages || {};
         galleryData.forEach(item => {
           const label =
@@ -343,20 +370,14 @@ export class ProjectManager {
           // Always update if we have a source
           if (item.src) {
             if (!window.originalImages[label]) {
-              console.log(`[Share] Adding missing image to window.originalImages: ${label}`);
               window.originalImages[label] = item.src;
             }
           }
         });
-      } else {
-        console.error('[Share] CRITICAL: Failed to find any images from any source!');
       }
-
-      console.log('[Share] window.originalImages keys:', Object.keys(window.originalImages || {}));
 
       async function toDataUrl(src) {
         try {
-          console.log('[Share] Converting to Data URL:', src.substring(0, 50) + '...');
           const resp = await fetch(src);
           const blob = await resp.blob();
           return await new Promise((resolve, reject) => {
@@ -366,29 +387,22 @@ export class ProjectManager {
             reader.readAsDataURL(blob);
           });
         } catch (e) {
-          console.error('[Share] Failed to convert to Data URL:', src, e);
+          console.error('Failed to convert to Data URL:', src);
           return null;
         }
       }
       async function convertOriginalImages(images) {
         const result = {};
         const labels = Object.keys(images || {});
-        console.log('[Share] Converting images for labels:', labels);
         for (const label of labels) {
           const src = images[label];
-          if (!src) {
-            console.warn(`[Share] No source for label ${label}`);
-            continue;
-          }
+          if (!src) continue;
           if (typeof src === 'string' && src.startsWith('data:')) {
             result[label] = src;
           } else {
             const dataUrl = await toDataUrl(src);
             if (dataUrl) {
               result[label] = dataUrl;
-              console.log(`[Share] Successfully converted ${label}`);
-            } else {
-              console.error(`[Share] Failed to get Data URL for ${label}`);
             }
           }
         }

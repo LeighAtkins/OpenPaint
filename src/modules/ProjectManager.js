@@ -170,17 +170,29 @@ export class ProjectManager {
   }
 
   async setBackgroundImage(url, fitMode = 'fit-canvas') {
+    console.log(`\n[Image Debug] ===== SET BACKGROUND IMAGE =====`);
+    console.log(`[Image Debug] URL: ${url?.substring?.(0, 50)}...`);
+    console.log(`[Image Debug] Fit mode: ${fitMode}`);
+
     return new Promise(resolve => {
       fabric.Image.fromURL(
         url,
         img => {
           const canvas = this.canvasManager.fabricCanvas;
-          if (!canvas) return resolve();
+          if (!canvas) {
+            console.log('[Image Debug] ❌ No canvas available');
+            return resolve();
+          }
 
           const canvasWidth = canvas.width;
           const canvasHeight = canvas.height;
           const imgWidth = img.width;
           const imgHeight = img.height;
+
+          console.log(
+            `[Image Debug] Canvas: ${canvasWidth}x${canvasHeight} (aspect: ${(canvasWidth / canvasHeight).toFixed(3)})\n` +
+              `[Image Debug] Image:  ${imgWidth}x${imgHeight} (aspect: ${(imgWidth / imgHeight).toFixed(3)})`
+          );
 
           let scale = 1;
           let left = canvasWidth / 2;
@@ -235,7 +247,26 @@ export class ProjectManager {
             evented: false,
           });
 
+          console.log(
+            `[Image Debug] Applied settings:\n` +
+              `  Position: (${left}, ${top})\n` +
+              `  Scale: ${scale.toFixed(3)}x${scale.toFixed(3)}\n` +
+              `  Scaled size: ${(imgWidth * scale).toFixed(1)}x${(imgHeight * scale).toFixed(1)}`
+          );
+
           canvas.setBackgroundImage(img, canvas.requestRenderAll.bind(canvas));
+
+          // Save fit mode for this view so resize can use it
+          if (this.currentViewId && this.views[this.currentViewId]) {
+            this.views[this.currentViewId].fitMode = fitMode;
+            console.log(
+              `[Image Debug] Saved fit mode '${fitMode}' for view: ${this.currentViewId}`
+            );
+          }
+
+          console.log('[Image Debug] ✓ Background image set and rendered');
+          console.log('[Image Debug] ===== BACKGROUND IMAGE SET COMPLETE =====\n');
+
           resolve();
         },
         { crossOrigin: 'anonymous' }

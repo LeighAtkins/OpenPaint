@@ -11,8 +11,6 @@ import { MeasurementSystem } from './MeasurementSystem.js';
 import { MeasurementDialog } from './MeasurementDialog.js';
 import { MeasurementExporter } from './MeasurementExporter.js';
 import { ArrowManager } from './utils/ArrowManager.js';
-import { AuthManager } from './AuthManager.js';
-import { CloudProjectManager } from './CloudProjectManager.js';
 
 class App {
   constructor() {
@@ -24,8 +22,6 @@ class App {
     this.projectManager = new ProjectManager(this.canvasManager, this.historyManager);
     this.uploadManager = new UploadManager(this.projectManager);
     this.arrowManager = new ArrowManager(this.canvasManager);
-    this.authManager = new AuthManager();
-    this.cloudProjectManager = new CloudProjectManager(this);
 
     // Measurement system
     this.measurementSystem = new MeasurementSystem(this.metadataManager);
@@ -113,6 +109,11 @@ class App {
       window.addEventListener('resize', () => {
         this.canvasManager.resize();
       });
+
+      // Expose resize globally
+      window.resizeCanvas = () => {
+        return this.canvasManager.resize();
+      };
 
       console.log('OpenPaint initialization complete');
 
@@ -326,6 +327,17 @@ class App {
     window.strokeVisibilityByImage = this.metadataManager.strokeVisibilityByImage;
     window.strokeLabelVisibility = this.metadataManager.strokeLabelVisibility;
     window.strokeMeasurements = this.metadataManager.strokeMeasurements;
+
+    // Expose updateStrokeVisibilityControls function globally
+    window.updateStrokeVisibilityControls = () =>
+      this.metadataManager.updateStrokeVisibilityControls();
+
+    // Initialize the stroke visibility controls
+    setTimeout(() => {
+      if (this.metadataManager) {
+        this.metadataManager.updateStrokeVisibilityControls();
+      }
+    }, 100);
 
     // Make project manager available globally for image switching
     window.projectManager = this.projectManager;
@@ -756,4 +768,19 @@ class App {
 // Start the app when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
   window.app = new App();
+
+  // Explicitly show panels to prevent them from being hidden by CSS
+  const panels = ['strokePanel', 'imagePanel', 'canvasControls'];
+  panels.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.classList.remove('hidden');
+      // Use flex for side panels, block for bottom controls
+      el.style.display = id === 'canvasControls' ? 'block' : 'flex';
+      // Mark as loaded to enable transitions
+      requestAnimationFrame(() => {
+        el.setAttribute('data-loaded', 'true');
+      });
+    }
+  });
 });
