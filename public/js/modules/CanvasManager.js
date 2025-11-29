@@ -19,6 +19,15 @@ export class CanvasManager {
     // Store capture frame in image-relative coordinates to prevent drift
     // These are ratios (0-1) of the background image dimensions
     this.captureFrameImageRatios = null;
+
+    // Debounce stroke scaling to prevent glitches from rapid resizes
+    this.strokeScalingTimeout = null;
+    this.pendingStrokeScale = null;
+    this.lastResizeTime = null;
+    this.consecutiveResizeCount = 0;
+    this.isResizing = false;
+    this.originalCanvasSize = { width: 0, height: 0 };
+    this.originalObjectStates = new Map();
   }
 
   init() {
@@ -106,6 +115,9 @@ export class CanvasManager {
     });
 
     console.log(`Fabric Canvas initialized: ${width}x${height}`);
+
+    // Set original canvas size after initialization
+    this.originalCanvasSize = { width: width, height: height };
 
     // Initialize zoom/pan events
     this.initZoomPan();
@@ -278,12 +290,35 @@ export class CanvasManager {
       topReserve = topToolbar.getBoundingClientRect().height;
     }
 
-    const width = window.innerWidth - leftReserve - rightReserve;
-    const height = window.innerHeight - topReserve;
+    // Sanitize canvas dimensions to prevent negative values
+    const width = Math.max(0, window.innerWidth - leftReserve - rightReserve);
+    const height = Math.max(0, window.innerHeight - topReserve);
+
+    // Enhanced minimum size constraints - be smarter about when to enforce large minimums
+    const hasBackgroundImage = this.fabricCanvas && this.fabricCanvas.backgroundImage;
+    const hasStrokes = this.fabricCanvas && this.fabricCanvas.getObjects().length > 0;
+
+    // Only enforce large minimums when canvas is completely empty
+    // If there are strokes (but no bg image), allow more flexible resizing
+    let minWidth, minHeight;
+
+    if (hasBackgroundImage) {
+      // With background image: small minimums, let image content determine size
+      minWidth = 300;
+      minHeight = 200;
+    } else if (hasStrokes) {
+      // With strokes but no image: moderate minimums, allow resizing but prevent too small
+      minWidth = 400;
+      minHeight = 300;
+    } else {
+      // Completely empty: larger minimums for comfortable drawing space
+      minWidth = 800;
+      minHeight = 600;
+    }
 
     return {
-      width: Math.max(100, width),
-      height: Math.max(100, height),
+      width: Math.max(minWidth, width),
+      height: Math.max(minHeight, height),
     };
   }
 
@@ -365,37 +400,20 @@ export class CanvasManager {
       return;
     }
 
-    const currentImageLabel = window.app?.projectManager?.currentViewId;
-    if (!currentImageLabel) {
-      console.log('[Frame Debug] No current image label');
-      return;
-    }
+    const currentImageLabel = window.app?.projectManager?.currentViewId || 'default';
 
-    console.log(`[Frame Debug] Updating frame for image: ${currentImageLabel}`);
-    console.log(`[Frame Debug] Target canvas size: ${targetWidth}x${targetHeight}`);
-    console.log(
-      `[Frame Debug] Current frame position: ${captureFrame.style.left}, ${captureFrame.style.top}`
-    );
-    console.log(
-      `[Frame Debug] Current frame size: ${captureFrame.style.width}, ${captureFrame.style.height}`
-    );
+    // If no image label, we're dealing with stroke-only canvas
+    const isStrokeOnlyCanvas = !window.app?.projectManager?.currentViewId;
 
     // Check if manual ratios are saved for this image
     const savedRatios = window.manualFrameRatios && window.manualFrameRatios[currentImageLabel];
-    console.log(`[Frame Debug] All saved ratios:`, window.manualFrameRatios);
 
     if (savedRatios) {
-      console.log('[Frame Debug] Using saved manual ratios:', savedRatios);
-
       // Frame was manually resized - apply saved ratios to current canvas size
       const frameWidth = targetWidth * savedRatios.widthRatio;
       const frameHeight = targetHeight * savedRatios.heightRatio;
       const frameLeft = targetWidth * savedRatios.leftRatio;
       const frameTop = targetHeight * savedRatios.topRatio;
-
-      console.log(
-        `[Frame Debug] Calculated from ratios: ${frameWidth.toFixed(1)}x${frameHeight.toFixed(1)} at (${frameLeft.toFixed(1)}, ${frameTop.toFixed(1)})`
-      );
 
       // Ensure frame stays within canvas bounds
       const maxLeft = Math.max(0, targetWidth - frameWidth);
@@ -403,70 +421,45 @@ export class CanvasManager {
       const boundedLeft = Math.max(0, Math.min(maxLeft, frameLeft));
       const boundedTop = Math.max(0, Math.min(maxTop, frameTop));
 
-      if (boundedLeft !== frameLeft || boundedTop !== frameTop) {
-        console.log(
-          `[Frame Debug] Bounded position: (${boundedLeft.toFixed(1)}, ${boundedTop.toFixed(1)})`
-        );
-      }
-
       captureFrame.style.width = `${frameWidth}px`;
       captureFrame.style.height = `${frameHeight}px`;
       captureFrame.style.left = `${boundedLeft}px`;
       captureFrame.style.top = `${boundedTop}px`;
-
-      // Verify the ratios are reasonable
-      const actualRatios = {
-        widthRatio: frameWidth / targetWidth,
-        heightRatio: frameHeight / targetHeight,
-        leftRatio: boundedLeft / targetWidth,
-        topRatio: boundedTop / targetHeight,
-      };
-
-      console.log(
-        `[Frame Debug] ✓ Applied manual frame: ${frameWidth.toFixed(1)}x${frameHeight.toFixed(1)} at (${boundedLeft.toFixed(1)}, ${boundedTop.toFixed(1)})\n` +
-          `[Frame Debug] Actual ratios after apply: w=${(actualRatios.widthRatio * 100).toFixed(1)}%, h=${(actualRatios.heightRatio * 100).toFixed(1)}%`
-      );
     } else {
-      console.log('[Frame Debug] No saved ratios, using default sizing');
-
-      // No manual resize - use default 800x600 or fit to canvas
+      // No manual resize - prefer larger frame size (800x600) when possible
       let frameWidth = 800;
       let frameHeight = 600;
 
-      // If canvas is smaller than 800x600, scale down to fit
-      if (targetWidth < 800 || targetHeight < 600) {
-        const aspectRatio = 4 / 3;
-        console.log(
-          `[Frame Debug] Canvas smaller than 800x600, scaling to fit (aspect: ${aspectRatio})`
-        );
+      // SIMPLIFIED LOGIC: Always use fixed 800x600 unless canvas is too small
+      // If canvas is smaller, use 80% of canvas size but never smaller than 400x300
+      if (targetWidth < 850 || targetHeight < 650) {
+        frameWidth = Math.max(400, Math.floor(targetWidth * 0.8));
+        frameHeight = Math.max(300, Math.floor(targetHeight * 0.8));
 
-        if (targetWidth / targetHeight > aspectRatio) {
-          frameHeight = targetHeight * 0.9;
+        // Maintain 4:3 aspect ratio
+        const aspectRatio = 4 / 3;
+        if (frameWidth / frameHeight > aspectRatio) {
           frameWidth = frameHeight * aspectRatio;
-          console.log(`[Frame Debug] Wide canvas: using 90% height`);
         } else {
-          frameWidth = targetWidth * 0.9;
           frameHeight = frameWidth / aspectRatio;
-          console.log(`[Frame Debug] Tall canvas: using 90% width`);
         }
       }
+      // Otherwise keep default 800x600
 
       // Center the frame on the canvas
-      const frameLeft = (targetWidth - frameWidth) / 2;
-      const frameTop = (targetHeight - frameHeight) / 2;
+      let frameLeft = (targetWidth - frameWidth) / 2;
+      let frameTop = (targetHeight - frameHeight) / 2;
 
-      console.log(
-        `[Frame Debug] Centered frame: ${frameWidth.toFixed(1)}x${frameHeight.toFixed(1)} at (${frameLeft.toFixed(1)}, ${frameTop.toFixed(1)})`
-      );
+      // Clamp frame to stay fully inside canvas bounds
+      frameWidth = Math.min(frameWidth, targetWidth);
+      frameHeight = Math.min(frameHeight, targetHeight);
+      frameLeft = Math.max(0, Math.min(frameLeft, targetWidth - frameWidth));
+      frameTop = Math.max(0, Math.min(frameTop, targetHeight - frameHeight));
 
       captureFrame.style.width = `${frameWidth}px`;
       captureFrame.style.height = `${frameHeight}px`;
       captureFrame.style.left = `${frameLeft}px`;
       captureFrame.style.top = `${frameTop}px`;
-
-      console.log(
-        `[Frame Debug] ✓ Applied default frame: ${frameWidth.toFixed(1)}x${frameHeight.toFixed(1)} at (${frameLeft.toFixed(1)}, ${frameTop.toFixed(1)})`
-      );
     }
   }
 
@@ -474,12 +467,14 @@ export class CanvasManager {
    * Apply resize with debouncing and smooth transitions
    */
   applyResize() {
-    if (!this.fabricCanvas) {
+    if (!this.fabricCanvas || this.isResizing) {
       return;
     }
     if (this.pendingResizeWidth === null || this.pendingResizeHeight === null) {
       return;
     }
+
+    this.isResizing = true;
 
     const targetWidth = this.pendingResizeWidth;
     const targetHeight = this.pendingResizeHeight;
@@ -499,23 +494,45 @@ export class CanvasManager {
     this.fabricCanvas.setWidth(targetWidth);
     this.fabricCanvas.setHeight(targetHeight);
 
-    // CRITICAL FIX: Remove min-width/min-height constraints that cause stretching
-    // These CSS constraints force the canvas to display larger than its actual size
+    // CRITICAL FIX: Remove all CSS constraints that cause canvas stretching/shrinking issues
+    // These style overrides ensure the canvas displays at its actual size, not hardcoded sizes
     const canvasEl = this.fabricCanvas.lowerCanvasEl;
     if (canvasEl) {
       canvasEl.style.minWidth = 'unset';
       canvasEl.style.minHeight = 'unset';
+      canvasEl.style.maxWidth = 'unset';
+      canvasEl.style.maxHeight = 'unset';
+      // Clear any hardcoded width/height from HTML that prevents dynamic sizing
+      canvasEl.style.width = `${targetWidth}px`;
+      canvasEl.style.height = `${targetHeight}px`;
     }
     const upperCanvasEl = this.fabricCanvas.upperCanvasEl;
     if (upperCanvasEl) {
       upperCanvasEl.style.minWidth = 'unset';
       upperCanvasEl.style.minHeight = 'unset';
+      upperCanvasEl.style.maxWidth = 'unset';
+      upperCanvasEl.style.maxHeight = 'unset';
+      // Clear any hardcoded width/height from HTML that prevents dynamic sizing
+      upperCanvasEl.style.width = `${targetWidth}px`;
+      upperCanvasEl.style.height = `${targetHeight}px`;
     }
+
+    // Also clear styles on the original canvas element to remove hardcoded dimensions from HTML
+    const originalCanvasEl = document.getElementById(this.canvasId);
+    if (originalCanvasEl) {
+      originalCanvasEl.style.width = `${targetWidth}px`;
+      originalCanvasEl.style.height = `${targetHeight}px`;
+    }
+
+    // Store old size for stroke scaling calculations BEFORE updating
+    const oldCanvasWidth = this.lastCanvasSize.width;
+    const oldCanvasHeight = this.lastCanvasSize.height;
 
     // Update last known size
     this.lastCanvasSize = { width: targetWidth, height: targetHeight };
 
     // Recalculate background image fit if one exists
+
     if (bgImage && sizeChanged) {
       // Get current fit mode from project manager if available
       const currentViewId = window.app?.projectManager?.currentViewId;
@@ -662,6 +679,205 @@ export class CanvasManager {
         captureFrame.style.width = `${roundedWidth}px`;
         captureFrame.style.height = `${roundedHeight}px`;
       }
+    } else if (sizeChanged) {
+      // For stroke-only canvas: Apply simple proportional scaling
+      console.log(
+        `[CanvasManager] Stroke-only canvas resize: ${oldCanvasWidth}x${oldCanvasHeight} -> ${targetWidth}x${targetHeight}`
+      );
+
+      // Scale from original positions to prevent accumulation
+      if (oldCanvasWidth > 0 && oldCanvasHeight > 0) {
+        // Initialize original canvas size and object states if not set
+        if (this.originalCanvasSize.width === 0) {
+          this.originalCanvasSize = { width: oldCanvasWidth, height: oldCanvasHeight };
+
+          this.fabricCanvas.getObjects().forEach(obj => {
+            if (!this.originalObjectStates.has(obj)) {
+              this.originalObjectStates.set(obj, {
+                left: obj.left,
+                top: obj.top,
+                scaleX: obj.scaleX || 1,
+                scaleY: obj.scaleY || 1,
+                strokeWidth: obj.strokeWidth || 1,
+              });
+            }
+          });
+        }
+
+        // Calculate scale factors from ORIGINAL canvas size
+        const scaleX = targetWidth / this.originalCanvasSize.width;
+        const scaleY = targetHeight / this.originalCanvasSize.height;
+
+        // Guard against NaN values from invalid dimensions during window drag
+        if (
+          Number.isNaN(scaleX) ||
+          Number.isNaN(scaleY) ||
+          !isFinite(scaleX) ||
+          !isFinite(scaleY)
+        ) {
+          console.warn(
+            `[CanvasManager] Invalid scale factors: ${scaleX}, ${scaleY} - aborting resize`
+          );
+          this.updateCaptureFrameOnResize(targetWidth, targetHeight);
+          return;
+        }
+
+        const uniformScale = Math.min(scaleX, scaleY);
+
+        // Skip scaling if change is very small to prevent precision issues
+        const scaleChange = Math.abs(uniformScale - 1.0);
+        if (scaleChange < 0.05) {
+          console.log(
+            `[CanvasManager] Skipping tiny scale change: ${uniformScale.toFixed(3)} (${scaleChange.toFixed(3)} < 0.05)`
+          );
+          this.updateCaptureFrameOnResize(targetWidth, targetHeight);
+          return;
+        }
+
+        const objects = this.fabricCanvas.getObjects();
+
+        console.log(
+          `[CanvasManager] Scaling ${objects.length} objects from original by ${uniformScale.toFixed(3)} (canvas: ${scaleX.toFixed(3)}x, ${scaleY.toFixed(3)}y)`
+        );
+
+        // Disable rendering during batch updates to prevent flicker
+        this.fabricCanvas.renderOnAddRemove = false;
+
+        objects.forEach(obj => {
+          // Get or store original state for new objects
+          if (!this.originalObjectStates.has(obj)) {
+            this.originalObjectStates.set(obj, {
+              left: obj.left,
+              top: obj.top,
+              scaleX: obj.scaleX || 1,
+              scaleY: obj.scaleY || 1,
+              strokeWidth: obj.strokeWidth || 1,
+            });
+          }
+
+          const original = this.originalObjectStates.get(obj);
+
+          // Scale from original positions and sizes
+          const updates = {
+            left: original.left * scaleX,
+            top: original.top * scaleY,
+            scaleX: original.scaleX * uniformScale,
+            scaleY: original.scaleY * uniformScale,
+          };
+
+          // Scale strokeWidth for line and path objects (but not tags)
+          if (!obj.isTag && obj.strokeWidth && (obj.type === 'line' || obj.type === 'path')) {
+            updates.strokeWidth = original.strokeWidth * uniformScale;
+          }
+
+          obj.set(updates);
+          obj.setCoords();
+        });
+
+        // Re-enable rendering and render all changes at once
+        this.fabricCanvas.renderOnAddRemove = true;
+        this.fabricCanvas.requestRenderAll();
+      }
+
+      // Update capture frame
+      this.updateCaptureFrameOnResize(targetWidth, targetHeight);
+
+      // Original stroke scaling logic disabled to prevent drift:
+      /*const oldWidth = oldCanvasWidth;
+      const oldHeight = oldCanvasHeight;
+      
+      // Only scale if we had a previous size and it's different
+      if (oldWidth > 0 && oldHeight > 0) {
+        const scaleX = targetWidth / oldWidth;
+        const scaleY = targetHeight / oldHeight;
+        
+        // Use uniform scaling to maintain proportions (take average of both scales)
+        const uniformScale = Math.sqrt(scaleX * scaleY);
+        
+        // Only transform if scale change is significant (avoid micro-adjustments)  
+        // But also prevent extreme scaling that could cause glitches
+        const scaleChange = Math.abs(uniformScale - 1.0);
+        
+        // Debounce rapid stroke scaling to prevent glitch accumulation
+        if (this.strokeScalingTimeout) {
+          clearTimeout(this.strokeScalingTimeout);
+        }
+        
+        this.pendingStrokeScale = { uniformScale, scaleChange, targetWidth, targetHeight };
+        
+        this.strokeScalingTimeout = setTimeout(() => {
+          const { uniformScale: scale, scaleChange: change, targetWidth: newWidth, targetHeight: newHeight } = this.pendingStrokeScale;
+          
+          if (change > 0.02 && change < 0.5) {
+            // Transform all objects to fit the new canvas size
+            const objects = this.fabricCanvas.getObjects();
+            
+            // Safety check: if we have objects but dimensions are invalid, skip scaling
+            if (objects.length > 0 && (oldWidth <= 0 || oldHeight <= 0 || newWidth <= 0 || newHeight <= 0)) {
+              console.warn(`[CanvasManager] Skipping scaling - invalid dimensions: old=${oldWidth}x${oldHeight}, new=${newWidth}x${newHeight}`);
+              this.strokeScalingTimeout = null;
+              this.pendingStrokeScale = null;
+              return;
+            }
+            
+            console.log(`[CanvasManager] Scaling ${objects.length} objects by ${scale.toFixed(3)}x`);
+          
+            objects.forEach(obj => {
+              // Scale position relative to canvas center for ALL objects (including tags)
+              const oldCenterX = oldWidth / 2;
+              const oldCenterY = oldHeight / 2;
+              const newCenterX = newWidth / 2;
+              const newCenterY = newHeight / 2;
+              
+              // Get position relative to old canvas center
+              const relX = obj.left - oldCenterX;
+              const relY = obj.top - oldCenterY;
+              
+              // Scale the relative position and add to new center
+              const newLeft = newCenterX + (relX * scale);
+              const newTop = newCenterY + (relY * scale);
+            
+            // Update object position 
+            const updates = {
+              left: newLeft,
+              top: newTop,
+            };
+            
+              // Only scale size for non-tag objects
+              if (!obj.isTag) {
+                const currentScaleX = obj.scaleX || 1;
+                const currentScaleY = obj.scaleY || 1;
+                const newScaleX = currentScaleX * scale;
+                const newScaleY = currentScaleY * scale;
+                
+                // Prevent extreme scaling that could cause glitches
+                // Clamp scale between 0.1x and 10x
+                updates.scaleX = Math.max(0.1, Math.min(10, newScaleX));
+                updates.scaleY = Math.max(0.1, Math.min(10, newScaleY));
+                
+                // For stroke objects, also scale stroke width with similar limits
+                if (obj.strokeWidth && (obj.type === 'line' || obj.type === 'path')) {
+                  const currentStrokeWidth = obj.strokeWidth;
+                  const newStrokeWidth = currentStrokeWidth * scale;
+                  // Clamp stroke width between 0.5px and 50px
+                  updates.strokeWidth = Math.max(0.5, Math.min(50, newStrokeWidth));
+                }
+              }
+            
+            obj.set(updates);
+            obj.setCoords(); // Update object coordinates for interactions
+            });
+            
+            // Also update capture frame for stroke-only canvas  
+            this.updateCaptureFrameOnResize(newWidth, newHeight);
+          }
+          
+          // Clear timeout after processing
+          this.strokeScalingTimeout = null;
+          this.pendingStrokeScale = null;
+        }, 150); // 150ms debounce delay to prevent rapid glitch accumulation
+      }
+      */ // End of disabled stroke scaling logic
     }
 
     // Redraw canvas
@@ -675,17 +891,42 @@ export class CanvasManager {
     // Clear pending resize
     this.pendingResizeWidth = null;
     this.pendingResizeHeight = null;
+    this.isResizing = false;
   }
 
   /**
    * Debounced resize method - queues resize with requestAnimationFrame
    */
   resize() {
-    if (!this.fabricCanvas) {
+    if (!this.fabricCanvas || this.isResizing) {
       return;
     }
 
     const { width, height } = this.getAvailableCanvasSize();
+
+    // Prevent unnecessary resizes if size hasn't changed significantly
+    const currentWidth = this.fabricCanvas.getWidth();
+    const currentHeight = this.fabricCanvas.getHeight();
+    const widthDiff = Math.abs(currentWidth - width);
+    const heightDiff = Math.abs(currentHeight - height);
+
+    // Only resize if change is significant (more than 10px) to prevent micro-adjustments
+    if (widthDiff < 10 && heightDiff < 10) {
+      return;
+    }
+
+    // Additional protection: prevent rapid consecutive resizes while keeping UI responsive
+    const now = Date.now();
+    if (this.lastResizeTime && now - this.lastResizeTime < 250) {
+      console.log(
+        `[CanvasManager] Blocking resize - only ${now - this.lastResizeTime}ms since last (need 250ms)`
+      );
+      return;
+    }
+
+    // Reset counter and update time
+    this.consecutiveResizeCount = 0;
+    this.lastResizeTime = now;
 
     this.pendingResizeWidth = width;
     this.pendingResizeHeight = height;
