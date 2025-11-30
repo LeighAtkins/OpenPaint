@@ -77,6 +77,14 @@ export class ProjectManager {
 
         // After loading, update history initial state
         this.historyManager.saveState();
+
+        // Rebuild metadata from canvas objects to ensure live references
+        if (window.app?.metadataManager) {
+          window.app.metadataManager.rebuildMetadataFromCanvas(
+            viewId,
+            this.canvasManager.fabricCanvas
+          );
+        }
       });
     } else {
       // Clear metadata for this view if no saved data
@@ -184,55 +192,63 @@ export class ProjectManager {
             return resolve();
           }
 
-          const canvasWidth = canvas.width;
-          const canvasHeight = canvas.height;
+          // Get capture frame dimensions
+          const captureFrame = document.getElementById('captureFrame');
+          let frameWidth, frameHeight, frameLeft, frameTop;
+
+          if (captureFrame) {
+            const rect = captureFrame.getBoundingClientRect();
+            frameWidth = rect.width;
+            frameHeight = rect.height;
+            frameLeft = rect.left;
+            frameTop = rect.top;
+          } else {
+            // Fallback to canvas dimensions if no frame
+            frameWidth = canvas.width;
+            frameHeight = canvas.height;
+            frameLeft = 0;
+            frameTop = 0;
+          }
+
           const imgWidth = img.width;
           const imgHeight = img.height;
 
           console.log(
-            `[Image Debug] Canvas: ${canvasWidth}x${canvasHeight} (aspect: ${(canvasWidth / canvasHeight).toFixed(3)})\n` +
-              `[Image Debug] Image:  ${imgWidth}x${imgHeight} (aspect: ${(imgWidth / imgHeight).toFixed(3)})`
+            `[Image Debug] Frame: ${frameWidth}x${frameHeight} at (${frameLeft},${frameTop})\n` +
+              `[Image Debug] Image: ${imgWidth}x${imgHeight}`
           );
 
           let scale = 1;
-          let left = canvasWidth / 2;
-          let top = canvasHeight / 2;
+
+          // Center based on frame center
+          let left = frameLeft + frameWidth / 2;
+          let top = frameTop + frameHeight / 2;
 
           switch (fitMode) {
             case 'fit-width':
-              scale = canvasWidth / imgWidth;
-              console.log(
-                `[Image Fit Width] Canvas: ${canvasWidth}x${canvasHeight}, Image: ${imgWidth}x${imgHeight}, Scale: ${scale.toFixed(3)}`
-              );
+              scale = frameWidth / imgWidth;
+              console.log(`[Image Fit Width] Scale: ${scale.toFixed(3)}`);
               break;
 
             case 'fit-height':
-              scale = canvasHeight / imgHeight;
-              console.log(
-                `[Image Fit Height] Canvas: ${canvasWidth}x${canvasHeight}, Image: ${imgWidth}x${imgHeight}, Scale: ${scale.toFixed(3)}`
-              );
+              scale = frameHeight / imgHeight;
+              console.log(`[Image Fit Height] Scale: ${scale.toFixed(3)}`);
               break;
 
             case 'fit-canvas':
-              scale = Math.min(canvasWidth / imgWidth, canvasHeight / imgHeight);
-              console.log(
-                `[Image Fit Canvas] Canvas: ${canvasWidth}x${canvasHeight}, Image: ${imgWidth}x${imgHeight}, Scale: ${scale.toFixed(3)}`
-              );
+              scale = Math.min(frameWidth / imgWidth, frameHeight / imgHeight);
+              console.log(`[Image Fit Canvas] Scale: ${scale.toFixed(3)}`);
               break;
 
             case 'actual-size':
               scale = 1;
-              console.log(
-                `[Image Actual Size] Canvas: ${canvasWidth}x${canvasHeight}, Image: ${imgWidth}x${imgHeight}, Scale: 1.000`
-              );
+              console.log(`[Image Actual Size] Scale: 1.000`);
               break;
 
             default:
-              // Default to fit canvas
-              scale = Math.min(canvasWidth / imgWidth, canvasHeight / imgHeight);
-              console.log(
-                `[Image Default] Canvas: ${canvasWidth}x${canvasHeight}, Image: ${imgWidth}x${imgHeight}, Scale: ${scale.toFixed(3)}`
-              );
+              // Default to fit canvas (frame)
+              scale = Math.min(frameWidth / imgWidth, frameHeight / imgHeight);
+              console.log(`[Image Default] Scale: ${scale.toFixed(3)}`);
               break;
           }
 
