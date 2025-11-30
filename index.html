@@ -744,12 +744,18 @@
       }
 
       /* Ensure image name header is always visible and not squished */
-      #imagePanel > .px-3.bg-white.border-b.border-slate-200.py-2 {
+      /* Ensure image name header is visible only when not collapsed */
+      #imagePanel:not(.collapsed) > .image-name-container {
         flex-shrink: 0 !important;
         min-height: 60px !important;
         position: relative !important;
         z-index: 10 !important;
         display: block !important;
+      }
+
+      /* Explicitly hide when collapsed */
+      #imagePanel.collapsed > .image-name-container {
+        display: none !important;
       }
 
       /* Ensure the image name input is always visible */
@@ -1281,13 +1287,13 @@
 
       /* Make the strokes area adjustable but constrained so new items never overlap headers */
       #strokeVisibilityControls {
-        min-height: 60px;
-        max-height: min(60vh, 24rem) !important;
-        /* cap to viewport or panel max-h-96 */
+        flex: 1 1 0;
+        min-height: 0;
         overflow-y: auto !important;
         overflow-x: hidden !important;
         box-sizing: border-box;
         position: relative;
+        transition: none !important;
       }
 
       #strokeVisibilityControls hr {
@@ -1923,8 +1929,18 @@
             <option value="15">15px</option>
             <option value="20">20px</option>
           </select>
-          <button id="arrowStartBtn" class="tbtn icon-btn" title="Start Arrow">◀</button>
-          <button id="arrowEndBtn" class="tbtn icon-btn" title="End Arrow">▶</button>
+          <button id="arrowStartBtn" class="tbtn icon-btn" title="Start Arrow">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="19" y1="12" x2="5" y2="12"></line>
+              <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+          </button>
+          <button id="arrowEndBtn" class="tbtn icon-btn" title="End Arrow">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+              <polyline points="12 5 19 12 12 19"></polyline>
+            </svg>
+          </button>
           <button id="dottedBtn" class="tbtn" title="Line Style">
             <svg width="34" height="12" viewBox="0 0 34 12" aria-hidden="true">
               <line
@@ -1969,6 +1985,9 @@
           <button id="saveProjectTop" class="tbtn" title="Save Project" aria-label="Save Project">
             <span class="label-long">Save Project</span><span class="label-short">Save</span>
           </button>
+          <button id="fixLayoutBtn" class="tbtn" onclick="window.resizeCanvas()" title="Force layout recalculation" style="background: #f59e0b; color: white; border-color: #d97706;">
+            Fix Layout
+          </button>
           <button id="unitToggleBtn" class="tbtn" title="Toggle units">inches</button>
         </div>
       </div>
@@ -2003,24 +2022,98 @@
         if (document.readyState === 'loading') {
           document.addEventListener('DOMContentLoaded', markToolbarReady);
         } else {
-          setTimeout(markToolbarReady, 0);
+            setTimeout(markToolbarReady, 0);
         }
       })();
     </script>
 
-    <!-- Fullscreen Canvas -->
-    <canvas
-      id="canvas"
-      style="
-        cursor: crosshair;
-        left: 0px;
-        top: 0px;
-        position: fixed;
-        max-width: none;
-        max-height: none;
-        z-index: 1;
-      "
-    ></canvas>
+    <!-- Main Layout Container: Flex layout for sidebars + canvas -->
+    <div id="main-layout" class="flex" style="height: calc(100vh - 48px); overflow: hidden;">
+      
+      <!-- Left Sidebar: Elements Panel -->
+      <!-- This will be moved here from its current location -->
+      
+      <!-- Center: Canvas Container -->
+      <div id="main-canvas-wrapper" class="flex-1 relative bg-white shadow-inner" style="overflow: hidden; z-index: 0;">
+        <canvas
+          id="canvas"
+          style="
+            cursor: crosshair;
+            position: absolute;
+            left: 0;
+            top: 0;
+            max-width: none;
+            max-height: none;
+          "
+        ></canvas>
+      </div>
+      
+      <!-- Right Sidebar: Images Panel -->
+      <!-- This will be moved here from its current location -->
+      
+    </div>
+
+    <script>
+      // Relocate panels into the flex layout on page load
+      (function() {
+        'use strict';
+        
+        function relocatePanels() {
+          console.log('[Layout] Relocation script starting...');
+          // document.body.style.border = '5px solid green'; // Removed sanity check
+
+          const mainLayout = document.getElementById('main-layout');
+          const canvasContainer = document.getElementById('main-canvas-wrapper');
+          const strokePanel = document.getElementById('strokePanel');
+          const imagePanel = document.getElementById('imagePanel');
+          
+          if (!mainLayout || !canvasContainer || !strokePanel || !imagePanel) {
+            console.error('[Layout] MISSING ELEMENTS:', { mainLayout, canvasContainer, strokePanel, imagePanel });
+            return;
+          }
+          
+          // Enforce strict order: strokePanel -> canvasContainer -> imagePanel
+          
+          // Ensure main layout is flex row with !important
+          mainLayout.style.cssText = 'display: flex !important; flex-direction: row !important; width: 100% !important; height: calc(100vh - 48px) !important; overflow: hidden !important; border: 1px solid red !important; box-sizing: border-box !important;';
+          
+          // 1. strokePanel (Left)
+          mainLayout.insertBefore(strokePanel, mainLayout.firstChild);
+          strokePanel.style.cssText += 'order: 1 !important; position: fixed !important; left: 0 !important; top: 48px !important; height: calc(100% - 128px) !important; flex: none !important; display: flex !important; flex-direction: column !important; width: 256px !important; min-width: 256px !important; max-width: 256px !important;';
+          
+          // 2. canvasContainer (Center)
+          mainLayout.appendChild(canvasContainer);
+          canvasContainer.style.cssText += 'order: 2 !important; flex: 1 !important; min-width: 0 !important; position: relative !important; display: block !important; border: 1px solid blue !important; box-sizing: border-box !important;';
+          
+          // 3. imagePanel (Right)
+          mainLayout.appendChild(imagePanel);
+          imagePanel.style.cssText += 'order: 3 !important; position: fixed !important; right: 0 !important; left: auto !important; top: 48px !important; height: calc(100% - 128px) !important; flex: none !important; display: flex !important; flex-direction: column !important; border-left-width: 1px !important; border-right-width: 0 !important; width: 288px !important; min-width: 288px !important; max-width: 288px !important;';
+          
+          // Debug: Log the final order and computed styles
+          const children = Array.from(mainLayout.children);
+          console.log('[Layout] Panels relocated into flex layout');
+          console.log('[Layout] Final order:', children.map(el => el.id || el.tagName));
+          
+          // Log computed styles to debug "on the left" issue
+          setTimeout(() => {
+            const containerStyle = window.getComputedStyle(mainLayout);
+            console.log('[Layout] Container display:', containerStyle.display, 'direction:', containerStyle.flexDirection);
+            console.log('[Layout] ImagePanel order:', window.getComputedStyle(imagePanel).order);
+            console.log('[Layout] CanvasContainer width:', canvasContainer.getBoundingClientRect().width);
+          }, 100);
+          
+          // Trigger resize to ensure CanvasManager updates its size
+          window.dispatchEvent(new Event('resize'));
+        }
+        
+        // Run immediately if DOM is ready, otherwise wait
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', relocatePanels);
+        } else {
+          relocatePanels();
+        }
+      })();
+    </script>
 
     <!-- Main Content Container for Frame Capture -->
     <div
@@ -2063,25 +2156,16 @@
     </script>
 
     <!-- Minimal Numeric Pill Strip Navigation - Positioned under frame capture -->
-    <div
-      id="navigation-container"
-      class="w-full"
-      style="
-        background: white;
-        border-top: 1px solid #cbd5e1;
-        position: relative;
-        z-index: 10300;
-        display: block;
-      "
-    >
-      <nav aria-label="Image quick nav" class="w-full">
-        <ol
-          id="mini-stepper"
-          class="flex gap-3 px-4 py-3 overflow-x-auto snap-x snap-mandatory justify-center items-center min-h-[60px]"
-        >
+
+    <!-- Bottom Navigation (Mini Stepper) -->
+    <div id="navigation-container" class="fixed bottom-0 left-0 right-0 z-[2001] pointer-events-none flex justify-center pb-4">
+      <ol
+        id="mini-stepper"
+        class="flex gap-3 px-4 py-3 bg-white/90 backdrop-blur-sm border border-slate-200 rounded-full shadow-lg pointer-events-auto overflow-x-auto snap-x snap-mandatory justify-center items-center min-h-[60px]"
+        aria-label="Image quick nav"
+      >
           <!-- Pills will be generated by JavaScript -->
         </ol>
-      </nav>
     </div>
 
     <!-- Project Header Panel -->
@@ -2328,8 +2412,18 @@
           <div class="flex items-center gap-4">
             <div id="arrowControls" class="flex items-center gap-3">
               <span class="text-sm font-semibold text-slate-700">Arrows:</span>
-              <button id="arrowStartBtn" class="tbtn icon-btn" title="Start Arrow">◀</button>
-              <button id="arrowEndBtn" class="tbtn icon-btn" title="End Arrow">▶</button>
+              <button id="arrowStartBtn" class="tbtn icon-btn" title="Start Arrow">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="19" y1="12" x2="5" y2="12"></line>
+                  <polyline points="12 19 5 12 12 5"></polyline>
+                </svg>
+              </button>
+              <button id="arrowEndBtn" class="tbtn icon-btn" title="End Arrow">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                  <polyline points="12 5 19 12 12 19"></polyline>
+                </svg>
+              </button>
 
               <div class="w-px h-6 bg-slate-200 mx-1"></div>
 
@@ -2400,19 +2494,15 @@
       </div>
     </div>
 
-    <!-- Vectors and Tags Panel -->
+    <!-- Vectors and Tags Panel (Left Sidebar) -->
     <div
       id="strokePanel"
-      class="floating-panel fixed left-4 z-40 rounded-2xl w-64 transition-all duration-300 overflow-hidden"
-      style="
-        z-index: 10200 !important;
-        top: clamp(1rem, 50vh - 20rem, calc(100vh - 40rem - 1rem));
-        max-height: min(40rem, calc(100vh - 2rem));
-      "
+      class="floating-panel flex-shrink-0 w-64 transition-all duration-300 overflow-hidden bg-white border-r border-gray-200 shadow-xl z-10 flex flex-col"
+      style="max-height: 100%; height: calc(100% - 128px) !important; position: fixed !important; top: 48px !important; left: 0 !important;"
     >
       <div
         id="elementsHeader"
-        class="flex items-center justify-between p-3 cursor-move border-b border-gray-200/50 bg-white rounded-t-2xl"
+        class="flex items-center justify-between p-3 border-b border-gray-200/50 bg-white"
       >
         <div class="flex items-center gap-2">
           <h3 class="text-sm font-semibold text-slate-800">Elements</h3>
@@ -2450,6 +2540,7 @@
         id="elementsBody"
         role="region"
         aria-labelledby="elementsHeader"
+        class="flex-1 flex flex-col min-h-0"
         style="position: relative; z-index: 100"
       >
         <div id="elementsControls" class="px-3 pt-3 pb-1 border-b border-gray-100">
@@ -2561,24 +2652,23 @@
         </div>
         <div
           id="strokeVisibilityControls"
-          class="px-3 pt-2 pb-2 overflow-x-hidden"
+          class="flex-1 overflow-y-auto overflow-x-hidden flex flex-col min-h-0"
           style="box-sizing: border-box; position: relative; z-index: 100"
-        ></div>
+        >
+          <div id="strokesList" class="px-3 pt-2 pb-2 flex-grow flex flex-col justify-center" style="padding-bottom: 70px !important;"></div>
+        </div>
       </div>
     </div>
 
-    <!-- Image Gallery Panel -->
+    <!-- Image Gallery Panel (Right Sidebar) -->
     <div
       id="imagePanel"
-      class="floating-panel fixed right-4 z-30 rounded-2xl w-72 transition-all duration-300 overflow-hidden"
-      style="
-        top: clamp(1rem, 50vh - 20rem, calc(100vh - 40rem - 1rem));
-        max-height: min(40rem, calc(100vh - 2rem));
-      "
+      class="floating-panel flex-shrink-0 w-72 transition-all duration-300 overflow-hidden bg-white border-l border-gray-200 flex flex-col shadow-xl z-10"
+      style="max-height: 100%; height: calc(100% - 128px) !important; position: fixed !important; top: 48px !important; right: 0 !important;"
     >
       <div
         id="imagePanelHeader"
-        class="flex items-center justify-between p-3 cursor-move border-b border-gray-200/50 bg-white rounded-t-2xl"
+        class="flex items-center justify-between p-3 border-b border-gray-200/50 bg-white"
       >
         <h3 class="text-sm font-semibold text-slate-800">Images</h3>
         <div class="flex items-center gap-2">
@@ -2611,7 +2701,7 @@
         </div>
       </div>
       <!-- Name/title box outside the scroll area (always visible at top of images panel) -->
-      <div class="px-3 bg-white border-b border-slate-200 py-2">
+      <div class="image-name-container px-3 bg-white border-b border-slate-200 py-2">
         <label for="currentImageNameBox" class="block text-[10px] text-slate-500 mb-1"
           >Image name</label
         >
@@ -2624,25 +2714,28 @@
       </div>
       <div
         id="imagePanelContent"
-        class="p-3 transition-all duration-300"
+        class="p-3 transition-all duration-300 flex-1 flex flex-col min-h-0"
         style="position: relative; z-index: 100"
       >
-        <!-- Legacy image list for backwards compatibility -->
-        <div
-          id="imageList"
-          class="space-y-4 mb-0 h-[60vh] overflow-y-auto overflow-x-hidden pr-0 snap-y snap-mandatory scroll-smooth"
-          style="
-            padding-top: calc(30vh - 5rem);
-            padding-bottom: calc(30vh - 5rem);
-            position: relative;
-            z-index: 100;
-          "
-        ></div>
+        <!-- Wrapper for list and guide line to ensure perfect centering -->
+        <div class="relative flex-1 min-h-0 mb-4 h-full">
+          <!-- Legacy image list for backwards compatibility -->
+          <div
+            id="imageList"
+            class="space-y-4 mb-0 h-full overflow-y-auto overflow-x-hidden pr-0 snap-y snap-mandatory scroll-smooth"
+            style="
+              padding-top: calc(30vh - 5rem);
+              padding-bottom: calc(30vh - 5rem + 70px);
+              position: relative;
+              z-index: 100;
+            "
+          ></div>
 
-        <!-- Snap guide line -->
-        <div
-          class="pointer-events-none absolute left-0 right-0 top-1/2 -translate-y-1/2 border-t border-slate-300/70 z-[80]"
-        ></div>
+          <!-- Snap guide line -->
+          <div
+            class="pointer-events-none absolute left-0 right-0 top-1/2 -translate-y-1/2 border-t border-slate-300/70 z-[80]"
+          ></div>
+        </div>
 
         <!-- Gallery (disabled in vertical list mode) -->
         <div class="mb-4 hidden">
@@ -2675,7 +2768,7 @@
     </div>
 
     <!-- Capture Frame -->
-    <div id="captureOverlay" class="fixed inset-0 pointer-events-none" style="z-index: 1">
+    <div id="captureOverlay" class="fixed inset-0 pointer-events-none" style="z-index: 1500">
       <!-- Capture frame -->
       <div
         id="captureFrame"

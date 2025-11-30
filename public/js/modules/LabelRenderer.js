@@ -35,7 +35,7 @@ export class LabelRenderer {
       const centerY = bounds.top + bounds.height / 2;
 
       // Create label text (non-interactive overlay)
-      // Note: Fabric.js may show a warning about 'alphabetical' textBaseline,
+      // Note: Fabric.js may show a warning about 'alphabetic' textBaseline,
       // but this is harmless - Fabric.js uses it internally and it still works
       const labelText = new fabric.Text(strokeLabel, {
         left: centerX + 15, // Offset to the right
@@ -43,7 +43,7 @@ export class LabelRenderer {
         fontSize: 14,
         fill: '#000000',
         fontFamily: 'Arial',
-        textBaseline: 'middle', // Use valid textBaseline instead of 'alphabetical'
+        textBaseline: 'middle', // Use valid textBaseline instead of 'alphabetic'
         selectable: false,
         evented: false,
         hasControls: false,

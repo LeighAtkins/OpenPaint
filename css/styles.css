@@ -1472,13 +1472,7 @@
             z-index: 10;
             background: white;
         }
-        #strokeVisibilityControls {
-            flex: 1 1 auto;
-            min-height: 0; /* allows flex child to shrink for scrolling in Firefox */
-            overflow-y: auto !important;
-            /* Remove transition that causes flickering */
-            transition: none !important;
-        }
+
         
         /* Header dragging styles */
         .cursor-move:active {
@@ -1504,14 +1498,7 @@
         .stroke-actions-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
 
         /* Make the strokes area adjustable but constrained so new items never overlap headers */
-        #strokeVisibilityControls {
-            min-height: 60px;
-            max-height: min(60vh, 24rem) !important; /* cap to viewport or panel max-h-96 */
-            overflow-y: auto !important;
-            overflow-x: hidden !important;
-            box-sizing: border-box;
-            position: relative;
-        }
+
         #strokeVisibilityControls hr { margin: 6px 0; }
         
         .stroke-visibility-item:hover {
