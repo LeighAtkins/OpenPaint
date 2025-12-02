@@ -41,6 +41,15 @@ export class ProjectManager {
 
     console.log(`Switching to view: ${viewId}`);
 
+    // Capture current viewport state to maintain continuity across image switches
+    // This prevents "shifting the frame" when scrolling through images
+    const currentZoom = this.canvasManager.fabricCanvas
+      ? this.canvasManager.fabricCanvas.getZoom()
+      : 1;
+    const currentVpt = this.canvasManager.fabricCanvas
+      ? [...(this.canvasManager.fabricCanvas.viewportTransform || [1, 0, 0, 1, 0, 0])]
+      : [1, 0, 0, 1, 0, 0];
+
     // 1. Save current state
     this.saveCurrentViewState();
 
@@ -85,12 +94,27 @@ export class ProjectManager {
             this.canvasManager.fabricCanvas
           );
         }
+
+        // Restore viewport state to maintain continuity
+        if (this.canvasManager.fabricCanvas) {
+          this.canvasManager.fabricCanvas.setViewportTransform(currentVpt);
+          this.canvasManager.fabricCanvas.setZoom(currentZoom);
+          this.canvasManager.fabricCanvas.requestRenderAll();
+        }
       });
     } else {
       // Clear metadata for this view if no saved data
       if (window.app?.metadataManager) {
         window.app.metadataManager.clearImageMetadata(viewId);
       }
+
+      // Restore viewport state to maintain continuity
+      if (this.canvasManager.fabricCanvas) {
+        this.canvasManager.fabricCanvas.setViewportTransform(currentVpt);
+        this.canvasManager.fabricCanvas.setZoom(currentZoom);
+        this.canvasManager.fabricCanvas.requestRenderAll();
+      }
+
       this.historyManager.saveState();
     }
   }
