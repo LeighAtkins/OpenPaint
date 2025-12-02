@@ -878,6 +878,20 @@ export class CanvasManager {
   }
 
   /**
+   * Set a manual zoom level (e.g. 1.0 for 100%, 2.0 for 200%)
+   * Pass 'fit' or null to return to auto-fit mode.
+   */
+  setManualZoom(zoomLevel) {
+    if (zoomLevel === 'fit' || zoomLevel === null) {
+      this.manualZoomLevel = null;
+    } else {
+      this.manualZoomLevel = parseFloat(zoomLevel);
+    }
+    console.log(`[CanvasManager] Manual zoom set to: ${this.manualZoomLevel}`);
+    this.resize();
+  }
+
+  /**
    * Debounced resize method - queues resize with setTimeout
    */
   resize() {
