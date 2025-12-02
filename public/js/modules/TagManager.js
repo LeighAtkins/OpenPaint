@@ -1,6 +1,7 @@
 // Tag Manager
 // Creates draggable, resizable tag objects that connect to strokes
 import { StrokeMetadataManager } from './StrokeMetadataManager.js';
+import { PathUtils } from './utils/PathUtils.js';
 
 export class TagManager {
   constructor(canvasManager, metadataManager) {
@@ -234,6 +235,7 @@ export class TagManager {
       hasBorders: false,
       lockRotation: true,
       hoverCursor: 'move',
+      perPixelTargetFind: true, // Only select when clicking visible parts
       // Custom properties
       isTag: true,
       strokeLabel: strokeLabel,
@@ -356,364 +358,67 @@ export class TagManager {
 
   // Get the closest point on the actual stroke geometry to a given point
   getClosestStrokeEndpoint(strokeObj, targetPoint) {
-    if (strokeObj.type === 'line') {
-      // For lines, find closest point on the line segment
-      return this.getClosestPointOnLine(strokeObj, targetPoint);
-    } else if (strokeObj.type === 'group') {
-      // For groups (arrows), find the line inside and get closest point
-      const objects = strokeObj.getObjects();
-      const lineObj = objects.find(obj => obj.type === 'line');
-      if (lineObj) {
-        return this.getClosestPointOnGroupLine(strokeObj, lineObj, targetPoint);
-      }
-    } else if (strokeObj.type === 'path') {
-      // For paths (curves, freehand), use actual path points
-      return this.getClosestPointOnPath(strokeObj, targetPoint);
-    }
-
-    // Fallback to bounding box
-    const bounds = strokeObj.getBoundingRect();
-    return {
-      x: bounds.left + bounds.width / 2,
-      y: bounds.top + bounds.height / 2,
-    };
+    return PathUtils.getClosestStrokeEndpoint(strokeObj, targetPoint);
   }
 
   // Find closest point on a line to target point
   getClosestPointOnLine(lineObj, targetPoint) {
-    // Get line endpoints in canvas coordinates
-    const points = lineObj.calcLinePoints();
-
-    // Calculate absolute center of the line
-    let center = lineObj.getCenterPoint();
-    if (lineObj.group) {
-      const groupMatrix = lineObj.group.calcTransformMatrix();
-      center = fabric.util.transformPoint(center, groupMatrix);
-    }
-
-    // Calculate the vector from center to endpoints using the matrix for rotation/scale only
-    // We do this by transforming (0,0) and (x,y) and taking the difference
-    // This avoids any translation issues in the matrix multiplication
-
-    // 1. Get the total transform matrix
-    let matrix = lineObj.calcTransformMatrix();
-    if (lineObj.group) {
-      const groupMatrix = lineObj.group.calcTransformMatrix();
-      matrix = fabric.util.multiplyTransformMatrices(groupMatrix, matrix);
-    }
-
-    // 2. Calculate vectors
-    const origin = fabric.util.transformPoint({ x: 0, y: 0 }, matrix);
-    const p1_transformed = fabric.util.transformPoint({ x: points.x1, y: points.y1 }, matrix);
-    const p2_transformed = fabric.util.transformPoint({ x: points.x2, y: points.y2 }, matrix);
-
-    const vec1 = { x: p1_transformed.x - origin.x, y: p1_transformed.y - origin.y };
-    const vec2 = { x: p2_transformed.x - origin.x, y: p2_transformed.y - origin.y };
-
-    // 3. Apply vectors to the correct absolute center
-    const point1 = { x: center.x + vec1.x, y: center.y + vec1.y };
-    const point2 = { x: center.x + vec2.x, y: center.y + vec2.y };
-
-    // Project targetPoint onto line segment using vector math
-    const A = targetPoint.x - point1.x;
-    const B = targetPoint.y - point1.y;
-    const C = point2.x - point1.x;
-    const D = point2.y - point1.y;
-
-    const dot = A * C + B * D;
-    const lenSq = C * C + D * D;
-
-    let param = -1;
-    if (lenSq !== 0) {
-      param = dot / lenSq;
-    }
-
-    let closestX, closestY;
-
-    if (param < 0) {
-      closestX = point1.x;
-      closestY = point1.y;
-    } else if (param > 1) {
-      closestX = point2.x;
-      closestY = point2.y;
-    } else {
-      closestX = point1.x + param * C;
-      closestY = point1.y + param * D;
-    }
-
-    return { x: closestX, y: closestY };
+    return PathUtils.getClosestPointOnLine(lineObj, targetPoint);
   }
 
   // Find closest point on a line within a group (for arrows)
   getClosestPointOnGroupLine(groupObj, lineObj, targetPoint) {
-    // Use calcLinePoints to get coordinates relative to the line's center
-    const points = lineObj.calcLinePoints();
-
-    // Step 1: Transform from Line Local to Group Local
-    const lineMatrix = lineObj.calcTransformMatrix();
-    let point1 = fabric.util.transformPoint({ x: points.x1, y: points.y1 }, lineMatrix);
-    let point2 = fabric.util.transformPoint({ x: points.x2, y: points.y2 }, lineMatrix);
-
-    // Step 2: Transform from Group Local to Parent Space (Canvas or ActiveSelection)
-    const groupMatrix = groupObj.calcTransformMatrix();
-    point1 = fabric.util.transformPoint(point1, groupMatrix);
-    point2 = fabric.util.transformPoint(point2, groupMatrix);
-
-    // Step 3: If group is in another group (activeSelection), transform to Canvas Space
-    if (groupObj.group) {
-      const parentMatrix = groupObj.group.calcTransformMatrix();
-      point1 = fabric.util.transformPoint(point1, parentMatrix);
-      point2 = fabric.util.transformPoint(point2, parentMatrix);
-    }
-
-    // Find closest point on line segment
-    const A = targetPoint.x - point1.x;
-    const B = targetPoint.y - point1.y;
-    const C = point2.x - point1.x;
-    const D = point2.y - point1.y;
-
-    const dot = A * C + B * D;
-    const lenSq = C * C + D * D;
-
-    let param = -1;
-    if (lenSq !== 0) {
-      param = dot / lenSq;
-    }
-
-    let closestX, closestY;
-
-    if (param < 0) {
-      closestX = point1.x;
-      closestY = point1.y;
-    } else if (param > 1) {
-      closestX = point2.x;
-      closestY = point2.y;
-    } else {
-      closestX = point1.x + param * C;
-      closestY = point1.y + param * D;
-    }
-
-    return { x: closestX, y: closestY };
+    return PathUtils.getClosestPointOnGroupLine(groupObj, lineObj, targetPoint);
   }
 
   // Find closest point on a path (curves, freehand drawings)
   getClosestPointOnPath(pathObj, targetPoint) {
-    // Option A: Use customPoints if available (CurveTool curves have these)
-    // Disabled because customPoints might be stale if object is moved/transformed
-    /* if (pathObj.customPoints && pathObj.customPoints.length > 0) {
-            return this.getClosestPointFromArray(pathObj.customPoints, targetPoint);
-        } */
-
-    // Option B: Sample SVG path for freehand drawings and other paths
-    if (pathObj.path && pathObj.path.length > 0) {
-      const sampledPoints = this.samplePathPoints(pathObj, 30);
-      if (sampledPoints.length > 0) {
-        return this.getClosestPointFromArray(sampledPoints, targetPoint);
-      }
-    }
-
-    // Option C: Fallback to bounding box edges
-    return this.getClosestPointOnBoundingBox(pathObj, targetPoint);
+    return PathUtils.getClosestPointOnPath(pathObj, targetPoint);
   }
 
   // Find closest point from an array of points
   getClosestPointFromArray(points, targetPoint) {
-    if (points.length === 0) return targetPoint;
-
-    let closestPoint = points[0];
-    let minDistance = this.calculateDistance(points[0], targetPoint);
-
-    for (let i = 1; i < points.length; i++) {
-      const distance = this.calculateDistance(points[i], targetPoint);
-      if (distance < minDistance) {
-        minDistance = distance;
-        closestPoint = points[i];
-      }
-    }
-
-    return {
-      x: closestPoint.x || closestPoint.x === 0 ? closestPoint.x : 0,
-      y: closestPoint.y || closestPoint.y === 0 ? closestPoint.y : 0,
-    };
+    return PathUtils.getClosestPointFromArray(points, targetPoint);
   }
 
   // Sample points along an SVG path
   samplePathPoints(pathObj, numSamples = 30) {
-    const points = [];
-    const pathData = pathObj.path;
-
-    // 1. Calculate the correct absolute center
-    let centerAbs = pathObj.getCenterPoint();
-    if (pathObj.group) {
-      const groupMatrix = pathObj.group.calcTransformMatrix();
-      centerAbs = fabric.util.transformPoint(centerAbs, groupMatrix);
-    }
-
-    // 2. Calculate the "buggy" center (using matrix multiplication which doubles translation)
-    // For fabric.Path, (pathOffset.x, pathOffset.y) is the center in local path coordinates
-    const pathCenterLocal = { x: pathObj.pathOffset.x, y: pathObj.pathOffset.y };
-
-    let matrix = pathObj.calcTransformMatrix();
-    if (pathObj.group) {
-      const groupMatrix = pathObj.group.calcTransformMatrix();
-      matrix = fabric.util.multiplyTransformMatrices(groupMatrix, matrix);
-    }
-
-    const centerBuggy = fabric.util.transformPoint(pathCenterLocal, matrix);
-
-    // Helper to transform point to absolute coordinates using vector from center
-    const transformToAbsolute = p => {
-      // Transform point using the "buggy" matrix
-      const pBuggy = fabric.util.transformPoint(p, matrix);
-
-      // Calculate vector from center
-      const vec = {
-        x: pBuggy.x - centerBuggy.x,
-        y: pBuggy.y - centerBuggy.y,
-      };
-
-      // Add vector to the correct absolute center
-      return {
-        x: centerAbs.x + vec.x,
-        y: centerAbs.y + vec.y,
-      };
-    };
-
-    let currentPoint = { x: 0, y: 0 };
-
-    for (const segment of pathData) {
-      const command = segment[0];
-
-      if (command === 'M') {
-        currentPoint = { x: segment[1], y: segment[2] };
-        const absPoint = transformToAbsolute(currentPoint);
-        points.push(absPoint);
-      } else if (command === 'L') {
-        const endPoint = { x: segment[1], y: segment[2] };
-        const samples = this.sampleLine(currentPoint, endPoint, 5);
-        samples.forEach(p => {
-          const absPoint = transformToAbsolute(p);
-          points.push(absPoint);
-        });
-        currentPoint = endPoint;
-      } else if (command === 'C') {
-        const cp1 = { x: segment[1], y: segment[2] };
-        const cp2 = { x: segment[3], y: segment[4] };
-        const endPoint = { x: segment[5], y: segment[6] };
-
-        const samples = this.sampleCubicBezier(currentPoint, cp1, cp2, endPoint, 10);
-        samples.forEach(p => {
-          const absPoint = transformToAbsolute(p);
-          points.push(absPoint);
-        });
-        currentPoint = endPoint;
-      } else if (command === 'Q') {
-        const cp = { x: segment[1], y: segment[2] };
-        const endPoint = { x: segment[3], y: segment[4] };
-
-        const samples = this.sampleQuadraticBezier(currentPoint, cp, endPoint, 10);
-        samples.forEach(p => {
-          const absPoint = fabric.util.transformPoint(p, matrix);
-          points.push(absPoint);
-        });
-        currentPoint = endPoint;
-      }
-    }
-
-    return points;
+    return PathUtils.samplePathPoints(pathObj, numSamples);
   }
 
   // Sample points along a line
   sampleLine(p0, p1, numSamples = 5) {
-    const points = [];
-    for (let i = 0; i <= numSamples; i++) {
-      const t = i / numSamples;
-      points.push({
-        x: p0.x + t * (p1.x - p0.x),
-        y: p0.y + t * (p1.y - p0.y),
-      });
-    }
-    return points;
+    return PathUtils.sampleLine(p0, p1, numSamples);
   }
 
   // Sample points along a cubic Bezier curve
   sampleCubicBezier(p0, cp1, cp2, p1, numSamples = 10) {
-    const points = [];
-    for (let i = 0; i <= numSamples; i++) {
-      const t = i / numSamples;
-      points.push(this.cubicBezierPoint(p0, cp1, cp2, p1, t));
-    }
-    return points;
+    return PathUtils.sampleCubicBezier(p0, cp1, cp2, p1, numSamples);
   }
 
   // Calculate point on cubic Bezier curve at parameter t (0 to 1)
   cubicBezierPoint(p0, cp1, cp2, p1, t) {
-    const t2 = t * t;
-    const t3 = t2 * t;
-    const mt = 1 - t;
-    const mt2 = mt * mt;
-    const mt3 = mt2 * mt;
-
-    return {
-      x: mt3 * p0.x + 3 * mt2 * t * cp1.x + 3 * mt * t2 * cp2.x + t3 * p1.x,
-      y: mt3 * p0.y + 3 * mt2 * t * cp1.y + 3 * mt * t2 * cp2.y + t3 * p1.y,
-    };
+    return PathUtils.cubicBezierPoint(p0, cp1, cp2, p1, t);
   }
 
   // Sample points along a quadratic Bezier curve
   sampleQuadraticBezier(p0, cp, p1, numSamples = 10) {
-    const points = [];
-    for (let i = 0; i <= numSamples; i++) {
-      const t = i / numSamples;
-      points.push(this.quadraticBezierPoint(p0, cp, p1, t));
-    }
-    return points;
+    return PathUtils.sampleQuadraticBezier(p0, cp, p1, numSamples);
   }
 
   // Calculate point on quadratic Bezier curve at parameter t (0 to 1)
   quadraticBezierPoint(p0, cp, p1, t) {
-    const mt = 1 - t;
-    const mt2 = mt * mt;
-    const t2 = t * t;
-
-    return {
-      x: mt2 * p0.x + 2 * mt * t * cp.x + t2 * p1.x,
-      y: mt2 * p0.y + 2 * mt * t * cp.y + t2 * p1.y,
-    };
+    return PathUtils.quadraticBezierPoint(p0, cp, p1, t);
   }
 
   // Get closest point on bounding box (fallback)
   getClosestPointOnBoundingBox(pathObj, targetPoint) {
-    const bounds = pathObj.getBoundingRect();
-    const centerX = bounds.left + bounds.width / 2;
-    const centerY = bounds.top + bounds.height / 2;
-
-    const edgePoints = [
-      { x: bounds.left, y: centerY },
-      { x: bounds.left + bounds.width, y: centerY },
-      { x: centerX, y: bounds.top },
-      { x: centerX, y: bounds.top + bounds.height },
-    ];
-
-    let closestPoint = edgePoints[0];
-    let minDistance = this.calculateDistance(edgePoints[0], targetPoint);
-
-    for (let i = 1; i < edgePoints.length; i++) {
-      const distance = this.calculateDistance(edgePoints[i], targetPoint);
-      if (distance < minDistance) {
-        minDistance = distance;
-        closestPoint = edgePoints[i];
-      }
-    }
-
-    return closestPoint;
+    return PathUtils.getClosestPointOnBoundingBox(pathObj, targetPoint);
   }
 
   // Calculate distance between two points
   calculateDistance(p1, p2) {
-    const dx = p1.x - p2.x;
-    const dy = p1.y - p2.y;
-    return Math.sqrt(dx * dx + dy * dy);
+    return PathUtils.calculateDistance(p1, p2);
   }
 
   // Create a manipulatable connector line

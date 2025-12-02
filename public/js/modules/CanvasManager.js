@@ -462,6 +462,65 @@ export class CanvasManager {
   }
 
   /**
+   * Calculate target frame size based on canvas dimensions
+   * Centralized logic to ensure consistency between image scaling and frame resizing
+   */
+  calculateTargetFrameSize(canvasWidth, canvasHeight) {
+    const currentImageLabel = window.app?.projectManager?.currentViewId || 'default';
+    const savedRatios = window.manualFrameRatios && window.manualFrameRatios[currentImageLabel];
+
+    if (savedRatios) {
+      // Frame was manually resized - apply saved ratios
+      const frameWidth = canvasWidth * savedRatios.widthRatio;
+      const frameHeight = canvasHeight * savedRatios.heightRatio;
+      const frameLeft = canvasWidth * savedRatios.leftRatio;
+      const frameTop = canvasHeight * savedRatios.topRatio;
+
+      // Ensure frame stays within canvas bounds
+      const maxLeft = Math.max(0, canvasWidth - frameWidth);
+      const maxTop = Math.max(0, canvasHeight - frameHeight);
+      const boundedLeft = Math.max(0, Math.min(maxLeft, frameLeft));
+      const boundedTop = Math.max(0, Math.min(maxTop, frameTop));
+
+      return {
+        width: frameWidth,
+        height: frameHeight,
+        left: boundedLeft,
+        top: boundedTop,
+      };
+    } else {
+      // Default: Frame is 85% of canvas size, capped at 800x600, with a minimum of 400x300
+      let frameWidth = Math.max(400, Math.min(800, Math.floor(canvasWidth * 0.85)));
+      let frameHeight = Math.max(300, Math.min(600, Math.floor(canvasHeight * 0.85)));
+
+      // Maintain 4:3 aspect ratio
+      const aspectRatio = 4 / 3;
+      if (frameWidth / frameHeight > aspectRatio) {
+        frameWidth = Math.floor(frameHeight * aspectRatio);
+      } else {
+        frameHeight = Math.floor(frameWidth / aspectRatio);
+      }
+
+      // Center the frame on the canvas
+      let frameLeft = (canvasWidth - frameWidth) / 2;
+      let frameTop = (canvasHeight - frameHeight) / 2;
+
+      // Clamp frame to stay fully inside canvas bounds
+      frameWidth = Math.min(frameWidth, canvasWidth);
+      frameHeight = Math.min(frameHeight, canvasHeight);
+      frameLeft = Math.max(0, Math.min(frameLeft, canvasWidth - frameWidth));
+      frameTop = Math.max(0, Math.min(frameTop, canvasHeight - frameHeight));
+
+      return {
+        width: frameWidth,
+        height: frameHeight,
+        left: frameLeft,
+        top: frameTop,
+      };
+    }
+  }
+
+  /**
    * Update capture frame position and size during resize
    */
   updateCaptureFrameOnResize(targetWidth, targetHeight) {
@@ -490,54 +549,12 @@ export class CanvasManager {
     }
 
     // Check if manual ratios are saved for this image
-    const savedRatios = window.manualFrameRatios && window.manualFrameRatios[currentImageLabel];
+    const targetFrame = this.calculateTargetFrameSize(targetWidth, targetHeight);
 
-    if (savedRatios) {
-      // Frame was manually resized - apply saved ratios to current canvas size
-      const frameWidth = targetWidth * savedRatios.widthRatio;
-      const frameHeight = targetHeight * savedRatios.heightRatio;
-      const frameLeft = targetWidth * savedRatios.leftRatio;
-      const frameTop = targetHeight * savedRatios.topRatio;
-
-      // Ensure frame stays within canvas bounds
-      const maxLeft = Math.max(0, targetWidth - frameWidth);
-      const maxTop = Math.max(0, targetHeight - frameHeight);
-      const boundedLeft = Math.max(0, Math.min(maxLeft, frameLeft));
-      const boundedTop = Math.max(0, Math.min(maxTop, frameTop));
-
-      captureFrame.style.width = `${frameWidth}px`;
-      captureFrame.style.height = `${frameHeight}px`;
-      captureFrame.style.left = `${boundedLeft}px`;
-      captureFrame.style.top = `${boundedTop}px`;
-    } else {
-      // No manual resize - use smooth continuous function to prevent jumping
-      // Frame is 85% of canvas size, capped at 800x600, with a minimum of 400x300
-      let frameWidth = Math.max(400, Math.min(800, Math.floor(targetWidth * 0.85)));
-      let frameHeight = Math.max(300, Math.min(600, Math.floor(targetHeight * 0.85)));
-
-      // Maintain 4:3 aspect ratio
-      const aspectRatio = 4 / 3;
-      if (frameWidth / frameHeight > aspectRatio) {
-        frameWidth = Math.floor(frameHeight * aspectRatio);
-      } else {
-        frameHeight = Math.floor(frameWidth / aspectRatio);
-      }
-
-      // Center the frame on the canvas
-      let frameLeft = (targetWidth - frameWidth) / 2;
-      let frameTop = (targetHeight - frameHeight) / 2;
-
-      // Clamp frame to stay fully inside canvas bounds
-      frameWidth = Math.min(frameWidth, targetWidth);
-      frameHeight = Math.min(frameHeight, targetHeight);
-      frameLeft = Math.max(0, Math.min(frameLeft, targetWidth - frameWidth));
-      frameTop = Math.max(0, Math.min(frameTop, targetHeight - frameHeight));
-
-      captureFrame.style.width = `${frameWidth}px`;
-      captureFrame.style.height = `${frameHeight}px`;
-      captureFrame.style.left = `${frameLeft}px`;
-      captureFrame.style.top = `${frameTop}px`;
-    }
+    captureFrame.style.width = `${targetFrame.width}px`;
+    captureFrame.style.height = `${targetFrame.height}px`;
+    captureFrame.style.left = `${targetFrame.left}px`;
+    captureFrame.style.top = `${targetFrame.top}px`;
   }
 
   /**
@@ -649,164 +666,15 @@ export class CanvasManager {
     // Update last known size
     this.lastCanvasSize = { width: targetWidth, height: targetHeight };
 
-    // Recalculate background image fit if one exists
+    // UNIFIED RESIZING LOGIC:
+    // We now use the zoom-based resizing (floating layout) for BOTH empty canvas and images.
+    // This ensures consistent behavior where the content (image or strokes) stays centered
+    // and scales to fit the window, preserving the "floating paper" effect.
 
-    if (bgImage && sizeChanged) {
-      // Get current fit mode from project manager if available
-      const currentViewId = window.app?.projectManager?.currentViewId;
-      const savedFitMode =
-        window.app?.projectManager?.views?.[currentViewId]?.fitMode || 'fit-canvas';
-
-      // Recalculate scale based on new canvas size
-      const imgWidth = bgImage.width;
-      const imgHeight = bgImage.height;
-      let scale = 1;
-
-      switch (savedFitMode) {
-        case 'fit-width':
-          scale = targetWidth / imgWidth;
-          break;
-        case 'fit-height':
-          scale = targetHeight / imgHeight;
-          break;
-        case 'fit-canvas':
-          scale = Math.min(targetWidth / imgWidth, targetHeight / imgHeight);
-          break;
-        case 'actual-size':
-          scale = 1;
-          break;
-        default:
-          scale = Math.min(targetWidth / imgWidth, targetHeight / imgHeight);
-      }
-
-      const oldScale = bgImage.scaleX;
-      const oldLeft = bgImage.left;
-      const oldTop = bgImage.top;
-
-      // Calculate scaled dimensions
-      const scaledWidth = imgWidth * scale;
-      const scaledHeight = imgHeight * scale;
-
-      // Center the image in the canvas
-      // Since originX/originY are 'center', left/top should be canvas center
-      const centerX = targetWidth / 2;
-      const centerY = targetHeight / 2;
-
-      // Update scale AND position to center the image
-      bgImage.set({
-        scaleX: scale,
-        scaleY: scale,
-        left: centerX,
-        top: centerY,
-      });
-
-      // CRITICAL: Transform all stroke objects to maintain position relative to background image
-      // Calculate the transformation delta
-      const scaleRatio = scale / oldScale;
-
-      // Transform all objects (strokes, arrows, tags, etc.) except the background image
-      const objects = this.fabricCanvas.getObjects();
-      let transformedCount = 0;
-      objects.forEach(obj => {
-        // Skip only the background image itself
-        if (obj === bgImage) return;
-
-        // Calculate new position relative to background image center
-        // 1. Get position relative to old background center
-        const relX = obj.left - oldLeft;
-        const relY = obj.top - oldTop;
-
-        // 2. Scale the relative position
-        const newRelX = relX * scaleRatio;
-        const newRelY = relY * scaleRatio;
-
-        // 3. Add new background center
-        const newLeft = centerX + newRelX;
-        const newTop = centerY + newRelY;
-
-        // Update object position and scale
-        obj.set({
-          left: newLeft,
-          top: newTop,
-          scaleX: (obj.scaleX || 1) * scaleRatio,
-          scaleY: (obj.scaleY || 1) * scaleRatio,
-        });
-
-        obj.setCoords(); // Update object coordinates for interactions
-        transformedCount++;
-      });
-
-      // Transform capture frame to stick with the background image
-      const captureFrame = document.getElementById('captureFrame');
-      if (captureFrame) {
-        // Use getComputedStyle to handle 'calc' values in initial HTML
-        const computedStyle = window.getComputedStyle(captureFrame);
-        const oldFrameLeft =
-          parseFloat(captureFrame.style.left) || parseFloat(computedStyle.left) || 0;
-        const oldFrameTop =
-          parseFloat(captureFrame.style.top) || parseFloat(computedStyle.top) || 0;
-        const oldFrameWidth =
-          parseFloat(captureFrame.style.width) || parseFloat(computedStyle.width) || 0;
-        const oldFrameHeight =
-          parseFloat(captureFrame.style.height) || parseFloat(computedStyle.height) || 0;
-
-        // Store frame ratios relative to OLD image if not already stored
-        // This prevents cumulative drift by always calculating from the same reference
-        if (!this.captureFrameImageRatios) {
-          // Calculate frame center relative to old image center
-          const frameCenterX = oldFrameLeft + oldFrameWidth / 2;
-          const frameCenterY = oldFrameTop + oldFrameHeight / 2;
-
-          // Position relative to old background center
-          const relX = frameCenterX - oldLeft;
-          const relY = frameCenterY - oldTop;
-
-          // Convert to ratios of the OLD image's scaled size
-          const oldScaledWidth = imgWidth * oldScale;
-          const oldScaledHeight = imgHeight * oldScale;
-
-          this.captureFrameImageRatios = {
-            // Frame center position as ratio of image size (-0.5 to 0.5 for centered)
-            centerXRatio: relX / oldScaledWidth,
-            centerYRatio: relY / oldScaledHeight,
-            // Frame size as ratio of image size
-            widthRatio: oldFrameWidth / oldScaledWidth,
-            heightRatio: oldFrameHeight / oldScaledHeight,
-          };
-        }
-
-        // Calculate NEW frame position from stored ratios and NEW image position
-        const newScaledWidth = imgWidth * scale;
-        const newScaledHeight = imgHeight * scale;
-
-        // Calculate frame size from ratios
-        const newFrameWidth = newScaledWidth * this.captureFrameImageRatios.widthRatio;
-        const newFrameHeight = newScaledHeight * this.captureFrameImageRatios.heightRatio;
-
-        // Calculate frame center position
-        const frameCenterX = centerX + newScaledWidth * this.captureFrameImageRatios.centerXRatio;
-        const frameCenterY = centerY + newScaledHeight * this.captureFrameImageRatios.centerYRatio;
-
-        // Calculate top-left position from center
-        const newFrameLeft = frameCenterX - newFrameWidth / 2;
-        const newFrameTop = frameCenterY - newFrameHeight / 2;
-
-        // Round to whole pixels to prevent sub-pixel jitter
-        const roundedLeft = Math.round(newFrameLeft);
-        const roundedTop = Math.round(newFrameTop);
-        const roundedWidth = Math.round(newFrameWidth);
-        const roundedHeight = Math.round(newFrameHeight);
-
-        // Update frame position and size
-        captureFrame.style.left = `${roundedLeft}px`;
-        captureFrame.style.top = `${roundedTop}px`;
-        captureFrame.style.width = `${roundedWidth}px`;
-        captureFrame.style.height = `${roundedHeight}px`;
-      }
-    } else if (sizeChanged) {
-      // For stroke-only canvas: Apply simple proportional scaling
+    if (sizeChanged) {
+      // Apply simple proportional scaling / zoom logic
       console.log(
-        `[CanvasManager] Stroke-only canvas resize: ${oldCanvasWidth}x${oldCanvasHeight} -> ${targetWidth}x${targetHeight}`
+        `[CanvasManager] Canvas resize: ${oldCanvasWidth}x${oldCanvasHeight} -> ${targetWidth}x${targetHeight}`
       );
 
       // Scale from original positions to prevent accumulation
@@ -990,8 +858,9 @@ export class CanvasManager {
         this.fabricCanvas.requestRenderAll();
       }
 
-      // Update capture frame
-      this.updateCaptureFrameOnResize(targetWidth, targetHeight);
+      // We do NOT call updateCaptureFrameOnResize here because the zoom logic above
+      // already updated the frame style to match the zoom.
+      // Calling it would overwrite the correct frame with the default "85% of window" frame.
     }
 
     // Redraw canvas
