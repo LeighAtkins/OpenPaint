@@ -1,5 +1,5 @@
 // Comprehensive test suite for Phase 4 project management services
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
   projectService,
   projectImagesService,
@@ -8,12 +8,7 @@ import {
   authService,
 } from '@/services';
 import { Result } from '@/utils/result';
-import type {
-  CreateProjectData,
-  CreateMeasurementData,
-  ImageUploadOptions,
-  ExportOptions,
-} from '@/services';
+import type { CreateProjectData, CreateMeasurementData, ExportOptions } from '@/services';
 
 // Mock authentication
 const mockUser = {
@@ -25,6 +20,8 @@ const mockUser = {
     id: 'test-user-id',
     email: 'test@example.com',
     display_name: 'Test User',
+    created_at: '2024-01-01T00:00:00Z',
+    updated_at: '2024-01-01T00:00:00Z',
     preferences: {
       theme: 'light' as const,
       defaultUnits: 'px' as const,
@@ -39,7 +36,7 @@ const mockUser = {
 // Mock Supabase operations
 vi.mock('@/services/supabase/client', () => ({
   SupabaseService: class MockSupabaseService {
-    async insert(table: string, data: any) {
+    async insert(_table: string, data: any) {
       return Result.ok({
         id: `mock-${Date.now()}`,
         ...data,
@@ -48,7 +45,7 @@ vi.mock('@/services/supabase/client', () => ({
       });
     }
 
-    async getById(table: string, id: string) {
+    async getById(_table: string, id: string) {
       return Result.ok({
         id,
         name: 'Mock Project',
@@ -84,7 +81,7 @@ vi.mock('@/services/supabase/client', () => ({
       });
     }
 
-    async update(table: string, id: string, data: any, version?: number) {
+    async update(_table: string, id: string, data: any, version?: number) {
       return Result.ok({
         id,
         ...data,
@@ -94,15 +91,15 @@ vi.mock('@/services/supabase/client', () => ({
       });
     }
 
-    async delete(table: string, id: string) {
+    async delete(_table: string, _id: string) {
       return Result.ok(true);
     }
 
-    async select(table: string, filters: any, options: any) {
+    async select(_table: string, _filters: any, _options: any) {
       return Result.ok([]);
     }
 
-    async paginate(table: string, page: number, pageSize: number) {
+    async paginate(_table: string, page: number, pageSize: number) {
       return Result.ok({
         data: [],
         count: 0,
@@ -282,18 +279,18 @@ describe('ProjectImagesService', () => {
     });
 
     // Mock Image constructor
-    global.Image = class MockImage {
+    (global as any).Image = class MockImage {
       onload: (() => void) | null = null;
       onerror: (() => void) | null = null;
       naturalWidth = 800;
       naturalHeight = 600;
 
-      set src(value: string) {
+      set src(_value: string) {
         setTimeout(() => {
           if (this.onload) this.onload();
         }, 0);
       }
-    } as any;
+    };
   });
 
   describe('uploadImage', () => {
@@ -355,7 +352,7 @@ describe('ProjectImagesService', () => {
       ];
 
       const progressCalls: number[] = [];
-      const onProgress = (completed: number, total: number) => {
+      const onProgress = (completed: number, _total: number) => {
         progressCalls.push(completed);
       };
 
@@ -386,7 +383,7 @@ describe('ProjectImagesService', () => {
       if (result.success) {
         expect(result.data.successful.length).toBe(1);
         expect(result.data.failed.length).toBe(1);
-        expect(result.data.failed[0].label).toBe('invalid-image');
+        expect(result.data.failed[0]?.label).toBe('invalid-image');
       }
     });
   });
@@ -582,14 +579,14 @@ describe('ProjectExportService', () => {
 
   beforeEach(() => {
     // Mock Blob constructor
-    global.Blob = class MockBlob {
+    (global as any).Blob = class MockBlob {
       size = 1000;
       type = '';
 
-      constructor(parts: any[], options: any = {}) {
+      constructor(_parts: any[], options: any = {}) {
         this.type = options.type || '';
       }
-    } as any;
+    };
   });
 
   describe('exportProject', () => {
@@ -699,7 +696,7 @@ describe('ProjectExportService', () => {
         }),
       };
 
-      global.FileReader = vi.fn().mockImplementation(() => mockFileReader);
+      (global as any).FileReader = vi.fn().mockImplementation(() => mockFileReader);
 
       const result = await projectExportService.importProject(jsonFile, {
         overwriteExisting: false,
@@ -803,6 +800,10 @@ describe('Permission Tests', () => {
     vi.spyOn(authService, 'getCurrentUser').mockReturnValue({
       ...mockUser,
       id: 'different-user-id',
+      profile: {
+        ...mockUser.profile,
+        id: 'different-user-id',
+      },
     });
 
     const result = await projectService.updateProject('mock-project-id', {
