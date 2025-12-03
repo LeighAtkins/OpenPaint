@@ -5,7 +5,6 @@ import {
   checkSupabaseHealth,
   initializeSupabase,
   authService,
-  storageService,
 } from '@/services';
 import { Result } from '@/utils/result';
 
@@ -68,7 +67,9 @@ describe('Supabase Configuration', () => {
   it('should initialize Supabase client successfully', () => {
     const result = initializeSupabase();
     expect(result.success).toBe(true);
-    expect(result.data).toBeDefined();
+    if (result.success) {
+      expect(result.data).toBeDefined();
+    }
   });
 
   it('should handle missing configuration', () => {
@@ -217,8 +218,9 @@ describe('Storage Service', () => {
 
   it('should generate correct storage paths', async () => {
     // Import using dynamic import for better test compatibility
-    const { StoragePathBuilder } = await import('@/services/supabase/storage.service');
-    const { UPLOAD_CONFIGS } = await import('@/services/supabase/storage.service');
+    const { StoragePathBuilder, UPLOAD_CONFIGS } = await import(
+      '@/services/supabase/storage.service'
+    );
 
     const userId = 'user123';
     const projectId = 'project456';
@@ -240,7 +242,7 @@ describe('Storage Service', () => {
 
   it('should handle upload configuration', async () => {
     // Import using dynamic import for better test compatibility
-    const { UPLOAD_CONFIGS } = await import('@/services/storage.service');
+    const { UPLOAD_CONFIGS } = await import('@/services/supabase/storage.service');
 
     expect(UPLOAD_CONFIGS.PROJECT_IMAGES.maxFileSizeMB).toBe(50);
     expect(UPLOAD_CONFIGS.PROJECT_IMAGES.allowedMimeTypes).toContain('image/jpeg');
@@ -257,10 +259,14 @@ describe('Error Handling', () => {
     const errorResult = Result.err(new Error('test error'));
 
     expect(successResult.success).toBe(true);
-    expect(successResult.data).toBe('test data');
+    if (successResult.success) {
+      expect(successResult.data).toBe('test data');
+    }
 
     expect(errorResult.success).toBe(false);
-    expect(errorResult.error).toBeInstanceOf(Error);
+    if (!errorResult.success) {
+      expect(errorResult.error).toBeInstanceOf(Error);
+    }
   });
 
   it('should handle network errors gracefully', async () => {
