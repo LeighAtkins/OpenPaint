@@ -13,6 +13,7 @@ export class StrokeMetadataManager {
     this.customLabelPositions = {};
     this.calculatedLabelOffsets = {};
     this.textElementsByImage = {}; // New storage for text elements
+    this.shapeElementsByImage = {}; // New storage for shape elements
   }
 
   // Attach metadata to a Fabric object
@@ -119,6 +120,63 @@ export class StrokeMetadataManager {
     setTimeout(() => {
       this.updateStrokeVisibilityControls();
     }, 50);
+  }
+
+  // Attach metadata to a Shape object
+  attachShapeMetadata(obj, imageLabel, shapeType) {
+    if (!obj) return;
+
+    if (!this.shapeElementsByImage[imageLabel]) {
+      this.shapeElementsByImage[imageLabel] = [];
+    }
+
+    if (!this.shapeElementsByImage[imageLabel].includes(obj)) {
+      const shapeName = this.getNextShapeName(imageLabel, shapeType);
+      this.shapeElementsByImage[imageLabel].push(obj);
+      console.log(`[StrokeMetadata] Stored shape object in shapeElementsByImage[${imageLabel}]`);
+
+      obj.strokeMetadata = {
+        imageLabel: imageLabel,
+        type: 'shape',
+        shapeType: shapeType,
+        shapeName: shapeName,
+        visible: true,
+      };
+
+      setTimeout(() => {
+        this.updateStrokeVisibilityControls();
+      }, 50);
+    }
+  }
+
+  getNextShapeName(imageLabel, shapeType) {
+    const shapes = this.shapeElementsByImage[imageLabel] || [];
+    const typeLabel = this.formatShapeType(shapeType);
+    const count = shapes.filter(
+      shapeObj => shapeObj?.strokeMetadata?.shapeType === shapeType
+    ).length;
+    return `${typeLabel} ${count + 1}`;
+  }
+
+  formatShapeType(shapeType) {
+    const map = {
+      square: 'Square',
+      triangle: 'Triangle',
+      circle: 'Circle',
+      star: 'Star',
+    };
+    return map[shapeType] || 'Shape';
+  }
+
+  removeShapeMetadata(obj) {
+    if (!obj || !obj.strokeMetadata || obj.strokeMetadata.type !== 'shape') return;
+
+    const imageLabel = obj.strokeMetadata.imageLabel;
+    const shapes = this.shapeElementsByImage[imageLabel] || [];
+    const index = shapes.indexOf(obj);
+    if (index > -1) {
+      shapes.splice(index, 1);
+    }
   }
 
   // Get metadata for an object
@@ -521,11 +579,104 @@ export class StrokeMetadataManager {
       });
     }
 
+    // Add shape elements header
+    const shapeHeader = document.createElement('h4');
+    shapeHeader.style.margin = '10px 0px 6px';
+    shapeHeader.style.fontSize = '13px';
+    shapeHeader.style.color = 'rgb(71, 85, 105)';
+    shapeHeader.textContent = 'Shape Elements';
+    strokesList.appendChild(shapeHeader);
+
+    const shapeElements = this.shapeElementsByImage[currentViewId] || [];
+    if (shapeElements.length === 0) {
+      const noShapeMsg = document.createElement('p');
+      noShapeMsg.style.margin = '0px 0px 8px';
+      noShapeMsg.textContent = 'No shapes';
+      strokesList.appendChild(noShapeMsg);
+    } else {
+      shapeElements.forEach((shapeObj, index) => {
+        const shapeItem = document.createElement('div');
+        shapeItem.className = 'stroke-visibility-item group';
+        shapeItem.style.position = 'relative';
+        shapeItem.style.marginBottom = '4px';
+
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        const shapeVisible = shapeObj.strokeMetadata?.visible !== false;
+        checkbox.checked = shapeVisible;
+        checkbox.style.marginRight = '8px';
+
+        if (shapeObj.visible !== shapeVisible) {
+          shapeObj.visible = shapeVisible;
+        }
+
+        checkbox.addEventListener('change', e => {
+          const isVisible = e.target.checked;
+          shapeObj.visible = isVisible;
+          if (shapeObj.strokeMetadata) {
+            shapeObj.strokeMetadata.visible = isVisible;
+          }
+          if (window.app?.canvasManager?.fabricCanvas) {
+            window.app.canvasManager.fabricCanvas.renderAll();
+          }
+        });
+
+        shapeItem.appendChild(checkbox);
+
+        const labelContainer = document.createElement('div');
+        labelContainer.className = 'stroke-label-container';
+        labelContainer.style.flex = '1';
+
+        const shapeLabel = document.createElement('span');
+        shapeLabel.className = 'stroke-name';
+        shapeLabel.style.color = '#475569';
+        shapeLabel.style.borderColor = 'transparent';
+        const fallbackName = `${this.formatShapeType(shapeObj.strokeMetadata?.shapeType || 'shape')} ${index + 1}`;
+        shapeLabel.textContent = shapeObj.strokeMetadata?.shapeName || fallbackName;
+        shapeLabel.title = shapeLabel.textContent;
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className =
+          'delete-image-btn opacity-0 group-hover:opacity-100 transition-opacity';
+        deleteBtn.title = 'Delete this shape';
+        deleteBtn.style.cursor = 'pointer';
+        deleteBtn.style.background = 'rgba(255, 255, 255, 0.9)';
+        deleteBtn.style.border = '1px solid rgb(204, 204, 204)';
+        deleteBtn.style.borderRadius = '50%';
+        deleteBtn.style.width = '20px';
+        deleteBtn.style.height = '20px';
+        deleteBtn.style.fontSize = '12px';
+        deleteBtn.style.fontWeight = 'bold';
+        deleteBtn.style.fontFamily = 'Arial, sans-serif';
+        deleteBtn.style.display = 'flex';
+        deleteBtn.style.alignItems = 'center';
+        deleteBtn.style.justifyContent = 'center';
+        deleteBtn.style.color = 'rgb(102, 102, 102)';
+        deleteBtn.style.lineHeight = '1';
+        deleteBtn.style.padding = '0px';
+        deleteBtn.style.marginLeft = 'auto';
+        deleteBtn.textContent = '×';
+
+        deleteBtn.addEventListener('click', () => {
+          if (window.app?.canvasManager?.fabricCanvas) {
+            window.app.canvasManager.fabricCanvas.remove(shapeObj);
+          }
+          this.removeShapeMetadata(shapeObj);
+          this.updateStrokeVisibilityControls();
+        });
+
+        labelContainer.appendChild(shapeLabel);
+        labelContainer.appendChild(deleteBtn);
+        shapeItem.appendChild(labelContainer);
+        strokesList.appendChild(shapeItem);
+      });
+    }
+
     const hr = document.createElement('hr');
     hr.style.margin = '10px 0px';
     strokesList.appendChild(hr);
 
-    // If no strokes, just show text elements section
+    // If no strokes, just show text + shape elements section
     if (Object.keys(strokes).length === 0) {
       // Only show if parent is not minimized
       const strokePanel = document.getElementById('strokePanel');
@@ -795,6 +946,7 @@ export class StrokeMetadataManager {
     delete this.customLabelPositions[imageLabel];
     delete this.calculatedLabelOffsets[imageLabel];
     delete this.textElementsByImage[imageLabel];
+    delete this.shapeElementsByImage[imageLabel];
 
     // Update controls after clearing
     this.updateStrokeVisibilityControls();
@@ -959,21 +1111,36 @@ export class StrokeMetadataManager {
     // Clear object references for this view (but keep visibility/measurement data)
     this.vectorStrokesByImage[viewId] = {};
     this.textElementsByImage[viewId] = [];
+    this.shapeElementsByImage[viewId] = [];
 
     if (!canvas) return;
 
     const objects = canvas.getObjects();
     objects.forEach(obj => {
-      // Check for stroke metadata
-      if (obj.strokeMetadata && obj.strokeMetadata.imageLabel === viewId) {
-        const strokeLabel = obj.strokeMetadata.strokeLabel;
+      if (!obj.strokeMetadata || obj.strokeMetadata.imageLabel !== viewId) return;
 
-        // Re-link stroke
-        if (obj.strokeMetadata.type === 'text') {
+      const strokeLabel = obj.strokeMetadata.strokeLabel;
+      const isVisible = obj.strokeMetadata.visible !== false;
+      const labelVisible = obj.strokeMetadata.labelVisible !== false;
+
+      if (obj.strokeMetadata.type === 'text') {
+        if (!this.textElementsByImage[viewId].includes(obj)) {
           this.textElementsByImage[viewId].push(obj);
-        } else {
-          this.vectorStrokesByImage[viewId][strokeLabel] = obj;
         }
+        obj.visible = isVisible;
+        return;
+      }
+
+      if (obj.strokeMetadata.type === 'shape') {
+        if (!this.shapeElementsByImage[viewId].includes(obj)) {
+          this.shapeElementsByImage[viewId].push(obj);
+        }
+        obj.visible = isVisible;
+        return;
+      }
+
+      if (strokeLabel) {
+        this.vectorStrokesByImage[viewId][strokeLabel] = obj;
 
         // Restore visibility state from metadata if available
         if (this.strokeVisibilityByImage[viewId]) {
@@ -986,16 +1153,16 @@ export class StrokeMetadataManager {
 
         // Restore label visibility
         if (this.strokeLabelVisibility[viewId]) {
-          const labelVisible = this.strokeLabelVisibility[viewId][strokeLabel];
-          if (labelVisible !== undefined) {
-            obj.strokeMetadata.labelVisible = labelVisible;
+          const labelVisibleOverride = this.strokeLabelVisibility[viewId][strokeLabel];
+          if (labelVisibleOverride !== undefined) {
+            obj.strokeMetadata.labelVisible = labelVisibleOverride;
           }
         }
       }
     });
 
     console.log(
-      `[StrokeMetadata] Rebuilt: ${Object.keys(this.vectorStrokesByImage[viewId]).length} strokes, ${this.textElementsByImage[viewId].length} text elements`
+      `[StrokeMetadata] Rebuilt: ${Object.keys(this.vectorStrokesByImage[viewId]).length} strokes, ${this.textElementsByImage[viewId].length} text elements, ${this.shapeElementsByImage[viewId].length} shape elements`
     );
 
     // Update UI

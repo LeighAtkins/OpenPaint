@@ -93,7 +93,7 @@ class App {
         this.canvasManager.fabricCanvas.on('object:removed', e => {
           // If a stroke is removed, remove its tag
           const obj = e.target;
-          if (obj && obj.strokeMetadata) {
+          if (obj && obj.strokeMetadata && obj.strokeMetadata.strokeLabel) {
             this.tagManager.removeTag(obj.strokeMetadata.strokeLabel);
           }
         });

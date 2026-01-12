@@ -93,7 +93,7 @@ class App {
         this.canvasManager.fabricCanvas.on('object:removed', e => {
           // If a stroke is removed, remove its tag
           const obj = e.target;
-          if (obj && obj.strokeMetadata) {
+          if (obj && obj.strokeMetadata && obj.strokeMetadata.strokeLabel) {
             this.tagManager.removeTag(obj.strokeMetadata.strokeLabel);
           }
         });
@@ -157,6 +157,31 @@ class App {
     }
   }
 
+  updateSelectedShapesFill(style) {
+    if (!this.canvasManager.fabricCanvas) return;
+
+    const activeObjects = this.canvasManager.fabricCanvas.getActiveObjects();
+    if (activeObjects.length === 0) return;
+
+    let updatedCount = 0;
+    const shapeTool = this.toolManager?.tools?.shape;
+
+    activeObjects.forEach(obj => {
+      if (!obj || obj.strokeMetadata?.type !== 'shape') return;
+      const baseColor = obj.stroke || shapeTool?.strokeColor || '#3b82f6';
+      const styles = shapeTool?.getStyleForFillStyle
+        ? shapeTool.getStyleForFillStyle(style, baseColor)
+        : { fill: baseColor, stroke: baseColor };
+      obj.set({ fill: styles.fill, stroke: styles.stroke });
+      obj.dirty = true;
+      updatedCount++;
+    });
+
+    if (updatedCount > 0) {
+      this.canvasManager.fabricCanvas.requestRenderAll();
+    }
+  }
+
   setupUI() {
     // Undo/Redo
     const undoBtn = document.getElementById('undoBtn');
@@ -172,14 +197,18 @@ class App {
 
     if (drawingModeToggle) {
       drawingModeToggle.addEventListener('click', () => {
-        // Cycle through: Straight Line -> Curved Line -> Select -> Straight Line
+        // Cycle through: Straight Line -> Curved Line -> Shapes -> Select -> Straight Line
         const currentTool = this.toolManager.activeTool;
         if (currentTool === this.toolManager.tools.line) {
           // Straight Line -> Curved Line
           this.toolManager.selectTool('curve');
           this.updateToggleLabel(drawingModeToggle, 'Curved Line');
         } else if (currentTool === this.toolManager.tools.curve) {
-          // Curved Line -> Select
+          // Curved Line -> Shapes
+          this.toolManager.selectTool('shape');
+          this.updateToggleLabel(drawingModeToggle, 'Shapes');
+        } else if (currentTool === this.toolManager.tools.shape) {
+          // Shapes -> Select
           this.toolManager.selectTool('select');
           this.updateToggleLabel(drawingModeToggle, 'Select');
         } else {
@@ -195,6 +224,120 @@ class App {
         this.toolManager.selectTool('text');
       });
     }
+
+    const shapeModeToggles = document.querySelectorAll('#shapeModeToggle');
+    const shapeModeWrappers = document.querySelectorAll('#shapeModeWrapper');
+    const shapeOptions = document.querySelectorAll('[data-shape-option]');
+    const shapeFillToggles = document.querySelectorAll('[data-shape-fill-toggle]');
+    const shapeFillStyles = ['solid', 'no-fill', 'clear-black', 'clear-color', 'clear-white'];
+    const shapeFillLabels = {
+      solid: 'Solid',
+      'no-fill': 'No Fill',
+      'clear-black': 'Clear Black',
+      'clear-color': 'Clear Color',
+      'clear-white': 'Clear White',
+    };
+    const shapeIcons = {
+      square: '■',
+      triangle: '▲',
+      circle: '●',
+      star: '★',
+    };
+
+    const updateShapeIcon = shape => {
+      shapeModeToggles.forEach(toggle => {
+        const icon = toggle.querySelector('.shape-icon');
+        if (icon) icon.textContent = shapeIcons[shape] || shapeIcons.square;
+      });
+      shapeOptions.forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-shape-option') === shape);
+      });
+    };
+
+    const updateShapeAvailability = () => {
+      const isShapeMode = this.toolManager.activeTool === this.toolManager.tools.shape;
+      shapeModeWrappers.forEach(wrapper => {
+        wrapper.classList.toggle('shape-active', isShapeMode);
+        wrapper.classList.toggle('shape-disabled', !isShapeMode);
+        if (!isShapeMode) {
+          wrapper.classList.remove('shape-open');
+        }
+      });
+      shapeModeToggles.forEach(toggle => {
+        toggle.setAttribute('aria-pressed', String(isShapeMode));
+      });
+    };
+
+    const applyShapeFillStyle = style => {
+      if (this.toolManager.tools.shape) {
+        this.toolManager.tools.shape.setFillStyle(style);
+      }
+      shapeFillToggles.forEach(toggle => {
+        toggle.textContent = `Fill: ${shapeFillLabels[style]}`;
+        toggle.setAttribute('aria-pressed', String(style !== 'solid'));
+      });
+      this.updateSelectedShapesFill(style);
+    };
+
+    const bindShapeMenu = wrapper => {
+      let hideTimer = null;
+
+      const showMenu = () => {
+        if (this.toolManager.activeTool !== this.toolManager.tools.shape) return;
+        if (hideTimer) {
+          clearTimeout(hideTimer);
+          hideTimer = null;
+        }
+        wrapper.classList.add('shape-open');
+      };
+
+      const scheduleHide = () => {
+        if (hideTimer) clearTimeout(hideTimer);
+        hideTimer = setTimeout(() => {
+          wrapper.classList.remove('shape-open');
+          hideTimer = null;
+        }, 200);
+      };
+
+      wrapper.addEventListener('mouseenter', showMenu);
+      wrapper.addEventListener('mouseleave', scheduleHide);
+    };
+
+    shapeModeWrappers.forEach(bindShapeMenu);
+
+    if (this.toolManager.tools.shape) {
+      updateShapeIcon(this.toolManager.tools.shape.shapeType);
+      const initialStyle = this.toolManager.tools.shape.getFillStyle?.() || 'solid';
+      applyShapeFillStyle(initialStyle);
+    }
+
+    shapeOptions.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const shape = btn.getAttribute('data-shape-option');
+        if (!shape || !this.toolManager.tools.shape) return;
+        this.toolManager.tools.shape.setShapeType(shape);
+        updateShapeIcon(shape);
+      });
+    });
+
+    shapeFillToggles.forEach(toggle => {
+      toggle.addEventListener('click', () => {
+        const tool = this.toolManager.tools.shape;
+        const currentStyle = tool?.getFillStyle?.() || 'solid';
+        const currentIndex = shapeFillStyles.indexOf(currentStyle);
+        const nextIndex = (currentIndex + 1) % shapeFillStyles.length;
+        applyShapeFillStyle(shapeFillStyles[nextIndex]);
+      });
+    });
+
+    window.addEventListener('toolchange', () => {
+      updateShapeAvailability();
+      if (this.toolManager.tools.shape) {
+        updateShapeIcon(this.toolManager.tools.shape.shapeType);
+      }
+    });
+
+    updateShapeAvailability();
 
     // Arrows - select Arrow tool
     const startArrowBtn = document.getElementById('startArrow');
@@ -298,6 +441,9 @@ class App {
         }
         if (this.toolManager.tools.arrow) {
           this.toolManager.tools.arrow.setDashPattern(pattern);
+        }
+        if (this.toolManager.tools.shape) {
+          this.toolManager.tools.shape.setDashPattern(pattern);
         }
       });
     }
@@ -430,8 +576,8 @@ class App {
   }
 
   setupKeyboardShortcuts() {
-    // Tab key cycles through drawing modes: Straight Line -> Curved Line -> Select -> Straight Line
-    // Tab key cycles through drawing modes: Straight Line -> Curved Line -> Select -> Straight Line
+    // Tab key cycles through drawing modes: Straight Line -> Curved Line -> Shapes -> Select -> Straight Line
+    // Tab key cycles through drawing modes: Straight Line -> Curved Line -> Shapes -> Select -> Straight Line
     // Use capture phase to ensure we catch it before anything else
     window.addEventListener(
       'keydown',
@@ -474,7 +620,13 @@ class App {
               this.updateToggleLabel(drawingModeToggle, 'Curved Line');
             }
           } else if (currentTool === this.toolManager.tools.curve) {
-            // Curved Line -> Select
+            // Curved Line -> Shapes
+            this.toolManager.selectTool('shape');
+            if (drawingModeToggle) {
+              this.updateToggleLabel(drawingModeToggle, 'Shapes');
+            }
+          } else if (currentTool === this.toolManager.tools.shape) {
+            // Shapes -> Select
             this.toolManager.selectTool('select');
             if (drawingModeToggle) {
               this.updateToggleLabel(drawingModeToggle, 'Select');
@@ -502,6 +654,8 @@ class App {
         shortSpan.textContent = 'Straight';
       } else if (text === 'Curved Line') {
         shortSpan.textContent = 'Curved';
+      } else if (text === 'Shapes') {
+        shortSpan.textContent = 'Shapes';
       } else if (text === 'Select') {
         shortSpan.textContent = 'Select';
       } else {
@@ -680,7 +834,7 @@ class App {
             <div style="margin-bottom: 20px;">
                 <h3 style="color: #555; font-size: 16px; margin-bottom: 10px; font-weight: 600;">Drawing Tools</h3>
                 <div style="display: grid; grid-template-columns: auto 1fr; gap: 8px 16px; font-size: 14px;">
-                    <kbd>Tab</kbd><span>Cycle through drawing modes (Line → Curve → Select)</span>
+                    <kbd>Tab</kbd><span>Cycle through drawing modes (Line → Curve → Shapes → Select)</span>
                 </div>
             </div>
             

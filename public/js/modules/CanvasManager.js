@@ -315,25 +315,35 @@ export class CanvasManager {
               const strokeLabel = obj.strokeMetadata.strokeLabel;
               const imageLabel = obj.strokeMetadata.imageLabel;
 
-              // Remove from metadata manager
               if (window.app?.metadataManager) {
                 const metadata = window.app.metadataManager;
-                if (metadata.vectorStrokesByImage[imageLabel]) {
-                  delete metadata.vectorStrokesByImage[imageLabel][strokeLabel];
-                }
-                if (metadata.strokeVisibilityByImage[imageLabel]) {
-                  delete metadata.strokeVisibilityByImage[imageLabel][strokeLabel];
-                }
-                if (metadata.strokeLabelVisibility[imageLabel]) {
-                  delete metadata.strokeLabelVisibility[imageLabel][strokeLabel];
-                }
-                if (metadata.strokeMeasurements[imageLabel]) {
-                  delete metadata.strokeMeasurements[imageLabel][strokeLabel];
+
+                if (obj.strokeMetadata.type === 'shape') {
+                  metadata.removeShapeMetadata(obj);
+                } else if (obj.strokeMetadata.type === 'text') {
+                  const textElements = metadata.textElementsByImage[imageLabel] || [];
+                  const index = textElements.indexOf(obj);
+                  if (index > -1) {
+                    textElements.splice(index, 1);
+                  }
+                } else if (strokeLabel) {
+                  if (metadata.vectorStrokesByImage[imageLabel]) {
+                    delete metadata.vectorStrokesByImage[imageLabel][strokeLabel];
+                  }
+                  if (metadata.strokeVisibilityByImage[imageLabel]) {
+                    delete metadata.strokeVisibilityByImage[imageLabel][strokeLabel];
+                  }
+                  if (metadata.strokeLabelVisibility[imageLabel]) {
+                    delete metadata.strokeLabelVisibility[imageLabel][strokeLabel];
+                  }
+                  if (metadata.strokeMeasurements[imageLabel]) {
+                    delete metadata.strokeMeasurements[imageLabel][strokeLabel];
+                  }
                 }
               }
 
               // Remove tag
-              if (window.app?.tagManager) {
+              if (window.app?.tagManager && strokeLabel) {
                 window.app.tagManager.removeTag(strokeLabel);
               }
             }

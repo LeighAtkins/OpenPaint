@@ -4,7 +4,7 @@ describe('Measurement Parsing Functions', () => {
     global.window.strokeMeasurements = { front: {} };
     global.window.currentImageLabel = 'front';
     delete global.window.__testUnit;
-    
+
     // Mock DOM elements
     document.body.innerHTML = `
       <select id="unitSelector">
@@ -12,20 +12,20 @@ describe('Measurement Parsing Functions', () => {
         <option value="cm">Centimeters</option>
       </select>
     `;
-    
+
     // Mock measurement parsing functions
-    global.window.parseAndSaveMeasurement = jest.fn((strokeLabel, input) => {
+    global.window.parseAndSaveMeasurement = vi.fn((strokeLabel, input) => {
       if (!input || typeof input !== 'string') return false;
 
       const validPatterns = [
-        /^(\d+(?:\.\d+)?)\s*"$/,                    // 12"
-        /^(\d+(?:\.\d+)?)\s*inches?$/i,             // 12 inches
-        /^(\d+(?:\.\d+)?)\s*cm$/i,                  // 12.5 cm
-        /^(\d+)\s+(\d+\/\d+)"$/,                    // 3 1/2"
-        /^(\d+(?:\.\d+)?)\s*meters?$/i,             // 2.5 meters
-        /^(\d+(?:\.\d+)?)\s*mm$/i,                  // 36 mm
-        /^(\d+(?:\.\d+)?)\s*ft$/i,                  // 3 ft
-        /^(\d+(?:\.\d+)?)\s*yards?$/i               // 2 yards
+        /^(\d+(?:\.\d+)?)\s*"$/, // 12"
+        /^(\d+(?:\.\d+)?)\s*inches?$/i, // 12 inches
+        /^(\d+(?:\.\d+)?)\s*cm$/i, // 12.5 cm
+        /^(\d+)\s+(\d+\/\d+)"$/, // 3 1/2"
+        /^(\d+(?:\.\d+)?)\s*meters?$/i, // 2.5 meters
+        /^(\d+(?:\.\d+)?)\s*mm$/i, // 36 mm
+        /^(\d+(?:\.\d+)?)\s*ft$/i, // 3 ft
+        /^(\d+(?:\.\d+)?)\s*yards?$/i, // 2 yards
       ];
 
       const isValid = validPatterns.some(pattern => pattern.test(input));
@@ -71,17 +71,17 @@ describe('Measurement Parsing Functions', () => {
       global.window.strokeMeasurements.front[strokeLabel] = {
         inchWhole,
         inchFraction,
-        cm: parseFloat(cm.toFixed(2))
+        cm: parseFloat(cm.toFixed(2)),
       };
 
       return true;
     });
-    
-    global.window.findClosestFraction = jest.fn((decimal) => {
+
+    global.window.findClosestFraction = vi.fn(decimal => {
       const fractions = [0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875];
       let closest = 0;
       let minDiff = Math.abs(decimal - 0);
-      
+
       fractions.forEach(fraction => {
         const diff = Math.abs(decimal - fraction);
         if (diff < minDiff) {
@@ -89,11 +89,11 @@ describe('Measurement Parsing Functions', () => {
           closest = fraction;
         }
       });
-      
+
       return closest;
     });
-    
-    global.window.convertUnits = jest.fn((from, value) => {
+
+    global.window.convertUnits = vi.fn((from, value) => {
       if (from === 'inch') {
         return value * 2.54; // to cm
       } else if (from === 'cm') {
@@ -101,8 +101,8 @@ describe('Measurement Parsing Functions', () => {
       }
       return value;
     });
-    
-    global.window.getMeasurementString = jest.fn((strokeLabel, unitOverride) => {
+
+    global.window.getMeasurementString = vi.fn((strokeLabel, unitOverride) => {
       const measurement = global.window.strokeMeasurements.front[strokeLabel];
       if (!measurement) return null;
 
@@ -114,7 +114,6 @@ describe('Measurement Parsing Functions', () => {
       } else {
         let result = measurement.inchWhole.toString();
         if (measurement.inchFraction > 0) {
-
           // Convert decimal fraction to the nearest eighth for display
           const fractionMap = {
             0.125: '1/8',
@@ -123,7 +122,7 @@ describe('Measurement Parsing Functions', () => {
             0.5: '1/2',
             0.625: '5/8',
             0.75: '3/4',
-            0.875: '7/8'
+            0.875: '7/8',
           };
           const rounded = global.window.findClosestFraction(measurement.inchFraction);
           const closestFraction = fractionMap[rounded];
@@ -145,7 +144,7 @@ describe('Measurement Parsing Functions', () => {
       ['2.5 meters', { inchWhole: 98, inchFraction: 0.425, cm: 250 }],
       ['36 mm', { inchWhole: 1, inchFraction: 0.417, cm: 3.6 }],
       ['3 ft', { inchWhole: 36, inchFraction: 0, cm: 91.44 }],
-      ['2 yards', { inchWhole: 72, inchFraction: 0, cm: 182.88 }]
+      ['2 yards', { inchWhole: 72, inchFraction: 0, cm: 182.88 }],
     ])('should parse "%s" correctly', (input, expected) => {
       const strokeLabel = 'A1';
 
@@ -165,7 +164,7 @@ describe('Measurement Parsing Functions', () => {
 
     test('should handle invalid inputs', () => {
       const invalidInputs = ['abc', '12 xyz', '-5 inches', 'NaN cm'];
-      
+
       invalidInputs.forEach(input => {
         const result = global.window.parseAndSaveMeasurement('A1', input);
         expect(result).toBe(false);
@@ -188,7 +187,7 @@ describe('Measurement Parsing Functions', () => {
       [0.51, 0.5],
       [0.6, 0.625],
       [0.8, 0.75],
-      [0.9, 0.875]
+      [0.9, 0.875],
     ])('should find closest fraction for %f', (input, expected) => {
       const result = global.window.findClosestFraction(input);
       expect(result).toBe(expected);
@@ -228,39 +227,38 @@ describe('Measurement Parsing Functions', () => {
       global.window.strokeMeasurements.front.A1 = {
         inchWhole: 24,
         inchFraction: 0.5,
-        cm: 62.23
+        cm: 62.23,
       };
       global.window.strokeMeasurements.front.A2 = {
         inchWhole: 0,
         inchFraction: 0.75,
-        cm: 1.905
+        cm: 1.905,
       };
     });
-  test('should return formatted measurement string for inches', () => {
-    document.getElementById('unitSelector').value = 'inch';
-    global.window.__testUnit = 'inch';
 
-    const result1 = global.window.getMeasurementString('A1');
-    expect(result1).toContain('24');
-    expect(result1).toContain('1/2');
+    test('should return formatted measurement string for inches', () => {
+      document.getElementById('unitSelector').value = 'inch';
+      global.window.__testUnit = 'inch';
 
-    const result2 = global.window.getMeasurementString('A2');
-    expect(result2).toContain('3/4');
-  });
+      const result1 = global.window.getMeasurementString('A1');
+      expect(result1).toContain('24');
+      expect(result1).toContain('1/2');
 
-  test('should return formatted measurement string for centimeters', () => {
-    document.getElementById('unitSelector').value = 'cm';
-    global.window.__testUnit = 'cm';
+      const result2 = global.window.getMeasurementString('A2');
+      expect(result2).toContain('3/4');
+    });
 
-    const result1 = global.window.getMeasurementString('A1');
-    expect(result1).toContain('62.23');
-    expect(result1).toContain('cm');
+    test('should return formatted measurement string for centimeters', () => {
+      document.getElementById('unitSelector').value = 'cm';
+      global.window.__testUnit = 'cm';
 
-    const result2 = global.window.getMeasurementString('A2');
-    expect(result2).toContain('1.905');
-    expect(result2).toContain('cm');
-  });
+      const result1 = global.window.getMeasurementString('A1');
+      expect(result1).toContain('62.23');
+      expect(result1).toContain('cm');
 
+      const result2 = global.window.getMeasurementString('A2');
+      expect(result2).toContain('1.905');
+      expect(result2).toContain('cm');
     });
 
     test('should handle missing measurements', () => {

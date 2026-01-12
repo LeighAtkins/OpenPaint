@@ -11,7 +11,7 @@ export class TagManager {
     this.tagSize = 20; // Default tag font size
     this.tagShape = 'square'; // 'square' or 'circle'
     this.tagMode = 'letters+numbers'; // 'letters' or 'letters+numbers'
-    this.tagBackgroundStyle = 'solid'; // 'solid', 'clear-black', 'clear-color', 'clear-white'
+    this.tagBackgroundStyle = 'solid'; // 'solid', 'no-fill', 'clear-black', 'clear-color', 'clear-white'
     this.strokeColor = '#3b82f6'; // Default stroke color for clear-color style
 
     // Initialize showMeasurements from checkbox state if available, otherwise default to true
@@ -185,7 +185,12 @@ export class TagManager {
     let bgStrokeWidth = 1;
     let textFill = '#000000';
 
-    if (this.tagBackgroundStyle === 'clear-black') {
+    if (this.tagBackgroundStyle === 'no-fill') {
+      bgFill = 'transparent';
+      bgStroke = 'transparent';
+      bgStrokeWidth = 0;
+      textFill = this.strokeColor || '#3b82f6';
+    } else if (this.tagBackgroundStyle === 'clear-black') {
       bgFill = 'transparent';
       bgStroke = '#000000';
       bgStrokeWidth = 1;
@@ -745,7 +750,7 @@ export class TagManager {
 
   // Set the background style for all tags
   setBackgroundStyle(style) {
-    this.tagBackgroundStyle = style; // 'solid', 'clear-black', 'clear-color', 'clear-white'
+    this.tagBackgroundStyle = style; // 'solid', 'no-fill', 'clear-black', 'clear-color', 'clear-white'
 
     const currentViewId = window.app?.projectManager?.currentViewId || 'front';
     const strokes = this.metadataManager.vectorStrokesByImage[currentViewId] || {};
