@@ -1006,9 +1006,9 @@
           initIntersectionObserver(newButtons);
           // Re-initialize pill centering observer
           initPillCenteringObserver(newButtons);
+          // Snap indicator for newly built pills
+          updateActivePill({ animate: false });
         }
-        // Update active pill on each check
-        updateActivePill({ animate: false });
         ticking = false;
       });
     };
