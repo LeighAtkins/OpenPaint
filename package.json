@@ -77,7 +77,6 @@
     "pngjs": "^7.0.0",
     "postcss": "^8.5.6",
     "prettier": "^3.6.2",
-    "supabase": "^2.61.2",
     "tailwindcss": "^4.1.16",
     "terser": "^5.44.1",
     "typescript": "^5.9.3",
