@@ -431,9 +431,10 @@
 
     // Label background style toggle button
     const labelBackgroundToggleBtn = document.getElementById('labelBackgroundToggleBtn');
-    const backgroundStyles = ['solid', 'clear-black', 'clear-color', 'clear-white'];
+    const backgroundStyles = ['solid', 'no-fill', 'clear-black', 'clear-color', 'clear-white'];
     const backgroundLabels = {
       solid: 'Solid',
+      'no-fill': 'No Fill',
       'clear-black': 'Clear Black',
       'clear-color': 'Clear Color',
       'clear-white': 'Clear White',

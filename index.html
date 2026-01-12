@@ -484,6 +484,62 @@
         border: 2px solid rgb(34, 197, 94);
       }
 
+      .shape-toggle {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+      }
+
+      .shape-toggle .shape-icon {
+        margin-left: 6px;
+        font-size: 14px;
+      }
+
+      .shape-toggle.shape-disabled {
+        opacity: 0.5;
+        pointer-events: none;
+      }
+
+      .shape-toggle .shape-menu {
+        position: absolute;
+        top: calc(100% + 6px);
+        left: 0;
+        background: #fff;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        padding: 6px;
+        display: none;
+        flex-direction: column;
+        gap: 4px;
+        box-shadow: 0 6px 18px rgba(15, 23, 42, 0.12);
+        z-index: 60;
+        min-width: 120px;
+      }
+
+      .shape-toggle.shape-active.shape-open .shape-menu,
+      .shape-toggle.shape-active:focus-within .shape-menu {
+        display: flex;
+      }
+
+      .shape-toggle .shape-menu button {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        width: 100%;
+        padding: 6px 8px;
+        border: 1px solid transparent;
+        background: #fff;
+        border-radius: 6px;
+        font-size: 12px;
+        cursor: pointer;
+      }
+
+      .shape-toggle .shape-menu button.active {
+        border-color: #3b82f6;
+        background: #eff6ff;
+        color: #1d4ed8;
+      }
+
       #projectName {
         width: 140px;
         padding: 8px 12px;
@@ -868,6 +924,27 @@
         scrollbar-width: none;
         -ms-overflow-style: none;
         min-height: 60px;
+        position: relative;
+      }
+
+      #mini-stepper-indicator {
+        position: absolute;
+        top: 50%;
+        left: 0;
+        width: 32px;
+        height: 32px;
+        border-radius: 9999px;
+        background: #0f172a;
+        transform: translate3d(0, -50%, 0);
+        transition: transform 120ms linear;
+        will-change: transform;
+        pointer-events: none;
+        z-index: 5;
+      }
+
+      #mini-stepper .step {
+        position: relative;
+        z-index: 10;
       }
 
       #mini-stepper::-webkit-scrollbar {
@@ -1862,6 +1939,27 @@
           <button id="textModeToggle" class="tbtn" title="Text Tool" aria-label="Text Tool">
             <span class="label-long">Text</span><span class="label-short">Text</span>
           </button>
+          <div id="shapeModeWrapper" class="shape-toggle shape-disabled">
+            <button
+              id="shapeModeToggle"
+              class="tbtn"
+              title="Shapes"
+              aria-label="Shapes"
+              aria-pressed="false"
+            >
+              <span class="label-long">Shapes</span><span class="label-short">Shapes</span>
+              <span class="shape-icon" aria-hidden="true">■</span>
+            </button>
+            <div class="shape-menu" id="shapeModeMenu">
+              <button type="button" data-shape-option="square">■ Square</button>
+              <button type="button" data-shape-option="triangle">▲ Triangle</button>
+              <button type="button" data-shape-option="circle">● Circle</button>
+              <button type="button" data-shape-option="star">★ Star</button>
+              <button type="button" class="shape-fill-toggle" data-shape-fill-toggle="true">
+                Fill: Solid
+              </button>
+            </div>
+          </div>
           <div class="color-swatches">
             <button
               class="active tbtn"
@@ -1930,13 +2028,31 @@
             <option value="20">20px</option>
           </select>
           <button id="arrowStartBtn" class="tbtn icon-btn" title="Start Arrow">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
               <line x1="19" y1="12" x2="5" y2="12"></line>
               <polyline points="12 19 5 12 12 5"></polyline>
             </svg>
           </button>
           <button id="arrowEndBtn" class="tbtn icon-btn" title="End Arrow">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
               <line x1="5" y1="12" x2="19" y2="12"></line>
               <polyline points="12 5 19 12 12 19"></polyline>
             </svg>
@@ -1985,7 +2101,13 @@
           <button id="saveProjectTop" class="tbtn" title="Save Project" aria-label="Save Project">
             <span class="label-long">Save Project</span><span class="label-short">Save</span>
           </button>
-          <button id="fixLayoutBtn" class="tbtn" onclick="window.resizeCanvas()" title="Force layout recalculation" style="background: #f59e0b; color: white; border-color: #d97706;">
+          <button
+            id="fixLayoutBtn"
+            class="tbtn"
+            onclick="window.resizeCanvas()"
+            title="Force layout recalculation"
+            style="background: #f59e0b; color: white; border-color: #d97706"
+          >
             Fix Layout
           </button>
           <button id="unitToggleBtn" class="tbtn" title="Toggle units">inches</button>
@@ -2022,19 +2144,22 @@
         if (document.readyState === 'loading') {
           document.addEventListener('DOMContentLoaded', markToolbarReady);
         } else {
-            setTimeout(markToolbarReady, 0);
+          setTimeout(markToolbarReady, 0);
         }
       })();
     </script>
 
     <!-- Main Layout Container: Flex layout for sidebars + canvas -->
-    <div id="main-layout" class="flex" style="height: calc(100vh - 48px); overflow: hidden;">
-      
+    <div id="main-layout" class="flex" style="height: calc(100vh - 48px); overflow: hidden">
       <!-- Left Sidebar: Elements Panel -->
       <!-- This will be moved here from its current location -->
-      
+
       <!-- Center: Canvas Container -->
-      <div id="main-canvas-wrapper" class="flex-1 relative bg-white shadow-inner" style="overflow: hidden; z-index: 0;">
+      <div
+        id="main-canvas-wrapper"
+        class="flex-1 relative bg-white shadow-inner"
+        style="overflow: hidden; z-index: 0"
+      >
         <canvas
           id="canvas"
           style="
@@ -2047,17 +2172,16 @@
           "
         ></canvas>
       </div>
-      
+
       <!-- Right Sidebar: Images Panel -->
       <!-- This will be moved here from its current location -->
-      
     </div>
 
     <script>
       // Relocate panels into the flex layout on page load
-      (function() {
+      (function () {
         'use strict';
-        
+
         function relocatePanels() {
           console.log('[Layout] Relocation script starting...');
           // document.body.style.border = '5px solid green'; // Removed sanity check
@@ -2066,46 +2190,66 @@
           const canvasContainer = document.getElementById('main-canvas-wrapper');
           const strokePanel = document.getElementById('strokePanel');
           const imagePanel = document.getElementById('imagePanel');
-          
+
           if (!mainLayout || !canvasContainer || !strokePanel || !imagePanel) {
-            console.error('[Layout] MISSING ELEMENTS:', { mainLayout, canvasContainer, strokePanel, imagePanel });
+            console.error('[Layout] MISSING ELEMENTS:', {
+              mainLayout,
+              canvasContainer,
+              strokePanel,
+              imagePanel,
+            });
             return;
           }
-          
+
           // Enforce strict order: strokePanel -> canvasContainer -> imagePanel
-          
+
           // Ensure main layout is flex row with !important
-          mainLayout.style.cssText = 'display: flex !important; flex-direction: row !important; width: 100% !important; height: calc(100vh - 48px) !important; overflow: hidden !important; border: 1px solid red !important; box-sizing: border-box !important;';
-          
+          mainLayout.style.cssText =
+            'display: flex !important; flex-direction: row !important; width: 100% !important; height: calc(100vh - 48px) !important; overflow: hidden !important; border: 1px solid red !important; box-sizing: border-box !important;';
+
           // 1. strokePanel (Left)
           mainLayout.insertBefore(strokePanel, mainLayout.firstChild);
-          strokePanel.style.cssText += 'order: 1 !important; position: fixed !important; left: 0 !important; top: 48px !important; height: calc(100% - 128px) !important; flex: none !important; display: flex !important; flex-direction: column !important; width: 256px !important; min-width: 256px !important; max-width: 256px !important;';
-          
+          strokePanel.style.cssText +=
+            'order: 1 !important; position: fixed !important; left: 0 !important; top: 48px !important; height: calc(100% - 128px) !important; flex: none !important; display: flex !important; flex-direction: column !important; width: 256px !important; min-width: 256px !important; max-width: 256px !important;';
+
           // 2. canvasContainer (Center)
           mainLayout.appendChild(canvasContainer);
-          canvasContainer.style.cssText += 'order: 2 !important; flex: 1 !important; min-width: 0 !important; position: relative !important; display: block !important; border: 1px solid blue !important; box-sizing: border-box !important;';
-          
+          canvasContainer.style.cssText +=
+            'order: 2 !important; flex: 1 !important; min-width: 0 !important; position: relative !important; display: block !important; border: 1px solid blue !important; box-sizing: border-box !important;';
+
           // 3. imagePanel (Right)
           mainLayout.appendChild(imagePanel);
-          imagePanel.style.cssText += 'order: 3 !important; position: fixed !important; right: 0 !important; left: auto !important; top: 48px !important; height: calc(100% - 128px) !important; flex: none !important; display: flex !important; flex-direction: column !important; border-left-width: 1px !important; border-right-width: 0 !important; width: 288px !important; min-width: 288px !important; max-width: 288px !important;';
-          
+          imagePanel.style.cssText +=
+            'order: 3 !important; position: fixed !important; right: 0 !important; left: auto !important; top: 48px !important; height: calc(100% - 128px) !important; flex: none !important; display: flex !important; flex-direction: column !important; border-left-width: 1px !important; border-right-width: 0 !important; width: 288px !important; min-width: 288px !important; max-width: 288px !important;';
+
           // Debug: Log the final order and computed styles
           const children = Array.from(mainLayout.children);
           console.log('[Layout] Panels relocated into flex layout');
-          console.log('[Layout] Final order:', children.map(el => el.id || el.tagName));
-          
+          console.log(
+            '[Layout] Final order:',
+            children.map(el => el.id || el.tagName)
+          );
+
           // Log computed styles to debug "on the left" issue
           setTimeout(() => {
             const containerStyle = window.getComputedStyle(mainLayout);
-            console.log('[Layout] Container display:', containerStyle.display, 'direction:', containerStyle.flexDirection);
+            console.log(
+              '[Layout] Container display:',
+              containerStyle.display,
+              'direction:',
+              containerStyle.flexDirection
+            );
             console.log('[Layout] ImagePanel order:', window.getComputedStyle(imagePanel).order);
-            console.log('[Layout] CanvasContainer width:', canvasContainer.getBoundingClientRect().width);
+            console.log(
+              '[Layout] CanvasContainer width:',
+              canvasContainer.getBoundingClientRect().width
+            );
           }, 100);
-          
+
           // Trigger resize to ensure CanvasManager updates its size
           window.dispatchEvent(new Event('resize'));
         }
-        
+
         // Run immediately if DOM is ready, otherwise wait
         if (document.readyState === 'loading') {
           document.addEventListener('DOMContentLoaded', relocatePanels);
@@ -2158,14 +2302,18 @@
     <!-- Minimal Numeric Pill Strip Navigation - Positioned under frame capture -->
 
     <!-- Bottom Navigation (Mini Stepper) -->
-    <div id="navigation-container" class="fixed bottom-0 left-0 right-0 z-[2001] pointer-events-none flex justify-center pb-4">
+    <div
+      id="navigation-container"
+      class="fixed bottom-0 left-0 right-0 z-[2001] pointer-events-none flex justify-center pb-4"
+    >
       <ol
         id="mini-stepper"
         class="flex gap-3 px-4 py-3 bg-white/90 backdrop-blur-sm border border-slate-200 rounded-full shadow-lg pointer-events-auto overflow-x-auto snap-x snap-mandatory justify-center items-center min-h-[60px]"
         aria-label="Image quick nav"
       >
-          <!-- Pills will be generated by JavaScript -->
-        </ol>
+        <span id="mini-stepper-indicator" aria-hidden="true"></span>
+        <!-- Pills will be generated by JavaScript -->
+      </ol>
     </div>
 
     <!-- Project Header Panel -->
@@ -2406,6 +2554,27 @@
             >
               <span class="label-long">Text</span><span class="label-short">Text</span>
             </button>
+            <div id="shapeModeWrapper" class="shape-toggle shape-disabled">
+              <button
+                id="shapeModeToggle"
+                class="px-4 py-2.5 bg-white border-2 border-slate-400 text-slate-700 text-sm font-semibold rounded-xl hover:bg-slate-50 hover:border-slate-500 active:bg-slate-100 transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-sm"
+                title="Shapes"
+                aria-label="Shapes"
+                aria-pressed="false"
+              >
+                <span class="label-long">Shapes</span><span class="label-short">Shapes</span>
+                <span class="shape-icon" aria-hidden="true">■</span>
+              </button>
+              <div class="shape-menu" id="shapeModeMenu">
+                <button type="button" data-shape-option="square">■ Square</button>
+                <button type="button" data-shape-option="triangle">▲ Triangle</button>
+                <button type="button" data-shape-option="circle">● Circle</button>
+                <button type="button" data-shape-option="star">★ Star</button>
+                <button type="button" class="shape-fill-toggle" data-shape-fill-toggle="true">
+                  Fill: Solid
+                </button>
+              </div>
+            </div>
           </div>
 
           <!-- Arrow & Line Style Controls -->
@@ -2413,13 +2582,31 @@
             <div id="arrowControls" class="flex items-center gap-3">
               <span class="text-sm font-semibold text-slate-700">Arrows:</span>
               <button id="arrowStartBtn" class="tbtn icon-btn" title="Start Arrow">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
                   <line x1="19" y1="12" x2="5" y2="12"></line>
                   <polyline points="12 19 5 12 12 5"></polyline>
                 </svg>
               </button>
               <button id="arrowEndBtn" class="tbtn icon-btn" title="End Arrow">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
                   <line x1="5" y1="12" x2="19" y2="12"></line>
                   <polyline points="12 5 19 12 12 19"></polyline>
                 </svg>
@@ -2498,7 +2685,13 @@
     <div
       id="strokePanel"
       class="floating-panel flex-shrink-0 w-64 transition-all duration-300 overflow-hidden bg-white border-r border-gray-200 shadow-xl z-10 flex flex-col"
-      style="max-height: 100%; height: calc(100% - 128px) !important; position: fixed !important; top: 48px !important; left: 0 !important;"
+      style="
+        max-height: 100%;
+        height: calc(100% - 128px) !important;
+        position: fixed !important;
+        top: 48px !important;
+        left: 0 !important;
+      "
     >
       <div
         id="elementsHeader"
@@ -2655,7 +2848,11 @@
           class="flex-1 overflow-y-auto overflow-x-hidden flex flex-col min-h-0"
           style="box-sizing: border-box; position: relative; z-index: 100"
         >
-          <div id="strokesList" class="px-3 pt-2 pb-2 flex-grow flex flex-col justify-center" style="padding-bottom: 70px !important;"></div>
+          <div
+            id="strokesList"
+            class="px-3 pt-2 pb-2 flex-grow flex flex-col justify-center"
+            style="padding-bottom: 70px !important"
+          ></div>
         </div>
       </div>
     </div>
@@ -2664,7 +2861,13 @@
     <div
       id="imagePanel"
       class="floating-panel flex-shrink-0 w-72 transition-all duration-300 overflow-hidden bg-white border-l border-gray-200 flex flex-col shadow-xl z-10"
-      style="max-height: 100%; height: calc(100% - 128px) !important; position: fixed !important; top: 48px !important; right: 0 !important;"
+      style="
+        max-height: 100%;
+        height: calc(100% - 128px) !important;
+        position: fixed !important;
+        top: 48px !important;
+        right: 0 !important;
+      "
     >
       <div
         id="imagePanelHeader"
@@ -3313,9 +3516,10 @@
 
         // Label background style toggle button
         const labelBackgroundToggleBtn = document.getElementById('labelBackgroundToggleBtn');
-        const backgroundStyles = ['solid', 'clear-black', 'clear-color', 'clear-white'];
+        const backgroundStyles = ['solid', 'no-fill', 'clear-black', 'clear-color', 'clear-white'];
         const backgroundLabels = {
           solid: 'Solid',
+          'no-fill': 'No Fill',
           'clear-black': 'Clear Black',
           'clear-color': 'Clear Color',
           'clear-white': 'Clear White',
@@ -7668,7 +7872,6 @@
 
     <!-- Scale Dropdown - positioned outside panel hierarchy -->
 
-
     <script>
       console.log('[INDEX] before paint.js');
       window.onerror = (m, s, l, c, e) => console.error('[INDEX] onerror', m, s, l, c, e);
@@ -7935,7 +8138,7 @@
       (function initMiniStepper() {
         // Configuration
         const cfg = {
-          activeClasses: 'bg-slate-900 text-white scale-105 shadow-md',
+          activeClasses: 'text-white scale-105 shadow-md',
           inactiveClasses: 'bg-white text-slate-600 border border-slate-300',
           pillSize: 'w-8 h-8',
           threshold: 0.3,
@@ -7965,7 +8168,33 @@
           });
         };
 
-        function updateActivePill() {
+        function positionStepperIndicator(activeButton, { animate = true } = {}) {
+          const indicator = document.getElementById('mini-stepper-indicator');
+          const stepper = document.getElementById('mini-stepper');
+          if (!indicator || !activeButton || !stepper) return;
+
+          const stepperRect = stepper.getBoundingClientRect();
+          const btnRect = activeButton.getBoundingClientRect();
+          const size = Math.min(btnRect.width, btnRect.height);
+          const isInitialized = indicator.dataset.initialized === 'true';
+          const shouldAnimate = animate && isInitialized;
+
+          indicator.style.width = `${Math.round(size)}px`;
+          indicator.style.height = `${Math.round(size)}px`;
+          indicator.style.transition = shouldAnimate ? 'transform 120ms linear' : 'none';
+
+          const offsetX = btnRect.left - stepperRect.left + btnRect.width / 2 - size / 2;
+          indicator.style.transform = `translate3d(${Math.round(offsetX)}px, -50%, 0)`;
+
+          if (!shouldAnimate) {
+            requestAnimationFrame(() => {
+              indicator.style.transition = 'transform 120ms linear';
+              indicator.dataset.initialized = 'true';
+            });
+          }
+        }
+
+        function updateActivePill({ animate = true } = {}) {
           // Update sidebar active state as well
           if (typeof window.updateActiveImageInSidebar === 'function') {
             window.updateActiveImageInSidebar();
@@ -7995,6 +8224,8 @@
               btn.removeAttribute('aria-current');
             }
           });
+
+          positionStepperIndicator(activeButton, { animate });
 
           // Auto-scroll the active pill to center
           if (activeButton && stepper) {
@@ -8703,7 +8934,7 @@
                         <li class="snap-center">
                             <button
                                 type="button"
-                                class="step w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-200 bg-white text-slate-600 border border-slate-300 hover:bg-slate-900 hover:text-white hover:scale-105 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-slate-500"
+                                class="step w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-200 bg-white text-slate-600 border border-slate-300 hover:scale-105 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-slate-500"
                                 aria-label="Go to ${label}"
                                 data-target="${label}"
                                 data-index="${idx}">
@@ -8713,7 +8944,8 @@
             })
             .join('');
 
-          stepper.innerHTML = pillsHTML;
+          const indicatorMarkup = '<span id="mini-stepper-indicator" aria-hidden="true"></span>';
+          stepper.innerHTML = indicatorMarkup + pillsHTML;
 
           const stepButtons = Array.from(stepper.querySelectorAll('button[data-target]'));
 
@@ -8723,7 +8955,7 @@
           });
 
           // Update active state immediately after creating pills
-          setTimeout(() => updateActivePill(), 100);
+          setTimeout(() => updateActivePill({ animate: false }), 100);
 
           // Initialize pill centering observer to track which pill is centered
           initPillCenteringObserver(stepButtons);
@@ -8856,6 +9088,9 @@
                 }
               });
 
+              const activeButton = stepButtons.find(b => b.dataset.target === label);
+              positionStepperIndicator(activeButton, { animate: true });
+
               // Dispatch event for external listeners
               window.dispatchEvent(
                 new CustomEvent('mini-step-change', {
@@ -8900,7 +9135,7 @@
           initIntersectionObserver(stepButtons);
 
           // Update active pill immediately
-          updateActivePill();
+          updateActivePill({ animate: false });
 
           // Set up periodic updates to handle dynamically added images (optimized with requestAnimationFrame)
           let ticking = false;
@@ -8924,7 +9159,7 @@
                 initPillCenteringObserver(newButtons);
               }
               // Update active pill on each check
-              updateActivePill();
+              updateActivePill({ animate: false });
               ticking = false;
             });
           };
