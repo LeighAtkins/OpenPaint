@@ -1,5 +1,7 @@
 {
   "version": 2,
+  "installCommand": "bun install --no-scripts",
+  "buildCommand": "bun run vercel-build",
   "builds": [
     {
       "src": "app.js",
