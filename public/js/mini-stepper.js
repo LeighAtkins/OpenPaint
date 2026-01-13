@@ -76,6 +76,10 @@
    * Update active pill in stepper
    */
   function updateActivePill({ animate = true } = {}) {
+    if (document.hidden || (document.hasFocus && !document.hasFocus())) {
+      return;
+    }
+
     // Update sidebar active state as well
     if (typeof window.updateActiveImageInSidebar === 'function') {
       window.updateActiveImageInSidebar();
@@ -568,6 +572,8 @@
       const isPanelCollapsed =
         (imagePanelContent && imagePanelContent.classList.contains('hidden')) ||
         (imagePanel && imagePanel.classList.contains('minimized')) ||
+        (imagePanel && imagePanel.classList.contains('collapsed')) ||
+        (imagePanel && imagePanel.getAttribute('aria-expanded') === 'false') ||
         (imagePanel && imagePanel.style.display === 'none');
 
       const labelToContainer = new Map();
@@ -648,7 +654,13 @@
     }
 
     const imagePanelContent = document.getElementById('imagePanelContent');
-    const isPanelCollapsed = imagePanelContent && imagePanelContent.classList.contains('hidden');
+    const imagePanel = document.getElementById('imagePanel');
+    const isPanelCollapsed =
+      (imagePanelContent && imagePanelContent.classList.contains('hidden')) ||
+      (imagePanel && imagePanel.classList.contains('minimized')) ||
+      (imagePanel && imagePanel.classList.contains('collapsed')) ||
+      (imagePanel && imagePanel.getAttribute('aria-expanded') === 'false') ||
+      (imagePanel && imagePanel.style.display === 'none');
 
     const labelToContainer = new Map();
     const seenContainers = new Set();
@@ -989,7 +1001,7 @@
     // Set up periodic updates to handle dynamically added images
     let ticking = false;
     const checkForChanges = () => {
-      if (ticking) return;
+      if (ticking || document.hidden || (document.hasFocus && !document.hasFocus())) return;
       ticking = true;
       requestAnimationFrame(() => {
         positionNavigationContainer();

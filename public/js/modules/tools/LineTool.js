@@ -330,6 +330,33 @@ export class LineTool extends BaseTool {
 
     console.log(`[LineTool] Valid stroke created (${strokeLength.toFixed(1)}px)`);
 
+    if (window.app && !window.app.hasDrawnFirstStroke) {
+      window.app.hasDrawnFirstStroke = true;
+      if (typeof performance !== 'undefined' && performance.mark) {
+        performance.mark('app-first-stroke');
+        if (performance.measure) {
+          try {
+            performance.measure('first-paint->first-stroke', 'app-first-paint', 'app-first-stroke');
+            window.app?.logPerfMeasure?.('first-paint->first-stroke');
+          } catch (error) {
+            console.warn('[Perf] Measure first stroke failed', error);
+          }
+        }
+      }
+      window.dispatchEvent(new CustomEvent('firststroke'));
+    }
+
+    if (
+      window.app &&
+      !window.app.firstStrokeCommitMarked &&
+      !window.app.firstStrokeCommitInProgress
+    ) {
+      window.app.firstStrokeCommitInProgress = true;
+      if (typeof performance !== 'undefined' && performance.mark) {
+        performance.mark('app-first-stroke-commit-start');
+      }
+    }
+
     // Make line selectable and interactive now that drawing is complete
     this.line.set({
       selectable: true,
@@ -368,6 +395,26 @@ export class LineTool extends BaseTool {
     // Save state after drawing completes
     if (window.app && window.app.historyManager) {
       window.app.historyManager.saveState();
+    }
+
+    if (window.app && window.app.firstStrokeCommitInProgress) {
+      if (typeof performance !== 'undefined' && performance.mark) {
+        performance.mark('app-first-stroke-commit-end');
+        if (performance.measure) {
+          try {
+            performance.measure(
+              'first-stroke-commit',
+              'app-first-stroke-commit-start',
+              'app-first-stroke-commit-end'
+            );
+            window.app?.logPerfMeasure?.('first-stroke-commit');
+          } catch (error) {
+            console.warn('[Perf] Measure first stroke commit failed', error);
+          }
+        }
+      }
+      window.app.firstStrokeCommitMarked = true;
+      window.app.firstStrokeCommitInProgress = false;
     }
   }
 

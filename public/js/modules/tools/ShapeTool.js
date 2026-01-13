@@ -9,6 +9,7 @@ export class ShapeTool extends BaseTool {
     this.shapeType = 'square';
     this.shape = null;
     this.isDrawing = false;
+    this.hasMoved = false;
     this.startX = 0;
     this.startY = 0;
     this.strokeColor = '#3b82f6';
@@ -88,38 +89,54 @@ export class ShapeTool extends BaseTool {
     const pointer = this.canvas.getPointer(evt);
     this.startX = pointer.x;
     this.startY = pointer.y;
-
-    const styles = this.getShapeStyles();
-
-    this.shape = this.createShape(styles);
-    if (!this.shape) return;
-
-    this.shape.set({
-      selectable: false,
-      evented: false,
-      strokeDashArray: this.dashPattern.length > 0 ? this.dashPattern : null,
-    });
-
-    this.canvas.add(this.shape);
     this.isDrawing = true;
+    this.hasMoved = false;
   }
 
   onMouseMove(o) {
-    if (!this.isActive || !this.isDrawing || !this.shape) return;
+    if (!this.isActive || !this.isDrawing) return;
 
     const pointer = this.canvas.getPointer(o.e);
+
+    if (!this.shape) {
+      const dx = pointer.x - this.startX;
+      const dy = pointer.y - this.startY;
+      if (Math.hypot(dx, dy) < 2) {
+        return;
+      }
+
+      const styles = this.getShapeStyles();
+      this.shape = this.createShape(styles);
+      if (!this.shape) return;
+
+      this.shape.set({
+        selectable: false,
+        evented: false,
+        strokeDashArray: this.dashPattern.length > 0 ? this.dashPattern : null,
+      });
+
+      this.canvas.add(this.shape);
+    }
+
+    this.hasMoved = true;
     this.updateShape(pointer.x, pointer.y);
     this.canvas.requestRenderAll();
   }
 
   onMouseUp(o) {
-    if (!this.isActive || !this.isDrawing || !this.shape) return;
+    if (!this.isActive || !this.isDrawing) return;
 
     const pointer = this.canvas.getPointer(o.e);
-    const { width, height } = this.getShapeSize(pointer.x, pointer.y);
-    const size = Math.min(width, height);
 
     this.isDrawing = false;
+
+    if (!this.shape || !this.hasMoved) {
+      this.shape = null;
+      return;
+    }
+
+    const { width, height } = this.getShapeSize(pointer.x, pointer.y);
+    const size = Math.min(width, height);
 
     if (size < MIN_SHAPE_SIZE) {
       this.canvas.remove(this.shape);
@@ -134,7 +151,7 @@ export class ShapeTool extends BaseTool {
     });
 
     this.shape.setCoords();
-    this.canvas.selection = true;
+    this.canvas.selection = false;
     this.canvas.requestRenderAll();
 
     this.attachMetadata(this.shape);
