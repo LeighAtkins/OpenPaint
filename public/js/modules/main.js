@@ -4,13 +4,7 @@ import { ToolManager } from './tools/ToolManager.js';
 import { ProjectManager } from './ProjectManager.js';
 import { HistoryManager } from './HistoryManager.js';
 import { StrokeMetadataManager } from './StrokeMetadataManager.js';
-import { setupDebugHelpers } from './DebugHelpers.js';
-import { TagManager } from './TagManager.js';
 import { UploadManager } from './UploadManager.js';
-import { MeasurementSystem } from './MeasurementSystem.js';
-import { MeasurementDialog } from './MeasurementDialog.js';
-import { MeasurementExporter } from './MeasurementExporter.js';
-import { ArrowManager } from './utils/ArrowManager.js';
 
 class App {
   constructor() {
@@ -18,15 +12,25 @@ class App {
     this.historyManager = new HistoryManager(this.canvasManager);
     this.toolManager = new ToolManager(this.canvasManager);
     this.metadataManager = new StrokeMetadataManager();
-    this.tagManager = new TagManager(this.canvasManager, this.metadataManager);
     this.projectManager = new ProjectManager(this.canvasManager, this.historyManager);
     this.uploadManager = new UploadManager(this.projectManager);
-    this.arrowManager = new ArrowManager(this.canvasManager);
 
-    // Measurement system
-    this.measurementSystem = new MeasurementSystem(this.metadataManager);
-    this.measurementDialog = new MeasurementDialog(this.measurementSystem);
-    this.measurementExporter = new MeasurementExporter(this.measurementSystem, this.projectManager);
+    this.deferredInitStarted = false;
+    this.deferredToolPreloadStarted = false;
+    this.hasDrawnFirstStroke = false;
+    this.hasUploadedFirstImage = false;
+    this.firstPaintMarked = false;
+    this.firstStrokeCommitMarked = false;
+    this.firstStrokeCommitInProgress = false;
+
+    if (typeof performance !== 'undefined' && performance.mark) {
+      performance.mark('app-init-start');
+    }
+    this.tagManager = null;
+    this.arrowManager = null;
+    this.measurementSystem = null;
+    this.measurementDialog = null;
+    this.measurementExporter = null;
 
     this.init();
   }
@@ -47,7 +51,8 @@ class App {
       this.historyManager.init();
       this.projectManager.init();
       this.uploadManager.init();
-      this.arrowManager.init();
+
+      this.setupDeferredToolPreload();
 
       // Initialize drawing mode toggle button label
       const drawingModeToggle = document.getElementById('drawingModeToggle');
@@ -93,7 +98,7 @@ class App {
         this.canvasManager.fabricCanvas.on('object:removed', e => {
           // If a stroke is removed, remove its tag
           const obj = e.target;
-          if (obj && obj.strokeMetadata && obj.strokeMetadata.strokeLabel) {
+          if (obj && obj.strokeMetadata && obj.strokeMetadata.strokeLabel && this.tagManager) {
             this.tagManager.removeTag(obj.strokeMetadata.strokeLabel);
           }
         });
@@ -115,6 +120,9 @@ class App {
         return this.canvasManager.resize();
       };
 
+      this.scheduleDeferredInit();
+      this.markFirstPaint();
+
       console.log('OpenPaint initialization complete');
 
       // Debug: Verify canvas is accessible
@@ -128,6 +136,130 @@ class App {
         console.error('Canvas element not found in DOM!');
       }
     }, 0);
+  }
+
+  scheduleDeferredInit() {
+    if (this.deferredInitStarted) {
+      return;
+    }
+
+    const runDeferred = () => {
+      this.deferredInitStarted = true;
+      void this.initDeferredManagers();
+    };
+
+    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+      window.requestIdleCallback(runDeferred, { timeout: 1500 });
+    } else {
+      setTimeout(runDeferred, 0);
+    }
+  }
+
+  setupDeferredToolPreload() {
+    if (this.deferredToolPreloadStarted) {
+      return;
+    }
+
+    const preload = () => {
+      if (this.deferredToolPreloadStarted) {
+        return;
+      }
+      this.deferredToolPreloadStarted = true;
+      this.toolManager.preloadTools(['select', 'pencil', 'curve', 'arrow', 'text', 'shape']);
+    };
+
+    window.addEventListener('firststroke', preload, { once: true });
+    window.addEventListener('firstupload', preload, { once: true });
+  }
+
+  markFirstPaint() {
+    if (this.firstPaintMarked) {
+      return;
+    }
+    this.firstPaintMarked = true;
+
+    if (typeof performance === 'undefined' || !performance.mark) {
+      return;
+    }
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        performance.mark('app-first-paint');
+        if (performance.measure) {
+          try {
+            performance.measure('app-init->first-paint', 'app-init-start', 'app-first-paint');
+            this.logPerfMeasure('app-init->first-paint');
+          } catch (error) {
+            console.warn('[Perf] Measure first paint failed', error);
+          }
+        }
+      });
+    });
+  }
+
+  logPerfMeasure(name) {
+    if (typeof performance === 'undefined' || !performance.getEntriesByName) {
+      return;
+    }
+    const entry = performance.getEntriesByName(name).slice(-1)[0];
+    if (!entry) {
+      return;
+    }
+    console.log(`[Perf] ${name}: ${entry.duration.toFixed(1)}ms`);
+  }
+
+  async initDeferredManagers() {
+    try {
+      const [
+        { TagManager },
+        { MeasurementSystem },
+        { MeasurementDialog },
+        { MeasurementExporter },
+        { ArrowManager },
+        { setupDebugHelpers },
+      ] = await Promise.all([
+        import('./TagManager.js'),
+        import('./MeasurementSystem.js'),
+        import('./MeasurementDialog.js'),
+        import('./MeasurementExporter.js'),
+        import('./utils/ArrowManager.js'),
+        import('./DebugHelpers.js'),
+      ]);
+
+      if (!this.tagManager) {
+        this.tagManager = new TagManager(this.canvasManager, this.metadataManager);
+      }
+
+      if (!this.arrowManager) {
+        this.arrowManager = new ArrowManager(this.canvasManager);
+        this.arrowManager.init();
+      }
+
+      if (!this.measurementSystem) {
+        this.measurementSystem = new MeasurementSystem(this.metadataManager);
+      }
+
+      if (!this.measurementDialog) {
+        this.measurementDialog = new MeasurementDialog(this.measurementSystem);
+      }
+
+      if (!this.measurementExporter) {
+        this.measurementExporter = new MeasurementExporter(
+          this.measurementSystem,
+          this.projectManager
+        );
+      }
+
+      if (this.metadataManager?.updateStrokeVisibilityControls) {
+        this.metadataManager.updateStrokeVisibilityControls();
+      }
+
+      if (setupDebugHelpers) {
+        setupDebugHelpers(this);
+      }
+    } catch (error) {
+      console.error('Deferred init failed', error);
+    }
   }
 
   // Helper function to update properties of selected strokes
@@ -490,9 +622,6 @@ class App {
     window.shareProject = () => this.projectManager.shareProject();
     window.updateSharedProject = () => this.projectManager.updateSharedProject();
     window.app = this;
-
-    // Setup debug helpers
-    setupDebugHelpers(this);
   }
 
   setupUnitToggle() {
