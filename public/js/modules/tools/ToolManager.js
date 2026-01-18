@@ -9,12 +9,15 @@ const TOOL_LOADERS = {
   arrow: () => import('./ArrowTool.js').then(module => module.ArrowTool),
   text: () => import('./TextTool.js').then(module => module.TextTool),
   shape: () => import('./ShapeTool.js').then(module => module.ShapeTool),
+  frame: () => import('./FrameTool.js').then(module => module.FrameTool),
 };
 
 export class ToolManager {
   constructor(canvasManager) {
     this.canvasManager = canvasManager;
     this.activeTool = null;
+    this.activeToolName = null;
+    this.previousToolName = null;
     this.tools = {};
     this.toolPromises = {};
     this.pendingToolName = null;
@@ -95,6 +98,7 @@ export class ToolManager {
     }
 
     this.activeTool = tool;
+    this.activeToolName = toolName;
     this.activeTool.activate();
     // Apply current settings to new tool
     this.updateSettings(this.currentSettings);

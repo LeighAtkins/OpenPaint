@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Get reference to save and load buttons
   const saveProjectBtn = document.getElementById('saveProject');
   const loadProjectBtn = document.getElementById('loadProject');
-    
+
   // Add event listeners
   if (saveProjectBtn) {
     saveProjectBtn.addEventListener('click', () => {
@@ -20,25 +20,25 @@ document.addEventListener('DOMContentLoaded', () => {
       } else {
         // console.log('- imageScaleByLabel is not defined!');
       }
-            
+
       // Now explicitly verify the current view's scale is correct
       const currentLabel = window.currentImageLabel;
       if (currentLabel) {
         // console.log(`[Save Project] Current view is ${currentLabel}`);
         // console.log(`[Save Project] Current scale for ${currentLabel} is ${window.imageScaleByLabel[currentLabel]}`);
-                
+
         // Get scale from the UI as a backup check
         const scaleEl = document.getElementById('scaleButton');
         if (scaleEl) {
           const scaleText = scaleEl.textContent;
           // console.log(`[Save Project] Scale shown in UI: ${scaleText}`);
-                    
+
           // Try to parse the scale from UI text (e.g. "Scale: 25% ▼")
           const scaleMatch = scaleText.match(/Scale: (\d+)%/);
           if (scaleMatch && scaleMatch[1]) {
             const uiScale = parseInt(scaleMatch[1]) / 100;
             // console.log(`[Save Project] Parsed UI scale: ${uiScale}`);
-                        
+
             // If UI scale doesn't match stored scale, update the stored scale
             if (uiScale !== window.imageScaleByLabel[currentLabel]) {
               // console.log(`[Save Project] Scale mismatch! Updating scale for ${currentLabel} from ${window.imageScaleByLabel[currentLabel]} to ${uiScale}`);
@@ -47,16 +47,16 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         }
       }
-            
+
       // Now call the actual save function
       saveProject();
     });
   }
-    
+
   if (loadProjectBtn) {
     loadProjectBtn.addEventListener('click', loadProject);
   }
-    
+
   // Add event listeners for new buttons
   const generateMeasurementsBtn = document.getElementById('generateMeasurements');
   if (generateMeasurementsBtn) {
@@ -68,7 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
-    
+
   const saveAllImagesBtn = document.getElementById('saveAllImages');
   if (saveAllImagesBtn) {
     saveAllImagesBtn.addEventListener('click', () => {
@@ -79,34 +79,34 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
-    
+
   // Add this BEFORE the loadProject function
   // Global variable to store project data across async operations
   window.loadedProjectDataGlobal = null;
-    
+
   // PERFORMANCE FIX: Global guards and utilities to prevent loading loops
   window.isLoadingProject = window.isLoadingProject || false;
   window.isSyncingLegacy = window.isSyncingLegacy || false;
   window.pendingLegacySync = window.pendingLegacySync || false;
   window.lastLegacySyncHash = window.lastLegacySyncHash || '';
   window.legacySyncTimer = window.legacySyncTimer || null;
-    
+
   // Utility functions for migration and stability
   function normalizeFurnitureTag(tag) {
     if (Array.isArray(tag)) return tag[0] || '';
     if (typeof tag === 'string') return tag;
     return '';
   }
-    
+
   function ensureStrokeMapsForImage(obj, imageLabel, strokeIds) {
     obj[imageLabel] = obj[imageLabel] || {};
     for (const id of strokeIds) {
       if (typeof obj[imageLabel][id] !== 'boolean') obj[imageLabel][id] = true;
     }
   }
-    
+
   function buildDefaultFolderStructure(imageLabels, imageOrder) {
-    const ordered = (imageOrder && imageOrder.length) ? imageOrder : imageLabels;
+    const ordered = imageOrder && imageOrder.length ? imageOrder : imageLabels;
     return {
       root: {
         id: 'root',
@@ -118,16 +118,16 @@ document.addEventListener('DOMContentLoaded', () => {
           name: l,
           type: 'image',
           parentId: 'root',
-          children: []
-        }))
-      }
+          children: [],
+        })),
+      },
     };
   }
-    
+
   function migrateProject(project) {
     console.log('[Migration] Starting project migration...');
     const migrated = JSON.parse(JSON.stringify(project));
-        
+
     // 1) Normalize imageTags.furnitureType to string (fixes mixed array/string issue)
     if (!migrated.imageTags) migrated.imageTags = {};
     for (const img of Object.keys(migrated.imageTags)) {
@@ -136,7 +136,7 @@ document.addEventListener('DOMContentLoaded', () => {
         migrated.imageTags[img].furnitureType = normalizeFurnitureTag(ft);
       }
     }
-        
+
     // 2) Ensure scales/positions/rotations for every imageLabel
     migrated.imageScales = migrated.imageScales || {};
     migrated.imagePositions = migrated.imagePositions || {};
@@ -152,7 +152,7 @@ document.addEventListener('DOMContentLoaded', () => {
         migrated.imageRotations[label] = 0;
       }
     }
-        
+
     // 3) Ensure strokeVisibility and strokeLabelVisibility contain booleans for all strokes
     migrated.strokeVisibility = migrated.strokeVisibility || {};
     migrated.strokeLabelVisibility = migrated.strokeLabelVisibility || {};
@@ -161,12 +161,13 @@ document.addEventListener('DOMContentLoaded', () => {
       ensureStrokeMapsForImage(migrated.strokeVisibility, img, strokeIds);
       ensureStrokeMapsForImage(migrated.strokeLabelVisibility, img, strokeIds);
     }
-        
+
     // 4) CRITICAL FIX: Ensure folderStructure includes all images (prevents legacy gallery loops)
     const children = migrated.folderStructure?.root?.children || [];
     const knownIds = new Set(children.map(c => c.id));
-    const needBuild = !migrated.folderStructure || !migrated.folderStructure.root || children.length === 0;
-        
+    const needBuild =
+      !migrated.folderStructure || !migrated.folderStructure.root || children.length === 0;
+
     if (needBuild) {
       console.log('[Migration] Building missing folderStructure from imageLabels');
       migrated.folderStructure = buildDefaultFolderStructure(
@@ -183,64 +184,81 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
     }
-        
+
     // 5) Migrate label offsets from legacy absolute coordinates to normalized format
     migrated.customLabelPositions = migrated.customLabelPositions || {};
     migrated.calculatedLabelOffsets = migrated.calculatedLabelOffsets || {};
-        
-    console.log('[Migration] Starting offset migration. originalImageDimensions:', migrated.originalImageDimensions);
-        
+
+    console.log(
+      '[Migration] Starting offset migration. originalImageDimensions:',
+      migrated.originalImageDimensions
+    );
+
     for (const label of migrated.imageLabels || []) {
       const dims = migrated.originalImageDimensions && migrated.originalImageDimensions[label];
-      const refPx = (dims && dims.width) ? dims.width : 1;
+      const refPx = dims && dims.width ? dims.width : 1;
       console.log(`[Migration] Processing label ${label}: dims=`, dims, `refPx=${refPx}`);
-            
+
       // Migrate customLabelPositions
       if (migrated.customLabelPositions[label]) {
         const posMap = migrated.customLabelPositions[label];
         for (const strokeLabel of Object.keys(posMap)) {
           const offset = posMap[strokeLabel];
           // Check if this is legacy format (has x,y but no 'kind' field, indicating it needs normalization)
-          if (offset && typeof offset.x === 'number' && typeof offset.y === 'number' && !offset.kind) {
+          if (
+            offset &&
+            typeof offset.x === 'number' &&
+            typeof offset.y === 'number' &&
+            !offset.kind
+          ) {
             // Legacy format detected - convert to normalized
-            console.log(`[Migration] Converting legacy offset for ${label}.${strokeLabel}: (${offset.x}, ${offset.y}) with refPx=${refPx}`);
+            console.log(
+              `[Migration] Converting legacy offset for ${label}.${strokeLabel}: (${offset.x}, ${offset.y}) with refPx=${refPx}`
+            );
             posMap[strokeLabel] = {
               kind: 'norm',
               dx_norm: offset.x / refPx,
               dy_norm: offset.y / refPx,
-              normRef: 'width'
+              normRef: 'width',
             };
           }
         }
       }
-            
+
       // Migrate calculatedLabelOffsets
       if (migrated.calculatedLabelOffsets[label]) {
         const offsetMap = migrated.calculatedLabelOffsets[label];
         for (const strokeLabel of Object.keys(offsetMap)) {
           const offset = offsetMap[strokeLabel];
           // Check if this is legacy format
-          if (offset && typeof offset.x === 'number' && typeof offset.y === 'number' && !offset.kind) {
-            console.log(`[Migration] Converting legacy calculated offset for ${label}.${strokeLabel}: (${offset.x}, ${offset.y}) with refPx=${refPx}`);
+          if (
+            offset &&
+            typeof offset.x === 'number' &&
+            typeof offset.y === 'number' &&
+            !offset.kind
+          ) {
+            console.log(
+              `[Migration] Converting legacy calculated offset for ${label}.${strokeLabel}: (${offset.x}, ${offset.y}) with refPx=${refPx}`
+            );
             offsetMap[strokeLabel] = {
               kind: 'norm',
               dx_norm: offset.x / refPx,
               dy_norm: offset.y / refPx,
-              normRef: 'width'
+              normRef: 'width',
             };
           }
         }
       }
     }
-        
+
     // 6) Bump version to prevent re-migration
     migrated.version = '2.0';
     migrated.migrated = true;
-        
+
     console.log('[Migration] Project migration completed');
     return migrated;
   }
-    
+
   // Debounced legacy sync (replaces interval-based loops)
   function stableGalleryHash(images, folderStructure) {
     const ids = [];
@@ -252,22 +270,22 @@ document.addEventListener('DOMContentLoaded', () => {
     ids.sort();
     return ids.join('|');
   }
-    
+
   function debounce(fn, wait) {
     let timeout;
-    return function(...args) {
+    return function (...args) {
       clearTimeout(timeout);
       timeout = setTimeout(() => fn.apply(this, args), wait);
     };
   }
-    
+
   const scheduleLegacySync = debounce(async function syncLegacyOnce() {
     if (window.isLoadingProject) return;
-    if (window.isSyncingLegacy) { 
-      window.pendingLegacySync = true; 
-      return; 
+    if (window.isSyncingLegacy) {
+      window.pendingLegacySync = true;
+      return;
     }
-        
+
     window.isSyncingLegacy = true;
     try {
       const hash = stableGalleryHash(window.originalImages, window.folderStructure);
@@ -276,10 +294,9 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
       window.lastLegacySyncHash = hash;
-            
+
       console.log('[Legacy Sync] Processing gallery changes...');
       // Add minimal, idempotent sync logic here if needed
-            
     } finally {
       window.isSyncingLegacy = false;
       if (window.pendingLegacySync) {
@@ -288,7 +305,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
   }, 400);
-    
+
   // Function to save project as ZIP file
   function saveProject() {
     try {
@@ -297,17 +314,31 @@ document.addEventListener('DOMContentLoaded', () => {
       let actualImageLabels = Object.keys(window.imageTags || {});
       if (actualImageLabels.length === 0) {
         const fallbackLabels = [...(window.IMAGE_LABELS || ['front', 'side', 'back', 'cushion'])];
-        console.log('[DEBUG SAVE] No images found in imageTags, using fallback labels:', fallbackLabels);
+        console.log(
+          '[DEBUG SAVE] No images found in imageTags, using fallback labels:',
+          fallbackLabels
+        );
       } else {
-        console.log(`[DEBUG SAVE] Found ${actualImageLabels.length} image(s) to save:`, actualImageLabels);
+        console.log(
+          `[DEBUG SAVE] Found ${actualImageLabels.length} image(s) to save:`,
+          actualImageLabels
+        );
         actualImageLabels.forEach(label => {
           const hasImage = !!(window.originalImages && window.originalImages[label]);
-          const hasStrokes = !!(window.vectorStrokesByImage && window.vectorStrokesByImage[label] && Object.keys(window.vectorStrokesByImage[label]).length > 0);
-          const strokeCount = hasStrokes ? Object.keys(window.vectorStrokesByImage[label]).length : 0;
-          console.log(`[DEBUG SAVE]   - ${label}: image=${hasImage ? 'YES' : 'NO'}, strokes=${strokeCount}, scale=${window.imageScaleByLabel?.[label] ?? 'N/A'}`);
+          const hasStrokes = !!(
+            window.vectorStrokesByImage &&
+            window.vectorStrokesByImage[label] &&
+            Object.keys(window.vectorStrokesByImage[label]).length > 0
+          );
+          const strokeCount = hasStrokes
+            ? Object.keys(window.vectorStrokesByImage[label]).length
+            : 0;
+          console.log(
+            `[DEBUG SAVE]   - ${label}: image=${hasImage ? 'YES' : 'NO'}, strokes=${strokeCount}, scale=${window.imageScaleByLabel?.[label] ?? 'N/A'}`
+          );
         });
       }
-      
+
       // DIAGNOSTIC: Add test measurements if needed for debugging
       // console.log('[Save Project] DIAGNOSTIC: Current state of strokeMeasurements before saving:');
       const IMAGE_LABELS = window.IMAGE_LABELS || ['front', 'side', 'back', 'cushion'];
@@ -334,22 +365,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             `;
       document.body.appendChild(loadingIndicator);
-            
+
       // Create a new JSZip instance with async option
       const zip = new JSZip();
-            
+
       // Get project name with fallback
       const projectName = document.getElementById('projectName').value || 'OpenPaint Project';
-            
+
       // Use actualImageLabels already declared above (line 297) for debug logging
       // If it was empty, we need to handle fallback here
       if (actualImageLabels.length === 0) {
         // Fallback if imageTags is empty for some reason
         actualImageLabels = [...(window.IMAGE_LABELS || ['front', 'side', 'back', 'cushion'])];
-        console.warn('[Save Project] No keys found in window.imageTags, falling back to default labels.');
+        console.warn(
+          '[Save Project] No keys found in window.imageTags, falling back to default labels.'
+        );
       }
       // console.log("[Save Project] Saving data for labels:", actualImageLabels);
-            
+
       // Create project metadata
       const projectData = {
         name: projectName,
@@ -371,94 +404,101 @@ document.addEventListener('DOMContentLoaded', () => {
         imageTags: {},
         customImageNames: {},
         folderStructure: window.folderStructure || {
-          'root': {
+          root: {
             id: 'root',
             name: 'Root',
             type: 'folder',
             parentId: null,
-            children: []
-          }
-        }
+            children: [],
+          },
+        },
+        pdfFrames: window.pdfFramesByImage || {},
       };
-            
+
       // *** ADDED LOGGING BEFORE LOOP ***
       // console.log('[Save Project] State before saving loop:');
       // console.log('  window.lineStrokesByImage:', JSON.parse(JSON.stringify(window.lineStrokesByImage)));
       // console.log('  window.labelsByImage:', JSON.parse(JSON.stringify(window.labelsByImage)));
       // console.log('  window.imageTags:', JSON.parse(JSON.stringify(window.imageTags || {})));
       // *** END ADDED LOGGING ***
-            
+
       // Add stroke data for each image
       for (const label of actualImageLabels) {
         // console.log(`Processing data for ${label}...`);
-                
+
         // Get vector strokes data - ensure we have data for each label
         if (window.vectorStrokesByImage && window.vectorStrokesByImage[label]) {
-          projectData.strokes[label] = JSON.parse(JSON.stringify(window.vectorStrokesByImage[label]));
+          projectData.strokes[label] = JSON.parse(
+            JSON.stringify(window.vectorStrokesByImage[label])
+          );
         } else {
           projectData.strokes[label] = {};
         }
-                
+
         // Add stroke visibility settings
         if (window.strokeVisibilityByImage && window.strokeVisibilityByImage[label]) {
           projectData.strokeVisibility[label] = window.strokeVisibilityByImage[label];
         } else {
           projectData.strokeVisibility[label] = {};
         }
-                
+
         // Add stroke label visibility settings
         if (window.strokeLabelVisibility && window.strokeLabelVisibility[label]) {
           projectData.strokeLabelVisibility[label] = window.strokeLabelVisibility[label];
         } else {
           projectData.strokeLabelVisibility[label] = {};
         }
-                
+
         // Add stroke measurements
         if (window.strokeMeasurements && window.strokeMeasurements[label]) {
-          // console.log(`[Save Project] Saving measurements for ${label}:`, 
+          // console.log(`[Save Project] Saving measurements for ${label}:`,
           //     JSON.stringify(window.strokeMeasurements[label]));
-                    
+
           // Check if there are any actual measurements to save
           const measurementCount = Object.keys(window.strokeMeasurements[label]).length;
           // console.log(`[Save Project] Found ${measurementCount} measurements for ${label}`);
-                    
+
           // Add detailed log of each measurement
           if (measurementCount > 0) {
-            Object.entries(window.strokeMeasurements[label]).forEach(([strokeLabel, measurement]) => {
-              //                             console.log(`[Save Project] - Measurement for ${strokeLabel}:`, measurement);
-            });
+            Object.entries(window.strokeMeasurements[label]).forEach(
+              ([strokeLabel, measurement]) => {
+                //                             console.log(`[Save Project] - Measurement for ${strokeLabel}:`, measurement);
+              }
+            );
           }
-                    
+
           // Add measurements to project data
           projectData.strokeMeasurements[label] = window.strokeMeasurements[label];
         } else {
           //                     console.log(`[Save Project] No measurements found for ${label}, using empty object`);
           projectData.strokeMeasurements[label] = {};
         }
-                
+
         // Add image scaling and position
         if (window.imageScaleByLabel && window.imageScaleByLabel[label] !== undefined) {
           const currentScale = window.imageScaleByLabel[label];
           projectData.imageScales[label] = currentScale;
           //                     console.log(`[Save Project] Saving scale for ${label}: ${currentScale}`);
-                    
+
           // Double-check to ensure it was assigned correctly
           if (projectData.imageScales[label] !== currentScale) {
-            console.error(`[Save Project] ERROR: Scale was not saved correctly for ${label}. Expected ${currentScale}, got ${projectData.imageScales[label]}. Fixing...`);
+            console.error(
+              `[Save Project] ERROR: Scale was not saved correctly for ${label}. Expected ${currentScale}, got ${projectData.imageScales[label]}. Fixing...`
+            );
             projectData.imageScales[label] = currentScale;
           }
         } else {
           projectData.imageScales[label] = 1.0; // Default to 100% scale
           //                     console.log(`[Save Project] No scale found for ${label}, using default 1.0`);
         }
-                
+
         if (window.imagePositionByLabel && window.imagePositionByLabel[label]) {
           projectData.imagePositions[label] = window.imagePositionByLabel[label];
           //                     console.log(`[Save Project] Saving position for ${label}: x=${window.imagePositionByLabel[label].x}, y=${window.imagePositionByLabel[label].y}`);
         } else {
           projectData.imagePositions[label] = { x: 0, y: 0 }; // Default position
         }
-                
+
         // Add image rotation
         if (window.imageRotationByLabel && window.imageRotationByLabel[label] !== undefined) {
           projectData.imageRotations[label] = window.imageRotationByLabel[label];
@@ -466,28 +506,28 @@ document.addEventListener('DOMContentLoaded', () => {
           projectData.imageRotations[label] = 0; // Default to 0 rotation
         }
         //                     console.log(`[Save Project] No position found for ${label}, using default {x:0, y:0}`);
-                
+
         // Add stroke sequence
         if (window.lineStrokesByImage && window.lineStrokesByImage[label]) {
           projectData.strokeSequence[label] = window.lineStrokesByImage[label].slice();
         } else {
           projectData.strokeSequence[label] = [];
         }
-                
+
         // Add next label counter
         if (window.labelsByImage && window.labelsByImage[label]) {
           projectData.nextLabels[label] = window.labelsByImage[label];
         } else {
           projectData.nextLabels[label] = 'A1'; // Default starting label
         }
-                
+
         // Add original image dimensions
         if (window.originalImageDimensions && window.originalImageDimensions[label]) {
           projectData.originalImageDimensions[label] = window.originalImageDimensions[label];
         } else {
           projectData.originalImageDimensions[label] = { width: 0, height: 0 };
         }
-                
+
         // Add image tags
         if (window.imageTags && window.imageTags[label]) {
           //                     console.log(`[Save Project] Saving tags for ${label}:`, JSON.stringify(window.imageTags[label]));
@@ -502,35 +542,37 @@ document.addEventListener('DOMContentLoaded', () => {
           projectData.customImageNames[label] = window.customImageNames[label];
         }
       }
-            
+
       // Add custom label positions, calculated offsets, rotation stamps, and text elements after the main loop
       if (!projectData.customLabelPositions) projectData.customLabelPositions = {};
       if (!projectData.calculatedLabelOffsets) projectData.calculatedLabelOffsets = {};
       if (!projectData.customLabelRotationStamps) projectData.customLabelRotationStamps = {};
       if (!projectData.textElementsByImage) projectData.textElementsByImage = {};
-            
+
       for (const label of actualImageLabels) {
         projectData.customLabelPositions[label] =
-                    (window.customLabelPositions && window.customLabelPositions[label])
-                      ? JSON.parse(JSON.stringify(window.customLabelPositions[label]))
-                      : {};
+          window.customLabelPositions && window.customLabelPositions[label]
+            ? JSON.parse(JSON.stringify(window.customLabelPositions[label]))
+            : {};
 
         projectData.calculatedLabelOffsets[label] =
-                    (window.calculatedLabelOffsets && window.calculatedLabelOffsets[label])
-                      ? JSON.parse(JSON.stringify(window.calculatedLabelOffsets[label]))
-                      : {};
+          window.calculatedLabelOffsets && window.calculatedLabelOffsets[label]
+            ? JSON.parse(JSON.stringify(window.calculatedLabelOffsets[label]))
+            : {};
 
         projectData.customLabelRotationStamps[label] =
-                    (window.customLabelOffsetsRotationByImageAndStroke && window.customLabelOffsetsRotationByImageAndStroke[label])
-                      ? JSON.parse(JSON.stringify(window.customLabelOffsetsRotationByImageAndStroke[label]))
-                      : {};
+          window.customLabelOffsetsRotationByImageAndStroke &&
+          window.customLabelOffsetsRotationByImageAndStroke[label]
+            ? JSON.parse(JSON.stringify(window.customLabelOffsetsRotationByImageAndStroke[label]))
+            : {};
 
         projectData.textElementsByImage[label] =
-                    (window.paintApp?.state?.textElementsByImage && window.paintApp.state.textElementsByImage[label])
-                      ? JSON.parse(JSON.stringify(window.paintApp.state.textElementsByImage[label]))
-                      : [];
+          window.paintApp?.state?.textElementsByImage &&
+          window.paintApp.state.textElementsByImage[label]
+            ? JSON.parse(JSON.stringify(window.paintApp.state.textElementsByImage[label]))
+            : [];
       }
-            
+
       // Add image order for sidebar persistence
       if (window.orderedImageLabels && window.orderedImageLabels.length > 0) {
         projectData.imageOrder = [...window.orderedImageLabels];
@@ -540,10 +582,10 @@ document.addEventListener('DOMContentLoaded', () => {
         projectData.imageOrder = [...actualImageLabels];
         //                 console.log('[Save Project] No orderedImageLabels found, using actualImageLabels as order:', JSON.stringify(projectData.imageOrder));
       }
-            
+
       // Add project.json to the zip
       zip.file('project.json', JSON.stringify(projectData, null, 2));
-            
+
       // Save AI exports if they exist
       if (window.aiExports && typeof window.aiExports === 'object') {
         for (const label of actualImageLabels) {
@@ -551,26 +593,35 @@ document.addEventListener('DOMContentLoaded', () => {
           if (aiExport && aiExport.svg && aiExport.vectors) {
             console.log(`[Save Project] Saving AI export for ${label}`);
             zip.file(`exports/${label}/ai-latest.svg`, aiExport.svg);
-            zip.file(`exports/${label}/ai-latest.json`, JSON.stringify({
-              vectors: aiExport.vectors,
-              summary: aiExport.summary,
-              timestamp: aiExport.timestamp
-            }, null, 2));
+            zip.file(
+              `exports/${label}/ai-latest.json`,
+              JSON.stringify(
+                {
+                  vectors: aiExport.vectors,
+                  summary: aiExport.summary,
+                  timestamp: aiExport.timestamp,
+                },
+                null,
+                2
+              )
+            );
           }
         }
       }
-            
+
       // Validate that scales were correctly added to the project data
       //             console.log('[Save Project] VALIDATION - Checking scales in project data:');
       if (projectData.imageScales) {
         Object.keys(projectData.imageScales).forEach(label => {
           //                     console.log(`- Project data scale for ${label}: ${projectData.imageScales[label]}`);
-                    
+
           // Compare with the current scale in the app
           if (window.imageScaleByLabel && window.imageScaleByLabel[label] !== undefined) {
             const currentScale = window.imageScaleByLabel[label];
             if (currentScale !== projectData.imageScales[label]) {
-              console.error(`[Save Project] ERROR: Scale mismatch for ${label}! App: ${currentScale}, Project data: ${projectData.imageScales[label]}`);
+              console.error(
+                `[Save Project] ERROR: Scale mismatch for ${label}! App: ${currentScale}, Project data: ${projectData.imageScales[label]}`
+              );
             } else {
               //                             console.log(`[Save Project] ✓ Scale verified for ${label}: ${currentScale}`);
             }
@@ -579,16 +630,18 @@ document.addEventListener('DOMContentLoaded', () => {
       } else {
         console.error('[Save Project] ERROR: No imageScales in project data!');
       }
-            
+
       // Add image files
       const imagePromises = [];
-            
+
       // *** MODIFIED: Iterate over actual labels for image saving ***
       console.log('[DEBUG SAVE] Processing images for ZIP file...');
       for (const label of actualImageLabels) {
         const imageUrl = window.originalImages ? window.originalImages[label] : null;
         if (imageUrl) {
-          console.log(`[DEBUG SAVE]   Adding image for ${label} (URL type: ${imageUrl.substring(0, 20)}...)`);
+          console.log(
+            `[DEBUG SAVE]   Adding image for ${label} (URL type: ${imageUrl.substring(0, 20)}...)`
+          );
           const promise = fetch(imageUrl)
             .then(response => {
               if (!response.ok) {
@@ -598,8 +651,10 @@ document.addEventListener('DOMContentLoaded', () => {
             })
             .then(blob => {
               // *** MODIFIED: Use label as filename base ***
-              zip.file(`${label}.png`, blob); 
-              console.log(`[DEBUG SAVE]   ✓ Successfully added ${label}.png to zip (${(blob.size / 1024).toFixed(2)} KB)`);
+              zip.file(`${label}.png`, blob);
+              console.log(
+                `[DEBUG SAVE]   ✓ Successfully added ${label}.png to zip (${(blob.size / 1024).toFixed(2)} KB)`
+              );
             })
             .catch(error => {
               console.error(`[DEBUG SAVE]   ✗ Error adding image ${label} to zip:`, error);
@@ -607,11 +662,13 @@ document.addEventListener('DOMContentLoaded', () => {
             });
           imagePromises.push(promise);
         } else {
-          console.log(`[DEBUG SAVE]   ⚠ No original image found for ${label}, skipping image file.`);
+          console.log(
+            `[DEBUG SAVE]   ⚠ No original image found for ${label}, skipping image file.`
+          );
         }
       }
       console.log(`[DEBUG SAVE] Total image promises created: ${imagePromises.length}`);
-            
+
       // Add a special spinner or indicator while saving
       const saveIndicator = document.createElement('div');
       saveIndicator.id = 'saveIndicator';
@@ -633,53 +690,53 @@ document.addEventListener('DOMContentLoaded', () => {
                 <style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>
             `;
       document.body.appendChild(saveIndicator);
-            
+
       // Wait for all image fetches to complete
       Promise.all(imagePromises)
         .then(() => {
           // Update progress
           const progressBar = document.getElementById('saveProgressBar');
           if (progressBar) progressBar.style.width = '70%';
-                    
+
           // Generate the zip file with optimized settings
           return zip.generateAsync({
             type: 'blob',
             compression: 'DEFLATE',
             compressionOptions: { level: 3 }, // Reduced compression for faster generation
-            streamFiles: true // Enable streaming for better performance
+            streamFiles: true, // Enable streaming for better performance
           });
         })
         .then(content => {
           // Update progress to complete
           const progressBar = document.getElementById('saveProgressBar');
           if (progressBar) progressBar.style.width = '100%';
-                    
+
           // Remove the save indicator
           if (saveIndicator.parentNode) {
             saveIndicator.parentNode.removeChild(saveIndicator);
           }
-                    
+
           // Remove loading indicator
           const loadingIndicator = document.getElementById('saveLoadingIndicator');
           if (loadingIndicator && loadingIndicator.parentNode) {
             loadingIndicator.parentNode.removeChild(loadingIndicator);
           }
-                    
+
           // Create download link
           const link = document.createElement('a');
           link.href = URL.createObjectURL(content);
-                    
+
           // Generate a filename based on project name and date
           const safeProjectName = projectName.replace(/[^\w\s]/gi, '').replace(/\s+/g, '_');
           const dateString = new Date().toISOString().split('T')[0];
           link.download = `${safeProjectName}_${dateString}.zip`;
-                    
+
           // Trigger download
           link.click();
-                    
+
           // Clean up the URL object
           setTimeout(() => URL.revokeObjectURL(link.href), 100);
-                    
+
           // Show success message
           console.log('[DEBUG SAVE] ===== Project Save Complete =====');
           showStatusMessage('Project saved successfully!', 'success');
@@ -690,7 +747,7 @@ document.addEventListener('DOMContentLoaded', () => {
           if (saveIndicator.parentNode) {
             saveIndicator.parentNode.removeChild(saveIndicator);
           }
-                    
+
           console.error('Error creating ZIP file:', err);
           showStatusMessage('Error saving project. See console for details.', 'error');
         });
@@ -699,25 +756,25 @@ document.addEventListener('DOMContentLoaded', () => {
       showStatusMessage('Error saving project. See console for details.', 'error');
     }
   }
-    
+
   // Function to load project from a ZIP file
   function loadProject() {
     // Create a file input element
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = '.zip';
-        
+
     // Handle file selection
-    input.onchange = function(e) {
+    input.onchange = function (e) {
       const file = e.target.files[0];
       if (!file) return;
-            
+
       // *** SET LOADING FLAG ***
-      window.isLoadingProject = true; 
+      window.isLoadingProject = true;
       //             console.log('[Load Project] Set isLoadingProject = true');
-            
+
       showStatusMessage('Loading project...', 'info');
-            
+
       // Create loading indicator with progress bar
       const loadingIndicator = document.createElement('div');
       loadingIndicator.id = 'loadingIndicator';
@@ -732,16 +789,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             `;
       document.body.appendChild(loadingIndicator);
-            
+
       // Read the selected file
       const reader = new FileReader();
-      reader.onload = function(e) {
+      reader.onload = function (e) {
         const data = e.target.result;
-                
+
         // Update progress
         const progressBar = document.getElementById('loadProgressBar');
         if (progressBar) progressBar.style.width = '20%';
-                
+
         JSZip.loadAsync(data)
           .then(zip => {
             // Update progress
@@ -751,435 +808,624 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!projectJsonFile) {
               throw new Error('Missing project.json'); // This will be caught by the final .catch()
             }
-                        
-            return projectJsonFile.async('string')
-              .then(jsonContent => {
-                // Update progress
-                if (progressBar) progressBar.style.width = '60%';
-                //                                 console.log("Project data loaded:", jsonContent.substring(0, 100) + "...");
-                const rawProjectData = JSON.parse(jsonContent);
-                                
-                // PERFORMANCE FIX: Apply migration to prevent repeated processing
-                const parsedProjectData = migrateProject(rawProjectData);
-                                
-                document.getElementById('projectName').value = parsedProjectData.name || 'OpenPaint Project';
-                const imageList = document.getElementById('imageList');
-                if (imageList) imageList.innerHTML = '';
 
-                window.vectorStrokesByImage = {};
-                window.strokeVisibilityByImage = {};
-                window.strokeLabelVisibility = {};
-                window.strokeMeasurements = {};
-                window.imageScaleByLabel = {};
-                window.imagePositionByLabel = {};
-                window.imageRotationByLabel = {};
-                window.lineStrokesByImage = {};
-                window.labelsByImage = {};
-                window.originalImages = {};
-                window.originalImageDimensions = {};
-                window.imageTags = {};
-                window.customImageNames = {};
+            return projectJsonFile.async('string').then(jsonContent => {
+              // Update progress
+              if (progressBar) progressBar.style.width = '60%';
+              //                                 console.log("Project data loaded:", jsonContent.substring(0, 100) + "...");
+              const rawProjectData = JSON.parse(jsonContent);
 
-                // PERFORMANCE FIX: Clear any legacy sync timers during load
-                if (window.legacySyncTimer) {
-                  clearInterval(window.legacySyncTimer);
-                  window.legacySyncTimer = null;
-                }
+              // PERFORMANCE FIX: Apply migration to prevent repeated processing
+              const parsedProjectData = migrateProject(rawProjectData);
 
-                if (parsedProjectData.folderStructure) {
-                  window.folderStructure = JSON.parse(JSON.stringify(parsedProjectData.folderStructure));
-                } else {
-                  window.folderStructure = { 'root': { id: 'root', name: 'Root', type: 'folder', parentId: null, children: [] } };
-                }
+              document.getElementById('projectName').value =
+                parsedProjectData.name || 'OpenPaint Project';
+              const imageList = document.getElementById('imageList');
+              if (imageList) imageList.innerHTML = '';
 
-                // Determine the order for processing images
-                console.log('[DEBUG LOAD] ===== loadProject: Loading Images =====');
-                console.log(`[DEBUG LOAD]   Project name: ${parsedProjectData.name || 'Unnamed'}`);
-                console.log(`[DEBUG LOAD]   Images in project: ${parsedProjectData.imageLabels?.length || 0}`, parsedProjectData.imageLabels);
-                
-                const imageOrder = parsedProjectData.imageOrder || [];
-                let labelsToProcess = [];
-                                
-                if (imageOrder.length > 0) {
-                  // Filter imageOrder to only include labels that actually exist in the project
-                  // Use Set to deduplicate imageOrder first
-                  const uniqueImageOrder = [...new Set(imageOrder)];
-                  labelsToProcess = uniqueImageOrder.filter(label => parsedProjectData.imageLabels.includes(label));
-                                    
-                  // Add any images present in imageLabels but missing from imageOrder (for backward compatibility)
-                  parsedProjectData.imageLabels.forEach(label => {
-                    if (!labelsToProcess.includes(label)) {
-                      labelsToProcess.push(label);
-                    }
-                  });
-                } else {
-                  // Fallback for older projects without imageOrder
-                  // Deduplicate imageLabels as well
-                  labelsToProcess = [...new Set(parsedProjectData.imageLabels)];
-                }
-                                
-                // Final deduplication to ensure no duplicates
-                labelsToProcess = [...new Set(labelsToProcess)];
-                
-                console.log(`[DEBUG LOAD]   Processing ${labelsToProcess.length} image(s) in order:`, labelsToProcess);
-                                
-                // Initialize paint.js's ordered list with the loaded order
-                window.orderedImageLabels = [...labelsToProcess];
+              window.vectorStrokesByImage = {};
+              window.strokeVisibilityByImage = {};
+              window.strokeLabelVisibility = {};
+              window.strokeMeasurements = {};
+              window.imageScaleByLabel = {};
+              window.imagePositionByLabel = {};
+              window.imageRotationByLabel = {};
+              window.lineStrokesByImage = {};
+              window.labelsByImage = {};
+              window.originalImages = {};
+              window.originalImageDimensions = {};
+              window.imageTags = {};
+              window.customImageNames = {};
 
-                const imagePromises = [];
-                for (const label of labelsToProcess) {
-                  console.log(`[DEBUG LOAD]   Processing label: ${label}`);
-                  const safeLabel = label.toLowerCase();
-                  const imageFiles = Object.keys(zip.files).filter(
-                    filename => filename.toLowerCase().startsWith(`${safeLabel}.`) && 
-                                        !filename.endsWith('/') && filename !== 'project.json'
-                  );
-                  if (imageFiles.length > 0) {
-                    const imageFile = imageFiles[0];
-                    console.log(`[DEBUG LOAD]     Found image file: ${imageFile}`);
-                    const promise = zip.file(imageFile).async('blob')
-                      .then(blob => {
-                        // PERFORMANCE FIX: Use object URL instead of data URL (faster, no base64 encoding)
-                        const objectUrl = URL.createObjectURL(blob);
-                        window.originalImages[label] = objectUrl;
-                        console.log(`[DEBUG LOAD]     Created object URL for ${label} (${(blob.size / 1024).toFixed(2)} KB)`);
-                        return new Promise((resolveDim) => {
-                          const img = new Image();
-                          img.onload = () => {
-                            window.originalImageDimensions[label] = { width: img.width, height: img.height };
-                            console.log(`[DEBUG LOAD]     ${label} dimensions: ${img.width}x${img.height}`);
-                            resolveDim();
+              // PERFORMANCE FIX: Clear any legacy sync timers during load
+              if (window.legacySyncTimer) {
+                clearInterval(window.legacySyncTimer);
+                window.legacySyncTimer = null;
+              }
+
+              if (parsedProjectData.folderStructure) {
+                window.folderStructure = JSON.parse(
+                  JSON.stringify(parsedProjectData.folderStructure)
+                );
+              } else {
+                window.folderStructure = {
+                  root: { id: 'root', name: 'Root', type: 'folder', parentId: null, children: [] },
+                };
+              }
+
+              // Load PDF frames data
+              if (parsedProjectData.pdfFrames) {
+                window.pdfFramesByImage = JSON.parse(JSON.stringify(parsedProjectData.pdfFrames));
+                console.log(
+                  '[DEBUG LOAD] Loaded PDF frames:',
+                  Object.keys(window.pdfFramesByImage).length,
+                  'images with frames'
+                );
+              } else {
+                window.pdfFramesByImage = {};
+              }
+
+              // Determine the order for processing images
+              console.log('[DEBUG LOAD] ===== loadProject: Loading Images =====');
+              console.log(`[DEBUG LOAD]   Project name: ${parsedProjectData.name || 'Unnamed'}`);
+              console.log(
+                `[DEBUG LOAD]   Images in project: ${parsedProjectData.imageLabels?.length || 0}`,
+                parsedProjectData.imageLabels
+              );
+
+              const imageOrder = parsedProjectData.imageOrder || [];
+              let labelsToProcess = [];
+
+              if (imageOrder.length > 0) {
+                // Filter imageOrder to only include labels that actually exist in the project
+                // Use Set to deduplicate imageOrder first
+                const uniqueImageOrder = [...new Set(imageOrder)];
+                labelsToProcess = uniqueImageOrder.filter(label =>
+                  parsedProjectData.imageLabels.includes(label)
+                );
+
+                // Add any images present in imageLabels but missing from imageOrder (for backward compatibility)
+                parsedProjectData.imageLabels.forEach(label => {
+                  if (!labelsToProcess.includes(label)) {
+                    labelsToProcess.push(label);
+                  }
+                });
+              } else {
+                // Fallback for older projects without imageOrder
+                // Deduplicate imageLabels as well
+                labelsToProcess = [...new Set(parsedProjectData.imageLabels)];
+              }
+
+              // Final deduplication to ensure no duplicates
+              labelsToProcess = [...new Set(labelsToProcess)];
+
+              console.log(
+                `[DEBUG LOAD]   Processing ${labelsToProcess.length} image(s) in order:`,
+                labelsToProcess
+              );
+
+              // Initialize paint.js's ordered list with the loaded order
+              window.orderedImageLabels = [...labelsToProcess];
+
+              const imagePromises = [];
+              for (const label of labelsToProcess) {
+                console.log(`[DEBUG LOAD]   Processing label: ${label}`);
+                const safeLabel = label.toLowerCase();
+                const imageFiles = Object.keys(zip.files).filter(
+                  filename =>
+                    filename.toLowerCase().startsWith(`${safeLabel}.`) &&
+                    !filename.endsWith('/') &&
+                    filename !== 'project.json'
+                );
+                if (imageFiles.length > 0) {
+                  const imageFile = imageFiles[0];
+                  console.log(`[DEBUG LOAD]     Found image file: ${imageFile}`);
+                  const promise = zip
+                    .file(imageFile)
+                    .async('blob')
+                    .then(blob => {
+                      // PERFORMANCE FIX: Use object URL instead of data URL (faster, no base64 encoding)
+                      const objectUrl = URL.createObjectURL(blob);
+                      window.originalImages[label] = objectUrl;
+                      console.log(
+                        `[DEBUG LOAD]     Created object URL for ${label} (${(blob.size / 1024).toFixed(2)} KB)`
+                      );
+                      return new Promise(resolveDim => {
+                        const img = new Image();
+                        img.onload = () => {
+                          window.originalImageDimensions[label] = {
+                            width: img.width,
+                            height: img.height,
                           };
-                          img.onerror = () => {
-                            window.originalImageDimensions[label] = { width: 0, height: 0 };
-                            console.error(`[DEBUG LOAD]     ✗ ${label} failed to load, dimensions set to zero`);
-                            resolveDim();
-                          };
-                          img.src = objectUrl;
-                        });
-                      })
-                      .then(() => { // After image and dimensions are loaded for this label
-                        console.log(`[DEBUG LOAD]     Loading data for ${label}`);
-                        
-                        // Store stroke data temporarily before initializeNewImageStructures clears it
-                        const savedVectorStrokes = parsedProjectData.strokes && parsedProjectData.strokes[label] 
-                          ? JSON.parse(JSON.stringify(parsedProjectData.strokes[label])) 
-                          : null;
-                        const savedLineStrokes = parsedProjectData.strokeSequence && parsedProjectData.strokeSequence[label]
-                          ? (Array.isArray(parsedProjectData.strokeSequence[label]) ? parsedProjectData.strokeSequence[label].slice() : [])
-                          : null;
-                        
-                        // Initialize structures (this will clear stroke data, which we'll restore after)
-                        if (typeof window.initializeNewImageStructures === 'function') {
-                          window.initializeNewImageStructures(label);
-                        }
-                        
-                        // CRITICAL: Restore stroke data AFTER initializeNewImageStructures clears it
-                        if (savedVectorStrokes) {
-                          window.vectorStrokesByImage[label] = savedVectorStrokes;
-                          console.log(`[DEBUG LOAD]     ✓ Loaded ${Object.keys(window.vectorStrokesByImage[label]).length} vector strokes for ${label}`);
-                        }
-                        
-                        if (savedLineStrokes) {
-                          window.lineStrokesByImage[label] = savedLineStrokes;
-                          console.log(`[DEBUG LOAD]     ✓ Loaded ${window.lineStrokesByImage[label].length} line strokes for ${label}`);
-                        }
-                        
-                        if (typeof window.addImageToSidebar === 'function') {
-                          window.addImageToSidebar(window.originalImages[label], label);
-                          console.log(`[DEBUG LOAD]     ✓ Added ${label} to sidebar`);
-                        }
-                        
-                        // Load other per-label data from parsedProjectData (overwrite defaults from initializeNewImageStructures)
-                        if (parsedProjectData.strokeVisibility && parsedProjectData.strokeVisibility[label]) window.strokeVisibilityByImage[label] = parsedProjectData.strokeVisibility[label];
-                        if (parsedProjectData.strokeLabelVisibility && parsedProjectData.strokeLabelVisibility[label]) window.strokeLabelVisibility[label] = parsedProjectData.strokeLabelVisibility[label];
-                        if (parsedProjectData.strokeMeasurements && parsedProjectData.strokeMeasurements[label]) {
-                          window.strokeMeasurements[label] = JSON.parse(JSON.stringify(parsedProjectData.strokeMeasurements[label]));
-                          // Ensure underReview flag exists for backward compatibility
-                          // Also ensure originalMeasurement exists if underReview is true
-                          Object.keys(window.strokeMeasurements[label]).forEach(strokeLabel => {
-                            const measurement = window.strokeMeasurements[label][strokeLabel];
-                            if (measurement) {
-                              if (measurement.underReview === undefined) {
-                                measurement.underReview = false;
-                              }
-                              // If underReview is true but originalMeasurement is missing, try to reconstruct it
-                              // This handles backward compatibility with old projects
-                              if (measurement.underReview === true && !measurement.originalMeasurement) {
-                                // Store current measurement values as original (best guess for old projects)
-                                measurement.originalMeasurementValues = {
-                                  inchWhole: measurement.inchWhole || 0,
-                                  inchFraction: measurement.inchFraction || 0,
-                                  cm: measurement.cm || 0.0
-                                };
-                                // Note: originalMeasurement string will be reconstructed in paint.js when rendering
-                                // We can't call getMeasurementString here as it might not be available in this context
-                              }
-                            }
-                          });
-                        }
-                        if (parsedProjectData.imageTags && parsedProjectData.imageTags[label]) window.imageTags[label] = JSON.parse(JSON.stringify(parsedProjectData.imageTags[label]));
-                        if (parsedProjectData.customImageNames && parsedProjectData.customImageNames[label]) {
-                          window.customImageNames[label] = parsedProjectData.customImageNames[label];
-                        }
-                        if (parsedProjectData.imageScales && parsedProjectData.imageScales[label] !== undefined) window.imageScaleByLabel[label] = parsedProjectData.imageScales[label];
-                        // Force recalculation of centered positions instead of using saved positions
-                        // This ensures images are centered properly regardless of saved project data
-                        window.imagePositionByLabel[label] = { x: 0, y: 0 }; // Will be recalculated by calculateFitScale
-                        if (parsedProjectData.imageRotations && parsedProjectData.imageRotations[label] !== undefined) window.imageRotationByLabel[label] = parsedProjectData.imageRotations[label];
-                        if (parsedProjectData.nextLabels && parsedProjectData.nextLabels[label]) window.labelsByImage[label] = parsedProjectData.nextLabels[label];
-                                                
-                        // Restore custom label positions, calculated offsets, rotation stamps, and text elements
-                        if (!window.customLabelPositions) window.customLabelPositions = {};
-                        if (!window.calculatedLabelOffsets) window.calculatedLabelOffsets = {};
-                        if (!window.customLabelOffsetsRotationByImageAndStroke) window.customLabelOffsetsRotationByImageAndStroke = {};
-                        if (!window.paintApp) window.paintApp = { state: {} };
-                        if (!window.paintApp.state) window.paintApp.state = {};
-                        if (!window.paintApp.state.textElementsByImage) window.paintApp.state.textElementsByImage = {};
-
-                        window.customLabelPositions[label] =
-                                                    (parsedProjectData.customLabelPositions && parsedProjectData.customLabelPositions[label])
-                                                      ? JSON.parse(JSON.stringify(parsedProjectData.customLabelPositions[label]))
-                                                      : {};
-
-                        window.calculatedLabelOffsets[label] =
-                                                    (parsedProjectData.calculatedLabelOffsets && parsedProjectData.calculatedLabelOffsets[label])
-                                                      ? JSON.parse(JSON.stringify(parsedProjectData.calculatedLabelOffsets[label]))
-                                                      : {};
-
-                        window.customLabelOffsetsRotationByImageAndStroke[label] =
-                                                    (parsedProjectData.customLabelRotationStamps && parsedProjectData.customLabelRotationStamps[label])
-                                                      ? JSON.parse(JSON.stringify(parsedProjectData.customLabelRotationStamps[label]))
-                                                      : {};
-
-                        window.paintApp.state.textElementsByImage[label] =
-                                                    (parsedProjectData.textElementsByImage && parsedProjectData.textElementsByImage[label])
-                                                      ? JSON.parse(JSON.stringify(parsedProjectData.textElementsByImage[label]))
-                                                      : [];
-
-                        // MIGRATION: Ensure all loaded text elements have useCanvasCoords set to true
-                        // This fixes misalignment issues with text loaded from older projects
-                        if (window.paintApp.state.textElementsByImage[label]) {
-                          window.paintApp.state.textElementsByImage[label].forEach(textEl => {
-                            if (textEl && textEl.useCanvasCoords === undefined) {
-                              console.log(`[Migration] Setting useCanvasCoords=true for text element ${textEl.id} in ${label}`);
-                              textEl.useCanvasCoords = true;
-                            }
-                          });
-                        }
-
-                        // Ensure rotation system is initialized for old projects
-                        if (!window.imageRotationByLabel) {
-                          window.imageRotationByLabel = {};
-                          console.log('[Legacy Migration] Initialized window.imageRotationByLabel for old project');
-                        }
-                        if (typeof window.imageRotationByLabel[label] === 'undefined') {
-                          window.imageRotationByLabel[label] = 0;
-                          console.log(`[Legacy Migration] Initialized rotation for ${label} to 0° for old project`);
-                        }
-
-                        // Legacy offset handling: For projects without rotation stamps, we can't know
-                        // what rotation state the offsets were calculated at. Rather than guessing,
-                        // we clear offsets when the image is currently rotated and let them recalculate.
-                        // This is safer than potentially double-rotating offsets.
-                        const curTheta = window.imageRotationByLabel && window.imageRotationByLabel[label] ? window.imageRotationByLabel[label] : 0;
-                        const isRotated = Math.abs(curTheta) > 0.01; // Small threshold to account for floating point
-                        
-                        // Ensure rotation stamp object exists
-                        if (!window.customLabelOffsetsRotationByImageAndStroke[label]) {
-                          window.customLabelOffsetsRotationByImageAndStroke[label] = {};
-                        }
-                        
-                        // Helper function to validate an offset would produce reasonable positions
-                        // Returns true if the offset is reasonable, false if it should be cleared
-                        const validateOffset = (offset, label, stroke) => {
-                          if (!offset) return false;
-                          const pixelOffset = window.normalizeToPixels ? window.normalizeToPixels(offset, label) : offset;
-                          if (!pixelOffset || typeof pixelOffset.x !== 'number' || typeof pixelOffset.y !== 'number') {
-                            return false;
-                          }
-                          
-                          // Check if offset magnitude is reasonable (should be within ~2x image dimensions)
-                          const dims = window.originalImageDimensions && window.originalImageDimensions[label];
-                          if (dims && dims.width && dims.height) {
-                            const maxReasonableOffset = Math.max(dims.width, dims.height) * 2;
-                            const offsetMagnitude = Math.sqrt(pixelOffset.x * pixelOffset.x + pixelOffset.y * pixelOffset.y);
-                            if (offsetMagnitude > maxReasonableOffset) {
-                              console.log(`[LEGACY-OFFSET] Clearing unreasonable offset for ${label}.${stroke}: magnitude ${offsetMagnitude.toFixed(1)} > max ${maxReasonableOffset.toFixed(1)}`);
-                              return false;
-                            }
-                          }
-                          
-                          return true;
+                          console.log(
+                            `[DEBUG LOAD]     ${label} dimensions: ${img.width}x${img.height}`
+                          );
+                          resolveDim();
                         };
-                        
-                        // For rotated images, clear legacy offsets without stamps and let them recalculate
-                        // This is safer than guessing their original rotation state
-                        if (isRotated) {
-                          // Clear custom label positions that don't have rotation stamps
-                          if (window.customLabelPositions[label] && typeof window.customLabelPositions[label] === 'object') {
-                            Object.keys(window.customLabelPositions[label]).forEach(stroke => {
-                              if (window.customLabelOffsetsRotationByImageAndStroke[label][stroke] === undefined) {
-                                // Legacy offset without rotation stamp on rotated image - clear it for safety
-                                const offset = window.customLabelPositions[label][stroke];
-                                if (!validateOffset(offset, label, stroke)) {
-                                  console.log(`[LEGACY-OFFSET] Clearing custom offset for ${label}.${stroke} (rotated image without stamp)`);
-                                  delete window.customLabelPositions[label][stroke];
-                                } else {
-                                  // Offset seems reasonable, stamp it with current rotation
-                                  console.log(`[LEGACY-OFFSET] Stamping custom offset for ${label}.${stroke} with current rotation ${(curTheta * 180 / Math.PI).toFixed(1)}°`);
-                                  window.customLabelOffsetsRotationByImageAndStroke[label][stroke] = curTheta;
-                                }
-                              }
-                            });
-                          }
-                          
-                          // Clear calculated label offsets that don't have rotation stamps
-                          if (window.calculatedLabelOffsets[label] && typeof window.calculatedLabelOffsets[label] === 'object') {
-                            Object.keys(window.calculatedLabelOffsets[label]).forEach(stroke => {
-                              if (!window.customLabelOffsetsRotationByImageAndStroke[label] || 
-                                  window.customLabelOffsetsRotationByImageAndStroke[label][stroke] === undefined) {
-                                // Legacy offset without rotation stamp on rotated image - clear it for safety
-                                const offset = window.calculatedLabelOffsets[label][stroke];
-                                if (!validateOffset(offset, label, stroke)) {
-                                  console.log(`[LEGACY-OFFSET] Clearing calculated offset for ${label}.${stroke} (rotated image without stamp)`);
-                                  delete window.calculatedLabelOffsets[label][stroke];
-                                } else {
-                                  // Offset seems reasonable, stamp it with current rotation
-                                  console.log(`[LEGACY-OFFSET] Stamping calculated offset for ${label}.${stroke} with current rotation ${(curTheta * 180 / Math.PI).toFixed(1)}°`);
-                                  if (!window.customLabelOffsetsRotationByImageAndStroke[label]) {
-                                    window.customLabelOffsetsRotationByImageAndStroke[label] = {};
-                                  }
-                                  window.customLabelOffsetsRotationByImageAndStroke[label][stroke] = curTheta;
-                                }
-                              }
-                            });
-                          }
-                        } else {
-                          // Image is at 0° rotation - stamp all legacy offsets with 0° so they're tracked
-                          if (window.customLabelPositions[label] && typeof window.customLabelPositions[label] === 'object') {
-                            Object.keys(window.customLabelPositions[label]).forEach(stroke => {
-                              if (window.customLabelOffsetsRotationByImageAndStroke[label][stroke] === undefined) {
-                                window.customLabelOffsetsRotationByImageAndStroke[label][stroke] = 0;
-                              }
-                            });
-                          }
-                          if (window.calculatedLabelOffsets[label] && typeof window.calculatedLabelOffsets[label] === 'object') {
-                            Object.keys(window.calculatedLabelOffsets[label]).forEach(stroke => {
-                              if (!window.customLabelOffsetsRotationByImageAndStroke[label] || 
-                                  window.customLabelOffsetsRotationByImageAndStroke[label][stroke] === undefined) {
-                                if (!window.customLabelOffsetsRotationByImageAndStroke[label]) {
-                                  window.customLabelOffsetsRotationByImageAndStroke[label] = {};
-                                }
-                                window.customLabelOffsetsRotationByImageAndStroke[label][stroke] = 0;
-                              }
-                            });
-                          }
-                        }
-                      })
-                      .catch(err => console.error(`Error processing data for label ${label}:`, err)); // Catch per-image errors
-                    imagePromises.push(promise);
-                  } else {
-                    // No image file found, but still load stroke data if it exists
-                    console.log(`[DEBUG LOAD]     No image file found for ${label}, loading stroke data only`);
-                    
-                    // Check if this label has stroke data
-                    const hasStrokeData = (parsedProjectData.strokes && parsedProjectData.strokes[label]) ||
-                                         (parsedProjectData.strokeSequence && parsedProjectData.strokeSequence[label]);
-                    
-                    if (hasStrokeData) {
-                      // Initialize structures first
+                        img.onerror = () => {
+                          window.originalImageDimensions[label] = { width: 0, height: 0 };
+                          console.error(
+                            `[DEBUG LOAD]     ✗ ${label} failed to load, dimensions set to zero`
+                          );
+                          resolveDim();
+                        };
+                        img.src = objectUrl;
+                      });
+                    })
+                    .then(() => {
+                      // After image and dimensions are loaded for this label
+                      console.log(`[DEBUG LOAD]     Loading data for ${label}`);
+
+                      // Store stroke data temporarily before initializeNewImageStructures clears it
+                      const savedVectorStrokes =
+                        parsedProjectData.strokes && parsedProjectData.strokes[label]
+                          ? JSON.parse(JSON.stringify(parsedProjectData.strokes[label]))
+                          : null;
+                      const savedLineStrokes =
+                        parsedProjectData.strokeSequence && parsedProjectData.strokeSequence[label]
+                          ? Array.isArray(parsedProjectData.strokeSequence[label])
+                            ? parsedProjectData.strokeSequence[label].slice()
+                            : []
+                          : null;
+
+                      // Initialize structures (this will clear stroke data, which we'll restore after)
                       if (typeof window.initializeNewImageStructures === 'function') {
                         window.initializeNewImageStructures(label);
                       }
-                      
-                      // Load stroke data
-                      if (parsedProjectData.strokes && parsedProjectData.strokes[label]) {
-                        window.vectorStrokesByImage[label] = JSON.parse(JSON.stringify(parsedProjectData.strokes[label]));
-                        console.log(`[DEBUG LOAD]     ✓ Loaded ${Object.keys(window.vectorStrokesByImage[label]).length} vector strokes for ${label} (no image)`);
+
+                      // CRITICAL: Restore stroke data AFTER initializeNewImageStructures clears it
+                      if (savedVectorStrokes) {
+                        window.vectorStrokesByImage[label] = savedVectorStrokes;
+                        console.log(
+                          `[DEBUG LOAD]     ✓ Loaded ${Object.keys(window.vectorStrokesByImage[label]).length} vector strokes for ${label}`
+                        );
                       }
-                      
-                      if (parsedProjectData.strokeSequence && parsedProjectData.strokeSequence[label]) {
-                        window.lineStrokesByImage[label] = Array.isArray(parsedProjectData.strokeSequence[label]) 
-                          ? parsedProjectData.strokeSequence[label].slice() 
-                          : [];
-                        console.log(`[DEBUG LOAD]     ✓ Loaded ${window.lineStrokesByImage[label].length} line strokes for ${label} (no image)`);
+
+                      if (savedLineStrokes) {
+                        window.lineStrokesByImage[label] = savedLineStrokes;
+                        console.log(
+                          `[DEBUG LOAD]     ✓ Loaded ${window.lineStrokesByImage[label].length} line strokes for ${label}`
+                        );
                       }
-                      
-                      // Load other per-label data
-                      if (parsedProjectData.strokeVisibility && parsedProjectData.strokeVisibility[label]) {
-                        window.strokeVisibilityByImage[label] = parsedProjectData.strokeVisibility[label];
+
+                      if (typeof window.addImageToSidebar === 'function') {
+                        window.addImageToSidebar(window.originalImages[label], label);
+                        console.log(`[DEBUG LOAD]     ✓ Added ${label} to sidebar`);
                       }
-                      if (parsedProjectData.strokeLabelVisibility && parsedProjectData.strokeLabelVisibility[label]) {
-                        window.strokeLabelVisibility[label] = parsedProjectData.strokeLabelVisibility[label];
-                      }
-                      if (parsedProjectData.strokeMeasurements && parsedProjectData.strokeMeasurements[label]) {
-                        window.strokeMeasurements[label] = JSON.parse(JSON.stringify(parsedProjectData.strokeMeasurements[label]));
+
+                      // Load other per-label data from parsedProjectData (overwrite defaults from initializeNewImageStructures)
+                      if (
+                        parsedProjectData.strokeVisibility &&
+                        parsedProjectData.strokeVisibility[label]
+                      )
+                        window.strokeVisibilityByImage[label] =
+                          parsedProjectData.strokeVisibility[label];
+                      if (
+                        parsedProjectData.strokeLabelVisibility &&
+                        parsedProjectData.strokeLabelVisibility[label]
+                      )
+                        window.strokeLabelVisibility[label] =
+                          parsedProjectData.strokeLabelVisibility[label];
+                      if (
+                        parsedProjectData.strokeMeasurements &&
+                        parsedProjectData.strokeMeasurements[label]
+                      ) {
+                        window.strokeMeasurements[label] = JSON.parse(
+                          JSON.stringify(parsedProjectData.strokeMeasurements[label])
+                        );
                         // Ensure underReview flag exists for backward compatibility
+                        // Also ensure originalMeasurement exists if underReview is true
                         Object.keys(window.strokeMeasurements[label]).forEach(strokeLabel => {
-                          if (window.strokeMeasurements[label][strokeLabel] && 
-                              window.strokeMeasurements[label][strokeLabel].underReview === undefined) {
-                            window.strokeMeasurements[label][strokeLabel].underReview = false;
+                          const measurement = window.strokeMeasurements[label][strokeLabel];
+                          if (measurement) {
+                            if (measurement.underReview === undefined) {
+                              measurement.underReview = false;
+                            }
+                            // If underReview is true but originalMeasurement is missing, try to reconstruct it
+                            // This handles backward compatibility with old projects
+                            if (
+                              measurement.underReview === true &&
+                              !measurement.originalMeasurement
+                            ) {
+                              // Store current measurement values as original (best guess for old projects)
+                              measurement.originalMeasurementValues = {
+                                inchWhole: measurement.inchWhole || 0,
+                                inchFraction: measurement.inchFraction || 0,
+                                cm: measurement.cm || 0.0,
+                              };
+                              // Note: originalMeasurement string will be reconstructed in paint.js when rendering
+                              // We can't call getMeasurementString here as it might not be available in this context
+                            }
                           }
                         });
                       }
-                      if (parsedProjectData.imageTags && parsedProjectData.imageTags[label]) {
-                        window.imageTags[label] = JSON.parse(JSON.stringify(parsedProjectData.imageTags[label]));
+                      if (parsedProjectData.imageTags && parsedProjectData.imageTags[label])
+                        window.imageTags[label] = JSON.parse(
+                          JSON.stringify(parsedProjectData.imageTags[label])
+                        );
+                      if (
+                        parsedProjectData.customImageNames &&
+                        parsedProjectData.customImageNames[label]
+                      ) {
+                        window.customImageNames[label] = parsedProjectData.customImageNames[label];
                       }
-                      if (parsedProjectData.nextLabels && parsedProjectData.nextLabels[label]) {
+                      if (
+                        parsedProjectData.imageScales &&
+                        parsedProjectData.imageScales[label] !== undefined
+                      )
+                        window.imageScaleByLabel[label] = parsedProjectData.imageScales[label];
+                      // Force recalculation of centered positions instead of using saved positions
+                      // This ensures images are centered properly regardless of saved project data
+                      window.imagePositionByLabel[label] = { x: 0, y: 0 }; // Will be recalculated by calculateFitScale
+                      if (
+                        parsedProjectData.imageRotations &&
+                        parsedProjectData.imageRotations[label] !== undefined
+                      )
+                        window.imageRotationByLabel[label] =
+                          parsedProjectData.imageRotations[label];
+                      if (parsedProjectData.nextLabels && parsedProjectData.nextLabels[label])
                         window.labelsByImage[label] = parsedProjectData.nextLabels[label];
+
+                      // Restore custom label positions, calculated offsets, rotation stamps, and text elements
+                      if (!window.customLabelPositions) window.customLabelPositions = {};
+                      if (!window.calculatedLabelOffsets) window.calculatedLabelOffsets = {};
+                      if (!window.customLabelOffsetsRotationByImageAndStroke)
+                        window.customLabelOffsetsRotationByImageAndStroke = {};
+                      if (!window.paintApp) window.paintApp = { state: {} };
+                      if (!window.paintApp.state) window.paintApp.state = {};
+                      if (!window.paintApp.state.textElementsByImage)
+                        window.paintApp.state.textElementsByImage = {};
+
+                      window.customLabelPositions[label] =
+                        parsedProjectData.customLabelPositions &&
+                        parsedProjectData.customLabelPositions[label]
+                          ? JSON.parse(
+                              JSON.stringify(parsedProjectData.customLabelPositions[label])
+                            )
+                          : {};
+
+                      window.calculatedLabelOffsets[label] =
+                        parsedProjectData.calculatedLabelOffsets &&
+                        parsedProjectData.calculatedLabelOffsets[label]
+                          ? JSON.parse(
+                              JSON.stringify(parsedProjectData.calculatedLabelOffsets[label])
+                            )
+                          : {};
+
+                      window.customLabelOffsetsRotationByImageAndStroke[label] =
+                        parsedProjectData.customLabelRotationStamps &&
+                        parsedProjectData.customLabelRotationStamps[label]
+                          ? JSON.parse(
+                              JSON.stringify(parsedProjectData.customLabelRotationStamps[label])
+                            )
+                          : {};
+
+                      window.paintApp.state.textElementsByImage[label] =
+                        parsedProjectData.textElementsByImage &&
+                        parsedProjectData.textElementsByImage[label]
+                          ? JSON.parse(JSON.stringify(parsedProjectData.textElementsByImage[label]))
+                          : [];
+
+                      // MIGRATION: Ensure all loaded text elements have useCanvasCoords set to true
+                      // This fixes misalignment issues with text loaded from older projects
+                      if (window.paintApp.state.textElementsByImage[label]) {
+                        window.paintApp.state.textElementsByImage[label].forEach(textEl => {
+                          if (textEl && textEl.useCanvasCoords === undefined) {
+                            console.log(
+                              `[Migration] Setting useCanvasCoords=true for text element ${textEl.id} in ${label}`
+                            );
+                            textEl.useCanvasCoords = true;
+                          }
+                        });
                       }
+
+                      // Ensure rotation system is initialized for old projects
+                      if (!window.imageRotationByLabel) {
+                        window.imageRotationByLabel = {};
+                        console.log(
+                          '[Legacy Migration] Initialized window.imageRotationByLabel for old project'
+                        );
+                      }
+                      if (typeof window.imageRotationByLabel[label] === 'undefined') {
+                        window.imageRotationByLabel[label] = 0;
+                        console.log(
+                          `[Legacy Migration] Initialized rotation for ${label} to 0° for old project`
+                        );
+                      }
+
+                      // Legacy offset handling: For projects without rotation stamps, we can't know
+                      // what rotation state the offsets were calculated at. Rather than guessing,
+                      // we clear offsets when the image is currently rotated and let them recalculate.
+                      // This is safer than potentially double-rotating offsets.
+                      const curTheta =
+                        window.imageRotationByLabel && window.imageRotationByLabel[label]
+                          ? window.imageRotationByLabel[label]
+                          : 0;
+                      const isRotated = Math.abs(curTheta) > 0.01; // Small threshold to account for floating point
+
+                      // Ensure rotation stamp object exists
+                      if (!window.customLabelOffsetsRotationByImageAndStroke[label]) {
+                        window.customLabelOffsetsRotationByImageAndStroke[label] = {};
+                      }
+
+                      // Helper function to validate an offset would produce reasonable positions
+                      // Returns true if the offset is reasonable, false if it should be cleared
+                      const validateOffset = (offset, label, stroke) => {
+                        if (!offset) return false;
+                        const pixelOffset = window.normalizeToPixels
+                          ? window.normalizeToPixels(offset, label)
+                          : offset;
+                        if (
+                          !pixelOffset ||
+                          typeof pixelOffset.x !== 'number' ||
+                          typeof pixelOffset.y !== 'number'
+                        ) {
+                          return false;
+                        }
+
+                        // Check if offset magnitude is reasonable (should be within ~2x image dimensions)
+                        const dims =
+                          window.originalImageDimensions && window.originalImageDimensions[label];
+                        if (dims && dims.width && dims.height) {
+                          const maxReasonableOffset = Math.max(dims.width, dims.height) * 2;
+                          const offsetMagnitude = Math.sqrt(
+                            pixelOffset.x * pixelOffset.x + pixelOffset.y * pixelOffset.y
+                          );
+                          if (offsetMagnitude > maxReasonableOffset) {
+                            console.log(
+                              `[LEGACY-OFFSET] Clearing unreasonable offset for ${label}.${stroke}: magnitude ${offsetMagnitude.toFixed(1)} > max ${maxReasonableOffset.toFixed(1)}`
+                            );
+                            return false;
+                          }
+                        }
+
+                        return true;
+                      };
+
+                      // For rotated images, clear legacy offsets without stamps and let them recalculate
+                      // This is safer than guessing their original rotation state
+                      if (isRotated) {
+                        // Clear custom label positions that don't have rotation stamps
+                        if (
+                          window.customLabelPositions[label] &&
+                          typeof window.customLabelPositions[label] === 'object'
+                        ) {
+                          Object.keys(window.customLabelPositions[label]).forEach(stroke => {
+                            if (
+                              window.customLabelOffsetsRotationByImageAndStroke[label][stroke] ===
+                              undefined
+                            ) {
+                              // Legacy offset without rotation stamp on rotated image - clear it for safety
+                              const offset = window.customLabelPositions[label][stroke];
+                              if (!validateOffset(offset, label, stroke)) {
+                                console.log(
+                                  `[LEGACY-OFFSET] Clearing custom offset for ${label}.${stroke} (rotated image without stamp)`
+                                );
+                                delete window.customLabelPositions[label][stroke];
+                              } else {
+                                // Offset seems reasonable, stamp it with current rotation
+                                console.log(
+                                  `[LEGACY-OFFSET] Stamping custom offset for ${label}.${stroke} with current rotation ${((curTheta * 180) / Math.PI).toFixed(1)}°`
+                                );
+                                window.customLabelOffsetsRotationByImageAndStroke[label][stroke] =
+                                  curTheta;
+                              }
+                            }
+                          });
+                        }
+
+                        // Clear calculated label offsets that don't have rotation stamps
+                        if (
+                          window.calculatedLabelOffsets[label] &&
+                          typeof window.calculatedLabelOffsets[label] === 'object'
+                        ) {
+                          Object.keys(window.calculatedLabelOffsets[label]).forEach(stroke => {
+                            if (
+                              !window.customLabelOffsetsRotationByImageAndStroke[label] ||
+                              window.customLabelOffsetsRotationByImageAndStroke[label][stroke] ===
+                                undefined
+                            ) {
+                              // Legacy offset without rotation stamp on rotated image - clear it for safety
+                              const offset = window.calculatedLabelOffsets[label][stroke];
+                              if (!validateOffset(offset, label, stroke)) {
+                                console.log(
+                                  `[LEGACY-OFFSET] Clearing calculated offset for ${label}.${stroke} (rotated image without stamp)`
+                                );
+                                delete window.calculatedLabelOffsets[label][stroke];
+                              } else {
+                                // Offset seems reasonable, stamp it with current rotation
+                                console.log(
+                                  `[LEGACY-OFFSET] Stamping calculated offset for ${label}.${stroke} with current rotation ${((curTheta * 180) / Math.PI).toFixed(1)}°`
+                                );
+                                if (!window.customLabelOffsetsRotationByImageAndStroke[label]) {
+                                  window.customLabelOffsetsRotationByImageAndStroke[label] = {};
+                                }
+                                window.customLabelOffsetsRotationByImageAndStroke[label][stroke] =
+                                  curTheta;
+                              }
+                            }
+                          });
+                        }
+                      } else {
+                        // Image is at 0° rotation - stamp all legacy offsets with 0° so they're tracked
+                        if (
+                          window.customLabelPositions[label] &&
+                          typeof window.customLabelPositions[label] === 'object'
+                        ) {
+                          Object.keys(window.customLabelPositions[label]).forEach(stroke => {
+                            if (
+                              window.customLabelOffsetsRotationByImageAndStroke[label][stroke] ===
+                              undefined
+                            ) {
+                              window.customLabelOffsetsRotationByImageAndStroke[label][stroke] = 0;
+                            }
+                          });
+                        }
+                        if (
+                          window.calculatedLabelOffsets[label] &&
+                          typeof window.calculatedLabelOffsets[label] === 'object'
+                        ) {
+                          Object.keys(window.calculatedLabelOffsets[label]).forEach(stroke => {
+                            if (
+                              !window.customLabelOffsetsRotationByImageAndStroke[label] ||
+                              window.customLabelOffsetsRotationByImageAndStroke[label][stroke] ===
+                                undefined
+                            ) {
+                              if (!window.customLabelOffsetsRotationByImageAndStroke[label]) {
+                                window.customLabelOffsetsRotationByImageAndStroke[label] = {};
+                              }
+                              window.customLabelOffsetsRotationByImageAndStroke[label][stroke] = 0;
+                            }
+                          });
+                        }
+                      }
+                    })
+                    .catch(err => console.error(`Error processing data for label ${label}:`, err)); // Catch per-image errors
+                  imagePromises.push(promise);
+                } else {
+                  // No image file found, but still load stroke data if it exists
+                  console.log(
+                    `[DEBUG LOAD]     No image file found for ${label}, loading stroke data only`
+                  );
+
+                  // Check if this label has stroke data
+                  const hasStrokeData =
+                    (parsedProjectData.strokes && parsedProjectData.strokes[label]) ||
+                    (parsedProjectData.strokeSequence && parsedProjectData.strokeSequence[label]);
+
+                  if (hasStrokeData) {
+                    // Initialize structures first
+                    if (typeof window.initializeNewImageStructures === 'function') {
+                      window.initializeNewImageStructures(label);
                     }
-                    
-                    // Set dimensions to zero if no image
-                    if (!window.originalImageDimensions[label]) {
-                      window.originalImageDimensions[label] = { width: 0, height: 0 };
+
+                    // Load stroke data
+                    if (parsedProjectData.strokes && parsedProjectData.strokes[label]) {
+                      window.vectorStrokesByImage[label] = JSON.parse(
+                        JSON.stringify(parsedProjectData.strokes[label])
+                      );
+                      console.log(
+                        `[DEBUG LOAD]     ✓ Loaded ${Object.keys(window.vectorStrokesByImage[label]).length} vector strokes for ${label} (no image)`
+                      );
+                    }
+
+                    if (
+                      parsedProjectData.strokeSequence &&
+                      parsedProjectData.strokeSequence[label]
+                    ) {
+                      window.lineStrokesByImage[label] = Array.isArray(
+                        parsedProjectData.strokeSequence[label]
+                      )
+                        ? parsedProjectData.strokeSequence[label].slice()
+                        : [];
+                      console.log(
+                        `[DEBUG LOAD]     ✓ Loaded ${window.lineStrokesByImage[label].length} line strokes for ${label} (no image)`
+                      );
+                    }
+
+                    // Load other per-label data
+                    if (
+                      parsedProjectData.strokeVisibility &&
+                      parsedProjectData.strokeVisibility[label]
+                    ) {
+                      window.strokeVisibilityByImage[label] =
+                        parsedProjectData.strokeVisibility[label];
+                    }
+                    if (
+                      parsedProjectData.strokeLabelVisibility &&
+                      parsedProjectData.strokeLabelVisibility[label]
+                    ) {
+                      window.strokeLabelVisibility[label] =
+                        parsedProjectData.strokeLabelVisibility[label];
+                    }
+                    if (
+                      parsedProjectData.strokeMeasurements &&
+                      parsedProjectData.strokeMeasurements[label]
+                    ) {
+                      window.strokeMeasurements[label] = JSON.parse(
+                        JSON.stringify(parsedProjectData.strokeMeasurements[label])
+                      );
+                      // Ensure underReview flag exists for backward compatibility
+                      Object.keys(window.strokeMeasurements[label]).forEach(strokeLabel => {
+                        if (
+                          window.strokeMeasurements[label][strokeLabel] &&
+                          window.strokeMeasurements[label][strokeLabel].underReview === undefined
+                        ) {
+                          window.strokeMeasurements[label][strokeLabel].underReview = false;
+                        }
+                      });
+                    }
+                    if (parsedProjectData.imageTags && parsedProjectData.imageTags[label]) {
+                      window.imageTags[label] = JSON.parse(
+                        JSON.stringify(parsedProjectData.imageTags[label])
+                      );
+                    }
+                    if (parsedProjectData.nextLabels && parsedProjectData.nextLabels[label]) {
+                      window.labelsByImage[label] = parsedProjectData.nextLabels[label];
                     }
                   }
-                } // End of for...of loop for labels
 
-                return Promise.all(imagePromises)
-                  .then(() => { // Executed after all images and their data are loaded and processed
-                    // Update progress
-                    if (progressBar) progressBar.style.width = '80%';
-                    const loadedImages = Object.keys(window.originalImages || {}).length;
-                    console.log(`[DEBUG LOAD]   All image files processed. Total loaded: ${loadedImages}`);
-                    console.log('[DEBUG LOAD]   Loaded image labels:', Object.keys(window.originalImages || {}));
-                    console.log('[DEBUG LOAD] ===== loadProject: Images Loaded =====');
-                                        
-                    // Load AI exports if they exist
-                    if (!window.aiExports) window.aiExports = {};
-                    const aiExportPromises = [];
-                                        
-                    for (const label of labelsToProcess) {
-                      const aiSvgFile = zip.file(`exports/${label}/ai-latest.svg`);
-                      const aiJsonFile = zip.file(`exports/${label}/ai-latest.json`);
-                                            
-                      if (aiSvgFile && aiJsonFile) {
-                        const promise = Promise.all([
-                          aiSvgFile.async('text'),
-                          aiJsonFile.async('text')
-                        ]).then(([svg, jsonStr]) => {
+                  // Set dimensions to zero if no image
+                  if (!window.originalImageDimensions[label]) {
+                    window.originalImageDimensions[label] = { width: 0, height: 0 };
+                  }
+                }
+              } // End of for...of loop for labels
+
+              return Promise.all(imagePromises)
+                .then(() => {
+                  // Executed after all images and their data are loaded and processed
+                  // Update progress
+                  if (progressBar) progressBar.style.width = '80%';
+                  const loadedImages = Object.keys(window.originalImages || {}).length;
+                  console.log(
+                    `[DEBUG LOAD]   All image files processed. Total loaded: ${loadedImages}`
+                  );
+                  console.log(
+                    '[DEBUG LOAD]   Loaded image labels:',
+                    Object.keys(window.originalImages || {})
+                  );
+                  console.log('[DEBUG LOAD] ===== loadProject: Images Loaded =====');
+
+                  // Load AI exports if they exist
+                  if (!window.aiExports) window.aiExports = {};
+                  const aiExportPromises = [];
+
+                  for (const label of labelsToProcess) {
+                    const aiSvgFile = zip.file(`exports/${label}/ai-latest.svg`);
+                    const aiJsonFile = zip.file(`exports/${label}/ai-latest.json`);
+
+                    if (aiSvgFile && aiJsonFile) {
+                      const promise = Promise.all([
+                        aiSvgFile.async('text'),
+                        aiJsonFile.async('text'),
+                      ])
+                        .then(([svg, jsonStr]) => {
                           const data = JSON.parse(jsonStr);
                           window.aiExports[label] = {
                             svg,
                             vectors: data.vectors,
                             summary: data.summary,
-                            timestamp: data.timestamp
+                            timestamp: data.timestamp,
                           };
                           console.log(`[Load Project] Loaded AI export for ${label}`);
-                        }).catch(err => {
-                          console.error(`[Load Project] Error loading AI export for ${label}:`, err);
+                        })
+                        .catch(err => {
+                          console.error(
+                            `[Load Project] Error loading AI export for ${label}:`,
+                            err
+                          );
                         });
-                        aiExportPromises.push(promise);
-                      }
+                      aiExportPromises.push(promise);
                     }
-                                        
-                    return Promise.all(aiExportPromises);
-                  })
-                  .then(() => {
-                    // Main UI update timeout
-                    setTimeout((activeProjectData) => { 
+                  }
+
+                  return Promise.all(aiExportPromises);
+                })
+                .then(() => {
+                  // Main UI update timeout
+                  setTimeout(
+                    activeProjectData => {
                       //                                             console.log('[Load Project] Main UI Update Timeout. ImageLabels:', activeProjectData.imageLabels);
                       document.getElementById('loadingIndicator')?.remove();
 
@@ -1189,50 +1435,72 @@ document.addEventListener('DOMContentLoaded', () => {
                       const preservedVisibility = {};
                       const preservedLabelVisibility = {};
                       const preservedMeasurements = {};
-                      
+
                       activeProjectData.imageLabels.forEach(label => {
                         if (window.vectorStrokesByImage && window.vectorStrokesByImage[label]) {
-                          preservedStrokeData[label] = JSON.parse(JSON.stringify(window.vectorStrokesByImage[label]));
+                          preservedStrokeData[label] = JSON.parse(
+                            JSON.stringify(window.vectorStrokesByImage[label])
+                          );
                         }
                         if (window.lineStrokesByImage && window.lineStrokesByImage[label]) {
                           preservedLineStrokes[label] = [...window.lineStrokesByImage[label]];
                         }
-                        if (window.strokeVisibilityByImage && window.strokeVisibilityByImage[label]) {
-                          preservedVisibility[label] = JSON.parse(JSON.stringify(window.strokeVisibilityByImage[label]));
+                        if (
+                          window.strokeVisibilityByImage &&
+                          window.strokeVisibilityByImage[label]
+                        ) {
+                          preservedVisibility[label] = JSON.parse(
+                            JSON.stringify(window.strokeVisibilityByImage[label])
+                          );
                         }
                         if (window.strokeLabelVisibility && window.strokeLabelVisibility[label]) {
-                          preservedLabelVisibility[label] = JSON.parse(JSON.stringify(window.strokeLabelVisibility[label]));
+                          preservedLabelVisibility[label] = JSON.parse(
+                            JSON.stringify(window.strokeLabelVisibility[label])
+                          );
                         }
                         if (window.strokeMeasurements && window.strokeMeasurements[label]) {
-                          preservedMeasurements[label] = JSON.parse(JSON.stringify(window.strokeMeasurements[label]));
+                          preservedMeasurements[label] = JSON.parse(
+                            JSON.stringify(window.strokeMeasurements[label])
+                          );
                         }
                       });
-                      
-                      console.log(`[DEBUG LOAD] Preserved stroke data for ${Object.keys(preservedStrokeData).length} images before switchToImage`);
+
+                      console.log(
+                        `[DEBUG LOAD] Preserved stroke data for ${Object.keys(preservedStrokeData).length} images before switchToImage`
+                      );
 
                       // Determine target label: prioritize first image in order, then saved currentImageLabel, then first available
                       const availableImageKeys = Object.keys(window.originalImages);
-                      const orderedLabels = window.orderedImageLabels || activeProjectData.imageLabels || [];
-                      
+                      const orderedLabels =
+                        window.orderedImageLabels || activeProjectData.imageLabels || [];
+
                       // CRITICAL: Always use the first image in the processing order (not saved currentImageLabel)
                       // This ensures the first image appears first when loading a project
-                      const firstImageInOrder = orderedLabels.find(label => availableImageKeys.includes(label));
-                      
+                      const firstImageInOrder = orderedLabels.find(label =>
+                        availableImageKeys.includes(label)
+                      );
+
                       let targetLabel;
                       if (firstImageInOrder) {
                         // Use first image in order (this is what user expects)
                         targetLabel = firstImageInOrder;
                         console.log(`[DEBUG LOAD] Using first image in order: ${targetLabel}`);
-                      } else if (activeProjectData.currentImageLabel && availableImageKeys.includes(activeProjectData.currentImageLabel)) {
+                      } else if (
+                        activeProjectData.currentImageLabel &&
+                        availableImageKeys.includes(activeProjectData.currentImageLabel)
+                      ) {
                         // Fallback to saved currentImageLabel if first image not found
                         targetLabel = activeProjectData.currentImageLabel;
                         console.log(`[DEBUG LOAD] Using saved currentImageLabel: ${targetLabel}`);
                       } else {
                         // Final fallback to first available image
-                        targetLabel = availableImageKeys.length > 0 ? availableImageKeys[0] : 'front';
+                        targetLabel =
+                          availableImageKeys.length > 0 ? availableImageKeys[0] : 'front';
                         console.log(`[DEBUG LOAD] Using first available image: ${targetLabel}`);
                       }
-                      console.log(`[DEBUG LOAD] Initial targetLabel: ${targetLabel} (orderedLabels: ${orderedLabels.slice(0, 3).join(', ')}...)`);
+                      console.log(
+                        `[DEBUG LOAD] Initial targetLabel: ${targetLabel} (orderedLabels: ${orderedLabels.slice(0, 3).join(', ')}...)`
+                      );
 
                       if (typeof window.switchToImage === 'function') {
                         window.currentImageLabel = targetLabel;
@@ -1243,30 +1511,40 @@ document.addEventListener('DOMContentLoaded', () => {
                         showStatusMessage('Error: switchToImage function missing.', 'error');
                         return;
                       }
-                      
+
                       // CRITICAL: Restore stroke data after switchToImage (in case it was cleared)
                       setTimeout(() => {
                         let restoredCount = 0;
                         activeProjectData.imageLabels.forEach(label => {
                           if (preservedStrokeData[label]) {
-                            window.vectorStrokesByImage[label] = JSON.parse(JSON.stringify(preservedStrokeData[label]));
+                            window.vectorStrokesByImage[label] = JSON.parse(
+                              JSON.stringify(preservedStrokeData[label])
+                            );
                             restoredCount++;
                           }
                           if (preservedLineStrokes[label]) {
                             window.lineStrokesByImage[label] = [...preservedLineStrokes[label]];
                           }
                           if (preservedVisibility[label]) {
-                            window.strokeVisibilityByImage[label] = JSON.parse(JSON.stringify(preservedVisibility[label]));
+                            window.strokeVisibilityByImage[label] = JSON.parse(
+                              JSON.stringify(preservedVisibility[label])
+                            );
                           }
                           if (preservedLabelVisibility[label]) {
-                            window.strokeLabelVisibility[label] = JSON.parse(JSON.stringify(preservedLabelVisibility[label]));
+                            window.strokeLabelVisibility[label] = JSON.parse(
+                              JSON.stringify(preservedLabelVisibility[label])
+                            );
                           }
                           if (preservedMeasurements[label]) {
-                            window.strokeMeasurements[label] = JSON.parse(JSON.stringify(preservedMeasurements[label]));
+                            window.strokeMeasurements[label] = JSON.parse(
+                              JSON.stringify(preservedMeasurements[label])
+                            );
                           }
                         });
-                        console.log(`[DEBUG LOAD] ✓ Restored stroke data for ${restoredCount} images after switchToImage`);
-                        
+                        console.log(
+                          `[DEBUG LOAD] ✓ Restored stroke data for ${restoredCount} images after switchToImage`
+                        );
+
                         // Force redraw to show restored strokes
                         if (typeof window.redrawCanvasWithVisibility === 'function') {
                           window.redrawCanvasWithVisibility();
@@ -1277,68 +1555,94 @@ document.addEventListener('DOMContentLoaded', () => {
                       }, 50);
 
                       try {
-                        if (typeof window.updateSidebarStrokeCounts === 'function') window.updateSidebarStrokeCounts();
+                        if (typeof window.updateSidebarStrokeCounts === 'function')
+                          window.updateSidebarStrokeCounts();
                         if (typeof window.updateScaleUI === 'function') window.updateScaleUI();
-                        if (typeof window.updateActiveImageInSidebar === 'function') window.updateActiveImageInSidebar();
-                        if (typeof window.updateStrokeVisibilityControls === 'function') window.updateStrokeVisibilityControls();
-                      } catch (uiError) { console.error('[Load Project] UI component update error:', uiError); }
+                        if (typeof window.updateActiveImageInSidebar === 'function')
+                          window.updateActiveImageInSidebar();
+                        if (typeof window.updateStrokeVisibilityControls === 'function')
+                          window.updateStrokeVisibilityControls();
+                      } catch (uiError) {
+                        console.error('[Load Project] UI component update error:', uiError);
+                      }
 
                       const currentActiveLabel = window.currentImageLabel;
-                      if (activeProjectData.imageScales && activeProjectData.imageScales[currentActiveLabel] !== undefined) {
-                        window.imageScaleByLabel[currentActiveLabel] = activeProjectData.imageScales[currentActiveLabel];
+                      if (
+                        activeProjectData.imageScales &&
+                        activeProjectData.imageScales[currentActiveLabel] !== undefined
+                      ) {
+                        window.imageScaleByLabel[currentActiveLabel] =
+                          activeProjectData.imageScales[currentActiveLabel];
                       } else window.imageScaleByLabel[currentActiveLabel] = 1.0;
                       // Force recalculation of centered positions instead of using saved positions
                       window.imagePositionByLabel[currentActiveLabel] = { x: 0, y: 0 }; // Will be recalculated by calculateFitScale
                       if (typeof window.updateScaleUI === 'function') window.updateScaleUI();
 
                       // Note: resizeCanvas will be called after all images are loaded
-                                            
+
                       // PERFORMANCE FIX: Start debounced sync instead of interval
                       queueMicrotask(() => scheduleLegacySync());
-                                            
+
                       // Final delayed actions timeout
-                      setTimeout((dataForFinalSteps) => { 
-                        //                                                 console.log('[Load Project] Final Delayed Actions Timeout. ImageLabels:', dataForFinalSteps.imageLabels);
-                                                
-                        // PERFORMANCE FIX: Non-blocking finalization with deferred tag refresh
-                        const labelsForTagRefresh = Array.isArray(dataForFinalSteps.imageLabels) ? dataForFinalSteps.imageLabels.slice() : [];
-                        finalizeLoadProcess(dataForFinalSteps);
+                      setTimeout(
+                        dataForFinalSteps => {
+                          //                                                 console.log('[Load Project] Final Delayed Actions Timeout. ImageLabels:', dataForFinalSteps.imageLabels);
 
-                        // Non-blocking tag refresh - runs after load completes
-                        (function tryTagRefresh(attempts = 0) {
-                          if (typeof window.updateTagsDisplay === 'function' && typeof window.getTagBasedFilename === 'function') {
-                            //                                                         console.log('[Load Project] Tag manager functions available, refreshing tags...');
-                            labelsForTagRefresh.forEach(label => {
-                              if (window.imageTags[label]) {
-                                try { 
-                                  window.updateTagsDisplay(label); 
-                                } catch (e) {
-                                  console.warn(`[Load Project] Error refreshing tags for ${label}:`, e);
+                          // PERFORMANCE FIX: Non-blocking finalization with deferred tag refresh
+                          const labelsForTagRefresh = Array.isArray(dataForFinalSteps.imageLabels)
+                            ? dataForFinalSteps.imageLabels.slice()
+                            : [];
+                          finalizeLoadProcess(dataForFinalSteps);
+
+                          // Non-blocking tag refresh - runs after load completes
+                          (function tryTagRefresh(attempts = 0) {
+                            if (
+                              typeof window.updateTagsDisplay === 'function' &&
+                              typeof window.getTagBasedFilename === 'function'
+                            ) {
+                              //                                                         console.log('[Load Project] Tag manager functions available, refreshing tags...');
+                              labelsForTagRefresh.forEach(label => {
+                                if (window.imageTags[label]) {
+                                  try {
+                                    window.updateTagsDisplay(label);
+                                  } catch (e) {
+                                    console.warn(
+                                      `[Load Project] Error refreshing tags for ${label}:`,
+                                      e
+                                    );
+                                  }
                                 }
-                              }
-                            });
-                          } else if (attempts < 20) {
-                            setTimeout(() => tryTagRefresh(attempts + 1), 100);
-                          } else {
-                            console.warn('[Load Project] Tag manager functions unavailable after retries; skipping tag refresh.');
-                            // Let tag-manager run a catch-up when it initializes
-                            window.__pendingTagRefresh = labelsForTagRefresh;
-                          }
-                        })();
-
-                      }, 100, activeProjectData); // Pass activeProjectData (which is parsedProjectData)
-                    }, 200, parsedProjectData); // Pass parsedProjectData to the main UI timeout
-                  }); // End of Promise.all().then()
-              }); // End of projectJsonFile.async().then()
+                              });
+                            } else if (attempts < 20) {
+                              setTimeout(() => tryTagRefresh(attempts + 1), 100);
+                            } else {
+                              console.warn(
+                                '[Load Project] Tag manager functions unavailable after retries; skipping tag refresh.'
+                              );
+                              // Let tag-manager run a catch-up when it initializes
+                              window.__pendingTagRefresh = labelsForTagRefresh;
+                            }
+                          })();
+                        },
+                        100,
+                        activeProjectData
+                      ); // Pass activeProjectData (which is parsedProjectData)
+                    },
+                    200,
+                    parsedProjectData
+                  ); // Pass parsedProjectData to the main UI timeout
+                }); // End of Promise.all().then()
+            }); // End of projectJsonFile.async().then()
           }) // End of JSZip.loadAsync().then()
-          .catch(err => { // Catch for JSZip.loadAsync() and its chained promises
+          .catch(err => {
+            // Catch for JSZip.loadAsync() and its chained promises
             window.isLoadingProject = false;
             document.getElementById('loadingIndicator')?.remove();
             console.error('Error loading project from ZIP (outer catch):', err);
             showStatusMessage(`Error loading project: ${err.message}`, 'error');
           });
       }; // End of reader.onload
-      reader.onerror = function(e) {
+      reader.onerror = function (e) {
         // *** CLEAR LOADING FLAG (Reader Error) ***
         window.isLoadingProject = false;
         //                 console.log('[Load Project] Set isLoadingProject = false (Reader Error)');
@@ -1347,17 +1651,17 @@ document.addEventListener('DOMContentLoaded', () => {
         if (loadingIndicator.parentNode) {
           loadingIndicator.parentNode.removeChild(loadingIndicator);
         }
-                
+
         console.error('Error reading file:', e);
         showStatusMessage('Error reading file', 'error');
       };
       reader.readAsArrayBuffer(file);
     };
-        
+
     // Trigger file selection
     input.click();
   }
-    
+
   // Function to show status message
   function showStatusMessage(message, type = 'info') {
     // Get or create status element
@@ -1383,11 +1687,11 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
       document.body.appendChild(statusElement);
     }
-        
+
     // Set message and type
     statusElement.textContent = message;
     statusElement.style.opacity = '1';
-    
+
     // Add spinner for loading type
     if (type === 'loading') {
       if (!statusElement.querySelector('.spinner')) {
@@ -1422,7 +1726,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const spinner = statusElement.querySelector('.spinner');
       if (spinner) spinner.remove();
     }
-        
+
     // Set color based on message type
     switch (type) {
       case 'success':
@@ -1439,7 +1743,7 @@ document.addEventListener('DOMContentLoaded', () => {
         statusElement.style.backgroundColor = '#2196F3';
         break;
     }
-        
+
     // Hide after a timeout (don't auto-hide loading messages)
     clearTimeout(statusElement.timer);
     if (type !== 'loading') {
@@ -1448,15 +1752,16 @@ document.addEventListener('DOMContentLoaded', () => {
       }, 3000);
     }
   }
-    
+
   // Make these functions available globally if needed
   window.projectManager = {
     saveProject,
     loadProject,
-    showStatusMessage
+    showStatusMessage,
   };
 
-  function finalizeLoadProcess(dataForFinalSteps) { // ADDED FUNCTION
+  function finalizeLoadProcess(dataForFinalSteps) {
+    // ADDED FUNCTION
     //         console.log('[Load Project] Finalizing load process...');
 
     // *** ADDED: Loop to update sidebar label text and scale text ***
@@ -1464,12 +1769,19 @@ document.addEventListener('DOMContentLoaded', () => {
       //             console.log('[Load Project] Updating sidebar label text and scale text...');
       dataForFinalSteps.imageLabels.forEach(label => {
         // Update Label Text (prefer custom names)
-        const labelElement = document.querySelector(`.image-container[data-label="${label}"] .image-label`);
+        const labelElement = document.querySelector(
+          `.image-container[data-label="${label}"] .image-label`
+        );
         if (labelElement) {
-          const displayName = (typeof window.getUserFacingImageName === 'function')
-            ? window.getUserFacingImageName(label)
-            : (typeof window.getTagBasedFilename === 'function' ? window.getTagBasedFilename(label, label.split('_')[0]) : label);
-          const newText = displayName ? displayName.charAt(0).toUpperCase() + displayName.slice(1) : label;
+          const displayName =
+            typeof window.getUserFacingImageName === 'function'
+              ? window.getUserFacingImageName(label)
+              : typeof window.getTagBasedFilename === 'function'
+                ? window.getTagBasedFilename(label, label.split('_')[0])
+                : label;
+          const newText = displayName
+            ? displayName.charAt(0).toUpperCase() + displayName.slice(1)
+            : label;
           labelElement.textContent = newText;
         }
         // Silently skip if label element doesn't exist (e.g., default labels without images, or during reordering)
@@ -1477,7 +1789,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Update Scale Text
         const scaleElement = document.getElementById(`scale-${label}`);
         if (scaleElement) {
-          const scaleValue = window.imageScaleByLabel[label] !== undefined ? window.imageScaleByLabel[label] : 1.0;
+          const scaleValue =
+            window.imageScaleByLabel[label] !== undefined ? window.imageScaleByLabel[label] : 1.0;
           const scaleText = `Scale: ${Math.round(scaleValue * 100)}%`;
           //                     console.log(`  Updating scale text for ${label} to: "${scaleText}"`);
           scaleElement.textContent = scaleText;
@@ -1485,7 +1798,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Silently skip if scale element doesn't exist (e.g., default labels without images, or during reordering)
       });
     } else {
-      console.warn('[Load Project] Could not update sidebar label/scale text. Necessary functions or data missing.');
+      console.warn(
+        '[Load Project] Could not update sidebar label/scale text. Necessary functions or data missing.'
+      );
     }
     // *** END ADDED BLOCK ***
 
@@ -1503,13 +1818,18 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('[Load Project] Neither resizeCanvas nor redrawCanvasWithVisibility available');
       }
     }
-        
+
     // Additional fallback: force centering by calling calculateFitScale directly
     if (typeof window.calculateFitScale === 'function' && window.currentImageLabel) {
       console.log('[Load Project] Fallback: calling calculateFitScale directly for current image');
       const fitResult = window.calculateFitScale('fit-width'); // or appropriate fit mode
       if (fitResult && fitResult.position && window.imagePositionByLabel) {
-        console.log('[Load Project] Updating position for', window.currentImageLabel, 'to', fitResult.position);
+        console.log(
+          '[Load Project] Updating position for',
+          window.currentImageLabel,
+          'to',
+          fitResult.position
+        );
         window.imagePositionByLabel[window.currentImageLabel] = fitResult.position;
         // Trigger a redraw
         if (typeof window.redrawCanvasWithVisibility === 'function') {
@@ -1525,33 +1845,35 @@ document.addEventListener('DOMContentLoaded', () => {
         const currentMeasurements = window.strokeMeasurements[label] || {};
         const loadedMeasurements = dataForFinalSteps.strokeMeasurements[label] || {};
         if (JSON.stringify(currentMeasurements) !== JSON.stringify(loadedMeasurements)) {
-          console.warn(`   MEASUREMENT MISMATCH for ${label}! App: ${JSON.stringify(currentMeasurements)}, Loaded: ${JSON.stringify(loadedMeasurements)}`);
+          console.warn(
+            `   MEASUREMENT MISMATCH for ${label}! App: ${JSON.stringify(currentMeasurements)}, Loaded: ${JSON.stringify(loadedMeasurements)}`
+          );
         } else {
           //                     console.log(`   ✓ Measurements verified for ${label}`);
         }
       });
-    } catch(validationError) {
+    } catch (validationError) {
       console.error('[Load Project] Final validation error:', validationError);
     }
-        
+
     // Update progress to complete
     const progressBar = document.getElementById('loadProgressBar');
     if (progressBar) progressBar.style.width = '100%';
-        
+
     // Remove loading indicator
     const loadingIndicator = document.getElementById('loadingIndicator');
     if (loadingIndicator && loadingIndicator.parentNode) {
       loadingIndicator.parentNode.removeChild(loadingIndicator);
     }
-        
+
     window.isLoadingProject = false;
     showStatusMessage('Project loaded successfully.', 'success');
-    
+
     // Auto-fix text rotation for loaded text elements
     if (typeof window.autoFixTextRotation === 'function') {
       setTimeout(window.autoFixTextRotation, 100);
     }
-    
+
     //         console.log('[Load Project] Complete.');
   }
 });

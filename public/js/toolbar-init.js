@@ -498,67 +498,87 @@
 
   // Setup quick save hover menu functionality
   function setupQuickSaveHover() {
-    // Quick Save hover menu (bottom panel)
     const quickSave = document.getElementById('quickSave');
     const quickSaveBtn = document.getElementById('quickSaveBtn');
     const quickSaveMenu = document.getElementById('quickSaveMenu');
 
-    console.log('Setting up quick save hover:', { quickSave, quickSaveBtn, quickSaveMenu });
-
-    if (quickSave && quickSaveBtn && quickSaveMenu) {
-      // Click: Save current image (reuses existing 'save' button)
-      quickSaveBtn.addEventListener('click', () => {
-        console.log('Quick save clicked');
-        const saveButton = document.getElementById('save');
-        if (saveButton) saveButton.click();
-      });
-
-      let hideTimer = null;
-      const showMenu = () => {
-        if (hideTimer) {
-          clearTimeout(hideTimer);
-          hideTimer = null;
-        }
-        quickSaveMenu.classList.remove('hidden');
-      };
-      const scheduleHide = () => {
-        if (hideTimer) clearTimeout(hideTimer);
-        hideTimer = setTimeout(() => {
-          quickSaveMenu.classList.add('hidden');
-          hideTimer = null;
-        }, 200); // small delay prevents flicker when moving cursor to menu
-      };
-
-      // Hover to show menu on the trigger container
-      quickSave.addEventListener('mouseenter', showMenu);
-      quickSave.addEventListener('mouseleave', scheduleHide);
-
-      // Keep the menu open while hovering the menu; hide after leaving it
-      quickSaveMenu.addEventListener('mouseenter', showMenu);
-      quickSaveMenu.addEventListener('mouseleave', scheduleHide);
-
-      // Menu actions
-      quickSaveMenu.addEventListener('click', e => {
-        const item = e.target.closest('[data-action]');
-        if (!item) return;
-        const action = item.dataset.action;
-        console.log('Quick save menu action:', action);
-
-        if (action === 'pdf') {
-          const projectName = document.getElementById('projectName')?.value || 'Untitled Project';
-          if (typeof window.showPDFExportDialog === 'function') {
-            window.showPDFExportDialog(projectName);
-          }
-        } else if (action === 'multiple') {
-          if (typeof window.saveAllImages === 'function') {
-            window.saveAllImages();
-          }
-        }
-      });
-      console.log('Quick save hover menu setup complete');
-    } else {
+    if (!quickSave || !quickSaveBtn || !quickSaveMenu) {
       console.error('Quick save elements not found:', { quickSave, quickSaveBtn, quickSaveMenu });
+      return;
     }
+
+    if (quickSave.__quickSaveBound) {
+      return;
+    }
+    quickSave.__quickSaveBound = true;
+
+    const triggerSaveOnce = () => {
+      const saveButton = document.getElementById('save');
+      if (!saveButton) {
+        console.warn('[QuickSave] Save button not found');
+        return;
+      }
+      if (saveButton.__quickSaveInFlight) {
+        return;
+      }
+      saveButton.__quickSaveInFlight = true;
+      if (typeof saveButton.click === 'function') {
+        saveButton.click();
+      } else {
+        saveButton.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      }
+      setTimeout(() => {
+        saveButton.__quickSaveInFlight = false;
+      }, 500);
+    };
+
+    quickSaveBtn.addEventListener('click', event => {
+      event.preventDefault();
+      event.stopPropagation();
+      triggerSaveOnce();
+    });
+
+    let hideTimer = null;
+    const showMenu = () => {
+      if (hideTimer) {
+        clearTimeout(hideTimer);
+        hideTimer = null;
+      }
+      quickSaveMenu.classList.remove('hidden');
+    };
+    const scheduleHide = () => {
+      if (hideTimer) clearTimeout(hideTimer);
+      hideTimer = setTimeout(() => {
+        quickSaveMenu.classList.add('hidden');
+        hideTimer = null;
+      }, 200);
+    };
+
+    quickSave.addEventListener('mouseenter', showMenu);
+    quickSave.addEventListener('mouseleave', scheduleHide);
+    quickSaveMenu.addEventListener('mouseenter', showMenu);
+    quickSaveMenu.addEventListener('mouseleave', scheduleHide);
+
+    quickSaveMenu.addEventListener('click', e => {
+      const item = e.target.closest('[data-action]');
+      if (!item) return;
+      const action = item.dataset.action;
+
+      if (action === 'pdf') {
+        const projectName = document.getElementById('projectName')?.value || 'Untitled Project';
+        if (typeof window.showPDFExportDialog === 'function') {
+          window.showPDFExportDialog(projectName);
+        } else {
+          console.error('[QuickSave] window.showPDFExportDialog is not a function');
+        }
+      } else if (action === 'multiple') {
+        if (typeof window.saveAllImages === 'function') {
+          window.saveAllImages();
+        } else {
+          console.error('[QuickSave] window.saveAllImages is not a function');
+        }
+      }
+    });
   }
 
   // Expose functions globally
