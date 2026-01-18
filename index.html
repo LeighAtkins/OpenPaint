@@ -496,8 +496,16 @@
       }
 
       .shape-toggle.shape-disabled {
-        opacity: 0.5;
+        opacity: 0.7;
+      }
+
+      .shape-toggle.shape-disabled .shape-menu {
         pointer-events: none;
+      }
+
+      .shape-toggle.shape-disabled #shapeModeToggle {
+        pointer-events: auto;
+        cursor: pointer;
       }
 
       .shape-toggle .shape-menu {
@@ -517,8 +525,37 @@
       }
 
       .shape-toggle.shape-active.shape-open .shape-menu,
-      .shape-toggle.shape-active:focus-within .shape-menu {
+      .shape-toggle.shape-active:focus-within .shape-menu,
+      .text-mode-toggle.shape-open .shape-menu {
         display: flex;
+      }
+
+      .text-mode-toggle .tbtn {
+        border-color: #cbd5e1;
+        color: #475569;
+        background: #f8fafc;
+      }
+
+      .text-mode-toggle.shape-active .tbtn {
+        border-color: #3b82f6;
+        color: #1d4ed8;
+        background: #eff6ff;
+      }
+
+      .text-mode-toggle .shape-icon {
+        font-size: 14px;
+      }
+
+      .text-mode-toggle.text-size-small .shape-icon {
+        font-size: 10px;
+      }
+
+      .text-mode-toggle.text-size-medium .shape-icon {
+        font-size: 12px;
+      }
+
+      .text-mode-toggle.text-size-large .shape-icon {
+        font-size: 14px;
       }
 
       .shape-toggle .shape-menu button {
@@ -532,12 +569,30 @@
         border-radius: 6px;
         font-size: 12px;
         cursor: pointer;
+        outline: none;
+        color: #374151;
+        transition: background 0.15s, border-color 0.15s;
+      }
+
+      .shape-toggle .shape-menu button:hover:not(.active) {
+        background: #f3f4f6;
+        border-color: #d1d5db;
+      }
+
+      .shape-toggle .shape-menu button:focus-visible {
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
       }
 
       .shape-toggle .shape-menu button.active {
         border-color: #3b82f6;
         background: #eff6ff;
         color: #1d4ed8;
+        font-weight: 500;
+      }
+
+      .shape-toggle .shape-menu button.active::before {
+        content: '✓ ';
+        font-weight: bold;
       }
 
       #projectName {
@@ -592,7 +647,26 @@
       .color-swatches {
         display: flex;
         align-items: center;
-        gap: 4px;
+        gap: 8px;
+      }
+
+      .text-bg-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 11px;
+        font-weight: 600;
+        color: #334155;
+        background: #ffffff;
+        border: 1px solid #cbd5f5;
+        border-radius: 999px;
+        padding: 4px 8px;
+        cursor: pointer;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+      }
+
+      .text-bg-toggle-input {
+        accent-color: #3b82f6;
       }
 
       .color-swatches button {
@@ -1928,17 +2002,34 @@
             <span class="label-long">Upload Images</span><span class="label-short">Upload</span>
           </button>
           <button id="clear" class="tbtn">Clear</button>
-          <button
-            id="drawingModeToggle"
-            class="tbtn straight-mode"
-            title="Straight Line"
-            aria-label="Straight Line"
-          >
-            <span class="label-long">Straight Line</span><span class="label-short">Straight</span>
-          </button>
-          <button id="textModeToggle" class="tbtn" title="Text Tool" aria-label="Text Tool">
-            <span class="label-long">Text</span><span class="label-short">Text</span>
-          </button>
+          <div id="drawingModeWrapper" class="shape-toggle shape-active">
+            <button
+              id="drawingModeToggle"
+              class="tbtn straight-mode"
+              title="Drawing Mode"
+              aria-label="Drawing Mode"
+              aria-pressed="true"
+            >
+              <span class="label-long">Straight Line</span><span class="label-short">Straight</span>
+              <span class="shape-icon" aria-hidden="true">▾</span>
+            </button>
+            <div class="shape-menu" id="drawingModeMenu">
+              <button type="button" data-drawing-mode="line">Straight Line</button>
+              <button type="button" data-drawing-mode="curve">Curved Line</button>
+              <button type="button" data-drawing-mode="select">Select</button>
+            </div>
+          </div>
+          <div id="textModeWrapper" class="shape-toggle text-mode-toggle">
+            <button id="textModeToggle" class="tbtn" title="Text Tool" aria-label="Text Tool">
+              <span class="label-long">Text</span><span class="label-short">Text</span>
+              <span class="shape-icon" aria-hidden="true">▾</span>
+            </button>
+            <div class="shape-menu" id="textModeMenu">
+              <button type="button" data-text-size="small">Small</button>
+              <button type="button" data-text-size="medium">Medium</button>
+              <button type="button" data-text-size="large">Large</button>
+            </div>
+          </div>
           <div id="shapeModeWrapper" class="shape-toggle shape-disabled">
             <button
               id="shapeModeToggle"
@@ -1960,6 +2051,7 @@
               </button>
             </div>
           </div>
+
           <div class="color-swatches">
             <button
               class="active tbtn"
@@ -2456,7 +2548,7 @@
               Clear
             </button>
             <button
-              id="paste"
+              id="paste-secondary"
               class="px-4 py-2.5 bg-primary-500 hover:bg-primary-600 active:bg-primary-700 text-white text-sm font-semibold rounded-xl shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-105 active:scale-95"
               title="Upload Images"
               aria-label="Upload Images"
@@ -2538,22 +2630,40 @@
 
           <!-- Drawing Mode & Controls -->
           <div class="flex items-center gap-4">
-            <button
-              id="drawingModeToggle"
-              class="px-4 py-2.5 bg-white border-2 border-success-500 text-success-600 text-sm font-semibold rounded-xl hover:bg-success-50 hover:border-success-600 active:bg-success-100 transition-all duration-200 transform hover:scale-105 active:scale-95 straight-mode shadow-sm"
-              title="Straight Line"
-              aria-label="Straight Line"
-            >
-              <span class="label-long">Straight Line</span><span class="label-short">Straight</span>
-            </button>
-            <button
-              id="textModeToggle"
-              class="px-4 py-2.5 bg-white border-2 border-slate-400 text-slate-700 text-sm font-semibold rounded-xl hover:bg-slate-50 hover:border-slate-500 active:bg-slate-100 transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-sm"
-              title="Text Tool"
-              aria-label="Text Tool"
-            >
-              <span class="label-long">Text</span><span class="label-short">Text</span>
-            </button>
+          <div id="drawingModeWrapper" class="shape-toggle shape-active">
+
+              <button
+                id="drawingModeToggle"
+                class="px-4 py-2.5 bg-white border-2 border-success-500 text-success-600 text-sm font-semibold rounded-xl hover:bg-success-50 hover:border-success-600 active:bg-success-100 transition-all duration-200 transform hover:scale-105 active:scale-95 straight-mode shadow-sm"
+                title="Drawing Mode"
+                aria-label="Drawing Mode"
+                aria-pressed="true"
+              >
+                <span class="label-long">Straight Line</span><span class="label-short">Straight</span>
+                <span class="shape-icon" aria-hidden="true">▾</span>
+              </button>
+              <div class="shape-menu" id="drawingModeMenu">
+                <button type="button" data-drawing-mode="line">Straight Line</button>
+                <button type="button" data-drawing-mode="curve">Curved Line</button>
+                <button type="button" data-drawing-mode="select">Select</button>
+              </div>
+            </div>
+            <div id="textModeWrapper" class="shape-toggle text-mode-toggle">
+              <button
+                id="textModeToggle"
+                class="px-4 py-2.5 bg-white border-2 border-slate-400 text-slate-700 text-sm font-semibold rounded-xl hover:bg-slate-50 hover:border-slate-500 active:bg-slate-100 transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-sm"
+                title="Text Tool"
+                aria-label="Text Tool"
+              >
+                <span class="label-long">Text</span><span class="label-short">Text</span>
+                <span class="shape-icon" aria-hidden="true">▾</span>
+              </button>
+              <div class="shape-menu" id="textModeMenu">
+                <button type="button" data-text-size="small">Small</button>
+                <button type="button" data-text-size="medium">Medium</button>
+                <button type="button" data-text-size="large">Large</button>
+              </div>
+            </div>
             <div id="shapeModeWrapper" class="shape-toggle shape-disabled">
               <button
                 id="shapeModeToggle"
@@ -2574,6 +2684,8 @@
                   Fill: Solid
                 </button>
               </div>
+            </div>
+
             </div>
           </div>
 
@@ -3194,6 +3306,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="/js/paint_backup.js"></script>
+    <script src="/js/project-manager.js"></script>
+    <script type="module" src="/js/modules/main.js"></script>
 
     <!-- New UI Controller Script -->
     <script>
@@ -3581,76 +3696,6 @@
         document.body.style.paddingTop = '48px';
       }
 
-      // Setup quick save hover menu functionality
-      function setupQuickSaveHover() {
-        // Quick Save hover menu (bottom panel)
-        const quickSave = document.getElementById('quickSave');
-        const quickSaveBtn = document.getElementById('quickSaveBtn');
-        const quickSaveMenu = document.getElementById('quickSaveMenu');
-
-        console.log('Setting up quick save hover:', { quickSave, quickSaveBtn, quickSaveMenu });
-
-        if (quickSave && quickSaveBtn && quickSaveMenu) {
-          // Click: Save current image (reuses existing 'save' button)
-          quickSaveBtn.addEventListener('click', () => {
-            console.log('Quick save clicked');
-            const saveButton = document.getElementById('save');
-            if (saveButton) saveButton.click();
-          });
-
-          let hideTimer = null;
-          const showMenu = () => {
-            if (hideTimer) {
-              clearTimeout(hideTimer);
-              hideTimer = null;
-            }
-            quickSaveMenu.classList.remove('hidden');
-          };
-          const scheduleHide = () => {
-            if (hideTimer) clearTimeout(hideTimer);
-            hideTimer = setTimeout(() => {
-              quickSaveMenu.classList.add('hidden');
-              hideTimer = null;
-            }, 200); // small delay prevents flicker when moving cursor to menu
-          };
-
-          // Hover to show menu on the trigger container
-          quickSave.addEventListener('mouseenter', showMenu);
-          quickSave.addEventListener('mouseleave', scheduleHide);
-
-          // Keep the menu open while hovering the menu; hide after leaving it
-          quickSaveMenu.addEventListener('mouseenter', showMenu);
-          quickSaveMenu.addEventListener('mouseleave', scheduleHide);
-
-          // Menu actions
-          quickSaveMenu.addEventListener('click', e => {
-            const item = e.target.closest('[data-action]');
-            if (!item) return;
-            const action = item.dataset.action;
-            console.log('Quick save menu action:', action);
-
-            if (action === 'pdf') {
-              const projectName =
-                document.getElementById('projectName')?.value || 'Untitled Project';
-              if (typeof window.showPDFExportDialog === 'function') {
-                window.showPDFExportDialog(projectName);
-              }
-            } else if (action === 'multiple') {
-              if (typeof window.saveAllImages === 'function') {
-                window.saveAllImages();
-              }
-            }
-          });
-          console.log('Quick save hover menu setup complete');
-        } else {
-          console.error('Quick save elements not found:', {
-            quickSave,
-            quickSaveBtn,
-            quickSaveMenu,
-          });
-        }
-      }
-
       // Extracted helper function to check if container needs compact mode
       // NOTE: Toolbar containers are now handled by data-toolbar-mode attribute
       // This function only applies to non-toolbar smart-label-scope containers
@@ -3878,6 +3923,7 @@
         }, 150);
 
         // Global function to update drawing mode toggle labels
+        // Note: Freehand mode has been removed - cycle is now: Straight Line -> Curved Line -> Select
         window.updateDrawingModeLabels = function (mode) {
           const toggle = document.getElementById('drawingModeToggle');
           if (!toggle) return;
@@ -3885,29 +3931,23 @@
           const longSpan = toggle.querySelector('.label-long');
           const shortSpan = toggle.querySelector('.label-short');
 
-          if (mode === true || mode === 'freehand') {
-            const longText = 'Freehand';
-            const shortText = 'Free';
-            if (longSpan) longSpan.textContent = longText;
-            if (shortSpan) shortSpan.textContent = shortText;
-            toggle.setAttribute('title', longText);
-            toggle.setAttribute('aria-label', longText);
-          } else if (mode === 'curved') {
-            const longText = 'Curved Line';
-            const shortText = 'Curved';
-            if (longSpan) longSpan.textContent = longText;
-            if (shortSpan) shortSpan.textContent = shortText;
-            toggle.setAttribute('title', longText);
-            toggle.setAttribute('aria-label', longText);
+          let longText, shortText;
+          if (mode === 'curved') {
+            longText = 'Curved Line';
+            shortText = 'Curved';
+          } else if (mode === 'select') {
+            longText = 'Select';
+            shortText = 'Select';
           } else {
-            // Straight mode (false or 'straight')
-            const longText = 'Straight Line';
-            const shortText = 'Straight';
-            if (longSpan) longSpan.textContent = longText;
-            if (shortSpan) shortSpan.textContent = shortText;
-            toggle.setAttribute('title', longText);
-            toggle.setAttribute('aria-label', longText);
+            // Default: Straight mode (false, 'straight', true, 'freehand' all map to Straight Line)
+            longText = 'Straight Line';
+            shortText = 'Straight';
           }
+
+          if (longSpan) longSpan.textContent = longText;
+          if (shortSpan) shortSpan.textContent = shortText;
+          toggle.setAttribute('title', longText);
+          toggle.setAttribute('aria-label', longText);
 
           // Re-check container after label change
           const container = toggle.closest('.smart-label-scope');
@@ -3962,9 +4002,6 @@
             setTimeout(doLayoutCalculation, 50);
           }
         });
-
-        // Setup quick save hover menu after toolbar initialization (with small delay)
-        setTimeout(setupQuickSaveHover, 100);
 
         // (Sketchbook toggle removed per request)
         // Panel visibility toggles
@@ -5479,10 +5516,16 @@
             return;
           }
 
+          if (imageGallery.querySelector(`[data-image-src="${imageSrc}"]`)) {
+            console.log('[Gallery] Skipping duplicate image:', imageSrc);
+            return;
+          }
+
           // Create image thumbnail
           const thumbnail = document.createElement('div');
           thumbnail.className = 'image-thumbnail';
           thumbnail.dataset.imageIndex = index;
+          thumbnail.dataset.imageSrc = imageSrc;
           thumbnail.style.backgroundImage = `url(${imageSrc})`;
           thumbnail.title = imageName;
           thumbnail.draggable = true;
@@ -7315,6 +7358,10 @@
 
           // Check if paint.js has loaded and defined its own addImageToSidebar
           if (window.addImageToSidebar && typeof window.addImageToSidebar === 'function') {
+            if (window.addImageToSidebar.__galleryHooked) {
+              return true;
+            }
+
             console.log(
               '[HOOK] Found original addImageToSidebar from paint.js, hooking into it...'
             );
@@ -7528,11 +7575,25 @@
 
                 addImageToGallery(imageData, index);
                 console.log('[HOOK] Added to new gallery at index', index);
+
+                // Register with Fabric.js ProjectManager to set background image
+                if (window.app && window.app.projectManager) {
+                  const pm = window.app.projectManager;
+                  // Use full label (e.g., 'front_1') as the view ID to support multiple images
+                  const viewId = label;
+                  console.log(
+                    '[HOOK] Registering image with ProjectManager:',
+                    viewId,
+                    imageUrl.substring(0, 50)
+                  );
+                  pm.addImage(viewId, imageUrl, { refreshBackground: false }); // Don't auto-refresh, let switchView handle it
+                }
               }
 
               return result;
             };
 
+            window.addImageToSidebar.__galleryHooked = true;
             console.log('[HOOK] Successfully hooked addImageToSidebar');
             return true;
           } else if (hookAttempts < maxHookAttempts) {
@@ -9295,14 +9356,16 @@
             >
               Generate
             </button>
-            <button
-              type="button"
-              onclick="document.getElementById('ai-calibration-dialog').close()"
-              class="flex-1 px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-700 font-semibold rounded-lg transition-colors"
-            >
-              Cancel
-            </button>
+              <button
+                type="button"
+                class="shape-fill-toggle"
+                data-shape-fill-toggle="true"
+              >
+                Fill: Solid
+              </button>
+            </div>
           </div>
+
         </form>
       </div>
     </dialog>
@@ -9361,7 +9424,6 @@
 
     <!-- Load AI Integration Module -->
     <script src="/js/ai-integration.js"></script>
-    <script type="module" src="/js/modules/main.js"></script>
 
     <script>
       // Enhanced status message with loading support

@@ -289,6 +289,49 @@ class App {
     }
   }
 
+  updateSelectedTextAndShapes({ color, strokeWidth, fontSize }) {
+    if (!this.canvasManager.fabricCanvas) return;
+
+    const activeObjects = this.canvasManager.fabricCanvas.getActiveObjects();
+    if (activeObjects.length === 0) return;
+
+    let updatedCount = 0;
+    const shapeTool = this.toolManager?.tools?.shape;
+    const textBgEnabled = window.textBgEnabled === true;
+
+    activeObjects.forEach(obj => {
+      if (!obj) return;
+
+      if (obj.type === 'i-text' || obj.type === 'text') {
+        if (color) {
+          obj.set('fill', color);
+          obj.set('stroke', '#000000');
+        }
+        if (fontSize) {
+          obj.set('fontSize', fontSize);
+        }
+        obj.set('backgroundColor', textBgEnabled ? '#ffffff' : 'transparent');
+        obj.dirty = true;
+        updatedCount++;
+        return;
+      }
+
+      if (obj.strokeMetadata?.type === 'shape') {
+        const baseColor = color || obj.stroke || shapeTool?.strokeColor || '#3b82f6';
+        obj.set({ fill: 'rgba(0,0,0,0)', stroke: baseColor });
+        if (strokeWidth) {
+          obj.set('strokeWidth', strokeWidth);
+        }
+        obj.dirty = true;
+        updatedCount++;
+      }
+    });
+
+    if (updatedCount > 0) {
+      this.canvasManager.fabricCanvas.requestRenderAll();
+    }
+  }
+
   updateSelectedShapesFill(style) {
     if (!this.canvasManager.fabricCanvas) return;
 
@@ -323,44 +366,81 @@ class App {
     if (redoBtn) redoBtn.addEventListener('click', () => this.historyManager.redo());
 
     // Tools
-    const drawingModeToggle = document.getElementById('drawingModeToggle');
-    const textModeToggle = document.getElementById('textModeToggle');
+    const drawingModeToggles = document.querySelectorAll('#drawingModeToggle');
+    const textModeToggles = document.querySelectorAll('#textModeToggle');
+    const textModeWrappers = document.querySelectorAll('#textModeWrapper');
+    const textModeOptions = document.querySelectorAll('[data-text-size]');
     const clearBtn = document.getElementById('clear');
 
-    if (drawingModeToggle) {
-      drawingModeToggle.addEventListener('click', () => {
-        // Cycle through: Straight Line -> Curved Line -> Shapes -> Select -> Straight Line
-        const currentTool = this.toolManager.activeTool;
-        if (currentTool === this.toolManager.tools.line) {
-          // Straight Line -> Curved Line
-          this.toolManager.selectTool('curve');
-          this.updateToggleLabel(drawingModeToggle, 'Curved Line');
-        } else if (currentTool === this.toolManager.tools.curve) {
-          // Curved Line -> Shapes
-          this.toolManager.selectTool('shape');
-          this.updateToggleLabel(drawingModeToggle, 'Shapes');
-        } else if (currentTool === this.toolManager.tools.shape) {
-          // Shapes -> Select
-          this.toolManager.selectTool('select');
-          this.updateToggleLabel(drawingModeToggle, 'Select');
-        } else {
-          // Select (or any other tool) -> Straight Line
-          this.toolManager.selectTool('line');
-          this.updateToggleLabel(drawingModeToggle, 'Straight Line');
+    const textToolSizeMultipliers = {
+      small: 0.75,
+      medium: 1,
+      large: 1.35,
+    };
+
+    const getCurrentTextSize = () => {
+      const viewId = window.app?.projectManager?.currentViewId;
+      const base = viewId ? window.originalImageDimensions?.[viewId] : null;
+      const baseWidth = base?.width || 1200;
+      return Math.max(12, Math.round((baseWidth / 1200) * 12));
+    };
+
+    const syncTextCursor = () => {
+      const canvasEl = document.getElementById('canvas');
+      if (!canvasEl) return;
+      const isText = this.toolManager.activeTool === this.toolManager.tools.text;
+      canvasEl.style.cursor = isText ? 'text' : 'crosshair';
+    };
+
+    const updateTextToggleState = () => {
+      const isText = this.toolManager.activeTool === this.toolManager.tools.text;
+      textModeWrappers.forEach(wrapper => {
+        wrapper.classList.toggle('shape-active', isText);
+        if (!isText) {
+          wrapper.classList.remove('shape-open');
         }
       });
-    }
-
-    if (textModeToggle) {
-      textModeToggle.addEventListener('click', () => {
-        this.toolManager.selectTool('text');
+      textModeToggles.forEach(toggle => {
+        toggle.setAttribute('aria-pressed', String(isText));
+        toggle.classList.toggle('shape-inactive', !isText);
       });
-    }
+    };
+
+    const updateDrawingToggleLabels = text => {
+      drawingModeToggles.forEach(toggle => this.updateToggleLabel(toggle, text));
+    };
+
+    drawingModeToggles.forEach(toggle => {
+      toggle.addEventListener('click', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        const wrapper = toggle.closest('.shape-toggle');
+        if (wrapper) wrapper.classList.toggle('shape-open');
+      });
+    });
+
+    textModeToggles.forEach(toggle => {
+      toggle.addEventListener('click', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        const wrapper = toggle.closest('.shape-toggle');
+        if (wrapper) wrapper.classList.toggle('shape-open');
+        this.toolManager.previousToolName = this.toolManager.activeToolName || 'line';
+        this.toolManager.selectTool('text');
+        syncTextCursor();
+        updateTextToggleState();
+      });
+    });
 
     const shapeModeToggles = document.querySelectorAll('#shapeModeToggle');
     const shapeModeWrappers = document.querySelectorAll('#shapeModeWrapper');
     const shapeOptions = document.querySelectorAll('[data-shape-option]');
     const shapeFillToggles = document.querySelectorAll('[data-shape-fill-toggle]');
+    const textStyleWrappers = document.querySelectorAll('#textStyleWrapper');
+    const textStyleOptions = document.querySelectorAll('[data-text-style]');
+    const drawingModeWrappers = document.querySelectorAll('#drawingModeWrapper');
+    const drawingModeOptions = document.querySelectorAll('[data-drawing-mode]');
+    const textStyleToggles = document.querySelectorAll('#textStyleToggle');
     const shapeFillStyles = ['solid', 'no-fill', 'clear-black', 'clear-color', 'clear-white'];
     const shapeFillLabels = {
       solid: 'Solid',
@@ -375,6 +455,16 @@ class App {
       circle: '●',
       star: '★',
     };
+
+    // Shape button click - activate shape tool and store previous tool
+    shapeModeToggles.forEach(toggle => {
+      toggle.addEventListener('click', () => {
+        // Store previous tool name for returning after drawing
+        const currentToolName = this.toolManager.activeToolName || 'line';
+        this.toolManager.previousToolName = currentToolName;
+        this.toolManager.selectTool('shape');
+      });
+    });
 
     const updateShapeIcon = shape => {
       shapeModeToggles.forEach(toggle => {
@@ -411,11 +501,11 @@ class App {
       this.updateSelectedShapesFill(style);
     };
 
-    const bindShapeMenu = wrapper => {
+    const bindShapeMenu = (wrapper, shouldShow) => {
       let hideTimer = null;
 
       const showMenu = () => {
-        if (this.toolManager.activeTool !== this.toolManager.tools.shape) return;
+        if (shouldShow && !shouldShow()) return;
         if (hideTimer) {
           clearTimeout(hideTimer);
           hideTimer = null;
@@ -435,7 +525,12 @@ class App {
       wrapper.addEventListener('mouseleave', scheduleHide);
     };
 
-    shapeModeWrappers.forEach(bindShapeMenu);
+    shapeModeWrappers.forEach(wrapper =>
+      bindShapeMenu(wrapper, () => this.toolManager.activeTool === this.toolManager.tools.shape)
+    );
+    textStyleWrappers.forEach(wrapper => bindShapeMenu(wrapper));
+    drawingModeWrappers.forEach(wrapper => bindShapeMenu(wrapper));
+    textModeWrappers.forEach(wrapper => bindShapeMenu(wrapper, () => true));
 
     if (this.toolManager.tools.shape) {
       updateShapeIcon(this.toolManager.tools.shape.shapeType);
@@ -452,6 +547,64 @@ class App {
       });
     });
 
+    drawingModeOptions.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const mode = btn.getAttribute('data-drawing-mode');
+        if (!mode) return;
+        if (mode === 'curve') {
+          this.toolManager.selectTool('curve');
+          updateDrawingToggleLabels('Curved Line');
+        } else if (mode === 'select') {
+          this.toolManager.selectTool('select');
+          updateDrawingToggleLabels('Select');
+        } else {
+          this.toolManager.selectTool('line');
+          updateDrawingToggleLabels('Straight Line');
+        }
+        drawingModeOptions.forEach(item => item.classList.remove('active'));
+        btn.classList.add('active');
+        const wrapper = btn.closest('.shape-toggle');
+        if (wrapper) wrapper.classList.remove('shape-open');
+      });
+    });
+
+    textModeOptions.forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const size = btn.getAttribute('data-text-size');
+        if (!size) return;
+        const scale = textToolSizeMultipliers[size] || textToolSizeMultipliers.medium;
+        const fontSize = Math.max(12, Math.round(getCurrentTextSize() * scale));
+        const tool = await this.toolManager.ensureTool('text');
+        if (tool) {
+          tool.setFontSize(fontSize);
+        }
+        this.toolManager.updateSettings({ fontSize });
+        this.updateSelectedTextAndShapes({ fontSize });
+        this.toolManager.previousToolName = this.toolManager.activeToolName || 'line';
+        this.toolManager.selectTool('text');
+        syncTextCursor();
+        updateTextToggleState();
+        textModeOptions.forEach(item => item.classList.remove('active'));
+        btn.classList.add('active');
+        textModeWrappers.forEach(wrapper => {
+          wrapper.classList.remove('text-size-small', 'text-size-medium', 'text-size-large');
+          wrapper.classList.add(`text-size-${size}`);
+        });
+        const wrapper = btn.closest('.shape-toggle');
+        if (wrapper) wrapper.classList.remove('shape-open');
+      });
+    });
+
+    if (textModeOptions.length > 0) {
+      const defaultOption = Array.from(textModeOptions).find(
+        option => option.dataset.textSize === 'medium'
+      );
+      if (defaultOption) {
+        defaultOption.classList.add('active');
+      }
+      textModeWrappers.forEach(wrapper => wrapper.classList.add('text-size-medium'));
+    }
+
     shapeFillToggles.forEach(toggle => {
       toggle.addEventListener('click', () => {
         const tool = this.toolManager.tools.shape;
@@ -467,7 +620,19 @@ class App {
       if (this.toolManager.tools.shape) {
         updateShapeIcon(this.toolManager.tools.shape.shapeType);
       }
+      const currentTool = this.toolManager.activeTool;
+      if (currentTool === this.toolManager.tools.line) {
+        updateDrawingToggleLabels('Straight Line');
+      } else if (currentTool === this.toolManager.tools.curve) {
+        updateDrawingToggleLabels('Curved Line');
+      } else if (currentTool === this.toolManager.tools.select) {
+        updateDrawingToggleLabels('Select');
+      }
+      syncTextCursor();
+      updateTextToggleState();
     });
+
+    updateTextToggleState();
 
     updateShapeAvailability();
 
@@ -500,16 +665,32 @@ class App {
     // Color Picker
     const colorPicker = document.getElementById('colorPicker');
     const colorButtons = document.querySelectorAll('[data-color]');
+    const textBgToggles = document.querySelectorAll('[data-text-bg-toggle]');
+
+    if (window.textBgEnabled === undefined) {
+      window.textBgEnabled = true;
+    }
 
     if (colorPicker) {
       colorPicker.addEventListener('input', e => {
         // Update tool settings for new strokes
         this.toolManager.updateSettings({ color: e.target.value });
 
+        if (this.toolManager?.tools?.shape) {
+          this.toolManager.tools.shape.setFillStyle('no-fill');
+        }
+
         // Update selected strokes if any are selected
         this.updateSelectedStrokes('color', e.target.value);
+
+        // Update selected text/shape elements
+        this.updateSelectedTextAndShapes({ color: e.target.value });
       });
     }
+
+    textBgToggles.forEach(toggle => {
+      toggle.checked = window.textBgEnabled === true;
+    });
 
     colorButtons.forEach(btn => {
       btn.addEventListener('click', () => {
@@ -517,10 +698,20 @@ class App {
 
         // Update tool settings for new strokes
         this.toolManager.updateSettings({ color: color });
-        if (colorPicker) colorPicker.value = color;
+        if (colorPicker) {
+          colorPicker.value = color;
+          colorPicker.dispatchEvent(new Event('change'));
+        }
+
+        if (this.toolManager?.tools?.shape) {
+          this.toolManager.tools.shape.setFillStyle('no-fill');
+        }
 
         // Update selected strokes if any are selected
         this.updateSelectedStrokes('color', color);
+
+        // Update selected text/shape elements
+        this.updateSelectedTextAndShapes({ color: color });
 
         // Update active state
         colorButtons.forEach(b => b.classList.remove('active', 'transform', 'scale-110'));
@@ -539,6 +730,9 @@ class App {
 
         // Update selected strokes if any are selected (handles both single and multi-selection)
         this.updateSelectedStrokes('strokeWidth', width);
+
+        // Update selected shape elements only (text ignores brush size)
+        this.updateSelectedTextAndShapes({ strokeWidth: width });
       });
     }
 
@@ -749,13 +943,7 @@ class App {
               this.updateToggleLabel(drawingModeToggle, 'Curved Line');
             }
           } else if (currentTool === this.toolManager.tools.curve) {
-            // Curved Line -> Shapes
-            this.toolManager.selectTool('shape');
-            if (drawingModeToggle) {
-              this.updateToggleLabel(drawingModeToggle, 'Shapes');
-            }
-          } else if (currentTool === this.toolManager.tools.shape) {
-            // Shapes -> Select
+            // Curved Line -> Select
             this.toolManager.selectTool('select');
             if (drawingModeToggle) {
               this.updateToggleLabel(drawingModeToggle, 'Select');
@@ -816,6 +1004,12 @@ class App {
         e.target.tagName === 'TEXTAREA' ||
         e.target.isContentEditable
       ) {
+        return;
+      }
+
+      // Don't interfere if text tool is actively editing
+      const textTool = this.toolManager?.tools?.text;
+      if (textTool?.activeTextObject?.isEditing) {
         return;
       }
 

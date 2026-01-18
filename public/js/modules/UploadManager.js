@@ -25,7 +25,21 @@ export class UploadManager {
       return;
     }
 
-    uploadButton.addEventListener('click', () => this.openFileDialog());
+    // Check if paint_backup.js already bound an upload handler
+    // to prevent double file picker dialog
+    if (uploadButton.__uploadBound) {
+      console.log('[UploadManager] Upload button already bound by legacy system, skipping.');
+    } else {
+      uploadButton.__uploadBound = true;
+      uploadButton.addEventListener('click', () => this.openFileDialog());
+    }
+
+    // Also bind the secondary upload button if it exists
+    const secondaryButton = document.getElementById('paste-secondary');
+    if (secondaryButton && !secondaryButton.__uploadBound) {
+      secondaryButton.__uploadBound = true;
+      secondaryButton.addEventListener('click', () => this.openFileDialog());
+    }
   }
 
   setupDragAndDrop() {

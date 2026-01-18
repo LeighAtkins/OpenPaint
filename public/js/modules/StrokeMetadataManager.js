@@ -122,6 +122,27 @@ export class StrokeMetadataManager {
     }, 50);
   }
 
+  // Remove metadata from a Text object
+  removeTextMetadata(obj) {
+    if (!obj || !obj.strokeMetadata) return;
+
+    const imageLabel = obj.strokeMetadata.imageLabel;
+    if (this.textElementsByImage[imageLabel]) {
+      const index = this.textElementsByImage[imageLabel].indexOf(obj);
+      if (index > -1) {
+        this.textElementsByImage[imageLabel].splice(index, 1);
+        console.log(`[StrokeMetadata] Removed text object from textElementsByImage[${imageLabel}]`);
+      }
+    }
+
+    delete obj.strokeMetadata;
+
+    // Update visibility controls
+    setTimeout(() => {
+      this.updateStrokeVisibilityControls();
+    }, 50);
+  }
+
   // Attach metadata to a Shape object
   attachShapeMetadata(obj, imageLabel, shapeType) {
     if (!obj) return;
@@ -533,6 +554,35 @@ export class StrokeMetadataManager {
           : 'Text';
         textPreview.title = textObj.text || 'Text Element';
 
+        // Text background toggle
+        const bgToggle = document.createElement('label');
+        bgToggle.style.cursor = 'pointer';
+        bgToggle.style.display = 'inline-flex';
+        bgToggle.style.alignItems = 'center';
+        bgToggle.style.gap = '6px';
+        bgToggle.style.marginLeft = 'auto';
+
+        const bgCheckbox = document.createElement('input');
+        bgCheckbox.type = 'checkbox';
+        bgCheckbox.checked = textObj.backgroundColor !== 'transparent' && !!textObj.backgroundColor;
+        bgCheckbox.style.cursor = 'pointer';
+
+        const bgLabel = document.createElement('span');
+        bgLabel.textContent = 'BG';
+        bgLabel.style.fontSize = '11px';
+        bgLabel.style.fontWeight = '600';
+        bgLabel.style.color = 'rgb(71, 85, 105)';
+
+        bgCheckbox.addEventListener('change', () => {
+          textObj.set('backgroundColor', bgCheckbox.checked ? '#ffffff' : 'transparent');
+          if (window.app?.canvasManager?.fabricCanvas) {
+            window.app.canvasManager.fabricCanvas.requestRenderAll();
+          }
+        });
+
+        bgToggle.appendChild(bgCheckbox);
+        bgToggle.appendChild(bgLabel);
+
         // Delete button
         const deleteBtn = document.createElement('button');
         deleteBtn.className =
@@ -573,6 +623,7 @@ export class StrokeMetadataManager {
         });
 
         labelContainer.appendChild(textPreview);
+        labelContainer.appendChild(bgToggle);
         labelContainer.appendChild(deleteBtn);
         textItem.appendChild(labelContainer);
         strokesList.appendChild(textItem);

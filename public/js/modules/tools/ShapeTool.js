@@ -15,7 +15,7 @@ export class ShapeTool extends BaseTool {
     this.strokeColor = '#3b82f6';
     this.strokeWidth = 2;
     this.dashPattern = [];
-    this.fillStyle = 'solid';
+    this.fillStyle = 'no-fill';
 
     this.onMouseDown = this.onMouseDown.bind(this);
     this.onMouseMove = this.onMouseMove.bind(this);
@@ -54,6 +54,7 @@ export class ShapeTool extends BaseTool {
 
   setColor(color) {
     this.strokeColor = color;
+    this.fillStyle = 'no-fill';
   }
 
   setWidth(width) {
@@ -69,7 +70,7 @@ export class ShapeTool extends BaseTool {
   }
 
   setFillStyle(style) {
-    this.fillStyle = style || 'solid';
+    this.fillStyle = style || 'no-fill';
   }
 
   getFillStyle() {
@@ -161,6 +162,36 @@ export class ShapeTool extends BaseTool {
     }
 
     this.shape = null;
+
+    // Return to previous tool after drawing one shape
+    this.returnToPreviousTool();
+  }
+
+  returnToPreviousTool() {
+    if (!window.app || !window.app.toolManager) return;
+
+    const toolManager = window.app.toolManager;
+    const previousTool = toolManager.previousToolName || 'line';
+
+    // Map tool names to toggle labels
+    const toolLabels = {
+      line: 'Straight Line',
+      curve: 'Curved Line',
+      select: 'Select',
+    };
+
+    // Switch to previous tool
+    toolManager.selectTool(previousTool);
+
+    // Update toggle label
+    const drawingModeToggle = document.getElementById('drawingModeToggle');
+    if (drawingModeToggle && window.app.updateToggleLabel) {
+      const label = toolLabels[previousTool] || 'Straight Line';
+      window.app.updateToggleLabel(drawingModeToggle, label);
+    }
+
+    // Clear previous tool reference
+    toolManager.previousToolName = null;
   }
 
   getShapeStyles() {
