@@ -11,6 +11,8 @@ import { MeasurementSystem } from './MeasurementSystem.js';
 import { MeasurementDialog } from './MeasurementDialog.js';
 import { MeasurementExporter } from './MeasurementExporter.js';
 import { ArrowManager } from './utils/ArrowManager.js';
+import { AuthManager } from './AuthManager.js';
+import { CloudProjectManager } from './CloudProjectManager.js';
 
 class App {
   constructor() {
@@ -22,6 +24,8 @@ class App {
     this.projectManager = new ProjectManager(this.canvasManager, this.historyManager);
     this.uploadManager = new UploadManager(this.projectManager);
     this.arrowManager = new ArrowManager(this.canvasManager);
+    this.authManager = new AuthManager();
+    this.cloudProjectManager = new CloudProjectManager(this);
 
     // Measurement system
     this.measurementSystem = new MeasurementSystem(this.metadataManager);
@@ -339,10 +343,25 @@ class App {
       }
     }, 100);
 
+    const saveProjectTop = document.getElementById('saveProjectTop');
+    if (saveProjectTop) {
+      saveProjectTop.addEventListener('click', () => {
+        console.log('[SaveButton] Clicked saveProjectTop');
+        if (this.projectManager?.saveProject) {
+          this.projectManager.saveProject();
+        } else {
+          console.warn('[SaveButton] projectManager.saveProject not available');
+        }
+      });
+    }
+
     // Make project manager available globally for image switching
     window.projectManager = this.projectManager;
     window.shareProject = () => this.projectManager.shareProject();
     window.updateSharedProject = () => this.projectManager.updateSharedProject();
+    window.saveFabricProject = () => this.projectManager.saveProject();
+    window.authManager = this.authManager;
+    window.cloudProjectManager = this.cloudProjectManager;
     window.app = this;
 
     // Setup debug helpers

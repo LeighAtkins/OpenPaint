@@ -48,8 +48,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
 
-      // Now call the actual save function
-      saveProject();
+      // Call modern Fabric.js save function
+      if (
+        window.app &&
+        window.app.canvasManager &&
+        typeof window.saveFabricProject === 'function'
+      ) {
+        window.saveFabricProject();
+      } else {
+        // Fallback to legacy save if modern system not available
+        saveProject();
+      }
     });
   }
 
@@ -757,17 +766,347 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Function to load project from a ZIP file
+  // Function to load project from a JSON file
+  function loadProjectFromJSON(file) {
+    window.isLoadingProject = true;
+    console.log('[Load JSON] Loading project from JSON file:', file.name);
+
+    showStatusMessage('Loading JSON project...', 'info');
+
+    const loadingIndicator = document.createElement('div');
+    loadingIndicator.id = 'loadingIndicator';
+    loadingIndicator.innerHTML = `
+      <div style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+                 background: rgba(0,0,0,0.8); color: white; padding: 20px; border-radius: 8px; 
+                 z-index: 10000; text-align: center;">
+          <div style="margin-bottom: 10px;">Loading JSON project...</div>
+          <div style="width: 200px; height: 4px; background: #333; border-radius: 2px; overflow: hidden;">
+              <div id="loadProgressBar" style="width: 0%; height: 100%; background: #4CAF50; transition: width 0.3s;"></div>
+          </div>
+      </div>
+    `;
+    document.body.appendChild(loadingIndicator);
+
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      try {
+        const progressBar = document.getElementById('loadProgressBar');
+        if (progressBar) progressBar.style.width = '30%';
+
+        const jsonContent = e.target.result;
+        const rawProjectData = JSON.parse(jsonContent);
+
+        console.log('[Load JSON] Parsed project data:', rawProjectData.name || 'Unnamed');
+
+        if (progressBar) progressBar.style.width = '50%';
+
+        // Apply migration to ensure data compatibility
+        const parsedProjectData = migrateProject(rawProjectData);
+
+        // Initialize all data structures
+        document.getElementById('projectName').value =
+          parsedProjectData.name || 'OpenPaint Project';
+
+        const imageList = document.getElementById('imageList');
+        if (imageList) imageList.innerHTML = '';
+
+        window.vectorStrokesByImage = {};
+        window.strokeVisibilityByImage = {};
+        window.strokeLabelVisibility = {};
+        window.strokeMeasurements = {};
+        window.imageScaleByLabel = {};
+        window.imagePositionByLabel = {};
+        window.imageRotationByLabel = {};
+        window.lineStrokesByImage = {};
+        window.labelsByImage = {};
+        window.originalImages = {};
+        window.originalImageDimensions = {};
+        window.imageTags = {};
+        window.customImageNames = {};
+
+        if (window.legacySyncTimer) {
+          clearInterval(window.legacySyncTimer);
+          window.legacySyncTimer = null;
+        }
+
+        if (parsedProjectData.folderStructure) {
+          window.folderStructure = JSON.parse(JSON.stringify(parsedProjectData.folderStructure));
+        } else {
+          window.folderStructure = {
+            root: { id: 'root', name: 'Root', type: 'folder', parentId: null, children: [] },
+          };
+        }
+
+        if (parsedProjectData.pdfFrames) {
+          window.pdfFramesByImage = JSON.parse(JSON.stringify(parsedProjectData.pdfFrames));
+        } else {
+          window.pdfFramesByImage = {};
+        }
+
+        if (progressBar) progressBar.style.width = '70%';
+
+        // Determine image processing order
+        const imageOrder = parsedProjectData.imageOrder || [];
+        let labelsToProcess = [];
+
+        if (imageOrder.length > 0) {
+          const uniqueImageOrder = [...new Set(imageOrder)];
+          labelsToProcess = uniqueImageOrder.filter(label =>
+            parsedProjectData.imageLabels.includes(label)
+          );
+          parsedProjectData.imageLabels.forEach(label => {
+            if (!labelsToProcess.includes(label)) {
+              labelsToProcess.push(label);
+            }
+          });
+        } else {
+          labelsToProcess = [...new Set(parsedProjectData.imageLabels)];
+        }
+
+        labelsToProcess = [...new Set(labelsToProcess)];
+        window.orderedImageLabels = [...labelsToProcess];
+
+        console.log(
+          '[Load JSON] Processing',
+          labelsToProcess.length,
+          'image labels (no image files in JSON)'
+        );
+
+        // Load all data for each label
+        for (const label of labelsToProcess) {
+          console.log('[Load JSON] Processing label:', label);
+
+          // Initialize structures
+          if (typeof window.initializeNewImageStructures === 'function') {
+            window.initializeNewImageStructures(label);
+          }
+
+          // Load stroke data
+          if (parsedProjectData.strokes && parsedProjectData.strokes[label]) {
+            window.vectorStrokesByImage[label] = JSON.parse(
+              JSON.stringify(parsedProjectData.strokes[label])
+            );
+            console.log(
+              '[Load JSON] Loaded',
+              Object.keys(window.vectorStrokesByImage[label]).length,
+              'strokes for',
+              label
+            );
+          }
+
+          if (parsedProjectData.strokeSequence && parsedProjectData.strokeSequence[label]) {
+            window.lineStrokesByImage[label] = Array.isArray(
+              parsedProjectData.strokeSequence[label]
+            )
+              ? parsedProjectData.strokeSequence[label].slice()
+              : [];
+          }
+
+          // Load visibility
+          if (parsedProjectData.strokeVisibility && parsedProjectData.strokeVisibility[label]) {
+            window.strokeVisibilityByImage[label] = parsedProjectData.strokeVisibility[label];
+          }
+          if (
+            parsedProjectData.strokeLabelVisibility &&
+            parsedProjectData.strokeLabelVisibility[label]
+          ) {
+            window.strokeLabelVisibility[label] = parsedProjectData.strokeLabelVisibility[label];
+          }
+
+          // Load measurements
+          if (parsedProjectData.strokeMeasurements && parsedProjectData.strokeMeasurements[label]) {
+            window.strokeMeasurements[label] = JSON.parse(
+              JSON.stringify(parsedProjectData.strokeMeasurements[label])
+            );
+            Object.keys(window.strokeMeasurements[label]).forEach(strokeLabel => {
+              const measurement = window.strokeMeasurements[label][strokeLabel];
+              if (measurement && measurement.underReview === undefined) {
+                measurement.underReview = false;
+              }
+            });
+          }
+
+          // Load tags and names
+          if (parsedProjectData.imageTags && parsedProjectData.imageTags[label]) {
+            window.imageTags[label] = JSON.parse(
+              JSON.stringify(parsedProjectData.imageTags[label])
+            );
+          }
+          if (parsedProjectData.customImageNames && parsedProjectData.customImageNames[label]) {
+            window.customImageNames[label] = parsedProjectData.customImageNames[label];
+          }
+
+          // Load transforms
+          if (parsedProjectData.imageScales && parsedProjectData.imageScales[label] !== undefined) {
+            window.imageScaleByLabel[label] = parsedProjectData.imageScales[label];
+          } else {
+            window.imageScaleByLabel[label] = 1.0;
+          }
+
+          window.imagePositionByLabel[label] = { x: 0, y: 0 };
+
+          if (
+            parsedProjectData.imageRotations &&
+            parsedProjectData.imageRotations[label] !== undefined
+          ) {
+            window.imageRotationByLabel[label] = parsedProjectData.imageRotations[label];
+          } else {
+            window.imageRotationByLabel[label] = 0;
+          }
+
+          if (parsedProjectData.nextLabels && parsedProjectData.nextLabels[label]) {
+            window.labelsByImage[label] = parsedProjectData.nextLabels[label];
+          }
+
+          // Load dimensions
+          if (
+            parsedProjectData.originalImageDimensions &&
+            parsedProjectData.originalImageDimensions[label]
+          ) {
+            window.originalImageDimensions[label] =
+              parsedProjectData.originalImageDimensions[label];
+          } else {
+            window.originalImageDimensions[label] = { width: 0, height: 0 };
+          }
+
+          // Load label positions and offsets
+          if (!window.customLabelPositions) window.customLabelPositions = {};
+          if (!window.calculatedLabelOffsets) window.calculatedLabelOffsets = {};
+          if (!window.customLabelOffsetsRotationByImageAndStroke)
+            window.customLabelOffsetsRotationByImageAndStroke = {};
+          if (!window.paintApp) window.paintApp = { state: {} };
+          if (!window.paintApp.state) window.paintApp.state = {};
+          if (!window.paintApp.state.textElementsByImage)
+            window.paintApp.state.textElementsByImage = {};
+
+          window.customLabelPositions[label] =
+            parsedProjectData.customLabelPositions && parsedProjectData.customLabelPositions[label]
+              ? JSON.parse(JSON.stringify(parsedProjectData.customLabelPositions[label]))
+              : {};
+
+          window.calculatedLabelOffsets[label] =
+            parsedProjectData.calculatedLabelOffsets &&
+            parsedProjectData.calculatedLabelOffsets[label]
+              ? JSON.parse(JSON.stringify(parsedProjectData.calculatedLabelOffsets[label]))
+              : {};
+
+          window.customLabelOffsetsRotationByImageAndStroke[label] =
+            parsedProjectData.customLabelRotationStamps &&
+            parsedProjectData.customLabelRotationStamps[label]
+              ? JSON.parse(JSON.stringify(parsedProjectData.customLabelRotationStamps[label]))
+              : {};
+
+          window.paintApp.state.textElementsByImage[label] =
+            parsedProjectData.textElementsByImage && parsedProjectData.textElementsByImage[label]
+              ? JSON.parse(JSON.stringify(parsedProjectData.textElementsByImage[label]))
+              : [];
+
+          // Ensure text elements have useCanvasCoords set
+          if (window.paintApp.state.textElementsByImage[label]) {
+            window.paintApp.state.textElementsByImage[label].forEach(textEl => {
+              if (textEl && textEl.useCanvasCoords === undefined) {
+                textEl.useCanvasCoords = true;
+              }
+            });
+          }
+        }
+
+        if (progressBar) progressBar.style.width = '90%';
+
+        // Set current image and finalize
+        setTimeout(() => {
+          const availableLabels = labelsToProcess;
+          const targetLabel = availableLabels.length > 0 ? availableLabels[0] : 'front';
+
+          console.log('[Load JSON] Setting current image to:', targetLabel);
+
+          if (typeof window.switchToImage === 'function') {
+            window.currentImageLabel = targetLabel;
+            window.switchToImage(targetLabel);
+          }
+
+          // Update UI
+          try {
+            if (typeof window.updateSidebarStrokeCounts === 'function')
+              window.updateSidebarStrokeCounts();
+            if (typeof window.updateScaleUI === 'function') window.updateScaleUI();
+            if (typeof window.updateActiveImageInSidebar === 'function')
+              window.updateActiveImageInSidebar();
+            if (typeof window.updateStrokeVisibilityControls === 'function')
+              window.updateStrokeVisibilityControls();
+          } catch (uiError) {
+            console.error('[Load JSON] UI update error:', uiError);
+          }
+
+          // Finalize
+          setTimeout(() => {
+            if (typeof window.redrawCanvasWithVisibility === 'function') {
+              window.redrawCanvasWithVisibility();
+            }
+
+            if (progressBar) progressBar.style.width = '100%';
+
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            if (loadingIndicator && loadingIndicator.parentNode) {
+              loadingIndicator.parentNode.removeChild(loadingIndicator);
+            }
+
+            window.isLoadingProject = false;
+            queueMicrotask(() => scheduleLegacySync());
+
+            showStatusMessage('JSON project loaded successfully (no images included)', 'success');
+            console.log('[Load JSON] Complete');
+          }, 100);
+        }, 200);
+      } catch (err) {
+        window.isLoadingProject = false;
+        document.getElementById('loadingIndicator')?.remove();
+        console.error('[Load JSON] Error loading JSON project:', err);
+        showStatusMessage(`Error loading JSON: ${err.message}`, 'error');
+      }
+    };
+
+    reader.onerror = function (e) {
+      window.isLoadingProject = false;
+      const loadingIndicator = document.getElementById('loadingIndicator');
+      if (loadingIndicator && loadingIndicator.parentNode) {
+        loadingIndicator.parentNode.removeChild(loadingIndicator);
+      }
+      console.error('[Load JSON] Error reading file:', e);
+      showStatusMessage('Error reading JSON file', 'error');
+    };
+
+    reader.readAsText(file);
+  }
+
+  // Function to load project from a ZIP or JSON file
   function loadProject() {
     // Create a file input element
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = '.zip';
+    input.accept = '.zip,.json';
 
     // Handle file selection
     input.onchange = function (e) {
       const file = e.target.files[0];
       if (!file) return;
+
+      // Determine file type
+      const isJSON = file.name.toLowerCase().endsWith('.json');
+      const isZIP = file.name.toLowerCase().endsWith('.zip');
+
+      if (!isJSON && !isZIP) {
+        showStatusMessage('Please select a .zip or .json project file', 'error');
+        return;
+      }
+
+      // Route to appropriate loader
+      if (isJSON) {
+        loadProjectFromJSON(file);
+        return;
+      }
+
+      // Continue with ZIP loading for .zip files
 
       // *** SET LOADING FLAG ***
       window.isLoadingProject = true;
@@ -1372,10 +1711,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
               } // End of for...of loop for labels
 
+              console.log(
+                `[DEBUG LOAD] Waiting for ${imagePromises.length} image promises to complete...`
+              );
+
               return Promise.all(imagePromises)
                 .then(() => {
                   // Executed after all images and their data are loaded and processed
                   // Update progress
+                  console.log('[DEBUG LOAD] ✓ All imagePromises resolved successfully');
                   if (progressBar) progressBar.style.width = '80%';
                   const loadedImages = Object.keys(window.originalImages || {}).length;
                   console.log(
@@ -1422,11 +1766,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
                   return Promise.all(aiExportPromises);
                 })
+                .catch(err => {
+                  console.error('[DEBUG LOAD] ERROR in Promise.all chain:', err);
+                  throw err; // Re-throw to continue to outer catch
+                })
                 .then(() => {
                   // Main UI update timeout
+                  console.log('[DEBUG LOAD] About to enter Main UI update timeout...');
                   setTimeout(
                     activeProjectData => {
-                      //                                             console.log('[Load Project] Main UI Update Timeout. ImageLabels:', activeProjectData.imageLabels);
+                      console.log(
+                        '[DEBUG LOAD] Inside Main UI Update Timeout. ImageLabels:',
+                        activeProjectData.imageLabels
+                      );
                       document.getElementById('loadingIndicator')?.remove();
 
                       // CRITICAL: Preserve all stroke data before switchToImage (which might clear it)
@@ -1468,6 +1820,14 @@ document.addEventListener('DOMContentLoaded', () => {
                       console.log(
                         `[DEBUG LOAD] Preserved stroke data for ${Object.keys(preservedStrokeData).length} images before switchToImage`
                       );
+
+                      // Debug: Log what we preserved
+                      Object.keys(preservedStrokeData).forEach(label => {
+                        console.log(
+                          `[DEBUG LOAD] Preserved ${Object.keys(preservedStrokeData[label]).length} strokes for ${label}:`,
+                          Object.keys(preservedStrokeData[label])
+                        );
+                      });
 
                       // Determine target label: prioritize first image in order, then saved currentImageLabel, then first available
                       const availableImageKeys = Object.keys(window.originalImages);
@@ -1545,12 +1905,63 @@ document.addEventListener('DOMContentLoaded', () => {
                           `[DEBUG LOAD] ✓ Restored stroke data for ${restoredCount} images after switchToImage`
                         );
 
-                        // Force redraw to show restored strokes
-                        if (typeof window.redrawCanvasWithVisibility === 'function') {
-                          window.redrawCanvasWithVisibility();
+                        // Debug: Verify what was restored
+                        Object.keys(preservedStrokeData).forEach(label => {
+                          const currentStrokes = window.vectorStrokesByImage[label];
+                          if (currentStrokes) {
+                            console.log(
+                              `[DEBUG LOAD] After restoration: ${label} has ${Object.keys(currentStrokes).length} strokes`
+                            );
+                          } else {
+                            console.error(
+                              `[DEBUG LOAD] ERROR: ${label} has NO strokes after restoration!`
+                            );
+                          }
+                        });
+
+                        // Sync restored data to StrokeMetadataManager
+                        if (window.app && window.app.metadataManager) {
+                          console.log(
+                            '[DEBUG LOAD] Syncing restored data to StrokeMetadataManager'
+                          );
+                          Object.keys(preservedStrokeData).forEach(label => {
+                            if (window.vectorStrokesByImage[label]) {
+                              window.app.metadataManager.vectorStrokesByImage[label] =
+                                window.vectorStrokesByImage[label];
+                              console.log(
+                                `[DEBUG LOAD] Synced ${Object.keys(window.vectorStrokesByImage[label]).length} strokes to metadataManager for ${label}`
+                              );
+                            }
+                            if (window.strokeVisibility && window.strokeVisibility[label]) {
+                              window.app.metadataManager.strokeVisibilityByImage[label] =
+                                window.strokeVisibility[label];
+                            }
+                            if (
+                              window.strokeLabelVisibility &&
+                              window.strokeLabelVisibility[label]
+                            ) {
+                              window.app.metadataManager.strokeLabelVisibility[label] =
+                                window.strokeLabelVisibility[label];
+                            }
+                            if (window.strokeMeasurements && window.strokeMeasurements[label]) {
+                              window.app.metadataManager.strokeMeasurements[label] =
+                                window.strokeMeasurements[label];
+                            }
+                          });
                         }
-                        if (typeof window.updateStrokeVisibilityControls === 'function') {
-                          window.updateStrokeVisibilityControls();
+
+                        // Legacy projects loaded - data available in window.vectorStrokesByImage
+                        // User can manually re-save to convert to modern Fabric.js format
+                        console.log(
+                          '[DEBUG LOAD] Legacy project loaded. Save again to convert to modern format.'
+                        );
+
+                        // Update UI to show loaded measurements
+                        if (window.app && window.app.metadataManager) {
+                          console.log(
+                            '[DEBUG LOAD] Updating stroke visibility controls to show loaded data'
+                          );
+                          window.app.metadataManager.updateStrokeVisibilityControls();
                         }
                       }, 50);
 
@@ -1875,5 +2286,109 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     //         console.log('[Load Project] Complete.');
+  }
+
+  // Modern Fabric.js save/load system
+
+  /**
+   * Save project using modern Fabric.js format
+   * Saves Fabric canvas JSON along with images and metadata in a ZIP file
+   */
+  window.saveFabricProject = async function saveFabricProject() {
+    console.log('[Save Fabric] Starting modern Fabric.js project save...');
+
+    if (!window.app || !window.app.canvasManager || !window.app.canvasManager.fabricCanvas) {
+      showStatusMessage('Canvas not available', 'error');
+      return;
+    }
+
+    const fabricCanvas = window.app.canvasManager.fabricCanvas;
+    const projectManager = window.app.projectManager;
+
+    // Get all views/images
+    const viewIds = Object.keys(projectManager.views);
+    console.log(`[Save Fabric] Saving ${viewIds.length} views:`, viewIds);
+
+    const projectData = {
+      version: '2.0-fabric',
+      projectName: window.projectName || 'Unnamed Project',
+      createdAt: new Date().toISOString(),
+      views: {},
+    };
+
+    // Save current view's canvas state
+    const currentViewId = projectManager.currentViewId;
+    projectData.currentViewId = currentViewId;
+
+    // For each view, save canvas JSON and metadata
+    for (const viewId of viewIds) {
+      const view = projectManager.views[viewId];
+
+      projectData.views[viewId] = {
+        canvasJSON: null,
+        imageDataURL: null,
+        metadata: {},
+      };
+
+      // If this is the current view, save its live canvas state
+      if (viewId === currentViewId) {
+        projectData.views[viewId].canvasJSON = fabricCanvas.toJSON([
+          'strokeMetadata',
+          'isTag',
+          'isConnectorLine',
+          'tagLabel',
+          'connectedTo',
+        ]);
+        console.log(`[Save Fabric] Saved canvas JSON for ${viewId}`);
+      } else if (view.canvasData) {
+        // Use stored canvas data for other views
+        projectData.views[viewId].canvasJSON = view.canvasData;
+      }
+
+      // Save background image as data URL if exists
+      if (view.image) {
+        try {
+          const response = await fetch(view.image);
+          const blob = await response.blob();
+          const reader = new FileReader();
+          const imageDataURL = await new Promise(resolve => {
+            reader.onloadend = () => resolve(reader.result);
+            reader.readAsDataURL(blob);
+          });
+          projectData.views[viewId].imageDataURL = imageDataURL;
+          console.log(`[Save Fabric] Saved image for ${viewId}`);
+        } catch (err) {
+          console.warn(`[Save Fabric] Could not save image for ${viewId}:`, err);
+        }
+      }
+
+      // Save metadata from metadataManager
+      if (window.app.metadataManager) {
+        const meta = window.app.metadataManager;
+        projectData.views[viewId].metadata = {
+          strokeVisibility: meta.strokeVisibilityByImage[viewId] || {},
+          strokeLabelVisibility: meta.strokeLabelVisibility[viewId] || {},
+          strokeMeasurements: meta.strokeMeasurements[viewId] || {},
+        };
+      }
+    }
+
+    // Convert to JSON and download
+    const jsonStr = JSON.stringify(projectData, null, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${projectData.projectName}_fabric.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+
+    showStatusMessage('Project saved successfully', 'success');
+    console.log('[Save Fabric] Project saved successfully');
+  };
+
+  // Remove legacy migration hook
+  if (typeof window.StrokeMetadataManager !== 'undefined') {
+    console.log('[Fabric Save/Load] Modern save system ready');
   }
 });

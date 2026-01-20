@@ -111,7 +111,11 @@ export class ProjectManager {
   }
 
   saveCurrentViewState() {
-    const json = this.canvasManager.toJSON();
+    const customProps = this.getCanvasCustomProps();
+    const json =
+      this.canvasManager?.fabricCanvas?.toJSON && customProps
+        ? this.canvasManager.fabricCanvas.toJSON(customProps)
+        : this.canvasManager.toJSON();
     if (this.views[this.currentViewId]) {
       this.views[this.currentViewId].canvasData = json;
       this.views[this.currentViewId].rotation = this.canvasManager.getRotationDegrees();
@@ -138,6 +142,19 @@ export class ProjectManager {
         };
       }
     }
+  }
+
+  getCanvasCustomProps() {
+    return [
+      'strokeMetadata',
+      'isTag',
+      'isTagText',
+      'labelVisible',
+      'visible',
+      'connectedTo',
+      'tagLabel',
+      'isConnectorLine',
+    ];
   }
 
   // Serialize measurements for a view (deep copy)
@@ -850,6 +867,143 @@ export class ProjectManager {
     modal.addEventListener('click', e => {
       if (e.target === modal) document.body.removeChild(modal);
     });
+  }
+
+  async getProjectData() {
+    this.saveCurrentViewState();
+
+    const projectNameInput = document.getElementById('projectName');
+    const projectName = projectNameInput?.value?.trim() || 'OpenPaint Project';
+    const fabricCanvas = this.canvasManager?.fabricCanvas;
+    const metadataManager = window.app?.metadataManager;
+    const customProps = this.getCanvasCustomProps();
+
+    console.log('[Save] Gathering project data');
+
+    const deepClone = obj => {
+      if (!obj) return {};
+      try {
+        return JSON.parse(JSON.stringify(obj));
+      } catch (e) {
+        console.warn('[Save] Failed to clone object', e);
+        return {};
+      }
+    };
+
+    const projectData = {
+      version: '2.0-fabric',
+      projectName,
+      name: projectName,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      currentViewId: this.currentViewId,
+      views: {},
+    };
+
+    const viewIds = Object.keys(this.views || {});
+    console.log('[Save] Views to persist:', viewIds);
+
+    for (const viewId of viewIds) {
+      const view = this.views[viewId] || {};
+      const entry = {
+        canvasJSON: null,
+        imageDataURL: null,
+        imageUrl: view.image || null,
+        metadata: {},
+      };
+
+      if (viewId === this.currentViewId && fabricCanvas) {
+        console.log(`[Save] Capturing live canvas for view ${viewId}`);
+        entry.canvasJSON = fabricCanvas.toJSON(customProps);
+      } else {
+        entry.canvasJSON = view.canvasData || null;
+      }
+
+      if (view.image) {
+        try {
+          console.log(`[Save] Embedding image for view ${viewId}`);
+          entry.imageDataURL = await this.fetchImageAsDataURL(view.image);
+        } catch (err) {
+          console.warn(`[Save] Could not capture image for ${viewId}:`, err);
+        }
+      }
+
+      if (metadataManager) {
+        entry.metadata = {
+          vectorStrokesByImage: deepClone(metadataManager.vectorStrokesByImage?.[viewId]),
+          strokeVisibilityByImage: deepClone(metadataManager.strokeVisibilityByImage?.[viewId]),
+          strokeLabelVisibility: deepClone(metadataManager.strokeLabelVisibility?.[viewId]),
+          strokeMeasurements: deepClone(metadataManager.strokeMeasurements?.[viewId]),
+        };
+      } else if (view.metadata) {
+        entry.metadata = deepClone(view.metadata);
+      }
+
+      projectData.views[viewId] = entry;
+    }
+
+    return projectData;
+  }
+
+  async saveProject() {
+    const projectNameInput = document.getElementById('projectName');
+    const projectName = projectNameInput?.value?.trim() || 'OpenPaint Project';
+    const downloadName = `${projectName.replace(/\s+/g, '_')}_fabric.json`;
+
+    try {
+      console.log('[Save] Starting saveProject');
+      if (!this.canvasManager?.fabricCanvas) {
+        this.showStatusMessage('Canvas not ready; cannot save.', 'error');
+        console.error('[Save] fabricCanvas missing');
+        return;
+      }
+
+      const projectData = await this.getProjectData();
+
+      await this.downloadProjectData(projectData, downloadName);
+
+      const authManager = window.app?.authManager;
+      const cloudManager = window.app?.cloudProjectManager;
+      const user = authManager?.getUser ? authManager.getUser() : null;
+
+      if (user && cloudManager?.saveProject) {
+        const result = await cloudManager.saveProject(projectData);
+        if (result?.error) {
+          console.error('[Save] Cloud save failed:', result.error);
+          this.showStatusMessage('Project saved locally. Cloud save failed.', 'error');
+          return;
+        }
+        this.showStatusMessage('Project saved locally and to cloud.', 'success');
+      } else {
+        this.showStatusMessage('Project saved locally.', 'success');
+      }
+    } catch (error) {
+      console.error('[Save] Failed to save project:', error);
+      this.showStatusMessage('Failed to save project: ' + error.message, 'error');
+    }
+  }
+
+  async fetchImageAsDataURL(url) {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  }
+
+  async downloadProjectData(projectData, fileName) {
+    console.log('[Save] Downloading project data as', fileName);
+    const jsonStr = JSON.stringify(projectData, null, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   showStatusMessage(message, type = 'info') {
