@@ -16,6 +16,7 @@ export { ProjectService, projectService } from './supabase/project.service';
 export { ProjectImagesService, projectImagesService } from './project-images.service';
 export { MeasurementsService, measurementsService } from './measurements.service';
 export { ProjectExportService, projectExportService } from './project-export.service';
+export { RotationService, rotationService } from './rotation.service';
 
 // Re-export types for convenience
 export type {

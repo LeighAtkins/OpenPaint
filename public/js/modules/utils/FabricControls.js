@@ -167,8 +167,24 @@ export class FabricControls {
         console.log('[FabricControls] Line start snapped to:', pointer);
       }
 
-      // Update x1, y1 based on snapped or raw position
-      lineObj.set({ x1: pointer.x, y1: pointer.y });
+      const points = lineObj.calcLinePoints();
+      const matrix = lineObj.calcTransformMatrix();
+      const p1 = fabric.util.transformPoint({ x: points.x1, y: points.y1 }, matrix);
+      const p2 = fabric.util.transformPoint({ x: points.x2, y: points.y2 }, matrix);
+      const center = {
+        x: (pointer.x + p2.x) / 2,
+        y: (pointer.y + p2.y) / 2,
+      };
+
+      lineObj.set({
+        x1: pointer.x - center.x,
+        y1: pointer.y - center.y,
+        x2: p2.x - center.x,
+        y2: p2.y - center.y,
+        left: center.x,
+        top: center.y,
+      });
+      lineObj.setCoords();
 
       // Fire moving event to trigger updates (like tag connectors)
       lineObj.fire('moving');
@@ -215,7 +231,24 @@ export class FabricControls {
         console.log('[FabricControls] Line end snapped to:', pointer);
       }
 
-      lineObj.set({ x2: pointer.x, y2: pointer.y });
+      const points = lineObj.calcLinePoints();
+      const matrix = lineObj.calcTransformMatrix();
+      const p1 = fabric.util.transformPoint({ x: points.x1, y: points.y1 }, matrix);
+      const p2 = fabric.util.transformPoint({ x: points.x2, y: points.y2 }, matrix);
+      const center = {
+        x: (p1.x + pointer.x) / 2,
+        y: (p1.y + pointer.y) / 2,
+      };
+
+      lineObj.set({
+        x1: p1.x - center.x,
+        y1: p1.y - center.y,
+        x2: pointer.x - center.x,
+        y2: pointer.y - center.y,
+        left: center.x,
+        top: center.y,
+      });
+      lineObj.setCoords();
       lineObj.fire('moving');
       return true;
     };

@@ -241,6 +241,7 @@ export class TagManager {
       lockRotation: true,
       hoverCursor: 'move',
       perPixelTargetFind: true, // Only select when clicking visible parts
+      excludeFromExport: true, // Don't serialize tags - they're recreated from stroke metadata
       // Custom properties
       isTag: true,
       strokeLabel: strokeLabel,
@@ -810,6 +811,39 @@ export class TagManager {
     Object.keys(strokes).forEach(strokeLabel => {
       this.removeTag(strokeLabel);
     });
+  }
+
+  // Recreate all tags for an image after loading from JSON
+  // This is needed because tags are not serialized (they have excludeFromExport)
+  recreateTagsForImage(imageLabel) {
+    console.log(`[TagManager] Recreating tags for image: ${imageLabel}`);
+
+    // First clear any existing tags for this image
+    this.clearTagsForImage(imageLabel);
+
+    // Get all strokes for this image
+    const strokes = this.metadataManager.vectorStrokesByImage[imageLabel] || {};
+    const strokeLabels = Object.keys(strokes);
+
+    console.log(`[TagManager] Found ${strokeLabels.length} strokes to create tags for`);
+
+    // Recreate tag for each stroke
+    strokeLabels.forEach(strokeLabel => {
+      const strokeObject = strokes[strokeLabel];
+      if (strokeObject) {
+        // Check if label should be visible
+        const isLabelVisible =
+          this.metadataManager.strokeLabelVisibility[imageLabel]?.[strokeLabel] !== false;
+        if (isLabelVisible) {
+          this.createTag(strokeLabel, imageLabel, strokeObject);
+        }
+      }
+    });
+
+    // Request render
+    if (this.canvas) {
+      this.canvas.requestRenderAll();
+    }
   }
 
   // Toggle showing measurements on all tags

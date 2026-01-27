@@ -475,10 +475,26 @@ export class FabricIntegrationService {
       try {
         const { fabricCanvas } = canvasInstance;
 
-        fabricCanvas.loadFromJSON(jsonData, () => {
-          fabricCanvas.renderAll();
-          resolve(Result.ok(true));
-        });
+        fabricCanvas.loadFromJSON(
+          jsonData,
+          () => {
+            fabricCanvas.renderAll();
+            resolve(Result.ok(true));
+          },
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (o: any, object: any) => {
+            // Reviver: restore custom properties from serialized JSON to fabric object
+            if (o && o['strokeMetadata']) {
+              object['strokeMetadata'] = o['strokeMetadata'];
+            }
+            if (o && o['isArrow']) {
+              object['isArrow'] = o['isArrow'];
+            }
+            if (o && o['customPoints']) {
+              object['customPoints'] = o['customPoints'];
+            }
+          }
+        );
       } catch (error) {
         resolve(
           Result.err(
@@ -500,7 +516,8 @@ export class FabricIntegrationService {
   ): Promise<Result<FabricCanvasJSON, AppError>> {
     try {
       const { fabricCanvas } = canvasInstance;
-      const jsonData = fabricCanvas.toJSON();
+      // Include strokeMetadata, isArrow, and customPoints to preserve stroke labels, visibility state, arrow markers, and curve control points
+      const jsonData = fabricCanvas.toJSON(['strokeMetadata', 'isArrow', 'customPoints']);
 
       // Save to canvas state service
       await canvasStateService.saveCanvasState(

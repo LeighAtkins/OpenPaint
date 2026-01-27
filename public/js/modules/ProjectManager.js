@@ -95,6 +95,11 @@ export class ProjectManager {
           );
         }
 
+        // Recreate tags after metadata is rebuilt (tags are not serialized)
+        if (window.app?.tagManager) {
+          window.app.tagManager.recreateTagsForImage(viewId);
+        }
+
         // Restore viewport state to maintain continuity
         if (this.canvasManager.fabricCanvas) {
           this.canvasManager.fabricCanvas.setViewportTransform(currentVpt);

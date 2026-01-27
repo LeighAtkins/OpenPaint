@@ -185,6 +185,9 @@ export class ArrowTool extends BaseTool {
     // Re-enable selection for the canvas
     this.canvas.selection = true;
 
+    // Mark as arrow for control restoration after JSON load
+    group.isArrow = true;
+
     // Attach metadata (label) to the arrow
     if (window.app && window.app.metadataManager && window.app.projectManager) {
       const imageLabel = window.app.projectManager.currentViewId || 'front';
@@ -194,6 +197,12 @@ export class ArrowTool extends BaseTool {
 
       const strokeLabel = window.app.metadataManager.getNextLabel(imageLabel);
       window.app.metadataManager.attachMetadata(group, imageLabel, strokeLabel);
+
+      // Mark strokeMetadata as arrow type for persistence
+      if (group.strokeMetadata) {
+        group.strokeMetadata.isArrow = true;
+      }
+
       console.log(`Arrow created with label: ${strokeLabel}`);
 
       // Create tag for the arrow

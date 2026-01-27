@@ -77,6 +77,19 @@ export class ProjectManager {
 
         // After loading, update history initial state
         this.historyManager.saveState();
+
+        // Rebuild metadata from canvas objects to ensure live references
+        if (window.app?.metadataManager) {
+          window.app.metadataManager.rebuildMetadataFromCanvas(
+            viewId,
+            this.canvasManager.fabricCanvas
+          );
+        }
+
+        // Recreate tags after metadata is rebuilt (tags are not serialized)
+        if (window.app?.tagManager) {
+          window.app.tagManager.recreateTagsForImage(viewId);
+        }
       });
     } else {
       // Clear metadata for this view if no saved data

@@ -1,0 +1,27 @@
+[
+  {
+    "content": "Finish cleaning legacy references in gallery controller and feature stores",
+    "id": "1",
+    "status": "completed"
+  },
+  {
+    "content": "Refactor transform store/service and add canvas store",
+    "id": "2",
+    "status": "completed"
+  },
+  {
+    "content": "Create canvas store UI module",
+    "id": "3",
+    "status": "completed"
+  },
+  {
+    "content": "Wire rotate controls in TS",
+    "id": "4",
+    "status": "completed"
+  },
+  {
+    "content": "Remove legacy script tags from index.html",
+    "id": "5",
+    "status": "pending"
+  }
+]

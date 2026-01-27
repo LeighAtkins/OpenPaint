@@ -1,6 +1,8 @@
 // Canvas Manager
 // Handles Fabric.js canvas initialization, resizing, zoom/pan
 
+import { FabricControls } from './utils/FabricControls.js';
+
 export class CanvasManager {
   constructor(canvasId) {
     this.canvasId = canvasId;
@@ -1253,15 +1255,55 @@ export class CanvasManager {
   }
 
   // Helper to get JSON export
+  // Include strokeMetadata, isArrow, and customPoints to preserve stroke labels, visibility state, arrow markers, and curve control points
   toJSON() {
-    return this.fabricCanvas.toJSON();
+    return this.fabricCanvas.toJSON(['strokeMetadata', 'isArrow', 'customPoints']);
   }
 
   // Helper to load from JSON
+  // Use reviver to restore strokeMetadata custom property on each object
+  // Also restores custom controls for lines, curves, and arrows
   loadFromJSON(json, callback) {
-    this.fabricCanvas.loadFromJSON(json, () => {
-      this.fabricCanvas.renderAll();
-      if (callback) callback();
-    });
+    this.fabricCanvas.loadFromJSON(
+      json,
+      () => {
+        // After all objects are loaded, restore custom controls
+        this.fabricCanvas.getObjects().forEach(object => {
+          if (object.strokeMetadata) {
+            const metaType = object.strokeMetadata.type;
+            const objType = object.type;
+
+            // Restore controls based on object type
+            if (objType === 'line') {
+              FabricControls.createLineControls(object);
+            } else if (objType === 'path' && metaType !== 'shape') {
+              // Curves are paths but not shapes
+              console.log(
+                '[CanvasManager] Restoring curve controls, customPoints:',
+                object.customPoints?.length || 'none'
+              );
+              FabricControls.createCurveControls(object);
+            } else if (objType === 'group' && (object.isArrow || object.strokeMetadata.isArrow)) {
+              FabricControls.createArrowControls(object);
+            }
+          }
+        });
+
+        this.fabricCanvas.renderAll();
+        if (callback) callback();
+      },
+      (o, object) => {
+        // Reviver: restore custom properties from serialized JSON to fabric object
+        if (o.strokeMetadata) {
+          object.strokeMetadata = o.strokeMetadata;
+        }
+        if (o.isArrow) {
+          object.isArrow = o.isArrow;
+        }
+        if (o.customPoints) {
+          object.customPoints = o.customPoints;
+        }
+      }
+    );
   }
 }
