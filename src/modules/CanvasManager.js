@@ -2,6 +2,7 @@
 // Handles Fabric.js canvas initialization, resizing, zoom/pan
 
 import { FabricControls } from './utils/FabricControls.js';
+import { PathUtils } from './utils/PathUtils.js';
 
 export class CanvasManager {
   constructor(canvasId) {
@@ -21,6 +22,13 @@ export class CanvasManager {
     // Store capture frame in image-relative coordinates to prevent drift
     // These are ratios (0-1) of the background image dimensions
     this.captureFrameImageRatios = null;
+
+    // Viewport transform state
+    this.rotationDegrees = 0;
+    this.zoomLevel = 1;
+    this.panX = 0;
+    this.panY = 0;
+    this.rotateViewport = false;
   }
 
   init() {
@@ -55,6 +63,12 @@ export class CanvasManager {
 
     // Store initial size
     this.lastCanvasSize = { width, height };
+
+    // Initialize viewport state
+    this.rotationDegrees = 0;
+    this.zoomLevel = 1;
+    this.panX = 0;
+    this.panY = 0;
 
     // Selection state is managed by tools (SelectTool enables, drawing tools disable as needed)
     // Don't set a default here - let tools control it
@@ -717,12 +731,18 @@ export class CanvasManager {
 
     this.fabricCanvas.on('mouse:wheel', opt => {
       const delta = opt.e.deltaY;
-      let zoom = this.fabricCanvas.getZoom();
+      let zoom = this.zoomLevel || this.fabricCanvas.getZoom();
       zoom *= 0.999 ** delta;
       if (zoom > 20) zoom = 20;
       if (zoom < 0.01) zoom = 0.01;
 
       this.fabricCanvas.zoomToPoint({ x: opt.e.offsetX, y: opt.e.offsetY }, zoom);
+      if (this.fabricCanvas.viewportTransform) {
+        this.zoomLevel = zoom;
+        this.panX = this.fabricCanvas.viewportTransform[4];
+        this.panY = this.fabricCanvas.viewportTransform[5];
+        this.applyViewportTransform();
+      }
       opt.e.preventDefault();
       opt.e.stopPropagation();
     });
@@ -759,10 +779,9 @@ export class CanvasManager {
     this.fabricCanvas.on('mouse:move', opt => {
       if (isDragging) {
         const e = opt.e;
-        const vpt = this.fabricCanvas.viewportTransform;
-        vpt[4] += e.clientX - lastPosX;
-        vpt[5] += e.clientY - lastPosY;
-        this.fabricCanvas.requestRenderAll();
+        this.panX += e.clientX - lastPosX;
+        this.panY += e.clientY - lastPosY;
+        this.applyViewportTransform();
         lastPosX = e.clientX;
         lastPosY = e.clientY;
       }
@@ -771,7 +790,7 @@ export class CanvasManager {
     this.fabricCanvas.on('mouse:up', opt => {
       if (isDragging) {
         console.log('[PAN] Ending pan gesture');
-        this.fabricCanvas.setViewportTransform(this.fabricCanvas.viewportTransform);
+        this.applyViewportTransform();
         isDragging = false;
         this.fabricCanvas.selection = true;
 
@@ -904,7 +923,7 @@ export class CanvasManager {
             currentDistance
           ) {
             const zoomRatio = currentDistance / touchGestureState.lastTwoFingerDistance;
-            let currentZoom = this.fabricCanvas.getZoom();
+            let currentZoom = this.zoomLevel || this.fabricCanvas.getZoom();
             let newZoom = currentZoom * zoomRatio;
 
             // Clamp zoom levels
@@ -929,6 +948,12 @@ export class CanvasManager {
               };
 
               this.fabricCanvas.zoomToPoint(zoomPoint, newZoom);
+              if (this.fabricCanvas.viewportTransform) {
+                this.zoomLevel = newZoom;
+                this.panX = this.fabricCanvas.viewportTransform[4];
+                this.panY = this.fabricCanvas.viewportTransform[5];
+                this.applyViewportTransform();
+              }
               touchGestureState.lastTwoFingerDistance = currentDistance;
             }
           }
@@ -947,10 +972,9 @@ export class CanvasManager {
               console.log('[PAN] Two-finger pan delta:', deltaX.toFixed(1), deltaY.toFixed(1));
 
               // Update viewport transform
-              const vpt = this.fabricCanvas.viewportTransform;
-              vpt[4] += deltaX;
-              vpt[5] += deltaY;
-              this.fabricCanvas.requestRenderAll();
+              this.panX += deltaX;
+              this.panY += deltaY;
+              this.applyViewportTransform();
 
               touchGestureState.lastTwoFingerCenter = currentCenter;
             }
@@ -983,7 +1007,7 @@ export class CanvasManager {
           touchGestureState.lastTwoFingerDistance = null;
 
           // Restore Fabric.js state
-          this.fabricCanvas.setViewportTransform(this.fabricCanvas.viewportTransform);
+          this.applyViewportTransform();
           this.fabricCanvas.selection = true;
 
           // Delay clearing gesture flag to prevent residual drawing events
@@ -1040,12 +1064,204 @@ export class CanvasManager {
       '#ffffff',
       this.fabricCanvas.renderAll.bind(this.fabricCanvas)
     );
+    this.applyViewportTransform();
+  }
+
+  setRotationDegrees(degrees) {
+    if (!this.fabricCanvas) return;
+    const normalized = ((degrees % 360) + 360) % 360;
+    this.rotationDegrees = normalized;
+    this.applyViewportTransform();
+  }
+
+  rotateBy(deltaDegrees) {
+    this.setRotationDegrees(this.rotationDegrees + deltaDegrees);
+  }
+
+  getRotationDegrees() {
+    return this.rotationDegrees;
+  }
+
+  setViewportState({ zoom, panX, panY } = {}) {
+    if (typeof zoom === 'number' && !Number.isNaN(zoom)) {
+      this.zoomLevel = zoom;
+    }
+    if (typeof panX === 'number' && !Number.isNaN(panX)) {
+      this.panX = panX;
+    }
+    if (typeof panY === 'number' && !Number.isNaN(panY)) {
+      this.panY = panY;
+    }
+    this.applyViewportTransform();
+  }
+
+  getViewportState() {
+    return {
+      zoom: this.zoomLevel,
+      panX: this.panX,
+      panY: this.panY,
+    };
+  }
+
+  applyViewportTransform() {
+    if (!this.fabricCanvas) return;
+
+    const zoom = this.zoomLevel || this.fabricCanvas.getZoom() || 1;
+    const angleRadians = this.rotateViewport ? (this.rotationDegrees * Math.PI) / 180 : 0;
+    const cos = Math.cos(angleRadians);
+    const sin = Math.sin(angleRadians);
+    let centerX = this.fabricCanvas.width / 2;
+    let centerY = this.fabricCanvas.height / 2;
+    const backgroundImage = this.fabricCanvas.backgroundImage;
+    if (backgroundImage && typeof backgroundImage.getCenterPoint === 'function') {
+      const bgCenter = backgroundImage.getCenterPoint();
+      if (typeof bgCenter?.x === 'number' && typeof bgCenter?.y === 'number') {
+        centerX = bgCenter.x;
+        centerY = bgCenter.y;
+      }
+    } else {
+      const center = this.fabricCanvas.getCenter();
+      centerX =
+        typeof center.left === 'number'
+          ? center.left
+          : typeof center.x === 'number'
+            ? center.x
+            : centerX;
+      centerY =
+        typeof center.top === 'number'
+          ? center.top
+          : typeof center.y === 'number'
+            ? center.y
+            : centerY;
+    }
+
+    const base = [zoom * cos, zoom * sin, -zoom * sin, zoom * cos, 0, 0];
+    const translateToOrigin = [1, 0, 0, 1, -centerX, -centerY];
+    const translateBack = [1, 0, 0, 1, centerX, centerY];
+
+    let transform = fabric.util.multiplyTransformMatrices(base, translateToOrigin);
+    transform = fabric.util.multiplyTransformMatrices(translateBack, transform);
+    transform[4] += this.panX;
+    transform[5] += this.panY;
+
+    this.fabricCanvas.setViewportTransform(transform);
+    this.fabricCanvas.calcOffset();
+    this.fabricCanvas.requestRenderAll();
+  }
+
+  getRotationCenter() {
+    if (!this.fabricCanvas) {
+      return { x: 0, y: 0 };
+    }
+    let centerX = this.fabricCanvas.width / 2;
+    let centerY = this.fabricCanvas.height / 2;
+    const backgroundImage = this.fabricCanvas.backgroundImage;
+    if (backgroundImage && typeof backgroundImage.getCenterPoint === 'function') {
+      const bgCenter = backgroundImage.getCenterPoint();
+      if (typeof bgCenter?.x === 'number' && typeof bgCenter?.y === 'number') {
+        centerX = bgCenter.x;
+        centerY = bgCenter.y;
+      }
+    }
+    return { x: centerX, y: centerY };
+  }
+
+  rotateCanvasObjects(deltaDegrees) {
+    if (!this.fabricCanvas) return this.rotationDegrees;
+    const center = this.getRotationCenter();
+    const radians = (deltaDegrees * Math.PI) / 180;
+    const tags = [];
+
+    this.fabricCanvas.getObjects().forEach(obj => {
+      if (!obj || obj.type === 'activeSelection') return;
+      if (obj.isConnectorLine) return;
+      if (obj.isTag) {
+        tags.push(obj);
+        return;
+      }
+      const objCenter = obj.getCenterPoint();
+      const rotatedCenter = fabric.util.rotatePoint(objCenter, center, radians);
+
+      if (obj.type === 'path' && Array.isArray(obj.customPoints)) {
+        obj.customPoints = obj.customPoints.map(point =>
+          fabric.util.rotatePoint(point, center, radians)
+        );
+        const newPathString = PathUtils.createSmoothPath(obj.customPoints);
+        const pathData = fabric.util.parsePath(newPathString);
+        obj.set({ path: pathData, angle: 0 });
+      } else {
+        obj.rotate((obj.angle || 0) + deltaDegrees);
+      }
+
+      obj.setPositionByOrigin(rotatedCenter, 'center', 'center');
+      obj.setCoords();
+
+      if (obj.type === 'path') {
+        obj.lastLeft = obj.left;
+        obj.lastTop = obj.top;
+      }
+    });
+
+    tags.forEach(tagObj => {
+      const tagCenter = tagObj.getCenterPoint();
+      const rotatedCenter = fabric.util.rotatePoint(tagCenter, center, radians);
+      tagObj.set({
+        left: rotatedCenter.x,
+        top: rotatedCenter.y,
+        angle: 0,
+      });
+      tagObj.setCoords();
+
+      const strokeObj = tagObj.connectedStroke;
+      if (strokeObj) {
+        let strokeCenter;
+        if (strokeObj.group) {
+          const centerRelative = strokeObj.getCenterPoint();
+          const groupMatrix = strokeObj.group.calcTransformMatrix();
+          strokeCenter = fabric.util.transformPoint(centerRelative, groupMatrix);
+        } else {
+          strokeCenter = strokeObj.getCenterPoint();
+        }
+        if (strokeCenter) {
+          tagObj.tagOffset = {
+            x: rotatedCenter.x - strokeCenter.x,
+            y: rotatedCenter.y - strokeCenter.y,
+          };
+          strokeObj.tagOffset = {
+            x: tagObj.tagOffset.x,
+            y: tagObj.tagOffset.y,
+          };
+        }
+      }
+    });
+
+    const backgroundImage = this.fabricCanvas.backgroundImage;
+    if (backgroundImage) {
+      const bgCenter = backgroundImage.getCenterPoint();
+      const rotatedBgCenter = fabric.util.rotatePoint(bgCenter, center, radians);
+      backgroundImage.rotate((backgroundImage.angle || 0) + deltaDegrees);
+      backgroundImage.setPositionByOrigin(rotatedBgCenter, 'center', 'center');
+      if (typeof backgroundImage.setCoords === 'function') {
+        backgroundImage.setCoords();
+      }
+    }
+
+    this.rotationDegrees = (((this.rotationDegrees + deltaDegrees) % 360) + 360) % 360;
+    if (window.app?.tagManager) {
+      tags.forEach(tagObj => {
+        if (tagObj?.strokeLabel) {
+          window.app.tagManager.updateConnector(tagObj.strokeLabel);
+        }
+      });
+    }
+    this.fabricCanvas.requestRenderAll();
+    return this.rotationDegrees;
   }
 
   // Helper to get JSON export
   // Include strokeMetadata, isArrow, and customPoints to preserve stroke labels, visibility state, arrow markers, and curve control points
   toJSON() {
-    return this.fabricCanvas.toJSON(['strokeMetadata', 'isArrow', 'customPoints']);
+    return this.fabricCanvas.toJSON(['strokeMetadata', 'isArrow', 'customPoints', 'tagOffset']);
   }
 
   // Helper to load from JSON
@@ -1090,6 +1306,9 @@ export class CanvasManager {
         }
         if (o.customPoints) {
           object.customPoints = o.customPoints;
+        }
+        if (o.tagOffset) {
+          object.tagOffset = o.tagOffset;
         }
       }
     );

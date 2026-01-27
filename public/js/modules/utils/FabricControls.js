@@ -169,18 +169,21 @@ export class FabricControls {
 
       const points = lineObj.calcLinePoints();
       const matrix = lineObj.calcTransformMatrix();
-      const p1 = fabric.util.transformPoint({ x: points.x1, y: points.y1 }, matrix);
-      const p2 = fabric.util.transformPoint({ x: points.x2, y: points.y2 }, matrix);
+      const p1World = fabric.util.transformPoint({ x: points.x1, y: points.y1 }, matrix);
+      const p2World = fabric.util.transformPoint({ x: points.x2, y: points.y2 }, matrix);
       const center = {
-        x: (pointer.x + p2.x) / 2,
-        y: (pointer.y + p2.y) / 2,
+        x: (pointer.x + p2World.x) / 2,
+        y: (pointer.y + p2World.y) / 2,
       };
+      const angle = (lineObj.angle || 0) * (Math.PI / 180);
+      const localP1 = fabric.util.rotatePoint(pointer, center, -angle);
+      const localP2 = fabric.util.rotatePoint(p2World, center, -angle);
 
       lineObj.set({
-        x1: pointer.x - center.x,
-        y1: pointer.y - center.y,
-        x2: p2.x - center.x,
-        y2: p2.y - center.y,
+        x1: localP1.x - center.x,
+        y1: localP1.y - center.y,
+        x2: localP2.x - center.x,
+        y2: localP2.y - center.y,
         left: center.x,
         top: center.y,
       });
@@ -233,18 +236,21 @@ export class FabricControls {
 
       const points = lineObj.calcLinePoints();
       const matrix = lineObj.calcTransformMatrix();
-      const p1 = fabric.util.transformPoint({ x: points.x1, y: points.y1 }, matrix);
-      const p2 = fabric.util.transformPoint({ x: points.x2, y: points.y2 }, matrix);
+      const p1World = fabric.util.transformPoint({ x: points.x1, y: points.y1 }, matrix);
+      const p2World = fabric.util.transformPoint({ x: points.x2, y: points.y2 }, matrix);
       const center = {
-        x: (p1.x + pointer.x) / 2,
-        y: (p1.y + pointer.y) / 2,
+        x: (p1World.x + pointer.x) / 2,
+        y: (p1World.y + pointer.y) / 2,
       };
+      const angle = (lineObj.angle || 0) * (Math.PI / 180);
+      const localP1 = fabric.util.rotatePoint(p1World, center, -angle);
+      const localP2 = fabric.util.rotatePoint(pointer, center, -angle);
 
       lineObj.set({
-        x1: p1.x - center.x,
-        y1: p1.y - center.y,
-        x2: pointer.x - center.x,
-        y2: pointer.y - center.y,
+        x1: localP1.x - center.x,
+        y1: localP1.y - center.y,
+        x2: localP2.x - center.x,
+        y2: localP2.y - center.y,
         left: center.x,
         top: center.y,
       });

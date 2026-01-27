@@ -229,9 +229,10 @@ export class TagManager {
 
     // Group tag text and background
     // Position group at stroke center + offset
+    const initialOffset = strokeObject?.tagOffset || { x: 20, y: -10 };
     const tagGroup = new fabric.Group([background, tagText], {
-      left: centerX + 20,
-      top: centerY - 10,
+      left: centerX + initialOffset.x,
+      top: centerY + initialOffset.y,
       originX: 'center',
       originY: 'center',
       selectable: true,
@@ -247,8 +248,12 @@ export class TagManager {
       strokeLabel: strokeLabel,
       imageLabel: imageLabel,
       connectedStroke: strokeObject,
-      tagOffset: { x: 20, y: -10 }, // Default offset
+      tagOffset: { x: initialOffset.x, y: initialOffset.y }, // Default offset
     });
+
+    if (strokeObject) {
+      strokeObject.tagOffset = { x: initialOffset.x, y: initialOffset.y };
+    }
 
     // Update connector line when tag moves
     tagGroup.on('moving', () => {
@@ -263,6 +268,13 @@ export class TagManager {
         x: tagGroup.left - strokeCenter.x,
         y: tagGroup.top - strokeCenter.y,
       };
+
+      if (strokeObject) {
+        strokeObject.tagOffset = {
+          x: tagGroup.tagOffset.x,
+          y: tagGroup.tagOffset.y,
+        };
+      }
 
       this.updateConnector(strokeLabel);
     });
@@ -504,7 +516,8 @@ export class TagManager {
 
       if (strokeCenter) {
         // Use stored offset or default
-        const tagOffset = tagObj.tagOffset || { x: 20, y: -10 };
+        const tagOffset = tagObj.tagOffset || connectedStrokeObj.tagOffset || { x: 20, y: -10 };
+        tagObj.tagOffset = { x: tagOffset.x, y: tagOffset.y };
         const newTagLeft = strokeCenter.x + tagOffset.x;
         const newTagTop = strokeCenter.y + tagOffset.y;
 

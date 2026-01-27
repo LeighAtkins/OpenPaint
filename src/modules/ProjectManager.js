@@ -9,10 +9,10 @@ export class ProjectManager {
     // Project Data
     this.currentViewId = 'front';
     this.views = {
-      front: { id: 'front', image: null, canvasData: null, metadata: null },
-      side: { id: 'side', image: null, canvasData: null, metadata: null },
-      back: { id: 'back', image: null, canvasData: null, metadata: null },
-      cushion: { id: 'cushion', image: null, canvasData: null, metadata: null },
+      front: { id: 'front', image: null, canvasData: null, metadata: null, rotation: 0 },
+      side: { id: 'side', image: null, canvasData: null, metadata: null, rotation: 0 },
+      back: { id: 'back', image: null, canvasData: null, metadata: null, rotation: 0 },
+      cushion: { id: 'cushion', image: null, canvasData: null, metadata: null, rotation: 0 },
     };
   }
 
@@ -36,6 +36,10 @@ export class ProjectManager {
       if (view.image) {
         await this.setBackgroundImage(view.image);
       }
+      if (typeof view.rotation === 'number') {
+        this.canvasManager.setRotationDegrees(view.rotation);
+        this.updateThumbnailRotation(viewId, view.rotation);
+      }
       return;
     }
 
@@ -50,6 +54,12 @@ export class ProjectManager {
     // 3. Switch context
     this.currentViewId = viewId;
     const view = this.views[viewId];
+
+    // Apply rotation for the new view
+    if (typeof view.rotation === 'number') {
+      this.canvasManager.setRotationDegrees(view.rotation);
+      this.updateThumbnailRotation(viewId, view.rotation);
+    }
 
     // 4. Clear canvas
     this.canvasManager.clear();
@@ -104,6 +114,7 @@ export class ProjectManager {
     const json = this.canvasManager.toJSON();
     if (this.views[this.currentViewId]) {
       this.views[this.currentViewId].canvasData = json;
+      this.views[this.currentViewId].rotation = this.canvasManager.getRotationDegrees();
 
       // Also save metadata for this view
       if (window.app?.metadataManager) {
@@ -170,7 +181,13 @@ export class ProjectManager {
 
     if (!this.views[viewId]) {
       // Create new view if it doesn't exist
-      this.views[viewId] = { id: viewId, image: null, canvasData: null, metadata: null };
+      this.views[viewId] = {
+        id: viewId,
+        image: null,
+        canvasData: null,
+        metadata: null,
+        rotation: 0,
+      };
     }
 
     this.views[viewId].image = imageUrl;
@@ -289,6 +306,46 @@ export class ProjectManager {
 
   getViewList() {
     return Object.keys(this.views);
+  }
+
+  rotateCurrentView(deltaDegrees) {
+    const view = this.views[this.currentViewId];
+    if (!view) return;
+    const nextRotation = this.canvasManager.rotateCanvasObjects(deltaDegrees);
+    view.rotation = nextRotation;
+    this.updateThumbnailRotation(this.currentViewId, nextRotation);
+  }
+
+  updateThumbnailRotation(viewId, rotationDegrees) {
+    const normalized = ((rotationDegrees % 360) + 360) % 360;
+    const needsScale = normalized === 90 || normalized === 270;
+    const scale = needsScale ? 0.9 : 1;
+    const targets = document.querySelectorAll('.image-thumbnail, .image-container');
+    targets.forEach(container => {
+      const label =
+        container.dataset?.label ||
+        container.getAttribute('title') ||
+        container.dataset?.imageIndex ||
+        container.id;
+      if (label !== viewId) return;
+
+      let preview = container;
+      if (container.classList.contains('image-container')) {
+        preview =
+          container.querySelector('.image-thumbnail') ||
+          container.querySelector('.image-thumb') ||
+          container.querySelector('img') ||
+          container.querySelector('canvas');
+        if (!preview) return;
+      }
+
+      preview.style.transform = `rotate(${normalized}deg) scale(${scale})`;
+      preview.style.transformOrigin = '50% 50%';
+      preview.dataset.rotation = String(normalized);
+      if (preview.classList && preview.classList.contains('image-thumbnail')) {
+        preview.style.overflow = 'hidden';
+      }
+    });
   }
 
   deleteImage(viewId) {

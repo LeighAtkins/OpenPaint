@@ -365,6 +365,22 @@ class App {
     if (undoBtn) undoBtn.addEventListener('click', () => this.historyManager.undo());
     if (redoBtn) redoBtn.addEventListener('click', () => this.historyManager.redo());
 
+    // Rotate controls
+    const rotateLeftCtrl = document.getElementById('rotateLeftCtrl');
+    const rotateRightCtrl = document.getElementById('rotateRightCtrl');
+
+    if (rotateLeftCtrl) {
+      rotateLeftCtrl.addEventListener('click', () => {
+        this.projectManager.rotateCurrentView(-90);
+      });
+    }
+
+    if (rotateRightCtrl) {
+      rotateRightCtrl.addEventListener('click', () => {
+        this.projectManager.rotateCurrentView(90);
+      });
+    }
+
     // Tools
     const drawingModeToggles = document.querySelectorAll('#drawingModeToggle');
     const textModeToggles = document.querySelectorAll('#textModeToggle');
