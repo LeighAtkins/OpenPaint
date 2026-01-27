@@ -180,6 +180,8 @@
     const thumbnail = document.createElement('div');
     thumbnail.className = 'image-thumbnail';
     thumbnail.dataset.imageIndex = index;
+    thumbnail.dataset.label =
+      originalData?.label || imageData?.label || imageData?.name || imageName || '';
     thumbnail.style.backgroundImage = `url(${imageSrc})`;
     thumbnail.title = imageName;
     thumbnail.draggable = true;
@@ -422,6 +424,12 @@
       const thumbnail = document.createElement('div');
       thumbnail.className = 'image-thumbnail';
       thumbnail.dataset.imageIndex = index;
+      thumbnail.dataset.label =
+        imageData?.original?.label ||
+        imageData?.label ||
+        imageData?.name ||
+        imageData?.filename ||
+        '';
       thumbnail.style.backgroundImage = `url(${imageData.src})`;
       thumbnail.title = imageData.name;
       thumbnail.draggable = true;

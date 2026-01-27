@@ -56,12 +56,16 @@ export class FabricControls {
         y: (pointer.y + p2.y) / 2,
       };
 
+      const angle = (lineObj.angle || 0) * (Math.PI / 180);
+      const localP1 = fabric.util.rotatePoint(pointer, center, -angle);
+      const localP2 = fabric.util.rotatePoint(p2, center, -angle);
+
       // Update x1, y1 based on pointer position, keeping the other endpoint fixed
       lineObj.set({
-        x1: pointer.x - center.x,
-        y1: pointer.y - center.y,
-        x2: p2.x - center.x,
-        y2: p2.y - center.y,
+        x1: localP1.x - center.x,
+        y1: localP1.y - center.y,
+        x2: localP2.x - center.x,
+        y2: localP2.y - center.y,
         left: center.x,
         top: center.y,
       });
@@ -102,11 +106,15 @@ export class FabricControls {
         y: (p1.y + pointer.y) / 2,
       };
 
+      const angle = (lineObj.angle || 0) * (Math.PI / 180);
+      const localP1 = fabric.util.rotatePoint(p1, center, -angle);
+      const localP2 = fabric.util.rotatePoint(pointer, center, -angle);
+
       lineObj.set({
-        x1: p1.x - center.x,
-        y1: p1.y - center.y,
-        x2: pointer.x - center.x,
-        y2: pointer.y - center.y,
+        x1: localP1.x - center.x,
+        y1: localP1.y - center.y,
+        x2: localP2.x - center.x,
+        y2: localP2.y - center.y,
         left: center.x,
         top: center.y,
       });
