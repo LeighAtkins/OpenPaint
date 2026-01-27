@@ -571,13 +571,14 @@ export class MeasurementsService extends SupabaseService {
             mimeType: 'application/json',
           });
 
-        case 'csv':
+        case 'csv': {
           const csvData = this.convertToCSV(exportData);
           return Result.ok({
             data: csvData,
             filename: `${project.name}_measurements_${Date.now()}.csv`,
             mimeType: 'text/csv',
           });
+        }
 
         default:
           return Result.err(
