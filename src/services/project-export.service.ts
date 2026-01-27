@@ -545,7 +545,7 @@ export class ProjectExportService extends SupabaseService {
       let importData: any;
       try {
         importData = JSON.parse(content.data);
-      } catch (error) {
+      } catch {
         return Result.err(
           new AppError(ErrorCode.VALIDATION_ERROR, 'Invalid JSON format in import file')
         );

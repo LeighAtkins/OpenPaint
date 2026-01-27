@@ -33,8 +33,6 @@ export class RotationService {
   private canvasDimensions = new Map<string, CanvasDimensions>();
   private drawingLayers = new Map<string, DrawingLayer>();
 
-  constructor() {}
-
   getCanvasDimensions(canvasElement: HTMLCanvasElement): CanvasDimensions | null {
     const canvas = this.getFabricCanvas(canvasElement);
     if (!canvas) return null;
