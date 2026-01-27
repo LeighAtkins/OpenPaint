@@ -1,12 +1,13 @@
 /**
  * OpenPaint TypeScript Entry Point
- * 
+ *
  * This is the main entry point for the new TypeScript application.
  * During migration, this will run alongside the existing JavaScript modules.
  */
 
 import { logger } from '@/utils/errors';
 import { env } from '@/utils/env';
+import { initializeRotationControls } from '@/features';
 
 const CONTEXT = 'OpenPaintTS';
 
@@ -36,7 +37,7 @@ class OpenPaintApp {
   private checkEnvironment(): void {
     logger.info(CONTEXT, `Environment: ${env.isDevelopment ? 'development' : 'production'}`);
     logger.info(CONTEXT, `Supabase configured: ${env.supabase.url ? 'yes' : 'no'}`);
-    
+
     if (env.isDevelopment) {
       logger.debug(CONTEXT, 'Development mode - enhanced logging enabled');
     }
@@ -66,7 +67,6 @@ class OpenPaintApp {
 
       this.initialized = true;
       logger.info(CONTEXT, 'TypeScript application initialized successfully');
-
     } catch (error) {
       logger.error(CONTEXT, 'Failed to initialize TypeScript application', error);
       throw error;
@@ -78,7 +78,7 @@ class OpenPaintApp {
     const checkInterval = 100; // 100ms
     const startTime = Date.now();
 
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       const checkLegacyApp = (): void => {
         if (window.app) {
           logger.info(CONTEXT, 'Legacy JavaScript app found - proceeding with integration');
@@ -103,26 +103,36 @@ class OpenPaintApp {
     // Add TypeScript enhancements to the existing app
     this.enhanceErrorHandling();
     this.addTypeScriptUtilities();
-    
+    this.initializeRotationControls();
+
     // Make TypeScript services available globally for development
     if (env.isDevelopment) {
       this.exposeDevelopmentHelpers();
     }
   }
 
+  private initializeRotationControls(): void {
+    try {
+      initializeRotationControls();
+      logger.info(CONTEXT, 'Rotation controls initialized');
+    } catch (error) {
+      logger.error(CONTEXT, 'Failed to initialize rotation controls', error);
+    }
+  }
+
   private enhanceErrorHandling(): void {
     // Enhance global error handling with our typed error system
-    window.addEventListener('error', (event) => {
+    window.addEventListener('error', event => {
       logger.error(CONTEXT, 'Global error caught', {
         message: event.message,
         filename: event.filename,
         lineno: event.lineno,
         colno: event.colno,
-        error: event.error
+        error: event.error,
       });
     });
 
-    window.addEventListener('unhandledrejection', (event) => {
+    window.addEventListener('unhandledrejection', event => {
       logger.error(CONTEXT, 'Unhandled promise rejection', event.reason);
       event.preventDefault(); // Prevent console spam
     });
@@ -137,7 +147,7 @@ class OpenPaintApp {
     window.paintApp.ts = {
       logger,
       env,
-      version: '2.0.0-migration'
+      version: '2.0.0-migration',
     };
 
     logger.debug(CONTEXT, 'TypeScript utilities added to window.paintApp.ts');
@@ -151,8 +161,8 @@ class OpenPaintApp {
       reinitialize: () => this.initialize(),
       getState: () => ({
         initialized: this.initialized,
-        legacyAppPresent: !!window.app
-      })
+        legacyAppPresent: !!window.app,
+      }),
     };
 
     logger.debug(CONTEXT, 'Development helpers exposed at window.__openpaint_ts_dev');
@@ -163,11 +173,13 @@ class OpenPaintApp {
 const app = new OpenPaintApp();
 
 // Initialize immediately in a way that doesn't block the main thread
-Promise.resolve().then(() => {
-  return app.initialize();
-}).catch((error) => {
-  console.error('OpenPaint TypeScript initialization failed:', error);
-});
+Promise.resolve()
+  .then(() => {
+    return app.initialize();
+  })
+  .catch(error => {
+    console.error('OpenPaint TypeScript initialization failed:', error);
+  });
 
 // Export for potential manual initialization
 export { OpenPaintApp };

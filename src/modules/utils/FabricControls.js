@@ -46,21 +46,26 @@ export class FabricControls {
       const lineObj = transform.target;
       const canvas = lineObj.canvas;
 
-      // Convert mouse coordinate to local coordinate system
-      const localPoint = lineObj.toLocalPoint(new fabric.Point(x, y), 'center', 'center');
-
-      // Update x1, y1 based on mouse position relative to object center
-      // Note: fabric.Line coordinates are relative to its center when origin is center
-      // But x1/y1/x2/y2 are absolute coordinates in the line's internal logic
-      // However, when dragging, we need to update the actual property values
-
-      // Simpler approach: Calculate new absolute coordinates
       const pointer = canvas.getPointer(eventData.e);
-      lineObj.set({ x1: pointer.x, y1: pointer.y });
+      const points = lineObj.calcLinePoints();
+      const matrix = lineObj.calcTransformMatrix();
+      const p1 = fabric.util.transformPoint({ x: points.x1, y: points.y1 }, matrix);
+      const p2 = fabric.util.transformPoint({ x: points.x2, y: points.y2 }, matrix);
+      const center = {
+        x: (pointer.x + p2.x) / 2,
+        y: (pointer.y + p2.y) / 2,
+      };
 
-      // Recalculate dimensions and position
-      // This is tricky with Fabric lines as changing x1/y1 shifts the center
-      // We might need a more robust way if this jumps around
+      // Update x1, y1 based on pointer position, keeping the other endpoint fixed
+      lineObj.set({
+        x1: pointer.x - center.x,
+        y1: pointer.y - center.y,
+        x2: p2.x - center.x,
+        y2: p2.y - center.y,
+        left: center.x,
+        top: center.y,
+      });
+      lineObj.setCoords();
 
       // Fire moving event to trigger updates (like tag connectors)
       lineObj.fire('moving');
@@ -88,7 +93,24 @@ export class FabricControls {
       const lineObj = transform.target;
       const canvas = lineObj.canvas;
       const pointer = canvas.getPointer(eventData.e);
-      lineObj.set({ x2: pointer.x, y2: pointer.y });
+      const points = lineObj.calcLinePoints();
+      const matrix = lineObj.calcTransformMatrix();
+      const p1 = fabric.util.transformPoint({ x: points.x1, y: points.y1 }, matrix);
+      const p2 = fabric.util.transformPoint({ x: points.x2, y: points.y2 }, matrix);
+      const center = {
+        x: (p1.x + pointer.x) / 2,
+        y: (p1.y + pointer.y) / 2,
+      };
+
+      lineObj.set({
+        x1: p1.x - center.x,
+        y1: p1.y - center.y,
+        x2: pointer.x - center.x,
+        y2: pointer.y - center.y,
+        left: center.x,
+        top: center.y,
+      });
+      lineObj.setCoords();
       lineObj.fire('moving');
       return true;
     };

@@ -3306,8 +3306,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-    <script src="/js/paint_backup.js"></script>
-    <script src="/js/project-manager.js"></script>
+
     <script type="module" src="/js/modules/main.js"></script>
 
     <!-- New UI Controller Script -->
@@ -5428,6 +5427,9 @@
           });
 
           // Canvas Controls: wire rotate/flip buttons to current image
+          // MIGRATED TO TYPESCRIPT - Rotation controls now handled by @/features/transform/controls.ts
+          // and initialized in src/main.ts via initializeRotationControls()
+          /*
           const rotateLeftCtrl = document.getElementById('rotateLeftCtrl');
           const rotateRightCtrl = document.getElementById('rotateRightCtrl');
           function getCurrentImageIndex() {
@@ -5462,6 +5464,7 @@
               rotateFallback(90);
             }
           });
+          */
 
           // Name/type inputs wiring
           const nameInput = document.getElementById('imageNameInput');
@@ -5931,6 +5934,8 @@
         }
 
         // Rotate image function
+        // MIGRATED TO TYPESCRIPT - Rotation now handled by src/features/transform/controls.ts
+        /*
         window.rotateImage = function rotateImage(index, degrees) {
           console.log(`[Gallery] Rotating image ${index} by ${degrees}°`);
 
@@ -5967,7 +5972,7 @@
               thumbnail.style.backgroundImage = `url(${newSrc})`;
             }
 
-            // Update the actual canvas image if this is the current image
+            // Update actual canvas image if this is the current image
             if (imageData.original && imageData.original.label) {
               const label = imageData.original.label;
 
@@ -6009,13 +6014,13 @@
 
               if (Math.abs(degrees) === 90 || Math.abs(degrees) === 270) {
                 // For blank canvas, keep original dimensions to rotate "in place"
-                // For real images, swap dimensions to match the rotated coordinate space
+                // For real images, swap dimensions to match rotated coordinate space
                 if (imageData.original && imageData.original.isBlankCanvas) {
                   console.log(
                     `[Transform] Keeping canvas dimensions for blank canvas rotation: ${transformWidth}x${transformHeight}`
                   );
                 } else {
-                  // After rotation, the canvas coordinate space also changes
+                  // After rotation, canvas coordinate space also changes
                   transformWidth = canvasHeight; // Width becomes height
                   transformHeight = canvasWidth; // Height becomes width
                   console.log(
@@ -6027,36 +6032,27 @@
               // Transform all coordinate-based data using IMAGE dimensions (not canvas)
               // Paint.js stores coordinates in image-relative space, not canvas space
               // For blank canvas, use canvas dimensions since there's no actual image
-              let rotateWidth, rotateHeight;
+              let rotateWidth = transformWidth;
+              let rotateHeight = transformHeight;
               if (imageData.original && imageData.original.isBlankCanvas) {
                 const canvas = document.getElementById('canvas');
                 rotateWidth = canvas ? canvas.width : 800;
                 rotateHeight = canvas ? canvas.height : 800;
                 console.log(
-                  `[Transform] Using canvas dimensions for blank canvas: ${rotateWidth}x${rotateHeight}`
+                  `[Transform] Using canvas dimensions for blank canvas rotation: ${rotateWidth}x${rotateHeight}`
                 );
               } else {
                 rotateWidth = img.naturalWidth;
                 rotateHeight = img.naturalHeight;
               }
-              // Debug: Check paint.js current state
-              if (window.paintApp && window.paintApp.state) {
-                console.log(
-                  `[Transform] Paint.js current image label: ${window.paintApp.state.currentImageLabel}`
-                );
-              }
-
-              console.log(
-                `[Transform] About to call transformImageData with label: ${label}, degrees: ${degrees}, dimensions: ${rotateWidth}x${rotateHeight}`
-              );
               transformImageData(label, 'rotate', degrees, rotateWidth, rotateHeight);
-              // Update the paint.js image data (skip for blank canvas as there's no actual image)
+              // Update paint.js image data (skip for blank canvas as there's no actual image)
               if (!imageData.original?.isBlankCanvas) {
                 if (window.originalImages && window.originalImages[label]) {
                   window.originalImages[label] = newSrc;
                 }
 
-                // Update the canvas if this is the currently displayed image
+                // Update canvas if this is the currently displayed image
                 if (window.paintApp && window.paintApp.state.currentImageLabel === label) {
                   console.log(`[Gallery] Updating canvas with rotated image for ${label}`);
                   updateCanvasWithNewImage(newSrc);
@@ -6066,7 +6062,7 @@
                   '[Transform] Skipping image update for blank canvas - only transforming drawing data'
                 );
 
-                // For blank canvas, just redraw the existing strokes with transformed coordinates
+                // For blank canvas, just redraw existing strokes with transformed coordinates
                 if (window.redrawCanvasWithVisibility) {
                   window.redrawCanvasWithVisibility();
                 } else if (window.drawAllStrokes) {
@@ -6074,12 +6070,11 @@
                 }
               }
             }
-
-            console.log(`[Gallery] Image ${index} rotated ${degrees}°`);
-          };
+          }
           img.crossOrigin = 'anonymous';
           img.src = imageData.src;
         };
+        */
 
         // Flip image function
         function flipImage(index, direction) {
@@ -7337,7 +7332,9 @@
 
         // Note: Stored centroid system removed - blank canvas now uses fixed canvas center
 
-        // Test function to try rotating the current image
+        // Test function to try rotating current image
+        // MIGRATED TO TYPESCRIPT - Rotation now handled by src/features/transform/controls.ts
+        /*
         window.testRotate = function () {
           console.log(`[Test] Testing rotation on current image (index ${currentImageIndex})`);
           if (currentImageIndex >= 0 && currentImageIndex < imageGalleryData.length) {
@@ -7348,6 +7345,7 @@
             console.log(`[Test] Invalid image index: ${currentImageIndex}`);
           }
         };
+        */
 
         // Hook into addImageToSidebar after external scripts load
         let hookAttempts = 0;
