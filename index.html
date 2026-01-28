@@ -3281,6 +3281,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="/js/paint_backup.js"></script>
 
     <script type="module" src="/js/modules/main.js"></script>
 
@@ -3533,11 +3534,12 @@
         const shareProjectBtn = document.getElementById('shareProjectBtn');
         const updateShareBtn = document.getElementById('updateShareBtn');
 
-        if (saveProjectTop) {
-          saveProjectTop.addEventListener('click', () => {
-            if (window.projectManager?.saveProject) window.projectManager.saveProject();
-          });
-        }
+        // Save button is now handled by toolbar-init.js to avoid double save
+        // if (saveProjectTop) {
+        //   saveProjectTop.addEventListener('click', () => {
+        //     if (window.projectManager?.saveProject) window.projectManager.saveProject();
+        //   });
+        // }
 
         if (shareProjectBtn) {
           shareProjectBtn.addEventListener('click', () => {
@@ -4619,17 +4621,7 @@
               const [, letter, number] = match;
               const num = parseInt(number);
 
-              // Check if this is the first tag with this letter
-              if (i === 0 || sortedBaseTags[i - 1][0] !== letter) {
-                // If it doesn't start at 1, fill from 1
-                if (num > 1) {
-                  const result = letter + '1';
-                  console.log('[calculateNextTag] Numbers mode, found gap at start:', result);
-                  return result;
-                }
-              }
-
-              // Check for gaps within the same letter
+              // Check for gaps within the same letter (but not before first occurrence)
               if (i < sortedBaseTags.length - 1) {
                 const nextMatch = sortedBaseTags[i + 1].match(/^([A-Z])(\d+)$/);
                 if (nextMatch) {

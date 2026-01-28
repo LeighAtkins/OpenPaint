@@ -14,9 +14,12 @@ export class TagManager {
     this.tagBackgroundStyle = 'solid'; // 'solid', 'no-fill', 'clear-black', 'clear-color', 'clear-white'
     this.strokeColor = '#3b82f6'; // Default stroke color for clear-color style
 
-    // Initialize showMeasurements from checkbox state if available, otherwise default to true
+    // Initialize showMeasurements to hidden by default; sync checkbox state if present
     const showMeasurementsCheckbox = document.getElementById('toggleShowMeasurements');
-    this.showMeasurements = showMeasurementsCheckbox ? showMeasurementsCheckbox.checked : true;
+    this.showMeasurements = false;
+    if (showMeasurementsCheckbox) {
+      showMeasurementsCheckbox.checked = false;
+    }
 
     // Initialize tag prediction system integration
     this.initTagPrediction();
@@ -131,11 +134,13 @@ export class TagManager {
         textAlign: 'center',
         originX: 'center',
         originY: 'center',
-        textBaseline: 'middle', // Use 'middle' for correct vertical centering
+        // Use standard baseline to avoid CanvasTextBaseline warnings
+        textBaseline: 'alphabetic',
         selectable: false, // Will be controlled by group
         evented: true, // Allow editing
         hasControls: false, // Controlled by group
         hasBorders: false, // Controlled by group
+        excludeFromExport: true, // Don't save tags to canvas JSON
         isTagText: true,
       });
     } catch (e) {
@@ -222,6 +227,7 @@ export class TagManager {
       originY: 'center',
       selectable: false,
       evented: true,
+      excludeFromExport: true, // Don't save tag backgrounds to canvas JSON
     });
 
     // Update text color based on background style

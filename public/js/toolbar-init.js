@@ -344,9 +344,20 @@
     const shareProjectBtn = document.getElementById('shareProjectBtn');
     const updateShareBtn = document.getElementById('updateShareBtn');
 
-    if (saveProjectTop) {
+    if (saveProjectTop && !saveProjectTop.__saveHandlerBound) {
+      saveProjectTop.__saveHandlerBound = true;
       saveProjectTop.addEventListener('click', () => {
-        if (window.projectManager?.saveProject) window.projectManager.saveProject();
+        console.log('[Toolbar] Save button clicked');
+        console.log('[Toolbar] window.projectManager:', window.projectManager);
+        console.log(
+          '[Toolbar] window.projectManager.saveProject:',
+          window.projectManager?.saveProject
+        );
+        if (window.projectManager?.saveProject) {
+          window.projectManager.saveProject();
+        } else {
+          console.error('[Toolbar] ProjectManager or saveProject method not available');
+        }
       });
     }
 
@@ -494,6 +505,13 @@
 
     // Add body padding to prevent toolbar overlap
     document.body.style.paddingTop = '48px';
+
+    // CRITICAL: Recalculate canvas offset after adding body padding
+    // This fixes the cursor offset issue where lines were drawn 20px below cursor
+    if (window.app?.canvasManager?.fabricCanvas) {
+      window.app.canvasManager.fabricCanvas.calcOffset();
+      console.log('[Toolbar] Recalculated canvas offset after adding body padding');
+    }
   }
 
   // Setup quick save hover menu functionality
