@@ -44,6 +44,7 @@ export class StrokeMetadataManager {
       imageLabel: imageLabel,
       strokeLabel: strokeLabel,
       visible: true,
+      // Labels remain visible by default; measurement text stays empty until provided
       labelVisible: true,
     };
 
@@ -354,10 +355,6 @@ export class StrokeMetadataManager {
 
   // Update tag prediction after a tag is used
   updateTagPredictionAfterUse(imageLabel, usedTag) {
-    // Update the global labelsByImage to track the used tag
-    window.labelsByImage = window.labelsByImage || {};
-    window.labelsByImage[imageLabel] = usedTag;
-
     // Ensure lineStrokesByImage is updated for tag prediction
     window.lineStrokesByImage = window.lineStrokesByImage || {};
     if (!window.lineStrokesByImage[imageLabel]) {
@@ -370,6 +367,24 @@ export class StrokeMetadataManager {
     // Update currentImageLabel for tag prediction system
     window.currentImageLabel = imageLabel;
 
+    // Handle manual tag sequences
+    window.labelsByImage = window.labelsByImage || {};
+    window.manualTagByImage = window.manualTagByImage || {};
+
+    const wasManualTag = window.manualTagByImage[imageLabel] === usedTag;
+
+    if (wasManualTag) {
+      // User manually set this tag - increment it for the next stroke
+      const nextTag = this.incrementTag(usedTag);
+      window.labelsByImage[imageLabel] = nextTag;
+      window.manualTagByImage[imageLabel] = nextTag;
+      console.log(`[Tag] Manual tag sequence: ${usedTag} → ${nextTag}`);
+    } else {
+      // Clear labelsByImage so the system calculates the next tag automatically
+      delete window.labelsByImage[imageLabel];
+      console.log(`[Tag] Auto tag used: ${usedTag}, clearing override`);
+    }
+
     // Update the next tag display
     if (window.updateNextTagDisplay) {
       window.updateNextTagDisplay();
@@ -379,6 +394,33 @@ export class StrokeMetadataManager {
       if (nextTagDisplay && window.calculateNextTag) {
         const nextTag = window.calculateNextTag();
         nextTagDisplay.textContent = nextTag;
+      }
+    }
+  }
+
+  // Helper to increment a tag (e.g., C3 -> C4, A9 -> B1, Z -> A)
+  incrementTag(tag) {
+    const mode = window.tagMode || 'letters+numbers';
+
+    if (mode === 'letters') {
+      // Single letter mode: A -> B -> C ... Z -> A
+      const letter = tag[0];
+      if (letter === 'Z') return 'A';
+      return String.fromCharCode(letter.charCodeAt(0) + 1);
+    } else {
+      // Letters+numbers mode: A1 -> A2 ... A9 -> B1
+      const match = tag.match(/^([A-Z])(\d+)$/);
+      if (!match) return 'A1';
+
+      const letter = match[1];
+      const num = parseInt(match[2], 10);
+
+      if (num < 9) {
+        return `${letter}${num + 1}`;
+      } else {
+        // Roll over to next letter
+        const nextLetter = letter === 'Z' ? 'A' : String.fromCharCode(letter.charCodeAt(0) + 1);
+        return `${nextLetter}1`;
       }
     }
   }
@@ -1158,6 +1200,15 @@ export class StrokeMetadataManager {
   // Rebuild metadata from canvas objects (called after loading view)
   rebuildMetadataFromCanvas(viewId, canvas) {
     console.log(`[StrokeMetadata] Rebuilding metadata for view: ${viewId}`);
+
+    // Only clear and rebuild if canvas has objects
+    // This prevents wiping legacy project data when no Fabric objects exist
+    if (!canvas || canvas.getObjects().length === 0) {
+      console.log(
+        `[StrokeMetadata] No canvas objects found for ${viewId}, preserving existing metadata`
+      );
+      return;
+    }
 
     // Clear object references for this view (but keep visibility/measurement data)
     this.vectorStrokesByImage[viewId] = {};

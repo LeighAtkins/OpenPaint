@@ -8,62 +8,49 @@ document.addEventListener('DOMContentLoaded', () => {
   const saveProjectBtn = document.getElementById('saveProject');
   const loadProjectBtn = document.getElementById('loadProject');
 
-  // Add event listeners
-  if (saveProjectBtn) {
-    saveProjectBtn.addEventListener('click', () => {
-      // Before saving, log the current scales for all images
-      // console.log('[Save Project] Verifying scales before saving:');
-      if (window.imageScaleByLabel) {
-        Object.keys(window.imageScaleByLabel).forEach(label => {
-          // console.log(`- Scale for ${label}: ${window.imageScaleByLabel[label]}`);
-        });
-      } else {
-        // console.log('- imageScaleByLabel is not defined!');
-      }
-
-      // Now explicitly verify the current view's scale is correct
-      const currentLabel = window.currentImageLabel;
-      if (currentLabel) {
-        // console.log(`[Save Project] Current view is ${currentLabel}`);
-        // console.log(`[Save Project] Current scale for ${currentLabel} is ${window.imageScaleByLabel[currentLabel]}`);
-
-        // Get scale from the UI as a backup check
-        const scaleEl = document.getElementById('scaleButton');
-        if (scaleEl) {
-          const scaleText = scaleEl.textContent;
-          // console.log(`[Save Project] Scale shown in UI: ${scaleText}`);
-
-          // Try to parse the scale from UI text (e.g. "Scale: 25% ▼")
-          const scaleMatch = scaleText.match(/Scale: (\d+)%/);
-          if (scaleMatch && scaleMatch[1]) {
-            const uiScale = parseInt(scaleMatch[1]) / 100;
-            // console.log(`[Save Project] Parsed UI scale: ${uiScale}`);
-
-            // If UI scale doesn't match stored scale, update the stored scale
-            if (uiScale !== window.imageScaleByLabel[currentLabel]) {
-              // console.log(`[Save Project] Scale mismatch! Updating scale for ${currentLabel} from ${window.imageScaleByLabel[currentLabel]} to ${uiScale}`);
-              window.imageScaleByLabel[currentLabel] = uiScale;
-            }
-          }
-        }
-      }
-
-      // Call modern Fabric.js save function
-      if (
-        window.app &&
-        window.app.canvasManager &&
-        typeof window.saveFabricProject === 'function'
-      ) {
-        window.saveFabricProject();
-      } else {
-        // Fallback to legacy save if modern system not available
-        saveProject();
-      }
-    });
-  }
+  // Legacy save button disabled - modern save is handled by toolbar-init.js
+  // No longer binding to saveProjectBtn to avoid double saves
 
   if (loadProjectBtn) {
-    loadProjectBtn.addEventListener('click', loadProject);
+    loadProjectBtn.addEventListener('click', () => {
+      // Create file input to detect project format
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = '.json,.zip';
+      input.onchange = async e => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        try {
+          // Check if it's a Fabric.js project (JSON with version 2.0)
+          if (file.name.endsWith('.json')) {
+            const text = await file.text();
+            const data = JSON.parse(text);
+
+            if (data.version && data.version.startsWith('2.0')) {
+              console.log('[Load Router] Detected Fabric.js project, using modern loader');
+              if (window.projectManager?.loadProject) {
+                // Re-create file from text since we consumed it
+                const newFile = new File([text], file.name, { type: 'application/json' });
+                await window.projectManager.loadProject(newFile);
+              } else {
+                console.error('[Load Router] Modern project manager not available');
+              }
+              return;
+            }
+          }
+
+          // Otherwise use legacy loader
+          console.log('[Load Router] Using legacy loader');
+          loadProject();
+        } catch (error) {
+          console.error('[Load Router] Error detecting format:', error);
+          // Fallback to legacy loader
+          loadProject();
+        }
+      };
+      input.click();
+    });
   }
 
   // Add event listeners for new buttons
@@ -2286,109 +2273,5 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     //         console.log('[Load Project] Complete.');
-  }
-
-  // Modern Fabric.js save/load system
-
-  /**
-   * Save project using modern Fabric.js format
-   * Saves Fabric canvas JSON along with images and metadata in a ZIP file
-   */
-  window.saveFabricProject = async function saveFabricProject() {
-    console.log('[Save Fabric] Starting modern Fabric.js project save...');
-
-    if (!window.app || !window.app.canvasManager || !window.app.canvasManager.fabricCanvas) {
-      showStatusMessage('Canvas not available', 'error');
-      return;
-    }
-
-    const fabricCanvas = window.app.canvasManager.fabricCanvas;
-    const projectManager = window.app.projectManager;
-
-    // Get all views/images
-    const viewIds = Object.keys(projectManager.views);
-    console.log(`[Save Fabric] Saving ${viewIds.length} views:`, viewIds);
-
-    const projectData = {
-      version: '2.0-fabric',
-      projectName: window.projectName || 'Unnamed Project',
-      createdAt: new Date().toISOString(),
-      views: {},
-    };
-
-    // Save current view's canvas state
-    const currentViewId = projectManager.currentViewId;
-    projectData.currentViewId = currentViewId;
-
-    // For each view, save canvas JSON and metadata
-    for (const viewId of viewIds) {
-      const view = projectManager.views[viewId];
-
-      projectData.views[viewId] = {
-        canvasJSON: null,
-        imageDataURL: null,
-        metadata: {},
-      };
-
-      // If this is the current view, save its live canvas state
-      if (viewId === currentViewId) {
-        projectData.views[viewId].canvasJSON = fabricCanvas.toJSON([
-          'strokeMetadata',
-          'isTag',
-          'isConnectorLine',
-          'tagLabel',
-          'connectedTo',
-        ]);
-        console.log(`[Save Fabric] Saved canvas JSON for ${viewId}`);
-      } else if (view.canvasData) {
-        // Use stored canvas data for other views
-        projectData.views[viewId].canvasJSON = view.canvasData;
-      }
-
-      // Save background image as data URL if exists
-      if (view.image) {
-        try {
-          const response = await fetch(view.image);
-          const blob = await response.blob();
-          const reader = new FileReader();
-          const imageDataURL = await new Promise(resolve => {
-            reader.onloadend = () => resolve(reader.result);
-            reader.readAsDataURL(blob);
-          });
-          projectData.views[viewId].imageDataURL = imageDataURL;
-          console.log(`[Save Fabric] Saved image for ${viewId}`);
-        } catch (err) {
-          console.warn(`[Save Fabric] Could not save image for ${viewId}:`, err);
-        }
-      }
-
-      // Save metadata from metadataManager
-      if (window.app.metadataManager) {
-        const meta = window.app.metadataManager;
-        projectData.views[viewId].metadata = {
-          strokeVisibility: meta.strokeVisibilityByImage[viewId] || {},
-          strokeLabelVisibility: meta.strokeLabelVisibility[viewId] || {},
-          strokeMeasurements: meta.strokeMeasurements[viewId] || {},
-        };
-      }
-    }
-
-    // Convert to JSON and download
-    const jsonStr = JSON.stringify(projectData, null, 2);
-    const blob = new Blob([jsonStr], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${projectData.projectName}_fabric.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-
-    showStatusMessage('Project saved successfully', 'success');
-    console.log('[Save Fabric] Project saved successfully');
-  };
-
-  // Remove legacy migration hook
-  if (typeof window.StrokeMetadataManager !== 'undefined') {
-    console.log('[Fabric Save/Load] Modern save system ready');
   }
 });

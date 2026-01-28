@@ -71,7 +71,10 @@ export class ProjectManager {
 
     // 6. Restore canvas objects (strokes/text)
     if (view.canvasData) {
-      this.canvasManager.loadFromJSON(view.canvasData, () => {
+      // Sanitize canvas data before loading
+      const sanitizedData = this.sanitizeCanvasJSON(view.canvasData);
+
+      this.canvasManager.loadFromJSON(sanitizedData, () => {
         // Restore metadata for this view
         if (view.metadata && window.app?.metadataManager) {
           window.app.metadataManager.vectorStrokesByImage[viewId] =
@@ -155,6 +158,41 @@ export class ProjectManager {
       'tagLabel',
       'isConnectorLine',
     ];
+  }
+
+  sanitizeCanvasJSON(canvasData) {
+    if (!canvasData || typeof canvasData !== 'object') {
+      return canvasData;
+    }
+
+    const validTextBaselines = ['top', 'hanging', 'middle', 'alphabetic', 'ideographic', 'bottom'];
+
+    const sanitizeObject = obj => {
+      if (!obj || typeof obj !== 'object') return obj;
+
+      if (Array.isArray(obj)) {
+        return obj.map(item => sanitizeObject(item));
+      }
+
+      const sanitized = { ...obj };
+
+      if (sanitized.textBaseline && !validTextBaselines.includes(sanitized.textBaseline)) {
+        console.warn(
+          `[Sanitize] Invalid textBaseline "${sanitized.textBaseline}", replacing with "alphabetic"`
+        );
+        sanitized.textBaseline = 'alphabetic';
+      }
+
+      for (const key in sanitized) {
+        if (typeof sanitized[key] === 'object') {
+          sanitized[key] = sanitizeObject(sanitized[key]);
+        }
+      }
+
+      return sanitized;
+    };
+
+    return sanitizeObject(canvasData);
   }
 
   // Serialize measurements for a view (deep copy)

@@ -151,7 +151,7 @@ export class FabricControls {
       // Resolve event object (eventData might be the event itself or a wrapper)
       const event = eventData.e || eventData;
 
-      // Get pointer and check for Ctrl key
+      // Get pointer and check for Ctrl key (screen space)
       const rawPointer = canvas.getPointer(event);
       const isCtrlHeld = event.ctrlKey;
 
@@ -218,7 +218,7 @@ export class FabricControls {
       // Resolve event object
       const event = eventData.e || eventData;
 
-      // Get pointer and check for Ctrl key
+      // Get pointer and check for Ctrl key (screen space)
       const rawPointer = canvas.getPointer(event);
       const isCtrlHeld = event.ctrlKey;
 
