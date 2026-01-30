@@ -145,10 +145,10 @@ export class TagManager {
       });
     } catch (e) {
       console.error('TagManager: Error creating text object', e);
-      // Fallback
+      // Fallback - use alphabetic instead of middle to be consistent
       tagText = new fabric.Text(strokeLabel, {
         fontSize: this.tagSize,
-        textBaseline: 'middle',
+        textBaseline: 'alphabetic',
       });
     }
 

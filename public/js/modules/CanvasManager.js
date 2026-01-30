@@ -902,11 +902,35 @@ export class CanvasManager {
   setManualZoom(zoomLevel) {
     if (zoomLevel === 'fit' || zoomLevel === null) {
       this.manualZoomLevel = null;
+      console.log(`[CanvasManager] Manual zoom set to: fit`);
+      this.resize();
     } else {
-      this.manualZoomLevel = parseFloat(zoomLevel);
+      const zoom = parseFloat(zoomLevel);
+      this.manualZoomLevel = zoom;
+      this.zoomLevel = zoom;
+      console.log(`[CanvasManager] Manual zoom set to: ${zoom}`);
+
+      // Apply zoom centered on canvas center (like the zoom menu expects)
+      const canvas = this.fabricCanvas;
+      const center = {
+        x: canvas.width / 2,
+        y: canvas.height / 2,
+      };
+      canvas.zoomToPoint(center, zoom);
+
+      // Update pan tracking from the transform
+      if (canvas.viewportTransform) {
+        this.panX = canvas.viewportTransform[4];
+        this.panY = canvas.viewportTransform[5];
+      }
+
+      canvas.requestRenderAll();
+
+      // Update zoom button text
+      if (window.updateZoomButtonText) {
+        window.updateZoomButtonText(zoom);
+      }
     }
-    console.log(`[CanvasManager] Manual zoom set to: ${this.manualZoomLevel}`);
-    this.resize();
   }
 
   /**
@@ -945,7 +969,13 @@ export class CanvasManager {
         this.zoomLevel = zoom;
         this.panX = this.fabricCanvas.viewportTransform[4];
         this.panY = this.fabricCanvas.viewportTransform[5];
-        this.applyViewportTransform();
+        // Note: Don't call applyViewportTransform() here - zoomToPoint already sets the correct transform
+        this.fabricCanvas.requestRenderAll();
+
+        // Update zoom button text
+        if (window.updateZoomButtonText) {
+          window.updateZoomButtonText(zoom);
+        }
       }
       opt.e.preventDefault();
       opt.e.stopPropagation();
@@ -1054,6 +1084,38 @@ export class CanvasManager {
       this.fabricCanvas.requestRenderAll();
     });
 
+    // Sync curve control points after rotation/scaling/moving
+    // This ensures customPoints stay in sync with object transforms
+    this.fabricCanvas.on('object:modified', e => {
+      const obj = e.target;
+
+      console.log('[CanvasManager] object:modified event:', {
+        type: obj.type,
+        hasCustomPoints: !!obj.customPoints,
+        angle: obj.angle,
+        left: obj.left,
+        top: obj.top,
+      });
+
+      // Only handle path objects with customPoints (curves)
+      if (obj.type !== 'path' || !obj.customPoints) return;
+
+      // Don't sync if we're in the middle of editing a control point
+      if (obj.isEditingControlPoint) return;
+
+      obj.dirty = true;
+
+      console.log('[CanvasManager] Curve modified - angle:', obj.angle);
+    });
+
+    // Add rotating event to debug rotation
+    this.fabricCanvas.on('object:rotating', e => {
+      const obj = e.target;
+      if (obj.type === 'path' && obj.customPoints) {
+        console.log('[CanvasManager] Curve rotating - angle:', obj.angle);
+      }
+    });
+
     // Touch gesture helpers
     const getTwoFingerCenter = touches => {
       if (touches.length < 2) return null;
@@ -1156,7 +1218,13 @@ export class CanvasManager {
                 this.zoomLevel = newZoom;
                 this.panX = this.fabricCanvas.viewportTransform[4];
                 this.panY = this.fabricCanvas.viewportTransform[5];
-                this.applyViewportTransform();
+                // Note: Don't call applyViewportTransform() here - zoomToPoint already sets the correct transform
+                this.fabricCanvas.requestRenderAll();
+
+                // Update zoom button text
+                if (window.updateZoomButtonText) {
+                  window.updateZoomButtonText(newZoom);
+                }
               }
               touchGestureState.lastTwoFingerDistance = currentDistance;
             }
@@ -1386,14 +1454,18 @@ export class CanvasManager {
       const objCenter = obj.getCenterPoint();
       const rotatedCenter = fabric.util.rotatePoint(objCenter, center, radians);
 
+      // For curves with customPoints, rotate the points (absolute coordinates)
       if (obj.type === 'path' && Array.isArray(obj.customPoints)) {
+        // Points are absolute canvas coordinates - rotate them around the center
         obj.customPoints = obj.customPoints.map(point =>
           fabric.util.rotatePoint(point, center, radians)
         );
+        // Regenerate path from rotated absolute points
         const newPathString = PathUtils.createSmoothPath(obj.customPoints);
         const pathData = fabric.util.parsePath(newPathString);
         obj.set({ path: pathData, angle: 0 });
       } else {
+        // Regular objects - just rotate
         obj.rotate((obj.angle || 0) + deltaDegrees);
       }
 
@@ -1481,6 +1553,16 @@ export class CanvasManager {
             const metaType = object.strokeMetadata.type;
             const objType = object.type;
 
+            // Migrate old curves to new relative coordinate system
+            if (objType === 'path' && object.customPoints && !object._pointsVersion) {
+              console.log('[CanvasManager] Migrating legacy curve to relative coordinates');
+              // Old format detected - points are in absolute coordinates
+              // Convert them to relative on load
+              FabricControls._convertPointsToRelative(object);
+              object._customPointsConverted = true;
+              object._pointsVersion = 2;
+            }
+
             // Restore controls based on object type
             if (objType === 'line') {
               FabricControls.createLineControls(object);
@@ -1488,7 +1570,9 @@ export class CanvasManager {
               // Curves are paths but not shapes
               console.log(
                 '[CanvasManager] Restoring curve controls, customPoints:',
-                object.customPoints?.length || 'none'
+                object.customPoints?.length || 'none',
+                'version:',
+                object._pointsVersion || 1
               );
               FabricControls.createCurveControls(object);
             } else if (objType === 'group' && (object.isArrow || object.strokeMetadata.isArrow)) {
@@ -1510,6 +1594,12 @@ export class CanvasManager {
         }
         if (o.customPoints) {
           object.customPoints = o.customPoints;
+        }
+        if (o._pointsVersion) {
+          object._pointsVersion = o._pointsVersion;
+        }
+        if (o._customPointsConverted) {
+          object._customPointsConverted = o._customPointsConverted;
         }
         if (o.tagOffset) {
           object.tagOffset = o.tagOffset;

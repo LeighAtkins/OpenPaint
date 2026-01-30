@@ -2,16 +2,16 @@
  * Geometry functions for coordinate space conversions
  * Handles conversions between imageSpace, canvasSpace, and normalized offsets
  */
-(function() {
+(function () {
   'use strict';
 
   /**
-     * Convert image space point to canvas device pixels
-     * @param {Object} P_img - Point in image space {x, y}
-     * @param {Object} T - Transform object {scale, panX, panY, dpr}
-     * @returns {Object} Point in canvas space {x, y}
-     */
-  window.toCanvas = function(P_img, T) {
+   * Convert image space point to canvas device pixels
+   * @param {Object} P_img - Point in image space {x, y}
+   * @param {Object} T - Transform object {scale, panX, panY, dpr}
+   * @returns {Object} Point in canvas space {x, y}
+   */
+  window.toCanvas = function (P_img, T) {
     if (!P_img || typeof P_img.x !== 'number' || typeof P_img.y !== 'number') {
       console.warn('[GEOMETRY] Invalid image point:', P_img);
       return { x: 0, y: 0 };
@@ -29,12 +29,12 @@
   };
 
   /**
-     * Convert canvas space point to image space
-     * @param {Object} P_canvas - Point in canvas space {x, y}
-     * @param {Object} T - Transform object {scale, panX, panY, dpr}
-     * @returns {Object} Point in image space {x, y}
-     */
-  window.toImage = function(P_canvas, T) {
+   * Convert canvas space point to image space
+   * @param {Object} P_canvas - Point in canvas space {x, y}
+   * @param {Object} T - Transform object {scale, panX, panY, dpr}
+   * @returns {Object} Point in image space {x, y}
+   */
+  window.toImage = function (P_canvas, T) {
     if (!P_canvas || typeof P_canvas.x !== 'number' || typeof P_canvas.y !== 'number') {
       console.warn('[GEOMETRY] Invalid canvas point:', P_canvas);
       return { x: 0, y: 0 };
@@ -51,13 +51,13 @@
   };
 
   /**
-     * Convert pixel offset to normalized offset
-     * @param {number} dx_px - X offset in pixels
-     * @param {number} dy_px - Y offset in pixels
-     * @param {Object} normRef - Normalization reference {w, h}
-     * @returns {Object} Normalized offset {dx_norm, dy_norm}
-     */
-  window.pixelOffsetToNorm = function(dx_px, dy_px, normRef) {
+   * Convert pixel offset to normalized offset
+   * @param {number} dx_px - X offset in pixels
+   * @param {number} dy_px - Y offset in pixels
+   * @param {Object} normRef - Normalization reference {w, h}
+   * @returns {Object} Normalized offset {dx_norm, dy_norm}
+   */
+  window.pixelOffsetToNorm = function (dx_px, dy_px, normRef) {
     if (!normRef || !normRef.w || !normRef.h) {
       console.warn('[GEOMETRY] Invalid normRef:', normRef);
       return { dx_norm: 0, dy_norm: 0 };
@@ -65,18 +65,18 @@
 
     return {
       dx_norm: dx_px / normRef.w,
-      dy_norm: dy_px / normRef.h
+      dy_norm: dy_px / normRef.h,
     };
   };
 
   /**
-     * Convert normalized offset to pixel offset
-     * @param {number} dx_norm - Normalized X offset
-     * @param {number} dy_norm - Normalized Y offset
-     * @param {Object} normRef - Normalization reference {w, h}
-     * @returns {Object} Pixel offset {dx, dy}
-     */
-  window.normToPixelOffset = function(dx_norm, dy_norm, normRef) {
+   * Convert normalized offset to pixel offset
+   * @param {number} dx_norm - Normalized X offset
+   * @param {number} dy_norm - Normalized Y offset
+   * @param {Object} normRef - Normalization reference {w, h}
+   * @returns {Object} Pixel offset {dx, dy}
+   */
+  window.normToPixelOffset = function (dx_norm, dy_norm, normRef) {
     if (!normRef || !normRef.w || !normRef.h) {
       console.warn('[GEOMETRY] Invalid normRef:', normRef);
       return { dx: 0, dy: 0 };
@@ -84,22 +84,25 @@
 
     return {
       dx: dx_norm * normRef.w,
-      dy: dy_norm * normRef.h
+      dy: dy_norm * normRef.h,
     };
   };
 
   /**
-     * Compute anchor center in image space from stroke points
-     * @param {Object} stroke - Stroke object with points array
-     * @returns {Object} Anchor center {x, y} in image space
-     */
-  window.computeAnchorCenterImage = function(stroke) {
+   * Compute anchor center in image space from stroke points
+   * @param {Object} stroke - Stroke object with points array
+   * @returns {Object} Anchor center {x, y} in image space
+   */
+  window.computeAnchorCenterImage = function (stroke) {
     if (!stroke || !stroke.points || !Array.isArray(stroke.points) || stroke.points.length === 0) {
       console.warn('[GEOMETRY] Invalid stroke for anchor computation:', stroke);
       return { x: 0, y: 0 };
     }
 
-    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    let minX = Infinity,
+      minY = Infinity,
+      maxX = -Infinity,
+      maxY = -Infinity;
 
     for (const p of stroke.points) {
       if (typeof p.x === 'number' && typeof p.y === 'number') {
@@ -117,23 +120,27 @@
 
     return {
       x: (minX + maxX) / 2,
-      y: (minY + maxY) / 2
+      y: (minY + maxY) / 2,
     };
   };
 
   /**
-     * Place label using anchor center and normalized offset
-     * @param {string} labelId - Label identifier
-     * @param {Object} anchorCenterImage - Anchor center in image space {x, y}
-     * @param {Object} offsetNorm - Normalized offset {dx_norm, dy_norm}
-     * @param {Object} normRef - Normalization reference {w, h}
-     * @param {Object} T - Transform object
-     * @returns {Object} Canvas position {x, y}
-     */
-  window.placeLabel = function(labelId, anchorCenterImage, offsetNorm, normRef, T) {
+   * Place label using anchor center and normalized offset
+   * @param {string} labelId - Label identifier
+   * @param {Object} anchorCenterImage - Anchor center in image space {x, y}
+   * @param {Object} offsetNorm - Normalized offset {dx_norm, dy_norm}
+   * @param {Object} normRef - Normalization reference {w, h}
+   * @param {Object} T - Transform object
+   * @returns {Object} Canvas position {x, y}
+   */
+  window.placeLabel = function (labelId, anchorCenterImage, offsetNorm, normRef, T) {
     if (!anchorCenterImage || !offsetNorm || !normRef || !T) {
       console.warn('[GEOMETRY] Invalid parameters for label placement:', {
-        labelId, anchorCenterImage, offsetNorm, normRef, T
+        labelId,
+        anchorCenterImage,
+        offsetNorm,
+        normRef,
+        T,
       });
       return { x: 0, y: 0 };
     }
@@ -144,7 +151,7 @@
     // Add offset to anchor center
     const P_img = {
       x: anchorCenterImage.x + pixelOffset.dx,
-      y: anchorCenterImage.y + pixelOffset.dy
+      y: anchorCenterImage.y + pixelOffset.dy,
     };
 
     // Convert to canvas space
@@ -152,13 +159,13 @@
   };
 
   /**
-     * Compute deterministic scale for fit mode
-     * @param {Object} imageNatural - Natural image dimensions {w, h}
-     * @param {Object} viewportCss - Viewport dimensions {w, h}
-     * @param {string} mode - Fit mode: 'width', 'height', 'contain'
-     * @returns {number} Scale factor
-     */
-  window.computeScaleForFit = function(imageNatural, viewportCss, mode) {
+   * Compute deterministic scale for fit mode
+   * @param {Object} imageNatural - Natural image dimensions {w, h}
+   * @param {Object} viewportCss - Viewport dimensions {w, h}
+   * @param {string} mode - Fit mode: 'width', 'height', 'contain'
+   * @returns {number} Scale factor
+   */
+  window.computeScaleForFit = function (imageNatural, viewportCss, mode) {
     if (!imageNatural || !viewportCss) {
       console.warn('[GEOMETRY] Invalid dimensions for fit calculation');
       return 1.0;
@@ -178,11 +185,11 @@
   };
 
   /**
-     * Persistence guard - check if offsets can be safely persisted
-     * @param {Object} session - Session object
-     * @returns {boolean} Whether persistence is safe
-     */
-  window.canPersistOffsets = function(session) {
+   * Persistence guard - check if offsets can be safely persisted
+   * @param {Object} session - Session object
+   * @returns {boolean} Whether persistence is safe
+   */
+  window.canPersistOffsets = function (session) {
     if (!session || session.phase !== 'Stable') {
       return false;
     }
@@ -210,7 +217,62 @@
     computeAnchorCenterImage: window.computeAnchorCenterImage,
     placeLabel: window.placeLabel,
     computeScaleForFit: window.computeScaleForFit,
-    canPersistOffsets: window.canPersistOffsets
+    canPersistOffsets: window.canPersistOffsets,
   };
 
+  // Anchor center cache for performance
+  if (!window._anchorCenterCache) {
+    window._anchorCenterCache = {}; // { [imageLabel]: { [strokeLabel]: {x, y, version} } }
+    window._anchorCenterVersion = {}; // { [imageLabel]: number }
+  }
+
+  /**
+   * Invalidate anchor cache for a specific image when strokes change or rotation occurs
+   * @param {string} imageLabel - The image label to invalidate cache for
+   */
+  window.invalidateAnchorCache = function (imageLabel) {
+    if (window._anchorCenterCache[imageLabel]) {
+      delete window._anchorCenterCache[imageLabel];
+      window._anchorCenterVersion[imageLabel] = (window._anchorCenterVersion[imageLabel] || 0) + 1;
+      console.log(`[GEOMETRY] Invalidated anchor cache for ${imageLabel}`);
+    }
+  };
+
+  /**
+   * Get cached anchor center or compute new one
+   * @param {string} strokeLabel - The stroke label
+   * @param {string} imageLabel - The image label
+   * @param {Object} vectorData - The stroke vector data with points array
+   * @returns {Object} Anchor center {x, y} in image space
+   */
+  window.getCachedAnchorCenter = function (strokeLabel, imageLabel, vectorData) {
+    const imgLabel = imageLabel;
+
+    if (!vectorData || !vectorData.points || vectorData.points.length === 0) {
+      return { x: 0, y: 0 };
+    }
+
+    // Check cache first
+    const cached = window._anchorCenterCache[imgLabel]?.[strokeLabel];
+    const currentVersion = window._anchorCenterVersion[imgLabel] || 0;
+
+    if (cached && cached.version === currentVersion) {
+      return { x: cached.x, y: cached.y };
+    }
+
+    // Compute new anchor center using geometry function
+    const anchorCenter = window.computeAnchorCenterImage(vectorData);
+
+    // Cache the result
+    if (!window._anchorCenterCache[imgLabel]) {
+      window._anchorCenterCache[imgLabel] = {};
+    }
+    window._anchorCenterCache[imgLabel][strokeLabel] = {
+      x: anchorCenter.x,
+      y: anchorCenter.y,
+      version: currentVersion,
+    };
+
+    return anchorCenter;
+  };
 })();

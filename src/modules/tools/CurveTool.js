@@ -14,6 +14,11 @@ export class CurveTool extends BaseTool {
     this.isDrawing = false;
     this.dashPattern = []; // Dash pattern for curves
 
+    // Snap properties
+    this.snapPoint = null;
+    this.snapThreshold = 10;
+    this.snapIndicator = null;
+
     // Bind event handlers
     this.onMouseDown = this.onMouseDown.bind(this);
     this.onMouseMove = this.onMouseMove.bind(this);
@@ -35,6 +40,7 @@ export class CurveTool extends BaseTool {
     this.canvas.forEachObject(obj => {
       obj.set('selectable', true);
       obj.set('evented', true);
+      obj.set('hoverCursor', 'crosshair'); // Keep crosshair cursor to avoid distraction
     });
 
     this.canvas.defaultCursor = 'crosshair';
@@ -76,7 +82,18 @@ export class CurveTool extends BaseTool {
       return;
     }
 
-    const pointer = this.canvas.getPointer(o.e);
+    const rawPointer = this.canvas.getPointer(o.e);
+
+    // Check for snap if Ctrl is held
+    let pointer = rawPointer;
+    if (evt.ctrlKey) {
+      const snapPoint = this.findSnapPointForDrawing(rawPointer);
+      if (snapPoint) {
+        pointer = snapPoint;
+        console.log('[CurveTool] Snapped point added:', pointer);
+      }
+    }
+
     this.points.push({ x: pointer.x, y: pointer.y });
 
     // Add visual marker for the point
@@ -106,13 +123,96 @@ export class CurveTool extends BaseTool {
   }
 
   onMouseMove(o) {
-    if (!this.isDrawing || this.points.length === 0) return;
+    // Allow running if not drawing (for start snap) or if drawing
+    if (!this.isActive) return;
 
-    const pointer = this.canvas.getPointer(o.e);
+    const rawPointer = this.canvas.getPointer(o.e);
+    let pointer = rawPointer;
+
+    // Check for snap if Ctrl is held
+    if (o.e.ctrlKey) {
+      const snapPoint = this.findSnapPointForDrawing(rawPointer);
+      if (snapPoint) {
+        pointer = snapPoint;
+        this.showSnapIndicator(snapPoint);
+      } else {
+        this.hideSnapIndicator();
+      }
+    } else {
+      this.hideSnapIndicator();
+    }
+
+    // If not drawing yet, we're done (just showed snap indicator)
+    if (!this.isDrawing || this.points.length === 0) return;
 
     // Update preview with current mouse position as temporary point
     if (this.points.length >= 1) {
       this.updatePreview(pointer);
+    }
+  }
+
+  findSnapPointForDrawing(mousePos) {
+    // Find closest point on all lines within threshold
+    let closestPoint = null;
+    let minDistance = this.snapThreshold;
+
+    const objects = this.canvas.getObjects();
+    for (const obj of objects) {
+      // Skip non-stroke objects
+      if (obj.isTag || obj.isConnectorLine || !obj.evented) continue;
+
+      // Skip if object doesn't have proper type
+      if (!obj.type || (obj.type !== 'line' && obj.type !== 'group' && obj.type !== 'path'))
+        continue;
+
+      // Skip the preview path itself
+      if (obj === this.previewPath) continue;
+
+      try {
+        const point = PathUtils.getClosestStrokeEndpoint(obj, mousePos);
+        const distance = PathUtils.calculateDistance(point, mousePos);
+
+        if (distance < minDistance) {
+          minDistance = distance;
+          closestPoint = point;
+        }
+      } catch (e) {
+        console.warn('[CurveTool] Error finding closest point:', e);
+      }
+    }
+
+    return closestPoint;
+  }
+
+  showSnapIndicator(point) {
+    if (this.snapIndicator) {
+      this.snapIndicator.set({ left: point.x, top: point.y });
+    } else {
+      this.snapIndicator = new fabric.Circle({
+        left: point.x,
+        top: point.y,
+        radius: 5,
+        fill: 'rgba(255, 255, 255, 0.8)',
+        stroke: '#ffffff',
+        strokeWidth: 2,
+        originX: 'center',
+        originY: 'center',
+        selectable: false,
+        evented: false,
+        hasControls: false,
+        hasBorders: false,
+        globalCompositeOperation: 'difference',
+      });
+      this.canvas.add(this.snapIndicator);
+    }
+    this.canvas.requestRenderAll();
+  }
+
+  hideSnapIndicator() {
+    if (this.snapIndicator) {
+      this.canvas.remove(this.snapIndicator);
+      this.snapIndicator = null;
+      this.canvas.requestRenderAll();
     }
   }
 
@@ -182,6 +282,8 @@ export class CurveTool extends BaseTool {
   }
 
   completeCurve() {
+    this.hideSnapIndicator();
+
     // Check for double-click artifact (last point very close to previous point)
     if (this.points.length >= 2) {
       const last = this.points[this.points.length - 1];
@@ -233,7 +335,7 @@ export class CurveTool extends BaseTool {
     this.pointMarkers.forEach(marker => this.canvas.remove(marker));
     this.pointMarkers = [];
 
-    // Create final curve path
+    // Create final curve path - let Fabric handle positioning
     const pathString = PathUtils.createSmoothPath(this.points);
     const curve = new fabric.Path(pathString, {
       stroke: this.strokeColor,
@@ -245,40 +347,22 @@ export class CurveTool extends BaseTool {
       perPixelTargetFind: true, // Only select when clicking the actual line
     });
 
-    // Store points on the object for editing
+    // Store points as absolute canvas coordinates
+    // These will be converted to relative coordinates after the path is properly positioned
     curve.customPoints = this.points.map(p => ({ x: p.x, y: p.y }));
 
-    // Initialize tracking for movement
-    curve.lastLeft = curve.left;
-    curve.lastTop = curve.top;
-
-    // Add listener to update customPoints when curve is moved
-    curve.on('moving', () => {
-      // Skip if we're editing a control point - the control point handler updates customPoints directly
-      if (curve.isEditingControlPoint) {
-        console.log('[CurveMoveDebug] Skipping move update - editing control point');
-        return;
-      }
-
-      const dx = curve.left - curve.lastLeft;
-      const dy = curve.top - curve.lastTop;
-
-      if (dx !== 0 || dy !== 0) {
-        console.log(
-          `[CurveMoveDebug] Moving whole curve by dx=${dx.toFixed(1)}, dy=${dy.toFixed(1)}`
-        );
-
-        // Update all custom points
-        curve.customPoints.forEach(p => {
-          p.x += dx;
-          p.y += dy;
-        });
-
-        // Update tracking
-        curve.lastLeft = curve.left;
-        curve.lastTop = curve.top;
-      }
+    // Debug logging
+    console.log('[CurveTool] Created curve:', {
+      angle: curve.angle,
+      left: curve.left,
+      top: curve.top,
+      pathOffset: curve.pathOffset,
+      pathDataPreview: pathString.substring(0, 100),
+      customPointsCount: curve.customPoints.length,
+      firstPoint: curve.customPoints[0],
     });
+
+    // Note: No manual movement tracking needed - relative coordinates handle transforms automatically
 
     // Add custom controls for point editing
     FabricControls.createCurveControls(curve);

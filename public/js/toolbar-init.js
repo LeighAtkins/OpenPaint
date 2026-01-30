@@ -315,15 +315,7 @@
         if (window.app && window.app.canvasManager) {
           window.app.canvasManager.setManualZoom(zoom);
 
-          // Update button text
-          const textNode = scaleBtn.firstChild;
-          if (textNode) {
-            if (zoom === 'fit') {
-              textNode.textContent = 'Fit ';
-            } else {
-              textNode.textContent = `${parseFloat(zoom) * 100}% `;
-            }
-          }
+          // Button text will be updated by setManualZoom via updateZoomButtonText
         }
         menu.classList.add('hidden');
       });
@@ -598,6 +590,23 @@
       }
     });
   }
+
+  // Update zoom button text to show current zoom level
+  window.updateZoomButtonText = function (zoomLevel) {
+    const scaleBtn = document.getElementById('scaleButton');
+    if (scaleBtn) {
+      const textNode = scaleBtn.firstChild;
+      if (textNode) {
+        if (zoomLevel === 'fit' || zoomLevel === null) {
+          textNode.textContent = 'Fit ';
+        } else {
+          // Show zoom with 1 decimal place (e.g., 125.5%)
+          const percentage = (parseFloat(zoomLevel) * 100).toFixed(1);
+          textNode.textContent = `${percentage}% `;
+        }
+      }
+    }
+  };
 
   // Expose functions globally
   window.initializeTopToolbar = initializeTopToolbar;
