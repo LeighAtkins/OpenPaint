@@ -347,28 +347,41 @@ export class CurveTool extends BaseTool {
       perPixelTargetFind: true, // Only select when clicking the actual line
     });
 
-    // Store points as absolute canvas coordinates
-    // These will be converted to relative coordinates after the path is properly positioned
-    curve.customPoints = this.points.map(p => ({ x: p.x, y: p.y }));
+    // Add to canvas
+    this.canvas.add(curve);
+    curve.setCoords();
 
-    // Debug logging
-    console.log('[CurveTool] Created curve:', {
-      angle: curve.angle,
-      left: curve.left,
-      top: curve.top,
-      pathOffset: curve.pathOffset,
-      pathDataPreview: pathString.substring(0, 100),
-      customPointsCount: curve.customPoints.length,
-      firstPoint: curve.customPoints[0],
+    // Store points on the object for editing (absolute canvas coordinates)
+    curve.customPoints = this.points.map(point => ({ x: point.x, y: point.y }));
+    curve.customPointsSpace = 'canvas';
+    PathUtils.updatePathFromAbsolutePoints(curve, curve.customPoints);
+
+    // Initialize tracking for movement
+    curve.lastLeft = curve.left;
+    curve.lastTop = curve.top;
+
+    // Add listener to update customPoints when curve is moved
+    curve.on('moving', () => {
+      if (curve.isEditingControlPoint) {
+        return;
+      }
+
+      const dx = curve.left - curve.lastLeft;
+      const dy = curve.top - curve.lastTop;
+
+      if (dx !== 0 || dy !== 0) {
+        curve.customPoints.forEach(p => {
+          p.x += dx;
+          p.y += dy;
+        });
+
+        curve.lastLeft = curve.left;
+        curve.lastTop = curve.top;
+      }
     });
-
-    // Note: No manual movement tracking needed - relative coordinates handle transforms automatically
 
     // Add custom controls for point editing
     FabricControls.createCurveControls(curve);
-
-    // Add to canvas
-    this.canvas.add(curve);
 
     // Add arrowheads if enabled
     if (window.app && window.app.arrowManager) {

@@ -327,30 +327,14 @@ export class FabricControls {
 
     path.controls = {};
 
-    // Create a control for each point
+    // Create a control for each point (absolute canvas coordinates)
     path.customPoints.forEach((point, index) => {
       const positionHandler = (dim, finalMatrix, fabricObject) => {
         if (!fabricObject.canvas) return { x: 0, y: 0 };
-
-        // Points are stored in object-local coordinates
-        // Transform through object matrix (includes rotation) + viewport for rendering
-        const objectMatrix = fabricObject.calcTransformMatrix();
-        const result = fabric.util.transformPoint(
+        return fabric.util.transformPoint(
           { x: point.x, y: point.y },
-          fabric.util.multiplyTransformMatrices(fabricObject.canvas.viewportTransform, objectMatrix)
+          fabricObject.canvas.viewportTransform
         );
-
-        if (index === 0) {
-          console.log('[FabricControls] positionHandler for point 0:', {
-            pointLocal: point,
-            fabricObjectAngle: fabricObject.angle,
-            fabricObjectLeft: fabricObject.left,
-            fabricObjectTop: fabricObject.top,
-            result,
-          });
-        }
-
-        return result;
       };
 
       const actionHandler = (eventData, transform, x, y) => {
@@ -368,56 +352,18 @@ export class FabricControls {
           pointer = FabricControls.getSnapPoint(canvas, pointer, pathObj);
         }
 
-        // Set flag to suppress moving event listener
         pathObj.isEditingControlPoint = true;
 
-        // Convert pointer (absolute) to object-local coordinates
-        const objectMatrix = pathObj.calcTransformMatrix();
-        const invertedMatrix = fabric.util.invertTransform(objectMatrix);
-        const localPointer = fabric.util.transformPoint(pointer, invertedMatrix);
+        point.x = pointer.x;
+        point.y = pointer.y;
 
-        // Update the point in local coordinates
-        point.x = localPointer.x;
-        point.y = localPointer.y;
-
-        // Convert all local points to absolute for path regeneration
-        const absolutePoints = pathObj.customPoints.map(p => {
-          return fabric.util.transformPoint({ x: p.x, y: p.y }, objectMatrix);
-        });
-
-        // Regenerate the path string from absolute points
-        const newPathString = PathUtils.createSmoothPath(absolutePoints);
-        const pathData = fabric.util.parsePath(newPathString);
-        pathObj.set({ path: pathData });
-
-        // Update dimensions because the bounding box changes
-        const dims = pathObj._calcDimensions();
-        pathObj.set({
-          width: dims.width,
-          height: dims.height,
-          pathOffset: { x: dims.left + dims.width / 2, y: dims.top + dims.height / 2 },
-        });
-
-        // Update position to keep the path centered correctly
-        pathObj.setPositionByOrigin(
-          new fabric.Point(dims.left + dims.width / 2, dims.top + dims.height / 2),
-          'center',
-          'center'
-        );
-
-        // Mark object as dirty and request canvas redraw to prevent artifacts
-        pathObj.dirty = true;
-        pathObj.setCoords();
+        PathUtils.updatePathFromAbsolutePoints(pathObj, pathObj.customPoints);
         canvas.requestRenderAll();
 
-        // Clear the flag after a brief moment
         setTimeout(() => {
           pathObj.isEditingControlPoint = false;
         }, 0);
 
-        // These moving events were causing the whole curve to move - removed
-        // pathObj.fire('moving');
-        // pathObj.fire('moving');
         return true;
       };
 

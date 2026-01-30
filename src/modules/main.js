@@ -169,6 +169,26 @@ class App {
     if (undoBtn) undoBtn.addEventListener('click', () => this.historyManager.undo());
     if (redoBtn) redoBtn.addEventListener('click', () => this.historyManager.redo());
 
+    // Rotate view controls
+    const rotateLeftCtrl = document.getElementById('rotateLeftCtrl');
+    const rotateRightCtrl = document.getElementById('rotateRightCtrl');
+    if (rotateLeftCtrl instanceof HTMLButtonElement) {
+      if (!rotateLeftCtrl.dataset.bound) {
+        rotateLeftCtrl.addEventListener('click', () => {
+          this.projectManager.rotateCurrentView(-90);
+        });
+        rotateLeftCtrl.dataset.bound = 'true';
+      }
+    }
+    if (rotateRightCtrl instanceof HTMLButtonElement) {
+      if (!rotateRightCtrl.dataset.bound) {
+        rotateRightCtrl.addEventListener('click', () => {
+          this.projectManager.rotateCurrentView(90);
+        });
+        rotateRightCtrl.dataset.bound = 'true';
+      }
+    }
+
     // Tools
     const drawingModeToggle = document.getElementById('drawingModeToggle');
     const textModeToggle = document.getElementById('textModeToggle');

@@ -9,9 +9,8 @@ import { rotationService } from './rotation.service';
  * Bind rotation buttons to TypeScript rotation service
  */
 export function initializeRotationControls(): void {
-  const legacyApp = (window as Window & { app?: unknown }).app;
-  if (legacyApp !== undefined) {
-    console.warn('[RotationControls] Legacy app detected, skipping TS rotation binding');
+  const app = (window as Window & { app?: unknown }).app;
+  if (app !== undefined) {
     return;
   }
   const rotateLeftCtrl = document.getElementById('rotateLeftCtrl');

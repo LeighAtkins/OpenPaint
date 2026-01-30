@@ -44,4 +44,30 @@ export class PathUtils {
 
     return path;
   }
+
+  static updatePathFromAbsolutePoints(pathObj, points, centerPoint = null) {
+    if (!pathObj || !points || points.length === 0) return;
+
+    const centerAbs = centerPoint || pathObj.getCenterPoint();
+    const localPoints = points.map(point => ({
+      x: point.x - centerAbs.x,
+      y: point.y - centerAbs.y,
+    }));
+
+    const newPathString = PathUtils.createSmoothPath(localPoints);
+    const pathData = fabric.util.parsePath(newPathString);
+
+    pathObj.set({ path: pathData });
+
+    const dims = pathObj._calcDimensions();
+    pathObj.set({
+      width: dims.width,
+      height: dims.height,
+      pathOffset: new fabric.Point(dims.left + dims.width / 2, dims.top + dims.height / 2),
+    });
+
+    pathObj.setPositionByOrigin(centerAbs, 'center', 'center');
+    pathObj.dirty = true;
+    pathObj.setCoords();
+  }
 }
