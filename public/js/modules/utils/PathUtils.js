@@ -5,11 +5,12 @@
 
 export class PathUtils {
   /**
-   * Creates a smooth SVG path string from an array of points
+   * Creates a smooth SVG path string from an array of points using Catmull-Rom splines
    * @param {Array<{x: number, y: number}>} points - Array of point objects
+   * @param {number} tension - Curve tension (0 = sharp corners, 1 = smooth). Default 0.5
    * @returns {string} SVG path string
    */
-  static createSmoothPath(points) {
+  static createSmoothPath(points, tension = 0.5) {
     if (!points || points.length < 2) return '';
 
     // Start path
@@ -19,26 +20,22 @@ export class PathUtils {
       // Simple line for 2 points
       path += ` L ${points[1].x} ${points[1].y}`;
     } else {
-      // Create smooth bezier curves through points
-      for (let i = 1; i < points.length; i++) {
-        const prev = points[i - 1];
-        const curr = points[i];
-        const next = points[i + 1] || curr;
+      // Use Catmull-Rom to Bezier conversion for smooth curves through all points
+      // This creates curves that pass exactly through each anchor point
+      for (let i = 0; i < points.length - 1; i++) {
+        const p0 = points[i === 0 ? 0 : i - 1];
+        const p1 = points[i];
+        const p2 = points[i + 1];
+        const p3 = points[i + 2 >= points.length ? points.length - 1 : i + 2];
 
-        // Calculate control points for smooth curve
-        // Tension factor 0.3 gives a good balance between smooth and tight
-        const dx1 = (curr.x - prev.x) * 0.3;
-        const dy1 = (curr.y - prev.y) * 0.3;
-        const dx2 = (next.x - curr.x) * 0.3;
-        const dy2 = (next.y - curr.y) * 0.3;
+        // Calculate control points using Catmull-Rom to Bezier formula
+        // The tension parameter controls how "tight" the curve is
+        const cp1x = p1.x + ((p2.x - p0.x) * tension) / 3;
+        const cp1y = p1.y + ((p2.y - p0.y) * tension) / 3;
+        const cp2x = p2.x - ((p3.x - p1.x) * tension) / 3;
+        const cp2y = p2.y - ((p3.y - p1.y) * tension) / 3;
 
-        const cp1x = prev.x + dx1;
-        const cp1y = prev.y + dy1;
-        const cp2x = curr.x - dx2;
-        const cp2y = curr.y - dy2;
-
-        // Use cubic bezier curve
-        path += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${curr.x} ${curr.y}`;
+        path += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2.x} ${p2.y}`;
       }
     }
 

@@ -106,11 +106,14 @@ export class FabricControls {
   }
 
   /**
-   * Adds custom controls to a fabric.Line object for endpoint manipulation
-   * @param {fabric.Line} line - The line object
-   */
+    /**
+     * Adds custom controls to a fabric.Line object for endpoint manipulation
+     * @param {fabric.Line} line - The line object
+     */
   static createLineControls(line) {
     if (!line) return;
+
+    console.log('[FabricControls] Creating custom controls for line', line);
 
     // Hide standard controls
     line.set({
@@ -212,7 +215,7 @@ export class FabricControls {
       const lineObj = transform.target;
       const canvas = lineObj.canvas;
 
-      // Resolve event object (eventData might be the event itself or a wrapper)
+      // Resolve event object
       const event = eventData.e || eventData;
 
       // Get pointer and check for Ctrl key (screen space)
@@ -283,34 +286,8 @@ export class FabricControls {
   static createCurveControls(path) {
     if (!path || !path.customPoints) return;
 
-    console.log('[FabricControls] createCurveControls called:', {
-      angle: path.angle,
-      left: path.left,
-      top: path.top,
-      width: path.width,
-      height: path.height,
-      customPointsCount: path.customPoints.length,
-      pathOffset: path.pathOffset,
-      firstPointBefore: path.customPoints[0],
-    });
-
-    // Convert customPoints from absolute to relative coordinates (one-time conversion)
-    // Only do this if points haven't been converted yet
-    if (!path._pointsConverted) {
-      const objectMatrix = path.calcTransformMatrix();
-      const invertedMatrix = fabric.util.invertTransform(objectMatrix);
-      path.customPoints = path.customPoints.map(p => {
-        return fabric.util.transformPoint({ x: p.x, y: p.y }, invertedMatrix);
-      });
-      path._pointsConverted = true;
-
-      console.log('[FabricControls] Converted points to relative:', {
-        firstPointAfter: path.customPoints[0],
-      });
-    }
-
-    // Clear existing controls to prevent duplicates and stale closures
-    path.controls = {};
+    console.log('[CURVE DEBUG] ========== createCurveControls called ==========');
+    console.log('[CURVE DEBUG] Initial customPoints:', JSON.stringify(path.customPoints));
 
     // Hide standard controls but enable custom ones
     path.set({
@@ -322,17 +299,160 @@ export class FabricControls {
       cornerStrokeColor: '#3b82f6',
       lockScalingX: true,
       lockScalingY: true,
-      lockRotation: false, // Allow rotation
+      lockRotation: true,
     });
 
     path.controls = {};
 
-    // Create a control for each point (absolute canvas coordinates)
+    const getCurveAnchorWorldPoint = (fabricObject, pointIndex) => {
+      const currentPoint = fabricObject.customPoints?.[pointIndex];
+      if (!currentPoint) {
+        console.log(`[CURVE DEBUG] getCurveAnchorWorldPoint(${pointIndex}): NO POINT FOUND`);
+        return new fabric.Point(0, 0);
+      }
+
+      // Calculate the full transform matrix including any parent group/activeSelection
+      const getFullTransformMatrix = obj => {
+        let matrix = obj.calcTransformMatrix();
+        // If inside a group or activeSelection, include parent transform
+        if (obj.group) {
+          const parentMatrix = obj.group.calcTransformMatrix();
+          matrix = fabric.util.multiplyTransformMatrices(parentMatrix, matrix);
+        }
+        return matrix;
+      };
+
+      if (
+        fabricObject.__curveTransformActive &&
+        fabricObject.__curveOrigMatrix &&
+        fabricObject.__curveOrigPoints?.[pointIndex]
+      ) {
+        const before = fabricObject.__curveOrigMatrix;
+        const after = getFullTransformMatrix(fabricObject);
+        const delta = fabric.util.multiplyTransformMatrices(
+          after,
+          fabric.util.invertTransform(before)
+        );
+        const originPoint = fabricObject.__curveOrigPoints[pointIndex];
+        const result = fabric.util.transformPoint(
+          new fabric.Point(originPoint.x, originPoint.y),
+          delta
+        );
+        console.log(
+          `[CURVE DEBUG] getCurveAnchorWorldPoint(${pointIndex}): TRANSFORM ACTIVE, origin=(${originPoint.x.toFixed(1)}, ${originPoint.y.toFixed(1)}) -> result=(${result.x.toFixed(1)}, ${result.y.toFixed(1)})`
+        );
+        return result;
+      }
+
+      // Check for activeSelection scaling - this works even if fabricObject.group is not set
+      const activeObj = fabricObject.canvas?.getActiveObject();
+      if (activeObj && activeObj.type === 'activeSelection') {
+        const scaleX = activeObj.scaleX || 1;
+        const scaleY = activeObj.scaleY || 1;
+        if (scaleX !== 1 || scaleY !== 1) {
+          const center = activeObj.getCenterPoint();
+          const scaledX = center.x + (currentPoint.x - center.x) * scaleX;
+          const scaledY = center.y + (currentPoint.y - center.y) * scaleY;
+          console.log(
+            `[CURVE DEBUG] getCurveAnchorWorldPoint(${pointIndex}): ACTIVE SELECTION SCALING, scale=(${scaleX.toFixed(2)}, ${scaleY.toFixed(2)})`
+          );
+          return new fabric.Point(scaledX, scaledY);
+        }
+      }
+
+      // Check if the curve itself has scaling applied
+      const curveScaleX = fabricObject.scaleX || 1;
+      const curveScaleY = fabricObject.scaleY || 1;
+      if (curveScaleX !== 1 || curveScaleY !== 1) {
+        const center = fabricObject.getCenterPoint();
+        const scaledX = center.x + (currentPoint.x - center.x) * curveScaleX;
+        const scaledY = center.y + (currentPoint.y - center.y) * curveScaleY;
+        console.log(`[CURVE DEBUG] getCurveAnchorWorldPoint(${pointIndex}): CURVE DIRECT SCALING`);
+        return new fabric.Point(scaledX, scaledY);
+      }
+
+      // If there's a parent group, transform the point
+      if (fabricObject.group && fabricObject.group.type !== 'activeSelection') {
+        const groupMatrix = fabricObject.group.calcTransformMatrix();
+        const result = fabric.util.transformPoint(
+          new fabric.Point(currentPoint.x, currentPoint.y),
+          groupMatrix
+        );
+        return result;
+      }
+
+      return new fabric.Point(currentPoint.x, currentPoint.y);
+    };
+
+    const resolvePointerWorldForCurve = (pathObj, pointerWorld) => {
+      if (pathObj.__curveTransformActive && pathObj.__curveOrigMatrix) {
+        const before = pathObj.__curveOrigMatrix;
+        const after = pathObj.calcTransformMatrix();
+        const delta = fabric.util.multiplyTransformMatrices(
+          after,
+          fabric.util.invertTransform(before)
+        );
+        const inverseDelta = fabric.util.invertTransform(delta);
+        const canonical = fabric.util.transformPoint(
+          new fabric.Point(pointerWorld.x, pointerWorld.y),
+          inverseDelta
+        );
+        return { x: canonical.x, y: canonical.y };
+      }
+
+      return pointerWorld;
+    };
+
+    const toLocalPoints = (pointsWorld, centerWorld) =>
+      pointsWorld.map(p => ({
+        x: p.x - centerWorld.x,
+        y: p.y - centerWorld.y,
+      }));
+
+    const canonicalizeCurveFromWorldPoints = (pathObj, baseCenterWorld) => {
+      const localPoints = toLocalPoints(pathObj.customPoints, baseCenterWorld);
+      const newPathString = PathUtils.createSmoothPath(localPoints);
+      const pathData = fabric.util.parsePath(newPathString);
+
+      pathObj.set({ path: pathData, angle: 0 });
+      pathObj.set({
+        scaleX: 1,
+        scaleY: 1,
+        skewX: 0,
+        skewY: 0,
+        flipX: false,
+        flipY: false,
+      });
+
+      const dims = pathObj._calcDimensions();
+      const centerLocal = new fabric.Point(dims.left + dims.width / 2, dims.top + dims.height / 2);
+
+      pathObj.set({
+        width: dims.width,
+        height: dims.height,
+        pathOffset: centerLocal,
+      });
+
+      const compensatedWorldCenter = new fabric.Point(
+        baseCenterWorld.x + centerLocal.x,
+        baseCenterWorld.y + centerLocal.y
+      );
+
+      pathObj.setPositionByOrigin(compensatedWorldCenter, 'center', 'center');
+      pathObj.lastLeft = pathObj.left;
+      pathObj.lastTop = pathObj.top;
+      pathObj.dirty = true;
+      pathObj.setCoords();
+    };
+
+    // Create a control for each point
     path.customPoints.forEach((point, index) => {
       const positionHandler = (dim, finalMatrix, fabricObject) => {
         if (!fabricObject.canvas) return { x: 0, y: 0 };
+
+        const worldPoint = getCurveAnchorWorldPoint(fabricObject, index);
         return fabric.util.transformPoint(
-          { x: point.x, y: point.y },
+          { x: worldPoint.x, y: worldPoint.y },
           fabricObject.canvas.viewportTransform
         );
       };
@@ -340,25 +460,51 @@ export class FabricControls {
       const actionHandler = (eventData, transform, x, y) => {
         const pathObj = transform.target;
         const canvas = pathObj.canvas;
-
-        // Resolve event object (eventData might be the event itself or a wrapper)
         const event = eventData.e || eventData;
-
-        let pointer = canvas.getPointer(event);
+        const rawPointer = canvas.getPointer(event);
         const isCtrlHeld = event.ctrlKey;
 
-        // Apply snap if Ctrl is held
-        if (isCtrlHeld) {
-          pointer = FabricControls.getSnapPoint(canvas, pointer, pathObj);
-        }
+        const snappedPointer = isCtrlHeld
+          ? FabricControls.getSnapPoint(canvas, rawPointer, pathObj)
+          : rawPointer;
+
+        const pointer = resolvePointerWorldForCurve(pathObj, snappedPointer);
 
         pathObj.isEditingControlPoint = true;
+
+        if (!pathObj.__curveEditBaseCenterWorld) {
+          pathObj.__curveEditBaseCenterWorld = pathObj.getCenterPoint();
+
+          if (pathObj.__curveTransformActive) {
+            delete pathObj.__curveTransformActive;
+            delete pathObj.__curveOrigMatrix;
+            delete pathObj.__curveOrigPoints;
+            delete pathObj.__curveBakedThisGesture;
+          }
+
+          if (!pathObj.__curveEditCleanup) {
+            pathObj.__curveEditCleanup = () => {
+              const cleanup = pathObj.__curveEditCleanup;
+              canvas.off('mouse:up', cleanup);
+              delete pathObj.__curveEditBaseCenterWorld;
+              delete pathObj.__curveEditCleanup;
+            };
+            canvas.on('mouse:up', pathObj.__curveEditCleanup);
+          }
+        }
 
         point.x = pointer.x;
         point.y = pointer.y;
 
-        PathUtils.updatePathFromAbsolutePoints(pathObj, pathObj.customPoints);
+        const baseCenterWorld = pathObj.__curveEditBaseCenterWorld || pathObj.getCenterPoint();
+        canonicalizeCurveFromWorldPoints(pathObj, baseCenterWorld);
         canvas.requestRenderAll();
+
+        if (!pathObj.__curveTransformActive) {
+          delete pathObj.__curveOrigMatrix;
+          delete pathObj.__curveOrigPoints;
+          delete pathObj.__curveBakedThisGesture;
+        }
 
         setTimeout(() => {
           pathObj.isEditingControlPoint = false;
@@ -374,71 +520,6 @@ export class FabricControls {
         actionName: 'modifyCurve',
         render: renderCircleControl,
       });
-    });
-  }
-
-  /**
-   * Convert absolute canvas coordinates to relative (object-local) coordinates
-   * @param {fabric.Path} pathObj - The path object with customPoints
-   */
-  static _convertPointsToRelative(pathObj) {
-    if (!pathObj.customPoints || pathObj.customPoints.length === 0) return;
-
-    // Get the object's current transform matrix
-    const objectMatrix = pathObj.calcTransformMatrix();
-    const invertedMatrix = fabric.util.invertTransform(objectMatrix);
-
-    // Convert each point to relative coordinates
-    pathObj.customPoints = pathObj.customPoints.map(point => {
-      const relativePoint = fabric.util.transformPoint({ x: point.x, y: point.y }, invertedMatrix);
-      return relativePoint;
-    });
-
-    console.log(
-      '[FabricControls] Converted',
-      pathObj.customPoints.length,
-      'points to relative coordinates'
-    );
-  }
-
-  /**
-   * Convert relative (object-local) coordinates to absolute canvas coordinates
-   * @param {fabric.Path} pathObj - The path object with relative customPoints
-   * @returns {Array<{x: number, y: number}>} - Absolute canvas coordinates
-   */
-  static _convertPointsToAbsolute(pathObj) {
-    if (!pathObj.customPoints || pathObj.customPoints.length === 0) return [];
-
-    // Get the object's current transform matrix
-    const objectMatrix = pathObj.calcTransformMatrix();
-
-    // Convert each relative point to absolute coordinates
-    return pathObj.customPoints.map(point => {
-      return fabric.util.transformPoint({ x: point.x, y: point.y }, objectMatrix);
-    });
-  }
-
-  /**
-   * Convert relative points to path-local coordinates (without rotation)
-   * Used for regenerating the path shape without baking in rotation
-   * @param {fabric.Path} pathObj - The path object with relative customPoints
-   * @returns {Array<{x: number, y: number}>} - Path-local coordinates
-   */
-  static _convertPointsToPathLocal(pathObj) {
-    if (!pathObj.customPoints || pathObj.customPoints.length === 0) return [];
-
-    // Create transform matrix without rotation
-    const scaleX = pathObj.scaleX || 1;
-    const scaleY = pathObj.scaleY || 1;
-    const left = pathObj.left || 0;
-    const top = pathObj.top || 0;
-
-    // Transform points by scale and position only (no rotation)
-    return pathObj.customPoints.map(point => {
-      return {
-        x: point.x * scaleX + left,
-        y: point.y * scaleY + top,
-      };
     });
   }
 
@@ -462,26 +543,13 @@ export class FabricControls {
       lockRotation: true,
     });
 
-    // We assume the group has 2 objects: line (index 0) and head (index 1)
-    // And that they were created in ArrowTool
-
     // Position handler for Start (Tail)
     const positionHandlerStart = (dim, finalMatrix, fabricObject) => {
       if (!fabricObject.canvas) return { x: 0, y: 0 };
-      // We need the coordinates of the line's start point relative to the group
-      // The line is centered in the group usually?
-      // Actually, in ArrowTool, we group them. The group's center is the center of the bounding box.
-      // The line's x1/y1 are relative to the group center if we use group.toLocalPoint?
-
-      // Let's use the line object inside the group
       const line = fabricObject.getObjects()[0];
       if (!line || line.type !== 'line') return { x: 0, y: 0 };
 
       const points = line.calcLinePoints();
-      // points are relative to line center.
-      // line center is relative to group center.
-
-      // Transform point from line local to group local
       const lineCenter = line.getCenterPoint();
       const x = points.x1 + lineCenter.x;
       const y = points.y1 + lineCenter.y;
@@ -502,17 +570,13 @@ export class FabricControls {
       const head = group.getObjects()[1];
       const canvas = group.canvas;
 
-      // Resolve event object
       const event = eventData.e || eventData;
+      const rawPointer = canvas.getPointer(event);
       const isCtrlHeld = event.ctrlKey;
+      const pointer = isCtrlHeld
+        ? FabricControls.getSnapPoint(canvas, rawPointer, group)
+        : rawPointer;
 
-      // x, y are already in canvas coordinates (provided by Fabric.js)
-      let pointer = { x, y };
-      if (isCtrlHeld) {
-        pointer = FabricControls.getSnapPoint(canvas, pointer, group);
-      }
-
-      // Get absolute end point
       const matrix = group.calcTransformMatrix();
       const lineCenter = line.getCenterPoint();
       const points = line.calcLinePoints();
@@ -521,7 +585,6 @@ export class FabricControls {
 
       group._restoreObjectsState();
 
-      // Now line and head are absolute.
       line.set({ x1: pointer.x, y1: pointer.y, x2: endAbs.x, y2: endAbs.y });
       line._setWidthHeight();
 
@@ -565,26 +628,20 @@ export class FabricControls {
       const head = group.getObjects()[1];
       const canvas = group.canvas;
 
-      // Resolve event object
       const event = eventData.e || eventData;
+      const rawPointer = canvas.getPointer(event);
       const isCtrlHeld = event.ctrlKey;
-
-      // x, y are already in canvas coordinates (provided by Fabric.js)
-      let pointer = { x, y };
-      if (isCtrlHeld) {
-        pointer = FabricControls.getSnapPoint(canvas, pointer, group);
-      }
+      const pointer = isCtrlHeld
+        ? FabricControls.getSnapPoint(canvas, rawPointer, group)
+        : rawPointer;
 
       group._restoreObjectsState();
 
-      // Get current absolute start
       const startAbs = { x: line.x1, y: line.y1 };
 
-      // Update Line
       line.set({ x2: pointer.x, y2: pointer.y });
       line._setWidthHeight();
 
-      // Update Head
       const dx = pointer.x - startAbs.x;
       const dy = pointer.y - startAbs.y;
       const angle = (Math.atan2(dy, dx) * 180) / Math.PI + 90;
