@@ -1454,18 +1454,15 @@ export class CanvasManager {
       const objCenter = obj.getCenterPoint();
       const rotatedCenter = fabric.util.rotatePoint(objCenter, center, radians);
 
-      // For curves with new relative coordinate system, use standard Fabric rotation
-      if (obj.type === 'path' && obj._pointsVersion === 2) {
-        // New system: points are relative, so just rotate the object
-        obj.rotate((obj.angle || 0) + deltaDegrees);
-      } else if (obj.type === 'path' && Array.isArray(obj.customPoints)) {
-        // Legacy system: points are absolute, need manual transformation
-        obj.customPoints = obj.customPoints.map(point =>
-          fabric.util.rotatePoint(point, center, radians)
-        );
-        const newPathString = PathUtils.createSmoothPath(obj.customPoints);
-        const pathData = fabric.util.parsePath(newPathString);
-        obj.set({ path: pathData, angle: 0 });
+      if (obj.type === 'path' && Array.isArray(obj.customPoints)) {
+        obj.customPoints.forEach(point => {
+          const rotated = fabric.util.rotatePoint(point, center, radians);
+          point.x = rotated.x;
+          point.y = rotated.y;
+        });
+        PathUtils.updatePathFromAbsolutePoints(obj, obj.customPoints, rotatedCenter);
+        obj.angle = 0;
+        FabricControls.createCurveControls(obj);
       } else {
         obj.rotate((obj.angle || 0) + deltaDegrees);
       }
@@ -1535,10 +1532,25 @@ export class CanvasManager {
     return this.rotationDegrees;
   }
 
+  normalizeCurvePoints(pathObj) {
+    if (!pathObj || !Array.isArray(pathObj.customPoints) || pathObj.customPoints.length === 0) {
+      return;
+    }
+    if (!pathObj.customPointsSpace) {
+      pathObj.customPointsSpace = 'canvas';
+    }
+  }
+
   // Helper to get JSON export
   // Include strokeMetadata, isArrow, and customPoints to preserve stroke labels, visibility state, arrow markers, and curve control points
   toJSON() {
-    return this.fabricCanvas.toJSON(['strokeMetadata', 'isArrow', 'customPoints', 'tagOffset']);
+    return this.fabricCanvas.toJSON([
+      'strokeMetadata',
+      'isArrow',
+      'customPoints',
+      'customPointsSpace',
+      'tagOffset',
+    ]);
   }
 
   // Helper to load from JSON
@@ -1569,6 +1581,7 @@ export class CanvasManager {
               FabricControls.createLineControls(object);
             } else if (objType === 'path' && metaType !== 'shape') {
               // Curves are paths but not shapes
+              this.normalizeCurvePoints(object);
               console.log(
                 '[CanvasManager] Restoring curve controls, customPoints:',
                 object.customPoints?.length || 'none',
@@ -1596,11 +1609,8 @@ export class CanvasManager {
         if (o.customPoints) {
           object.customPoints = o.customPoints;
         }
-        if (o._pointsVersion) {
-          object._pointsVersion = o._pointsVersion;
-        }
-        if (o._customPointsConverted) {
-          object._customPointsConverted = o._customPointsConverted;
+        if (o.customPointsSpace) {
+          object.customPointsSpace = o.customPointsSpace;
         }
         if (o.tagOffset) {
           object.tagOffset = o.tagOffset;
