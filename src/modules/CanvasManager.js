@@ -23,6 +23,16 @@ export class CanvasManager {
     // These are ratios (0-1) of the background image dimensions
     this.captureFrameImageRatios = null;
 
+    // Debounce stroke scaling to prevent glitches from rapid resizes
+    this.strokeScalingTimeout = null;
+    this.pendingStrokeScale = null;
+    this.lastResizeTime = null;
+    this.consecutiveResizeCount = 0;
+    this.isResizing = false;
+    this.originalCanvasSize = { width: 0, height: 0 };
+    this.originalObjectStates = new Map();
+    this.resizeTimeout = null;
+
     // Viewport transform state
     this.rotationDegrees = 0;
     this.zoomLevel = 1;
@@ -123,8 +133,14 @@ export class CanvasManager {
 
     console.log(`Fabric Canvas initialized: ${width}x${height}`);
 
+    // Set original canvas size after initialization
+    this.originalCanvasSize = { width: width, height: height };
+
     // Initialize zoom/pan events
     this.initZoomPan();
+
+    // Enforce floating layout for full-screen canvas
+    this.enforceFloatingLayout();
 
     // Initialize keyboard shortcuts
     this.initKeyboardShortcuts();
@@ -194,6 +210,100 @@ export class CanvasManager {
 
     // Ensure canvas is visible
     canvasEl.style.display = 'block';
+
+    // Setup ResizeObserver to handle flex layout changes
+    this.setupResizeObserver();
+  }
+
+  enforceFloatingLayout() {
+    const applyStyles = () => {
+      const strokePanel = document.getElementById('strokePanel');
+      const imagePanel = document.getElementById('imagePanel');
+      const mainLayout = document.getElementById('main-layout');
+      const canvasWrapper = document.getElementById('main-canvas-wrapper');
+
+      if (strokePanel && imagePanel && mainLayout && canvasWrapper) {
+        console.log('[CanvasManager] Enforcing Floating Layout (Full Screen Canvas)');
+
+        // 1. Main Layout: Relative container, block display (not flex)
+        mainLayout.style.setProperty('position', 'relative', 'important');
+        mainLayout.style.setProperty('display', 'block', 'important');
+        mainLayout.style.setProperty('z-index', '10', 'important');
+
+        // 2. Canvas Wrapper: Absolute, Full Screen, Bottom Layer
+        canvasWrapper.style.setProperty('position', 'absolute', 'important');
+        canvasWrapper.style.setProperty('left', '0', 'important');
+        canvasWrapper.style.setProperty('top', '0', 'important');
+        canvasWrapper.style.setProperty('width', '100%', 'important');
+        canvasWrapper.style.setProperty('height', '100%', 'important');
+        canvasWrapper.style.setProperty('z-index', '0', 'important');
+
+        // Move panels to body to ensure they can float above everything (escape main-layout stacking context)
+        if (strokePanel.parentNode !== document.body) {
+          document.body.appendChild(strokePanel);
+        }
+        if (imagePanel.parentNode !== document.body) {
+          document.body.appendChild(imagePanel);
+        }
+
+        // 3. Panels: Absolute, Floating, Top Layer
+        // Stroke Panel (Left)
+        strokePanel.style.setProperty('position', 'fixed', 'important'); // Use fixed to stay on screen
+        strokePanel.style.setProperty('left', '0', 'important');
+        strokePanel.style.setProperty('top', '48px', 'important'); // Account for toolbar
+        strokePanel.style.setProperty('height', 'calc(100% - 128px)', 'important'); // Full height minus toolbar and stepper
+        strokePanel.style.setProperty('z-index', '2000', 'important');
+        strokePanel.style.setProperty('opacity', '1', 'important');
+        strokePanel.style.setProperty('visibility', 'visible', 'important');
+        strokePanel.style.setProperty('display', 'flex', 'important');
+        strokePanel.style.setProperty('flex-direction', 'column', 'important');
+
+        // Image Panel (Right)
+        imagePanel.style.setProperty('position', 'fixed', 'important'); // Use fixed to stay on screen
+        imagePanel.style.setProperty('right', '0', 'important');
+        imagePanel.style.setProperty('top', '48px', 'important'); // Account for toolbar
+        imagePanel.style.setProperty('height', 'calc(100% - 128px)', 'important'); // Full height minus toolbar and stepper
+        imagePanel.style.setProperty('z-index', '2000', 'important');
+        imagePanel.style.setProperty('opacity', '1', 'important');
+        imagePanel.style.setProperty('visibility', 'visible', 'important');
+        imagePanel.style.setProperty('display', 'flex', 'important');
+        imagePanel.style.setProperty('flex-direction', 'column', 'important');
+
+        // Force resize to update canvas dimensions
+        setTimeout(() => {
+          this.resize();
+        }, 0);
+
+        console.log('[CanvasManager] Panels moved to body and forced to top layer');
+      }
+    };
+
+    // Apply immediately
+    applyStyles();
+
+    // Re-apply after a delay to override any conflicting scripts (like relocatePanels)
+    setTimeout(applyStyles, 100);
+    setTimeout(applyStyles, 500);
+    setTimeout(applyStyles, 1000);
+  }
+
+  setupResizeObserver() {
+    const wrapper = document.getElementById('main-canvas-wrapper');
+    if (!wrapper) return;
+
+    this.resizeObserver = new ResizeObserver(entries => {
+      for (const entry of entries) {
+        if (entry.target === wrapper) {
+          // Debounce the resize call
+          if (this.resizeTimeout) clearTimeout(this.resizeTimeout);
+          this.resizeTimeout = setTimeout(() => {
+            this.resize();
+          }, 100); // Standard debounce for stability
+        }
+      }
+    });
+
+    this.resizeObserver.observe(wrapper);
   }
 
   initKeyboardShortcuts() {
@@ -221,14 +331,13 @@ export class CanvasManager {
               const strokeLabel = obj.strokeMetadata.strokeLabel;
               const imageLabel = obj.strokeMetadata.imageLabel;
 
-              // Remove from metadata manager
               if (window.app?.metadataManager) {
                 const metadata = window.app.metadataManager;
 
                 if (obj.strokeMetadata.type === 'shape') {
                   metadata.removeShapeMetadata(obj);
                 } else if (obj.strokeMetadata.type === 'text') {
-                  const textElements = metadata.textElementsByImage?.[imageLabel] || [];
+                  const textElements = metadata.textElementsByImage[imageLabel] || [];
                   const index = textElements.indexOf(obj);
                   if (index > -1) {
                     textElements.splice(index, 1);
@@ -276,41 +385,37 @@ export class CanvasManager {
 
   /**
    * Calculate available canvas size (works before fabricCanvas is initialized)
+   * Now simplified to use the flex layout container dimensions directly
    */
   calculateAvailableSize() {
-    const margin = 16;
-    const isVisible = el => el && el.offsetParent !== null;
+    // With the new flex layout, canvas is inside #main-canvas-wrapper
+    // Just measure that container's dimensions
+    const canvasContainer = document.getElementById('main-canvas-wrapper');
 
-    let leftReserve = 0;
-    ['toolsPanel', 'strokePanel'].forEach(id => {
-      const el = document.getElementById(id);
-      if (isVisible(el)) {
-        const elRect = el.getBoundingClientRect();
-        leftReserve = Math.max(leftReserve, elRect.width + margin);
-      }
-    });
+    if (canvasContainer) {
+      // Use clientWidth/clientHeight to get the inner dimension (excluding borders)
+      // This prevents the canvas from growing slightly larger than the container due to border inclusion
+      let width = canvasContainer.clientWidth;
+      const height = canvasContainer.clientHeight;
 
-    let rightReserve = 0;
-    ['imagePanel'].forEach(id => {
-      const el = document.getElementById(id);
-      if (isVisible(el)) {
-        const elRect = el.getBoundingClientRect();
-        rightReserve = Math.max(rightReserve, elRect.width + margin);
-      }
-    });
+      // Standard behavior: Canvas fills the container exactly.
+      // No experimental offsets.
 
-    let topReserve = 0;
-    const topToolbar = document.getElementById('topToolbar');
-    if (isVisible(topToolbar)) {
-      topReserve = topToolbar.getBoundingClientRect().height;
+      // console.log(`[CanvasManager] calculateAvailableSize: Container found. Size: ${width}x${height}`);
+      return {
+        width: Math.max(300, width),
+        height: Math.max(200, height),
+      };
     }
 
-    const width = window.innerWidth - leftReserve - rightReserve;
-    const height = window.innerHeight - topReserve;
+    // Fallback to old logic if container doesn't exist yet
+    const margin = 16;
+    const width = window.innerWidth - margin * 2;
+    const height = window.innerHeight - 100; // Toolbar + margin
 
     return {
-      width: Math.max(100, width),
-      height: Math.max(100, height),
+      width: Math.max(300, width),
+      height: Math.max(200, height),
     };
   }
 
@@ -383,6 +488,65 @@ export class CanvasManager {
   }
 
   /**
+   * Calculate target frame size based on canvas dimensions
+   * Centralized logic to ensure consistency between image scaling and frame resizing
+   */
+  calculateTargetFrameSize(canvasWidth, canvasHeight) {
+    const currentImageLabel = window.app?.projectManager?.currentViewId || 'default';
+    const savedRatios = window.manualFrameRatios && window.manualFrameRatios[currentImageLabel];
+
+    if (savedRatios) {
+      // Frame was manually resized - apply saved ratios
+      const frameWidth = canvasWidth * savedRatios.widthRatio;
+      const frameHeight = canvasHeight * savedRatios.heightRatio;
+      const frameLeft = canvasWidth * savedRatios.leftRatio;
+      const frameTop = canvasHeight * savedRatios.topRatio;
+
+      // Ensure frame stays within canvas bounds
+      const maxLeft = Math.max(0, canvasWidth - frameWidth);
+      const maxTop = Math.max(0, canvasHeight - frameHeight);
+      const boundedLeft = Math.max(0, Math.min(maxLeft, frameLeft));
+      const boundedTop = Math.max(0, Math.min(maxTop, frameTop));
+
+      return {
+        width: frameWidth,
+        height: frameHeight,
+        left: boundedLeft,
+        top: boundedTop,
+      };
+    } else {
+      // Default: Frame is 85% of canvas size, capped at 800x600, with a minimum of 400x300
+      let frameWidth = Math.max(400, Math.min(800, Math.floor(canvasWidth * 0.85)));
+      let frameHeight = Math.max(300, Math.min(600, Math.floor(canvasHeight * 0.85)));
+
+      // Maintain 4:3 aspect ratio
+      const aspectRatio = 4 / 3;
+      if (frameWidth / frameHeight > aspectRatio) {
+        frameWidth = Math.floor(frameHeight * aspectRatio);
+      } else {
+        frameHeight = Math.floor(frameWidth / aspectRatio);
+      }
+
+      // Center the frame on the canvas
+      let frameLeft = (canvasWidth - frameWidth) / 2;
+      let frameTop = (canvasHeight - frameHeight) / 2;
+
+      // Clamp frame to stay fully inside canvas bounds
+      frameWidth = Math.min(frameWidth, canvasWidth);
+      frameHeight = Math.min(frameHeight, canvasHeight);
+      frameLeft = Math.max(0, Math.min(frameLeft, canvasWidth - frameWidth));
+      frameTop = Math.max(0, Math.min(frameTop, canvasHeight - frameHeight));
+
+      return {
+        width: frameWidth,
+        height: frameHeight,
+        left: frameLeft,
+        top: frameTop,
+      };
+    }
+  }
+
+  /**
    * Update capture frame position and size during resize
    */
   updateCaptureFrameOnResize(targetWidth, targetHeight) {
@@ -392,127 +556,92 @@ export class CanvasManager {
       return;
     }
 
-    const currentImageLabel = window.app?.projectManager?.currentViewId;
-    if (!currentImageLabel) {
-      console.log('[Frame Debug] No current image label');
+    const currentImageLabel = window.app?.projectManager?.currentViewId || 'default';
+
+    // If no image label OR no background image, we're dealing with stroke-only canvas
+    // We must check backgroundImage because sometimes we have a viewId but no image (e.g. cleared or template)
+    const isStrokeOnlyCanvas =
+      !window.app?.projectManager?.currentViewId ||
+      (this.fabricCanvas && !this.fabricCanvas.backgroundImage);
+
+    // IMPORTANT: In stroke-only mode, we use zoom-based resizing
+    // The capture frame should NOT be resized manually - it will scale with the zoom
+    // Skip manual resizing to prevent double-scaling effect
+    if (isStrokeOnlyCanvas) {
+      console.log(
+        '[CanvasManager] Skipping frame resize in zoom mode - frame will scale with canvas zoom'
+      );
       return;
     }
 
-    console.log(`[Frame Debug] Updating frame for image: ${currentImageLabel}`);
-    console.log(`[Frame Debug] Target canvas size: ${targetWidth}x${targetHeight}`);
-    console.log(
-      `[Frame Debug] Current frame position: ${captureFrame.style.left}, ${captureFrame.style.top}`
-    );
-    console.log(
-      `[Frame Debug] Current frame size: ${captureFrame.style.width}, ${captureFrame.style.height}`
-    );
-
     // Check if manual ratios are saved for this image
-    const savedRatios = window.manualFrameRatios && window.manualFrameRatios[currentImageLabel];
-    console.log(`[Frame Debug] All saved ratios:`, window.manualFrameRatios);
+    const targetFrame = this.calculateTargetFrameSize(targetWidth, targetHeight);
 
-    if (savedRatios) {
-      console.log('[Frame Debug] Using saved manual ratios:', savedRatios);
+    captureFrame.style.width = `${targetFrame.width}px`;
+    captureFrame.style.height = `${targetFrame.height}px`;
+    captureFrame.style.left = `${targetFrame.left}px`;
+    captureFrame.style.top = `${targetFrame.top}px`;
+  }
 
-      // Frame was manually resized - apply saved ratios to current canvas size
-      const frameWidth = targetWidth * savedRatios.widthRatio;
-      const frameHeight = targetHeight * savedRatios.heightRatio;
-      const frameLeft = targetWidth * savedRatios.leftRatio;
-      const frameTop = targetHeight * savedRatios.topRatio;
-
-      console.log(
-        `[Frame Debug] Calculated from ratios: ${frameWidth.toFixed(1)}x${frameHeight.toFixed(1)} at (${frameLeft.toFixed(1)}, ${frameTop.toFixed(1)})`
-      );
-
-      // Ensure frame stays within canvas bounds
-      const maxLeft = Math.max(0, targetWidth - frameWidth);
-      const maxTop = Math.max(0, targetHeight - frameHeight);
-      const boundedLeft = Math.max(0, Math.min(maxLeft, frameLeft));
-      const boundedTop = Math.max(0, Math.min(maxTop, frameTop));
-
-      if (boundedLeft !== frameLeft || boundedTop !== frameTop) {
-        console.log(
-          `[Frame Debug] Bounded position: (${boundedLeft.toFixed(1)}, ${boundedTop.toFixed(1)})`
-        );
-      }
-
-      captureFrame.style.width = `${frameWidth}px`;
-      captureFrame.style.height = `${frameHeight}px`;
-      captureFrame.style.left = `${boundedLeft}px`;
-      captureFrame.style.top = `${boundedTop}px`;
-
-      // Verify the ratios are reasonable
-      const actualRatios = {
-        widthRatio: frameWidth / targetWidth,
-        heightRatio: frameHeight / targetHeight,
-        leftRatio: boundedLeft / targetWidth,
-        topRatio: boundedTop / targetHeight,
-      };
-
-      console.log(
-        `[Frame Debug] ✓ Applied manual frame: ${frameWidth.toFixed(1)}x${frameHeight.toFixed(1)} at (${boundedLeft.toFixed(1)}, ${boundedTop.toFixed(1)})\n` +
-          `[Frame Debug] Actual ratios after apply: w=${(actualRatios.widthRatio * 100).toFixed(1)}%, h=${(actualRatios.heightRatio * 100).toFixed(1)}%`
-      );
-    } else {
-      console.log('[Frame Debug] No saved ratios, using default sizing');
-
-      // No manual resize - use default 800x600 or fit to canvas
-      let frameWidth = 800;
-      let frameHeight = 600;
-
-      // If canvas is smaller than 800x600, scale down to fit
-      if (targetWidth < 800 || targetHeight < 600) {
-        const aspectRatio = 4 / 3;
-        console.log(
-          `[Frame Debug] Canvas smaller than 800x600, scaling to fit (aspect: ${aspectRatio})`
-        );
-
-        if (targetWidth / targetHeight > aspectRatio) {
-          frameHeight = targetHeight * 0.9;
-          frameWidth = frameHeight * aspectRatio;
-          console.log(`[Frame Debug] Wide canvas: using 90% height`);
-        } else {
-          frameWidth = targetWidth * 0.9;
-          frameHeight = frameWidth / aspectRatio;
-          console.log(`[Frame Debug] Tall canvas: using 90% width`);
-        }
-      }
-
-      // Center the frame on the canvas
-      const frameLeft = (targetWidth - frameWidth) / 2;
-      const frameTop = (targetHeight - frameHeight) / 2;
-
-      console.log(
-        `[Frame Debug] Centered frame: ${frameWidth.toFixed(1)}x${frameHeight.toFixed(1)} at (${frameLeft.toFixed(1)}, ${frameTop.toFixed(1)})`
-      );
-
-      captureFrame.style.width = `${frameWidth}px`;
-      captureFrame.style.height = `${frameHeight}px`;
-      captureFrame.style.left = `${frameLeft}px`;
-      captureFrame.style.top = `${frameTop}px`;
-
-      console.log(
-        `[Frame Debug] ✓ Applied default frame: ${frameWidth.toFixed(1)}x${frameHeight.toFixed(1)} at (${frameLeft.toFixed(1)}, ${frameTop.toFixed(1)})`
-      );
-    }
+  /**
+   * Public resize method called by main app
+   */
+  resize() {
+    console.log('[CanvasManager] resize() called');
+    const { width, height } = this.calculateAvailableSize();
+    console.log(`[CanvasManager] Calculated available size: ${width}x${height}`);
+    this.applyResize(width, height);
   }
 
   /**
    * Apply resize with debouncing and smooth transitions
    */
-  applyResize() {
+  applyResize(width, height) {
     if (!this.fabricCanvas) {
       return;
     }
-    if (this.pendingResizeWidth === null || this.pendingResizeHeight === null) {
+
+    // Use provided dimensions or fall back to pending (legacy support)
+    const targetWidth = width !== undefined ? width : this.pendingResizeWidth;
+    const targetHeight = height !== undefined ? height : this.pendingResizeHeight;
+
+    if (targetWidth === null || targetHeight === null) {
       return;
     }
 
-    const targetWidth = this.pendingResizeWidth;
-    const targetHeight = this.pendingResizeHeight;
+    this.isResizing = true;
+
+    // CAPTURE OLD ZOOM AND VIEWPORT TRANSFORM BEFORE RESIZE
+    // setWidth/setHeight might reset the viewport transform/zoom in some Fabric versions/configs
+    // We need the accurate old zoom to calculate the virtual frame size later
+    const oldZoom = this.fabricCanvas ? this.fabricCanvas.getZoom() || 1 : 1;
+    const oldVpt = this.fabricCanvas
+      ? [...(this.fabricCanvas.viewportTransform || [1, 0, 0, 1, 0, 0])]
+      : [1, 0, 0, 1, 0, 0];
+    // console.log(`[CanvasManager] applyResize started. Old Zoom: ${oldZoom}, Old Pan: [${oldVpt[4]}, ${oldVpt[5]}]`);
 
     const sizeChanged =
       this.lastCanvasSize.width !== targetWidth || this.lastCanvasSize.height !== targetHeight;
+
+    // CRITICAL FIX: If originalCanvasSize looks suspicious (e.g. full screen width when panels should exist),
+    // or if this is the first real resize after layout settlement, update it.
+    // This ensures centering logic uses the correct "base" size.
+    if (this.originalCanvasSize) {
+      const isStrokeOnly = !this.fabricCanvas.backgroundImage;
+      const currentWindowWidth = window.innerWidth;
+      const windowWidthDiff = Math.abs(
+        currentWindowWidth - (this.lastWindowWidth || currentWindowWidth)
+      );
+
+      // If we are in stroke-only mode and the width changed significantly (e.g. > 50px),
+      // AND the window width is relatively stable (meaning it's a layout shift, not a window resize),
+      // We should treat this new size as the "original" size for centering purposes IF zoom is 1.
+      // REMOVED REDUNDANT LAYOUT SHIFT LOGIC
+      // The responsive sizing logic below (zoom >= 1) now handles this correctly for both
+      // window resizing and layout shifts, without causing jitter during shrinking.
+
+      this.lastWindowWidth = currentWindowWidth;
+    }
 
     // Get background image info if available
     const bgImage = this.fabricCanvas.backgroundImage;
@@ -526,169 +655,230 @@ export class CanvasManager {
     this.fabricCanvas.setWidth(targetWidth);
     this.fabricCanvas.setHeight(targetHeight);
 
-    // CRITICAL FIX: Remove min-width/min-height constraints that cause stretching
-    // These CSS constraints force the canvas to display larger than its actual size
+    // CRITICAL FIX: Remove all CSS constraints that cause canvas stretching/shrinking issues
+    // These style overrides ensure the canvas displays at its actual size, not hardcoded sizes
     const canvasEl = this.fabricCanvas.lowerCanvasEl;
     if (canvasEl) {
       canvasEl.style.minWidth = 'unset';
       canvasEl.style.minHeight = 'unset';
+      canvasEl.style.maxWidth = 'unset';
+      canvasEl.style.maxHeight = 'unset';
+      // Clear any hardcoded width/height from HTML that prevents dynamic sizing
+      canvasEl.style.width = `${targetWidth}px`;
+      canvasEl.style.height = `${targetHeight}px`;
     }
     const upperCanvasEl = this.fabricCanvas.upperCanvasEl;
     if (upperCanvasEl) {
       upperCanvasEl.style.minWidth = 'unset';
       upperCanvasEl.style.minHeight = 'unset';
+      upperCanvasEl.style.maxWidth = 'unset';
+      upperCanvasEl.style.maxHeight = 'unset';
+      // Clear any hardcoded width/height from HTML that prevents dynamic sizing
+      upperCanvasEl.style.width = `${targetWidth}px`;
+      upperCanvasEl.style.height = `${targetHeight}px`;
     }
+
+    // Also clear styles on the original canvas element to remove hardcoded dimensions from HTML
+    const originalCanvasEl = document.getElementById(this.canvasId);
+    if (originalCanvasEl) {
+      originalCanvasEl.style.width = `${targetWidth}px`;
+      originalCanvasEl.style.height = `${targetHeight}px`;
+    }
+
+    // Store old size for stroke scaling calculations BEFORE updating
+    const oldCanvasWidth = this.lastCanvasSize.width;
+    const oldCanvasHeight = this.lastCanvasSize.height;
 
     // Update last known size
     this.lastCanvasSize = { width: targetWidth, height: targetHeight };
 
-    // Recalculate background image fit if one exists
-    if (bgImage && sizeChanged) {
-      // Get current fit mode from project manager if available
-      const currentViewId = window.app?.projectManager?.currentViewId;
-      const savedFitMode =
-        window.app?.projectManager?.views?.[currentViewId]?.fitMode || 'fit-canvas';
+    // UNIFIED RESIZING LOGIC:
+    // We now use the zoom-based resizing (floating layout) for BOTH empty canvas and images.
+    // This ensures consistent behavior where the content (image or strokes) stays centered
+    // and scales to fit the window, preserving the "floating paper" effect.
 
-      // Recalculate scale based on new canvas size
-      const imgWidth = bgImage.width;
-      const imgHeight = bgImage.height;
-      let scale = 1;
+    if (sizeChanged) {
+      // Apply simple proportional scaling / zoom logic
+      console.log(
+        `[CanvasManager] Canvas resize: ${oldCanvasWidth}x${oldCanvasHeight} -> ${targetWidth}x${targetHeight}`
+      );
 
-      switch (savedFitMode) {
-        case 'fit-width':
-          scale = targetWidth / imgWidth;
-          break;
-        case 'fit-height':
-          scale = targetHeight / imgHeight;
-          break;
-        case 'fit-canvas':
-          scale = Math.min(targetWidth / imgWidth, targetHeight / imgHeight);
-          break;
-        case 'actual-size':
-          scale = 1;
-          break;
-        default:
-          scale = Math.min(targetWidth / imgWidth, targetHeight / imgHeight);
-      }
+      // Scale from original positions to prevent accumulation
+      if (oldCanvasWidth > 0 && oldCanvasHeight > 0) {
+        // Initialize original canvas size and object states if not set
+        if (this.originalCanvasSize.width === 0) {
+          this.originalCanvasSize = { width: oldCanvasWidth, height: oldCanvasHeight };
 
-      const oldScale = bgImage.scaleX;
-      const oldLeft = bgImage.left;
-      const oldTop = bgImage.top;
-
-      // Calculate scaled dimensions
-      const scaledWidth = imgWidth * scale;
-      const scaledHeight = imgHeight * scale;
-
-      // Center the image in the canvas
-      // Since originX/originY are 'center', left/top should be canvas center
-      const centerX = targetWidth / 2;
-      const centerY = targetHeight / 2;
-
-      // Update scale AND position to center the image
-      bgImage.set({
-        scaleX: scale,
-        scaleY: scale,
-        left: centerX,
-        top: centerY,
-      });
-
-      // CRITICAL: Transform all stroke objects to maintain position relative to background image
-      // Calculate the transformation delta
-      const scaleRatio = scale / oldScale;
-
-      // Transform all objects (strokes, arrows, tags, etc.) except the background image
-      const objects = this.fabricCanvas.getObjects();
-      let transformedCount = 0;
-      objects.forEach(obj => {
-        // Skip only the background image itself
-        if (obj === bgImage) return;
-
-        // Calculate new position relative to background image center
-        // 1. Get position relative to old background center
-        const relX = obj.left - oldLeft;
-        const relY = obj.top - oldTop;
-
-        // 2. Scale the relative position
-        const newRelX = relX * scaleRatio;
-        const newRelY = relY * scaleRatio;
-
-        // 3. Add new background center
-        const newLeft = centerX + newRelX;
-        const newTop = centerY + newRelY;
-
-        // Update object position and scale
-        obj.set({
-          left: newLeft,
-          top: newTop,
-          scaleX: (obj.scaleX || 1) * scaleRatio,
-          scaleY: (obj.scaleY || 1) * scaleRatio,
-        });
-
-        obj.setCoords(); // Update object coordinates for interactions
-        transformedCount++;
-      });
-
-      // Transform capture frame to stick with the background image
-      const captureFrame = document.getElementById('captureFrame');
-      if (captureFrame) {
-        const oldFrameLeft = parseFloat(captureFrame.style.left) || 0;
-        const oldFrameTop = parseFloat(captureFrame.style.top) || 0;
-        const oldFrameWidth = parseFloat(captureFrame.style.width) || 0;
-        const oldFrameHeight = parseFloat(captureFrame.style.height) || 0;
-
-        // Store frame ratios relative to OLD image if not already stored
-        // This prevents cumulative drift by always calculating from the same reference
-        if (!this.captureFrameImageRatios) {
-          // Calculate frame center relative to old image center
-          const frameCenterX = oldFrameLeft + oldFrameWidth / 2;
-          const frameCenterY = oldFrameTop + oldFrameHeight / 2;
-
-          // Position relative to old background center
-          const relX = frameCenterX - oldLeft;
-          const relY = frameCenterY - oldTop;
-
-          // Convert to ratios of the OLD image's scaled size
-          const oldScaledWidth = imgWidth * oldScale;
-          const oldScaledHeight = imgHeight * oldScale;
-
-          this.captureFrameImageRatios = {
-            // Frame center position as ratio of image size (-0.5 to 0.5 for centered)
-            centerXRatio: relX / oldScaledWidth,
-            centerYRatio: relY / oldScaledHeight,
-            // Frame size as ratio of image size
-            widthRatio: oldFrameWidth / oldScaledWidth,
-            heightRatio: oldFrameHeight / oldScaledHeight,
-          };
+          this.fabricCanvas.getObjects().forEach(obj => {
+            if (!this.originalObjectStates.has(obj)) {
+              this.originalObjectStates.set(obj, {
+                left: obj.left,
+                top: obj.top,
+                scaleX: obj.scaleX || 1,
+                scaleY: obj.scaleY || 1,
+                strokeWidth: obj.strokeWidth || 1,
+              });
+            }
+          });
         }
 
-        // Calculate NEW frame position from stored ratios and NEW image position
-        const newScaledWidth = imgWidth * scale;
-        const newScaledHeight = imgHeight * scale;
+        // Calculate scale factors from ORIGINAL canvas size
+        const scaleX = targetWidth / this.originalCanvasSize.width;
+        const scaleY = targetHeight / this.originalCanvasSize.height;
 
-        // Calculate frame size from ratios
-        const newFrameWidth = newScaledWidth * this.captureFrameImageRatios.widthRatio;
-        const newFrameHeight = newScaledHeight * this.captureFrameImageRatios.heightRatio;
+        // Guard against NaN values from invalid dimensions during window drag
+        if (
+          Number.isNaN(scaleX) ||
+          Number.isNaN(scaleY) ||
+          !isFinite(scaleX) ||
+          !isFinite(scaleY)
+        ) {
+          console.warn(
+            `[CanvasManager] Invalid scale factors: ${scaleX}, ${scaleY} - aborting resize`
+          );
+          this.updateCaptureFrameOnResize(targetWidth, targetHeight);
+          this.isResizing = false;
+          return;
+        }
 
-        // Calculate frame center position
-        const frameCenterX = centerX + newScaledWidth * this.captureFrameImageRatios.centerXRatio;
-        const frameCenterY = centerY + newScaledHeight * this.captureFrameImageRatios.centerYRatio;
+        // ZOOM-BASED RESIZING: Use Fabric's zoom instead of scaling objects
+        // Calculate zoom to fit the original canvas size into the new window size
+        let zoom = Math.min(scaleX, scaleY);
 
-        // Calculate top-left position from center
-        const newFrameLeft = frameCenterX - newFrameWidth / 2;
-        const newFrameTop = frameCenterY - newFrameHeight / 2;
+        // RESPONSIVE FIX: If we have enough space to show the original canvas at 100% (zoom >= 1),
+        // we should EXPAND the "original" canvas size to fill the new space.
+        // This prevents "grey bars" when the window grows larger than the initial load size.
+        // We only shrink (zoom < 1) if the window is smaller than the content.
+        if (zoom >= 1) {
+          console.log(
+            `[CanvasManager] Expanding originalCanvasSize to fill available space (Zoom >= 1)`
+          );
+          this.originalCanvasSize = { width: targetWidth, height: targetHeight };
+          zoom = 1;
 
-        // Round to whole pixels to prevent sub-pixel jitter
-        const roundedLeft = Math.round(newFrameLeft);
-        const roundedTop = Math.round(newFrameTop);
-        const roundedWidth = Math.round(newFrameWidth);
-        const roundedHeight = Math.round(newFrameHeight);
+          // RECENTERING FIX: When expanding, we want the frame to stay centered in the new larger space.
+          // We update the base state's position mathematically (smoothly) to match the new center.
+          if (this.baseFrameState) {
+            this.baseFrameState.left = (targetWidth - this.baseFrameState.width) / 2;
+            this.baseFrameState.top = (targetHeight - this.baseFrameState.height) / 2;
+          }
+          // this.baseFrameState = null;
+        }
 
-        // Update frame position and size
-        captureFrame.style.left = `${roundedLeft}px`;
-        captureFrame.style.top = `${roundedTop}px`;
-        captureFrame.style.width = `${roundedWidth}px`;
-        captureFrame.style.height = `${roundedHeight}px`;
+        console.log(
+          `[CanvasManager] Applying zoom-based resize: zoom=${zoom.toFixed(3)} (canvas: ${targetWidth}x${targetHeight})`
+        );
+
+        // ITERATIVE FRAME SCALING:
+        // Calculate virtual frame size based on OLD zoom, then apply NEW zoom
+        // This preserves manual frame resizing while keeping it in sync with zoom
+        const captureFrame = document.getElementById('captureFrame');
+        if (captureFrame) {
+          // Use the oldZoom captured at the start of the function
+
+          // Use getComputedStyle to handle 'calc' values in initial HTML
+          const computedStyle = window.getComputedStyle(captureFrame);
+          const currentFrameWidth =
+            parseFloat(captureFrame.style.width) || parseFloat(computedStyle.width) || 800;
+          const currentFrameHeight =
+            parseFloat(captureFrame.style.height) || parseFloat(computedStyle.height) || 600;
+          const currentFrameLeft =
+            parseFloat(captureFrame.style.left) || parseFloat(computedStyle.left) || 0;
+          const currentFrameTop =
+            parseFloat(captureFrame.style.top) || parseFloat(computedStyle.top) || 0;
+
+          // Use the oldVpt captured at the start of the function
+          const oldPanX = oldVpt[4];
+          const oldPanY = oldVpt[5];
+
+          // Initialize base state if missing (first run or after reload)
+          let shouldUpdateBaseState = !this.baseFrameState;
+
+          let virtualWidth, virtualHeight, virtualLeft, virtualTop;
+
+          if (shouldUpdateBaseState) {
+            // Calculate from DOM only on first run
+            virtualWidth = currentFrameWidth / oldZoom;
+            virtualHeight = currentFrameHeight / oldZoom;
+            virtualLeft = (currentFrameLeft - oldPanX) / oldZoom;
+            virtualTop = (currentFrameTop - oldPanY) / oldZoom;
+
+            // CRITICAL FIX: In stroke-only mode, ignore the current DOM position (which might be off-center due to layout shifts)
+            // and FORCE the base state to be centered in the original canvas.
+            const isStrokeOnly = !this.fabricCanvas.backgroundImage;
+
+            if (isStrokeOnly && this.originalCanvasSize && this.originalCanvasSize.width > 0) {
+              console.log('[CanvasManager] Enforcing centered baseFrameState for stroke-only mode');
+              // Use standard 800x600 if DOM values seem weird (e.g. too small)
+              if (virtualWidth < 100) virtualWidth = 800;
+              if (virtualHeight < 100) virtualHeight = 600;
+
+              virtualLeft = (this.originalCanvasSize.width - virtualWidth) / 2;
+              virtualTop = (this.originalCanvasSize.height - virtualHeight) / 2;
+            }
+
+            this.baseFrameState = {
+              width: virtualWidth,
+              height: virtualHeight,
+              left: virtualLeft,
+              top: virtualTop,
+            };
+            console.log('[CanvasManager] Initialized baseFrameState:', this.baseFrameState);
+          } else {
+            // Use stored base state to prevent drift - Single Source of Truth
+            // We ignore the current DOM state because it might be polluted by layout shifts or transitions
+            virtualWidth = this.baseFrameState.width;
+            virtualHeight = this.baseFrameState.height;
+            virtualLeft = this.baseFrameState.left;
+            virtualTop = this.baseFrameState.top;
+          }
+
+          // Calculate new centering offsets (will be applied to viewport)
+          const scaledOriginalWidth = this.originalCanvasSize.width * zoom;
+          const scaledOriginalHeight = this.originalCanvasSize.height * zoom;
+
+          // Standard centering relative to the container
+          const centerOffsetX = (targetWidth - scaledOriginalWidth) / 2;
+          const centerOffsetY = (targetHeight - scaledOriginalHeight) / 2;
+
+          // Apply new zoom and offset to frame
+          const newFrameWidth = virtualWidth * zoom;
+          const newFrameHeight = virtualHeight * zoom;
+          const newFrameLeft = virtualLeft * zoom + centerOffsetX;
+          const newFrameTop = virtualTop * zoom + centerOffsetY;
+
+          captureFrame.style.width = `${newFrameWidth}px`;
+          captureFrame.style.height = `${newFrameHeight}px`;
+          captureFrame.style.left = `${newFrameLeft}px`;
+          captureFrame.style.top = `${newFrameTop}px`;
+
+          console.log(
+            `[CanvasManager] Scaled frame: ${currentFrameWidth.toFixed(0)}->${newFrameWidth.toFixed(0)} (zoom: ${oldZoom.toFixed(2)}->${zoom.toFixed(2)})`
+          );
+        }
+
+        // Calculate centering offsets to keep content centered
+        const scaledOriginalWidth = this.originalCanvasSize.width * zoom;
+        const scaledOriginalHeight = this.originalCanvasSize.height * zoom;
+
+        // Standard centering relative to the container
+        const centerOffsetX = (targetWidth - scaledOriginalWidth) / 2;
+        const centerOffsetY = (targetHeight - scaledOriginalHeight) / 2;
+
+        console.log(
+          `[CanvasManager] Centering: Target=${targetWidth}x${targetHeight}, Scaled=${scaledOriginalWidth.toFixed(1)}x${scaledOriginalHeight.toFixed(1)}, Offset=${centerOffsetX.toFixed(1)},${centerOffsetY.toFixed(1)}, Zoom=${zoom.toFixed(3)}`
+        );
+
+        // Apply zoom and centering while preserving rotation
+        this.zoomLevel = zoom;
+        this.panX = centerOffsetX;
+        this.panY = centerOffsetY;
+        this.applyViewportTransform();
       }
+
+      // We do NOT call updateCaptureFrameOnResize here because the zoom logic above
+      // already updated the frame style to match the zoom.
+      // Calling it would overwrite the correct frame with the default "85% of window" frame.
     }
 
     // Redraw canvas
@@ -702,10 +892,49 @@ export class CanvasManager {
     // Clear pending resize
     this.pendingResizeWidth = null;
     this.pendingResizeHeight = null;
+    this.isResizing = false;
   }
 
   /**
-   * Debounced resize method - queues resize with requestAnimationFrame
+   * Set a manual zoom level (e.g. 1.0 for 100%, 2.0 for 200%)
+   * Pass 'fit' or null to return to auto-fit mode.
+   */
+  setManualZoom(zoomLevel) {
+    if (zoomLevel === 'fit' || zoomLevel === null) {
+      this.manualZoomLevel = null;
+      console.log(`[CanvasManager] Manual zoom set to: fit`);
+      this.resize();
+    } else {
+      const zoom = parseFloat(zoomLevel);
+      this.manualZoomLevel = zoom;
+      this.zoomLevel = zoom;
+      console.log(`[CanvasManager] Manual zoom set to: ${zoom}`);
+
+      // Apply zoom centered on canvas center (like the zoom menu expects)
+      const canvas = this.fabricCanvas;
+      const center = {
+        x: canvas.width / 2,
+        y: canvas.height / 2,
+      };
+      canvas.zoomToPoint(center, zoom);
+
+      // Update pan tracking from the transform
+      if (canvas.viewportTransform) {
+        this.panX = canvas.viewportTransform[4];
+        this.panY = canvas.viewportTransform[5];
+      }
+
+      canvas.requestRenderAll();
+
+      // Update zoom button text
+      if (window.updateZoomButtonText) {
+        window.updateZoomButtonText(zoom);
+      }
+    }
+  }
+
+  /**
+   * Debounced resize method - queues resize with setTimeout
    */
   resize() {
     if (!this.fabricCanvas) {
@@ -714,16 +943,15 @@ export class CanvasManager {
 
     const { width, height } = this.getAvailableCanvasSize();
 
-    this.pendingResizeWidth = width;
-    this.pendingResizeHeight = height;
+    // REMOVED THRESHOLD: We want smooth resizing, so we process even small changes.
+    // REMOVED DEBOUNCE: ResizeObserver already debounces calls to this method (50ms).
+    // Adding another debounce here (150ms) caused the "last moment" update behavior
+    // because the timer kept getting reset during continuous drags.
 
-    // Debounce resize calls to prevent multiple rapid calls
-    if (!this.pendingResizeFrame) {
-      this.pendingResizeFrame = requestAnimationFrame(() => {
-        this.pendingResizeFrame = null;
-        this.applyResize();
-      });
-    }
+    // Use requestAnimationFrame to ensure we don't thrash the layout loop
+    requestAnimationFrame(() => {
+      this.applyResize(width, height);
+    });
   }
 
   initZoomPan() {
@@ -741,7 +969,13 @@ export class CanvasManager {
         this.zoomLevel = zoom;
         this.panX = this.fabricCanvas.viewportTransform[4];
         this.panY = this.fabricCanvas.viewportTransform[5];
-        this.applyViewportTransform();
+        // Note: Don't call applyViewportTransform() here - zoomToPoint already sets the correct transform
+        this.fabricCanvas.requestRenderAll();
+
+        // Update zoom button text
+        if (window.updateZoomButtonText) {
+          window.updateZoomButtonText(zoom);
+        }
       }
       opt.e.preventDefault();
       opt.e.stopPropagation();
@@ -850,6 +1084,38 @@ export class CanvasManager {
       this.fabricCanvas.requestRenderAll();
     });
 
+    // Sync curve control points after rotation/scaling/moving
+    // This ensures customPoints stay in sync with object transforms
+    this.fabricCanvas.on('object:modified', e => {
+      const obj = e.target;
+
+      console.log('[CanvasManager] object:modified event:', {
+        type: obj.type,
+        hasCustomPoints: !!obj.customPoints,
+        angle: obj.angle,
+        left: obj.left,
+        top: obj.top,
+      });
+
+      // Only handle path objects with customPoints (curves)
+      if (obj.type !== 'path' || !obj.customPoints) return;
+
+      // Don't sync if we're in the middle of editing a control point
+      if (obj.isEditingControlPoint) return;
+
+      obj.dirty = true;
+
+      console.log('[CanvasManager] Curve modified - angle:', obj.angle);
+    });
+
+    // Add rotating event to debug rotation
+    this.fabricCanvas.on('object:rotating', e => {
+      const obj = e.target;
+      if (obj.type === 'path' && obj.customPoints) {
+        console.log('[CanvasManager] Curve rotating - angle:', obj.angle);
+      }
+    });
+
     // Touch gesture helpers
     const getTwoFingerCenter = touches => {
       if (touches.length < 2) return null;
@@ -952,7 +1218,13 @@ export class CanvasManager {
                 this.zoomLevel = newZoom;
                 this.panX = this.fabricCanvas.viewportTransform[4];
                 this.panY = this.fabricCanvas.viewportTransform[5];
-                this.applyViewportTransform();
+                // Note: Don't call applyViewportTransform() here - zoomToPoint already sets the correct transform
+                this.fabricCanvas.requestRenderAll();
+
+                // Update zoom button text
+                if (window.updateZoomButtonText) {
+                  window.updateZoomButtonText(newZoom);
+                }
               }
               touchGestureState.lastTwoFingerDistance = currentDistance;
             }
@@ -1182,7 +1454,12 @@ export class CanvasManager {
       const objCenter = obj.getCenterPoint();
       const rotatedCenter = fabric.util.rotatePoint(objCenter, center, radians);
 
-      if (obj.type === 'path' && Array.isArray(obj.customPoints)) {
+      // For curves with new relative coordinate system, use standard Fabric rotation
+      if (obj.type === 'path' && obj._pointsVersion === 2) {
+        // New system: points are relative, so just rotate the object
+        obj.rotate((obj.angle || 0) + deltaDegrees);
+      } else if (obj.type === 'path' && Array.isArray(obj.customPoints)) {
+        // Legacy system: points are absolute, need manual transformation
         obj.customPoints = obj.customPoints.map(point =>
           fabric.util.rotatePoint(point, center, radians)
         );
@@ -1277,6 +1554,16 @@ export class CanvasManager {
             const metaType = object.strokeMetadata.type;
             const objType = object.type;
 
+            // Migrate old curves to new relative coordinate system
+            if (objType === 'path' && object.customPoints && !object._pointsVersion) {
+              console.log('[CanvasManager] Migrating legacy curve to relative coordinates');
+              // Old format detected - points are in absolute coordinates
+              // Convert them to relative on load
+              FabricControls._convertPointsToRelative(object);
+              object._customPointsConverted = true;
+              object._pointsVersion = 2;
+            }
+
             // Restore controls based on object type
             if (objType === 'line') {
               FabricControls.createLineControls(object);
@@ -1284,7 +1571,9 @@ export class CanvasManager {
               // Curves are paths but not shapes
               console.log(
                 '[CanvasManager] Restoring curve controls, customPoints:',
-                object.customPoints?.length || 'none'
+                object.customPoints?.length || 'none',
+                'version:',
+                object._pointsVersion || 1
               );
               FabricControls.createCurveControls(object);
             } else if (objType === 'group' && (object.isArrow || object.strokeMetadata.isArrow)) {
@@ -1306,6 +1595,12 @@ export class CanvasManager {
         }
         if (o.customPoints) {
           object.customPoints = o.customPoints;
+        }
+        if (o._pointsVersion) {
+          object._pointsVersion = o._pointsVersion;
+        }
+        if (o._customPointsConverted) {
+          object._customPointsConverted = o._customPointsConverted;
         }
         if (o.tagOffset) {
           object.tagOffset = o.tagOffset;

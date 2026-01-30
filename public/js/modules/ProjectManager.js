@@ -988,6 +988,8 @@ export class ProjectManager {
       'tagLabel',
       'isConnectorLine',
       'perPixelTargetFind',
+      '_pointsVersion',
+      '_customPointsConverted',
     ];
   }
 
@@ -997,6 +999,7 @@ export class ProjectManager {
     }
 
     const validTextBaselines = ['top', 'hanging', 'middle', 'alphabetic', 'ideographic', 'bottom'];
+    let sanitizedCount = 0;
 
     const sanitizeObject = obj => {
       if (!obj || typeof obj !== 'object') return obj;
@@ -1007,13 +1010,16 @@ export class ProjectManager {
 
       const sanitized = { ...obj };
 
+      // Fix invalid textBaseline values (common in old saved data)
       if (sanitized.textBaseline && !validTextBaselines.includes(sanitized.textBaseline)) {
         console.warn(
           `[Sanitize] Invalid textBaseline "${sanitized.textBaseline}", replacing with "alphabetic"`
         );
         sanitized.textBaseline = 'alphabetic';
+        sanitizedCount++;
       }
 
+      // Recursively sanitize nested objects
       for (const key in sanitized) {
         if (typeof sanitized[key] === 'object') {
           sanitized[key] = sanitizeObject(sanitized[key]);
@@ -1023,7 +1029,13 @@ export class ProjectManager {
       return sanitized;
     };
 
-    return sanitizeObject(canvasData);
+    const result = sanitizeObject(canvasData);
+
+    if (sanitizedCount > 0) {
+      console.log(`[Sanitize] Fixed ${sanitizedCount} invalid textBaseline values`);
+    }
+
+    return result;
   }
 
   async getProjectData() {

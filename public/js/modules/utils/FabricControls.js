@@ -106,14 +106,11 @@ export class FabricControls {
   }
 
   /**
-    /**
-     * Adds custom controls to a fabric.Line object for endpoint manipulation
-     * @param {fabric.Line} line - The line object
-     */
+   * Adds custom controls to a fabric.Line object for endpoint manipulation
+   * @param {fabric.Line} line - The line object
+   */
   static createLineControls(line) {
     if (!line) return;
-
-    console.log('[FabricControls] Creating custom controls for line', line);
 
     // Hide standard controls
     line.set({
@@ -215,7 +212,7 @@ export class FabricControls {
       const lineObj = transform.target;
       const canvas = lineObj.canvas;
 
-      // Resolve event object
+      // Resolve event object (eventData might be the event itself or a wrapper)
       const event = eventData.e || eventData;
 
       // Get pointer and check for Ctrl key (screen space)
@@ -286,17 +283,23 @@ export class FabricControls {
   static createCurveControls(path) {
     if (!path || !path.customPoints) return;
 
+    // Keep points in ABSOLUTE canvas coordinates - simpler and more reliable
+    // No conversion needed, points are already where they should be
+
+    // Clear existing controls to prevent duplicates and stale closures
+    path.controls = {};
+
     // Hide standard controls but enable custom ones
     path.set({
       hasBorders: false,
       hasControls: true,
-      cornerSize: 12, // Increased from 8 to make controls easier to grab
+      cornerSize: 12,
       transparentCorners: false,
       cornerColor: '#ffffff',
       cornerStrokeColor: '#3b82f6',
       lockScalingX: true,
       lockScalingY: true,
-      lockRotation: true,
+      lockRotation: false, // Allow rotation
     });
 
     path.controls = {};
@@ -305,31 +308,9 @@ export class FabricControls {
     path.customPoints.forEach((point, index) => {
       const positionHandler = (dim, finalMatrix, fabricObject) => {
         if (!fabricObject.canvas) return { x: 0, y: 0 };
-        // The point coordinates are absolute canvas coordinates
-        // We need to transform them to screen coordinates for the control
 
-        // However, if the object has moved, the points are relative to the object's new position?
-        // No, customPoints are stored as absolute coordinates from creation time.
-        // If the object moves, we need to account for that.
-        // BUT, for simplicity, let's assume we are editing the path in place.
-        // If the user moves the whole path, the customPoints need to be updated or offset.
-
-        // Better approach:
-        // When the path is moved (modified), we should update customPoints?
-        // Or, we treat customPoints as relative to the object center?
-
-        // Let's try keeping customPoints as absolute and updating them when the control is dragged.
-        // If the object itself is moved, we might have a disconnect.
-        // For now, let's assume the object stays in place or we update points on move.
-
-        // Actually, to make controls follow the object if it moves:
-        // We should probably map the point to the object's coordinate space.
-        // But path points are complex.
-
-        // Let's stick to the "absolute points" model for now, as that's how the curve tool works.
-        // If the user moves the curve group, we might need to re-calculate points.
-        // For this task, let's assume we are just manipulating the points.
-
+        // Points are stored in ABSOLUTE canvas coordinates
+        // Just apply viewport transform for rendering
         return fabric.util.transformPoint(
           { x: point.x, y: point.y },
           fabricObject.canvas.viewportTransform
@@ -340,70 +321,36 @@ export class FabricControls {
         const pathObj = transform.target;
         const canvas = pathObj.canvas;
 
-        // Resolve event object
+        // Resolve event object (eventData might be the event itself or a wrapper)
         const event = eventData.e || eventData;
 
-        // Get pointer and check for Ctrl key
-        const rawPointer = canvas.getPointer(event);
+        // Use x, y from Fabric (already in canvas coordinates)
+        let pointer = { x, y };
         const isCtrlHeld = event.ctrlKey;
 
-        const pointer = isCtrlHeld
-          ? FabricControls.getSnapPoint(canvas, rawPointer, pathObj)
-          : rawPointer;
+        // Apply snap if Ctrl is held
+        if (isCtrlHeld) {
+          pointer = FabricControls.getSnapPoint(canvas, pointer, pathObj);
+        }
 
         // Set flag to suppress moving event listener
         pathObj.isEditingControlPoint = true;
 
-        // Update the point
+        // Update the point in ABSOLUTE canvas coordinates
         point.x = pointer.x;
         point.y = pointer.y;
 
-        // Regenerate the path string
+        // Regenerate the path string from ABSOLUTE points
         const newPathString = PathUtils.createSmoothPath(pathObj.customPoints);
-
-        // Update the path object
-        // Note: setting 'path' directly might not work as expected in Fabric v4/v5
-        // We might need to create a new path or use set({ path: ... }) if supported
-        // Or use internal methods.
-
-        // Fabric.js doesn't easily support changing the path data of an existing Path object dynamically
-        // without some internal hacking or replacing the object.
-        // However, we can try updating the path array if it exists, or recreating the object.
-
-        // A common trick is to update the 'path' property and call _setPath?
-        // Or just replace the object? Replacing breaks the selection.
-
-        // Let's try to update the path data.
-        // In Fabric.js, path is stored in .path array.
-        // We can parse the new string and update .path
-
-        // Actually, for smooth interaction, replacing the path string and letting Fabric re-parse is best if possible.
-        // But Fabric doesn't expose a public API for this easily.
-
-        // Workaround:
-        // 1. Generate new path data
-        // 2. Update the object's path data
-        // 3. Update dimensions (width/height/top/left) because changing path changes bounding box
-
-        // Let's try a safer approach:
-        // We can't easily mutate a fabric.Path in place.
-        // But we can try to use a Polyline/Polygon if we didn't need curves.
-        // Since we need curves, we might have to deal with the complexity.
-
-        // Alternative:
-        // Instead of a real fabric.Path, use a custom subclass or just accept that we might need to
-        // re-initialize the path data.
-
-        // Let's try this:
-        // fabric.Path.prototype.initialize(pathData) might work to reset it?
-
-        // Let's try to just update the path array manually if we can parse it.
-        // Or use fabric.util.parsePath(newPathString)
-
         const pathData = fabric.util.parsePath(newPathString);
+
+        // Store current center before path change
+        const prevCenter = pathObj.getCenterPoint();
+
+        // Update the path
         pathObj.set({ path: pathData });
 
-        // We also need to update dimensions because the bounding box changes
+        // Recalculate dimensions and keep centered at same position
         const dims = pathObj._calcDimensions();
         pathObj.set({
           width: dims.width,
@@ -411,16 +358,9 @@ export class FabricControls {
           pathOffset: { x: dims.left + dims.width / 2, y: dims.top + dims.height / 2 },
         });
 
-        // And we need to ensure the object position remains correct relative to the points
-        // This is the hard part. When path changes, center changes.
-        // We might need to adjust top/left to match the new bounding box.
-        pathObj.setPositionByOrigin(
-          new fabric.Point(dims.left + dims.width / 2, dims.top + dims.height / 2),
-          'center',
-          'center'
-        );
+        // Keep the object at the same center position
+        pathObj.setPositionByOrigin(prevCenter, 'center', 'center');
 
-        // Mark object as dirty and request canvas redraw to prevent artifacts
         pathObj.dirty = true;
         pathObj.setCoords();
         canvas.requestRenderAll();
@@ -430,9 +370,6 @@ export class FabricControls {
           pathObj.isEditingControlPoint = false;
         }, 0);
 
-        // These moving events were causing the whole curve to move - removed
-        // pathObj.fire('moving');
-        // pathObj.fire('moving');
         return true;
       };
 
@@ -443,6 +380,71 @@ export class FabricControls {
         actionName: 'modifyCurve',
         render: renderCircleControl,
       });
+    });
+  }
+
+  /**
+   * Convert absolute canvas coordinates to relative (object-local) coordinates
+   * @param {fabric.Path} pathObj - The path object with customPoints
+   */
+  static _convertPointsToRelative(pathObj) {
+    if (!pathObj.customPoints || pathObj.customPoints.length === 0) return;
+
+    // Get the object's current transform matrix
+    const objectMatrix = pathObj.calcTransformMatrix();
+    const invertedMatrix = fabric.util.invertTransform(objectMatrix);
+
+    // Convert each point to relative coordinates
+    pathObj.customPoints = pathObj.customPoints.map(point => {
+      const relativePoint = fabric.util.transformPoint({ x: point.x, y: point.y }, invertedMatrix);
+      return relativePoint;
+    });
+
+    console.log(
+      '[FabricControls] Converted',
+      pathObj.customPoints.length,
+      'points to relative coordinates'
+    );
+  }
+
+  /**
+   * Convert relative (object-local) coordinates to absolute canvas coordinates
+   * @param {fabric.Path} pathObj - The path object with relative customPoints
+   * @returns {Array<{x: number, y: number}>} - Absolute canvas coordinates
+   */
+  static _convertPointsToAbsolute(pathObj) {
+    if (!pathObj.customPoints || pathObj.customPoints.length === 0) return [];
+
+    // Get the object's current transform matrix
+    const objectMatrix = pathObj.calcTransformMatrix();
+
+    // Convert each relative point to absolute coordinates
+    return pathObj.customPoints.map(point => {
+      return fabric.util.transformPoint({ x: point.x, y: point.y }, objectMatrix);
+    });
+  }
+
+  /**
+   * Convert relative points to path-local coordinates (without rotation)
+   * Used for regenerating the path shape without baking in rotation
+   * @param {fabric.Path} pathObj - The path object with relative customPoints
+   * @returns {Array<{x: number, y: number}>} - Path-local coordinates
+   */
+  static _convertPointsToPathLocal(pathObj) {
+    if (!pathObj.customPoints || pathObj.customPoints.length === 0) return [];
+
+    // Create transform matrix without rotation
+    const scaleX = pathObj.scaleX || 1;
+    const scaleY = pathObj.scaleY || 1;
+    const left = pathObj.left || 0;
+    const top = pathObj.top || 0;
+
+    // Transform points by scale and position only (no rotation)
+    return pathObj.customPoints.map(point => {
+      return {
+        x: point.x * scaleX + left,
+        y: point.y * scaleY + top,
+      };
     });
   }
 
@@ -508,13 +510,13 @@ export class FabricControls {
 
       // Resolve event object
       const event = eventData.e || eventData;
-
-      // Get raw pointer and apply snap if Ctrl is held
-      const rawPointer = canvas.getPointer(event);
       const isCtrlHeld = event.ctrlKey;
-      const pointer = isCtrlHeld
-        ? FabricControls.getSnapPoint(canvas, rawPointer, group)
-        : rawPointer;
+
+      // x, y are already in canvas coordinates (provided by Fabric.js)
+      let pointer = { x, y };
+      if (isCtrlHeld) {
+        pointer = FabricControls.getSnapPoint(canvas, pointer, group);
+      }
 
       // Get absolute end point
       const matrix = group.calcTransformMatrix();
@@ -571,13 +573,13 @@ export class FabricControls {
 
       // Resolve event object
       const event = eventData.e || eventData;
-
-      // Get raw pointer and apply snap if Ctrl is held
-      const rawPointer = canvas.getPointer(event);
       const isCtrlHeld = event.ctrlKey;
-      const pointer = isCtrlHeld
-        ? FabricControls.getSnapPoint(canvas, rawPointer, group)
-        : rawPointer;
+
+      // x, y are already in canvas coordinates (provided by Fabric.js)
+      let pointer = { x, y };
+      if (isCtrlHeld) {
+        pointer = FabricControls.getSnapPoint(canvas, pointer, group);
+      }
 
       group._restoreObjectsState();
 

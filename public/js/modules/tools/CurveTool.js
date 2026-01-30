@@ -335,7 +335,7 @@ export class CurveTool extends BaseTool {
     this.pointMarkers.forEach(marker => this.canvas.remove(marker));
     this.pointMarkers = [];
 
-    // Create final curve path
+    // Create final curve path - let Fabric handle positioning
     const pathString = PathUtils.createSmoothPath(this.points);
     const curve = new fabric.Path(pathString, {
       stroke: this.strokeColor,
@@ -347,40 +347,22 @@ export class CurveTool extends BaseTool {
       perPixelTargetFind: true, // Only select when clicking the actual line
     });
 
-    // Store points on the object for editing
+    // Store points as absolute canvas coordinates
+    // These will be converted to relative coordinates after the path is properly positioned
     curve.customPoints = this.points.map(p => ({ x: p.x, y: p.y }));
 
-    // Initialize tracking for movement
-    curve.lastLeft = curve.left;
-    curve.lastTop = curve.top;
-
-    // Add listener to update customPoints when curve is moved
-    curve.on('moving', () => {
-      // Skip if we're editing a control point - the control point handler updates customPoints directly
-      if (curve.isEditingControlPoint) {
-        console.log('[CurveMoveDebug] Skipping move update - editing control point');
-        return;
-      }
-
-      const dx = curve.left - curve.lastLeft;
-      const dy = curve.top - curve.lastTop;
-
-      if (dx !== 0 || dy !== 0) {
-        console.log(
-          `[CurveMoveDebug] Moving whole curve by dx=${dx.toFixed(1)}, dy=${dy.toFixed(1)}`
-        );
-
-        // Update all custom points
-        curve.customPoints.forEach(p => {
-          p.x += dx;
-          p.y += dy;
-        });
-
-        // Update tracking
-        curve.lastLeft = curve.left;
-        curve.lastTop = curve.top;
-      }
+    // Debug logging
+    console.log('[CurveTool] Created curve:', {
+      angle: curve.angle,
+      left: curve.left,
+      top: curve.top,
+      pathOffset: curve.pathOffset,
+      pathDataPreview: pathString.substring(0, 100),
+      customPointsCount: curve.customPoints.length,
+      firstPoint: curve.customPoints[0],
     });
+
+    // Note: No manual movement tracking needed - relative coordinates handle transforms automatically
 
     // Add custom controls for point editing
     FabricControls.createCurveControls(curve);
