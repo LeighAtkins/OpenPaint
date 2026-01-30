@@ -64,3 +64,34 @@ The application uses a centralized state object `window.paintApp` with:
 - Project data is stored in structured objects by image label
 - Event handling uses modern browser APIs with proper cleanup
 - Multiple backup files exist in `public/js/` - use `paint.js` as the main file
+- **Active code is in `public/js/modules/`** - the `src/modules/` directory is for TypeScript migration and is NOT used by the running app
+
+### Fabric.js Zoom Implementation (IMPORTANT)
+
+When implementing zoom with Fabric.js, **do NOT call `applyViewportTransform()` after `zoomToPoint()`**. The `zoomToPoint()` method already sets the correct viewport transform. Calling `applyViewportTransform()` afterward will corrupt the transform and cause the canvas to drift.
+
+**Correct pattern:**
+```javascript
+this.fabricCanvas.zoomToPoint({ x: mouseX, y: mouseY }, zoom);
+this.zoomLevel = zoom;
+// Compute panX/panY so applyViewportTransform would reproduce this transform
+if (this.fabricCanvas.viewportTransform) {
+  const vpt = this.fabricCanvas.viewportTransform;
+  let centerX = this.fabricCanvas.width / 2;
+  let centerY = this.fabricCanvas.height / 2;
+  // Use background image center if available
+  const bgImage = this.fabricCanvas.backgroundImage;
+  if (bgImage && typeof bgImage.getCenterPoint === 'function') {
+    const bgCenter = bgImage.getCenterPoint();
+    if (typeof bgCenter?.x === 'number' && typeof bgCenter?.y === 'number') {
+      centerX = bgCenter.x;
+      centerY = bgCenter.y;
+    }
+  }
+  // Subtract the center offset that applyViewportTransform adds
+  this.panX = vpt[4] - centerX * (1 - zoom);
+  this.panY = vpt[5] - centerY * (1 - zoom);
+}
+```
+
+**Why this matters:** The `applyViewportTransform()` function adds `centerX*(1-zoom)` to panX when building the transform matrix. If you save `viewportTransform[4]` directly to panX (which already contains a zoom offset from `zoomToPoint`), then call `applyViewportTransform()`, the center offset gets applied twice, causing drift.
