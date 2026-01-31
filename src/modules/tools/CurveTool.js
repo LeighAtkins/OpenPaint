@@ -357,17 +357,38 @@ export class CurveTool extends BaseTool {
     PathUtils.updatePathFromAbsolutePoints(curve, curve.customPoints);
 
     // Initialize tracking for movement
-    curve.lastLeft = curve.left;
-    curve.lastTop = curve.top;
+    const curveCenter = curve.getCenterPoint();
+    curve.__lastCenter = { x: curveCenter.x, y: curveCenter.y };
 
     // Add listener to update customPoints when curve is moved
     curve.on('moving', () => {
+      // Skip if we're editing a control point - the control point handler updates customPoints directly
       if (curve.isEditingControlPoint) {
         return;
       }
 
-      const dx = curve.left - curve.lastLeft;
-      const dy = curve.top - curve.lastTop;
+      // Skip if curve was just baked - customPoints are already world-space correct
+      if (curve.__curveJustBaked) {
+        // Update lastCenter to current to prevent stale delta on next move
+        const center = curve.getCenterPoint();
+        curve.__lastCenter = { x: center.x, y: center.y };
+        return;
+      }
+
+      // Skip if transform (scale/rotate/skew) is active - bakeCurveTransform handles it
+      if (curve.__curveTransformActive) {
+        return;
+      }
+
+      // Skip if inside activeSelection - CanvasManager handles multi-selection movement
+      if (curve.group && curve.group.type === 'activeSelection') {
+        return;
+      }
+
+      const currentCenter = curve.getCenterPoint();
+      const lastCenter = curve.__lastCenter || currentCenter;
+      const dx = currentCenter.x - lastCenter.x;
+      const dy = currentCenter.y - lastCenter.y;
 
       if (dx !== 0 || dy !== 0) {
         curve.customPoints.forEach(p => {
@@ -375,8 +396,7 @@ export class CurveTool extends BaseTool {
           p.y += dy;
         });
 
-        curve.lastLeft = curve.left;
-        curve.lastTop = curve.top;
+        curve.__lastCenter = currentCenter;
       }
     });
 

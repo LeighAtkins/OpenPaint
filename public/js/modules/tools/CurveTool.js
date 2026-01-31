@@ -351,25 +351,12 @@ export class CurveTool extends BaseTool {
     curve.customPoints = this.points.map(p => ({ x: p.x, y: p.y }));
 
     // Initialize tracking for movement
-    curve.lastLeft = curve.left;
-    curve.lastTop = curve.top;
+    const curveCenter = curve.getCenterPoint();
+    curve.__lastCenter = { x: curveCenter.x, y: curveCenter.y };
 
     // Add listener to update customPoints when curve is moved
     curve.on('moving', () => {
       console.log('[CURVE DEBUG] curve.on("moving") fired');
-      console.log('[CURVE DEBUG]   isEditingControlPoint:', curve.isEditingControlPoint);
-      console.log(
-        '[CURVE DEBUG]   left:',
-        curve.left?.toFixed(1),
-        'lastLeft:',
-        curve.lastLeft?.toFixed(1)
-      );
-      console.log(
-        '[CURVE DEBUG]   top:',
-        curve.top?.toFixed(1),
-        'lastTop:',
-        curve.lastTop?.toFixed(1)
-      );
 
       // Skip if we're editing a control point - the control point handler updates customPoints directly
       if (curve.isEditingControlPoint) {
@@ -377,18 +364,46 @@ export class CurveTool extends BaseTool {
         return;
       }
 
-      const dx = curve.left - curve.lastLeft;
-      const dy = curve.top - curve.lastTop;
+      // Skip if curve was just baked - customPoints are already world-space correct
+      if (curve.__curveJustBaked) {
+        console.log('[CURVE DEBUG] curve.on("moving") - SKIPPING (__curveJustBaked=true)');
+        // Update lastCenter to current to prevent stale delta on next move
+        const center = curve.getCenterPoint();
+        curve.__lastCenter = { x: center.x, y: center.y };
+        return;
+      }
+
+      // Skip if transform (scale/rotate/skew) is active - bakeCurveTransform handles it
+      if (curve.__curveTransformActive) {
+        console.log('[CURVE DEBUG] curve.on("moving") - SKIPPING (__curveTransformActive=true)');
+        return;
+      }
+
+      // Skip if inside activeSelection - CanvasManager handles multi-selection movement
+      if (curve.group && curve.group.type === 'activeSelection') {
+        console.log('[CURVE DEBUG] curve.on("moving") - SKIPPING (inside activeSelection)');
+        return;
+      }
+
+      const currentCenter = curve.getCenterPoint();
+      const lastCenter = curve.__lastCenter || currentCenter;
+      console.log(
+        '[CURVE DEBUG]   center:',
+        currentCenter.x?.toFixed(1),
+        currentCenter.y?.toFixed(1),
+        'lastCenter:',
+        lastCenter.x?.toFixed(1),
+        lastCenter.y?.toFixed(1)
+      );
+
+      const dx = currentCenter.x - lastCenter.x;
+      const dy = currentCenter.y - lastCenter.y;
 
       console.log('[CURVE DEBUG]   dx:', dx?.toFixed(1), 'dy:', dy?.toFixed(1));
 
       if (dx !== 0 || dy !== 0) {
         console.log(
           `[CURVE DEBUG] curve.on("moving") - APPLYING translation dx=${dx.toFixed(1)}, dy=${dy.toFixed(1)}`
-        );
-        console.log(
-          '[CURVE DEBUG]   customPoints BEFORE:',
-          JSON.stringify(curve.customPoints.map(p => ({ x: p.x.toFixed(1), y: p.y.toFixed(1) })))
         );
 
         // Update all custom points
@@ -398,13 +413,7 @@ export class CurveTool extends BaseTool {
         });
 
         // Update tracking
-        curve.lastLeft = curve.left;
-        curve.lastTop = curve.top;
-
-        console.log(
-          '[CURVE DEBUG]   customPoints AFTER:',
-          JSON.stringify(curve.customPoints.map(p => ({ x: p.x.toFixed(1), y: p.y.toFixed(1) })))
-        );
+        curve.__lastCenter = currentCenter;
       } else {
         console.log('[CURVE DEBUG] curve.on("moving") - NO-OP (dx=0, dy=0)');
       }

@@ -20,7 +20,7 @@ export class FabricControls {
     let minDistance = threshold;
 
     const objects = canvas.getObjects();
-    console.log(`[FabricControls] getSnapPoint checking ${objects.length} objects`);
+    curveDebug(`[FabricControls] getSnapPoint checking ${objects.length} objects`);
 
     for (const obj of objects) {
       // Skip the object being edited
@@ -42,13 +42,13 @@ export class FabricControls {
           closestPoint = point;
         }
       } catch (e) {
-        console.warn('[FabricControls] Error finding closest point:', e);
+        curveWarn('[FabricControls] Error finding closest point:', e);
       }
     }
 
     // Show/hide snap indicator
     if (closestPoint) {
-      console.log('[FabricControls] Found snap point:', closestPoint);
+      curveDebug('[FabricControls] Found snap point:', closestPoint);
       FabricControls.showSnapIndicator(canvas, closestPoint);
       return closestPoint;
     } else {
@@ -106,6 +106,110 @@ export class FabricControls {
   }
 
   /**
+   * Canonicalizes a curve path from its world-space customPoints.
+   * This rebuilds the path geometry, sets proper pathOffset, and positions the object correctly.
+   * Call this after modifying customPoints to ensure path rendering matches anchor positions.
+   * @param {fabric.Path} pathObj - The path object with customPoints array
+   * @param {Object} baseCenterWorld - Optional center point {x, y}. If not provided, computed from customPoints.
+   */
+  static canonicalizeCurveFromWorldPoints(pathObj, baseCenterWorld = null) {
+    if (!pathObj || !Array.isArray(pathObj.customPoints) || pathObj.customPoints.length < 2) {
+      console.warn(
+        '[FabricControls] canonicalizeCurveFromWorldPoints: invalid pathObj or customPoints'
+      );
+      return;
+    }
+
+    // Calculate baseCenterWorld from customPoints if not provided
+    if (!baseCenterWorld) {
+      const minX = Math.min(...pathObj.customPoints.map(p => p.x));
+      const maxX = Math.max(...pathObj.customPoints.map(p => p.x));
+      const minY = Math.min(...pathObj.customPoints.map(p => p.y));
+      const maxY = Math.max(...pathObj.customPoints.map(p => p.y));
+      baseCenterWorld = {
+        x: (minX + maxX) / 2,
+        y: (minY + maxY) / 2,
+      };
+    }
+
+    console.log(
+      '[CURVE CANONICALIZE] baseCenterWorld:',
+      baseCenterWorld.x.toFixed(1),
+      baseCenterWorld.y.toFixed(1)
+    );
+
+    // Convert world points to local points around baseCenterWorld
+    const localPoints = pathObj.customPoints.map(p => ({
+      x: p.x - baseCenterWorld.x,
+      y: p.y - baseCenterWorld.y,
+    }));
+
+    // Create smooth path from local points
+    const newPathString = PathUtils.createSmoothPath(localPoints);
+    const pathData = fabric.util.parsePath(newPathString);
+
+    // Set path and reset transforms
+    pathObj.set({ path: pathData, angle: 0 });
+    pathObj.set({
+      scaleX: 1,
+      scaleY: 1,
+      skewX: 0,
+      skewY: 0,
+      flipX: false,
+      flipY: false,
+    });
+
+    // Compute Fabric local bbox center (Bezier-extrema aware)
+    const dims = pathObj._calcDimensions();
+    const centerLocal = new fabric.Point(dims.left + dims.width / 2, dims.top + dims.height / 2);
+
+    console.log('[CURVE CANONICALIZE] dims:', JSON.stringify(dims));
+    console.log(
+      '[CURVE CANONICALIZE] centerLocal:',
+      centerLocal.x.toFixed(1),
+      centerLocal.y.toFixed(1)
+    );
+
+    // Set pathOffset to centerLocal
+    pathObj.set({
+      width: dims.width,
+      height: dims.height,
+      pathOffset: centerLocal,
+    });
+
+    // Compensate world position: baseCenterWorld + centerLocal
+    const compensatedWorldCenter = new fabric.Point(
+      baseCenterWorld.x + centerLocal.x,
+      baseCenterWorld.y + centerLocal.y
+    );
+
+    console.log(
+      '[CURVE CANONICALIZE] compensatedWorldCenter:',
+      compensatedWorldCenter.x.toFixed(1),
+      compensatedWorldCenter.y.toFixed(1)
+    );
+
+    pathObj.setPositionByOrigin(compensatedWorldCenter, 'center', 'center');
+
+    // Update tracking for move handlers
+    pathObj.lastLeft = pathObj.left;
+    pathObj.lastTop = pathObj.top;
+    const updatedCenter = pathObj.getCenterPoint();
+    pathObj.__lastCenter = { x: updatedCenter.x, y: updatedCenter.y };
+
+    // Force cache invalidation and render
+    pathObj.objectCaching = false;
+    pathObj.dirty = true;
+    pathObj.setCoords();
+
+    console.log(
+      '[CURVE CANONICALIZE] final left/top:',
+      pathObj.left?.toFixed(1),
+      pathObj.top?.toFixed(1)
+    );
+  }
+
+  /**
     /**
      * Adds custom controls to a fabric.Line object for endpoint manipulation
      * @param {fabric.Line} line - The line object
@@ -113,7 +217,7 @@ export class FabricControls {
   static createLineControls(line) {
     if (!line) return;
 
-    console.log('[FabricControls] Creating custom controls for line', line);
+    curveDebug('[FabricControls] Creating custom controls for line', line);
 
     // Hide standard controls
     line.set({
@@ -156,7 +260,7 @@ export class FabricControls {
       const isCtrlHeld = event.ctrlKey;
 
       if (isCtrlHeld) {
-        console.log('[FabricControls] Line start - Ctrl held, checking for snap');
+        curveDebug('[FabricControls] Line start - Ctrl held, checking for snap');
       }
 
       const pointer = isCtrlHeld
@@ -164,7 +268,7 @@ export class FabricControls {
         : rawPointer;
 
       if (isCtrlHeld && pointer !== rawPointer) {
-        console.log('[FabricControls] Line start snapped to:', pointer);
+        curveDebug('[FabricControls] Line start snapped to:', pointer);
       }
 
       const points = lineObj.calcLinePoints();
@@ -223,7 +327,7 @@ export class FabricControls {
       const isCtrlHeld = event.ctrlKey;
 
       if (isCtrlHeld) {
-        console.log('[FabricControls] Line end - Ctrl held, checking for snap');
+        curveDebug('[FabricControls] Line end - Ctrl held, checking for snap');
       }
 
       const pointer = isCtrlHeld
@@ -231,7 +335,7 @@ export class FabricControls {
         : rawPointer;
 
       if (isCtrlHeld && pointer !== rawPointer) {
-        console.log('[FabricControls] Line end snapped to:', pointer);
+        curveDebug('[FabricControls] Line end snapped to:', pointer);
       }
 
       const points = lineObj.calcLinePoints();
@@ -284,13 +388,27 @@ export class FabricControls {
    * @param {fabric.Path} path - The path object
    */
   static createCurveControls(path) {
+    const curveDebug = (...args) => {
+      if (globalThis?.app?.debugCurve === true) {
+        console.log(...args);
+      }
+    };
+
+    const curveWarn = (...args) => {
+      if (globalThis?.app?.debugCurve === true) {
+        console.warn(...args);
+      }
+    };
+
     if (!path || !path.customPoints) return;
 
-    console.log('[CURVE DEBUG] ========== createCurveControls called ==========');
-    console.log('[CURVE DEBUG] Initial customPoints:', JSON.stringify(path.customPoints));
-    console.log('[CURVE DEBUG] Initial path center:', path.getCenterPoint());
-    console.log('[CURVE DEBUG] Initial left/top:', path.left, path.top);
-    console.log('[CURVE DEBUG] Initial pathOffset:', path.pathOffset);
+    curveDebug('[CURVE DEBUG] ========== createCurveControls called ==========');
+    curveDebug('[CURVE DEBUG] Initial customPoints:', JSON.stringify(path.customPoints));
+    curveDebug('[CURVE DEBUG] Initial path center:', path.getCenterPoint());
+    curveDebug('[CURVE DEBUG] Initial left/top:', path.left, path.top);
+    curveDebug('[CURVE DEBUG] Initial pathOffset:', path.pathOffset);
+    const initialCenter = path.getCenterPoint();
+    path.__lastCenter = { x: initialCenter.x, y: initialCenter.y };
 
     // Hide standard controls but enable custom ones
     path.set({
@@ -310,20 +428,36 @@ export class FabricControls {
     const getCurveAnchorWorldPoint = (fabricObject, pointIndex) => {
       const currentPoint = fabricObject.customPoints?.[pointIndex];
       if (!currentPoint) {
-        console.log(`[CURVE DEBUG] getCurveAnchorWorldPoint(${pointIndex}): NO POINT FOUND`);
+        curveDebug(`[CURVE DEBUG] getCurveAnchorWorldPoint(${pointIndex}): NO POINT FOUND`);
         return new fabric.Point(0, 0);
       }
 
-      // Calculate the full transform matrix including any parent group/activeSelection
-      const getFullTransformMatrix = obj => {
-        let matrix = obj.calcTransformMatrix();
-        // If inside a group or activeSelection, include parent transform
-        if (obj.group) {
-          const parentMatrix = obj.group.calcTransformMatrix();
-          matrix = fabric.util.multiplyTransformMatrices(parentMatrix, matrix);
+      // If the curve was just baked, return the customPoint directly unless an activeSelection is still scaled.
+      // In that case, align anchor positions to the still-scaled selection so the line and anchors match.
+      if (fabricObject.__curveJustBaked) {
+        const activeObj = fabricObject.canvas?.getActiveObject();
+        if (activeObj && activeObj.type === 'activeSelection') {
+          const scaleX = activeObj.scaleX || 1;
+          const scaleY = activeObj.scaleY || 1;
+          if (scaleX !== 1 || scaleY !== 1) {
+            const center = activeObj.getCenterPoint();
+            const scaledX = center.x + (currentPoint.x - center.x) * scaleX;
+            const scaledY = center.y + (currentPoint.y - center.y) * scaleY;
+            curveDebug(
+              `[CURVE DEBUG] getCurveAnchorWorldPoint(${pointIndex}): JUST BAKED + SELECTION SCALE (${scaleX.toFixed(2)}, ${scaleY.toFixed(2)})`
+            );
+            return new fabric.Point(scaledX, scaledY);
+          }
         }
-        return matrix;
-      };
+
+        curveDebug(
+          `[CURVE DEBUG] getCurveAnchorWorldPoint(${pointIndex}): JUST BAKED, returning customPoint directly (${currentPoint.x.toFixed(1)}, ${currentPoint.y.toFixed(1)})`
+        );
+        return new fabric.Point(currentPoint.x, currentPoint.y);
+      }
+
+      // Calculate the full transform matrix including any parent group/activeSelection
+      const getFullTransformMatrix = obj => obj.calcTransformMatrix();
 
       if (
         fabricObject.__curveTransformActive &&
@@ -341,16 +475,23 @@ export class FabricControls {
           new fabric.Point(originPoint.x, originPoint.y),
           delta
         );
-        console.log(
+        curveDebug(
           `[CURVE DEBUG] getCurveAnchorWorldPoint(${pointIndex}): TRANSFORM ACTIVE, origin=(${originPoint.x.toFixed(1)}, ${originPoint.y.toFixed(1)}) -> result=(${result.x.toFixed(1)}, ${result.y.toFixed(1)})`
         );
         return result;
       }
 
-      // Check for activeSelection scaling - this works even if fabricObject.group is not set
-      // because a single selected object can still be scaled via activeSelection
+      // P4: Only apply scaling transforms when gesture is actively in progress (pre-bake).
+      // customPoints are WORLD coordinates, so after baking they already include the final transform.
+      // Applying scaling again after bake would double-scale and cause bounding box mismatch.
+      const isGestureScaling =
+        fabricObject.__curveTransformActive &&
+        fabricObject.__curveOrigMatrix &&
+        fabricObject.__curveOrigPoints;
+
+      // Check for activeSelection scaling - only during active gesture
       const activeObj = fabricObject.canvas?.getActiveObject();
-      if (activeObj && activeObj.type === 'activeSelection') {
+      if (isGestureScaling && activeObj && activeObj.type === 'activeSelection') {
         const scaleX = activeObj.scaleX || 1;
         const scaleY = activeObj.scaleY || 1;
         // Only apply scaling if there's actual scaling happening
@@ -358,43 +499,27 @@ export class FabricControls {
           const center = activeObj.getCenterPoint();
           const scaledX = center.x + (currentPoint.x - center.x) * scaleX;
           const scaledY = center.y + (currentPoint.y - center.y) * scaleY;
-          console.log(
-            `[CURVE DEBUG] getCurveAnchorWorldPoint(${pointIndex}): ACTIVE SELECTION SCALING, scale=(${scaleX.toFixed(2)}, ${scaleY.toFixed(2)}), original=(${currentPoint.x.toFixed(1)}, ${currentPoint.y.toFixed(1)}) -> scaled=(${scaledX.toFixed(1)}, ${scaledY.toFixed(1)})`
+          curveDebug(
+            `[CURVE DEBUG] getCurveAnchorWorldPoint(${pointIndex}): ACTIVE SELECTION SCALING (gesture active), scale=(${scaleX.toFixed(2)}, ${scaleY.toFixed(2)}), original=(${currentPoint.x.toFixed(1)}, ${currentPoint.y.toFixed(1)}) -> scaled=(${scaledX.toFixed(1)}, ${scaledY.toFixed(1)})`
           );
           return new fabric.Point(scaledX, scaledY);
         }
       }
 
-      // Check if the curve itself has scaling applied (direct selection without activeSelection)
+      // Check if the curve itself has scaling applied - only during active gesture
       const curveScaleX = fabricObject.scaleX || 1;
       const curveScaleY = fabricObject.scaleY || 1;
-      if (curveScaleX !== 1 || curveScaleY !== 1) {
+      if (isGestureScaling && (curveScaleX !== 1 || curveScaleY !== 1)) {
         const center = fabricObject.getCenterPoint();
         const scaledX = center.x + (currentPoint.x - center.x) * curveScaleX;
         const scaledY = center.y + (currentPoint.y - center.y) * curveScaleY;
-        console.log(
-          `[CURVE DEBUG] getCurveAnchorWorldPoint(${pointIndex}): CURVE DIRECT SCALING, scale=(${curveScaleX.toFixed(2)}, ${curveScaleY.toFixed(2)}), original=(${currentPoint.x.toFixed(1)}, ${currentPoint.y.toFixed(1)}) -> scaled=(${scaledX.toFixed(1)}, ${scaledY.toFixed(1)})`
+        curveDebug(
+          `[CURVE DEBUG] getCurveAnchorWorldPoint(${pointIndex}): CURVE DIRECT SCALING (gesture active), scale=(${curveScaleX.toFixed(2)}, ${curveScaleY.toFixed(2)}), original=(${currentPoint.x.toFixed(1)}, ${currentPoint.y.toFixed(1)}) -> scaled=(${scaledX.toFixed(1)}, ${scaledY.toFixed(1)})`
         );
         return new fabric.Point(scaledX, scaledY);
       }
 
-      // If there's a parent group, transform the point
-      if (fabricObject.group) {
-        const groupMatrix = fabricObject.group.calcTransformMatrix();
-        // For groups that aren't activeSelection (like arrow groups), apply full transform
-        if (fabricObject.group.type !== 'activeSelection') {
-          const result = fabric.util.transformPoint(
-            new fabric.Point(currentPoint.x, currentPoint.y),
-            groupMatrix
-          );
-          console.log(
-            `[CURVE DEBUG] getCurveAnchorWorldPoint(${pointIndex}): GROUP TRANSFORM, result=(${result.x.toFixed(1)}, ${result.y.toFixed(1)})`
-          );
-          return result;
-        }
-      }
-
-      console.log(
+      curveDebug(
         `[CURVE DEBUG] getCurveAnchorWorldPoint(${pointIndex}): returning customPoint (${currentPoint.x.toFixed(1)}, ${currentPoint.y.toFixed(1)})`
       );
       return new fabric.Point(currentPoint.x, currentPoint.y);
@@ -413,13 +538,13 @@ export class FabricControls {
           new fabric.Point(pointerWorld.x, pointerWorld.y),
           inverseDelta
         );
-        console.log(
+        curveDebug(
           `[CURVE DEBUG] resolvePointerWorldForCurve: TRANSFORM ACTIVE, pointer=(${pointerWorld.x.toFixed(1)}, ${pointerWorld.y.toFixed(1)}) -> canonical=(${canonical.x.toFixed(1)}, ${canonical.y.toFixed(1)})`
         );
         return { x: canonical.x, y: canonical.y };
       }
 
-      console.log(
+      curveDebug(
         `[CURVE DEBUG] resolvePointerWorldForCurve: NO TRANSFORM, pointer=(${pointerWorld.x.toFixed(1)}, ${pointerWorld.y.toFixed(1)})`
       );
       return pointerWorld;
@@ -431,7 +556,7 @@ export class FabricControls {
           x: p.x - centerWorld.x,
           y: p.y - centerWorld.y,
         };
-        console.log(
+        curveDebug(
           `[CURVE DEBUG] toLocalPoints[${i}]: world=(${p.x.toFixed(1)}, ${p.y.toFixed(1)}) - center=(${centerWorld.x.toFixed(1)}, ${centerWorld.y.toFixed(1)}) = local=(${local.x.toFixed(1)}, ${local.y.toFixed(1)})`
         );
         return local;
@@ -440,29 +565,29 @@ export class FabricControls {
     };
 
     const canonicalizeCurveFromWorldPoints = (pathObj, baseCenterWorld) => {
-      console.log('[CURVE DEBUG] ---- canonicalizeCurveFromWorldPoints START ----');
-      console.log(
+      curveDebug('[CURVE DEBUG] ---- canonicalizeCurveFromWorldPoints START ----');
+      curveDebug(
         '[CURVE DEBUG] baseCenterWorld:',
         baseCenterWorld.x.toFixed(1),
         baseCenterWorld.y.toFixed(1)
       );
-      console.log(
+      curveDebug(
         '[CURVE DEBUG] customPoints BEFORE:',
         JSON.stringify(pathObj.customPoints.map(p => ({ x: p.x.toFixed(1), y: p.y.toFixed(1) })))
       );
-      console.log(
+      curveDebug(
         '[CURVE DEBUG] pathObj.left/top BEFORE:',
         pathObj.left?.toFixed(1),
         pathObj.top?.toFixed(1)
       );
-      console.log('[CURVE DEBUG] pathObj.getCenterPoint() BEFORE:', pathObj.getCenterPoint());
-      console.log('[CURVE DEBUG] pathObj.pathOffset BEFORE:', pathObj.pathOffset);
+      curveDebug('[CURVE DEBUG] pathObj.getCenterPoint() BEFORE:', pathObj.getCenterPoint());
+      curveDebug('[CURVE DEBUG] pathObj.pathOffset BEFORE:', pathObj.pathOffset);
 
       // S3: Convert WORLD points to LOCAL points around stable base center
       const localPoints = toLocalPoints(pathObj.customPoints, baseCenterWorld);
       const newPathString = PathUtils.createSmoothPath(localPoints);
       const pathData = fabric.util.parsePath(newPathString);
-      console.log('[CURVE DEBUG] newPathString:', newPathString);
+      curveDebug('[CURVE DEBUG] newPathString:', newPathString);
 
       // S4: Set path + reset transforms for deterministic bounds math
       pathObj.set({ path: pathData, angle: 0 });
@@ -477,9 +602,9 @@ export class FabricControls {
 
       // S5: Compute Fabric LOCAL bbox center (Bezier-extrema aware)
       const dims = pathObj._calcDimensions();
-      console.log('[CURVE DEBUG] _calcDimensions:', JSON.stringify(dims));
+      curveDebug('[CURVE DEBUG] _calcDimensions:', JSON.stringify(dims));
       const centerLocal = new fabric.Point(dims.left + dims.width / 2, dims.top + dims.height / 2);
-      console.log(
+      curveDebug(
         '[CURVE DEBUG] centerLocal (Fabric bbox center):',
         centerLocal.x.toFixed(1),
         centerLocal.y.toFixed(1)
@@ -496,12 +621,12 @@ export class FabricControls {
         x: (anchorOnlyBbox.minX + anchorOnlyBbox.maxX) / 2,
         y: (anchorOnlyBbox.minY + anchorOnlyBbox.maxY) / 2,
       };
-      console.log(
+      curveDebug(
         '[CURVE DEBUG] anchorOnlyCenter (for comparison):',
         anchorOnlyCenter.x.toFixed(1),
         anchorOnlyCenter.y.toFixed(1)
       );
-      console.log(
+      curveDebug(
         '[CURVE DEBUG] centerLocal vs anchorOnlyCenter DIFF:',
         (centerLocal.x - anchorOnlyCenter.x).toFixed(1),
         (centerLocal.y - anchorOnlyCenter.y).toFixed(1)
@@ -516,7 +641,7 @@ export class FabricControls {
         height: dims.height,
         pathOffset: centerLocal,
       });
-      console.log(
+      curveDebug(
         '[CURVE DEBUG] Set pathOffset to centerLocal:',
         centerLocal.x.toFixed(1),
         centerLocal.y.toFixed(1)
@@ -527,21 +652,23 @@ export class FabricControls {
         baseCenterWorld.x + centerLocal.x,
         baseCenterWorld.y + centerLocal.y
       );
-      console.log(
+      curveDebug(
         '[CURVE DEBUG] compensatedWorldCenter = baseCenterWorld + centerLocal:',
         compensatedWorldCenter.x.toFixed(1),
         compensatedWorldCenter.y.toFixed(1)
       );
 
       pathObj.setPositionByOrigin(compensatedWorldCenter, 'center', 'center');
-      console.log('[CURVE DEBUG] After setPositionByOrigin:');
-      console.log('[CURVE DEBUG]   left/top:', pathObj.left?.toFixed(1), pathObj.top?.toFixed(1));
-      console.log('[CURVE DEBUG]   getCenterPoint():', pathObj.getCenterPoint());
+      curveDebug('[CURVE DEBUG] After setPositionByOrigin:');
+      curveDebug('[CURVE DEBUG]   left/top:', pathObj.left?.toFixed(1), pathObj.top?.toFixed(1));
+      curveDebug('[CURVE DEBUG]   getCenterPoint():', pathObj.getCenterPoint());
 
       // CRITICAL: Update lastLeft/lastTop to prevent stale delta calculations in moving handlers
       pathObj.lastLeft = pathObj.left;
       pathObj.lastTop = pathObj.top;
-      console.log(
+      const updatedCenter = pathObj.getCenterPoint();
+      pathObj.__lastCenter = { x: updatedCenter.x, y: updatedCenter.y };
+      curveDebug(
         '[CURVE DEBUG]   Updated lastLeft/lastTop:',
         pathObj.lastLeft?.toFixed(1),
         pathObj.lastTop?.toFixed(1)
@@ -551,19 +678,16 @@ export class FabricControls {
       pathObj.setCoords();
 
       // Verify: where do the anchors end up in WORLD space now?
-      console.log('[CURVE DEBUG] VERIFICATION - Anchor world positions after canonicalization:');
+      curveDebug('[CURVE DEBUG] VERIFICATION - Anchor world positions after canonicalization:');
       pathObj.customPoints.forEach((p, i) => {
-        console.log(`[CURVE DEBUG]   anchor[${i}]: (${p.x.toFixed(1)}, ${p.y.toFixed(1)})`);
+        curveDebug(`[CURVE DEBUG]   anchor[${i}]: (${p.x.toFixed(1)}, ${p.y.toFixed(1)})`);
       });
 
       // Check transform matrix
       const matrix = pathObj.calcTransformMatrix();
-      console.log(
-        '[CURVE DEBUG] Final transform matrix:',
-        matrix.map(v => v.toFixed(2)).join(', ')
-      );
+      curveDebug('[CURVE DEBUG] Final transform matrix:', matrix.map(v => v.toFixed(2)).join(', '));
 
-      console.log('[CURVE DEBUG] ---- canonicalizeCurveFromWorldPoints END ----');
+      curveDebug('[CURVE DEBUG] ---- canonicalizeCurveFromWorldPoints END ----');
     };
 
     // Create a control for each point
@@ -581,7 +705,7 @@ export class FabricControls {
         if (!fabricObject.__posLogCounter) fabricObject.__posLogCounter = 0;
         fabricObject.__posLogCounter++;
         if (fabricObject.__posLogCounter % 60 === 1) {
-          console.log(
+          curveDebug(
             `[CURVE DEBUG] positionHandler[${index}]: worldPoint=(${worldPoint.x.toFixed(1)}, ${worldPoint.y.toFixed(1)}) -> screenPoint=(${screenPoint.x.toFixed(1)}, ${screenPoint.y.toFixed(1)})`
           );
         }
@@ -601,9 +725,7 @@ export class FabricControls {
         const shouldLog = dragFrameCount <= 5 || dragFrameCount % 10 === 0;
 
         if (shouldLog) {
-          console.log(
-            `[CURVE DEBUG] ====== actionHandler[${index}] FRAME ${dragFrameCount} ======`
-          );
+          curveDebug(`[CURVE DEBUG] ====== actionHandler[${index}] FRAME ${dragFrameCount} ======`);
         }
 
         // Resolve event object
@@ -614,7 +736,7 @@ export class FabricControls {
         const isCtrlHeld = event.ctrlKey;
 
         if (shouldLog) {
-          console.log(
+          curveDebug(
             `[CURVE DEBUG] rawPointer: (${rawPointer.x.toFixed(1)}, ${rawPointer.y.toFixed(1)}), ctrlHeld: ${isCtrlHeld}`
           );
         }
@@ -626,13 +748,13 @@ export class FabricControls {
         const pointer = resolvePointerWorldForCurve(pathObj, snappedPointer);
 
         if (shouldLog) {
-          console.log(
+          curveDebug(
             `[CURVE DEBUG] Final pointer for point update: (${pointer.x.toFixed(1)}, ${pointer.y.toFixed(1)})`
           );
-          console.log(
+          curveDebug(
             `[CURVE DEBUG] BEFORE update - point[${index}]: (${point.x.toFixed(1)}, ${point.y.toFixed(1)})`
           );
-          console.log(
+          curveDebug(
             `[CURVE DEBUG] All customPoints BEFORE:`,
             JSON.stringify(
               pathObj.customPoints.map(p => ({ x: p.x.toFixed(1), y: p.y.toFixed(1) }))
@@ -656,14 +778,14 @@ export class FabricControls {
             x: (minX + maxX) / 2,
             y: (minY + maxY) / 2,
           };
-          console.log(
+          curveDebug(
             `[CURVE DEBUG] FIRST FRAME - Calculated __curveEditBaseCenterWorld from customPoints: (${pathObj.__curveEditBaseCenterWorld.x.toFixed(1)}, ${pathObj.__curveEditBaseCenterWorld.y.toFixed(1)})`
           );
 
           // CRITICAL: Clear the transform state that may have been captured by before:transform
           // This prevents bakeCurveTransform from reverting our edits on mouse:up
           if (pathObj.__curveTransformActive) {
-            console.log(
+            curveDebug(
               '[CURVE DEBUG] FIRST FRAME - Clearing __curveTransformActive state (was set by before:transform)'
             );
             delete pathObj.__curveTransformActive;
@@ -674,7 +796,7 @@ export class FabricControls {
 
           if (!pathObj.__curveEditCleanup) {
             pathObj.__curveEditCleanup = () => {
-              console.log('[CURVE DEBUG] mouse:up cleanup - clearing __curveEditBaseCenterWorld');
+              curveDebug('[CURVE DEBUG] mouse:up cleanup - clearing __curveEditBaseCenterWorld');
               const cleanup = pathObj.__curveEditCleanup;
               canvas.off('mouse:up', cleanup);
               delete pathObj.__curveEditBaseCenterWorld;
@@ -692,10 +814,10 @@ export class FabricControls {
         point.y = pointer.y;
 
         if (shouldLog) {
-          console.log(
+          curveDebug(
             `[CURVE DEBUG] UPDATED point[${index}]: (${oldX.toFixed(1)}, ${oldY.toFixed(1)}) -> (${point.x.toFixed(1)}, ${point.y.toFixed(1)})`
           );
-          console.log(
+          curveDebug(
             `[CURVE DEBUG] All customPoints AFTER update:`,
             JSON.stringify(
               pathObj.customPoints.map(p => ({ x: p.x.toFixed(1), y: p.y.toFixed(1) }))
@@ -706,7 +828,7 @@ export class FabricControls {
         const baseCenterWorld = pathObj.__curveEditBaseCenterWorld || pathObj.getCenterPoint();
 
         if (shouldLog) {
-          console.log(
+          curveDebug(
             `[CURVE DEBUG] Using baseCenterWorld: (${baseCenterWorld.x.toFixed(1)}, ${baseCenterWorld.y.toFixed(1)})`
           );
         }
@@ -726,7 +848,7 @@ export class FabricControls {
         }, 0);
 
         if (shouldLog) {
-          console.log(
+          curveDebug(
             `[CURVE DEBUG] ====== actionHandler[${index}] FRAME ${dragFrameCount} END ======`
           );
         }
