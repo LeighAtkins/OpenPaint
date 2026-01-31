@@ -211,10 +211,14 @@ export class CanvasManager {
 
     const captureCurveTransformStart = opt => {
       const action = opt?.transform?.action;
-      console.log('[CURVE DEBUG] captureCurveTransformStart called, action:', action);
+      const isScaleAction = action === 'scale' || action === 'scaleX' || action === 'scaleY';
+      const logScale = (...args) => {
+        if (isScaleAction) {
+          console.log('[CURVE SCALE]', ...args);
+        }
+      };
 
       if (action === 'drag') {
-        console.log('[CURVE DEBUG] captureCurveTransformStart - SKIP (drag action)');
         return;
       }
 
@@ -228,92 +232,123 @@ export class CanvasManager {
       }
 
       if (!obj) {
-        console.log('[CURVE DEBUG] captureCurveTransformStart - SKIP (no obj found)');
         return;
       }
 
       // Handle activeSelection - check if it contains a curve
       if (obj.type === 'activeSelection') {
         const objects = obj.getObjects();
-        console.log(
-          '[CURVE DEBUG] captureCurveTransformStart - activeSelection has',
-          objects.length,
-          'objects'
-        );
-        objects.forEach((o, i) => {
-          console.log(
-            `[CURVE DEBUG]   object[${i}]: type=${o.type}, hasCustomPoints=${Array.isArray(o.customPoints)}, isTag=${o.isTag}`
-          );
-        });
+        logScale('activeSelection objects:', objects.length);
 
         // Find the curve in the selection (might have a tag connected)
         const curve = objects.find(o => o.type === 'path' && Array.isArray(o.customPoints));
         if (curve) {
-          console.log('[CURVE DEBUG] captureCurveTransformStart - found curve in activeSelection');
           obj = curve;
         } else {
-          console.log(
-            '[CURVE DEBUG] captureCurveTransformStart - SKIP (no curve in activeSelection)'
-          );
           return;
         }
       }
 
       if (obj.type !== 'path' || !Array.isArray(obj.customPoints)) {
-        console.log(
-          '[CURVE DEBUG] captureCurveTransformStart - SKIP (not a path with customPoints)'
-        );
         return;
       }
       if (obj.isEditingControlPoint) {
-        console.log('[CURVE DEBUG] captureCurveTransformStart - SKIP (isEditingControlPoint=true)');
         return;
       }
       if (obj.__curveTransformActive) {
-        console.log('[CURVE DEBUG] captureCurveTransformStart - SKIP (already active)');
         return;
       }
 
-      console.log('[CURVE DEBUG] captureCurveTransformStart - CAPTURING transform state');
-      console.log('[CURVE DEBUG]   action:', action);
-      console.log(
-        '[CURVE DEBUG]   customPoints:',
+      logScale('capture start', { action });
+      logScale(
+        'customPoints',
         JSON.stringify(obj.customPoints.map(p => ({ x: p.x.toFixed(1), y: p.y.toFixed(1) })))
       );
 
-      // Calculate full transform matrix including parent group/activeSelection
-      let fullMatrix = obj.calcTransformMatrix();
-      if (obj.group) {
-        const parentMatrix = obj.group.calcTransformMatrix();
-        fullMatrix = fabric.util.multiplyTransformMatrices(parentMatrix, fullMatrix);
-        console.log('[CURVE DEBUG]   Including parent group transform in origMatrix');
-      }
+      // Use Fabric's world-space matrix as-is to avoid double-counting group transforms.
+      const fullMatrix = obj.calcTransformMatrix();
 
       obj.__curveTransformActive = true;
+      obj.__curveTransformAction = action;
+      obj.__curveTransformCorner = opt?.transform?.corner || null;
       obj.__curveBakedThisGesture = false;
       obj.__curveOrigMatrix = fullMatrix;
+      obj.__curveOrigAngle = obj.angle || 0;
       obj.__curveOrigPoints = obj.customPoints.map(point => ({
         x: point.x,
         y: point.y,
       }));
+
+      const originX = opt?.transform?.originX || 'center';
+      const originY = opt?.transform?.originY || 'center';
+      const pivotTarget = opt?.transform?.target || obj;
+      if (typeof pivotTarget?.getPointByOrigin === 'function') {
+        const pivot = pivotTarget.getPointByOrigin(originX, originY);
+        obj.__curveTransformPivotWorld = { x: pivot.x, y: pivot.y };
+      } else if (typeof pivotTarget?.getCenterPoint === 'function') {
+        const pivot = pivotTarget.getCenterPoint();
+        obj.__curveTransformPivotWorld = { x: pivot.x, y: pivot.y };
+      }
+
+      logScale('corner', obj.__curveTransformCorner);
+      logScale('pivotWorld', obj.__curveTransformPivotWorld);
 
       // Store reference to the activeSelection if applicable
       const activeObj = this.fabricCanvas.getActiveObject();
       if (activeObj && activeObj.type === 'activeSelection') {
         obj.__curveOrigActiveSelection = activeObj;
         obj.__curveOrigActiveSelectionCenter = activeObj.getCenterPoint();
-        console.log(
-          '[CURVE DEBUG]   Stored activeSelection reference, center:',
-          obj.__curveOrigActiveSelectionCenter
-        );
+        logScale('activeSelection center', obj.__curveOrigActiveSelectionCenter);
       }
 
       this.__activeCurveTransformTarget = obj;
     };
 
+    const scheduleBakeAfterFinalize = curveObj => {
+      const canvas = curveObj?.canvas;
+      if (!canvas) return;
+      if (curveObj.__curveBakeScheduled) return;
+      curveObj.__curveBakeScheduled = true;
+
+      const tick = () => {
+        const stillGrouping = curveObj.group && curveObj.group.type === 'activeSelection';
+        const stillTransforming = !!canvas._currentTransform;
+
+        if (stillGrouping || stillTransforming) {
+          requestAnimationFrame(tick);
+          return;
+        }
+
+        curveObj.__curveBakeScheduled = false;
+        bakeCurveTransform({ target: curveObj });
+        canvas.requestRenderAll();
+      };
+
+      requestAnimationFrame(tick);
+    };
+
+    const finalizeCurveVisualState = (canvas, obj) => {
+      if (!obj) {
+        return;
+      }
+      obj.dirty = true;
+      obj._cacheCanvas = null;
+      obj._cacheContext = null;
+      obj.setCoords();
+      canvas?.requestRenderAll?.() ?? canvas?.renderAll?.();
+    };
+
     const bakeCurveTransform = opt => {
       let obj = opt?.target;
-      console.log('[CURVE DEBUG] bakeCurveTransform called');
+      const isScaleAction =
+        obj?.__curveTransformAction === 'scale' ||
+        obj?.__curveTransformAction === 'scaleX' ||
+        obj?.__curveTransformAction === 'scaleY';
+      const logScale = (...args) => {
+        if (isScaleAction) {
+          console.log('[CURVE SCALE]', ...args);
+        }
+      };
 
       // Try to get active object from canvas if no direct target
       if (!obj) {
@@ -323,152 +358,302 @@ export class CanvasManager {
       // Also check if we have a tracked active curve transform target
       if (!obj && this.__activeCurveTransformTarget) {
         obj = this.__activeCurveTransformTarget;
-        console.log('[CURVE DEBUG] bakeCurveTransform - using __activeCurveTransformTarget');
       }
 
       if (!obj) {
-        console.log('[CURVE DEBUG] bakeCurveTransform - SKIP (no obj found)');
         return;
       }
 
-      // Handle activeSelection - extract the curve
+      // Handle activeSelection - delay bake until Fabric finalizes and ungroups objects
       if (obj.type === 'activeSelection') {
         const objects = obj.getObjects();
-        console.log(
-          '[CURVE DEBUG] bakeCurveTransform - activeSelection has',
-          objects.length,
-          'objects'
-        );
-
-        // Find the curve in the selection
-        const curve = objects.find(o => o.type === 'path' && Array.isArray(o.customPoints));
-        if (curve) {
-          console.log('[CURVE DEBUG] bakeCurveTransform - found curve in activeSelection');
-          obj = curve;
-        } else {
-          console.log('[CURVE DEBUG] bakeCurveTransform - SKIP (no curve in activeSelection)');
-          return;
-        }
+        objects.forEach(o => {
+          if (o?.type === 'path' && Array.isArray(o.customPoints) && o.__curveTransformActive) {
+            scheduleBakeAfterFinalize(o);
+          }
+        });
+        return;
       }
       if (obj.type !== 'path' || !Array.isArray(obj.customPoints)) {
-        console.log('[CURVE DEBUG] bakeCurveTransform - SKIP (not a path with customPoints)');
         delete obj.__curveTransformActive;
+        delete obj.__curveTransformAction;
+        delete obj.__curveTransformCorner;
+        delete obj.__curveTransformPivotWorld;
+        delete obj.__curveOrigAngle;
         delete obj.__curveOrigMatrix;
         delete obj.__curveOrigPoints;
         delete obj.__curveBakedThisGesture;
         return;
       }
+      if (obj.group && obj.group.type === 'activeSelection') {
+        scheduleBakeAfterFinalize(obj);
+        return;
+      }
       // CRITICAL: Skip if we're editing a control point - the control point handler manages customPoints directly
       if (obj.isEditingControlPoint || obj.__curveEditBaseCenterWorld) {
-        console.log(
-          '[CURVE DEBUG] bakeCurveTransform - SKIP (isEditingControlPoint or __curveEditBaseCenterWorld is set)'
-        );
         // Clean up transform state since we're not using it
         delete obj.__curveTransformActive;
+        delete obj.__curveTransformAction;
+        delete obj.__curveTransformCorner;
+        delete obj.__curveTransformPivotWorld;
+        delete obj.__curveOrigAngle;
         delete obj.__curveOrigMatrix;
         delete obj.__curveOrigPoints;
         delete obj.__curveBakedThisGesture;
         return;
       }
       if (obj.__curveBakedThisGesture) {
-        console.log('[CURVE DEBUG] bakeCurveTransform - SKIP (already baked this gesture)');
         return;
       }
       if (!obj.__curveTransformActive || !obj.__curveOrigMatrix || !obj.__curveOrigPoints) {
-        console.log('[CURVE DEBUG] bakeCurveTransform - SKIP (no active transform)');
         return;
       }
       obj.__curveBakedThisGesture = true;
-      console.log('[CURVE DEBUG] bakeCurveTransform - PROCEEDING');
+      logScale('bake start');
 
-      const desiredCenter = obj.getCenterPoint();
-      console.log('[CURVE DEBUG] bakeCurveTransform - desiredCenter:', desiredCenter);
+      if (globalThis.app?.debugCurveScaleNoCache) {
+        obj.objectCaching = false;
+        logScale('objectCaching', 'disabled');
+      }
 
       const before = obj.__curveOrigMatrix;
 
-      // Calculate full transform matrix including parent group/activeSelection
-      let after = obj.calcTransformMatrix();
-      if (obj.group) {
-        const parentMatrix = obj.group.calcTransformMatrix();
-        after = fabric.util.multiplyTransformMatrices(parentMatrix, after);
-        console.log('[CURVE DEBUG] bakeCurveTransform - Including parent group transform');
-      }
+      // Use Fabric's world-space matrix as-is to avoid double-counting group transforms.
+      const after = obj.calcTransformMatrix();
 
       const inverseBefore = fabric.util.invertTransform(before);
       const delta = fabric.util.multiplyTransformMatrices(after, inverseBefore);
 
-      console.log(
-        '[CURVE DEBUG] bakeCurveTransform - delta matrix:',
-        delta.map(v => v.toFixed(2)).join(', ')
-      );
-      console.log(
-        '[CURVE DEBUG] bakeCurveTransform - customPoints BEFORE transform:',
-        JSON.stringify(obj.customPoints.map(p => ({ x: p.x.toFixed(1), y: p.y.toFixed(1) })))
-      );
+      logScale('delta', delta.map(v => v.toFixed(4)).join(', '));
 
+      const corner = obj.__curveTransformCorner;
+      const isCornerScale = corner && ['tl', 'tr', 'bl', 'br'].includes(corner);
+      const useUniformScale = isScaleAction && isCornerScale;
       const count = Math.min(obj.__curveOrigPoints.length, obj.customPoints.length);
-      for (let i = 0; i < count; i += 1) {
-        const original = obj.__curveOrigPoints[i];
-        const transformed = fabric.util.transformPoint(
-          new fabric.Point(original.x, original.y),
-          delta
-        );
-        obj.customPoints[i].x = transformed.x;
-        obj.customPoints[i].y = transformed.y;
+
+      if (useUniformScale) {
+        const sx = Math.hypot(delta[0], delta[1]);
+        const sy = Math.hypot(delta[2], delta[3]);
+        let uniformScale = Math.min(sx, sy);
+        if (!Number.isFinite(uniformScale) || uniformScale === 0) {
+          uniformScale = 1;
+        }
+        logScale('uniformScale', uniformScale.toFixed(4));
+
+        const pivot = obj.__curveTransformPivotWorld || obj.getCenterPoint();
+        logScale('pivotWorld', pivot);
+        for (let i = 0; i < count; i += 1) {
+          const original = obj.__curveOrigPoints[i];
+          const dx = original.x - pivot.x;
+          const dy = original.y - pivot.y;
+          obj.customPoints[i].x = pivot.x + dx * uniformScale;
+          obj.customPoints[i].y = pivot.y + dy * uniformScale;
+        }
+      } else {
+        for (let i = 0; i < count; i += 1) {
+          const original = obj.__curveOrigPoints[i];
+          const transformed = fabric.util.transformPoint(
+            new fabric.Point(original.x, original.y),
+            delta
+          );
+          obj.customPoints[i].x = transformed.x;
+          obj.customPoints[i].y = transformed.y;
+        }
       }
 
-      console.log(
-        '[CURVE DEBUG] bakeCurveTransform - customPoints AFTER transform:',
-        JSON.stringify(obj.customPoints.map(p => ({ x: p.x.toFixed(1), y: p.y.toFixed(1) })))
-      );
+      // Calculate the center from the transformed customPoints (not from getCenterPoint which can drift)
+      const minX = Math.min(...obj.customPoints.map(p => p.x));
+      const maxX = Math.max(...obj.customPoints.map(p => p.x));
+      const minY = Math.min(...obj.customPoints.map(p => p.y));
+      const maxY = Math.max(...obj.customPoints.map(p => p.y));
+      const baseCenterWorld = {
+        x: (minX + maxX) / 2,
+        y: (minY + maxY) / 2,
+      };
+      logScale('baseCenterWorld', baseCenterWorld);
 
-      const newPathString = PathUtils.createSmoothPath(obj.customPoints);
+      const preserveAngle = useUniformScale;
+      const angle = preserveAngle ? obj.__curveOrigAngle || 0 : 0;
+      const angleRad = angle ? fabric.util.degreesToRadians(angle) : 0;
+
+      // Convert world points to local points around the calculated center
+      const localPoints = obj.customPoints.map(p => {
+        const local = new fabric.Point(p.x - baseCenterWorld.x, p.y - baseCenterWorld.y);
+        if (!preserveAngle || !angleRad) {
+          return { x: local.x, y: local.y };
+        }
+        const rotated = fabric.util.rotatePoint(local, new fabric.Point(0, 0), -angleRad);
+        return { x: rotated.x, y: rotated.y };
+      });
+
+      const newPathString = PathUtils.createSmoothPath(localPoints);
       const pathData = fabric.util.parsePath(newPathString);
-      obj.set({ path: pathData, angle: 0 });
+      obj.set({ path: pathData, angle });
+
+      // If the curve is inside a group/activeSelection, we need to compensate for the parent's scale
+      // Otherwise the parent's scale will be applied on top of our already-baked coordinates
+      let compensateScaleX = 1;
+      let compensateScaleY = 1;
+      if (obj.group) {
+        const parentScaleX = obj.group.scaleX || 1;
+        const parentScaleY = obj.group.scaleY || 1;
+        if (parentScaleX !== 1 || parentScaleY !== 1) {
+          compensateScaleX = 1 / parentScaleX;
+          compensateScaleY = 1 / parentScaleY;
+          logScale('parentScale', { parentScaleX, parentScaleY });
+        }
+      }
+
       obj.set({
-        scaleX: 1,
-        scaleY: 1,
+        scaleX: compensateScaleX,
+        scaleY: compensateScaleY,
         skewX: 0,
         skewY: 0,
         flipX: false,
         flipY: false,
       });
 
+      // Reset pathOffset so _calcDimensions uses the new path bounds.
+      obj.set({ pathOffset: new fabric.Point(0, 0) });
+
       const dims = obj._calcDimensions();
-      const pathOffset = new fabric.Point(dims.left + dims.width / 2, dims.top + dims.height / 2);
-      console.log('[CURVE DEBUG] bakeCurveTransform - dims:', JSON.stringify(dims));
-      console.log('[CURVE DEBUG] bakeCurveTransform - pathOffset:', pathOffset);
+      const centerLocal = new fabric.Point(dims.left + dims.width / 2, dims.top + dims.height / 2);
+      logScale('centerLocal', { x: centerLocal.x, y: centerLocal.y });
 
       obj.set({
         width: dims.width,
         height: dims.height,
-        pathOffset: pathOffset,
+        pathOffset: centerLocal,
       });
 
-      obj.setPositionByOrigin(desiredCenter, 'center', 'center');
-      console.log('[CURVE DEBUG] bakeCurveTransform - after setPositionByOrigin:');
-      console.log('[CURVE DEBUG]   left:', obj.left?.toFixed(1), 'top:', obj.top?.toFixed(1));
+      // Compensate world position: baseCenterWorld + centerLocal
+      const centerLocalWorld =
+        preserveAngle && angleRad
+          ? fabric.util.rotatePoint(centerLocal, new fabric.Point(0, 0), angleRad)
+          : centerLocal;
+      const compensatedWorldCenter = new fabric.Point(
+        baseCenterWorld.x + centerLocalWorld.x,
+        baseCenterWorld.y + centerLocalWorld.y
+      );
+      logScale('compensatedWorldCenter', compensatedWorldCenter);
+
+      obj.setPositionByOrigin(compensatedWorldCenter, 'center', 'center');
+      logScale('leftTop', { left: obj.left, top: obj.top });
 
       // Update lastLeft/lastTop to prevent stale delta calculations in moving handlers
       obj.lastLeft = obj.left;
       obj.lastTop = obj.top;
-      console.log(
-        '[CURVE DEBUG] bakeCurveTransform - updated lastLeft/lastTop:',
-        obj.lastLeft?.toFixed(1),
-        obj.lastTop?.toFixed(1)
-      );
+      const updatedCenter = obj.getCenterPoint();
+      obj.__lastCenter = { x: updatedCenter.x, y: updatedCenter.y };
 
       obj.dirty = true;
       obj.setCoords();
 
+      if (Array.isArray(obj.customPoints)) {
+        FabricControls.createCurveControls(obj);
+      }
+
+      const canvas = obj.canvas;
+      const activeSelection = obj.__curveOrigActiveSelection || canvas?.getActiveObject?.();
+      const shouldIsolateSelection =
+        activeSelection &&
+        activeSelection.type === 'activeSelection' &&
+        obj.__curveTransformAction === 'scale';
+      let restoreObjects = null;
+
+      if (shouldIsolateSelection) {
+        restoreObjects = activeSelection.getObjects?.().slice() ?? null;
+        canvas?.discardActiveObject();
+        canvas?.requestRenderAll?.();
+      }
+
+      // CRITICAL FIX: Call canonicalizeCurveFromWorldPoints to ensure path geometry
+      // matches anchor positions. This uses the same rebuild logic as anchor edits,
+      // which is proven to produce correct alignment.
+      console.log('[CURVE SCALE] Calling canonicalizeCurveFromWorldPoints for final alignment...');
+      FabricControls.canonicalizeCurveFromWorldPoints(obj, baseCenterWorld);
+
+      finalizeCurveVisualState(obj.canvas, obj);
+
+      // P2: If the curve was scaled as part of an activeSelection, force that selection to recompute bounds/coords.
+      // Otherwise the selection box can lag behind and the curve appears to "jump" outside it.
+      const sel = obj.__curveOrigActiveSelection || obj.canvas?.getActiveObject?.();
+
+      if (sel && sel.type === 'activeSelection' && !shouldIsolateSelection) {
+        try {
+          // Recompute selection bounds based on updated object coords.
+          // These are internal but effective across Fabric 4/5-ish builds.
+          sel._calcBounds();
+          sel._updateObjectsCoords();
+          sel.setCoords();
+
+          // Some Fabric builds need a render tick to fully settle.
+          obj.canvas?.requestRenderAll();
+        } catch (e) {
+          console.warn('[CURVE DEBUG] activeSelection recalc failed:', e);
+        }
+
+        if (obj.__curveTransformAction === 'scale') {
+          const objects = sel.getObjects();
+          const curveCount = objects.filter(
+            o => o?.type === 'path' && Array.isArray(o.customPoints)
+          ).length;
+          const hasNonTagNonCurve = objects.some(
+            o => !(o?.type === 'path' && Array.isArray(o.customPoints)) && !o?.isTag
+          );
+
+          if (curveCount === 1 && !hasNonTagNonCurve) {
+            sel._restoreObjectsState?.();
+            obj.canvas?.discardActiveObject();
+            obj.canvas?.setActiveObject(obj);
+            obj.setCoords();
+            obj.canvas?.requestRenderAll();
+          }
+        }
+      }
+
+      if (shouldIsolateSelection && restoreObjects?.length) {
+        const restoredSelection = new fabric.ActiveSelection(restoreObjects, { canvas });
+        canvas?.setActiveObject(restoredSelection);
+        restoredSelection.setCoords();
+        canvas?.requestRenderAll?.();
+      }
+
+      // P3: Mark as just baked so getCurveAnchorWorldPoint knows not to apply additional scaling.
+      // Use requestAnimationFrame to wait until activeSelection scale settles back to 1.
+      obj.__curveJustBaked = true;
+
+      const clearCanvas = obj.canvas;
+      const clearWhenSafe = () => {
+        const active = clearCanvas?.getActiveObject?.();
+        const stillScaledSelection =
+          active &&
+          active.type === 'activeSelection' &&
+          ((active.scaleX || 1) !== 1 || (active.scaleY || 1) !== 1);
+
+        if (stillScaledSelection) {
+          requestAnimationFrame(clearWhenSafe);
+          return;
+        }
+
+        delete obj.__curveJustBaked;
+      };
+
+      requestAnimationFrame(clearWhenSafe);
+
       delete obj.__curveTransformActive;
+      delete obj.__curveTransformAction;
+      delete obj.__curveTransformCorner;
+      delete obj.__curveTransformPivotWorld;
+      delete obj.__curveOrigAngle;
       delete obj.__curveOrigMatrix;
       delete obj.__curveOrigPoints;
       delete obj.__curveBakedThisGesture;
+      delete obj.__curveBakeScheduled;
       delete obj.__curveOrigActiveSelection;
       delete obj.__curveOrigActiveSelectionCenter;
 
-      console.log('[CURVE DEBUG] bakeCurveTransform - DONE');
+      logScale('bake done');
     };
 
     this.fabricCanvas.on('object:scaling', captureCurveTransformStart);
@@ -479,7 +664,17 @@ export class CanvasManager {
     this.fabricCanvas.on('mouse:up', opt => {
       const obj = this.__activeCurveTransformTarget || opt?.target;
       if (obj?.__curveTransformActive && !obj.__curveBakedThisGesture) {
-        bakeCurveTransform({ target: obj });
+        // CRITICAL: If curve is inside activeSelection, use scheduleBakeAfterFinalize
+        // to wait until the curve is ungrouped. Otherwise canonicalize runs with
+        // the curve still in selection context, causing position mismatch.
+        if (obj.group && obj.group.type === 'activeSelection') {
+          console.log(
+            '[CURVE SCALE] mouse:up - scheduling bake after finalize (still in activeSelection)'
+          );
+          scheduleBakeAfterFinalize(obj);
+        } else {
+          bakeCurveTransform({ target: obj });
+        }
       }
       this.__activeCurveTransformTarget = null;
     });
@@ -1303,62 +1498,60 @@ export class CanvasManager {
     this.fabricCanvas.on('object:moving', e => {
       const movingObj = e.target;
 
+      const getWorldCenter = obj => {
+        const center = obj.getCenterPoint();
+        return { x: center.x, y: center.y };
+      };
+
       const applyCurveTranslation = (obj, dx, dy) => {
         if (!obj || obj.type !== 'path' || !Array.isArray(obj.customPoints)) return;
 
         // IMPORTANT: Skip if we're editing a control point - the control point handler updates customPoints directly
         if (obj.isEditingControlPoint) {
-          console.log(
-            '[CURVE DEBUG] object:moving - SKIPPING applyCurveTranslation because isEditingControlPoint=true'
-          );
+          return;
+        }
+
+        const transform = obj.canvas?._currentTransform;
+        const isNonDragTransform = transform && transform.action && transform.action !== 'drag';
+        if (obj.__curveTransformActive || obj.__curveJustBaked || isNonDragTransform) {
           return;
         }
 
         if (dx === 0 && dy === 0) {
-          console.log('[CURVE DEBUG] object:moving - applyCurveTranslation SKIPPED (dx=0, dy=0)');
           return;
         }
-
-        console.log(
-          `[CURVE DEBUG] object:moving - applyCurveTranslation APPLYING dx=${dx.toFixed(1)}, dy=${dy.toFixed(1)}`
-        );
-        console.log(
-          '[CURVE DEBUG]   customPoints BEFORE:',
-          JSON.stringify(obj.customPoints.map(p => ({ x: p.x.toFixed(1), y: p.y.toFixed(1) })))
-        );
 
         obj.customPoints.forEach(point => {
           point.x += dx;
           point.y += dy;
         });
-        obj.lastLeft = obj.left;
-        obj.lastTop = obj.top;
-
-        console.log(
-          '[CURVE DEBUG]   customPoints AFTER:',
-          JSON.stringify(obj.customPoints.map(p => ({ x: p.x.toFixed(1), y: p.y.toFixed(1) })))
-        );
+        obj.__lastCenter = obj.__lastCenter
+          ? { x: obj.__lastCenter.x + dx, y: obj.__lastCenter.y + dy }
+          : getWorldCenter(obj);
       };
 
       const updateCurveTranslationFromSelf = obj => {
         // IMPORTANT: Skip if we're editing a control point
         if (obj.isEditingControlPoint) {
-          console.log(
-            '[CURVE DEBUG] object:moving - SKIPPING updateCurveTranslationFromSelf because isEditingControlPoint=true'
-          );
           return;
         }
 
-        const lastLeft = typeof obj.lastLeft === 'number' ? obj.lastLeft : obj.left;
-        const lastTop = typeof obj.lastTop === 'number' ? obj.lastTop : obj.top;
-        const dx = (obj.left ?? lastLeft) - lastLeft;
-        const dy = (obj.top ?? lastTop) - lastTop;
+        const transform = obj.canvas?._currentTransform;
+        const isNonDragTransform = transform && transform.action && transform.action !== 'drag';
+        if (obj.__curveTransformActive || obj.__curveJustBaked || isNonDragTransform) {
+          return;
+        }
+        if (obj.group && obj.group.type === 'activeSelection') {
+          return;
+        }
 
-        console.log(
-          `[CURVE DEBUG] object:moving - updateCurveTranslationFromSelf: left=${obj.left?.toFixed(1)}, lastLeft=${lastLeft?.toFixed(1)}, dx=${dx.toFixed(1)}, dy=${dy.toFixed(1)}`
-        );
+        const currentCenter = getWorldCenter(obj);
+        const lastCenter = obj.__lastCenter || currentCenter;
+        const dx = currentCenter.x - lastCenter.x;
+        const dy = currentCenter.y - lastCenter.y;
 
         applyCurveTranslation(obj, dx, dy);
+        obj.__lastCenter = currentCenter;
       };
 
       if (!window.app?.tagManager) return;
@@ -1369,14 +1562,11 @@ export class CanvasManager {
         const objects = movingObj.getObjects();
         const tagManager = window.app.tagManager;
 
-        const lastLeft =
-          typeof movingObj.__lastLeft === 'number' ? movingObj.__lastLeft : movingObj.left;
-        const lastTop =
-          typeof movingObj.__lastTop === 'number' ? movingObj.__lastTop : movingObj.top;
-        const dx = (movingObj.left ?? lastLeft) - lastLeft;
-        const dy = (movingObj.top ?? lastTop) - lastTop;
-        movingObj.__lastLeft = movingObj.left;
-        movingObj.__lastTop = movingObj.top;
+        const currentCenter = getWorldCenter(movingObj);
+        const lastCenter = movingObj.__lastCenter || currentCenter;
+        const dx = currentCenter.x - lastCenter.x;
+        const dy = currentCenter.y - lastCenter.y;
+        movingObj.__lastCenter = currentCenter;
 
         // Update connectors for all strokes in the selection
         objects.forEach(obj => {
@@ -1790,6 +1980,8 @@ export class CanvasManager {
       if (obj.type === 'path') {
         obj.lastLeft = obj.left;
         obj.lastTop = obj.top;
+        const newCenter = obj.getCenterPoint();
+        obj.__lastCenter = { x: newCenter.x, y: newCenter.y };
       }
     });
 
