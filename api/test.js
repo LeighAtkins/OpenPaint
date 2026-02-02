@@ -1,8 +1,3 @@
-const express = require('express');
-const app = express();
-
-app.get('/test', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
-});
-
-module.exports = app;
+module.exports = (req, res) => {
+  res.json({ ok: true, message: 'API test endpoint working', timestamp: Date.now() });
+};
