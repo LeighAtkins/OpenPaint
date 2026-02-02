@@ -3,42 +3,9 @@
   "installCommand": "npm install --ignore-scripts",
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "routes": [
-    {
-      "src": "^/ai/(.*)$",
-      "dest": "/app.js"
-    },
-    {
-      "src": "^/(health|env-check|version|test)$",
-      "dest": "/app.js"
-    },
-    {
-      "src": "^/js/(.*)$",
-      "dest": "/public/js/$1"
-    },
-    {
-      "src": "^/css/(.*)$",
-      "dest": "/css/$1"
-    },
-    {
-      "src": "^/src/(.*)$",
-      "dest": "/src/$1"
-    },
-    {
-      "src": "^/uploads/(.*)$",
-      "dest": "/app.js"
-    },
-    {
-      "src": "^/projects/(.*)$",
-      "dest": "/app.js"
-    },
-    {
-      "src": "^/(.*\\.(js|css|ico|png|jpg|jpeg|gif|svg|woff|woff2|ttf|eot))$",
-      "dest": "/$1"
-    },
-    {
-      "src": "^/(?!api|ai|uploads|projects|js|css|src|health|env-check|version|test).*$",
-      "dest": "/index.html"
+  "functions": {
+    "api/**/*.js": {
+      "includeFiles": "server/**"
     }
-  ]
+  }
 }
