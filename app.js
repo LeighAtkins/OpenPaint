@@ -11,8 +11,14 @@ import multer from 'multer';
 import fs from 'fs';
 import crypto from 'crypto';
 import { fileURLToPath } from 'url';
-import { isDbConfigured, ensureSchema, createOrUpdateProject, getProjectBySlug } from './api/db.js';
+import {
+  isDbConfigured,
+  ensureSchema,
+  createOrUpdateProject,
+  getProjectBySlug,
+} from './server/db.js';
 import { spawn } from 'child_process';
+import { createClient } from '@supabase/supabase-js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -25,6 +31,11 @@ const AI_WORKER_URL = (process.env.AI_WORKER_URL || 'http://localhost:8787')
   .replace(/^\s*-\s*/, '') // strip accidental "- "
   .trim();
 const AI_WORKER_KEY = (process.env.AI_WORKER_KEY || '').trim();
+const SUPABASE_URL = (process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '').trim();
+const SUPABASE_SERVICE_ROLE_KEY = (process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim();
+const CLOUDINARY_CLOUD_NAME = (process.env.CLOUDINARY_CLOUD_NAME || '').trim();
+const CLOUDINARY_UPLOAD_PRESET = (process.env.CLOUDINARY_UPLOAD_PRESET || '').trim();
+const CLOUDINARY_UPLOAD_FOLDER = (process.env.CLOUDINARY_UPLOAD_FOLDER || '').trim();
 
 // Cloudflare Images configuration
 const CF_ACCOUNT_ID = (process.env.CF_ACCOUNT_ID || '').trim();
@@ -43,8 +54,24 @@ function joinUrl(base, path) {
 
 // In-memory storage for shared projects (in production, use a database)
 const sharedProjects = new Map();
+const cloudProjects = new Map();
 // In-memory storage for projects (used by /api/projects/* routes)
 const projects = new Map();
+
+let supabaseAdmin = null;
+function getSupabaseAdmin() {
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) return null;
+  if (!supabaseAdmin) {
+    supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+      auth: { persistSession: false },
+    });
+  }
+  return supabaseAdmin;
+}
+
+function isSupabaseAdminConfigured() {
+  return Boolean(SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY);
+}
 
 // Ensure uploads directory exists
 // In serverless environments (Vercel), use /tmp as it's the only writable directory
@@ -184,6 +211,167 @@ app.get('/api/projects', (req, res) => {
     res.json({ success: true, projects: projectList });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Failed to list projects' });
+  }
+});
+
+// Cloudinary config for unsigned uploads
+app.get('/api/cloudinary/config', (req, res) => {
+  return res.json({
+    success: Boolean(CLOUDINARY_CLOUD_NAME && CLOUDINARY_UPLOAD_PRESET),
+    cloudName: CLOUDINARY_CLOUD_NAME || null,
+    uploadPreset: CLOUDINARY_UPLOAD_PRESET || null,
+    folder: CLOUDINARY_UPLOAD_FOLDER || null,
+  });
+});
+
+// Cloud project save/load via Supabase (anyone-with-link)
+app.post('/api/cloud-projects', async (req, res) => {
+  try {
+    const { projectData, title = null, expiresAt = null } = req.body || {};
+    if (!projectData || typeof projectData !== 'object') {
+      return res.status(400).json({ success: false, message: 'Project data is required' });
+    }
+
+    const projectId = crypto.randomBytes(12).toString('hex');
+    const editToken = crypto.randomBytes(16).toString('hex');
+    const now = new Date().toISOString();
+    const expiry = expiresAt ? new Date(expiresAt).toISOString() : null;
+
+    const record = {
+      id: projectId,
+      title,
+      data: projectData,
+      edit_token: editToken,
+      created_at: now,
+      updated_at: now,
+      expires_at: expiry,
+    };
+
+    if (isSupabaseAdminConfigured()) {
+      const supabase = getSupabaseAdmin();
+      const { error } = await supabase.from('cloud_projects').insert(record);
+      if (error) throw error;
+    } else {
+      cloudProjects.set(projectId, record);
+    }
+
+    return res.json({
+      success: true,
+      projectId,
+      editToken,
+      shareUrl: `${req.protocol}://${req.get('host')}/open/${projectId}`,
+      createdAt: now,
+      expiresAt: expiry,
+    });
+  } catch (error) {
+    console.error('Error creating cloud project:', error);
+    return res.status(500).json({ success: false, message: 'Server error creating project' });
+  }
+});
+
+app.get('/api/cloud-projects/:projectId', async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    let record = null;
+
+    if (isSupabaseAdminConfigured()) {
+      const supabase = getSupabaseAdmin();
+      const { data, error } = await supabase
+        .from('cloud_projects')
+        .select('*')
+        .eq('id', projectId)
+        .single();
+      if (error) throw error;
+      record = data;
+    } else {
+      record = cloudProjects.get(projectId);
+    }
+
+    if (!record) {
+      return res.status(404).json({ success: false, message: 'Project not found' });
+    }
+
+    if (record.expires_at && new Date() > new Date(record.expires_at)) {
+      if (!isSupabaseAdminConfigured()) {
+        cloudProjects.delete(projectId);
+      }
+      return res.status(410).json({ success: false, message: 'Project link has expired' });
+    }
+
+    return res.json({
+      success: true,
+      projectData: record.data,
+      projectInfo: {
+        id: record.id,
+        createdAt: record.created_at,
+        expiresAt: record.expires_at,
+        title: record.title,
+      },
+    });
+  } catch (error) {
+    console.error('Error retrieving cloud project:', error);
+    return res.status(500).json({ success: false, message: 'Server error retrieving project' });
+  }
+});
+
+app.patch('/api/cloud-projects/:projectId', async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const { editToken, projectData, title = null, expiresAt = null } = req.body || {};
+
+    if (!editToken) {
+      return res.status(400).json({ success: false, message: 'editToken is required' });
+    }
+
+    let record = null;
+    if (isSupabaseAdminConfigured()) {
+      const supabase = getSupabaseAdmin();
+      const { data, error } = await supabase
+        .from('cloud_projects')
+        .select('*')
+        .eq('id', projectId)
+        .single();
+      if (error) throw error;
+      record = data;
+    } else {
+      record = cloudProjects.get(projectId);
+    }
+
+    if (!record) {
+      return res.status(404).json({ success: false, message: 'Project not found' });
+    }
+    if (record.edit_token && record.edit_token !== editToken) {
+      return res.status(403).json({ success: false, message: 'Invalid edit token' });
+    }
+
+    const updatedRecord = {
+      ...record,
+      title: title ?? record.title,
+      data: projectData && typeof projectData === 'object' ? projectData : record.data,
+      expires_at: expiresAt ? new Date(expiresAt).toISOString() : record.expires_at,
+      updated_at: new Date().toISOString(),
+    };
+
+    if (isSupabaseAdminConfigured()) {
+      const supabase = getSupabaseAdmin();
+      const { error } = await supabase
+        .from('cloud_projects')
+        .update({
+          title: updatedRecord.title,
+          data: updatedRecord.data,
+          expires_at: updatedRecord.expires_at,
+          updated_at: updatedRecord.updated_at,
+        })
+        .eq('id', projectId);
+      if (error) throw error;
+    } else {
+      cloudProjects.set(projectId, updatedRecord);
+    }
+
+    return res.json({ success: true });
+  } catch (error) {
+    console.error('Error updating cloud project:', error);
+    return res.status(500).json({ success: false, message: 'Server error updating project' });
   }
 });
 
@@ -450,6 +638,13 @@ app.get('/api/shared/:shareId/measurements', async (req, res) => {
 app.get('/shared/:shareId', (req, res) => {
   // Serve the shared project page; the page will fetch via /api/shared/:shareId
   res.sendFile(path.join(__dirname, 'shared.html'));
+});
+
+/**
+ * Serve the editor for cloud-saved projects
+ */
+app.get('/open/:projectId', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 /**
