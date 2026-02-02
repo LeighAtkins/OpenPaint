@@ -39,10 +39,6 @@
     {
       "src": "^/(?!api|ai|uploads|projects|js|css|src|health|env-check|version|test).*$",
       "dest": "/index.html"
-    },
-    {
-      "src": "^/.*$",
-      "dest": "/app.js"
     }
   ]
 }
