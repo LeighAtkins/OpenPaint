@@ -43,6 +43,8 @@ function joinUrl(base, path) {
 
 // In-memory storage for shared projects (in production, use a database)
 const sharedProjects = new Map();
+// In-memory storage for projects (used by /api/projects/* routes)
+const projects = new Map();
 
 // Ensure uploads directory exists
 // In serverless environments (Vercel), use /tmp as it's the only writable directory
@@ -120,6 +122,101 @@ app.get('/env-check', (req, res) => {
 app.get('/test', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
+
+// ============== PROJECT CRUD API ROUTES ==============
+
+// API Health check
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// Save project
+app.post('/api/projects/save', (req, res) => {
+  try {
+    const { projectData, projectId } = req.body;
+    if (!projectData) {
+      return res.status(400).json({ success: false, message: 'Project data required' });
+    }
+
+    const id = projectId || crypto.randomBytes(8).toString('hex');
+    const record = {
+      id,
+      data: projectData,
+      savedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    projects.set(id, record);
+    console.log(`[Projects] Saved project ${id}`);
+
+    res.json({ success: true, projectId: id, savedAt: record.savedAt });
+  } catch (error) {
+    console.error('[Projects] Save error:', error);
+    res.status(500).json({ success: false, message: 'Failed to save project' });
+  }
+});
+
+// Load project by ID
+app.get('/api/projects/:projectId', (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const record = projects.get(projectId);
+
+    if (!record) {
+      return res.status(404).json({ success: false, message: 'Project not found' });
+    }
+
+    res.json({ success: true, project: record });
+  } catch (error) {
+    console.error('[Projects] Load error:', error);
+    res.status(500).json({ success: false, message: 'Failed to load project' });
+  }
+});
+
+// List all projects
+app.get('/api/projects', (req, res) => {
+  try {
+    const projectList = Array.from(projects.values()).map(p => ({
+      id: p.id,
+      savedAt: p.savedAt,
+      updatedAt: p.updatedAt,
+    }));
+    res.json({ success: true, projects: projectList });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to list projects' });
+  }
+});
+
+// Share a project (create shareable link)
+app.post('/api/projects/:projectId/share', (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const project = projects.get(projectId);
+
+    if (!project) {
+      return res.status(404).json({ success: false, message: 'Project not found' });
+    }
+
+    const shareId = crypto.randomBytes(6).toString('hex');
+    sharedProjects.set(shareId, {
+      projectId,
+      shareId,
+      sharedAt: new Date().toISOString(),
+      data: project.data,
+    });
+
+    res.json({
+      success: true,
+      shareId,
+      shareUrl: `/share/${shareId}`,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to share project' });
+  }
+});
+
+// ============== END PROJECT CRUD API ROUTES ==============
+
 /**
  * API endpoint for creating a shareable URL for a project
  * Accepts project data and returns a unique share ID
