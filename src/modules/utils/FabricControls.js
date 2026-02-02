@@ -5,6 +5,12 @@
 
 import { PathUtils } from './PathUtils.js';
 
+const curveDebug = (...args) => {
+  if (globalThis.app?.debugCurve) {
+    console.log(...args);
+  }
+};
+
 export class FabricControls {
   /**
    * Helper function to find snap point when Ctrl is held during editing

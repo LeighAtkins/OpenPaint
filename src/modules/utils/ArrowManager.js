@@ -250,6 +250,8 @@ export class ArrowManager {
 
       const { startArrow, endArrow, arrowSize, arrowStyle = 'triangular' } = this.arrowSettings;
       const strokeWidth = this.strokeWidth;
+      const objScale = Math.max(Math.abs(this.scaleX || 1), Math.abs(this.scaleY || 1));
+      const strokeActualWidth = strokeWidth * objScale;
 
       // Get current scale (approximation from canvas or object)
       // Ideally we use window.imageScaleByLabel[currentImageLabel] but accessing global state inside render is risky if context changes.
@@ -270,9 +272,9 @@ export class ArrowManager {
       // But strokeWidth is usually constant unless scaling stroke.
       // Let's assume strokeWidth is the base.
 
-      const baseArrowSize = arrowSize || strokeWidth * 2;
-      const effectiveBaseSize = Math.max(baseArrowSize, strokeWidth * 2);
-      const scaledArrowSize = effectiveBaseSize; // * scale?
+      const baseArrowSize = arrowSize || strokeActualWidth * 2;
+      const effectiveBaseSize = Math.max(baseArrowSize, strokeActualWidth * 2);
+      const scaledArrowSize = effectiveBaseSize * scale;
       // Wait, if we zoom in, the canvas scales everything.
       // If we want the arrow to stay consistent relative to the image, we don't need to multiply by scale
       // IF the canvas transform handles it.
@@ -292,7 +294,7 @@ export class ArrowManager {
       // SHORTENING LOGIC
       // extensionDistance = scaledArrowSize + (strokeActualWidth * scale * 2)
       // We use a simplified version: size + padding
-      const extensionDistance = effectiveBaseSize * 0.8; // Using 0.8 factor from report for shortening
+      const extensionDistance = (scaledArrowSize + strokeActualWidth * scale * 2) * 0.8;
 
       // We need to modify the drawing of the line to be shorter.
       // This is tricky because `originalRender` draws the full line.
@@ -335,7 +337,7 @@ export class ArrowManager {
             x1,
             y1,
             angle + Math.PI,
-            effectiveBaseSize,
+            scaledArrowSize,
             arrowStyle,
             this.stroke
           );
@@ -346,7 +348,7 @@ export class ArrowManager {
           endY = y2 - Math.sin(angle) * extensionDistance;
 
           // Draw end arrow
-          self.drawArrowhead(ctx, x2, y2, angle, effectiveBaseSize, arrowStyle, this.stroke);
+          self.drawArrowhead(ctx, x2, y2, angle, scaledArrowSize, arrowStyle, this.stroke);
         }
 
         // Draw the shortened line
@@ -359,11 +361,6 @@ export class ArrowManager {
         ctx.strokeDashArray = this.strokeDashArray;
         ctx.stroke();
       } else if (this.type === 'path') {
-        // For paths, shortening is hard.
-        // We will draw the original path, then draw arrows on top.
-        // To minimize overlap, we can try to draw the arrows with a "cover" if needed,
-        // but for now let's just draw them on top.
-
         originalRender.call(this, ctx);
 
         const path = this.path;
@@ -372,87 +369,95 @@ export class ArrowManager {
           return;
         }
 
-        // Start Arrow
-        if (startArrow) {
-          const start = path[0];
-          const next = path[1];
-          let angle = 0;
+        const offsetX = this.pathOffset?.x || 0;
+        const offsetY = this.pathOffset?.y || 0;
 
-          // Calculate angle based on first segment
-          if (next[0] === 'C') {
-            angle = Math.atan2(next[2] - start[2], next[1] - start[1]);
-          } else if (next[0] === 'Q') {
-            angle = Math.atan2(next[2] - start[2], next[1] - start[1]);
-          } else {
-            angle = Math.atan2(next[2] - start[2], next[1] - start[1]);
+        const fabricUtil = globalThis.fabric?.util;
+        const getLastPoint = cmd => {
+          const len = cmd.length;
+          return { x: cmd[len - 2], y: cmd[len - 1] };
+        };
+
+        let startPoint = null;
+        let endPoint = null;
+        let startAngle = 0;
+        let endAngle = 0;
+
+        if (fabricUtil?.getPathSegmentsInfo && fabricUtil?.getPointOnPath) {
+          const infos = fabricUtil.getPathSegmentsInfo(path);
+          const totalLength = infos.length ? infos[infos.length - 1].length : 0;
+          const epsilon = Math.min(2, totalLength * 0.01);
+          const startInfo = fabricUtil.getPointOnPath(path, 0, infos);
+          const startTangentInfo = fabricUtil.getPointOnPath(
+            path,
+            Math.min(epsilon, totalLength),
+            infos
+          );
+          const endInfo = fabricUtil.getPointOnPath(path, totalLength, infos);
+          const endTangentInfo = fabricUtil.getPointOnPath(
+            path,
+            Math.max(0, totalLength - epsilon),
+            infos
+          );
+
+          if (startInfo) {
+            startPoint = { x: startInfo.x, y: startInfo.y };
           }
+          if (endInfo) {
+            endPoint = { x: endInfo.x, y: endInfo.y };
+          }
+          if (startTangentInfo) {
+            startAngle = startTangentInfo.angle;
+          }
+          if (endTangentInfo) {
+            endAngle = endTangentInfo.angle;
+          }
+        }
 
-          // Adjust for offset
-          const offsetX = this.pathOffset.x;
-          const offsetY = this.pathOffset.y;
+        if (!startPoint || !endPoint) {
+          const startCmd = path[0];
+          const endCmd = path[path.length - 1];
+          startPoint = startPoint || { x: startCmd[1], y: startCmd[2] };
+          endPoint = endPoint || getLastPoint(endCmd);
+        }
 
-          // Angle needs to be reversed for start arrow (pointing OUT from start)
-          // The vector we calculated is Start -> Next.
-          // We want arrow pointing AWAY from Next, i.e., towards Start?
-          // No, "Start Arrow" usually points AT the start point.
-          // So direction is Next -> Start.
-          // So angle + PI.
+        // Clear overlap under arrowheads to visually shorten the path.
+        // Use a smaller cutout radius so the arrow connects cleanly to the line.
+        const cutoutRadius = Math.max(scaledArrowSize * 0.45, strokeActualWidth * scale * 0.5);
+        ctx.save();
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.fillStyle = '#000';
+        if (startArrow) {
+          ctx.beginPath();
+          ctx.arc(startPoint.x - offsetX, startPoint.y - offsetY, cutoutRadius, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        if (endArrow) {
+          ctx.beginPath();
+          ctx.arc(endPoint.x - offsetX, endPoint.y - offsetY, cutoutRadius, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
 
+        if (startArrow) {
           self.drawArrowhead(
             ctx,
-            start[1] - offsetX,
-            start[2] - offsetY,
-            angle + Math.PI,
-            effectiveBaseSize,
+            startPoint.x - offsetX,
+            startPoint.y - offsetY,
+            startAngle,
+            scaledArrowSize,
             arrowStyle,
             this.stroke
           );
         }
 
-        // End Arrow
         if (endArrow) {
-          const end = path[path.length - 1];
-          const prev = path[path.length - 2];
-          let angle = 0;
-
-          // Helper to get last point coords
-          const getLastPoint = cmd => {
-            const len = cmd.length;
-            return { x: cmd[len - 2], y: cmd[len - 1] };
-          };
-
-          const pEnd = getLastPoint(end);
-          let pControl;
-
-          // Determine the control point to calculate tangent
-          if (end[0] === 'C') {
-            // Cubic Bezier: Control point is (x2, y2) -> indices 3, 4
-            pControl = { x: end[3], y: end[4] };
-          } else if (end[0] === 'Q') {
-            // Quadratic Bezier: Control point is (x1, y1) -> indices 1, 2
-            pControl = { x: end[1], y: end[2] };
-          } else {
-            // Line or other: Use previous point
-            pControl = getLastPoint(prev);
-          }
-
-          // If control point is same as end point (rare), fallback to previous point
-          if (Math.abs(pEnd.x - pControl.x) < 0.01 && Math.abs(pEnd.y - pControl.y) < 0.01) {
-            pControl = getLastPoint(prev);
-          }
-
-          // Angle is Control -> End
-          angle = Math.atan2(pEnd.y - pControl.y, pEnd.x - pControl.x);
-
-          const offsetX = this.pathOffset.x;
-          const offsetY = this.pathOffset.y;
-
           self.drawArrowhead(
             ctx,
-            pEnd.x - offsetX,
-            pEnd.y - offsetY,
-            angle,
-            effectiveBaseSize,
+            endPoint.x - offsetX,
+            endPoint.y - offsetY,
+            endAngle,
+            scaledArrowSize,
             arrowStyle,
             this.stroke
           );
