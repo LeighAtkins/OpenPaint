@@ -5,6 +5,14 @@
 
 import { PathUtils } from './PathUtils.js';
 
+// Debug function for curve/line operations
+const CURVE_DEBUG_ENABLED = false;
+const curveDebug = (...args) => {
+  if (CURVE_DEBUG_ENABLED) {
+    console.log(...args);
+  }
+};
+
 export class FabricControls {
   /**
    * Helper function to find snap point when Ctrl is held during editing
