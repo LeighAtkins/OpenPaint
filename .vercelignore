@@ -1,0 +1,7 @@
+# Ignore for Vercel deployment
+vendor/
+dist/
+test-results/
+reference/
+*.log
+.git
