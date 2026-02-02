@@ -39,12 +39,12 @@ const sharedProjects = new Map();
 // ============== API ROUTES ==============
 
 // Health check
-app.get('/api/health', (req, res) => {
+app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
 // Environment info
-app.get('/api/env', (req, res) => {
+app.get('/env', (req, res) => {
   res.json({
     REMBG_ORIGIN: process.env.REMBG_ORIGIN ? 'configured' : 'missing',
     NODE_ENV: process.env.NODE_ENV || 'development',
@@ -53,7 +53,7 @@ app.get('/api/env', (req, res) => {
 });
 
 // Save project
-app.post('/api/projects/save', (req, res) => {
+app.post('/projects/save', (req, res) => {
   try {
     const { projectData, projectId } = req.body;
     if (!projectData) {
@@ -79,7 +79,7 @@ app.post('/api/projects/save', (req, res) => {
 });
 
 // Load project
-app.get('/api/projects/:projectId', (req, res) => {
+app.get('/projects/:projectId', (req, res) => {
   try {
     const { projectId } = req.params;
     const record = projects.get(projectId);
@@ -96,7 +96,7 @@ app.get('/api/projects/:projectId', (req, res) => {
 });
 
 // List projects
-app.get('/api/projects', (req, res) => {
+app.get('/projects', (req, res) => {
   try {
     const projectList = Array.from(projects.values()).map(p => ({
       id: p.id,
@@ -110,7 +110,7 @@ app.get('/api/projects', (req, res) => {
 });
 
 // Share project (create shareable link)
-app.post('/api/projects/:projectId/share', (req, res) => {
+app.post('/projects/:projectId/share', (req, res) => {
   try {
     const { projectId } = req.params;
     const project = projects.get(projectId);
@@ -138,7 +138,7 @@ app.post('/api/projects/:projectId/share', (req, res) => {
 });
 
 // Get shared project
-app.get('/api/share/:shareId', (req, res) => {
+app.get('/share/:shareId', (req, res) => {
   try {
     const { shareId } = req.params;
     const shared = sharedProjects.get(shareId);
@@ -154,7 +154,7 @@ app.get('/api/share/:shareId', (req, res) => {
 });
 
 // Proxy to remove background service
-app.post('/api/remove-background', async (req, res) => {
+app.post('/remove-background', async (req, res) => {
   try {
     const origin = process.env.REMBG_ORIGIN || 'https://sofapaint-api.leigh-atkins.workers.dev';
     const response = await fetch(`${origin}/remove-background`, {
@@ -172,7 +172,7 @@ app.post('/api/remove-background', async (req, res) => {
 });
 
 // Direct upload proxy
-app.post('/api/images/direct-upload', async (req, res) => {
+app.post('/images/direct-upload', async (req, res) => {
   try {
     const origin = process.env.REMBG_ORIGIN || 'https://sofapaint-api.leigh-atkins.workers.dev';
     const response = await fetch(`${origin}/images/direct-upload`, {

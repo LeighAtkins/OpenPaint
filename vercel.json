@@ -9,10 +9,6 @@
       "dest": "/app.js"
     },
     {
-      "src": "^/api/(.*)$",
-      "dest": "/app.js"
-    },
-    {
       "src": "^/(health|env-check|version|test)$",
       "dest": "/app.js"
     },
