@@ -3,19 +3,19 @@
  * Handles file operations, static file serving, and API endpoints
  */
 
-const express = require('express');
-const path = require('path');
-const multer = require('multer');
-const fs = require('fs');
-const crypto = require('crypto');
+import express from 'express';
+import path from 'path';
+import multer from 'multer';
+import fs from 'fs';
+import crypto from 'crypto';
+import { fileURLToPath } from 'url';
+import { spawn } from 'child_process';
+import { isDbConfigured, ensureSchema, createOrUpdateProject, getProjectBySlug } from './db.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const app = express();
-const {
-  isDbConfigured,
-  ensureSchema,
-  createOrUpdateProject,
-  getProjectBySlug
-} = require('./api/db');
-const { spawn } = require('child_process');
 const port = process.env.PORT || 3000;
 
 // In-memory storage for shared projects (in production, use a database)
@@ -30,18 +30,18 @@ if (!fs.existsSync(uploadDir)) {
 
 // Set up multer for handling file uploads
 const storage = multer.diskStorage({
-  destination: function(req, file, cb) {
+  destination: function (req, file, cb) {
     cb(null, uploadDir);
   },
-  filename: function(req, file, cb) {
+  filename: function (req, file, cb) {
     // Use a timestamp to ensure unique filenames
     cb(null, Date.now() + '-' + file.originalname);
-  }
+  },
 });
 
-const upload = multer({ 
+const upload = multer({
   storage: storage,
-  limits: { fileSize: 200 * 1024 * 1024 } // 200MB limit
+  limits: { fileSize: 200 * 1024 * 1024 }, // 200MB limit
 });
 
 // Middleware setup
@@ -66,7 +66,7 @@ app.get('/env-check', (req, res) => {
   res.json({
     AI_WORKER_URL: (process.env.AI_WORKER_URL || '').trim(),
     HAS_AI_WORKER_KEY: Boolean((process.env.AI_WORKER_KEY || '').trim()),
-    ROUTES_MOUNTED: true
+    ROUTES_MOUNTED: true,
   });
 });
 
@@ -95,10 +95,12 @@ app.post('/api/share-project', async (req, res) => {
       editToken,
       projectData,
       createdAt: new Date(),
-      expiresAt: shareOptions.expiresAt ? new Date(shareOptions.expiresAt) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      expiresAt: shareOptions.expiresAt
+        ? new Date(shareOptions.expiresAt)
+        : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
       isPublic: shareOptions.isPublic || false,
       allowEditing: shareOptions.allowEditing || false,
-      measurements: shareOptions.measurements || {}
+      measurements: shareOptions.measurements || {},
     };
 
     if (isDbConfigured()) {
@@ -115,7 +117,7 @@ app.post('/api/share-project', async (req, res) => {
       shareId,
       editToken,
       shareUrl: `${req.protocol}://${req.get('host')}/shared/${shareId}`,
-      expiresAt: shareRecord.expiresAt
+      expiresAt: shareRecord.expiresAt,
     });
   } catch (error) {
     console.error('Error creating share link:', error);
@@ -161,12 +163,14 @@ app.get('/api/shared/:shareId', async (req, res) => {
         createdAt: shareRecord.createdAt,
         expiresAt: shareRecord.expiresAt,
         allowEditing: shareRecord.allowEditing,
-        measurements: shareRecord.measurements
-      }
+        measurements: shareRecord.measurements,
+      },
     });
   } catch (error) {
     console.error('Error retrieving shared project:', error);
-    return res.status(500).json({ success: false, message: 'Server error retrieving shared project' });
+    return res
+      .status(500)
+      .json({ success: false, message: 'Server error retrieving shared project' });
   }
 });
 
@@ -212,7 +216,7 @@ app.post('/api/shared/:shareId/measurements', async (req, res) => {
       measurements: measurements,
       customerInfo: customerInfo,
       submittedAt: new Date(),
-      shareId: shareId
+      shareId: shareId,
     };
 
     if (!Array.isArray(shareRecord.submissions)) {
@@ -221,21 +225,30 @@ app.post('/api/shared/:shareId/measurements', async (req, res) => {
     shareRecord.submissions.push(submission);
 
     if (isDbConfigured()) {
-      await createOrUpdateProject({ slug: shareId, title: null, data: shareRecord, editToken: null });
+      await createOrUpdateProject({
+        slug: shareId,
+        title: null,
+        data: shareRecord,
+        editToken: null,
+      });
     } else {
       sharedProjects.set(shareId, shareRecord);
     }
 
-    console.log(`Received measurements for share ${shareId}: ${submissionId} (db=${isDbConfigured()})`);
+    console.log(
+      `Received measurements for share ${shareId}: ${submissionId} (db=${isDbConfigured()})`
+    );
 
     return res.json({
       success: true,
       submissionId: submissionId,
-      message: 'Measurements submitted successfully'
+      message: 'Measurements submitted successfully',
     });
   } catch (error) {
     console.error('Error submitting measurements:', error);
-    return res.status(500).json({ success: false, message: 'Server error submitting measurements' });
+    return res
+      .status(500)
+      .json({ success: false, message: 'Server error submitting measurements' });
   }
 });
 
@@ -257,27 +270,32 @@ app.get('/api/shared/:shareId/measurements', async (req, res) => {
     if (isDbConfigured()) {
       await ensureSchema();
       const dbRow = await getProjectBySlug(shareId);
-      if (!dbRow) return res.status(404).json({ success: false, message: 'Shared project not found' });
-      if (dbRow.edit_token !== editToken) return res.status(403).json({ success: false, message: 'Invalid edit token' });
+      if (!dbRow)
+        return res.status(404).json({ success: false, message: 'Shared project not found' });
+      if (dbRow.edit_token !== editToken)
+        return res.status(403).json({ success: false, message: 'Invalid edit token' });
       shareRecord = dbRow.data;
     } else {
       shareRecord = sharedProjects.get(shareId);
-      if (!shareRecord) return res.status(404).json({ success: false, message: 'Shared project not found' });
+      if (!shareRecord)
+        return res.status(404).json({ success: false, message: 'Shared project not found' });
       if (shareRecord.editToken && shareRecord.editToken !== editToken) {
         return res.status(403).json({ success: false, message: 'Invalid edit token' });
       }
     }
 
     const measurements = shareRecord.measurements || {};
-        
-    return res.json({ 
-      success: true, 
+
+    return res.json({
+      success: true,
       measurements: measurements,
-      totalSubmissions: Object.keys(measurements).length
+      totalSubmissions: Object.keys(measurements).length,
     });
   } catch (error) {
     console.error('Error retrieving measurements:', error);
-    return res.status(500).json({ success: false, message: 'Server error retrieving measurements' });
+    return res
+      .status(500)
+      .json({ success: false, message: 'Server error retrieving measurements' });
   }
 });
 
@@ -298,12 +316,12 @@ app.post('/api/upload-project', upload.single('projectFile'), (req, res) => {
     if (!req.file) {
       return res.status(400).json({ success: false, message: 'No file uploaded' });
     }
-        
+
     // Just return the file path - client will handle extraction
-    return res.json({ 
-      success: true, 
+    return res.json({
+      success: true,
       filePath: req.file.path,
-      fileName: req.file.originalname
+      fileName: req.file.originalname,
     });
   } catch (error) {
     console.error('Error handling project upload:', error);
@@ -319,7 +337,9 @@ app.post('/api/upload-project', upload.single('projectFile'), (req, res) => {
 app.post('/api/remove-background', upload.single('image'), async (req, res) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ success: false, message: 'No image uploaded (field name should be "image")' });
+      return res
+        .status(400)
+        .json({ success: false, message: 'No image uploaded (field name should be "image")' });
     }
 
     const inputPath = req.file.path;
@@ -336,7 +356,7 @@ app.post('/api/remove-background', upload.single('image'), async (req, res) => {
       success: true,
       original: originalImageUrl,
       processed: processedImageUrl,
-      url: processedImageUrl
+      url: processedImageUrl,
     });
   } catch (error) {
     console.error('Error processing image:', error);
@@ -362,12 +382,15 @@ app.patch('/api/shared/:shareId', async (req, res) => {
     if (isDbConfigured()) {
       await ensureSchema();
       dbRow = await getProjectBySlug(shareId);
-      if (!dbRow) return res.status(404).json({ success: false, message: 'Shared project not found' });
-      if (dbRow.edit_token !== editToken) return res.status(403).json({ success: false, message: 'Invalid edit token' });
+      if (!dbRow)
+        return res.status(404).json({ success: false, message: 'Shared project not found' });
+      if (dbRow.edit_token !== editToken)
+        return res.status(403).json({ success: false, message: 'Invalid edit token' });
       shareRecord = dbRow.data;
     } else {
       shareRecord = sharedProjects.get(shareId);
-      if (!shareRecord) return res.status(404).json({ success: false, message: 'Shared project not found' });
+      if (!shareRecord)
+        return res.status(404).json({ success: false, message: 'Shared project not found' });
       if (shareRecord.editToken && shareRecord.editToken !== editToken) {
         return res.status(403).json({ success: false, message: 'Invalid edit token' });
       }
@@ -380,7 +403,8 @@ app.patch('/api/shared/:shareId', async (req, res) => {
     if (shareOptions && typeof shareOptions === 'object') {
       if (shareOptions.expiresAt) shareRecord.expiresAt = new Date(shareOptions.expiresAt);
       if (typeof shareOptions.isPublic === 'boolean') shareRecord.isPublic = shareOptions.isPublic;
-      if (typeof shareOptions.allowEditing === 'boolean') shareRecord.allowEditing = shareOptions.allowEditing;
+      if (typeof shareOptions.allowEditing === 'boolean')
+        shareRecord.allowEditing = shareOptions.allowEditing;
     }
 
     // Persist
@@ -393,7 +417,9 @@ app.patch('/api/shared/:shareId', async (req, res) => {
     return res.json({ success: true });
   } catch (error) {
     console.error('Error updating shared project:', error);
-    return res.status(500).json({ success: false, message: 'Server error updating shared project' });
+    return res
+      .status(500)
+      .json({ success: false, message: 'Server error updating shared project' });
   }
 });
 
@@ -423,15 +449,15 @@ const AI_RATE_WINDOW = 60 * 1000; // 1 minute
 function checkAIRateLimit(ip) {
   const now = Date.now();
   const record = aiRequestCounts.get(ip) || { count: 0, resetTime: now + AI_RATE_WINDOW };
-    
+
   if (now > record.resetTime) {
     record.count = 0;
     record.resetTime = now + AI_RATE_WINDOW;
   }
-    
+
   record.count++;
   aiRequestCounts.set(ip, record);
-    
+
   return record.count <= AI_RATE_LIMIT;
 }
 
@@ -577,22 +603,13 @@ app.use((err, req, res, next) => {
 });
 
 // export for Vercel
-module.exports = app;
-
-// keep local server only when run directly
-if (require.main === module) {
-  const port = process.env.PORT || 3000;
-  app.listen(port, '0.0.0.0', () => {
-    console.log(`OpenPaint app listening at http://localhost:${port}`);
-  });
-}
+export default app;
 
 /**
  * Python rembg processing function using inline script execution
  */
 async function processImageWithRembg(inputPath, outputPath) {
   return new Promise((resolve, reject) => {
-    const fs = require('fs');
     const tempScriptPath = path.join(__dirname, 'temp_rembg_script.py');
     const pythonScript = `
 import sys
@@ -643,14 +660,19 @@ if __name__ == "__main__":
 
     const py = spawn('python3', [tempScriptPath, inputPath, outputPath], { stdio: 'inherit' });
     let failed = false;
-    py.on('error', (err) => { failed = true; try { fs.unlinkSync(tempScriptPath); } catch (_) {} reject(err); });
-    py.on('close', (code) => {
-      try { fs.unlinkSync(tempScriptPath); } catch (_) {}
+    py.on('error', err => {
+      failed = true;
+      try {
+        fs.unlinkSync(tempScriptPath);
+      } catch (_) {}
+      reject(err);
+    });
+    py.on('close', code => {
+      try {
+        fs.unlinkSync(tempScriptPath);
+      } catch (_) {}
       if (!failed && code === 0) return resolve();
       reject(new Error(`Python process exited with code ${code}`));
     });
   });
 }
-
-// Export for Vercel
-module.exports = app;

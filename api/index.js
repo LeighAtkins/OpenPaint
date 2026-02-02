@@ -1,5 +1,10 @@
-const express = require('express');
-const path = require('path');
+import express from 'express';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const app = express();
 
 // Basic middleware
@@ -7,12 +12,18 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Serve static files with caching headers
-app.use('/js', express.static(path.join(__dirname, '..', 'js'), {
-  setHeaders: (res) => res.set('Cache-Control', 'public, max-age=604800, immutable')
-}));
-app.use('/css', express.static(path.join(__dirname, '..', 'css'), {
-  setHeaders: (res) => res.set('Cache-Control', 'public, max-age=604800, immutable')
-}));
+app.use(
+  '/js',
+  express.static(path.join(__dirname, '..', 'js'), {
+    setHeaders: res => res.set('Cache-Control', 'public, max-age=604800, immutable'),
+  })
+);
+app.use(
+  '/css',
+  express.static(path.join(__dirname, '..', 'css'), {
+    setHeaders: res => res.set('Cache-Control', 'public, max-age=604800, immutable'),
+  })
+);
 app.use('/src', express.static(path.join(__dirname, '..', 'src')));
 app.use('/public', express.static(path.join(__dirname, '..', 'public')));
 app.use(express.static(path.join(__dirname, '..')));
@@ -43,4 +54,4 @@ app.get('*', (req, res) => {
 });
 
 // Export for Vercel
-module.exports = app;
+export default app;

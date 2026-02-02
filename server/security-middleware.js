@@ -1,10 +1,10 @@
 /**
- * Security Middleware for OpenPaint (CommonJS)
+ * Security Middleware for OpenPaint (ESM)
  * Provides comprehensive security hardening for Express applications
  */
 
-const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 
 /**
  * Apply Helmet.js security middleware
@@ -81,14 +81,14 @@ function sanitizeInput(req, res, next) {
 /**
  * Apply all security middleware
  */
-function applySecurityMiddleware(app) {
+export function applySecurityMiddleware(app) {
   applyHelmet(app);
   applyRateLimiting(app);
   app.use(sanitizeInput);
   console.log('[Security] All security middleware applied');
 }
 
-module.exports = {
+export default {
   applyHelmet,
   applyRateLimiting,
   sanitizeInput,

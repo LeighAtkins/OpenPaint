@@ -1,5 +1,10 @@
-const express = require('express');
-const path = require('path');
+import express from 'express';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const app = express();
 
 // AI Worker configuration with startup logging
@@ -30,7 +35,7 @@ app.get('/env-check', (req, res) => {
   res.json({
     AI_WORKER_URL: (process.env.AI_WORKER_URL || '').trim(),
     HAS_AI_WORKER_KEY: Boolean((process.env.AI_WORKER_KEY || '').trim()),
-    ROUTES_MOUNTED: true
+    ROUTES_MOUNTED: true,
   });
 });
 
@@ -83,4 +88,4 @@ app.post('/ai/generate-svg', async (req, res) => {
 });
 
 // Export for Vercel
-module.exports = app;
+export default app;
