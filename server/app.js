@@ -5,7 +5,15 @@ const crypto = require('crypto');
 
 const app = express();
 
-// Middleware
+// Try to load security middleware (optional - graceful fallback)
+let securityMiddleware;
+try {
+  securityMiddleware = require('./security-middleware');
+} catch (e) {
+  console.log('[Security] Middleware not available, running without security hardening');
+}
+
+// Basic middleware
 app.set('trust proxy', true);
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
@@ -15,336 +23,191 @@ app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
+  if (req.method === 'OPTIONS') return res.status(200).end();
   next();
 });
 
-// Route handlers - ALL WITHOUT /api PREFIX
-
-// Handlers extracted for dual-path mounting during routing migration
-async function directUploadHandler(req, res) {
-  try {
-    const origin = process.env.REMBG_ORIGIN || 'https://sofapaint-api.leigh-atkins.workers.dev';
-    if (!origin) {
-      return res.status(500).json({ success: false, message: 'REMBG_ORIGIN is not configured' });
-    }
-    const response = await fetch(`${origin.replace(/\/$/, '')}/images/direct-upload`, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        'x-api-key': 'dev-secret'
-      },
-      body: JSON.stringify(req.body)
-    });
-    const data = await response.json();
-    res.status(response.status).json(data);
-  } catch (err) {
-    console.error('Proxy /images/direct-upload error:', err);
-    res.status(500).json({ success: false, message: 'Proxy error' });
-  }
+// Apply security middleware if available
+if (securityMiddleware && securityMiddleware.applySecurityMiddleware) {
+  securityMiddleware.applySecurityMiddleware(app);
 }
 
-async function removeBackgroundHandler(req, res) {
-  try {
-    const origin = process.env.REMBG_ORIGIN || 'https://sofapaint-api.leigh-atkins.workers.dev';
-    if (!origin) {
-      return res.status(500).json({ success: false, message: 'REMBG_ORIGIN is not configured' });
-    }
-    const bodyText = typeof req.body === 'string' ? req.body : JSON.stringify(req.body || {});
-    const upstream = await fetch(`${origin.replace(/\/$/, '')}/remove-background`, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        'x-api-key': 'dev-secret'
-      },
-      body: bodyText
-    });
-    const ct = upstream.headers.get('content-type') || 'application/octet-stream';
-    const buf = Buffer.from(await upstream.arrayBuffer());
-    res.status(upstream.status);
-    res.setHeader('content-type', ct);
-    res.send(buf);
-  } catch (err) {
-    console.error('Proxy /remove-background error:', err);
-    res.status(500).json({ success: false, message: 'Proxy error' });
-  }
-}
+// In-memory storage (use database in production)
+const projects = new Map();
+const sharedProjects = new Map();
 
-function envHandler(req, res) {
+// ============== API ROUTES ==============
+
+// Health check
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// Environment info
+app.get('/api/env', (req, res) => {
   res.json({
     REMBG_ORIGIN: process.env.REMBG_ORIGIN ? 'configured' : 'missing',
-    NODE_ENV: process.env.NODE_ENV || 'development'
+    NODE_ENV: process.env.NODE_ENV || 'development',
+    security: securityMiddleware ? 'enabled' : 'disabled',
   });
-}
+});
 
-// Proxy direct upload to Cloudflare Worker (dual-path mounting)
-app.post(['/api/images/direct-upload', '/images/direct-upload'], directUploadHandler);
-
-// Proxy background removal (dual-path mounting)
-app.post(['/api/remove-background', '/remove-background'], removeBackgroundHandler);
-
-// Debug endpoint to check environment variables (dual-path mounting)
-app.get(['/api/_env', '/_env'], envHandler);
-
-/**
- * API endpoint for creating a shareable URL for a project
- * Accepts project data and returns a unique share ID
- */
-app.post('/share-project', async (req, res) => {
+// Save project
+app.post('/api/projects/save', (req, res) => {
   try {
-    const { projectData, title = null, shareOptions = {} } = req.body;
-
+    const { projectData, projectId } = req.body;
     if (!projectData) {
-      return res.status(400).json({ success: false, message: 'Project data is required' });
+      return res.status(400).json({ success: false, message: 'Project data required' });
     }
 
-    // Generate a unique share ID
-    const shareId = crypto.randomBytes(16).toString('hex');
-        
-    // Generate edit token for future updates
-    const editToken = crypto.randomBytes(32).toString('hex');
-
-    // Store the project data (in a real app, this would go to a database)
-    // For now, we'll use a simple in-memory store
-    if (!global.sharedProjects) {
-      global.sharedProjects = new Map();
-    }
-
-    const shareRecord = {
-      shareId,
-      editToken,
-      projectData,
-      title,
-      shareOptions,
-      createdAt: new Date().toISOString(),
-      lastAccessed: new Date().toISOString()
+    const id = projectId || crypto.randomBytes(8).toString('hex');
+    const record = {
+      id,
+      data: projectData,
+      savedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     };
 
-    global.sharedProjects.set(shareId, shareRecord);
+    projects.set(id, record);
+    console.log(`[Projects] Saved project ${id}`);
 
-    const proto = (req.get('x-forwarded-proto') || req.protocol);
-    res.json({
-      success: true,
-      shareId,
-      editToken,
-      shareUrl: `${proto}://${req.get('host')}/shared/${shareId}`,
-      message: 'Project shared successfully'
-    });
-
+    res.json({ success: true, projectId: id, savedAt: record.savedAt });
   } catch (error) {
-    console.error('Error sharing project:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to share project',
-      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
-    });
+    console.error('[Projects] Save error:', error);
+    res.status(500).json({ success: false, message: 'Failed to save project' });
   }
 });
 
-/**
- * Update an existing shared project (requires editToken)
- */
-app.patch('/shared/:shareId', async (req, res) => {
+// Load project
+app.get('/api/projects/:projectId', (req, res) => {
   try {
-    const { shareId } = req.params;
-    const { editToken, projectData, title = null, shareOptions = {} } = req.body || {};
+    const { projectId } = req.params;
+    const record = projects.get(projectId);
 
-    if (!editToken) {
-      return res.status(400).json({ success: false, message: 'Edit token is required' });
+    if (!record) {
+      return res.status(404).json({ success: false, message: 'Project not found' });
     }
 
-    if (!global.sharedProjects) {
+    res.json({ success: true, project: record });
+  } catch (error) {
+    console.error('[Projects] Load error:', error);
+    res.status(500).json({ success: false, message: 'Failed to load project' });
+  }
+});
+
+// List projects
+app.get('/api/projects', (req, res) => {
+  try {
+    const projectList = Array.from(projects.values()).map(p => ({
+      id: p.id,
+      savedAt: p.savedAt,
+      updatedAt: p.updatedAt,
+    }));
+    res.json({ success: true, projects: projectList });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to list projects' });
+  }
+});
+
+// Share project (create shareable link)
+app.post('/api/projects/:projectId/share', (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const project = projects.get(projectId);
+
+    if (!project) {
+      return res.status(404).json({ success: false, message: 'Project not found' });
+    }
+
+    const shareId = crypto.randomBytes(6).toString('hex');
+    sharedProjects.set(shareId, {
+      projectId,
+      shareId,
+      sharedAt: new Date().toISOString(),
+      data: project.data,
+    });
+
+    res.json({
+      success: true,
+      shareId,
+      shareUrl: `/share/${shareId}`,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to share project' });
+  }
+});
+
+// Get shared project
+app.get('/api/share/:shareId', (req, res) => {
+  try {
+    const { shareId } = req.params;
+    const shared = sharedProjects.get(shareId);
+
+    if (!shared) {
       return res.status(404).json({ success: false, message: 'Shared project not found' });
     }
 
-    const shareRecord = global.sharedProjects.get(shareId);
-    if (!shareRecord) {
-      return res.status(404).json({ success: false, message: 'Shared project not found' });
-    }
-
-    if (shareRecord.editToken !== editToken) {
-      return res.status(403).json({ success: false, message: 'Invalid edit token' });
-    }
-
-    // Update the project data
-    shareRecord.projectData = projectData;
-    shareRecord.title = title;
-    shareRecord.shareOptions = shareOptions;
-    shareRecord.lastAccessed = new Date().toISOString();
-
-    global.sharedProjects.set(shareId, shareRecord);
-
-    const proto = (req.get('x-forwarded-proto') || req.protocol);
-    res.json({
-      success: true,
-      message: 'Project updated successfully',
-      shareId,
-      shareUrl: `${proto}://${req.get('host')}/shared/${shareId}`
-    });
-
+    res.json({ success: true, project: shared });
   } catch (error) {
-    console.error('Error updating shared project:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to update project',
-      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
-    });
+    res.status(500).json({ success: false, message: 'Failed to get shared project' });
   }
 });
 
-/**
- * API endpoint for retrieving a shared project
- * Returns project data for a given share ID
- */
-app.get('/shared/:shareId', async (req, res) => {
+// Proxy to remove background service
+app.post('/api/remove-background', async (req, res) => {
   try {
-    const { shareId } = req.params;
-    let shareRecord;
-
-    if (isDbConfigured()) {
-      // Database implementation would go here
-      shareRecord = await getSharedProjectFromDb(shareId);
-    } else {
-      // Fallback to in-memory store
-      if (!global.sharedProjects) {
-        return res.status(404).json({ success: false, message: 'Shared project not found' });
-      }
-      shareRecord = global.sharedProjects.get(shareId);
-    }
-
-    if (!shareRecord) {
-      return res.status(404).json({ success: false, message: 'Shared project not found' });
-    }
-
-    // Update last accessed time
-    shareRecord.lastAccessed = new Date().toISOString();
-    if (global.sharedProjects) {
-      global.sharedProjects.set(shareId, shareRecord);
-    }
-
-    res.json({
-      success: true,
-      shareId,
-      projectData: shareRecord.projectData,
-      title: shareRecord.title,
-      shareOptions: shareRecord.shareOptions,
-      createdAt: shareRecord.createdAt,
-      lastAccessed: shareRecord.lastAccessed
+    const origin = process.env.REMBG_ORIGIN || 'https://sofapaint-api.leigh-atkins.workers.dev';
+    const response = await fetch(`${origin}/remove-background`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-api-key': 'dev-secret' },
+      body: JSON.stringify(req.body || {}),
     });
-
+    const ct = response.headers.get('content-type') || 'application/octet-stream';
+    const buf = Buffer.from(await response.arrayBuffer());
+    res.status(response.status).setHeader('content-type', ct).send(buf);
   } catch (error) {
-    console.error('Error retrieving shared project:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to retrieve project',
-      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
-    });
+    console.error('[RemBG] Error:', error);
+    res.status(500).json({ success: false, message: 'Background removal failed' });
   }
 });
 
-/**
- * API endpoint for submitting customer measurements
- * Accepts measurement data for a shared project
- */
-app.post('/shared/:shareId/measurements', async (req, res) => {
+// Direct upload proxy
+app.post('/api/images/direct-upload', async (req, res) => {
   try {
-    const { shareId } = req.params;
-    const { measurements, customerInfo = {} } = req.body;
-
-    // Validate measurements (basic validation)
-    if (!measurements || typeof measurements !== 'object') {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Valid measurements object is required' 
-      });
-    }
-
-    // Store measurements (in a real app, this would go to a database)
-    if (!global.projectMeasurements) {
-      global.projectMeasurements = new Map();
-    }
-
-    const measurementRecord = {
-      shareId,
-      measurements,
-      customerInfo,
-      submittedAt: new Date().toISOString(),
-      id: crypto.randomBytes(8).toString('hex')
-    };
-
-    global.projectMeasurements.set(measurementRecord.id, measurementRecord);
-
-    res.json({
-      success: true,
-      message: 'Measurements submitted successfully',
-      measurementId: measurementRecord.id,
-      submittedAt: measurementRecord.submittedAt
+    const origin = process.env.REMBG_ORIGIN || 'https://sofapaint-api.leigh-atkins.workers.dev';
+    const response = await fetch(`${origin}/images/direct-upload`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-api-key': 'dev-secret' },
+      body: JSON.stringify(req.body),
     });
-
+    res.status(response.status).json(await response.json());
   } catch (error) {
-    console.error('Error submitting measurements:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to submit measurements',
-      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
-    });
+    console.error('[Upload] Error:', error);
+    res.status(500).json({ success: false, message: 'Upload failed' });
   }
 });
 
-/**
- * API endpoint for uploading project files (simplified for serverless)
- * Accepts project data directly instead of file uploads
- */
+// Legacy endpoints (without /api prefix) for backwards compatibility
 app.post('/upload-project', (req, res) => {
-  try {
-    const { projectData } = req.body;
-        
-    if (!projectData) {
-      return res.status(400).json({ success: false, message: 'Project data is required' });
-    }
-
-    // In a real implementation, you would save the project data to a database
-    // For now, we'll just return a success response
-    res.json({
-      success: true,
-      message: 'Project uploaded successfully',
-      projectId: crypto.randomBytes(8).toString('hex')
-    });
-
-  } catch (error) {
-    console.error('Error uploading project:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to upload project',
-      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
-    });
-  }
+  const { projectData } = req.body;
+  if (!projectData)
+    return res.status(400).json({ success: false, message: 'Project data required' });
+  const id = crypto.randomBytes(8).toString('hex');
+  projects.set(id, { id, data: projectData, savedAt: new Date().toISOString() });
+  res.json({ success: true, projectId: id });
 });
 
-// Helper functions
-function isDbConfigured() {
-  // Check if database is configured
-  return false; // For now, always use in-memory storage
-}
+app.get('/env', (req, res) => {
+  res.json({ NODE_ENV: process.env.NODE_ENV || 'development' });
+});
 
-async function getSharedProjectFromDb(shareId) {
-  // Database implementation would go here
-  return null;
-}
-
-// Error handling middleware
+// Error handler
 app.use((err, req, res, next) => {
-  console.error('Unhandled error:', err);
-  res.status(500).json({
-    success: false,
-    message: 'Server error',
-    error: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error'
-  });
+  console.error('[Error]', err);
+  res.status(500).json({ success: false, message: 'Server error' });
 });
 
-// Catch-all route for any unmatched paths
+// 404 handler
 app.use((req, res) => {
   res.status(404).json({ error: 'Route not found', path: req.url });
 });
