@@ -1,14 +1,18 @@
-const express = require('express');
-const path = require('path');
-const fs = require('fs');
-const crypto = require('crypto');
+import express from 'express';
+import path from 'path';
+import fs from 'fs';
+import crypto from 'crypto';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 
 // Try to load security middleware (optional - graceful fallback)
 let securityMiddleware;
 try {
-  securityMiddleware = require('./security-middleware');
+  securityMiddleware = await import('./security-middleware.js');
 } catch (e) {
   console.log('[Security] Middleware not available, running without security hardening');
 }
@@ -212,4 +216,4 @@ app.use((req, res) => {
   res.status(404).json({ error: 'Route not found', path: req.url });
 });
 
-module.exports = app;
+export default app;
