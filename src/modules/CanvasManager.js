@@ -289,6 +289,48 @@ export class CanvasManager {
       canvas?.requestRenderAll?.() ?? canvas?.renderAll?.();
     };
 
+    const refreshTagForStroke = obj => {
+      const tagManager = window.app?.tagManager;
+      if (!tagManager || !obj) {
+        return;
+      }
+      for (const [strokeLabel, tagObj] of tagManager.tagObjects.entries()) {
+        if (tagObj.connectedStroke !== obj) continue;
+
+        let strokeCenter;
+        if (obj.group) {
+          const centerRelative = obj.getCenterPoint();
+          const groupMatrix = obj.group.calcTransformMatrix();
+          strokeCenter = fabric.util.transformPoint(centerRelative, groupMatrix);
+        } else {
+          strokeCenter = obj.getCenterPoint();
+        }
+
+        let tagCenter;
+        if (tagObj.group) {
+          const centerRelative = tagObj.getCenterPoint();
+          const groupMatrix = tagObj.group.calcTransformMatrix();
+          tagCenter = fabric.util.transformPoint(centerRelative, groupMatrix);
+        } else {
+          tagCenter = tagObj.getCenterPoint();
+        }
+
+        if (strokeCenter && tagCenter) {
+          tagObj.tagOffset = {
+            x: tagCenter.x - strokeCenter.x,
+            y: tagCenter.y - strokeCenter.y,
+          };
+          obj.tagOffset = {
+            x: tagObj.tagOffset.x,
+            y: tagObj.tagOffset.y,
+          };
+        }
+
+        tagManager.updateConnector(strokeLabel);
+        break;
+      }
+    };
+
     const bakeCurveTransform = opt => {
       let obj = opt?.target;
       if (!obj) return;
@@ -529,6 +571,10 @@ export class CanvasManager {
         canvas?.setActiveObject(restoredSelection);
         restoredSelection.setCoords();
         canvas?.requestRenderAll?.();
+      }
+
+      if (isScaleAction) {
+        refreshTagForStroke(obj);
       }
 
       // P3: Mark as just baked so getCurveAnchorWorldPoint knows not to apply additional scaling.
@@ -1295,6 +1341,51 @@ export class CanvasManager {
       // Request render to ensure connectors and tags display correctly
       this.fabricCanvas.requestRenderAll();
     });
+
+    const updateTagConnectorsForScaling = scalingObj => {
+      if (!window.app?.tagManager || !scalingObj) return;
+      const tagManager = window.app.tagManager;
+
+      const updateForStroke = obj => {
+        if ((obj.type === 'line' || obj.type === 'path' || obj.type === 'group') && !obj.isTag) {
+          for (const [strokeLabel, tagObj] of tagManager.tagObjects.entries()) {
+            if (tagObj.connectedStroke === obj) {
+              tagManager.updateConnector(strokeLabel);
+              break;
+            }
+          }
+        }
+      };
+
+      if (scalingObj.type === 'activeSelection') {
+        scalingObj.getObjects().forEach(updateForStroke);
+      } else {
+        updateForStroke(scalingObj);
+      }
+    };
+
+    // Update tag connectors while scaling for smoother feedback.
+    this.fabricCanvas.on('object:scaling', e => {
+      const scalingObj = e.target;
+      if (!scalingObj) return;
+      this.__tagScaleActive = true;
+      this.__tagScaleTarget = scalingObj;
+      updateTagConnectorsForScaling(scalingObj);
+    });
+
+    // Keep connectors in sync on each render tick while scaling.
+    this.fabricCanvas.on('after:render', () => {
+      if (!this.__tagScaleActive || !this.__tagScaleTarget) return;
+      updateTagConnectorsForScaling(this.__tagScaleTarget);
+    });
+
+    const clearScaleTracking = () => {
+      this.__tagScaleActive = false;
+      this.__tagScaleTarget = null;
+    };
+
+    this.fabricCanvas.on('object:scaled', clearScaleTracking);
+    this.fabricCanvas.on('mouse:up', clearScaleTracking);
 
     // Touch gesture helpers
     const getTwoFingerCenter = touches => {

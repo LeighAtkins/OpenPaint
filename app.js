@@ -79,6 +79,14 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+// Avoid stale cache for module scripts during local dev.
+app.use('/js/modules', (req, res, next) => {
+  res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  next();
+});
+
 // Serve static files from public directory
 app.use(express.static('public'));
 // Serve static files from root directory (but index.html is handled by route above)

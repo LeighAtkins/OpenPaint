@@ -338,6 +338,48 @@ export class CanvasManager {
       canvas?.requestRenderAll?.() ?? canvas?.renderAll?.();
     };
 
+    const refreshTagForStroke = obj => {
+      const tagManager = window.app?.tagManager;
+      if (!tagManager || !obj) {
+        return;
+      }
+      for (const [strokeLabel, tagObj] of tagManager.tagObjects.entries()) {
+        if (tagObj.connectedStroke !== obj) continue;
+
+        let strokeCenter;
+        if (obj.group) {
+          const centerRelative = obj.getCenterPoint();
+          const groupMatrix = obj.group.calcTransformMatrix();
+          strokeCenter = fabric.util.transformPoint(centerRelative, groupMatrix);
+        } else {
+          strokeCenter = obj.getCenterPoint();
+        }
+
+        let tagCenter;
+        if (tagObj.group) {
+          const centerRelative = tagObj.getCenterPoint();
+          const groupMatrix = tagObj.group.calcTransformMatrix();
+          tagCenter = fabric.util.transformPoint(centerRelative, groupMatrix);
+        } else {
+          tagCenter = tagObj.getCenterPoint();
+        }
+
+        if (strokeCenter && tagCenter) {
+          tagObj.tagOffset = {
+            x: tagCenter.x - strokeCenter.x,
+            y: tagCenter.y - strokeCenter.y,
+          };
+          obj.tagOffset = {
+            x: tagObj.tagOffset.x,
+            y: tagObj.tagOffset.y,
+          };
+        }
+
+        tagManager.updateConnector(strokeLabel);
+        break;
+      }
+    };
+
     const bakeCurveTransform = opt => {
       let obj = opt?.target;
       const isScaleAction =
@@ -619,6 +661,10 @@ export class CanvasManager {
         canvas?.requestRenderAll?.();
       }
 
+      if (isScaleAction) {
+        refreshTagForStroke(obj);
+      }
+
       // P3: Mark as just baked so getCurveAnchorWorldPoint knows not to apply additional scaling.
       // Use requestAnimationFrame to wait until activeSelection scale settles back to 1.
       obj.__curveJustBaked = true;
@@ -655,6 +701,288 @@ export class CanvasManager {
 
       logScale('bake done');
     };
+
+    // ========== LINE BAKING LOGIC ==========
+    // Similar to curve baking, but for fabric.Line objects
+    // When a line is scaled, we need to bake the transform into the actual coordinates
+
+    const scheduleLineBakeAfterFinalize = lineObj => {
+      const canvas = lineObj?.canvas;
+      if (!canvas) return;
+      if (lineObj.__lineBakeScheduled) return;
+      lineObj.__lineBakeScheduled = true;
+
+      const tick = () => {
+        const stillGrouping = lineObj.group && lineObj.group.type === 'activeSelection';
+        const stillTransforming = !!canvas._currentTransform;
+
+        if (stillGrouping || stillTransforming) {
+          requestAnimationFrame(tick);
+          return;
+        }
+
+        lineObj.__lineBakeScheduled = false;
+        this.bakeLineSingleObject(lineObj);
+        canvas.requestRenderAll();
+      };
+
+      requestAnimationFrame(tick);
+    };
+
+    const captureLineTransformStart = opt => {
+      const action = opt?.transform?.action;
+      const isScaleAction = action === 'scale' || action === 'scaleX' || action === 'scaleY';
+
+      // Skip for drag and control point editing (modifyLine is the action for endpoint controls)
+      if (action === 'drag' || action === 'modifyLine') {
+        return;
+      }
+
+      // Only capture for actual scaling/rotating/skewing transforms
+      if (
+        !action ||
+        (action !== 'scale' &&
+          action !== 'scaleX' &&
+          action !== 'scaleY' &&
+          action !== 'rotate' &&
+          action !== 'skewX' &&
+          action !== 'skewY')
+      ) {
+        return;
+      }
+
+      let obj = opt?.transform?.target || opt?.target;
+
+      if (!obj) {
+        obj = this.fabricCanvas.getActiveObject();
+      }
+
+      if (!obj) {
+        return;
+      }
+
+      // Handle activeSelection - check if it contains lines
+      if (obj.type === 'activeSelection') {
+        const objects = obj.getObjects();
+        // Capture transform start for each line in the selection
+        for (const o of objects) {
+          if (o.type === 'line' && !o.__lineTransformActive) {
+            this.captureLineState(o, opt);
+          }
+        }
+        return;
+      }
+
+      if (obj.type !== 'line') {
+        return;
+      }
+      // Skip lines that are inside a permanent group (like arrows)
+      // Only process lines in activeSelection or standalone lines
+      if (obj.group && obj.group.type !== 'activeSelection') {
+        return;
+      }
+      if (obj.__lineTransformActive) {
+        return;
+      }
+
+      this.captureLineState(obj, opt);
+    };
+
+    // Helper to capture line state
+    this.captureLineState = (obj, opt) => {
+      const fullMatrix = obj.calcTransformMatrix();
+      const points = obj.calcLinePoints();
+
+      // Transform the local points to world coordinates
+      const p1World = fabric.util.transformPoint({ x: points.x1, y: points.y1 }, fullMatrix);
+      const p2World = fabric.util.transformPoint({ x: points.x2, y: points.y2 }, fullMatrix);
+
+      obj.__lineTransformActive = true;
+      obj.__lineTransformAction = opt?.transform?.action || 'scale';
+      obj.__lineBakedThisGesture = false;
+      obj.__lineOrigMatrix = fullMatrix;
+      obj.__lineOrigP1World = { x: p1World.x, y: p1World.y };
+      obj.__lineOrigP2World = { x: p2World.x, y: p2World.y };
+
+      console.log('[LINE SCALE] capture start', {
+        p1: obj.__lineOrigP1World,
+        p2: obj.__lineOrigP2World,
+      });
+    };
+
+    const bakeLineTransform = opt => {
+      let obj = opt?.target;
+
+      if (!obj) {
+        obj = this.fabricCanvas.getActiveObject();
+      }
+
+      if (!obj) {
+        return;
+      }
+
+      // Handle activeSelection - schedule bake for each line after selection is finalized
+      if (obj.type === 'activeSelection') {
+        const objects = obj.getObjects();
+        for (const o of objects) {
+          if (o.type === 'line' && o.__lineTransformActive && !o.__lineBakedThisGesture) {
+            // Schedule bake to happen after the selection is ungrouped
+            scheduleLineBakeAfterFinalize(o);
+          }
+        }
+        return;
+      }
+
+      if (obj.type !== 'line') {
+        return;
+      }
+      if (!obj.__lineTransformActive) {
+        return;
+      }
+      if (obj.__lineBakedThisGesture) {
+        return;
+      }
+
+      // If line is inside activeSelection, schedule bake for later
+      if (obj.group && obj.group.type === 'activeSelection') {
+        scheduleLineBakeAfterFinalize(obj);
+        return;
+      }
+
+      this.bakeLineSingleObject(obj);
+    };
+
+    // Helper to bake a single line object
+    this.bakeLineSingleObject = obj => {
+      obj.__lineBakedThisGesture = true;
+
+      const before = obj.__lineOrigMatrix;
+      const after = obj.calcTransformMatrix();
+
+      // Calculate the delta transform
+      const inverseBefore = fabric.util.invertTransform(before);
+      const delta = fabric.util.multiplyTransformMatrices(after, inverseBefore);
+
+      // Transform the original world points by delta
+      const p1Transformed = fabric.util.transformPoint(
+        new fabric.Point(obj.__lineOrigP1World.x, obj.__lineOrigP1World.y),
+        delta
+      );
+      const p2Transformed = fabric.util.transformPoint(
+        new fabric.Point(obj.__lineOrigP2World.x, obj.__lineOrigP2World.y),
+        delta
+      );
+
+      console.log('[LINE SCALE] baking', {
+        p1Before: obj.__lineOrigP1World,
+        p2Before: obj.__lineOrigP2World,
+        p1After: { x: p1Transformed.x, y: p1Transformed.y },
+        p2After: { x: p2Transformed.x, y: p2Transformed.y },
+      });
+
+      // Calculate the new center (midpoint of the line)
+      const center = {
+        x: (p1Transformed.x + p2Transformed.x) / 2,
+        y: (p1Transformed.y + p2Transformed.y) / 2,
+      };
+
+      // Line coordinates are relative to center, so calculate local offsets
+      // Note: we reset angle to 0 so no rotation compensation needed
+      const localP1 = {
+        x: p1Transformed.x - center.x,
+        y: p1Transformed.y - center.y,
+      };
+      const localP2 = {
+        x: p2Transformed.x - center.x,
+        y: p2Transformed.y - center.y,
+      };
+
+      // Reset transforms and set coordinates relative to center
+      obj.set({
+        x1: localP1.x,
+        y1: localP1.y,
+        x2: localP2.x,
+        y2: localP2.y,
+        left: center.x,
+        top: center.y,
+        angle: 0,
+        scaleX: 1,
+        scaleY: 1,
+        skewX: 0,
+        skewY: 0,
+        flipX: false,
+        flipY: false,
+      });
+
+      obj.setCoords();
+
+      // Update lastLeft/lastTop for consistent move tracking
+      obj.lastLeft = obj.left;
+      obj.lastTop = obj.top;
+
+      obj.dirty = true;
+
+      // Refresh controls
+      FabricControls.createLineControls(obj);
+
+      // Fire moving event to update tag connectors
+      obj.fire('moving');
+
+      // Refresh tag connector if one is attached
+      refreshTagForStroke(obj);
+
+      // Request render
+      obj.canvas?.requestRenderAll();
+
+      // Clean up state
+      delete obj.__lineTransformActive;
+      delete obj.__lineTransformAction;
+      delete obj.__lineBakedThisGesture;
+      delete obj.__lineOrigMatrix;
+      delete obj.__lineOrigP1World;
+      delete obj.__lineOrigP2World;
+      delete obj.__lineBakeScheduled;
+
+      console.log('[LINE SCALE] bake done', { left: obj.left, top: obj.top });
+    };
+
+    // Register line transform handlers
+    this.fabricCanvas.on('object:scaling', captureLineTransformStart);
+    this.fabricCanvas.on('object:rotating', captureLineTransformStart);
+    this.fabricCanvas.on('object:skewing', captureLineTransformStart);
+    this.fabricCanvas.on('before:transform', captureLineTransformStart);
+    this.fabricCanvas.on('object:modified', bakeLineTransform);
+
+    // Also handle mouse:up for lines to ensure baking happens
+    this.fabricCanvas.on('mouse:up', opt => {
+      const obj = opt?.target;
+      if (obj?.type === 'line' && obj.__lineTransformActive && !obj.__lineBakedThisGesture) {
+        // If line is inside activeSelection, schedule bake for later
+        if (obj.group && obj.group.type === 'activeSelection') {
+          console.log(
+            '[LINE SCALE] mouse:up - scheduling bake after finalize (still in activeSelection)'
+          );
+          scheduleLineBakeAfterFinalize(obj);
+        } else {
+          this.bakeLineSingleObject(obj);
+        }
+      }
+      // Handle activeSelection containing lines
+      if (obj?.type === 'activeSelection') {
+        const objects = obj.getObjects();
+        for (const o of objects) {
+          if (o.type === 'line' && o.__lineTransformActive && !o.__lineBakedThisGesture) {
+            // Schedule bake to happen after the selection is ungrouped
+            console.log(
+              '[LINE SCALE] mouse:up - scheduling bake after finalize (in activeSelection)'
+            );
+            scheduleLineBakeAfterFinalize(o);
+          }
+        }
+      }
+    });
+
+    // ========== END LINE BAKING LOGIC ==========
 
     this.fabricCanvas.on('object:scaling', captureCurveTransformStart);
     this.fabricCanvas.on('object:rotating', captureCurveTransformStart);
@@ -1602,6 +1930,51 @@ export class CanvasManager {
       // Request render to ensure connectors and tags display correctly
       this.fabricCanvas.requestRenderAll();
     });
+
+    const updateTagConnectorsForScaling = scalingObj => {
+      if (!window.app?.tagManager || !scalingObj) return;
+      const tagManager = window.app.tagManager;
+
+      const updateForStroke = obj => {
+        if ((obj.type === 'line' || obj.type === 'path' || obj.type === 'group') && !obj.isTag) {
+          for (const [strokeLabel, tagObj] of tagManager.tagObjects.entries()) {
+            if (tagObj.connectedStroke === obj) {
+              tagManager.updateConnector(strokeLabel);
+              break;
+            }
+          }
+        }
+      };
+
+      if (scalingObj.type === 'activeSelection') {
+        scalingObj.getObjects().forEach(updateForStroke);
+      } else {
+        updateForStroke(scalingObj);
+      }
+    };
+
+    // Update tag connectors while scaling for smoother feedback.
+    this.fabricCanvas.on('object:scaling', e => {
+      const scalingObj = e.target;
+      if (!scalingObj) return;
+      this.__tagScaleActive = true;
+      this.__tagScaleTarget = scalingObj;
+      updateTagConnectorsForScaling(scalingObj);
+    });
+
+    // Keep connectors in sync on each render tick while scaling.
+    this.fabricCanvas.on('after:render', () => {
+      if (!this.__tagScaleActive || !this.__tagScaleTarget) return;
+      updateTagConnectorsForScaling(this.__tagScaleTarget);
+    });
+
+    const clearScaleTracking = () => {
+      this.__tagScaleActive = false;
+      this.__tagScaleTarget = null;
+    };
+
+    this.fabricCanvas.on('object:scaled', clearScaleTracking);
+    this.fabricCanvas.on('mouse:up', clearScaleTracking);
 
     // Touch gesture helpers
     const getTwoFingerCenter = touches => {

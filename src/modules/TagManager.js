@@ -737,9 +737,10 @@ export class TagManager {
     const connector = new fabric.Line(
       [tagCenter.x, tagCenter.y, strokeEndpoint.x, strokeEndpoint.y],
       {
-        stroke: '#666666',
-        strokeWidth: 2,
-        strokeDashArray: [8, 4],
+        stroke: 'rgba(0, 0, 0, 0.35)',
+        strokeWidth: 1,
+        strokeDashArray: [6, 4],
+        opacity: 0.7,
         selectable: false,
         evented: false,
         hasControls: false,
@@ -841,9 +842,10 @@ export class TagManager {
 
       // Create new connector with updated endpoints
       connector = new fabric.Line([tagCenter.x, tagCenter.y, strokeEndpoint.x, strokeEndpoint.y], {
-        stroke: '#666666',
-        strokeWidth: 2,
-        strokeDashArray: [8, 4],
+        stroke: 'rgba(0, 0, 0, 0.35)',
+        strokeWidth: 1,
+        strokeDashArray: [6, 4],
+        opacity: 0.7,
         selectable: false,
         evented: false,
         hasControls: false,
