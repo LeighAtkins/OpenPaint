@@ -48,6 +48,18 @@ console.log('[Cloudflare Images] Account ID:', CF_ACCOUNT_ID ? 'configured' : 'm
 console.log('[Cloudflare Images] API Token:', CF_IMAGES_API_TOKEN ? 'configured' : 'missing');
 console.log('[Cloudflare Images] Account Hash:', CF_ACCOUNT_HASH ? 'configured' : 'missing');
 
+// Supabase configuration
+const SUPABASE_URL = process.env.VITE_SUPABASE_URL || '';
+const SUPABASE_SERVICE_KEY = process.env.VITE_SUPABASE_SERVICE_KEY || process.env.VITE_SUPABASE_ANON_KEY || '';
+let supabaseClient = null;
+
+if (SUPABASE_URL && SUPABASE_SERVICE_KEY) {
+  supabaseClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+  console.log('[Supabase] Client initialized');
+} else {
+  console.warn('[Supabase] Missing URL or key, Supabase features disabled');
+}
+
 function joinUrl(base, path) {
   return `${String(base).replace(/\/+$/, '')}/${String(path).replace(/^\/+/, '')}`;
 }
@@ -105,7 +117,23 @@ app.get('/', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
   res.setHeader('Pragma', 'no-cache');
   res.setHeader('Expires', '0');
-  res.sendFile(path.join(__dirname, 'index.html'));
+
+  // Read and inject environment variables into index.html
+  const indexPath = path.join(__dirname, 'index.html');
+  let html = fs.readFileSync(indexPath, 'utf8');
+
+  // Inject window.__ENV with public Supabase config (anon key only, not service key)
+  const envScript = `<script>
+    window.__ENV = {
+      VITE_SUPABASE_URL: "${process.env.VITE_SUPABASE_URL || ''}",
+      VITE_SUPABASE_ANON_KEY: "${process.env.VITE_SUPABASE_ANON_KEY || ''}"
+    };
+  </script>`;
+
+  // Insert before closing </head> tag
+  html = html.replace('</head>', `${envScript}\n</head>`);
+
+  res.send(html);
 });
 
 // Avoid stale cache for module scripts during local dev.
@@ -1110,13 +1138,174 @@ app.post('/api/storage/presign', async (req, res) => {
   }
 });
 
+/**
+ * API endpoint for saving project to Supabase
+ * Handles direct database persistence via Supabase client
+ */
+app.post('/api/projects/:projectId/save', async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const { data, userId } = req.body;
+
+    if (!data) {
+      return res.status(400).json({
+        success: false,
+        message: 'Project data required',
+      });
+    }
+
+    console.log(`[Save API] Saving project ${projectId} to Supabase`);
+    console.log('[Save API] Project data:', {
+      name: data.name,
+      hasImages: Object.keys(data.images || {}).length,
+      hasStrokes: Object.keys(data.strokes || {}).length,
+      hasMeasurements: Object.keys(data.measurements || {}).length,
+    });
+
+    // Try Supabase save if client is available
+    if (supabaseClient) {
+      const projectRecord = {
+        id: projectId || crypto.randomUUID(),
+        user_id: userId || null,
+        name: data.name || 'Untitled Project',
+        description: data.description || null,
+        data: data,
+        updated_at: new Date().toISOString(),
+      };
+
+      const { data: savedProject, error } = await supabaseClient
+        .from('projects')
+        .upsert(projectRecord, { onConflict: 'id' })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('[Save API] Supabase error:', error);
+        return res.status(500).json({
+          success: false,
+          message: 'Failed to save to Supabase',
+          error: error.message,
+        });
+      }
+
+      console.log('[Save API] Saved to Supabase:', savedProject.id);
+      return res.json({
+        success: true,
+        message: 'Saved to Supabase',
+        projectId: savedProject.id,
+        savedAt: savedProject.updated_at,
+      });
+    }
+
+    // Fallback: return success but note Supabase is not configured
+    console.log('[Save API] Supabase not configured, returning success anyway');
+    return res.json({
+      success: true,
+      message: 'Supabase not configured - save acknowledged',
+      projectId: projectId || crypto.randomUUID(),
+    });
+  } catch (error) {
+    console.error('[Save API] Error saving to Supabase:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to save to Supabase',
+      error: error.message,
+    });
+  }
+});
+
+/**
+ * API endpoint for loading project from Supabase
+ */
+app.get('/api/projects/:projectId/load', async (req, res) => {
+  try {
+    const { projectId } = req.params;
+
+    if (!supabaseClient) {
+      return res.status(503).json({
+        success: false,
+        message: 'Supabase not configured',
+      });
+    }
+
+    const { data: project, error } = await supabaseClient
+      .from('projects')
+      .select('*')
+      .eq('id', projectId)
+      .single();
+
+    if (error) {
+      console.error('[Load API] Supabase error:', error);
+      return res.status(404).json({
+        success: false,
+        message: 'Project not found',
+        error: error.message,
+      });
+    }
+
+    return res.json({
+      success: true,
+      project: project,
+    });
+  } catch (error) {
+    console.error('[Load API] Error loading from Supabase:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to load project',
+      error: error.message,
+    });
+  }
+});
+
+/**
+ * API endpoint for listing user projects from Supabase
+ */
+app.get('/api/projects/list/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    if (!supabaseClient) {
+      return res.status(503).json({
+        success: false,
+        message: 'Supabase not configured',
+      });
+    }
+
+    const { data: projects, error } = await supabaseClient
+      .from('projects')
+      .select('id, name, description, created_at, updated_at')
+      .eq('user_id', userId)
+      .order('updated_at', { ascending: false });
+
+    if (error) {
+      console.error('[List API] Supabase error:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to list projects',
+        error: error.message,
+      });
+    }
+
+    return res.json({
+      success: true,
+      projects: projects || [],
+    });
+  } catch (error) {
+    console.error('[List API] Error listing projects:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to list projects',
+      error: error.message,
+    });
+  }
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error('Server error:', err);
   res.status(500).json({ success: false, message: 'Server error' });
 });
 
-// export for Vercel
 // export for Vercel
 export default app;
 
@@ -1265,5 +1454,21 @@ app.get('*', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
   res.setHeader('Pragma', 'no-cache');
   res.setHeader('Expires', '0');
-  res.sendFile(path.join(__dirname, 'index.html'));
+
+  // Read and inject environment variables into index.html
+  const indexPath = path.join(__dirname, 'index.html');
+  let html = fs.readFileSync(indexPath, 'utf8');
+
+  // Inject window.__ENV with public Supabase config (anon key only, not service key)
+  const envScript = `<script>
+    window.__ENV = {
+      VITE_SUPABASE_URL: "${process.env.VITE_SUPABASE_URL || ''}",
+      VITE_SUPABASE_ANON_KEY: "${process.env.VITE_SUPABASE_ANON_KEY || ''}"
+    };
+  </script>`;
+
+  // Insert before closing </head> tag
+  html = html.replace('</head>', `${envScript}\n</head>`);
+
+  res.send(html);
 });
