@@ -189,6 +189,48 @@ class App {
       }
     }
 
+    // Fine rotate controls (hover bar)
+    const rotateFineSlider = document.getElementById('rotateFineSlider');
+    const rotateFineValue = document.getElementById('rotateFineValue');
+    let lastFineValue = 0;
+
+    const updateFineReadout = value => {
+      if (rotateFineValue) {
+        rotateFineValue.textContent = `${value}°`;
+      }
+    };
+
+    const applyFineRotateDelta = deltaDegrees => {
+      if (!deltaDegrees) return;
+      this.projectManager.rotateCurrentView(deltaDegrees);
+    };
+
+    if (rotateFineSlider) {
+      const setFineRotateActive = active => {
+        document.body.classList.toggle('fine-rotate-active', active);
+      };
+
+      rotateFineSlider.addEventListener('pointerdown', () => setFineRotateActive(true));
+      rotateFineSlider.addEventListener('input', () => {
+        const value = Number(rotateFineSlider.value);
+        const delta = value - lastFineValue;
+        lastFineValue = value;
+        updateFineReadout(value);
+        applyFineRotateDelta(delta);
+      });
+
+      const resetFineSlider = () => {
+        lastFineValue = 0;
+        rotateFineSlider.value = '0';
+        updateFineReadout(0);
+        setFineRotateActive(false);
+      };
+
+      rotateFineSlider.addEventListener('pointerup', resetFineSlider);
+      rotateFineSlider.addEventListener('pointercancel', resetFineSlider);
+      rotateFineSlider.addEventListener('blur', resetFineSlider);
+    }
+
     // Tools
     const drawingModeToggle = document.getElementById('drawingModeToggle');
     const textModeToggle = document.getElementById('textModeToggle');

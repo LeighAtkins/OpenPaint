@@ -568,6 +568,72 @@
   padding: 0;
 }
 
+/* Rotate controls: big swing hover state */
+#rotateLeftCtrl,
+#rotateRightCtrl {
+  position: relative;
+  overflow: hidden;
+  transform-origin: 50% 60%;
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    border-color 0.18s ease,
+    background 0.18s ease,
+    color 0.18s ease;
+}
+
+#rotateLeftCtrl::after,
+#rotateRightCtrl::after {
+  content: '';
+  position: absolute;
+  inset: -40%;
+  background: radial-gradient(
+    circle at 30% 30%,
+    rgba(59, 130, 246, 0.25),
+    rgba(14, 116, 144, 0.0) 60%
+  );
+  opacity: 0;
+  transition: opacity 0.18s ease;
+  pointer-events: none;
+}
+
+#rotateLeftCtrl:hover,
+#rotateRightCtrl:hover {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border-color: rgba(59, 130, 246, 0.6);
+  box-shadow:
+    0 10px 24px rgba(15, 23, 42, 0.18),
+    0 0 0 2px rgba(59, 130, 246, 0.15);
+  color: #0f172a;
+}
+
+#rotateLeftCtrl:hover {
+  transform: rotate(-12deg) scale(1.08);
+}
+
+#rotateRightCtrl:hover {
+  transform: rotate(12deg) scale(1.08);
+}
+
+#rotateLeftCtrl:hover::after,
+#rotateRightCtrl:hover::after {
+  opacity: 1;
+}
+
+#rotateLeftCtrl:active,
+#rotateRightCtrl:active {
+  transform: scale(0.96);
+  box-shadow:
+    0 6px 14px rgba(15, 23, 42, 0.12),
+    0 0 0 2px rgba(59, 130, 246, 0.12);
+}
+
+#rotateLeftCtrl:focus-visible,
+#rotateRightCtrl:focus-visible {
+  outline: 2px solid rgba(59, 130, 246, 0.65);
+  outline-offset: 2px;
+}
+
 /* Specific button styles to prevent layout shifts */
 #paste {
   padding: 8px 16px;
