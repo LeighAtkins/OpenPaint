@@ -209,49 +209,74 @@ export class CanvasManager {
       }
       if (!obj) return;
 
+      const initCurveTransformState = curveObj => {
+        if (!curveObj) return;
+        if (curveObj.__curveTransformActive) return;
+
+        if (curveObj.type !== 'path' || !Array.isArray(curveObj.customPoints)) return;
+        if (curveObj.isEditingControlPoint) return;
+
+        curveObj.__curveTransformActive = true;
+        curveObj.__curveTransformAction = action;
+        curveObj.__curveTransformCorner = opt?.transform?.corner || null;
+        curveObj.__curveBakedThisGesture = false;
+        curveObj.__curveOrigMatrix = curveObj.calcTransformMatrix();
+        curveObj.__curveOrigAngle = curveObj.angle || 0;
+        curveObj.__curveOrigPoints = curveObj.customPoints.map(point => ({
+          x: point.x,
+          y: point.y,
+        }));
+
+        const originX = opt?.transform?.originX || 'center';
+        const originY = opt?.transform?.originY || 'center';
+        const pivotTarget = opt?.transform?.target || curveObj;
+        if (typeof pivotTarget?.getPointByOrigin === 'function') {
+          const pivot = pivotTarget.getPointByOrigin(originX, originY);
+          curveObj.__curveTransformPivotWorld = { x: pivot.x, y: pivot.y };
+        } else if (typeof pivotTarget?.getCenterPoint === 'function') {
+          const pivot = pivotTarget.getCenterPoint();
+          curveObj.__curveTransformPivotWorld = { x: pivot.x, y: pivot.y };
+        }
+        if (!curveObj.__curveTransformPivotWorld) {
+          const minX = Math.min(...curveObj.customPoints.map(p => p.x));
+          const maxX = Math.max(...curveObj.customPoints.map(p => p.x));
+          const minY = Math.min(...curveObj.customPoints.map(p => p.y));
+          const maxY = Math.max(...curveObj.customPoints.map(p => p.y));
+          curveObj.__curveTransformPivotWorld = {
+            x: (minX + maxX) / 2,
+            y: (minY + maxY) / 2,
+          };
+        }
+
+        logScale('capture start', { action });
+        logScale('corner', curveObj.__curveTransformCorner);
+        logScale('pivotWorld', curveObj.__curveTransformPivotWorld);
+
+        const activeObj = this.fabricCanvas.getActiveObject();
+        if (activeObj && activeObj.type === 'activeSelection') {
+          curveObj.__curveOrigActiveSelection = activeObj;
+          curveObj.__curveOrigActiveSelectionCenter = activeObj.getCenterPoint();
+        }
+
+        let origCenterWorld = curveObj.getCenterPoint();
+        if (curveObj.group) {
+          const groupMatrix = curveObj.group.calcTransformMatrix();
+          origCenterWorld = fabric.util.transformPoint(origCenterWorld, groupMatrix);
+        }
+        curveObj.__curveOrigCenterWorld = origCenterWorld;
+      };
+
       if (obj.type === 'activeSelection') {
         const objects = obj.getObjects();
-        const curve = objects.find(o => o.type === 'path' && Array.isArray(o.customPoints));
-        if (!curve) return;
-        obj = curve;
         logScale('activeSelection objects:', objects.length);
+        const curves = objects.filter(o => o.type === 'path' && Array.isArray(o.customPoints));
+        if (!curves.length) return;
+        curves.forEach(curve => initCurveTransformState(curve));
+        this.__activeCurveTransformTarget = curves[0];
+        return;
       }
 
-      if (obj.type !== 'path' || !Array.isArray(obj.customPoints)) return;
-      if (obj.isEditingControlPoint) return;
-      if (obj.__curveTransformActive) return;
-
-      obj.__curveTransformActive = true;
-      obj.__curveTransformAction = action;
-      obj.__curveTransformCorner = opt?.transform?.corner || null;
-      obj.__curveBakedThisGesture = false;
-      obj.__curveOrigMatrix = obj.calcTransformMatrix();
-      obj.__curveOrigAngle = obj.angle || 0;
-      obj.__curveOrigPoints = obj.customPoints.map(point => ({
-        x: point.x,
-        y: point.y,
-      }));
-
-      const originX = opt?.transform?.originX || 'center';
-      const originY = opt?.transform?.originY || 'center';
-      const pivotTarget = opt?.transform?.target || obj;
-      if (typeof pivotTarget?.getPointByOrigin === 'function') {
-        const pivot = pivotTarget.getPointByOrigin(originX, originY);
-        obj.__curveTransformPivotWorld = { x: pivot.x, y: pivot.y };
-      } else if (typeof pivotTarget?.getCenterPoint === 'function') {
-        const pivot = pivotTarget.getCenterPoint();
-        obj.__curveTransformPivotWorld = { x: pivot.x, y: pivot.y };
-      }
-      logScale('capture start', { action });
-      logScale('corner', obj.__curveTransformCorner);
-      logScale('pivotWorld', obj.__curveTransformPivotWorld);
-
-      const activeObj = this.fabricCanvas.getActiveObject();
-      if (activeObj && activeObj.type === 'activeSelection') {
-        obj.__curveOrigActiveSelection = activeObj;
-        obj.__curveOrigActiveSelectionCenter = activeObj.getCenterPoint();
-      }
-
+      initCurveTransformState(obj);
       this.__activeCurveTransformTarget = obj;
     };
 
@@ -366,7 +391,12 @@ export class CanvasManager {
         delete obj.__curveBakedThisGesture;
         return;
       }
-      if (obj.group && obj.group.type === 'activeSelection') {
+      const activeSelection = obj.group && obj.group.type === 'activeSelection' ? obj.group : null;
+      let restoreObjects = null;
+      if (activeSelection && opt?.forceUngroup) {
+        restoreObjects = activeSelection.getObjects?.().slice() ?? null;
+        obj.canvas?.discardActiveObject?.();
+      } else if (activeSelection) {
         scheduleBakeAfterFinalize(obj);
         return;
       }
@@ -399,6 +429,8 @@ export class CanvasManager {
 
       const inverseBefore = fabric.util.invertTransform(before);
       const delta = fabric.util.multiplyTransformMatrices(after, inverseBefore);
+      const rotationRad = Math.atan2(delta[1], delta[0]);
+      const hasRotation = Math.abs(rotationRad) > 0.0001;
       logScale('delta', delta.map(v => v.toFixed(4)).join(', '));
 
       const corner = obj.__curveTransformCorner;
@@ -436,102 +468,49 @@ export class CanvasManager {
         }
       }
 
-      // Calculate the center from the transformed customPoints (not from getCenterPoint which can drift)
+      // Calculate the center from the transformed customPoints (not from getCenterPoint which can drift).
       const minX = Math.min(...obj.customPoints.map(p => p.x));
       const maxX = Math.max(...obj.customPoints.map(p => p.x));
       const minY = Math.min(...obj.customPoints.map(p => p.y));
       const maxY = Math.max(...obj.customPoints.map(p => p.y));
-      const baseCenterWorld = {
+      const baseCenterWorldFromPoints = {
         x: (minX + maxX) / 2,
         y: (minY + maxY) / 2,
       };
+      let currentCenterWorld = obj.__curveOrigCenterWorld || obj.getCenterPoint();
+      if (!obj.__curveOrigCenterWorld && obj.group) {
+        const groupMatrix = obj.group.calcTransformMatrix();
+        currentCenterWorld = fabric.util.transformPoint(currentCenterWorld, groupMatrix);
+      }
+      const baseCenterWorld = hasRotation ? currentCenterWorld : baseCenterWorldFromPoints;
       logScale('baseCenterWorld', baseCenterWorld);
 
-      const preserveAngle = useUniformScale;
+      const preserveAngle = useUniformScale && !hasRotation;
       const angle = preserveAngle ? obj.__curveOrigAngle || 0 : 0;
-      const angleRad = angle ? fabric.util.degreesToRadians(angle) : 0;
 
-      // Convert world points to local points around the calculated center
-      const localPoints = obj.customPoints.map(p => {
-        const local = new fabric.Point(p.x - baseCenterWorld.x, p.y - baseCenterWorld.y);
-        if (!preserveAngle || !angleRad) {
-          return { x: local.x, y: local.y };
-        }
-        const rotated = fabric.util.rotatePoint(local, new fabric.Point(0, 0), -angleRad);
-        return { x: rotated.x, y: rotated.y };
-      });
-
-      const newPathString = PathUtils.createSmoothPath(localPoints);
-      const pathData = fabric.util.parsePath(newPathString);
-      obj.set({ path: pathData, angle });
-      obj.set({
-        scaleX: 1,
-        scaleY: 1,
-        skewX: 0,
-        skewY: 0,
-        flipX: false,
-        flipY: false,
-      });
-
-      obj.set({ pathOffset: new fabric.Point(0, 0) });
-      const dims = obj._calcDimensions();
-      const centerLocal = new fabric.Point(dims.left + dims.width / 2, dims.top + dims.height / 2);
-      logScale('centerLocal', { x: centerLocal.x, y: centerLocal.y });
-      obj.set({
-        width: dims.width,
-        height: dims.height,
-        pathOffset: centerLocal,
-      });
-
-      // Compensate world position: baseCenterWorld + centerLocal
-      const centerLocalWorld =
-        preserveAngle && angleRad
-          ? fabric.util.rotatePoint(centerLocal, new fabric.Point(0, 0), angleRad)
-          : centerLocal;
-      const compensatedWorldCenter = new fabric.Point(
-        baseCenterWorld.x + centerLocalWorld.x,
-        baseCenterWorld.y + centerLocalWorld.y
-      );
-      logScale('compensatedWorldCenter', compensatedWorldCenter);
-
-      obj.setPositionByOrigin(compensatedWorldCenter, 'center', 'center');
+      const keepWorldCenter = hasRotation ? obj.__curveOrigCenterWorld || currentCenterWorld : null;
+      FabricControls.canonicalizeCurveFromWorldPoints(obj, baseCenterWorld, angle, keepWorldCenter);
       logScale('leftTop', { left: obj.left, top: obj.top });
-      obj.lastLeft = obj.left;
-      obj.lastTop = obj.top;
-      const updatedCenter = obj.getCenterPoint();
-      obj.__lastCenter = { x: updatedCenter.x, y: updatedCenter.y };
-      obj.dirty = true;
-      obj.setCoords();
 
       if (Array.isArray(obj.customPoints)) {
         FabricControls.createCurveControls(obj);
       }
 
       const canvas = obj.canvas;
-      const activeSelection = obj.__curveOrigActiveSelection || canvas?.getActiveObject?.();
+      const sel = obj.__curveOrigActiveSelection || canvas?.getActiveObject?.();
       const shouldIsolateSelection =
-        activeSelection &&
-        activeSelection.type === 'activeSelection' &&
-        obj.__curveTransformAction === 'scale';
-      let restoreObjects = null;
+        sel && sel.type === 'activeSelection' && obj.__curveTransformAction === 'scale';
 
-      if (shouldIsolateSelection) {
-        restoreObjects = activeSelection.getObjects?.().slice() ?? null;
+      if (shouldIsolateSelection && !restoreObjects) {
+        restoreObjects = sel.getObjects?.().slice() ?? null;
         canvas?.discardActiveObject();
         canvas?.requestRenderAll?.();
       }
-
-      // CRITICAL FIX: Call canonicalizeCurveFromWorldPoints to ensure path geometry
-      // matches anchor positions. This uses the same rebuild logic as anchor edits,
-      // which is proven to produce correct alignment.
-      FabricControls.canonicalizeCurveFromWorldPoints(obj, baseCenterWorld);
 
       finalizeCurveVisualState(obj.canvas, obj);
 
       // P2: If the curve was scaled as part of an activeSelection, force that selection to recompute bounds/coords.
       // Otherwise the selection box can lag behind and the curve appears to "jump" outside it.
-      const sel = obj.__curveOrigActiveSelection || obj.canvas?.getActiveObject?.();
-
       if (sel && sel.type === 'activeSelection' && !shouldIsolateSelection) {
         try {
           // Recompute selection bounds based on updated object coords.
@@ -566,7 +545,7 @@ export class CanvasManager {
         }
       }
 
-      if (shouldIsolateSelection && restoreObjects?.length) {
+      if (restoreObjects?.length) {
         const restoredSelection = new fabric.ActiveSelection(restoreObjects, { canvas });
         canvas?.setActiveObject(restoredSelection);
         restoredSelection.setCoords();
@@ -621,13 +600,44 @@ export class CanvasManager {
     this.fabricCanvas.on('before:transform', captureCurveTransformStart);
     this.fabricCanvas.on('object:modified', bakeCurveTransform);
     this.fabricCanvas.on('mouse:up', opt => {
-      const obj = this.__activeCurveTransformTarget || opt?.target;
+      const activeTarget = opt?.target;
+      if (activeTarget?.type === 'activeSelection') {
+        const objects = activeTarget.getObjects();
+        objects.forEach(o => {
+          if (o?.type === 'path' && Array.isArray(o.customPoints)) {
+            if (!o.__curveTransformActive || o.__curveBakedThisGesture) return;
+            const action = o.__curveTransformAction;
+            const isRotateOrSkew =
+              action === 'rotate' || action === 'skew' || action === 'skewX' || action === 'skewY';
+            if (o.group && o.group.type === 'activeSelection') {
+              if (isRotateOrSkew) {
+                bakeCurveTransform({ target: o, forceUngroup: true });
+              } else {
+                scheduleBakeAfterFinalize(o);
+              }
+            } else {
+              bakeCurveTransform({ target: o });
+            }
+          }
+        });
+        this.__activeCurveTransformTarget = null;
+        return;
+      }
+
+      const obj = this.__activeCurveTransformTarget || activeTarget;
       if (obj?.__curveTransformActive && !obj.__curveBakedThisGesture) {
         // CRITICAL: If curve is inside activeSelection, use scheduleBakeAfterFinalize
         // to wait until the curve is ungrouped. Otherwise canonicalize runs with
         // the curve still in selection context, causing position mismatch.
         if (obj.group && obj.group.type === 'activeSelection') {
-          scheduleBakeAfterFinalize(obj);
+          const action = obj.__curveTransformAction;
+          const isRotateOrSkew =
+            action === 'rotate' || action === 'skew' || action === 'skewX' || action === 'skewY';
+          if (isRotateOrSkew) {
+            bakeCurveTransform({ target: obj, forceUngroup: true });
+          } else {
+            scheduleBakeAfterFinalize(obj);
+          }
         } else {
           bakeCurveTransform({ target: obj });
         }
@@ -1727,19 +1737,15 @@ export class CanvasManager {
           point.x = rotatedPoint.x;
           point.y = rotatedPoint.y;
         });
-        const newPathString = PathUtils.createSmoothPath(obj.customPoints);
-        const pathData = fabric.util.parsePath(newPathString);
-        obj.set({ path: pathData, angle: 0 });
-
-        const dims = obj._calcDimensions();
-        obj.set({
-          width: dims.width,
-          height: dims.height,
-          pathOffset: new fabric.Point(dims.left + dims.width / 2, dims.top + dims.height / 2),
-        });
-        obj.setPositionByOrigin(rotatedCenter, 'center', 'center');
-        obj.dirty = true;
-        obj.setCoords();
+        const minX = Math.min(...obj.customPoints.map(p => p.x));
+        const maxX = Math.max(...obj.customPoints.map(p => p.x));
+        const minY = Math.min(...obj.customPoints.map(p => p.y));
+        const maxY = Math.max(...obj.customPoints.map(p => p.y));
+        const baseCenterWorld = {
+          x: (minX + maxX) / 2,
+          y: (minY + maxY) / 2,
+        };
+        FabricControls.canonicalizeCurveFromWorldPoints(obj, baseCenterWorld, 0);
         didResyncPath = true;
       } else {
         obj.rotate((obj.angle || 0) + deltaDegrees);
@@ -1761,11 +1767,8 @@ export class CanvasManager {
     tags.forEach(tagObj => {
       const tagCenter = tagObj.getCenterPoint();
       const rotatedCenter = fabric.util.rotatePoint(tagCenter, center, radians);
-      tagObj.set({
-        left: rotatedCenter.x,
-        top: rotatedCenter.y,
-        angle: 0,
-      });
+      tagObj.rotate((tagObj.angle || 0) + deltaDegrees);
+      tagObj.setPositionByOrigin(rotatedCenter, 'center', 'center');
       tagObj.setCoords();
 
       const strokeObj = tagObj.connectedStroke;

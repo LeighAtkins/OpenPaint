@@ -19,6 +19,79 @@ export class TagManager {
 
     // Initialize tag prediction system integration
     this.initTagPrediction();
+
+    this.ensureBaselineSanitizer();
+  }
+
+  ensureBaselineSanitizer() {
+    const fabricGlobal = globalThis.fabric;
+    if (!fabricGlobal?.Text?.prototype) return;
+    const prototypes = [fabricGlobal.Text, fabricGlobal.IText, fabricGlobal.Textbox]
+      .map(cls => cls?.prototype)
+      .filter(Boolean);
+
+    prototypes.forEach(proto => {
+      if (proto.__baselinePatch) return;
+      proto.textBaseline = 'alphabetic';
+      const original = proto._setTextStyles;
+      const originalGetStyle = proto._getStyleDeclaration;
+      const originalSet = proto.set;
+
+      if (typeof originalGetStyle === 'function') {
+        proto._getStyleDeclaration = function (...args) {
+          const style = originalGetStyle.apply(this, args);
+          if (style?.textBaseline === 'alphabetical') {
+            style.textBaseline = 'alphabetic';
+          }
+          return style;
+        };
+      }
+
+      if (typeof originalSet === 'function') {
+        proto.set = function (key, value) {
+          if (typeof key === 'object' && key?.textBaseline === 'alphabetical') {
+            key.textBaseline = 'alphabetic';
+          } else if (key === 'textBaseline' && value === 'alphabetical') {
+            value = 'alphabetic';
+          }
+          return originalSet.call(this, key, value);
+        };
+      }
+
+      proto._setTextStyles = function (ctx, ...args) {
+        this.textBaseline = 'alphabetic';
+        if (ctx?.textBaseline === 'alphabetical') {
+          ctx.textBaseline = 'alphabetic';
+        }
+        args.forEach(arg => {
+          if (arg?.textBaseline === 'alphabetical') {
+            arg.textBaseline = 'alphabetic';
+          }
+        });
+        return original.call(this, ctx, ...args);
+      };
+      proto.__baselinePatch = true;
+    });
+  }
+
+  sanitizeTextBaseline(value) {
+    const allowed = new Set(['top', 'hanging', 'middle', 'alphabetic', 'ideographic', 'bottom']);
+    return allowed.has(value) ? value : 'alphabetic';
+  }
+
+  sanitizeTextObject(textObj) {
+    if (!textObj) return;
+    textObj.textBaseline = 'alphabetic';
+    const styles = textObj.styles;
+    if (!styles) return;
+    Object.values(styles).forEach(line => {
+      if (!line) return;
+      Object.values(line).forEach(style => {
+        if (style?.textBaseline === 'alphabetical') {
+          style.textBaseline = 'alphabetic';
+        }
+      });
+    });
   }
 
   // Get canvas reference dynamically (may not be available at construction time)
@@ -102,6 +175,7 @@ export class TagManager {
 
   // Create a draggable, resizable tag object
   createTag(strokeLabel, imageLabel, strokeObject) {
+    this.ensureBaselineSanitizer();
     // Ensure canvas is available
     const canvas = this.canvas;
     if (!canvas) {
@@ -130,7 +204,7 @@ export class TagManager {
         textAlign: 'center',
         originX: 'center',
         originY: 'center',
-        // textBaseline: 'middle', // Removed to prevent warning
+        textBaseline: 'alphabetic',
         selectable: false, // Will be controlled by group
         evented: true, // Allow editing
         hasControls: false, // Controlled by group
@@ -140,8 +214,13 @@ export class TagManager {
     } catch (e) {
       console.error('TagManager: Error creating text object', e);
       // Fallback
-      tagText = new fabric.Text(strokeLabel, { fontSize: this.tagSize });
+      tagText = new fabric.Text(strokeLabel, {
+        fontSize: this.tagSize,
+        textBaseline: 'alphabetic',
+      });
     }
+    this.sanitizeTextObject(tagText);
+    tagText.styles = {};
 
     // Allow editing tag text (double-click to edit)
     tagText.on('editing:entered', () => {
@@ -267,12 +346,34 @@ export class TagManager {
         this.updateConnector(strokeLabel);
       });
       strokeObject.on('modified', () => {
+        strokeObject.__tagRotationAngle = strokeObject.angle || 0;
         this.updateConnector(strokeLabel);
       });
       strokeObject.on('scaling', () => {
         this.updateConnector(strokeLabel);
       });
       strokeObject.on('rotating', () => {
+        const tagObj = this.tagObjects.get(strokeLabel);
+        if (tagObj) {
+          const currentAngle = strokeObject.angle || 0;
+          const prevAngle =
+            typeof strokeObject.__tagRotationAngle === 'number'
+              ? strokeObject.__tagRotationAngle
+              : currentAngle;
+          const delta = currentAngle - prevAngle;
+
+          if (delta) {
+            const offset = tagObj.tagOffset || { x: 20, y: -10 };
+            const rotatedOffset = fabric.util.rotatePoint(
+              new fabric.Point(offset.x, offset.y),
+              new fabric.Point(0, 0),
+              fabric.util.degreesToRadians(delta)
+            );
+            tagObj.tagOffset = { x: rotatedOffset.x, y: rotatedOffset.y };
+          }
+
+          strokeObject.__tagRotationAngle = currentAngle;
+        }
         this.updateConnector(strokeLabel);
       });
     }
@@ -895,6 +996,7 @@ export class TagManager {
 
   // Update tag text when measurement changes
   updateTagText(strokeLabel, imageLabel) {
+    this.ensureBaselineSanitizer();
     const tagObj = this.tagObjects.get(strokeLabel);
     if (!tagObj) {
       console.warn(`[TagManager] No tag found for ${strokeLabel}`);
@@ -921,6 +1023,9 @@ export class TagManager {
 
     // Update the text
     textObj.set('text', fullText);
+    textObj.set('textBaseline', 'alphabetic');
+    this.sanitizeTextObject(textObj);
+    textObj.styles = {};
 
     // Force text to recalculate dimensions
     textObj.initDimensions();
