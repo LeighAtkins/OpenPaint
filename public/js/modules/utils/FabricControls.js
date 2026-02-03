@@ -199,6 +199,14 @@ export class FabricControls {
 
     pathObj.setPositionByOrigin(compensatedWorldCenter, 'center', 'center');
 
+    // CRITICAL: Rebuild customPoints in world coordinates based on the new canonicalized path
+    // The path uses local coordinates relative to centerLocal, so world coordinates are:
+    // compensatedWorldCenter + (localPoint - centerLocal) = baseCenterWorld + localPoint
+    pathObj.customPoints = localPoints.map(p => ({
+      x: baseCenterWorld.x + p.x,
+      y: baseCenterWorld.y + p.y,
+    }));
+
     // Update tracking for move handlers
     pathObj.lastLeft = pathObj.left;
     pathObj.lastTop = pathObj.top;
@@ -214,6 +222,11 @@ export class FabricControls {
       '[CURVE CANONICALIZE] final left/top:',
       pathObj.left?.toFixed(1),
       pathObj.top?.toFixed(1)
+    );
+    console.log(
+      '[CURVE CANONICALIZE] customPoints rebuilt (world coords):',
+      pathObj.customPoints.length,
+      'points'
     );
   }
 
@@ -818,19 +831,10 @@ export class FabricControls {
         // Update the point
         const oldX = point.x;
         const oldY = point.y;
-        point.x = pointer.x;
-        point.y = pointer.y;
-
-        if (shouldLog) {
-          curveDebug(
-            `[CURVE DEBUG] UPDATED point[${index}]: (${oldX.toFixed(1)}, ${oldY.toFixed(1)}) -> (${point.x.toFixed(1)}, ${point.y.toFixed(1)})`
-          );
-          curveDebug(
-            `[CURVE DEBUG] All customPoints AFTER update:`,
-            JSON.stringify(
-              pathObj.customPoints.map(p => ({ x: p.x.toFixed(1), y: p.y.toFixed(1) }))
-            )
-          );
+        // Update customPoints by index to handle array replacement by canonicalizeCurveFromWorldPoints
+        if (pathObj.customPoints[index]) {
+          pathObj.customPoints[index].x = pointer.x;
+          pathObj.customPoints[index].y = pointer.y;
         }
 
         const baseCenterWorld = pathObj.__curveEditBaseCenterWorld || pathObj.getCenterPoint();

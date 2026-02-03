@@ -339,16 +339,30 @@
     if (saveProjectTop && !saveProjectTop.__saveHandlerBound) {
       saveProjectTop.__saveHandlerBound = true;
       saveProjectTop.addEventListener('click', () => {
-        console.log('[Toolbar] Save button clicked');
-        console.log('[Toolbar] window.projectManager:', window.projectManager);
-        console.log(
-          '[Toolbar] window.projectManager.saveProject:',
-          window.projectManager?.saveProject
-        );
         if (window.projectManager?.saveProject) {
+          console.log('[Toolbar] Triggering ProjectManager.saveProject');
           window.projectManager.saveProject();
+        } else if (window.app?.projectManager?.saveProject) {
+          console.log('[Toolbar] Triggering app.projectManager.saveProject');
+          window.app.projectManager.saveProject();
         } else {
-          console.error('[Toolbar] ProjectManager or saveProject method not available');
+          console.error('[Toolbar] ProjectManager.saveProject not available');
+        }
+      });
+    }
+
+    const loadProjectBtn = document.getElementById('loadProject');
+    if (loadProjectBtn && !loadProjectBtn.__loadHandlerBound) {
+      loadProjectBtn.__loadHandlerBound = true;
+      loadProjectBtn.addEventListener('click', () => {
+        if (window.projectManager?.promptLoadProject) {
+          console.log('[Toolbar] Triggering ProjectManager.promptLoadProject');
+          window.projectManager.promptLoadProject();
+        } else if (window.app?.projectManager?.promptLoadProject) {
+          console.log('[Toolbar] Triggering app.projectManager.promptLoadProject');
+          window.app.projectManager.promptLoadProject();
+        } else {
+          console.error('[Toolbar] ProjectManager.promptLoadProject not available');
         }
       });
     }
@@ -486,6 +500,67 @@
       };
     }
 
+    // Setup save current image button
+    const saveBtn = document.getElementById('save');
+    if (saveBtn && !saveBtn.__saveHandlerBound) {
+      saveBtn.__saveHandlerBound = true;
+      saveBtn.addEventListener('click', () => {
+        if (window.app?.canvasManager?.fabricCanvas) {
+          const canvas = window.app.canvasManager.fabricCanvas;
+          const projectName = document.getElementById('projectName')?.value || 'OpenPaint';
+          const viewId = window.app.projectManager?.currentViewId || 'image';
+
+          // Get the capture frame for proper cropping
+          const captureFrame = document.getElementById('captureFrame');
+          if (!captureFrame) {
+            console.error('[Save] Capture frame not found');
+            return;
+          }
+
+          const frameRect = captureFrame.getBoundingClientRect();
+          const canvasEl = canvas.lowerCanvasEl;
+
+          // Get canvas scale (CSS size vs actual size)
+          const scaleX = canvasEl.width / canvasEl.offsetWidth;
+          const scaleY = canvasEl.height / canvasEl.offsetHeight;
+
+          // Calculate crop region in canvas coordinates
+          const canvasRect = canvasEl.getBoundingClientRect();
+          const left = (frameRect.left - canvasRect.left) * scaleX;
+          const top = (frameRect.top - canvasRect.top) * scaleY;
+          const width = frameRect.width * scaleX;
+          const height = frameRect.height * scaleY;
+
+          console.log('[Save] Frame rect:', frameRect);
+          console.log('[Save] Canvas rect:', canvasRect);
+          console.log('[Save] Scale:', scaleX, scaleY);
+          console.log('[Save] Crop region:', { left, top, width, height });
+
+          // Create a temporary canvas for cropping
+          const tempCanvas = document.createElement('canvas');
+          tempCanvas.width = width;
+          tempCanvas.height = height;
+          const ctx = tempCanvas.getContext('2d');
+
+          // Draw the cropped region from the fabric canvas
+          ctx.drawImage(canvasEl, left, top, width, height, 0, 0, width, height);
+
+          // Download the image
+          tempCanvas.toBlob(blob => {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${projectName}_${viewId}.png`;
+            a.click();
+            URL.revokeObjectURL(url);
+            console.log('[Save] Image saved:', a.download);
+          });
+        } else {
+          console.error('[Save] Canvas not available');
+        }
+      });
+    }
+
     // Hide legacy panels after moving controls (keep in DOM to preserve any lookups)
     document.getElementById('toolsPanel')?.classList.add('hidden');
     document.getElementById('projectPanel')?.classList.add('hidden');
@@ -524,22 +599,12 @@
 
     const triggerSaveOnce = () => {
       const saveButton = document.getElementById('save');
-      if (!saveButton) {
-        console.warn('[QuickSave] Save button not found');
-        return;
-      }
-      if (saveButton.__quickSaveInFlight) {
-        return;
-      }
-      saveButton.__quickSaveInFlight = true;
-      if (typeof saveButton.click === 'function') {
+      if (saveButton) {
+        console.log('[QuickSave] Triggering save current image');
         saveButton.click();
       } else {
-        saveButton.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        console.error('[QuickSave] Save button not found');
       }
-      setTimeout(() => {
-        saveButton.__quickSaveInFlight = false;
-      }, 500);
     };
 
     quickSaveBtn.addEventListener('click', event => {
@@ -575,19 +640,22 @@
       const action = item.dataset.action;
 
       if (action === 'pdf') {
-        const projectName = document.getElementById('projectName')?.value || 'Untitled Project';
+        const projectName = document.getElementById('projectName')?.value || 'OpenPaint';
         if (typeof window.showPDFExportDialog === 'function') {
           window.showPDFExportDialog(projectName);
         } else {
-          console.error('[QuickSave] window.showPDFExportDialog is not a function');
+          console.error('[QuickSave] PDF export not loaded yet');
         }
       } else if (action === 'multiple') {
         if (typeof window.saveAllImages === 'function') {
           window.saveAllImages();
         } else {
-          console.error('[QuickSave] window.saveAllImages is not a function');
+          console.error('[QuickSave] Save all images not loaded yet');
         }
       }
+
+      // Hide menu after selection
+      quickSaveMenu.classList.add('hidden');
     });
   }
 

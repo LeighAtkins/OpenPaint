@@ -23,14 +23,14 @@ export class ProjectManager {
   }
 
   // Switch to a different view (image)
-  async switchView(viewId) {
+  async switchView(viewId, force = false) {
     if (!this.views[viewId]) {
       console.warn(`View ${viewId} does not exist.`);
       return;
     }
 
-    // If already on this view, don't clear everything
-    if (this.currentViewId === viewId) {
+    // If already on this view, don't clear everything (unless forced)
+    if (this.currentViewId === viewId && !force) {
       console.log(`Already on view: ${viewId}, refreshing image only`);
       const view = this.views[viewId];
       if (view.image) {
@@ -119,6 +119,19 @@ export class ProjectManager {
             FabricControls.createLineControls(obj);
           } else if (obj.type === 'path' && obj.customPoints) {
             FabricControls.createCurveControls(obj);
+          } else if (
+            (obj.type === 'i-text' || obj.type === 'text') &&
+            obj.strokeMetadata?.type === 'text'
+          ) {
+            // Reattach event handlers for text elements loaded from JSON
+            obj.on('editing:exited', () => {
+              if (window.app?.historyManager) {
+                window.app.historyManager.saveState();
+              }
+            });
+            console.log(
+              `[Load] Reattached event handlers for text element: "${obj.text?.substring(0, 30) || 'empty'}"`
+            );
           }
         });
 
@@ -1207,6 +1220,12 @@ export class ProjectManager {
       // Clear existing views and recreate from saved data
       this.views = {};
 
+      // Clear image gallery to prevent duplicate detection issues
+      if (window.imageGallery?.clearGallery) {
+        window.imageGallery.clearGallery();
+        console.log('[Load] Cleared image gallery');
+      }
+
       // Load each view
       const viewIds = Object.keys(projectData.views);
       console.log('[Load] Loading views:', viewIds);
@@ -1243,7 +1262,7 @@ export class ProjectManager {
       const targetView = projectData.currentViewId || viewIds[0];
       if (targetView && this.views[targetView]) {
         console.log(`[Load] Switching to view: ${targetView}`);
-        await this.switchView(targetView);
+        await this.switchView(targetView, true);
       }
 
       this.showStatusMessage('Project loaded successfully', 'success');

@@ -1228,6 +1228,9 @@ export class StrokeMetadataManager {
       if (obj.strokeMetadata.type === 'text') {
         if (!this.textElementsByImage[viewId].includes(obj)) {
           this.textElementsByImage[viewId].push(obj);
+          console.log(
+            `[StrokeMetadata] Rebuilt: Found text element "${obj.text?.substring(0, 30) || 'empty'}" in view ${viewId}`
+          );
         }
         obj.visible = isVisible;
         return;

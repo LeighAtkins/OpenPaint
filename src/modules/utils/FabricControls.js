@@ -178,6 +178,14 @@ export class FabricControls {
 
     pathObj.setPositionByOrigin(compensatedWorldCenter, 'center', 'center');
 
+    // CRITICAL: Rebuild customPoints in world coordinates based on the new canonicalized path
+    // The path uses local coordinates relative to centerLocal, so world coordinates are:
+    // compensatedWorldCenter + (localPoint - centerLocal) = baseCenterWorld + localPoint
+    pathObj.customPoints = localPoints.map(p => ({
+      x: baseCenterWorld.x + p.x,
+      y: baseCenterWorld.y + p.y,
+    }));
+
     // Update tracking for move handlers
     pathObj.lastLeft = pathObj.left;
     pathObj.lastTop = pathObj.top;
@@ -619,8 +627,11 @@ export class FabricControls {
           }
         }
 
-        point.x = pointer.x;
-        point.y = pointer.y;
+        // Update customPoints by index to handle array replacement by canonicalizeCurveFromWorldPoints
+        if (pathObj.customPoints[index]) {
+          pathObj.customPoints[index].x = pointer.x;
+          pathObj.customPoints[index].y = pointer.y;
+        }
 
         const baseCenterWorld = pathObj.__curveEditBaseCenterWorld || pathObj.getCenterPoint();
         canonicalizeCurveFromWorldPoints(pathObj, baseCenterWorld);
