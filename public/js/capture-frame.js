@@ -76,6 +76,7 @@
         lockButton.classList.add('locked');
         lockButton.title = 'Unlock frame (L)';
         instructions.classList.add('hidden');
+        document.body.classList.remove('capture-unlocked');
 
         // Hide Apply All button for safety
         if (applyAllButton) {
@@ -94,6 +95,7 @@
         lockButton.classList.remove('locked');
         lockButton.title = 'Lock frame (L)';
         instructions.classList.remove('hidden');
+        document.body.classList.add('capture-unlocked');
 
         // Show Apply All button when unlocked
         if (applyAllButton) {
@@ -179,56 +181,41 @@
       let newWidth = startRect.width;
       let newHeight = startRect.height;
 
-      // Handle different resize directions
-      switch (currentHandle) {
-        case 'nw':
-          newX = startRect.x + deltaX;
-          newY = startRect.y + deltaY;
-          newWidth = startRect.width - deltaX;
-          newHeight = startRect.height - deltaY;
-          break;
-        case 'n':
-          newY = startRect.y + deltaY;
-          newHeight = startRect.height - deltaY;
-          break;
-        case 'ne':
-          newY = startRect.y + deltaY;
-          newWidth = startRect.width + deltaX;
-          newHeight = startRect.height - deltaY;
-          break;
-        case 'e':
-          newWidth = startRect.width + deltaX;
-          break;
-        case 'se':
-          newWidth = startRect.width + deltaX;
-          newHeight = startRect.height + deltaY;
-          break;
-        case 's':
-          newHeight = startRect.height + deltaY;
-          break;
-        case 'sw':
-          newX = startRect.x + deltaX;
-          newWidth = startRect.width - deltaX;
-          newHeight = startRect.height + deltaY;
-          break;
-        case 'w':
-          newX = startRect.x + deltaX;
-          newWidth = startRect.width - deltaX;
-          break;
+      // Handle different resize directions (mirrored resize from center)
+      const centerX = startRect.x + startRect.width / 2;
+      const centerY = startRect.y + startRect.height / 2;
+      if (currentHandle.includes('e')) {
+        newWidth = startRect.width + deltaX * 2;
+      }
+      if (currentHandle.includes('w')) {
+        newWidth = startRect.width - deltaX * 2;
+      }
+      if (currentHandle.includes('s')) {
+        newHeight = startRect.height + deltaY * 2;
+      }
+      if (currentHandle.includes('n')) {
+        newHeight = startRect.height - deltaY * 2;
       }
 
       // Apply minimum size constraints
       const minSize = 100;
-      if (newWidth < minSize) {
-        if (currentHandle.includes('w')) newX = startRect.x + startRect.width - minSize;
-        newWidth = minSize;
+      newWidth = Math.max(minSize, newWidth);
+      newHeight = Math.max(minSize, newHeight);
+
+      // Apply maximum size constraints (viewport bounds) with symmetric resizing
+      const maxWidth = 2 * Math.min(centerX, window.innerWidth - centerX);
+      const maxHeight = 2 * Math.min(centerY, window.innerHeight - centerY);
+      if (Number.isFinite(maxWidth)) {
+        newWidth = Math.min(newWidth, maxWidth);
       }
-      if (newHeight < minSize) {
-        if (currentHandle.includes('n')) newY = startRect.y + startRect.height - minSize;
-        newHeight = minSize;
+      if (Number.isFinite(maxHeight)) {
+        newHeight = Math.min(newHeight, maxHeight);
       }
 
-      // Apply maximum size constraints (viewport bounds)
+      newX = centerX - newWidth / 2;
+      newY = centerY - newHeight / 2;
+
+      // Apply minimum size constraints
       const maxX = window.innerWidth - newWidth;
       const maxY = window.innerHeight - newHeight;
       newX = Math.max(0, Math.min(maxX, newX));

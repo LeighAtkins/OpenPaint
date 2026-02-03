@@ -24,7 +24,9 @@
       if (!el) return null;
       beforeSetup?.(el);
       target.appendChild(el);
-      setUniform(el);
+      if (!el.dataset?.skipUniform) {
+        setUniform(el);
+      }
       return el;
     };
 
@@ -231,16 +233,7 @@
 
     // CENTER/BOTTOM: canvas view controls moved to bottom
     reparent('fitModeSelect', bottom);
-    reparent('rotateLeftCtrl', bottom, el => {
-      el.classList.add('icon-btn', 'tbtn');
-      el.title = 'Rotate Left';
-      el.textContent = '↶';
-    });
-    reparent('rotateRightCtrl', bottom, el => {
-      el.classList.add('icon-btn', 'tbtn');
-      el.title = 'Rotate Right';
-      el.textContent = '↷';
-    });
+    reparent('rotateFineWrap', bottom);
     // CLEANUP: Remove any existing menu or wrapper from previous runs
     const existingMenu = document.getElementById('zoomMenuDropdown');
     if (existingMenu) existingMenu.remove();

@@ -468,6 +468,184 @@
         padding: 0;
       }
 
+      /* Rotate controls: big swing hover state */
+      #rotateLeftCtrl,
+      #rotateRightCtrl {
+        position: relative;
+        overflow: hidden;
+        transform-origin: 50% 60%;
+        transition:
+          transform 0.18s ease,
+          box-shadow 0.18s ease,
+          border-color 0.18s ease,
+          background 0.18s ease,
+          color 0.18s ease;
+      }
+
+      #rotateLeftCtrl::after,
+      #rotateRightCtrl::after {
+        content: '';
+        position: absolute;
+        inset: -40%;
+        background: radial-gradient(
+          circle at 30% 30%,
+          rgba(59, 130, 246, 0.25),
+          rgba(14, 116, 144, 0.0) 60%
+        );
+        opacity: 0;
+        transition: opacity 0.18s ease;
+        pointer-events: none;
+      }
+
+      #rotateLeftCtrl:hover,
+      #rotateRightCtrl:hover {
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        border-color: rgba(59, 130, 246, 0.6);
+        box-shadow:
+          0 10px 24px rgba(15, 23, 42, 0.18),
+          0 0 0 2px rgba(59, 130, 246, 0.15);
+        color: #0f172a;
+      }
+
+      #rotateLeftCtrl:hover {
+        transform: rotate(-12deg) scale(1.08);
+      }
+
+      #rotateRightCtrl:hover {
+        transform: rotate(12deg) scale(1.08);
+      }
+
+      #rotateLeftCtrl:hover::after,
+      #rotateRightCtrl:hover::after {
+        opacity: 1;
+      }
+
+      #rotateLeftCtrl:active,
+      #rotateRightCtrl:active {
+        transform: scale(0.96);
+        box-shadow:
+          0 6px 14px rgba(15, 23, 42, 0.12),
+          0 0 0 2px rgba(59, 130, 246, 0.12);
+      }
+
+      #rotateLeftCtrl:focus-visible,
+      #rotateRightCtrl:focus-visible {
+        outline: 2px solid rgba(59, 130, 246, 0.65);
+        outline-offset: 2px;
+      }
+
+      .rotate-fine-wrap {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+      }
+
+      .rotate-fine-panel {
+        position: absolute;
+        bottom: calc(100% + 4px);
+        left: 50%;
+        transform: translate(-50%, 8px);
+        opacity: 0;
+        pointer-events: none;
+        background: rgba(255, 255, 255, 0.98);
+        border: 1px solid rgba(148, 163, 184, 0.5);
+        box-shadow: 0 12px 32px rgba(15, 23, 42, 0.2);
+        border-radius: 14px;
+        padding: 8px 10px;
+        min-width: 220px;
+        transition: opacity 0.16s ease, transform 0.16s ease;
+      }
+
+      .rotate-fine-wrap:hover .rotate-fine-panel,
+      .rotate-fine-wrap:focus-within .rotate-fine-panel,
+      .rotate-fine-panel:hover {
+        opacity: 1;
+        pointer-events: auto;
+        transform: translate(-50%, 0);
+      }
+
+      .rotate-fine-wrap::after {
+        content: '';
+        position: absolute;
+        left: -6px;
+        right: -6px;
+        top: -22px;
+        height: 26px;
+      }
+
+      .rotate-fine-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .rotate-fine-label {
+        font-size: 11px;
+        font-weight: 600;
+        color: #0f172a;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+      }
+
+      #rotateFineSlider {
+        appearance: none;
+        height: 6px;
+        border-radius: 999px;
+        background: linear-gradient(90deg, #0ea5e9 0%, #6366f1 100%);
+        outline: none;
+        flex: 1;
+        cursor: pointer;
+      }
+
+      #rotateFineSlider::-webkit-slider-thumb {
+        appearance: none;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: #0f172a;
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.25);
+        border: 2px solid #fff;
+        cursor: pointer;
+      }
+
+      #rotateFineSlider::-moz-range-thumb {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: #0f172a;
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.25);
+        border: 2px solid #fff;
+        cursor: pointer;
+      }
+
+      #fineRotateGrid {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        opacity: 0;
+        background-image:
+          linear-gradient(rgba(148, 163, 184, 0.18) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(148, 163, 184, 0.18) 1px, transparent 1px);
+        background-size: 40px 40px;
+        transition: opacity 0.18s ease;
+        z-index: 12;
+      }
+
+      body.fine-rotate-active #fineRotateGrid,
+      body.capture-unlocked #fineRotateGrid {
+        opacity: 1;
+      }
+
+      .rotate-fine-value {
+        font-variant-numeric: tabular-nums;
+        font-size: 12px;
+        font-weight: 600;
+        color: #0f172a;
+        min-width: 36px;
+        text-align: right;
+      }
+
+
       /* Specific button styles to prevent layout shifts */
       #paste {
         padding: 8px 16px;
@@ -2239,6 +2417,7 @@
         class="flex-1 relative bg-white shadow-inner"
         style="overflow: hidden; z-index: 0"
       >
+        <div id="fineRotateGrid" aria-hidden="true"></div>
         <canvas
           id="canvas"
           style="
@@ -3244,21 +3423,38 @@
             <path d="M5.25 7.5l4.5 4.5 4.5-4.5H5.25z" />
           </svg>
         </button>
-        <div class="flex items-center gap-1 ml-2">
-          <button
+        <div id="rotateFineWrap" class="rotate-fine-wrap ml-2" data-skip-uniform="true">
+          <div class="flex items-center gap-1">
+            <button
             id="rotateLeftCtrl"
-            class="px-2 py-1 bg-white border border-gray-300 text-slate-700 text-xs rounded-lg hover:bg-slate-50"
+            class="px-2 py-1 bg-white border border-gray-300 text-slate-700 text-xs rounded-lg hover:bg-slate-50 icon-btn tbtn"
             title="Rotate 90° CCW"
           >
             ↶
           </button>
           <button
             id="rotateRightCtrl"
-            class="px-2 py-1 bg-white border border-gray-300 text-slate-700 text-xs rounded-lg hover:bg-slate-50"
+            class="px-2 py-1 bg-white border border-gray-300 text-slate-700 text-xs rounded-lg hover:bg-slate-50 icon-btn tbtn"
             title="Rotate 90° CW"
           >
             ↷
           </button>
+          </div>
+          <div id="rotateFinePanel" class="rotate-fine-panel">
+            <div class="rotate-fine-row">
+              <span class="rotate-fine-label">Fine</span>
+              <input
+                id="rotateFineSlider"
+                type="range"
+                min="-45"
+                max="45"
+                step="1"
+                value="0"
+                aria-label="Fine rotate"
+              />
+              <span id="rotateFineValue" class="rotate-fine-value">0°</span>
+            </div>
+          </div>
         </div>
 
         <!-- Share/Update next to Copy/Save -->
@@ -3510,7 +3706,9 @@ async function generatePDFWithPDFLib(projectName, viewIds, quality, pageSize, in
           if (!el) return null;
           beforeSetup?.(el);
           target.appendChild(el);
-          setUniform(el);
+          if (!el.dataset?.skipUniform) {
+            setUniform(el);
+          }
           return el;
         };
 
@@ -3717,16 +3915,7 @@ async function generatePDFWithPDFLib(projectName, viewIds, quality, pageSize, in
 
         // CENTER/BOTTOM: canvas view controls moved to bottom
         reparent('fitModeSelect', bottom);
-        reparent('rotateLeftCtrl', bottom, el => {
-          el.classList.add('icon-btn', 'tbtn');
-          el.title = 'Rotate Left';
-          el.textContent = '↶';
-        });
-        reparent('rotateRightCtrl', bottom, el => {
-          el.classList.add('icon-btn', 'tbtn');
-          el.title = 'Rotate Right';
-          el.textContent = '↷';
-        });
+        reparent('rotateFineWrap', bottom);
         reparent('scaleButton', bottom);
         syncFromState();
 
@@ -5094,6 +5283,7 @@ async function generatePDFWithPDFLib(projectName, viewIds, quality, pageSize, in
           if (isCaptureLocked) {
             captureFrame.classList.add('locked');
             captureFrame.classList.remove('unlocked');
+            document.body.classList.remove('capture-unlocked');
             lockButton.classList.add('locked');
             lockButton.title = 'Unlock frame (L)';
             instructions.classList.add('hidden');
@@ -5112,6 +5302,7 @@ async function generatePDFWithPDFLib(projectName, viewIds, quality, pageSize, in
           } else {
             captureFrame.classList.remove('locked');
             captureFrame.classList.add('unlocked');
+            document.body.classList.add('capture-unlocked');
             lockButton.classList.remove('locked');
             lockButton.title = 'Lock frame (L)';
             instructions.classList.remove('hidden');
@@ -5200,54 +5391,39 @@ async function generatePDFWithPDFLib(projectName, viewIds, quality, pageSize, in
           let newWidth = startRect.width;
           let newHeight = startRect.height;
 
-          // Handle different resize directions
-          switch (currentHandle) {
-            case 'nw':
-              newX = startRect.x + deltaX;
-              newY = startRect.y + deltaY;
-              newWidth = startRect.width - deltaX;
-              newHeight = startRect.height - deltaY;
-              break;
-            case 'n':
-              newY = startRect.y + deltaY;
-              newHeight = startRect.height - deltaY;
-              break;
-            case 'ne':
-              newY = startRect.y + deltaY;
-              newWidth = startRect.width + deltaX;
-              newHeight = startRect.height - deltaY;
-              break;
-            case 'e':
-              newWidth = startRect.width + deltaX;
-              break;
-            case 'se':
-              newWidth = startRect.width + deltaX;
-              newHeight = startRect.height + deltaY;
-              break;
-            case 's':
-              newHeight = startRect.height + deltaY;
-              break;
-            case 'sw':
-              newX = startRect.x + deltaX;
-              newWidth = startRect.width - deltaX;
-              newHeight = startRect.height + deltaY;
-              break;
-            case 'w':
-              newX = startRect.x + deltaX;
-              newWidth = startRect.width - deltaX;
-              break;
+          // Handle different resize directions (mirrored resize from center)
+          const centerX = startRect.x + startRect.width / 2;
+          const centerY = startRect.y + startRect.height / 2;
+          if (currentHandle.includes('e')) {
+            newWidth = startRect.width + deltaX * 2;
+          }
+          if (currentHandle.includes('w')) {
+            newWidth = startRect.width - deltaX * 2;
+          }
+          if (currentHandle.includes('s')) {
+            newHeight = startRect.height + deltaY * 2;
+          }
+          if (currentHandle.includes('n')) {
+            newHeight = startRect.height - deltaY * 2;
           }
 
           // Apply minimum size constraints
           const minSize = 100;
-          if (newWidth < minSize) {
-            if (currentHandle.includes('w')) newX = startRect.x + startRect.width - minSize;
-            newWidth = minSize;
+          newWidth = Math.max(minSize, newWidth);
+          newHeight = Math.max(minSize, newHeight);
+
+          // Apply maximum size constraints (viewport bounds) with symmetric resizing
+          const maxWidth = 2 * Math.min(centerX, window.innerWidth - centerX);
+          const maxHeight = 2 * Math.min(centerY, window.innerHeight - centerY);
+          if (Number.isFinite(maxWidth)) {
+            newWidth = Math.min(newWidth, maxWidth);
           }
-          if (newHeight < minSize) {
-            if (currentHandle.includes('n')) newY = startRect.y + startRect.height - minSize;
-            newHeight = minSize;
+          if (Number.isFinite(maxHeight)) {
+            newHeight = Math.min(newHeight, maxHeight);
           }
+
+          newX = centerX - newWidth / 2;
+          newY = centerY - newHeight / 2;
 
           // Apply maximum size constraints (viewport bounds)
           const maxX = window.innerWidth - newWidth;
