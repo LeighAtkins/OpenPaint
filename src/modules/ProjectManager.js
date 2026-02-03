@@ -23,14 +23,14 @@ export class ProjectManager {
   }
 
   // Switch to a different view (image)
-  async switchView(viewId) {
+  async switchView(viewId, force = false) {
     if (!this.views[viewId]) {
       console.warn(`View ${viewId} does not exist.`);
       return;
     }
 
-    // If already on this view, don't clear everything
-    if (this.currentViewId === viewId) {
+    // If already on this view, don't clear everything (unless forced)
+    if (this.currentViewId === viewId && !force) {
       console.log(`Already on view: ${viewId}, refreshing image only`);
       const view = this.views[viewId];
       if (view.image) {

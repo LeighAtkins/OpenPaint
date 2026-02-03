@@ -832,6 +832,152 @@ class App {
     window.shareProject = () => this.projectManager.shareProject();
     window.updateSharedProject = () => this.projectManager.updateSharedProject();
     window.app = this;
+
+    // Copy Canvas button - copies image to clipboard (cropped to capture frame if present)
+    const copyCanvasBtn = document.getElementById('copyCanvasBtn');
+    if (copyCanvasBtn) {
+      copyCanvasBtn.addEventListener('click', async () => {
+        console.log('[Copy] Button clicked');
+        try {
+          const canvas = this.canvasManager?.fabricCanvas;
+          if (!canvas) {
+            console.error('[Copy] Canvas not available');
+            return;
+          }
+
+          // Visual feedback - subtle press animation
+          copyCanvasBtn.style.transform = 'scale(0.98)';
+          setTimeout(() => {
+            copyCanvasBtn.style.transform = '';
+          }, 100);
+
+          // Get icon elements for animation
+          const copyIcon = copyCanvasBtn.querySelector('#copyIcon');
+          const checkIcon = copyCanvasBtn.querySelector('#checkIcon');
+
+          // Get the capture frame if it exists
+          const captureFrame = document.getElementById('captureFrame');
+          const sourceCanvas = canvas.lowerCanvasEl;
+          let cropData = null;
+
+          if (captureFrame) {
+            const frameRect = captureFrame.getBoundingClientRect();
+            const canvasRect = sourceCanvas.getBoundingClientRect();
+
+            // Check if frame overlaps with canvas
+            if (
+              frameRect.left < canvasRect.right &&
+              frameRect.right > canvasRect.left &&
+              frameRect.top < canvasRect.bottom &&
+              frameRect.bottom > canvasRect.top
+            ) {
+              // Calculate crop area in canvas pixel coordinates
+              const scalePx = sourceCanvas.width / canvasRect.width;
+              const left = Math.max(frameRect.left, canvasRect.left);
+              const top = Math.max(frameRect.top, canvasRect.top);
+              const right = Math.min(frameRect.right, canvasRect.right);
+              const bottom = Math.min(frameRect.bottom, canvasRect.bottom);
+
+              cropData = {
+                x: Math.round((left - canvasRect.left) * scalePx),
+                y: Math.round((top - canvasRect.top) * scalePx),
+                width: Math.round((right - left) * scalePx),
+                height: Math.round((bottom - top) * scalePx),
+              };
+              console.log('[Copy] Cropping to frame:', cropData);
+            }
+          }
+
+          // Create a temporary canvas for the output
+          const tempCanvas = document.createElement('canvas');
+          const tempCtx = tempCanvas.getContext('2d');
+
+          if (cropData && cropData.width > 0 && cropData.height > 0) {
+            // Copy the cropped region
+            tempCanvas.width = cropData.width;
+            tempCanvas.height = cropData.height;
+            tempCtx.drawImage(
+              sourceCanvas,
+              cropData.x,
+              cropData.y,
+              cropData.width,
+              cropData.height,
+              0,
+              0,
+              cropData.width,
+              cropData.height
+            );
+          } else {
+            // Copy the entire canvas
+            tempCanvas.width = sourceCanvas.width;
+            tempCanvas.height = sourceCanvas.height;
+            tempCtx.drawImage(sourceCanvas, 0, 0);
+            console.log('[Copy] Copying full canvas:', tempCanvas.width, 'x', tempCanvas.height);
+          }
+
+          // Convert to blob and copy to clipboard
+          const blob = await new Promise((resolve, reject) => {
+            tempCanvas.toBlob(b => {
+              if (b) resolve(b);
+              else reject(new Error('Failed to create blob'));
+            }, 'image/png');
+          });
+
+          console.log('[Copy] Blob created, size:', blob.size);
+
+          if (navigator.clipboard && window.ClipboardItem) {
+            await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+            console.log('[Copy] Successfully copied to clipboard');
+
+            // Show success feedback
+            if (this.projectManager?.showStatusMessage) {
+              this.projectManager.showStatusMessage('Image copied to clipboard!', 'success');
+            }
+
+            // Visual success feedback - icon transition to checkmark
+            if (copyIcon && checkIcon) {
+              copyIcon.classList.add('opacity-0', 'scale-50');
+              copyIcon.classList.remove('opacity-90', 'scale-100');
+              checkIcon.classList.remove('opacity-0', 'scale-50');
+              checkIcon.classList.add('opacity-100', 'scale-100');
+
+              // Transition back to copy icon after delay
+              setTimeout(() => {
+                checkIcon.classList.add('opacity-0', 'scale-50');
+                checkIcon.classList.remove('opacity-100', 'scale-100');
+                copyIcon.classList.remove('opacity-0', 'scale-50');
+                copyIcon.classList.add('opacity-90', 'scale-100');
+              }, 1500);
+            }
+          } else {
+            console.warn('[Copy] Clipboard API not supported');
+            if (this.projectManager?.showStatusMessage) {
+              this.projectManager.showStatusMessage(
+                'Clipboard not supported in this browser',
+                'error'
+              );
+            }
+          }
+        } catch (error) {
+          console.error('[Copy] Failed to copy to clipboard:', error);
+          if (this.projectManager?.showStatusMessage) {
+            this.projectManager.showStatusMessage(
+              'Failed to copy image: ' + error.message,
+              'error'
+            );
+          }
+
+          // Visual error feedback - subtle shake animation
+          copyCanvasBtn.style.animation = 'shake 0.3s ease-in-out';
+          setTimeout(() => {
+            copyCanvasBtn.style.animation = '';
+          }, 300);
+        }
+      });
+      console.log('[main.js] Copy canvas button event listener added');
+    } else {
+      console.warn('[main.js] Copy canvas button not found');
+    }
   }
 
   setupUnitToggle() {

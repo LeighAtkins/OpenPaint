@@ -2456,6 +2456,15 @@ export class CanvasManager {
         // Reviver: restore custom properties from serialized JSON to fabric object
         if (o.strokeMetadata) {
           object.strokeMetadata = o.strokeMetadata;
+          // DEBUG: Log text objects being restored
+          if (o.strokeMetadata.type === 'text') {
+            console.log(
+              '[CanvasManager] Reviver: Restoring text object:',
+              o.text?.substring(0, 30) || 'empty',
+              'with metadata:',
+              o.strokeMetadata
+            );
+          }
         }
         if (o.isArrow) {
           object.isArrow = o.isArrow;
