@@ -120,13 +120,21 @@ export class FabricControls {
    * @param {fabric.Path} pathObj - The path object with customPoints array
    * @param {Object} baseCenterWorld - Optional center point {x, y}. If not provided, computed from customPoints.
    */
-  static canonicalizeCurveFromWorldPoints(pathObj, baseCenterWorld = null) {
+  static canonicalizeCurveFromWorldPoints(
+    pathObj,
+    baseCenterWorld = null,
+    angle = 0,
+    keepWorldCenter = null
+  ) {
     if (!pathObj || !Array.isArray(pathObj.customPoints) || pathObj.customPoints.length < 2) {
       console.warn(
         '[FabricControls] canonicalizeCurveFromWorldPoints: invalid pathObj or customPoints'
       );
       return;
     }
+
+    const normalizedAngle = Number.isFinite(angle) ? angle : 0;
+    const angleRad = normalizedAngle ? fabric.util.degreesToRadians(normalizedAngle) : 0;
 
     // Calculate baseCenterWorld from customPoints if not provided
     if (!baseCenterWorld) {
@@ -147,17 +155,21 @@ export class FabricControls {
     );
 
     // Convert world points to local points around baseCenterWorld
-    const localPoints = pathObj.customPoints.map(p => ({
-      x: p.x - baseCenterWorld.x,
-      y: p.y - baseCenterWorld.y,
-    }));
+    const localPoints = pathObj.customPoints.map(p => {
+      const local = new fabric.Point(p.x - baseCenterWorld.x, p.y - baseCenterWorld.y);
+      if (!angleRad) {
+        return { x: local.x, y: local.y };
+      }
+      const rotated = fabric.util.rotatePoint(local, new fabric.Point(0, 0), -angleRad);
+      return { x: rotated.x, y: rotated.y };
+    });
 
     // Create smooth path from local points
     const newPathString = PathUtils.createSmoothPath(localPoints);
     const pathData = fabric.util.parsePath(newPathString);
 
     // Set path and reset transforms
-    pathObj.set({ path: pathData, angle: 0 });
+    pathObj.set({ path: pathData, angle: normalizedAngle });
     pathObj.set({
       scaleX: 1,
       scaleY: 1,
@@ -185,11 +197,23 @@ export class FabricControls {
       pathOffset: centerLocal,
     });
 
-    // Compensate world position: baseCenterWorld + centerLocal
-    const compensatedWorldCenter = new fabric.Point(
-      baseCenterWorld.x + centerLocal.x,
-      baseCenterWorld.y + centerLocal.y
-    );
+    // Compensate world position: baseCenterWorld + centerLocal (rotated if angle is preserved)
+    const centerLocalWorld = angleRad
+      ? fabric.util.rotatePoint(centerLocal, new fabric.Point(0, 0), angleRad)
+      : centerLocal;
+    const desiredCenter =
+      keepWorldCenter ||
+      new fabric.Point(
+        baseCenterWorld.x + centerLocalWorld.x,
+        baseCenterWorld.y + centerLocalWorld.y
+      );
+    if (keepWorldCenter) {
+      baseCenterWorld = {
+        x: keepWorldCenter.x - centerLocalWorld.x,
+        y: keepWorldCenter.y - centerLocalWorld.y,
+      };
+    }
+    const compensatedWorldCenter = new fabric.Point(desiredCenter.x, desiredCenter.y);
 
     console.log(
       '[CURVE CANONICALIZE] compensatedWorldCenter:',
@@ -199,13 +223,24 @@ export class FabricControls {
 
     pathObj.setPositionByOrigin(compensatedWorldCenter, 'center', 'center');
 
-    // CRITICAL: Rebuild customPoints in world coordinates based on the new canonicalized path
-    // The path uses local coordinates relative to centerLocal, so world coordinates are:
-    // compensatedWorldCenter + (localPoint - centerLocal) = baseCenterWorld + localPoint
-    pathObj.customPoints = localPoints.map(p => ({
-      x: baseCenterWorld.x + p.x,
-      y: baseCenterWorld.y + p.y,
-    }));
+    // Rebuild customPoints in world coordinates based on the preserved angle.
+    pathObj.customPoints = localPoints.map(p => {
+      if (!angleRad) {
+        return {
+          x: baseCenterWorld.x + p.x,
+          y: baseCenterWorld.y + p.y,
+        };
+      }
+      const rotated = fabric.util.rotatePoint(
+        new fabric.Point(p.x, p.y),
+        new fabric.Point(0, 0),
+        angleRad
+      );
+      return {
+        x: baseCenterWorld.x + rotated.x,
+        y: baseCenterWorld.y + rotated.y,
+      };
+    });
 
     // Update tracking for move handlers
     pathObj.lastLeft = pathObj.left;
@@ -587,127 +622,7 @@ export class FabricControls {
 
     const canonicalizeCurveFromWorldPoints = (pathObj, baseCenterWorld) => {
       curveDebug('[CURVE DEBUG] ---- canonicalizeCurveFromWorldPoints START ----');
-      curveDebug(
-        '[CURVE DEBUG] baseCenterWorld:',
-        baseCenterWorld.x.toFixed(1),
-        baseCenterWorld.y.toFixed(1)
-      );
-      curveDebug(
-        '[CURVE DEBUG] customPoints BEFORE:',
-        JSON.stringify(pathObj.customPoints.map(p => ({ x: p.x.toFixed(1), y: p.y.toFixed(1) })))
-      );
-      curveDebug(
-        '[CURVE DEBUG] pathObj.left/top BEFORE:',
-        pathObj.left?.toFixed(1),
-        pathObj.top?.toFixed(1)
-      );
-      curveDebug('[CURVE DEBUG] pathObj.getCenterPoint() BEFORE:', pathObj.getCenterPoint());
-      curveDebug('[CURVE DEBUG] pathObj.pathOffset BEFORE:', pathObj.pathOffset);
-
-      // S3: Convert WORLD points to LOCAL points around stable base center
-      const localPoints = toLocalPoints(pathObj.customPoints, baseCenterWorld);
-      const newPathString = PathUtils.createSmoothPath(localPoints);
-      const pathData = fabric.util.parsePath(newPathString);
-      curveDebug('[CURVE DEBUG] newPathString:', newPathString);
-
-      // S4: Set path + reset transforms for deterministic bounds math
-      pathObj.set({ path: pathData, angle: 0 });
-      pathObj.set({
-        scaleX: 1,
-        scaleY: 1,
-        skewX: 0,
-        skewY: 0,
-        flipX: false,
-        flipY: false,
-      });
-
-      // S5: Compute Fabric LOCAL bbox center (Bezier-extrema aware)
-      const dims = pathObj._calcDimensions();
-      curveDebug('[CURVE DEBUG] _calcDimensions:', JSON.stringify(dims));
-      const centerLocal = new fabric.Point(dims.left + dims.width / 2, dims.top + dims.height / 2);
-      curveDebug(
-        '[CURVE DEBUG] centerLocal (Fabric bbox center):',
-        centerLocal.x.toFixed(1),
-        centerLocal.y.toFixed(1)
-      );
-
-      // Calculate what the anchor-only bbox center would be (for comparison)
-      const anchorOnlyBbox = {
-        minX: Math.min(...localPoints.map(p => p.x)),
-        maxX: Math.max(...localPoints.map(p => p.x)),
-        minY: Math.min(...localPoints.map(p => p.y)),
-        maxY: Math.max(...localPoints.map(p => p.y)),
-      };
-      const anchorOnlyCenter = {
-        x: (anchorOnlyBbox.minX + anchorOnlyBbox.maxX) / 2,
-        y: (anchorOnlyBbox.minY + anchorOnlyBbox.maxY) / 2,
-      };
-      curveDebug(
-        '[CURVE DEBUG] anchorOnlyCenter (for comparison):',
-        anchorOnlyCenter.x.toFixed(1),
-        anchorOnlyCenter.y.toFixed(1)
-      );
-      curveDebug(
-        '[CURVE DEBUG] centerLocal vs anchorOnlyCenter DIFF:',
-        (centerLocal.x - anchorOnlyCenter.x).toFixed(1),
-        (centerLocal.y - anchorOnlyCenter.y).toFixed(1)
-      );
-
-      // S6: Set pathOffset to centerLocal and compensate WORLD placement
-      // This cancels the visual translation that happens when pathOffset is updated.
-      // Fabric renders the path around pathOffset in local space.
-      // If pathOffset changes, the stroke "moves" unless we offset the object's world center accordingly.
-      pathObj.set({
-        width: dims.width,
-        height: dims.height,
-        pathOffset: centerLocal,
-      });
-      curveDebug(
-        '[CURVE DEBUG] Set pathOffset to centerLocal:',
-        centerLocal.x.toFixed(1),
-        centerLocal.y.toFixed(1)
-      );
-
-      // Compensation: object WORLD center must shift by centerLocal
-      const compensatedWorldCenter = new fabric.Point(
-        baseCenterWorld.x + centerLocal.x,
-        baseCenterWorld.y + centerLocal.y
-      );
-      curveDebug(
-        '[CURVE DEBUG] compensatedWorldCenter = baseCenterWorld + centerLocal:',
-        compensatedWorldCenter.x.toFixed(1),
-        compensatedWorldCenter.y.toFixed(1)
-      );
-
-      pathObj.setPositionByOrigin(compensatedWorldCenter, 'center', 'center');
-      curveDebug('[CURVE DEBUG] After setPositionByOrigin:');
-      curveDebug('[CURVE DEBUG]   left/top:', pathObj.left?.toFixed(1), pathObj.top?.toFixed(1));
-      curveDebug('[CURVE DEBUG]   getCenterPoint():', pathObj.getCenterPoint());
-
-      // CRITICAL: Update lastLeft/lastTop to prevent stale delta calculations in moving handlers
-      pathObj.lastLeft = pathObj.left;
-      pathObj.lastTop = pathObj.top;
-      const updatedCenter = pathObj.getCenterPoint();
-      pathObj.__lastCenter = { x: updatedCenter.x, y: updatedCenter.y };
-      curveDebug(
-        '[CURVE DEBUG]   Updated lastLeft/lastTop:',
-        pathObj.lastLeft?.toFixed(1),
-        pathObj.lastTop?.toFixed(1)
-      );
-
-      pathObj.dirty = true;
-      pathObj.setCoords();
-
-      // Verify: where do the anchors end up in WORLD space now?
-      curveDebug('[CURVE DEBUG] VERIFICATION - Anchor world positions after canonicalization:');
-      pathObj.customPoints.forEach((p, i) => {
-        curveDebug(`[CURVE DEBUG]   anchor[${i}]: (${p.x.toFixed(1)}, ${p.y.toFixed(1)})`);
-      });
-
-      // Check transform matrix
-      const matrix = pathObj.calcTransformMatrix();
-      curveDebug('[CURVE DEBUG] Final transform matrix:', matrix.map(v => v.toFixed(2)).join(', '));
-
+      FabricControls.canonicalizeCurveFromWorldPoints(pathObj, baseCenterWorld, pathObj.angle || 0);
       curveDebug('[CURVE DEBUG] ---- canonicalizeCurveFromWorldPoints END ----');
     };
 

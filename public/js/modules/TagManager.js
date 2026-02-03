@@ -23,6 +23,79 @@ export class TagManager {
 
     // Initialize tag prediction system integration
     this.initTagPrediction();
+
+    this.ensureBaselineSanitizer();
+  }
+
+  ensureBaselineSanitizer() {
+    const fabricGlobal = globalThis.fabric;
+    if (!fabricGlobal?.Text?.prototype) return;
+    const prototypes = [fabricGlobal.Text, fabricGlobal.IText, fabricGlobal.Textbox]
+      .map(cls => cls?.prototype)
+      .filter(Boolean);
+
+    prototypes.forEach(proto => {
+      if (proto.__baselinePatch) return;
+      proto.textBaseline = 'alphabetic';
+      const original = proto._setTextStyles;
+      const originalGetStyle = proto._getStyleDeclaration;
+      const originalSet = proto.set;
+
+      if (typeof originalGetStyle === 'function') {
+        proto._getStyleDeclaration = function (...args) {
+          const style = originalGetStyle.apply(this, args);
+          if (style?.textBaseline === 'alphabetical') {
+            style.textBaseline = 'alphabetic';
+          }
+          return style;
+        };
+      }
+
+      if (typeof originalSet === 'function') {
+        proto.set = function (key, value) {
+          if (typeof key === 'object' && key?.textBaseline === 'alphabetical') {
+            key.textBaseline = 'alphabetic';
+          } else if (key === 'textBaseline' && value === 'alphabetical') {
+            value = 'alphabetic';
+          }
+          return originalSet.call(this, key, value);
+        };
+      }
+
+      proto._setTextStyles = function (ctx, ...args) {
+        this.textBaseline = 'alphabetic';
+        if (ctx?.textBaseline === 'alphabetical') {
+          ctx.textBaseline = 'alphabetic';
+        }
+        args.forEach(arg => {
+          if (arg?.textBaseline === 'alphabetical') {
+            arg.textBaseline = 'alphabetic';
+          }
+        });
+        return original.call(this, ctx, ...args);
+      };
+      proto.__baselinePatch = true;
+    });
+  }
+
+  sanitizeTextBaseline(value) {
+    const allowed = new Set(['top', 'hanging', 'middle', 'alphabetic', 'ideographic', 'bottom']);
+    return allowed.has(value) ? value : 'alphabetic';
+  }
+
+  sanitizeTextObject(textObj) {
+    if (!textObj) return;
+    textObj.textBaseline = 'alphabetic';
+    const styles = textObj.styles;
+    if (!styles) return;
+    Object.values(styles).forEach(line => {
+      if (!line) return;
+      Object.values(line).forEach(style => {
+        if (style?.textBaseline === 'alphabetical') {
+          style.textBaseline = 'alphabetic';
+        }
+      });
+    });
   }
 
   // Get canvas reference dynamically (may not be available at construction time)
@@ -106,6 +179,7 @@ export class TagManager {
 
   // Create a draggable, resizable tag object
   createTag(strokeLabel, imageLabel, strokeObject) {
+    this.ensureBaselineSanitizer();
     // Ensure canvas is available
     const canvas = this.canvas;
     if (!canvas) {
@@ -151,6 +225,8 @@ export class TagManager {
         textBaseline: 'alphabetic',
       });
     }
+    this.sanitizeTextObject(tagText);
+    tagText.styles = {};
 
     // Allow editing tag text (double-click to edit)
     tagText.on('editing:entered', () => {
@@ -623,6 +699,7 @@ export class TagManager {
 
   // Update tag text when measurement changes
   updateTagText(strokeLabel, imageLabel) {
+    this.ensureBaselineSanitizer();
     const tagObj = this.tagObjects.get(strokeLabel);
     if (!tagObj) {
       console.warn(`[TagManager] No tag found for ${strokeLabel}`);
@@ -649,6 +726,9 @@ export class TagManager {
 
     // Update the text
     textObj.set('text', fullText);
+    textObj.set('textBaseline', 'alphabetic');
+    this.sanitizeTextObject(textObj);
+    textObj.styles = {};
 
     // Force text to recalculate dimensions
     textObj.initDimensions();

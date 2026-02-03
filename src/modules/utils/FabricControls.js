@@ -118,13 +118,21 @@ export class FabricControls {
    * @param {fabric.Path} pathObj - The path object with customPoints array
    * @param {Object} baseCenterWorld - Optional center point {x, y}. If not provided, computed from customPoints.
    */
-  static canonicalizeCurveFromWorldPoints(pathObj, baseCenterWorld = null) {
+  static canonicalizeCurveFromWorldPoints(
+    pathObj,
+    baseCenterWorld = null,
+    angle = 0,
+    keepWorldCenter = null
+  ) {
     if (!pathObj || !Array.isArray(pathObj.customPoints) || pathObj.customPoints.length < 2) {
       console.warn(
         '[FabricControls] canonicalizeCurveFromWorldPoints: invalid pathObj or customPoints'
       );
       return;
     }
+
+    const normalizedAngle = Number.isFinite(angle) ? angle : 0;
+    const angleRad = normalizedAngle ? fabric.util.degreesToRadians(normalizedAngle) : 0;
 
     // Calculate baseCenterWorld from customPoints if not provided
     if (!baseCenterWorld) {
@@ -139,17 +147,21 @@ export class FabricControls {
     }
 
     // Convert world points to local points around baseCenterWorld
-    const localPoints = pathObj.customPoints.map(p => ({
-      x: p.x - baseCenterWorld.x,
-      y: p.y - baseCenterWorld.y,
-    }));
+    const localPoints = pathObj.customPoints.map(p => {
+      const local = new fabric.Point(p.x - baseCenterWorld.x, p.y - baseCenterWorld.y);
+      if (!angleRad) {
+        return { x: local.x, y: local.y };
+      }
+      const rotated = fabric.util.rotatePoint(local, new fabric.Point(0, 0), -angleRad);
+      return { x: rotated.x, y: rotated.y };
+    });
 
     // Create smooth path from local points
     const newPathString = PathUtils.createSmoothPath(localPoints);
     const pathData = fabric.util.parsePath(newPathString);
 
     // Set path and reset transforms
-    pathObj.set({ path: pathData, angle: 0 });
+    pathObj.set({ path: pathData, angle: normalizedAngle });
     pathObj.set({
       scaleX: 1,
       scaleY: 1,
@@ -170,21 +182,44 @@ export class FabricControls {
       pathOffset: centerLocal,
     });
 
-    // Compensate world position: baseCenterWorld + centerLocal
-    const compensatedWorldCenter = new fabric.Point(
-      baseCenterWorld.x + centerLocal.x,
-      baseCenterWorld.y + centerLocal.y
-    );
+    // Compensate world position: baseCenterWorld + centerLocal (rotated if angle is preserved)
+    const centerLocalWorld = angleRad
+      ? fabric.util.rotatePoint(centerLocal, new fabric.Point(0, 0), angleRad)
+      : centerLocal;
+    const desiredCenter =
+      keepWorldCenter ||
+      new fabric.Point(
+        baseCenterWorld.x + centerLocalWorld.x,
+        baseCenterWorld.y + centerLocalWorld.y
+      );
+    if (keepWorldCenter) {
+      baseCenterWorld = {
+        x: keepWorldCenter.x - centerLocalWorld.x,
+        y: keepWorldCenter.y - centerLocalWorld.y,
+      };
+    }
+    const compensatedWorldCenter = new fabric.Point(desiredCenter.x, desiredCenter.y);
 
     pathObj.setPositionByOrigin(compensatedWorldCenter, 'center', 'center');
 
-    // CRITICAL: Rebuild customPoints in world coordinates based on the new canonicalized path
-    // The path uses local coordinates relative to centerLocal, so world coordinates are:
-    // compensatedWorldCenter + (localPoint - centerLocal) = baseCenterWorld + localPoint
-    pathObj.customPoints = localPoints.map(p => ({
-      x: baseCenterWorld.x + p.x,
-      y: baseCenterWorld.y + p.y,
-    }));
+    // Rebuild customPoints in world coordinates based on the preserved angle.
+    pathObj.customPoints = localPoints.map(p => {
+      if (!angleRad) {
+        return {
+          x: baseCenterWorld.x + p.x,
+          y: baseCenterWorld.y + p.y,
+        };
+      }
+      const rotated = fabric.util.rotatePoint(
+        new fabric.Point(p.x, p.y),
+        new fabric.Point(0, 0),
+        angleRad
+      );
+      return {
+        x: baseCenterWorld.x + rotated.x,
+        y: baseCenterWorld.y + rotated.y,
+      };
+    });
 
     // Update tracking for move handlers
     pathObj.lastLeft = pathObj.left;
@@ -526,50 +561,6 @@ export class FabricControls {
       return pointerWorld;
     };
 
-    const toLocalPoints = (pointsWorld, centerWorld) =>
-      pointsWorld.map(p => ({
-        x: p.x - centerWorld.x,
-        y: p.y - centerWorld.y,
-      }));
-
-    const canonicalizeCurveFromWorldPoints = (pathObj, baseCenterWorld) => {
-      const localPoints = toLocalPoints(pathObj.customPoints, baseCenterWorld);
-      const newPathString = PathUtils.createSmoothPath(localPoints);
-      const pathData = fabric.util.parsePath(newPathString);
-
-      pathObj.set({ path: pathData, angle: 0 });
-      pathObj.set({
-        scaleX: 1,
-        scaleY: 1,
-        skewX: 0,
-        skewY: 0,
-        flipX: false,
-        flipY: false,
-      });
-
-      const dims = pathObj._calcDimensions();
-      const centerLocal = new fabric.Point(dims.left + dims.width / 2, dims.top + dims.height / 2);
-
-      pathObj.set({
-        width: dims.width,
-        height: dims.height,
-        pathOffset: centerLocal,
-      });
-
-      const compensatedWorldCenter = new fabric.Point(
-        baseCenterWorld.x + centerLocal.x,
-        baseCenterWorld.y + centerLocal.y
-      );
-
-      pathObj.setPositionByOrigin(compensatedWorldCenter, 'center', 'center');
-      pathObj.lastLeft = pathObj.left;
-      pathObj.lastTop = pathObj.top;
-      const updatedCenter = pathObj.getCenterPoint();
-      pathObj.__lastCenter = { x: updatedCenter.x, y: updatedCenter.y };
-      pathObj.dirty = true;
-      pathObj.setCoords();
-    };
-
     // Create a control for each point
     path.customPoints.forEach((point, index) => {
       const positionHandler = (dim, finalMatrix, fabricObject) => {
@@ -634,7 +625,11 @@ export class FabricControls {
         }
 
         const baseCenterWorld = pathObj.__curveEditBaseCenterWorld || pathObj.getCenterPoint();
-        canonicalizeCurveFromWorldPoints(pathObj, baseCenterWorld);
+        FabricControls.canonicalizeCurveFromWorldPoints(
+          pathObj,
+          baseCenterWorld,
+          pathObj.angle || 0
+        );
         canvas.requestRenderAll();
 
         if (!pathObj.__curveTransformActive) {
