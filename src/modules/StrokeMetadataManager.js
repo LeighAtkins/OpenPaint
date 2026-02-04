@@ -45,6 +45,10 @@ export class StrokeMetadataManager {
       labelVisible: true,
     };
 
+    if (obj.arrowSettings) {
+      obj.strokeMetadata.arrowSettings = obj.arrowSettings;
+    }
+
     // Initialize visibility maps
     if (!this.strokeVisibilityByImage[imageLabel]) {
       this.strokeVisibilityByImage[imageLabel] = {};

@@ -71,6 +71,10 @@ export class LineTool extends BaseTool {
 
     this.canvas.selection = false;
     this.isDrawing = true;
+
+    if (window.app?.historyManager) {
+      window.app.historyManager.saveState({ force: true, reason: 'line:start' });
+    }
     const pointer = this.canvas.getPointer(o.e);
     this.startX = pointer.x;
     this.startY = pointer.y;
@@ -179,8 +183,8 @@ export class LineTool extends BaseTool {
     }
 
     // Save state after drawing completes
-    if (window.app && window.app.historyManager) {
-      window.app.historyManager.saveState();
+    if (window.app?.historyManager) {
+      window.app.historyManager.saveState({ force: true, reason: 'line:end' });
     }
   }
 

@@ -82,6 +82,10 @@ export class CurveTool extends BaseTool {
       return;
     }
 
+    if (this.points.length === 0 && window.app?.historyManager) {
+      window.app.historyManager.saveState({ force: true, reason: 'curve:start' });
+    }
+
     const rawPointer = this.canvas.getPointer(o.e);
 
     // Check for snap if Ctrl is held
@@ -120,6 +124,10 @@ export class CurveTool extends BaseTool {
     }
 
     this.canvas.renderAll();
+
+    if (window.app?.historyManager) {
+      window.app.historyManager.saveState({ force: true, reason: 'curve:end' });
+    }
   }
 
   onMouseMove(o) {
@@ -232,6 +240,31 @@ export class CurveTool extends BaseTool {
     else if (e.key === 'Enter' && this.points.length >= 2) {
       this.completeCurve();
     }
+  }
+
+  handleUndo() {
+    if (!this.isActive || !this.isDrawing) return false;
+    if (this.points.length === 0) return false;
+
+    const marker = this.pointMarkers.pop();
+    if (marker) {
+      this.canvas.remove(marker);
+    }
+
+    this.points.pop();
+
+    if (this.points.length === 0) {
+      if (this.previewPath) {
+        this.canvas.remove(this.previewPath);
+        this.previewPath = null;
+      }
+      this.isDrawing = false;
+    } else {
+      this.updatePreview();
+    }
+
+    this.canvas.requestRenderAll();
+    return true;
   }
 
   updatePreview(tempPoint = null) {

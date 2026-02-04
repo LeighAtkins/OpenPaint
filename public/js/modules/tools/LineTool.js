@@ -92,6 +92,10 @@ export class LineTool extends BaseTool {
     this.canvas.selection = false;
     this.isDrawing = true;
 
+    if (window.app?.historyManager) {
+      window.app.historyManager.saveState({ force: true, reason: 'line:start' });
+    }
+
     // Use snap point if available, otherwise use mouse position
     if (this.snapPoint) {
       this.startX = this.snapPoint.x;
@@ -393,8 +397,8 @@ export class LineTool extends BaseTool {
     }
 
     // Save state after drawing completes
-    if (window.app && window.app.historyManager) {
-      window.app.historyManager.saveState();
+    if (window.app?.historyManager) {
+      window.app.historyManager.saveState({ force: true, reason: 'line:end' });
     }
 
     if (window.app && window.app.firstStrokeCommitInProgress) {
