@@ -65,6 +65,43 @@
     const colorInput = document.getElementById('colorPicker');
     if (colorInput) colorInput.classList.add('hidden');
 
+    // Text size menu default/active state (ensure Medium is the single default)
+    const textModeWrappers = document.querySelectorAll('#textModeWrapper');
+    const textSizeButtons = document.querySelectorAll('[data-text-size]');
+    const setTextSizeActive = size => {
+      if (!size) return;
+      textSizeButtons.forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.textSize === size);
+      });
+      textModeWrappers.forEach(wrapper => {
+        wrapper.classList.remove('text-size-small', 'text-size-medium', 'text-size-large');
+        wrapper.classList.add(`text-size-${size}`);
+      });
+    };
+    if (textSizeButtons.length > 0) {
+      const activeButtons = Array.from(textSizeButtons).filter(btn =>
+        btn.classList.contains('active')
+      );
+      let initialSize = null;
+      if (activeButtons.length === 1) {
+        initialSize = activeButtons[0].dataset.textSize;
+      } else if (activeButtons.length > 1) {
+        initialSize = activeButtons.some(btn => btn.dataset.textSize === 'medium')
+          ? 'medium'
+          : activeButtons[0].dataset.textSize;
+      }
+      setTextSizeActive(initialSize || 'medium');
+
+      textSizeButtons.forEach(btn => {
+        if (btn.__textSizeBound) return;
+        btn.__textSizeBound = true;
+        btn.addEventListener('click', () => {
+          const size = btn.dataset.textSize;
+          setTextSizeActive(size || 'medium');
+        });
+      });
+    }
+
     // Arrow and line style controls are now pre-populated, just need to wire up functionality
     const arrowStartBtn = document.getElementById('arrowStartBtn');
     const arrowEndBtn = document.getElementById('arrowEndBtn');

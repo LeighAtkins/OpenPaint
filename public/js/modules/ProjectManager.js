@@ -1,6 +1,8 @@
 // Project Manager
 // Handles views (images) and their associated canvas states
 
+import { imageRegistry } from './ImageRegistry.js';
+
 export class ProjectManager {
   constructor(canvasManager, historyManager) {
     this.canvasManager = canvasManager;
@@ -1242,11 +1244,28 @@ export class ProjectManager {
         console.log('[Load] Cleared image gallery');
       }
 
+      const useRegistry =
+        typeof imageRegistry?.isEnabled === 'function' && imageRegistry.isEnabled();
+      if (useRegistry) {
+        await imageRegistry.whenReady();
+        imageRegistry.reset();
+      }
+
       // Load each view
       const viewIds = Object.keys(projectData.views);
-      console.log('[Load] Loading views:', viewIds);
+      const preferredOrder = ['front', 'side', 'back', 'cushion', 'left', 'right'];
+      const orderedViewIds = [...viewIds].sort((a, b) => {
+        const aIndex = preferredOrder.indexOf(a);
+        const bIndex = preferredOrder.indexOf(b);
+        const aScore = aIndex === -1 ? Number.MAX_SAFE_INTEGER : aIndex;
+        const bScore = bIndex === -1 ? Number.MAX_SAFE_INTEGER : bIndex;
+        if (aScore !== bScore) return aScore - bScore;
+        return a.localeCompare(b);
+      });
 
-      for (const viewId of viewIds) {
+      console.log('[Load] Loading views:', orderedViewIds);
+
+      for (const viewId of orderedViewIds) {
         const viewData = projectData.views[viewId];
 
         this.views[viewId] = {
@@ -1265,17 +1284,23 @@ export class ProjectManager {
           console.log(`[Load] Using image URL for view ${viewId}`);
         }
 
-        // Register view with legacy system for compatibility
-        if (this.views[viewId].image && window.addImageToSidebar) {
-          const label = viewId;
+        const imageUrl = this.views[viewId].image;
+        if (imageUrl) {
           const filename = `${projectData.projectName || 'Project'} - ${viewId}`;
-          console.log(`[Load] Registering view ${viewId} with legacy system`);
-          window.addImageToSidebar(this.views[viewId].image, label, filename);
+          if (useRegistry) {
+            await imageRegistry.registerImage(viewId, imageUrl, filename, {
+              source: 'json',
+              refreshBackground: false,
+            });
+          } else if (window.addImageToSidebar) {
+            console.log(`[Load] Registering view ${viewId} with legacy system`);
+            window.addImageToSidebar(imageUrl, viewId, filename);
+          }
         }
       }
 
       // Switch to the saved current view or first view
-      const targetView = projectData.currentViewId || viewIds[0];
+      const targetView = projectData.currentViewId || orderedViewIds[0];
       if (targetView && this.views[targetView]) {
         console.log(`[Load] Switching to view: ${targetView}`);
         await this.switchView(targetView, true);

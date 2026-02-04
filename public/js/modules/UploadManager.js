@@ -1,6 +1,8 @@
 // Upload Manager
 // Handles file selection, drag/drop, paste uploads, and HEIC conversion via Cloudflare Worker
 
+import { imageRegistry } from './ImageRegistry.js';
+
 const DEFAULT_HEIC_WORKER_URL = 'https://YOUR-CLOUDFLARE-WORKER.example.com/convert';
 const VIEW_PREFERENCE = ['front', 'side', 'back', 'cushion'];
 
@@ -189,83 +191,113 @@ export class UploadManager {
     const hadExistingImage = !!this.projectManager.views?.[viewId]?.image;
     const isCurrentView = this.projectManager.currentViewId === viewId;
 
-    if (canMark) {
-      performance.mark(`upload-project-start:${perfId}`);
-    }
-
-    // Add image to ProjectManager (but don't switch views automatically)
-    await this.projectManager.addImage(viewId, objectUrl, {
-      refreshBackground: isCurrentView, // Only refresh if this is the current view
-    });
-
-    if (canMark && performance.measure) {
-      try {
-        performance.mark(`upload-project-end:${perfId}`);
-        performance.measure(
-          'upload-project-add',
-          `upload-project-start:${perfId}`,
-          `upload-project-end:${perfId}`
-        );
-        window.app?.logPerfMeasure?.('upload-project-add');
-      } catch (error) {
-        console.warn('[Perf] Measure project add failed', error);
-      }
-    }
-
     const displayName = this.formatDisplayName(workingFile.name, viewId);
 
-    if (canMark) {
-      performance.mark(`upload-gallery-start:${perfId}`);
-    }
+    const useRegistry = typeof imageRegistry?.isEnabled === 'function' && imageRegistry.isEnabled();
 
-    // Add to new gallery system
-    if (typeof window.addImageToGalleryCompat === 'function') {
-      window.addImageToGalleryCompat({
-        src: objectUrl,
-        name: displayName,
-        original: {
-          label: viewId,
-          filename: workingFile.name,
-          type: workingFile.type,
-          uploadedAt: new Date().toISOString(),
-        },
-      });
-    }
-
-    if (canMark && performance.measure) {
-      try {
-        performance.mark(`upload-gallery-end:${perfId}`);
-        performance.measure(
-          'upload-gallery-add',
-          `upload-gallery-start:${perfId}`,
-          `upload-gallery-end:${perfId}`
-        );
-        window.app?.logPerfMeasure?.('upload-gallery-add');
-      } catch (error) {
-        console.warn('[Perf] Measure gallery add failed', error);
+    if (useRegistry) {
+      if (canMark) {
+        performance.mark(`upload-register-start:${perfId}`);
       }
-    }
 
-    if (canMark) {
-      performance.mark(`upload-sidebar-start:${perfId}`);
-    }
+      await imageRegistry.registerImage(viewId, objectUrl, displayName, {
+        source: 'upload',
+        refreshBackground: isCurrentView,
+        mimeType: workingFile.type,
+        originalFilename: workingFile.name,
+        uploadedAt: new Date().toISOString(),
+      });
 
-    // Also add to legacy sidebar system (for imageList and mini-stepper)
-    if (typeof window.addImageToSidebar === 'function') {
-      window.addImageToSidebar(objectUrl, viewId, displayName);
-    }
+      if (canMark && performance.measure) {
+        try {
+          performance.mark(`upload-register-end:${perfId}`);
+          performance.measure(
+            'upload-register',
+            `upload-register-start:${perfId}`,
+            `upload-register-end:${perfId}`
+          );
+          window.app?.logPerfMeasure?.('upload-register');
+        } catch (error) {
+          console.warn('[Perf] Measure upload register failed', error);
+        }
+      }
+    } else {
+      if (canMark) {
+        performance.mark(`upload-project-start:${perfId}`);
+      }
 
-    if (canMark && performance.measure) {
-      try {
-        performance.mark(`upload-sidebar-end:${perfId}`);
-        performance.measure(
-          'upload-sidebar-add',
-          `upload-sidebar-start:${perfId}`,
-          `upload-sidebar-end:${perfId}`
-        );
-        window.app?.logPerfMeasure?.('upload-sidebar-add');
-      } catch (error) {
-        console.warn('[Perf] Measure sidebar add failed', error);
+      // Add image to ProjectManager (but don't switch views automatically)
+      await this.projectManager.addImage(viewId, objectUrl, {
+        refreshBackground: isCurrentView, // Only refresh if this is the current view
+      });
+
+      if (canMark && performance.measure) {
+        try {
+          performance.mark(`upload-project-end:${perfId}`);
+          performance.measure(
+            'upload-project-add',
+            `upload-project-start:${perfId}`,
+            `upload-project-end:${perfId}`
+          );
+          window.app?.logPerfMeasure?.('upload-project-add');
+        } catch (error) {
+          console.warn('[Perf] Measure project add failed', error);
+        }
+      }
+
+      if (canMark) {
+        performance.mark(`upload-gallery-start:${perfId}`);
+      }
+
+      // Add to new gallery system
+      if (typeof window.addImageToGalleryCompat === 'function') {
+        window.addImageToGalleryCompat({
+          src: objectUrl,
+          name: displayName,
+          original: {
+            label: viewId,
+            filename: workingFile.name,
+            type: workingFile.type,
+            uploadedAt: new Date().toISOString(),
+          },
+        });
+      }
+
+      if (canMark && performance.measure) {
+        try {
+          performance.mark(`upload-gallery-end:${perfId}`);
+          performance.measure(
+            'upload-gallery-add',
+            `upload-gallery-start:${perfId}`,
+            `upload-gallery-end:${perfId}`
+          );
+          window.app?.logPerfMeasure?.('upload-gallery-add');
+        } catch (error) {
+          console.warn('[Perf] Measure gallery add failed', error);
+        }
+      }
+
+      if (canMark) {
+        performance.mark(`upload-sidebar-start:${perfId}`);
+      }
+
+      // Also add to legacy sidebar system (for imageList and mini-stepper)
+      if (typeof window.addImageToSidebar === 'function') {
+        window.addImageToSidebar(objectUrl, viewId, displayName);
+      }
+
+      if (canMark && performance.measure) {
+        try {
+          performance.mark(`upload-sidebar-end:${perfId}`);
+          performance.measure(
+            'upload-sidebar-add',
+            `upload-sidebar-start:${perfId}`,
+            `upload-sidebar-end:${perfId}`
+          );
+          window.app?.logPerfMeasure?.('upload-sidebar-add');
+        } catch (error) {
+          console.warn('[Perf] Measure sidebar add failed', error);
+        }
       }
     }
 
