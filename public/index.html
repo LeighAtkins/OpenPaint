@@ -5906,36 +5906,19 @@ async function generatePDFWithPDFLib(projectName, viewIds, quality, pageSize, in
             console.warn('[Gallery] Invalid image data format:', imageData);
             return;
           }
-
-          if (imageGallery.querySelector(`[data-image-src="${imageSrc}"]`)) {
-            console.log('[Gallery] Skipping duplicate image:', imageSrc);
+          if (!imageSrc) {
+            console.warn('[Gallery] Missing image src, skipping:', imageData);
             return;
           }
 
-          // Create image thumbnail
-          const thumbnail = document.createElement('div');
-          thumbnail.className = 'image-thumbnail';
-          thumbnail.dataset.imageIndex = index;
-          thumbnail.dataset.imageSrc = imageSrc;
-          thumbnail.style.backgroundImage = `url(${imageSrc})`;
-          thumbnail.title = imageName;
-          thumbnail.draggable = true;
+          // Handle cases where imageData already has an 'original' property to avoid nesting
+          let originalData = imageData;
+          if (imageData && imageData.original && typeof imageData.original === 'object') {
+            // If imageData already has an original property, use that instead
+            originalData = imageData.original;
+            console.log('[Gallery] Using nested original data to avoid double nesting');
+          }
 
-          // Remove overlay label; use minimal caption below instead
-
-          // Add hover controls (delete only)
-          const controls = createThumbnailControls(index);
-          // Strip rotate/flip from controls
-          controls.querySelectorAll('.rotate-btn, .flip-btn').forEach(el => el.remove());
-          thumbnail.appendChild(controls);
-
-          // Add all event listeners using helper function
-          addThumbnailEventListeners(thumbnail, index);
-
-          // Wrap thumbnail in a small card with optional caption
-          const card = document.createElement('div');
-          card.className = 'flex flex-col items-center gap-1';
-          card.appendChild(thumbnail);
           // Compute caption; hide for blank canvas
           let displayName = '';
           try {
@@ -5951,36 +5934,97 @@ async function generatePDFWithPDFLib(projectName, viewIds, quality, pageSize, in
           } catch (e) {
             displayName = imageName || '';
           }
-          const caption = document.createElement('div');
-          caption.className =
-            'thumb-caption text-[11px] text-slate-500 font-medium truncate max-w-[120px]';
-          caption.textContent = displayName || '';
-          card.appendChild(caption);
-          if (displayName) thumbnail.title = displayName;
-          else thumbnail.removeAttribute('title');
-          imageGallery.appendChild(card);
-          console.log(`[Gallery] Created thumbnail element:`, thumbnail);
-          console.log(`[Gallery] Gallery element children count:`, imageGallery.children.length);
 
-          // Create navigation dot
-          const dot = document.createElement('div');
-          dot.className = 'nav-dot';
-          dot.dataset.imageIndex = index;
-          dot.addEventListener('click', () => navigateToImage(index));
-          imageDots.appendChild(dot);
+          const existingThumb = imageGallery.querySelector(
+            `.image-thumbnail[data-image-index="${index}"]`
+          );
+          if (existingThumb) {
+            existingThumb.dataset.imageSrc = imageSrc;
+            existingThumb.dataset.label =
+              originalData?.label || imageData?.label || imageData?.name || imageName || '';
+            existingThumb.style.backgroundImage = `url(${imageSrc})`;
+            if (displayName) existingThumb.title = displayName;
+            else existingThumb.removeAttribute('title');
 
-          // Observe thumbnail for intersection
-          if (intersectionObserver) {
-            intersectionObserver.observe(thumbnail);
+            const existingCard = existingThumb.parentElement;
+            let caption = existingCard?.querySelector('.thumb-caption');
+            if (!caption && existingCard) {
+              caption = document.createElement('div');
+              caption.className =
+                'thumb-caption text-[11px] text-slate-500 font-medium truncate max-w-[120px]';
+              existingCard.appendChild(caption);
+            }
+            if (caption) caption.textContent = displayName || '';
+
+            let dot = imageDots.querySelector(`.nav-dot[data-image-index="${index}"]`);
+            if (!dot) {
+              dot = document.createElement('div');
+              dot.className = 'nav-dot';
+              dot.dataset.imageIndex = index;
+              dot.addEventListener('click', () => navigateToImage(index));
+              imageDots.appendChild(dot);
+            }
+            console.log('[Gallery] Updated existing thumbnail at index:', index);
           }
 
-          // Store normalized image data
-          // Handle cases where imageData already has an 'original' property to avoid nesting
-          let originalData = imageData;
-          if (imageData && imageData.original && typeof imageData.original === 'object') {
-            // If imageData already has an original property, use that instead
-            originalData = imageData.original;
-            console.log('[Gallery] Using nested original data to avoid double nesting');
+          // Create image thumbnail
+          let thumbnail = existingThumb;
+          let card = existingThumb ? existingThumb.parentElement : null;
+          if (!thumbnail) {
+            thumbnail = document.createElement('div');
+            thumbnail.className = 'image-thumbnail';
+            thumbnail.dataset.imageIndex = index;
+            thumbnail.dataset.imageSrc = imageSrc;
+            thumbnail.dataset.label =
+              originalData?.label || imageData?.label || imageData?.name || imageName || '';
+            thumbnail.style.backgroundImage = `url(${imageSrc})`;
+            thumbnail.title = imageName;
+            thumbnail.draggable = true;
+          }
+
+          // Remove overlay label; use minimal caption below instead
+
+          // Add hover controls (delete only)
+          if (!existingThumb) {
+            const controls = createThumbnailControls(index);
+            // Strip rotate/flip from controls
+            controls.querySelectorAll('.rotate-btn, .flip-btn').forEach(el => el.remove());
+            thumbnail.appendChild(controls);
+          }
+
+          // Add all event listeners using helper function
+          if (!existingThumb) addThumbnailEventListeners(thumbnail, index);
+
+          // Wrap thumbnail in a small card with optional caption
+          if (!card) {
+            card = document.createElement('div');
+            card.className = 'flex flex-col items-center gap-1';
+            card.dataset.imageIndex = index;
+            card.appendChild(thumbnail);
+            const caption = document.createElement('div');
+            caption.className =
+              'thumb-caption text-[11px] text-slate-500 font-medium truncate max-w-[120px]';
+            caption.textContent = displayName || '';
+            card.appendChild(caption);
+            if (displayName) thumbnail.title = displayName;
+            else thumbnail.removeAttribute('title');
+            imageGallery.appendChild(card);
+            console.log(`[Gallery] Created thumbnail element:`, thumbnail);
+            console.log(`[Gallery] Gallery element children count:`, imageGallery.children.length);
+          }
+
+          // Create navigation dot
+          if (!existingThumb) {
+            const dot = document.createElement('div');
+            dot.className = 'nav-dot';
+            dot.dataset.imageIndex = index;
+            dot.addEventListener('click', () => navigateToImage(index));
+            imageDots.appendChild(dot);
+          }
+
+          // Observe thumbnail for intersection
+          if (intersectionObserver && !existingThumb) {
+            intersectionObserver.observe(thumbnail);
           }
 
           const normalizedData = {
@@ -5992,6 +6036,11 @@ async function generatePDFWithPDFLib(projectName, viewIds, quality, pageSize, in
           // Update gallery data
           imageGalleryData[index] = normalizedData;
           updateGalleryControls();
+          if (!window.__initialGallerySyncDone && imageGalleryData.length === 1) {
+            window.__initialGallerySyncDone = true;
+            navigateToImage(0);
+            console.log('[Gallery] Auto-selected first image');
+          }
 
           // Trigger mini-stepper update if function exists
           // This ensures the bottom navigation shows all images
@@ -6108,7 +6157,12 @@ async function generatePDFWithPDFLib(projectName, viewIds, quality, pageSize, in
 
           // Get the image data and find corresponding legacy image
           const imageData = imageGalleryData[index];
-          if (imageData && imageData.original && imageData.original.label) {
+          if (
+            !window.__isLoadingProject &&
+            imageData &&
+            imageData.original &&
+            imageData.original.label
+          ) {
             const label = imageData.original.label;
             console.log(`[Gallery] Switching to image with label: ${label}`);
 
@@ -7455,6 +7509,104 @@ async function generatePDFWithPDFLib(projectName, viewIds, quality, pageSize, in
         // Store reference to original addImageToSidebar if it exists
         const originalAddImageToSidebar = window.addImageToSidebar;
 
+        function ensureLegacyImageContainer(imageUrl, label) {
+          const imageList = document.getElementById('imageList');
+          if (!imageList) {
+            console.error('[COMPAT] imageList element not found!');
+            return false;
+          }
+          if (!imageUrl || !label) {
+            console.warn('[COMPAT] Missing imageUrl or label for legacy container');
+            return false;
+          }
+
+          const existing = imageList.querySelector(`[data-label="${label}"]`);
+          if (existing) return true;
+
+          const container = document.createElement('button');
+          container.type = 'button';
+          container.draggable = true;
+          container.className =
+            'image-container group w-full text-left relative flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 transition-colors snap-center';
+          container.dataset.label = label;
+          container.dataset.originalImageUrl = imageUrl;
+
+          const img = document.createElement('img');
+          img.src = imageUrl;
+          img.className = 'pasted-image w-full h-40 rounded-lg object-contain bg-slate-100 shadow-sm';
+          img.alt = `${label} view`;
+
+          container.appendChild(img);
+
+          const deleteBtn = document.createElement('button');
+          deleteBtn.className =
+            'delete-image-btn opacity-0 group-hover:opacity-100 transition-opacity';
+          deleteBtn.title = 'Delete image';
+          deleteBtn.textContent = '×';
+          deleteBtn.style.cssText =
+            'position: absolute; top: 6px; right: 6px; cursor: pointer; background: rgba(255, 255, 255, 0.9); border: 1px solid rgb(204, 204, 204); border-radius: 50%; width: 20px; height: 20px; font-size: 12px; font-weight: bold; font-family: Arial, sans-serif; display: flex; align-items: center; justify-content: center; z-index: 10; color: rgb(102, 102, 102); line-height: 1; padding: 0px; margin: 0px; text-align: center;';
+
+          deleteBtn.addEventListener('click', e => {
+            e.stopPropagation();
+            if (confirm('Delete this image?')) {
+              container.remove();
+              if (window.projectManager && typeof window.projectManager.deleteImage === 'function') {
+                window.projectManager.deleteImage(label);
+              }
+              if (typeof updatePills === 'function') updatePills();
+              if (typeof updateActivePill === 'function') updateActivePill();
+              if (typeof updateImageListPadding === 'function') updateImageListPadding();
+            }
+          });
+
+          container.appendChild(deleteBtn);
+
+          container.onclick = () => {
+            if (window.projectManager && typeof window.projectManager.switchView === 'function') {
+              window.projectManager.switchView(label);
+            }
+            container.scrollIntoView({
+              behavior: 'smooth',
+              block: 'center',
+              inline: 'center',
+            });
+            window.__imageListProgrammaticScrollUntil = Date.now() + 500;
+          };
+
+          imageList.appendChild(container);
+          console.log(`[COMPAT] Manually added legacy container for "${label}"`);
+
+          if (typeof window.ensureImageListObserver === 'function') {
+            window.ensureImageListObserver();
+          } else {
+            window.__pendingImageListObserverInit = true;
+          }
+          if (typeof updateImageListPadding === 'function') updateImageListPadding();
+          if (typeof initImageListCenteringObserver === 'function') {
+            if (!window.__imageListCenteringObserver) initImageListCenteringObserver();
+            if (window.__imageListCenteringObserver) {
+              window.__imageListCenteringObserver.observe(container);
+            }
+          }
+
+          setTimeout(() => {
+            const allContainers = Array.from(imageList.querySelectorAll('.image-container'));
+            const isFirst = allContainers.length === 1 && allContainers[0] === container;
+            if (isFirst) {
+              console.log(`[COMPAT] First image "${label}" added, centering and switching to it`);
+              window.__imageListProgrammaticScrollUntil = Date.now() + 1000;
+              container.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+              if (window.projectManager && typeof window.projectManager.switchView === 'function') {
+                window.projectManager.switchView(label);
+              }
+            }
+            if (typeof updatePills === 'function') updatePills();
+            if (typeof updateActivePill === 'function') updateActivePill();
+          }, 100);
+
+          return true;
+        }
+
         // Enhanced compatibility function that works with both new and old formats
         // NOTE: This is replaced by the [HOOK] wrapper when paint.js loads
         window.addImageToSidebar = function (imageUrl, label, filename) {
@@ -7465,9 +7617,11 @@ async function generatePDFWithPDFLib(projectName, viewIds, quality, pageSize, in
           });
 
           // Call original function first if it exists (for backwards compatibility)
+          let didCallOriginal = false;
           if (originalAddImageToSidebar && typeof originalAddImageToSidebar === 'function') {
             try {
               originalAddImageToSidebar.apply(this, arguments);
+              didCallOriginal = true;
 
               // Verify imageList was updated
               const imageList = document.getElementById('imageList');
@@ -7484,41 +7638,92 @@ async function generatePDFWithPDFLib(projectName, viewIds, quality, pageSize, in
             console.warn('[COMPAT] No original addImageToSidebar function available');
           }
 
-          // Add to new gallery
-          if (imageUrl) {
-            const index = imageGalleryData.length;
-            const imageData = {
-              src: imageUrl,
-              url: imageUrl,
-              name: filename || label || `Image ${index + 1}`,
-              label: label,
-              filename: filename,
-            };
+          if (!didCallOriginal) {
+            ensureLegacyImageContainer(imageUrl, label);
+          }
 
-            addImageToGallery(imageData, index);
-            console.log(
-              '[COMPAT] Added to new gallery at index',
-              index,
-              'Total images now:',
-              imageGalleryData.length
+          // Add to new gallery (avoid duplicates if UploadManager already did)
+          if (imageUrl) {
+            const alreadyExists = imageGalleryData.some(
+              img =>
+                img &&
+                img.src === imageUrl &&
+                (img.original?.label === label ||
+                  img.name === filename ||
+                  img.name === label ||
+                  img.original?.filename === filename)
             );
 
-            return index;
+            if (!alreadyExists) {
+              const index = imageGalleryData.length;
+              const imageData = {
+                src: imageUrl,
+                url: imageUrl,
+                name: filename || label || `Image ${index + 1}`,
+                label: label,
+                filename: filename,
+              };
+
+              addImageToGallery(imageData, index);
+              console.log(
+                '[COMPAT] Added to new gallery at index',
+                index,
+                'Total images now:',
+                imageGalleryData.length
+              );
+              if (
+                label &&
+                window.projectManager &&
+                window.projectManager.currentViewId === label &&
+                typeof window.projectManager.setBackgroundImage === 'function'
+              ) {
+                requestAnimationFrame(() => {
+                  window.projectManager.setBackgroundImage(imageUrl);
+                  console.log('[COMPAT] Refreshed background for active view:', label);
+                });
+              }
+              if (
+                imageGalleryData.length === 1 &&
+                label &&
+                window.projectManager &&
+                typeof window.projectManager.switchView === 'function' &&
+                !window.__isLoadingProject
+              ) {
+                setTimeout(() => {
+                  window.projectManager.switchView(label, true);
+                  console.log('[COMPAT] Forced switch to first image:', label);
+                }, 0);
+              }
+              return index;
+            }
+            console.log('[COMPAT] Gallery already has image for label:', label);
+            return -1;
           } else {
             console.warn('[COMPAT] No valid imageUrl provided');
             return -1;
           }
         };
+        window.addImageToSidebar.__isCompat = true;
 
         window.switchToImage = function (imageIndexOrLabel) {
           // If it's a number, treat as gallery index
           if (typeof imageIndexOrLabel === 'number') {
             navigateToImage(imageIndexOrLabel);
             console.log('[COMPAT] Switched to image index:', imageIndexOrLabel);
+            return;
           }
-          // If it's a string (label), use ProjectManager
-          else if (typeof imageIndexOrLabel === 'string') {
-            const label = imageIndexOrLabel;
+
+          if (typeof imageIndexOrLabel === 'string') {
+            const trimmed = imageIndexOrLabel.trim();
+            const asNumber = Number(trimmed);
+            if (trimmed !== '' && Number.isFinite(asNumber)) {
+              const index = Math.trunc(asNumber);
+              navigateToImage(index);
+              console.log('[COMPAT] Switched to image index (string):', index);
+              return;
+            }
+
+            const label = trimmed;
             console.log('[COMPAT] Switched to image label:', label);
 
             // Try ProjectManager first
@@ -7737,13 +7942,19 @@ async function generatePDFWithPDFLib(projectName, viewIds, quality, pageSize, in
 
         // Hook into addImageToSidebar after external scripts load
         let hookAttempts = 0;
-        const maxHookAttempts = 50;
+        const maxHookAttempts = 200;
 
         function attemptHook() {
           hookAttempts++;
 
           // Check if paint.js has loaded and defined its own addImageToSidebar
           if (window.addImageToSidebar && typeof window.addImageToSidebar === 'function') {
+            if (window.addImageToSidebar.__isCompat) {
+              if (window.__DEBUG__)
+                console.log('[HOOK] Compat addImageToSidebar detected, waiting for paint.js...');
+              setTimeout(attemptHook, 100);
+              return false;
+            }
             if (window.addImageToSidebar.__galleryHooked) {
               return true;
             }

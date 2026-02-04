@@ -7,7 +7,7 @@ export class TagManager {
   constructor(canvasManager, metadataManager) {
     this.canvasManager = canvasManager;
     this.metadataManager = metadataManager;
-    this.tagObjects = new Map(); // Map<strokeLabel, fabricObject>
+    this.tagObjects = new Map(); // Map<viewId::strokeLabel, fabricObject>
     this.tagSize = 20; // Default tag font size
     this.tagShape = 'square'; // 'square' or 'circle'
     this.tagMode = 'letters+numbers'; // 'letters' or 'letters+numbers'
@@ -25,6 +25,37 @@ export class TagManager {
     this.initTagPrediction();
 
     this.ensureBaselineSanitizer();
+  }
+
+  getTagKey(strokeLabel, imageLabel) {
+    const viewId = imageLabel || window.app?.projectManager?.currentViewId || 'front';
+    return `${viewId}::${strokeLabel}`;
+  }
+
+  resolveTagKey(strokeLabel, imageLabel) {
+    if (typeof strokeLabel === 'string' && strokeLabel.includes('::')) {
+      return strokeLabel;
+    }
+    const preferredKey = this.getTagKey(strokeLabel, imageLabel);
+    if (this.tagObjects.has(preferredKey)) return preferredKey;
+
+    const viewId = imageLabel || window.app?.projectManager?.currentViewId;
+    for (const [key, tagObj] of this.tagObjects.entries()) {
+      if (!tagObj) continue;
+      if (tagObj.strokeLabel !== strokeLabel) continue;
+      if (viewId && tagObj.imageLabel && tagObj.imageLabel !== viewId) continue;
+      return key;
+    }
+
+    return null;
+  }
+
+  getTagObject(strokeLabel, imageLabel) {
+    const key = this.resolveTagKey(strokeLabel, imageLabel);
+    if (!key) return null;
+    const tagObj = this.tagObjects.get(key);
+    if (!tagObj) return null;
+    return { key, tagObj };
   }
 
   ensureBaselineSanitizer() {
@@ -222,7 +253,7 @@ export class TagManager {
     }
 
     // Remove existing tag if any
-    this.removeTag(strokeLabel);
+    this.removeTag(strokeLabel, imageLabel);
 
     // Get tag position (near stroke center)
     const bounds = strokeObject.getBoundingRect();
@@ -453,7 +484,9 @@ export class TagManager {
     });
 
     canvas.add(tagGroup);
-    this.tagObjects.set(strokeLabel, tagGroup);
+    tagGroup.strokeLabel = strokeLabel;
+    tagGroup.imageLabel = imageLabel;
+    this.tagObjects.set(this.getTagKey(strokeLabel, imageLabel), tagGroup);
 
     // Update tag text to include measurement if showMeasurements is enabled
     this.updateTagText(strokeLabel, imageLabel);
@@ -485,7 +518,7 @@ export class TagManager {
     }
 
     // Create connector line
-    this.updateConnector(strokeLabel);
+    this.updateConnector(strokeLabel, imageLabel);
 
     return tagGroup;
   }
@@ -596,12 +629,14 @@ export class TagManager {
   }
 
   // Update connector line between tag and stroke
-  updateConnector(strokeLabel) {
+  updateConnector(strokeLabel, imageLabel) {
     const canvas = this.canvas;
     if (!canvas) return;
 
-    const tagObj = this.tagObjects.get(strokeLabel);
-    if (!tagObj) return;
+    const found = this.getTagObject(strokeLabel, imageLabel);
+    if (!found) return;
+    const tagObj = found.tagObj;
+    const displayLabel = tagObj.strokeLabel || strokeLabel;
     const connectedStrokeObj = tagObj.connectedStroke;
     if (!connectedStrokeObj) return;
 
@@ -694,7 +729,7 @@ export class TagManager {
         isConnectorLine: true,
         connectedTag: tagObj,
         connectedStroke: connectedStrokeObj,
-        strokeLabel: strokeLabel,
+        strokeLabel: displayLabel,
       });
 
       canvas.add(connector);
@@ -702,7 +737,7 @@ export class TagManager {
       tagObj.connectorLine = connector;
     } else {
       // Create new connector
-      connector = this.createManipulatableConnector(tagObj, connectedStrokeObj, strokeLabel);
+      connector = this.createManipulatableConnector(tagObj, connectedStrokeObj, displayLabel);
       if (connector) {
         canvas.add(connector);
         connector.sendToBack();
@@ -715,30 +750,39 @@ export class TagManager {
   }
 
   // Remove a tag
-  removeTag(strokeLabel) {
+  removeTag(strokeLabel, imageLabel) {
     const canvas = this.canvas;
     if (!canvas) return;
 
-    const tagObj = this.tagObjects.get(strokeLabel);
-    if (tagObj) {
-      // Remove connector
-      if (tagObj.connectorLine) {
-        canvas.remove(tagObj.connectorLine);
-      }
-      // Remove tag
-      canvas.remove(tagObj);
-      this.tagObjects.delete(strokeLabel);
+    const key = this.resolveTagKey(strokeLabel, imageLabel);
+    if (!key) return;
+    const tagObj = this.tagObjects.get(key);
+    if (!tagObj) return;
+
+    // Remove connector
+    if (tagObj.connectorLine) {
+      canvas.remove(tagObj.connectorLine);
     }
+    // Remove tag
+    canvas.remove(tagObj);
+    this.tagObjects.delete(key);
+  }
+
+  // Clear all tags (useful when switching views with shared labels like A1)
+  clearAllTags() {
+    const keys = Array.from(this.tagObjects.keys());
+    keys.forEach(key => this.removeTag(key));
   }
 
   // Update tag text when measurement changes
   updateTagText(strokeLabel, imageLabel) {
     this.ensureBaselineSanitizer();
-    const tagObj = this.tagObjects.get(strokeLabel);
-    if (!tagObj) {
+    const found = this.getTagObject(strokeLabel, imageLabel);
+    if (!found) {
       console.warn(`[TagManager] No tag found for ${strokeLabel}`);
       return;
     }
+    const tagObj = found.tagObj;
 
     // Get the text object from the tag group
     const textObj = tagObj.getObjects().find(obj => obj.isTagText);
@@ -817,8 +861,8 @@ export class TagManager {
     const strokes = this.metadataManager.vectorStrokesByImage[currentViewId] || {};
 
     Object.entries(strokes).forEach(([strokeLabel, strokeObj]) => {
-      const tagObj = this.tagObjects.get(strokeLabel);
-      if (tagObj) {
+      const found = this.getTagObject(strokeLabel, currentViewId);
+      if (found) {
         // Recreate tag with new settings
         this.createTag(strokeLabel, currentViewId, strokeObj);
       }
@@ -834,8 +878,9 @@ export class TagManager {
     const strokes = this.metadataManager.vectorStrokesByImage[currentViewId] || {};
 
     Object.entries(strokes).forEach(([strokeLabel, strokeObj]) => {
-      const tagObj = this.tagObjects.get(strokeLabel);
-      if (tagObj) {
+      const found = this.getTagObject(strokeLabel, currentViewId);
+      if (found) {
+        const tagObj = found.tagObj;
         // Update both text and background size
         const textObj = tagObj
           .getObjects()
@@ -868,7 +913,7 @@ export class TagManager {
 
             // Update group coordinates and render
             tagObj.setCoords();
-            this.updateConnector(strokeLabel);
+            this.updateConnector(strokeLabel, currentViewId);
             canvas.renderAll();
           }, 10); // Small delay to allow text measurement
         }
@@ -892,8 +937,8 @@ export class TagManager {
     const strokes = this.metadataManager.vectorStrokesByImage[currentViewId] || {};
 
     Object.entries(strokes).forEach(([strokeLabel, strokeObj]) => {
-      const tagObj = this.tagObjects.get(strokeLabel);
-      if (tagObj) {
+      const found = this.getTagObject(strokeLabel, currentViewId);
+      if (found) {
         // Recreate tag with new background style
         this.createTag(strokeLabel, currentViewId, strokeObj);
       }
@@ -910,8 +955,8 @@ export class TagManager {
       const strokes = this.metadataManager.vectorStrokesByImage[currentViewId] || {};
 
       Object.entries(strokes).forEach(([strokeLabel, strokeObj]) => {
-        const tagObj = this.tagObjects.get(strokeLabel);
-        if (tagObj) {
+        const found = this.getTagObject(strokeLabel, currentViewId);
+        if (found) {
           this.createTag(strokeLabel, currentViewId, strokeObj);
         }
       });
@@ -944,7 +989,7 @@ export class TagManager {
   clearTagsForImage(imageLabel) {
     const strokes = this.metadataManager.vectorStrokesByImage[imageLabel] || {};
     Object.keys(strokes).forEach(strokeLabel => {
-      this.removeTag(strokeLabel);
+      this.removeTag(strokeLabel, imageLabel);
     });
   }
 
@@ -996,13 +1041,13 @@ export class TagManager {
 
   // Update tags when stroke visibility changes
   updateTagVisibility(strokeLabel, imageLabel, visible) {
-    const tagObj = this.tagObjects.get(strokeLabel);
-    if (tagObj) {
-      tagObj.set('visible', visible);
-      if (tagObj.connectorLine) {
-        tagObj.connectorLine.set('visible', visible);
-      }
-      this.canvas.renderAll();
+    const found = this.getTagObject(strokeLabel, imageLabel);
+    if (!found) return;
+    const tagObj = found.tagObj;
+    tagObj.set('visible', visible);
+    if (tagObj.connectorLine) {
+      tagObj.connectorLine.set('visible', visible);
     }
+    this.canvas.renderAll();
   }
 }

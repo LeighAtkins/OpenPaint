@@ -756,6 +756,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Function to load project from a JSON file
   function loadProjectFromJSON(file) {
     window.isLoadingProject = true;
+    window.__suppressScrollSelectUntil = Date.now() + 2000;
     console.log('[Load JSON] Loading project from JSON file:', file.name);
 
     showStatusMessage('Loading JSON project...', 'info');
@@ -796,6 +797,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const imageList = document.getElementById('imageList');
         if (imageList) imageList.innerHTML = '';
+        if (typeof window.clearImageGallery === 'function') {
+          window.clearImageGallery();
+        }
+        window.__initialGallerySyncDone = false;
 
         window.vectorStrokesByImage = {};
         window.strokeVisibilityByImage = {};
@@ -1008,6 +1013,7 @@ document.addEventListener('DOMContentLoaded', () => {
           console.log('[Load JSON] Setting current image to:', targetLabel);
 
           if (typeof window.switchToImage === 'function') {
+            window.__suppressScrollSelectUntil = Date.now() + 1000;
             window.currentImageLabel = targetLabel;
             window.switchToImage(targetLabel);
           }
@@ -1097,6 +1103,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // *** SET LOADING FLAG ***
       window.isLoadingProject = true;
+      window.__suppressScrollSelectUntil = Date.now() + 2000;
       //             console.log('[Load Project] Set isLoadingProject = true');
 
       showStatusMessage('Loading project...', 'info');
@@ -1148,6 +1155,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 parsedProjectData.name || 'OpenPaint Project';
               const imageList = document.getElementById('imageList');
               if (imageList) imageList.innerHTML = '';
+              if (typeof window.clearImageGallery === 'function') {
+                window.clearImageGallery();
+              }
+              window.__initialGallerySyncDone = false;
 
               window.vectorStrokesByImage = {};
               window.strokeVisibilityByImage = {};
@@ -1850,6 +1861,7 @@ document.addEventListener('DOMContentLoaded', () => {
                       );
 
                       if (typeof window.switchToImage === 'function') {
+                        window.__suppressScrollSelectUntil = Date.now() + 1000;
                         window.currentImageLabel = targetLabel;
                         window.switchToImage(targetLabel);
                       } else {
