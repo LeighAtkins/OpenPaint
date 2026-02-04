@@ -167,6 +167,10 @@
       console.warn('[Gallery] Invalid image data format:', imageData);
       return;
     }
+    if (!imageSrc) {
+      console.warn('[Gallery] Missing image src, skipping:', imageData);
+      return;
+    }
 
     // Handle cases where imageData already has an 'original' property to avoid nesting
     let originalData = imageData;
@@ -175,30 +179,6 @@
       originalData = imageData.original;
       console.log('[Gallery] Using nested original data to avoid double nesting');
     }
-
-    // Create image thumbnail
-    const thumbnail = document.createElement('div');
-    thumbnail.className = 'image-thumbnail';
-    thumbnail.dataset.imageIndex = index;
-    thumbnail.dataset.label =
-      originalData?.label || imageData?.label || imageData?.name || imageName || '';
-    thumbnail.style.backgroundImage = `url(${imageSrc})`;
-    thumbnail.title = imageName;
-    thumbnail.draggable = true;
-
-    // Add hover controls (delete only)
-    const controls = createThumbnailControls(index);
-    // Strip rotate/flip from controls
-    controls.querySelectorAll('.rotate-btn, .flip-btn').forEach(el => el.remove());
-    thumbnail.appendChild(controls);
-
-    // Add all event listeners using helper function
-    addThumbnailEventListeners(thumbnail, index);
-
-    // Wrap thumbnail in a small card with optional caption
-    const card = document.createElement('div');
-    card.className = 'flex flex-col items-center gap-1';
-    card.appendChild(thumbnail);
 
     // Compute caption; hide for blank canvas
     let displayName = '';
@@ -216,27 +196,94 @@
       displayName = imageName || '';
     }
 
-    const caption = document.createElement('div');
-    caption.className =
-      'thumb-caption text-[11px] text-slate-500 font-medium truncate max-w-[120px]';
-    caption.textContent = displayName || '';
-    card.appendChild(caption);
-    if (displayName) thumbnail.title = displayName;
-    else thumbnail.removeAttribute('title');
-    imageGallery.appendChild(card);
+    const existingThumb = imageGallery.querySelector(
+      `.image-thumbnail[data-image-index="${index}"]`
+    );
+    if (existingThumb) {
+      existingThumb.dataset.imageSrc = imageSrc;
+      existingThumb.dataset.label =
+        originalData?.label || imageData?.label || imageData?.name || imageName || '';
+      existingThumb.style.backgroundImage = `url(${imageSrc})`;
+      if (displayName) existingThumb.title = displayName;
+      else existingThumb.removeAttribute('title');
+
+      const existingCard = existingThumb.parentElement;
+      let caption = existingCard?.querySelector('.thumb-caption');
+      if (!caption && existingCard) {
+        caption = document.createElement('div');
+        caption.className =
+          'thumb-caption text-[11px] text-slate-500 font-medium truncate max-w-[120px]';
+        existingCard.appendChild(caption);
+      }
+      if (caption) caption.textContent = displayName || '';
+
+      let dot = imageDots.querySelector(`.nav-dot[data-image-index="${index}"]`);
+      if (!dot) {
+        dot = document.createElement('div');
+        dot.className = 'nav-dot';
+        dot.dataset.imageIndex = index;
+        dot.addEventListener('click', () => navigateToImage(index));
+        imageDots.appendChild(dot);
+      }
+      console.log('[Gallery] Updated existing thumbnail at index:', index);
+    }
+
+    // Create image thumbnail
+    let thumbnail = existingThumb;
+    let card = existingThumb ? existingThumb.parentElement : null;
+    if (!thumbnail) {
+      thumbnail = document.createElement('div');
+      thumbnail.className = 'image-thumbnail';
+      thumbnail.dataset.imageIndex = index;
+      thumbnail.dataset.imageSrc = imageSrc;
+      thumbnail.dataset.label =
+        originalData?.label || imageData?.label || imageData?.name || imageName || '';
+      thumbnail.style.backgroundImage = `url(${imageSrc})`;
+      thumbnail.title = imageName;
+      thumbnail.draggable = true;
+    }
+
+    // Add hover controls (delete only)
+    if (!existingThumb) {
+      const controls = createThumbnailControls(index);
+      // Strip rotate/flip from controls
+      controls.querySelectorAll('.rotate-btn, .flip-btn').forEach(el => el.remove());
+      thumbnail.appendChild(controls);
+    }
+
+    // Add all event listeners using helper function
+    if (!existingThumb) addThumbnailEventListeners(thumbnail, index);
+
+    // Wrap thumbnail in a small card with optional caption
+    if (!card) {
+      card = document.createElement('div');
+      card.className = 'flex flex-col items-center gap-1';
+      card.dataset.imageIndex = index;
+      card.appendChild(thumbnail);
+      const caption = document.createElement('div');
+      caption.className =
+        'thumb-caption text-[11px] text-slate-500 font-medium truncate max-w-[120px]';
+      caption.textContent = displayName || '';
+      card.appendChild(caption);
+      if (displayName) thumbnail.title = displayName;
+      else thumbnail.removeAttribute('title');
+      imageGallery.appendChild(card);
+    }
 
     console.log(`[Gallery] Created thumbnail element:`, thumbnail);
     console.log(`[Gallery] Gallery element children count:`, imageGallery.children.length);
 
     // Create navigation dot
-    const dot = document.createElement('div');
-    dot.className = 'nav-dot';
-    dot.dataset.imageIndex = index;
-    dot.addEventListener('click', () => navigateToImage(index));
-    imageDots.appendChild(dot);
+    if (!existingThumb) {
+      const dot = document.createElement('div');
+      dot.className = 'nav-dot';
+      dot.dataset.imageIndex = index;
+      dot.addEventListener('click', () => navigateToImage(index));
+      imageDots.appendChild(dot);
+    }
 
     // Observe thumbnail for intersection
-    if (intersectionObserver) {
+    if (intersectionObserver && !existingThumb) {
       intersectionObserver.observe(thumbnail);
     }
 
@@ -249,6 +296,20 @@
     // Update gallery data
     imageGalleryData[index] = normalizedData;
     updateGalleryControls();
+
+    // Persist order for save/load consistency
+    try {
+      window.orderedImageLabels = imageGalleryData
+        .map(item => item?.original?.label || item?.label || item?.name || '')
+        .filter(Boolean);
+    } catch (e) {
+      console.warn('[Gallery] Failed to update orderedImageLabels after add:', e);
+    }
+    if (!window.__initialGallerySyncDone && imageGalleryData.length === 1) {
+      window.__initialGallerySyncDone = true;
+      navigateToImage(0);
+      console.log('[Gallery] Auto-selected first image');
+    }
 
     // Trigger mini-stepper update if function exists
     if (typeof updatePills === 'function') {
@@ -351,7 +412,7 @@
 
     // Get the image data and find corresponding legacy image
     const imageData = imageGalleryData[index];
-    if (imageData && imageData.original && imageData.original.label) {
+    if (!window.__isLoadingProject && imageData && imageData.original && imageData.original.label) {
       const label = imageData.original.label;
       console.log(`[Gallery] Switching to image with label: ${label}`);
 
@@ -403,6 +464,15 @@
     }
 
     updateActiveImage(currentImageIndex);
+
+    // Persist order for save/load consistency
+    try {
+      window.orderedImageLabels = imageGalleryData
+        .map(item => item?.original?.label || item?.label || item?.name || '')
+        .filter(Boolean);
+    } catch (e) {
+      console.warn('[Gallery] Failed to update orderedImageLabels after reorder:', e);
+    }
   }
 
   /**
@@ -606,6 +676,37 @@
   }
 
   /**
+   * Sync gallery UI to a label without switching views
+   */
+  function syncToLabel(label, options = {}) {
+    if (!label) return false;
+    const imageGallery = document.getElementById('imageGallery');
+    if (!imageGallery) return false;
+    const index = imageGalleryData.findIndex(
+      item => item?.original?.label === label || item?.label === label
+    );
+    if (index < 0) return false;
+
+    // Suppress scroll-select while we realign the list to avoid auto-switch oscillation
+    window.__suppressScrollSelectUntil = Date.now() + 1200;
+    window.__imageListProgrammaticScrollUntil = Date.now() + 1200;
+
+    updateActiveImage(index);
+
+    if (options.scroll) {
+      const targetThumbnail = imageGallery.querySelector(`[data-image-index="${index}"]`);
+      if (targetThumbnail) {
+        targetThumbnail.scrollIntoView({
+          behavior: options.smooth === true ? 'smooth' : 'auto',
+          block: 'nearest',
+          inline: 'center',
+        });
+      }
+    }
+    return true;
+  }
+
+  /**
    * Update gallery controls and counters
    */
   function updateGalleryControls() {
@@ -660,6 +761,7 @@
     addImage: addImageToGallery,
     navigateToImage: navigateToImage,
     clearGallery: clearImageGallery,
+    syncToLabel: syncToLabel,
     getData: () => imageGalleryData,
     getCurrentIndex: () => currentImageIndex,
   };

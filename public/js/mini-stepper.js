@@ -153,9 +153,15 @@
     const debouncedSwitch = (label, reason = 'unknown') => {
       const isScrollSelectEnabled = () => window.scrollToSelectEnabled !== false;
       if (!isScrollSelectEnabled()) return;
+      if (window.__suppressScrollSelectUntil && Date.now() < window.__suppressScrollSelectUntil) {
+        return;
+      }
       if (switchTimeout) clearTimeout(switchTimeout);
       switchTimeout = setTimeout(() => {
         if (!isScrollSelectEnabled()) return;
+        if (window.__suppressScrollSelectUntil && Date.now() < window.__suppressScrollSelectUntil) {
+          return;
+        }
         // Skip if this is a programmatic scroll
         if (
           window.__imageListProgrammaticScrollUntil &&
@@ -190,6 +196,9 @@
           window.__imageListProgrammaticScrollUntil &&
           Date.now() < window.__imageListProgrammaticScrollUntil
         ) {
+          return;
+        }
+        if (window.__suppressScrollSelectUntil && Date.now() < window.__suppressScrollSelectUntil) {
           return;
         }
 
@@ -238,6 +247,9 @@
       ) {
         return;
       }
+      if (window.__suppressScrollSelectUntil && Date.now() < window.__suppressScrollSelectUntil) {
+        return;
+      }
 
       const closest = findCenteredContainer();
       const isScrollSelectEnabled = () => window.scrollToSelectEnabled !== false;
@@ -265,6 +277,9 @@
           window.__imageListProgrammaticScrollUntil &&
           Date.now() < window.__imageListProgrammaticScrollUntil
         ) {
+          return;
+        }
+        if (window.__suppressScrollSelectUntil && Date.now() < window.__suppressScrollSelectUntil) {
           return;
         }
 
@@ -315,6 +330,12 @@
           if (
             window.__imageListProgrammaticScrollUntil &&
             Date.now() < window.__imageListProgrammaticScrollUntil
+          ) {
+            return;
+          }
+          if (
+            window.__suppressScrollSelectUntil &&
+            Date.now() < window.__suppressScrollSelectUntil
           ) {
             return;
           }

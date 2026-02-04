@@ -405,7 +405,7 @@ export class CanvasManager {
           };
         }
 
-        tagManager.updateConnector(strokeLabel);
+        tagManager.updateConnector(tagObj.strokeLabel || strokeLabel, tagObj.imageLabel);
         break;
       }
     };
@@ -1412,7 +1412,10 @@ export class CanvasManager {
 
               // Remove tag
               if (window.app?.tagManager && strokeLabel) {
-                window.app.tagManager.removeTag(strokeLabel);
+                window.app.tagManager.removeTag(
+                  strokeLabel,
+                  imageLabel || window.currentImageLabel
+                );
               }
             }
 
@@ -2164,7 +2167,7 @@ export class CanvasManager {
             // Find the tag associated with this stroke
             for (const [strokeLabel, tagObj] of tagManager.tagObjects.entries()) {
               if (tagObj.connectedStroke === obj) {
-                tagManager.updateConnector(strokeLabel);
+                tagManager.updateConnector(tagObj.strokeLabel || strokeLabel, tagObj.imageLabel);
                 break;
               }
             }
@@ -2181,7 +2184,7 @@ export class CanvasManager {
         const tagManager = window.app.tagManager;
         for (const [strokeLabel, tagObj] of tagManager.tagObjects.entries()) {
           if (tagObj.connectedStroke === movingObj) {
-            tagManager.updateConnector(strokeLabel);
+            tagManager.updateConnector(tagObj.strokeLabel || strokeLabel, tagObj.imageLabel);
             break;
           }
         }
@@ -2199,7 +2202,7 @@ export class CanvasManager {
         if ((obj.type === 'line' || obj.type === 'path' || obj.type === 'group') && !obj.isTag) {
           for (const [strokeLabel, tagObj] of tagManager.tagObjects.entries()) {
             if (tagObj.connectedStroke === obj) {
-              tagManager.updateConnector(strokeLabel);
+              tagManager.updateConnector(tagObj.strokeLabel || strokeLabel, tagObj.imageLabel);
               break;
             }
           }
@@ -2666,7 +2669,7 @@ export class CanvasManager {
     if (window.app?.tagManager) {
       tags.forEach(tagObj => {
         if (tagObj?.strokeLabel) {
-          window.app.tagManager.updateConnector(tagObj.strokeLabel);
+          window.app.tagManager.updateConnector(tagObj.strokeLabel, tagObj.imageLabel);
         }
       });
     }

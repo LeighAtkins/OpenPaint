@@ -1024,7 +1024,7 @@ export class StrokeMetadataManager {
 
         // Remove tag
         if (window.app?.tagManager) {
-          window.app.tagManager.removeTag(strokeLabel);
+          window.app.tagManager.removeTag(strokeLabel, currentViewId);
         }
 
         // Refresh UI

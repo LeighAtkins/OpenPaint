@@ -7,6 +7,10 @@ export class ProjectManager {
   constructor(canvasManager, historyManager) {
     this.canvasManager = canvasManager;
     this.historyManager = historyManager;
+    this.isLoadingProject = false;
+    this.suspendSave = false;
+    this.isSwitchingView = false;
+    this.pendingSwitchViewId = null;
 
     // Project Data
     this.currentViewId = 'front';
@@ -26,10 +30,19 @@ export class ProjectManager {
 
   // Switch to a different view (image)
   async switchView(viewId, force = false) {
-    if (!this.views[viewId]) {
-      console.warn(`View ${viewId} does not exist.`);
+    if (this.isSwitchingView) {
+      this.pendingSwitchViewId = viewId;
       return;
     }
+    this.isSwitchingView = true;
+    if (!this.views[viewId]) {
+      console.warn(`View ${viewId} does not exist.`);
+      this.isSwitchingView = false;
+      return;
+    }
+
+    // If the sidebar DOM has a newer image for this view, prefer it
+    this.syncViewImageFromDom(viewId);
 
     // If already on this view, don't clear everything (unless forced)
     if (this.currentViewId === viewId && !force) {
@@ -49,6 +62,12 @@ export class ProjectManager {
         window.updateNextTagDisplay();
       }
 
+      this.isSwitchingView = false;
+      if (this.pendingSwitchViewId) {
+        const nextView = this.pendingSwitchViewId;
+        this.pendingSwitchViewId = null;
+        this.switchView(nextView, true);
+      }
       return;
     }
 
@@ -58,8 +77,17 @@ export class ProjectManager {
     // This prevents "shifting the frame" when scrolling through images
     const currentViewportState = this.canvasManager.getViewportState();
 
-    // 1. Save current state
-    this.saveCurrentViewState();
+    // 1. Save current state (skip during project load to avoid clobbering loaded data)
+    if (
+      !this.isLoadingProject &&
+      !this.suspendSave &&
+      !window.__isLoadingProject &&
+      !window.__suspendSaveCurrentView
+    ) {
+      this.saveCurrentViewState();
+    } else {
+      console.log('[Load] Skipping saveCurrentViewState during project load');
+    }
 
     // 2. Clear history for the new view (or we could maintain separate history stacks per view)
     this.historyManager.clear();
@@ -95,80 +123,114 @@ export class ProjectManager {
       // Sanitize canvas data and fix image URLs before loading
       let sanitizedData = this.sanitizeCanvasJSON(view.canvasData);
 
+      // Filter out objects that belong to a different view (prevents cross-view stroke bleed)
+      if (sanitizedData?.objects && Array.isArray(sanitizedData.objects)) {
+        sanitizedData.objects = sanitizedData.objects
+          .map(obj => {
+            if (!obj || typeof obj !== 'object') return obj;
+            if (obj.strokeMetadata) {
+              if (!obj.strokeMetadata.imageLabel) {
+                obj.strokeMetadata.imageLabel = viewId;
+              } else if (obj.strokeMetadata.imageLabel !== viewId) {
+                return null;
+              }
+            }
+            return obj;
+          })
+          .filter(Boolean);
+      }
+
       // If we have a saved image data URL, replace the blob URL in backgroundImage
       if (sanitizedData.backgroundImage && view.image) {
         sanitizedData.backgroundImage.src = view.image;
         console.log(`[Load] Replaced background image URL for ${viewId}`);
       }
 
-      this.canvasManager.loadFromJSON(sanitizedData, async () => {
-        // Restore metadata for this view
-        if (view.metadata && window.app?.metadataManager) {
-          window.app.metadataManager.vectorStrokesByImage[viewId] =
-            view.metadata.vectorStrokesByImage || {};
-          window.app.metadataManager.strokeVisibilityByImage[viewId] =
-            view.metadata.strokeVisibilityByImage || {};
-          window.app.metadataManager.strokeLabelVisibility[viewId] =
-            view.metadata.strokeLabelVisibility || {};
+      await new Promise(resolve => {
+        this.canvasManager.loadFromJSON(sanitizedData, async () => {
+          // Restore metadata for this view
+          if (view.metadata && window.app?.metadataManager) {
+            window.app.metadataManager.vectorStrokesByImage[viewId] =
+              view.metadata.vectorStrokesByImage || {};
+            window.app.metadataManager.strokeVisibilityByImage[viewId] =
+              view.metadata.strokeVisibilityByImage || {};
+            window.app.metadataManager.strokeLabelVisibility[viewId] =
+              view.metadata.strokeLabelVisibility || {};
 
-          // Deserialize measurements with validation
-          this.deserializeMeasurements(viewId, view.metadata.strokeMeasurements || {});
-        }
+            // Deserialize measurements with validation
+            this.deserializeMeasurements(viewId, view.metadata.strokeMeasurements || {});
+          }
 
-        // After loading, update history initial state
-        this.historyManager.saveState();
+          // After loading, update history initial state
+          this.historyManager.saveState();
 
-        // Rebuild metadata from canvas objects to ensure live references
-        if (window.app?.metadataManager) {
-          window.app.metadataManager.rebuildMetadataFromCanvas(
-            viewId,
-            this.canvasManager.fabricCanvas
-          );
-        }
-
-        // Recreate custom controls for lines and curves
-        const FabricControls =
-          window.FabricControls || (await import('./utils/FabricControls.js')).FabricControls;
-
-        const objects = this.canvasManager.fabricCanvas.getObjects();
-        objects.forEach(obj => {
-          if (obj.type === 'line' && obj.strokeMetadata) {
-            FabricControls.createLineControls(obj);
-          } else if (obj.type === 'path' && obj.customPoints) {
-            FabricControls.createCurveControls(obj);
-          } else if (
-            (obj.type === 'i-text' || obj.type === 'text') &&
-            obj.strokeMetadata?.type === 'text'
-          ) {
-            // Reattach event handlers for text elements loaded from JSON
-            obj.on('editing:exited', () => {
-              if (window.app?.historyManager) {
-                window.app.historyManager.saveState();
-              }
-            });
-            console.log(
-              `[Load] Reattached event handlers for text element: "${obj.text?.substring(0, 30) || 'empty'}"`
+          // Rebuild metadata from canvas objects to ensure live references
+          if (window.app?.metadataManager) {
+            window.app.metadataManager.rebuildMetadataFromCanvas(
+              viewId,
+              this.canvasManager.fabricCanvas
             );
           }
-        });
 
-        // Recreate tags for all strokes with visible labels
-        if (window.app?.tagManager && window.app?.metadataManager) {
-          const strokes = window.app.metadataManager.vectorStrokesByImage[viewId] || {};
-          const labelVisibility = window.app.metadataManager.strokeLabelVisibility[viewId] || {};
+          // Recreate custom controls for lines and curves
+          const FabricControls =
+            window.FabricControls || (await import('./utils/FabricControls.js')).FabricControls;
 
-          console.log(`[Load] Recreating tags for ${Object.keys(strokes).length} strokes`);
-
-          Object.entries(strokes).forEach(([strokeLabel, strokeObj]) => {
-            const isLabelVisible = labelVisibility[strokeLabel] !== false;
-            if (isLabelVisible) {
-              window.app.tagManager.createTag(strokeLabel, viewId, strokeObj);
+          const objects = this.canvasManager.fabricCanvas.getObjects();
+          objects.forEach(obj => {
+            if (obj.type === 'line' && obj.strokeMetadata) {
+              FabricControls.createLineControls(obj);
+            } else if (obj.type === 'path' && obj.customPoints) {
+              FabricControls.createCurveControls(obj);
+            } else if (
+              (obj.type === 'i-text' || obj.type === 'text') &&
+              obj.strokeMetadata?.type === 'text'
+            ) {
+              // Reattach event handlers for text elements loaded from JSON
+              obj.on('editing:exited', () => {
+                if (window.app?.historyManager) {
+                  window.app.historyManager.saveState();
+                }
+              });
+              console.log(
+                `[Load] Reattached event handlers for text element: "${obj.text?.substring(0, 30) || 'empty'}"`
+              );
             }
           });
-        }
 
-        // Restore viewport state to maintain continuity
-        this.canvasManager.setViewportState(currentViewportState);
+          // Recreate tags for all strokes with visible labels
+          if (window.app?.tagManager && window.app?.metadataManager) {
+            // Clear all tags to avoid collisions between views (e.g., multiple A1 labels)
+            if (typeof window.app.tagManager.clearAllTags === 'function') {
+              window.app.tagManager.clearAllTags();
+            }
+            const strokes = window.app.metadataManager.vectorStrokesByImage[viewId] || {};
+            const labelVisibility = window.app.metadataManager.strokeLabelVisibility[viewId] || {};
+
+            console.log(`[Load] Recreating tags for ${Object.keys(strokes).length} strokes`);
+
+            Object.entries(strokes).forEach(([strokeLabel, strokeObj]) => {
+              const isLabelVisible = labelVisibility[strokeLabel] !== false;
+              if (isLabelVisible) {
+                window.app.tagManager.createTag(strokeLabel, viewId, strokeObj);
+              }
+            });
+          }
+
+          // Ensure background image is re-applied after JSON load (JSON can clear it)
+          if (view.image) {
+            const canvas = this.canvasManager?.fabricCanvas;
+            const currentBgSrc = canvas?.backgroundImage?.src;
+            if (!currentBgSrc || currentBgSrc !== view.image) {
+              console.log('[Load] Reapplying background image after JSON load:', viewId);
+              await this.setBackgroundImage(view.image);
+            }
+          }
+
+          // Restore viewport state to maintain continuity
+          this.canvasManager.setViewportState(currentViewportState);
+          resolve();
+        });
       });
     } else {
       // Clear metadata for this view if no saved data
@@ -180,6 +242,31 @@ export class ProjectManager {
       this.canvasManager.setViewportState(currentViewportState);
 
       this.historyManager.saveState();
+    }
+
+    this.isSwitchingView = false;
+    if (this.pendingSwitchViewId) {
+      const nextView = this.pendingSwitchViewId;
+      this.pendingSwitchViewId = null;
+      this.switchView(nextView, true);
+    }
+  }
+
+  syncViewImageFromDom(viewId) {
+    try {
+      const escape =
+        typeof CSS !== 'undefined' && typeof CSS.escape === 'function'
+          ? CSS.escape
+          : value => String(value).replace(/"/g, '\\"');
+      const container = document.querySelector(`.image-container[data-label="${escape(viewId)}"]`);
+      if (!container) return;
+      const img = container.querySelector('img');
+      const domSrc = img?.getAttribute('src') || container.dataset?.originalImageUrl;
+      if (domSrc && this.views?.[viewId] && this.views[viewId].image !== domSrc) {
+        this.views[viewId].image = domSrc;
+      }
+    } catch (err) {
+      console.warn('[ProjectManager] Failed to sync view image from DOM:', err);
     }
   }
 
@@ -295,10 +382,20 @@ export class ProjectManager {
             const rect = captureFrame.getBoundingClientRect();
             frameWidth = rect.width;
             frameHeight = rect.height;
-            frameLeft = rect.left;
-            frameTop = rect.top;
+            const canvasRect = canvas.getElement().getBoundingClientRect();
+            frameLeft = rect.left - canvasRect.left;
+            frameTop = rect.top - canvasRect.top;
           } else {
             // Fallback to canvas dimensions if no frame
+            frameWidth = canvas.width;
+            frameHeight = canvas.height;
+            frameLeft = 0;
+            frameTop = 0;
+          }
+
+          // If frame is not laid out yet, fallback to canvas dimensions
+          if (!frameWidth || !frameHeight) {
+            console.warn('[Image Debug] Capture frame size invalid, using canvas size');
             frameWidth = canvas.width;
             frameHeight = canvas.height;
             frameLeft = 0;
@@ -1097,11 +1194,34 @@ export class ProjectManager {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       currentViewId: this.currentViewId,
+      viewOrder: [],
       views: {},
     };
 
     const viewIds = Object.keys(this.views || {});
     console.log('[Save] Views to persist:', viewIds);
+
+    // Capture view order to preserve gallery order on load
+    try {
+      const orderFromGlobals =
+        Array.isArray(window.orderedImageLabels) && window.orderedImageLabels.length
+          ? window.orderedImageLabels.slice()
+          : [];
+      const orderFromGallery = window.imageGallery?.getData
+        ? window.imageGallery
+            .getData()
+            .map(item => item?.original?.label || item?.label || item?.name || '')
+            .filter(Boolean)
+        : [];
+      const rawOrder = orderFromGlobals.length ? orderFromGlobals : orderFromGallery;
+      const filtered = rawOrder.filter(id => viewIds.includes(id));
+      const remaining = viewIds.filter(id => !filtered.includes(id));
+      projectData.viewOrder = filtered.concat(remaining);
+    } catch (e) {
+      projectData.viewOrder = viewIds.slice();
+    }
+
+    const isBlobUrl = url => typeof url === 'string' && url.startsWith('blob:');
 
     for (const viewId of viewIds) {
       const view = this.views[viewId] || {};
@@ -1126,6 +1246,18 @@ export class ProjectManager {
         } catch (err) {
           console.warn(`[Save] Could not capture image for ${viewId}:`, err);
         }
+      }
+
+      // Prefer stable data URLs over blob URLs in saved JSON
+      if (entry.imageDataURL) {
+        entry.imageUrl = entry.imageDataURL;
+      } else if (isBlobUrl(entry.imageUrl)) {
+        entry.imageUrl = null;
+      }
+
+      // Ensure backgroundImage src isn't blank when canvasJSON exists
+      if (entry.canvasJSON?.backgroundImage && !entry.canvasJSON.backgroundImage.src) {
+        entry.canvasJSON.backgroundImage.src = entry.imageDataURL || entry.imageUrl || '';
       }
 
       if (metadataManager) {
@@ -1215,6 +1347,15 @@ export class ProjectManager {
 
       console.log('[Load] Parsed project data:', projectData.projectName || projectData.name);
 
+      // Mark project load in progress to prevent auto-switches and saves
+      window.__isLoadingProject = true;
+      window.__suspendSaveCurrentView = true;
+      this.isLoadingProject = true;
+      this.suspendSave = true;
+
+      // Prevent scroll-select auto-switching during load without toggling UI state
+      window.__suppressScrollSelectUntil = Date.now() + 3000;
+
       if (!projectData.version || !projectData.version.startsWith('2.0')) {
         this.showStatusMessage(
           'This appears to be a legacy project format. Please use the legacy loader.',
@@ -1254,14 +1395,26 @@ export class ProjectManager {
       // Load each view
       const viewIds = Object.keys(projectData.views);
       const preferredOrder = ['front', 'side', 'back', 'cushion', 'left', 'right'];
-      const orderedViewIds = [...viewIds].sort((a, b) => {
-        const aIndex = preferredOrder.indexOf(a);
-        const bIndex = preferredOrder.indexOf(b);
-        const aScore = aIndex === -1 ? Number.MAX_SAFE_INTEGER : aIndex;
-        const bScore = bIndex === -1 ? Number.MAX_SAFE_INTEGER : bIndex;
-        if (aScore !== bScore) return aScore - bScore;
-        return a.localeCompare(b);
-      });
+      const orderFromProject = Array.isArray(projectData.viewOrder)
+        ? projectData.viewOrder
+        : Array.isArray(projectData.imageLabels)
+          ? projectData.imageLabels
+          : [];
+      let orderedViewIds = [];
+      if (orderFromProject.length) {
+        const filtered = orderFromProject.filter(id => viewIds.includes(id));
+        const remaining = viewIds.filter(id => !filtered.includes(id));
+        orderedViewIds = filtered.concat(remaining);
+      } else {
+        orderedViewIds = [...viewIds].sort((a, b) => {
+          const aIndex = preferredOrder.indexOf(a);
+          const bIndex = preferredOrder.indexOf(b);
+          const aScore = aIndex === -1 ? Number.MAX_SAFE_INTEGER : aIndex;
+          const bScore = bIndex === -1 ? Number.MAX_SAFE_INTEGER : bIndex;
+          if (aScore !== bScore) return aScore - bScore;
+          return a.localeCompare(b);
+        });
+      }
 
       console.log('[Load] Loading views:', orderedViewIds);
 
@@ -1304,13 +1457,66 @@ export class ProjectManager {
       if (targetView && this.views[targetView]) {
         console.log(`[Load] Switching to view: ${targetView}`);
         await this.switchView(targetView, true);
+        // Force a background re-apply after switch to avoid "blank until click"
+        if (this.views[targetView]?.image) {
+          await this.setBackgroundImage(this.views[targetView].image);
+          this.canvasManager?.fabricCanvas?.requestRenderAll?.();
+        }
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            if (this.canvasManager?.resize) {
+              this.canvasManager.resize();
+            }
+            const current = this.views[targetView];
+            if (current?.image && this.currentViewId === targetView) {
+              console.log('[Load] Post-load refresh of background image:', targetView);
+              this.setBackgroundImage(current.image);
+              this.canvasManager?.fabricCanvas?.requestRenderAll?.();
+            }
+          });
+        });
+        const lateRefresh = () => {
+          const current = this.views[targetView];
+          if (!current?.image || this.currentViewId !== targetView) return;
+          const canvas = this.canvasManager?.fabricCanvas;
+          const hasBg = !!canvas?.backgroundImage;
+          if (!hasBg) {
+            console.log('[Load] Late refresh of background image:', targetView);
+            this.setBackgroundImage(current.image);
+          }
+        };
+        setTimeout(lateRefresh, 250);
+        setTimeout(lateRefresh, 800);
+
+        // Align gallery selection/scroll to the current view without switching views
+        const syncGalleryToView = attempt => {
+          if (!window.imageGallery?.syncToLabel) return;
+          const ok = window.imageGallery.syncToLabel(targetView, { scroll: true, smooth: false });
+          if (!ok && attempt < 5) {
+            setTimeout(() => syncGalleryToView(attempt + 1), 150);
+          }
+        };
+        setTimeout(() => syncGalleryToView(0), 100);
       }
 
       this.showStatusMessage('Project loaded successfully', 'success');
       console.log('[Load] Project load complete');
+
+      // Re-enable scroll-select after load settles
+      setTimeout(() => {
+        window.__suppressScrollSelectUntil = 0;
+        window.__isLoadingProject = false;
+        window.__suspendSaveCurrentView = false;
+        this.isLoadingProject = false;
+        this.suspendSave = false;
+      }, 3500);
     } catch (error) {
       console.error('[Load] Failed to load project:', error);
       this.showStatusMessage('Failed to load project: ' + error.message, 'error');
+      window.__isLoadingProject = false;
+      window.__suspendSaveCurrentView = false;
+      this.isLoadingProject = false;
+      this.suspendSave = false;
     }
   }
 

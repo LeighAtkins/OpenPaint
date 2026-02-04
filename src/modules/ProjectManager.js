@@ -29,6 +29,9 @@ export class ProjectManager {
       return;
     }
 
+    // If the sidebar DOM has a newer image for this view, prefer it
+    this.syncViewImageFromDom(viewId);
+
     // If already on this view, don't clear everything (unless forced)
     if (this.currentViewId === viewId && !force) {
       console.log(`Already on view: ${viewId}, refreshing image only`);
@@ -110,6 +113,24 @@ export class ProjectManager {
         window.app.metadataManager.clearImageMetadata(viewId);
       }
       this.historyManager.saveState();
+    }
+  }
+
+  syncViewImageFromDom(viewId) {
+    try {
+      const escape =
+        typeof CSS !== 'undefined' && typeof CSS.escape === 'function'
+          ? CSS.escape
+          : value => String(value).replace(/"/g, '\\"');
+      const container = document.querySelector(`.image-container[data-label="${escape(viewId)}"]`);
+      if (!container) return;
+      const img = container.querySelector('img');
+      const domSrc = img?.getAttribute('src') || container.dataset?.originalImageUrl;
+      if (domSrc && this.views?.[viewId] && this.views[viewId].image !== domSrc) {
+        this.views[viewId].image = domSrc;
+      }
+    } catch (err) {
+      console.warn('[ProjectManager] Failed to sync view image from DOM:', err);
     }
   }
 
