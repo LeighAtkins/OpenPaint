@@ -36,14 +36,20 @@ export class TagManager {
 
     prototypes.forEach(proto => {
       if (proto.__baselinePatch) return;
-      proto.textBaseline = 'alphabetic';
-      const original = proto._setTextStyles;
-      const originalGetStyle = proto._getStyleDeclaration;
-      const originalSet = proto.set;
 
-      if (typeof originalGetStyle === 'function') {
+      // Force default to 'alphabetic'
+      proto.textBaseline = 'alphabetic';
+
+      const original_setTextStyles = proto._setTextStyles;
+      const original_getStyleDeclaration = proto._getStyleDeclaration;
+      const original_set = proto.set;
+      const original_render = proto._render;
+      const original_initDimensions = proto.initDimensions;
+
+      // Intercept _getStyleDeclaration
+      if (typeof original_getStyleDeclaration === 'function') {
         proto._getStyleDeclaration = function (...args) {
-          const style = originalGetStyle.apply(this, args);
+          const style = original_getStyleDeclaration.apply(this, args);
           if (style?.textBaseline === 'alphabetical') {
             style.textBaseline = 'alphabetic';
           }
@@ -51,29 +57,57 @@ export class TagManager {
         };
       }
 
-      if (typeof originalSet === 'function') {
+      // Intercept set method
+      if (typeof original_set === 'function') {
         proto.set = function (key, value) {
           if (typeof key === 'object' && key?.textBaseline === 'alphabetical') {
             key.textBaseline = 'alphabetic';
           } else if (key === 'textBaseline' && value === 'alphabetical') {
             value = 'alphabetic';
           }
-          return originalSet.call(this, key, value);
+          return original_set.call(this, key, value);
         };
       }
 
-      proto._setTextStyles = function (ctx, ...args) {
-        this.textBaseline = 'alphabetic';
-        if (ctx?.textBaseline === 'alphabetical') {
-          ctx.textBaseline = 'alphabetic';
-        }
-        args.forEach(arg => {
-          if (arg?.textBaseline === 'alphabetical') {
-            arg.textBaseline = 'alphabetic';
+      // Intercept _setTextStyles
+      if (typeof original_setTextStyles === 'function') {
+        proto._setTextStyles = function (ctx, ...args) {
+          this.textBaseline = 'alphabetic';
+          if (ctx?.textBaseline === 'alphabetical') {
+            ctx.textBaseline = 'alphabetic';
           }
-        });
-        return original.call(this, ctx, ...args);
-      };
+          args.forEach(arg => {
+            if (arg?.textBaseline === 'alphabetical') {
+              arg.textBaseline = 'alphabetic';
+            }
+          });
+          return original_setTextStyles.call(this, ctx, ...args);
+        };
+      }
+
+      // Intercept _render to sanitize before rendering
+      if (typeof original_render === 'function') {
+        proto._render = function (ctx) {
+          if (this.textBaseline === 'alphabetical') {
+            this.textBaseline = 'alphabetic';
+          }
+          if (ctx?.textBaseline === 'alphabetical') {
+            ctx.textBaseline = 'alphabetic';
+          }
+          return original_render.call(this, ctx);
+        };
+      }
+
+      // Intercept initDimensions
+      if (typeof original_initDimensions === 'function') {
+        proto.initDimensions = function () {
+          if (this.textBaseline === 'alphabetical') {
+            this.textBaseline = 'alphabetic';
+          }
+          return original_initDimensions.call(this);
+        };
+      }
+
       proto.__baselinePatch = true;
     });
   }

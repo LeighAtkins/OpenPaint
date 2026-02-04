@@ -88,6 +88,7 @@ export class ArrowManager {
           }
 
           this.attachArrowRendering(obj);
+          this.syncArrowMetadata(obj);
           obj.dirty = true;
         });
 
@@ -121,6 +122,7 @@ export class ArrowManager {
 
           obj.arrowSettings[key] = value;
           this.attachArrowRendering(obj);
+          this.syncArrowMetadata(obj);
           obj.dirty = true;
         });
 
@@ -229,6 +231,13 @@ export class ArrowManager {
     // Apply current default settings to a new object
     object.arrowSettings = { ...this.defaultSettings };
     this.attachArrowRendering(object);
+    this.syncArrowMetadata(object);
+  }
+
+  syncArrowMetadata(object) {
+    if (object?.strokeMetadata) {
+      object.strokeMetadata.arrowSettings = object.arrowSettings;
+    }
   }
 
   attachArrowRendering(object) {

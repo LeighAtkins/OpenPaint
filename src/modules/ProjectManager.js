@@ -150,6 +150,7 @@ export class ProjectManager {
   getCanvasCustomProps() {
     return [
       'strokeMetadata',
+      'arrowSettings',
       'isTag',
       'isTagText',
       'labelVisible',

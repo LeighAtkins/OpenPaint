@@ -4910,8 +4910,10 @@ async function generatePDFWithPDFLib(projectName, viewIds, quality, pageSize, in
         function calculateNextTag() {
           console.log('[calculateNextTag] Called with tagMode:', tagMode);
           const currentImageLabel = window.currentImageLabel || 'default';
-          const lineStrokes = window.lineStrokesByImage?.[currentImageLabel] || [];
-          const existingTags = lineStrokes.filter(Boolean);
+          
+          // First, check if there are any existing tags
+          const strokesObj = window.app?.metadataManager?.vectorStrokesByImage?.[currentImageLabel] || {};
+          const existingTags = Object.keys(strokesObj);
 
           console.log(
             '[calculateNextTag] Current image:',
@@ -4920,11 +4922,36 @@ async function generatePDFWithPDFLib(projectName, viewIds, quality, pageSize, in
             existingTags
           );
 
+          // If no tags exist, reset to the beginning and clear any manual overrides
           if (existingTags.length === 0) {
+            // Clear any manual tag overrides since we're starting fresh
+            if (window.labelsByImage && window.labelsByImage[currentImageLabel]) {
+              delete window.labelsByImage[currentImageLabel];
+            }
+            if (window.manualTagByImage && window.manualTagByImage[currentImageLabel]) {
+              delete window.manualTagByImage[currentImageLabel];
+            }
+            
             const result = tagMode === 'letters' ? 'A' : 'A1';
             console.log('[calculateNextTag] No existing tags, returning:', result);
             return result;
           }
+          
+          // Priority 1: Check if user manually set the next tag via labelsByImage
+          if (window.labelsByImage && window.labelsByImage[currentImageLabel]) {
+            const manualTag = window.labelsByImage[currentImageLabel];
+            console.log('[calculateNextTag] Using labelsByImage (manual override):', manualTag);
+            return manualTag;
+          }
+          
+          // Priority 2: Check if we're in a manual tag sequence (manualTagByImage)
+          if (window.manualTagByImage && window.manualTagByImage[currentImageLabel]) {
+            const manualTag = window.manualTagByImage[currentImageLabel];
+            console.log('[calculateNextTag] Using manualTagByImage (manual sequence):', manualTag);
+            return manualTag;
+          }
+          
+          // Priority 3: Calculate next tag with gap-filling
 
           // Extract all base tags (without suffixes)
           const baseTags = new Set();
@@ -4980,6 +5007,14 @@ async function generatePDFWithPDFLib(projectName, viewIds, quality, pageSize, in
 
           if (tagMode === 'letters') {
             // Letters only mode: Check for gaps first
+            
+            // Check if 'A' is missing (gap at the beginning)
+            if (sortedBaseTags[0] !== 'A') {
+              console.log('[calculateNextTag] Letters mode, missing A at start');
+              return 'A';
+            }
+            
+            // Check for gaps in the middle
             for (let i = 0; i < sortedBaseTags.length - 1; i++) {
               const currentLetter = sortedBaseTags[i][0];
               const nextLetter = sortedBaseTags[i + 1][0];
@@ -5004,6 +5039,15 @@ async function generatePDFWithPDFLib(projectName, viewIds, quality, pageSize, in
             return nextLetter;
           } else {
             // Letters + numbers mode: Check for gaps first
+            
+            // Check if A1 is missing (gap at the beginning)
+            const firstTag = sortedBaseTags[0];
+            if (firstTag !== 'A1') {
+              console.log('[calculateNextTag] Numbers mode, missing A1 at start');
+              return 'A1';
+            }
+            
+            // Check for gaps in the sequence
             for (let i = 0; i < sortedBaseTags.length; i++) {
               const match = sortedBaseTags[i].match(/^([A-Z])(\d+)$/);
               if (!match) continue;
@@ -5011,7 +5055,7 @@ async function generatePDFWithPDFLib(projectName, viewIds, quality, pageSize, in
               const [, letter, number] = match;
               const num = parseInt(number);
 
-              // Check for gaps within the same letter (but not before first occurrence)
+              // Check for gaps within the same letter
               if (i < sortedBaseTags.length - 1) {
                 const nextMatch = sortedBaseTags[i + 1].match(/^([A-Z])(\d+)$/);
                 if (nextMatch) {

@@ -6,6 +6,7 @@ export class PencilTool extends BaseTool {
     super(canvasManager);
     this.brushColor = '#3b82f6'; // Default to bright blue
     this.brushWidth = 2;
+    this.isDrawing = false;
   }
 
   activate() {
@@ -64,6 +65,10 @@ export class PencilTool extends BaseTool {
     }
 
     console.log(`[PencilTool] Valid freehand stroke created (${pathLength.toFixed(1)}px)`);
+
+    if (window.app?.historyManager) {
+      window.app.historyManager.saveState({ force: true, reason: 'pencil:end' });
+    }
   }
 
   onMouseDown(o) {
@@ -72,6 +77,13 @@ export class PencilTool extends BaseTool {
     if (evt.altKey || evt.shiftKey || this.canvas.isGestureActive) {
       console.log('[PencilTool] Pan gesture detected - temporarily disabling drawing mode');
       this.canvas.isDrawingMode = false;
+      this.isDrawing = false;
+      return;
+    }
+
+    this.isDrawing = true;
+    if (window.app?.historyManager) {
+      window.app.historyManager.saveState({ force: true, reason: 'pencil:start' });
     }
   }
 
@@ -82,6 +94,7 @@ export class PencilTool extends BaseTool {
       console.log('[PencilTool] Re-enabling drawing mode');
       this.canvas.isDrawingMode = true;
     }
+    this.isDrawing = false;
   }
 
   calculatePathLength(path) {

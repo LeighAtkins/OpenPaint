@@ -48,6 +48,10 @@ export class StrokeMetadataManager {
       labelVisible: true,
     };
 
+    if (obj.arrowSettings) {
+      obj.strokeMetadata.arrowSettings = obj.arrowSettings;
+    }
+
     // Initialize visibility maps
     if (!this.strokeVisibilityByImage[imageLabel]) {
       this.strokeVisibilityByImage[imageLabel] = {};
@@ -362,6 +366,17 @@ export class StrokeMetadataManager {
     }
     if (!window.lineStrokesByImage[imageLabel].includes(usedTag)) {
       window.lineStrokesByImage[imageLabel].push(usedTag);
+    }
+
+    // IMPORTANT: Add the used tag to vectorStrokesByImage temporarily
+    // so that calculateNextTag() can see it and generate the correct next tag
+    // This is a placeholder that will be replaced when attachMetadata() is called
+    if (!this.vectorStrokesByImage[imageLabel]) {
+      this.vectorStrokesByImage[imageLabel] = {};
+    }
+    if (!this.vectorStrokesByImage[imageLabel][usedTag]) {
+      // Add a placeholder marker (will be replaced with actual stroke object later)
+      this.vectorStrokesByImage[imageLabel][usedTag] = { _placeholder: true };
     }
 
     // Update currentImageLabel for tag prediction system
@@ -1014,6 +1029,13 @@ export class StrokeMetadataManager {
 
         // Refresh UI
         this.updateStrokeVisibilityControls();
+
+        // Update next tag display to fill the gap (after UI refresh)
+        setTimeout(() => {
+          if (window.updateNextTagDisplay) {
+            window.updateNextTagDisplay();
+          }
+        }, 10);
         if (window.app?.canvasManager?.fabricCanvas) {
           window.app.canvasManager.fabricCanvas.renderAll();
         }

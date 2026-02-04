@@ -40,6 +40,13 @@ export class ProjectManager {
         this.canvasManager.setRotationDegrees(view.rotation);
         this.updateThumbnailRotation(viewId, view.rotation);
       }
+
+      // Update global currentImageLabel and next tag display
+      window.currentImageLabel = viewId;
+      if (window.updateNextTagDisplay) {
+        window.updateNextTagDisplay();
+      }
+
       return;
     }
 
@@ -58,6 +65,14 @@ export class ProjectManager {
     // 3. Switch context
     this.currentViewId = viewId;
     const view = this.views[viewId];
+
+    // Update global currentImageLabel for tag prediction system
+    window.currentImageLabel = viewId;
+
+    // Update next tag display to start from A1 (or A) for the new image
+    if (window.updateNextTagDisplay) {
+      window.updateNextTagDisplay();
+    }
 
     // Apply rotation for the new view
     if (typeof view.rotation === 'number') {
@@ -993,6 +1008,7 @@ export class ProjectManager {
   getCanvasCustomProps() {
     return [
       'strokeMetadata',
+      'arrowSettings',
       'isTag',
       'isTagText',
       'labelVisible',

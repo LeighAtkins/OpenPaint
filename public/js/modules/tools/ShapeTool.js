@@ -92,6 +92,10 @@ export class ShapeTool extends BaseTool {
     this.startY = pointer.y;
     this.isDrawing = true;
     this.hasMoved = false;
+
+    if (window.app?.historyManager) {
+      window.app.historyManager.saveState({ force: true, reason: 'shape:start' });
+    }
   }
 
   onMouseMove(o) {
@@ -157,8 +161,8 @@ export class ShapeTool extends BaseTool {
 
     this.attachMetadata(this.shape);
 
-    if (window.app && window.app.historyManager) {
-      window.app.historyManager.saveState();
+    if (window.app?.historyManager) {
+      window.app.historyManager.saveState({ force: true, reason: 'shape:end' });
     }
 
     this.shape = null;

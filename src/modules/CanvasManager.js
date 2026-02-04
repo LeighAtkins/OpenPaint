@@ -39,6 +39,8 @@ export class CanvasManager {
       return;
     }
 
+    this.ensureBaselineSanitizer();
+
     // Ensure canvas element exists
     const canvasEl = document.getElementById(this.canvasId);
     if (!canvasEl) {
@@ -647,6 +649,85 @@ export class CanvasManager {
 
     // Ensure canvas is visible
     canvasEl.style.display = 'block';
+  }
+
+  ensureBaselineSanitizer() {
+    const fabricGlobal = globalThis.fabric;
+    if (!fabricGlobal?.Text?.prototype) return;
+    const prototypes = [fabricGlobal.Text, fabricGlobal.IText, fabricGlobal.Textbox]
+      .map(cls => cls?.prototype)
+      .filter(Boolean);
+
+    prototypes.forEach(proto => {
+      if (proto.__baselinePatch) return;
+
+      proto.textBaseline = 'alphabetic';
+
+      const original_setTextStyles = proto._setTextStyles;
+      const original_getStyleDeclaration = proto._getStyleDeclaration;
+      const original_set = proto.set;
+      const original_render = proto._render;
+      const original_initDimensions = proto.initDimensions;
+
+      if (typeof original_getStyleDeclaration === 'function') {
+        proto._getStyleDeclaration = function (...args) {
+          const style = original_getStyleDeclaration.apply(this, args);
+          if (style?.textBaseline === 'alphabetical') {
+            style.textBaseline = 'alphabetic';
+          }
+          return style;
+        };
+      }
+
+      if (typeof original_set === 'function') {
+        proto.set = function (key, value) {
+          if (typeof key === 'object' && key?.textBaseline === 'alphabetical') {
+            key.textBaseline = 'alphabetic';
+          } else if (key === 'textBaseline' && value === 'alphabetical') {
+            value = 'alphabetic';
+          }
+          return original_set.call(this, key, value);
+        };
+      }
+
+      if (typeof original_setTextStyles === 'function') {
+        proto._setTextStyles = function (ctx, ...args) {
+          this.textBaseline = 'alphabetic';
+          if (ctx?.textBaseline === 'alphabetical') {
+            ctx.textBaseline = 'alphabetic';
+          }
+          args.forEach(arg => {
+            if (arg?.textBaseline === 'alphabetical') {
+              arg.textBaseline = 'alphabetic';
+            }
+          });
+          return original_setTextStyles.call(this, ctx, ...args);
+        };
+      }
+
+      if (typeof original_render === 'function') {
+        proto._render = function (ctx) {
+          if (this.textBaseline === 'alphabetical') {
+            this.textBaseline = 'alphabetic';
+          }
+          if (ctx?.textBaseline === 'alphabetical') {
+            ctx.textBaseline = 'alphabetic';
+          }
+          return original_render.call(this, ctx);
+        };
+      }
+
+      if (typeof original_initDimensions === 'function') {
+        proto.initDimensions = function () {
+          if (this.textBaseline === 'alphabetical') {
+            this.textBaseline = 'alphabetic';
+          }
+          return original_initDimensions.call(this);
+        };
+      }
+
+      proto.__baselinePatch = true;
+    });
   }
 
   initKeyboardShortcuts() {
@@ -1820,7 +1901,23 @@ export class CanvasManager {
   // Helper to get JSON export
   // Include strokeMetadata, isArrow, and customPoints to preserve stroke labels, visibility state, arrow markers, and curve control points
   toJSON() {
-    return this.fabricCanvas.toJSON(['strokeMetadata', 'isArrow', 'customPoints', 'tagOffset']);
+    const json = this.fabricCanvas.toJSON([
+      'strokeMetadata',
+      'isArrow',
+      'customPoints',
+      'tagOffset',
+      'arrowSettings',
+    ]);
+    const exportableObjects = this.fabricCanvas.getObjects().filter(obj => !obj?.excludeFromExport);
+    if (json?.objects && exportableObjects.length === json.objects.length) {
+      json.objects.forEach((entry, index) => {
+        const obj = exportableObjects[index];
+        if (obj?.arrowSettings) {
+          entry.arrowSettings = obj.arrowSettings;
+        }
+      });
+    }
+    return json;
   }
 
   // Helper to load from JSON
@@ -1832,6 +1929,9 @@ export class CanvasManager {
       () => {
         // After all objects are loaded, restore custom controls
         this.fabricCanvas.getObjects().forEach(object => {
+          if (object?._arrowRenderingAttached) {
+            delete object._arrowRenderingAttached;
+          }
           if (object.strokeMetadata) {
             const metaType = object.strokeMetadata.type;
             const objType = object.type;
@@ -1850,12 +1950,40 @@ export class CanvasManager {
               FabricControls.createArrowControls(object);
             }
           }
+
+          if (object.arrowSettings && window.app?.arrowManager) {
+            window.app.arrowManager.attachArrowRendering(object);
+            object.dirty = true;
+          }
         });
 
         this.fabricCanvas.renderAll();
         if (callback) callback();
       },
       (o, object) => {
+        if (object?._arrowRenderingAttached) {
+          delete object._arrowRenderingAttached;
+        }
+        if (o.textBaseline === 'alphabetical') {
+          o.textBaseline = 'alphabetic';
+        }
+
+        if (o.styles) {
+          Object.values(o.styles).forEach(line => {
+            if (line && typeof line === 'object') {
+              Object.values(line).forEach(style => {
+                if (style?.textBaseline === 'alphabetical') {
+                  style.textBaseline = 'alphabetic';
+                }
+              });
+            }
+          });
+        }
+
+        if (o.arrowSettings) {
+          object.arrowSettings = o.arrowSettings;
+        }
+
         // Reviver: restore custom properties from serialized JSON to fabric object
         if (o.strokeMetadata) {
           object.strokeMetadata = o.strokeMetadata;
@@ -1868,6 +1996,9 @@ export class CanvasManager {
         }
         if (o.tagOffset) {
           object.tagOffset = o.tagOffset;
+        }
+        if (!object.arrowSettings && o.strokeMetadata?.arrowSettings) {
+          object.arrowSettings = o.strokeMetadata.arrowSettings;
         }
       }
     );
