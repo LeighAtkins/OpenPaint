@@ -2,7 +2,7 @@
   "version": 2,
   "installCommand": "npm install --ignore-scripts",
   "buildCommand": "npm run vercel-build",
-  "outputDirectory": ".",
+  "outputDirectory": "public",
   "functions": {
     "api/**/*.js": {
       "includeFiles": "server/**"

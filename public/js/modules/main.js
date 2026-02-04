@@ -5,6 +5,8 @@ import { ProjectManager } from './ProjectManager.js';
 import { HistoryManager } from './HistoryManager.js';
 import { StrokeMetadataManager } from './StrokeMetadataManager.js';
 import { UploadManager } from './UploadManager.js';
+import { imageRegistry } from './ImageRegistry.js';
+import { imageRegistry } from './ImageRegistry.js';
 
 class App {
   constructor() {
@@ -14,6 +16,12 @@ class App {
     this.metadataManager = new StrokeMetadataManager();
     this.projectManager = new ProjectManager(this.canvasManager, this.historyManager);
     this.uploadManager = new UploadManager(this.projectManager);
+
+    imageRegistry.bindProjectManager(this.projectManager);
+    imageRegistry.start();
+
+    imageRegistry.bindProjectManager(this.projectManager);
+    imageRegistry.start();
 
     this.deferredInitStarted = false;
     this.deferredToolPreloadStarted = false;
