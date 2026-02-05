@@ -2043,6 +2043,127 @@
         transition: none !important;
       }
 
+      .capture-tab-bar {
+        position: fixed;
+        left: 50%;
+        top: 5.5rem;
+        transform: translateX(-50%);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 10px;
+        background: rgba(255, 255, 255, 0.92);
+        border: 1px solid rgba(15, 23, 42, 0.12);
+        border-radius: 999px;
+        box-shadow: 0 10px 25px rgba(15, 23, 42, 0.15);
+        z-index: 12000;
+        pointer-events: auto;
+      }
+
+      .capture-tab-bar,
+      .capture-tab-bar * {
+        pointer-events: auto;
+      }
+
+      .capture-tab-list {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .capture-tab {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        border: 1px solid transparent;
+        background: rgba(226, 232, 240, 0.6);
+        color: #0f172a;
+        font-size: 12px;
+        font-weight: 600;
+        transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+      }
+
+      .capture-tab:hover {
+        background: rgba(226, 232, 240, 0.9);
+      }
+
+      .capture-tab.active {
+        background: #2563eb;
+        color: #ffffff;
+        border-color: rgba(37, 99, 235, 0.8);
+        box-shadow: 0 8px 16px rgba(37, 99, 235, 0.25);
+      }
+
+      .capture-tab.master {
+        background: rgba(15, 23, 42, 0.08);
+        color: #0f172a;
+      }
+
+      .capture-tab.master.active {
+        background: #0f172a;
+        color: #ffffff;
+      }
+
+      .capture-tab-close {
+        width: 16px;
+        height: 16px;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        line-height: 1;
+        background: rgba(15, 23, 42, 0.12);
+        color: inherit;
+      }
+
+      .capture-tab-add {
+        padding: 4px 10px;
+        border-radius: 999px;
+        border: 1px dashed rgba(15, 23, 42, 0.2);
+        background: rgba(255, 255, 255, 0.9);
+        font-size: 12px;
+        font-weight: 600;
+        color: #0f172a;
+      }
+
+      .capture-tab-master-overlay {
+        position: absolute;
+        inset: 0;
+        z-index: 1550;
+        display: none;
+      }
+
+      body.master-view-active .capture-tab-master-overlay {
+        display: block;
+      }
+
+      body.master-view-active #captureFrame {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .capture-tab-frame {
+        position: absolute;
+        border: 2px solid rgba(37, 99, 235, 0.8);
+        background: rgba(37, 99, 235, 0.08);
+        border-radius: 10px;
+        pointer-events: auto;
+        display: flex;
+        align-items: flex-start;
+        justify-content: flex-start;
+        padding: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #0f172a;
+      }
+
+      .capture-tab-frame:hover {
+        background: rgba(37, 99, 235, 0.18);
+      }
+
       .resize-handle {
         position: absolute;
         opacity: 0;
@@ -3250,6 +3371,7 @@
 
     <!-- Capture Frame -->
     <div id="captureOverlay" class="fixed inset-0 pointer-events-none" style="z-index: 1500">
+      <div id="captureTabMasterOverlay" class="capture-tab-master-overlay"></div>
       <!-- Capture frame -->
       <div
         id="captureFrame"
@@ -3328,6 +3450,10 @@
           ></div>
         </div>
       </div>
+    </div>
+    <div id="captureTabBar" class="capture-tab-bar">
+      <div id="captureTabList" class="capture-tab-list"></div>
+      <button id="captureTabAdd" class="capture-tab-add" type="button">New Tab</button>
     </div>
 
     <!-- Instruction Text for Unlocked Mode -->
@@ -4375,8 +4501,23 @@ async function generatePDFWithPDFLib(projectName, viewIds, quality, pageSize, in
         const imagePanel = document.getElementById('imagePanel');
         const captureOverlay = document.getElementById('captureOverlay');
         const captureFrame = document.getElementById('captureFrame');
-        // Per-image capture frame storage and helpers
-        window.captureFrameByLabel = window.captureFrameByLabel || {};
+        const tabBar = document.getElementById('captureTabBar');
+        const tabList = document.getElementById('captureTabList');
+        const tabAddButton = document.getElementById('captureTabAdd');
+        const masterOverlay = document.getElementById('captureTabMasterOverlay');
+        if (!tabBar || !tabList || !tabAddButton) {
+          console.warn('[CaptureTabs] Tab UI elements missing');
+        } else {
+          console.log('[CaptureTabs] Tab UI ready');
+        }
+
+        // Capture frame tabs storage and helpers
+        window.captureTabsByLabel = window.captureTabsByLabel || {};
+        let captureTabIdCounter = 1;
+
+        const getActiveLabel = () =>
+          window.app?.projectManager?.currentViewId || window.currentImageLabel || 'front';
+
         function buildCaptureFrameRecord(rect) {
           const winW = Math.max(window.innerWidth, 1);
           const winH = Math.max(window.innerHeight, 1);
@@ -4397,9 +4538,149 @@ async function generatePDFWithPDFLib(projectName, viewIds, quality, pageSize, in
           const rect = captureFrame.getBoundingClientRect();
           return buildCaptureFrameRecord(rect);
         }
-        function saveCurrentCaptureFrameForLabel(label) {
+        function buildViewportRecord() {
+          const canvasManager = window.app?.canvasManager;
+          const viewport = canvasManager?.getViewportState
+            ? canvasManager.getViewportState()
+            : { zoom: 1, panX: 0, panY: 0 };
+          const rotation = canvasManager?.getRotationDegrees
+            ? canvasManager.getRotationDegrees()
+            : 0;
+          return {
+            zoom: typeof viewport.zoom === 'number' ? viewport.zoom : 1,
+            panX: typeof viewport.panX === 'number' ? viewport.panX : 0,
+            panY: typeof viewport.panY === 'number' ? viewport.panY : 0,
+            rotation: typeof rotation === 'number' ? rotation : 0,
+          };
+        }
+        function applyViewportRecord(record) {
+          if (!record) return;
+          const canvasManager = window.app?.canvasManager;
+          if (canvasManager?.setRotationDegrees && typeof record.rotation === 'number') {
+            canvasManager.setRotationDegrees(record.rotation);
+          }
+          if (canvasManager?.setViewportState) {
+            canvasManager.setViewportState({
+              zoom: record.zoom,
+              panX: record.panX,
+              panY: record.panY,
+            });
+          }
+        }
+        function createTabId() {
+          captureTabIdCounter += 1;
+          return `tab-${Date.now()}-${captureTabIdCounter}`;
+        }
+        function createDefaultTabState(label) {
+          const frameRect = getCaptureFrameRectPixels();
+          const viewport = buildViewportRecord();
+          const defaultTabId = createTabId();
+          const masterTabId = 'master';
+          return {
+            tabs: [
+              {
+                id: defaultTabId,
+                name: 'Frame 1',
+                type: 'normal',
+                captureFrame: frameRect,
+                viewport,
+              },
+              {
+                id: masterTabId,
+                name: 'Master',
+                type: 'master',
+                viewport,
+              },
+            ],
+            activeTabId: defaultTabId,
+            masterTabId,
+            lastNonMasterId: defaultTabId,
+          };
+        }
+        function normalizeTabState(label, state) {
+          if (!state || !Array.isArray(state.tabs)) {
+            return createDefaultTabState(label);
+          }
+          const normalized = {
+            tabs: [],
+            activeTabId: state.activeTabId,
+            masterTabId: state.masterTabId || 'master',
+            lastNonMasterId: state.lastNonMasterId,
+          };
+          state.tabs.forEach(tab => {
+            if (!tab || typeof tab !== 'object') return;
+            const id = typeof tab.id === 'string' ? tab.id : createTabId();
+            const type = tab.type === 'master' || tab.type === 'linked' ? tab.type : 'normal';
+            normalized.tabs.push({
+              id,
+              name: typeof tab.name === 'string' ? tab.name : 'Frame',
+              type,
+              captureFrame: tab.captureFrame || null,
+              viewport: tab.viewport || null,
+              linkedTarget: tab.linkedTarget || null,
+            });
+          });
+          if (!normalized.tabs.length) {
+            return createDefaultTabState(label);
+          }
+          let hasMaster = normalized.tabs.some(tab => tab.type === 'master');
+          if (!hasMaster) {
+            normalized.tabs.push({
+              id: normalized.masterTabId,
+              name: 'Master',
+              type: 'master',
+              viewport: buildViewportRecord(),
+            });
+            hasMaster = true;
+          }
+          if (!normalized.masterTabId) {
+            const master = normalized.tabs.find(tab => tab.type === 'master');
+            normalized.masterTabId = master ? master.id : 'master';
+          }
+          if (!normalized.activeTabId || !normalized.tabs.some(tab => tab.id === normalized.activeTabId)) {
+            const firstNormal = normalized.tabs.find(tab => tab.type !== 'master');
+            normalized.activeTabId = firstNormal ? firstNormal.id : normalized.masterTabId;
+          }
+          if (!normalized.lastNonMasterId) {
+            const firstNormal = normalized.tabs.find(tab => tab.type !== 'master');
+            normalized.lastNonMasterId = firstNormal ? firstNormal.id : normalized.activeTabId;
+          }
+          return normalized;
+        }
+        function ensureCaptureTabsForLabel(label) {
+          if (!label) return createDefaultTabState('front');
+          const existing = window.captureTabsByLabel[label];
+          if (!existing) {
+            window.captureTabsByLabel[label] = createDefaultTabState(label);
+          } else {
+            window.captureTabsByLabel[label] = normalizeTabState(label, existing);
+          }
+          return window.captureTabsByLabel[label];
+        }
+        function getActiveTab(label) {
+          const state = ensureCaptureTabsForLabel(label);
+          return state.tabs.find(tab => tab.id === state.activeTabId) || null;
+        }
+        function setMasterViewActive(isActive) {
+          if (isActive) {
+            document.body.classList.add('master-view-active');
+          } else {
+            document.body.classList.remove('master-view-active');
+          }
+        }
+        function saveActiveTabState(label) {
           if (!label) return;
-          window.captureFrameByLabel[label] = getCaptureFrameRectPixels();
+          const state = ensureCaptureTabsForLabel(label);
+          const activeTab = state.tabs.find(tab => tab.id === state.activeTabId);
+          if (!activeTab || activeTab.type === 'master') return;
+          activeTab.captureFrame = getCaptureFrameRectPixels();
+          activeTab.viewport = buildViewportRecord();
+          state.lastNonMasterId = activeTab.id;
+        }
+        function saveCurrentCaptureFrameForLabel(label) {
+          const resolved = label || getActiveLabel();
+          if (!resolved) return;
+          saveActiveTabState(resolved);
         }
         function resolveCaptureFrameRect(stored) {
           const winW = Math.max(window.innerWidth, 1);
@@ -4446,6 +4727,10 @@ async function generatePDFWithPDFLib(projectName, viewIds, quality, pageSize, in
             height = Math.round(width / targetAspect);
           }
 
+          if (width < 200 || height < 150) {
+            return fallback;
+          }
+
           const leftRatio =
             typeof stored.relativeLeft === 'number'
               ? stored.relativeLeft
@@ -4466,35 +4751,213 @@ async function generatePDFWithPDFLib(projectName, viewIds, quality, pageSize, in
           };
         }
         function applyCaptureFrameForLabel(label) {
-          const stored = window.captureFrameByLabel[label];
+          const resolved = label || getActiveLabel();
+          ensureCaptureTabsForLabel(resolved);
+          const activeTab = getActiveTab(resolved);
+          if (!activeTab) return;
+          if (activeTab.type === 'master') {
+            setMasterViewActive(true);
+            renderMasterOverlay(resolved);
+            return;
+          }
+          setMasterViewActive(false);
+          const stored = activeTab.captureFrame;
           const rect = resolveCaptureFrameRect(stored);
           captureFrame.style.left = `${rect.left}px`;
           captureFrame.style.top = `${rect.top}px`;
           captureFrame.style.width = `${rect.width}px`;
           captureFrame.style.height = `${rect.height}px`;
-
-          if (label) {
-            window.captureFrameByLabel[label] = {
-              ...(stored || {}),
-              ...rect,
-              windowWidth: Math.max(window.innerWidth, 1),
-              windowHeight: Math.max(window.innerHeight, 1),
-              relativeLeft: rect.left / Math.max(window.innerWidth, 1),
-              relativeTop: rect.top / Math.max(window.innerHeight, 1),
-              relativeWidth: rect.width / Math.max(window.innerWidth, 1),
-              relativeHeight: rect.height / Math.max(window.innerHeight, 1),
-            };
+          activeTab.captureFrame = {
+            ...(stored || {}),
+            ...rect,
+            windowWidth: Math.max(window.innerWidth, 1),
+            windowHeight: Math.max(window.innerHeight, 1),
+            relativeLeft: rect.left / Math.max(window.innerWidth, 1),
+            relativeTop: rect.top / Math.max(window.innerHeight, 1),
+            relativeWidth: rect.width / Math.max(window.innerWidth, 1),
+            relativeHeight: rect.height / Math.max(window.innerHeight, 1),
+          };
+          if (!activeTab.viewport) {
+            activeTab.viewport = buildViewportRecord();
+          }
+          if (activeTab.viewport) {
+            applyViewportRecord(activeTab.viewport);
           }
         }
+        function renderTabBar(label) {
+          if (!tabList) return;
+          const state = ensureCaptureTabsForLabel(label);
+          tabList.innerHTML = '';
+          state.tabs.forEach(tab => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = `capture-tab${
+              tab.id === state.activeTabId ? ' active' : ''
+            }${tab.type === 'master' ? ' master' : ''}`;
+            button.dataset.tabId = tab.id;
+            const labelSpan = document.createElement('span');
+            labelSpan.textContent = tab.name || 'Frame';
+            button.appendChild(labelSpan);
+            if (tab.type !== 'master') {
+              const close = document.createElement('span');
+              close.className = 'capture-tab-close';
+              close.textContent = 'x';
+              close.dataset.action = 'close';
+              button.appendChild(close);
+            }
+            tabList.appendChild(button);
+          });
+        }
+        function renderMasterOverlay(label) {
+          if (!masterOverlay) return;
+          const state = ensureCaptureTabsForLabel(label);
+          masterOverlay.innerHTML = '';
+          state.tabs
+            .filter(tab => tab.type !== 'master')
+            .forEach(tab => {
+              const rect = resolveCaptureFrameRect(tab.captureFrame);
+              const frame = document.createElement('button');
+              frame.type = 'button';
+              frame.className = 'capture-tab-frame';
+              frame.dataset.tabId = tab.id;
+              frame.style.left = `${rect.left}px`;
+              frame.style.top = `${rect.top}px`;
+              frame.style.width = `${rect.width}px`;
+              frame.style.height = `${rect.height}px`;
+              frame.textContent = tab.name || 'Frame';
+              masterOverlay.appendChild(frame);
+            });
+        }
+        function setActiveTab(label, tabId, options = {}) {
+          const state = ensureCaptureTabsForLabel(label);
+          const targetTab = state.tabs.find(tab => tab.id === tabId);
+          if (!targetTab) return;
+          if (!options.skipSave) {
+            saveActiveTabState(label);
+          }
+          state.activeTabId = targetTab.id;
+          if (targetTab.type !== 'master') {
+            state.lastNonMasterId = targetTab.id;
+          }
+          if (targetTab.viewport) {
+            applyViewportRecord(targetTab.viewport);
+          }
+          applyCaptureFrameForLabel(label);
+          renderTabBar(label);
+          renderMasterOverlay(label);
+        }
+        function createNewTab(label) {
+          const state = ensureCaptureTabsForLabel(label);
+          const activeTab = getActiveTab(label);
+          const baseName = 'Frame';
+          const nextIndex =
+            state.tabs.filter(tab => tab.type !== 'master').length + 1;
+          const name = `${baseName} ${nextIndex}`;
+          const newTab = {
+            id: createTabId(),
+            name,
+            type: 'normal',
+            captureFrame: activeTab?.captureFrame || getCaptureFrameRectPixels(),
+            viewport: activeTab?.viewport || buildViewportRecord(),
+          };
+          const masterIndex = state.tabs.findIndex(tab => tab.type === 'master');
+          if (masterIndex === -1) {
+            state.tabs.push(newTab);
+          } else {
+            state.tabs.splice(masterIndex, 0, newTab);
+          }
+          setActiveTab(label, newTab.id, { skipSave: true });
+        }
+        function deleteTab(label, tabId) {
+          const state = ensureCaptureTabsForLabel(label);
+          const tab = state.tabs.find(item => item.id === tabId);
+          if (!tab || tab.type === 'master') return;
+          const remaining = state.tabs.filter(item => item.type !== 'master' && item.id !== tabId);
+          if (remaining.length === 0) return;
+          state.tabs = state.tabs.filter(item => item.id !== tabId);
+          const nextId =
+            state.activeTabId === tabId
+              ? state.lastNonMasterId && state.lastNonMasterId !== tabId
+                ? state.lastNonMasterId
+                : remaining[0].id
+              : state.activeTabId;
+          setActiveTab(label, nextId, { skipSave: true });
+        }
+
+        if (tabAddButton) {
+          tabAddButton.addEventListener('click', () => {
+            console.log('[CaptureTabs] New Tab clicked');
+            const label = getActiveLabel();
+            createNewTab(label);
+          });
+        }
+        if (tabList) {
+          tabList.addEventListener('click', e => {
+            console.log('[CaptureTabs] Tab clicked');
+            const target = e.target;
+            const button = target.closest('button');
+            if (!button || !button.dataset.tabId) return;
+            const label = getActiveLabel();
+            if (target.dataset.action === 'close') {
+              deleteTab(label, button.dataset.tabId);
+              return;
+            }
+            setActiveTab(label, button.dataset.tabId);
+          });
+          tabList.addEventListener('dblclick', e => {
+            const button = e.target.closest('button');
+            if (!button || !button.dataset.tabId) return;
+            const label = getActiveLabel();
+            const state = ensureCaptureTabsForLabel(label);
+            const tab = state.tabs.find(item => item.id === button.dataset.tabId);
+            if (!tab || tab.type === 'master') return;
+            const nextName = window.prompt('Rename tab', tab.name || 'Frame');
+            if (typeof nextName === 'string' && nextName.trim()) {
+              tab.name = nextName.trim();
+              renderTabBar(label);
+              renderMasterOverlay(label);
+            }
+          });
+        }
+        if (masterOverlay) {
+          masterOverlay.addEventListener('click', e => {
+            const button = e.target.closest('button');
+            if (!button || !button.dataset.tabId) return;
+            const label = getActiveLabel();
+            setActiveTab(label, button.dataset.tabId);
+          });
+        }
+
         window.saveCurrentCaptureFrameForLabel = saveCurrentCaptureFrameForLabel;
         window.applyCaptureFrameForLabel = applyCaptureFrameForLabel;
+        window.ensureCaptureTabsForLabel = ensureCaptureTabsForLabel;
+        window.setActiveCaptureTab = setActiveTab;
+        window.renderCaptureTabUI = label => {
+          const resolved = label || getActiveLabel();
+          renderTabBar(resolved);
+          renderMasterOverlay(resolved);
+        };
+        window.captureTabsSyncActive = label => {
+          const resolved = label || getActiveLabel();
+          saveActiveTabState(resolved);
+        };
+        window.setCaptureTabsForLabel = (label, data) => {
+          if (!label) return;
+          window.captureTabsByLabel[label] = normalizeTabState(label, data);
+        };
+
+        const initialLabel = getActiveLabel();
+        ensureCaptureTabsForLabel(initialLabel);
+        renderTabBar(initialLabel);
+        renderMasterOverlay(initialLabel);
+        applyCaptureFrameForLabel(initialLabel);
 
         let captureFrameResizeRaf = null;
         window.addEventListener('resize', () => {
           if (captureFrameResizeRaf !== null) return;
           captureFrameResizeRaf = requestAnimationFrame(() => {
             captureFrameResizeRaf = null;
-            const activeLabel = window.currentImageLabel;
+            const activeLabel = getActiveLabel();
             if (typeof window.applyCaptureFrameForLabel === 'function') {
               window.applyCaptureFrameForLabel(activeLabel);
             }
@@ -5489,7 +5952,8 @@ async function generatePDFWithPDFLib(projectName, viewIds, quality, pageSize, in
           document.removeEventListener('mouseup', stopResize);
           // Save per-image frame when resizing ends
           if (typeof window.currentImageLabel !== 'undefined') {
-            saveCurrentCaptureFrameForLabel(window.currentImageLabel);
+            const activeLabel = getActiveLabel();
+            saveCurrentCaptureFrameForLabel(activeLabel);
 
             // Store the frame dimensions as a ratio of canvas size
             const canvas = document.getElementById('canvas');
@@ -5499,7 +5963,7 @@ async function generatePDFWithPDFLib(projectName, viewIds, quality, pageSize, in
               window.manualFrameRatios = {};
             }
 
-            window.manualFrameRatios[window.currentImageLabel] = {
+            window.manualFrameRatios[activeLabel] = {
               widthRatio: frameRect.width / canvas.clientWidth,
               heightRatio: frameRect.height / canvas.clientHeight,
               leftRatio: frameRect.left / canvas.clientWidth,
@@ -5507,7 +5971,7 @@ async function generatePDFWithPDFLib(projectName, viewIds, quality, pageSize, in
             };
 
             console.log(
-              `[FRAME] Saved ${window.currentImageLabel} frame ratios: ${(window.manualFrameRatios[window.currentImageLabel].widthRatio * 100).toFixed(1)}% width, ${(window.manualFrameRatios[window.currentImageLabel].heightRatio * 100).toFixed(1)}% height`
+              `[FRAME] Saved ${activeLabel} frame ratios: ${(window.manualFrameRatios[activeLabel].widthRatio * 100).toFixed(1)}% width, ${(window.manualFrameRatios[activeLabel].heightRatio * 100).toFixed(1)}% height`
             );
           }
         }
@@ -5608,7 +6072,7 @@ async function generatePDFWithPDFLib(projectName, viewIds, quality, pageSize, in
           document.removeEventListener('mouseup', stopCaptureDrag);
           // Save per-image frame when dragging ends
           if (typeof window.currentImageLabel !== 'undefined') {
-            saveCurrentCaptureFrameForLabel(window.currentImageLabel);
+            saveCurrentCaptureFrameForLabel(getActiveLabel());
           }
         }
 

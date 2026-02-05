@@ -15,10 +15,24 @@ export class ProjectManager {
     // Project Data
     this.currentViewId = 'front';
     this.views = {
-      front: { id: 'front', image: null, canvasData: null, metadata: null, rotation: 0 },
-      side: { id: 'side', image: null, canvasData: null, metadata: null, rotation: 0 },
-      back: { id: 'back', image: null, canvasData: null, metadata: null, rotation: 0 },
-      cushion: { id: 'cushion', image: null, canvasData: null, metadata: null, rotation: 0 },
+      front: {
+        id: 'front',
+        image: null,
+        canvasData: null,
+        metadata: null,
+        rotation: 0,
+        tabs: null,
+      },
+      side: { id: 'side', image: null, canvasData: null, metadata: null, rotation: 0, tabs: null },
+      back: { id: 'back', image: null, canvasData: null, metadata: null, rotation: 0, tabs: null },
+      cushion: {
+        id: 'cushion',
+        image: null,
+        canvasData: null,
+        metadata: null,
+        rotation: 0,
+        tabs: null,
+      },
     };
   }
 
@@ -62,6 +76,16 @@ export class ProjectManager {
         window.updateNextTagDisplay();
       }
 
+      if (window.ensureCaptureTabsForLabel) {
+        window.ensureCaptureTabsForLabel(viewId);
+      }
+      if (window.applyCaptureFrameForLabel) {
+        window.applyCaptureFrameForLabel(viewId);
+      }
+      if (window.renderCaptureTabUI) {
+        window.renderCaptureTabUI(viewId);
+      }
+
       this.isSwitchingView = false;
       if (this.pendingSwitchViewId) {
         const nextView = this.pendingSwitchViewId;
@@ -84,6 +108,9 @@ export class ProjectManager {
       !window.__isLoadingProject &&
       !window.__suspendSaveCurrentView
     ) {
+      if (window.captureTabsSyncActive) {
+        window.captureTabsSyncActive(this.currentViewId);
+      }
       this.saveCurrentViewState();
     } else {
       console.log('[Load] Skipping saveCurrentViewState during project load');
@@ -112,6 +139,16 @@ export class ProjectManager {
 
     // 4. Clear canvas
     this.canvasManager.clear();
+
+    if (window.ensureCaptureTabsForLabel) {
+      window.ensureCaptureTabsForLabel(viewId);
+    }
+    if (window.applyCaptureFrameForLabel) {
+      window.applyCaptureFrameForLabel(viewId);
+    }
+    if (window.renderCaptureTabUI) {
+      window.renderCaptureTabUI(viewId);
+    }
 
     // 5. Load background image if exists
     if (view.image) {
@@ -275,6 +312,15 @@ export class ProjectManager {
     if (this.views[this.currentViewId]) {
       this.views[this.currentViewId].canvasData = json;
       this.views[this.currentViewId].rotation = this.canvasManager.getRotationDegrees();
+      if (window.captureTabsByLabel?.[this.currentViewId]) {
+        try {
+          this.views[this.currentViewId].tabs = JSON.parse(
+            JSON.stringify(window.captureTabsByLabel[this.currentViewId])
+          );
+        } catch (err) {
+          console.warn('[Save] Failed to clone capture tabs for view:', err);
+        }
+      }
 
       // Also save metadata for this view
       if (window.app?.metadataManager) {
@@ -347,6 +393,7 @@ export class ProjectManager {
         canvasData: null,
         metadata: null,
         rotation: 0,
+        tabs: null,
       };
     }
 
@@ -1167,6 +1214,9 @@ export class ProjectManager {
   }
 
   async getProjectData() {
+    if (window.captureTabsSyncActive) {
+      window.captureTabsSyncActive(this.currentViewId);
+    }
     this.saveCurrentViewState();
 
     const projectNameInput = document.getElementById('projectName');
@@ -1230,6 +1280,7 @@ export class ProjectManager {
         imageDataURL: null,
         imageUrl: view.image || null,
         metadata: {},
+        tabs: null,
       };
 
       if (viewId === this.currentViewId && fabricCanvas) {
@@ -1270,6 +1321,8 @@ export class ProjectManager {
       } else if (view.metadata) {
         entry.metadata = deepClone(view.metadata);
       }
+
+      entry.tabs = deepClone(window.captureTabsByLabel?.[viewId] || view.tabs);
 
       projectData.views[viewId] = entry;
     }
@@ -1426,6 +1479,7 @@ export class ProjectManager {
           image: null,
           canvasData: viewData.canvasJSON,
           metadata: viewData.metadata || {},
+          tabs: viewData.tabs || null,
         };
 
         // Restore image from data URL if available
@@ -1452,11 +1506,23 @@ export class ProjectManager {
         }
       }
 
+      if (window.setCaptureTabsForLabel) {
+        orderedViewIds.forEach(viewId => {
+          window.setCaptureTabsForLabel(viewId, projectData.views?.[viewId]?.tabs || null);
+        });
+      }
+
       // Switch to the saved current view or first view
       const targetView = projectData.currentViewId || orderedViewIds[0];
       if (targetView && this.views[targetView]) {
         console.log(`[Load] Switching to view: ${targetView}`);
         await this.switchView(targetView, true);
+        if (window.renderCaptureTabUI) {
+          window.renderCaptureTabUI(targetView);
+        }
+        if (window.applyCaptureFrameForLabel) {
+          window.applyCaptureFrameForLabel(targetView);
+        }
         // Force a background re-apply after switch to avoid "blank until click"
         if (this.views[targetView]?.image) {
           await this.setBackgroundImage(this.views[targetView].image);
