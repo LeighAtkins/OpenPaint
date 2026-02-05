@@ -40,6 +40,9 @@ export class CanvasManager {
     this.panY = 0;
     this.rotateViewport = false;
     this.__activeCurveTransformTarget = null;
+
+    this.clipboard = null;
+    this.clipboardPasteCount = 0;
   }
 
   init() {
@@ -1365,8 +1368,28 @@ export class CanvasManager {
       // Don't delete if typing in an input
       const isInput = e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA';
       const isContentEditable = e.target.isContentEditable;
+      const isTextEditing =
+        window.app?.toolManager?.tools?.text?.activeTextObject?.isEditing === true;
 
-      if (isInput || isContentEditable) {
+      if (isInput || isContentEditable || isTextEditing) {
+        return;
+      }
+
+      const key = String(e.key || '').toLowerCase();
+      const isCopy = (e.ctrlKey || e.metaKey) && key === 'c';
+      const isPaste = (e.ctrlKey || e.metaKey) && key === 'v';
+
+      if (isCopy) {
+        e.preventDefault();
+        this.copySelectedObjects();
+        return;
+      }
+
+      if (isPaste) {
+        if (this.clipboard?.objects?.length) {
+          e.preventDefault();
+          this.pasteClipboardObjects();
+        }
         return;
       }
 
@@ -1443,6 +1466,111 @@ export class CanvasManager {
         }
       }
     });
+  }
+
+  copySelectedObjects() {
+    if (!this.fabricCanvas) return;
+    const activeObjects = this.fabricCanvas.getActiveObjects();
+    if (!activeObjects || activeObjects.length === 0) return;
+
+    const exportable = activeObjects.filter(
+      obj => !obj?.excludeFromExport && !obj?.isTag && !obj?.isConnectorLine
+    );
+    if (exportable.length === 0) return;
+
+    const customProps = ['strokeMetadata', 'isArrow', 'customPoints', 'tagOffset', 'arrowSettings'];
+    const serialized = exportable.map(obj => obj.toObject(customProps));
+
+    this.clipboard = {
+      objects: serialized,
+      timestamp: Date.now(),
+    };
+    this.clipboardPasteCount = 0;
+    console.log(`[Copy] Stored ${serialized.length} objects in clipboard`);
+  }
+
+  pasteClipboardObjects() {
+    if (!this.fabricCanvas || !this.clipboard?.objects?.length) return;
+
+    const imageLabel = window.app?.projectManager?.currentViewId || window.currentImageLabel;
+    const offset = 12 * (this.clipboardPasteCount + 1);
+    this.clipboardPasteCount += 1;
+    const payload = JSON.parse(JSON.stringify(this.clipboard.objects));
+
+    fabric.util.enlivenObjects(payload, objects => {
+      const pastedObjects = [];
+      objects.forEach(obj => {
+        if (!obj) return;
+        obj.set({
+          left: (obj.left || 0) + offset,
+          top: (obj.top || 0) + offset,
+        });
+        if (typeof obj.setCoords === 'function') {
+          obj.setCoords();
+        }
+        this.fabricCanvas.add(obj);
+        this.attachMetadataForPaste(obj, imageLabel);
+        pastedObjects.push(obj);
+      });
+
+      if (pastedObjects.length === 1) {
+        this.fabricCanvas.setActiveObject(pastedObjects[0]);
+      } else if (pastedObjects.length > 1) {
+        const selection = new fabric.ActiveSelection(pastedObjects, {
+          canvas: this.fabricCanvas,
+        });
+        this.fabricCanvas.setActiveObject(selection);
+      }
+
+      this.fabricCanvas.requestRenderAll();
+      if (window.app?.metadataManager?.updateStrokeVisibilityControls) {
+        window.app.metadataManager.updateStrokeVisibilityControls();
+      }
+      if (window.app?.historyManager) {
+        window.app.historyManager.saveState();
+      }
+    });
+  }
+
+  attachMetadataForPaste(obj, imageLabel) {
+    const metadataManager = window.app?.metadataManager;
+    if (!metadataManager || !obj) return;
+
+    const meta = obj.strokeMetadata || {};
+
+    if (meta.type === 'text' || obj.type === 'i-text' || obj.type === 'text') {
+      metadataManager.attachTextMetadata(obj, imageLabel);
+      obj.on('editing:exited', () => {
+        if (window.app?.historyManager) {
+          window.app.historyManager.saveState();
+        }
+      });
+      return;
+    }
+
+    if (meta.type === 'shape') {
+      metadataManager.attachShapeMetadata(obj, imageLabel, meta.shapeType || 'shape');
+      return;
+    }
+
+    const strokeLabel = metadataManager.getNextLabel(imageLabel);
+    metadataManager.attachMetadata(obj, imageLabel, strokeLabel);
+    if (window.app?.tagManager) {
+      window.app.tagManager.createTagForStroke(strokeLabel, imageLabel, obj);
+    }
+
+    if (obj.type === 'line') {
+      FabricControls.createLineControls(obj);
+    } else if (obj.type === 'path' && meta.type !== 'shape') {
+      FabricControls.createCurveControls(obj);
+    } else if (obj.type === 'group' && (obj.isArrow || meta.isArrow)) {
+      FabricControls.createArrowControls(obj);
+    }
+
+    if (obj.arrowSettings && window.app?.arrowManager) {
+      window.app.arrowManager.attachArrowRendering(obj);
+      obj.dirty = true;
+    }
   }
 
   /**
