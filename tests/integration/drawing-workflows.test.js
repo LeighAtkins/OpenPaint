@@ -1,7 +1,7 @@
 describe.skip('Drawing Workflows Integration Tests', () => {
   let canvas, ctx;
 
-  beforeEach(async () => {
+  beforeEach(() => {
     // Setup DOM
     document.body.innerHTML = `
       <canvas id="canvas" width="800" height="600"></canvas>
@@ -42,7 +42,7 @@ describe.skip('Drawing Workflows Integration Tests', () => {
     };
 
     // Load the paint.js functions
-    await import('../../public/js/paint.js');
+    require('../../public/js/paint.js');
   });
 
   describe('Straight Line Drawing Workflow', () => {

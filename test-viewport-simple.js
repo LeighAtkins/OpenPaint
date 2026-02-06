@@ -7,34 +7,34 @@ console.log('🧪 Testing Viewport Controller Math...\n');
 function containScale(contentWidth, contentHeight, viewportWidth, viewportHeight, padding = 0) {
   const availableWidth = Math.max(1, viewportWidth - 2 * padding);
   const availableHeight = Math.max(1, viewportHeight - 2 * padding);
-  
+
   const scaleX = availableWidth / Math.max(1, contentWidth);
   const scaleY = availableHeight / Math.max(1, contentHeight);
-  
+
   return Math.min(scaleX, scaleY);
 }
 
 function centreTxTy(contentBounds, viewportWidth, viewportHeight, scale) {
   const scaledWidth = contentBounds.width * scale;
   const scaledHeight = contentBounds.height * scale;
-  
+
   const tx = (viewportWidth - scaledWidth) / 2 / scale - contentBounds.x;
   const ty = (viewportHeight - scaledHeight) / 2 / scale - contentBounds.y;
-  
+
   return { tx, ty };
 }
 
 function toScreen(worldX, worldY, transform) {
   return {
     x: (worldX + transform.tx) * transform.scale,
-    y: (worldY + transform.ty) * transform.scale
+    y: (worldY + transform.ty) * transform.scale,
   };
 }
 
 function toWorld(screenX, screenY, transform) {
   return {
     x: screenX / transform.scale - transform.tx,
-    y: screenY / transform.scale - transform.ty
+    y: screenY / transform.scale - transform.ty,
   };
 }
 
@@ -78,25 +78,29 @@ const transform = { scale: 2.0, tx: 100, ty: 50 };
 const testPoints = [
   { x: 0, y: 0 },
   { x: 123.456, y: 789.012 },
-  { x: -50.5, y: 100.25 }
+  { x: -50.5, y: 100.25 },
 ];
 
 let allPassed = true;
 testPoints.forEach((point, i) => {
   const screen = toScreen(point.x, point.y, transform);
   const world = toWorld(screen.x, screen.y, transform);
-    
+
   const errorX = Math.abs(world.x - point.x);
   const errorY = Math.abs(world.y - point.y);
   const maxError = 0.000001; // Very tight tolerance
-    
+
   const passed = errorX < maxError && errorY < maxError;
   allPassed = allPassed && passed;
-    
+
   if (passed) {
-    console.log(`✅ Point ${i + 1} round-trip: PASS (error: ${errorX.toFixed(8)}, ${errorY.toFixed(8)})`);
+    console.log(
+      `✅ Point ${i + 1} round-trip: PASS (error: ${errorX.toFixed(8)}, ${errorY.toFixed(8)})`
+    );
   } else {
-    console.log(`❌ Point ${i + 1} round-trip: FAIL (error: ${errorX.toFixed(8)}, ${errorY.toFixed(8)})`);
+    console.log(
+      `❌ Point ${i + 1} round-trip: FAIL (error: ${errorX.toFixed(8)}, ${errorY.toFixed(8)})`
+    );
   }
 });
 
@@ -131,7 +135,8 @@ const highDprPoint = { x: 99.999, y: 199.111 };
 const highDprScreen = toScreen(highDprPoint.x, highDprPoint.y, highDprTransform);
 const highDprWorld = toWorld(highDprScreen.x, highDprScreen.y, highDprTransform);
 
-const highDprError = Math.abs(highDprWorld.x - highDprPoint.x) + Math.abs(highDprWorld.y - highDprPoint.y);
+const highDprError =
+  Math.abs(highDprWorld.x - highDprPoint.x) + Math.abs(highDprWorld.y - highDprPoint.y);
 if (highDprError < 0.000001) {
   console.log('✅ High precision round-trip: PASS');
 } else {
@@ -146,7 +151,7 @@ console.log('🚀 Server should be running on http://localhost:3000');
 
 console.log('\n📊 Test Summary:');
 console.log('  - containScale: ✅ Width/height constraints working');
-console.log('  - centreTxTy: ✅ Content centering working');  
+console.log('  - centreTxTy: ✅ Content centering working');
 console.log('  - Coordinate transforms: ✅ Round-trip precision < 0.000001px');
 console.log('  - Edge cases: ✅ Handles zero/small dimensions');
 console.log('  - High precision: ✅ Works with fractional coordinates');

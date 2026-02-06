@@ -159,7 +159,7 @@ export const MockCanvas = {
     canvas.height = height;
 
     // Mock additional methods that might be needed
-    canvas.getBoundingClientRect = vi.fn(() => ({
+    canvas.getBoundingClientRect = jest.fn(() => ({
       left: 0,
       top: 0,
       width: width,

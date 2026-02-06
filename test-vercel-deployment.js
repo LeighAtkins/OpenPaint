@@ -170,9 +170,15 @@ async function testVercelDeployment(baseUrl) {
   return results;
 }
 
-// Auto-run if called directly (ES module check)
-const isMainModule = import.meta.url === `file://${process.argv[1].replace(/\\/g, '/')}`;
-if (isMainModule) {
+// Export for use
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { testVercelDeployment, testPayload };
+} else if (typeof window !== 'undefined') {
+  window.VercelTestSuite = { testVercelDeployment, testPayload };
+}
+
+// Auto-run if called directly
+if (require.main === module) {
   const baseUrl = process.argv[2] || 'https://sofapaint-jmula3ux9-leigh-atkins-projects.vercel.app';
   testVercelDeployment(baseUrl);
 }
