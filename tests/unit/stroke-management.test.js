@@ -9,7 +9,7 @@ describe('Stroke Management Functions', () => {
     global.window.strokeLabelVisibility = { front: {} };
 
     // Mock stroke management functions
-    global.window.generateUniqueStrokeName = vi.fn(baseName => {
+    global.window.generateUniqueStrokeName = jest.fn(baseName => {
       if (!baseName) return 'A1';
 
       const currentStrokes =
@@ -28,7 +28,7 @@ describe('Stroke Management Functions', () => {
       return newName;
     });
 
-    global.window.renameStroke = vi.fn((oldName, newName) => {
+    global.window.renameStroke = jest.fn((oldName, newName) => {
       const uniqueName = global.window.generateUniqueStrokeName(newName);
       const currentImage = global.window.currentImageLabel;
 
@@ -62,14 +62,14 @@ describe('Stroke Management Functions', () => {
       return uniqueName;
     });
 
-    global.window.toggleStrokeVisibility = vi.fn((strokeLabel, isVisible) => {
+    global.window.toggleStrokeVisibility = jest.fn((strokeLabel, isVisible) => {
       const currentImage = global.window.currentImageLabel;
       if (global.window.strokeVisibilityByImage[currentImage]) {
         global.window.strokeVisibilityByImage[currentImage][strokeLabel] = isVisible;
       }
     });
 
-    global.window.deleteStroke = vi.fn(strokeLabel => {
+    global.window.deleteStroke = jest.fn(strokeLabel => {
       const currentImage = global.window.currentImageLabel;
 
       // Remove from lineStrokesByImage
@@ -91,7 +91,7 @@ describe('Stroke Management Functions', () => {
       delete global.window.strokeVisibilityByImage[currentImage][strokeLabel];
     });
 
-    global.window.toggleLabelVisibility = vi.fn(strokeLabel => {
+    global.window.toggleLabelVisibility = jest.fn(strokeLabel => {
       const currentImage = global.window.currentImageLabel;
       if (!global.window.strokeLabelVisibility[currentImage]) {
         global.window.strokeLabelVisibility[currentImage] = {};

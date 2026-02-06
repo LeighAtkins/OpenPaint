@@ -2,14 +2,14 @@
  * Test suite for the new coordinate system
  * Validates Transform T, geometry functions, and coordinate stability
  */
-(function() {
+(function () {
   'use strict';
 
   // Test results
   const testResults = {
     passed: 0,
     failed: 0,
-    tests: []
+    tests: [],
   };
 
   function logTest(name, success, message, details = null) {
@@ -167,8 +167,8 @@
           { x: 100, y: 100 },
           { x: 200, y: 100 },
           { x: 200, y: 200 },
-          { x: 100, y: 200 }
-        ]
+          { x: 100, y: 200 },
+        ],
       };
 
       const anchor = window.computeAnchorCenterImage(mockStroke);
@@ -183,11 +183,19 @@
       const error = Math.hypot(anchor.x - expectedX, anchor.y - expectedY);
 
       if (error > 0.1) {
-        logTest('Anchor Centers', false, `Incorrect center: got (${anchor.x}, ${anchor.y}), expected (${expectedX}, ${expectedY})`);
+        logTest(
+          'Anchor Centers',
+          false,
+          `Incorrect center: got (${anchor.x}, ${anchor.y}), expected (${expectedX}, ${expectedY})`
+        );
         return;
       }
 
-      logTest('Anchor Centers', true, `Center computed: (${anchor.x.toFixed(1)}, ${anchor.y.toFixed(1)})`);
+      logTest(
+        'Anchor Centers',
+        true,
+        `Center computed: (${anchor.x.toFixed(1)}, ${anchor.y.toFixed(1)})`
+      );
     } catch (e) {
       logTest('Anchor Centers', false, `Exception: ${e.message}`, e);
     }
@@ -240,7 +248,11 @@
         return;
       }
 
-      logTest('Persistence Guard', true, `Persistence check: ${canPersist ? 'allowed' : 'blocked'} (${session.phase})`);
+      logTest(
+        'Persistence Guard',
+        true,
+        `Persistence check: ${canPersist ? 'allowed' : 'blocked'} (${session.phase})`
+      );
     } catch (e) {
       logTest('Persistence Guard', false, `Exception: ${e.message}`, e);
     }
@@ -255,7 +267,13 @@
 
       // Test legacy detection
       const legacyOffset = { x: 10, y: -20 };
-      const modernOffset = { kind: 'norm', dx_norm: 0.0125, dy_norm: -0.0333, normRef: { w: 800, h: 600 }, version: 2 };
+      const modernOffset = {
+        kind: 'norm',
+        dx_norm: 0.0125,
+        dy_norm: -0.0333,
+        normRef: { w: 800, h: 600 },
+        version: 2,
+      };
 
       const isLegacy = window.isLegacyOffset(legacyOffset);
       const isModern = !window.isLegacyOffset(modernOffset);
@@ -284,6 +302,7 @@
   window.runCoordinateSystemTests = runTests;
   window.getTestResults = () => testResults;
 
-  console.log('🧪 Coordinate system test suite loaded. Run window.runCoordinateSystemTests() to execute tests.');
-
+  console.log(
+    '🧪 Coordinate system test suite loaded. Run window.runCoordinateSystemTests() to execute tests.'
+  );
 })();

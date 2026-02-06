@@ -18,16 +18,16 @@ describe.skip('Paint Application Integration Tests', () => {
     // Setup canvas mock
     mockCanvas = document.getElementById('canvas');
     mockContext = {
-      clearRect: vi.fn(),
-      beginPath: vi.fn(),
-      moveTo: vi.fn(),
-      lineTo: vi.fn(),
-      stroke: vi.fn(),
-      setLineDash: vi.fn(),
-      save: vi.fn(),
-      restore: vi.fn(),
+      clearRect: jest.fn(),
+      beginPath: jest.fn(),
+      moveTo: jest.fn(),
+      lineTo: jest.fn(),
+      stroke: jest.fn(),
+      setLineDash: jest.fn(),
+      save: jest.fn(),
+      restore: jest.fn(),
     };
-    mockCanvas.getContext = vi.fn(() => mockContext);
+    mockCanvas.getContext = jest.fn(() => mockContext);
 
     // Initialize application state
     global.window.currentImageLabel = 'front';
@@ -39,9 +39,9 @@ describe.skip('Paint Application Integration Tests', () => {
     global.window.imagePositionByLabel = { front: { x: 0, y: 0 } };
 
     // Mock drawing mode management
-    global.window.switchDrawingMode = vi.fn(() => {
+    global.window.switchDrawingMode = jest.fn(() => {
       const toggle = document.getElementById('drawingModeToggle');
-      const modes = ['Freehand', 'Straight Line', 'Curved Line', 'Shapes'];
+      const modes = ['Freehand', 'Straight Line', 'Curved Line'];
       const currentMode = toggle.textContent;
       const currentIndex = modes.indexOf(currentMode);
       const nextIndex = (currentIndex + 1) % modes.length;
@@ -59,9 +59,6 @@ describe.skip('Paint Application Integration Tests', () => {
 
       global.window.switchDrawingMode();
       expect(modeToggle.textContent).toBe('Curved Line');
-
-      global.window.switchDrawingMode();
-      expect(modeToggle.textContent).toBe('Shapes');
 
       global.window.switchDrawingMode();
       expect(modeToggle.textContent).toBe('Freehand');
