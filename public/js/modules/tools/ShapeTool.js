@@ -336,7 +336,10 @@ export class ShapeTool extends BaseTool {
   attachMetadata(shape) {
     if (window.app && window.app.metadataManager && window.app.projectManager) {
       const imageLabel = window.app.projectManager.currentViewId || 'front';
-      window.currentImageLabel = imageLabel;
+      window.currentImageLabel =
+        (typeof window.getCaptureTabScopedLabel === 'function' &&
+          window.getCaptureTabScopedLabel(imageLabel)) ||
+        imageLabel;
 
       window.app.metadataManager.attachShapeMetadata(shape, imageLabel, this.shapeType);
     }

@@ -16,32 +16,61 @@ export class StrokeMetadataManager {
     this.shapeElementsByImage = {}; // New storage for shape elements
   }
 
+  normalizeImageLabel(imageLabel) {
+    const baseLabel = imageLabel || window.app?.projectManager?.currentViewId || 'front';
+    if (typeof baseLabel !== 'string') return baseLabel;
+    if (baseLabel.includes('::tab:')) return baseLabel;
+    if (typeof window.getCaptureTabScopedLabel === 'function') {
+      return window.getCaptureTabScopedLabel(baseLabel) || baseLabel;
+    }
+    return baseLabel;
+  }
+
+  isInViewScope(imageLabel, viewId) {
+    if (!imageLabel || !viewId) return false;
+    return imageLabel === viewId || imageLabel.startsWith(`${viewId}::tab:`);
+  }
+
+  clearScopedBucketsForView(viewId) {
+    const clearMap = map => {
+      Object.keys(map || {}).forEach(key => {
+        if (this.isInViewScope(key, viewId)) {
+          map[key] = Array.isArray(map[key]) ? [] : {};
+        }
+      });
+    };
+    clearMap(this.vectorStrokesByImage);
+    clearMap(this.textElementsByImage);
+    clearMap(this.shapeElementsByImage);
+  }
+
   // Attach metadata to a Fabric object
   attachMetadata(obj, imageLabel, strokeLabel) {
     if (!obj) return;
+    const scopedLabel = this.normalizeImageLabel(imageLabel);
 
     // Store reference in legacy structure
-    if (!this.vectorStrokesByImage[imageLabel]) {
-      this.vectorStrokesByImage[imageLabel] = {};
+    if (!this.vectorStrokesByImage[scopedLabel]) {
+      this.vectorStrokesByImage[scopedLabel] = {};
     }
-    this.vectorStrokesByImage[imageLabel][strokeLabel] = obj;
+    this.vectorStrokesByImage[scopedLabel][strokeLabel] = obj;
     console.log(
-      `[StrokeMetadata] Stored ${strokeLabel} in vectorStrokesByImage[${imageLabel}], type=${obj.type}`
+      `[StrokeMetadata] Stored ${strokeLabel} in vectorStrokesByImage[${scopedLabel}], type=${obj.type}`
     );
 
     // Also update legacy window.lineStrokesByImage for tag prediction system compatibility
     window.lineStrokesByImage = window.lineStrokesByImage || {};
-    if (!window.lineStrokesByImage[imageLabel]) {
-      window.lineStrokesByImage[imageLabel] = [];
+    if (!window.lineStrokesByImage[scopedLabel]) {
+      window.lineStrokesByImage[scopedLabel] = [];
     }
     // Add stroke label to array if not already present
-    if (!window.lineStrokesByImage[imageLabel].includes(strokeLabel)) {
-      window.lineStrokesByImage[imageLabel].push(strokeLabel);
+    if (!window.lineStrokesByImage[scopedLabel].includes(strokeLabel)) {
+      window.lineStrokesByImage[scopedLabel].push(strokeLabel);
     }
 
     // Store metadata directly on Fabric object
     obj.strokeMetadata = {
-      imageLabel: imageLabel,
+      imageLabel: scopedLabel,
       strokeLabel: strokeLabel,
       visible: true,
       // Labels remain visible by default; measurement text stays empty until provided
@@ -53,15 +82,15 @@ export class StrokeMetadataManager {
     }
 
     // Initialize visibility maps
-    if (!this.strokeVisibilityByImage[imageLabel]) {
-      this.strokeVisibilityByImage[imageLabel] = {};
+    if (!this.strokeVisibilityByImage[scopedLabel]) {
+      this.strokeVisibilityByImage[scopedLabel] = {};
     }
-    if (!this.strokeLabelVisibility[imageLabel]) {
-      this.strokeLabelVisibility[imageLabel] = {};
+    if (!this.strokeLabelVisibility[scopedLabel]) {
+      this.strokeLabelVisibility[scopedLabel] = {};
     }
 
-    this.strokeVisibilityByImage[imageLabel][strokeLabel] = true;
-    this.strokeLabelVisibility[imageLabel][strokeLabel] = true;
+    this.strokeVisibilityByImage[scopedLabel][strokeLabel] = true;
+    this.strokeLabelVisibility[scopedLabel][strokeLabel] = true;
 
     // Update visibility controls when new stroke is added
     setTimeout(() => {
@@ -102,21 +131,22 @@ export class StrokeMetadataManager {
   // Attach metadata to a Text object
   attachTextMetadata(obj, imageLabel) {
     if (!obj) return;
+    const scopedLabel = this.normalizeImageLabel(imageLabel);
 
     // Initialize storage for this image
-    if (!this.textElementsByImage[imageLabel]) {
-      this.textElementsByImage[imageLabel] = [];
+    if (!this.textElementsByImage[scopedLabel]) {
+      this.textElementsByImage[scopedLabel] = [];
     }
 
     // Avoid duplicates
-    if (!this.textElementsByImage[imageLabel].includes(obj)) {
-      this.textElementsByImage[imageLabel].push(obj);
-      console.log(`[StrokeMetadata] Stored text object in textElementsByImage[${imageLabel}]`);
+    if (!this.textElementsByImage[scopedLabel].includes(obj)) {
+      this.textElementsByImage[scopedLabel].push(obj);
+      console.log(`[StrokeMetadata] Stored text object in textElementsByImage[${scopedLabel}]`);
     }
 
     // Store metadata directly on Fabric object
     obj.strokeMetadata = {
-      imageLabel: imageLabel,
+      imageLabel: scopedLabel,
       type: 'text',
       visible: true,
     };
@@ -151,18 +181,19 @@ export class StrokeMetadataManager {
   // Attach metadata to a Shape object
   attachShapeMetadata(obj, imageLabel, shapeType) {
     if (!obj) return;
+    const scopedLabel = this.normalizeImageLabel(imageLabel);
 
-    if (!this.shapeElementsByImage[imageLabel]) {
-      this.shapeElementsByImage[imageLabel] = [];
+    if (!this.shapeElementsByImage[scopedLabel]) {
+      this.shapeElementsByImage[scopedLabel] = [];
     }
 
-    if (!this.shapeElementsByImage[imageLabel].includes(obj)) {
-      const shapeName = this.getNextShapeName(imageLabel, shapeType);
-      this.shapeElementsByImage[imageLabel].push(obj);
-      console.log(`[StrokeMetadata] Stored shape object in shapeElementsByImage[${imageLabel}]`);
+    if (!this.shapeElementsByImage[scopedLabel].includes(obj)) {
+      const shapeName = this.getNextShapeName(scopedLabel, shapeType);
+      this.shapeElementsByImage[scopedLabel].push(obj);
+      console.log(`[StrokeMetadata] Stored shape object in shapeElementsByImage[${scopedLabel}]`);
 
       obj.strokeMetadata = {
-        imageLabel: imageLabel,
+        imageLabel: scopedLabel,
         type: 'shape',
         shapeType: shapeType,
         shapeName: shapeName,
@@ -212,6 +243,7 @@ export class StrokeMetadataManager {
 
   // Set visibility for a stroke
   setStrokeVisibility(imageLabel, strokeLabel, visible) {
+    imageLabel = this.normalizeImageLabel(imageLabel);
     if (!this.strokeVisibilityByImage[imageLabel]) {
       this.strokeVisibilityByImage[imageLabel] = {};
     }
@@ -227,6 +259,7 @@ export class StrokeMetadataManager {
 
   // Set label visibility for a stroke
   setLabelVisibility(imageLabel, strokeLabel, visible) {
+    imageLabel = this.normalizeImageLabel(imageLabel);
     if (!this.strokeLabelVisibility[imageLabel]) {
       this.strokeLabelVisibility[imageLabel] = {};
     }
@@ -242,6 +275,7 @@ export class StrokeMetadataManager {
   // Set measurement for a stroke
   // Expects measurement object with structure: {inchWhole: number, inchFraction: number, cm: number}
   setMeasurement(imageLabel, strokeLabel, measurement) {
+    imageLabel = this.normalizeImageLabel(imageLabel);
     if (!this.strokeMeasurements[imageLabel]) {
       this.strokeMeasurements[imageLabel] = {};
     }
@@ -266,11 +300,13 @@ export class StrokeMetadataManager {
   // Get measurement for a stroke
   // Returns measurement object: {inchWhole: number, inchFraction: number, cm: number} or null
   getMeasurement(imageLabel, strokeLabel) {
+    imageLabel = this.normalizeImageLabel(imageLabel);
     return this.strokeMeasurements[imageLabel]?.[strokeLabel] || null;
   }
 
   // Generate next label (A1, A2, B1, etc.) - integrates with tag prediction system
   getNextLabel(imageLabel, mode = 'letters+numbers') {
+    imageLabel = this.normalizeImageLabel(imageLabel);
     // First, try to use the tag prediction system from index.html
     if (window.calculateNextTag) {
       try {
@@ -359,6 +395,7 @@ export class StrokeMetadataManager {
 
   // Update tag prediction after a tag is used
   updateTagPredictionAfterUse(imageLabel, usedTag) {
+    imageLabel = this.normalizeImageLabel(imageLabel);
     // Ensure lineStrokesByImage is updated for tag prediction
     window.lineStrokesByImage = window.lineStrokesByImage || {};
     if (!window.lineStrokesByImage[imageLabel]) {
@@ -527,7 +564,9 @@ export class StrokeMetadataManager {
       this.controlsObserver.observe(controlsContainer, { childList: true, subtree: true });
     }
 
-    const currentViewId = window.app?.projectManager?.currentViewId || 'front';
+    const currentViewId = this.normalizeImageLabel(
+      window.app?.projectManager?.currentViewId || 'front'
+    );
     const strokes = this.vectorStrokesByImage[currentViewId] || {};
     console.log(
       `[StrokeMetadata] vectorStrokesByImage[${currentViewId}]:`,
@@ -1075,6 +1114,7 @@ export class StrokeMetadataManager {
   // Parse and save measurement string
   // Returns true if update occurred, false otherwise
   parseAndSaveMeasurement(imageLabel, strokeLabel, newString) {
+    imageLabel = this.normalizeImageLabel(imageLabel);
     let successfullyParsedAndSaved = false;
 
     if (!newString && newString !== '0') {
@@ -1232,26 +1272,30 @@ export class StrokeMetadataManager {
       return;
     }
 
-    // Clear object references for this view (but keep visibility/measurement data)
-    this.vectorStrokesByImage[viewId] = {};
-    this.textElementsByImage[viewId] = [];
-    this.shapeElementsByImage[viewId] = [];
+    // Clear object references for this view scopes (but keep visibility/measurement data)
+    this.clearScopedBucketsForView(viewId);
 
     if (!canvas) return;
 
     const objects = canvas.getObjects();
     objects.forEach(obj => {
-      if (!obj.strokeMetadata || obj.strokeMetadata.imageLabel !== viewId) return;
+      if (!obj.strokeMetadata) return;
+      const objectLabel = this.normalizeImageLabel(obj.strokeMetadata.imageLabel || viewId);
+      if (!this.isInViewScope(objectLabel, viewId)) return;
+      obj.strokeMetadata.imageLabel = objectLabel;
+      if (!this.vectorStrokesByImage[objectLabel]) this.vectorStrokesByImage[objectLabel] = {};
+      if (!this.textElementsByImage[objectLabel]) this.textElementsByImage[objectLabel] = [];
+      if (!this.shapeElementsByImage[objectLabel]) this.shapeElementsByImage[objectLabel] = [];
 
       const strokeLabel = obj.strokeMetadata.strokeLabel;
       const isVisible = obj.strokeMetadata.visible !== false;
       const labelVisible = obj.strokeMetadata.labelVisible !== false;
 
       if (obj.strokeMetadata.type === 'text') {
-        if (!this.textElementsByImage[viewId].includes(obj)) {
-          this.textElementsByImage[viewId].push(obj);
+        if (!this.textElementsByImage[objectLabel].includes(obj)) {
+          this.textElementsByImage[objectLabel].push(obj);
           console.log(
-            `[StrokeMetadata] Rebuilt: Found text element "${obj.text?.substring(0, 30) || 'empty'}" in view ${viewId}`
+            `[StrokeMetadata] Rebuilt: Found text element "${obj.text?.substring(0, 30) || 'empty'}" in view ${objectLabel}`
           );
         }
         obj.visible = isVisible;
@@ -1259,19 +1303,19 @@ export class StrokeMetadataManager {
       }
 
       if (obj.strokeMetadata.type === 'shape') {
-        if (!this.shapeElementsByImage[viewId].includes(obj)) {
-          this.shapeElementsByImage[viewId].push(obj);
+        if (!this.shapeElementsByImage[objectLabel].includes(obj)) {
+          this.shapeElementsByImage[objectLabel].push(obj);
         }
         obj.visible = isVisible;
         return;
       }
 
       if (strokeLabel) {
-        this.vectorStrokesByImage[viewId][strokeLabel] = obj;
+        this.vectorStrokesByImage[objectLabel][strokeLabel] = obj;
 
         // Restore visibility state from metadata if available
-        if (this.strokeVisibilityByImage[viewId]) {
-          const visible = this.strokeVisibilityByImage[viewId][strokeLabel];
+        if (this.strokeVisibilityByImage[objectLabel]) {
+          const visible = this.strokeVisibilityByImage[objectLabel][strokeLabel];
           if (visible !== undefined) {
             obj.visible = visible;
             obj.strokeMetadata.visible = visible;
@@ -1279,8 +1323,8 @@ export class StrokeMetadataManager {
         }
 
         // Restore label visibility
-        if (this.strokeLabelVisibility[viewId]) {
-          const labelVisibleOverride = this.strokeLabelVisibility[viewId][strokeLabel];
+        if (this.strokeLabelVisibility[objectLabel]) {
+          const labelVisibleOverride = this.strokeLabelVisibility[objectLabel][strokeLabel];
           if (labelVisibleOverride !== undefined) {
             obj.strokeMetadata.labelVisible = labelVisibleOverride;
           }
@@ -1288,8 +1332,23 @@ export class StrokeMetadataManager {
       }
     });
 
+    const scopedKeys = Object.keys(this.vectorStrokesByImage).filter(key =>
+      this.isInViewScope(key, viewId)
+    );
+    const totalStrokes = scopedKeys.reduce(
+      (sum, key) => sum + Object.keys(this.vectorStrokesByImage[key] || {}).length,
+      0
+    );
+    const totalText = scopedKeys.reduce(
+      (sum, key) => sum + (this.textElementsByImage[key]?.length || 0),
+      0
+    );
+    const totalShapes = scopedKeys.reduce(
+      (sum, key) => sum + (this.shapeElementsByImage[key]?.length || 0),
+      0
+    );
     console.log(
-      `[StrokeMetadata] Rebuilt: ${Object.keys(this.vectorStrokesByImage[viewId]).length} strokes, ${this.textElementsByImage[viewId].length} text elements, ${this.shapeElementsByImage[viewId].length} shape elements`
+      `[StrokeMetadata] Rebuilt: ${totalStrokes} strokes, ${totalText} text elements, ${totalShapes} shape elements for view ${viewId}`
     );
 
     // Update UI
@@ -1298,6 +1357,7 @@ export class StrokeMetadataManager {
 
   // Get formatted measurement string
   getMeasurementString(imageLabel, strokeLabel) {
+    imageLabel = this.normalizeImageLabel(imageLabel);
     const measurement = this.getMeasurement(imageLabel, strokeLabel);
     if (!measurement) return '';
 
