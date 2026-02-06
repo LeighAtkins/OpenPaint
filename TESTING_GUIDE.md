@@ -1,24 +1,24 @@
 # AI Worker Testing Guide
 
-Quick reference for testing the Cloudflare AI Worker integration and the Vitest suite.
+Quick reference for testing the Cloudflare AI Worker integration.
 
 ## Quick Test Commands
 
-### 1) Test Worker Health (No Auth Required)
+### 1. Test Worker Health (No Auth Required)
 ```bash
 curl https://openpaint-ai-worker.sofapaint-api.workers.dev/health
 ```
-Expected: `{"status":"ok","version":"1.0.0","timestamp":"..."}`
+✅ **Expected:** `{"status":"ok","version":"1.0.0","timestamp":"..."}`
 
-### 2) Test Worker Auth Rejection
+### 2. Test Worker Auth Rejection
 ```bash
 curl -X POST https://openpaint-ai-worker.sofapaint-api.workers.dev/generate-svg \
   -H "Content-Type: application/json" \
   -d '{"image":{"width":800,"height":600},"strokes":[]}'
 ```
-Expected: `{"error":"Unauthorized"}` (401)
+✅ **Expected:** `{"error":"Unauthorized"}` (401)
 
-### 3) Test Worker Direct (With Auth)
+### 3. Test Worker Direct (With Auth)
 ```bash
 curl -X POST https://openpaint-ai-worker.sofapaint-api.workers.dev/generate-svg \
   -H "Content-Type: application/json" \
@@ -35,9 +35,9 @@ curl -X POST https://openpaint-ai-worker.sofapaint-api.workers.dev/generate-svg 
     }]
   }'
 ```
-Expected: Valid SVG with vectors and summary
+✅ **Expected:** Valid SVG with vectors and summary
 
-### 4) Test Express Relay
+### 4. Test Express Relay
 ```bash
 curl -X POST https://sofapaint-owk3k678t-leigh-atkins-projects.vercel.app/ai/generate-svg \
   -H "Content-Type: application/json" \
@@ -53,9 +53,9 @@ curl -X POST https://sofapaint-owk3k678t-leigh-atkins-projects.vercel.app/ai/gen
     }]
   }'
 ```
-Expected: Same SVG response (relay adds auth automatically)
+✅ **Expected:** Same SVG response (relay adds auth automatically)
 
-### 5) Test Assist Measurement
+### 5. Test Assist Measurement
 ```bash
 curl -X POST https://sofapaint-owk3k678t-leigh-atkins-projects.vercel.app/ai/assist-measurement \
   -H "Content-Type: application/json" \
@@ -70,34 +70,115 @@ curl -X POST https://sofapaint-owk3k678t-leigh-atkins-projects.vercel.app/ai/ass
     }
   }'
 ```
-Expected: `{"value":10,"formatted":"10.00 cm","labelPos":{...}}`
+✅ **Expected:** `{"value":10,"formatted":"10.00 cm","labelPos":{...},...}`
 
 ## Frontend Testing
 
 ### Local Development (Mock Mode)
-1) Start server: `npm start`
-2) Open: http://localhost:3000
-3) Upload an image, draw a stroke, click "AI SVG Export"
-4) Expect console log: `[AI Export] Using mock worker`
+
+1. **Start server:**
+   ```bash
+   npm start
+   ```
+
+2. **Open:** http://localhost:3000
+
+3. **Test:**
+   - Upload an image
+   - Draw a stroke
+   - Click "AI SVG Export"
+   - Should see: `[AI Export] Using mock worker`
+   - Preview modal should appear with SVG
 
 ### Production (Worker Mode)
-1) Open: https://sofapaint-owk3k678t-leigh-atkins-projects.vercel.app
-2) Draw and export; expect `[AI Export] Calling production worker`
 
-## Unit/Integration Tests (Vitest)
+1. **Open:** https://sofapaint-owk3k678t-leigh-atkins-projects.vercel.app
 
-```bash
-# Run all tests
-bun test
+2. **Test:**
+   - Upload an image
+   - Draw a stroke
+   - Click "AI SVG Export"
+   - Should see: `[AI Export] Calling production worker`
+   - Preview modal should appear with SVG
 
-# Watch mode
-bun run test:watch
+### Browser Console Checks
 
-# Coverage report
-bun run test:coverage
+Open DevTools → Console and look for:
+
+**Successful Flow:**
+```
+[AI Export] Starting export for image: front
+[AI Export] Payload created: {strokes: 3, dimensions: "800x600", units: "cm"}
+[AI Export] Calling production worker
+[AI Export] Success: {svgLength: 1234, vectorCount: 3, measurements: 2}
 ```
 
-Tests live in `src/__tests__/` and `tests/`.
+**Error Flow:**
+```
+[AI Export] Starting export for image: front
+[AI Export] Failed: Error: No strokes to export
+```
+
+## Unit Tests
+
+Run Jest tests:
+```bash
+npm test
+```
+
+**Expected output:**
+```
+PASS  tests/unit/coordinate-validation.test.js
+PASS  tests/unit/ai-svg-generation.test.js
+
+Test Suites: 2 passed, 2 total
+Tests:       12 passed, 12 total
+```
+
+## Integration Testing Scenarios
+
+### Scenario 1: Simple Straight Line
+1. Draw a straight line
+2. Click "AI SVG Export"
+3. Verify SVG contains `<line>` element
+4. Verify measurement label appears
+5. Download SVG and open in browser
+6. Verify line renders correctly
+
+### Scenario 2: Multiple Strokes
+1. Draw 3 different strokes (straight, freehand, arrow)
+2. Click "AI SVG Export"
+3. Verify SVG contains all 3 strokes
+4. Verify arrow has marker
+5. Verify measurements for straight line
+6. Download PNG and verify composite
+
+### Scenario 3: Complex Freehand
+1. Draw a long freehand path (100+ points)
+2. Click "AI SVG Export"
+3. Verify path is simplified (fewer points)
+4. Verify path still looks correct
+5. Check processing time < 2 seconds
+
+### Scenario 4: Save and Load
+1. Draw strokes
+2. Generate AI SVG
+3. Click "Save to Project"
+4. Save project as ZIP
+5. Load project
+6. Verify AI export is restored
+7. Re-open preview modal
+8. Verify SVG is still there
+
+### Scenario 5: Error Handling
+1. Don't draw any strokes
+2. Click "AI SVG Export"
+3. Should see error: "No strokes to export"
+4. Draw a stroke
+5. Disconnect network (DevTools → Network → Offline)
+6. Click "AI SVG Export"
+7. Should see timeout error
+8. Should suggest manual export
 
 ## Monitoring Commands
 
@@ -112,6 +193,16 @@ wrangler tail --name openpaint-ai-worker
 vercel logs --follow
 ```
 
+### Watch Browser Network
+1. Open DevTools → Network
+2. Filter: `ai`
+3. Click "AI SVG Export"
+4. Look for:
+   - POST to `/ai/generate-svg`
+   - Status: 200
+   - Response time < 3 seconds
+   - Response body contains SVG
+
 ## Performance Benchmarks
 
 | Metric | Target | Acceptable | Poor |
@@ -125,16 +216,147 @@ vercel logs --follow
 ## Common Issues and Fixes
 
 ### Issue: "No strokes to export"
-Draw at least one stroke before exporting.
+**Debug:**
+```javascript
+// In browser console
+console.log('Current image:', window.currentImageLabel);
+console.log('Strokes:', window.vectorStrokesByImage[window.currentImageLabel]);
+```
+**Fix:** Draw at least one stroke before exporting
 
 ### Issue: "Unauthorized"
-Verify Worker secret and Vercel environment variables match.
+**Debug:**
+```bash
+# Check Worker secret
+cd worker
+wrangler secret list
+
+# Check backend env
+vercel env ls
+```
+**Fix:** Ensure API keys match
 
 ### Issue: Timeout
-Check worker logs and simplify stroke data.
+**Debug:**
+```bash
+# Check Worker logs
+wrangler tail --name openpaint-ai-worker
+```
+**Fix:** 
+- Increase timeout in app.js
+- Simplify stroke data
+- Check Worker performance
+
+### Issue: CORS Error
+**Debug:** Check browser console for CORS error
+**Fix:** Verify Worker CORS headers in src/index.js
 
 ### Issue: Mock Mode in Production
-Verify hostname detection logic in the frontend.
+**Debug:**
+```javascript
+// In browser console
+console.log('Hostname:', window.location.hostname);
+console.log('USE_MOCK:', !window.location.hostname.includes('vercel.app'));
+```
+**Fix:** Check hostname detection logic in ai-export.js
+
+## Test Data
+
+### Minimal Test Stroke
+```json
+{
+  "id": "A1",
+  "type": "straight",
+  "points": [{"x": 0, "y": 0}, {"x": 100, "y": 0}],
+  "color": "#000000",
+  "width": 2
+}
+```
+
+### Complex Test Stroke
+```json
+{
+  "id": "B1",
+  "type": "curved-arrow",
+  "points": [
+    {"x": 0, "y": 0},
+    {"x": 50, "y": 50},
+    {"x": 100, "y": 25},
+    {"x": 150, "y": 75}
+  ],
+  "color": "#3b82f6",
+  "width": 3,
+  "arrowSettings": {
+    "startArrow": false,
+    "endArrow": true,
+    "arrowSize": 15
+  }
+}
+```
+
+### Full Test Payload
+```json
+{
+  "image": {
+    "width": 800,
+    "height": 600,
+    "rotation": 0
+  },
+  "units": {
+    "name": "cm",
+    "pxPerUnit": 37.8
+  },
+  "strokes": [
+    {
+      "id": "A1",
+      "type": "straight",
+      "points": [{"x": 100, "y": 100}, {"x": 300, "y": 100}],
+      "color": "#000000",
+      "width": 2
+    },
+    {
+      "id": "A2",
+      "type": "arrow",
+      "points": [{"x": 100, "y": 200}, {"x": 300, "y": 200}],
+      "color": "#0B84F3",
+      "width": 3,
+      "arrowSettings": {"endArrow": true}
+    },
+    {
+      "id": "A3",
+      "type": "freehand",
+      "points": [
+        {"x": 100, "y": 300},
+        {"x": 150, "y": 320},
+        {"x": 200, "y": 310},
+        {"x": 250, "y": 330},
+        {"x": 300, "y": 300}
+      ],
+      "color": "#F39C12",
+      "width": 2
+    }
+  ]
+}
+```
+
+## Success Indicators
+
+✅ **Worker deployed and accessible**
+✅ **Health endpoint responds**
+✅ **Auth works correctly**
+✅ **Express relay forwards requests**
+✅ **Frontend calls relay (not Worker directly)**
+✅ **Mock mode works locally**
+✅ **Production mode works on Vercel**
+✅ **SVG generation succeeds**
+✅ **Preview modal displays**
+✅ **Downloads work (SVG and PNG)**
+✅ **Project save/load works**
+✅ **No console errors**
+✅ **Performance within targets**
 
 ---
+
 **Last Updated**: October 18, 2025
+**Version**: 1.0.0
+
