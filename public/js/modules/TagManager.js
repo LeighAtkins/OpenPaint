@@ -27,8 +27,21 @@ export class TagManager {
     this.ensureBaselineSanitizer();
   }
 
+  normalizeImageLabel(imageLabel) {
+    const baseLabel = imageLabel || window.app?.projectManager?.currentViewId || 'front';
+    if (typeof baseLabel !== 'string') return baseLabel;
+    if (baseLabel.includes('::tab:')) return baseLabel;
+    if (typeof this.metadataManager?.normalizeImageLabel === 'function') {
+      return this.metadataManager.normalizeImageLabel(baseLabel);
+    }
+    if (typeof window.getCaptureTabScopedLabel === 'function') {
+      return window.getCaptureTabScopedLabel(baseLabel) || baseLabel;
+    }
+    return baseLabel;
+  }
+
   getTagKey(strokeLabel, imageLabel) {
-    const viewId = imageLabel || window.app?.projectManager?.currentViewId || 'front';
+    const viewId = this.normalizeImageLabel(imageLabel);
     return `${viewId}::${strokeLabel}`;
   }
 
@@ -39,7 +52,7 @@ export class TagManager {
     const preferredKey = this.getTagKey(strokeLabel, imageLabel);
     if (this.tagObjects.has(preferredKey)) return preferredKey;
 
-    const viewId = imageLabel || window.app?.projectManager?.currentViewId;
+    const viewId = this.normalizeImageLabel(imageLabel);
     for (const [key, tagObj] of this.tagObjects.entries()) {
       if (!tagObj) continue;
       if (tagObj.strokeLabel !== strokeLabel) continue;
@@ -244,6 +257,7 @@ export class TagManager {
 
   // Create a draggable, resizable tag object
   createTag(strokeLabel, imageLabel, strokeObject) {
+    imageLabel = this.normalizeImageLabel(imageLabel);
     this.ensureBaselineSanitizer();
     // Ensure canvas is available
     const canvas = this.canvas;
@@ -857,7 +871,9 @@ export class TagManager {
 
   // Update all tags (e.g., when tag mode or shape changes)
   updateAllTags() {
-    const currentViewId = window.app?.projectManager?.currentViewId || 'front';
+    const currentViewId = this.normalizeImageLabel(
+      window.app?.projectManager?.currentViewId || 'front'
+    );
     const strokes = this.metadataManager.vectorStrokesByImage[currentViewId] || {};
 
     Object.entries(strokes).forEach(([strokeLabel, strokeObj]) => {
@@ -874,7 +890,9 @@ export class TagManager {
     const canvas = this.canvas;
     if (!canvas) return;
 
-    const currentViewId = window.app?.projectManager?.currentViewId || 'front';
+    const currentViewId = this.normalizeImageLabel(
+      window.app?.projectManager?.currentViewId || 'front'
+    );
     const strokes = this.metadataManager.vectorStrokesByImage[currentViewId] || {};
 
     Object.entries(strokes).forEach(([strokeLabel, strokeObj]) => {
@@ -933,7 +951,9 @@ export class TagManager {
   setBackgroundStyle(style) {
     this.tagBackgroundStyle = style; // 'solid', 'no-fill', 'clear-black', 'clear-color', 'clear-white'
 
-    const currentViewId = window.app?.projectManager?.currentViewId || 'front';
+    const currentViewId = this.normalizeImageLabel(
+      window.app?.projectManager?.currentViewId || 'front'
+    );
     const strokes = this.metadataManager.vectorStrokesByImage[currentViewId] || {};
 
     Object.entries(strokes).forEach(([strokeLabel, strokeObj]) => {
@@ -951,7 +971,9 @@ export class TagManager {
 
     // If using clear-color style, update all tags
     if (this.tagBackgroundStyle === 'clear-color') {
-      const currentViewId = window.app?.projectManager?.currentViewId || 'front';
+      const currentViewId = this.normalizeImageLabel(
+        window.app?.projectManager?.currentViewId || 'front'
+      );
       const strokes = this.metadataManager.vectorStrokesByImage[currentViewId] || {};
 
       Object.entries(strokes).forEach(([strokeLabel, strokeObj]) => {
@@ -965,6 +987,7 @@ export class TagManager {
 
   // Create tag for a stroke when metadata is attached
   createTagForStroke(strokeLabel, imageLabel, strokeObject) {
+    imageLabel = this.normalizeImageLabel(imageLabel);
     // Check if label should be visible
     const isLabelVisible =
       this.metadataManager.strokeLabelVisibility[imageLabel]?.[strokeLabel] !== false;
@@ -987,6 +1010,7 @@ export class TagManager {
 
   // Clear all tags for an image
   clearTagsForImage(imageLabel) {
+    imageLabel = this.normalizeImageLabel(imageLabel);
     const strokes = this.metadataManager.vectorStrokesByImage[imageLabel] || {};
     Object.keys(strokes).forEach(strokeLabel => {
       this.removeTag(strokeLabel, imageLabel);
@@ -996,6 +1020,7 @@ export class TagManager {
   // Recreate all tags for an image after loading from JSON
   // This is needed because tags are not serialized (they have excludeFromExport)
   recreateTagsForImage(imageLabel) {
+    imageLabel = this.normalizeImageLabel(imageLabel);
     console.log(`[TagManager] Recreating tags for image: ${imageLabel}`);
 
     // First clear any existing tags for this image
@@ -1031,7 +1056,9 @@ export class TagManager {
     this.showMeasurements = show;
 
     // Update all existing tags
-    const currentViewId = window.app?.projectManager?.currentViewId || 'front';
+    const currentViewId = this.normalizeImageLabel(
+      window.app?.projectManager?.currentViewId || 'front'
+    );
     const strokes = this.metadataManager.vectorStrokesByImage[currentViewId] || {};
 
     Object.keys(strokes).forEach(strokeLabel => {

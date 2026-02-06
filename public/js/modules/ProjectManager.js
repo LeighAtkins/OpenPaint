@@ -71,7 +71,10 @@ export class ProjectManager {
       }
 
       // Update global currentImageLabel and next tag display
-      window.currentImageLabel = viewId;
+      window.currentImageLabel =
+        (typeof window.getCaptureTabScopedLabel === 'function' &&
+          window.getCaptureTabScopedLabel(viewId)) ||
+        viewId;
       if (window.updateNextTagDisplay) {
         window.updateNextTagDisplay();
       }
@@ -124,7 +127,10 @@ export class ProjectManager {
     const view = this.views[viewId];
 
     // Update global currentImageLabel for tag prediction system
-    window.currentImageLabel = viewId;
+    window.currentImageLabel =
+      (typeof window.getCaptureTabScopedLabel === 'function' &&
+        window.getCaptureTabScopedLabel(viewId)) ||
+      viewId;
 
     // Update next tag display to start from A1 (or A) for the new image
     if (window.updateNextTagDisplay) {
@@ -168,7 +174,10 @@ export class ProjectManager {
             if (obj.strokeMetadata) {
               if (!obj.strokeMetadata.imageLabel) {
                 obj.strokeMetadata.imageLabel = viewId;
-              } else if (obj.strokeMetadata.imageLabel !== viewId) {
+              } else if (
+                obj.strokeMetadata.imageLabel !== viewId &&
+                !obj.strokeMetadata.imageLabel.startsWith(`${viewId}::tab:`)
+              ) {
                 return null;
               }
             }
@@ -187,12 +196,19 @@ export class ProjectManager {
         this.canvasManager.loadFromJSON(sanitizedData, async () => {
           // Restore metadata for this view
           if (view.metadata && window.app?.metadataManager) {
-            window.app.metadataManager.vectorStrokesByImage[viewId] =
-              view.metadata.vectorStrokesByImage || {};
-            window.app.metadataManager.strokeVisibilityByImage[viewId] =
-              view.metadata.strokeVisibilityByImage || {};
-            window.app.metadataManager.strokeLabelVisibility[viewId] =
-              view.metadata.strokeLabelVisibility || {};
+            const scopedVectors = view.metadata.vectorStrokesByImage || {};
+            const scopedVisibility = view.metadata.strokeVisibilityByImage || {};
+            const scopedLabelVisibility = view.metadata.strokeLabelVisibility || {};
+
+            Object.entries(scopedVectors).forEach(([key, value]) => {
+              window.app.metadataManager.vectorStrokesByImage[key] = value || {};
+            });
+            Object.entries(scopedVisibility).forEach(([key, value]) => {
+              window.app.metadataManager.strokeVisibilityByImage[key] = value || {};
+            });
+            Object.entries(scopedLabelVisibility).forEach(([key, value]) => {
+              window.app.metadataManager.strokeLabelVisibility[key] = value || {};
+            });
 
             // Deserialize measurements with validation
             this.deserializeMeasurements(viewId, view.metadata.strokeMeasurements || {});
@@ -241,15 +257,17 @@ export class ProjectManager {
             if (typeof window.app.tagManager.clearAllTags === 'function') {
               window.app.tagManager.clearAllTags();
             }
-            const strokes = window.app.metadataManager.vectorStrokesByImage[viewId] || {};
-            const labelVisibility = window.app.metadataManager.strokeLabelVisibility[viewId] || {};
+            const activeScope = window.app.metadataManager.normalizeImageLabel?.(viewId) || viewId;
+            const strokes = window.app.metadataManager.vectorStrokesByImage[activeScope] || {};
+            const labelVisibility =
+              window.app.metadataManager.strokeLabelVisibility[activeScope] || {};
 
             console.log(`[Load] Recreating tags for ${Object.keys(strokes).length} strokes`);
 
             Object.entries(strokes).forEach(([strokeLabel, strokeObj]) => {
               const isLabelVisible = labelVisibility[strokeLabel] !== false;
               if (isLabelVisible) {
-                window.app.tagManager.createTag(strokeLabel, viewId, strokeObj);
+                window.app.tagManager.createTag(strokeLabel, activeScope, strokeObj);
               }
             });
           }
@@ -325,25 +343,32 @@ export class ProjectManager {
       // Also save metadata for this view
       if (window.app?.metadataManager) {
         this.views[this.currentViewId].metadata = {
-          vectorStrokesByImage: JSON.parse(
-            JSON.stringify(
-              window.app.metadataManager.vectorStrokesByImage[this.currentViewId] || {}
-            )
+          vectorStrokesByImage: this.collectScopedMetadataBuckets(
+            window.app.metadataManager.vectorStrokesByImage,
+            this.currentViewId
           ),
-          strokeVisibilityByImage: JSON.parse(
-            JSON.stringify(
-              window.app.metadataManager.strokeVisibilityByImage[this.currentViewId] || {}
-            )
+          strokeVisibilityByImage: this.collectScopedMetadataBuckets(
+            window.app.metadataManager.strokeVisibilityByImage,
+            this.currentViewId
           ),
-          strokeLabelVisibility: JSON.parse(
-            JSON.stringify(
-              window.app.metadataManager.strokeLabelVisibility[this.currentViewId] || {}
-            )
+          strokeLabelVisibility: this.collectScopedMetadataBuckets(
+            window.app.metadataManager.strokeLabelVisibility,
+            this.currentViewId
           ),
           strokeMeasurements: this.serializeMeasurements(this.currentViewId),
         };
       }
     }
+  }
+
+  collectScopedMetadataBuckets(sourceMap, viewId) {
+    const scoped = {};
+    Object.entries(sourceMap || {}).forEach(([key, value]) => {
+      if (key === viewId || key.startsWith(`${viewId}::tab:`)) {
+        scoped[key] = JSON.parse(JSON.stringify(value || {}));
+      }
+    });
+    return scoped;
   }
 
   // Serialize measurements for a view (deep copy)
@@ -352,8 +377,7 @@ export class ProjectManager {
       return {};
     }
 
-    const measurements = window.app.metadataManager.strokeMeasurements[viewId] || {};
-    return JSON.parse(JSON.stringify(measurements));
+    return this.collectScopedMetadataBuckets(window.app.metadataManager.strokeMeasurements, viewId);
   }
 
   // Deserialize measurements for a view
@@ -366,19 +390,35 @@ export class ProjectManager {
       return;
     }
 
-    // Validate and restore each measurement
-    window.app.metadataManager.strokeMeasurements[viewId] = {};
+    const normalizeBucket = bucket => {
+      const output = {};
+      Object.entries(bucket || {}).forEach(([strokeLabel, measurement]) => {
+        if (measurement && typeof measurement === 'object') {
+          output[strokeLabel] = {
+            inchWhole: typeof measurement.inchWhole === 'number' ? measurement.inchWhole : 0,
+            inchFraction:
+              typeof measurement.inchFraction === 'number' ? measurement.inchFraction : 0,
+            cm: typeof measurement.cm === 'number' ? measurement.cm : 0,
+          };
+        }
+      });
+      return output;
+    };
 
-    for (const [strokeLabel, measurement] of Object.entries(measurements)) {
-      // Ensure proper structure
-      if (measurement && typeof measurement === 'object') {
-        window.app.metadataManager.strokeMeasurements[viewId][strokeLabel] = {
-          inchWhole: typeof measurement.inchWhole === 'number' ? measurement.inchWhole : 0,
-          inchFraction: typeof measurement.inchFraction === 'number' ? measurement.inchFraction : 0,
-          cm: typeof measurement.cm === 'number' ? measurement.cm : 0,
-        };
-      }
+    const isLegacyFlatShape = Object.values(measurements).some(
+      value =>
+        value && typeof value === 'object' && Object.prototype.hasOwnProperty.call(value, 'cm')
+    );
+
+    if (isLegacyFlatShape) {
+      window.app.metadataManager.strokeMeasurements[viewId] = normalizeBucket(measurements);
+      return;
     }
+
+    Object.entries(measurements).forEach(([scopeKey, bucket]) => {
+      if (scopeKey !== viewId && !scopeKey.startsWith(`${viewId}::tab:`)) return;
+      window.app.metadataManager.strokeMeasurements[scopeKey] = normalizeBucket(bucket);
+    });
   }
 
   // Add or update an image for a view

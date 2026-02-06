@@ -382,7 +382,10 @@ export class LineTool extends BaseTool {
       const imageLabel = window.app.projectManager.currentViewId || 'front';
 
       // Set currentImageLabel for tag prediction system
-      window.currentImageLabel = imageLabel;
+      window.currentImageLabel =
+        (typeof window.getCaptureTabScopedLabel === 'function' &&
+          window.getCaptureTabScopedLabel(imageLabel)) ||
+        imageLabel;
 
       const strokeLabel = window.app.metadataManager.getNextLabel(imageLabel);
       window.app.metadataManager.attachMetadata(this.line, imageLabel, strokeLabel);

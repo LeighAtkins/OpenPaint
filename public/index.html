@@ -2028,6 +2028,7 @@
 
       .capture-frame {
         background: transparent;
+        border: 2px solid #22c55e !important;
         transition: none !important;
       }
 
@@ -2058,6 +2059,29 @@
         box-shadow: 0 10px 25px rgba(15, 23, 42, 0.15);
         z-index: 12000;
         pointer-events: auto;
+      }
+
+      .capture-master-target-badge {
+        position: fixed;
+        left: 50%;
+        top: 8.4rem;
+        transform: translateX(-50%);
+        display: none;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(15, 23, 42, 0.12);
+        background: rgba(255, 255, 255, 0.94);
+        color: #0f172a;
+        font-size: 12px;
+        font-weight: 700;
+        z-index: 12001;
+        pointer-events: none;
+      }
+
+      body.master-view-active .capture-master-target-badge {
+        display: inline-flex;
       }
 
       .capture-tab-bar,
@@ -2134,6 +2158,7 @@
         inset: 0;
         z-index: 1550;
         display: none;
+        pointer-events: none;
       }
 
       body.master-view-active .capture-tab-master-overlay {
@@ -2141,27 +2166,125 @@
       }
 
       body.master-view-active #captureFrame {
+        border-color: transparent !important;
+        box-shadow: none !important;
+        background: transparent !important;
+        pointer-events: none;
+      }
+
+      body.master-view-active #captureFrame .resize-handles,
+      body.master-view-active #captureFrame #unlockInstructions {
         opacity: 0;
         pointer-events: none;
       }
 
+      body.master-view-active #captureFrame #captureLockButton {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
       .capture-tab-frame {
         position: absolute;
-        border: 2px solid rgba(37, 99, 235, 0.8);
-        background: rgba(37, 99, 235, 0.08);
+        border: 2px solid rgba(34, 197, 94, 0.95);
+        background: rgba(34, 197, 94, 0.2);
         border-radius: 10px;
         pointer-events: auto;
+        mix-blend-mode: multiply;
         display: flex;
         align-items: flex-start;
         justify-content: flex-start;
         padding: 6px;
         font-size: 12px;
         font-weight: 600;
-        color: #0f172a;
+        color: #ffffff;
+        overflow: visible;
+      }
+
+      .capture-tab-frame-label {
+        color: #ffffff;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
+        pointer-events: none;
+      }
+
+      .capture-tab-frame-label.selectable {
+        pointer-events: auto;
+        cursor: pointer;
+        background: rgba(71, 85, 105, 0.7);
+        border-radius: 999px;
+        padding: 2px 7px;
       }
 
       .capture-tab-frame:hover {
-        background: rgba(37, 99, 235, 0.18);
+        background: rgba(34, 197, 94, 0.28);
+      }
+
+      .capture-tab-frame.active {
+        background: rgba(34, 197, 94, 0.08);
+        box-shadow: none;
+      }
+
+      .capture-tab-frame.draw-target {
+        background: transparent !important;
+        box-shadow: none;
+        mix-blend-mode: normal;
+      }
+
+      .master-resize-handle {
+        position: absolute;
+        width: 10px;
+        height: 10px;
+        border-radius: 2px;
+        border: 1px solid rgba(255, 255, 255, 0.95);
+        background: rgba(15, 23, 42, 0.85);
+        opacity: 0;
+        transition: opacity 0.15s ease;
+        z-index: 2;
+      }
+
+      body.capture-unlocked .capture-tab-frame:hover .master-resize-handle,
+      body.capture-unlocked .capture-tab-frame .master-resize-handle:hover {
+        opacity: 1;
+      }
+
+      .master-resize-handle[data-direction='nw'] {
+        left: -5px;
+        top: -5px;
+        cursor: nwse-resize;
+      }
+      .master-resize-handle[data-direction='n'] {
+        left: calc(50% - 5px);
+        top: -5px;
+        cursor: ns-resize;
+      }
+      .master-resize-handle[data-direction='ne'] {
+        right: -5px;
+        top: -5px;
+        cursor: nesw-resize;
+      }
+      .master-resize-handle[data-direction='e'] {
+        right: -5px;
+        top: calc(50% - 5px);
+        cursor: ew-resize;
+      }
+      .master-resize-handle[data-direction='se'] {
+        right: -5px;
+        bottom: -5px;
+        cursor: nwse-resize;
+      }
+      .master-resize-handle[data-direction='s'] {
+        left: calc(50% - 5px);
+        bottom: -5px;
+        cursor: ns-resize;
+      }
+      .master-resize-handle[data-direction='sw'] {
+        left: -5px;
+        bottom: -5px;
+        cursor: nesw-resize;
+      }
+      .master-resize-handle[data-direction='w'] {
+        left: -5px;
+        top: calc(50% - 5px);
+        cursor: ew-resize;
       }
 
       .resize-handle {
@@ -3382,7 +3505,7 @@
           width: 800px;
           height: 600px;
           pointer-events: none;
-          border: 2px solid #3b82f6 !important;
+          border: 2px solid #22c55e !important;
         "
       >
         <!-- Lock button -->
@@ -3455,6 +3578,7 @@
       <div id="captureTabList" class="capture-tab-list"></div>
       <button id="captureTabAdd" class="capture-tab-add" type="button">New Tab</button>
     </div>
+    <div id="captureMasterTargetBadge" class="capture-master-target-badge"></div>
 
     <!-- Instruction Text for Unlocked Mode -->
     <div
@@ -4505,18 +4629,93 @@ async function generatePDFWithPDFLib(projectName, viewIds, quality, pageSize, in
         const tabList = document.getElementById('captureTabList');
         const tabAddButton = document.getElementById('captureTabAdd');
         const masterOverlay = document.getElementById('captureTabMasterOverlay');
-        if (!tabBar || !tabList || !tabAddButton) {
-          console.warn('[CaptureTabs] Tab UI elements missing');
-        } else {
-          console.log('[CaptureTabs] Tab UI ready');
-        }
+        const masterTargetBadge = document.getElementById('captureMasterTargetBadge');
 
         // Capture frame tabs storage and helpers
         window.captureTabsByLabel = window.captureTabsByLabel || {};
+        window.captureMasterDrawTargetByLabel = window.captureMasterDrawTargetByLabel || {};
         let captureTabIdCounter = 1;
+        const captureTabPalette = ['#22c55e', '#06b6d4', '#f59e0b', '#ec4899', '#8b5cf6', '#ef4444'];
 
+        function toBaseLabel(label) {
+          if (!label || typeof label !== 'string') return label;
+          return label.split('::tab:')[0];
+        }
         const getActiveLabel = () =>
-          window.app?.projectManager?.currentViewId || window.currentImageLabel || 'front';
+          toBaseLabel(window.app?.projectManager?.currentViewId || window.currentImageLabel || 'front');
+        function pickNextTabColor(state) {
+          const normalTabs = (state?.tabs || []).filter(tab => tab.type !== 'master');
+          return captureTabPalette[normalTabs.length % captureTabPalette.length];
+        }
+        function buildScopedLabel(label, tabId) {
+          if (!label) return label;
+          const baseLabel = toBaseLabel(label);
+          if (!tabId || tabId === 'master') return baseLabel;
+          return `${baseLabel}::tab:${tabId}`;
+        }
+        function getActiveScopedLabel(label) {
+          const resolved = label || getActiveLabel();
+          const state = ensureCaptureTabsForLabel(resolved);
+          let tabId = state?.activeTabId;
+          if (tabId === state?.masterTabId || tabId === 'master') {
+            const fromMasterSelection = window.captureMasterDrawTargetByLabel?.[resolved];
+            tabId =
+              fromMasterSelection ||
+              state?.lastNonMasterId ||
+              state?.tabs?.find(tab => tab.type !== 'master')?.id;
+          }
+          return buildScopedLabel(resolved, tabId);
+        }
+        function isLabelInViewScope(objectLabel, viewLabel) {
+          if (!objectLabel || !viewLabel) return false;
+          return objectLabel === viewLabel || objectLabel.startsWith(`${viewLabel}::tab:`);
+        }
+        function getMasterDrawTargetTabId(label, state) {
+          const resolvedState = state || ensureCaptureTabsForLabel(label);
+          return (
+            window.captureMasterDrawTargetByLabel?.[label] ||
+            resolvedState?.lastNonMasterId ||
+            resolvedState?.tabs?.find(tab => tab.type !== 'master')?.id ||
+            null
+          );
+        }
+        function syncCanvasVisibilityForActiveTab(label) {
+          const resolved = label || getActiveLabel();
+          const state = ensureCaptureTabsForLabel(resolved);
+          const activeTab = getActiveTab(resolved);
+          const canvas = window.app?.canvasManager?.fabricCanvas;
+          if (!canvas || !state || !activeTab) return;
+          const primaryTab = state.tabs.find(tab => tab.type !== 'master');
+          const activeScope = buildScopedLabel(resolved, activeTab.id);
+          const showLegacyBase = activeTab.type !== 'master' && primaryTab && activeTab.id === primaryTab.id;
+          const masterDrawTargetId = getMasterDrawTargetTabId(resolved, state);
+          const masterTargetScope = buildScopedLabel(resolved, masterDrawTargetId);
+          const masterAllowsLegacy = primaryTab && masterDrawTargetId === primaryTab.id;
+
+          canvas.getObjects().forEach(obj => {
+            const objectLabel = obj?.strokeMetadata?.imageLabel || obj?.imageLabel;
+            if (!objectLabel || !isLabelInViewScope(objectLabel, resolved)) return;
+            if (activeTab.type === 'master') {
+              obj.visible = true;
+              const inTargetScope = objectLabel.includes('::tab:')
+                ? objectLabel === masterTargetScope
+                : masterAllowsLegacy;
+              obj.evented = inTargetScope;
+              obj.selectable = inTargetScope;
+              return;
+            }
+            if (objectLabel.includes('::tab:')) {
+              obj.visible = objectLabel === activeScope;
+              obj.evented = obj.visible;
+              obj.selectable = obj.visible;
+              return;
+            }
+            obj.visible = showLegacyBase;
+            obj.evented = obj.visible;
+            obj.selectable = obj.visible;
+          });
+          canvas.requestRenderAll();
+        }
 
         function buildCaptureFrameRecord(rect) {
           const winW = Math.max(window.innerWidth, 1);
@@ -4582,6 +4781,7 @@ async function generatePDFWithPDFLib(projectName, viewIds, quality, pageSize, in
                 id: defaultTabId,
                 name: 'Frame 1',
                 type: 'normal',
+                color: captureTabPalette[0],
                 captureFrame: frameRect,
                 viewport,
               },
@@ -4607,14 +4807,25 @@ async function generatePDFWithPDFLib(projectName, viewIds, quality, pageSize, in
             masterTabId: state.masterTabId || 'master',
             lastNonMasterId: state.lastNonMasterId,
           };
+          let normalIndex = 0;
           state.tabs.forEach(tab => {
             if (!tab || typeof tab !== 'object') return;
             const id = typeof tab.id === 'string' ? tab.id : createTabId();
             const type = tab.type === 'master' || tab.type === 'linked' ? tab.type : 'normal';
+            const color =
+              type === 'master'
+                ? null
+                : typeof tab.color === 'string' && tab.color
+                  ? tab.color
+                  : captureTabPalette[normalIndex % captureTabPalette.length];
+            if (type !== 'master') {
+              normalIndex += 1;
+            }
             normalized.tabs.push({
               id,
               name: typeof tab.name === 'string' ? tab.name : 'Frame',
               type,
+              color,
               captureFrame: tab.captureFrame || null,
               viewport: tab.viewport || null,
               linkedTarget: tab.linkedTarget || null,
@@ -4648,18 +4859,44 @@ async function generatePDFWithPDFLib(projectName, viewIds, quality, pageSize, in
           return normalized;
         }
         function ensureCaptureTabsForLabel(label) {
-          if (!label) return createDefaultTabState('front');
-          const existing = window.captureTabsByLabel[label];
+          const baseLabel = toBaseLabel(label) || 'front';
+          const existing = window.captureTabsByLabel[baseLabel];
           if (!existing) {
-            window.captureTabsByLabel[label] = createDefaultTabState(label);
+            window.captureTabsByLabel[baseLabel] = createDefaultTabState(baseLabel);
           } else {
-            window.captureTabsByLabel[label] = normalizeTabState(label, existing);
+            window.captureTabsByLabel[baseLabel] = normalizeTabState(baseLabel, existing);
           }
-          return window.captureTabsByLabel[label];
+          return window.captureTabsByLabel[baseLabel];
         }
         function getActiveTab(label) {
           const state = ensureCaptureTabsForLabel(label);
           return state.tabs.find(tab => tab.id === state.activeTabId) || null;
+        }
+        function getHighlightedFrameTab(state, label) {
+          if (!state) return null;
+          const selectedInMaster = window.captureMasterDrawTargetByLabel?.[label || getActiveLabel()];
+          const highlightedId =
+            state.activeTabId === state.masterTabId || state.activeTabId === 'master'
+              ? selectedInMaster || state.lastNonMasterId
+              : state.activeTabId;
+          return state.tabs.find(tab => tab.id === highlightedId && tab.type !== 'master') || null;
+        }
+        function renderMasterTargetBadge(label) {
+          if (!masterTargetBadge) return;
+          const state = ensureCaptureTabsForLabel(label);
+          const tab = getHighlightedFrameTab(state);
+          if (!tab) {
+            masterTargetBadge.textContent = 'Drawing target: none';
+            masterTargetBadge.style.borderColor = 'rgba(15, 23, 42, 0.2)';
+            masterTargetBadge.style.background = 'rgba(255, 255, 255, 0.94)';
+            masterTargetBadge.style.color = '#0f172a';
+            return;
+          }
+          const accent = tab.color || '#22c55e';
+          masterTargetBadge.textContent = `Drawing into: ${tab.name || 'Frame'}`;
+          masterTargetBadge.style.borderColor = `${accent}99`;
+          masterTargetBadge.style.background = `${accent}22`;
+          masterTargetBadge.style.color = '#0f172a';
         }
         function setMasterViewActive(isActive) {
           if (isActive) {
@@ -4752,11 +4989,12 @@ async function generatePDFWithPDFLib(projectName, viewIds, quality, pageSize, in
         }
         function applyCaptureFrameForLabel(label) {
           const resolved = label || getActiveLabel();
-          ensureCaptureTabsForLabel(resolved);
+          const state = ensureCaptureTabsForLabel(resolved);
           const activeTab = getActiveTab(resolved);
           if (!activeTab) return;
           if (activeTab.type === 'master') {
             setMasterViewActive(true);
+            captureFrame.style.borderColor = '#22c55e';
             renderMasterOverlay(resolved);
             return;
           }
@@ -4777,11 +5015,161 @@ async function generatePDFWithPDFLib(projectName, viewIds, quality, pageSize, in
             relativeWidth: rect.width / Math.max(window.innerWidth, 1),
             relativeHeight: rect.height / Math.max(window.innerHeight, 1),
           };
+          captureFrame.style.borderColor = activeTab.color || '#22c55e';
           if (!activeTab.viewport) {
             activeTab.viewport = buildViewportRecord();
           }
           if (activeTab.viewport) {
             applyViewportRecord(activeTab.viewport);
+          }
+        }
+        function getCanvasClientRect() {
+          const canvasEl =
+            window.app?.canvasManager?.fabricCanvas?.upperCanvasEl ||
+            window.app?.canvasManager?.fabricCanvas?.lowerCanvasEl ||
+            null;
+          return canvasEl?.getBoundingClientRect?.() || { left: 0, top: 0 };
+        }
+        function buildViewportTransform(viewport) {
+          const canvasManager = window.app?.canvasManager;
+          const zoom = typeof viewport?.zoom === 'number' && viewport.zoom > 0 ? viewport.zoom : 1;
+          const panX = typeof viewport?.panX === 'number' ? viewport.panX : 0;
+          const panY = typeof viewport?.panY === 'number' ? viewport.panY : 0;
+          const rotation = typeof viewport?.rotation === 'number' ? viewport.rotation : 0;
+          const angleRadians = (rotation * Math.PI) / 180;
+          const cos = Math.cos(angleRadians);
+          const sin = Math.sin(angleRadians);
+          const center = canvasManager?.getRotationCenter?.() || {
+            x: window.innerWidth / 2,
+            y: window.innerHeight / 2,
+          };
+          const base = [zoom * cos, zoom * sin, -zoom * sin, zoom * cos, 0, 0];
+          const translateToOrigin = [1, 0, 0, 1, -center.x, -center.y];
+          const translateBack = [1, 0, 0, 1, center.x, center.y];
+          let transform = fabric.util.multiplyTransformMatrices(base, translateToOrigin);
+          transform = fabric.util.multiplyTransformMatrices(translateBack, transform);
+          transform[4] += panX;
+          transform[5] += panY;
+          return transform;
+        }
+        function computeWorldRectForTab(tab) {
+          if (!tab?.captureFrame || !tab?.viewport) return null;
+          const rect = resolveCaptureFrameRect(tab.captureFrame);
+          const canvasRect = getCanvasClientRect();
+          const matrix = buildViewportTransform(tab.viewport);
+          const inverse = fabric.util.invertTransform(matrix);
+          const corners = [
+            new fabric.Point(rect.left - canvasRect.left, rect.top - canvasRect.top),
+            new fabric.Point(rect.left + rect.width - canvasRect.left, rect.top - canvasRect.top),
+            new fabric.Point(rect.left - canvasRect.left, rect.top + rect.height - canvasRect.top),
+            new fabric.Point(rect.left + rect.width - canvasRect.left, rect.top + rect.height - canvasRect.top),
+          ].map(point => fabric.util.transformPoint(point, inverse));
+          const xs = corners.map(point => point.x);
+          const ys = corners.map(point => point.y);
+          const minX = Math.min(...xs);
+          const minY = Math.min(...ys);
+          const maxX = Math.max(...xs);
+          const maxY = Math.max(...ys);
+          return {
+            left: minX,
+            top: minY,
+            width: maxX - minX,
+            height: maxY - minY,
+          };
+        }
+        function mapWorldRectToViewport(worldRect, viewport) {
+          if (!worldRect || !viewport) return null;
+          const canvasRect = getCanvasClientRect();
+          const matrix = buildViewportTransform(viewport);
+          const corners = [
+            new fabric.Point(worldRect.left, worldRect.top),
+            new fabric.Point(worldRect.left + worldRect.width, worldRect.top),
+            new fabric.Point(worldRect.left, worldRect.top + worldRect.height),
+            new fabric.Point(worldRect.left + worldRect.width, worldRect.top + worldRect.height),
+          ].map(point => fabric.util.transformPoint(point, matrix));
+          const xs = corners.map(point => point.x + canvasRect.left);
+          const ys = corners.map(point => point.y + canvasRect.top);
+          const minX = Math.min(...xs);
+          const minY = Math.min(...ys);
+          const maxX = Math.max(...xs);
+          const maxY = Math.max(...ys);
+          return {
+            left: minX,
+            top: minY,
+            width: maxX - minX,
+            height: maxY - minY,
+          };
+        }
+        function computeWorldRectFromViewportRect(rect, viewport) {
+          if (!rect || !viewport) return null;
+          const canvasRect = getCanvasClientRect();
+          const matrix = buildViewportTransform(viewport);
+          const inverse = fabric.util.invertTransform(matrix);
+          const corners = [
+            new fabric.Point(rect.left - canvasRect.left, rect.top - canvasRect.top),
+            new fabric.Point(rect.left + rect.width - canvasRect.left, rect.top - canvasRect.top),
+            new fabric.Point(rect.left - canvasRect.left, rect.top + rect.height - canvasRect.top),
+            new fabric.Point(rect.left + rect.width - canvasRect.left, rect.top + rect.height - canvasRect.top),
+          ].map(point => fabric.util.transformPoint(point, inverse));
+          const xs = corners.map(point => point.x);
+          const ys = corners.map(point => point.y);
+          const minX = Math.min(...xs);
+          const minY = Math.min(...ys);
+          const maxX = Math.max(...xs);
+          const maxY = Math.max(...ys);
+          return {
+            left: minX,
+            top: minY,
+            width: maxX - minX,
+            height: maxY - minY,
+          };
+        }
+        function isCaptureFrameUnlocked() {
+          return document.body.classList.contains('capture-unlocked');
+        }
+        function buildCenteredRectFromSize(width, height) {
+          const nextWidth = Math.max(100, Math.min(width || 800, window.innerWidth));
+          const nextHeight = Math.max(80, Math.min(height || 600, window.innerHeight));
+          return {
+            left: Math.max(0, Math.round((window.innerWidth - nextWidth) / 2)),
+            top: Math.max(0, Math.round((window.innerHeight - nextHeight) / 2)),
+            width: Math.round(nextWidth),
+            height: Math.round(nextHeight),
+          };
+        }
+        function updateTabFromMasterOverlayRect(label, tabId, masterRect) {
+          const state = ensureCaptureTabsForLabel(label);
+          const tab = state.tabs.find(item => item.id === tabId);
+          const master = state.tabs.find(item => item.type === 'master');
+          if (!tab || !master || tab.type === 'master') return;
+          const worldRect = computeWorldRectFromViewportRect(masterRect, master.viewport || buildViewportRecord());
+          if (!worldRect) return;
+          const existingRect = resolveCaptureFrameRect(tab.captureFrame);
+          const centeredRect = buildCenteredRectFromSize(existingRect.width, existingRect.height);
+          let nextViewport = {
+            ...(tab.viewport || buildViewportRecord()),
+          };
+          const mappedBefore = mapWorldRectToViewport(worldRect, nextViewport);
+          if (!mappedBefore || mappedBefore.width <= 0 || mappedBefore.height <= 0) return;
+          const fitScale = Math.min(
+            centeredRect.width / Math.max(1, mappedBefore.width),
+            centeredRect.height / Math.max(1, mappedBefore.height)
+          );
+          nextViewport.zoom = Math.max(0.01, (nextViewport.zoom || 1) * fitScale);
+          const mappedAfter = mapWorldRectToViewport(worldRect, nextViewport);
+          if (!mappedAfter) return;
+          const targetCx = centeredRect.left + centeredRect.width / 2;
+          const targetCy = centeredRect.top + centeredRect.height / 2;
+          const mappedCx = mappedAfter.left + mappedAfter.width / 2;
+          const mappedCy = mappedAfter.top + mappedAfter.height / 2;
+          nextViewport.panX = (nextViewport.panX || 0) + (targetCx - mappedCx);
+          nextViewport.panY = (nextViewport.panY || 0) + (targetCy - mappedCy);
+          tab.viewport = nextViewport;
+          tab.captureFrame = buildCaptureFrameRecord(centeredRect);
+          if (state.activeTabId === tab.id) {
+            applyCaptureFrameForLabel(label);
+          } else {
+            renderMasterOverlay(label);
           }
         }
         function renderTabBar(label) {
@@ -4798,6 +5186,12 @@ async function generatePDFWithPDFLib(projectName, viewIds, quality, pageSize, in
             const labelSpan = document.createElement('span');
             labelSpan.textContent = tab.name || 'Frame';
             button.appendChild(labelSpan);
+            const accent = tab.color || captureTabPalette[0];
+            if (tab.type !== 'master') {
+              button.style.borderColor = `${accent}66`;
+              button.style.background = tab.id === state.activeTabId ? accent : `${accent}22`;
+              button.style.color = tab.id === state.activeTabId ? '#ffffff' : '#0f172a';
+            }
             if (tab.type !== 'master') {
               const close = document.createElement('span');
               close.className = 'capture-tab-close';
@@ -4805,68 +5199,243 @@ async function generatePDFWithPDFLib(projectName, viewIds, quality, pageSize, in
               close.dataset.action = 'close';
               button.appendChild(close);
             }
+            button.addEventListener('pointerdown', e => {
+              e.stopPropagation();
+            });
+            button.addEventListener('click', e => {
+              e.preventDefault();
+              e.stopPropagation();
+              const target = e.target;
+              const resolvedLabel = resolveLabelForTabId(tab.id, label);
+              if (target?.dataset?.action === 'close') {
+                deleteTab(resolvedLabel, tab.id);
+                return;
+              }
+              setActiveTab(resolvedLabel, tab.id);
+            });
             tabList.appendChild(button);
           });
         }
         function renderMasterOverlay(label) {
           if (!masterOverlay) return;
           const state = ensureCaptureTabsForLabel(label);
+          const master = state.tabs.find(item => item.type === 'master');
+          const highlightedTab = getHighlightedFrameTab(state, label);
           masterOverlay.innerHTML = '';
           state.tabs
             .filter(tab => tab.type !== 'master')
             .forEach(tab => {
-              const rect = resolveCaptureFrameRect(tab.captureFrame);
+              const worldRect = computeWorldRectForTab(tab);
+              const rect = mapWorldRectToViewport(worldRect, master?.viewport || buildViewportRecord());
+              if (!rect) return;
               const frame = document.createElement('button');
               frame.type = 'button';
               frame.className = 'capture-tab-frame';
+              const isMasterActive = state.activeTabId === state.masterTabId || state.activeTabId === 'master';
+              const isDrawTarget = isMasterActive && tab.id === highlightedTab?.id;
+              const isLockedMaster = isMasterActive && !isCaptureFrameUnlocked();
+              if (tab.id === highlightedTab?.id) {
+                frame.classList.add('active');
+              }
+              if (isDrawTarget) {
+                frame.classList.add('draw-target');
+              }
+              const accent = tab.color || '#22c55e';
               frame.dataset.tabId = tab.id;
               frame.style.left = `${rect.left}px`;
               frame.style.top = `${rect.top}px`;
               frame.style.width = `${rect.width}px`;
               frame.style.height = `${rect.height}px`;
-              frame.textContent = tab.name || 'Frame';
+              frame.style.borderColor = `${accent}f2`;
+              frame.style.background = tab.id === highlightedTab?.id ? `${accent}12` : `${accent}08`;
+              if (isLockedMaster) {
+                frame.style.pointerEvents = 'none';
+              }
+              const directions = ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'];
+              directions.forEach(direction => {
+                const handle = document.createElement('span');
+                handle.className = 'master-resize-handle';
+                handle.dataset.direction = direction;
+                frame.appendChild(handle);
+              });
+
+              frame.addEventListener('mousedown', e => {
+                if (!isCaptureFrameUnlocked()) return;
+                if (e.button !== 0) return;
+                const handle = e.target.closest('.master-resize-handle');
+                const startRect = frame.getBoundingClientRect();
+                const startPos = { x: e.clientX, y: e.clientY };
+                let moved = false;
+                const mode = handle ? 'resize' : 'drag';
+                const direction = handle?.dataset?.direction || null;
+
+                const onMove = moveEvent => {
+                  const deltaX = moveEvent.clientX - startPos.x;
+                  const deltaY = moveEvent.clientY - startPos.y;
+                  let nextRect = {
+                    left: startRect.left,
+                    top: startRect.top,
+                    width: startRect.width,
+                    height: startRect.height,
+                  };
+                  if (mode === 'drag') {
+                    nextRect.left = startRect.left + deltaX;
+                    nextRect.top = startRect.top + deltaY;
+                  } else {
+                    const centerX = startRect.left + startRect.width / 2;
+                    const centerY = startRect.top + startRect.height / 2;
+                    if (direction.includes('e')) nextRect.width = startRect.width + deltaX * 2;
+                    if (direction.includes('w')) nextRect.width = startRect.width - deltaX * 2;
+                    if (direction.includes('s')) nextRect.height = startRect.height + deltaY * 2;
+                    if (direction.includes('n')) nextRect.height = startRect.height - deltaY * 2;
+                    nextRect.width = Math.max(90, nextRect.width);
+                    nextRect.height = Math.max(70, nextRect.height);
+                    nextRect.left = centerX - nextRect.width / 2;
+                    nextRect.top = centerY - nextRect.height / 2;
+                  }
+
+                  const maxLeft = Math.max(0, window.innerWidth - nextRect.width);
+                  const maxTop = Math.max(0, window.innerHeight - nextRect.height);
+                  nextRect.left = Math.min(maxLeft, Math.max(0, nextRect.left));
+                  nextRect.top = Math.min(maxTop, Math.max(0, nextRect.top));
+
+                  frame.style.left = `${nextRect.left}px`;
+                  frame.style.top = `${nextRect.top}px`;
+                  frame.style.width = `${nextRect.width}px`;
+                  frame.style.height = `${nextRect.height}px`;
+                  moved = true;
+                };
+
+                const onUp = () => {
+                  document.removeEventListener('mousemove', onMove);
+                  document.removeEventListener('mouseup', onUp);
+                  if (moved) {
+                    frame.dataset.moved = '1';
+                    setTimeout(() => {
+                      delete frame.dataset.moved;
+                    }, 0);
+                    const finalRect = frame.getBoundingClientRect();
+                    updateTabFromMasterOverlayRect(label, tab.id, finalRect);
+                  }
+                };
+
+                e.preventDefault();
+                e.stopPropagation();
+                document.addEventListener('mousemove', onMove);
+                document.addEventListener('mouseup', onUp);
+              });
+              frame.addEventListener('click', e => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (frame.dataset.moved === '1') return;
+                const state = ensureCaptureTabsForLabel(label);
+                const active = state.tabs.find(item => item.id === state.activeTabId);
+                if (active?.type === 'master') {
+                  state.lastNonMasterId = tab.id;
+                  window.captureMasterDrawTargetByLabel[label] = tab.id;
+                  window.currentImageLabel = buildScopedLabel(label, tab.id);
+                  syncCanvasVisibilityForActiveTab(label);
+                  window.app?.metadataManager?.updateStrokeVisibilityControls?.();
+                  renderMasterOverlay(label);
+                  return;
+                }
+                setActiveTab(label, tab.id);
+              });
               masterOverlay.appendChild(frame);
+              const selector = document.createElement('button');
+              selector.type = 'button';
+              selector.className = 'capture-tab-frame-label selectable';
+              selector.textContent = tab.name || 'Frame';
+              selector.style.position = 'absolute';
+              selector.style.left = `${rect.left + 8}px`;
+              selector.style.top = `${rect.top + 8}px`;
+              selector.style.zIndex = '4';
+              selector.addEventListener('click', clickEvent => {
+                clickEvent.preventDefault();
+                clickEvent.stopPropagation();
+                state.lastNonMasterId = tab.id;
+                window.captureMasterDrawTargetByLabel[label] = tab.id;
+                window.currentImageLabel = buildScopedLabel(label, tab.id);
+                syncCanvasVisibilityForActiveTab(label);
+                window.app?.metadataManager?.updateStrokeVisibilityControls?.();
+                renderMasterOverlay(label);
+              });
+              masterOverlay.appendChild(selector);
             });
+          renderMasterTargetBadge(label);
         }
         function setActiveTab(label, tabId, options = {}) {
-          const state = ensureCaptureTabsForLabel(label);
+          const baseLabel = toBaseLabel(label) || 'front';
+          const state = ensureCaptureTabsForLabel(baseLabel);
           const targetTab = state.tabs.find(tab => tab.id === tabId);
           if (!targetTab) return;
           if (!options.skipSave) {
-            saveActiveTabState(label);
+            saveActiveTabState(baseLabel);
           }
-          state.activeTabId = targetTab.id;
+          const nextState = {
+            ...state,
+            tabs: [...state.tabs],
+            activeTabId: targetTab.id,
+          };
           if (targetTab.type !== 'master') {
-            state.lastNonMasterId = targetTab.id;
+            nextState.lastNonMasterId = targetTab.id;
+            window.captureMasterDrawTargetByLabel[baseLabel] = targetTab.id;
           }
+          window.captureTabsByLabel[baseLabel] = nextState;
           if (targetTab.viewport) {
             applyViewportRecord(targetTab.viewport);
           }
-          applyCaptureFrameForLabel(label);
-          renderTabBar(label);
-          renderMasterOverlay(label);
+          window.currentImageLabel = getActiveScopedLabel(baseLabel);
+          applyCaptureFrameForLabel(baseLabel);
+          syncCanvasVisibilityForActiveTab(baseLabel);
+          window.app?.metadataManager?.updateStrokeVisibilityControls?.();
+          renderTabBar(baseLabel);
+          renderMasterOverlay(baseLabel);
         }
         function createNewTab(label) {
-          const state = ensureCaptureTabsForLabel(label);
-          const activeTab = getActiveTab(label);
+          const baseLabel = toBaseLabel(label) || 'front';
+          const state = ensureCaptureTabsForLabel(baseLabel);
+          const workingState = normalizeTabState(baseLabel, state);
+          const activeTab =
+            workingState.tabs.find(tab => tab.id === workingState.activeTabId) ||
+            workingState.tabs.find(tab => tab.type !== 'master') ||
+            null;
           const baseName = 'Frame';
           const nextIndex =
-            state.tabs.filter(tab => tab.type !== 'master').length + 1;
+            workingState.tabs.filter(tab => tab.type !== 'master').length + 1;
           const name = `${baseName} ${nextIndex}`;
           const newTab = {
             id: createTabId(),
             name,
             type: 'normal',
-            captureFrame: activeTab?.captureFrame || getCaptureFrameRectPixels(),
-            viewport: activeTab?.viewport || buildViewportRecord(),
+            color: pickNextTabColor(workingState),
+            captureFrame: activeTab?.captureFrame
+              ? JSON.parse(JSON.stringify(activeTab.captureFrame))
+              : getCaptureFrameRectPixels(),
+            viewport: activeTab?.viewport
+              ? JSON.parse(JSON.stringify(activeTab.viewport))
+              : buildViewportRecord(),
           };
-          const masterIndex = state.tabs.findIndex(tab => tab.type === 'master');
+          const nextTabs = [...workingState.tabs];
+          const masterIndex = nextTabs.findIndex(tab => tab.type === 'master');
           if (masterIndex === -1) {
-            state.tabs.push(newTab);
+            nextTabs.push(newTab);
           } else {
-            state.tabs.splice(masterIndex, 0, newTab);
+            nextTabs.splice(masterIndex, 0, newTab);
           }
-          setActiveTab(label, newTab.id, { skipSave: true });
+          window.captureTabsByLabel[baseLabel] = {
+            ...workingState,
+            tabs: nextTabs,
+            activeTabId: newTab.id,
+            lastNonMasterId: newTab.id,
+          };
+          window.captureMasterDrawTargetByLabel[baseLabel] = newTab.id;
+          window.currentImageLabel = buildScopedLabel(baseLabel, newTab.id);
+          applyCaptureFrameForLabel(baseLabel);
+          syncCanvasVisibilityForActiveTab(baseLabel);
+          window.app?.metadataManager?.updateStrokeVisibilityControls?.();
+          renderTabBar(baseLabel);
+          renderMasterOverlay(baseLabel);
         }
         function deleteTab(label, tabId) {
           const state = ensureCaptureTabsForLabel(label);
@@ -4883,31 +5452,36 @@ async function generatePDFWithPDFLib(projectName, viewIds, quality, pageSize, in
               : state.activeTabId;
           setActiveTab(label, nextId, { skipSave: true });
         }
+        function resolveLabelForTabId(tabId, preferredLabel) {
+          if (!tabId) return preferredLabel || getActiveLabel();
+          const preferred = toBaseLabel(preferredLabel || getActiveLabel());
+          if (preferred) {
+            const preferredState = ensureCaptureTabsForLabel(preferred);
+            if (preferredState.tabs.some(tab => tab.id === tabId)) {
+              return preferred;
+            }
+          }
+          const labels = Object.keys(window.captureTabsByLabel || {});
+          for (const label of labels) {
+            const state = ensureCaptureTabsForLabel(toBaseLabel(label));
+            if (state.tabs.some(tab => tab.id === tabId)) {
+              return toBaseLabel(label);
+            }
+          }
+          return preferred;
+        }
 
         if (tabAddButton) {
           tabAddButton.addEventListener('click', () => {
-            console.log('[CaptureTabs] New Tab clicked');
             const label = getActiveLabel();
             createNewTab(label);
           });
         }
         if (tabList) {
-          tabList.addEventListener('click', e => {
-            console.log('[CaptureTabs] Tab clicked');
-            const target = e.target;
-            const button = target.closest('button');
-            if (!button || !button.dataset.tabId) return;
-            const label = getActiveLabel();
-            if (target.dataset.action === 'close') {
-              deleteTab(label, button.dataset.tabId);
-              return;
-            }
-            setActiveTab(label, button.dataset.tabId);
-          });
           tabList.addEventListener('dblclick', e => {
             const button = e.target.closest('button');
             if (!button || !button.dataset.tabId) return;
-            const label = getActiveLabel();
+            const label = resolveLabelForTabId(button.dataset.tabId);
             const state = ensureCaptureTabsForLabel(label);
             const tab = state.tabs.find(item => item.id === button.dataset.tabId);
             if (!tab || tab.type === 'master') return;
@@ -4919,38 +5493,77 @@ async function generatePDFWithPDFLib(projectName, viewIds, quality, pageSize, in
             }
           });
         }
-        if (masterOverlay) {
-          masterOverlay.addEventListener('click', e => {
-            const button = e.target.closest('button');
-            if (!button || !button.dataset.tabId) return;
+        function installTabViewportTracking() {
+          const canvas = window.app?.canvasManager?.fabricCanvas;
+          if (!canvas || canvas.__captureTabViewportTracking) return false;
+          canvas.__captureTabViewportTracking = true;
+          let raf = null;
+          const sync = () => {
             const label = getActiveLabel();
-            setActiveTab(label, button.dataset.tabId);
-          });
+            const state = ensureCaptureTabsForLabel(label);
+            const activeTab = getActiveTab(label);
+            if (!activeTab || activeTab.type === 'master') return;
+            const viewport = buildViewportRecord();
+            const previous = activeTab.viewport || {};
+            if (
+              previous.zoom === viewport.zoom &&
+              previous.panX === viewport.panX &&
+              previous.panY === viewport.panY &&
+              previous.rotation === viewport.rotation
+            ) {
+              return;
+            }
+            activeTab.viewport = viewport;
+            state.lastNonMasterId = activeTab.id;
+            renderMasterOverlay(label);
+          };
+          const scheduleSync = () => {
+            if (raf !== null) return;
+            raf = requestAnimationFrame(() => {
+              raf = null;
+              sync();
+            });
+          };
+          canvas.on('mouse:wheel', scheduleSync);
+          canvas.on('mouse:move', scheduleSync);
+          canvas.on('mouse:up', scheduleSync);
+          return true;
         }
+        const viewportTrackingTimer = setInterval(() => {
+          if (installTabViewportTracking()) {
+            clearInterval(viewportTrackingTimer);
+          }
+        }, 250);
 
         window.saveCurrentCaptureFrameForLabel = saveCurrentCaptureFrameForLabel;
         window.applyCaptureFrameForLabel = applyCaptureFrameForLabel;
         window.ensureCaptureTabsForLabel = ensureCaptureTabsForLabel;
         window.setActiveCaptureTab = setActiveTab;
         window.renderCaptureTabUI = label => {
-          const resolved = label || getActiveLabel();
+          const resolved = toBaseLabel(label || getActiveLabel());
           renderTabBar(resolved);
           renderMasterOverlay(resolved);
         };
         window.captureTabsSyncActive = label => {
-          const resolved = label || getActiveLabel();
+          const resolved = toBaseLabel(label || getActiveLabel());
           saveActiveTabState(resolved);
         };
         window.setCaptureTabsForLabel = (label, data) => {
-          if (!label) return;
-          window.captureTabsByLabel[label] = normalizeTabState(label, data);
+          const resolved = toBaseLabel(label);
+          if (!resolved) return;
+          window.captureTabsByLabel[resolved] = normalizeTabState(resolved, data);
         };
+        window.getCaptureTabScopedLabel = label => getActiveScopedLabel(label || getActiveLabel());
+        window.getCaptureTabScopeForTab = (label, tabId) => buildScopedLabel(label, tabId);
+        window.syncCaptureTabCanvasVisibility = label => syncCanvasVisibilityForActiveTab(label);
 
         const initialLabel = getActiveLabel();
         ensureCaptureTabsForLabel(initialLabel);
         renderTabBar(initialLabel);
         renderMasterOverlay(initialLabel);
+        window.currentImageLabel = getActiveScopedLabel(initialLabel);
         applyCaptureFrameForLabel(initialLabel);
+        syncCanvasVisibilityForActiveTab(initialLabel);
 
         let captureFrameResizeRaf = null;
         window.addEventListener('resize', () => {
@@ -5273,10 +5886,20 @@ async function generatePDFWithPDFLib(projectName, viewIds, quality, pageSize, in
 
         // Simplified Tag System
         let tagMode = 'letters+numbers'; // 'letters' or 'letters+numbers'
+        const resolveTagScopeLabel = () => {
+          const fallback = window.currentImageLabel || window.app?.projectManager?.currentViewId || 'default';
+          if (typeof fallback === 'string' && fallback.includes('::tab:')) {
+            return fallback;
+          }
+          if (typeof window.getCaptureTabScopedLabel === 'function') {
+            return window.getCaptureTabScopedLabel(fallback) || fallback;
+          }
+          return fallback;
+        };
 
         // Helper function to find next available letter (A, B, C...)
         function findNextAvailableLetter() {
-          const currentImageLabel = window.currentImageLabel || 'default';
+          const currentImageLabel = resolveTagScopeLabel();
           const lineStrokes = window.lineStrokesByImage?.[currentImageLabel] || [];
           const existingTags = lineStrokes.filter(Boolean);
 
@@ -5302,7 +5925,7 @@ async function generatePDFWithPDFLib(projectName, viewIds, quality, pageSize, in
 
         // Helper function to find next available letter+number (A1, A2, A3...)
         function findNextAvailableLetterNumber() {
-          const currentImageLabel = window.currentImageLabel || 'default';
+          const currentImageLabel = resolveTagScopeLabel();
           const lineStrokes = window.lineStrokesByImage?.[currentImageLabel] || [];
           const existingTags = lineStrokes.filter(Boolean);
 
@@ -5348,7 +5971,7 @@ async function generatePDFWithPDFLib(projectName, viewIds, quality, pageSize, in
               tagMode === 'letters' ? 'Letters Only' : 'Letters + Numbers';
 
             // Automatically set the next appropriate tag when switching modes
-            const currentImageLabel = window.currentImageLabel || 'default';
+            const currentImageLabel = resolveTagScopeLabel();
             window.labelsByImage = window.labelsByImage || {};
 
             if (tagMode === 'letters') {
@@ -5372,7 +5995,7 @@ async function generatePDFWithPDFLib(projectName, viewIds, quality, pageSize, in
         // Calculate next tag based on current mode and existing tags
         function calculateNextTag() {
           console.log('[calculateNextTag] Called with tagMode:', tagMode);
-          const currentImageLabel = window.currentImageLabel || 'default';
+          const currentImageLabel = resolveTagScopeLabel();
           
           // First, check if there are any existing tags
           const strokesObj = window.app?.metadataManager?.vectorStrokesByImage?.[currentImageLabel] || {};
@@ -5594,40 +6217,11 @@ async function generatePDFWithPDFLib(projectName, viewIds, quality, pageSize, in
           }
         }
 
-        // Calculate the next tag after a specific tag (simple increment, no gap-filling)
-        function calculateNextTagFrom(tag) {
-          const mode = typeof tagMode === 'string' ? tagMode : 'letters+numbers';
-
-          if (mode === 'letters') {
-            // Just increment the letter
-            const nextLetter = String.fromCharCode(tag.charCodeAt(0) + 1);
-            return nextLetter > 'Z' ? 'A' : nextLetter;
-          } else {
-            // Letters + numbers mode
-            const match = tag.match(/^([A-Z])(\d+)$/);
-            if (!match) return 'A1';
-
-            const [, letter, number] = match;
-            const nextNumber = parseInt(number) + 1;
-
-            if (nextNumber > 9) {
-              // Wrap to next letter
-              const nextLetter = String.fromCharCode(letter.charCodeAt(0) + 1);
-              if (nextLetter > 'Z') {
-                return 'A1'; // Wrap around
-              }
-              return nextLetter + '1';
-            }
-
-            return letter + nextNumber;
-          }
-        }
-
         // Update the next tag display
         function updateNextTagDisplay() {
           const nextTagDisplay = document.getElementById('nextTagDisplay');
           if (nextTagDisplay) {
-            const currentImageLabel = window.currentImageLabel || 'default';
+            const currentImageLabel = resolveTagScopeLabel();
 
             // Priority: 1) labelsByImage (immediate next), 2) manualTagByImage (manual sequence), 3) calculateNextTag (gap-filling)
             let nextTag;
@@ -5691,7 +6285,7 @@ async function generatePDFWithPDFLib(projectName, viewIds, quality, pageSize, in
         // Validate and save on blur
         nextTagEl?.addEventListener('blur', e => {
           const mode = typeof tagMode === 'string' ? tagMode : 'letters+numbers';
-          const currentImageLabel = window.currentImageLabel || 'default';
+          const currentImageLabel = resolveTagScopeLabel();
           const input = e.target.textContent.trim().toUpperCase();
 
           // If empty or unchanged, restore original
@@ -5786,6 +6380,7 @@ async function generatePDFWithPDFLib(projectName, viewIds, quality, pageSize, in
           const lockButton = document.getElementById('captureLockButton');
           const instructions = document.getElementById('unlockInstructions');
           const applyAllButton = document.getElementById('applyFitAll');
+          const isMasterView = document.body.classList.contains('master-view-active');
 
           if (isCaptureLocked) {
             captureFrame.classList.add('locked');
@@ -5823,8 +6418,14 @@ async function generatePDFWithPDFLib(projectName, viewIds, quality, pageSize, in
             captureFrame.style.boxShadow = 'none';
 
             // Enable pointer events for dragging and resizing
-            captureFrame.style.pointerEvents = 'auto';
+            captureFrame.style.pointerEvents = isMasterView ? 'none' : 'auto';
             lockButton.style.pointerEvents = 'auto';
+          }
+
+          if (isMasterView) {
+            const label = getActiveLabel();
+            renderMasterOverlay(label);
+            syncCanvasVisibilityForActiveTab(label);
           }
         }
 
@@ -5867,7 +6468,7 @@ async function generatePDFWithPDFLib(projectName, viewIds, quality, pageSize, in
         resizeHandles.forEach(handle => {
           handle.addEventListener('mousedown', e => {
             // Don't allow resizing when locked
-            if (isCaptureLocked) return;
+            if (isCaptureLocked || document.body.classList.contains('master-view-active')) return;
 
             e.preventDefault();
             isResizing = true;
@@ -5981,11 +6582,23 @@ async function generatePDFWithPDFLib(projectName, viewIds, quality, pageSize, in
         let captureDragOffset = { x: 0, y: 0 };
         let lastCaptureMousePos = { x: 0, y: 0 };
         let captureRafId = null;
+        function isPointerNearCaptureBorder(event, rect) {
+          const borderGrab = 14;
+          const x = event.clientX - rect.left;
+          const y = event.clientY - rect.top;
+          return (
+            x <= borderGrab ||
+            y <= borderGrab ||
+            x >= rect.width - borderGrab ||
+            y >= rect.height - borderGrab
+          );
+        }
 
         captureFrame.addEventListener('mousedown', e => {
           // Don't drag if locked, clicking on handles, or buttons
           if (
             isCaptureLocked ||
+            document.body.classList.contains('master-view-active') ||
             e.target.classList.contains('resize-handle') ||
             e.target.closest('button')
           ) {
@@ -5997,12 +6610,16 @@ async function generatePDFWithPDFLib(projectName, viewIds, quality, pageSize, in
             return;
           }
 
+          const rect = captureFrame.getBoundingClientRect();
+          if (e.target === captureFrame && !isPointerNearCaptureBorder(e, rect)) {
+            return;
+          }
+
           e.preventDefault();
           e.stopPropagation();
 
           isCaptureDragging = true;
 
-          const rect = captureFrame.getBoundingClientRect();
           captureDragOffset.x = e.clientX - rect.left;
           captureDragOffset.y = e.clientY - rect.top;
 
@@ -9053,7 +9670,7 @@ async function generatePDFWithPDFLib(projectName, viewIds, quality, pageSize, in
     <script type="module" src="/js/toolbar-init.js"></script>
     <script type="module" src="/js/smart-labels.js"></script>
     <script type="module" src="/js/panel-management.js"></script>
-    <script type="module" src="/js/tag-system.js"></script>
+    <!-- Legacy tag-system module disabled; inline scoped tag logic is authoritative -->
     <script type="module" src="/js/capture-frame.js"></script>
     <script type="module" src="/js/image-gallery.js"></script>
     <script type="module" src="/js/scroll-select-system.js"></script>
