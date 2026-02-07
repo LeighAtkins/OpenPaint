@@ -1,6 +1,7 @@
 import { PathUtils } from './PathUtils.js';
 
 export class ArrowManager {
+  static versionStamp = 'arrow-tangent-fabric-v1';
   constructor(canvasManager) {
     this.canvasManager = canvasManager;
     this.canvas = null; // Will be set in init()
@@ -392,9 +393,15 @@ export class ArrowManager {
         let startAngle = 0;
         let endAngle = 0;
 
-        if (fabricUtil?.getPathSegmentsInfo && fabricUtil?.getPointOnPath) {
-          const infos = fabricUtil.getPathSegmentsInfo(path);
-          const totalLength = infos.length ? infos[infos.length - 1].length : 0;
+        // Calculate path info once for reuse
+        let infos = null;
+        let totalLength = 0;
+        if (fabricUtil?.getPathSegmentsInfo) {
+          infos = fabricUtil.getPathSegmentsInfo(path);
+          totalLength = infos.length ? infos[infos.length - 1].length : 0;
+        }
+
+        if (fabricUtil?.getPointOnPath && infos) {
           const epsilon = Math.min(2, totalLength * 0.01);
           const startInfo = fabricUtil.getPointOnPath(path, 0, infos);
           const startTangentInfo = fabricUtil.getPointOnPath(
@@ -409,25 +416,52 @@ export class ArrowManager {
             infos
           );
 
-          if (startInfo) {
+          if (startInfo && (startInfo.x !== 0 || startInfo.y !== 0)) {
             startPoint = { x: startInfo.x, y: startInfo.y };
+
+            // Calculate start angle only if we have valid startInfo
+            if (startTangentInfo) {
+              const dx = startTangentInfo.x - startInfo.x;
+              const dy = startTangentInfo.y - startInfo.y;
+              startAngle = Math.atan2(dy, dx) + Math.PI; // Reverse for start arrow
+            }
           }
+
           if (endInfo) {
             endPoint = { x: endInfo.x, y: endInfo.y };
-          }
-          if (startTangentInfo) {
-            startAngle = startTangentInfo.angle;
-          }
-          if (endTangentInfo) {
-            endAngle = endTangentInfo.angle;
+
+            // Calculate end angle
+            if (endTangentInfo) {
+              const dx = endInfo.x - endTangentInfo.x;
+              const dy = endInfo.y - endTangentInfo.y;
+              endAngle = Math.atan2(dy, dx);
+            }
           }
         }
 
         if (!startPoint || !endPoint) {
           const startCmd = path[0];
           const endCmd = path[path.length - 1];
-          startPoint = startPoint || { x: startCmd[1], y: startCmd[2] };
-          endPoint = endPoint || getLastPoint(endCmd);
+
+          if (!startPoint) {
+            startPoint = { x: startCmd[1], y: startCmd[2] };
+
+            // Calculate start angle from path commands - use tangent
+            // For curves, use a point slightly along the path, not the next anchor
+            if (fabricUtil?.getPointOnPath && infos) {
+              const epsilon = Math.min(2, totalLength * 0.01);
+              const tangentInfo = fabricUtil.getPointOnPath(path, epsilon, infos);
+              if (tangentInfo && (tangentInfo.x !== 0 || tangentInfo.y !== 0)) {
+                const dx = tangentInfo.x - startPoint.x;
+                const dy = tangentInfo.y - startPoint.y;
+                startAngle = Math.atan2(dy, dx) + Math.PI; // Reverse for start arrow
+              }
+            }
+          }
+
+          if (!endPoint) {
+            endPoint = getLastPoint(endCmd);
+          }
         }
 
         // Clear overlap under arrowheads to visually shorten the path.

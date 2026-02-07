@@ -29,15 +29,21 @@ export class LabelRenderer {
 
       if (!isVisible || !isLabelVisible || !fabricObj) return;
 
-      // Calculate label position (top-left of object's bounding box)
+      // Get object bounds
       const bounds = fabricObj.getBoundingRect();
+      const centerX = bounds.left + bounds.width / 2;
+      const centerY = bounds.top + bounds.height / 2;
+
+      // Create label text (non-interactive overlay)
+      // Note: Fabric.js may show a warning about 'alphabetic' textBaseline,
+      // but this is harmless - Fabric.js uses it internally and it still works
       const labelText = new fabric.Text(strokeLabel, {
-        left: bounds.left,
-        top: bounds.top - 20,
+        left: centerX + 15, // Offset to the right
+        top: centerY - 10, // Offset upward slightly
         fontSize: 14,
+        fill: '#000000',
         fontFamily: 'Arial',
-        fill: '#000',
-        backgroundColor: '#fff',
+        textBaseline: 'middle', // Use valid textBaseline instead of 'alphabetic'
         selectable: false,
         evented: false,
         hasControls: false,

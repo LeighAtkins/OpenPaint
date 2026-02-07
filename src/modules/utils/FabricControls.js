@@ -5,8 +5,10 @@
 
 import { PathUtils } from './PathUtils.js';
 
+// Debug function for curve/line operations
+const CURVE_DEBUG_ENABLED = false;
 const curveDebug = (...args) => {
-  if (globalThis.app?.debugCurve) {
+  if (CURVE_DEBUG_ENABLED) {
     console.log(...args);
   }
 };
@@ -146,6 +148,12 @@ export class FabricControls {
       };
     }
 
+    console.log(
+      '[CURVE CANONICALIZE] baseCenterWorld:',
+      baseCenterWorld.x.toFixed(1),
+      baseCenterWorld.y.toFixed(1)
+    );
+
     // Convert world points to local points around baseCenterWorld
     const localPoints = pathObj.customPoints.map(p => {
       const local = new fabric.Point(p.x - baseCenterWorld.x, p.y - baseCenterWorld.y);
@@ -175,6 +183,13 @@ export class FabricControls {
     const dims = pathObj._calcDimensions();
     const centerLocal = new fabric.Point(dims.left + dims.width / 2, dims.top + dims.height / 2);
 
+    console.log('[CURVE CANONICALIZE] dims:', JSON.stringify(dims));
+    console.log(
+      '[CURVE CANONICALIZE] centerLocal:',
+      centerLocal.x.toFixed(1),
+      centerLocal.y.toFixed(1)
+    );
+
     // Set pathOffset to centerLocal
     pathObj.set({
       width: dims.width,
@@ -199,6 +214,12 @@ export class FabricControls {
       };
     }
     const compensatedWorldCenter = new fabric.Point(desiredCenter.x, desiredCenter.y);
+
+    console.log(
+      '[CURVE CANONICALIZE] compensatedWorldCenter:',
+      compensatedWorldCenter.x.toFixed(1),
+      compensatedWorldCenter.y.toFixed(1)
+    );
 
     pathObj.setPositionByOrigin(compensatedWorldCenter, 'center', 'center');
 
@@ -231,6 +252,17 @@ export class FabricControls {
     pathObj.objectCaching = false;
     pathObj.dirty = true;
     pathObj.setCoords();
+
+    console.log(
+      '[CURVE CANONICALIZE] final left/top:',
+      pathObj.left?.toFixed(1),
+      pathObj.top?.toFixed(1)
+    );
+    console.log(
+      '[CURVE CANONICALIZE] customPoints rebuilt (world coords):',
+      pathObj.customPoints.length,
+      'points'
+    );
   }
 
   /**
@@ -428,6 +460,9 @@ export class FabricControls {
 
     curveDebug('[CURVE DEBUG] ========== createCurveControls called ==========');
     curveDebug('[CURVE DEBUG] Initial customPoints:', JSON.stringify(path.customPoints));
+    curveDebug('[CURVE DEBUG] Initial path center:', path.getCenterPoint());
+    curveDebug('[CURVE DEBUG] Initial left/top:', path.left, path.top);
+    curveDebug('[CURVE DEBUG] Initial pathOffset:', path.pathOffset);
     const initialCenter = path.getCenterPoint();
     path.__lastCenter = { x: initialCenter.x, y: initialCenter.y };
 
@@ -435,7 +470,7 @@ export class FabricControls {
     path.set({
       hasBorders: false,
       hasControls: true,
-      cornerSize: 12,
+      cornerSize: 12, // Increased from 8 to make controls easier to grab
       transparentCorners: false,
       cornerColor: '#ffffff',
       cornerStrokeColor: '#3b82f6',
@@ -515,12 +550,13 @@ export class FabricControls {
       if (isGestureScaling && activeObj && activeObj.type === 'activeSelection') {
         const scaleX = activeObj.scaleX || 1;
         const scaleY = activeObj.scaleY || 1;
+        // Only apply scaling if there's actual scaling happening
         if (scaleX !== 1 || scaleY !== 1) {
           const center = activeObj.getCenterPoint();
           const scaledX = center.x + (currentPoint.x - center.x) * scaleX;
           const scaledY = center.y + (currentPoint.y - center.y) * scaleY;
           curveDebug(
-            `[CURVE DEBUG] getCurveAnchorWorldPoint(${pointIndex}): ACTIVE SELECTION SCALING (gesture active), scale=(${scaleX.toFixed(2)}, ${scaleY.toFixed(2)})`
+            `[CURVE DEBUG] getCurveAnchorWorldPoint(${pointIndex}): ACTIVE SELECTION SCALING (gesture active), scale=(${scaleX.toFixed(2)}, ${scaleY.toFixed(2)}), original=(${currentPoint.x.toFixed(1)}, ${currentPoint.y.toFixed(1)}) -> scaled=(${scaledX.toFixed(1)}, ${scaledY.toFixed(1)})`
           );
           return new fabric.Point(scaledX, scaledY);
         }
@@ -534,11 +570,14 @@ export class FabricControls {
         const scaledX = center.x + (currentPoint.x - center.x) * curveScaleX;
         const scaledY = center.y + (currentPoint.y - center.y) * curveScaleY;
         curveDebug(
-          `[CURVE DEBUG] getCurveAnchorWorldPoint(${pointIndex}): CURVE DIRECT SCALING (gesture active)`
+          `[CURVE DEBUG] getCurveAnchorWorldPoint(${pointIndex}): CURVE DIRECT SCALING (gesture active), scale=(${curveScaleX.toFixed(2)}, ${curveScaleY.toFixed(2)}), original=(${currentPoint.x.toFixed(1)}, ${currentPoint.y.toFixed(1)}) -> scaled=(${scaledX.toFixed(1)}, ${scaledY.toFixed(1)})`
         );
         return new fabric.Point(scaledX, scaledY);
       }
 
+      curveDebug(
+        `[CURVE DEBUG] getCurveAnchorWorldPoint(${pointIndex}): returning customPoint (${currentPoint.x.toFixed(1)}, ${currentPoint.y.toFixed(1)})`
+      );
       return new fabric.Point(currentPoint.x, currentPoint.y);
     };
 
@@ -555,10 +594,36 @@ export class FabricControls {
           new fabric.Point(pointerWorld.x, pointerWorld.y),
           inverseDelta
         );
+        curveDebug(
+          `[CURVE DEBUG] resolvePointerWorldForCurve: TRANSFORM ACTIVE, pointer=(${pointerWorld.x.toFixed(1)}, ${pointerWorld.y.toFixed(1)}) -> canonical=(${canonical.x.toFixed(1)}, ${canonical.y.toFixed(1)})`
+        );
         return { x: canonical.x, y: canonical.y };
       }
 
+      curveDebug(
+        `[CURVE DEBUG] resolvePointerWorldForCurve: NO TRANSFORM, pointer=(${pointerWorld.x.toFixed(1)}, ${pointerWorld.y.toFixed(1)})`
+      );
       return pointerWorld;
+    };
+
+    const toLocalPoints = (pointsWorld, centerWorld) => {
+      const result = pointsWorld.map((p, i) => {
+        const local = {
+          x: p.x - centerWorld.x,
+          y: p.y - centerWorld.y,
+        };
+        curveDebug(
+          `[CURVE DEBUG] toLocalPoints[${i}]: world=(${p.x.toFixed(1)}, ${p.y.toFixed(1)}) - center=(${centerWorld.x.toFixed(1)}, ${centerWorld.y.toFixed(1)}) = local=(${local.x.toFixed(1)}, ${local.y.toFixed(1)})`
+        );
+        return local;
+      });
+      return result;
+    };
+
+    const canonicalizeCurveFromWorldPoints = (pathObj, baseCenterWorld) => {
+      curveDebug('[CURVE DEBUG] ---- canonicalizeCurveFromWorldPoints START ----');
+      FabricControls.canonicalizeCurveFromWorldPoints(pathObj, baseCenterWorld, pathObj.angle || 0);
+      curveDebug('[CURVE DEBUG] ---- canonicalizeCurveFromWorldPoints END ----');
     };
 
     // Create a control for each point
@@ -567,18 +632,50 @@ export class FabricControls {
         if (!fabricObject.canvas) return { x: 0, y: 0 };
 
         const worldPoint = getCurveAnchorWorldPoint(fabricObject, index);
-        return fabric.util.transformPoint(
+        const screenPoint = fabric.util.transformPoint(
           { x: worldPoint.x, y: worldPoint.y },
           fabricObject.canvas.viewportTransform
         );
+
+        // Only log occasionally to avoid spam (every 60 frames roughly)
+        if (!fabricObject.__posLogCounter) fabricObject.__posLogCounter = 0;
+        fabricObject.__posLogCounter++;
+        if (fabricObject.__posLogCounter % 60 === 1) {
+          curveDebug(
+            `[CURVE DEBUG] positionHandler[${index}]: worldPoint=(${worldPoint.x.toFixed(1)}, ${worldPoint.y.toFixed(1)}) -> screenPoint=(${screenPoint.x.toFixed(1)}, ${screenPoint.y.toFixed(1)})`
+          );
+        }
+
+        return screenPoint;
       };
+
+      // Track drag frame count for logging
+      let dragFrameCount = 0;
 
       const actionHandler = (eventData, transform, x, y) => {
         const pathObj = transform.target;
         const canvas = pathObj.canvas;
+        dragFrameCount++;
+
+        // Log every frame for the first 5 frames, then every 10th frame
+        const shouldLog = dragFrameCount <= 5 || dragFrameCount % 10 === 0;
+
+        if (shouldLog) {
+          curveDebug(`[CURVE DEBUG] ====== actionHandler[${index}] FRAME ${dragFrameCount} ======`);
+        }
+
+        // Resolve event object
         const event = eventData.e || eventData;
+
+        // Get pointer and check for Ctrl key
         const rawPointer = canvas.getPointer(event);
         const isCtrlHeld = event.ctrlKey;
+
+        if (shouldLog) {
+          curveDebug(
+            `[CURVE DEBUG] rawPointer: (${rawPointer.x.toFixed(1)}, ${rawPointer.y.toFixed(1)}), ctrlHeld: ${isCtrlHeld}`
+          );
+        }
 
         const snappedPointer = isCtrlHeld
           ? FabricControls.getSnapPoint(canvas, rawPointer, pathObj)
@@ -586,9 +683,27 @@ export class FabricControls {
 
         const pointer = resolvePointerWorldForCurve(pathObj, snappedPointer);
 
+        if (shouldLog) {
+          curveDebug(
+            `[CURVE DEBUG] Final pointer for point update: (${pointer.x.toFixed(1)}, ${pointer.y.toFixed(1)})`
+          );
+          curveDebug(
+            `[CURVE DEBUG] BEFORE update - point[${index}]: (${point.x.toFixed(1)}, ${point.y.toFixed(1)})`
+          );
+          curveDebug(
+            `[CURVE DEBUG] All customPoints BEFORE:`,
+            JSON.stringify(
+              pathObj.customPoints.map(p => ({ x: p.x.toFixed(1), y: p.y.toFixed(1) }))
+            )
+          );
+        }
+
+        // Set flag to suppress moving event listener
         pathObj.isEditingControlPoint = true;
 
-        if (!pathObj.__curveEditBaseCenterWorld) {
+        // Capture stable base center at drag start
+        const isFirstFrame = !pathObj.__curveEditBaseCenterWorld;
+        if (isFirstFrame) {
           // IMPORTANT: Calculate center from customPoints directly, not from getCenterPoint()
           // The visual center can drift from the actual anchor positions after transforms
           const minX = Math.min(...pathObj.customPoints.map(p => p.x));
@@ -599,8 +714,16 @@ export class FabricControls {
             x: (minX + maxX) / 2,
             y: (minY + maxY) / 2,
           };
+          curveDebug(
+            `[CURVE DEBUG] FIRST FRAME - Calculated __curveEditBaseCenterWorld from customPoints: (${pathObj.__curveEditBaseCenterWorld.x.toFixed(1)}, ${pathObj.__curveEditBaseCenterWorld.y.toFixed(1)})`
+          );
 
+          // CRITICAL: Clear the transform state that may have been captured by before:transform
+          // This prevents bakeCurveTransform from reverting our edits on mouse:up
           if (pathObj.__curveTransformActive) {
+            curveDebug(
+              '[CURVE DEBUG] FIRST FRAME - Clearing __curveTransformActive state (was set by before:transform)'
+            );
             delete pathObj.__curveTransformActive;
             delete pathObj.__curveOrigMatrix;
             delete pathObj.__curveOrigPoints;
@@ -609,15 +732,20 @@ export class FabricControls {
 
           if (!pathObj.__curveEditCleanup) {
             pathObj.__curveEditCleanup = () => {
+              curveDebug('[CURVE DEBUG] mouse:up cleanup - clearing __curveEditBaseCenterWorld');
               const cleanup = pathObj.__curveEditCleanup;
               canvas.off('mouse:up', cleanup);
               delete pathObj.__curveEditBaseCenterWorld;
               delete pathObj.__curveEditCleanup;
+              dragFrameCount = 0; // Reset for next drag
             };
             canvas.on('mouse:up', pathObj.__curveEditCleanup);
           }
         }
 
+        // Update the point
+        const oldX = point.x;
+        const oldY = point.y;
         // Update customPoints by index to handle array replacement by canonicalizeCurveFromWorldPoints
         if (pathObj.customPoints[index]) {
           pathObj.customPoints[index].x = pointer.x;
@@ -625,11 +753,14 @@ export class FabricControls {
         }
 
         const baseCenterWorld = pathObj.__curveEditBaseCenterWorld || pathObj.getCenterPoint();
-        FabricControls.canonicalizeCurveFromWorldPoints(
-          pathObj,
-          baseCenterWorld,
-          pathObj.angle || 0
-        );
+
+        if (shouldLog) {
+          curveDebug(
+            `[CURVE DEBUG] Using baseCenterWorld: (${baseCenterWorld.x.toFixed(1)}, ${baseCenterWorld.y.toFixed(1)})`
+          );
+        }
+
+        canonicalizeCurveFromWorldPoints(pathObj, baseCenterWorld);
         canvas.requestRenderAll();
 
         if (!pathObj.__curveTransformActive) {
@@ -638,9 +769,16 @@ export class FabricControls {
           delete pathObj.__curveBakedThisGesture;
         }
 
+        // Clear the flag after a brief moment
         setTimeout(() => {
           pathObj.isEditingControlPoint = false;
         }, 0);
+
+        if (shouldLog) {
+          curveDebug(
+            `[CURVE DEBUG] ====== actionHandler[${index}] FRAME ${dragFrameCount} END ======`
+          );
+        }
 
         return true;
       };
@@ -675,13 +813,26 @@ export class FabricControls {
       lockRotation: true,
     });
 
+    // We assume the group has 2 objects: line (index 0) and head (index 1)
+    // And that they were created in ArrowTool
+
     // Position handler for Start (Tail)
     const positionHandlerStart = (dim, finalMatrix, fabricObject) => {
       if (!fabricObject.canvas) return { x: 0, y: 0 };
+      // We need the coordinates of the line's start point relative to the group
+      // The line is centered in the group usually?
+      // Actually, in ArrowTool, we group them. The group's center is the center of the bounding box.
+      // The line's x1/y1 are relative to the group center if we use group.toLocalPoint?
+
+      // Let's use the line object inside the group
       const line = fabricObject.getObjects()[0];
       if (!line || line.type !== 'line') return { x: 0, y: 0 };
 
       const points = line.calcLinePoints();
+      // points are relative to line center.
+      // line center is relative to group center.
+
+      // Transform point from line local to group local
       const lineCenter = line.getCenterPoint();
       const x = points.x1 + lineCenter.x;
       const y = points.y1 + lineCenter.y;
@@ -702,13 +853,17 @@ export class FabricControls {
       const head = group.getObjects()[1];
       const canvas = group.canvas;
 
+      // Resolve event object
       const event = eventData.e || eventData;
+
+      // Get raw pointer and apply snap if Ctrl is held
       const rawPointer = canvas.getPointer(event);
       const isCtrlHeld = event.ctrlKey;
       const pointer = isCtrlHeld
         ? FabricControls.getSnapPoint(canvas, rawPointer, group)
         : rawPointer;
 
+      // Get absolute end point
       const matrix = group.calcTransformMatrix();
       const lineCenter = line.getCenterPoint();
       const points = line.calcLinePoints();
@@ -717,6 +872,7 @@ export class FabricControls {
 
       group._restoreObjectsState();
 
+      // Now line and head are absolute.
       line.set({ x1: pointer.x, y1: pointer.y, x2: endAbs.x, y2: endAbs.y });
       line._setWidthHeight();
 
@@ -760,7 +916,10 @@ export class FabricControls {
       const head = group.getObjects()[1];
       const canvas = group.canvas;
 
+      // Resolve event object
       const event = eventData.e || eventData;
+
+      // Get raw pointer and apply snap if Ctrl is held
       const rawPointer = canvas.getPointer(event);
       const isCtrlHeld = event.ctrlKey;
       const pointer = isCtrlHeld
@@ -769,11 +928,14 @@ export class FabricControls {
 
       group._restoreObjectsState();
 
+      // Get current absolute start
       const startAbs = { x: line.x1, y: line.y1 };
 
+      // Update Line
       line.set({ x2: pointer.x, y2: pointer.y });
       line._setWidthHeight();
 
+      // Update Head
       const dx = pointer.x - startAbs.x;
       const dy = pointer.y - startAbs.y;
       const angle = (Math.atan2(dy, dx) * 180) / Math.PI + 90;

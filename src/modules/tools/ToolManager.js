@@ -1,16 +1,27 @@
 // Tool Manager
-import { PencilTool } from './PencilTool.js';
-import { CurveTool } from './CurveTool.js';
 import { LineTool } from './LineTool.js';
-import { ArrowTool } from './ArrowTool.js';
-import { TextTool } from './TextTool.js';
-import { SelectTool } from './SelectTool.js';
+
+const TOOL_LOADERS = {
+  select: () => import('./SelectTool.js').then(module => module.SelectTool),
+  pencil: () => import('./PencilTool.js').then(module => module.PencilTool),
+  curve: () => import('./CurveTool.js').then(module => module.CurveTool),
+  line: () => Promise.resolve(LineTool),
+  arrow: () => import('./ArrowTool.js').then(module => module.ArrowTool),
+  privacy: () => import('./PrivacyEraserTool.js').then(module => module.PrivacyEraserTool),
+  text: () => import('./TextTool.js').then(module => module.TextTool),
+  shape: () => import('./ShapeTool.js').then(module => module.ShapeTool),
+  frame: () => import('./FrameTool.js').then(module => module.FrameTool),
+};
 
 export class ToolManager {
   constructor(canvasManager) {
     this.canvasManager = canvasManager;
     this.activeTool = null;
+    this.activeToolName = null;
+    this.previousToolName = null;
     this.tools = {};
+    this.toolPromises = {};
+    this.pendingToolName = null;
     this.currentSettings = {
       color: '#3b82f6', // Default to bright blue
       width: 2,
@@ -19,45 +30,82 @@ export class ToolManager {
 
   init() {
     console.log('ToolManager initialized');
+    this.tools = {};
+    this.toolPromises = {};
+    this.pendingToolName = null;
+    this.selectDefaultTool();
+  }
 
-    // Initialize tools
-    this.tools = {
-      select: new SelectTool(this.canvasManager),
-      pencil: new PencilTool(this.canvasManager),
-      curve: new CurveTool(this.canvasManager),
-      line: new LineTool(this.canvasManager),
-      arrow: new ArrowTool(this.canvasManager),
-      text: new TextTool(this.canvasManager),
-    };
-
-    // Select default tool (only if canvas is ready)
+  selectDefaultTool() {
     if (this.canvasManager.fabricCanvas) {
-      this.selectTool('line'); // Start in straight line mode (drawing by default)
+      void this.selectTool('line'); // Start in straight line mode (drawing by default)
     } else {
       console.warn('ToolManager: Canvas not ready, deferring tool selection');
       // Try again after a short delay
       setTimeout(() => {
         if (this.canvasManager.fabricCanvas) {
-          this.selectTool('line'); // Start in straight line mode
+          void this.selectTool('line'); // Start in straight line mode
         }
       }, 100);
     }
   }
 
-  selectTool(toolName) {
-    if (this.activeTool) {
+  async ensureTool(toolName) {
+    if (this.tools[toolName]) {
+      return this.tools[toolName];
+    }
+
+    const loader = TOOL_LOADERS[toolName];
+    if (!loader) {
+      console.warn(`Tool loader not found: ${toolName}`);
+      return null;
+    }
+
+    if (!this.toolPromises[toolName]) {
+      this.toolPromises[toolName] = loader()
+        .then(ToolClass => {
+          const tool = new ToolClass(this.canvasManager);
+          this.tools[toolName] = tool;
+          return tool;
+        })
+        .catch(error => {
+          console.error(`Failed to load tool: ${toolName}`, error);
+          return null;
+        })
+        .finally(() => {
+          delete this.toolPromises[toolName];
+        });
+    }
+
+    return this.toolPromises[toolName];
+  }
+
+  preloadTools(toolNames) {
+    toolNames.forEach(toolName => {
+      void this.ensureTool(toolName);
+    });
+  }
+
+  async selectTool(toolName) {
+    this.pendingToolName = toolName;
+
+    const tool = await this.ensureTool(toolName);
+    if (!tool || this.pendingToolName !== toolName) {
+      return;
+    }
+
+    if (this.activeTool && this.activeTool !== tool) {
       this.activeTool.deactivate();
     }
 
-    const tool = this.tools[toolName];
-    if (tool) {
-      this.activeTool = tool;
-      this.activeTool.activate();
-      // Apply current settings to new tool
-      this.updateSettings(this.currentSettings);
-      console.log(`Tool selected: ${toolName}`);
-    } else {
-      console.warn(`Tool not found: ${toolName}`);
+    this.activeTool = tool;
+    this.activeToolName = toolName;
+    this.activeTool.activate();
+    // Apply current settings to new tool
+    this.updateSettings(this.currentSettings);
+    console.log(`Tool selected: ${toolName}`);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('toolchange', { detail: { tool: toolName } }));
     }
   }
 

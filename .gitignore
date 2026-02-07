@@ -71,9 +71,11 @@ test-results/
 # Claude
 .claude/marketplace
 
-# Vendor libraries
-vendor/
+# Vendor libraries (root only — src/vendor/ is tracked)
+/vendor/
 
 # local agent state
 .claude/*.local.*
 .claude/settings.local.json
+.vercel
+.env*.local

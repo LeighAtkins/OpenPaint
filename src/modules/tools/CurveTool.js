@@ -368,7 +368,7 @@ export class CurveTool extends BaseTool {
     this.pointMarkers.forEach(marker => this.canvas.remove(marker));
     this.pointMarkers = [];
 
-    // Create final curve path - let Fabric handle positioning
+    // Create final curve path
     const pathString = PathUtils.createSmoothPath(this.points);
     const curve = new fabric.Path(pathString, {
       stroke: this.strokeColor,
@@ -380,14 +380,8 @@ export class CurveTool extends BaseTool {
       perPixelTargetFind: true, // Only select when clicking the actual line
     });
 
-    // Add to canvas
-    this.canvas.add(curve);
-    curve.setCoords();
-
-    // Store points on the object for editing (absolute canvas coordinates)
-    curve.customPoints = this.points.map(point => ({ x: point.x, y: point.y }));
-    curve.customPointsSpace = 'canvas';
-    PathUtils.updatePathFromAbsolutePoints(curve, curve.customPoints);
+    // Store points on the object for editing
+    curve.customPoints = this.points.map(p => ({ x: p.x, y: p.y }));
 
     // Initialize tracking for movement
     const curveCenter = curve.getCenterPoint();
@@ -395,13 +389,17 @@ export class CurveTool extends BaseTool {
 
     // Add listener to update customPoints when curve is moved
     curve.on('moving', () => {
+      console.log('[CURVE DEBUG] curve.on("moving") fired');
+
       // Skip if we're editing a control point - the control point handler updates customPoints directly
       if (curve.isEditingControlPoint) {
+        console.log('[CURVE DEBUG] curve.on("moving") - SKIPPING (isEditingControlPoint=true)');
         return;
       }
 
       // Skip if curve was just baked - customPoints are already world-space correct
       if (curve.__curveJustBaked) {
+        console.log('[CURVE DEBUG] curve.on("moving") - SKIPPING (__curveJustBaked=true)');
         // Update lastCenter to current to prevent stale delta on next move
         const center = curve.getCenterPoint();
         curve.__lastCenter = { x: center.x, y: center.y };
@@ -410,31 +408,55 @@ export class CurveTool extends BaseTool {
 
       // Skip if transform (scale/rotate/skew) is active - bakeCurveTransform handles it
       if (curve.__curveTransformActive) {
+        console.log('[CURVE DEBUG] curve.on("moving") - SKIPPING (__curveTransformActive=true)');
         return;
       }
 
       // Skip if inside activeSelection - CanvasManager handles multi-selection movement
       if (curve.group && curve.group.type === 'activeSelection') {
+        console.log('[CURVE DEBUG] curve.on("moving") - SKIPPING (inside activeSelection)');
         return;
       }
 
       const currentCenter = curve.getCenterPoint();
       const lastCenter = curve.__lastCenter || currentCenter;
+      console.log(
+        '[CURVE DEBUG]   center:',
+        currentCenter.x?.toFixed(1),
+        currentCenter.y?.toFixed(1),
+        'lastCenter:',
+        lastCenter.x?.toFixed(1),
+        lastCenter.y?.toFixed(1)
+      );
+
       const dx = currentCenter.x - lastCenter.x;
       const dy = currentCenter.y - lastCenter.y;
 
+      console.log('[CURVE DEBUG]   dx:', dx?.toFixed(1), 'dy:', dy?.toFixed(1));
+
       if (dx !== 0 || dy !== 0) {
+        console.log(
+          `[CURVE DEBUG] curve.on("moving") - APPLYING translation dx=${dx.toFixed(1)}, dy=${dy.toFixed(1)}`
+        );
+
+        // Update all custom points
         curve.customPoints.forEach(p => {
           p.x += dx;
           p.y += dy;
         });
 
+        // Update tracking
         curve.__lastCenter = currentCenter;
+      } else {
+        console.log('[CURVE DEBUG] curve.on("moving") - NO-OP (dx=0, dy=0)');
       }
     });
 
     // Add custom controls for point editing
     FabricControls.createCurveControls(curve);
+
+    // Add to canvas
+    this.canvas.add(curve);
 
     // Add arrowheads if enabled
     if (window.app && window.app.arrowManager) {

@@ -1,5 +1,5 @@
 # Ignore for Vercel deployment
-vendor/
+/vendor/
 dist/
 test-results/
 reference/

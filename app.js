@@ -50,7 +50,8 @@ console.log('[Cloudflare Images] Account Hash:', CF_ACCOUNT_HASH ? 'configured' 
 
 // Supabase configuration
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || '';
-const SUPABASE_SERVICE_KEY = process.env.VITE_SUPABASE_SERVICE_KEY || process.env.VITE_SUPABASE_ANON_KEY || '';
+const SUPABASE_SERVICE_KEY =
+  process.env.VITE_SUPABASE_SERVICE_KEY || process.env.VITE_SUPABASE_ANON_KEY || '';
 let supabaseClient = null;
 
 if (SUPABASE_URL && SUPABASE_SERVICE_KEY) {
@@ -708,64 +709,11 @@ app.post('/api/upload-project', upload.single('projectFile'), (req, res) => {
  * API endpoint for background removal - proxies to CF Worker
  */
 app.post('/api/remove-background', async (req, res) => {
-  try {
-    const base = process.env.CF_WORKER_URL || AI_WORKER_URL || '';
-    if (!base) {
-      return res.status(500).set('content-type', 'application/json; charset=utf-8').json({
-        ok: false,
-        error: 'missing-CF_WORKER_URL',
-        message: 'Set CF_WORKER_URL to your Worker base URL',
-      });
-    }
-    const url = `${base.replace(/\/$/, '')}/remove-background`;
-    const headers = { 'content-type': 'application/json' };
-    if (req.headers['x-api-key']) {
-      headers['x-api-key'] = String(req.headers['x-api-key']);
-    }
-
-    const bodyText = typeof req.body === 'string' ? req.body : JSON.stringify(req.body || {});
-    let upstream;
-    try {
-      upstream = await fetch(url, {
-        method: 'POST',
-        headers,
-        body: bodyText,
-      });
-    } catch (e) {
-      return res.status(502).set('content-type', 'application/json; charset=utf-8').json({
-        ok: false,
-        error: 'fetch-exception',
-        message: e.message,
-      });
-    }
-
-    const ct = upstream.headers.get('content-type') || 'application/octet-stream';
-    const buf = Buffer.from(await upstream.arrayBuffer());
-
-    // If upstream returned an error status and HTML, convert to JSON error
-    if (!upstream.ok && ct.includes('text/html')) {
-      return res
-        .status(upstream.status)
-        .set('content-type', 'application/json; charset=utf-8')
-        .json({
-          ok: false,
-          error: 'upstream-error',
-          message: `Worker returned ${upstream.status}: ${upstream.statusText}`,
-          workerUrl: url,
-        });
-    }
-
-    res.status(upstream.status).set('content-type', ct).send(buf);
-  } catch (err) {
-    res
-      .status(500)
-      .set('content-type', 'application/json; charset=utf-8')
-      .json({
-        ok: false,
-        error: 'proxy-exception',
-        message: String(err),
-      });
-  }
+  return res.status(410).set('content-type', 'application/json; charset=utf-8').json({
+    ok: false,
+    error: 'feature-removed',
+    message: 'Background removal service has been removed. Use the Privacy Erase tool instead.',
+  });
 });
 
 /**

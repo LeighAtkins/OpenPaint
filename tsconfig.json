@@ -2,15 +2,8 @@
   "compilerOptions": {
     // Target modern browsers
     "target": "ES2022",
-    "lib": [
-      "ES2022",
-      "DOM",
-      "DOM.Iterable",
-      "WebWorker"
-    ],
-    "types": [
-      "vite/client"
-    ],
+    "lib": ["ES2022", "DOM", "DOM.Iterable", "WebWorker"],
+    "types": ["vite/client"],
     "module": "ESNext",
     "moduleResolution": "node",
     "useDefineForClassFields": true,
@@ -20,6 +13,7 @@
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
+    "allowJs": true,
     // STRICT MODE - ALL THE WAY TO 11
     "strict": true,
     "noImplicitAny": true,
@@ -48,36 +42,16 @@
     // Path mapping
     "baseUrl": ".",
     "paths": {
-      "@/*": [
-        "src/*"
-      ],
-      "@/types": [
-        "src/types/index"
-      ],
-      "@/types/*": [
-        "src/types/*"
-      ],
-      "@/services": [
-        "src/services/index"
-      ],
-      "@/services/*": [
-        "src/services/*"
-      ],
-      "@/utils": [
-        "src/utils/index"
-      ],
-      "@/utils/*": [
-        "src/utils/*"
-      ],
-      "@/stores/*": [
-        "src/stores/*"
-      ],
-      "@/constants": [
-        "src/constants/index"
-      ],
-      "@/hooks/*": [
-        "src/hooks/*"
-      ]
+      "@/*": ["src/*"],
+      "@/types": ["src/types/index"],
+      "@/types/*": ["src/types/*"],
+      "@/services": ["src/services/index"],
+      "@/services/*": ["src/services/*"],
+      "@/utils": ["src/utils/index"],
+      "@/utils/*": ["src/utils/*"],
+      "@/stores/*": ["src/stores/*"],
+      "@/constants": ["src/constants/index"],
+      "@/hooks/*": ["src/hooks/*"]
     },
     // Plugins
     "plugins": [
@@ -86,17 +60,8 @@
       }
     ]
   },
-  "include": [
-    "src/**/*.ts",
-    "src/**/*.tsx",
-    "src/**/*.d.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "**/*.spec.ts",
-    "**/*.test.ts"
-  ],
+  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.d.ts"],
+  "exclude": ["node_modules", "dist", "**/*.spec.ts", "**/*.test.ts"],
   "references": [
     {
       "path": "./tsconfig.node.json"

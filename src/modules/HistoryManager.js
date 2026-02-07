@@ -43,21 +43,25 @@ export class HistoryManager {
     // Listen for object modifications to auto-save state
     const canvas = this.canvasManager.fabricCanvas;
     if (canvas) {
+      // Debounce saveState to prevent multiple rapid saves
+      let saveTimeout = null;
       const shouldTrackTarget = target =>
         !target?.excludeFromExport && !target?.isTag && !target?.isConnectorLine;
 
-      canvas.on('object:modified', e => {
-        if (!shouldTrackTarget(e?.target)) return;
-        this.saveState();
-      });
-      canvas.on('object:added', e => {
-        if (!shouldTrackTarget(e?.target)) return;
-        this.saveState();
-      });
-      canvas.on('object:removed', e => {
-        if (!shouldTrackTarget(e?.target)) return;
-        this.saveState();
-      });
+      const debouncedSave = e => {
+        if (saveTimeout) clearTimeout(saveTimeout);
+        saveTimeout = setTimeout(() => {
+          const target = e?.target;
+          if (!shouldTrackTarget(target)) {
+            return;
+          }
+          this.saveState();
+        }, 100);
+      };
+
+      canvas.on('object:modified', debouncedSave);
+      canvas.on('object:added', debouncedSave);
+      canvas.on('object:removed', debouncedSave);
 
       // Save initial state
       setTimeout(() => {
@@ -65,6 +69,7 @@ export class HistoryManager {
       }, 100);
     }
 
+    // Setup keyboard shortcuts
     this.setupKeyboardShortcuts();
   }
 
@@ -180,88 +185,137 @@ export class HistoryManager {
   }
 
   undo() {
-    if (this.undoStack.length <= 1) return; // Need at least one state to stay on
+    if (this.undoStack.length <= 1) {
+      console.log('[History] Cannot undo - at oldest state');
+      return;
+    }
 
+    console.log('[History] Undo triggered');
     this.locked = true;
 
-    // Pop current state and push to redo
-    const currentState = this.undoStack.pop();
-    this.redoStack.push(currentState);
+    try {
+      // Pop current state and push to redo
+      const currentState = this.undoStack.pop();
+      this.redoStack.push(currentState);
 
-    // Get previous state
-    const prevStateStr = this.undoStack[this.undoStack.length - 1];
-    const prevState = JSON.parse(prevStateStr);
-    if (prevState?.canvas) {
-      prevState.canvas = this.sanitizeCanvasJSON(prevState.canvas);
-    }
-    this.lastStateSignature = prevState?.signature || this.buildStateSignature(prevState?.canvas);
-
-    // Restore canvas
-    this.canvasManager.loadFromJSON(prevState.canvas, () => {
-      // Restore metadata if available
-      if (prevState.metadata && window.app?.metadataManager) {
-        window.app.metadataManager.vectorStrokesByImage =
-          prevState.metadata.vectorStrokesByImage || {};
-        window.app.metadataManager.strokeVisibilityByImage =
-          prevState.metadata.strokeVisibilityByImage || {};
-        window.app.metadataManager.strokeLabelVisibility =
-          prevState.metadata.strokeLabelVisibility || {};
-        window.app.metadataManager.strokeMeasurements = prevState.metadata.strokeMeasurements || {};
-        window.app.metadataManager.customLabelPositions =
-          prevState.metadata.customLabelPositions || {};
-        window.app.metadataManager.calculatedLabelOffsets =
-          prevState.metadata.calculatedLabelOffsets || {};
+      // Get previous state
+      const prevStateStr = this.undoStack[this.undoStack.length - 1];
+      const prevState = JSON.parse(prevStateStr);
+      if (prevState?.canvas) {
+        prevState.canvas = this.sanitizeCanvasJSON(prevState.canvas);
       }
+      this.lastStateSignature = prevState?.signature || this.buildStateSignature(prevState?.canvas);
 
-      if (this.canvasManager?.fabricCanvas && window.app?.arrowManager) {
-        const objects = this.canvasManager.fabricCanvas.getObjects() || [];
-        objects.forEach(obj => {
-          if (!obj) return;
-          if (!obj.arrowSettings && obj.strokeMetadata?.arrowSettings) {
-            obj.arrowSettings = obj.strokeMetadata.arrowSettings;
+      // Restore canvas
+      this.canvasManager.loadFromJSON(prevState.canvas, () => {
+        try {
+          // Restore metadata if available
+          if (prevState.metadata && window.app?.metadataManager) {
+            window.app.metadataManager.vectorStrokesByImage =
+              prevState.metadata.vectorStrokesByImage || {};
+            window.app.metadataManager.strokeVisibilityByImage =
+              prevState.metadata.strokeVisibilityByImage || {};
+            window.app.metadataManager.strokeLabelVisibility =
+              prevState.metadata.strokeLabelVisibility || {};
+            window.app.metadataManager.strokeMeasurements =
+              prevState.metadata.strokeMeasurements || {};
+            window.app.metadataManager.customLabelPositions =
+              prevState.metadata.customLabelPositions || {};
+            window.app.metadataManager.calculatedLabelOffsets =
+              prevState.metadata.calculatedLabelOffsets || {};
           }
-          if (obj.arrowSettings) {
-            window.app.arrowManager.attachArrowRendering(obj);
-            obj.dirty = true;
-          }
-        });
 
-        this.canvasManager.fabricCanvas.requestRenderAll();
-      }
+          // Rebuild metadata and recreate tags
+          this.restoreAfterHistoryChange();
 
+          console.log('[History] Undo completed successfully');
+        } catch (err) {
+          console.error('[History] Error during undo restoration:', err);
+        } finally {
+          this.locked = false;
+          this.updateUI();
+        }
+      });
+    } catch (err) {
+      console.error('[History] Error during undo:', err);
       this.locked = false;
       this.updateUI();
-    });
+    }
   }
 
   redo() {
-    if (this.redoStack.length === 0) return;
+    if (this.redoStack.length === 0) {
+      console.log('[History] Cannot redo - no future states');
+      return;
+    }
 
+    console.log('[History] Redo triggered');
     this.locked = true;
 
-    const nextStateStr = this.redoStack.pop();
-    this.undoStack.push(nextStateStr);
-    const nextState = JSON.parse(nextStateStr);
-    if (nextState?.canvas) {
-      nextState.canvas = this.sanitizeCanvasJSON(nextState.canvas);
-    }
-    this.lastStateSignature = nextState?.signature || this.buildStateSignature(nextState?.canvas);
+    try {
+      const nextStateStr = this.redoStack.pop();
+      this.undoStack.push(nextStateStr);
+      const nextState = JSON.parse(nextStateStr);
+      if (nextState?.canvas) {
+        nextState.canvas = this.sanitizeCanvasJSON(nextState.canvas);
+      }
+      this.lastStateSignature = nextState?.signature || this.buildStateSignature(nextState?.canvas);
 
-    // Restore canvas
-    this.canvasManager.loadFromJSON(nextState.canvas, () => {
-      // Restore metadata if available
-      if (nextState.metadata && window.app?.metadataManager) {
-        window.app.metadataManager.vectorStrokesByImage =
-          nextState.metadata.vectorStrokesByImage || {};
-        window.app.metadataManager.strokeVisibilityByImage =
-          nextState.metadata.strokeVisibilityByImage || {};
-        window.app.metadataManager.strokeLabelVisibility =
-          nextState.metadata.strokeLabelVisibility || {};
-        window.app.metadataManager.strokeMeasurements = nextState.metadata.strokeMeasurements || {};
-        window.app.metadataManager.customLabelPositions =
-          nextState.metadata.customLabelPositions || {};
-        window.app.metadataManager.calculatedLabelOffsets =
-          nextState.metadata.calculatedLabelOffsets || {};
+      // Restore canvas
+      this.canvasManager.loadFromJSON(nextState.canvas, () => {
+        try {
+          // Restore metadata if available
+          if (nextState.metadata && window.app?.metadataManager) {
+            window.app.metadataManager.vectorStrokesByImage =
+              nextState.metadata.vectorStrokesByImage || {};
+            window.app.metadataManager.strokeVisibilityByImage =
+              nextState.metadata.strokeVisibilityByImage || {};
+            window.app.metadataManager.strokeLabelVisibility =
+              nextState.metadata.strokeLabelVisibility || {};
+            window.app.metadataManager.strokeMeasurements =
+              nextState.metadata.strokeMeasurements || {};
+            window.app.metadataManager.customLabelPositions =
+              nextState.metadata.customLabelPositions || {};
+            window.app.metadataManager.calculatedLabelOffsets =
+              nextState.metadata.calculatedLabelOffsets || {};
+          }
+
+          // Rebuild metadata and recreate tags
+          this.restoreAfterHistoryChange();
+
+          console.log('[History] Redo completed successfully');
+        } catch (err) {
+          console.error('[History] Error during redo restoration:', err);
+        } finally {
+          this.locked = false;
+          this.updateUI();
+        }
+      });
+    } catch (err) {
+      console.error('[History] Error during redo:', err);
+      this.locked = false;
+      this.updateUI();
+    }
+  }
+
+  restoreAfterHistoryChange() {
+    const currentViewId = window.app?.projectManager?.currentViewId || 'front';
+    console.log('[History] Restoring state for view:', currentViewId);
+
+    try {
+      // Rebuild metadata from canvas objects to ensure live references
+      if (window.app?.metadataManager && this.canvasManager.fabricCanvas) {
+        console.log('[History] Rebuilding metadata from canvas');
+        window.app.metadataManager.rebuildMetadataFromCanvas(
+          currentViewId,
+          this.canvasManager.fabricCanvas
+        );
+      }
+
+      // Recreate tags for all strokes
+      if (window.app?.tagManager) {
+        console.log('[History] Recreating tags');
+        window.app.tagManager.recreateTagsForImage(currentViewId);
       }
 
       if (this.canvasManager?.fabricCanvas && window.app?.arrowManager) {
@@ -280,9 +334,22 @@ export class HistoryManager {
         this.canvasManager.fabricCanvas.requestRenderAll();
       }
 
-      this.locked = false;
-      this.updateUI();
-    });
+      // Update stroke visibility controls
+      if (window.app?.metadataManager?.updateStrokeVisibilityControls) {
+        console.log('[History] Updating stroke visibility controls');
+        window.app.metadataManager.updateStrokeVisibilityControls();
+      }
+
+      // Update next tag display
+      setTimeout(() => {
+        if (window.updateNextTagDisplay) {
+          console.log('[History] Updating next tag display');
+          window.updateNextTagDisplay();
+        }
+      }, 50);
+    } catch (err) {
+      console.error('[History] Error in restoreAfterHistoryChange:', err);
+    }
   }
 
   clear() {
