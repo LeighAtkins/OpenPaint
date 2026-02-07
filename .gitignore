@@ -73,3 +73,7 @@ test-results/
 
 # Vendor libraries
 vendor/
+
+# local agent state
+.claude/*.local.*
+.claude/settings.local.json
