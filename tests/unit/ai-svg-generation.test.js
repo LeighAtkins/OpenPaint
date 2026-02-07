@@ -159,7 +159,7 @@ describe('AI SVG Generation', () => {
         {
           id: 'A1',
           type: 'freehand',
-          points: Array.from({ length: 100 }, (_, i) => ({ x: i, y: i })),
+          points: Array.from({ length: 100 }, (_, i) => ({ x: i * 0.5, y: i * 0.5 })),
           color: '#000000',
           width: 2,
         },

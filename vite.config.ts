@@ -76,15 +76,6 @@ export default defineConfig(({ mode }) => {
       port: 4173,
     },
 
-    test: {
-      globals: true,
-      environment: 'jsdom',
-      setupFiles: ['./src/__tests__/setup.ts'],
-      coverage: {
-        provider: 'v8',
-        reporter: ['text', 'json', 'html'],
-        exclude: ['node_modules/', 'src/__tests__/', '**/*.d.ts', '**/*.test.ts', '**/*.spec.ts'],
-      },
-    },
+    // Test config lives in vitest.config.ts (merged via mergeConfig)
   };
 });

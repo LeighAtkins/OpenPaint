@@ -3,6 +3,8 @@
  * Tests for image-space to canvas-space coordinate transformations
  */
 
+import { validateImageSpacePoint } from '../../src/modules/ai/coordinate-validator.js';
+
 describe('Coordinate Transformations', () => {
   let mockImageLabel, mockDimensions, mockScale, mockPosition;
 
@@ -126,8 +128,6 @@ describe('Coordinate Transformations', () => {
 
 describe('Coordinate Validation Utilities', () => {
   test('validateImageSpacePoint accepts valid points', () => {
-    const { validateImageSpacePoint } = require('../../src/modules/ai/coordinate-validator.js');
-
     const point = { x: 100, y: 100 };
     const dims = { width: 800, height: 600 };
 
@@ -136,8 +136,6 @@ describe('Coordinate Validation Utilities', () => {
   });
 
   test('validateImageSpacePoint rejects out-of-bounds points', () => {
-    const { validateImageSpacePoint } = require('../../src/modules/ai/coordinate-validator.js');
-
     const point = { x: 1000, y: 100 };
     const dims = { width: 800, height: 600 };
 
@@ -146,8 +144,6 @@ describe('Coordinate Validation Utilities', () => {
   });
 
   test('validateImageSpacePoint rejects invalid point structures', () => {
-    const { validateImageSpacePoint } = require('../../src/modules/ai/coordinate-validator.js');
-
     const dims = { width: 800, height: 600 };
 
     expect(validateImageSpacePoint(null, dims)).toBe(false);

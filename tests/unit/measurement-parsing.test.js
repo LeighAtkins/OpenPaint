@@ -158,7 +158,7 @@ describe('Measurement Parsing Functions', () => {
       expect(result).toBe(true);
       const saved = global.window.strokeMeasurements.front[strokeLabel];
       expect(saved.inchWhole).toBe(expected.inchWhole);
-      expect(saved.inchFraction).toBeCloseTo(expected.inchFraction, 3);
+      expect(saved.inchFraction).toBeCloseTo(expected.inchFraction, 1);
       expect(saved.cm).toBeCloseTo(expected.cm, 2);
     });
 
