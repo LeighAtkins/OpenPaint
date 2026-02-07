@@ -636,6 +636,7 @@ export class TagManager {
         connectedTag: tagObj,
         connectedStroke: strokeObj,
         strokeLabel: strokeLabel,
+        imageLabel: tagObj.imageLabel || strokeObj?.strokeMetadata?.imageLabel || null,
       }
     );
 
@@ -744,6 +745,7 @@ export class TagManager {
         connectedTag: tagObj,
         connectedStroke: connectedStrokeObj,
         strokeLabel: displayLabel,
+        imageLabel: tagObj.imageLabel || connectedStrokeObj?.strokeMetadata?.imageLabel || null,
       });
 
       canvas.add(connector);
