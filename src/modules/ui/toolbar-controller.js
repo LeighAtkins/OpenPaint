@@ -112,7 +112,9 @@ export function initToolbarController() {
         const state = window.paintApp?.state || {};
         const shape = state.labelShape || 'square';
         // Note: shapeSquareBtn and shapeCircleBtn were removed, using single toggle button instead
-      } catch {}
+      } catch {
+        /* optional UI sync */
+      }
     };
     syncFromState();
 
@@ -144,7 +146,9 @@ export function initToolbarController() {
           window.redrawCanvasWithVisibility?.();
         }
         syncFromState();
-      } catch {}
+      } catch {
+        /* optional UI sync */
+      }
     });
     arrowEndBtn.addEventListener('click', () => {
       try {
@@ -174,7 +178,9 @@ export function initToolbarController() {
           window.redrawCanvasWithVisibility?.();
         }
         syncFromState();
-      } catch {}
+      } catch {
+        /* optional UI sync */
+      }
     });
     dottedBtn.addEventListener('click', () => {
       try {
@@ -219,7 +225,9 @@ export function initToolbarController() {
         }
         setLineStyleIcon(ds.style);
         syncFromState();
-      } catch {}
+      } catch {
+        /* optional UI sync */
+      }
     });
 
     // Undo / Redo buttons
@@ -369,7 +377,9 @@ export function initToolbarController() {
         updateTimer = setTimeout(() => {
           try {
             window.updateSharedProject();
-          } catch {}
+          } catch {
+            /* optional UI sync */
+          }
         }, 600);
         return result;
       };

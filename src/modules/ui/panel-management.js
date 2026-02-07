@@ -128,10 +128,6 @@
     const toolbarWrap = document.querySelector('.toolbar-wrap');
     if (!toolbarWrap) return;
 
-    function isMobileDevice() {
-      return window.innerWidth <= 768;
-    }
-
     // Track if we've shown the initial glow (only once per page load)
     let hasShownInitialGlow = false;
     let wasScrollable = false;
@@ -530,10 +526,6 @@
   }
 
   // Mobile panel toggle icons functionality
-  function isMobileDevice() {
-    return window.innerWidth <= 768;
-  }
-
   function initializePanelToggleIcons() {
     const strokePanel = document.getElementById('strokePanel');
     const imagePanel = document.getElementById('imagePanel');
