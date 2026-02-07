@@ -1,18 +1,38 @@
 // Project Manager
 // Handles views (images) and their associated canvas states
 
+import { imageRegistry } from './ImageRegistry.js';
+
 export class ProjectManager {
   constructor(canvasManager, historyManager) {
     this.canvasManager = canvasManager;
     this.historyManager = historyManager;
+    this.isLoadingProject = false;
+    this.suspendSave = false;
+    this.isSwitchingView = false;
+    this.pendingSwitchViewId = null;
 
     // Project Data
     this.currentViewId = 'front';
     this.views = {
-      front: { id: 'front', image: null, canvasData: null, metadata: null, rotation: 0 },
-      side: { id: 'side', image: null, canvasData: null, metadata: null, rotation: 0 },
-      back: { id: 'back', image: null, canvasData: null, metadata: null, rotation: 0 },
-      cushion: { id: 'cushion', image: null, canvasData: null, metadata: null, rotation: 0 },
+      front: {
+        id: 'front',
+        image: null,
+        canvasData: null,
+        metadata: null,
+        rotation: 0,
+        tabs: null,
+      },
+      side: { id: 'side', image: null, canvasData: null, metadata: null, rotation: 0, tabs: null },
+      back: { id: 'back', image: null, canvasData: null, metadata: null, rotation: 0, tabs: null },
+      cushion: {
+        id: 'cushion',
+        image: null,
+        canvasData: null,
+        metadata: null,
+        rotation: 0,
+        tabs: null,
+      },
     };
   }
 
@@ -24,8 +44,14 @@ export class ProjectManager {
 
   // Switch to a different view (image)
   async switchView(viewId, force = false) {
+    if (this.isSwitchingView) {
+      this.pendingSwitchViewId = viewId;
+      return;
+    }
+    this.isSwitchingView = true;
     if (!this.views[viewId]) {
       console.warn(`View ${viewId} does not exist.`);
+      this.isSwitchingView = false;
       return;
     }
 
@@ -43,13 +69,55 @@ export class ProjectManager {
         this.canvasManager.setRotationDegrees(view.rotation);
         this.updateThumbnailRotation(viewId, view.rotation);
       }
+
+      // Update global currentImageLabel and next tag display
+      window.currentImageLabel =
+        (typeof window.getCaptureTabScopedLabel === 'function' &&
+          window.getCaptureTabScopedLabel(viewId)) ||
+        viewId;
+      if (window.updateNextTagDisplay) {
+        window.updateNextTagDisplay();
+      }
+
+      if (window.ensureCaptureTabsForLabel) {
+        window.ensureCaptureTabsForLabel(viewId);
+      }
+      if (window.applyCaptureFrameForLabel) {
+        window.applyCaptureFrameForLabel(viewId);
+      }
+      if (window.renderCaptureTabUI) {
+        window.renderCaptureTabUI(viewId);
+      }
+
+      this.isSwitchingView = false;
+      if (this.pendingSwitchViewId) {
+        const nextView = this.pendingSwitchViewId;
+        this.pendingSwitchViewId = null;
+        this.switchView(nextView, true);
+      }
       return;
     }
 
     console.log(`Switching to view: ${viewId}`);
 
-    // 1. Save current state
-    this.saveCurrentViewState();
+    // Capture current viewport state to maintain continuity across image switches
+    // This prevents "shifting the frame" when scrolling through images
+    const currentViewportState = this.canvasManager.getViewportState();
+
+    // 1. Save current state (skip during project load to avoid clobbering loaded data)
+    if (
+      !this.isLoadingProject &&
+      !this.suspendSave &&
+      !window.__isLoadingProject &&
+      !window.__suspendSaveCurrentView
+    ) {
+      if (window.captureTabsSyncActive) {
+        window.captureTabsSyncActive(this.currentViewId);
+      }
+      this.saveCurrentViewState();
+    } else {
+      console.log('[Load] Skipping saveCurrentViewState during project load');
+    }
 
     // 2. Clear history for the new view (or we could maintain separate history stacks per view)
     this.historyManager.clear();
@@ -57,6 +125,17 @@ export class ProjectManager {
     // 3. Switch context
     this.currentViewId = viewId;
     const view = this.views[viewId];
+
+    // Update global currentImageLabel for tag prediction system
+    window.currentImageLabel =
+      (typeof window.getCaptureTabScopedLabel === 'function' &&
+        window.getCaptureTabScopedLabel(viewId)) ||
+      viewId;
+
+    // Update next tag display to start from A1 (or A) for the new image
+    if (window.updateNextTagDisplay) {
+      window.updateNextTagDisplay();
+    }
 
     // Apply rotation for the new view
     if (typeof view.rotation === 'number') {
@@ -67,6 +146,16 @@ export class ProjectManager {
     // 4. Clear canvas
     this.canvasManager.clear();
 
+    if (window.ensureCaptureTabsForLabel) {
+      window.ensureCaptureTabsForLabel(viewId);
+    }
+    if (window.applyCaptureFrameForLabel) {
+      window.applyCaptureFrameForLabel(viewId);
+    }
+    if (window.renderCaptureTabUI) {
+      window.renderCaptureTabUI(viewId);
+    }
+
     // 5. Load background image if exists
     if (view.image) {
       await this.setBackgroundImage(view.image);
@@ -74,45 +163,147 @@ export class ProjectManager {
 
     // 6. Restore canvas objects (strokes/text)
     if (view.canvasData) {
-      // Sanitize canvas data before loading
-      const sanitizedData = this.sanitizeCanvasJSON(view.canvasData);
+      // Sanitize canvas data and fix image URLs before loading
+      let sanitizedData = this.sanitizeCanvasJSON(view.canvasData);
 
-      this.canvasManager.loadFromJSON(sanitizedData, () => {
-        // Restore metadata for this view
-        if (view.metadata && window.app?.metadataManager) {
-          window.app.metadataManager.vectorStrokesByImage[viewId] =
-            view.metadata.vectorStrokesByImage || {};
-          window.app.metadataManager.strokeVisibilityByImage[viewId] =
-            view.metadata.strokeVisibilityByImage || {};
-          window.app.metadataManager.strokeLabelVisibility[viewId] =
-            view.metadata.strokeLabelVisibility || {};
+      // Filter out objects that belong to a different view (prevents cross-view stroke bleed)
+      if (sanitizedData?.objects && Array.isArray(sanitizedData.objects)) {
+        sanitizedData.objects = sanitizedData.objects
+          .map(obj => {
+            if (!obj || typeof obj !== 'object') return obj;
+            if (obj.strokeMetadata) {
+              if (!obj.strokeMetadata.imageLabel) {
+                obj.strokeMetadata.imageLabel = viewId;
+              } else if (
+                obj.strokeMetadata.imageLabel !== viewId &&
+                !obj.strokeMetadata.imageLabel.startsWith(`${viewId}::tab:`)
+              ) {
+                return null;
+              }
+            }
+            return obj;
+          })
+          .filter(Boolean);
+      }
 
-          // Deserialize measurements with validation
-          this.deserializeMeasurements(viewId, view.metadata.strokeMeasurements || {});
-        }
+      // If we have a saved image data URL, replace the blob URL in backgroundImage
+      if (sanitizedData.backgroundImage && view.image) {
+        sanitizedData.backgroundImage.src = view.image;
+        console.log(`[Load] Replaced background image URL for ${viewId}`);
+      }
 
-        // After loading, update history initial state
-        this.historyManager.saveState();
+      await new Promise(resolve => {
+        this.canvasManager.loadFromJSON(sanitizedData, async () => {
+          // Restore metadata for this view
+          if (view.metadata && window.app?.metadataManager) {
+            const scopedVectors = view.metadata.vectorStrokesByImage || {};
+            const scopedVisibility = view.metadata.strokeVisibilityByImage || {};
+            const scopedLabelVisibility = view.metadata.strokeLabelVisibility || {};
 
-        // Rebuild metadata from canvas objects to ensure live references
-        if (window.app?.metadataManager) {
-          window.app.metadataManager.rebuildMetadataFromCanvas(
-            viewId,
-            this.canvasManager.fabricCanvas
-          );
-        }
+            Object.entries(scopedVectors).forEach(([key, value]) => {
+              window.app.metadataManager.vectorStrokesByImage[key] = value || {};
+            });
+            Object.entries(scopedVisibility).forEach(([key, value]) => {
+              window.app.metadataManager.strokeVisibilityByImage[key] = value || {};
+            });
+            Object.entries(scopedLabelVisibility).forEach(([key, value]) => {
+              window.app.metadataManager.strokeLabelVisibility[key] = value || {};
+            });
 
-        // Recreate tags after metadata is rebuilt (tags are not serialized)
-        if (window.app?.tagManager) {
-          window.app.tagManager.recreateTagsForImage(viewId);
-        }
+            // Deserialize measurements with validation
+            this.deserializeMeasurements(viewId, view.metadata.strokeMeasurements || {});
+          }
+
+          // After loading, update history initial state
+          this.historyManager.saveState();
+
+          // Rebuild metadata from canvas objects to ensure live references
+          if (window.app?.metadataManager) {
+            window.app.metadataManager.rebuildMetadataFromCanvas(
+              viewId,
+              this.canvasManager.fabricCanvas
+            );
+          }
+
+          // Recreate custom controls for lines and curves
+          const FabricControls =
+            window.FabricControls || (await import('./utils/FabricControls.js')).FabricControls;
+
+          const objects = this.canvasManager.fabricCanvas.getObjects();
+          objects.forEach(obj => {
+            if (obj.type === 'line' && obj.strokeMetadata) {
+              FabricControls.createLineControls(obj);
+            } else if (obj.type === 'path' && obj.customPoints) {
+              FabricControls.createCurveControls(obj);
+            } else if (
+              (obj.type === 'i-text' || obj.type === 'text') &&
+              obj.strokeMetadata?.type === 'text'
+            ) {
+              // Reattach event handlers for text elements loaded from JSON
+              obj.on('editing:exited', () => {
+                if (window.app?.historyManager) {
+                  window.app.historyManager.saveState();
+                }
+              });
+              console.log(
+                `[Load] Reattached event handlers for text element: "${obj.text?.substring(0, 30) || 'empty'}"`
+              );
+            }
+          });
+
+          // Recreate tags for all strokes with visible labels
+          if (window.app?.tagManager && window.app?.metadataManager) {
+            // Clear all tags to avoid collisions between views (e.g., multiple A1 labels)
+            if (typeof window.app.tagManager.clearAllTags === 'function') {
+              window.app.tagManager.clearAllTags();
+            }
+            const activeScope = window.app.metadataManager.normalizeImageLabel?.(viewId) || viewId;
+            const strokes = window.app.metadataManager.vectorStrokesByImage[activeScope] || {};
+            const labelVisibility =
+              window.app.metadataManager.strokeLabelVisibility[activeScope] || {};
+
+            console.log(`[Load] Recreating tags for ${Object.keys(strokes).length} strokes`);
+
+            Object.entries(strokes).forEach(([strokeLabel, strokeObj]) => {
+              const isLabelVisible = labelVisibility[strokeLabel] !== false;
+              if (isLabelVisible) {
+                window.app.tagManager.createTag(strokeLabel, activeScope, strokeObj);
+              }
+            });
+          }
+
+          // Ensure background image is re-applied after JSON load (JSON can clear it)
+          if (view.image) {
+            const canvas = this.canvasManager?.fabricCanvas;
+            const currentBgSrc = canvas?.backgroundImage?.src;
+            if (!currentBgSrc || currentBgSrc !== view.image) {
+              console.log('[Load] Reapplying background image after JSON load:', viewId);
+              await this.setBackgroundImage(view.image);
+            }
+          }
+
+          // Restore viewport state to maintain continuity
+          this.canvasManager.setViewportState(currentViewportState);
+          resolve();
+        });
       });
     } else {
       // Clear metadata for this view if no saved data
       if (window.app?.metadataManager) {
         window.app.metadataManager.clearImageMetadata(viewId);
       }
+
+      // Restore viewport state to maintain continuity
+      this.canvasManager.setViewportState(currentViewportState);
+
       this.historyManager.saveState();
+    }
+
+    this.isSwitchingView = false;
+    if (this.pendingSwitchViewId) {
+      const nextView = this.pendingSwitchViewId;
+      this.pendingSwitchViewId = null;
+      this.switchView(nextView, true);
     }
   }
 
@@ -135,32 +326,34 @@ export class ProjectManager {
   }
 
   saveCurrentViewState() {
-    const customProps = this.getCanvasCustomProps();
-    const json =
-      this.canvasManager?.fabricCanvas?.toJSON && customProps
-        ? this.canvasManager.fabricCanvas.toJSON(customProps)
-        : this.canvasManager.toJSON();
+    const json = this.canvasManager.toJSON();
     if (this.views[this.currentViewId]) {
       this.views[this.currentViewId].canvasData = json;
       this.views[this.currentViewId].rotation = this.canvasManager.getRotationDegrees();
+      if (window.captureTabsByLabel?.[this.currentViewId]) {
+        try {
+          this.views[this.currentViewId].tabs = JSON.parse(
+            JSON.stringify(window.captureTabsByLabel[this.currentViewId])
+          );
+        } catch (err) {
+          console.warn('[Save] Failed to clone capture tabs for view:', err);
+        }
+      }
 
       // Also save metadata for this view
       if (window.app?.metadataManager) {
         this.views[this.currentViewId].metadata = {
-          vectorStrokesByImage: JSON.parse(
-            JSON.stringify(
-              window.app.metadataManager.vectorStrokesByImage[this.currentViewId] || {}
-            )
+          vectorStrokesByImage: this.collectScopedMetadataBuckets(
+            window.app.metadataManager.vectorStrokesByImage,
+            this.currentViewId
           ),
-          strokeVisibilityByImage: JSON.parse(
-            JSON.stringify(
-              window.app.metadataManager.strokeVisibilityByImage[this.currentViewId] || {}
-            )
+          strokeVisibilityByImage: this.collectScopedMetadataBuckets(
+            window.app.metadataManager.strokeVisibilityByImage,
+            this.currentViewId
           ),
-          strokeLabelVisibility: JSON.parse(
-            JSON.stringify(
-              window.app.metadataManager.strokeLabelVisibility[this.currentViewId] || {}
-            )
+          strokeLabelVisibility: this.collectScopedMetadataBuckets(
+            window.app.metadataManager.strokeLabelVisibility,
+            this.currentViewId
           ),
           strokeMeasurements: this.serializeMeasurements(this.currentViewId),
         };
@@ -168,53 +361,14 @@ export class ProjectManager {
     }
   }
 
-  getCanvasCustomProps() {
-    return [
-      'strokeMetadata',
-      'arrowSettings',
-      'isTag',
-      'isTagText',
-      'labelVisible',
-      'visible',
-      'connectedTo',
-      'tagLabel',
-      'isConnectorLine',
-    ];
-  }
-
-  sanitizeCanvasJSON(canvasData) {
-    if (!canvasData || typeof canvasData !== 'object') {
-      return canvasData;
-    }
-
-    const validTextBaselines = ['top', 'hanging', 'middle', 'alphabetic', 'ideographic', 'bottom'];
-
-    const sanitizeObject = obj => {
-      if (!obj || typeof obj !== 'object') return obj;
-
-      if (Array.isArray(obj)) {
-        return obj.map(item => sanitizeObject(item));
+  collectScopedMetadataBuckets(sourceMap, viewId) {
+    const scoped = {};
+    Object.entries(sourceMap || {}).forEach(([key, value]) => {
+      if (key === viewId || key.startsWith(`${viewId}::tab:`)) {
+        scoped[key] = JSON.parse(JSON.stringify(value || {}));
       }
-
-      const sanitized = { ...obj };
-
-      if (sanitized.textBaseline && !validTextBaselines.includes(sanitized.textBaseline)) {
-        console.warn(
-          `[Sanitize] Invalid textBaseline "${sanitized.textBaseline}", replacing with "alphabetic"`
-        );
-        sanitized.textBaseline = 'alphabetic';
-      }
-
-      for (const key in sanitized) {
-        if (typeof sanitized[key] === 'object') {
-          sanitized[key] = sanitizeObject(sanitized[key]);
-        }
-      }
-
-      return sanitized;
-    };
-
-    return sanitizeObject(canvasData);
+    });
+    return scoped;
   }
 
   // Serialize measurements for a view (deep copy)
@@ -223,8 +377,7 @@ export class ProjectManager {
       return {};
     }
 
-    const measurements = window.app.metadataManager.strokeMeasurements[viewId] || {};
-    return JSON.parse(JSON.stringify(measurements));
+    return this.collectScopedMetadataBuckets(window.app.metadataManager.strokeMeasurements, viewId);
   }
 
   // Deserialize measurements for a view
@@ -237,19 +390,35 @@ export class ProjectManager {
       return;
     }
 
-    // Validate and restore each measurement
-    window.app.metadataManager.strokeMeasurements[viewId] = {};
+    const normalizeBucket = bucket => {
+      const output = {};
+      Object.entries(bucket || {}).forEach(([strokeLabel, measurement]) => {
+        if (measurement && typeof measurement === 'object') {
+          output[strokeLabel] = {
+            inchWhole: typeof measurement.inchWhole === 'number' ? measurement.inchWhole : 0,
+            inchFraction:
+              typeof measurement.inchFraction === 'number' ? measurement.inchFraction : 0,
+            cm: typeof measurement.cm === 'number' ? measurement.cm : 0,
+          };
+        }
+      });
+      return output;
+    };
 
-    for (const [strokeLabel, measurement] of Object.entries(measurements)) {
-      // Ensure proper structure
-      if (measurement && typeof measurement === 'object') {
-        window.app.metadataManager.strokeMeasurements[viewId][strokeLabel] = {
-          inchWhole: typeof measurement.inchWhole === 'number' ? measurement.inchWhole : 0,
-          inchFraction: typeof measurement.inchFraction === 'number' ? measurement.inchFraction : 0,
-          cm: typeof measurement.cm === 'number' ? measurement.cm : 0,
-        };
-      }
+    const isLegacyFlatShape = Object.values(measurements).some(
+      value =>
+        value && typeof value === 'object' && Object.prototype.hasOwnProperty.call(value, 'cm')
+    );
+
+    if (isLegacyFlatShape) {
+      window.app.metadataManager.strokeMeasurements[viewId] = normalizeBucket(measurements);
+      return;
     }
+
+    Object.entries(measurements).forEach(([scopeKey, bucket]) => {
+      if (scopeKey !== viewId && !scopeKey.startsWith(`${viewId}::tab:`)) return;
+      window.app.metadataManager.strokeMeasurements[scopeKey] = normalizeBucket(bucket);
+    });
   }
 
   // Add or update an image for a view
@@ -264,6 +433,7 @@ export class ProjectManager {
         canvasData: null,
         metadata: null,
         rotation: 0,
+        tabs: null,
       };
     }
 
@@ -291,55 +461,73 @@ export class ProjectManager {
             return resolve();
           }
 
-          const canvasWidth = canvas.width;
-          const canvasHeight = canvas.height;
+          // Get capture frame dimensions
+          const captureFrame = document.getElementById('captureFrame');
+          let frameWidth, frameHeight, frameLeft, frameTop;
+
+          if (captureFrame) {
+            const rect = captureFrame.getBoundingClientRect();
+            frameWidth = rect.width;
+            frameHeight = rect.height;
+            const canvasRect = canvas.getElement().getBoundingClientRect();
+            frameLeft = rect.left - canvasRect.left;
+            frameTop = rect.top - canvasRect.top;
+          } else {
+            // Fallback to canvas dimensions if no frame
+            frameWidth = canvas.width;
+            frameHeight = canvas.height;
+            frameLeft = 0;
+            frameTop = 0;
+          }
+
+          // If frame is not laid out yet, fallback to canvas dimensions
+          if (!frameWidth || !frameHeight) {
+            console.warn('[Image Debug] Capture frame size invalid, using canvas size');
+            frameWidth = canvas.width;
+            frameHeight = canvas.height;
+            frameLeft = 0;
+            frameTop = 0;
+          }
+
           const imgWidth = img.width;
           const imgHeight = img.height;
 
           console.log(
-            `[Image Debug] Canvas: ${canvasWidth}x${canvasHeight} (aspect: ${(canvasWidth / canvasHeight).toFixed(3)})\n` +
-              `[Image Debug] Image:  ${imgWidth}x${imgHeight} (aspect: ${(imgWidth / imgHeight).toFixed(3)})`
+            `[Image Debug] Frame: ${frameWidth}x${frameHeight} at (${frameLeft},${frameTop})\n` +
+              `[Image Debug] Image: ${imgWidth}x${imgHeight}`
           );
 
           let scale = 1;
-          let left = canvasWidth / 2;
-          let top = canvasHeight / 2;
+
+          // Center based on frame center
+          let left = frameLeft + frameWidth / 2;
+          let top = frameTop + frameHeight / 2;
 
           switch (fitMode) {
             case 'fit-width':
-              scale = canvasWidth / imgWidth;
-              console.log(
-                `[Image Fit Width] Canvas: ${canvasWidth}x${canvasHeight}, Image: ${imgWidth}x${imgHeight}, Scale: ${scale.toFixed(3)}`
-              );
+              scale = frameWidth / imgWidth;
+              console.log(`[Image Fit Width] Scale: ${scale.toFixed(3)}`);
               break;
 
             case 'fit-height':
-              scale = canvasHeight / imgHeight;
-              console.log(
-                `[Image Fit Height] Canvas: ${canvasWidth}x${canvasHeight}, Image: ${imgWidth}x${imgHeight}, Scale: ${scale.toFixed(3)}`
-              );
+              scale = frameHeight / imgHeight;
+              console.log(`[Image Fit Height] Scale: ${scale.toFixed(3)}`);
               break;
 
             case 'fit-canvas':
-              scale = Math.min(canvasWidth / imgWidth, canvasHeight / imgHeight);
-              console.log(
-                `[Image Fit Canvas] Canvas: ${canvasWidth}x${canvasHeight}, Image: ${imgWidth}x${imgHeight}, Scale: ${scale.toFixed(3)}`
-              );
+              scale = Math.min(frameWidth / imgWidth, frameHeight / imgHeight);
+              console.log(`[Image Fit Canvas] Scale: ${scale.toFixed(3)}`);
               break;
 
             case 'actual-size':
               scale = 1;
-              console.log(
-                `[Image Actual Size] Canvas: ${canvasWidth}x${canvasHeight}, Image: ${imgWidth}x${imgHeight}, Scale: 1.000`
-              );
+              console.log(`[Image Actual Size] Scale: 1.000`);
               break;
 
             default:
-              // Default to fit canvas
-              scale = Math.min(canvasWidth / imgWidth, canvasHeight / imgHeight);
-              console.log(
-                `[Image Default] Canvas: ${canvasWidth}x${canvasHeight}, Image: ${imgWidth}x${imgHeight}, Scale: ${scale.toFixed(3)}`
-              );
+              // Default to fit canvas (frame)
+              scale = Math.min(frameWidth / imgWidth, frameHeight / imgHeight);
+              console.log(`[Image Default] Scale: ${scale.toFixed(3)}`);
               break;
           }
 
@@ -929,143 +1117,6 @@ export class ProjectManager {
     });
   }
 
-  async getProjectData() {
-    this.saveCurrentViewState();
-
-    const projectNameInput = document.getElementById('projectName');
-    const projectName = projectNameInput?.value?.trim() || 'OpenPaint Project';
-    const fabricCanvas = this.canvasManager?.fabricCanvas;
-    const metadataManager = window.app?.metadataManager;
-    const customProps = this.getCanvasCustomProps();
-
-    console.log('[Save] Gathering project data');
-
-    const deepClone = obj => {
-      if (!obj) return {};
-      try {
-        return JSON.parse(JSON.stringify(obj));
-      } catch (e) {
-        console.warn('[Save] Failed to clone object', e);
-        return {};
-      }
-    };
-
-    const projectData = {
-      version: '2.0-fabric',
-      projectName,
-      name: projectName,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      currentViewId: this.currentViewId,
-      views: {},
-    };
-
-    const viewIds = Object.keys(this.views || {});
-    console.log('[Save] Views to persist:', viewIds);
-
-    for (const viewId of viewIds) {
-      const view = this.views[viewId] || {};
-      const entry = {
-        canvasJSON: null,
-        imageDataURL: null,
-        imageUrl: view.image || null,
-        metadata: {},
-      };
-
-      if (viewId === this.currentViewId && fabricCanvas) {
-        console.log(`[Save] Capturing live canvas for view ${viewId}`);
-        entry.canvasJSON = fabricCanvas.toJSON(customProps);
-      } else {
-        entry.canvasJSON = view.canvasData || null;
-      }
-
-      if (view.image) {
-        try {
-          console.log(`[Save] Embedding image for view ${viewId}`);
-          entry.imageDataURL = await this.fetchImageAsDataURL(view.image);
-        } catch (err) {
-          console.warn(`[Save] Could not capture image for ${viewId}:`, err);
-        }
-      }
-
-      if (metadataManager) {
-        entry.metadata = {
-          vectorStrokesByImage: deepClone(metadataManager.vectorStrokesByImage?.[viewId]),
-          strokeVisibilityByImage: deepClone(metadataManager.strokeVisibilityByImage?.[viewId]),
-          strokeLabelVisibility: deepClone(metadataManager.strokeLabelVisibility?.[viewId]),
-          strokeMeasurements: deepClone(metadataManager.strokeMeasurements?.[viewId]),
-        };
-      } else if (view.metadata) {
-        entry.metadata = deepClone(view.metadata);
-      }
-
-      projectData.views[viewId] = entry;
-    }
-
-    return projectData;
-  }
-
-  async saveProject() {
-    const projectNameInput = document.getElementById('projectName');
-    const projectName = projectNameInput?.value?.trim() || 'OpenPaint Project';
-    const downloadName = `${projectName.replace(/\s+/g, '_')}_fabric.json`;
-
-    try {
-      console.log('[Save] Starting saveProject');
-      if (!this.canvasManager?.fabricCanvas) {
-        this.showStatusMessage('Canvas not ready; cannot save.', 'error');
-        console.error('[Save] fabricCanvas missing');
-        return;
-      }
-
-      const projectData = await this.getProjectData();
-
-      await this.downloadProjectData(projectData, downloadName);
-
-      const authManager = window.app?.authManager;
-      const cloudManager = window.app?.cloudProjectManager;
-      const user = authManager?.getUser ? authManager.getUser() : null;
-
-      if (user && cloudManager?.saveProject) {
-        const result = await cloudManager.saveProject(projectData);
-        if (result?.error) {
-          console.error('[Save] Cloud save failed:', result.error);
-          this.showStatusMessage('Project saved locally. Cloud save failed.', 'error');
-          return;
-        }
-        this.showStatusMessage('Project saved locally and to cloud.', 'success');
-      } else {
-        this.showStatusMessage('Project saved locally.', 'success');
-      }
-    } catch (error) {
-      console.error('[Save] Failed to save project:', error);
-      this.showStatusMessage('Failed to save project: ' + error.message, 'error');
-    }
-  }
-
-  async fetchImageAsDataURL(url) {
-    const response = await fetch(url);
-    const blob = await response.blob();
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result);
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
-    });
-  }
-
-  async downloadProjectData(projectData, fileName) {
-    console.log('[Save] Downloading project data as', fileName);
-    const jsonStr = JSON.stringify(projectData, null, 2);
-    const blob = new Blob([jsonStr], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = fileName;
-    a.click();
-    URL.revokeObjectURL(url);
-  }
-
   showStatusMessage(message, type = 'info') {
     // Simple toast implementation if not available elsewhere
     const toast = document.createElement('div');
@@ -1138,5 +1189,453 @@ export class ProjectManager {
 
     await traverse(clone);
     return clone;
+  }
+
+  getCanvasCustomProps() {
+    return [
+      'strokeMetadata',
+      'arrowSettings',
+      'isTag',
+      'isTagText',
+      'labelVisible',
+      'visible',
+      'connectedTo',
+      'tagLabel',
+      'isConnectorLine',
+      'perPixelTargetFind',
+      '_pointsVersion',
+      '_customPointsConverted',
+    ];
+  }
+
+  sanitizeCanvasJSON(canvasData) {
+    if (!canvasData || typeof canvasData !== 'object') {
+      return canvasData;
+    }
+
+    const validTextBaselines = ['top', 'hanging', 'middle', 'alphabetic', 'ideographic', 'bottom'];
+    let sanitizedCount = 0;
+
+    const sanitizeObject = obj => {
+      if (!obj || typeof obj !== 'object') return obj;
+
+      if (Array.isArray(obj)) {
+        return obj.map(item => sanitizeObject(item));
+      }
+
+      const sanitized = { ...obj };
+
+      // Fix invalid textBaseline values (common in old saved data)
+      if (sanitized.textBaseline && !validTextBaselines.includes(sanitized.textBaseline)) {
+        console.warn(
+          `[Sanitize] Invalid textBaseline "${sanitized.textBaseline}", replacing with "alphabetic"`
+        );
+        sanitized.textBaseline = 'alphabetic';
+        sanitizedCount++;
+      }
+
+      // Recursively sanitize nested objects
+      for (const key in sanitized) {
+        if (typeof sanitized[key] === 'object') {
+          sanitized[key] = sanitizeObject(sanitized[key]);
+        }
+      }
+
+      return sanitized;
+    };
+
+    const result = sanitizeObject(canvasData);
+
+    if (sanitizedCount > 0) {
+      console.log(`[Sanitize] Fixed ${sanitizedCount} invalid textBaseline values`);
+    }
+
+    return result;
+  }
+
+  async getProjectData() {
+    if (window.captureTabsSyncActive) {
+      window.captureTabsSyncActive(this.currentViewId);
+    }
+    this.saveCurrentViewState();
+
+    const projectNameInput = document.getElementById('projectName');
+    const projectName = projectNameInput?.value?.trim() || 'OpenPaint Project';
+    const fabricCanvas = this.canvasManager?.fabricCanvas;
+    const metadataManager = window.app?.metadataManager;
+    const customProps = this.getCanvasCustomProps();
+
+    console.log('[Save] Gathering project data');
+
+    const deepClone = obj => {
+      if (!obj) return {};
+      try {
+        return JSON.parse(JSON.stringify(obj));
+      } catch (e) {
+        console.warn('[Save] Failed to clone object', e);
+        return {};
+      }
+    };
+
+    const projectData = {
+      version: '2.0-fabric',
+      projectName,
+      name: projectName,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      currentViewId: this.currentViewId,
+      viewOrder: [],
+      views: {},
+    };
+
+    const viewIds = Object.keys(this.views || {});
+    console.log('[Save] Views to persist:', viewIds);
+
+    // Capture view order to preserve gallery order on load
+    try {
+      const orderFromGlobals =
+        Array.isArray(window.orderedImageLabels) && window.orderedImageLabels.length
+          ? window.orderedImageLabels.slice()
+          : [];
+      const orderFromGallery = window.imageGallery?.getData
+        ? window.imageGallery
+            .getData()
+            .map(item => item?.original?.label || item?.label || item?.name || '')
+            .filter(Boolean)
+        : [];
+      const rawOrder = orderFromGlobals.length ? orderFromGlobals : orderFromGallery;
+      const filtered = rawOrder.filter(id => viewIds.includes(id));
+      const remaining = viewIds.filter(id => !filtered.includes(id));
+      projectData.viewOrder = filtered.concat(remaining);
+    } catch (e) {
+      projectData.viewOrder = viewIds.slice();
+    }
+
+    const isBlobUrl = url => typeof url === 'string' && url.startsWith('blob:');
+
+    for (const viewId of viewIds) {
+      const view = this.views[viewId] || {};
+      const entry = {
+        canvasJSON: null,
+        imageDataURL: null,
+        imageUrl: view.image || null,
+        metadata: {},
+        tabs: null,
+      };
+
+      if (viewId === this.currentViewId && fabricCanvas) {
+        console.log(`[Save] Capturing live canvas for view ${viewId}`);
+        entry.canvasJSON = fabricCanvas.toJSON(customProps);
+      } else {
+        entry.canvasJSON = view.canvasData || null;
+      }
+
+      if (view.image) {
+        try {
+          console.log(`[Save] Embedding image for view ${viewId}`);
+          entry.imageDataURL = await this.fetchImageAsDataURL(view.image);
+        } catch (err) {
+          console.warn(`[Save] Could not capture image for ${viewId}:`, err);
+        }
+      }
+
+      // Prefer stable data URLs over blob URLs in saved JSON
+      if (entry.imageDataURL) {
+        entry.imageUrl = entry.imageDataURL;
+      } else if (isBlobUrl(entry.imageUrl)) {
+        entry.imageUrl = null;
+      }
+
+      // Ensure backgroundImage src isn't blank when canvasJSON exists
+      if (entry.canvasJSON?.backgroundImage && !entry.canvasJSON.backgroundImage.src) {
+        entry.canvasJSON.backgroundImage.src = entry.imageDataURL || entry.imageUrl || '';
+      }
+
+      if (metadataManager) {
+        entry.metadata = {
+          vectorStrokesByImage: deepClone(metadataManager.vectorStrokesByImage?.[viewId]),
+          strokeVisibilityByImage: deepClone(metadataManager.strokeVisibilityByImage?.[viewId]),
+          strokeLabelVisibility: deepClone(metadataManager.strokeLabelVisibility?.[viewId]),
+          strokeMeasurements: deepClone(metadataManager.strokeMeasurements?.[viewId]),
+        };
+      } else if (view.metadata) {
+        entry.metadata = deepClone(view.metadata);
+      }
+
+      entry.tabs = deepClone(window.captureTabsByLabel?.[viewId] || view.tabs);
+
+      projectData.views[viewId] = entry;
+    }
+
+    return projectData;
+  }
+
+  async saveProject() {
+    const projectNameInput = document.getElementById('projectName');
+    const projectName = projectNameInput?.value?.trim() || 'OpenPaint Project';
+    const downloadName = `${projectName.replace(/\s+/g, '_')}_fabric.json`;
+
+    try {
+      console.log('[Save] Starting saveProject');
+      if (!this.canvasManager?.fabricCanvas) {
+        this.showStatusMessage('Canvas not ready; cannot save.', 'error');
+        console.error('[Save] fabricCanvas missing');
+        return;
+      }
+
+      const projectData = await this.getProjectData();
+
+      await this.downloadProjectData(projectData, downloadName);
+
+      const authManager = window.app?.authManager;
+      const cloudManager = window.app?.cloudProjectManager;
+      const user = authManager?.getUser ? authManager.getUser() : null;
+
+      if (user && cloudManager?.saveProject) {
+        const result = await cloudManager.saveProject(projectData);
+        if (result?.error) {
+          console.error('[Save] Cloud save failed:', result.error);
+          this.showStatusMessage('Project saved locally. Cloud save failed.', 'error');
+          return;
+        }
+        this.showStatusMessage('Project saved locally and to cloud.', 'success');
+      } else {
+        this.showStatusMessage('Project saved locally.', 'success');
+      }
+    } catch (error) {
+      console.error('[Save] Failed to save project:', error);
+      this.showStatusMessage('Failed to save project: ' + error.message, 'error');
+    }
+  }
+
+  async fetchImageAsDataURL(url) {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  }
+
+  async downloadProjectData(projectData, fileName) {
+    const jsonStr = JSON.stringify(projectData, null, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName || 'project_fabric.json';
+    a.click();
+    URL.revokeObjectURL(url);
+    console.log('[Save] Downloaded project as:', fileName);
+  }
+
+  async loadProject(file) {
+    try {
+      console.log('[Load] Loading project file:', file.name);
+
+      const text = await file.text();
+      const projectData = JSON.parse(text);
+
+      console.log('[Load] Parsed project data:', projectData.projectName || projectData.name);
+
+      // Mark project load in progress to prevent auto-switches and saves
+      window.__isLoadingProject = true;
+      window.__suspendSaveCurrentView = true;
+      this.isLoadingProject = true;
+      this.suspendSave = true;
+
+      // Prevent scroll-select auto-switching during load without toggling UI state
+      window.__suppressScrollSelectUntil = Date.now() + 3000;
+
+      if (!projectData.version || !projectData.version.startsWith('2.0')) {
+        this.showStatusMessage(
+          'This appears to be a legacy project format. Please use the legacy loader.',
+          'error'
+        );
+        console.error('[Load] Unsupported project version:', projectData.version);
+        return;
+      }
+
+      if (!projectData.views) {
+        this.showStatusMessage('Invalid project format: missing views', 'error');
+        return;
+      }
+
+      // Update project name
+      const projectNameInput = document.getElementById('projectName');
+      if (projectNameInput && projectData.projectName) {
+        projectNameInput.value = projectData.projectName;
+      }
+
+      // Clear existing views and recreate from saved data
+      this.views = {};
+
+      // Clear image gallery to prevent duplicate detection issues
+      if (window.imageGallery?.clearGallery) {
+        window.imageGallery.clearGallery();
+        console.log('[Load] Cleared image gallery');
+      }
+
+      const useRegistry =
+        typeof imageRegistry?.isEnabled === 'function' && imageRegistry.isEnabled();
+      if (useRegistry) {
+        await imageRegistry.whenReady();
+        imageRegistry.reset();
+      }
+
+      // Load each view
+      const viewIds = Object.keys(projectData.views);
+      const preferredOrder = ['front', 'side', 'back', 'cushion', 'left', 'right'];
+      const orderFromProject = Array.isArray(projectData.viewOrder)
+        ? projectData.viewOrder
+        : Array.isArray(projectData.imageLabels)
+          ? projectData.imageLabels
+          : [];
+      let orderedViewIds = [];
+      if (orderFromProject.length) {
+        const filtered = orderFromProject.filter(id => viewIds.includes(id));
+        const remaining = viewIds.filter(id => !filtered.includes(id));
+        orderedViewIds = filtered.concat(remaining);
+      } else {
+        orderedViewIds = [...viewIds].sort((a, b) => {
+          const aIndex = preferredOrder.indexOf(a);
+          const bIndex = preferredOrder.indexOf(b);
+          const aScore = aIndex === -1 ? Number.MAX_SAFE_INTEGER : aIndex;
+          const bScore = bIndex === -1 ? Number.MAX_SAFE_INTEGER : bIndex;
+          if (aScore !== bScore) return aScore - bScore;
+          return a.localeCompare(b);
+        });
+      }
+
+      console.log('[Load] Loading views:', orderedViewIds);
+
+      for (const viewId of orderedViewIds) {
+        const viewData = projectData.views[viewId];
+
+        this.views[viewId] = {
+          id: viewId,
+          image: null,
+          canvasData: viewData.canvasJSON,
+          metadata: viewData.metadata || {},
+          tabs: viewData.tabs || null,
+        };
+
+        // Restore image from data URL if available
+        if (viewData.imageDataURL) {
+          this.views[viewId].image = viewData.imageDataURL;
+          console.log(`[Load] Restored image for view ${viewId} from data URL`);
+        } else if (viewData.imageUrl) {
+          this.views[viewId].image = viewData.imageUrl;
+          console.log(`[Load] Using image URL for view ${viewId}`);
+        }
+
+        const imageUrl = this.views[viewId].image;
+        if (imageUrl) {
+          const filename = `${projectData.projectName || 'Project'} - ${viewId}`;
+          if (useRegistry) {
+            await imageRegistry.registerImage(viewId, imageUrl, filename, {
+              source: 'json',
+              refreshBackground: false,
+            });
+          } else if (window.addImageToSidebar) {
+            console.log(`[Load] Registering view ${viewId} with legacy system`);
+            window.addImageToSidebar(imageUrl, viewId, filename);
+          }
+        }
+      }
+
+      if (window.setCaptureTabsForLabel) {
+        orderedViewIds.forEach(viewId => {
+          window.setCaptureTabsForLabel(viewId, projectData.views?.[viewId]?.tabs || null);
+        });
+      }
+
+      // Switch to the saved current view or first view
+      const targetView = projectData.currentViewId || orderedViewIds[0];
+      if (targetView && this.views[targetView]) {
+        console.log(`[Load] Switching to view: ${targetView}`);
+        await this.switchView(targetView, true);
+        if (window.renderCaptureTabUI) {
+          window.renderCaptureTabUI(targetView);
+        }
+        if (window.applyCaptureFrameForLabel) {
+          window.applyCaptureFrameForLabel(targetView);
+        }
+        // Force a background re-apply after switch to avoid "blank until click"
+        if (this.views[targetView]?.image) {
+          await this.setBackgroundImage(this.views[targetView].image);
+          this.canvasManager?.fabricCanvas?.requestRenderAll?.();
+        }
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            if (this.canvasManager?.resize) {
+              this.canvasManager.resize();
+            }
+            const current = this.views[targetView];
+            if (current?.image && this.currentViewId === targetView) {
+              console.log('[Load] Post-load refresh of background image:', targetView);
+              this.setBackgroundImage(current.image);
+              this.canvasManager?.fabricCanvas?.requestRenderAll?.();
+            }
+          });
+        });
+        const lateRefresh = () => {
+          const current = this.views[targetView];
+          if (!current?.image || this.currentViewId !== targetView) return;
+          const canvas = this.canvasManager?.fabricCanvas;
+          const hasBg = !!canvas?.backgroundImage;
+          if (!hasBg) {
+            console.log('[Load] Late refresh of background image:', targetView);
+            this.setBackgroundImage(current.image);
+          }
+        };
+        setTimeout(lateRefresh, 250);
+        setTimeout(lateRefresh, 800);
+
+        // Align gallery selection/scroll to the current view without switching views
+        const syncGalleryToView = attempt => {
+          if (!window.imageGallery?.syncToLabel) return;
+          const ok = window.imageGallery.syncToLabel(targetView, { scroll: true, smooth: false });
+          if (!ok && attempt < 5) {
+            setTimeout(() => syncGalleryToView(attempt + 1), 150);
+          }
+        };
+        setTimeout(() => syncGalleryToView(0), 100);
+      }
+
+      this.showStatusMessage('Project loaded successfully', 'success');
+      console.log('[Load] Project load complete');
+
+      // Re-enable scroll-select after load settles
+      setTimeout(() => {
+        window.__suppressScrollSelectUntil = 0;
+        window.__isLoadingProject = false;
+        window.__suspendSaveCurrentView = false;
+        this.isLoadingProject = false;
+        this.suspendSave = false;
+      }, 3500);
+    } catch (error) {
+      console.error('[Load] Failed to load project:', error);
+      this.showStatusMessage('Failed to load project: ' + error.message, 'error');
+      window.__isLoadingProject = false;
+      window.__suspendSaveCurrentView = false;
+      this.isLoadingProject = false;
+      this.suspendSave = false;
+    }
+  }
+
+  promptLoadProject() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = async e => {
+      const file = e.target.files[0];
+      if (file) {
+        await this.loadProject(file);
+      }
+    };
+    input.click();
   }
 }

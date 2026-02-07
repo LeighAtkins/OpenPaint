@@ -4,15 +4,8 @@ import { ToolManager } from './tools/ToolManager.js';
 import { ProjectManager } from './ProjectManager.js';
 import { HistoryManager } from './HistoryManager.js';
 import { StrokeMetadataManager } from './StrokeMetadataManager.js';
-import { setupDebugHelpers } from './DebugHelpers.js';
-import { TagManager } from './TagManager.js';
 import { UploadManager } from './UploadManager.js';
-import { MeasurementSystem } from './MeasurementSystem.js';
-import { MeasurementDialog } from './MeasurementDialog.js';
-import { MeasurementExporter } from './MeasurementExporter.js';
-import { ArrowManager } from './utils/ArrowManager.js';
-import { AuthManager } from './AuthManager.js';
-import { CloudProjectManager } from './CloudProjectManager.js';
+import { imageRegistry } from './ImageRegistry.js';
 
 class App {
   constructor() {
@@ -20,17 +13,28 @@ class App {
     this.historyManager = new HistoryManager(this.canvasManager);
     this.toolManager = new ToolManager(this.canvasManager);
     this.metadataManager = new StrokeMetadataManager();
-    this.tagManager = new TagManager(this.canvasManager, this.metadataManager);
     this.projectManager = new ProjectManager(this.canvasManager, this.historyManager);
     this.uploadManager = new UploadManager(this.projectManager);
-    this.arrowManager = new ArrowManager(this.canvasManager);
-    this.authManager = new AuthManager();
-    this.cloudProjectManager = new CloudProjectManager(this);
 
-    // Measurement system
-    this.measurementSystem = new MeasurementSystem(this.metadataManager);
-    this.measurementDialog = new MeasurementDialog(this.measurementSystem);
-    this.measurementExporter = new MeasurementExporter(this.measurementSystem, this.projectManager);
+    imageRegistry.bindProjectManager(this.projectManager);
+    imageRegistry.start();
+
+    this.deferredInitStarted = false;
+    this.deferredToolPreloadStarted = false;
+    this.hasDrawnFirstStroke = false;
+    this.hasUploadedFirstImage = false;
+    this.firstPaintMarked = false;
+    this.firstStrokeCommitMarked = false;
+    this.firstStrokeCommitInProgress = false;
+
+    if (typeof performance !== 'undefined' && performance.mark) {
+      performance.mark('app-init-start');
+    }
+    this.tagManager = null;
+    this.arrowManager = null;
+    this.measurementSystem = null;
+    this.measurementDialog = null;
+    this.measurementExporter = null;
 
     this.init();
   }
@@ -51,7 +55,8 @@ class App {
       this.historyManager.init();
       this.projectManager.init();
       this.uploadManager.init();
-      this.arrowManager.init();
+
+      this.setupDeferredToolPreload();
 
       // Initialize drawing mode toggle button label
       const drawingModeToggle = document.getElementById('drawingModeToggle');
@@ -97,8 +102,11 @@ class App {
         this.canvasManager.fabricCanvas.on('object:removed', e => {
           // If a stroke is removed, remove its tag
           const obj = e.target;
-          if (obj && obj.strokeMetadata && obj.strokeMetadata.strokeLabel) {
-            this.tagManager.removeTag(obj.strokeMetadata.strokeLabel);
+          if (obj && obj.strokeMetadata && obj.strokeMetadata.strokeLabel && this.tagManager) {
+            this.tagManager.removeTag(
+              obj.strokeMetadata.strokeLabel,
+              obj.strokeMetadata.imageLabel || window.currentImageLabel
+            );
           }
         });
       }
@@ -119,6 +127,9 @@ class App {
         return this.canvasManager.resize();
       };
 
+      this.scheduleDeferredInit();
+      this.markFirstPaint();
+
       console.log('OpenPaint initialization complete');
 
       // Debug: Verify canvas is accessible
@@ -132,6 +143,138 @@ class App {
         console.error('Canvas element not found in DOM!');
       }
     }, 0);
+  }
+
+  scheduleDeferredInit() {
+    if (this.deferredInitStarted) {
+      return;
+    }
+
+    const runDeferred = () => {
+      this.deferredInitStarted = true;
+      void this.initDeferredManagers();
+    };
+
+    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+      window.requestIdleCallback(runDeferred, { timeout: 1500 });
+    } else {
+      setTimeout(runDeferred, 0);
+    }
+  }
+
+  setupDeferredToolPreload() {
+    if (this.deferredToolPreloadStarted) {
+      return;
+    }
+
+    const preload = () => {
+      if (this.deferredToolPreloadStarted) {
+        return;
+      }
+      this.deferredToolPreloadStarted = true;
+      this.toolManager.preloadTools([
+        'select',
+        'pencil',
+        'curve',
+        'arrow',
+        'privacy',
+        'text',
+        'shape',
+      ]);
+    };
+
+    window.addEventListener('firststroke', preload, { once: true });
+    window.addEventListener('firstupload', preload, { once: true });
+  }
+
+  markFirstPaint() {
+    if (this.firstPaintMarked) {
+      return;
+    }
+    this.firstPaintMarked = true;
+
+    if (typeof performance === 'undefined' || !performance.mark) {
+      return;
+    }
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        performance.mark('app-first-paint');
+        if (performance.measure) {
+          try {
+            performance.measure('app-init->first-paint', 'app-init-start', 'app-first-paint');
+            this.logPerfMeasure('app-init->first-paint');
+          } catch (error) {
+            console.warn('[Perf] Measure first paint failed', error);
+          }
+        }
+      });
+    });
+  }
+
+  logPerfMeasure(name) {
+    if (typeof performance === 'undefined' || !performance.getEntriesByName) {
+      return;
+    }
+    const entry = performance.getEntriesByName(name).slice(-1)[0];
+    if (!entry) {
+      return;
+    }
+    console.log(`[Perf] ${name}: ${entry.duration.toFixed(1)}ms`);
+  }
+
+  async initDeferredManagers() {
+    try {
+      const [
+        { TagManager },
+        { MeasurementSystem },
+        { MeasurementDialog },
+        { MeasurementExporter },
+        { ArrowManager },
+        { setupDebugHelpers },
+      ] = await Promise.all([
+        import('./TagManager.js'),
+        import('./MeasurementSystem.js'),
+        import('./MeasurementDialog.js'),
+        import('./MeasurementExporter.js'),
+        import('./utils/ArrowManager.js'),
+        import('./DebugHelpers.js'),
+      ]);
+
+      if (!this.tagManager) {
+        this.tagManager = new TagManager(this.canvasManager, this.metadataManager);
+      }
+
+      if (!this.arrowManager) {
+        this.arrowManager = new ArrowManager(this.canvasManager);
+        this.arrowManager.init();
+      }
+
+      if (!this.measurementSystem) {
+        this.measurementSystem = new MeasurementSystem(this.metadataManager);
+      }
+
+      if (!this.measurementDialog) {
+        this.measurementDialog = new MeasurementDialog(this.measurementSystem);
+      }
+
+      if (!this.measurementExporter) {
+        this.measurementExporter = new MeasurementExporter(
+          this.measurementSystem,
+          this.projectManager
+        );
+      }
+
+      if (this.metadataManager?.updateStrokeVisibilityControls) {
+        this.metadataManager.updateStrokeVisibilityControls();
+      }
+
+      if (setupDebugHelpers) {
+        setupDebugHelpers(this);
+      }
+    } catch (error) {
+      console.error('Deferred init failed', error);
+    }
   }
 
   // Helper function to update properties of selected strokes
@@ -161,6 +304,74 @@ class App {
     }
   }
 
+  updateSelectedTextAndShapes({ color, strokeWidth, fontSize }) {
+    if (!this.canvasManager.fabricCanvas) return;
+
+    const activeObjects = this.canvasManager.fabricCanvas.getActiveObjects();
+    if (activeObjects.length === 0) return;
+
+    let updatedCount = 0;
+    const shapeTool = this.toolManager?.tools?.shape;
+    const textBgEnabled = window.textBgEnabled === true;
+
+    activeObjects.forEach(obj => {
+      if (!obj) return;
+
+      if (obj.type === 'i-text' || obj.type === 'text') {
+        if (color) {
+          obj.set('fill', color);
+          obj.set('stroke', '#000000');
+        }
+        if (fontSize) {
+          obj.set('fontSize', fontSize);
+        }
+        obj.set('backgroundColor', textBgEnabled ? '#ffffff' : 'transparent');
+        obj.dirty = true;
+        updatedCount++;
+        return;
+      }
+
+      if (obj.strokeMetadata?.type === 'shape') {
+        const baseColor = color || obj.stroke || shapeTool?.strokeColor || '#3b82f6';
+        obj.set({ fill: 'rgba(0,0,0,0)', stroke: baseColor });
+        if (strokeWidth) {
+          obj.set('strokeWidth', strokeWidth);
+        }
+        obj.dirty = true;
+        updatedCount++;
+      }
+    });
+
+    if (updatedCount > 0) {
+      this.canvasManager.fabricCanvas.requestRenderAll();
+    }
+  }
+
+  updateSelectedShapesFill(style) {
+    if (!this.canvasManager.fabricCanvas) return;
+
+    const activeObjects = this.canvasManager.fabricCanvas.getActiveObjects();
+    if (activeObjects.length === 0) return;
+
+    let updatedCount = 0;
+    const shapeTool = this.toolManager?.tools?.shape;
+
+    activeObjects.forEach(obj => {
+      if (!obj || obj.strokeMetadata?.type !== 'shape') return;
+      const baseColor = obj.stroke || shapeTool?.strokeColor || '#3b82f6';
+      const styles = shapeTool?.getStyleForFillStyle
+        ? shapeTool.getStyleForFillStyle(style, baseColor)
+        : { fill: baseColor, stroke: baseColor };
+      obj.set({ fill: styles.fill, stroke: styles.stroke });
+      obj.dirty = true;
+      updatedCount++;
+    });
+
+    if (updatedCount > 0) {
+      this.canvasManager.fabricCanvas.requestRenderAll();
+    }
+  }
+
   setupUI() {
     // Undo/Redo
     const undoBtn = document.getElementById('undoBtn');
@@ -169,24 +380,20 @@ class App {
     if (undoBtn) undoBtn.addEventListener('click', () => this.historyManager.undo());
     if (redoBtn) redoBtn.addEventListener('click', () => this.historyManager.redo());
 
-    // Rotate view controls
+    // Rotate controls
     const rotateLeftCtrl = document.getElementById('rotateLeftCtrl');
     const rotateRightCtrl = document.getElementById('rotateRightCtrl');
-    if (rotateLeftCtrl instanceof HTMLButtonElement) {
-      if (!rotateLeftCtrl.dataset.bound) {
-        rotateLeftCtrl.addEventListener('click', () => {
-          this.projectManager.rotateCurrentView(-90);
-        });
-        rotateLeftCtrl.dataset.bound = 'true';
-      }
+
+    if (rotateLeftCtrl) {
+      rotateLeftCtrl.addEventListener('click', () => {
+        this.projectManager.rotateCurrentView(-90);
+      });
     }
-    if (rotateRightCtrl instanceof HTMLButtonElement) {
-      if (!rotateRightCtrl.dataset.bound) {
-        rotateRightCtrl.addEventListener('click', () => {
-          this.projectManager.rotateCurrentView(90);
-        });
-        rotateRightCtrl.dataset.bound = 'true';
-      }
+
+    if (rotateRightCtrl) {
+      rotateRightCtrl.addEventListener('click', () => {
+        this.projectManager.rotateCurrentView(90);
+      });
     }
 
     // Fine rotate controls (hover bar)
@@ -232,35 +439,280 @@ class App {
     }
 
     // Tools
-    const drawingModeToggle = document.getElementById('drawingModeToggle');
-    const textModeToggle = document.getElementById('textModeToggle');
+    const drawingModeToggles = document.querySelectorAll('#drawingModeToggle');
+    const textModeToggles = document.querySelectorAll('#textModeToggle');
+    const textModeWrappers = document.querySelectorAll('#textModeWrapper');
+    const textModeOptions = document.querySelectorAll('[data-text-size]');
     const clearBtn = document.getElementById('clear');
 
-    if (drawingModeToggle) {
-      drawingModeToggle.addEventListener('click', () => {
-        // Cycle through: Straight Line -> Curved Line -> Select -> Straight Line
-        const currentTool = this.toolManager.activeTool;
-        if (currentTool === this.toolManager.tools.line) {
-          // Straight Line -> Curved Line
-          this.toolManager.selectTool('curve');
-          this.updateToggleLabel(drawingModeToggle, 'Curved Line');
-        } else if (currentTool === this.toolManager.tools.curve) {
-          // Curved Line -> Select
-          this.toolManager.selectTool('select');
-          this.updateToggleLabel(drawingModeToggle, 'Select');
-        } else {
-          // Select (or any other tool) -> Straight Line
-          this.toolManager.selectTool('line');
-          this.updateToggleLabel(drawingModeToggle, 'Straight Line');
+    const textToolSizeMultipliers = {
+      small: 0.75,
+      medium: 1,
+      large: 1.35,
+    };
+
+    const getCurrentTextSize = () => {
+      const viewId = window.app?.projectManager?.currentViewId;
+      const base = viewId ? window.originalImageDimensions?.[viewId] : null;
+      const baseWidth = base?.width || 1200;
+      return Math.max(12, Math.round((baseWidth / 1200) * 12));
+    };
+
+    const syncTextCursor = () => {
+      const canvasEl = document.getElementById('canvas');
+      if (!canvasEl) return;
+      const isText = this.toolManager.activeTool === this.toolManager.tools.text;
+      canvasEl.style.cursor = isText ? 'text' : 'crosshair';
+    };
+
+    const updateTextToggleState = () => {
+      const isText = this.toolManager.activeTool === this.toolManager.tools.text;
+      textModeWrappers.forEach(wrapper => {
+        wrapper.classList.toggle('shape-active', isText);
+        if (!isText) {
+          wrapper.classList.remove('shape-open');
         }
       });
+      textModeToggles.forEach(toggle => {
+        toggle.setAttribute('aria-pressed', String(isText));
+        toggle.classList.toggle('shape-inactive', !isText);
+      });
+    };
+
+    const updateDrawingToggleLabels = text => {
+      drawingModeToggles.forEach(toggle => this.updateToggleLabel(toggle, text));
+    };
+
+    drawingModeToggles.forEach(toggle => {
+      toggle.addEventListener('click', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        const wrapper = toggle.closest('.shape-toggle');
+        if (wrapper) wrapper.classList.toggle('shape-open');
+      });
+    });
+
+    textModeToggles.forEach(toggle => {
+      toggle.addEventListener('click', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        const wrapper = toggle.closest('.shape-toggle');
+        if (wrapper) wrapper.classList.toggle('shape-open');
+        this.toolManager.previousToolName = this.toolManager.activeToolName || 'line';
+        this.toolManager.selectTool('text');
+        syncTextCursor();
+        updateTextToggleState();
+      });
+    });
+
+    const shapeModeToggles = document.querySelectorAll('#shapeModeToggle');
+    const shapeModeWrappers = document.querySelectorAll('#shapeModeWrapper');
+    const shapeOptions = document.querySelectorAll('[data-shape-option]');
+    const shapeFillToggles = document.querySelectorAll('[data-shape-fill-toggle]');
+    const textStyleWrappers = document.querySelectorAll('#textStyleWrapper');
+    const textStyleOptions = document.querySelectorAll('[data-text-style]');
+    const drawingModeWrappers = document.querySelectorAll('#drawingModeWrapper');
+    const drawingModeOptions = document.querySelectorAll('[data-drawing-mode]');
+    const textStyleToggles = document.querySelectorAll('#textStyleToggle');
+    const shapeFillStyles = ['solid', 'no-fill', 'clear-black', 'clear-color', 'clear-white'];
+    const shapeFillLabels = {
+      solid: 'Solid',
+      'no-fill': 'No Fill',
+      'clear-black': 'Clear Black',
+      'clear-color': 'Clear Color',
+      'clear-white': 'Clear White',
+    };
+    const shapeIcons = {
+      square: '■',
+      triangle: '▲',
+      circle: '●',
+      star: '★',
+    };
+
+    // Shape button click - activate shape tool and store previous tool
+    shapeModeToggles.forEach(toggle => {
+      toggle.addEventListener('click', () => {
+        // Store previous tool name for returning after drawing
+        const currentToolName = this.toolManager.activeToolName || 'line';
+        this.toolManager.previousToolName = currentToolName;
+        this.toolManager.selectTool('shape');
+      });
+    });
+
+    const updateShapeIcon = shape => {
+      shapeModeToggles.forEach(toggle => {
+        const icon = toggle.querySelector('.shape-icon');
+        if (icon) icon.textContent = shapeIcons[shape] || shapeIcons.square;
+      });
+      shapeOptions.forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-shape-option') === shape);
+      });
+    };
+
+    const updateShapeAvailability = () => {
+      const isShapeMode = this.toolManager.activeTool === this.toolManager.tools.shape;
+      shapeModeWrappers.forEach(wrapper => {
+        wrapper.classList.toggle('shape-active', isShapeMode);
+        wrapper.classList.toggle('shape-disabled', !isShapeMode);
+        if (!isShapeMode) {
+          wrapper.classList.remove('shape-open');
+        }
+      });
+      shapeModeToggles.forEach(toggle => {
+        toggle.setAttribute('aria-pressed', String(isShapeMode));
+      });
+    };
+
+    const applyShapeFillStyle = style => {
+      if (this.toolManager.tools.shape) {
+        this.toolManager.tools.shape.setFillStyle(style);
+      }
+      shapeFillToggles.forEach(toggle => {
+        toggle.textContent = `Fill: ${shapeFillLabels[style]}`;
+        toggle.setAttribute('aria-pressed', String(style !== 'solid'));
+      });
+      this.updateSelectedShapesFill(style);
+    };
+
+    const bindShapeMenu = (wrapper, shouldShow) => {
+      let hideTimer = null;
+
+      const showMenu = () => {
+        if (shouldShow && !shouldShow()) return;
+        if (hideTimer) {
+          clearTimeout(hideTimer);
+          hideTimer = null;
+        }
+        wrapper.classList.add('shape-open');
+      };
+
+      const scheduleHide = () => {
+        if (hideTimer) clearTimeout(hideTimer);
+        hideTimer = setTimeout(() => {
+          wrapper.classList.remove('shape-open');
+          hideTimer = null;
+        }, 200);
+      };
+
+      wrapper.addEventListener('mouseenter', showMenu);
+      wrapper.addEventListener('mouseleave', scheduleHide);
+    };
+
+    shapeModeWrappers.forEach(wrapper =>
+      bindShapeMenu(wrapper, () => this.toolManager.activeTool === this.toolManager.tools.shape)
+    );
+    textStyleWrappers.forEach(wrapper => bindShapeMenu(wrapper));
+    drawingModeWrappers.forEach(wrapper => bindShapeMenu(wrapper));
+    textModeWrappers.forEach(wrapper => bindShapeMenu(wrapper, () => true));
+
+    if (this.toolManager.tools.shape) {
+      updateShapeIcon(this.toolManager.tools.shape.shapeType);
+      const initialStyle = this.toolManager.tools.shape.getFillStyle?.() || 'solid';
+      applyShapeFillStyle(initialStyle);
     }
 
-    if (textModeToggle) {
-      textModeToggle.addEventListener('click', () => {
-        this.toolManager.selectTool('text');
+    shapeOptions.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const shape = btn.getAttribute('data-shape-option');
+        if (!shape || !this.toolManager.tools.shape) return;
+        this.toolManager.tools.shape.setShapeType(shape);
+        updateShapeIcon(shape);
       });
+    });
+
+    drawingModeOptions.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const mode = btn.getAttribute('data-drawing-mode');
+        if (!mode) return;
+        if (mode === 'curve') {
+          this.toolManager.selectTool('curve');
+          updateDrawingToggleLabels('Curved Line');
+        } else if (mode === 'privacy') {
+          this.toolManager.selectTool('privacy');
+          updateDrawingToggleLabels('Privacy Erase');
+        } else if (mode === 'select') {
+          this.toolManager.selectTool('select');
+          updateDrawingToggleLabels('Select');
+        } else {
+          this.toolManager.selectTool('line');
+          updateDrawingToggleLabels('Straight Line');
+        }
+        drawingModeOptions.forEach(item => item.classList.remove('active'));
+        btn.classList.add('active');
+        const wrapper = btn.closest('.shape-toggle');
+        if (wrapper) wrapper.classList.remove('shape-open');
+      });
+    });
+
+    textModeOptions.forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const size = btn.getAttribute('data-text-size');
+        if (!size) return;
+        const scale = textToolSizeMultipliers[size] || textToolSizeMultipliers.medium;
+        const fontSize = Math.max(12, Math.round(getCurrentTextSize() * scale));
+        const tool = await this.toolManager.ensureTool('text');
+        if (tool) {
+          tool.setFontSize(fontSize);
+        }
+        this.toolManager.updateSettings({ fontSize });
+        this.updateSelectedTextAndShapes({ fontSize });
+        this.toolManager.previousToolName = this.toolManager.activeToolName || 'line';
+        this.toolManager.selectTool('text');
+        syncTextCursor();
+        updateTextToggleState();
+        textModeOptions.forEach(item => item.classList.remove('active'));
+        btn.classList.add('active');
+        textModeWrappers.forEach(wrapper => {
+          wrapper.classList.remove('text-size-small', 'text-size-medium', 'text-size-large');
+          wrapper.classList.add(`text-size-${size}`);
+        });
+        const wrapper = btn.closest('.shape-toggle');
+        if (wrapper) wrapper.classList.remove('shape-open');
+      });
+    });
+
+    if (textModeOptions.length > 0) {
+      const defaultOption = Array.from(textModeOptions).find(
+        option => option.dataset.textSize === 'medium'
+      );
+      if (defaultOption) {
+        defaultOption.classList.add('active');
+      }
+      textModeWrappers.forEach(wrapper => wrapper.classList.add('text-size-medium'));
     }
+
+    shapeFillToggles.forEach(toggle => {
+      toggle.addEventListener('click', () => {
+        const tool = this.toolManager.tools.shape;
+        const currentStyle = tool?.getFillStyle?.() || 'solid';
+        const currentIndex = shapeFillStyles.indexOf(currentStyle);
+        const nextIndex = (currentIndex + 1) % shapeFillStyles.length;
+        applyShapeFillStyle(shapeFillStyles[nextIndex]);
+      });
+    });
+
+    window.addEventListener('toolchange', () => {
+      updateShapeAvailability();
+      if (this.toolManager.tools.shape) {
+        updateShapeIcon(this.toolManager.tools.shape.shapeType);
+      }
+      const currentTool = this.toolManager.activeTool;
+      if (currentTool === this.toolManager.tools.line) {
+        updateDrawingToggleLabels('Straight Line');
+      } else if (currentTool === this.toolManager.tools.curve) {
+        updateDrawingToggleLabels('Curved Line');
+      } else if (currentTool === this.toolManager.tools.privacy) {
+        updateDrawingToggleLabels('Privacy Erase');
+      } else if (currentTool === this.toolManager.tools.select) {
+        updateDrawingToggleLabels('Select');
+      }
+      syncTextCursor();
+      updateTextToggleState();
+    });
+
+    updateTextToggleState();
+
+    updateShapeAvailability();
 
     // Arrows - select Arrow tool
     const startArrowBtn = document.getElementById('startArrow');
@@ -291,16 +743,32 @@ class App {
     // Color Picker
     const colorPicker = document.getElementById('colorPicker');
     const colorButtons = document.querySelectorAll('[data-color]');
+    const textBgToggles = document.querySelectorAll('[data-text-bg-toggle]');
+
+    if (window.textBgEnabled === undefined) {
+      window.textBgEnabled = true;
+    }
 
     if (colorPicker) {
       colorPicker.addEventListener('input', e => {
         // Update tool settings for new strokes
         this.toolManager.updateSettings({ color: e.target.value });
 
+        if (this.toolManager?.tools?.shape) {
+          this.toolManager.tools.shape.setFillStyle('no-fill');
+        }
+
         // Update selected strokes if any are selected
         this.updateSelectedStrokes('color', e.target.value);
+
+        // Update selected text/shape elements
+        this.updateSelectedTextAndShapes({ color: e.target.value });
       });
     }
+
+    textBgToggles.forEach(toggle => {
+      toggle.checked = window.textBgEnabled === true;
+    });
 
     colorButtons.forEach(btn => {
       btn.addEventListener('click', () => {
@@ -308,10 +776,20 @@ class App {
 
         // Update tool settings for new strokes
         this.toolManager.updateSettings({ color: color });
-        if (colorPicker) colorPicker.value = color;
+        if (colorPicker) {
+          colorPicker.value = color;
+          colorPicker.dispatchEvent(new Event('change'));
+        }
+
+        if (this.toolManager?.tools?.shape) {
+          this.toolManager.tools.shape.setFillStyle('no-fill');
+        }
 
         // Update selected strokes if any are selected
         this.updateSelectedStrokes('color', color);
+
+        // Update selected text/shape elements
+        this.updateSelectedTextAndShapes({ color: color });
 
         // Update active state
         colorButtons.forEach(b => b.classList.remove('active', 'transform', 'scale-110'));
@@ -330,6 +808,9 @@ class App {
 
         // Update selected strokes if any are selected (handles both single and multi-selection)
         this.updateSelectedStrokes('strokeWidth', width);
+
+        // Update selected shape elements only (text ignores brush size)
+        this.updateSelectedTextAndShapes({ strokeWidth: width });
       });
     }
 
@@ -364,6 +845,9 @@ class App {
         }
         if (this.toolManager.tools.arrow) {
           this.toolManager.tools.arrow.setDashPattern(pattern);
+        }
+        if (this.toolManager.tools.shape) {
+          this.toolManager.tools.shape.setDashPattern(pattern);
         }
       });
     }
@@ -405,29 +889,157 @@ class App {
       }
     }, 100);
 
-    const saveProjectTop = document.getElementById('saveProjectTop');
-    if (saveProjectTop) {
-      saveProjectTop.addEventListener('click', () => {
-        console.log('[SaveButton] Clicked saveProjectTop');
-        if (this.projectManager?.saveProject) {
-          this.projectManager.saveProject();
-        } else {
-          console.warn('[SaveButton] projectManager.saveProject not available');
-        }
-      });
-    }
-
     // Make project manager available globally for image switching
     window.projectManager = this.projectManager;
     window.shareProject = () => this.projectManager.shareProject();
     window.updateSharedProject = () => this.projectManager.updateSharedProject();
-    window.saveFabricProject = () => this.projectManager.saveProject();
-    window.authManager = this.authManager;
-    window.cloudProjectManager = this.cloudProjectManager;
     window.app = this;
 
-    // Setup debug helpers
-    setupDebugHelpers(this);
+    // Copy Canvas button - copies image to clipboard (cropped to capture frame if present)
+    const copyCanvasBtn = document.getElementById('copyCanvasBtn');
+    if (copyCanvasBtn) {
+      copyCanvasBtn.addEventListener('click', async () => {
+        console.log('[Copy] Button clicked');
+        try {
+          const canvas = this.canvasManager?.fabricCanvas;
+          if (!canvas) {
+            console.error('[Copy] Canvas not available');
+            return;
+          }
+
+          // Visual feedback - subtle press animation
+          copyCanvasBtn.style.transform = 'scale(0.98)';
+          setTimeout(() => {
+            copyCanvasBtn.style.transform = '';
+          }, 100);
+
+          // Get icon elements for animation
+          const copyIcon = copyCanvasBtn.querySelector('#copyIcon');
+          const checkIcon = copyCanvasBtn.querySelector('#checkIcon');
+
+          // Get the capture frame if it exists
+          const captureFrame = document.getElementById('captureFrame');
+          const sourceCanvas = canvas.lowerCanvasEl;
+          let cropData = null;
+
+          if (captureFrame) {
+            const frameRect = captureFrame.getBoundingClientRect();
+            const canvasRect = sourceCanvas.getBoundingClientRect();
+
+            // Check if frame overlaps with canvas
+            if (
+              frameRect.left < canvasRect.right &&
+              frameRect.right > canvasRect.left &&
+              frameRect.top < canvasRect.bottom &&
+              frameRect.bottom > canvasRect.top
+            ) {
+              // Calculate crop area in canvas pixel coordinates
+              const scalePx = sourceCanvas.width / canvasRect.width;
+              const left = Math.max(frameRect.left, canvasRect.left);
+              const top = Math.max(frameRect.top, canvasRect.top);
+              const right = Math.min(frameRect.right, canvasRect.right);
+              const bottom = Math.min(frameRect.bottom, canvasRect.bottom);
+
+              cropData = {
+                x: Math.round((left - canvasRect.left) * scalePx),
+                y: Math.round((top - canvasRect.top) * scalePx),
+                width: Math.round((right - left) * scalePx),
+                height: Math.round((bottom - top) * scalePx),
+              };
+              console.log('[Copy] Cropping to frame:', cropData);
+            }
+          }
+
+          // Create a temporary canvas for the output
+          const tempCanvas = document.createElement('canvas');
+          const tempCtx = tempCanvas.getContext('2d');
+
+          if (cropData && cropData.width > 0 && cropData.height > 0) {
+            // Copy the cropped region
+            tempCanvas.width = cropData.width;
+            tempCanvas.height = cropData.height;
+            tempCtx.drawImage(
+              sourceCanvas,
+              cropData.x,
+              cropData.y,
+              cropData.width,
+              cropData.height,
+              0,
+              0,
+              cropData.width,
+              cropData.height
+            );
+          } else {
+            // Copy the entire canvas
+            tempCanvas.width = sourceCanvas.width;
+            tempCanvas.height = sourceCanvas.height;
+            tempCtx.drawImage(sourceCanvas, 0, 0);
+            console.log('[Copy] Copying full canvas:', tempCanvas.width, 'x', tempCanvas.height);
+          }
+
+          // Convert to blob and copy to clipboard
+          const blob = await new Promise((resolve, reject) => {
+            tempCanvas.toBlob(b => {
+              if (b) resolve(b);
+              else reject(new Error('Failed to create blob'));
+            }, 'image/png');
+          });
+
+          console.log('[Copy] Blob created, size:', blob.size);
+
+          if (navigator.clipboard && window.ClipboardItem) {
+            await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+            console.log('[Copy] Successfully copied to clipboard');
+
+            // Show success feedback
+            if (this.projectManager?.showStatusMessage) {
+              this.projectManager.showStatusMessage('Image copied to clipboard!', 'success');
+            }
+
+            // Visual success feedback - icon transition to checkmark
+            if (copyIcon && checkIcon) {
+              copyIcon.classList.add('opacity-0', 'scale-50');
+              copyIcon.classList.remove('opacity-90', 'scale-100');
+              checkIcon.classList.remove('opacity-0', 'scale-50');
+              checkIcon.classList.add('opacity-100', 'scale-100');
+
+              // Transition back to copy icon after delay
+              setTimeout(() => {
+                checkIcon.classList.add('opacity-0', 'scale-50');
+                checkIcon.classList.remove('opacity-100', 'scale-100');
+                copyIcon.classList.remove('opacity-0', 'scale-50');
+                copyIcon.classList.add('opacity-90', 'scale-100');
+              }, 1500);
+            }
+          } else {
+            console.warn('[Copy] Clipboard API not supported');
+            if (this.projectManager?.showStatusMessage) {
+              this.projectManager.showStatusMessage(
+                'Clipboard not supported in this browser',
+                'error'
+              );
+            }
+          }
+        } catch (error) {
+          console.error('[Copy] Failed to copy to clipboard:', error);
+          if (this.projectManager?.showStatusMessage) {
+            this.projectManager.showStatusMessage(
+              'Failed to copy image: ' + error.message,
+              'error'
+            );
+          }
+
+          // Visual error feedback - subtle shake animation
+          copyCanvasBtn.style.animation = 'shake 0.3s ease-in-out';
+          setTimeout(() => {
+            copyCanvasBtn.style.animation = '';
+          }, 300);
+        }
+      });
+      console.log('[main.js] Copy canvas button event listener added');
+    } else {
+      console.warn('[main.js] Copy canvas button not found');
+    }
   }
 
   setupUnitToggle() {
@@ -511,8 +1123,8 @@ class App {
   }
 
   setupKeyboardShortcuts() {
-    // Tab key cycles through drawing modes: Straight Line -> Curved Line -> Select -> Straight Line
-    // Tab key cycles through drawing modes: Straight Line -> Curved Line -> Select -> Straight Line
+    // Tab key cycles through drawing modes: Straight Line -> Curved Line -> Shapes -> Select -> Straight Line
+    // Tab key cycles through drawing modes: Straight Line -> Curved Line -> Shapes -> Select -> Straight Line
     // Use capture phase to ensure we catch it before anything else
     window.addEventListener(
       'keydown',
@@ -583,6 +1195,10 @@ class App {
         shortSpan.textContent = 'Straight';
       } else if (text === 'Curved Line') {
         shortSpan.textContent = 'Curved';
+      } else if (text === 'Privacy Erase') {
+        shortSpan.textContent = 'Erase';
+      } else if (text === 'Shapes') {
+        shortSpan.textContent = 'Shapes';
       } else if (text === 'Select') {
         shortSpan.textContent = 'Select';
       } else {
@@ -614,6 +1230,12 @@ class App {
         e.target.tagName === 'TEXTAREA' ||
         e.target.isContentEditable
       ) {
+        return;
+      }
+
+      // Don't interfere if text tool is actively editing
+      const textTool = this.toolManager?.tools?.text;
+      if (textTool?.activeTextObject?.isEditing) {
         return;
       }
 
@@ -761,7 +1383,7 @@ class App {
             <div style="margin-bottom: 20px;">
                 <h3 style="color: #555; font-size: 16px; margin-bottom: 10px; font-weight: 600;">Drawing Tools</h3>
                 <div style="display: grid; grid-template-columns: auto 1fr; gap: 8px 16px; font-size: 14px;">
-                    <kbd>Tab</kbd><span>Cycle through drawing modes (Line → Curve → Select)</span>
+                    <kbd>Tab</kbd><span>Cycle through drawing modes (Line → Curve → Shapes → Select)</span>
                 </div>
             </div>
             
@@ -846,8 +1468,7 @@ class App {
   }
 }
 
-// Start the app when DOM is ready
-document.addEventListener('DOMContentLoaded', () => {
+function startApp() {
   window.app = new App();
 
   // Explicitly show panels to prevent them from being hidden by CSS
@@ -864,4 +1485,11 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
   });
-});
+}
+
+// Start the app when DOM is ready, or immediately if it already fired.
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', startApp, { once: true });
+} else {
+  startApp();
+}

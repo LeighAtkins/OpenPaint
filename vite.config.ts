@@ -34,6 +34,7 @@ export default defineConfig(({ mode }) => {
         '@/stores': path.resolve(__dirname, './src/stores'),
         '@/constants': path.resolve(__dirname, './src/constants'),
         '@/hooks': path.resolve(__dirname, './src/hooks'),
+        '@/features': path.resolve(__dirname, './src/features'),
       },
     },
 
@@ -44,7 +45,7 @@ export default defineConfig(({ mode }) => {
 
     build: {
       target: 'ES2022',
-      sourcemap: true,
+      sourcemap: mode !== 'production',
       minify: 'terser',
       terserOptions: {
         compress: {
@@ -58,19 +59,11 @@ export default defineConfig(({ mode }) => {
             supabase: ['@supabase/supabase-js'],
           },
         },
-        external: ['fabric'], // Fabric.js is loaded via CDN
       },
     },
 
     optimizeDeps: {
-      exclude: [
-        'fabric', // Don't try to bundle Fabric.js
-        // Exclude public JS files from dependency scanning
-        '/js/modules/main.js',
-        'js/modules/main.js',
-        '/js/typescript-bridge.js',
-        'js/typescript-bridge.js',
-      ],
+      exclude: ['debug'],
     },
 
     server: {

@@ -159,20 +159,10 @@ app.get('/share/:shareId', (req, res) => {
 
 // Proxy to remove background service
 app.post('/remove-background', async (req, res) => {
-  try {
-    const origin = process.env.REMBG_ORIGIN || 'https://sofapaint-api.leigh-atkins.workers.dev';
-    const response = await fetch(`${origin}/remove-background`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', 'x-api-key': 'dev-secret' },
-      body: JSON.stringify(req.body || {}),
-    });
-    const ct = response.headers.get('content-type') || 'application/octet-stream';
-    const buf = Buffer.from(await response.arrayBuffer());
-    res.status(response.status).setHeader('content-type', ct).send(buf);
-  } catch (error) {
-    console.error('[RemBG] Error:', error);
-    res.status(500).json({ success: false, message: 'Background removal failed' });
-  }
+  return res.status(410).json({
+    success: false,
+    message: 'Background removal has been removed. Use the Privacy Erase tool instead.',
+  });
 });
 
 // Direct upload proxy

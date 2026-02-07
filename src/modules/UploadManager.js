@@ -1,6 +1,8 @@
 // Upload Manager
 // Handles file selection, drag/drop, paste uploads, and HEIC conversion via Cloudflare Worker
 
+import { imageRegistry } from './ImageRegistry.js';
+
 const DEFAULT_HEIC_WORKER_URL = 'https://YOUR-CLOUDFLARE-WORKER.example.com/convert';
 const VIEW_PREFERENCE = ['front', 'side', 'back', 'cushion'];
 
@@ -25,7 +27,21 @@ export class UploadManager {
       return;
     }
 
-    uploadButton.addEventListener('click', () => this.openFileDialog());
+    // Check if paint_backup.js already bound an upload handler
+    // to prevent double file picker dialog
+    if (uploadButton.__uploadBound) {
+      console.log('[UploadManager] Upload button already bound by legacy system, skipping.');
+    } else {
+      uploadButton.__uploadBound = true;
+      uploadButton.addEventListener('click', () => this.openFileDialog());
+    }
+
+    // Also bind the secondary upload button if it exists
+    const secondaryButton = document.getElementById('paste-secondary');
+    if (secondaryButton && !secondaryButton.__uploadBound) {
+      secondaryButton.__uploadBound = true;
+      secondaryButton.addEventListener('click', () => this.openFileDialog());
+    }
   }
 
   setupDragAndDrop() {
@@ -82,7 +98,24 @@ export class UploadManager {
     const files = Array.from(fileList || []);
     if (!files.length) return;
 
+    if (window.app && !window.app.hasUploadedFirstImage) {
+      window.app.hasUploadedFirstImage = true;
+      if (typeof performance !== 'undefined' && performance.mark) {
+        performance.mark('app-first-upload');
+        if (performance.measure) {
+          try {
+            performance.measure('first-paint->first-upload', 'app-first-paint', 'app-first-upload');
+            window.app?.logPerfMeasure?.('first-paint->first-upload');
+          } catch (error) {
+            console.warn('[Perf] Measure first upload failed', error);
+          }
+        }
+      }
+      window.dispatchEvent(new CustomEvent('firstupload'));
+    }
+
     this.isHandlingUpload = true;
+
     this.showStatus(`Uploading ${files.length} image${files.length > 1 ? 's' : ''}…`, 'info');
 
     // Remember the current view before uploads to preserve it
@@ -124,11 +157,33 @@ export class UploadManager {
 
   async processFile(file, options = {}) {
     const { preserveCurrentView = false, currentViewBeforeUpload = null } = options;
+    const perfId = `${file.name}-${Date.now()}`;
+    const canMark = typeof performance !== 'undefined' && performance.mark;
+
+    if (canMark) {
+      performance.mark(`upload-start:${perfId}`);
+    }
 
     let workingFile = file;
 
     if (this.isHeicFile(file)) {
+      if (canMark) {
+        performance.mark(`upload-heic-start:${perfId}`);
+      }
       workingFile = await this.convertHeicFile(file);
+      if (canMark && performance.measure) {
+        try {
+          performance.mark(`upload-heic-end:${perfId}`);
+          performance.measure(
+            'upload-heic-convert',
+            `upload-heic-start:${perfId}`,
+            `upload-heic-end:${perfId}`
+          );
+          window.app?.logPerfMeasure?.('upload-heic-convert');
+        } catch (error) {
+          console.warn('[Perf] Measure HEIC convert failed', error);
+        }
+      }
     }
 
     const objectUrl = URL.createObjectURL(workingFile);
@@ -136,30 +191,118 @@ export class UploadManager {
     const hadExistingImage = !!this.projectManager.views?.[viewId]?.image;
     const isCurrentView = this.projectManager.currentViewId === viewId;
 
-    // Add image to ProjectManager (but don't switch views automatically)
-    await this.projectManager.addImage(viewId, objectUrl, {
-      refreshBackground: isCurrentView, // Only refresh if this is the current view
-    });
-
     const displayName = this.formatDisplayName(workingFile.name, viewId);
 
-    // Add to new gallery system
-    if (typeof window.addImageToGalleryCompat === 'function') {
-      window.addImageToGalleryCompat({
-        src: objectUrl,
-        name: displayName,
-        original: {
-          label: viewId,
-          filename: workingFile.name,
-          type: workingFile.type,
-          uploadedAt: new Date().toISOString(),
-        },
+    const useRegistry = typeof imageRegistry?.isEnabled === 'function' && imageRegistry.isEnabled();
+
+    if (useRegistry) {
+      if (canMark) {
+        performance.mark(`upload-register-start:${perfId}`);
+      }
+
+      await imageRegistry.registerImage(viewId, objectUrl, displayName, {
+        source: 'upload',
+        refreshBackground: isCurrentView,
+        mimeType: workingFile.type,
+        originalFilename: workingFile.name,
+        uploadedAt: new Date().toISOString(),
       });
+
+      if (canMark && performance.measure) {
+        try {
+          performance.mark(`upload-register-end:${perfId}`);
+          performance.measure(
+            'upload-register',
+            `upload-register-start:${perfId}`,
+            `upload-register-end:${perfId}`
+          );
+          window.app?.logPerfMeasure?.('upload-register');
+        } catch (error) {
+          console.warn('[Perf] Measure upload register failed', error);
+        }
+      }
+    } else {
+      if (canMark) {
+        performance.mark(`upload-project-start:${perfId}`);
+      }
+
+      // Add image to ProjectManager (but don't switch views automatically)
+      await this.projectManager.addImage(viewId, objectUrl, {
+        refreshBackground: isCurrentView, // Only refresh if this is the current view
+      });
+
+      if (canMark && performance.measure) {
+        try {
+          performance.mark(`upload-project-end:${perfId}`);
+          performance.measure(
+            'upload-project-add',
+            `upload-project-start:${perfId}`,
+            `upload-project-end:${perfId}`
+          );
+          window.app?.logPerfMeasure?.('upload-project-add');
+        } catch (error) {
+          console.warn('[Perf] Measure project add failed', error);
+        }
+      }
+
+      if (canMark) {
+        performance.mark(`upload-gallery-start:${perfId}`);
+      }
+
+      // Add to new gallery system
+      if (typeof window.addImageToGalleryCompat === 'function') {
+        window.addImageToGalleryCompat({
+          src: objectUrl,
+          name: displayName,
+          original: {
+            label: viewId,
+            filename: workingFile.name,
+            type: workingFile.type,
+            uploadedAt: new Date().toISOString(),
+          },
+        });
+      }
+
+      if (canMark && performance.measure) {
+        try {
+          performance.mark(`upload-gallery-end:${perfId}`);
+          performance.measure(
+            'upload-gallery-add',
+            `upload-gallery-start:${perfId}`,
+            `upload-gallery-end:${perfId}`
+          );
+          window.app?.logPerfMeasure?.('upload-gallery-add');
+        } catch (error) {
+          console.warn('[Perf] Measure gallery add failed', error);
+        }
+      }
+
+      if (canMark) {
+        performance.mark(`upload-sidebar-start:${perfId}`);
+      }
+
+      // Also add to legacy sidebar system (for imageList and mini-stepper)
+      if (typeof window.addImageToSidebar === 'function') {
+        window.addImageToSidebar(objectUrl, viewId, displayName);
+      }
+
+      if (canMark && performance.measure) {
+        try {
+          performance.mark(`upload-sidebar-end:${perfId}`);
+          performance.measure(
+            'upload-sidebar-add',
+            `upload-sidebar-start:${perfId}`,
+            `upload-sidebar-end:${perfId}`
+          );
+          window.app?.logPerfMeasure?.('upload-sidebar-add');
+        } catch (error) {
+          console.warn('[Perf] Measure sidebar add failed', error);
+        }
+      }
     }
 
-    // Also add to legacy sidebar system (for imageList and mini-stepper)
-    if (typeof window.addImageToSidebar === 'function') {
-      window.addImageToSidebar(objectUrl, viewId, displayName);
+    if (canMark) {
+      performance.mark(`upload-switch-start:${perfId}`);
     }
 
     // Only switch to this view if:
@@ -175,6 +318,30 @@ export class UploadManager {
     } else if (isCurrentView) {
       // If we're already on this view, just ensure the image is displayed
       await this.projectManager.setBackgroundImage(objectUrl);
+    }
+
+    if (canMark && performance.measure) {
+      try {
+        performance.mark(`upload-switch-end:${perfId}`);
+        performance.measure(
+          'upload-view-refresh',
+          `upload-switch-start:${perfId}`,
+          `upload-switch-end:${perfId}`
+        );
+        window.app?.logPerfMeasure?.('upload-view-refresh');
+      } catch (error) {
+        console.warn('[Perf] Measure view refresh failed', error);
+      }
+    }
+
+    if (canMark && performance.measure) {
+      try {
+        performance.mark(`upload-end:${perfId}`);
+        performance.measure('upload-total', `upload-start:${perfId}`, `upload-end:${perfId}`);
+        window.app?.logPerfMeasure?.('upload-total');
+      } catch (error) {
+        console.warn('[Perf] Measure upload total failed', error);
+      }
     }
 
     // Release object URL after Fabric loads it - DISABLED to prevent ERR_FILE_NOT_FOUND when switching views

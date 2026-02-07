@@ -175,6 +175,7 @@ export class ArrowTool extends BaseTool {
       originY: 'center',
       selectable: true, // Make selectable for moving/deleting
       evented: true,
+      perPixelTargetFind: true, // Only select when clicking the actual arrow
     });
 
     this.canvas.remove(this.line, this.head);
@@ -196,7 +197,10 @@ export class ArrowTool extends BaseTool {
       const imageLabel = window.app.projectManager.currentViewId || 'front';
 
       // Set currentImageLabel for tag prediction system
-      window.currentImageLabel = imageLabel;
+      window.currentImageLabel =
+        (typeof window.getCaptureTabScopedLabel === 'function' &&
+          window.getCaptureTabScopedLabel(imageLabel)) ||
+        imageLabel;
 
       const strokeLabel = window.app.metadataManager.getNextLabel(imageLabel);
       window.app.metadataManager.attachMetadata(group, imageLabel, strokeLabel);
