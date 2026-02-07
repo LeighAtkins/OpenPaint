@@ -41,8 +41,7 @@ describe.skip('Drawing Workflows Integration Tests', () => {
       },
     };
 
-    // Load the paint.js functions
-    require('../../public/js/paint.js');
+    // TODO: These tests need rewriting — paint.js was split into manager classes in src/modules/
   });
 
   describe('Straight Line Drawing Workflow', () => {

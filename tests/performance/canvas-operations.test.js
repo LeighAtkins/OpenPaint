@@ -18,8 +18,7 @@ describe('Canvas Performance Tests', () => {
     window.imageScaleByLabel = { test_1: 1.0 };
     window.imagePositionByLabel = { test_1: { x: 0, y: 0 } };
 
-    // Load paint.js functions
-    require('../../public/js/paint.js');
+    // TODO: These tests need rewriting — paint.js was split into manager classes in src/modules/
   });
 
   test('should render 100+ strokes within performance budget', () => {

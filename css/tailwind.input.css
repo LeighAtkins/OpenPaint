@@ -1,7 +1,5 @@
 @import 'tailwindcss';
 
 @source "../index.html";
-@source "../js/**/*.{js,ts}";
-@source "../public/js/**/*.{js,ts}";
 @source "../src/**/*.{js,ts,jsx,tsx}";
 @source "../server/**/*.{js,ts}";

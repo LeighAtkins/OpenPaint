@@ -151,7 +151,7 @@ PASS tests/unit/stroke-management.test.js
 ### Jest Configuration (`jest.config.js`)
 - **Environment**: jsdom for DOM testing
 - **Setup**: Canvas mocking and global setup
-- **Coverage**: Focused on `public/js/**/*.js` files
+- **Coverage**: Focused on `src/modules/**/*.js` files
 - **Module mapping**: CSS and asset mocking
 
 ### Cypress Configuration (`cypress.config.js`)
