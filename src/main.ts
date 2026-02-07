@@ -96,9 +96,9 @@ import './modules/ui/image-gallery.js';
 import './modules/ui/scroll-select-system.js';
 import './modules/ui/mini-stepper.js';
 import './modules/ui/status-message.js';
-import './modules/utils/transform.js';
-import './modules/utils/geometry.js';
-import './modules/utils/migration.js';
+import './modules/utils/transform';
+import './modules/utils/geometry';
+import './modules/utils/migration';
 import './modules/ai/ai-integration.js';
 
 // ── 6. Core application ────────────────────────────────────────────────────

@@ -1,4 +1,14 @@
-function drawArrowLine(ctx, startX, startY, endX, endY, color, lineWidth, arrowStart, arrowEnd) {
+export function drawArrowLine(
+  ctx: CanvasRenderingContext2D,
+  startX: number,
+  startY: number,
+  endX: number,
+  endY: number,
+  color: string,
+  lineWidth: number,
+  arrowStart: boolean,
+  arrowEnd: boolean
+): void {
   ctx.save();
   ctx.strokeStyle = color;
   ctx.lineWidth = lineWidth;
@@ -55,7 +65,16 @@ function drawArrowLine(ctx, startX, startY, endX, endY, color, lineWidth, arrowS
   ctx.restore();
 }
 
-function drawArrowhead(ctx, x, y, dirX, dirY, length, width, color) {
+export function drawArrowhead(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  dirX: number,
+  dirY: number,
+  length: number,
+  width: number,
+  color: string
+): void {
   ctx.save();
   ctx.fillStyle = color;
 
