@@ -1,7 +1,26 @@
 /**
- * PathUtils.js
+ * PathUtils.ts
  * Utilities for generating SVG paths and geometric calculations
  */
+
+import type { fabric as FabricNamespace } from 'fabric';
+import type { Group, Line, Object as FabricObject, Path } from 'fabric/fabric-impl';
+
+declare const fabric: FabricNamespace;
+
+export interface Point {
+  x: number;
+  y: number;
+}
+
+export type PathSegment =
+  | ['M', number, number]
+  | ['L', number, number]
+  | ['C', number, number, number, number, number, number]
+  | ['Q', number, number, number, number]
+  | [string, ...number[]];
+
+export type PathData = PathSegment[];
 
 export class PathUtils {
   /**
@@ -10,7 +29,7 @@ export class PathUtils {
    * @param {number} tension - Curve tension (0 = sharp corners, 1 = smooth). Default 0.5
    * @returns {string} SVG path string
    */
-  static createSmoothPath(points, tension = 0.5) {
+  static createSmoothPath(points: Point[] | null | undefined, tension = 0.5): string {
     if (!points || points.length < 2) return '';
 
     // Start path
@@ -48,7 +67,7 @@ export class PathUtils {
    * @param {Object} p2 - Second point {x, y}
    * @returns {number} Distance in pixels
    */
-  static calculateDistance(p1, p2) {
+  static calculateDistance(p1: Point, p2: Point): number {
     const dx = p1.x - p2.x;
     const dy = p1.y - p2.y;
     return Math.sqrt(dx * dx + dy * dy);
@@ -60,17 +79,17 @@ export class PathUtils {
    * @param {Object} targetPoint - Target point {x, y}
    * @returns {Object} Closest point {x, y}
    */
-  static getClosestStrokeEndpoint(strokeObj, targetPoint) {
+  static getClosestStrokeEndpoint(strokeObj: FabricObject, targetPoint: Point): Point {
     if (strokeObj.type === 'line') {
-      return PathUtils.getClosestPointOnLine(strokeObj, targetPoint);
+      return PathUtils.getClosestPointOnLine(strokeObj as Line, targetPoint);
     } else if (strokeObj.type === 'group') {
-      const objects = strokeObj.getObjects();
-      const lineObj = objects.find(obj => obj.type === 'line');
+      const objects = (strokeObj as Group).getObjects();
+      const lineObj = objects.find(obj => obj.type === 'line') as Line | undefined;
       if (lineObj) {
-        return PathUtils.getClosestPointOnGroupLine(strokeObj, lineObj, targetPoint);
+        return PathUtils.getClosestPointOnGroupLine(strokeObj as Group, lineObj, targetPoint);
       }
     } else if (strokeObj.type === 'path') {
-      return PathUtils.getClosestPointOnPath(strokeObj, targetPoint);
+      return PathUtils.getClosestPointOnPath(strokeObj as Path, targetPoint);
     }
 
     // Fallback to bounding box
@@ -87,7 +106,7 @@ export class PathUtils {
    * @param {Object} targetPoint - Target point {x, y}
    * @returns {Object} Closest point {x, y}
    */
-  static getClosestPointOnLine(lineObj, targetPoint) {
+  static getClosestPointOnLine(lineObj: Line, targetPoint: Point): Point {
     const points = lineObj.calcLinePoints();
 
     // Calculate absolute center of the line
@@ -153,7 +172,7 @@ export class PathUtils {
    * @param {Object} targetPoint - Target point {x, y}
    * @returns {Object} Closest point {x, y}
    */
-  static getClosestPointOnGroupLine(groupObj, lineObj, targetPoint) {
+  static getClosestPointOnGroupLine(groupObj: Group, lineObj: Line, targetPoint: Point): Point {
     const points = lineObj.calcLinePoints();
 
     // Transform from Line Local to Group Local
@@ -209,7 +228,7 @@ export class PathUtils {
    * @param {Object} targetPoint - Target point {x, y}
    * @returns {Object} Closest point {x, y}
    */
-  static getClosestPointOnPath(pathObj, targetPoint) {
+  static getClosestPointOnPath(pathObj: Path, targetPoint: Point): Point {
     if (pathObj.path && pathObj.path.length > 0) {
       const sampledPoints = PathUtils.samplePathPoints(pathObj, 30);
       if (sampledPoints.length > 0) {
@@ -226,7 +245,7 @@ export class PathUtils {
    * @param {Object} targetPoint - Target point {x, y}
    * @returns {Object} Closest point {x, y}
    */
-  static getClosestPointFromArray(points, targetPoint) {
+  static getClosestPointFromArray(points: Point[], targetPoint: Point): Point {
     if (points.length === 0) return targetPoint;
 
     let closestPoint = points[0];
@@ -252,9 +271,11 @@ export class PathUtils {
    * @param {number} numSamples - Number of samples
    * @returns {Array<Object>} Array of sampled points {x, y}
    */
-  static samplePathPoints(pathObj, numSamples = 30) {
-    const points = [];
-    const pathData = pathObj.path;
+  static samplePathPoints(pathObj: Path, numSamples = 30): Point[] {
+    const points: Point[] = [];
+    const pathData = (pathObj.path as unknown as PathData | undefined) ?? [];
+    const lineSamples = Math.max(2, Math.round(numSamples / 6));
+    const curveSamples = Math.max(4, Math.round(numSamples / 3));
 
     let centerAbs = pathObj.getCenterPoint();
     if (pathObj.group) {
@@ -272,7 +293,7 @@ export class PathUtils {
 
     const centerBuggy = fabric.util.transformPoint(pathCenterLocal, matrix);
 
-    const transformToAbsolute = p => {
+    const transformToAbsolute = (p: Point): Point => {
       const pBuggy = fabric.util.transformPoint(p, matrix);
       const vec = {
         x: pBuggy.x - centerBuggy.x,
@@ -294,20 +315,20 @@ export class PathUtils {
         points.push(transformToAbsolute(currentPoint));
       } else if (command === 'L') {
         const endPoint = { x: segment[1], y: segment[2] };
-        const samples = PathUtils.sampleLine(currentPoint, endPoint, 5);
+        const samples = PathUtils.sampleLine(currentPoint, endPoint, lineSamples);
         samples.forEach(p => points.push(transformToAbsolute(p)));
         currentPoint = endPoint;
       } else if (command === 'C') {
         const cp1 = { x: segment[1], y: segment[2] };
         const cp2 = { x: segment[3], y: segment[4] };
         const endPoint = { x: segment[5], y: segment[6] };
-        const samples = PathUtils.sampleCubicBezier(currentPoint, cp1, cp2, endPoint, 10);
+        const samples = PathUtils.sampleCubicBezier(currentPoint, cp1, cp2, endPoint, curveSamples);
         samples.forEach(p => points.push(transformToAbsolute(p)));
         currentPoint = endPoint;
       } else if (command === 'Q') {
         const cp = { x: segment[1], y: segment[2] };
         const endPoint = { x: segment[3], y: segment[4] };
-        const samples = PathUtils.sampleQuadraticBezier(currentPoint, cp, endPoint, 10);
+        const samples = PathUtils.sampleQuadraticBezier(currentPoint, cp, endPoint, curveSamples);
         samples.forEach(p => points.push(fabric.util.transformPoint(p, matrix)));
         currentPoint = endPoint;
       }
@@ -319,8 +340,8 @@ export class PathUtils {
   /**
    * Sample points along a line segment
    */
-  static sampleLine(p0, p1, numSamples = 5) {
-    const points = [];
+  static sampleLine(p0: Point, p1: Point, numSamples = 5): Point[] {
+    const points: Point[] = [];
     for (let i = 0; i <= numSamples; i++) {
       const t = i / numSamples;
       points.push({
@@ -334,8 +355,8 @@ export class PathUtils {
   /**
    * Sample points along a cubic Bezier curve
    */
-  static sampleCubicBezier(p0, cp1, cp2, p1, numSamples = 10) {
-    const points = [];
+  static sampleCubicBezier(p0: Point, cp1: Point, cp2: Point, p1: Point, numSamples = 10): Point[] {
+    const points: Point[] = [];
     for (let i = 0; i <= numSamples; i++) {
       const t = i / numSamples;
       points.push(PathUtils.cubicBezierPoint(p0, cp1, cp2, p1, t));
@@ -346,7 +367,7 @@ export class PathUtils {
   /**
    * Calculate point on cubic Bezier curve at parameter t (0 to 1)
    */
-  static cubicBezierPoint(p0, cp1, cp2, p1, t) {
+  static cubicBezierPoint(p0: Point, cp1: Point, cp2: Point, p1: Point, t: number): Point {
     const t2 = t * t;
     const t3 = t2 * t;
     const mt = 1 - t;
@@ -362,8 +383,8 @@ export class PathUtils {
   /**
    * Sample points along a quadratic Bezier curve
    */
-  static sampleQuadraticBezier(p0, cp, p1, numSamples = 10) {
-    const points = [];
+  static sampleQuadraticBezier(p0: Point, cp: Point, p1: Point, numSamples = 10): Point[] {
+    const points: Point[] = [];
     for (let i = 0; i <= numSamples; i++) {
       const t = i / numSamples;
       points.push(PathUtils.quadraticBezierPoint(p0, cp, p1, t));
@@ -374,7 +395,7 @@ export class PathUtils {
   /**
    * Calculate point on quadratic Bezier curve at parameter t (0 to 1)
    */
-  static quadraticBezierPoint(p0, cp, p1, t) {
+  static quadraticBezierPoint(p0: Point, cp: Point, p1: Point, t: number): Point {
     const mt = 1 - t;
     const mt2 = mt * mt;
     const t2 = t * t;
@@ -388,7 +409,7 @@ export class PathUtils {
   /**
    * Get closest point on bounding box (fallback)
    */
-  static getClosestPointOnBoundingBox(pathObj, targetPoint) {
+  static getClosestPointOnBoundingBox(pathObj: FabricObject, targetPoint: Point): Point {
     const bounds = pathObj.getBoundingRect();
     const centerX = bounds.left + bounds.width / 2;
     const centerY = bounds.top + bounds.height / 2;
