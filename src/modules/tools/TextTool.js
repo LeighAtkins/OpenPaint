@@ -71,9 +71,8 @@ export class TextTool extends BaseTool {
       const activeText = this.activeTextObject;
       if (activeText.isEditing) {
         // exitEditing() triggers editing:exited event synchronously,
-        // which calls handleEditingExited -> returnToPreviousTool -> deactivates this tool
+        // which calls handleEditingExited and sets skipNextClick
         activeText.exitEditing();
-        // After exitEditing, tool may have been switched - check if still active
         if (!this.isActive) return;
       }
       // Check if activeTextObject was cleared by the event handler
@@ -184,35 +183,8 @@ export class TextTool extends BaseTool {
     }
 
     this.activeTextObject = null;
+    this.skipNextClick = true;
     this.canvas.requestRenderAll();
-    this.returnToPreviousTool();
-  }
-
-  returnToPreviousTool() {
-    if (!window.app || !window.app.toolManager) return;
-
-    const toolManager = window.app.toolManager;
-    const previousTool = toolManager.previousToolName || 'line';
-
-    // Map tool names to toggle labels
-    const toolLabels = {
-      line: 'Straight Line',
-      curve: 'Curved Line',
-      select: 'Select',
-    };
-
-    // Switch to previous tool
-    toolManager.selectTool(previousTool);
-
-    // Update toggle label
-    const drawingModeToggle = document.getElementById('drawingModeToggle');
-    if (drawingModeToggle && window.app.updateToggleLabel) {
-      const label = toolLabels[previousTool] || 'Straight Line';
-      window.app.updateToggleLabel(drawingModeToggle, label);
-    }
-
-    // Clear previous tool reference
-    toolManager.previousToolName = null;
   }
 
   setColor(color) {
