@@ -1,0 +1,13 @@
+diff --git a/node_modules/fabric/dist/fabric.js b/node_modules/fabric/dist/fabric.js
+index faee7fc..854748f 100644
+--- a/node_modules/fabric/dist/fabric.js
++++ b/node_modules/fabric/dist/fabric.js
+@@ -26462,7 +26462,7 @@ fabric.Image.filters.BaseFilter.fromObject = function(object, callback) {
+      * @param {String} [charStyle.fontStyle] Font style (italic|normal)
+      */
+     _setTextStyles: function(ctx, charStyle, forMeasuring) {
+-      ctx.textBaseline = 'alphabetical';
++      ctx.textBaseline = 'alphabetic';
+       if (this.path) {
+         switch (this.pathAlign) {
+           case 'center':

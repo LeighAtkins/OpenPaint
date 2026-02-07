@@ -11,34 +11,6 @@ export class HistoryManager {
     this.lastStateSignature = null;
   }
 
-  sanitizeCanvasJSON(canvasJSON) {
-    if (!canvasJSON || typeof canvasJSON !== 'object') return canvasJSON;
-    const visited = new Set();
-    const sanitize = value => {
-      if (!value || typeof value !== 'object') return value;
-      if (visited.has(value)) return value;
-      visited.add(value);
-
-      if (Array.isArray(value)) {
-        value.forEach(sanitize);
-        return value;
-      }
-
-      Object.keys(value).forEach(key => {
-        const current = value[key];
-        if (key === 'textBaseline' && current === 'alphabetical') {
-          value[key] = 'alphabetic';
-        } else if (current && typeof current === 'object') {
-          sanitize(current);
-        }
-      });
-
-      return value;
-    };
-
-    return sanitize(canvasJSON);
-  }
-
   init() {
     // Listen for object modifications to auto-save state
     const canvas = this.canvasManager.fabricCanvas;
@@ -114,7 +86,7 @@ export class HistoryManager {
     }
 
     // Save both Fabric canvas state and metadata
-    const canvasJSON = this.sanitizeCanvasJSON(this.canvasManager.toJSON());
+    const canvasJSON = this.canvasManager.toJSON();
     const metadata = window.app?.metadataManager
       ? {
           vectorStrokesByImage: JSON.parse(
@@ -201,9 +173,6 @@ export class HistoryManager {
       // Get previous state
       const prevStateStr = this.undoStack[this.undoStack.length - 1];
       const prevState = JSON.parse(prevStateStr);
-      if (prevState?.canvas) {
-        prevState.canvas = this.sanitizeCanvasJSON(prevState.canvas);
-      }
       this.lastStateSignature = prevState?.signature || this.buildStateSignature(prevState?.canvas);
 
       // Restore canvas
@@ -256,9 +225,6 @@ export class HistoryManager {
       const nextStateStr = this.redoStack.pop();
       this.undoStack.push(nextStateStr);
       const nextState = JSON.parse(nextStateStr);
-      if (nextState?.canvas) {
-        nextState.canvas = this.sanitizeCanvasJSON(nextState.canvas);
-      }
       this.lastStateSignature = nextState?.signature || this.buildStateSignature(nextState?.canvas);
 
       // Restore canvas
