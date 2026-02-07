@@ -20,6 +20,17 @@ export default defineConfig(({ mode }) => {
       //     position: 'br',
       //   },
       // }),
+
+      // Fabric.js 5.x uses 'alphabetical' but Canvas2D spec requires 'alphabetic'
+      // Vite skips node_modules for transform(), so we patch final chunks via renderChunk()
+      {
+        name: 'fix-fabric-textbaseline',
+        renderChunk(code) {
+          if (code.includes('alphabetical')) {
+            return code.replaceAll('alphabetical', 'alphabetic');
+          }
+        },
+      },
     ],
 
     // Serve static files from public directory
