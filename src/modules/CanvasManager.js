@@ -1696,16 +1696,6 @@ export class CanvasManager {
   }
 
   /**
-   * Public resize method called by main app
-   */
-  resize() {
-    console.log('[CanvasManager] resize() called');
-    const { width, height } = this.calculateAvailableSize();
-    console.log(`[CanvasManager] Calculated available size: ${width}x${height}`);
-    this.applyResize(width, height);
-  }
-
-  /**
    * Apply resize with debouncing and smooth transitions
    */
   applyResize(width, height) {
