@@ -52,8 +52,6 @@ export class CanvasManager {
       return;
     }
 
-    this.ensureBaselineSanitizer();
-
     // Ensure canvas element exists
     const canvasEl = document.getElementById(this.canvasId);
     if (!canvasEl) {
@@ -1192,85 +1190,6 @@ export class CanvasManager {
 
     // Setup ResizeObserver to handle flex layout changes
     this.setupResizeObserver();
-  }
-
-  ensureBaselineSanitizer() {
-    const fabricGlobal = globalThis.fabric;
-    if (!fabricGlobal?.Text?.prototype) return;
-    const prototypes = [fabricGlobal.Text, fabricGlobal.IText, fabricGlobal.Textbox]
-      .map(cls => cls?.prototype)
-      .filter(Boolean);
-
-    prototypes.forEach(proto => {
-      if (proto.__baselinePatch) return;
-
-      proto.textBaseline = 'alphabetic';
-
-      const original_setTextStyles = proto._setTextStyles;
-      const original_getStyleDeclaration = proto._getStyleDeclaration;
-      const original_set = proto.set;
-      const original_render = proto._render;
-      const original_initDimensions = proto.initDimensions;
-
-      if (typeof original_getStyleDeclaration === 'function') {
-        proto._getStyleDeclaration = function (...args) {
-          const style = original_getStyleDeclaration.apply(this, args);
-          if (style?.textBaseline === 'alphabetical') {
-            style.textBaseline = 'alphabetic';
-          }
-          return style;
-        };
-      }
-
-      if (typeof original_set === 'function') {
-        proto.set = function (key, value) {
-          if (typeof key === 'object' && key?.textBaseline === 'alphabetical') {
-            key.textBaseline = 'alphabetic';
-          } else if (key === 'textBaseline' && value === 'alphabetical') {
-            value = 'alphabetic';
-          }
-          return original_set.call(this, key, value);
-        };
-      }
-
-      if (typeof original_setTextStyles === 'function') {
-        proto._setTextStyles = function (ctx, ...args) {
-          this.textBaseline = 'alphabetic';
-          if (ctx?.textBaseline === 'alphabetical') {
-            ctx.textBaseline = 'alphabetic';
-          }
-          args.forEach(arg => {
-            if (arg?.textBaseline === 'alphabetical') {
-              arg.textBaseline = 'alphabetic';
-            }
-          });
-          return original_setTextStyles.call(this, ctx, ...args);
-        };
-      }
-
-      if (typeof original_render === 'function') {
-        proto._render = function (ctx) {
-          if (this.textBaseline === 'alphabetical') {
-            this.textBaseline = 'alphabetic';
-          }
-          if (ctx?.textBaseline === 'alphabetical') {
-            ctx.textBaseline = 'alphabetic';
-          }
-          return original_render.call(this, ctx);
-        };
-      }
-
-      if (typeof original_initDimensions === 'function') {
-        proto.initDimensions = function () {
-          if (this.textBaseline === 'alphabetical') {
-            this.textBaseline = 'alphabetic';
-          }
-          return original_initDimensions.call(this);
-        };
-      }
-
-      proto.__baselinePatch = true;
-    });
   }
 
   enforceFloatingLayout() {
@@ -2880,24 +2799,6 @@ export class CanvasManager {
         if (object?._arrowRenderingAttached) {
           delete object._arrowRenderingAttached;
         }
-        // Fix invalid textBaseline values before Fabric processes them
-        if (o.textBaseline === 'alphabetical') {
-          o.textBaseline = 'alphabetic';
-        }
-
-        // Fix in styles as well
-        if (o.styles) {
-          Object.values(o.styles).forEach(line => {
-            if (line && typeof line === 'object') {
-              Object.values(line).forEach(style => {
-                if (style?.textBaseline === 'alphabetical') {
-                  style.textBaseline = 'alphabetic';
-                }
-              });
-            }
-          });
-        }
-
         if (o.arrowSettings) {
           object.arrowSettings = o.arrowSettings;
         }
