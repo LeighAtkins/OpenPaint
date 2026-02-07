@@ -761,6 +761,30 @@ export function initToolbarController() {
       const activeTab = getActiveTab(resolved);
       const canvas = window.app?.canvasManager?.fabricCanvas;
       if (!canvas || !state || !activeTab) return;
+
+      const tagManager = window.app?.tagManager;
+      const metadataManager = window.app?.metadataManager;
+      if (tagManager && metadataManager) {
+        Object.entries(metadataManager.vectorStrokesByImage || {}).forEach(
+          ([scopeKey, strokes]) => {
+            if (!isLabelInViewScope(scopeKey, resolved)) return;
+            const labelVisibility = metadataManager.strokeLabelVisibility?.[scopeKey] || {};
+            Object.entries(strokes || {}).forEach(([strokeLabel, strokeObj]) => {
+              if (!strokeObj) return;
+              const labelVisible = labelVisibility[strokeLabel] !== false;
+              if (!labelVisible) return;
+              const existing =
+                typeof tagManager.getTagObject === 'function'
+                  ? tagManager.getTagObject(strokeLabel, scopeKey)
+                  : null;
+              if (!existing && typeof tagManager.createTag === 'function') {
+                tagManager.createTag(strokeLabel, scopeKey, strokeObj);
+              }
+            });
+          }
+        );
+      }
+
       const primaryTab = state.tabs.find(tab => tab.type !== 'master');
       const activeScope = buildScopedLabel(resolved, activeTab.id);
       const showLegacyBase =
