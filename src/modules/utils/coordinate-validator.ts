@@ -3,13 +3,104 @@
  * Validates and serializes stroke data in image-space coordinates
  */
 
+type ImagePoint = {
+  x: number;
+  y: number;
+};
+
+type ImageDimensions = {
+  width: number;
+  height: number;
+};
+
+type ArrowSettings = {
+  startArrow?: boolean;
+  endArrow?: boolean;
+  arrowSize?: number;
+};
+
+type VectorStroke = {
+  points: ImagePoint[];
+  type?: string;
+  color?: string;
+  width?: number;
+  arrowSettings?: ArrowSettings;
+};
+
+type SerializedArrowSettings = {
+  startArrow: boolean;
+  endArrow: boolean;
+  arrowSize: number;
+};
+
+type SerializedStroke = {
+  id: string;
+  type: string;
+  points: ImagePoint[];
+  color: string;
+  width: number;
+  arrowSettings?: SerializedArrowSettings;
+};
+
+type ValidationError = {
+  type: string;
+  [key: string]: unknown;
+};
+
+type TransformParams = {
+  scale: number;
+  position: ImagePoint;
+  dimensions: ImageDimensions;
+  rotation: number;
+};
+
+type TransformValidation = {
+  valid: boolean;
+  params: TransformParams | null;
+  error: string | null;
+};
+
+type WorkerPayload = {
+  image: {
+    width: number;
+    height: number;
+    rotation: number;
+  };
+  units: {
+    name: string;
+    pxPerUnit: number;
+  };
+  strokes: SerializedStroke[];
+  prompt: string;
+  styleGuide: unknown | null;
+};
+
+type WorkerPayloadOptions = {
+  units?: {
+    name: string;
+    pxPerUnit: number;
+  };
+  prompt?: string;
+  styleGuide?: unknown | null;
+};
+
+declare global {
+  interface Window {
+    originalImageDimensions?: Record<string, ImageDimensions>;
+    vectorStrokesByImage?: Record<string, Record<string, VectorStroke>>;
+    imageScaleByLabel?: Record<string, number>;
+    imagePositionByLabel?: Record<string, ImagePoint>;
+    imageRotationByLabel?: Record<string, number>;
+  }
+}
+
 /**
  * Validate that a point is within image bounds
- * @param {{x: number, y: number}} point - Point in image-space
- * @param {{width: number, height: number}} imageDims - Image dimensions
- * @returns {boolean} True if point is valid
+ * @param point - Point in image-space
+ * @param imageDims - Image dimensions
+ * @returns True if point is valid
  */
-export function validateImageSpacePoint(point, imageDims) {
+export function validateImageSpacePoint(point: ImagePoint, imageDims: ImageDimensions): boolean {
   if (!point || typeof point.x !== 'number' || typeof point.y !== 'number') {
     return false;
   }
@@ -18,11 +109,14 @@ export function validateImageSpacePoint(point, imageDims) {
 
 /**
  * Validate an array of points
- * @param {Array<{x: number, y: number}>} points - Points array
- * @param {{width: number, height: number}} imageDims - Image dimensions
- * @returns {{valid: boolean, invalidIndices: number[]}}
+ * @param points - Points array
+ * @param imageDims - Image dimensions
+ * @returns Validity and invalid indices
  */
-export function validatePointsArray(points, imageDims) {
+export function validatePointsArray(
+  points: ImagePoint[],
+  imageDims: ImageDimensions
+): { valid: boolean; invalidIndices: number[] } {
   if (!Array.isArray(points) || points.length === 0) {
     return { valid: false, invalidIndices: [] };
   }
@@ -42,12 +136,15 @@ export function validatePointsArray(points, imageDims) {
 
 /**
  * Serialize strokes for AI Worker payload with validation
- * @param {string} imageLabel - Image label to extract strokes from
- * @returns {{strokes: Array, errors: Array}} Validated strokes and any errors
+ * @param imageLabel - Image label to extract strokes from
+ * @returns Validated strokes and any errors
  */
-export function serializeStrokesForWorker(imageLabel) {
-  const strokes = [];
-  const errors = [];
+export function serializeStrokesForWorker(imageLabel: string): {
+  strokes: SerializedStroke[];
+  errors: ValidationError[];
+} {
+  const strokes: SerializedStroke[] = [];
+  const errors: ValidationError[] = [];
 
   // Get image dimensions for validation
   const imageDims = window.originalImageDimensions?.[imageLabel];
@@ -88,10 +185,10 @@ export function serializeStrokesForWorker(imageLabel) {
     }
 
     // Serialize stroke in AI Worker format
-    const serialized = {
+    const serialized: SerializedStroke = {
       id: strokeLabel,
       type: stroke.type || 'freehand',
-      points: stroke.points.map(p => ({ x: p.x, y: p.y })), // Deep copy
+      points: stroke.points.map(point => ({ x: point.x, y: point.y })),
       color: stroke.color || '#000000',
       width: stroke.width || 5,
     };
@@ -113,10 +210,10 @@ export function serializeStrokesForWorker(imageLabel) {
 
 /**
  * Validate coordinate transformation parameters
- * @param {string} imageLabel - Image label
- * @returns {{valid: boolean, params: Object|null, error: string|null}}
+ * @param imageLabel - Image label
+ * @returns Validation result and params
  */
-export function validateTransformParams(imageLabel) {
+export function validateTransformParams(imageLabel: string): TransformValidation {
   const scale = window.imageScaleByLabel?.[imageLabel];
   const position = window.imagePositionByLabel?.[imageLabel];
   const dimensions = window.originalImageDimensions?.[imageLabel];
@@ -152,16 +249,19 @@ export function validateTransformParams(imageLabel) {
 
 /**
  * Create complete AI Worker payload for an image
- * @param {string} imageLabel - Image label
- * @param {Object} options - Additional options
- * @returns {{payload: Object|null, errors: Array}}
+ * @param imageLabel - Image label
+ * @param options - Additional options
+ * @returns Worker payload and any errors
  */
-export function createWorkerPayload(imageLabel, options = {}) {
-  const errors = [];
+export function createWorkerPayload(
+  imageLabel: string,
+  options: WorkerPayloadOptions = {}
+): { payload: WorkerPayload | null; errors: ValidationError[] } {
+  const errors: ValidationError[] = [];
 
   // Validate transform params
   const transformValidation = validateTransformParams(imageLabel);
-  if (!transformValidation.valid) {
+  if (!transformValidation.valid || !transformValidation.params) {
     errors.push({ type: 'transform_validation', error: transformValidation.error });
     return { payload: null, errors };
   }
@@ -175,7 +275,7 @@ export function createWorkerPayload(imageLabel, options = {}) {
   }
 
   // Build payload
-  const payload = {
+  const payload: WorkerPayload = {
     image: {
       width: transformValidation.params.dimensions.width,
       height: transformValidation.params.dimensions.height,
