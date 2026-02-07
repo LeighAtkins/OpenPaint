@@ -30,7 +30,8 @@
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
-    "test:visual": "vitest run tests/visual",
+    "test:visual": "playwright test",
+    "test:visual:update": "playwright test --update-snapshots",
     "validate": "npm run type-check && npm run lint && npm run test",
     "validate:full": "npm run type-check && npm run lint && npm run test:coverage",
     "db:generate-types": "supabase gen types typescript --linked > src/types/database.types.ts",
@@ -63,6 +64,7 @@
   },
   "devDependencies": {
     "@parcel/watcher": "^2.5.1",
+    "@playwright/test": "^1.58.2",
     "@tailwindcss/cli": "^4.1.17",
     "@types/fabric": "^5.3.11",
     "@types/node": "^24.10.1",
