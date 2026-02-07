@@ -17,7 +17,7 @@ describe('Coordinate Transformation Functions', () => {
     };
 
     // Mock the coordinate transformation functions
-    global.window.toCanvas = jest.fn((imagePoint, imgLabel) => {
+    global.window.toCanvas = vi.fn((imagePoint, imgLabel) => {
       const scale = global.window.imageScaleByLabel[imgLabel] || 1;
       const position = global.window.imagePositionByLabel[imgLabel] || { x: 0, y: 0 };
       return {
@@ -26,7 +26,7 @@ describe('Coordinate Transformation Functions', () => {
       };
     });
 
-    global.window.toImage = jest.fn((canvasPoint, imgLabel) => {
+    global.window.toImage = vi.fn((canvasPoint, imgLabel) => {
       const scale = global.window.imageScaleByLabel[imgLabel] || 1;
       const position = global.window.imagePositionByLabel[imgLabel] || { x: 0, y: 0 };
       return {
@@ -35,12 +35,12 @@ describe('Coordinate Transformation Functions', () => {
       };
     });
 
-    global.window.getTransformedCoords = jest.fn((x, y) => {
+    global.window.getTransformedCoords = vi.fn((x, y) => {
       const canvasPoint = { x, y };
       return global.window.toImage(canvasPoint, global.window.currentImageLabel || mockImageLabel);
     });
 
-    global.window.getCanvasCoords = jest.fn((x, y) => {
+    global.window.getCanvasCoords = vi.fn((x, y) => {
       const imagePoint = { x, y };
       return global.window.toCanvas(imagePoint, global.window.currentImageLabel || mockImageLabel);
     });
