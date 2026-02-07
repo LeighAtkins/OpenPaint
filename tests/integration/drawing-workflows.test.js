@@ -186,47 +186,6 @@ describe('Drawing Workflows Integration Tests', () => {
   });
 
   describe('Straight Line Drawing Workflow', () => {
-    test.skip('should create straight line with measurement input', async () => {
-      // Given: Switch to straight line mode
-      const modeToggle = document.getElementById('drawingModeToggle');
-      modeToggle.click(); // Switch to straight line
-      expect(modeToggle.textContent).toBe('Straight Line');
-
-      // When: Draw a line from point A to point B
-      const mousedown = new MouseEvent('mousedown', {
-        clientX: 100,
-        clientY: 200,
-        offsetX: 100,
-        offsetY: 200,
-        bubbles: true,
-      });
-      const mouseup = new MouseEvent('mouseup', {
-        clientX: 400,
-        clientY: 200,
-        offsetX: 400,
-        offsetY: 200,
-        bubbles: true,
-      });
-
-      canvas.dispatchEvent(mousedown);
-      await new Promise(resolve => setTimeout(resolve, 10));
-      canvas.dispatchEvent(mouseup);
-
-      // Then: Verify line creation
-      expect(window.lineStrokesByImage.front).toHaveLength(1);
-      expect(window.lineStrokesByImage.front[0]).toBe('A1');
-
-      // Verify vector data
-      const vectorData = window.vectorStrokesByImage.front.A1;
-      expect(vectorData).toBeDefined();
-      expect(vectorData.type).toBe('straight');
-      expect(vectorData.points).toHaveLength(2);
-      expect(vectorData.points[0].x).toBeCloseTo(100, 1);
-      expect(vectorData.points[0].y).toBeCloseTo(200, 1);
-      expect(vectorData.points[1].x).toBeCloseTo(400, 1);
-      expect(vectorData.points[1].y).toBeCloseTo(200, 1);
-    });
-
     test('should handle measurement input after line creation', () => {
       // Create a stroke first
       window.lineStrokesByImage.front.push('A1');

@@ -78,11 +78,15 @@ global.ResizeObserver = MockResizeObserver;
 global.requestAnimationFrame = callback => setTimeout(callback, 16);
 global.cancelAnimationFrame = id => clearTimeout(id);
 
-// canvasViewport.js module has not been implemented yet — skip all tests
-// eslint-disable-next-line no-unused-vars
-let CanvasViewportController, containScale, centreTxTy, focusTxTy, toScreen, toWorld;
+import {
+  CanvasViewportController,
+  containScale,
+  centreTxTy,
+  toScreen,
+  toWorld,
+} from '../../src/modules/utils/canvasViewport';
 
-describe.skip('Viewport Helper Functions', () => {
+describe('Viewport Helper Functions', () => {
   describe('containScale', () => {
     it('should calculate correct scale for width-constrained content', () => {
       const scale = containScale(200, 100, 400, 300, 20);
@@ -148,7 +152,7 @@ describe.skip('Viewport Helper Functions', () => {
   });
 });
 
-describe.skip('CanvasViewportController', () => {
+describe('CanvasViewportController', () => {
   let container, canvas, controller, mockCtx;
 
   beforeEach(() => {
@@ -314,7 +318,7 @@ describe.skip('CanvasViewportController', () => {
   });
 });
 
-describe.skip('Integration Tests', () => {
+describe('Integration Tests', () => {
   it('should maintain precision through multiple transforms', () => {
     const transform = { scale: 1.5, tx: 123.456, ty: 789.012 };
     const originalPoints = [

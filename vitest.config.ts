@@ -9,7 +9,7 @@ export default mergeConfig(
       environment: 'happy-dom',
       setupFiles: ['./tests/helpers/setup.js'],
       include: ['src/**/*.{test,spec}.{ts,tsx,js}', 'tests/**/*.{test,spec}.{js,ts}'],
-      exclude: ['node_modules', 'dist'],
+      exclude: ['node_modules', 'dist', 'tests/visual/*.spec.ts'],
       coverage: {
         provider: 'v8',
         reporter: ['text', 'json', 'html', 'lcov'],
