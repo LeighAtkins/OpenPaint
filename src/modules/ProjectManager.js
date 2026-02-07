@@ -1353,10 +1353,22 @@ export class ProjectManager {
 
       if (metadataManager) {
         entry.metadata = {
-          vectorStrokesByImage: deepClone(metadataManager.vectorStrokesByImage?.[viewId]),
-          strokeVisibilityByImage: deepClone(metadataManager.strokeVisibilityByImage?.[viewId]),
-          strokeLabelVisibility: deepClone(metadataManager.strokeLabelVisibility?.[viewId]),
-          strokeMeasurements: deepClone(metadataManager.strokeMeasurements?.[viewId]),
+          vectorStrokesByImage: this.collectScopedMetadataBuckets(
+            metadataManager.vectorStrokesByImage,
+            viewId
+          ),
+          strokeVisibilityByImage: this.collectScopedMetadataBuckets(
+            metadataManager.strokeVisibilityByImage,
+            viewId
+          ),
+          strokeLabelVisibility: this.collectScopedMetadataBuckets(
+            metadataManager.strokeLabelVisibility,
+            viewId
+          ),
+          strokeMeasurements: this.collectScopedMetadataBuckets(
+            metadataManager.strokeMeasurements,
+            viewId
+          ),
         };
       } else if (view.metadata) {
         entry.metadata = deepClone(view.metadata);

@@ -24,8 +24,9 @@ window.addEventListener('error', event => {
 });
 
 // ── 1. Vendor libraries (must load before app modules) ──────────────────────
-// Fabric.js 5.3.1 — sets window.fabric as a side effect
-import './vendor/fabric.min.js';
+import { fabric } from 'fabric';
+
+(globalThis as any).fabric = fabric;
 
 // ── 2. TypeScript utilities ─────────────────────────────────────────────────
 import { logger } from '@/utils/errors';

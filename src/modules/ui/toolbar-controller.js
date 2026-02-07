@@ -2,6 +2,14 @@
 // Extracted from index.html inline scripts
 
 export function initToolbarController() {
+  const runWhenDomReady = callback => {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', callback, { once: true });
+      return;
+    }
+    callback();
+  };
+
   // Initialize top toolbar - now works with pre-populated content
   function initializeTopToolbar() {
     const left = document.getElementById('tbLeft');
@@ -643,7 +651,7 @@ export function initToolbarController() {
   }
 
   // New UI functionality for modular panels and capture frame
-  document.addEventListener('DOMContentLoaded', () => {
+  runWhenDomReady(() => {
     // 1. Initialize top toolbar structure first (so elements are in place)
     initializeTopToolbar();
 
@@ -5614,7 +5622,7 @@ export function initToolbarController() {
   });
 
   // View Measurements toggle functionality
-  document.addEventListener('DOMContentLoaded', () => {
+  runWhenDomReady(() => {
     // View Measurements toggle functionality
     const viewMeasurementsToggle = document.getElementById('viewMeasurementsToggle');
     if (viewMeasurementsToggle) {
