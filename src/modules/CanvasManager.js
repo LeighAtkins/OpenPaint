@@ -2755,13 +2755,18 @@ export class CanvasManager {
     tags.forEach(tagObj => {
       const tagCenter = tagObj.getCenterPoint();
       const rotatedCenter = fabric.util.rotatePoint(tagCenter, center, radians);
-      tagObj.set({
-        left: rotatedCenter.x,
-        top: rotatedCenter.y,
-        angle: 0,
-      });
+
+      // Reset angle first, then position — avoids Fabric.js group transform quirk
+      tagObj.set({ angle: 0 });
+      tagObj.setPositionByOrigin(
+        new fabric.Point(rotatedCenter.x, rotatedCenter.y),
+        'center',
+        'center'
+      );
+      tagObj.dirty = true; // Invalidate group cache so the upright bitmap is re-rendered
       tagObj.setCoords();
 
+      // Update tagOffset to track the stroke's new position
       const strokeObj = tagObj.connectedStroke;
       if (strokeObj) {
         let strokeCenter;
@@ -2773,9 +2778,10 @@ export class CanvasManager {
           strokeCenter = strokeObj.getCenterPoint();
         }
         if (strokeCenter) {
+          const newCenter = tagObj.getCenterPoint();
           tagObj.tagOffset = {
-            x: rotatedCenter.x - strokeCenter.x,
-            y: rotatedCenter.y - strokeCenter.y,
+            x: newCenter.x - strokeCenter.x,
+            y: newCenter.y - strokeCenter.y,
           };
           strokeObj.tagOffset = {
             x: tagObj.tagOffset.x,
