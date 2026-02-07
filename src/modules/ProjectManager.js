@@ -270,6 +270,11 @@ export class ProjectManager {
                 window.app.tagManager.createTag(strokeLabel, activeScope, strokeObj);
               }
             });
+
+            // Ensure tab-scoped visibility is applied immediately after load.
+            if (typeof window.syncCaptureTabCanvasVisibility === 'function') {
+              window.syncCaptureTabCanvasVisibility(viewId);
+            }
           }
 
           // Ensure background image is re-applied after JSON load (JSON can clear it)
@@ -1571,6 +1576,9 @@ export class ProjectManager {
         await this.switchView(targetView, true);
         if (window.renderCaptureTabUI) {
           window.renderCaptureTabUI(targetView);
+        }
+        if (window.syncCaptureTabCanvasVisibility) {
+          window.syncCaptureTabCanvasVisibility(targetView);
         }
         if (window.applyCaptureFrameForLabel) {
           window.applyCaptureFrameForLabel(targetView);
