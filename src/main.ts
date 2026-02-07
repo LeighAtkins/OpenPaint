@@ -85,7 +85,7 @@ import { initScrollSelectSystem } from './modules/ui/scroll-select-init.js';
 import { initStatusMessageHandler } from './modules/ui/status-message-handler.js';
 import { initAIExport } from './modules/ai/ai-export-loader.js';
 
-// ── 5. Standalone UI modules (from public/js/) ─────────────────────────────
+// ── 5. Standalone UI modules ─────────────────────────────────────────────────
 import './modules/ui/toolbar-layout.js';
 import './modules/ui/frame-capture-visibility.js';
 import './modules/ui/toolbar-init.js';

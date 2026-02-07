@@ -137,14 +137,6 @@ app.get('/', (req, res) => {
   res.send(html);
 });
 
-// Avoid stale cache for module scripts during local dev.
-app.use('/js/modules', (req, res, next) => {
-  res.setHeader('Cache-Control', 'no-store');
-  res.setHeader('Pragma', 'no-cache');
-  res.setHeader('Expires', '0');
-  next();
-});
-
 // Serve static files from public directory
 app.use(express.static('public'));
 // Serve static files from root directory (but index.html is handled by route above)
@@ -1338,18 +1330,6 @@ if __name__ == "__main__":
   });
 }
 
-// Serve static files with proper MIME types
-app.get('/js/:filename(*)', (req, res) => {
-  const filePath = path.join(__dirname, 'js', req.params.filename);
-  res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
-  res.sendFile(filePath, err => {
-    if (err) {
-      console.error('[Static] Failed to serve JS file:', req.path, err.message);
-      res.status(404).send('File not found');
-    }
-  });
-});
-
 app.get('/css/:filename(*)', (req, res) => {
   const filePath = path.join(__dirname, 'css', req.params.filename);
   res.setHeader('Content-Type', 'text/css; charset=utf-8');
@@ -1365,18 +1345,6 @@ app.get('/diagnostics-overlay.js', (req, res) => {
   const filePath = path.join(__dirname, 'diagnostics-overlay.js');
   res.setHeader('Content-Type', 'application/javascript');
   res.sendFile(filePath);
-});
-
-// Specific route for ai-export.js to test
-app.get('/js/ai-export.js', (req, res) => {
-  const filePath = path.join(__dirname, 'js', 'ai-export.js');
-  res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
-  res.sendFile(filePath, err => {
-    if (err) {
-      console.error('[Static] Failed to serve ai-export.js:', err.message);
-      res.status(404).send('File not found');
-    }
-  });
 });
 
 app.get('/test-coordinate-system.js', (req, res) => {

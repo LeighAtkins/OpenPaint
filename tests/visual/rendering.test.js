@@ -20,8 +20,7 @@ describe('Visual Regression Tests', () => {
     window.imageScaleByLabel = { visual_test: 1 };
     window.imagePositionByLabel = { visual_test: { x: 0, y: 0 } };
 
-    // Load paint.js functions
-    require('../../public/js/paint.js');
+    // TODO: These tests need rewriting — paint.js was split into manager classes in src/modules/
   });
 
   test('should render straight lines consistently', async () => {
