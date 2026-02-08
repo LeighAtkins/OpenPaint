@@ -1,20 +1,58 @@
 // Tool Manager
 import { LineTool } from './LineTool.js';
 
-const TOOL_LOADERS = {
-  select: () => import('./SelectTool.js').then(module => module.SelectTool),
-  pencil: () => import('./PencilTool.js').then(module => module.PencilTool),
-  curve: () => import('./CurveTool.js').then(module => module.CurveTool),
-  line: () => Promise.resolve(LineTool),
-  arrow: () => import('./ArrowTool.js').then(module => module.ArrowTool),
-  privacy: () => import('./PrivacyEraserTool.js').then(module => module.PrivacyEraserTool),
-  text: () => import('./TextTool.js').then(module => module.TextTool),
-  shape: () => import('./ShapeTool.js').then(module => module.ShapeTool),
-  frame: () => import('./FrameTool.js').then(module => module.FrameTool),
+type CanvasManagerLike = {
+  fabricCanvas?: unknown;
 };
 
+export interface ToolSettings {
+  color?: string;
+  width?: number;
+  fontSize?: number;
+}
+
+export interface ToolInstance {
+  activate: () => void;
+  deactivate: () => void;
+  setColor?: (color: string) => void;
+  setWidth?: (width: number) => void;
+  setFontSize?: (fontSize: number) => void;
+}
+
+type ToolConstructor = new (canvasManager: CanvasManagerLike) => ToolInstance;
+
+type ToolLoader = () => Promise<ToolConstructor>;
+
+const TOOL_LOADERS = {
+  select: () => import('./SelectTool.js').then(module => module.SelectTool as ToolConstructor),
+  pencil: () => import('./PencilTool.js').then(module => module.PencilTool as ToolConstructor),
+  curve: () => import('./CurveTool.js').then(module => module.CurveTool as ToolConstructor),
+  line: () => Promise.resolve(LineTool as ToolConstructor),
+  arrow: () => import('./ArrowTool.js').then(module => module.ArrowTool as ToolConstructor),
+  privacy: () =>
+    import('./PrivacyEraserTool.js').then(module => module.PrivacyEraserTool as ToolConstructor),
+  text: () => import('./TextTool.js').then(module => module.TextTool as ToolConstructor),
+  shape: () => import('./ShapeTool.js').then(module => module.ShapeTool as ToolConstructor),
+  frame: () => import('./FrameTool.js').then(module => module.FrameTool as ToolConstructor),
+} satisfies Record<string, ToolLoader>;
+
+type ToolName = keyof typeof TOOL_LOADERS;
+
+type ToolLookup = Partial<Record<ToolName, ToolInstance>>;
+
+type ToolPromiseLookup = Partial<Record<ToolName, Promise<ToolInstance | null>>>;
+
 export class ToolManager {
-  constructor(canvasManager) {
+  canvasManager: CanvasManagerLike;
+  activeTool: ToolInstance | null;
+  activeToolName: ToolName | null;
+  previousToolName: ToolName | null;
+  tools: ToolLookup;
+  toolPromises: ToolPromiseLookup;
+  pendingToolName: ToolName | null;
+  currentSettings: ToolSettings;
+
+  constructor(canvasManager: CanvasManagerLike) {
     this.canvasManager = canvasManager;
     this.activeTool = null;
     this.activeToolName = null;
@@ -50,7 +88,7 @@ export class ToolManager {
     }
   }
 
-  async ensureTool(toolName) {
+  async ensureTool(toolName: ToolName) {
     if (this.tools[toolName]) {
       return this.tools[toolName];
     }
@@ -77,16 +115,16 @@ export class ToolManager {
         });
     }
 
-    return this.toolPromises[toolName];
+    return this.toolPromises[toolName] ?? null;
   }
 
-  preloadTools(toolNames) {
+  preloadTools(toolNames: ToolName[]) {
     toolNames.forEach(toolName => {
       void this.ensureTool(toolName);
     });
   }
 
-  async selectTool(toolName) {
+  async selectTool(toolName: ToolName) {
     this.pendingToolName = toolName;
 
     const tool = await this.ensureTool(toolName);
@@ -110,7 +148,7 @@ export class ToolManager {
   }
 
   // Helper to update current tool settings
-  updateSettings(settings) {
+  updateSettings(settings: ToolSettings) {
     this.currentSettings = { ...this.currentSettings, ...settings };
 
     if (this.activeTool) {
