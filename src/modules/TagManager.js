@@ -14,11 +14,11 @@ export class TagManager {
     this.tagBackgroundStyle = 'solid'; // 'solid', 'no-fill', 'clear-black', 'clear-color', 'clear-white'
     this.strokeColor = '#3b82f6'; // Default stroke color for clear-color style
 
-    // Initialize showMeasurements to hidden by default; sync checkbox state if present
+    // Initialize showMeasurements to visible by default; sync checkbox state if present
     const showMeasurementsCheckbox = document.getElementById('toggleShowMeasurements');
-    this.showMeasurements = false;
+    this.showMeasurements = true;
     if (showMeasurementsCheckbox) {
-      showMeasurementsCheckbox.checked = false;
+      showMeasurementsCheckbox.checked = true;
     }
 
     // Initialize tag prediction system integration
@@ -774,6 +774,13 @@ export class TagManager {
         this.createTag(strokeLabel, currentViewId, strokeObj);
       }
     });
+  }
+
+  updateAllTagTexts() {
+    for (const tagObj of this.tagObjects.values()) {
+      if (!tagObj || !tagObj.strokeLabel) continue;
+      this.updateTagText(tagObj.strokeLabel, tagObj.imageLabel);
+    }
   }
 
   // Update tag size for all tags

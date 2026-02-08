@@ -18,6 +18,7 @@ export class TextTool extends BaseTool {
     super.activate();
     this.canvas.selection = false;
     this.canvas.defaultCursor = 'text';
+    this.skipNextClick = false;
     this.canvas.on('mouse:down', this.onMouseDown);
     document.addEventListener('keydown', this.onKeyDown, true);
   }
@@ -183,8 +184,28 @@ export class TextTool extends BaseTool {
     }
 
     this.activeTextObject = null;
-    this.skipNextClick = true;
+    this.skipNextClick = !isNewText;
     this.canvas.requestRenderAll();
+
+    if (isNewText) {
+      this.returnToPreviousTool();
+    }
+  }
+
+  returnToPreviousTool() {
+    if (!window.app || !window.app.toolManager) return;
+
+    const toolManager = window.app.toolManager;
+    const previousTool = toolManager.previousToolName || 'line';
+
+    if (previousTool === 'text') {
+      toolManager.previousToolName = null;
+      toolManager.selectTool('line');
+      return;
+    }
+
+    toolManager.selectTool(previousTool);
+    toolManager.previousToolName = null;
   }
 
   setColor(color) {

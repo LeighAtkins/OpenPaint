@@ -193,6 +193,23 @@ export function initScrollSelectSystem() {
       threshold: 0.3,
     };
 
+    function isImagePanelCollapsed() {
+      if (document.body?.getAttribute('data-image-panel-state') === 'collapsed') {
+        return true;
+      }
+      const imagePanel = document.getElementById('imagePanel');
+      const imagePanelContent = document.getElementById('imagePanelContent');
+      return !!(
+        (imagePanel &&
+          (imagePanel.classList.contains('collapsed') ||
+            imagePanel.classList.contains('minimized') ||
+            imagePanel.style.display === 'none')) ||
+        (imagePanelContent &&
+          (imagePanelContent.classList.contains('hidden') ||
+            imagePanelContent.style.display === 'none'))
+      );
+    }
+
     window.updateActiveImageInSidebar = function () {
       const imageList = document.getElementById('imageList');
       if (!imageList) return;
@@ -227,19 +244,30 @@ export function initScrollSelectSystem() {
       const size = Math.min(btnRect.width, btnRect.height);
       const isInitialized = indicator.dataset.initialized === 'true';
       const shouldAnimate = animate && isInitialized;
+      const offsetX = btnRect.left - stepperRect.left + btnRect.width / 2 - size / 2;
+      const roundedOffsetX = Math.round(offsetX);
+      const lastX = Number.parseInt(indicator.dataset.lastX || '', 10);
+      const hasLastX = Number.isFinite(lastX);
+      // Ignore sub-pixel/tiny jitter to prevent visible pulsing.
+      if (hasLastX && Math.abs(lastX - roundedOffsetX) <= 1) {
+        return;
+      }
 
       indicator.style.width = `${Math.round(size)}px`;
       indicator.style.height = `${Math.round(size)}px`;
       indicator.style.transition = shouldAnimate ? 'transform 120ms linear' : 'none';
+      indicator.style.transform = `translate3d(${roundedOffsetX}px, -50%, 0)`;
+      indicator.dataset.lastX = String(roundedOffsetX);
 
-      const offsetX = btnRect.left - stepperRect.left + btnRect.width / 2 - size / 2;
-      indicator.style.transform = `translate3d(${Math.round(offsetX)}px, -50%, 0)`;
-
-      if (!shouldAnimate) {
+      if (!shouldAnimate && animate) {
         requestAnimationFrame(() => {
           indicator.style.transition = 'transform 120ms linear';
           indicator.dataset.initialized = 'true';
         });
+      } else if (!animate) {
+        // Keep transition disabled while callers request non-animated updates
+        // (e.g., collapsed image panel), preventing visible pulsing.
+        indicator.style.transition = 'none';
       }
     }
 
@@ -258,7 +286,13 @@ export function initScrollSelectSystem() {
 
       const stepper = document.getElementById('mini-stepper');
       const stepButtons = Array.from(stepper?.querySelectorAll('button[data-target]') || []);
-      let activeButton = null;
+      const activeButton = stepButtons.find(btn => btn.dataset.target === currentLabel) || null;
+
+      // During view switches, current label can be temporarily out of sync with
+      // rendered pills. Keep previous active styling instead of flashing to all-white.
+      if (!activeButton) {
+        return;
+      }
 
       stepButtons.forEach(btn => {
         const isActive = btn.dataset.target === currentLabel;
@@ -266,7 +300,6 @@ export function initScrollSelectSystem() {
           btn.classList.remove(...cfg.inactiveClasses.split(' '));
           btn.classList.add(...cfg.activeClasses.split(' '));
           btn.setAttribute('aria-current', 'true');
-          activeButton = btn;
         } else {
           btn.classList.remove(...cfg.activeClasses.split(' '));
           btn.classList.add(...cfg.inactiveClasses.split(' '));
@@ -274,16 +307,27 @@ export function initScrollSelectSystem() {
         }
       });
 
-      positionStepperIndicator(activeButton, { animate });
+      const panelCollapsed = isImagePanelCollapsed();
+      positionStepperIndicator(activeButton, { animate: panelCollapsed ? false : animate });
 
       // Auto-scroll the active pill to center
-      if (activeButton && stepper) {
+      if (activeButton && stepper && !panelCollapsed) {
+        const activeLabel = activeButton.dataset.target || '';
+        const lastAutoScrollLabel = window.__miniStepperLastAutoScrollLabel || '';
+        // Don't keep re-centering the same active pill on every refresh.
+        if (activeLabel && activeLabel === lastAutoScrollLabel) {
+          return;
+        }
+
         const stepperRect = stepper.getBoundingClientRect();
         const btnRect = activeButton.getBoundingClientRect();
         const delta = btnRect.left - stepperRect.left + btnRect.width / 2 - stepperRect.width / 2;
         if (Math.abs(delta) > 1) {
           window.__miniStepperProgrammaticScrollUntil = Date.now() + 400;
           stepper.scrollBy({ left: delta, behavior: 'smooth' });
+          window.__miniStepperLastAutoScrollLabel = activeLabel;
+        } else if (activeLabel) {
+          window.__miniStepperLastAutoScrollLabel = activeLabel;
         }
       }
     }
@@ -584,6 +628,7 @@ export function initScrollSelectSystem() {
       // Debounce to avoid rapid switching
       let switchTimeout = null;
       const debouncedSwitch = (label, reason = 'mini-stepper') => {
+        if (isImagePanelCollapsed()) return;
         if (!isScrollSelectEnabled()) return;
         if (
           window.__miniStepperProgrammaticScrollUntil &&
@@ -716,6 +761,18 @@ export function initScrollSelectSystem() {
     }
 
     function getImageContainers() {
+      const imagePanelContent = document.getElementById('imagePanelContent');
+      const imagePanel = document.getElementById('imagePanel');
+      const isPanelCollapsed = !!(
+        (imagePanelContent &&
+          (imagePanelContent.classList.contains('hidden') ||
+            imagePanelContent.style.display === 'none')) ||
+        (imagePanel &&
+          (imagePanel.classList.contains('collapsed') ||
+            imagePanel.classList.contains('minimized') ||
+            imagePanel.style.display === 'none'))
+      );
+
       // Use window.originalImages as the source of truth for which images exist
       // This ensures we can detect images even when the panel is collapsed
       const imageLabelsFromState = window.originalImages
@@ -726,13 +783,6 @@ export function initScrollSelectSystem() {
 
       // If we have state, use it as the primary source and find matching containers
       if (imageLabelsFromState.length > 0) {
-        const imagePanelContent = document.getElementById('imagePanelContent');
-        const imagePanel = document.getElementById('imagePanel');
-        const isPanelCollapsed =
-          (imagePanelContent && imagePanelContent.classList.contains('hidden')) ||
-          (imagePanel && imagePanel.classList.contains('minimized')) ||
-          (imagePanel && imagePanel.style.display === 'none');
-
         // Map each label to its container, preferring visible ones
         const labelToContainer = new Map();
 
@@ -823,9 +873,6 @@ export function initScrollSelectSystem() {
       }
 
       // Filter to valid image containers and deduplicate by label
-      const imagePanelContent = document.getElementById('imagePanelContent');
-      const isPanelCollapsed = imagePanelContent && imagePanelContent.classList.contains('hidden');
-
       const labelToContainer = new Map();
       const seenContainers = new Set();
 
@@ -1070,8 +1117,13 @@ export function initScrollSelectSystem() {
     function initIntersectionObserver(stepButtons) {
       if (stepButtons.length === 0) return;
 
+      let lastObservedLabel = '';
+
       const io = new IntersectionObserver(
         entries => {
+          if (isImagePanelCollapsed()) {
+            return;
+          }
           // Find the image container with the highest intersection ratio
           const imageEntries = entries.filter(entry => {
             // Convert className to string (it might be a DOMTokenList)
@@ -1114,10 +1166,16 @@ export function initScrollSelectSystem() {
 
           if (!label) return;
 
+          // Ignore repeated callbacks for the same active label to prevent
+          // continuous class transitions/scroll nudges that cause indicator pulsing.
+          if (label === lastObservedLabel) {
+            return;
+          }
+          lastObservedLabel = label;
+
           // Update UI
           stepButtons.forEach(b => {
             const active = b.dataset.target === label;
-            b.classList.toggle('aria-current', active);
 
             if (active) {
               b.setAttribute('aria-current', 'true');
@@ -1186,12 +1244,20 @@ export function initScrollSelectSystem() {
         if (ticking) return;
         ticking = true;
         requestAnimationFrame(() => {
+          const stepper = document.getElementById('mini-stepper');
           positionNavigationContainer();
           const currentButtons = Array.from(
             document.querySelectorAll('#mini-stepper button[data-target]')
           );
           const currentContainers = getImageContainers();
-          if (currentButtons.length !== currentContainers.length) {
+          const hasNoImagesPlaceholder =
+            !!stepper && (stepper.textContent || '').includes('No images yet');
+          const hasProjectImages =
+            !!window.projectManager?.views &&
+            Object.values(window.projectManager.views).some(view => !!view?.image);
+          const shouldRebuildFromProjectState = hasNoImagesPlaceholder && hasProjectImages;
+
+          if (currentButtons.length !== currentContainers.length || shouldRebuildFromProjectState) {
             // Clean up old observer if it exists
             if (window.__pillCenteringObserver) {
               window.__pillCenteringObserver.disconnect();

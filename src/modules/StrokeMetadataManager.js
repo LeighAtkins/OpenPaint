@@ -1250,12 +1250,18 @@ export class StrokeMetadataManager {
 
     // Refresh all tag texts on canvas
     if (window.app?.tagManager) {
-      const currentViewId = window.app?.projectManager?.currentViewId || 'front';
-      const strokes = this.vectorStrokesByImage[currentViewId] || {};
+      if (typeof window.app.tagManager.updateAllTagTexts === 'function') {
+        window.app.tagManager.updateAllTagTexts();
+      } else {
+        const currentViewId = this.normalizeImageLabel(
+          window.app?.projectManager?.currentViewId || 'front'
+        );
+        const strokes = this.vectorStrokesByImage[currentViewId] || {};
 
-      Object.keys(strokes).forEach(strokeLabel => {
-        window.app.tagManager.updateTagText(strokeLabel, currentViewId);
-      });
+        Object.keys(strokes).forEach(strokeLabel => {
+          window.app.tagManager.updateTagText(strokeLabel, currentViewId);
+        });
+      }
 
       // Re-render canvas to show updated tag text
       const canvas = window.app?.canvasManager?.fabricCanvas;

@@ -142,8 +142,10 @@ export class ShapeTool extends BaseTool {
 
     const { width, height } = this.getShapeSize(pointer.x, pointer.y);
     const size = Math.min(width, height);
+    const isRectangle = this.shapeType === 'square';
+    const tooSmall = isRectangle ? Math.max(width, height) < MIN_SHAPE_SIZE : size < MIN_SHAPE_SIZE;
 
-    if (size < MIN_SHAPE_SIZE) {
+    if (tooSmall) {
       this.canvas.remove(this.shape);
       this.shape = null;
       return;
@@ -258,10 +260,8 @@ export class ShapeTool extends BaseTool {
   }
 
   updateShape(currentX, currentY) {
-    const { width, height, left, top, size, centerX, centerY } = this.getShapeSize(
-      currentX,
-      currentY
-    );
+    const { left, top, size, centerX, centerY, rectLeft, rectTop, rectWidth, rectHeight } =
+      this.getShapeSize(currentX, currentY);
 
     if (this.shapeType === 'circle') {
       this.shape.set({
@@ -294,10 +294,10 @@ export class ShapeTool extends BaseTool {
     }
 
     this.shape.set({
-      left,
-      top,
-      width: size,
-      height: size,
+      left: rectLeft,
+      top: rectTop,
+      width: rectWidth,
+      height: rectHeight,
     });
   }
 
@@ -306,6 +306,10 @@ export class ShapeTool extends BaseTool {
     const dy = currentY - this.startY;
     const width = Math.abs(dx);
     const height = Math.abs(dy);
+    const rectWidth = Math.max(1, width);
+    const rectHeight = Math.max(1, height);
+    const rectLeft = dx < 0 ? this.startX - rectWidth : this.startX;
+    const rectTop = dy < 0 ? this.startY - rectHeight : this.startY;
     const size = Math.max(MIN_SHAPE_SIZE, Math.min(width, height));
 
     const left = dx < 0 ? this.startX - size : this.startX;
@@ -313,7 +317,19 @@ export class ShapeTool extends BaseTool {
     const centerX = this.startX + dx / 2;
     const centerY = this.startY + dy / 2;
 
-    return { width, height, size, left, top, centerX, centerY };
+    return {
+      width,
+      height,
+      size,
+      left,
+      top,
+      centerX,
+      centerY,
+      rectWidth,
+      rectHeight,
+      rectLeft,
+      rectTop,
+    };
   }
 
   buildStarPoints() {
