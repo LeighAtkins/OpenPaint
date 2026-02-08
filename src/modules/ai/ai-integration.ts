@@ -381,8 +381,8 @@ function showPreviewModal(result: AIAnalysisResult): void {
   }
 
   // Store SVG for preview
-  if (result.svg) {
-    modal.dataset.svg = result.svg;
+  if (result['svg']) {
+    modal.dataset['svg'] = result['svg'];
   }
 
   // Show modal
@@ -613,16 +613,19 @@ async function cleanupStrokesWithAI(
 }
 
 // Export functions to global scope
-window.generateSofaBasics = generateSofaBasics;
-window.handleCalibrationSubmit = handleCalibrationSubmit;
-window.handlePreviewAction = handlePreviewAction;
+window.generateSofaBasics = (...args: Parameters<typeof generateSofaBasics>) =>
+  void generateSofaBasics(...args);
+window.handleCalibrationSubmit = (...args: Parameters<typeof handleCalibrationSubmit>) =>
+  void handleCalibrationSubmit(...args);
+window.handlePreviewAction = (...args: Parameters<typeof handlePreviewAction>) =>
+  void handlePreviewAction(...args);
 window.cleanupStrokesWithAI = cleanupStrokesWithAI;
 
 // Set up event listeners when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
   const generateButton = document.getElementById('generateSofaBasics');
   if (generateButton) {
-    generateButton.addEventListener('click', generateSofaBasics);
+    generateButton.addEventListener('click', () => void generateSofaBasics());
     console.log('[AI Integration] Generate button event listener attached');
   } else {
     console.warn('[AI Integration] Generate button not found');

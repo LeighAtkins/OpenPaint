@@ -63,8 +63,8 @@ export function initToolbarSizing(): void {
   initCalculation();
 
   // Recalculate after fonts load (for accurate text measurement)
-  if (document.fonts && document.fonts.ready) {
-    document.fonts.ready.then(() => {
+  if (document.fonts) {
+    void document.fonts.ready.then(() => {
       setTimeout(calculateToolbarMode, 50);
     });
   }

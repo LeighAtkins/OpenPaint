@@ -73,16 +73,21 @@ export class MockAIWorker {
     console.log('[Mock Worker] Enhancing placement for', input.strokes.length, 'strokes');
 
     // Simple mock: just return vectors with slight position adjustments
-    const vectors = input.strokes.map(stroke => ({
-      id: stroke.id,
-      type: stroke.type === 'straight' || stroke.type === 'arrow' ? 'line' : 'path',
-      points: stroke.points,
-      style: {
-        color: stroke.color,
-        width: stroke.width,
-        marker: stroke.type === 'arrow' ? 'arrow' : 'none',
-      },
-    }));
+    const vectors: AIVectorOutput[] = input.strokes.map(stroke => {
+      const vectorType: 'line' | 'path' =
+        stroke.type === 'straight' || stroke.type === 'arrow' ? 'line' : 'path';
+      const markerType: 'arrow' | 'none' = stroke.type === 'arrow' ? 'arrow' : 'none';
+      return {
+        id: stroke.id,
+        type: vectorType,
+        points: stroke.points,
+        style: {
+          color: stroke.color,
+          width: stroke.width,
+          marker: markerType,
+        },
+      };
+    });
 
     await new Promise<void>(resolve => setTimeout(resolve, 100));
 
@@ -231,11 +236,11 @@ export class MockAIWorker {
     if (points.length <= 2) return points;
 
     // Simple Douglas-Peucker implementation
-    const simplified = [points[0]];
-    let prevPoint = points[0];
+    const simplified = [points[0]!];
+    let prevPoint = points[0]!;
 
     for (let i = 1; i < points.length - 1; i++) {
-      const point = points[i];
+      const point = points[i]!;
       const dist = Math.hypot(point.x - prevPoint.x, point.y - prevPoint.y);
       if (dist > tolerance) {
         simplified.push(point);
@@ -243,41 +248,41 @@ export class MockAIWorker {
       }
     }
 
-    simplified.push(points[points.length - 1]);
+    simplified.push(points[points.length - 1]!);
     return simplified;
   }
 
   private _createSmoothPath(points: AIPoint[]): string {
     if (points.length < 2) return '';
     if (points.length === 2) {
-      return `M ${points[0].x} ${points[0].y} L ${points[1].x} ${points[1].y}`;
+      return `M ${points[0]!.x} ${points[0]!.y} L ${points[1]!.x} ${points[1]!.y}`;
     }
 
     // Create smooth curve using quadratic bezier
-    let path = `M ${points[0].x} ${points[0].y}`;
+    let path = `M ${points[0]!.x} ${points[0]!.y}`;
     for (let i = 1; i < points.length - 1; i++) {
-      const xc = (points[i].x + points[i + 1].x) / 2;
-      const yc = (points[i].y + points[i + 1].y) / 2;
-      path += ` Q ${points[i].x} ${points[i].y}, ${xc} ${yc}`;
+      const xc = (points[i]!.x + points[i + 1]!.x) / 2;
+      const yc = (points[i]!.y + points[i + 1]!.y) / 2;
+      path += ` Q ${points[i]!.x} ${points[i]!.y}, ${xc} ${yc}`;
     }
-    path += ` L ${points[points.length - 1].x} ${points[points.length - 1].y}`;
+    path += ` L ${points[points.length - 1]!.x} ${points[points.length - 1]!.y}`;
     return path;
   }
 
   private _computeLength(points: AIPoint[]): number {
     let total = 0;
     for (let i = 1; i < points.length; i++) {
-      total += Math.hypot(points[i].x - points[i - 1].x, points[i].y - points[i - 1].y);
+      total += Math.hypot(points[i]!.x - points[i - 1]!.x, points[i]!.y - points[i - 1]!.y);
     }
     return total;
   }
 
   private _getMidpoint(points: AIPoint[]): AIPoint {
     if (points.length === 0) return { x: 0, y: 0 };
-    if (points.length === 1) return { ...points[0] };
+    if (points.length === 1) return { ...points[0]! };
 
-    const start = points[0];
-    const end = points[points.length - 1];
+    const start = points[0]!;
+    const end = points[points.length - 1]!;
     return {
       x: (start.x + end.x) / 2,
       y: (start.y + end.y) / 2,

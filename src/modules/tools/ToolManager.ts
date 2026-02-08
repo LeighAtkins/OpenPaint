@@ -1,9 +1,9 @@
 // Tool Manager
 import { LineTool } from './LineTool.js';
 
-type CanvasManagerLike = {
+interface CanvasManagerLike {
   fabricCanvas?: unknown;
-};
+}
 
 export interface ToolSettings {
   color?: string;
@@ -38,7 +38,10 @@ const TOOL_LOADERS = {
 
 type ToolName = keyof typeof TOOL_LOADERS;
 
-type ToolLookup = Partial<Record<ToolName, ToolInstance>>;
+// Tools are legacy JS with dynamic APIs (shapeType, setFillStyle, setDashPattern, etc.)
+// Use `any` until individual tools are converted to TypeScript
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type ToolLookup = Partial<Record<ToolName, any>>;
 
 type ToolPromiseLookup = Partial<Record<ToolName, Promise<ToolInstance | null>>>;
 
@@ -138,7 +141,7 @@ export class ToolManager {
 
     this.activeTool = tool;
     this.activeToolName = toolName;
-    this.activeTool.activate();
+    tool.activate();
     // Apply current settings to new tool
     this.updateSettings(this.currentSettings);
     console.log(`Tool selected: ${toolName}`);

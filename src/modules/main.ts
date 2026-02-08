@@ -1,67 +1,15 @@
 // Main Entry Point
 import { CanvasManager } from './CanvasManager.js';
-import { ToolManager } from './tools/ToolManager.ts';
+import { ToolManager } from './tools/ToolManager';
 import { ProjectManager } from './ProjectManager.js';
 import { HistoryManager } from './HistoryManager.js';
 import { StrokeMetadataManager } from './StrokeMetadataManager.js';
 import { UploadManager } from './UploadManager.js';
 import { imageRegistry } from './ImageRegistry.js';
 
-type DeferredManager = {
-  init?: () => void;
-};
-
-export interface App {
-  canvasManager: CanvasManager;
-  historyManager: HistoryManager;
-  toolManager: ToolManager;
-  metadataManager: StrokeMetadataManager;
-  projectManager: ProjectManager;
-  uploadManager: UploadManager;
-  tagManager: DeferredManager | null;
-  arrowManager: DeferredManager | null;
-  measurementSystem: DeferredManager | null;
-  measurementDialog: DeferredManager | null;
-  measurementExporter: DeferredManager | null;
-  deferredInitStarted: boolean;
-  deferredToolPreloadStarted: boolean;
-  hasDrawnFirstStroke: boolean;
-  hasUploadedFirstImage: boolean;
-  firstPaintMarked: boolean;
-  firstStrokeCommitMarked: boolean;
-  firstStrokeCommitInProgress: boolean;
-  currentUnit: 'inch' | 'cm';
-  captureFrameScale: number;
-  init: () => void;
-  scheduleDeferredInit: () => void;
-  setupDeferredToolPreload: () => void;
-  markFirstPaint: () => void;
-  logPerfMeasure: (name: string) => void;
-  initDeferredManagers: () => Promise<void>;
-  updateSelectedStrokes: (property: 'color' | 'strokeWidth', value: string | number) => void;
-  updateSelectedTextAndShapes: (options: {
-    color?: string;
-    strokeWidth?: number;
-    fontSize?: number;
-  }) => void;
-  updateSelectedShapesFill: (style: string) => void;
-  setupUI: () => void;
-  setupUnitToggle: () => void;
-  setupKeyboardShortcuts: () => void;
-  updateToggleLabel: (button: Element, text: string) => void;
-  applyImageFitMode: (fitMode: string) => void;
-  setupKeyboardControls: () => void;
-  resizeCaptureFrameProportionally: (scaleChange: number) => void;
-  createHelpHint: () => void;
-  createHelpMenu: () => void;
-  toggleHelpMenu: () => void;
-}
-
-declare global {
-  interface Window {
-    app?: App;
-  }
-}
+// Deferred managers are dynamically loaded JS modules with varying shapes
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type DeferredManager = any;
 
 export class App {
   canvasManager: CanvasManager;
@@ -364,7 +312,7 @@ export class App {
     if (activeObjects.length === 0) return;
 
     let updatedCount = 0;
-    activeObjects.forEach(obj => {
+    activeObjects.forEach((obj: any) => {
       // Only update drawable strokes (lines, paths, and curves)
       if (obj && (obj.type === 'line' || obj.type === 'path')) {
         if (property === 'color') {
@@ -401,7 +349,7 @@ export class App {
     const shapeTool = this.toolManager?.tools?.shape;
     const textBgEnabled = window.textBgEnabled === true;
 
-    activeObjects.forEach(obj => {
+    activeObjects.forEach((obj: any) => {
       if (!obj) return;
 
       if (obj.type === 'i-text' || obj.type === 'text') {
@@ -443,7 +391,7 @@ export class App {
     let updatedCount = 0;
     const shapeTool = this.toolManager?.tools?.shape;
 
-    activeObjects.forEach(obj => {
+    activeObjects.forEach((obj: any) => {
       if (!obj || obj.strokeMetadata?.type !== 'shape') return;
       const baseColor = obj.stroke || shapeTool?.strokeColor || '#3b82f6';
       const styles = shapeTool?.getStyleForFillStyle
@@ -633,7 +581,7 @@ export class App {
     const updateShapeIcon = (shape: string) => {
       shapeModeToggles.forEach(toggle => {
         const icon = toggle.querySelector('.shape-icon');
-        if (icon) icon.textContent = shapeIcons[shape] || shapeIcons.square;
+        if (icon) icon.textContent = shapeIcons[shape] ?? shapeIcons['square'] ?? null;
       });
       shapeOptions.forEach(btn => {
         btn.classList.toggle('active', btn.getAttribute('data-shape-option') === shape);
@@ -739,35 +687,39 @@ export class App {
     });
 
     textModeOptions.forEach(btn => {
-      btn.addEventListener('click', async () => {
-        const size = btn.getAttribute('data-text-size');
-        if (!size) return;
-        const scale = textToolSizeMultipliers[size] || textToolSizeMultipliers.medium;
-        const fontSize = Math.max(12, Math.round(getCurrentTextSize() * scale));
-        const tool = await this.toolManager.ensureTool('text');
-        if (tool) {
-          tool.setFontSize(fontSize);
-        }
-        this.toolManager.updateSettings({ fontSize });
-        this.updateSelectedTextAndShapes({ fontSize });
-        this.toolManager.previousToolName = this.toolManager.activeToolName || 'line';
-        this.toolManager.selectTool('text');
-        syncTextCursor();
-        updateTextToggleState();
-        textModeOptions.forEach(item => item.classList.remove('active'));
-        btn.classList.add('active');
-        textModeWrappers.forEach(wrapper => {
-          wrapper.classList.remove('text-size-small', 'text-size-medium', 'text-size-large');
-          wrapper.classList.add(`text-size-${size}`);
-        });
-        const wrapper = btn.closest('.shape-toggle');
-        if (wrapper) wrapper.classList.remove('shape-open');
-      });
+      btn.addEventListener(
+        'click',
+        () =>
+          void (async () => {
+            const size = btn.getAttribute('data-text-size');
+            if (!size) return;
+            const scale = textToolSizeMultipliers[size] || textToolSizeMultipliers['medium'];
+            const fontSize = Math.max(12, Math.round(getCurrentTextSize() * (scale ?? 1)));
+            const tool = await this.toolManager.ensureTool('text');
+            if (tool?.setFontSize) {
+              tool.setFontSize(fontSize);
+            }
+            this.toolManager.updateSettings({ fontSize });
+            this.updateSelectedTextAndShapes({ fontSize });
+            this.toolManager.previousToolName = this.toolManager.activeToolName || 'line';
+            this.toolManager.selectTool('text');
+            syncTextCursor();
+            updateTextToggleState();
+            textModeOptions.forEach(item => item.classList.remove('active'));
+            btn.classList.add('active');
+            textModeWrappers.forEach(wrapper => {
+              wrapper.classList.remove('text-size-small', 'text-size-medium', 'text-size-large');
+              wrapper.classList.add(`text-size-${size}`);
+            });
+            const wrapper = btn.closest('.shape-toggle');
+            if (wrapper) wrapper.classList.remove('shape-open');
+          })()
+      );
     });
 
     if (textModeOptions.length > 0) {
       const defaultOption = Array.from(textModeOptions).find(
-        option => option.dataset.textSize === 'medium'
+        option => option.dataset['textSize'] === 'medium'
       );
       if (defaultOption) {
         defaultOption.classList.add('active');
@@ -782,7 +734,7 @@ export class App {
           (tool?.getFillStyle?.() as (typeof shapeFillStyles)[number] | undefined) ?? 'solid';
         const currentIndex = shapeFillStyles.indexOf(currentStyle);
         const nextIndex = (currentIndex + 1) % shapeFillStyles.length;
-        applyShapeFillStyle(shapeFillStyles[nextIndex]);
+        applyShapeFillStyle(shapeFillStyles[nextIndex]!);
       });
     });
 
@@ -934,8 +886,9 @@ export class App {
         const pattern = patterns[style] || [];
 
         // Apply to all tools that support dash patterns
-        if (this.toolManager.activeTool && this.toolManager.activeTool.setDashPattern) {
-          this.toolManager.activeTool.setDashPattern(pattern);
+        const activeTool = this.toolManager.activeTool as any;
+        if (activeTool?.setDashPattern) {
+          activeTool.setDashPattern(pattern);
         }
 
         // Apply to all line-based tools
@@ -1000,148 +953,159 @@ export class App {
     // Copy Canvas button - copies image to clipboard (cropped to capture frame if present)
     const copyCanvasBtn = document.getElementById('copyCanvasBtn');
     if (copyCanvasBtn) {
-      copyCanvasBtn.addEventListener('click', async () => {
-        console.log('[Copy] Button clicked');
-        try {
-          const canvas = this.canvasManager?.fabricCanvas;
-          if (!canvas) {
-            console.error('[Copy] Canvas not available');
-            return;
-          }
+      copyCanvasBtn.addEventListener(
+        'click',
+        () =>
+          void (async () => {
+            console.log('[Copy] Button clicked');
+            try {
+              const canvas = this.canvasManager?.fabricCanvas;
+              if (!canvas) {
+                console.error('[Copy] Canvas not available');
+                return;
+              }
 
-          // Visual feedback - subtle press animation
-          copyCanvasBtn.style.transform = 'scale(0.98)';
-          setTimeout(() => {
-            copyCanvasBtn.style.transform = '';
-          }, 100);
-
-          // Get icon elements for animation
-          const copyIcon = copyCanvasBtn.querySelector('#copyIcon') as HTMLElement | null;
-          const checkIcon = copyCanvasBtn.querySelector('#checkIcon') as HTMLElement | null;
-
-          // Get the capture frame if it exists
-          const captureFrame = document.getElementById('captureFrame');
-          const sourceCanvas = canvas.lowerCanvasEl;
-          let cropData: { x: number; y: number; width: number; height: number } | null = null;
-
-          if (captureFrame) {
-            const frameRect = captureFrame.getBoundingClientRect();
-            const canvasRect = sourceCanvas.getBoundingClientRect();
-
-            // Check if frame overlaps with canvas
-            if (
-              frameRect.left < canvasRect.right &&
-              frameRect.right > canvasRect.left &&
-              frameRect.top < canvasRect.bottom &&
-              frameRect.bottom > canvasRect.top
-            ) {
-              // Calculate crop area in canvas pixel coordinates
-              const scalePx = sourceCanvas.width / canvasRect.width;
-              const left = Math.max(frameRect.left, canvasRect.left);
-              const top = Math.max(frameRect.top, canvasRect.top);
-              const right = Math.min(frameRect.right, canvasRect.right);
-              const bottom = Math.min(frameRect.bottom, canvasRect.bottom);
-
-              cropData = {
-                x: Math.round((left - canvasRect.left) * scalePx),
-                y: Math.round((top - canvasRect.top) * scalePx),
-                width: Math.round((right - left) * scalePx),
-                height: Math.round((bottom - top) * scalePx),
-              };
-              console.log('[Copy] Cropping to frame:', cropData);
-            }
-          }
-
-          // Create a temporary canvas for the output
-          const tempCanvas = document.createElement('canvas');
-          const tempCtx = tempCanvas.getContext('2d');
-          if (!tempCtx) {
-            throw new Error('Failed to acquire 2D context');
-          }
-
-          if (cropData && cropData.width > 0 && cropData.height > 0) {
-            // Copy the cropped region
-            tempCanvas.width = cropData.width;
-            tempCanvas.height = cropData.height;
-            tempCtx.drawImage(
-              sourceCanvas,
-              cropData.x,
-              cropData.y,
-              cropData.width,
-              cropData.height,
-              0,
-              0,
-              cropData.width,
-              cropData.height
-            );
-          } else {
-            // Copy the entire canvas
-            tempCanvas.width = sourceCanvas.width;
-            tempCanvas.height = sourceCanvas.height;
-            tempCtx.drawImage(sourceCanvas, 0, 0);
-            console.log('[Copy] Copying full canvas:', tempCanvas.width, 'x', tempCanvas.height);
-          }
-
-          // Convert to blob and copy to clipboard
-          const blob = await new Promise<Blob>((resolve, reject) => {
-            tempCanvas.toBlob((b: Blob | null) => {
-              if (b) resolve(b);
-              else reject(new Error('Failed to create blob'));
-            }, 'image/png');
-          });
-
-          console.log('[Copy] Blob created, size:', blob.size);
-
-          const ClipboardItemConstructor = (
-            window as Window & { ClipboardItem?: typeof ClipboardItem }
-          ).ClipboardItem;
-          if (navigator.clipboard && ClipboardItemConstructor) {
-            await navigator.clipboard.write([new ClipboardItemConstructor({ 'image/png': blob })]);
-            console.log('[Copy] Successfully copied to clipboard');
-
-            // Show success feedback
-            if (this.projectManager?.showStatusMessage) {
-              this.projectManager.showStatusMessage('Image copied to clipboard!', 'success');
-            }
-
-            // Visual success feedback - icon transition to checkmark
-            if (copyIcon && checkIcon) {
-              copyIcon.classList.add('opacity-0', 'scale-50');
-              copyIcon.classList.remove('opacity-90', 'scale-100');
-              checkIcon.classList.remove('opacity-0', 'scale-50');
-              checkIcon.classList.add('opacity-100', 'scale-100');
-
-              // Transition back to copy icon after delay
+              // Visual feedback - subtle press animation
+              copyCanvasBtn.style.transform = 'scale(0.98)';
               setTimeout(() => {
-                checkIcon.classList.add('opacity-0', 'scale-50');
-                checkIcon.classList.remove('opacity-100', 'scale-100');
-                copyIcon.classList.remove('opacity-0', 'scale-50');
-                copyIcon.classList.add('opacity-90', 'scale-100');
-              }, 1500);
-            }
-          } else {
-            console.warn('[Copy] Clipboard API not supported');
-            if (this.projectManager?.showStatusMessage) {
-              this.projectManager.showStatusMessage(
-                'Clipboard not supported in this browser',
-                'error'
-              );
-            }
-          }
-        } catch (error) {
-          const message = error instanceof Error ? error.message : String(error);
-          console.error('[Copy] Failed to copy to clipboard:', error);
-          if (this.projectManager?.showStatusMessage) {
-            this.projectManager.showStatusMessage('Failed to copy image: ' + message, 'error');
-          }
+                copyCanvasBtn.style.transform = '';
+              }, 100);
 
-          // Visual error feedback - subtle shake animation
-          copyCanvasBtn.style.animation = 'shake 0.3s ease-in-out';
-          setTimeout(() => {
-            copyCanvasBtn.style.animation = '';
-          }, 300);
-        }
-      });
+              // Get icon elements for animation
+              const copyIcon = copyCanvasBtn.querySelector('#copyIcon') as HTMLElement | null;
+              const checkIcon = copyCanvasBtn.querySelector('#checkIcon') as HTMLElement | null;
+
+              // Get the capture frame if it exists
+              const captureFrame = document.getElementById('captureFrame');
+              const sourceCanvas = (canvas as any).lowerCanvasEl;
+              let cropData: { x: number; y: number; width: number; height: number } | null = null;
+
+              if (captureFrame) {
+                const frameRect = captureFrame.getBoundingClientRect();
+                const canvasRect = sourceCanvas.getBoundingClientRect();
+
+                // Check if frame overlaps with canvas
+                if (
+                  frameRect.left < canvasRect.right &&
+                  frameRect.right > canvasRect.left &&
+                  frameRect.top < canvasRect.bottom &&
+                  frameRect.bottom > canvasRect.top
+                ) {
+                  // Calculate crop area in canvas pixel coordinates
+                  const scalePx = sourceCanvas.width / canvasRect.width;
+                  const left = Math.max(frameRect.left, canvasRect.left);
+                  const top = Math.max(frameRect.top, canvasRect.top);
+                  const right = Math.min(frameRect.right, canvasRect.right);
+                  const bottom = Math.min(frameRect.bottom, canvasRect.bottom);
+
+                  cropData = {
+                    x: Math.round((left - canvasRect.left) * scalePx),
+                    y: Math.round((top - canvasRect.top) * scalePx),
+                    width: Math.round((right - left) * scalePx),
+                    height: Math.round((bottom - top) * scalePx),
+                  };
+                  console.log('[Copy] Cropping to frame:', cropData);
+                }
+              }
+
+              // Create a temporary canvas for the output
+              const tempCanvas = document.createElement('canvas');
+              const tempCtx = tempCanvas.getContext('2d');
+              if (!tempCtx) {
+                throw new Error('Failed to acquire 2D context');
+              }
+
+              if (cropData && cropData.width > 0 && cropData.height > 0) {
+                // Copy the cropped region
+                tempCanvas.width = cropData.width;
+                tempCanvas.height = cropData.height;
+                tempCtx.drawImage(
+                  sourceCanvas,
+                  cropData.x,
+                  cropData.y,
+                  cropData.width,
+                  cropData.height,
+                  0,
+                  0,
+                  cropData.width,
+                  cropData.height
+                );
+              } else {
+                // Copy the entire canvas
+                tempCanvas.width = sourceCanvas.width;
+                tempCanvas.height = sourceCanvas.height;
+                tempCtx.drawImage(sourceCanvas, 0, 0);
+                console.log(
+                  '[Copy] Copying full canvas:',
+                  tempCanvas.width,
+                  'x',
+                  tempCanvas.height
+                );
+              }
+
+              // Convert to blob and copy to clipboard
+              const blob = await new Promise<Blob>((resolve, reject) => {
+                tempCanvas.toBlob((b: Blob | null) => {
+                  if (b) resolve(b);
+                  else reject(new Error('Failed to create blob'));
+                }, 'image/png');
+              });
+
+              console.log('[Copy] Blob created, size:', blob.size);
+
+              const ClipboardItemConstructor = (
+                window as Window & { ClipboardItem?: typeof ClipboardItem }
+              ).ClipboardItem;
+              if (navigator.clipboard && ClipboardItemConstructor) {
+                await navigator.clipboard.write([
+                  new ClipboardItemConstructor({ 'image/png': blob }),
+                ]);
+                console.log('[Copy] Successfully copied to clipboard');
+
+                // Show success feedback
+                if (this.projectManager?.showStatusMessage) {
+                  this.projectManager.showStatusMessage('Image copied to clipboard!', 'success');
+                }
+
+                // Visual success feedback - icon transition to checkmark
+                if (copyIcon && checkIcon) {
+                  copyIcon.classList.add('opacity-0', 'scale-50');
+                  copyIcon.classList.remove('opacity-90', 'scale-100');
+                  checkIcon.classList.remove('opacity-0', 'scale-50');
+                  checkIcon.classList.add('opacity-100', 'scale-100');
+
+                  // Transition back to copy icon after delay
+                  setTimeout(() => {
+                    checkIcon.classList.add('opacity-0', 'scale-50');
+                    checkIcon.classList.remove('opacity-100', 'scale-100');
+                    copyIcon.classList.remove('opacity-0', 'scale-50');
+                    copyIcon.classList.add('opacity-90', 'scale-100');
+                  }, 1500);
+                }
+              } else {
+                console.warn('[Copy] Clipboard API not supported');
+                if (this.projectManager?.showStatusMessage) {
+                  this.projectManager.showStatusMessage(
+                    'Clipboard not supported in this browser',
+                    'error'
+                  );
+                }
+              }
+            } catch (error) {
+              const message = error instanceof Error ? error.message : String(error);
+              console.error('[Copy] Failed to copy to clipboard:', error);
+              if (this.projectManager?.showStatusMessage) {
+                this.projectManager.showStatusMessage('Failed to copy image: ' + message, 'error');
+              }
+
+              // Visual error feedback - subtle shake animation
+              copyCanvasBtn.style.animation = 'shake 0.3s ease-in-out';
+              setTimeout(() => {
+                copyCanvasBtn.style.animation = '';
+              }, 300);
+            }
+          })()
+      );
       console.log('[main.js] Copy canvas button event listener added');
     } else {
       console.warn('[main.js] Copy canvas button not found');
@@ -1197,7 +1161,7 @@ export class App {
     // Also listen for direct changes to unit selector
     if (unitSelector) {
       unitSelector.addEventListener('change', () => {
-        this.currentUnit = unitSelector.value;
+        this.currentUnit = unitSelector.value as 'inch' | 'cm';
         const unitLabel = this.currentUnit === 'inch' ? 'inches' : 'cm';
         if (unitToggle) unitToggle.textContent = unitLabel;
         if (unitToggleSecondary) unitToggleSecondary.textContent = unitLabel;
@@ -1318,7 +1282,7 @@ export class App {
   }
 
   applyImageFitMode(fitMode: string): void {
-    const currentView = this.projectManager.views[this.projectManager.currentViewId];
+    const currentView = (this.projectManager.views as any)[this.projectManager.currentViewId];
 
     if (!currentView || !currentView.image) {
       console.warn('No current image available for fit mode');

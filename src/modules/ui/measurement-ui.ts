@@ -15,7 +15,7 @@ type MeasurementWindow = Window & {
 };
 
 export function initMeasurementUI(): void {
-  const win = window as MeasurementWindow;
+  const win = window as unknown as MeasurementWindow;
   if (!win.app || !win.app.measurementSystem) {
     console.warn('Measurement system not initialized yet');
     return;
@@ -72,10 +72,10 @@ function setupEditMeasurementHandlers(): void {
   document.addEventListener('click', event => {
     const target = event.target as HTMLElement | null;
     if (target?.classList.contains('edit-measurement-btn')) {
-      const imageLabel = target.dataset.imageLabel;
-      const strokeLabel = target.dataset.strokeLabel;
+      const imageLabel = target.dataset['imageLabel'];
+      const strokeLabel = target.dataset['strokeLabel'];
 
-      const win = window as MeasurementWindow;
+      const win = window as unknown as MeasurementWindow;
       if (win.app?.measurementDialog) {
         win.app.measurementDialog.open(imageLabel, strokeLabel);
       }
@@ -99,7 +99,7 @@ export function startMeasurementUI(): void {
   }
 
   // Expose initialization function for manual initialization if needed
-  (window as MeasurementWindow).initMeasurementUI = initMeasurementUI;
+  (window as unknown as MeasurementWindow).initMeasurementUI = initMeasurementUI;
 }
 
 startMeasurementUI();

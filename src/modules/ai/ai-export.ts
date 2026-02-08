@@ -21,10 +21,10 @@ const USE_MOCK =
 
 const mockWorker = new MockAIWorker();
 
-type WorkerPayloadError = {
+interface WorkerPayloadError {
   error?: string;
   type?: string;
-};
+}
 
 interface ExportAIOptions {
   imageLabel?: string;
@@ -123,7 +123,7 @@ export async function enhanceAnnotations(
   const placementPayload: EnhancePlacementInput = {
     image: payload.image,
     strokes: payload.strokes,
-    styleGuide: payload.styleGuide,
+    styleGuide: payload.styleGuide ?? null,
   };
 
   return USE_MOCK
