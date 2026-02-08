@@ -1256,6 +1256,10 @@ export class StrokeMetadataManager {
       Object.keys(strokes).forEach(strokeLabel => {
         window.app.tagManager.updateTagText(strokeLabel, currentViewId);
       });
+
+      // Re-render canvas to show updated tag text
+      const canvas = window.app?.canvasManager?.fabricCanvas;
+      if (canvas) canvas.requestRenderAll();
     }
   }
 

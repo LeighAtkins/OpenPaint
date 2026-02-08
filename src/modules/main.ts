@@ -452,7 +452,10 @@ export class App {
         document.body.classList.toggle('fine-rotate-active', active);
       };
 
-      rotateFineSlider.addEventListener('pointerdown', () => setFineRotateActive(true));
+      rotateFineSlider.addEventListener('pointerdown', (e: PointerEvent) => {
+        rotateFineSlider.setPointerCapture(e.pointerId);
+        setFineRotateActive(true);
+      });
       rotateFineSlider.addEventListener('input', () => {
         const value = Number(rotateFineSlider.value);
         const delta = value - lastFineValue;
@@ -460,17 +463,9 @@ export class App {
         updateFineReadout(value);
         applyFineRotateDelta(delta);
       });
-
-      const resetFineSlider = () => {
-        lastFineValue = 0;
-        rotateFineSlider.value = '0';
-        updateFineReadout(0);
+      rotateFineSlider.addEventListener('pointerup', () => {
         setFineRotateActive(false);
-      };
-
-      rotateFineSlider.addEventListener('pointerup', resetFineSlider);
-      rotateFineSlider.addEventListener('pointercancel', resetFineSlider);
-      rotateFineSlider.addEventListener('blur', resetFineSlider);
+      });
     }
 
     // Tools
@@ -705,7 +700,11 @@ export class App {
             this.toolManager.selectTool('text');
             syncTextCursor();
             updateTextToggleState();
-            textModeOptions.forEach(item => item.classList.remove('active'));
+            const parentDropdown = btn.closest('.shape-toggle');
+            const siblings = parentDropdown
+              ? parentDropdown.querySelectorAll<HTMLElement>('[data-text-size]')
+              : textModeOptions;
+            siblings.forEach(item => item.classList.remove('active'));
             btn.classList.add('active');
             textModeWrappers.forEach(wrapper => {
               wrapper.classList.remove('text-size-small', 'text-size-medium', 'text-size-large');
@@ -718,12 +717,10 @@ export class App {
     });
 
     if (textModeOptions.length > 0) {
-      const defaultOption = Array.from(textModeOptions).find(
-        option => option.dataset['textSize'] === 'medium'
-      );
-      if (defaultOption) {
-        defaultOption.classList.add('active');
-      }
+      textModeOptions.forEach(item => item.classList.remove('active'));
+      textModeOptions.forEach(item => {
+        if (item.dataset['textSize'] === 'medium') item.classList.add('active');
+      });
       textModeWrappers.forEach(wrapper => wrapper.classList.add('text-size-medium'));
     }
 
