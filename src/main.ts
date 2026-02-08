@@ -32,11 +32,12 @@ import { fabric } from 'fabric';
 import { logger } from '@/utils/errors';
 import { env } from '@/utils/env';
 import { initializeRotationControls } from '@/features';
+import type { App } from './modules/main';
 
 // ── 3. Type declarations ────────────────────────────────────────────────────
 declare global {
   interface Window {
-    app?: any;
+    app?: App;
     paintApp?: any;
     PDFLib?: any;
     JSZip?: any;
@@ -106,7 +107,7 @@ initFrameCaptureVisibility();
 initStatusMessage();
 
 // ── 6. Core application ────────────────────────────────────────────────────
-// The App class from modules/main.js is the heart of the application.
+// The App class from modules/main.ts is the heart of the application.
 // It creates all managers (CanvasManager, ToolManager, ProjectManager, etc.)
 // and wires up the entire UI.
 
@@ -129,11 +130,11 @@ async function bootstrap(): Promise<void> {
   initPanelRelocation();
   initFrameCaptureToggle();
 
-  // ── Initialize the core App (from modules/main.js) ──
+  // ── Initialize the core App (from modules/main.ts) ──
   // The App class self-initializes on DOMContentLoaded via its own listener.
   // We import it here so Vite bundles it; its DOMContentLoaded listener
   // will fire since the DOM is already ready at this point.
-  await import('./modules/main.js');
+  await import('./modules/main');
 
   // ── Post-app initialization ──
   // These run after the App has initialized and set window.app
