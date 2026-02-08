@@ -67,7 +67,6 @@ declare global {
     openSofaTypePicker?: any;
     openPieceConnectionEditor?: any;
     openAdaptiveIntakePdf?: any;
-    openSofaTypePicker?: any;
     saveFabricProject?: any;
     updateStrokeVisibilityControls?: any;
     aiExports?: any;
