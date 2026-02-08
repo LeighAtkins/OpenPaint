@@ -160,7 +160,6 @@ async function bootstrap(): Promise<void> {
 
   // Initialize piece + connection editor launcher
   initPieceConnectionEditor();
-
   // Initialize status message handler
   initStatusMessageHandler();
 
