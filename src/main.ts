@@ -64,6 +64,7 @@ declare global {
     resizeCanvas?: any;
     shareProject?: any;
     updateSharedProject?: any;
+    openSofaTypePicker?: any;
     saveFabricProject?: any;
     updateStrokeVisibilityControls?: any;
     aiExports?: any;
@@ -85,6 +86,7 @@ import { initToolbarLayout } from './modules/ui/toolbar-layout';
 import { initPdfExport } from './modules/ui/pdf-export-inline.js';
 import { initToolbarController } from './modules/ui/toolbar-controller.js';
 import { initScrollSelectSystem } from './modules/ui/scroll-select-init.js';
+import { initSofaTypePicker } from './modules/ui/sofa-type-picker.js';
 import { initStatusMessageHandler } from './modules/ui/status-message-handler';
 import { initStatusMessage } from './modules/ui/status-message';
 import { initAIExport } from './modules/ai/ai-export-loader';
@@ -145,6 +147,9 @@ async function bootstrap(): Promise<void> {
 
   // Initialize scroll-select system and mini-stepper
   initScrollSelectSystem();
+
+  // Initialize sofa type onboarding + save guard
+  initSofaTypePicker();
 
   // Initialize status message handler
   initStatusMessageHandler();
