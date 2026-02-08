@@ -83,7 +83,7 @@ import { initPdfExport } from './modules/ui/pdf-export-inline.js';
 import { initToolbarController } from './modules/ui/toolbar-controller.js';
 import { initScrollSelectSystem } from './modules/ui/scroll-select-init.js';
 import { initStatusMessageHandler } from './modules/ui/status-message-handler.js';
-import { initAIExport } from './modules/ai/ai-export-loader.js';
+import { initAIExport } from './modules/ai/ai-export-loader';
 
 // ── 5. Standalone UI modules ─────────────────────────────────────────────────
 import './modules/ui/toolbar-layout.js';
@@ -99,7 +99,7 @@ import './modules/ui/status-message.js';
 import './modules/utils/transform.js';
 import './modules/utils/geometry.js';
 import './modules/utils/migration.js';
-import './modules/ai/ai-integration.js';
+import './modules/ai/ai-integration';
 
 // ── 6. Core application ────────────────────────────────────────────────────
 // The App class from modules/main.js is the heart of the application.
