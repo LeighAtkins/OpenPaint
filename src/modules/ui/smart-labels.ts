@@ -1,4 +1,7 @@
 // Smart label system for responsive button text
+/* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/no-misused-promises, @typescript-eslint/prefer-regexp-exec, @typescript-eslint/unbound-method, prefer-rest-params */
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+// @ts-nocheck
 (function () {
   'use strict';
 

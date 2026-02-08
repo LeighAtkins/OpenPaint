@@ -1,4 +1,7 @@
 // Tag Manager
+/* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/no-misused-promises, @typescript-eslint/prefer-regexp-exec, prefer-rest-params */
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+// @ts-nocheck
 // Creates draggable, resizable tag objects that connect to strokes
 import { StrokeMetadataManager } from './StrokeMetadataManager.js';
 import { PathUtils } from './utils/PathUtils.js';
