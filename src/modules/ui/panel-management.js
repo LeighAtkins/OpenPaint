@@ -1,4 +1,5 @@
 // Panel management - toggle and layout functionality
+import { IMAGE_PANEL_STATES, setImagePanelState } from './panel-state.js';
 (function () {
   'use strict';
 
@@ -9,11 +10,6 @@
 
   function isCompactDesktop() {
     return window.innerWidth > 768 && window.innerWidth <= 1365;
-  }
-
-  function setImagePanelUiState(state) {
-    if (!document?.body) return;
-    document.body.setAttribute('data-image-panel-state', state);
   }
 
   // Inject styles for collapsed sidebars
@@ -397,7 +393,9 @@
       const isMinimized = body.classList.contains('hidden');
 
       if (panelId === 'imagePanel') {
-        setImagePanelUiState(isMinimized ? 'expanded' : 'collapsed');
+        setImagePanelState(
+          isMinimized ? IMAGE_PANEL_STATES.expanded : IMAGE_PANEL_STATES.collapsed
+        );
       }
 
       // Special handling for imagePanel: ensure navigation container stays visible
@@ -489,7 +487,9 @@
       const content = document.getElementById(contentId);
 
       if (panelId === 'imagePanel') {
-        setImagePanelUiState(isCollapsed ? 'expanded' : 'collapsed');
+        setImagePanelState(
+          isCollapsed ? IMAGE_PANEL_STATES.expanded : IMAGE_PANEL_STATES.collapsed
+        );
       }
 
       if (isCollapsed) {
@@ -590,7 +590,7 @@
       }
 
       if (panel.id === 'imagePanel') {
-        setImagePanelUiState(isOpen ? 'expanded' : 'collapsed');
+        setImagePanelState(isOpen ? IMAGE_PANEL_STATES.expanded : IMAGE_PANEL_STATES.collapsed);
       }
     }
 
@@ -705,7 +705,7 @@
         imagePanel.setAttribute('data-mobile-state', 'minimized');
         imagePanel.setAttribute('aria-expanded', 'false');
         imagePanel.style.display = 'none'; // Hide on mobile when minimized
-        setImagePanelUiState('collapsed');
+        setImagePanelState(IMAGE_PANEL_STATES.collapsed);
 
         // Hide content on mobile when minimized
         if (strokeContent) {
@@ -724,13 +724,13 @@
           imagePanel.classList.add('collapsed');
           strokePanel.setAttribute('aria-expanded', 'false');
           imagePanel.setAttribute('aria-expanded', 'false');
-          setImagePanelUiState('collapsed');
+          setImagePanelState(IMAGE_PANEL_STATES.collapsed);
         } else {
           strokePanel.classList.remove('collapsed');
           imagePanel.classList.remove('collapsed');
           strokePanel.setAttribute('aria-expanded', 'true');
           imagePanel.setAttribute('aria-expanded', 'true');
-          setImagePanelUiState('expanded');
+          setImagePanelState(IMAGE_PANEL_STATES.expanded);
         }
 
         strokePanel.setAttribute('data-mobile-state', 'expanded');
