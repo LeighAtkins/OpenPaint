@@ -470,10 +470,13 @@ export class App {
 
     // Tools
     const drawingModeToggles = document.querySelectorAll<HTMLElement>('#drawingModeToggle');
+    const drawingModeWrappers = document.querySelectorAll<HTMLElement>('#drawingModeWrapper');
+    const drawingModeOptions = document.querySelectorAll<HTMLElement>('[data-drawing-mode]');
     const textModeToggles = document.querySelectorAll<HTMLElement>('#textModeToggle');
     const textModeWrappers = document.querySelectorAll<HTMLElement>('#textModeWrapper');
     const textModeOptions = document.querySelectorAll<HTMLElement>('[data-text-size]');
     const clearBtn = document.getElementById('clear');
+    let preferredTextWrapper: HTMLElement | null = null;
 
     const textToolSizeMultipliers: Record<string, number> = {
       small: 0.75,
@@ -495,17 +498,73 @@ export class App {
       canvasEl.style.cursor = isText ? 'text' : 'crosshair';
     };
 
+    const resolveTextWrapper = () => {
+      if (preferredTextWrapper && preferredTextWrapper.isConnected) {
+        return preferredTextWrapper;
+      }
+      const wrappers = Array.from(textModeWrappers);
+      const visibleWrapper = wrappers.find(
+        wrapper => wrapper.offsetParent !== null || wrapper.getClientRects().length > 0
+      );
+      preferredTextWrapper = visibleWrapper || wrappers[0] || null;
+      return preferredTextWrapper;
+    };
+
+    const setActiveTextSizeOption = (size: string) => {
+      const allOptions = document.querySelectorAll<HTMLElement>('[data-text-size]');
+      allOptions.forEach(option => option.classList.remove('active'));
+      const matchingOptions = document.querySelectorAll<HTMLElement>(`[data-text-size="${size}"]`);
+      matchingOptions.forEach(option => option.classList.add('active'));
+
+      const label = `${size.charAt(0).toUpperCase()}${size.slice(1)} Text`;
+      textModeToggles.forEach(toggle => this.updateToggleLabel(toggle, label));
+    };
+
+    const updateDrawingModeState = () => {
+      const currentTool = this.toolManager.activeTool;
+      const isDrawingMode =
+        currentTool === this.toolManager.tools.line ||
+        currentTool === this.toolManager.tools.curve ||
+        currentTool === this.toolManager.tools.privacy ||
+        currentTool === this.toolManager.tools.select;
+
+      drawingModeWrappers.forEach(wrapper => {
+        wrapper.classList.toggle('shape-active', isDrawingMode);
+        if (!isDrawingMode) {
+          wrapper.classList.remove('shape-open');
+        }
+      });
+
+      drawingModeToggles.forEach(toggle => {
+        toggle.setAttribute('aria-pressed', String(isDrawingMode));
+      });
+
+      drawingModeOptions.forEach(option => {
+        const mode = option.getAttribute('data-drawing-mode');
+        const isActive =
+          (mode === 'line' && currentTool === this.toolManager.tools.line) ||
+          (mode === 'curve' && currentTool === this.toolManager.tools.curve) ||
+          (mode === 'privacy' && currentTool === this.toolManager.tools.privacy) ||
+          (mode === 'select' && currentTool === this.toolManager.tools.select);
+        option.classList.toggle('active', isActive);
+      });
+    };
+
     const updateTextToggleState = () => {
       const isText = this.toolManager.activeTool === this.toolManager.tools.text;
+      const activeWrapper = isText ? resolveTextWrapper() : null;
       textModeWrappers.forEach(wrapper => {
-        wrapper.classList.toggle('shape-active', isText);
-        if (!isText) {
+        const isActiveWrapper = isText && wrapper === activeWrapper;
+        wrapper.classList.toggle('shape-active', isActiveWrapper);
+        if (!isActiveWrapper) {
           wrapper.classList.remove('shape-open');
         }
       });
       textModeToggles.forEach(toggle => {
-        toggle.setAttribute('aria-pressed', String(isText));
-        toggle.classList.toggle('shape-inactive', !isText);
+        const wrapper = toggle.closest('.shape-toggle');
+        const isActiveToggle = isText && wrapper === activeWrapper;
+        toggle.setAttribute('aria-pressed', String(isActiveToggle));
+        toggle.classList.toggle('shape-inactive', !isActiveToggle);
       });
     };
 
@@ -527,11 +586,19 @@ export class App {
         e.preventDefault();
         e.stopPropagation();
         const wrapper = toggle.closest('.shape-toggle');
+        if (wrapper instanceof HTMLElement) {
+          preferredTextWrapper = wrapper;
+        }
         if (wrapper) wrapper.classList.toggle('shape-open');
-        this.toolManager.previousToolName = this.toolManager.activeToolName || 'line';
-        this.toolManager.selectTool('text');
-        syncTextCursor();
-        updateTextToggleState();
+
+        // Keep text tool activation tied to selecting a size option.
+        // If no size is active yet, default to medium for the opened menu.
+        const hasActiveSize = wrapper
+          ? !!wrapper.querySelector('[data-text-size].active')
+          : !!document.querySelector('[data-text-size].active');
+        if (!hasActiveSize) {
+          setActiveTextSizeOption('medium');
+        }
       });
     });
 
@@ -540,8 +607,6 @@ export class App {
     const shapeOptions = document.querySelectorAll<HTMLElement>('[data-shape-option]');
     const shapeFillToggles = document.querySelectorAll<HTMLElement>('[data-shape-fill-toggle]');
     const textStyleWrappers = document.querySelectorAll<HTMLElement>('#textStyleWrapper');
-    const drawingModeWrappers = document.querySelectorAll<HTMLElement>('#drawingModeWrapper');
-    const drawingModeOptions = document.querySelectorAll<HTMLElement>('[data-drawing-mode]');
     const shapeFillStyles = [
       'solid',
       'no-fill',
@@ -557,10 +622,16 @@ export class App {
       'clear-white': 'Clear White',
     };
     const shapeIcons: Record<string, string> = {
-      square: '■',
+      square: '▭',
       triangle: '▲',
       circle: '●',
       star: '★',
+    };
+    const shapeLabels: Record<string, string> = {
+      square: 'Rectangle',
+      triangle: 'Triangle',
+      circle: 'Circle',
+      star: 'Star',
     };
 
     // Shape button click - activate shape tool and store previous tool
@@ -577,6 +648,7 @@ export class App {
       shapeModeToggles.forEach(toggle => {
         const icon = toggle.querySelector('.shape-icon');
         if (icon) icon.textContent = shapeIcons[shape] ?? shapeIcons['square'] ?? null;
+        this.updateToggleLabel(toggle, shapeLabels[shape] ?? 'Shapes');
       });
       shapeOptions.forEach(btn => {
         btn.classList.toggle('active', btn.getAttribute('data-shape-option') === shape);
@@ -587,7 +659,6 @@ export class App {
       const isShapeMode = this.toolManager.activeTool === this.toolManager.tools.shape;
       shapeModeWrappers.forEach(wrapper => {
         wrapper.classList.toggle('shape-active', isShapeMode);
-        wrapper.classList.toggle('shape-disabled', !isShapeMode);
         if (!isShapeMode) {
           wrapper.classList.remove('shape-open');
         }
@@ -632,9 +703,7 @@ export class App {
       wrapper.addEventListener('mouseleave', scheduleHide);
     };
 
-    shapeModeWrappers.forEach(wrapper =>
-      bindShapeMenu(wrapper, () => this.toolManager.activeTool === this.toolManager.tools.shape)
-    );
+    shapeModeWrappers.forEach(wrapper => bindShapeMenu(wrapper, () => true));
     textStyleWrappers.forEach(wrapper => bindShapeMenu(wrapper));
     drawingModeWrappers.forEach(wrapper => bindShapeMenu(wrapper));
     textModeWrappers.forEach(wrapper => bindShapeMenu(wrapper, () => true));
@@ -649,11 +718,18 @@ export class App {
     }
 
     shapeOptions.forEach(btn => {
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', async () => {
         const shape = btn.getAttribute('data-shape-option');
-        if (!shape || !this.toolManager.tools.shape) return;
-        this.toolManager.tools.shape.setShapeType(shape);
+        if (!shape) return;
+        const shapeTool = await this.toolManager.ensureTool('shape');
+        if (!shapeTool?.setShapeType) return;
+        this.toolManager.previousToolName = this.toolManager.activeToolName || 'line';
+        shapeTool.setShapeType(shape);
+        this.toolManager.selectTool('shape');
         updateShapeIcon(shape);
+        updateShapeAvailability();
+        const wrapper = btn.closest('.shape-toggle');
+        if (wrapper) wrapper.classList.remove('shape-open');
       });
     });
 
@@ -701,11 +777,10 @@ export class App {
             syncTextCursor();
             updateTextToggleState();
             const parentDropdown = btn.closest('.shape-toggle');
-            const siblings = parentDropdown
-              ? parentDropdown.querySelectorAll<HTMLElement>('[data-text-size]')
-              : textModeOptions;
-            siblings.forEach(item => item.classList.remove('active'));
-            btn.classList.add('active');
+            if (parentDropdown instanceof HTMLElement) {
+              preferredTextWrapper = parentDropdown;
+            }
+            setActiveTextSizeOption(size);
             textModeWrappers.forEach(wrapper => {
               wrapper.classList.remove('text-size-small', 'text-size-medium', 'text-size-large');
               wrapper.classList.add(`text-size-${size}`);
@@ -717,10 +792,7 @@ export class App {
     });
 
     if (textModeOptions.length > 0) {
-      textModeOptions.forEach(item => item.classList.remove('active'));
-      textModeOptions.forEach(item => {
-        if (item.dataset['textSize'] === 'medium') item.classList.add('active');
-      });
+      setActiveTextSizeOption('medium');
       textModeWrappers.forEach(wrapper => wrapper.classList.add('text-size-medium'));
     }
 
@@ -736,6 +808,7 @@ export class App {
     });
 
     window.addEventListener('toolchange', () => {
+      updateDrawingModeState();
       updateShapeAvailability();
       if (this.toolManager.tools.shape) {
         updateShapeIcon(this.toolManager.tools.shape.shapeType);
@@ -755,6 +828,7 @@ export class App {
     });
 
     updateTextToggleState();
+    updateDrawingModeState();
 
     updateShapeAvailability();
 
@@ -1200,6 +1274,10 @@ export class App {
     window.addEventListener(
       'keydown',
       (e: KeyboardEvent) => {
+        if (e.key !== 'Tab') {
+          return;
+        }
+
         // Don't cycle if typing in an input/textarea or if text tool is active
         // Exception: Allow cycling if the target is a measurement span (user wants to tab out of it)
         const target = e.target as HTMLElement | null;
@@ -1213,42 +1291,43 @@ export class App {
           return;
         }
 
-        // Don't cycle if text tool is active (user might be typing)
-        if (this.toolManager.activeTool === this.toolManager.tools.text) {
+        // Don't cycle if text tool is active (user might be typing).
+        // Also prevent default focus navigation so Tab does not appear to switch modes.
+        if (this.toolManager.activeToolName === 'text') {
+          e.preventDefault();
+          e.stopPropagation();
           return;
         }
 
-        if (e.key === 'Tab') {
-          // Prevent default tab behavior (focus switching)
-          e.preventDefault();
-          e.stopPropagation();
+        // Prevent default tab behavior (focus switching)
+        e.preventDefault();
+        e.stopPropagation();
 
-          // Blur any active element to ensure focus doesn't get stuck
-          if (document.activeElement && document.activeElement !== document.body) {
-            (document.activeElement as HTMLElement).blur();
+        // Blur any active element to ensure focus doesn't get stuck
+        if (document.activeElement && document.activeElement !== document.body) {
+          (document.activeElement as HTMLElement).blur();
+        }
+
+        const currentToolName = this.toolManager.activeToolName;
+        const drawingModeToggle = document.getElementById('drawingModeToggle');
+
+        if (currentToolName === 'line') {
+          // Straight Line -> Curved Line
+          this.toolManager.selectTool('curve');
+          if (drawingModeToggle) {
+            this.updateToggleLabel(drawingModeToggle, 'Curved Line');
           }
-
-          const currentTool = this.toolManager.activeTool;
-          const drawingModeToggle = document.getElementById('drawingModeToggle');
-
-          if (currentTool === this.toolManager.tools.line) {
-            // Straight Line -> Curved Line
-            this.toolManager.selectTool('curve');
-            if (drawingModeToggle) {
-              this.updateToggleLabel(drawingModeToggle, 'Curved Line');
-            }
-          } else if (currentTool === this.toolManager.tools.curve) {
-            // Curved Line -> Select
-            this.toolManager.selectTool('select');
-            if (drawingModeToggle) {
-              this.updateToggleLabel(drawingModeToggle, 'Select');
-            }
-          } else {
-            // Select (or any other tool) -> Straight Line
-            this.toolManager.selectTool('line');
-            if (drawingModeToggle) {
-              this.updateToggleLabel(drawingModeToggle, 'Straight Line');
-            }
+        } else if (currentToolName === 'curve') {
+          // Curved Line -> Select
+          this.toolManager.selectTool('select');
+          if (drawingModeToggle) {
+            this.updateToggleLabel(drawingModeToggle, 'Select');
+          }
+        } else {
+          // Select (or any other tool) -> Straight Line
+          this.toolManager.selectTool('line');
+          if (drawingModeToggle) {
+            this.updateToggleLabel(drawingModeToggle, 'Straight Line');
           }
         }
       },

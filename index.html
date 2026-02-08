@@ -711,17 +711,31 @@
 
       .shape-toggle.shape-active.shape-open .shape-menu,
       .shape-toggle.shape-active:focus-within .shape-menu,
+      #drawingModeWrapper.shape-open .shape-menu,
+      #shapeModeWrapper.shape-open .shape-menu,
       .text-mode-toggle.shape-open .shape-menu {
         display: flex;
       }
 
-      .text-mode-toggle .tbtn {
+      .text-mode-toggle > #textModeToggle {
         border-color: #cbd5e1;
         color: #475569;
         background: #f8fafc;
       }
 
-      .text-mode-toggle.shape-active .tbtn {
+      #shapeModeWrapper > #shapeModeToggle {
+        border-color: #cbd5e1;
+        color: #475569;
+        background: #f8fafc;
+      }
+
+      .text-mode-toggle.shape-active > #textModeToggle {
+        border-color: #3b82f6;
+        color: #1d4ed8;
+        background: #eff6ff;
+      }
+
+      #shapeModeWrapper.shape-active > #shapeModeToggle {
         border-color: #3b82f6;
         color: #1d4ed8;
         background: #eff6ff;
@@ -1199,6 +1213,21 @@
         will-change: transform;
         pointer-events: none;
         z-index: 5;
+      }
+
+      body[data-image-panel-state="collapsed"] #mini-stepper-indicator {
+        transition: none !important;
+        opacity: 0 !important;
+      }
+
+      body[data-image-panel-state="collapsed"] #mini-stepper .step {
+        transition: none !important;
+      }
+
+      body[data-image-panel-state="collapsed"] #mini-stepper .step[aria-current="true"] {
+        background: #0f172a !important;
+        color: #ffffff !important;
+        border-color: #0f172a !important;
       }
 
       #mini-stepper .step {
@@ -2373,7 +2402,7 @@
               <button type="button" data-text-size="large">Large</button>
             </div>
           </div>
-          <div id="shapeModeWrapper" class="shape-toggle shape-disabled">
+          <div id="shapeModeWrapper" class="shape-toggle">
             <button
               id="shapeModeToggle"
               class="tbtn"
@@ -2382,10 +2411,10 @@
               aria-pressed="false"
             >
               <span class="label-long">Shapes</span><span class="label-short">Shapes</span>
-              <span class="shape-icon" aria-hidden="true">■</span>
+              <span class="shape-icon" aria-hidden="true">▭</span>
             </button>
             <div class="shape-menu" id="shapeModeMenu">
-              <button type="button" data-shape-option="square">■ Square</button>
+              <button type="button" data-shape-option="square">▭ Rectangle</button>
               <button type="button" data-shape-option="triangle">▲ Triangle</button>
               <button type="button" data-shape-option="circle">● Circle</button>
               <button type="button" data-shape-option="star">★ Star</button>
@@ -2858,7 +2887,7 @@
                 <button type="button" data-text-size="large">Large</button>
               </div>
             </div>
-            <div id="shapeModeWrapper" class="shape-toggle shape-disabled">
+            <div id="shapeModeWrapper" class="shape-toggle">
               <button
                 id="shapeModeToggle"
                 class="px-4 py-2.5 bg-white border-2 border-slate-400 text-slate-700 text-sm font-semibold rounded-xl hover:bg-slate-50 hover:border-slate-500 active:bg-slate-100 transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-sm"
@@ -2867,10 +2896,10 @@
                 aria-pressed="false"
               >
                 <span class="label-long">Shapes</span><span class="label-short">Shapes</span>
-                <span class="shape-icon" aria-hidden="true">■</span>
+                <span class="shape-icon" aria-hidden="true">▭</span>
               </button>
               <div class="shape-menu" id="shapeModeMenu">
-                <button type="button" data-shape-option="square">■ Square</button>
+                <button type="button" data-shape-option="square">▭ Rectangle</button>
                 <button type="button" data-shape-option="triangle">▲ Triangle</button>
                 <button type="button" data-shape-option="circle">● Circle</button>
                 <button type="button" data-shape-option="star">★ Star</button>

@@ -7,6 +7,15 @@
     return window.innerWidth <= 768;
   }
 
+  function isCompactDesktop() {
+    return window.innerWidth > 768 && window.innerWidth <= 1365;
+  }
+
+  function setImagePanelUiState(state) {
+    if (!document?.body) return;
+    document.body.setAttribute('data-image-panel-state', state);
+  }
+
   // Inject styles for collapsed sidebars
   const style = document.createElement('style');
   style.textContent = `
@@ -387,6 +396,10 @@
       const body = content;
       const isMinimized = body.classList.contains('hidden');
 
+      if (panelId === 'imagePanel') {
+        setImagePanelUiState(isMinimized ? 'expanded' : 'collapsed');
+      }
+
       // Special handling for imagePanel: ensure navigation container stays visible
       if (panelId === 'imagePanel') {
         const navContainer = document.getElementById('navigation-container');
@@ -474,6 +487,10 @@
       e.stopPropagation();
       const isCollapsed = panel.classList.contains('collapsed');
       const content = document.getElementById(contentId);
+
+      if (panelId === 'imagePanel') {
+        setImagePanelUiState(isCollapsed ? 'expanded' : 'collapsed');
+      }
 
       if (isCollapsed) {
         // Expand
@@ -571,6 +588,10 @@
           panel.style.display = 'none';
         }
       }
+
+      if (panel.id === 'imagePanel') {
+        setImagePanelUiState(isOpen ? 'expanded' : 'collapsed');
+      }
     }
 
     // Toggle panel on icon click
@@ -664,6 +685,7 @@
       const strokeContent = document.getElementById('elementsBody');
       const imageContent = document.getElementById('imagePanelContent');
       const isMobile = isMobileDevice();
+      const compactDesktop = isCompactDesktop();
 
       if (!strokePanel || !imagePanel) {
         return;
@@ -683,6 +705,7 @@
         imagePanel.setAttribute('data-mobile-state', 'minimized');
         imagePanel.setAttribute('aria-expanded', 'false');
         imagePanel.style.display = 'none'; // Hide on mobile when minimized
+        setImagePanelUiState('collapsed');
 
         // Hide content on mobile when minimized
         if (strokeContent) {
@@ -692,31 +715,52 @@
           imageContent.classList.add('hidden');
         }
       } else {
-        // Desktop: expand panels by default
+        // Desktop: snap side panels closed by default on compact widths
         strokePanel.classList.remove('minimized', 'expanded');
+        imagePanel.classList.remove('minimized', 'expanded');
+
+        if (compactDesktop) {
+          strokePanel.classList.add('collapsed');
+          imagePanel.classList.add('collapsed');
+          strokePanel.setAttribute('aria-expanded', 'false');
+          imagePanel.setAttribute('aria-expanded', 'false');
+          setImagePanelUiState('collapsed');
+        } else {
+          strokePanel.classList.remove('collapsed');
+          imagePanel.classList.remove('collapsed');
+          strokePanel.setAttribute('aria-expanded', 'true');
+          imagePanel.setAttribute('aria-expanded', 'true');
+          setImagePanelUiState('expanded');
+        }
+
         strokePanel.setAttribute('data-mobile-state', 'expanded');
-        strokePanel.setAttribute('aria-expanded', 'true');
         strokePanel.style.setProperty('display', 'flex', 'important');
 
-        imagePanel.classList.remove('minimized', 'expanded');
         imagePanel.setAttribute('data-mobile-state', 'expanded');
-        imagePanel.setAttribute('aria-expanded', 'true');
         imagePanel.style.setProperty('display', 'flex', 'important');
 
-        // Aggressively ensure content is visible on desktop
+        // Aggressively ensure content visibility based on collapsed state
         if (strokeContent) {
-          strokeContent.classList.remove('hidden');
-          strokeContent.style.maxHeight = 'none';
-          strokeContent.style.display = '';
-          strokeContent.style.visibility = '';
-          strokeContent.style.opacity = '';
+          if (strokePanel.classList.contains('collapsed')) {
+            strokeContent.style.setProperty('display', 'none', 'important');
+          } else {
+            strokeContent.classList.remove('hidden');
+            strokeContent.style.maxHeight = 'none';
+            strokeContent.style.display = '';
+            strokeContent.style.visibility = '';
+            strokeContent.style.opacity = '';
+          }
         }
         if (imageContent) {
-          imageContent.classList.remove('hidden');
-          imageContent.style.maxHeight = 'none';
-          imageContent.style.display = '';
-          imageContent.style.visibility = '';
-          imageContent.style.opacity = '';
+          if (imagePanel.classList.contains('collapsed')) {
+            imageContent.style.setProperty('display', 'none', 'important');
+          } else {
+            imageContent.classList.remove('hidden');
+            imageContent.style.maxHeight = 'none';
+            imageContent.style.display = '';
+            imageContent.style.visibility = '';
+            imageContent.style.opacity = '';
+          }
         }
       }
 
