@@ -23,20 +23,7 @@ export function initMeasurementUI(): void {
 
   const measurementSystem = win.app.measurementSystem;
 
-  // Setup unit selector event listener
-  const unitSelector = document.getElementById('unitSelector') as HTMLSelectElement | null;
-  if (unitSelector) {
-    unitSelector.addEventListener('change', event => {
-      const target = event.target as HTMLSelectElement | null;
-      const unit = target?.value === 'inch' ? 'inches' : 'cm';
-      measurementSystem.setUnit(unit);
-
-      // Refresh all measurement displays
-      if (win.app?.metadataManager) {
-        win.app.metadataManager.updateStrokeVisibilityControls();
-      }
-    });
-  }
+  // Unit selector handling is centralized in main.ts to avoid duplicate handlers.
 
   // Setup measurement input event listeners for the main inputs (if visible)
   const inchWholeInput = document.getElementById('inchWhole') as HTMLInputElement | null;
