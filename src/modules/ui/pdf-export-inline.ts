@@ -4,11 +4,15 @@
 // @ts-nocheck
 // Extracted from index.html inline scripts
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
+import { buildImageExportFilename, sanitizeFilenamePart } from '../utils/naming-utils.js';
 
 export function initPdfExport() {
   // Export utilities for saving multiple images and PDF generation with pdf-lib
   window.saveAllImages = async function () {
     const projectName = document.getElementById('projectName')?.value || 'OpenPaint';
+    const metadata =
+      window.app?.projectManager?.getProjectMetadata?.() || window.projectMetadata || {};
+    const partLabels = metadata.imagePartLabels || {};
     const views = window.app?.projectManager?.views || {};
     const viewIds = Object.keys(views).filter(id => views[id].image);
     if (viewIds.length === 0) {
@@ -16,7 +20,8 @@ export function initPdfExport() {
       return;
     }
     console.log(`[Export] Saving ${viewIds.length} images`);
-    for (const viewId of viewIds) {
+    for (let i = 0; i < viewIds.length; i++) {
+      const viewId = viewIds[i];
       await window.app.projectManager.switchView(viewId);
       await new Promise(resolve => setTimeout(resolve, 100));
       const canvas = window.app.canvasManager.fabricCanvas;
@@ -44,7 +49,8 @@ export function initPdfExport() {
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
           a.href = url;
-          a.download = `${projectName}_${viewId}.png`;
+          const imageLabel = partLabels[viewId] || '';
+          a.download = `${buildImageExportFilename(projectName, imageLabel, i)}.png`;
           a.click();
           URL.revokeObjectURL(url);
           resolve();
@@ -94,6 +100,14 @@ export function initPdfExport() {
     const pdfDoc = await PDFDocument.create();
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
     const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+    const metadata =
+      window.app?.projectManager?.getProjectMetadata?.() || window.projectMetadata || {};
+    const naming = metadata.naming || {};
+    const partLabels = metadata.imagePartLabels || {};
+    const relations =
+      typeof window.evaluateMeasurementRelations === 'function'
+        ? window.evaluateMeasurementRelations()
+        : { checks: [], connections: [] };
     const pageSizes = { letter: { width: 612, height: 792 }, a4: { width: 595, height: 842 } };
     const { width: pageWidth, height: pageHeight } = pageSizes[pageSize] || pageSizes.letter;
     const qualityScales = { high: 3.0, medium: 2.0, low: 1.5 };
@@ -150,6 +164,27 @@ export function initPdfExport() {
         font,
         color: rgb(0.8, 0.9, 1),
       });
+      const partLabel = partLabels[viewId] || `view-${String(i + 1).padStart(2, '0')}`;
+      page.drawText(partLabel, {
+        x: 36,
+        y: pageHeight - 45,
+        size: 10,
+        font,
+        color: rgb(0.8, 0.9, 1),
+      });
+      const namingLine = [naming.customerName, naming.sofaTypeLabel, naming.jobDate]
+        .map(part => String(part || '').trim())
+        .filter(Boolean)
+        .join(' | ');
+      if (namingLine) {
+        page.drawText(namingLine, {
+          x: 36,
+          y: pageHeight - 58,
+          size: 8,
+          font,
+          color: rgb(0.88, 0.94, 1),
+        });
+      }
       const imgAspect = image.width / image.height;
       let imgWidth = 500;
       let imgHeight = imgWidth / imgAspect;
@@ -249,6 +284,65 @@ export function initPdfExport() {
         { x: 40, y: 20, size: 8, font, color: rgb(0.4, 0.4, 0.4) }
       );
     }
+
+    // Relationship summary page
+    if ((relations.checks?.length || 0) + (relations.connections?.length || 0) > 0) {
+      const page = pdfDoc.addPage([pageWidth, pageHeight]);
+      page.drawRectangle({
+        x: 0,
+        y: pageHeight - 50,
+        width: pageWidth,
+        height: 50,
+        color: rgb(0.12, 0.25, 0.69),
+      });
+      page.drawText('Measurement Checks + Connections', {
+        x: 36,
+        y: pageHeight - 30,
+        size: 16,
+        font: fontBold,
+        color: rgb(1, 1, 1),
+      });
+      let y = pageHeight - 80;
+      page.drawText('Checks', { x: 36, y, size: 12, font: fontBold, color: rgb(0.1, 0.1, 0.1) });
+      y -= 16;
+      (relations.checks || []).forEach(check => {
+        const status = String(check.status || 'pending').toUpperCase();
+        const text = `${check.formula || check.id || 'Check'} [${status}]${check.reason ? ` - ${check.reason}` : ''}`;
+        page.drawText(text.slice(0, 120), {
+          x: 36,
+          y,
+          size: 9,
+          font,
+          color: rgb(0.2, 0.2, 0.2),
+        });
+        y -= 12;
+        if (y < 90) return;
+      });
+      y -= 6;
+      page.drawText('Connections', {
+        x: 36,
+        y,
+        size: 12,
+        font: fontBold,
+        color: rgb(0.1, 0.1, 0.1),
+      });
+      y -= 16;
+      (relations.connections || []).forEach(connection => {
+        const status = String(connection.status || 'pending').toUpperCase();
+        const left = connection.fromDisplay || connection.fromKey || '-';
+        const right = connection.toDisplay || connection.toKey || '-';
+        const label = `${left} ↔ ${right} [${status}]${connection.reason ? ` - ${connection.reason}` : ''}`;
+        page.drawText(label.slice(0, 120), {
+          x: 36,
+          y,
+          size: 9,
+          font,
+          color: rgb(0.2, 0.2, 0.2),
+        });
+        y -= 12;
+      });
+    }
+
     progressBar.style.width = '100%';
     progressText.textContent = 'Saving PDF...';
     const pdfBytes = await pdfDoc.save();
@@ -256,7 +350,7 @@ export function initPdfExport() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${projectName}.pdf`;
+    a.download = `${sanitizeFilenamePart(projectName, 'OpenPaint Project')}.pdf`;
     a.click();
     URL.revokeObjectURL(url);
     console.log('[PDF] Generated with editable form fields using pdf-lib');
