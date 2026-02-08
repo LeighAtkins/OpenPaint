@@ -1,6 +1,6 @@
 // Main Entry Point
 import { CanvasManager } from './CanvasManager.js';
-import { ToolManager } from './tools/ToolManager.js';
+import { ToolManager } from './tools/ToolManager.ts';
 import { ProjectManager } from './ProjectManager.js';
 import { HistoryManager } from './HistoryManager.js';
 import { StrokeMetadataManager } from './StrokeMetadataManager.js';
