@@ -109,6 +109,10 @@ function createUniquePdfFieldName(baseName, usedNames) {
   return candidate;
 }
 
+function safePdfText(value) {
+  return String(value || '').replace(/[^\x20-\x7E]/g, ' ');
+}
+
 export function initPdfExport() {
   // Export utilities for saving multiple images and PDF generation with pdf-lib
   window.saveAllImages = async function () {
@@ -209,10 +213,14 @@ export function initPdfExport() {
       window.app?.projectManager?.getProjectMetadata?.() || window.projectMetadata || {};
     const naming = metadata.naming || {};
     const partLabels = metadata.imagePartLabels || {};
-    const relations =
-      typeof window.evaluateMeasurementRelations === 'function'
-        ? window.evaluateMeasurementRelations()
-        : { checks: [], connections: [] };
+    let relations = { checks: [], connections: [] };
+    if (typeof window.evaluateMeasurementRelations === 'function') {
+      try {
+        relations = window.evaluateMeasurementRelations() || relations;
+      } catch (error) {
+        console.warn('[PDF] Failed to evaluate measurement relations, continuing:', error);
+      }
+    }
     const pageSizes = { letter: { width: 612, height: 792 }, a4: { width: 595, height: 842 } };
     const { width: pageWidth, height: pageHeight } = pageSizes[pageSize] || pageSizes.letter;
     const qualityScales = { high: 3.0, medium: 2.0, low: 1.5 };
@@ -259,14 +267,14 @@ export function initPdfExport() {
         height: 50,
         color: rgb(0.12, 0.25, 0.69),
       });
-      page.drawText(projectName, {
+      page.drawText(safePdfText(projectName), {
         x: pageWidth / 2 - projectName.length * 6,
         y: pageHeight - 30,
         size: 16,
         font: fontBold,
         color: rgb(1, 1, 1),
       });
-      page.drawText(viewId, {
+      page.drawText(safePdfText(viewId), {
         x: pageWidth / 2 - viewId.length * 4,
         y: pageHeight - 45,
         size: 10,
@@ -276,7 +284,7 @@ export function initPdfExport() {
       const partLabel =
         partLabels[viewId] || `view-${String(target.viewIndex + 1).padStart(2, '0')}`;
       const pageLabel = `${partLabel} - ${tabName}`;
-      page.drawText(pageLabel, {
+      page.drawText(safePdfText(pageLabel), {
         x: 36,
         y: pageHeight - 45,
         size: 10,
@@ -288,7 +296,7 @@ export function initPdfExport() {
         .filter(Boolean)
         .join(' | ');
       if (namingLine) {
-        page.drawText(namingLine, {
+        page.drawText(safePdfText(namingLine), {
           x: 36,
           y: pageHeight - 58,
           size: 8,
@@ -432,8 +440,9 @@ export function initPdfExport() {
       y -= 16;
       (relations.checks || []).forEach(check => {
         const status = String(check.status || 'pending').toUpperCase();
-        const text = `${check.formula || check.id || 'Check'} [${status}]${check.reason ? ` - ${check.reason}` : ''}`;
-        page.drawText(text.slice(0, 120), {
+        const isPending = String(check.status || '').toLowerCase() === 'pending';
+        const text = `${check.formula || check.id || 'Check'} [${status}]${!isPending && check.reason ? ` - ${check.reason}` : ''}`;
+        page.drawText(safePdfText(text).slice(0, 120), {
           x: 36,
           y,
           size: 9,
@@ -456,8 +465,9 @@ export function initPdfExport() {
         const status = String(connection.status || 'pending').toUpperCase();
         const left = connection.fromDisplay || connection.fromKey || '-';
         const right = connection.toDisplay || connection.toKey || '-';
-        const label = `${left} ↔ ${right} [${status}]${connection.reason ? ` - ${connection.reason}` : ''}`;
-        page.drawText(label.slice(0, 120), {
+        const isPending = String(connection.status || '').toLowerCase() === 'pending';
+        const label = `${left} <-> ${right} [${status}]${!isPending && connection.reason ? ` - ${connection.reason}` : ''}`;
+        page.drawText(safePdfText(label).slice(0, 120), {
           x: 36,
           y,
           size: 9,

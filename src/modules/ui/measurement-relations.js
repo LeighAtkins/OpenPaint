@@ -135,7 +135,7 @@ function evaluateChecks(checks, measurementIndex) {
         status: 'pending',
         result: null,
         delta: null,
-        reason: `Missing value for ${missingToken}`,
+        reason: `Waiting for ${missingToken} value (informational)`,
       };
     }
 
@@ -179,7 +179,7 @@ function evaluateConnections(connections, measurementLookup, tolerance = 0) {
         ...connection,
         status: 'pending',
         delta: null,
-        reason: 'Missing values',
+        reason: 'Waiting for values (informational)',
         fromDisplay: from?.display || connection.fromKey || '-',
         toDisplay: to?.display || connection.toKey || '-',
       };
