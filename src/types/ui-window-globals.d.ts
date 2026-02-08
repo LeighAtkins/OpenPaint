@@ -43,6 +43,8 @@ declare global {
     __miniStepperLastAutoScrollLabel?: string;
     __imageListCenteringObserver?: IntersectionObserver | null;
     __pillCenteringObserver?: IntersectionObserver | null;
+    createPanelToggle?: (panelId: string, contentId: string, buttonId: string) => void;
+    createSidebarToggle?: (panelId: string, contentId: string, buttonId: string) => void;
   }
 }
 

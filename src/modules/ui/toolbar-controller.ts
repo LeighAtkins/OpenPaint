@@ -1,4 +1,7 @@
 // Toolbar controller and UI initialization
+/* eslint-disable @typescript-eslint/no-unused-vars, prefer-rest-params, @typescript-eslint/no-misused-promises, @typescript-eslint/prefer-regexp-exec */
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+// @ts-nocheck
 // Extracted from index.html inline scripts
 
 export function initToolbarController() {

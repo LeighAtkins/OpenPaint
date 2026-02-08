@@ -1,7 +1,9 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-// @ts-nocheck
 // Scroll-select and mini-stepper initialization
 import { isImagePanelCollapsed } from './panel-state.js';
+
+declare const imageGalleryData:
+  | Array<{ original?: { label?: string }; label?: string }>
+  | undefined;
 
 // Extracted from index.html inline scripts
 
@@ -30,7 +32,7 @@ export function initScrollSelectSystem() {
   }
   window.updateImageListPadding = updateImageListPadding;
 
-  let __imageListPaddingResizeTimeout = null;
+  let __imageListPaddingResizeTimeout: ReturnType<typeof setTimeout> | null = null;
   window.addEventListener('resize', () => {
     if (__imageListPaddingResizeTimeout) {
       clearTimeout(__imageListPaddingResizeTimeout);
@@ -54,7 +56,7 @@ export function initScrollSelectSystem() {
     }
   }
 
-  function persistScrollSelectState(enabled) {
+  function persistScrollSelectState(enabled: boolean): void {
     try {
       localStorage.setItem(SCROLL_SELECT_STORAGE_KEY, String(enabled));
     } catch {
@@ -62,7 +64,7 @@ export function initScrollSelectSystem() {
     }
   }
 
-  function setScrollSelectEnabled(enabled, source = 'auto') {
+  function setScrollSelectEnabled(enabled: boolean, source = 'auto'): void {
     window.scrollToSelectEnabled = enabled;
     persistScrollSelectState(enabled);
     console.debug(`[ScrollSelect] Mode set to ${enabled ? 'AUTO' : 'MANUAL'} (source: ${source})`);
@@ -75,20 +77,20 @@ export function initScrollSelectSystem() {
       modeLabel.classList.toggle('text-blue-600', enabled);
       modeLabel.classList.toggle('text-slate-500', !enabled);
     }
-    const toggle = document.getElementById('scrollSelectToggle');
+    const toggle = document.getElementById('scrollSelectToggle') as HTMLInputElement | null;
     if (toggle) {
       toggle.checked = enabled;
     }
   }
 
-  function isScrollSelectEnabled() {
+  function isScrollSelectEnabled(): boolean {
     return window.scrollToSelectEnabled !== false;
   }
 
   const MIN_CENTER_TOLERANCE = 8;
   const MAX_CENTER_TOLERANCE = 48;
 
-  function getListCenterMetrics(listRect) {
+  function getListCenterMetrics(listRect: DOMRect) {
     if (!listRect) {
       return { center: 0, tolerance: MIN_CENTER_TOLERANCE };
     }
@@ -100,14 +102,14 @@ export function initScrollSelectSystem() {
     return { center, tolerance };
   }
 
-  function getAlignedImageContainer(imageList) {
+  function getAlignedImageContainer(imageList: HTMLElement) {
     if (!imageList) return null;
     const listRect = imageList.getBoundingClientRect();
     if (!listRect || !listRect.height) return null;
     const { center, tolerance } = getListCenterMetrics(listRect);
-    let closest = null;
+    let closest: HTMLElement | null = null;
     let closestDistance = Infinity;
-    imageList.querySelectorAll('.image-container').forEach(container => {
+    imageList.querySelectorAll<HTMLElement>('.image-container').forEach(container => {
       const rect = container.getBoundingClientRect();
       if (!rect || rect.height === 0) return;
       const containerCenter = rect.top + rect.height / 2;
@@ -170,7 +172,7 @@ export function initScrollSelectSystem() {
   function initScrollSelectToggle() {
     const initial = loadScrollSelectState();
     setScrollSelectEnabled(initial, 'init');
-    const toggle = document.getElementById('scrollSelectToggle');
+    const toggle = document.getElementById('scrollSelectToggle') as HTMLInputElement | null;
     if (toggle) {
       toggle.addEventListener('change', () => {
         setScrollSelectEnabled(toggle.checked, 'toggle');
