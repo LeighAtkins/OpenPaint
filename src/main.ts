@@ -32,11 +32,12 @@ import { fabric } from 'fabric';
 import { logger } from '@/utils/errors';
 import { env } from '@/utils/env';
 import { initializeRotationControls } from '@/features';
+import type { App } from './modules/main';
 
 // ── 3. Type declarations ────────────────────────────────────────────────────
 declare global {
   interface Window {
-    app?: any;
+    app?: App;
     paintApp?: any;
     PDFLib?: any;
     JSZip?: any;
@@ -75,19 +76,20 @@ declare global {
 }
 
 // ── 4. Extracted inline scripts (from index.html) ───────────────────────────
-import { initToolbarSizing } from './modules/ui/toolbar-sizing.js';
-import { initToolbarReady } from './modules/ui/toolbar-ready.js';
-import { initPanelRelocation } from './modules/ui/panel-relocation.js';
-import { initFrameCaptureToggle } from './modules/ui/frame-capture-toggle.js';
+import { initToolbarSizing } from './modules/ui/toolbar-sizing';
+import { initToolbarReady } from './modules/ui/toolbar-ready';
+import { initPanelRelocation } from './modules/ui/panel-relocation';
+import { initFrameCaptureToggle } from './modules/ui/frame-capture-toggle';
+import { initFrameCaptureVisibility } from './modules/ui/frame-capture-visibility';
+import { initToolbarLayout } from './modules/ui/toolbar-layout';
 import { initPdfExport } from './modules/ui/pdf-export-inline.js';
 import { initToolbarController } from './modules/ui/toolbar-controller.js';
 import { initScrollSelectSystem } from './modules/ui/scroll-select-init.js';
-import { initStatusMessageHandler } from './modules/ui/status-message-handler.js';
-import { initAIExport } from './modules/ai/ai-export-loader.js';
+import { initStatusMessageHandler } from './modules/ui/status-message-handler';
+import { initStatusMessage } from './modules/ui/status-message';
+import { initAIExport } from './modules/ai/ai-export-loader';
 
 // ── 5. Standalone UI modules ─────────────────────────────────────────────────
-import './modules/ui/toolbar-layout.js';
-import './modules/ui/frame-capture-visibility.js';
 import './modules/ui/toolbar-init.js';
 import './modules/ui/smart-labels.js';
 import './modules/ui/panel-management.js';
@@ -95,14 +97,17 @@ import './modules/ui/capture-frame.js';
 import './modules/ui/image-gallery.js';
 import './modules/ui/scroll-select-system.js';
 import './modules/ui/mini-stepper.js';
-import './modules/ui/status-message.js';
 import './modules/utils/transform';
 import './modules/utils/geometry';
 import './modules/utils/migration';
-import './modules/ai/ai-integration.js';
+import './modules/ai/ai-integration';
+
+initToolbarLayout();
+initFrameCaptureVisibility();
+initStatusMessage();
 
 // ── 6. Core application ────────────────────────────────────────────────────
-// The App class from modules/main.js is the heart of the application.
+// The App class from modules/main.ts is the heart of the application.
 // It creates all managers (CanvasManager, ToolManager, ProjectManager, etc.)
 // and wires up the entire UI.
 
@@ -125,11 +130,11 @@ async function bootstrap(): Promise<void> {
   initPanelRelocation();
   initFrameCaptureToggle();
 
-  // ── Initialize the core App (from modules/main.js) ──
+  // ── Initialize the core App (from modules/main.ts) ──
   // The App class self-initializes on DOMContentLoaded via its own listener.
   // We import it here so Vite bundles it; its DOMContentLoaded listener
   // will fire since the DOM is already ready at this point.
-  await import('./modules/main.js');
+  await import('./modules/main');
 
   // ── Post-app initialization ──
   // These run after the App has initialized and set window.app

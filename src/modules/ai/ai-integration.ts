@@ -3,6 +3,65 @@
  * Handles AI-powered furniture dimensioning with Cloudflare Images and Worker
  */
 
+import type { AIImageInfo, AIStrokeInput, AIUnits, AIVectorOutput } from './ai-schemas';
+
+interface AIDerivedInfo {
+  unit: string;
+  pxPerUnit: number;
+}
+
+interface AISummaryDimension {
+  id: string;
+  value: number;
+  unit: string;
+}
+
+interface AISummaryInfo {
+  dims?: AISummaryDimension[];
+}
+
+interface AIResultVector {
+  type: 'line' | 'path' | 'text';
+  points?: Array<{ x: number; y: number }>;
+  style?: {
+    color?: string;
+    width?: number;
+  };
+  label?: string | { text?: string; x?: number; y?: number };
+}
+
+interface AIAnalysisResult {
+  derived?: AIDerivedInfo;
+  summary?: AISummaryInfo;
+  vectors?: AIResultVector[];
+  svg?: string;
+}
+
+interface AIIntegrationState {
+  isGenerating: boolean;
+  currentImageId: string | null;
+  currentImageUrl: string | null;
+  lastResult: AIAnalysisResult | null;
+}
+
+declare global {
+  interface Window {
+    aiIntegration: AIIntegrationState;
+    AppInit?: {
+      markReady: (name: string) => void;
+    };
+    generateSofaBasics?: () => void;
+    handleCalibrationSubmit?: (event: Event) => void;
+    handlePreviewAction?: (action: string) => void;
+    cleanupStrokesWithAI?: (
+      strokes: AIStrokeInput[],
+      image: AIImageInfo,
+      units?: AIUnits | null
+    ) => Promise<unknown>;
+    redrawCanvasWithVisibility?: () => void;
+  }
+}
+
 // AI Integration state
 window.aiIntegration = {
   isGenerating: false,
@@ -13,10 +72,10 @@ window.aiIntegration = {
 
 /**
  * Upload image to Cloudflare Images and get signed URL
- * @param {Blob} imageBlob - Image blob to upload
- * @returns {Promise<{imageId: string, deliveryUrl: string}>}
  */
-async function uploadImageToCloudflare(imageBlob) {
+async function uploadImageToCloudflare(
+  imageBlob: Blob
+): Promise<{ imageId: string; deliveryUrl: string }> {
   try {
     // Get presigned upload URL
     const presignResponse = await fetch('/api/storage/presign', {
@@ -27,11 +86,15 @@ async function uploadImageToCloudflare(imageBlob) {
     });
 
     if (!presignResponse.ok) {
-      const error = await presignResponse.json();
+      const error = (await presignResponse.json()) as { message?: string };
       throw new Error(error.message || 'Failed to get upload URL');
     }
 
-    const { uploadUrl, imageId, deliveryUrl } = await presignResponse.json();
+    const { uploadUrl, imageId, deliveryUrl } = (await presignResponse.json()) as {
+      uploadUrl: string;
+      imageId: string;
+      deliveryUrl: string;
+    };
 
     // Upload image to Cloudflare Images
     const uploadResponse = await fetch(uploadUrl, {
@@ -56,10 +119,8 @@ async function uploadImageToCloudflare(imageBlob) {
 
 /**
  * Get signed image URL for existing image
- * @param {string} imageId - Cloudflare Images ID
- * @returns {string} Delivery URL
  */
-function getSignedImageUrl(imageId) {
+function getSignedImageUrl(imageId: string): string {
   const CF_ACCOUNT_HASH = window.paintApp?.config?.CF_ACCOUNT_HASH;
   if (!CF_ACCOUNT_HASH) {
     throw new Error('CF_ACCOUNT_HASH not configured');
@@ -69,19 +130,17 @@ function getSignedImageUrl(imageId) {
 
 /**
  * Check if image is loaded and ready for AI processing
- * @returns {boolean}
  */
-function isImageReadyForAI() {
+function isImageReadyForAI(): boolean {
   const currentImage =
     window.paintApp?.state?.originalImages?.[window.paintApp?.state?.currentImageLabel];
-  return currentImage && currentImage.naturalWidth && currentImage.naturalHeight;
+  return Boolean(currentImage && currentImage.naturalWidth && currentImage.naturalHeight);
 }
 
 /**
  * Get current image dimensions
- * @returns {{width: number, height: number} | null}
  */
-function getCurrentImageDimensions() {
+function getCurrentImageDimensions(): { width: number; height: number } | null {
   const currentImage =
     window.paintApp?.state?.originalImages?.[window.paintApp?.state?.currentImageLabel];
   if (!currentImage) return null;
@@ -94,9 +153,8 @@ function getCurrentImageDimensions() {
 
 /**
  * Get current image as blob
- * @returns {Promise<Blob>}
  */
-async function getCurrentImageAsBlob() {
+async function getCurrentImageAsBlob(): Promise<Blob> {
   const currentImage =
     window.paintApp?.state?.originalImages?.[window.paintApp?.state?.currentImageLabel];
   if (!currentImage) {
@@ -107,12 +165,16 @@ async function getCurrentImageAsBlob() {
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
 
+  if (!ctx) {
+    throw new Error('Failed to get canvas context');
+  }
+
   canvas.width = currentImage.naturalWidth || currentImage.width;
   canvas.height = currentImage.naturalHeight || currentImage.height;
 
   ctx.drawImage(currentImage, 0, 0);
 
-  return new Promise((resolve, reject) => {
+  return new Promise<Blob>((resolve, reject) => {
     canvas.toBlob(
       blob => {
         if (blob) {
@@ -131,7 +193,7 @@ async function getCurrentImageAsBlob() {
  * Generate sofa basics using AI
  * Main entry point for AI dimensioning
  */
-async function generateSofaBasics() {
+async function generateSofaBasics(): Promise<void> {
   try {
     // Check if image is ready
     if (!isImageReadyForAI()) {
@@ -166,18 +228,18 @@ async function generateSofaBasics() {
     // Show calibration dialog
     showCalibrationDialog(dimensions);
   } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
     console.error('[AI Integration] Generate sofa basics failed:', error);
-    showAIMessage(`Error: ${error.message}`, 'error');
+    showAIMessage(`Error: ${message}`, 'error');
     window.aiIntegration.isGenerating = false;
   }
 }
 
 /**
  * Show calibration dialog
- * @param {{width: number, height: number}} dimensions - Image dimensions
  */
-function showCalibrationDialog(dimensions) {
-  const dialog = document.getElementById('ai-calibration-dialog');
+function showCalibrationDialog(dimensions: { width: number; height: number }): void {
+  const dialog = document.getElementById('ai-calibration-dialog') as HTMLDialogElement | null;
   if (!dialog) {
     console.error('[AI Integration] Calibration dialog not found');
     return;
@@ -190,11 +252,19 @@ function showCalibrationDialog(dimensions) {
   }
 
   // Reset form
-  const form = dialog.querySelector('#calibration-form');
+  const form = dialog.querySelector('#calibration-form') as HTMLFormElement | null;
   if (form) {
     form.reset();
-    form.querySelector('input[name="real-width"]').value = '';
-    form.querySelector('select[name="unit"]').value = 'cm';
+    const realWidthInput = form.querySelector(
+      'input[name="real-width"]'
+    ) as HTMLInputElement | null;
+    if (realWidthInput) {
+      realWidthInput.value = '';
+    }
+    const unitSelect = form.querySelector('select[name="unit"]') as HTMLSelectElement | null;
+    if (unitSelect) {
+      unitSelect.value = 'cm';
+    }
   }
 
   // Show dialog
@@ -203,16 +273,19 @@ function showCalibrationDialog(dimensions) {
 
 /**
  * Handle calibration form submission
- * @param {Event} event - Form submit event
  */
-async function handleCalibrationSubmit(event) {
+async function handleCalibrationSubmit(event: Event): Promise<void> {
   event.preventDefault();
 
-  const form = event.target;
+  const form = event.target as HTMLFormElement | null;
+  if (!form) return;
+
   const formData = new FormData(form);
 
-  const realWidth = parseFloat(formData.get('real-width'));
-  const unit = formData.get('unit');
+  const realWidthValue = formData.get('real-width');
+  const realWidth = typeof realWidthValue === 'string' ? Number.parseFloat(realWidthValue) : NaN;
+  const unitValue = formData.get('unit');
+  const unit = typeof unitValue === 'string' ? unitValue : 'cm';
 
   if (!realWidth || realWidth <= 0) {
     showAIMessage('Please enter a valid width value', 'error');
@@ -221,13 +294,17 @@ async function handleCalibrationSubmit(event) {
 
   try {
     // Close calibration dialog
-    const dialog = document.getElementById('ai-calibration-dialog');
-    dialog.close();
+    const dialog = document.getElementById('ai-calibration-dialog') as HTMLDialogElement | null;
+    dialog?.close();
 
     showAIMessage('Generating AI dimensions...', 'info');
 
     // Prepare payload for Worker
     const dimensions = getCurrentImageDimensions();
+    if (!dimensions) {
+      throw new Error('Could not get image dimensions');
+    }
+
     const payload = {
       image: {
         width: dimensions.width,
@@ -257,18 +334,19 @@ async function handleCalibrationSubmit(event) {
     });
 
     if (!response.ok) {
-      const error = await response.json();
+      const error = (await response.json()) as { error?: string; message?: string };
       throw new Error(error.error || error.message || 'AI analysis failed');
     }
 
-    const result = await response.json();
+    const result = (await response.json()) as AIAnalysisResult;
     window.aiIntegration.lastResult = result;
 
     // Show preview modal
     showPreviewModal(result);
   } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
     console.error('[AI Integration] Calibration failed:', error);
-    showAIMessage(`Error: ${error.message}`, 'error');
+    showAIMessage(`Error: ${message}`, 'error');
   } finally {
     window.aiIntegration.isGenerating = false;
   }
@@ -276,10 +354,9 @@ async function handleCalibrationSubmit(event) {
 
 /**
  * Show preview modal with AI results
- * @param {Object} result - AI analysis result
  */
-function showPreviewModal(result) {
-  const modal = document.getElementById('ai-preview-modal');
+function showPreviewModal(result: AIAnalysisResult): void {
+  const modal = document.getElementById('ai-preview-modal') as HTMLDialogElement | null;
   if (!modal) {
     console.error('[AI Integration] Preview modal not found');
     return;
@@ -293,7 +370,7 @@ function showPreviewModal(result) {
 
   // Update dimension summary
   const summaryEl = modal.querySelector('#ai-dimension-summary');
-  if (summaryEl && result.summary && result.summary.dims) {
+  if (summaryEl && result.summary?.dims) {
     const dims = result.summary.dims;
     summaryEl.innerHTML = dims
       .map(
@@ -304,8 +381,8 @@ function showPreviewModal(result) {
   }
 
   // Store SVG for preview
-  if (result.svg) {
-    modal.dataset.svg = result.svg;
+  if (result['svg']) {
+    modal.dataset['svg'] = result['svg'];
   }
 
   // Show modal
@@ -314,10 +391,9 @@ function showPreviewModal(result) {
 
 /**
  * Handle preview modal actions
- * @param {string} action - Action to perform
  */
-async function handlePreviewAction(action) {
-  const modal = document.getElementById('ai-preview-modal');
+async function handlePreviewAction(action: string): Promise<void> {
+  const modal = document.getElementById('ai-preview-modal') as HTMLDialogElement | null;
   const result = window.aiIntegration.lastResult;
 
   if (!result) {
@@ -329,14 +405,14 @@ async function handlePreviewAction(action) {
     switch (action) {
       case 'accept':
         await acceptAIResult(result);
-        modal.close();
+        modal?.close();
         showAIMessage('AI dimensions added to canvas', 'success');
         break;
 
       case 'save':
         await acceptAIResult(result);
         await saveAIResult(result);
-        modal.close();
+        modal?.close();
         showAIMessage('AI dimensions saved to project', 'success');
         break;
 
@@ -345,28 +421,28 @@ async function handlePreviewAction(action) {
         break;
 
       case 'cancel':
-        modal.close();
+        modal?.close();
         break;
 
       default:
         console.warn('[AI Integration] Unknown preview action:', action);
     }
   } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
     console.error('[AI Integration] Preview action failed:', error);
-    showAIMessage(`Error: ${error.message}`, 'error');
+    showAIMessage(`Error: ${message}`, 'error');
   }
 }
 
 /**
  * Accept AI result and add to canvas
- * @param {Object} result - AI analysis result
  */
-async function acceptAIResult(result) {
+async function acceptAIResult(result: AIAnalysisResult): Promise<void> {
   if (!result.vectors || !Array.isArray(result.vectors)) {
     throw new Error('No AI vectors to add');
   }
 
-  const currentLabel = window.paintApp?.state?.currentImageLabel;
+  const currentLabel = window.paintApp?.state?.currentImageLabel as string | undefined;
   if (!currentLabel) {
     throw new Error('No current image label');
   }
@@ -411,10 +487,9 @@ async function acceptAIResult(result) {
 
 /**
  * Save AI result to project
- * @param {Object} result - AI analysis result
  */
-async function saveAIResult(result) {
-  const currentLabel = window.paintApp?.state?.currentImageLabel;
+async function saveAIResult(result: AIAnalysisResult): Promise<void> {
+  const currentLabel = window.paintApp?.state?.currentImageLabel as string | undefined;
   if (!currentLabel) {
     throw new Error('No current image label');
   }
@@ -457,9 +532,8 @@ async function saveAIResult(result) {
 
 /**
  * Download AI SVG
- * @param {Object} result - AI analysis result
  */
-function downloadAISVG(result) {
+function downloadAISVG(result: AIAnalysisResult): void {
   if (!result.svg) {
     showAIMessage('No SVG available to download', 'error');
     return;
@@ -478,10 +552,8 @@ function downloadAISVG(result) {
 
 /**
  * Show AI message to user
- * @param {string} message - Message to show
- * @param {string} type - Message type (info, success, warning, error)
  */
-function showAIMessage(message, type = 'info') {
+function showAIMessage(message: string, type: 'info' | 'success' | 'warning' | 'error' = 'info') {
   console.log(`[AI Integration] ${type.toUpperCase()}: ${message}`);
 
   // Try to use existing toast/notification system
@@ -497,12 +569,12 @@ function showAIMessage(message, type = 'info') {
 
 /**
  * Clean up existing strokes with AI (stroke-only flow)
- * @param {Array} strokes - Array of stroke objects
- * @param {Object} image - Image dimensions
- * @param {Object} units - Unit configuration (optional)
- * @returns {Promise<Object>} Cleaned SVG and vectors
  */
-async function cleanupStrokesWithAI(strokes, image, units = null) {
+async function cleanupStrokesWithAI(
+  strokes: AIStrokeInput[],
+  image: AIImageInfo,
+  units: AIUnits | null = null
+): Promise<AIVectorOutput[]> {
   try {
     const response = await fetch('/ai/generate-svg', {
       method: 'POST',
@@ -528,11 +600,12 @@ async function cleanupStrokesWithAI(strokes, image, units = null) {
     });
 
     if (!response.ok) {
-      const error = await response.json();
+      const error = (await response.json()) as { error?: { message?: string } };
       throw new Error(error.error?.message || 'AI stroke cleanup failed');
     }
 
-    return await response.json();
+    const data = (await response.json()) as { vectors?: AIVectorOutput[] };
+    return data.vectors || [];
   } catch (error) {
     console.error('Stroke cleanup failed:', error);
     throw error;
@@ -540,16 +613,19 @@ async function cleanupStrokesWithAI(strokes, image, units = null) {
 }
 
 // Export functions to global scope
-window.generateSofaBasics = generateSofaBasics;
-window.handleCalibrationSubmit = handleCalibrationSubmit;
-window.handlePreviewAction = handlePreviewAction;
+window.generateSofaBasics = (...args: Parameters<typeof generateSofaBasics>) =>
+  void generateSofaBasics(...args);
+window.handleCalibrationSubmit = (...args: Parameters<typeof handleCalibrationSubmit>) =>
+  void handleCalibrationSubmit(...args);
+window.handlePreviewAction = (...args: Parameters<typeof handlePreviewAction>) =>
+  void handlePreviewAction(...args);
 window.cleanupStrokesWithAI = cleanupStrokesWithAI;
 
 // Set up event listeners when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
   const generateButton = document.getElementById('generateSofaBasics');
   if (generateButton) {
-    generateButton.addEventListener('click', generateSofaBasics);
+    generateButton.addEventListener('click', () => void generateSofaBasics());
     console.log('[AI Integration] Generate button event listener attached');
   } else {
     console.warn('[AI Integration] Generate button not found');
@@ -562,3 +638,5 @@ console.log('[AI Integration] Module loaded successfully');
 if (window.AppInit) {
   window.AppInit.markReady('ai');
 }
+
+void getSignedImageUrl;

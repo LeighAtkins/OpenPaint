@@ -1,15 +1,14 @@
 // Status message handler
 // Extracted from index.html inline scripts
 
-export function initStatusMessageHandler() {
-  // Enhanced status message with loading support
-  window.showStatusMessage = function (message, type = 'info') {
-    // Get or create status element
-    let statusElement = document.getElementById('statusMessage');
-    if (!statusElement) {
-      statusElement = document.createElement('div');
-      statusElement.id = 'statusMessage';
-      statusElement.style.cssText = `
+type StatusElement = HTMLDivElement & { timer?: ReturnType<typeof setTimeout> | null };
+
+const getStatusElement = (): StatusElement => {
+  let statusElement = document.getElementById('statusMessage') as StatusElement | null;
+  if (!statusElement) {
+    statusElement = document.createElement('div') as StatusElement;
+    statusElement.id = 'statusMessage';
+    statusElement.style.cssText = `
                       position: fixed;
                       bottom: 80px; /* Moved up to avoid bottom navigation */
                       left: 50%;
@@ -30,8 +29,18 @@ export function initStatusMessageHandler() {
                       gap: 10px;
                       backdrop-filter: blur(8px);
                   `;
-      document.body.appendChild(statusElement);
-    }
+    document.body.appendChild(statusElement);
+  }
+
+  return statusElement;
+};
+
+export function initStatusMessageHandler(): void {
+  // Enhanced status message with loading support
+  (
+    window as Window & { showStatusMessage?: (message: string, type?: string) => void }
+  ).showStatusMessage = (message: string, type = 'info') => {
+    const statusElement = getStatusElement();
 
     // Reset any previous styles
     statusElement.className = '';
@@ -45,7 +54,9 @@ export function initStatusMessageHandler() {
                       <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                       <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>`;
-      statusElement.appendChild(spinner.firstChild);
+      if (spinner.firstChild) {
+        statusElement.appendChild(spinner.firstChild);
+      }
 
       const text = document.createElement('span');
       text.textContent = message;
@@ -92,8 +103,8 @@ export function initStatusMessageHandler() {
   };
 
   // Helper to hide status message manually (useful for finishing loading states)
-  window.hideStatusMessage = function () {
-    const statusElement = document.getElementById('statusMessage');
+  (window as Window & { hideStatusMessage?: () => void }).hideStatusMessage = () => {
+    const statusElement = document.getElementById('statusMessage') as StatusElement | null;
     if (statusElement) {
       statusElement.style.opacity = '0';
       statusElement.style.transform = 'translateX(-50%) translateY(10px)';
