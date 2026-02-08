@@ -1,11 +1,23 @@
 // Text Tool
 /* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/no-misused-promises, @typescript-eslint/prefer-regexp-exec, @typescript-eslint/unbound-method, prefer-rest-params */
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-// @ts-nocheck
 import { BaseTool } from './BaseTool.js';
 
+declare const fabric: any;
+
+interface CanvasMouseEvent {
+  e: MouseEvent;
+  target?: any;
+}
+
 export class TextTool extends BaseTool {
-  constructor(canvasManager) {
+  textColor: string;
+  fontSize: number;
+  strokeWidth: number;
+  backgroundEnabled: boolean;
+  activeTextObject: any | null;
+  skipNextClick: boolean;
+
+  constructor(canvasManager: any) {
     super(canvasManager);
     this.textColor = '#000000';
     this.fontSize = 20;
@@ -17,7 +29,7 @@ export class TextTool extends BaseTool {
     this.skipNextClick = false;
   }
 
-  activate() {
+  override activate() {
     super.activate();
     this.canvas.selection = false;
     this.canvas.defaultCursor = 'text';
@@ -26,7 +38,7 @@ export class TextTool extends BaseTool {
     document.addEventListener('keydown', this.onKeyDown, true);
   }
 
-  deactivate() {
+  override deactivate() {
     super.deactivate();
     this.canvas.selection = true;
     this.canvas.defaultCursor = 'default';
@@ -41,7 +53,7 @@ export class TextTool extends BaseTool {
     this.skipNextClick = false;
   }
 
-  onKeyDown(e) {
+  onKeyDown(e: KeyboardEvent) {
     if (!this.activeTextObject || !this.activeTextObject.isEditing) {
       return;
     }
@@ -56,7 +68,7 @@ export class TextTool extends BaseTool {
     }
   }
 
-  onMouseDown(o) {
+  onMouseDown(o: CanvasMouseEvent) {
     if (!this.isActive) return;
 
     // Skip this click if flagged (we just exited editing)
@@ -102,7 +114,7 @@ export class TextTool extends BaseTool {
     this.createNewText(o);
   }
 
-  createNewText(o) {
+  createNewText(o: CanvasMouseEvent) {
     const pointer = this.canvas.getPointer(o.e);
     const backgroundEnabled = window.textBgEnabled !== false;
     this.backgroundEnabled = backgroundEnabled;
@@ -155,7 +167,7 @@ export class TextTool extends BaseTool {
     text.on('editing:exited', onEditingExited);
   }
 
-  editExistingText(textObj) {
+  editExistingText(textObj: any) {
     this.activeTextObject = textObj;
     textObj.enterEditing();
     textObj.selectAll();
@@ -170,7 +182,7 @@ export class TextTool extends BaseTool {
     textObj.on('editing:exited', onEditingExited);
   }
 
-  handleEditingExited(text, isNewText) {
+  handleEditingExited(text: any, isNewText: boolean) {
     // Handle empty text - remove it
     const isEmpty = text.text.trim() === '';
     if (isEmpty) {
@@ -211,7 +223,7 @@ export class TextTool extends BaseTool {
     toolManager.previousToolName = null;
   }
 
-  setColor(color) {
+  setColor(color: string) {
     this.textColor = color;
     const activeObj = this.canvas.getActiveObject();
     if (activeObj && (activeObj.type === 'i-text' || activeObj.type === 'text')) {
@@ -222,7 +234,7 @@ export class TextTool extends BaseTool {
     }
   }
 
-  setFontSize(size) {
+  setFontSize(size: string) {
     this.fontSize = parseInt(size, 10);
     const activeObj = this.canvas.getActiveObject();
     if (activeObj && (activeObj.type === 'i-text' || activeObj.type === 'text')) {
