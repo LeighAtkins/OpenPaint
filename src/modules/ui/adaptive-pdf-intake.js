@@ -1,31 +1,9 @@
-const DEFAULT_RULE_PARAMS = {
-  tolSeatSum: 2,
-  tolJoinHeight: 1,
-  tolOverallWidth: 3,
-  armTaperThreshold: 2,
-};
-
-function getProjectMetadata() {
-  const metadata = window.app?.projectManager?.getProjectMetadata?.() || window.projectMetadata;
-  return metadata && typeof metadata === 'object' ? metadata : {};
-}
-
-function mergeRuleParams(metadata) {
-  const custom =
-    metadata?.ruleParams && typeof metadata.ruleParams === 'object' ? metadata.ruleParams : {};
-  return {
-    ...DEFAULT_RULE_PARAMS,
-    ...custom,
-  };
-}
-
-function persistRuleParams(params) {
-  if (window.app?.projectManager?.setProjectMetadata) {
-    window.app.projectManager.setProjectMetadata({ ruleParams: params });
-  } else {
-    window.projectMetadata = { ...(window.projectMetadata || {}), ruleParams: params };
-  }
-}
+import {
+  evaluateSofaRules,
+  getProjectMetadata,
+  mergeRuleParams,
+  persistRuleParams,
+} from '../sofa-rule-engine.js';
 
 function escapeHtml(value) {
   return String(value ?? '')
@@ -38,15 +16,9 @@ function escapeHtml(value) {
 
 function getRuleResult(metadata, params) {
   if (typeof window.evaluateSofaRules === 'function') {
-    const withParams = { ...metadata, ruleParams: params };
-    return window.evaluateSofaRules(withParams);
+    return window.evaluateSofaRules({ ...metadata, ruleParams: params });
   }
-  return {
-    overallStatus: 'warn',
-    checks: [],
-    generatedActions: [],
-    computed: {},
-  };
+  return evaluateSofaRules(metadata, params);
 }
 
 function renderPieceTable(metadata) {
