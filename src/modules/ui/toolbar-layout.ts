@@ -1,11 +1,12 @@
 // Toolbar layout calculation - determines compact vs full mode
-(function () {
+
+export function initToolbarLayout(): void {
   'use strict';
 
-  let resizeTimer = null;
+  let resizeTimer: ReturnType<typeof setTimeout> | null = null;
   let isCalculating = false;
 
-  const calculateToolbarMode = () => {
+  const calculateToolbarMode = (): void => {
     // Prevent concurrent calculations
     if (isCalculating) return;
     isCalculating = true;
@@ -46,7 +47,7 @@
   };
 
   // Calculate immediately when toolbar exists
-  const initCalculation = () => {
+  const initCalculation = (): void => {
     const toolbarWrap =
       document.getElementById('toolbarWrap') || document.querySelector('.toolbar-wrap');
     if (toolbarWrap) {
@@ -75,5 +76,6 @@
   });
 
   // Expose function globally if needed
-  window.calculateToolbarMode = calculateToolbarMode;
-})();
+  (window as Window & { calculateToolbarMode?: () => void }).calculateToolbarMode =
+    calculateToolbarMode;
+}
