@@ -65,6 +65,7 @@ declare global {
     shareProject?: any;
     updateSharedProject?: any;
     openSofaTypePicker?: any;
+    openPieceConnectionEditor?: any;
     saveFabricProject?: any;
     updateStrokeVisibilityControls?: any;
     aiExports?: any;
@@ -87,6 +88,7 @@ import { initPdfExport } from './modules/ui/pdf-export-inline.js';
 import { initToolbarController } from './modules/ui/toolbar-controller.js';
 import { initScrollSelectSystem } from './modules/ui/scroll-select-init.js';
 import { initSofaTypePicker } from './modules/ui/sofa-type-picker.js';
+import { initPieceConnectionEditor } from './modules/ui/piece-connection-editor.js';
 import { initStatusMessageHandler } from './modules/ui/status-message-handler';
 import { initStatusMessage } from './modules/ui/status-message';
 import { initAIExport } from './modules/ai/ai-export-loader';
@@ -150,6 +152,9 @@ async function bootstrap(): Promise<void> {
 
   // Initialize sofa type onboarding + save guard
   initSofaTypePicker();
+
+  // Initialize piece + connection editor launcher
+  initPieceConnectionEditor();
 
   // Initialize status message handler
   initStatusMessageHandler();
