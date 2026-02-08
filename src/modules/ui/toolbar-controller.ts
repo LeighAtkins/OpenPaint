@@ -2102,21 +2102,6 @@ export function initToolbarController() {
         existingTags
       );
 
-      // If no tags exist, reset to the beginning and clear any manual overrides
-      if (existingTags.length === 0) {
-        // Clear any manual tag overrides since we're starting fresh
-        if (window.labelsByImage && window.labelsByImage[currentImageLabel]) {
-          delete window.labelsByImage[currentImageLabel];
-        }
-        if (window.manualTagByImage && window.manualTagByImage[currentImageLabel]) {
-          delete window.manualTagByImage[currentImageLabel];
-        }
-
-        const result = tagMode === 'letters' ? 'A' : 'A1';
-        console.log('[calculateNextTag] No existing tags, returning:', result);
-        return result;
-      }
-
       // Priority 1: Check if user manually set the next tag via labelsByImage
       if (window.labelsByImage && window.labelsByImage[currentImageLabel]) {
         const manualTag = window.labelsByImage[currentImageLabel];
@@ -2129,6 +2114,14 @@ export function initToolbarController() {
         const manualTag = window.manualTagByImage[currentImageLabel];
         console.log('[calculateNextTag] Using manualTagByImage (manual sequence):', manualTag);
         return manualTag;
+      }
+
+      // If no tags exist, default to the beginning.
+      // Keep manual overrides intact so first-stroke custom seeds (for example C1) still work.
+      if (existingTags.length === 0) {
+        const result = tagMode === 'letters' ? 'A' : 'A1';
+        console.log('[calculateNextTag] No existing tags, returning:', result);
+        return result;
       }
 
       // Priority 3: Calculate next tag with gap-filling

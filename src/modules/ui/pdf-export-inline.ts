@@ -6,6 +6,40 @@
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 import { buildImageExportFilename, sanitizeFilenamePart } from '../utils/naming-utils.js';
 
+function getScopedMeasurementsForView(viewId) {
+  const allMeasurements = window.app?.metadataManager?.strokeMeasurements || {};
+  const merged = {};
+  Object.entries(allMeasurements).forEach(([scopeKey, bucket]) => {
+    if (scopeKey !== viewId && !scopeKey.startsWith(`${viewId}::tab:`)) {
+      return;
+    }
+    Object.entries(bucket || {}).forEach(([strokeLabel, measurement]) => {
+      if (!measurement || typeof measurement !== 'object') return;
+      merged[strokeLabel] = measurement;
+    });
+  });
+  return merged;
+}
+
+function sanitizePdfFieldPart(value, fallback) {
+  const cleaned = String(value || '')
+    .trim()
+    .replace(/[^A-Za-z0-9_-]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+  return cleaned || fallback;
+}
+
+function createUniquePdfFieldName(baseName, usedNames) {
+  let candidate = baseName;
+  let suffix = 1;
+  while (usedNames.has(candidate)) {
+    suffix += 1;
+    candidate = `${baseName}_${suffix}`;
+  }
+  usedNames.add(candidate);
+  return candidate;
+}
+
 export function initPdfExport() {
   // Export utilities for saving multiple images and PDF generation with pdf-lib
   window.saveAllImages = async function () {
@@ -98,6 +132,7 @@ export function initPdfExport() {
     const progressBar = document.getElementById('pdfProgressBar');
     const progressText = document.getElementById('pdfProgressText');
     const pdfDoc = await PDFDocument.create();
+    const usedFieldNames = new Set();
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
     const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
     const metadata =
@@ -196,7 +231,7 @@ export function initPdfExport() {
       const imgY = pageHeight - 70 - imgHeight;
       page.drawImage(image, { x: imgX, y: imgY, width: imgWidth, height: imgHeight });
       if (includeMeasurements) {
-        const measurements = window.app?.metadataManager?.strokeMeasurements?.[viewId] || {};
+        const measurements = getScopedMeasurementsForView(viewId);
         const strokes = Object.keys(measurements);
         if (strokes.length > 0) {
           const currentUnit = document.getElementById('unitSelector')?.value || 'inch';
@@ -215,7 +250,9 @@ export function initPdfExport() {
             font: fontBold,
             color: rgb(1, 1, 1),
           });
-          const cmCheck = form.createCheckBox(`unit_cm_${viewId}`);
+          const safeView = sanitizePdfFieldPart(viewId, `view_${i + 1}`);
+          const cmName = createUniquePdfFieldName(`unit_cm_${safeView}`, usedFieldNames);
+          const cmCheck = form.createCheckBox(cmName);
           cmCheck.addToPage(page, { x: pageWidth - 150, y: measureY + 5, width: 12, height: 12 });
           if (currentUnit === 'cm') cmCheck.check();
           page.drawText('cm', {
@@ -225,7 +262,8 @@ export function initPdfExport() {
             font,
             color: rgb(1, 1, 1),
           });
-          const inchCheck = form.createCheckBox(`unit_inch_${viewId}`);
+          const inchName = createUniquePdfFieldName(`unit_inch_${safeView}`, usedFieldNames);
+          const inchCheck = form.createCheckBox(inchName);
           inchCheck.addToPage(page, { x: pageWidth - 80, y: measureY + 5, width: 12, height: 12 });
           if (currentUnit === 'inch') inchCheck.check();
           page.drawText('inch', {
@@ -259,7 +297,12 @@ export function initPdfExport() {
               font: fontBold,
               color: rgb(0, 0, 0),
             });
-            const textField = form.createTextField(`${viewId}_${strokeLabel}`);
+            const safeStroke = sanitizePdfFieldPart(strokeLabel, `stroke_${idx + 1}`);
+            const fieldName = createUniquePdfFieldName(
+              `m_${safeView}_${safeStroke}`,
+              usedFieldNames
+            );
+            const textField = form.createTextField(fieldName);
             textField.setText(measurement);
             textField.addToPage(page, {
               x,
