@@ -24,14 +24,30 @@ function getCurrentMetadata() {
 
 function setSofaTypeMetadata(sofaType, customSofaType = '') {
   const manager = window.app?.projectManager;
+  const currentMetadata = manager?.getProjectMetadata?.() || window.projectMetadata || {};
+  const existingNaming = currentMetadata.naming || {};
+  const defaultSofaLabel =
+    sofaType === 'custom'
+      ? customSofaType?.trim() || 'Custom Sofa'
+      : SOFA_TYPE_LABELS[sofaType] || existingNaming.sofaTypeLabel || '';
+  const naming = {
+    ...existingNaming,
+    sofaTypeLabel: existingNaming.sofaTypeLabel || defaultSofaLabel,
+  };
+
   if (manager?.setSofaType) {
-    return manager.setSofaType(sofaType, customSofaType);
+    manager.setSofaType(sofaType, customSofaType);
+    if (manager?.setProjectMetadata) {
+      return manager.setProjectMetadata({ naming });
+    }
+    return manager.getProjectMetadata?.() || {};
   }
 
   const next = {
     ...(window.projectMetadata || {}),
     sofaType,
     customSofaType,
+    naming,
   };
   window.projectMetadata = next;
   return next;
