@@ -1,38 +1,80 @@
 // Select Tool (for moving/deleting objects)
 import { BaseTool } from './BaseTool.js';
 
+type FabricObjectLike = {
+  evented?: boolean;
+  selectable?: boolean;
+  strokeMetadata?: {
+    imageLabel?: string;
+  };
+  imageLabel?: string;
+};
+
+type CanvasLike = {
+  isDrawingMode: boolean;
+  selection: boolean;
+  defaultCursor: string;
+  forEachObject: (callback: (obj: FabricObjectLike) => void) => void;
+  renderAll: () => void;
+};
+
+type CaptureTabState = {
+  activeTabId?: string;
+  masterTabId?: string;
+  lastNonMasterId?: string;
+  tabs?: Array<{ id: string; type?: string }>;
+};
+
+declare global {
+  interface Window {
+    app?: {
+      projectManager?: {
+        currentViewId?: string;
+      };
+    };
+    ensureCaptureTabsForLabel?: (label: string) => CaptureTabState | null;
+    captureMasterDrawTargetByLabel?: Record<string, string | undefined>;
+  }
+}
+
 export class SelectTool extends BaseTool {
-  constructor(canvasManager) {
+  declare canvas: CanvasLike | null;
+
+  constructor(canvasManager: { fabricCanvas: CanvasLike | null }) {
     super(canvasManager);
   }
 
-  activate() {
+  activate(): void {
     super.activate();
     if (!this.canvas) {
       console.error('SelectTool: Canvas not available');
       return;
     }
 
-    // Enable selection and object manipulation
-    this.canvas.isDrawingMode = false;
-    this.canvas.selection = true;
-    this.canvas.defaultCursor = 'default';
+    const canvas = this.canvas;
 
-    const currentView = window.app?.projectManager?.currentViewId || 'front';
-    const baseView = typeof currentView === 'string' ? currentView.split('::tab:')[0] : currentView;
-    const state = window.ensureCaptureTabsForLabel?.(baseView) || null;
+    // Enable selection and object manipulation
+    canvas.isDrawingMode = false;
+    canvas.selection = true;
+    canvas.defaultCursor = 'default';
+
+    const currentView = window.app?.projectManager?.currentViewId ?? 'front';
+    const baseView = currentView.split('::tab:')[0];
+    const state = window.ensureCaptureTabsForLabel?.(baseView) ?? null;
     const isMasterView =
       !!state && (state.activeTabId === state.masterTabId || state.activeTabId === 'master');
     const primaryTabId = state?.tabs?.find(tab => tab.type !== 'master')?.id;
     const targetTabId = isMasterView
-      ? window.captureMasterDrawTargetByLabel?.[baseView] || state?.lastNonMasterId || primaryTabId
+      ? (window.captureMasterDrawTargetByLabel?.[baseView] ??
+        state?.lastNonMasterId ??
+        primaryTabId)
       : state?.activeTabId;
     const targetScopeLabel =
       targetTabId && targetTabId !== 'master' ? `${baseView}::tab:${targetTabId}` : baseView;
     const allowLegacyBase = !!primaryTabId && targetTabId === primaryTabId;
 
     // Enable object controls for all objects (except label text)
-    this.canvas.forEachObject(obj => {
+    canvas.forEachObject(obj => {
       // Skip label text objects (they have evented: false)
       if (obj.evented === false && obj.selectable === false) {
         return; // Skip label objects
@@ -52,11 +94,11 @@ export class SelectTool extends BaseTool {
       obj.evented = true;
     });
 
-    this.canvas.renderAll();
+    canvas.renderAll();
     console.log('SelectTool activated');
   }
 
-  deactivate() {
+  deactivate(): void {
     super.deactivate();
     // Selection stays enabled, just mark as inactive
   }
