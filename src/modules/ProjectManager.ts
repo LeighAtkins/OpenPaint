@@ -5,6 +5,11 @@
 // Handles views (images) and their associated canvas states
 
 import { imageRegistry } from './ImageRegistry.js';
+import {
+  createDefaultSofaMetadata,
+  mergeSofaMetadata,
+  normalizeSofaMetadata,
+} from './sofa-metadata.js';
 
 export class ProjectManager {
   constructor(canvasManager, historyManager) {
@@ -14,6 +19,8 @@ export class ProjectManager {
     this.suspendSave = false;
     this.isSwitchingView = false;
     this.pendingSwitchViewId = null;
+    this.projectMetadata = createDefaultSofaMetadata();
+    window.projectMetadata = this.getProjectMetadata();
 
     // Project Data
     this.currentViewId = 'front';
@@ -43,6 +50,20 @@ export class ProjectManager {
     console.log('ProjectManager initialized');
     // Load the initial view
     this.switchView('front');
+  }
+
+  getProjectMetadata() {
+    return normalizeSofaMetadata(this.projectMetadata);
+  }
+
+  setProjectMetadata(patch = {}) {
+    this.projectMetadata = mergeSofaMetadata(this.projectMetadata, patch);
+    window.projectMetadata = this.getProjectMetadata();
+    return this.getProjectMetadata();
+  }
+
+  setSofaType(sofaType, customSofaType = '') {
+    return this.setProjectMetadata({ sofaType, customSofaType });
   }
 
   // Switch to a different view (image)
@@ -800,6 +821,7 @@ export class ProjectManager {
       const projectData = {
         currentImageLabel,
         imageLabels,
+        metadata: this.getProjectMetadata(),
         originalImages: originalImagesForShare,
         originalImageDimensions: window.originalImageDimensions || {},
         strokes: window.vectorStrokesByImage || {},
@@ -968,6 +990,7 @@ export class ProjectManager {
       const projectData = {
         currentImageLabel: window.paintApp?.state?.currentImageLabel,
         imageLabels: window.paintApp?.state?.imageLabels || [],
+        metadata: this.getProjectMetadata(),
         originalImages: window.originalImages || {},
         originalImageDimensions: window.originalImageDimensions || {},
         strokes: window.vectorStrokesByImage || {},
@@ -1292,6 +1315,7 @@ export class ProjectManager {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       currentViewId: this.currentViewId,
+      metadata: this.getProjectMetadata(),
       viewOrder: [],
       views: {},
     };
@@ -1488,6 +1512,9 @@ export class ProjectManager {
       if (projectNameInput && projectData.projectName) {
         projectNameInput.value = projectData.projectName;
       }
+
+      this.projectMetadata = normalizeSofaMetadata(projectData.metadata);
+      window.projectMetadata = this.getProjectMetadata();
 
       // Clear existing views and recreate from saved data
       this.views = {};
