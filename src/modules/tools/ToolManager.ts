@@ -24,7 +24,7 @@ type ToolConstructor = new (canvasManager: CanvasManagerLike) => ToolInstance;
 type ToolLoader = () => Promise<ToolConstructor>;
 
 const TOOL_LOADERS = {
-  select: () => import('./SelectTool.js').then(module => module.SelectTool as ToolConstructor),
+  select: () => import('./SelectTool').then(module => module.SelectTool as ToolConstructor),
   pencil: () => import('./PencilTool.js').then(module => module.PencilTool as ToolConstructor),
   curve: () => import('./CurveTool.js').then(module => module.CurveTool as ToolConstructor),
   line: () => Promise.resolve(LineTool as ToolConstructor),
