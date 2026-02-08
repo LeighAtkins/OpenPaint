@@ -1,4 +1,6 @@
 // Scroll-select and mini-stepper initialization
+import { isImagePanelCollapsed } from './panel-state.js';
+
 // Extracted from index.html inline scripts
 
 export function initScrollSelectSystem() {
@@ -192,23 +194,6 @@ export function initScrollSelectSystem() {
       pillSize: 'w-8 h-8',
       threshold: 0.3,
     };
-
-    function isImagePanelCollapsed() {
-      if (document.body?.getAttribute('data-image-panel-state') === 'collapsed') {
-        return true;
-      }
-      const imagePanel = document.getElementById('imagePanel');
-      const imagePanelContent = document.getElementById('imagePanelContent');
-      return !!(
-        (imagePanel &&
-          (imagePanel.classList.contains('collapsed') ||
-            imagePanel.classList.contains('minimized') ||
-            imagePanel.style.display === 'none')) ||
-        (imagePanelContent &&
-          (imagePanelContent.classList.contains('hidden') ||
-            imagePanelContent.style.display === 'none'))
-      );
-    }
 
     window.updateActiveImageInSidebar = function () {
       const imageList = document.getElementById('imageList');

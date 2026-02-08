@@ -718,19 +718,23 @@ export class App {
       applyShapeFillStyle(initialStyle);
     }
 
+    const selectShapeOption = async (btn: HTMLElement) => {
+      const shape = btn.getAttribute('data-shape-option');
+      if (!shape) return;
+      const shapeTool = await this.toolManager.ensureTool('shape');
+      if (!shapeTool?.setShapeType) return;
+      this.toolManager.previousToolName = this.toolManager.activeToolName || 'line';
+      shapeTool.setShapeType(shape);
+      this.toolManager.selectTool('shape');
+      updateShapeIcon(shape);
+      updateShapeAvailability();
+      const wrapper = btn.closest('.shape-toggle');
+      if (wrapper) wrapper.classList.remove('shape-open');
+    };
+
     shapeOptions.forEach(btn => {
-      btn.addEventListener('click', async () => {
-        const shape = btn.getAttribute('data-shape-option');
-        if (!shape) return;
-        const shapeTool = await this.toolManager.ensureTool('shape');
-        if (!shapeTool?.setShapeType) return;
-        this.toolManager.previousToolName = this.toolManager.activeToolName || 'line';
-        shapeTool.setShapeType(shape);
-        this.toolManager.selectTool('shape');
-        updateShapeIcon(shape);
-        updateShapeAvailability();
-        const wrapper = btn.closest('.shape-toggle');
-        if (wrapper) wrapper.classList.remove('shape-open');
+      btn.addEventListener('click', () => {
+        void selectShapeOption(btn);
       });
     });
 
