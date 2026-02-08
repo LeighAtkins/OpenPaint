@@ -67,6 +67,8 @@ declare global {
     openSofaTypePicker?: any;
     openPieceConnectionEditor?: any;
     openAdaptiveIntakePdf?: any;
+    evaluateSofaRules?: any;
+    openSofaRuleReview?: any;
     saveFabricProject?: any;
     updateStrokeVisibilityControls?: any;
     aiExports?: any;
@@ -91,6 +93,7 @@ import { initToolbarController } from './modules/ui/toolbar-controller.js';
 import { initScrollSelectSystem } from './modules/ui/scroll-select-init.js';
 import { initSofaTypePicker } from './modules/ui/sofa-type-picker.js';
 import { initPieceConnectionEditor } from './modules/ui/piece-connection-editor.js';
+import { initSofaRuleReview } from './modules/ui/sofa-rule-review.js';
 import { initStatusMessageHandler } from './modules/ui/status-message-handler';
 import { initStatusMessage } from './modules/ui/status-message';
 import { initAIExport } from './modules/ai/ai-export-loader';
@@ -160,6 +163,9 @@ async function bootstrap(): Promise<void> {
 
   // Initialize piece + connection editor launcher
   initPieceConnectionEditor();
+
+  // Initialize rule checks launcher for sofa intake metadata
+  initSofaRuleReview();
   // Initialize status message handler
   initStatusMessageHandler();
 
