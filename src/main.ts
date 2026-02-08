@@ -75,19 +75,20 @@ declare global {
 }
 
 // ── 4. Extracted inline scripts (from index.html) ───────────────────────────
-import { initToolbarSizing } from './modules/ui/toolbar-sizing.js';
-import { initToolbarReady } from './modules/ui/toolbar-ready.js';
-import { initPanelRelocation } from './modules/ui/panel-relocation.js';
-import { initFrameCaptureToggle } from './modules/ui/frame-capture-toggle.js';
+import { initToolbarSizing } from './modules/ui/toolbar-sizing';
+import { initToolbarReady } from './modules/ui/toolbar-ready';
+import { initPanelRelocation } from './modules/ui/panel-relocation';
+import { initFrameCaptureToggle } from './modules/ui/frame-capture-toggle';
+import { initFrameCaptureVisibility } from './modules/ui/frame-capture-visibility';
+import { initToolbarLayout } from './modules/ui/toolbar-layout';
 import { initPdfExport } from './modules/ui/pdf-export-inline.js';
 import { initToolbarController } from './modules/ui/toolbar-controller.js';
 import { initScrollSelectSystem } from './modules/ui/scroll-select-init.js';
-import { initStatusMessageHandler } from './modules/ui/status-message-handler.js';
+import { initStatusMessageHandler } from './modules/ui/status-message-handler';
+import { initStatusMessage } from './modules/ui/status-message';
 import { initAIExport } from './modules/ai/ai-export-loader.js';
 
 // ── 5. Standalone UI modules ─────────────────────────────────────────────────
-import './modules/ui/toolbar-layout.js';
-import './modules/ui/frame-capture-visibility.js';
 import './modules/ui/toolbar-init.js';
 import './modules/ui/smart-labels.js';
 import './modules/ui/panel-management.js';
@@ -95,11 +96,14 @@ import './modules/ui/capture-frame.js';
 import './modules/ui/image-gallery.js';
 import './modules/ui/scroll-select-system.js';
 import './modules/ui/mini-stepper.js';
-import './modules/ui/status-message.js';
 import './modules/utils/transform.js';
 import './modules/utils/geometry.js';
 import './modules/utils/migration.js';
 import './modules/ai/ai-integration.js';
+
+initToolbarLayout();
+initFrameCaptureVisibility();
+initStatusMessage();
 
 // ── 6. Core application ────────────────────────────────────────────────────
 // The App class from modules/main.js is the heart of the application.
