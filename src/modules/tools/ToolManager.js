@@ -2,7 +2,7 @@
 import { LineTool } from './LineTool.js';
 
 const TOOL_LOADERS = {
-  select: () => import('./SelectTool.js').then(module => module.SelectTool),
+  select: () => import('./SelectTool.ts').then(module => module.SelectTool),
   pencil: () => import('./PencilTool.js').then(module => module.PencilTool),
   curve: () => import('./CurveTool.js').then(module => module.CurveTool),
   line: () => Promise.resolve(LineTool),
