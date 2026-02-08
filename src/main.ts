@@ -95,7 +95,6 @@ import './modules/ui/smart-labels.js';
 import './modules/ui/panel-management.js';
 import './modules/ui/capture-frame.js';
 import './modules/ui/image-gallery.js';
-import './modules/ui/scroll-select-system.js';
 import './modules/utils/transform';
 import './modules/utils/geometry';
 import './modules/utils/migration';

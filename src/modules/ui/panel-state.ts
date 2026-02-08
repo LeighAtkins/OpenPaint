@@ -1,11 +1,13 @@
+export type ImagePanelState = 'expanded' | 'collapsed';
+
 export const IMAGE_PANEL_STATE_ATTR = 'data-image-panel-state';
 
 export const IMAGE_PANEL_STATES = {
   expanded: 'expanded',
   collapsed: 'collapsed',
-};
+} as const;
 
-export function setImagePanelState(state) {
+export function setImagePanelState(state: ImagePanelState): void {
   if (!document?.body) return;
   const normalizedState =
     state === IMAGE_PANEL_STATES.collapsed
@@ -14,11 +16,14 @@ export function setImagePanelState(state) {
   document.body.setAttribute(IMAGE_PANEL_STATE_ATTR, normalizedState);
 }
 
-export function getImagePanelState() {
-  return document?.body?.getAttribute(IMAGE_PANEL_STATE_ATTR) || null;
+export function getImagePanelState(): ImagePanelState | null {
+  const state = document?.body?.getAttribute(IMAGE_PANEL_STATE_ATTR);
+  return state === IMAGE_PANEL_STATES.collapsed || state === IMAGE_PANEL_STATES.expanded
+    ? state
+    : null;
 }
 
-export function isImagePanelCollapsed() {
+export function isImagePanelCollapsed(): boolean {
   if (getImagePanelState() === IMAGE_PANEL_STATES.collapsed) {
     return true;
   }
