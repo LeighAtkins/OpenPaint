@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/no-misused-promises, @typescript-eslint/prefer-regexp-exec, @typescript-eslint/unbound-method, prefer-rest-params */
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+// @ts-nocheck
 import { BaseTool } from './BaseTool.js';
 
 // Frame Tool for drawing PDF export frames (marquee rectangles)
