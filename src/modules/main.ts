@@ -280,6 +280,7 @@ export class App {
       if (!this.measurementSystem) {
         this.measurementSystem = new MeasurementSystem(this.metadataManager);
       }
+      this.measurementSystem.setUnit(this.currentUnit === 'inch' ? 'inches' : 'cm');
 
       if (!this.measurementDialog) {
         this.measurementDialog = new MeasurementDialog(this.measurementSystem);
@@ -1117,55 +1118,49 @@ export class App {
     // Initialize currentUnit state
     this.currentUnit = 'inch';
 
-    // Sync initial state
-    if (unitSelector) {
-      // Force reset to inch to avoid browser form restoration issues
-      unitSelector.value = 'inch';
+    const applyUnit = (unit: 'inch' | 'cm'): void => {
+      this.currentUnit = unit;
 
-      const unitLabel = 'inches';
-      if (unitToggle) unitToggle.textContent = unitLabel;
-      if (unitToggleSecondary) unitToggleSecondary.textContent = unitLabel;
-    }
-
-    const toggleUnits = () => {
-      // Toggle between inch and cm using our state
-      this.currentUnit = this.currentUnit === 'inch' ? 'cm' : 'inch';
-
-      // Sync selector if it exists
       if (unitSelector) {
-        unitSelector.value = this.currentUnit;
+        unitSelector.value = unit;
       }
 
-      // Update button labels
-      const unitLabel = this.currentUnit === 'inch' ? 'inches' : 'cm';
+      const unitLabel = unit === 'inch' ? 'inches' : 'cm';
       if (unitToggle) unitToggle.textContent = unitLabel;
       if (unitToggleSecondary) unitToggleSecondary.textContent = unitLabel;
 
-      // Refresh all measurement displays
+      if (this.measurementSystem) {
+        this.measurementSystem.setUnit(unitLabel);
+      }
+
       if (this.metadataManager) {
         this.metadataManager.refreshAllMeasurements();
       }
     };
 
+    // Sync initial state
+    if (unitSelector) {
+      // Force reset to inch to avoid browser form restoration issues
+      unitSelector.value = 'inch';
+    }
+    applyUnit('inch');
+
     if (unitToggle) {
-      unitToggle.addEventListener('click', toggleUnits);
+      unitToggle.addEventListener('click', () => {
+        applyUnit(this.currentUnit === 'inch' ? 'cm' : 'inch');
+      });
     }
 
     if (unitToggleSecondary) {
-      unitToggleSecondary.addEventListener('click', toggleUnits);
+      unitToggleSecondary.addEventListener('click', () => {
+        applyUnit(this.currentUnit === 'inch' ? 'cm' : 'inch');
+      });
     }
 
     // Also listen for direct changes to unit selector
     if (unitSelector) {
       unitSelector.addEventListener('change', () => {
-        this.currentUnit = unitSelector.value as 'inch' | 'cm';
-        const unitLabel = this.currentUnit === 'inch' ? 'inches' : 'cm';
-        if (unitToggle) unitToggle.textContent = unitLabel;
-        if (unitToggleSecondary) unitToggleSecondary.textContent = unitLabel;
-
-        if (this.metadataManager) {
-          this.metadataManager.refreshAllMeasurements();
-        }
+        applyUnit(unitSelector.value as 'inch' | 'cm');
       });
     }
 

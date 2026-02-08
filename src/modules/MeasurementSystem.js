@@ -24,12 +24,13 @@ export class MeasurementSystem {
 
   // Set display unit
   setUnit(unit) {
-    if (unit !== 'inches' && unit !== 'cm') {
+    const normalizedUnit = unit === 'inch' ? 'inches' : unit;
+    if (normalizedUnit !== 'inches' && normalizedUnit !== 'cm') {
       console.warn(`Invalid unit: ${unit}. Defaulting to inches.`);
       this.currentUnit = 'inches';
       return;
     }
-    this.currentUnit = unit;
+    this.currentUnit = normalizedUnit;
   }
 
   // Get current unit
