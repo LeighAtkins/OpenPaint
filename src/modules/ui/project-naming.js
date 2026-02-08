@@ -366,5 +366,4 @@ export function initProjectNaming() {
   bindImagePartLabelInput();
   applyNamingToProjectName({ force: false });
   installSaveNamingPrompt();
-  promptInitialNamingIfNeeded();
 }

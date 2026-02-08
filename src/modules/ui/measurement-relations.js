@@ -29,14 +29,31 @@ function toCmDecimal(bucket) {
 function buildMeasurementIndex() {
   const unit = document.getElementById('unitSelector')?.value || 'inch';
   const strokeMeasurements = window.app?.metadataManager?.strokeMeasurements || {};
+  const strokeMap = window.app?.metadataManager?.vectorStrokesByImage || {};
   const views = Object.keys(window.app?.projectManager?.views || {});
   const entries = [];
   const lookup = {};
   const byStrokeLabel = {};
 
   views.forEach((viewId, viewIdx) => {
-    const bucket = strokeMeasurements[viewId] || {};
-    Object.entries(bucket).forEach(([strokeLabel, measurement]) => {
+    const scopedStrokeLabels = new Set();
+    const scopedMeasurements = {};
+
+    Object.entries(strokeMap).forEach(([scopeKey, bucket]) => {
+      if (scopeKey !== viewId && !scopeKey.startsWith(`${viewId}::tab:`)) return;
+      Object.keys(bucket || {}).forEach(strokeLabel => scopedStrokeLabels.add(strokeLabel));
+    });
+
+    Object.entries(strokeMeasurements).forEach(([scopeKey, bucket]) => {
+      if (scopeKey !== viewId && !scopeKey.startsWith(`${viewId}::tab:`)) return;
+      Object.entries(bucket || {}).forEach(([strokeLabel, measurement]) => {
+        scopedStrokeLabels.add(strokeLabel);
+        scopedMeasurements[strokeLabel] = measurement;
+      });
+    });
+
+    scopedStrokeLabels.forEach(strokeLabel => {
+      const measurement = scopedMeasurements[strokeLabel] || null;
       const numeric = unit === 'cm' ? toCmDecimal(measurement) : toInchDecimal(measurement);
       const key = `${viewId}:${strokeLabel}`;
       const partLabel =

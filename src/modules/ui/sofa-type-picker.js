@@ -98,8 +98,46 @@ function ensureStyles() {
     .sofa-picker-btn.primary { background: #2563eb; color: white; }
     .sofa-picker-btn.primary:disabled { background: #93c5fd; cursor: not-allowed; }
     .sofa-picker-btn.secondary { background: #fff; border-color: #cbd5e1; color: #334155; }
+    .sofa-start-card { width: min(640px, 100%); background: #ffffff; border-radius: 16px; padding: 20px; box-shadow: 0 24px 50px rgba(15, 23, 42, 0.25); }
+    .sofa-start-actions { margin-top: 16px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .sofa-start-btn { border: 1px solid #cbd5e1; border-radius: 12px; background: #fff; padding: 14px; font-size: 14px; font-weight: 600; color: #0f172a; cursor: pointer; }
+    .sofa-start-btn.primary { border-color: #1d4ed8; background: #eff6ff; }
+    .sofa-start-btn:hover { box-shadow: 0 3px 10px rgba(15, 23, 42, 0.08); }
   `;
   document.head.appendChild(style);
+}
+
+function hasAnyProjectImages() {
+  const views = window.app?.projectManager?.views || {};
+  return Object.values(views).some(view => Boolean(view?.image));
+}
+
+function openStartupChoiceOverlay({ onLoadProject, onBlankProject }) {
+  ensureStyles();
+  const overlay = document.createElement('div');
+  overlay.className = 'sofa-picker-overlay';
+  overlay.innerHTML = `
+    <section class="sofa-start-card" role="dialog" aria-modal="true" aria-label="Start project options">
+      <h2 class="sofa-picker-title">Start a project</h2>
+      <p class="sofa-picker-subtitle">Choose how you want to begin.</p>
+      <div class="sofa-start-actions">
+        <button type="button" class="sofa-start-btn" id="startupLoadProject">Load Project</button>
+        <button type="button" class="sofa-start-btn primary" id="startupBlankProject">Blank Project</button>
+      </div>
+    </section>
+  `;
+
+  overlay.querySelector('#startupLoadProject')?.addEventListener('click', () => {
+    onLoadProject?.();
+    overlay.remove();
+  });
+
+  overlay.querySelector('#startupBlankProject')?.addEventListener('click', () => {
+    onBlankProject?.();
+    overlay.remove();
+  });
+
+  document.body.appendChild(overlay);
 }
 
 function createPickerOverlay({
@@ -202,23 +240,47 @@ function hasSofaTypeSelected() {
 
 function showInitialPickerIfNeeded() {
   if (hasSofaTypeSelected()) return;
+  if (hasAnyProjectImages()) return;
 
-  const currentMetadata = getCurrentMetadata();
+  const openSofaPicker = () => {
+    const currentMetadata = getCurrentMetadata();
 
-  createPickerOverlay({
-    title: 'Step 1: Identify your sofa type',
-    subtitle: 'Choose a sofa type to improve naming, photo prompts, and PDF intake guidance.',
-    showSkip: true,
-    initialType: currentMetadata.sofaType,
-    initialCustomType: currentMetadata.customSofaType || '',
-    onContinue: ({ sofaType, customSofaType }) => {
-      setSofaTypeMetadata(sofaType, customSofaType);
-      applyProjectNameFromSelection(sofaType, customSofaType);
-    },
-    onSkip: () => {
-      setSofaTypeMetadata(null, '');
-    },
-  });
+    createPickerOverlay({
+      title: 'Step 1: Identify your sofa type',
+      subtitle: 'Choose a sofa type to improve naming, photo prompts, and PDF intake guidance.',
+      showSkip: true,
+      initialType: currentMetadata.sofaType,
+      initialCustomType: currentMetadata.customSofaType || '',
+      onContinue: ({ sofaType, customSofaType }) => {
+        setSofaTypeMetadata(sofaType, customSofaType);
+        applyProjectNameFromSelection(sofaType, customSofaType);
+      },
+      onSkip: () => {
+        setSofaTypeMetadata(null, '');
+      },
+    });
+  };
+
+  const loadProject = () => {
+    if (window.projectManager?.promptLoadProject) {
+      window.projectManager.promptLoadProject();
+      return;
+    }
+    if (window.app?.projectManager?.promptLoadProject) {
+      window.app.projectManager.promptLoadProject();
+    }
+  };
+
+  if (!window.__startupChoiceShown) {
+    window.__startupChoiceShown = true;
+    openStartupChoiceOverlay({
+      onLoadProject: loadProject,
+      onBlankProject: openSofaPicker,
+    });
+    return;
+  }
+
+  openSofaPicker();
 }
 
 function installSaveGuard() {

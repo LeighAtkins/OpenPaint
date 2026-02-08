@@ -21,6 +21,18 @@ function getScopedMeasurementsForView(viewId) {
   return merged;
 }
 
+function getScopedStrokeLabelsForView(viewId) {
+  const strokeMap = window.app?.metadataManager?.vectorStrokesByImage || {};
+  const labels = new Set();
+  Object.entries(strokeMap).forEach(([scopeKey, bucket]) => {
+    if (scopeKey !== viewId && !scopeKey.startsWith(`${viewId}::tab:`)) {
+      return;
+    }
+    Object.keys(bucket || {}).forEach(strokeLabel => labels.add(strokeLabel));
+  });
+  return Array.from(labels).sort((a, b) => a.localeCompare(b));
+}
+
 function sanitizePdfFieldPart(value, fallback) {
   const cleaned = String(value || '')
     .trim()
@@ -232,7 +244,10 @@ export function initPdfExport() {
       page.drawImage(image, { x: imgX, y: imgY, width: imgWidth, height: imgHeight });
       if (includeMeasurements) {
         const measurements = getScopedMeasurementsForView(viewId);
-        const strokes = Object.keys(measurements);
+        const measuredStrokes = Object.keys(measurements);
+        const strokes = Array.from(
+          new Set([...getScopedStrokeLabelsForView(viewId), ...measuredStrokes])
+        ).sort((a, b) => a.localeCompare(b));
         if (strokes.length > 0) {
           const currentUnit = document.getElementById('unitSelector')?.value || 'inch';
           const measureY = imgY - 40;
@@ -277,7 +292,7 @@ export function initPdfExport() {
           let yPos = measureY - 20;
           let col = 0;
           strokes.forEach((strokeLabel, idx) => {
-            const m = measurements[strokeLabel];
+            const m = measurements[strokeLabel] || {};
             let measurement = '';
             if (currentUnit === 'inch') {
               const whole = m.inchWhole || 0;
