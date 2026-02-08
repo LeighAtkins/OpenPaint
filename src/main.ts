@@ -31,7 +31,7 @@ import { fabric } from 'fabric';
 // ── 2. TypeScript utilities ─────────────────────────────────────────────────
 import { logger } from '@/utils/errors';
 import { env } from '@/utils/env';
-import { initializeRotationControls } from '@/features';
+
 import type { App } from './modules/main';
 
 // ── 3. Type declarations ────────────────────────────────────────────────────
@@ -155,14 +155,6 @@ async function bootstrap(): Promise<void> {
   initAIExport().catch((error: unknown) => {
     console.warn('[AI Export] Non-critical init failure:', error);
   });
-
-  // ── TypeScript enhancements ──
-  try {
-    initializeRotationControls();
-    logger.info(CONTEXT, 'Rotation controls initialized');
-  } catch (error) {
-    logger.error(CONTEXT, 'Failed to initialize rotation controls', error);
-  }
 
   // Enhanced error handling
   window.addEventListener('error', event => {

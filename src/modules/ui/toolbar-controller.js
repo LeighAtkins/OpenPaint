@@ -277,36 +277,9 @@ export function initToolbarController() {
       });
     }
 
-    // Unit toggle button is now pre-populated, just need to wire up functionality
-    const unitToggle = document.getElementById('unitToggleBtn');
+    // Unit toggle is handled by main.ts setupUnitToggle() — just hide the raw selector
     const unitSel = document.getElementById('unitSelector');
-    const unitToggleSecondary = document.getElementById('unitToggleBtnSecondary');
-
-    const getUnitLabel = () => (unitSel?.value === 'inch' ? 'inches' : 'cm');
-    const toggleUnits = () => {
-      if (!unitSel) return;
-      unitSel.value = unitSel.value === 'inch' ? 'cm' : 'inch';
-      const label = getUnitLabel();
-      if (unitToggle) unitToggle.textContent = label;
-      if (unitToggleSecondary) unitToggleSecondary.textContent = label;
-      if (typeof updateMeasurementDisplay === 'function') {
-        updateMeasurementDisplay();
-      } else if (unitSel.onchange) {
-        unitSel.onchange();
-      }
-    };
-
-    if (unitToggle && unitSel) {
-      unitToggle.textContent = getUnitLabel();
-      unitToggle.addEventListener('click', toggleUnits);
-      // Hide the original select (kept for compatibility)
-      unitSel.style.display = 'none';
-    }
-
-    if (unitToggleSecondary && unitSel) {
-      unitToggleSecondary.textContent = getUnitLabel();
-      unitToggleSecondary.addEventListener('click', toggleUnits);
-    }
+    if (unitSel) unitSel.style.display = 'none';
 
     // Elements panel single-button shape toggle wiring
     const labelShapeToggleBtn = document.getElementById('labelShapeToggleBtn');

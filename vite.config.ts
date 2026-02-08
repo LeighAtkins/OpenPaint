@@ -34,7 +34,6 @@ export default defineConfig(({ mode }) => {
         '@/stores': path.resolve(__dirname, './src/stores'),
         '@/constants': path.resolve(__dirname, './src/constants'),
         '@/hooks': path.resolve(__dirname, './src/hooks'),
-        '@/features': path.resolve(__dirname, './src/features'),
       },
     },
 
@@ -53,13 +52,7 @@ export default defineConfig(({ mode }) => {
           drop_debugger: mode === 'production',
         },
       },
-      rollupOptions: {
-        output: {
-          manualChunks: {
-            supabase: ['@supabase/supabase-js'],
-          },
-        },
-      },
+      rollupOptions: {},
     },
 
     optimizeDeps: {
