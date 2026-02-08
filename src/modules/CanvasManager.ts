@@ -4,8 +4,74 @@
 import { FabricControls } from './utils/FabricControls.js';
 import { PathUtils } from './utils/PathUtils.js';
 
+declare const fabric: typeof import('fabric');
+
+type FabricCanvas = any;
+type FabricObject = any;
+type FabricIEvent = any;
+type ViewportTransform = [number, number, number, number, number, number];
+
+type Size = { width: number; height: number };
+type FrameState = { width: number; height: number; left: number; top: number };
+type CaptureFrameRatios = {
+  widthRatio: number;
+  heightRatio: number;
+  leftRatio: number;
+  topRatio: number;
+};
+type ClipboardState = {
+  objects: unknown[];
+  timestamp: number;
+};
+
+declare global {
+  interface Window {
+    app?: any;
+    manualFrameRatios?: Record<string, CaptureFrameRatios>;
+    currentImageLabel?: string;
+    getCaptureTabScopedLabel?: (label: string) => string;
+    updateNextTagDisplay?: () => void;
+  }
+}
+
 export class CanvasManager {
-  constructor(canvasId) {
+  canvasId: string;
+  fabricCanvas: FabricCanvas | null;
+  pendingResizeFrame: number | null;
+  pendingResizeWidth: number | null;
+  pendingResizeHeight: number | null;
+  lastCanvasSize: Size;
+  resizeOverlayCanvas: HTMLCanvasElement | null;
+  resizeOverlayCleanupId: number | null;
+  captureFrameImageRatios: CaptureFrameRatios | null;
+  strokeScalingTimeout: ReturnType<typeof setTimeout> | null;
+  pendingStrokeScale: number | null;
+  lastResizeTime: number | null;
+  consecutiveResizeCount: number;
+  isResizing: boolean;
+  originalCanvasSize: Size;
+  originalObjectStates: Map<
+    FabricObject,
+    { left?: number; top?: number; scaleX: number; scaleY: number; strokeWidth: number }
+  >;
+  resizeTimeout: ReturnType<typeof setTimeout> | null;
+  rotationDegrees: number;
+  zoomLevel: number;
+  panX: number;
+  panY: number;
+  rotateViewport: boolean;
+  __activeCurveTransformTarget: FabricObject | null;
+  clipboard: ClipboardState | null;
+  clipboardPasteCount: number;
+  resizeObserver: ResizeObserver | null;
+  baseFrameState?: FrameState;
+  manualZoomLevel: number | null;
+  lastWindowWidth?: number;
+  _updateTimeout?: ReturnType<typeof setTimeout>;
+  __tagScaleActive?: boolean;
+  __tagScaleTarget?: FabricObject | null;
+
+  constructor(canvasId: string) {
     this.canvasId = canvasId;
     this.fabricCanvas = null;
 
@@ -43,9 +109,12 @@ export class CanvasManager {
 
     this.clipboard = null;
     this.clipboardPasteCount = 0;
+
+    this.resizeObserver = null;
+    this.manualZoomLevel = null;
   }
 
-  init() {
+  init(): void {
     // fabric is loaded globally via CDN in index.html
     if (typeof fabric === 'undefined') {
       console.error('Fabric.js library not found!');
@@ -87,7 +156,7 @@ export class CanvasManager {
     // Selection state is managed by tools (SelectTool enables, drawing tools disable as needed)
     // Don't set a default here - let tools control it
 
-    this.fabricCanvas.on('mouse:down', opt => {
+    this.fabricCanvas.on('mouse:down', (opt: FabricIEvent) => {
       const evt = opt.e;
       // Check if Ctrl key is pressed (or Meta key for Mac)
       if (evt.ctrlKey || evt.metaKey) {
@@ -116,7 +185,7 @@ export class CanvasManager {
       }
     });
 
-    this.fabricCanvas.on('mouse:up', opt => {
+    this.fabricCanvas.on('mouse:up', (opt: FabricIEvent) => {
       // Restore state if we changed it
       if (this.fabricCanvas._tempDrawingMode) {
         this.fabricCanvas.isDrawingMode = true;
@@ -150,7 +219,7 @@ export class CanvasManager {
     this.initKeyboardShortcuts();
 
     // Listen for path creation (freehand drawing) to attach metadata and save history
-    this.fabricCanvas.on('path:created', e => {
+    this.fabricCanvas.on('path:created', (e: FabricIEvent) => {
       const path = e.path;
       if (path) {
         // Make path selectable for moving/deleting
@@ -191,7 +260,7 @@ export class CanvasManager {
     });
 
     // Listen for object removal to update stroke list
-    this.fabricCanvas.on('object:removed', e => {
+    this.fabricCanvas.on('object:removed', (e: FabricIEvent) => {
       const obj = e.target;
       if (obj && window.app && window.app.metadataManager) {
         // We need to check if this object has metadata and remove it
@@ -215,10 +284,10 @@ export class CanvasManager {
       }
     });
 
-    const captureCurveTransformStart = opt => {
+    const captureCurveTransformStart = (opt: FabricIEvent) => {
       const action = opt?.transform?.action;
       const isScaleAction = action === 'scale' || action === 'scaleX' || action === 'scaleY';
-      const logScale = (...args) => {
+      const logScale = (...args: unknown[]) => {
         if (isScaleAction) {
           console.log('[CURVE SCALE]', ...args);
         }
@@ -241,7 +310,7 @@ export class CanvasManager {
         return;
       }
 
-      const initCurveTransformState = curveObj => {
+      const initCurveTransformState = (curveObj: FabricObject) => {
         if (!curveObj) return;
         if (curveObj.__curveTransformActive) return;
 
@@ -338,7 +407,7 @@ export class CanvasManager {
       this.__activeCurveTransformTarget = obj;
     };
 
-    const scheduleBakeAfterFinalize = curveObj => {
+    const scheduleBakeAfterFinalize = (curveObj: FabricObject) => {
       const canvas = curveObj?.canvas;
       if (!canvas) return;
       if (curveObj.__curveBakeScheduled) return;
@@ -361,7 +430,7 @@ export class CanvasManager {
       requestAnimationFrame(tick);
     };
 
-    const finalizeCurveVisualState = (canvas, obj) => {
+    const finalizeCurveVisualState = (canvas: FabricCanvas | null, obj: FabricObject) => {
       if (!obj) {
         return;
       }
@@ -372,55 +441,13 @@ export class CanvasManager {
       canvas?.requestRenderAll?.() ?? canvas?.renderAll?.();
     };
 
-    const refreshTagForStroke = obj => {
-      const tagManager = window.app?.tagManager;
-      if (!tagManager || !obj) {
-        return;
-      }
-      for (const [strokeLabel, tagObj] of tagManager.tagObjects.entries()) {
-        if (tagObj.connectedStroke !== obj) continue;
-
-        let strokeCenter;
-        if (obj.group) {
-          const centerRelative = obj.getCenterPoint();
-          const groupMatrix = obj.group.calcTransformMatrix();
-          strokeCenter = fabric.util.transformPoint(centerRelative, groupMatrix);
-        } else {
-          strokeCenter = obj.getCenterPoint();
-        }
-
-        let tagCenter;
-        if (tagObj.group) {
-          const centerRelative = tagObj.getCenterPoint();
-          const groupMatrix = tagObj.group.calcTransformMatrix();
-          tagCenter = fabric.util.transformPoint(centerRelative, groupMatrix);
-        } else {
-          tagCenter = tagObj.getCenterPoint();
-        }
-
-        if (strokeCenter && tagCenter) {
-          tagObj.tagOffset = {
-            x: tagCenter.x - strokeCenter.x,
-            y: tagCenter.y - strokeCenter.y,
-          };
-          obj.tagOffset = {
-            x: tagObj.tagOffset.x,
-            y: tagObj.tagOffset.y,
-          };
-        }
-
-        tagManager.updateConnector(tagObj.strokeLabel || strokeLabel, tagObj.imageLabel);
-        break;
-      }
-    };
-
-    const bakeCurveTransform = opt => {
+    const bakeCurveTransform = (opt: FabricIEvent) => {
       let obj = opt?.target;
       const isScaleAction =
         obj?.__curveTransformAction === 'scale' ||
         obj?.__curveTransformAction === 'scaleX' ||
         obj?.__curveTransformAction === 'scaleY';
-      const logScale = (...args) => {
+      const logScale = (...args: unknown[]) => {
         if (isScaleAction) {
           console.log('[CURVE SCALE]', ...args);
         }
@@ -499,7 +526,7 @@ export class CanvasManager {
       obj.__curveBakedThisGesture = true;
       logScale('bake start');
 
-      if (globalThis.app?.debugCurveScaleNoCache) {
+      if ((globalThis as typeof globalThis & { app?: any }).app?.debugCurveScaleNoCache) {
         obj.objectCaching = false;
         logScale('objectCaching', 'disabled');
       }
@@ -723,10 +750,10 @@ export class CanvasManager {
         if (obj.__curveTransformAction === 'scale') {
           const objects = sel.getObjects();
           const curveCount = objects.filter(
-            o => o?.type === 'path' && Array.isArray(o.customPoints)
+            (o: FabricObject) => o?.type === 'path' && Array.isArray(o.customPoints)
           ).length;
           const hasNonTagNonCurve = objects.some(
-            o => !(o?.type === 'path' && Array.isArray(o.customPoints)) && !o?.isTag
+            (o: FabricObject) => !(o?.type === 'path' && Array.isArray(o.customPoints)) && !o?.isTag
           );
 
           if (curveCount === 1 && !hasNonTagNonCurve) {
@@ -747,7 +774,7 @@ export class CanvasManager {
       }
 
       if (isScaleAction) {
-        refreshTagForStroke(obj);
+        this.refreshTagForStroke(obj);
       }
 
       // P3: Mark as just baked so getCurveAnchorWorldPoint knows not to apply additional scaling.
@@ -798,7 +825,7 @@ export class CanvasManager {
     // Similar to curve baking, but for fabric.Line objects
     // When a line is scaled, we need to bake the transform into the actual coordinates
 
-    const scheduleLineBakeAfterFinalize = lineObj => {
+    const scheduleLineBakeAfterFinalize = (lineObj: FabricObject) => {
       const canvas = lineObj?.canvas;
       if (!canvas) return;
       if (lineObj.__lineBakeScheduled) return;
@@ -825,7 +852,7 @@ export class CanvasManager {
       requestAnimationFrame(tick);
     };
 
-    const captureLineTransformStart = opt => {
+    const captureLineTransformStart = (opt: FabricIEvent) => {
       const action = opt?.transform?.action;
       const isScaleAction = action === 'scale' || action === 'scaleX' || action === 'scaleY';
 
@@ -884,29 +911,7 @@ export class CanvasManager {
       this.captureLineState(obj, opt);
     };
 
-    // Helper to capture line state
-    this.captureLineState = (obj, opt) => {
-      const fullMatrix = obj.calcTransformMatrix();
-      const points = obj.calcLinePoints();
-
-      // Transform the local points to world coordinates
-      const p1World = fabric.util.transformPoint({ x: points.x1, y: points.y1 }, fullMatrix);
-      const p2World = fabric.util.transformPoint({ x: points.x2, y: points.y2 }, fullMatrix);
-
-      obj.__lineTransformActive = true;
-      obj.__lineTransformAction = opt?.transform?.action || 'scale';
-      obj.__lineBakedThisGesture = false;
-      obj.__lineOrigMatrix = fullMatrix;
-      obj.__lineOrigP1World = { x: p1World.x, y: p1World.y };
-      obj.__lineOrigP2World = { x: p2World.x, y: p2World.y };
-
-      console.log('[LINE SCALE] capture start', {
-        p1: obj.__lineOrigP1World,
-        p2: obj.__lineOrigP2World,
-      });
-    };
-
-    const bakeLineTransform = opt => {
+    const bakeLineTransform = (opt: FabricIEvent) => {
       let obj = opt?.target;
 
       if (!obj) {
@@ -948,110 +953,6 @@ export class CanvasManager {
       this.bakeLineSingleObject(obj);
     };
 
-    // Helper to bake a single line object
-    this.bakeLineSingleObject = obj => {
-      if (!obj.__lineOrigMatrix || !obj.__lineOrigP1World || !obj.__lineOrigP2World) {
-        delete obj.__lineTransformActive;
-        delete obj.__lineTransformAction;
-        delete obj.__lineBakedThisGesture;
-        delete obj.__lineOrigMatrix;
-        delete obj.__lineOrigP1World;
-        delete obj.__lineOrigP2World;
-        delete obj.__lineBakeScheduled;
-        return;
-      }
-      obj.__lineBakedThisGesture = true;
-
-      const before = obj.__lineOrigMatrix;
-      const after = obj.calcTransformMatrix();
-
-      // Calculate the delta transform
-      const inverseBefore = fabric.util.invertTransform(before);
-      const delta = fabric.util.multiplyTransformMatrices(after, inverseBefore);
-
-      // Transform the original world points by delta
-      const p1Transformed = fabric.util.transformPoint(
-        new fabric.Point(obj.__lineOrigP1World.x, obj.__lineOrigP1World.y),
-        delta
-      );
-      const p2Transformed = fabric.util.transformPoint(
-        new fabric.Point(obj.__lineOrigP2World.x, obj.__lineOrigP2World.y),
-        delta
-      );
-
-      console.log('[LINE SCALE] baking', {
-        p1Before: obj.__lineOrigP1World,
-        p2Before: obj.__lineOrigP2World,
-        p1After: { x: p1Transformed.x, y: p1Transformed.y },
-        p2After: { x: p2Transformed.x, y: p2Transformed.y },
-      });
-
-      // Calculate the new center (midpoint of the line)
-      const center = {
-        x: (p1Transformed.x + p2Transformed.x) / 2,
-        y: (p1Transformed.y + p2Transformed.y) / 2,
-      };
-
-      // Line coordinates are relative to center, so calculate local offsets
-      // Note: we reset angle to 0 so no rotation compensation needed
-      const localP1 = {
-        x: p1Transformed.x - center.x,
-        y: p1Transformed.y - center.y,
-      };
-      const localP2 = {
-        x: p2Transformed.x - center.x,
-        y: p2Transformed.y - center.y,
-      };
-
-      // Reset transforms and set coordinates relative to center
-      obj.set({
-        x1: localP1.x,
-        y1: localP1.y,
-        x2: localP2.x,
-        y2: localP2.y,
-        left: center.x,
-        top: center.y,
-        angle: 0,
-        scaleX: 1,
-        scaleY: 1,
-        skewX: 0,
-        skewY: 0,
-        flipX: false,
-        flipY: false,
-      });
-
-      obj.setCoords();
-
-      // Update lastLeft/lastTop for consistent move tracking
-      obj.lastLeft = obj.left;
-      obj.lastTop = obj.top;
-
-      obj.dirty = true;
-
-      // Refresh controls
-      FabricControls.createLineControls(obj);
-
-      // Fire moving event to update tag connectors
-      obj.fire('moving');
-
-      // Refresh tag connector if one is attached
-      refreshTagForStroke(obj);
-
-      // Request render
-      obj.canvas?.requestRenderAll();
-
-      // Clean up state
-      delete obj.__lineTransformActive;
-      delete obj.__lineTransformAction;
-      delete obj.__lineBakedThisGesture;
-      delete obj.__lineOrigMatrix;
-      delete obj.__lineOrigP1World;
-      delete obj.__lineOrigP2World;
-      delete obj.__lineBakeScheduled;
-
-      console.log('[LINE SCALE] bake done', { left: obj.left, top: obj.top });
-    };
-
     // Register line transform handlers
     this.fabricCanvas.on('object:scaling', captureLineTransformStart);
     this.fabricCanvas.on('object:rotating', captureLineTransformStart);
@@ -1060,7 +961,7 @@ export class CanvasManager {
     this.fabricCanvas.on('object:modified', bakeLineTransform);
 
     // Also handle mouse:up for lines to ensure baking happens
-    this.fabricCanvas.on('mouse:up', opt => {
+    this.fabricCanvas.on('mouse:up', (opt: FabricIEvent) => {
       const obj = opt?.target;
       if (obj?.type === 'line' && obj.__lineTransformActive && !obj.__lineBakedThisGesture) {
         // If line is inside activeSelection, schedule bake for later
@@ -1133,7 +1034,7 @@ export class CanvasManager {
     this.fabricCanvas.on('object:skewing', captureCurveTransformStart);
     this.fabricCanvas.on('before:transform', captureCurveTransformStart);
     this.fabricCanvas.on('object:modified', bakeCurveTransform);
-    this.fabricCanvas.on('mouse:up', opt => {
+    this.fabricCanvas.on('mouse:up', (opt: FabricIEvent) => {
       const activeTarget = opt?.target;
       if (activeTarget?.type === 'activeSelection') {
         const objects = activeTarget.getObjects();
@@ -1192,7 +1093,173 @@ export class CanvasManager {
     this.setupResizeObserver();
   }
 
-  enforceFloatingLayout() {
+  private refreshTagForStroke(obj: FabricObject): void {
+    const tagManager = window.app?.tagManager;
+    if (!tagManager || !obj) {
+      return;
+    }
+    for (const [strokeLabel, tagObj] of tagManager.tagObjects.entries()) {
+      if (tagObj.connectedStroke !== obj) continue;
+
+      let strokeCenter;
+      if (obj.group) {
+        const centerRelative = obj.getCenterPoint();
+        const groupMatrix = obj.group.calcTransformMatrix();
+        strokeCenter = fabric.util.transformPoint(centerRelative, groupMatrix);
+      } else {
+        strokeCenter = obj.getCenterPoint();
+      }
+
+      let tagCenter;
+      if (tagObj.group) {
+        const centerRelative = tagObj.getCenterPoint();
+        const groupMatrix = tagObj.group.calcTransformMatrix();
+        tagCenter = fabric.util.transformPoint(centerRelative, groupMatrix);
+      } else {
+        tagCenter = tagObj.getCenterPoint();
+      }
+
+      if (strokeCenter && tagCenter) {
+        tagObj.tagOffset = {
+          x: tagCenter.x - strokeCenter.x,
+          y: tagCenter.y - strokeCenter.y,
+        };
+        obj.tagOffset = {
+          x: tagObj.tagOffset.x,
+          y: tagObj.tagOffset.y,
+        };
+      }
+
+      tagManager.updateConnector(tagObj.strokeLabel || strokeLabel, tagObj.imageLabel);
+      break;
+    }
+  }
+
+  private captureLineState(obj: FabricObject, opt: FabricIEvent): void {
+    const fullMatrix = obj.calcTransformMatrix();
+    const points = obj.calcLinePoints();
+
+    // Transform the local points to world coordinates
+    const p1World = fabric.util.transformPoint({ x: points.x1, y: points.y1 }, fullMatrix);
+    const p2World = fabric.util.transformPoint({ x: points.x2, y: points.y2 }, fullMatrix);
+
+    obj.__lineTransformActive = true;
+    obj.__lineTransformAction = opt?.transform?.action || 'scale';
+    obj.__lineBakedThisGesture = false;
+    obj.__lineOrigMatrix = fullMatrix;
+    obj.__lineOrigP1World = { x: p1World.x, y: p1World.y };
+    obj.__lineOrigP2World = { x: p2World.x, y: p2World.y };
+
+    console.log('[LINE SCALE] capture start', {
+      p1: obj.__lineOrigP1World,
+      p2: obj.__lineOrigP2World,
+    });
+  }
+
+  private bakeLineSingleObject(obj: FabricObject): void {
+    if (!obj.__lineOrigMatrix || !obj.__lineOrigP1World || !obj.__lineOrigP2World) {
+      delete obj.__lineTransformActive;
+      delete obj.__lineTransformAction;
+      delete obj.__lineBakedThisGesture;
+      delete obj.__lineOrigMatrix;
+      delete obj.__lineOrigP1World;
+      delete obj.__lineOrigP2World;
+      delete obj.__lineBakeScheduled;
+      return;
+    }
+    obj.__lineBakedThisGesture = true;
+
+    const before = obj.__lineOrigMatrix;
+    const after = obj.calcTransformMatrix();
+
+    // Calculate the delta transform
+    const inverseBefore = fabric.util.invertTransform(before);
+    const delta = fabric.util.multiplyTransformMatrices(after, inverseBefore);
+
+    // Transform the original world points by delta
+    const p1Transformed = fabric.util.transformPoint(
+      new fabric.Point(obj.__lineOrigP1World.x, obj.__lineOrigP1World.y),
+      delta
+    );
+    const p2Transformed = fabric.util.transformPoint(
+      new fabric.Point(obj.__lineOrigP2World.x, obj.__lineOrigP2World.y),
+      delta
+    );
+
+    console.log('[LINE SCALE] baking', {
+      p1Before: obj.__lineOrigP1World,
+      p2Before: obj.__lineOrigP2World,
+      p1After: { x: p1Transformed.x, y: p1Transformed.y },
+      p2After: { x: p2Transformed.x, y: p2Transformed.y },
+    });
+
+    // Calculate the new center (midpoint of the line)
+    const center = {
+      x: (p1Transformed.x + p2Transformed.x) / 2,
+      y: (p1Transformed.y + p2Transformed.y) / 2,
+    };
+
+    // Line coordinates are relative to center, so calculate local offsets
+    // Note: we reset angle to 0 so no rotation compensation needed
+    const localP1 = {
+      x: p1Transformed.x - center.x,
+      y: p1Transformed.y - center.y,
+    };
+    const localP2 = {
+      x: p2Transformed.x - center.x,
+      y: p2Transformed.y - center.y,
+    };
+
+    // Reset transforms and set coordinates relative to center
+    obj.set({
+      x1: localP1.x,
+      y1: localP1.y,
+      x2: localP2.x,
+      y2: localP2.y,
+      left: center.x,
+      top: center.y,
+      angle: 0,
+      scaleX: 1,
+      scaleY: 1,
+      skewX: 0,
+      skewY: 0,
+      flipX: false,
+      flipY: false,
+    });
+
+    obj.setCoords();
+
+    // Update lastLeft/lastTop for consistent move tracking
+    obj.lastLeft = obj.left;
+    obj.lastTop = obj.top;
+
+    obj.dirty = true;
+
+    // Refresh controls
+    FabricControls.createLineControls(obj);
+
+    // Fire moving event to update tag connectors
+    obj.fire('moving');
+
+    // Refresh tag connector if one is attached
+    this.refreshTagForStroke(obj);
+
+    // Request render
+    obj.canvas?.requestRenderAll();
+
+    // Clean up state
+    delete obj.__lineTransformActive;
+    delete obj.__lineTransformAction;
+    delete obj.__lineBakedThisGesture;
+    delete obj.__lineOrigMatrix;
+    delete obj.__lineOrigP1World;
+    delete obj.__lineOrigP2World;
+    delete obj.__lineBakeScheduled;
+
+    console.log('[LINE SCALE] bake done', { left: obj.left, top: obj.top });
+  }
+
+  enforceFloatingLayout(): void {
     const applyStyles = () => {
       const strokePanel = document.getElementById('strokePanel');
       const imagePanel = document.getElementById('imagePanel');
@@ -1264,11 +1331,11 @@ export class CanvasManager {
     setTimeout(applyStyles, 1000);
   }
 
-  setupResizeObserver() {
+  setupResizeObserver(): void {
     const wrapper = document.getElementById('main-canvas-wrapper');
     if (!wrapper) return;
 
-    this.resizeObserver = new ResizeObserver(entries => {
+    this.resizeObserver = new ResizeObserver((entries: ResizeObserverEntry[]) => {
       for (const entry of entries) {
         if (entry.target === wrapper) {
           // Debounce the resize call
@@ -1283,13 +1350,15 @@ export class CanvasManager {
     this.resizeObserver.observe(wrapper);
   }
 
-  initKeyboardShortcuts() {
+  initKeyboardShortcuts(): void {
     // Delete key handler
-    document.addEventListener('keydown', e => {
+    document.addEventListener('keydown', (e: KeyboardEvent) => {
       // Don't delete if typing in an input
       // Don't delete if typing in an input
-      const isInput = e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA';
-      const isContentEditable = e.target.isContentEditable;
+      const target = e.target as HTMLElement | null;
+      const tagName = target?.tagName || '';
+      const isInput = tagName === 'INPUT' || tagName === 'TEXTAREA';
+      const isContentEditable = !!target?.isContentEditable;
       const isTextEditing =
         window.app?.toolManager?.tools?.text?.activeTextObject?.isEditing === true;
 
@@ -1390,7 +1459,7 @@ export class CanvasManager {
     });
   }
 
-  copySelectedObjects() {
+  copySelectedObjects(): void {
     if (!this.fabricCanvas) return;
     const activeObjects = this.fabricCanvas.getActiveObjects();
     if (!activeObjects || activeObjects.length === 0) return;
@@ -1411,7 +1480,7 @@ export class CanvasManager {
     console.log(`[Copy] Stored ${serialized.length} objects in clipboard`);
   }
 
-  pasteClipboardObjects() {
+  pasteClipboardObjects(): void {
     if (!this.fabricCanvas || !this.clipboard?.objects?.length) return;
 
     const imageLabel = window.app?.projectManager?.currentViewId || window.currentImageLabel;
@@ -1419,7 +1488,7 @@ export class CanvasManager {
     this.clipboardPasteCount += 1;
     const payload = JSON.parse(JSON.stringify(this.clipboard.objects));
 
-    fabric.util.enlivenObjects(payload, objects => {
+    fabric.util.enlivenObjects(payload, (objects: FabricObject[]) => {
       const pastedObjects = [];
       objects.forEach(obj => {
         if (!obj) return;
@@ -1454,7 +1523,7 @@ export class CanvasManager {
     });
   }
 
-  attachMetadataForPaste(obj, imageLabel) {
+  attachMetadataForPaste(obj: FabricObject, imageLabel: string): void {
     const metadataManager = window.app?.metadataManager;
     if (!metadataManager || !obj) return;
 
@@ -1499,7 +1568,7 @@ export class CanvasManager {
    * Calculate available canvas size (works before fabricCanvas is initialized)
    * Now simplified to use the flex layout container dimensions directly
    */
-  calculateAvailableSize() {
+  calculateAvailableSize(): Size {
     // With the new flex layout, canvas is inside #main-canvas-wrapper
     // Just measure that container's dimensions
     const canvasContainer = document.getElementById('main-canvas-wrapper');
@@ -1534,7 +1603,7 @@ export class CanvasManager {
   /**
    * Show resize overlay to maintain visual continuity during canvas resize
    */
-  showResizeOverlay(targetWidth, targetHeight) {
+  showResizeOverlay(targetWidth: number, targetHeight: number): void {
     const canvasEl = this.fabricCanvas?.lowerCanvasEl;
     if (!canvasEl || !canvasEl.parentElement) return;
 
@@ -1557,6 +1626,9 @@ export class CanvasManager {
     this.resizeOverlayCanvas.height = Math.max(1, Math.floor(canvasRect.height));
 
     const overlayCtx = this.resizeOverlayCanvas.getContext('2d');
+    if (!overlayCtx) {
+      return;
+    }
     overlayCtx.clearRect(0, 0, this.resizeOverlayCanvas.width, this.resizeOverlayCanvas.height);
     try {
       overlayCtx.drawImage(
@@ -1577,7 +1649,7 @@ export class CanvasManager {
   /**
    * Hide resize overlay after redraw completes
    */
-  hideResizeOverlay() {
+  hideResizeOverlay(): void {
     if (this.resizeOverlayCleanupId) {
       cancelAnimationFrame(this.resizeOverlayCleanupId);
     }
@@ -1595,7 +1667,7 @@ export class CanvasManager {
    * Calculate available canvas size considering sidebars and panels
    * (Wrapper for calculateAvailableSize for consistency)
    */
-  getAvailableCanvasSize() {
+  getAvailableCanvasSize(): Size {
     return this.calculateAvailableSize();
   }
 
@@ -1603,7 +1675,7 @@ export class CanvasManager {
    * Calculate target frame size based on canvas dimensions
    * Centralized logic to ensure consistency between image scaling and frame resizing
    */
-  calculateTargetFrameSize(canvasWidth, canvasHeight) {
+  calculateTargetFrameSize(canvasWidth: number, canvasHeight: number): FrameState {
     const currentImageLabel = window.app?.projectManager?.currentViewId || 'default';
     const savedRatios = window.manualFrameRatios && window.manualFrameRatios[currentImageLabel];
 
@@ -1661,7 +1733,7 @@ export class CanvasManager {
   /**
    * Update capture frame position and size during resize
    */
-  updateCaptureFrameOnResize(targetWidth, targetHeight) {
+  updateCaptureFrameOnResize(targetWidth: number, targetHeight: number): void {
     const captureFrame = document.getElementById('captureFrame');
     if (!captureFrame) {
       console.log('[Frame Debug] No capture frame element found');
@@ -1698,7 +1770,7 @@ export class CanvasManager {
   /**
    * Apply resize with debouncing and smooth transitions
    */
-  applyResize(width, height) {
+  applyResize(width?: number, height?: number): void {
     if (!this.fabricCanvas) {
       return;
     }
@@ -1717,8 +1789,8 @@ export class CanvasManager {
     // setWidth/setHeight might reset the viewport transform/zoom in some Fabric versions/configs
     // We need the accurate old zoom to calculate the virtual frame size later
     const oldZoom = this.fabricCanvas ? this.fabricCanvas.getZoom() || 1 : 1;
-    const oldVpt = this.fabricCanvas
-      ? [...(this.fabricCanvas.viewportTransform || [1, 0, 0, 1, 0, 0])]
+    const oldVpt: ViewportTransform = this.fabricCanvas
+      ? ([...(this.fabricCanvas.viewportTransform || [1, 0, 0, 1, 0, 0])] as ViewportTransform)
       : [1, 0, 0, 1, 0, 0];
     // console.log(`[CanvasManager] applyResize started. Old Zoom: ${oldZoom}, Old Pan: [${oldVpt[4]}, ${oldVpt[5]}]`);
 
@@ -2001,7 +2073,7 @@ export class CanvasManager {
    * Set a manual zoom level (e.g. 1.0 for 100%, 2.0 for 200%)
    * Pass 'fit' or null to return to auto-fit mode.
    */
-  setManualZoom(zoomLevel) {
+  setManualZoom(zoomLevel: number | 'fit' | null): void {
     if (zoomLevel === 'fit' || zoomLevel === null) {
       this.manualZoomLevel = null;
     } else {
@@ -2014,7 +2086,7 @@ export class CanvasManager {
   /**
    * Debounced resize method - queues resize with setTimeout
    */
-  resize() {
+  resize(): void {
     if (!this.fabricCanvas) {
       return;
     }
@@ -2032,10 +2104,10 @@ export class CanvasManager {
     });
   }
 
-  initZoomPan() {
+  initZoomPan(): void {
     if (!this.fabricCanvas) return;
 
-    this.fabricCanvas.on('mouse:wheel', opt => {
+    this.fabricCanvas.on('mouse:wheel', (opt: FabricIEvent) => {
       const delta = opt.e.deltaY;
       let zoom = this.zoomLevel || this.fabricCanvas.getZoom();
       zoom *= 0.999 ** delta;
@@ -2067,11 +2139,17 @@ export class CanvasManager {
 
     // Panning logic: Alt+Drag, Shift+Drag, or two-finger touch
     let isDragging = false;
-    let lastPosX;
-    let lastPosY;
+    let lastPosX = 0;
+    let lastPosY = 0;
 
     // Touch gesture state
-    let touchGestureState = {
+    const touchGestureState: {
+      isTwoFingerPan: boolean;
+      isPinchZoom: boolean;
+      lastTwoFingerCenter: { x: number; y: number } | null;
+      lastTwoFingerDistance: number | null;
+      activeTouches: Map<number, { x: number; y: number }>;
+    } = {
       isTwoFingerPan: false,
       isPinchZoom: false,
       lastTwoFingerCenter: null,
@@ -2079,7 +2157,7 @@ export class CanvasManager {
       activeTouches: new Map(),
     };
 
-    this.fabricCanvas.on('mouse:down', opt => {
+    this.fabricCanvas.on('mouse:down', (opt: FabricIEvent) => {
       const evt = opt.e;
       if (evt.altKey === true || evt.shiftKey === true) {
         console.log('[PAN] Starting pan gesture with', evt.altKey ? 'Alt' : 'Shift');
@@ -2094,7 +2172,7 @@ export class CanvasManager {
       }
     });
 
-    this.fabricCanvas.on('mouse:move', opt => {
+    this.fabricCanvas.on('mouse:move', (opt: FabricIEvent) => {
       if (isDragging) {
         const e = opt.e;
         this.panX += e.clientX - lastPosX;
@@ -2105,7 +2183,7 @@ export class CanvasManager {
       }
     });
 
-    this.fabricCanvas.on('mouse:up', opt => {
+    this.fabricCanvas.on('mouse:up', (opt: FabricIEvent) => {
       if (isDragging) {
         console.log('[PAN] Ending pan gesture');
         this.applyViewportTransform();
@@ -2126,15 +2204,15 @@ export class CanvasManager {
 
     // Update tag connectors when strokes are moved (including multi-select)
     // Note: Tags are non-selectable, so only strokes trigger this handler
-    this.fabricCanvas.on('object:moving', e => {
+    this.fabricCanvas.on('object:moving', (e: FabricIEvent) => {
       const movingObj = e.target;
 
-      const getWorldCenter = obj => {
+      const getWorldCenter = (obj: FabricObject) => {
         const center = obj.getCenterPoint();
         return { x: center.x, y: center.y };
       };
 
-      const applyCurveTranslation = (obj, dx, dy) => {
+      const applyCurveTranslation = (obj: FabricObject, dx: number, dy: number) => {
         if (!obj || obj.type !== 'path' || !Array.isArray(obj.customPoints)) return;
 
         // IMPORTANT: Skip if we're editing a control point - the control point handler updates customPoints directly
@@ -2152,7 +2230,7 @@ export class CanvasManager {
           return;
         }
 
-        obj.customPoints.forEach(point => {
+        obj.customPoints.forEach((point: { x: number; y: number }) => {
           point.x += dx;
           point.y += dy;
         });
@@ -2161,7 +2239,7 @@ export class CanvasManager {
           : getWorldCenter(obj);
       };
 
-      const updateCurveTranslationFromSelf = obj => {
+      const updateCurveTranslationFromSelf = (obj: FabricObject) => {
         // IMPORTANT: Skip if we're editing a control point
         if (obj.isEditingControlPoint) {
           return;
@@ -2200,7 +2278,7 @@ export class CanvasManager {
         movingObj.__lastCenter = currentCenter;
 
         // Update connectors for all strokes in the selection
-        objects.forEach(obj => {
+        objects.forEach((obj: FabricObject) => {
           applyCurveTranslation(obj, dx, dy);
           // Handle lines, paths (curves), and groups (arrows), but skip tags
           if ((obj.type === 'line' || obj.type === 'path' || obj.type === 'group') && !obj.isTag) {
@@ -2234,11 +2312,11 @@ export class CanvasManager {
       this.fabricCanvas.requestRenderAll();
     });
 
-    const updateTagConnectorsForScaling = scalingObj => {
+    const updateTagConnectorsForScaling = (scalingObj: FabricObject) => {
       if (!window.app?.tagManager || !scalingObj) return;
       const tagManager = window.app.tagManager;
 
-      const updateForStroke = obj => {
+      const updateForStroke = (obj: FabricObject) => {
         if ((obj.type === 'line' || obj.type === 'path' || obj.type === 'group') && !obj.isTag) {
           for (const [strokeLabel, tagObj] of tagManager.tagObjects.entries()) {
             if (tagObj.connectedStroke === obj) {
@@ -2257,7 +2335,7 @@ export class CanvasManager {
     };
 
     // Update tag connectors while scaling for smoother feedback.
-    this.fabricCanvas.on('object:scaling', e => {
+    this.fabricCanvas.on('object:scaling', (e: FabricIEvent) => {
       const scalingObj = e.target;
       if (!scalingObj) return;
       this.__tagScaleActive = true;
@@ -2280,7 +2358,7 @@ export class CanvasManager {
     this.fabricCanvas.on('mouse:up', clearScaleTracking);
 
     // Touch gesture helpers
-    const getTwoFingerCenter = touches => {
+    const getTwoFingerCenter = (touches: TouchList) => {
       if (touches.length < 2) return null;
       const touch1 = touches[0];
       const touch2 = touches[1];
@@ -2290,7 +2368,7 @@ export class CanvasManager {
       };
     };
 
-    const getTwoFingerDistance = touches => {
+    const getTwoFingerDistance = (touches: TouchList) => {
       if (touches.length < 2) return null;
       const touch1 = touches[0];
       const touch2 = touches[1];
@@ -2304,7 +2382,7 @@ export class CanvasManager {
 
     canvasElement.addEventListener(
       'touchstart',
-      e => {
+      (e: TouchEvent) => {
         // Update active touches
         for (let i = 0; i < e.touches.length; i++) {
           const touch = e.touches[i];
@@ -2337,13 +2415,16 @@ export class CanvasManager {
 
     canvasElement.addEventListener(
       'touchmove',
-      e => {
+      (e: TouchEvent) => {
         if (
           (touchGestureState.isTwoFingerPan || touchGestureState.isPinchZoom) &&
           e.touches.length === 2
         ) {
           const currentCenter = getTwoFingerCenter(e.touches);
           const currentDistance = getTwoFingerDistance(e.touches);
+          if (!currentCenter) {
+            return;
+          }
 
           // Handle pinch-to-zoom
           if (
@@ -2428,7 +2509,7 @@ export class CanvasManager {
 
     canvasElement.addEventListener(
       'touchend',
-      e => {
+      (e: TouchEvent) => {
         // Remove ended touches from active touches
         for (let i = 0; i < e.changedTouches.length; i++) {
           const touch = e.changedTouches[i];
@@ -2463,7 +2544,7 @@ export class CanvasManager {
 
     canvasElement.addEventListener(
       'touchcancel',
-      e => {
+      (e: TouchEvent) => {
         // Reset touch state on cancel
         touchGestureState.activeTouches.clear();
         touchGestureState.isTwoFingerPan = false;
@@ -2483,14 +2564,14 @@ export class CanvasManager {
     );
 
     // Keyboard event listeners for cursor feedback on shift key
-    document.addEventListener('keydown', e => {
+    document.addEventListener('keydown', (e: KeyboardEvent) => {
       if (e.key === 'Shift' && !isDragging) {
         console.log('[PAN] Shift key pressed - showing grab cursor');
         this.fabricCanvas.upperCanvasEl.style.cursor = 'grab';
       }
     });
 
-    document.addEventListener('keyup', e => {
+    document.addEventListener('keyup', (e: KeyboardEvent) => {
       if (e.key === 'Shift' && !isDragging) {
         console.log('[PAN] Shift key released - restoring default cursor');
         this.fabricCanvas.upperCanvasEl.style.cursor = 'default';
@@ -2498,7 +2579,8 @@ export class CanvasManager {
     });
   }
 
-  clear() {
+  clear(): void {
+    if (!this.fabricCanvas) return;
     this.fabricCanvas.clear();
     this.fabricCanvas.setBackgroundColor(
       '#ffffff',
@@ -2507,22 +2589,26 @@ export class CanvasManager {
     this.applyViewportTransform();
   }
 
-  setRotationDegrees(degrees) {
+  setRotationDegrees(degrees: number): void {
     if (!this.fabricCanvas) return;
     const normalized = ((degrees % 360) + 360) % 360;
     this.rotationDegrees = normalized;
     this.applyViewportTransform();
   }
 
-  rotateBy(deltaDegrees) {
+  rotateBy(deltaDegrees: number): void {
     this.setRotationDegrees(this.rotationDegrees + deltaDegrees);
   }
 
-  getRotationDegrees() {
+  getRotationDegrees(): number {
     return this.rotationDegrees;
   }
 
-  setViewportState({ zoom, panX, panY } = {}) {
+  setViewportState({
+    zoom,
+    panX,
+    panY,
+  }: { zoom?: number; panX?: number; panY?: number } = {}): void {
     if (typeof zoom === 'number' && !Number.isNaN(zoom)) {
       this.zoomLevel = zoom;
     }
@@ -2535,7 +2621,7 @@ export class CanvasManager {
     this.applyViewportTransform();
   }
 
-  getViewportState() {
+  getViewportState(): { zoom: number; panX: number; panY: number } {
     return {
       zoom: this.zoomLevel,
       panX: this.panX,
@@ -2543,7 +2629,7 @@ export class CanvasManager {
     };
   }
 
-  applyViewportTransform() {
+  applyViewportTransform(): void {
     if (!this.fabricCanvas) return;
 
     const zoom = this.zoomLevel || this.fabricCanvas.getZoom() || 1;
@@ -2589,7 +2675,7 @@ export class CanvasManager {
     this.fabricCanvas.requestRenderAll();
   }
 
-  getRotationCenter() {
+  getRotationCenter(): { x: number; y: number } {
     if (!this.fabricCanvas) {
       return { x: 0, y: 0 };
     }
@@ -2606,7 +2692,7 @@ export class CanvasManager {
     return { x: centerX, y: centerY };
   }
 
-  rotateCanvasObjects(deltaDegrees) {
+  rotateCanvasObjects(deltaDegrees: number): number {
     if (!this.fabricCanvas) return this.rotationDegrees;
     const center = this.getRotationCenter();
     const radians = (deltaDegrees * Math.PI) / 180;
@@ -2725,7 +2811,10 @@ export class CanvasManager {
 
   // Helper to get JSON export
   // Include strokeMetadata, isArrow, and customPoints to preserve stroke labels, visibility state, arrow markers, and curve control points
-  toJSON() {
+  toJSON(): any {
+    if (!this.fabricCanvas) {
+      return null;
+    }
     const json = this.fabricCanvas.toJSON([
       'strokeMetadata',
       'isArrow',
@@ -2748,7 +2837,10 @@ export class CanvasManager {
   // Helper to load from JSON
   // Use reviver to restore strokeMetadata custom property on each object
   // Also restores custom controls for lines, curves, and arrows
-  loadFromJSON(json, callback) {
+  loadFromJSON(json: any, callback?: () => void): void {
+    if (!this.fabricCanvas) {
+      return;
+    }
     this.fabricCanvas.loadFromJSON(
       json,
       () => {
@@ -2785,7 +2877,7 @@ export class CanvasManager {
         this.fabricCanvas.renderAll();
         if (callback) callback();
       },
-      (o, object) => {
+      (o: any, object: FabricObject) => {
         if (object?._arrowRenderingAttached) {
           delete object._arrowRenderingAttached;
         }
