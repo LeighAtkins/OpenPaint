@@ -1,5 +1,5 @@
 // Main Entry Point
-import { CanvasManager } from './CanvasManager.js';
+import { CanvasManager } from './CanvasManager.ts';
 import { ToolManager } from './tools/ToolManager.js';
 import { ProjectManager } from './ProjectManager.js';
 import { HistoryManager } from './HistoryManager.js';
