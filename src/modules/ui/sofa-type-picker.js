@@ -86,7 +86,17 @@ function ensureStyles() {
   document.head.appendChild(style);
 }
 
-function createPickerOverlay({ title, subtitle, showSkip = true, onContinue, onSkip }) {
+function createPickerOverlay({
+  title,
+  subtitle,
+  showSkip = true,
+  skipLabel = 'Skip for now',
+  continueLabel = 'Continue',
+  initialType = null,
+  initialCustomType = '',
+  onContinue,
+  onSkip,
+}) {
   ensureStyles();
   const overlay = document.createElement('div');
   overlay.className = 'sofa-picker-overlay';
@@ -99,8 +109,8 @@ function createPickerOverlay({ title, subtitle, showSkip = true, onContinue, onS
         <input id="sofaPickerCustomInput" type="text" maxlength="80" placeholder="Enter custom sofa type" />
       </div>
       <div class="sofa-picker-actions">
-        ${showSkip ? '<button type="button" class="sofa-picker-btn secondary" id="sofaPickerSkip">Skip for now</button>' : ''}
-        <button type="button" class="sofa-picker-btn primary" id="sofaPickerContinue" disabled>Continue</button>
+        ${showSkip ? `<button type="button" class="sofa-picker-btn secondary" id="sofaPickerSkip">${skipLabel}</button>` : ''}
+        <button type="button" class="sofa-picker-btn primary" id="sofaPickerContinue" disabled>${continueLabel}</button>
       </div>
     </div>
   `;
@@ -111,7 +121,10 @@ function createPickerOverlay({ title, subtitle, showSkip = true, onContinue, onS
   const customWrap = overlay.querySelector('#sofaPickerCustomWrap');
   const customInput = overlay.querySelector('#sofaPickerCustomInput');
 
-  let selectedType = null;
+  let selectedType = initialType;
+  if (customInput) {
+    customInput.value = initialCustomType;
+  }
 
   const updateUiState = () => {
     const needsCustomName = selectedType === 'custom';
@@ -131,7 +144,7 @@ function createPickerOverlay({ title, subtitle, showSkip = true, onContinue, onS
     button.dataset.sofaType = option.id;
     button.setAttribute('aria-pressed', 'false');
     button.innerHTML = `<span class="sofa-picker-icon" aria-hidden="true">${option.icon}</span><span class="sofa-picker-label">${option.label}</span>`;
-    button.addEventListener('click', () => {
+    const selectOption = () => {
       selectedType = option.id;
       grid.querySelectorAll('.sofa-picker-tile').forEach(tile => {
         const isSelected = tile.dataset.sofaType === selectedType;
@@ -139,11 +152,16 @@ function createPickerOverlay({ title, subtitle, showSkip = true, onContinue, onS
         tile.setAttribute('aria-pressed', String(isSelected));
       });
       updateUiState();
-    });
+    };
+    button.addEventListener('click', selectOption);
+    if (option.id === initialType) {
+      selectOption();
+    }
     grid.appendChild(button);
   });
 
   customInput?.addEventListener('input', updateUiState);
+  updateUiState();
 
   continueBtn.addEventListener('click', () => {
     const customValue = customInput?.value?.trim() || '';
@@ -169,10 +187,14 @@ function hasSofaTypeSelected() {
 function showInitialPickerIfNeeded() {
   if (hasSofaTypeSelected()) return;
 
+  const currentMetadata = getCurrentMetadata();
+
   createPickerOverlay({
     title: 'Step 1: Identify your sofa type',
     subtitle: 'Choose a sofa type to improve naming, photo prompts, and PDF intake guidance.',
     showSkip: true,
+    initialType: currentMetadata.sofaType,
+    initialCustomType: currentMetadata.customSofaType || '',
     onContinue: ({ sofaType, customSofaType }) => {
       setSofaTypeMetadata(sofaType, customSofaType);
       applyProjectNameFromSelection(sofaType, customSofaType);
@@ -196,11 +218,16 @@ function installSaveGuard() {
       return originalSaveProject(...args);
     }
 
+    const currentMetadata = getCurrentMetadata();
     return new Promise(resolve => {
       createPickerOverlay({
         title: 'Sofa type missing',
         subtitle: 'Pick sofa type before saving (recommended).',
         showSkip: true,
+        skipLabel: 'Save anyway',
+        continueLabel: 'Choose now',
+        initialType: currentMetadata.sofaType,
+        initialCustomType: currentMetadata.customSofaType || '',
         onContinue: async ({ sofaType, customSofaType }) => {
           setSofaTypeMetadata(sofaType, customSofaType);
           applyProjectNameFromSelection(sofaType, customSofaType);
@@ -216,7 +243,24 @@ function installSaveGuard() {
   };
 }
 
+export function openSofaTypePicker() {
+  const currentMetadata = getCurrentMetadata();
+  createPickerOverlay({
+    title: 'Identify your sofa type',
+    subtitle: 'Update this anytime to improve naming, prompts, and PDF intake output.',
+    showSkip: false,
+    continueLabel: 'Save type',
+    initialType: currentMetadata.sofaType,
+    initialCustomType: currentMetadata.customSofaType || '',
+    onContinue: ({ sofaType, customSofaType }) => {
+      setSofaTypeMetadata(sofaType, customSofaType);
+      applyProjectNameFromSelection(sofaType, customSofaType);
+    },
+  });
+}
+
 export function initSofaTypePicker() {
   showInitialPickerIfNeeded();
   installSaveGuard();
+  window.openSofaTypePicker = openSofaTypePicker;
 }

@@ -64,6 +64,7 @@ declare global {
     resizeCanvas?: any;
     shareProject?: any;
     updateSharedProject?: any;
+    openSofaTypePicker?: any;
     saveFabricProject?: any;
     updateStrokeVisibilityControls?: any;
     aiExports?: any;
