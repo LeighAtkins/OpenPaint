@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-// @ts-nocheck
 // Panel management - toggle and layout functionality
 import { IMAGE_PANEL_STATES, setImagePanelState } from './panel-state.js';
 (function () {
@@ -132,13 +130,14 @@ import { IMAGE_PANEL_STATES, setImagePanelState } from './panel-state.js';
 
   // Toolbar expand/collapse functionality
   (function initToolbarToggle() {
-    const toolbarWrap = document.querySelector('.toolbar-wrap');
+    const toolbarWrap = document.querySelector<HTMLElement>('.toolbar-wrap')!;
     if (!toolbarWrap) return;
 
     // Track if we've shown the initial glow (only once per page load)
     let hasShownInitialGlow = false;
     let wasScrollable = false;
     let wasExpanded = false;
+    let checkIfExpandableTimeout: ReturnType<typeof setTimeout> | null = null;
 
     // Check if toolbar is scrollable (can be expanded)
     function checkIfExpandable() {
@@ -227,26 +226,32 @@ import { IMAGE_PANEL_STATES, setImagePanelState } from './panel-state.js';
 
     // Also check on scroll
     toolbarWrap.addEventListener('scroll', () => {
-      clearTimeout(checkIfExpandable.timeout);
-      checkIfExpandable.timeout = setTimeout(() => {
+      if (checkIfExpandableTimeout) {
+        clearTimeout(checkIfExpandableTimeout);
+      }
+      checkIfExpandableTimeout = setTimeout(() => {
         checkIfExpandable();
       }, 300);
     });
 
-    function handleToolbarTap(e) {
+    function handleToolbarTap(e: MouseEvent | TouchEvent) {
       if (!isMobileDevice()) {
         return;
       }
 
       // Only process if the event target is the toolbar or a child of the toolbar
-      const target = e.target;
+      const target = e.target as HTMLElement | null;
+      if (!target) {
+        return;
+      }
       if (!toolbarWrap.contains(target) && target !== toolbarWrap) {
         return; // Not a toolbar event, let it pass through
       }
 
       const rect = toolbarWrap.getBoundingClientRect();
-      const tapY = e.clientY || (e.changedTouches && e.changedTouches[0]?.clientY) || 0;
-      const tapX = e.clientX || (e.changedTouches && e.changedTouches[0]?.clientX) || 0;
+      const isTouchEvent = 'changedTouches' in e;
+      const tapY = isTouchEvent ? e.changedTouches[0]?.clientY || 0 : e.clientY;
+      const tapX = isTouchEvent ? e.changedTouches[0]?.clientX || 0 : e.clientX;
 
       // Check if tap is in the bottom 12px of the toolbar
       const bottomThreshold = 12;
@@ -354,9 +359,11 @@ import { IMAGE_PANEL_STATES, setImagePanelState } from './panel-state.js';
     toolbarWrap.addEventListener('touchend', handleToolbarTap);
 
     // Handle window resize
-    let resizeTimeout;
+    let resizeTimeout: ReturnType<typeof setTimeout> | null = null;
     window.addEventListener('resize', () => {
-      clearTimeout(resizeTimeout);
+      if (resizeTimeout) {
+        clearTimeout(resizeTimeout);
+      }
       resizeTimeout = setTimeout(() => {
         if (!isMobileDevice() && toolbarWrap.classList.contains('expanded')) {
           toolbarWrap.classList.remove('expanded');
@@ -372,12 +379,14 @@ import { IMAGE_PANEL_STATES, setImagePanelState } from './panel-state.js';
 
     // Cleanup interval on page unload
     window.addEventListener('beforeunload', () => {
-      clearInterval(checkInterval);
+      if (checkInterval) {
+        clearInterval(checkInterval);
+      }
     });
   })();
 
   // Enhanced panel toggle functionality with minimize-to-header behavior
-  function createPanelToggle(panelId, contentId, buttonId) {
+  function createPanelToggle(panelId: string, contentId: string, buttonId: string) {
     const panel = document.getElementById(panelId);
     const content = document.getElementById(contentId);
     const button = document.getElementById(buttonId);
@@ -464,7 +473,7 @@ import { IMAGE_PANEL_STATES, setImagePanelState } from './panel-state.js';
   }
 
   // Sidebar toggle functionality (Horizontal collapse)
-  function createSidebarToggle(panelId, contentId, buttonId) {
+  function createSidebarToggle(panelId: string, contentId: string, buttonId: string) {
     const panel = document.getElementById(panelId);
     const button = document.getElementById(buttonId);
     const icon = button?.querySelector('svg');
@@ -551,17 +560,22 @@ import { IMAGE_PANEL_STATES, setImagePanelState } from './panel-state.js';
       return;
     }
 
+    const strokePanelEl = strokePanel;
+    const imagePanelEl = imagePanel;
+    const strokeIconEl = strokeIcon;
+    const imageIconEl = imageIcon;
+
     // Initialize panel states - start minimized on mobile, expanded on desktop
     const isMobile = isMobileDevice();
-    if (!strokePanel.getAttribute('data-mobile-state')) {
-      strokePanel.setAttribute('data-mobile-state', isMobile ? 'minimized' : 'expanded');
+    if (!strokePanelEl.getAttribute('data-mobile-state')) {
+      strokePanelEl.setAttribute('data-mobile-state', isMobile ? 'minimized' : 'expanded');
     }
-    if (!imagePanel.getAttribute('data-mobile-state')) {
-      imagePanel.setAttribute('data-mobile-state', isMobile ? 'minimized' : 'expanded');
+    if (!imagePanelEl.getAttribute('data-mobile-state')) {
+      imagePanelEl.setAttribute('data-mobile-state', isMobile ? 'minimized' : 'expanded');
     }
 
     // Sync icon visual state with panel state
-    function syncIconState(panel, icon) {
+    function syncIconState(panel: HTMLElement, icon: HTMLElement) {
       icon.classList.remove('minimized', 'expanded');
       panel.classList.remove('minimized', 'expanded');
 
@@ -592,7 +606,7 @@ import { IMAGE_PANEL_STATES, setImagePanelState } from './panel-state.js';
     }
 
     // Toggle panel on icon click
-    function setupIconToggle(panel, icon) {
+    function setupIconToggle(panel: HTMLElement, icon: HTMLElement) {
       icon.addEventListener('click', e => {
         if (!isMobileDevice()) return;
         e.stopPropagation();
@@ -609,19 +623,19 @@ import { IMAGE_PANEL_STATES, setImagePanelState } from './panel-state.js';
 
       // On desktop, always show panels and ensure content is visible
       if (!isMobile) {
-        strokePanel.style.setProperty('display', 'flex', 'important');
-        imagePanel.style.setProperty('display', 'flex', 'important');
+        strokePanelEl.style.setProperty('display', 'flex', 'important');
+        imagePanelEl.style.setProperty('display', 'flex', 'important');
 
         // CRITICAL FIX: Remove minimized class on desktop to restore width constraints
         // The minimized class forces width:auto, which causes the panel to expand uncontrollably
-        strokePanel.classList.remove('minimized');
-        imagePanel.classList.remove('minimized');
+        strokePanelEl.classList.remove('minimized');
+        imagePanelEl.classList.remove('minimized');
 
         // Ensure content is visible ONLY if not manually collapsed
         const strokeContent = document.getElementById('elementsBody');
         const imageContent = document.getElementById('imagePanelContent');
 
-        if (!strokePanel.classList.contains('collapsed')) {
+        if (!strokePanelEl.classList.contains('collapsed')) {
           if (strokeContent) {
             strokeContent.classList.remove('hidden');
             strokeContent.style.maxHeight = 'none';
@@ -634,7 +648,7 @@ import { IMAGE_PANEL_STATES, setImagePanelState } from './panel-state.js';
           }
         }
 
-        if (!imagePanel.classList.contains('collapsed')) {
+        if (!imagePanelEl.classList.contains('collapsed')) {
           if (imageContent) {
             imageContent.classList.remove('hidden');
             imageContent.style.maxHeight = 'none';
@@ -648,28 +662,30 @@ import { IMAGE_PANEL_STATES, setImagePanelState } from './panel-state.js';
         }
       } else {
         // On mobile, show icons with smooth fade-in
-        strokeIcon.style.display = 'flex';
-        imageIcon.style.display = 'flex';
+        strokeIconEl.style.display = 'flex';
+        imageIconEl.style.display = 'flex';
         // Fade in icons smoothly
         requestAnimationFrame(() => {
-          strokeIcon.style.opacity = '1';
-          imageIcon.style.opacity = '1';
+          strokeIconEl.style.opacity = '1';
+          imageIconEl.style.opacity = '1';
         });
         // Sync panel state with icons
-        syncIconState(strokePanel, strokeIcon);
-        syncIconState(imagePanel, imageIcon);
+        syncIconState(strokePanelEl, strokeIconEl);
+        syncIconState(imagePanelEl, imageIconEl);
       }
     }
 
     // Initialize
-    setupIconToggle(strokePanel, strokeIcon);
-    setupIconToggle(imagePanel, imageIcon);
+    setupIconToggle(strokePanelEl, strokeIconEl);
+    setupIconToggle(imagePanelEl, imageIconEl);
     updatePanelVisibility();
 
     // Update on window resize
-    let resizeTimeout;
+    let resizeTimeout: ReturnType<typeof setTimeout> | null = null;
     window.addEventListener('resize', () => {
-      clearTimeout(resizeTimeout);
+      if (resizeTimeout) {
+        clearTimeout(resizeTimeout);
+      }
       resizeTimeout = setTimeout(updatePanelVisibility, 150);
     });
   }
