@@ -4,11 +4,122 @@
 // @ts-nocheck
 // Extracted from index.html inline scripts
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
+import { buildImageExportFilename, sanitizeFilenamePart } from '../utils/naming-utils.js';
+
+function toBaseViewId(scopeOrViewId) {
+  const raw = String(scopeOrViewId || '');
+  return raw.split('::tab:')[0] || raw;
+}
+
+function getScopedMeasurements(scopeKey, options = {}) {
+  const includeBase = options.includeBase === true;
+  const allMeasurements = window.app?.metadataManager?.strokeMeasurements || {};
+  const merged = {};
+  const baseViewId = toBaseViewId(scopeKey);
+  Object.entries(allMeasurements).forEach(([entryKey, bucket]) => {
+    const inScope = entryKey === scopeKey;
+    const isBase = includeBase && entryKey === baseViewId;
+    if (!inScope && !isBase) {
+      return;
+    }
+    Object.entries(bucket || {}).forEach(([strokeLabel, measurement]) => {
+      if (!measurement || typeof measurement !== 'object') return;
+      merged[strokeLabel] = measurement;
+    });
+  });
+  return merged;
+}
+
+function getScopedStrokeLabels(scopeKey, options = {}) {
+  const includeBase = options.includeBase === true;
+  const strokeMap = window.app?.metadataManager?.vectorStrokesByImage || {};
+  const baseViewId = toBaseViewId(scopeKey);
+  const labels = new Set();
+  Object.entries(strokeMap).forEach(([entryKey, bucket]) => {
+    const inScope = entryKey === scopeKey;
+    const isBase = includeBase && entryKey === baseViewId;
+    if (!inScope && !isBase) {
+      return;
+    }
+    Object.keys(bucket || {}).forEach(strokeLabel => labels.add(strokeLabel));
+  });
+  return Array.from(labels).sort((a, b) => a.localeCompare(b));
+}
+
+function getPdfPageTargets(viewIds) {
+  const ensureTabs =
+    typeof window.ensureCaptureTabsForLabel === 'function'
+      ? window.ensureCaptureTabsForLabel
+      : null;
+  const states = window.captureTabsByLabel || {};
+  const targets = [];
+
+  viewIds.forEach((viewId, viewIndex) => {
+    const state = ensureTabs ? ensureTabs(viewId) : states[viewId];
+    const normalTabs = (state?.tabs || []).filter(tab => tab.type !== 'master');
+
+    if (!normalTabs.length) {
+      targets.push({
+        viewId,
+        viewIndex,
+        tabId: null,
+        tabName: 'Frame 1',
+        scopeKey: viewId,
+        includeBase: true,
+      });
+      return;
+    }
+
+    const primaryTabId = normalTabs[0].id;
+    normalTabs.forEach((tab, tabIndex) => {
+      const scopeKey =
+        typeof window.getCaptureTabScopeForTab === 'function'
+          ? window.getCaptureTabScopeForTab(viewId, tab.id)
+          : `${viewId}::tab:${tab.id}`;
+      targets.push({
+        viewId,
+        viewIndex,
+        tabId: tab.id,
+        tabName: tab.name || `Frame ${tabIndex + 1}`,
+        scopeKey,
+        includeBase: tab.id === primaryTabId,
+      });
+    });
+  });
+
+  return targets;
+}
+
+function sanitizePdfFieldPart(value, fallback) {
+  const cleaned = String(value || '')
+    .trim()
+    .replace(/[^A-Za-z0-9_-]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+  return cleaned || fallback;
+}
+
+function createUniquePdfFieldName(baseName, usedNames) {
+  let candidate = baseName;
+  let suffix = 1;
+  while (usedNames.has(candidate)) {
+    suffix += 1;
+    candidate = `${baseName}_${suffix}`;
+  }
+  usedNames.add(candidate);
+  return candidate;
+}
+
+function safePdfText(value) {
+  return String(value || '').replace(/[^\x20-\x7E]/g, ' ');
+}
 
 export function initPdfExport() {
   // Export utilities for saving multiple images and PDF generation with pdf-lib
   window.saveAllImages = async function () {
     const projectName = document.getElementById('projectName')?.value || 'OpenPaint';
+    const metadata =
+      window.app?.projectManager?.getProjectMetadata?.() || window.projectMetadata || {};
+    const partLabels = metadata.imagePartLabels || {};
     const views = window.app?.projectManager?.views || {};
     const viewIds = Object.keys(views).filter(id => views[id].image);
     if (viewIds.length === 0) {
@@ -16,7 +127,8 @@ export function initPdfExport() {
       return;
     }
     console.log(`[Export] Saving ${viewIds.length} images`);
-    for (const viewId of viewIds) {
+    for (let i = 0; i < viewIds.length; i++) {
+      const viewId = viewIds[i];
       await window.app.projectManager.switchView(viewId);
       await new Promise(resolve => setTimeout(resolve, 100));
       const canvas = window.app.canvasManager.fabricCanvas;
@@ -44,7 +156,8 @@ export function initPdfExport() {
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
           a.href = url;
-          a.download = `${projectName}_${viewId}.png`;
+          const imageLabel = partLabels[viewId] || '';
+          a.download = `${buildImageExportFilename(projectName, imageLabel, i)}.png`;
           a.click();
           URL.revokeObjectURL(url);
           resolve();
@@ -59,6 +172,7 @@ export function initPdfExport() {
     projectName = projectName || document.getElementById('projectName')?.value || 'OpenPaint';
     const views = window.app?.projectManager?.views || {};
     const viewIds = Object.keys(views).filter(id => views[id].image);
+    const pageTargets = getPdfPageTargets(viewIds);
     if (viewIds.length === 0) {
       alert('No images to export. Please upload images first.');
       return;
@@ -76,14 +190,14 @@ export function initPdfExport() {
       document.getElementById('pdfProgress').style.display = 'block';
       document.getElementById('generatePdfBtn').disabled = true;
       document.getElementById('cancelPdfBtn').disabled = true;
-      await generatePDFWithPDFLib(projectName, viewIds, quality, pageSize, includeMeasurements);
+      await generatePDFWithPDFLib(projectName, pageTargets, quality, pageSize, includeMeasurements);
       overlay.remove();
     };
   };
 
   async function generatePDFWithPDFLib(
     projectName,
-    viewIds,
+    pageTargets,
     quality,
     pageSize,
     includeMeasurements
@@ -92,17 +206,34 @@ export function initPdfExport() {
     const progressBar = document.getElementById('pdfProgressBar');
     const progressText = document.getElementById('pdfProgressText');
     const pdfDoc = await PDFDocument.create();
+    const usedFieldNames = new Set();
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
     const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+    const metadata =
+      window.app?.projectManager?.getProjectMetadata?.() || window.projectMetadata || {};
+    const naming = metadata.naming || {};
+    const partLabels = metadata.imagePartLabels || {};
+    let relations = { checks: [], connections: [] };
+    if (typeof window.evaluateMeasurementRelations === 'function') {
+      try {
+        relations = window.evaluateMeasurementRelations() || relations;
+      } catch (error) {
+        console.warn('[PDF] Failed to evaluate measurement relations, continuing:', error);
+      }
+    }
     const pageSizes = { letter: { width: 612, height: 792 }, a4: { width: 595, height: 842 } };
     const { width: pageWidth, height: pageHeight } = pageSizes[pageSize] || pageSizes.letter;
     const qualityScales = { high: 3.0, medium: 2.0, low: 1.5 };
     const scale = qualityScales[quality] || 2.0;
-    for (let i = 0; i < viewIds.length; i++) {
-      const viewId = viewIds[i];
-      progressText.textContent = `Processing ${viewId} (${i + 1}/${viewIds.length})...`;
-      progressBar.style.width = `${(i / viewIds.length) * 100}%`;
+    for (let i = 0; i < pageTargets.length; i++) {
+      const target = pageTargets[i];
+      const { viewId, tabId, tabName, scopeKey, includeBase } = target;
+      progressText.textContent = `Processing ${viewId} - ${tabName} (${i + 1}/${pageTargets.length})...`;
+      progressBar.style.width = `${(i / pageTargets.length) * 100}%`;
       await window.app.projectManager.switchView(viewId);
+      if (tabId && typeof window.setActiveCaptureTab === 'function') {
+        window.setActiveCaptureTab(viewId, tabId);
+      }
       await new Promise(resolve => setTimeout(resolve, 150));
       const canvas = window.app.canvasManager.fabricCanvas;
       const captureFrame = document.getElementById('captureFrame');
@@ -136,20 +267,43 @@ export function initPdfExport() {
         height: 50,
         color: rgb(0.12, 0.25, 0.69),
       });
-      page.drawText(projectName, {
+      page.drawText(safePdfText(projectName), {
         x: pageWidth / 2 - projectName.length * 6,
         y: pageHeight - 30,
         size: 16,
         font: fontBold,
         color: rgb(1, 1, 1),
       });
-      page.drawText(viewId, {
+      page.drawText(safePdfText(viewId), {
         x: pageWidth / 2 - viewId.length * 4,
         y: pageHeight - 45,
         size: 10,
         font,
         color: rgb(0.8, 0.9, 1),
       });
+      const partLabel =
+        partLabels[viewId] || `view-${String(target.viewIndex + 1).padStart(2, '0')}`;
+      const pageLabel = `${partLabel} - ${tabName}`;
+      page.drawText(safePdfText(pageLabel), {
+        x: 36,
+        y: pageHeight - 45,
+        size: 10,
+        font,
+        color: rgb(0.8, 0.9, 1),
+      });
+      const namingLine = [naming.customerName, naming.sofaTypeLabel, naming.jobDate]
+        .map(part => String(part || '').trim())
+        .filter(Boolean)
+        .join(' | ');
+      if (namingLine) {
+        page.drawText(safePdfText(namingLine), {
+          x: 36,
+          y: pageHeight - 58,
+          size: 8,
+          font,
+          color: rgb(0.88, 0.94, 1),
+        });
+      }
       const imgAspect = image.width / image.height;
       let imgWidth = 500;
       let imgHeight = imgWidth / imgAspect;
@@ -161,8 +315,14 @@ export function initPdfExport() {
       const imgY = pageHeight - 70 - imgHeight;
       page.drawImage(image, { x: imgX, y: imgY, width: imgWidth, height: imgHeight });
       if (includeMeasurements) {
-        const measurements = window.app?.metadataManager?.strokeMeasurements?.[viewId] || {};
-        const strokes = Object.keys(measurements);
+        const measurements = getScopedMeasurements(scopeKey, { scopeKey, includeBase });
+        const measuredStrokes = Object.keys(measurements);
+        const strokes = Array.from(
+          new Set([
+            ...getScopedStrokeLabels(scopeKey, { scopeKey, includeBase }),
+            ...measuredStrokes,
+          ])
+        ).sort((a, b) => a.localeCompare(b));
         if (strokes.length > 0) {
           const currentUnit = document.getElementById('unitSelector')?.value || 'inch';
           const measureY = imgY - 40;
@@ -180,7 +340,9 @@ export function initPdfExport() {
             font: fontBold,
             color: rgb(1, 1, 1),
           });
-          const cmCheck = form.createCheckBox(`unit_cm_${viewId}`);
+          const safeView = sanitizePdfFieldPart(scopeKey, `view_${i + 1}`);
+          const cmName = createUniquePdfFieldName(`unit_cm_${safeView}`, usedFieldNames);
+          const cmCheck = form.createCheckBox(cmName);
           cmCheck.addToPage(page, { x: pageWidth - 150, y: measureY + 5, width: 12, height: 12 });
           if (currentUnit === 'cm') cmCheck.check();
           page.drawText('cm', {
@@ -190,7 +352,8 @@ export function initPdfExport() {
             font,
             color: rgb(1, 1, 1),
           });
-          const inchCheck = form.createCheckBox(`unit_inch_${viewId}`);
+          const inchName = createUniquePdfFieldName(`unit_inch_${safeView}`, usedFieldNames);
+          const inchCheck = form.createCheckBox(inchName);
           inchCheck.addToPage(page, { x: pageWidth - 80, y: measureY + 5, width: 12, height: 12 });
           if (currentUnit === 'inch') inchCheck.check();
           page.drawText('inch', {
@@ -204,7 +367,7 @@ export function initPdfExport() {
           let yPos = measureY - 20;
           let col = 0;
           strokes.forEach((strokeLabel, idx) => {
-            const m = measurements[strokeLabel];
+            const m = measurements[strokeLabel] || {};
             let measurement = '';
             if (currentUnit === 'inch') {
               const whole = m.inchWhole || 0;
@@ -224,7 +387,12 @@ export function initPdfExport() {
               font: fontBold,
               color: rgb(0, 0, 0),
             });
-            const textField = form.createTextField(`${viewId}_${strokeLabel}`);
+            const safeStroke = sanitizePdfFieldPart(strokeLabel, `stroke_${idx + 1}`);
+            const fieldName = createUniquePdfFieldName(
+              `m_${safeView}_${safeStroke}`,
+              usedFieldNames
+            );
+            const textField = form.createTextField(fieldName);
             textField.setText(measurement);
             textField.addToPage(page, {
               x,
@@ -245,10 +413,71 @@ export function initPdfExport() {
         }
       }
       page.drawText(
-        `Generated: ${new Date().toLocaleDateString()} | Page ${i + 1} of ${viewIds.length}`,
+        `Generated: ${new Date().toLocaleDateString()} | Page ${i + 1} of ${pageTargets.length}`,
         { x: 40, y: 20, size: 8, font, color: rgb(0.4, 0.4, 0.4) }
       );
     }
+
+    // Relationship summary page
+    if ((relations.checks?.length || 0) + (relations.connections?.length || 0) > 0) {
+      const page = pdfDoc.addPage([pageWidth, pageHeight]);
+      page.drawRectangle({
+        x: 0,
+        y: pageHeight - 50,
+        width: pageWidth,
+        height: 50,
+        color: rgb(0.12, 0.25, 0.69),
+      });
+      page.drawText('Measurement Checks + Connections', {
+        x: 36,
+        y: pageHeight - 30,
+        size: 16,
+        font: fontBold,
+        color: rgb(1, 1, 1),
+      });
+      let y = pageHeight - 80;
+      page.drawText('Checks', { x: 36, y, size: 12, font: fontBold, color: rgb(0.1, 0.1, 0.1) });
+      y -= 16;
+      (relations.checks || []).forEach(check => {
+        const status = String(check.status || 'pending').toUpperCase();
+        const isPending = String(check.status || '').toLowerCase() === 'pending';
+        const text = `${check.formula || check.id || 'Check'} [${status}]${!isPending && check.reason ? ` - ${check.reason}` : ''}`;
+        page.drawText(safePdfText(text).slice(0, 120), {
+          x: 36,
+          y,
+          size: 9,
+          font,
+          color: rgb(0.2, 0.2, 0.2),
+        });
+        y -= 12;
+        if (y < 90) return;
+      });
+      y -= 6;
+      page.drawText('Connections', {
+        x: 36,
+        y,
+        size: 12,
+        font: fontBold,
+        color: rgb(0.1, 0.1, 0.1),
+      });
+      y -= 16;
+      (relations.connections || []).forEach(connection => {
+        const status = String(connection.status || 'pending').toUpperCase();
+        const left = connection.fromDisplay || connection.fromKey || '-';
+        const right = connection.toDisplay || connection.toKey || '-';
+        const isPending = String(connection.status || '').toLowerCase() === 'pending';
+        const label = `${left} <-> ${right} [${status}]${!isPending && connection.reason ? ` - ${connection.reason}` : ''}`;
+        page.drawText(safePdfText(label).slice(0, 120), {
+          x: 36,
+          y,
+          size: 9,
+          font,
+          color: rgb(0.2, 0.2, 0.2),
+        });
+        y -= 12;
+      });
+    }
+
     progressBar.style.width = '100%';
     progressText.textContent = 'Saving PDF...';
     const pdfBytes = await pdfDoc.save();
@@ -256,7 +485,7 @@ export function initPdfExport() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${projectName}.pdf`;
+    a.download = `${sanitizeFilenamePart(projectName, 'OpenPaint Project')}.pdf`;
     a.click();
     URL.revokeObjectURL(url);
     console.log('[PDF] Generated with editable form fields using pdf-lib');
