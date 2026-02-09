@@ -90,7 +90,7 @@ function getPdfPageTargets(viewIds) {
   return targets;
 }
 
-function getGroupedPdfPageTargets(pageTargets, connections, partLabels) {
+function getGroupedPdfPageTargets(pageTargets, pieceGroups, partLabels) {
   // Build a map: viewId -> array of targets for that view
   const targetsByView = {};
   pageTargets.forEach(target => {
@@ -101,33 +101,49 @@ function getGroupedPdfPageTargets(pageTargets, connections, partLabels) {
   const consumed = new Set(); // viewId values consumed into grouped entries
   const grouped = [];
 
-  // For each connection pair, consume the first-tab targets into a grouped entry
-  (connections || []).forEach(conn => {
-    const fromId = conn.fromViewId;
-    const toId = conn.toViewId;
-    if (!fromId || !toId || fromId === toId) return;
-    if (consumed.has(fromId) || consumed.has(toId)) return;
-    const fromTargets = targetsByView[fromId];
-    const toTargets = targetsByView[toId];
-    if (!fromTargets?.length || !toTargets?.length) return;
+  // For each piece group, the main view + first related view go onto one grouped page.
+  // Extra related views and extra tabs become singles.
+  (pieceGroups || []).forEach(group => {
+    const mainId = group.mainViewId;
+    const relatedIds = Array.isArray(group.relatedViewIds) ? group.relatedViewIds : [];
+    if (!mainId || consumed.has(mainId)) return;
 
-    // Consume the first tab from each view into a grouped page
-    consumed.add(fromId);
-    consumed.add(toId);
-    grouped.push({
-      type: 'grouped',
-      targets: [fromTargets[0], toTargets[0]],
-      note: conn.note || '',
-      partLabels: [
-        partLabels[fromId] ||
-          `view-${String((fromTargets[0].viewIndex || 0) + 1).padStart(2, '0')}`,
-        partLabels[toId] || `view-${String((toTargets[0].viewIndex || 0) + 1).padStart(2, '0')}`,
-      ],
-    });
+    const mainTargets = targetsByView[mainId];
+    if (!mainTargets?.length) return;
 
-    // Extra tabs beyond the first become singles
-    fromTargets.slice(1).forEach(t => grouped.push({ type: 'single', target: t }));
-    toTargets.slice(1).forEach(t => grouped.push({ type: 'single', target: t }));
+    // Find first non-consumed related view that has targets
+    const pairedId = relatedIds.find(id => id && !consumed.has(id) && targetsByView[id]?.length);
+
+    if (pairedId) {
+      const pairedTargets = targetsByView[pairedId];
+      consumed.add(mainId);
+      consumed.add(pairedId);
+      grouped.push({
+        type: 'grouped',
+        targets: [mainTargets[0], pairedTargets[0]],
+        note: group.label || '',
+        partLabels: [
+          partLabels[mainId] ||
+            `view-${String((mainTargets[0].viewIndex || 0) + 1).padStart(2, '0')}`,
+          partLabels[pairedId] ||
+            `view-${String((pairedTargets[0].viewIndex || 0) + 1).padStart(2, '0')}`,
+        ],
+      });
+
+      // Extra tabs beyond the first become singles
+      mainTargets.slice(1).forEach(t => grouped.push({ type: 'single', target: t }));
+      pairedTargets.slice(1).forEach(t => grouped.push({ type: 'single', target: t }));
+
+      // Additional related views (beyond the first paired) become singles
+      relatedIds.forEach(id => {
+        if (id === pairedId || consumed.has(id)) return;
+        const targets = targetsByView[id];
+        if (!targets?.length) return;
+        consumed.add(id);
+        targets.forEach(t => grouped.push({ type: 'single', target: t }));
+      });
+    }
+    // If no related view found, main stays unconsumed (will become singles below)
   });
 
   // Remaining unconsumed views become singles
@@ -264,12 +280,13 @@ export function initPdfExport() {
       window.app?.projectManager?.getProjectMetadata?.() || window.projectMetadata || {};
     const naming = metadata.naming || {};
     const partLabels = metadata.imagePartLabels || {};
-    // Pre-check whether checks/connections exist (for page count).
+    // Pre-check whether checks/connections/pieceGroups exist (for page count).
     // Full evaluation is deferred until after the image loop so all views are loaded.
     const metaChecks = Array.isArray(metadata.measurementChecks) ? metadata.measurementChecks : [];
     const metaConnections = Array.isArray(metadata.measurementConnections)
       ? metadata.measurementConnections
       : [];
+    const metaPieceGroups = Array.isArray(metadata.pieceGroups) ? metadata.pieceGroups : [];
     const pageSizes = { letter: { width: 612, height: 792 }, a4: { width: 595, height: 842 } };
     const { width: pageWidth, height: pageHeight } = pageSizes[pageSize] || pageSizes.letter;
     const qualityScales = { high: 3.0, medium: 2.0, low: 1.5 };
@@ -733,7 +750,7 @@ export function initPdfExport() {
     }
 
     // ── Build grouped targets ─────────────────────────────────────────
-    const groupedTargets = getGroupedPdfPageTargets(pageTargets, metaConnections, partLabels);
+    const groupedTargets = getGroupedPdfPageTargets(pageTargets, metaPieceGroups, partLabels);
     const hasRelationshipPage = metaChecks.length > 0 || metaConnections.length > 0;
     totalPages = groupedTargets.length + (hasRelationshipPage ? 1 : 0);
 
@@ -893,7 +910,7 @@ export function initPdfExport() {
     }
 
     // ── Evaluate relationships AFTER image loop (all views now loaded) ──
-    let relations = { checks: [], connections: [] };
+    let relations = { checks: [], connections: [], pieceGroups: [] };
     if (hasRelationshipPage && typeof window.evaluateMeasurementRelations === 'function') {
       try {
         relations = window.evaluateMeasurementRelations() || relations;
@@ -972,11 +989,72 @@ export function initPdfExport() {
         y -= 8;
       }
 
-      // ── Connections Section (simple image-level links) ──
+      // ── Connections Section (per-measurement links with status) ──
       if (relations.connections?.length > 0) {
         if (checkPageBreak(40)) {
-          y = drawSectionHeader(page, 'Connected Parts', y);
-          page.drawText('These image pairs are linked and appear side-by-side in the PDF.', {
+          y = drawSectionHeader(page, 'Cross-image Connections', y);
+          y -= 4;
+
+          relations.connections.forEach(connection => {
+            if (!checkPageBreak(42)) return;
+
+            const cardH = 36;
+            // Card background
+            page.drawRectangle({
+              x: layout.marginX,
+              y: y - cardH,
+              width: cardW,
+              height: cardH,
+              color: colors.accentLight,
+              borderColor: colors.borderLight,
+              borderWidth: 0.5,
+            });
+
+            // Status badge
+            const badgeW = drawStatusBadge(
+              page,
+              connection.status,
+              layout.marginX + cardPadX,
+              y - 10
+            );
+
+            // Connection text: "FromDisplay <-> ToDisplay"
+            const fromLabel = safePdfText(connection.fromDisplay || connection.fromKey || '-');
+            const toLabel = safePdfText(connection.toDisplay || connection.toKey || '-');
+            const connText = `${fromLabel}  <->  ${toLabel}`;
+            page.drawText(connText.slice(0, 80), {
+              x: layout.marginX + cardPadX + badgeW + 8,
+              y: y - 10,
+              size: typo.table,
+              font: fontMono,
+              color: colors.textPrimary,
+            });
+
+            // Reason line
+            const isPending = String(connection.status || '').toLowerCase() === 'pending';
+            if (!isPending && connection.reason) {
+              page.drawText(safePdfText(connection.reason).slice(0, 100), {
+                x: layout.marginX + cardPadX,
+                y: y - 26,
+                size: typo.small,
+                font,
+                color: colors.textSecondary,
+              });
+            }
+
+            y -= cardH + 6;
+          });
+
+          y -= 8;
+        }
+      }
+
+      // ── Piece Groups Section (lightweight listing) ──
+      const summaryPieceGroups = relations.pieceGroups || metaPieceGroups;
+      if (summaryPieceGroups.length > 0) {
+        if (checkPageBreak(40)) {
+          y = drawSectionHeader(page, 'Piece Groups', y);
+          page.drawText('Grouped images appear side-by-side in the PDF.', {
             x: layout.marginX,
             y: y + 4,
             size: typo.small,
@@ -985,12 +1063,11 @@ export function initPdfExport() {
           });
           y -= 14;
 
-          relations.connections.forEach((connection, connIdx) => {
+          summaryPieceGroups.forEach((group, gIdx) => {
             if (!checkPageBreak(22)) return;
 
             const rowH = 18;
-            // Alternating row background
-            if (connIdx % 2 === 0) {
+            if (gIdx % 2 === 0) {
               page.drawRectangle({
                 x: layout.marginX,
                 y: y - rowH + 4,
@@ -1000,36 +1077,18 @@ export function initPdfExport() {
               });
             }
 
-            // Connection text: "PartA <-> PartB"
-            const fromLabel = safePdfText(
-              partLabels[connection.fromViewId] || connection.fromViewId || '-'
-            );
-            const toLabel = safePdfText(
-              partLabels[connection.toViewId] || connection.toViewId || '-'
-            );
-            const connText = `${fromLabel}  <->  ${toLabel}`;
-            page.drawText(connText.slice(0, 90), {
+            const mainLabel = safePdfText(partLabels[group.mainViewId] || group.mainViewId || '-');
+            const relatedLabels = (group.relatedViewIds || [])
+              .map(id => safePdfText(partLabels[id] || id || '-'))
+              .join(', ');
+            const groupText = `${mainLabel}  +  ${relatedLabels || 'none'}`;
+            page.drawText(groupText.slice(0, 90), {
               x: layout.marginX + cardPadX,
               y: y - 8,
               size: typo.table,
               font: fontBold,
               color: colors.textPrimary,
             });
-
-            // Note if present
-            if (connection.note) {
-              page.drawText(safePdfText(connection.note).slice(0, 80), {
-                x:
-                  layout.marginX +
-                  cardPadX +
-                  fontBold.widthOfTextAtSize(connText.slice(0, 90), typo.table) +
-                  12,
-                y: y - 8,
-                size: typo.small,
-                font,
-                color: colors.textMuted,
-              });
-            }
 
             y -= rowH + 2;
           });
