@@ -26,7 +26,6 @@ export function createDefaultSofaMetadata() {
       jobDate: '',
       extraLabel: '',
       autoProjectTitle: '',
-      coverStyle: '',
     },
     measurementChecks: [],
     measurementConnections: [],
@@ -72,7 +71,6 @@ export function normalizeSofaMetadata(input) {
             typeof source.naming.autoProjectTitle === 'string'
               ? source.naming.autoProjectTitle
               : '',
-          coverStyle: typeof source.naming.coverStyle === 'string' ? source.naming.coverStyle : '',
         }
       : defaults.naming;
 
