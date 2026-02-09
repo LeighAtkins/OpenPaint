@@ -117,7 +117,11 @@ window.paintApp = {
     orderedImageLabels: [],
     imageLabels: [],
     // Text elements per image label (moved from uiState since it's persistent data)
-    textElementsByImage: {}
+    textElementsByImage: {},
+    // View to piece mapping for grouped PDF export
+    viewPieceMapping: {},
+    // Piece definitions for grouped PDF
+    pieces: {}
   },
   uiState: {
     // Control point dragging
@@ -3005,6 +3009,309 @@ document.addEventListener('DOMContentLoaded', () => {
         
     previewContent.innerHTML = previewText;
   };
+
+  window.showAssignViewsToGroupsDialog = function() {
+    const existingDialog = document.getElementById('assignGroupsOverlay');
+    if (existingDialog) {
+      existingDialog.remove();
+    }
+
+    const dialogOverlay = document.createElement('div');
+    dialogOverlay.id = 'assignGroupsOverlay';
+    dialogOverlay.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; display: flex; justify-content: center; align-items: center;';
+    
+    const imageLabels = window.paintApp?.state?.orderedImageLabels || [];
+    if (imageLabels.length === 0) {
+      alert('No images found. Please upload images first.');
+      return;
+    }
+
+    const viewMapping = window.paintApp.state.viewPieceMapping || {};
+    const pieces = window.paintApp.state.pieces || {};
+    const piecesList = Object.keys(pieces);
+
+    const imageRows = imageLabels.map(label => {
+      const mapping = viewMapping[label] || { pieceId: '', type: 'frame', cushionIndex: 1 };
+      
+      return `
+        <tr style="border-bottom: 1px solid #eee;">
+          <td style="padding: 8px; font-weight: 500;">${label}</td>
+          <td style="padding: 8px;">
+            <select class="piece-select" data-image="${label}" style="width: 100%; padding: 4px; border: 1px solid #ccc; border-radius: 4px;">
+              <option value="">${piecesList.length === 0 ? '-- Create groups first --' : '-- No group --'}</option>
+              ${piecesList.map(pieceId => `<option value="${pieceId}" ${mapping.pieceId === pieceId ? 'selected' : ''}>${pieces[pieceId].name}</option>`).join('')}
+            </select>
+          </td>
+          <td style="padding: 8px;">
+            <select class="type-select" data-image="${label}" style="width: 100%; padding: 4px; border: 1px solid #ccc; border-radius: 4px;">
+              <option value="frame" ${mapping.type === 'frame' ? 'selected' : ''}>Frame</option>
+              <option value="cushion" ${mapping.type === 'cushion' ? 'selected' : ''}>Cushion</option>
+              <option value="detail" ${mapping.type === 'detail' ? 'selected' : ''}>Detail</option>
+            </select>
+          </td>
+          <td style="padding: 8px;">
+            <input type="number" min="1" max="10" class="cushion-index" data-image="${label}" value="${mapping.cushionIndex || 1}" style="width: 60px; padding: 4px; border: 1px solid #ccc; border-radius: 4px;" ${mapping.type !== 'cushion' ? 'disabled' : ''}>
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    dialogOverlay.innerHTML = `
+      <div style="background: white; border-radius: 8px; max-width: 800px; width: 90%; max-height: 90vh; overflow-y: auto; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+        <div style="padding: 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
+          <h3 style="margin: 0; color: #333; font-size: 20px;">Assign Views to Groups</h3>
+          <button onclick="this.closest('#assignGroupsOverlay').remove()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #999;">&times;</button>
+        </div>
+        
+        <div style="padding: 20px;">
+          <p style="margin: 0 0 15px 0; color: #666; font-size: 14px;">
+            Group related images together (e.g., frame + cushions) to display them on the same PDF page.
+          </p>
+
+          ${piecesList.length === 0 ? `
+            <div style="padding: 20px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 4px; margin-bottom: 20px;">
+              <p style="margin: 0 0 10px 0; font-weight: 500;">No groups defined yet</p>
+              <p style="margin: 0 0 10px 0; font-size: 14px;">Create groups like "Left Section", "Right Section", etc. to organize your sofa images.</p>
+              <button id="createGroupBtn" style="padding: 8px 16px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 500;">
+                Create Groups
+              </button>
+            </div>
+          ` : `
+            <div style="margin-bottom: 15px;">
+              <button id="editGroupsBtn" style="padding: 6px 12px; background: #2196F3; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">
+                Edit Groups
+              </button>
+            </div>
+          `}
+
+          <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+              <tr style="background: #f5f5f5; border-bottom: 2px solid #ddd;">
+                <th style="padding: 10px; text-align: left; font-weight: 600;">Image</th>
+                <th style="padding: 10px; text-align: left; font-weight: 600;">Group</th>
+                <th style="padding: 10px; text-align: left; font-weight: 600;">Type</th>
+                <th style="padding: 10px; text-align: left; font-weight: 600;">Cushion #</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${imageRows}
+            </tbody>
+          </table>
+        </div>
+
+        <div style="padding: 20px; border-top: 1px solid #eee; display: flex; justify-content: flex-end; gap: 10px;">
+          <button id="saveAssignmentsBtn" style="padding: 12px 24px; border: none; border-radius: 4px; cursor: pointer; background-color: #4CAF50; color: white; font-weight: bold;">
+            Save Assignments
+          </button>
+          <button onclick="this.closest('#assignGroupsOverlay').remove()" style="padding: 12px 24px; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; background-color: white; color: #333;">
+            Cancel
+          </button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(dialogOverlay);
+
+    const typeSelects = dialogOverlay.querySelectorAll('.type-select');
+    typeSelects.forEach(select => {
+      select.addEventListener('change', (e) => {
+        const imageLabel = e.target.dataset.image;
+        const cushionInput = dialogOverlay.querySelector(`.cushion-index[data-image="${imageLabel}"]`);
+        cushionInput.disabled = e.target.value !== 'cushion';
+      });
+    });
+
+    const createGroupBtn = dialogOverlay.querySelector('#createGroupBtn');
+    if (createGroupBtn) {
+      createGroupBtn.addEventListener('click', () => {
+        showCreateGroupsDialog();
+      });
+    }
+
+    const editGroupsBtn = dialogOverlay.querySelector('#editGroupsBtn');
+    if (editGroupsBtn) {
+      editGroupsBtn.addEventListener('click', () => {
+        showCreateGroupsDialog();
+      });
+    }
+
+    const saveBtn = dialogOverlay.querySelector('#saveAssignmentsBtn');
+    saveBtn.addEventListener('click', () => {
+      const pieceSelects = dialogOverlay.querySelectorAll('.piece-select');
+      const newMapping = {};
+      
+      pieceSelects.forEach(select => {
+        const imageLabel = select.dataset.image;
+        const pieceId = select.value;
+        const type = dialogOverlay.querySelector(`.type-select[data-image="${imageLabel}"]`).value;
+        const cushionIndex = parseInt(dialogOverlay.querySelector(`.cushion-index[data-image="${imageLabel}"]`).value) || 1;
+        
+        if (pieceId) {
+          newMapping[imageLabel] = { pieceId, type, cushionIndex };
+        }
+      });
+
+      window.paintApp.state.viewPieceMapping = newMapping;
+      console.log('[Group Assignment] Saved view mapping:', newMapping);
+      
+      dialogOverlay.remove();
+      alert('View assignments saved successfully!');
+    });
+  };
+
+  function showCreateGroupsDialog() {
+    const existingDialog = document.getElementById('createGroupsOverlay');
+    if (existingDialog) {
+      existingDialog.remove();
+    }
+
+    const dialogOverlay = document.createElement('div');
+    dialogOverlay.id = 'createGroupsOverlay';
+    dialogOverlay.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 10001; display: flex; justify-content: center; align-items: center;';
+
+    const pieces = window.paintApp.state.pieces || {};
+    const piecesList = Object.entries(pieces);
+
+    const pieceRows = piecesList.map(([id, piece]) => `
+      <div style="display: flex; gap: 10px; margin-bottom: 10px; align-items: center;">
+        <input type="text" value="${piece.name}" data-piece-id="${id}" class="piece-name-input" style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+        <button class="delete-piece-btn" data-piece-id="${id}" style="padding: 6px 12px; background: #f44336; color: white; border: none; border-radius: 4px; cursor: pointer;">Delete</button>
+      </div>
+    `).join('');
+
+    dialogOverlay.innerHTML = `
+      <div style="background: white; border-radius: 8px; max-width: 500px; width: 90%; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+        <div style="padding: 20px; border-bottom: 1px solid #eee;">
+          <h3 style="margin: 0; color: #333; font-size: 18px;">Manage Groups</h3>
+          <p style="margin: 10px 0 0 0; color: #666; font-size: 14px;">Create groups like "Left Section", "Right Section", "Chaise", etc.</p>
+        </div>
+        
+        <div style="padding: 20px;">
+          <div id="piecesList">
+            ${pieceRows}
+          </div>
+          
+          <button id="addPieceBtn" style="width: 100%; padding: 10px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 500; margin-top: 10px;">
+            + Add New Group
+          </button>
+        </div>
+
+        <div style="padding: 20px; border-top: 1px solid #eee; display: flex; justify-content: flex-end; gap: 10px;">
+          <button id="saveGroupsBtn" style="padding: 12px 24px; border: none; border-radius: 4px; cursor: pointer; background-color: #4CAF50; color: white; font-weight: bold;">
+            Save Groups
+          </button>
+          <button onclick="this.closest('#createGroupsOverlay').remove()" style="padding: 12px 24px; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; background-color: white; color: #333;">
+            Cancel
+          </button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(dialogOverlay);
+
+    const piecesList = dialogOverlay.querySelector('#piecesList');
+    const addPieceBtn = dialogOverlay.querySelector('#addPieceBtn');
+
+    addPieceBtn.addEventListener('click', () => {
+      const newId = 'piece_' + Date.now();
+      const newRow = document.createElement('div');
+      newRow.style.cssText = 'display: flex; gap: 10px; margin-bottom: 10px; align-items: center;';
+      newRow.innerHTML = `
+        <input type="text" value="New Group" data-piece-id="${newId}" class="piece-name-input" style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+        <button class="delete-piece-btn" data-piece-id="${newId}" style="padding: 6px 12px; background: #f44336; color: white; border: none; border-radius: 4px; cursor: pointer;">Delete</button>
+      `;
+      piecesList.appendChild(newRow);
+      
+      newRow.querySelector('.delete-piece-btn').addEventListener('click', () => {
+        newRow.remove();
+      });
+      
+      newRow.querySelector('input').focus();
+      newRow.querySelector('input').select();
+    });
+
+    dialogOverlay.querySelectorAll('.delete-piece-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        btn.closest('div').remove();
+      });
+    });
+
+    const saveGroupsBtn = dialogOverlay.querySelector('#saveGroupsBtn');
+    saveGroupsBtn.addEventListener('click', () => {
+      const inputs = dialogOverlay.querySelectorAll('.piece-name-input');
+      const newPieces = {};
+      
+      inputs.forEach(input => {
+        const id = input.dataset.pieceId;
+        const name = input.value.trim();
+        if (name) {
+          newPieces[id] = { name };
+        }
+      });
+
+      window.paintApp.state.pieces = newPieces;
+      console.log('[Group Management] Saved groups:', newPieces);
+      
+      dialogOverlay.remove();
+      
+      const assignDialog = document.getElementById('assignGroupsOverlay');
+      if (assignDialog) {
+        assignDialog.remove();
+        window.showAssignViewsToGroupsDialog();
+      } else {
+        alert('Groups saved successfully!');
+      }
+    });
+  }
+
+  async function captureImageForPDF(imageLabel, canvas) {
+    try {
+      if (window.paintApp.state.currentImageLabel !== imageLabel) {
+        window.switchToImage(imageLabel);
+        await new Promise(resolve => setTimeout(resolve, 300));
+      }
+
+      let sourceCanvas = canvas;
+      const captureEl = document.getElementById('captureFrame');
+      if (captureEl) {
+        const canvasRect = canvas.getBoundingClientRect();
+        const frameRect = captureEl.getBoundingClientRect();
+        const left = Math.max(frameRect.left, canvasRect.left);
+        const top = Math.max(frameRect.top, canvasRect.top);
+        const right = Math.min(frameRect.right, canvasRect.right);
+        const bottom = Math.min(frameRect.bottom, canvasRect.bottom);
+        const cssWidth = Math.max(0, right - left);
+        const cssHeight = Math.max(0, bottom - top);
+        if (cssWidth > 0 && cssHeight > 0) {
+          const scalePx = canvas.width / canvasRect.width;
+          const viewportBounds = {
+            x: Math.round((left - canvasRect.left) * scalePx),
+            y: Math.round((top - canvasRect.top) * scalePx),
+            width: Math.round(cssWidth * scalePx),
+            height: Math.round(cssHeight * scalePx)
+          };
+          sourceCanvas = cropToViewport(canvas, viewportBounds);
+        }
+      }
+
+      const tempCanvas = document.createElement('canvas');
+      const tempCtx = tempCanvas.getContext('2d');
+      const scale = 2;
+      tempCanvas.width = sourceCanvas.width * scale;
+      tempCanvas.height = sourceCanvas.height * scale;
+      tempCtx.scale(scale, scale);
+      tempCtx.drawImage(sourceCanvas, 0, 0);
+      
+      return {
+        dataUrl: tempCanvas.toDataURL('image/jpeg', 0.8),
+        aspectRatio: sourceCanvas.width / sourceCanvas.height
+      };
+    } catch (error) {
+      console.warn(`Could not capture image ${imageLabel}:`, error);
+      return null;
+    }
+  }
+
   // Enhanced Customer Measurement Form PDF Generation Function
   window.generatePDF = async function(projectName) {
     try {
@@ -3090,6 +3397,54 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         return;
       }
+
+      const viewMapping = window.paintApp.state.viewPieceMapping || {};
+      const pieces = window.paintApp.state.pieces || {};
+      const hasGrouping = Object.keys(viewMapping).length > 0 && Object.keys(pieces).length > 0;
+
+      let groups = [];
+      if (hasGrouping) {
+        const groupedImages = {};
+        const ungroupedImages = [];
+
+        images.forEach(imageData => {
+          const mapping = viewMapping[imageData.label];
+          if (mapping && mapping.pieceId && pieces[mapping.pieceId]) {
+            if (!groupedImages[mapping.pieceId]) {
+              groupedImages[mapping.pieceId] = {
+                pieceId: mapping.pieceId,
+                pieceName: pieces[mapping.pieceId].name,
+                frame: null,
+                cushions: [],
+                details: []
+              };
+            }
+            
+            if (mapping.type === 'frame') {
+              groupedImages[mapping.pieceId].frame = imageData;
+            } else if (mapping.type === 'cushion') {
+              groupedImages[mapping.pieceId].cushions.push({
+                ...imageData,
+                cushionIndex: mapping.cushionIndex || 1
+              });
+            } else if (mapping.type === 'detail') {
+              groupedImages[mapping.pieceId].details.push(imageData);
+            }
+          } else {
+            ungroupedImages.push(imageData);
+          }
+        });
+
+        Object.values(groupedImages).forEach(group => {
+          group.cushions.sort((a, b) => a.cushionIndex - b.cushionIndex);
+        });
+
+        groups = [...Object.values(groupedImages), ...ungroupedImages.map(img => ({ ungrouped: true, image: img }))];
+        console.log('[PDF] Using grouped layout:', groups);
+      } else {
+        groups = images.map(img => ({ ungrouped: true, image: img }));
+        console.log('[PDF] Using ungrouped layout');
+      }
             
       // Store original state to restore later
       const canvas = document.getElementById('canvas');
@@ -3098,9 +3453,9 @@ document.addEventListener('DOMContentLoaded', () => {
       let isFirstPage = true;
       let globalRadioAdded = false;
             
-      // Create one page per image with screen view capture
-      for (let i = 0; i < images.length; i++) {
-        const imageData = images[i];
+      // Create pages based on groups
+      for (let i = 0; i < groups.length; i++) {
+        const group = groups[i];
                 
         if (!isFirstPage) {
           pdf.addPage();
@@ -3182,88 +3537,174 @@ document.addEventListener('DOMContentLoaded', () => {
           globalRadioAdded = true;
         }
                 
-        // Page header with image name
-        pdf.setFontSize(14);
-        pdf.setFont(undefined, 'bold');
-        const titleName = (typeof window.getUserFacingImageName === 'function') ? window.getUserFacingImageName(imageData.label) : imageData.label;
-        pdf.text(`${titleName}`, 20, yPosition);
-        yPosition += 8;
-                
         isFirstPage = false;
-                
-        // Capture image with measurements drawn
-        try {
-          // Switch to the target image to capture with measurements
-          if (window.paintApp.state.currentImageLabel !== imageData.label) {
-            window.switchToImage(imageData.label);
-            // Wait for rendering to complete
-            await new Promise(resolve => setTimeout(resolve, 300));
+
+        if (group.ungrouped) {
+          const imageData = group.image;
+          pdf.setFontSize(14);
+          pdf.setFont(undefined, 'bold');
+          const titleName = (typeof window.getUserFacingImageName === 'function') ? window.getUserFacingImageName(imageData.label) : imageData.label;
+          pdf.text(`${titleName}`, 20, yPosition);
+          yPosition += 8;
+
+          const captured = await captureImageForPDF(imageData.label, canvas);
+          if (captured) {
+            const maxWidth = 170;
+            const maxHeight = 120;
+            let imgWidth = maxWidth;
+            let imgHeight = maxWidth / captured.aspectRatio;
+            if (imgHeight > maxHeight) {
+              imgHeight = maxHeight;
+              imgWidth = maxHeight * captured.aspectRatio;
+            }
+            const imgX = (210 - imgWidth) / 2;
+            pdf.addImage(captured.dataUrl, 'JPEG', imgX, yPosition, imgWidth, imgHeight);
+            yPosition += imgHeight + 15;
+          } else {
+            pdf.setFontSize(12);
+            pdf.setFont(undefined, 'italic');
+            pdf.text('[Image could not be captured]', 20, yPosition);
+            yPosition += 20;
           }
-                    
-          // Determine source content: crop to capture frame if present
-          let sourceCanvas = canvas;
-          const captureEl = document.getElementById('captureFrame');
-          if (captureEl) {
-            const canvasRect = canvas.getBoundingClientRect();
-            const frameRect = captureEl.getBoundingClientRect();
-            const left = Math.max(frameRect.left, canvasRect.left);
-            const top = Math.max(frameRect.top, canvasRect.top);
-            const right = Math.min(frameRect.right, canvasRect.right);
-            const bottom = Math.min(frameRect.bottom, canvasRect.bottom);
-            const cssWidth = Math.max(0, right - left);
-            const cssHeight = Math.max(0, bottom - top);
-            if (cssWidth > 0 && cssHeight > 0) {
-              const scalePx = canvas.width / canvasRect.width;
-              const viewportBounds = {
-                x: Math.round((left - canvasRect.left) * scalePx),
-                y: Math.round((top - canvasRect.top) * scalePx),
-                width: Math.round(cssWidth * scalePx),
-                height: Math.round(cssHeight * scalePx)
-              };
-              sourceCanvas = cropToViewport(canvas, viewportBounds);
+        } else {
+          pdf.setFontSize(14);
+          pdf.setFont(undefined, 'bold');
+          pdf.text(group.pieceName, 20, yPosition);
+          yPosition += 8;
+
+          const leftColumnWidth = 125;
+          const rightColumnX = 135;
+          let leftY = yPosition;
+          let rightY = yPosition;
+
+          if (group.frame) {
+            const captured = await captureImageForPDF(group.frame.label, canvas);
+            if (captured) {
+              const maxWidth = leftColumnWidth - 10;
+              const maxHeight = 80;
+              let imgWidth = maxWidth;
+              let imgHeight = maxWidth / captured.aspectRatio;
+              if (imgHeight > maxHeight) {
+                imgHeight = maxHeight;
+                imgWidth = maxHeight * captured.aspectRatio;
+              }
+              pdf.addImage(captured.dataUrl, 'JPEG', 20, leftY, imgWidth, imgHeight);
+              leftY += imgHeight + 5;
             }
           }
 
-          // Create high-resolution capture of the (possibly cropped) content
-          const tempCanvas = document.createElement('canvas');
-          const tempCtx = tempCanvas.getContext('2d');
-          const scale = 2;
-          tempCanvas.width = sourceCanvas.width * scale;
-          tempCanvas.height = sourceCanvas.height * scale;
-          tempCtx.scale(scale, scale);
-          tempCtx.drawImage(sourceCanvas, 0, 0);
-                    
-          // Convert to data URL and add to PDF
-          const imageDataUrl = tempCanvas.toDataURL('image/jpeg', 0.8);
-                    
-          // Calculate dimensions to fit on page based on cropped content
-          const maxWidth = 170;
-          const maxHeight = 120;
-          const canvasAspectRatio = sourceCanvas.width / sourceCanvas.height;
-                    
-          let imgWidth = maxWidth;
-          let imgHeight = maxWidth / canvasAspectRatio;
-                    
-          if (imgHeight > maxHeight) {
-            imgHeight = maxHeight;
-            imgWidth = maxHeight * canvasAspectRatio;
+          if (group.cushions.length > 0) {
+            pdf.setFontSize(10);
+            pdf.setFont(undefined, 'bold');
+            pdf.text('Cushions:', 20, leftY);
+            leftY += 6;
+
+            const cushionsPerRow = 3;
+            const cushionSize = 30;
+            const cushionGap = 5;
+
+            for (let ci = 0; ci < group.cushions.length; ci++) {
+              const cushion = group.cushions[ci];
+              const captured = await captureImageForPDF(cushion.label, canvas);
+              if (captured) {
+                const col = ci % cushionsPerRow;
+                const row = Math.floor(ci / cushionsPerRow);
+                const cushionX = 20 + col * (cushionSize + cushionGap);
+                const cushionY = leftY + row * (cushionSize + cushionGap + 8);
+                pdf.addImage(captured.dataUrl, 'JPEG', cushionX, cushionY, cushionSize, cushionSize);
+                pdf.setFontSize(8);
+                pdf.setFont(undefined, 'normal');
+                pdf.text(`#${cushion.cushionIndex}`, cushionX + cushionSize/2, cushionY + cushionSize + 4, { align: 'center' });
+              }
+            }
+            leftY += Math.ceil(group.cushions.length / cushionsPerRow) * (cushionSize + cushionGap + 8) + 5;
           }
-                    
-          // Center the image
-          const imgX = (210 - imgWidth) / 2;
-          pdf.addImage(imageDataUrl, 'JPEG', imgX, yPosition, imgWidth, imgHeight);
-          yPosition += imgHeight + 15;
-                    
-        } catch (error) {
-          console.warn(`Could not capture image ${imageData.label}:`, error);
-          pdf.setFontSize(12);
-          pdf.setFont(undefined, 'italic');
-          pdf.text('[Image could not be captured]', 20, yPosition);
-          yPosition += 20;
+
+          if (group.frame && group.frame.measurements && group.frame.measurements.length > 0) {
+            pdf.setFontSize(10);
+            pdf.setFont(undefined, 'bold');
+            pdf.text('Frame Measurements', rightColumnX, rightY);
+            rightY += 6;
+
+            const TextField = jsPDF.AcroForm.TextField;
+            group.frame.measurements.forEach(measurement => {
+              pdf.setFontSize(9);
+              pdf.setFont(undefined, 'normal');
+              pdf.text(`${measurement.label}:`, rightColumnX, rightY);
+              
+              const textField = new TextField();
+              textField.fieldName = `measurement_${group.frame.label}_${measurement.label}`;
+              textField.Rect = [rightColumnX + 35, rightY - 3, 25, 5];
+              textField.fontSize = 8;
+              
+              let measurementValue = '';
+              if (measurement.measurement) {
+                const data = measurement.measurement;
+                if (data.inchWhole !== undefined) {
+                  if (selectedUnit === 'inch') {
+                    const inches = data.inchWhole + (data.inchFraction || 0);
+                    measurementValue = `${inches}`;
+                  } else {
+                    const cm = data.cm || 0;
+                    measurementValue = `${cm.toFixed(1)}`;
+                  }
+                }
+              }
+              textField.value = measurementValue;
+              pdf.addField(textField);
+              rightY += 6;
+            });
+            rightY += 4;
+          }
+
+          const allCushionMeasurements = group.cushions.flatMap(c => c.measurements || []);
+          if (allCushionMeasurements.length > 0) {
+            pdf.setFontSize(10);
+            pdf.setFont(undefined, 'bold');
+            pdf.text('Cushion Measurements', rightColumnX, rightY);
+            rightY += 6;
+
+            const TextField = jsPDF.AcroForm.TextField;
+            group.cushions.forEach(cushion => {
+              if (cushion.measurements && cushion.measurements.length > 0) {
+                cushion.measurements.forEach(measurement => {
+                  pdf.setFontSize(9);
+                  pdf.setFont(undefined, 'normal');
+                  pdf.text(`${measurement.label}:`, rightColumnX, rightY);
+                  
+                  const textField = new TextField();
+                  textField.fieldName = `measurement_${cushion.label}_${measurement.label}`;
+                  textField.Rect = [rightColumnX + 35, rightY - 3, 25, 5];
+                  textField.fontSize = 8;
+                  
+                  let measurementValue = '';
+                  if (measurement.measurement) {
+                    const data = measurement.measurement;
+                    if (data.inchWhole !== undefined) {
+                      if (selectedUnit === 'inch') {
+                        const inches = data.inchWhole + (data.inchFraction || 0);
+                        measurementValue = `${inches}`;
+                      } else {
+                        const cm = data.cm || 0;
+                        measurementValue = `${cm.toFixed(1)}`;
+                      }
+                    }
+                  }
+                  textField.value = measurementValue;
+                  pdf.addField(textField);
+                  rightY += 6;
+                });
+              }
+            });
+          }
+
+          yPosition = Math.max(leftY, rightY) + 10;
         }
+
+        const imageData = group.ungrouped ? group.image : (group.frame || group.cushions[0] || { label: 'unknown', measurements: [] });
                 
-        // Measurements form section
-        if (imageData.hasMeasurements && imageData.measurements.length > 0) {
+        // Measurements form section (only for ungrouped views)
+        if (group.ungrouped && imageData.hasMeasurements && imageData.measurements.length > 0) {
           pdf.setFontSize(14);
           pdf.setFont(undefined, 'bold');
           pdf.text('MEASUREMENTS', 20, yPosition);
@@ -3400,8 +3841,8 @@ document.addEventListener('DOMContentLoaded', () => {
           // Update yPosition to after all measurements (account for layout and potential extra pages)
           yPosition = maxFieldBottom + 10;
                     
-        } else {
-          // No measurements for this image
+        } else if (group.ungrouped) {
+          // No measurements for this ungrouped image
           pdf.setFontSize(14);
           pdf.setFont(undefined, 'bold');
           pdf.text('NO MEASUREMENTS', 20, yPosition);
