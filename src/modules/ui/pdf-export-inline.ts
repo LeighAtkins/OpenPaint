@@ -783,11 +783,52 @@ export function initPdfExport() {
         const subtitle = (entry.partLabels || []).filter(Boolean).join(' + ');
         drawHeader(page, projectName, subtitle, namingLine, pageNum);
 
-        // Hero area for main image (big, top)
-        const heroMaxH = Math.max(
-          180,
-          Math.min(300, (layout.contentTop - layout.contentBottom) * 0.5)
+        const currentUnit = document.getElementById('unitSelector')?.value || 'inch';
+        const groupedMeasurementRows = [];
+        const groupedMeasurementTargets = [heroTarget, ...(entry.relatedTargets || [])].filter(
+          Boolean
         );
+
+        groupedMeasurementTargets.forEach(target => {
+          const { strokes, measurements } = getTargetStrokes(target.scopeKey, target.includeBase);
+          if (!strokes.length) return;
+          const targetPartLabel = partLabels[target.viewId] || target.viewId;
+          const targetName = `${targetPartLabel} - ${target.tabName || 'Frame'}`;
+          strokes.forEach(strokeLabel => {
+            const m = measurements[strokeLabel] || {};
+            let value = '';
+            if (currentUnit === 'inch') {
+              const whole = m.inchWhole || 0;
+              const frac = m.inchFraction || 0;
+              value =
+                whole > 0 || frac > 0
+                  ? `${whole > 0 ? whole + '"' : ''}${frac > 0 ? ' ' + frac.toFixed(2) + '"' : ''}`.trim()
+                  : '';
+            } else {
+              value = m.cm ? `${m.cm.toFixed(1)} cm` : '';
+            }
+            groupedMeasurementRows.push({
+              targetName,
+              strokeLabel,
+              value: value || '-',
+            });
+          });
+        });
+
+        const hasGroupedMeasurements = groupedMeasurementRows.length > 0;
+        const measurementRowH = 14;
+        const measurementHeaderH = 18;
+        const maxVisibleRows = 10;
+        const measurementRowsToShow = groupedMeasurementRows.slice(0, maxVisibleRows);
+        const measurementSectionH = hasGroupedMeasurements
+          ? measurementHeaderH + measurementRowsToShow.length * measurementRowH + 20
+          : 0;
+        const visualBottomY = hasGroupedMeasurements
+          ? layout.contentBottom + measurementSectionH + 10
+          : layout.contentBottom;
+
+        // Hero area for main image (big, top)
+        const heroMaxH = Math.max(160, Math.min(280, (layout.contentTop - visualBottomY) * 0.55));
         const heroFrame = drawImageFrame(
           page,
           heroImage,
@@ -807,7 +848,7 @@ export function initPdfExport() {
         // Related frames area below hero image
         if (relatedFrames.length > 0) {
           const sectionTop = heroFrame.imgY - 26;
-          const sectionBottom = layout.contentBottom + 4;
+          const sectionBottom = visualBottomY;
           const sectionHeight = Math.max(80, sectionTop - sectionBottom);
 
           const maxCols = 4;
@@ -836,6 +877,107 @@ export function initPdfExport() {
               color: colors.textSecondary,
             });
           });
+        }
+
+        if (hasGroupedMeasurements) {
+          const boxX = layout.marginX;
+          const boxY = layout.contentBottom;
+          const boxW = layout.contentWidth;
+          const boxH = measurementSectionH;
+          const partColW = boxW * 0.54;
+          const labelColW = boxW * 0.24;
+
+          page.drawRectangle({
+            x: boxX,
+            y: boxY,
+            width: boxW,
+            height: boxH,
+            color: colors.accentLight,
+            borderColor: colors.border,
+            borderWidth: 0.75,
+          });
+
+          page.drawText('Measurements', {
+            x: boxX + 8,
+            y: boxY + boxH - 13,
+            size: typo.tableHeader,
+            font: fontBold,
+            color: colors.textPrimary,
+          });
+
+          const headerY = boxY + boxH - 26;
+          page.drawRectangle({
+            x: boxX + 1,
+            y: headerY - 2,
+            width: boxW - 2,
+            height: 14,
+            color: colors.headerBg,
+          });
+          page.drawText('Part / Frame', {
+            x: boxX + 6,
+            y: headerY + 2,
+            size: typo.small,
+            font: fontBold,
+            color: colors.white,
+          });
+          page.drawText('Label', {
+            x: boxX + partColW + 6,
+            y: headerY + 2,
+            size: typo.small,
+            font: fontBold,
+            color: colors.white,
+          });
+          page.drawText('Value', {
+            x: boxX + partColW + labelColW + 6,
+            y: headerY + 2,
+            size: typo.small,
+            font: fontBold,
+            color: colors.white,
+          });
+
+          measurementRowsToShow.forEach((row, idx) => {
+            const rowY = headerY - measurementRowH * (idx + 1);
+            if (idx % 2 === 0) {
+              page.drawRectangle({
+                x: boxX + 1,
+                y: rowY,
+                width: boxW - 2,
+                height: measurementRowH,
+                color: colors.white,
+              });
+            }
+            page.drawText(safePdfText(row.targetName).slice(0, 38), {
+              x: boxX + 6,
+              y: rowY + 4,
+              size: typo.small,
+              font,
+              color: colors.textPrimary,
+            });
+            page.drawText(safePdfText(row.strokeLabel).slice(0, 16), {
+              x: boxX + partColW + 6,
+              y: rowY + 4,
+              size: typo.small,
+              font: fontBold,
+              color: colors.textPrimary,
+            });
+            page.drawText(safePdfText(row.value).slice(0, 14), {
+              x: boxX + partColW + labelColW + 6,
+              y: rowY + 4,
+              size: typo.small,
+              font,
+              color: colors.textSecondary,
+            });
+          });
+
+          if (groupedMeasurementRows.length > maxVisibleRows) {
+            page.drawText(`+${groupedMeasurementRows.length - maxVisibleRows} more`, {
+              x: boxX + 8,
+              y: boxY + 4,
+              size: typo.small,
+              font,
+              color: colors.textMuted,
+            });
+          }
         }
 
         drawFooter(page, pageNum);
