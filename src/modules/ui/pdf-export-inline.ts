@@ -967,7 +967,6 @@ export function initPdfExport() {
           imgMaxH,
           layout.contentTop
         );
-
         // Measurements table
         if (hasMeasurements) {
           const currentUnit = document.getElementById('unitSelector')?.value || 'inch';
