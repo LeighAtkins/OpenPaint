@@ -90,6 +90,56 @@ function getPdfPageTargets(viewIds) {
   return targets;
 }
 
+function getGroupedPdfPageTargets(pageTargets, connections, partLabels) {
+  // Build a map: viewId -> array of targets for that view
+  const targetsByView = {};
+  pageTargets.forEach(target => {
+    if (!targetsByView[target.viewId]) targetsByView[target.viewId] = [];
+    targetsByView[target.viewId].push(target);
+  });
+
+  const consumed = new Set(); // viewId values consumed into grouped entries
+  const grouped = [];
+
+  // For each connection pair, consume the first-tab targets into a grouped entry
+  (connections || []).forEach(conn => {
+    const fromId = conn.fromViewId;
+    const toId = conn.toViewId;
+    if (!fromId || !toId || fromId === toId) return;
+    if (consumed.has(fromId) || consumed.has(toId)) return;
+    const fromTargets = targetsByView[fromId];
+    const toTargets = targetsByView[toId];
+    if (!fromTargets?.length || !toTargets?.length) return;
+
+    // Consume the first tab from each view into a grouped page
+    consumed.add(fromId);
+    consumed.add(toId);
+    grouped.push({
+      type: 'grouped',
+      targets: [fromTargets[0], toTargets[0]],
+      note: conn.note || '',
+      partLabels: [
+        partLabels[fromId] ||
+          `view-${String((fromTargets[0].viewIndex || 0) + 1).padStart(2, '0')}`,
+        partLabels[toId] || `view-${String((toTargets[0].viewIndex || 0) + 1).padStart(2, '0')}`,
+      ],
+    });
+
+    // Extra tabs beyond the first become singles
+    fromTargets.slice(1).forEach(t => grouped.push({ type: 'single', target: t }));
+    toTargets.slice(1).forEach(t => grouped.push({ type: 'single', target: t }));
+  });
+
+  // Remaining unconsumed views become singles
+  pageTargets.forEach(target => {
+    if (!consumed.has(target.viewId)) {
+      grouped.push({ type: 'single', target });
+    }
+  });
+
+  return grouped;
+}
+
 function sanitizePdfFieldPart(value, fallback) {
   const cleaned = String(value || '')
     .trim()
@@ -220,8 +270,6 @@ export function initPdfExport() {
     const metaConnections = Array.isArray(metadata.measurementConnections)
       ? metadata.measurementConnections
       : [];
-    const hasRelationshipPage = metaChecks.length + metaConnections.length > 0;
-    let relations = { checks: [], connections: [] };
     const pageSizes = { letter: { width: 612, height: 792 }, a4: { width: 595, height: 842 } };
     const { width: pageWidth, height: pageHeight } = pageSizes[pageSize] || pageSizes.letter;
     const qualityScales = { high: 3.0, medium: 2.0, low: 1.5 };
@@ -270,7 +318,9 @@ export function initPdfExport() {
       footer: 7,
     };
 
-    const totalPages = pageTargets.length + (hasRelationshipPage ? 1 : 0);
+    // totalPages is computed after grouping; use a mutable variable so
+    // header/footer helpers (closed over this scope) can reference it.
+    let totalPages = pageTargets.length; // updated below after grouping
 
     // ── Helper Functions ─────────────────────────────────────────────
 
@@ -371,7 +421,8 @@ export function initPdfExport() {
       );
     }
 
-    function drawImageFrame(page, image, maxWidth, maxHeight, topY) {
+    function drawImageFrame(page, image, maxWidth, maxHeight, topY, columnOpts) {
+      // columnOpts: optional { columnX, columnWidth } for half-page columns
       const imgAspect = image.width / image.height;
       let imgWidth = maxWidth;
       let imgHeight = imgWidth / imgAspect;
@@ -379,7 +430,10 @@ export function initPdfExport() {
         imgHeight = maxHeight;
         imgWidth = imgHeight * imgAspect;
       }
-      const imgX = (pageWidth - imgWidth) / 2;
+      // Center within column or full page
+      const colX = columnOpts?.columnX ?? 0;
+      const colW = columnOpts?.columnWidth ?? pageWidth;
+      const imgX = colX + (colW - imgWidth) / 2;
       const imgY = topY - imgHeight;
       // Shadow (offset rectangle)
       page.drawRectangle({
@@ -405,9 +459,10 @@ export function initPdfExport() {
       return { imgX, imgY, imgWidth, imgHeight };
     }
 
-    function drawSectionHeader(page, text, y) {
+    function drawSectionHeader(page, text, y, startX) {
+      const x = startX ?? layout.marginX;
       page.drawText(safePdfText(text), {
-        x: layout.marginX,
+        x,
         y,
         size: typo.sectionHeader,
         font: fontBold,
@@ -416,7 +471,7 @@ export function initPdfExport() {
       // Accent underline
       const textW = fontBold.widthOfTextAtSize(safePdfText(text), typo.sectionHeader);
       page.drawRectangle({
-        x: layout.marginX,
+        x,
         y: y - 4,
         width: textW + 8,
         height: 2,
@@ -473,11 +528,13 @@ export function initPdfExport() {
       currentUnit,
       scopeKey,
       pageIndex,
-      form
+      form,
+      columnOpts
     ) {
+      // columnOpts: optional { tableX, tableW } for column-scoped tables
       const safeView = sanitizePdfFieldPart(scopeKey, `view_${pageIndex + 1}`);
-      const tableX = layout.marginX;
-      const tableW = layout.contentWidth;
+      const tableX = columnOpts?.tableX ?? layout.marginX;
+      const tableW = columnOpts?.tableW ?? layout.contentWidth;
       const rowH = 22;
       const headerH = 20;
       const labelColW = tableW * 0.45;
@@ -488,7 +545,7 @@ export function initPdfExport() {
         let y = startY;
 
         // Section header
-        y = drawSectionHeader(page, 'Measurements', y);
+        y = drawSectionHeader(page, 'Measurements', y, tableX);
         y -= 2;
 
         // Unit checkboxes row
@@ -631,17 +688,8 @@ export function initPdfExport() {
       };
     }
 
-    // ── Image Pages ──────────────────────────────────────────────────
-    const namingLine = [naming.customerName, naming.sofaTypeLabel, naming.jobDate]
-      .map(part => String(part || '').trim())
-      .filter(Boolean)
-      .join('  |  ');
-
-    for (let i = 0; i < pageTargets.length; i++) {
-      const target = pageTargets[i];
-      const { viewId, tabId, tabName, scopeKey, includeBase } = target;
-      progressText.textContent = `Processing ${viewId} - ${tabName} (${i + 1}/${pageTargets.length})...`;
-      progressBar.style.width = `${(i / pageTargets.length) * 100}%`;
+    // ── Canvas Capture Helper ────────────────────────────────────────
+    async function captureViewImage(viewId, tabId) {
       await window.app.projectManager.switchView(viewId);
       if (tabId && typeof window.setActiveCaptureTab === 'function') {
         window.setActiveCaptureTab(viewId, tabId);
@@ -650,9 +698,8 @@ export function initPdfExport() {
 
       const canvas = window.app.canvasManager.fabricCanvas;
       const captureFrame = document.getElementById('captureFrame');
-      if (!canvas || !captureFrame) continue;
+      if (!canvas || !captureFrame) return null;
 
-      // Canvas capture (unchanged)
       const frameRect = captureFrame.getBoundingClientRect();
       const canvasEl = canvas.lowerCanvasEl;
       const scaleX = canvasEl.width / canvasEl.offsetWidth;
@@ -672,70 +719,181 @@ export function initPdfExport() {
       ctx.drawImage(canvasEl, left, top, width, height, 0, 0, width, height);
       const imageData = tempCanvas.toDataURL('image/jpeg', 0.95);
       const imageBytes = Uint8Array.from(atob(imageData.split(',')[1]), c => c.charCodeAt(0));
-      const image = await pdfDoc.embedJpg(imageBytes);
+      return pdfDoc.embedJpg(imageBytes);
+    }
 
-      const page = pdfDoc.addPage([pageWidth, pageHeight]);
-      const form = pdfDoc.getForm();
+    function getTargetStrokes(scopeKey, includeBase) {
+      if (!includeMeasurements) return { strokes: [], measurements: {} };
+      const measurements = getScopedMeasurements(scopeKey, { scopeKey, includeBase });
+      const measuredStrokes = Object.keys(measurements);
+      const strokes = Array.from(
+        new Set([...getScopedStrokeLabels(scopeKey, { scopeKey, includeBase }), ...measuredStrokes])
+      ).sort((a, b) => a.localeCompare(b));
+      return { strokes, measurements };
+    }
+
+    // ── Build grouped targets ─────────────────────────────────────────
+    const groupedTargets = getGroupedPdfPageTargets(pageTargets, metaConnections, partLabels);
+    const hasRelationshipPage = metaChecks.length > 0 || metaConnections.length > 0;
+    totalPages = groupedTargets.length + (hasRelationshipPage ? 1 : 0);
+
+    // ── Image Pages ──────────────────────────────────────────────────
+    const namingLine = [naming.customerName, naming.sofaTypeLabel, naming.jobDate]
+      .map(part => String(part || '').trim())
+      .filter(Boolean)
+      .join('  |  ');
+
+    for (let i = 0; i < groupedTargets.length; i++) {
+      const entry = groupedTargets[i];
       const pageNum = i + 1;
 
-      // Page label
-      const partLabel =
-        partLabels[viewId] || `view-${String(target.viewIndex + 1).padStart(2, '0')}`;
-      const pageLabel = `${partLabel} - ${tabName}`;
+      if (entry.type === 'grouped') {
+        // ── Grouped page: two images side-by-side ──
+        const [targetA, targetB] = entry.targets;
+        progressText.textContent = `Processing grouped page (${i + 1}/${groupedTargets.length})...`;
+        progressBar.style.width = `${(i / groupedTargets.length) * 100}%`;
 
-      // Header
-      drawHeader(page, projectName, pageLabel, namingLine, pageNum);
+        // Capture both images
+        const imageA = await captureViewImage(targetA.viewId, targetA.tabId);
+        const imageB = await captureViewImage(targetB.viewId, targetB.tabId);
+        if (!imageA || !imageB) continue;
 
-      // Image frame — allocate space based on whether we have measurements
-      const measurements = includeMeasurements
-        ? getScopedMeasurements(scopeKey, { scopeKey, includeBase })
-        : {};
-      const measuredStrokes = Object.keys(measurements);
-      const strokes = includeMeasurements
-        ? Array.from(
-            new Set([
-              ...getScopedStrokeLabels(scopeKey, { scopeKey, includeBase }),
-              ...measuredStrokes,
-            ])
-          ).sort((a, b) => a.localeCompare(b))
-        : [];
+        const page = pdfDoc.addPage([pageWidth, pageHeight]);
+        const form = pdfDoc.getForm();
 
-      const hasMeasurements = strokes.length > 0;
-      // Reserve space: if measurements exist, cap image height to leave room for table
-      const maxImgH = hasMeasurements
-        ? Math.min(340, layout.contentTop - layout.contentBottom - strokes.length * 22 - 80)
-        : layout.contentTop - layout.contentBottom - 20;
-      const imgMaxH = Math.max(180, maxImgH);
+        // Header with both part labels
+        const subtitle = `${entry.partLabels[0]} + ${entry.partLabels[1]}`;
+        drawHeader(page, projectName, subtitle, namingLine, pageNum);
 
-      const { imgY } = drawImageFrame(
-        page,
-        image,
-        layout.contentWidth - 20,
-        imgMaxH,
-        layout.contentTop
-      );
+        // Column layout: two columns with 12px gap
+        const colGap = 12;
+        const colW = (layout.contentWidth - colGap) / 2;
+        const leftColX = layout.marginX;
+        const rightColX = layout.marginX + colW + colGap;
 
-      // Measurements table
-      if (hasMeasurements) {
-        const currentUnit = document.getElementById('unitSelector')?.value || 'inch';
-        const tableStartY = imgY - 16;
-        const drawTable = drawMeasurementTable(
+        // Get measurement data for both
+        const dataA = getTargetStrokes(targetA.scopeKey, targetA.includeBase);
+        const dataB = getTargetStrokes(targetB.scopeKey, targetB.includeBase);
+
+        const hasMA = dataA.strokes.length > 0;
+        const hasMB = dataB.strokes.length > 0;
+        const maxStrokeCount = Math.max(dataA.strokes.length, dataB.strokes.length);
+
+        // Image frame height: cap to leave room for table
+        const maxImgH =
+          hasMA || hasMB
+            ? Math.min(200, layout.contentTop - layout.contentBottom - maxStrokeCount * 22 - 80)
+            : layout.contentTop - layout.contentBottom - 20;
+        const imgMaxH = Math.max(120, maxImgH);
+
+        // Draw left column
+        const frameA = drawImageFrame(page, imageA, colW - 10, imgMaxH, layout.contentTop, {
+          columnX: leftColX,
+          columnWidth: colW,
+        });
+
+        // Draw right column
+        const frameB = drawImageFrame(page, imageB, colW - 10, imgMaxH, layout.contentTop, {
+          columnX: rightColX,
+          columnWidth: colW,
+        });
+
+        // Use the lower of the two image bottoms for table start
+        const tableTopY = Math.min(frameA.imgY, frameB.imgY) - 12;
+
+        // Draw measurement tables in columns
+        if (hasMA) {
+          const currentUnit = document.getElementById('unitSelector')?.value || 'inch';
+          const drawTableA = drawMeasurementTable(
+            page,
+            dataA.strokes,
+            dataA.measurements,
+            currentUnit,
+            targetA.scopeKey,
+            i,
+            form,
+            { tableX: leftColX, tableW: colW }
+          );
+          drawTableA(tableTopY);
+        }
+        if (hasMB) {
+          const currentUnit = document.getElementById('unitSelector')?.value || 'inch';
+          const drawTableB = drawMeasurementTable(
+            page,
+            dataB.strokes,
+            dataB.measurements,
+            currentUnit,
+            targetB.scopeKey,
+            i,
+            form,
+            { tableX: rightColX, tableW: colW }
+          );
+          drawTableB(tableTopY);
+        }
+
+        drawFooter(page, pageNum);
+      } else {
+        // ── Single page (existing logic) ──
+        const target = entry.target;
+        const { viewId, tabId, tabName, scopeKey, includeBase } = target;
+        progressText.textContent = `Processing ${viewId} - ${tabName} (${i + 1}/${groupedTargets.length})...`;
+        progressBar.style.width = `${(i / groupedTargets.length) * 100}%`;
+
+        const image = await captureViewImage(viewId, tabId);
+        if (!image) continue;
+
+        const page = pdfDoc.addPage([pageWidth, pageHeight]);
+        const form = pdfDoc.getForm();
+
+        // Page label
+        const partLabel =
+          partLabels[viewId] || `view-${String(target.viewIndex + 1).padStart(2, '0')}`;
+        const pageLabel = `${partLabel} - ${tabName}`;
+
+        // Header
+        drawHeader(page, projectName, pageLabel, namingLine, pageNum);
+
+        // Image frame — allocate space based on whether we have measurements
+        const { strokes, measurements } = getTargetStrokes(scopeKey, includeBase);
+
+        const hasMeasurements = strokes.length > 0;
+        // Reserve space: if measurements exist, cap image height to leave room for table
+        const maxImgH = hasMeasurements
+          ? Math.min(340, layout.contentTop - layout.contentBottom - strokes.length * 22 - 80)
+          : layout.contentTop - layout.contentBottom - 20;
+        const imgMaxH = Math.max(180, maxImgH);
+
+        const { imgY } = drawImageFrame(
           page,
-          strokes,
-          measurements,
-          currentUnit,
-          scopeKey,
-          i,
-          form
+          image,
+          layout.contentWidth - 20,
+          imgMaxH,
+          layout.contentTop
         );
-        drawTable(tableStartY);
-      }
 
-      // Footer
-      drawFooter(page, pageNum);
+        // Measurements table
+        if (hasMeasurements) {
+          const currentUnit = document.getElementById('unitSelector')?.value || 'inch';
+          const tableStartY = imgY - 16;
+          const drawTable = drawMeasurementTable(
+            page,
+            strokes,
+            measurements,
+            currentUnit,
+            scopeKey,
+            i,
+            form
+          );
+          drawTable(tableStartY);
+        }
+
+        // Footer
+        drawFooter(page, pageNum);
+      }
     }
 
     // ── Evaluate relationships AFTER image loop (all views now loaded) ──
+    let relations = { checks: [], connections: [] };
     if (hasRelationshipPage && typeof window.evaluateMeasurementRelations === 'function') {
       try {
         relations = window.evaluateMeasurementRelations() || relations;
@@ -747,7 +905,7 @@ export function initPdfExport() {
     // ── Relationship Summary Page ────────────────────────────────────
     if (hasRelationshipPage) {
       const page = pdfDoc.addPage([pageWidth, pageHeight]);
-      const pageNum = totalPages;
+      const pageNum = groupedTargets.length + 1;
 
       drawHeader(page, projectName, 'Measurement Checks & Connections', namingLine, pageNum);
 
@@ -758,7 +916,6 @@ export function initPdfExport() {
       // Helper to start a new page if needed
       function checkPageBreak(neededHeight) {
         if (y - neededHeight < layout.contentBottom) {
-          // For simplicity, just stop rendering (pagination of summary is rare)
           return false;
         }
         return true;
@@ -815,29 +972,23 @@ export function initPdfExport() {
         y -= 8;
       }
 
-      // ── Connections Section (checkboxes for customer verification) ──
+      // ── Connections Section (simple image-level links) ──
       if (relations.connections?.length > 0) {
-        if (!checkPageBreak(40)) {
-          // skip
-        } else {
-          y = drawSectionHeader(page, 'Linked Measurements', y);
-          page.drawText(
-            'Verify that each pair of measurements starts and ends at the same point.',
-            {
-              x: layout.marginX,
-              y: y + 4,
-              size: typo.small,
-              font,
-              color: colors.textSecondary,
-            }
-          );
+        if (checkPageBreak(40)) {
+          y = drawSectionHeader(page, 'Connected Parts', y);
+          page.drawText('These image pairs are linked and appear side-by-side in the PDF.', {
+            x: layout.marginX,
+            y: y + 4,
+            size: typo.small,
+            font,
+            color: colors.textSecondary,
+          });
           y -= 14;
 
-          const form = pdfDoc.getForm();
           relations.connections.forEach((connection, connIdx) => {
-            if (!checkPageBreak(28)) return;
+            if (!checkPageBreak(22)) return;
 
-            const rowH = 24;
+            const rowH = 18;
             // Alternating row background
             if (connIdx % 2 === 0) {
               page.drawRectangle({
@@ -848,35 +999,18 @@ export function initPdfExport() {
                 color: colors.tableRowAlt,
               });
             }
-            // Row border
-            page.drawRectangle({
-              x: layout.marginX,
-              y: y - rowH + 4,
-              width: cardW,
-              height: 0.5,
-              color: colors.borderLight,
-            });
 
-            // Checkbox
-            const connFieldName = createUniquePdfFieldName(
-              `link_${sanitizePdfFieldPart(connection.id || `conn_${connIdx + 1}`, `conn_${connIdx + 1}`)}`,
-              usedFieldNames
+            // Connection text: "PartA <-> PartB"
+            const fromLabel = safePdfText(
+              partLabels[connection.fromViewId] || connection.fromViewId || '-'
             );
-            const checkbox = form.createCheckBox(connFieldName);
-            checkbox.addToPage(page, {
-              x: layout.marginX + cardPadX,
-              y: y - rowH + 8,
-              width: 12,
-              height: 12,
-            });
-
-            // Connection label text
-            const leftLabel = safePdfText(connection.fromDisplay || connection.fromKey || '-');
-            const rightLabel = safePdfText(connection.toDisplay || connection.toKey || '-');
-            const connText = `${leftLabel}  <->  ${rightLabel}`;
+            const toLabel = safePdfText(
+              partLabels[connection.toViewId] || connection.toViewId || '-'
+            );
+            const connText = `${fromLabel}  <->  ${toLabel}`;
             page.drawText(connText.slice(0, 90), {
-              x: layout.marginX + cardPadX + 18,
-              y: y - 10,
+              x: layout.marginX + cardPadX,
+              y: y - 8,
               size: typo.table,
               font: fontBold,
               color: colors.textPrimary,
@@ -885,9 +1019,13 @@ export function initPdfExport() {
             // Note if present
             if (connection.note) {
               page.drawText(safePdfText(connection.note).slice(0, 80), {
-                x: layout.marginX + cardPadX + 18,
-                y: y - 20,
-                size: typo.small - 1,
+                x:
+                  layout.marginX +
+                  cardPadX +
+                  fontBold.widthOfTextAtSize(connText.slice(0, 90), typo.table) +
+                  12,
+                y: y - 8,
+                size: typo.small,
                 font,
                 color: colors.textMuted,
               });

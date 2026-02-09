@@ -163,39 +163,6 @@ function evaluateChecks(checks, measurementIndex) {
   });
 }
 
-function evaluateConnections(connections, measurementLookup, tolerance = 0) {
-  return (connections || []).map(connection => {
-    const from = measurementLookup[connection.fromKey || ''];
-    const to = measurementLookup[connection.toKey || ''];
-    if (
-      !from ||
-      !to ||
-      from.value === null ||
-      from.value === undefined ||
-      to.value === null ||
-      to.value === undefined
-    ) {
-      return {
-        ...connection,
-        status: 'pending',
-        delta: null,
-        reason: 'Waiting for values (informational)',
-        fromDisplay: from?.display || connection.fromKey || '-',
-        toDisplay: to?.display || connection.toKey || '-',
-      };
-    }
-    const delta = Math.abs(from.value - to.value);
-    return {
-      ...connection,
-      status: delta <= tolerance ? 'pass' : 'fail',
-      delta,
-      reason: delta <= tolerance ? 'Connected values align' : 'Connected values differ',
-      fromDisplay: from.display,
-      toDisplay: to.display,
-    };
-  });
-}
-
 function evaluateMeasurementRelations() {
   const metadata = getMetadata();
   const checks = Array.isArray(metadata.measurementChecks) ? metadata.measurementChecks : [];
@@ -204,11 +171,10 @@ function evaluateMeasurementRelations() {
     : [];
   const index = buildMeasurementIndex();
   const checkResults = evaluateChecks(checks, index);
-  const connectionResults = evaluateConnections(connections, index.lookup, 0);
   return {
     unit: index.unit,
     checks: checkResults,
-    connections: connectionResults,
+    connections, // simple image-level links, no pass/fail evaluation
     measurements: index.entries,
   };
 }
@@ -275,8 +241,16 @@ async function openMeasurementRelationsEditor() {
     : [];
 
   const index = buildMeasurementIndex();
-  const measurementOptions = index.entries
-    .map(entry => `<option value="${entry.key}">${entry.display}</option>`)
+
+  // Build view options for connections (per-image, not per-measurement)
+  const views = window.app?.projectManager?.views || {};
+  const viewIds = Object.keys(views).filter(id => views[id]?.image);
+  const viewOptions = viewIds
+    .map((id, idx) => {
+      const partLabel =
+        metadata.imagePartLabels?.[id] || `view-${String(idx + 1).padStart(2, '0')}`;
+      return `<option value="${id}">${partLabel} (${id})</option>`;
+    })
     .join('');
 
   const overlay = document.createElement('div');
@@ -302,8 +276,9 @@ async function openMeasurementRelationsEditor() {
 
       <section class="relations-section">
         <h3 style="margin:0 0 8px;font-size:14px;color:#0f172a;">Cross-image Connections</h3>
+        <p style="margin:0 0 8px;font-size:11px;color:#64748b;">Link two images as connected parts. Connected images appear side-by-side in PDF exports.</p>
         <table class="relations-table">
-          <thead><tr><th>From</th><th>To</th><th>Note</th><th>Status</th><th></th></tr></thead>
+          <thead><tr><th>From Image</th><th>To Image</th><th>Note</th><th></th></tr></thead>
           <tbody id="relationsConnectionsBody"></tbody>
         </table>
         <button id="addRelationConnection" type="button" style="margin-top:8px;border:1px solid #cbd5e1;background:#fff;border-radius:7px;padding:6px 10px;font-size:12px;cursor:pointer;">Add connection</button>
@@ -353,23 +328,20 @@ async function openMeasurementRelationsEditor() {
     connectionsBody.innerHTML = '';
     if (!connections.length) {
       connectionsBody.innerHTML =
-        '<tr><td colspan="5" style="color:#64748b;">No connections yet.</td></tr>';
+        '<tr><td colspan="4" style="color:#64748b;">No connections yet.</td></tr>';
     }
     connections.forEach((connection, idx) => {
-      const status = evaluated.connections[idx]?.status || 'pending';
-      const reason = evaluated.connections[idx]?.reason || '';
       const row = document.createElement('tr');
       row.innerHTML = `
-        <td><select data-field="fromKey">${measurementOptions}</select></td>
-        <td><select data-field="toKey">${measurementOptions}</select></td>
+        <td><select data-field="fromViewId">${viewOptions}</select></td>
+        <td><select data-field="toViewId">${viewOptions}</select></td>
         <td><input data-field="note" value="${connection.note || ''}" placeholder="Optional" /></td>
-        <td><span class="status-chip ${status}">${status}</span><div style="font-size:10px;color:#64748b;">${reason}</div></td>
         <td><button data-remove="${idx}" type="button" style="border:1px solid #fecaca;background:#fff;color:#b91c1c;border-radius:7px;padding:4px 8px;cursor:pointer;">Remove</button></td>
       `;
-      row.querySelector('[data-field="fromKey"]').value =
-        connection.fromKey || index.entries[0]?.key || '';
-      row.querySelector('[data-field="toKey"]').value =
-        connection.toKey || index.entries[0]?.key || '';
+      row.querySelector('[data-field="fromViewId"]').value =
+        connection.fromViewId || viewIds[0] || '';
+      row.querySelector('[data-field="toViewId"]').value =
+        connection.toViewId || viewIds[1] || viewIds[0] || '';
       row.querySelectorAll('[data-field]').forEach(input => {
         const field = input.dataset.field;
         input.addEventListener('change', () => {
@@ -390,10 +362,14 @@ async function openMeasurementRelationsEditor() {
   });
 
   overlay.querySelector('#addRelationConnection')?.addEventListener('click', () => {
-    const firstKey = index.entries[0]?.key || '';
     connections = [
       ...connections,
-      { id: `conn-${Date.now()}`, fromKey: firstKey, toKey: firstKey, note: '' },
+      {
+        id: `conn-${Date.now()}`,
+        fromViewId: viewIds[0] || '',
+        toViewId: viewIds[1] || viewIds[0] || '',
+        note: '',
+      },
     ];
     render();
   });

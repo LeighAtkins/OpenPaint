@@ -27,16 +27,38 @@ export function createDefaultSofaMetadata() {
       extraLabel: '',
       autoProjectTitle: '',
     },
-    pieceCount: 0,
-    pieces: [],
-    connections: [],
     measurementChecks: [],
     measurementConnections: [],
     imagePartLabels: {},
-    ruleParams: {},
     photos: [],
     quickSketchMap: null,
   };
+}
+
+function migrateConnections(rawConnections) {
+  if (!Array.isArray(rawConnections) || !rawConnections.length) return [];
+  // Old format used fromKey/toKey (per-measurement, e.g. "viewId:strokeLabel").
+  // New format uses fromViewId/toViewId (per-image).
+  const hasOldFormat = rawConnections.some(c => c.fromKey && !c.fromViewId);
+  if (!hasOldFormat) return rawConnections;
+
+  const seen = new Set();
+  const migrated = [];
+  rawConnections.forEach(c => {
+    const fromViewId = String(c.fromKey || '').split(':')[0];
+    const toViewId = String(c.toKey || '').split(':')[0];
+    if (!fromViewId || !toViewId || fromViewId === toViewId) return;
+    const pairKey = [fromViewId, toViewId].sort().join('|');
+    if (seen.has(pairKey)) return;
+    seen.add(pairKey);
+    migrated.push({
+      id: c.id || `conn-${Date.now()}-${migrated.length}`,
+      fromViewId,
+      toViewId,
+      note: c.note || '',
+    });
+  });
+  return migrated;
 }
 
 export function normalizeSofaMetadata(input) {
@@ -49,14 +71,13 @@ export function normalizeSofaMetadata(input) {
   const customSofaType =
     typeof source.customSofaType === 'string' ? source.customSofaType.trim() : '';
 
-  const pieces = Array.isArray(source.pieces) ? safeClone(source.pieces, []) : [];
-  const connections = Array.isArray(source.connections) ? safeClone(source.connections, []) : [];
   const measurementChecks = Array.isArray(source.measurementChecks)
     ? safeClone(source.measurementChecks, [])
     : [];
-  const measurementConnections = Array.isArray(source.measurementConnections)
+  const rawConnections = Array.isArray(source.measurementConnections)
     ? safeClone(source.measurementConnections, [])
     : [];
+  const measurementConnections = migrateConnections(rawConnections);
   const photos = Array.isArray(source.photos) ? safeClone(source.photos, []) : [];
   const imagePartLabels =
     source.imagePartLabels && typeof source.imagePartLabels === 'object'
@@ -77,30 +98,15 @@ export function normalizeSofaMetadata(input) {
               : '',
         }
       : defaults.naming;
-  const ruleParams =
-    source.ruleParams && typeof source.ruleParams === 'object'
-      ? safeClone(source.ruleParams, {})
-      : {};
-
-  const derivedPieceCount = pieces.length;
-  const pieceCountInput =
-    typeof source.pieceCount === 'number' && Number.isFinite(source.pieceCount)
-      ? Math.max(0, Math.floor(source.pieceCount))
-      : derivedPieceCount;
-  const pieceCount = Math.max(pieceCountInput, derivedPieceCount);
 
   return {
     ...defaults,
     sofaType,
     customSofaType,
-    pieceCount,
-    pieces,
-    connections,
     measurementChecks,
     measurementConnections,
     imagePartLabels,
     naming,
-    ruleParams,
     photos,
     quickSketchMap: source.quickSketchMap ? safeClone(source.quickSketchMap, null) : null,
   };
