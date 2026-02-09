@@ -101,8 +101,8 @@ function getGroupedPdfPageTargets(pageTargets, pieceGroups, partLabels) {
   const consumed = new Set(); // viewId values consumed into grouped entries
   const grouped = [];
 
-  // For each piece group, the main view + first related view go onto one grouped page.
-  // Extra related views and extra tabs become singles.
+  // For each piece group, include the main view and all related view tabs on a grouped page.
+  // If there are too many targets for one page, overflow targets become singles.
   (pieceGroups || []).forEach(group => {
     const mainId = group.mainViewId;
     const relatedIds = Array.isArray(group.relatedViewIds) ? group.relatedViewIds : [];
@@ -111,39 +111,38 @@ function getGroupedPdfPageTargets(pageTargets, pieceGroups, partLabels) {
     const mainTargets = targetsByView[mainId];
     if (!mainTargets?.length) return;
 
-    // Find first non-consumed related view that has targets
-    const pairedId = relatedIds.find(id => id && !consumed.has(id) && targetsByView[id]?.length);
+    const relatedViewIds = relatedIds.filter(
+      id => id && !consumed.has(id) && id !== mainId && targetsByView[id]?.length
+    );
 
-    if (pairedId) {
-      const pairedTargets = targetsByView[pairedId];
-      consumed.add(mainId);
-      consumed.add(pairedId);
-      grouped.push({
-        type: 'grouped',
-        targets: [mainTargets[0], pairedTargets[0]],
-        note: group.label || '',
-        partLabels: [
-          partLabels[mainId] ||
-            `view-${String((mainTargets[0].viewIndex || 0) + 1).padStart(2, '0')}`,
-          partLabels[pairedId] ||
-            `view-${String((pairedTargets[0].viewIndex || 0) + 1).padStart(2, '0')}`,
-        ],
-      });
-
-      // Extra tabs beyond the first become singles
-      mainTargets.slice(1).forEach(t => grouped.push({ type: 'single', target: t }));
-      pairedTargets.slice(1).forEach(t => grouped.push({ type: 'single', target: t }));
-
-      // Additional related views (beyond the first paired) become singles
-      relatedIds.forEach(id => {
-        if (id === pairedId || consumed.has(id)) return;
-        const targets = targetsByView[id];
-        if (!targets?.length) return;
-        consumed.add(id);
-        targets.forEach(t => grouped.push({ type: 'single', target: t }));
-      });
+    if (!relatedViewIds.length) {
+      // If no related views found, main stays unconsumed (will become singles below)
+      return;
     }
-    // If no related view found, main stays unconsumed (will become singles below)
+
+    consumed.add(mainId);
+    relatedViewIds.forEach(id => consumed.add(id));
+
+    const relatedTargets = relatedViewIds.flatMap(id => targetsByView[id] || []);
+    const combinedTargets = [...mainTargets, ...relatedTargets];
+    const maxGroupedTargets = 4;
+    const groupedPageTargets = combinedTargets.slice(0, maxGroupedTargets);
+    const overflowTargets = combinedTargets.slice(maxGroupedTargets);
+
+    const orderedViewIds = [mainId, ...relatedViewIds];
+    const labels = orderedViewIds.map(id => {
+      const firstTarget = targetsByView[id]?.[0];
+      return partLabels[id] || `view-${String((firstTarget?.viewIndex || 0) + 1).padStart(2, '0')}`;
+    });
+
+    grouped.push({
+      type: 'grouped',
+      targets: groupedPageTargets,
+      note: group.label || '',
+      partLabels: labels,
+    });
+
+    overflowTargets.forEach(target => grouped.push({ type: 'single', target }));
   });
 
   // Remaining unconsumed views become singles
@@ -765,87 +764,168 @@ export function initPdfExport() {
       const pageNum = i + 1;
 
       if (entry.type === 'grouped') {
-        // ── Grouped page: two images side-by-side ──
-        const [targetA, targetB] = entry.targets;
+        // ── Grouped page: up to four images on one page ──
         progressText.textContent = `Processing grouped page (${i + 1}/${groupedTargets.length})...`;
         progressBar.style.width = `${(i / groupedTargets.length) * 100}%`;
 
-        // Capture both images
-        const imageA = await captureViewImage(targetA.viewId, targetA.tabId);
-        const imageB = await captureViewImage(targetB.viewId, targetB.tabId);
-        if (!imageA || !imageB) continue;
+        const capturedTargets = [];
+        for (const target of entry.targets || []) {
+          const image = await captureViewImage(target.viewId, target.tabId);
+          if (!image) continue;
+          capturedTargets.push({ target, image });
+        }
+        if (!capturedTargets.length) continue;
 
         const page = pdfDoc.addPage([pageWidth, pageHeight]);
         const form = pdfDoc.getForm();
 
-        // Header with both part labels
-        const subtitle = `${entry.partLabels[0]} + ${entry.partLabels[1]}`;
+        const uniqueSubtitleLabels = Array.from(
+          new Set((entry.partLabels || []).map(label => String(label || '').trim()).filter(Boolean))
+        );
+        const subtitle = uniqueSubtitleLabels.join(' + ');
         drawHeader(page, projectName, subtitle, namingLine, pageNum);
 
-        // Column layout: two columns with 12px gap
-        const colGap = 12;
-        const colW = (layout.contentWidth - colGap) / 2;
-        const leftColX = layout.marginX;
-        const rightColX = layout.marginX + colW + colGap;
+        if (capturedTargets.length <= 2) {
+          const [leftEntry, rightEntry] = capturedTargets;
+          if (!rightEntry) {
+            const { target, image } = leftEntry;
+            const { strokes, measurements } = getTargetStrokes(target.scopeKey, target.includeBase);
+            const hasMeasurements = strokes.length > 0;
+            const maxImgH = hasMeasurements
+              ? Math.min(340, layout.contentTop - layout.contentBottom - strokes.length * 22 - 80)
+              : layout.contentTop - layout.contentBottom - 20;
+            const imgMaxH = Math.max(180, maxImgH);
 
-        // Get measurement data for both
-        const dataA = getTargetStrokes(targetA.scopeKey, targetA.includeBase);
-        const dataB = getTargetStrokes(targetB.scopeKey, targetB.includeBase);
+            const { imgY } = drawImageFrame(
+              page,
+              image,
+              layout.contentWidth - 20,
+              imgMaxH,
+              layout.contentTop
+            );
 
-        const hasMA = dataA.strokes.length > 0;
-        const hasMB = dataB.strokes.length > 0;
-        const maxStrokeCount = Math.max(dataA.strokes.length, dataB.strokes.length);
+            if (hasMeasurements) {
+              const currentUnit = document.getElementById('unitSelector')?.value || 'inch';
+              const drawTable = drawMeasurementTable(
+                page,
+                strokes,
+                measurements,
+                currentUnit,
+                target.scopeKey,
+                i,
+                form
+              );
+              drawTable(imgY - 16);
+            }
+          } else {
+            const colGap = 12;
+            const colW = (layout.contentWidth - colGap) / 2;
+            const leftColX = layout.marginX;
+            const rightColX = layout.marginX + colW + colGap;
 
-        // Image frame height: cap to leave room for table
-        const maxImgH =
-          hasMA || hasMB
-            ? Math.min(200, layout.contentTop - layout.contentBottom - maxStrokeCount * 22 - 80)
-            : layout.contentTop - layout.contentBottom - 20;
-        const imgMaxH = Math.max(120, maxImgH);
+            const dataA = getTargetStrokes(leftEntry.target.scopeKey, leftEntry.target.includeBase);
+            const dataB = getTargetStrokes(
+              rightEntry.target.scopeKey,
+              rightEntry.target.includeBase
+            );
+            const hasMA = dataA.strokes.length > 0;
+            const hasMB = dataB.strokes.length > 0;
+            const maxStrokeCount = Math.max(dataA.strokes.length, dataB.strokes.length);
 
-        // Draw left column
-        const frameA = drawImageFrame(page, imageA, colW - 10, imgMaxH, layout.contentTop, {
-          columnX: leftColX,
-          columnWidth: colW,
-        });
+            const maxImgH =
+              hasMA || hasMB
+                ? Math.min(200, layout.contentTop - layout.contentBottom - maxStrokeCount * 22 - 80)
+                : layout.contentTop - layout.contentBottom - 20;
+            const imgMaxH = Math.max(120, maxImgH);
 
-        // Draw right column
-        const frameB = drawImageFrame(page, imageB, colW - 10, imgMaxH, layout.contentTop, {
-          columnX: rightColX,
-          columnWidth: colW,
-        });
+            const frameA = drawImageFrame(
+              page,
+              leftEntry.image,
+              colW - 10,
+              imgMaxH,
+              layout.contentTop,
+              {
+                columnX: leftColX,
+                columnWidth: colW,
+              }
+            );
+            const frameB = drawImageFrame(
+              page,
+              rightEntry.image,
+              colW - 10,
+              imgMaxH,
+              layout.contentTop,
+              {
+                columnX: rightColX,
+                columnWidth: colW,
+              }
+            );
+            const tableTopY = Math.min(frameA.imgY, frameB.imgY) - 12;
 
-        // Use the lower of the two image bottoms for table start
-        const tableTopY = Math.min(frameA.imgY, frameB.imgY) - 12;
+            if (hasMA) {
+              const currentUnit = document.getElementById('unitSelector')?.value || 'inch';
+              const drawTableA = drawMeasurementTable(
+                page,
+                dataA.strokes,
+                dataA.measurements,
+                currentUnit,
+                leftEntry.target.scopeKey,
+                i,
+                form,
+                { tableX: leftColX, tableW: colW }
+              );
+              drawTableA(tableTopY);
+            }
+            if (hasMB) {
+              const currentUnit = document.getElementById('unitSelector')?.value || 'inch';
+              const drawTableB = drawMeasurementTable(
+                page,
+                dataB.strokes,
+                dataB.measurements,
+                currentUnit,
+                rightEntry.target.scopeKey,
+                i,
+                form,
+                { tableX: rightColX, tableW: colW }
+              );
+              drawTableB(tableTopY);
+            }
+          }
+        } else {
+          const gridGap = 12;
+          const cols = 2;
+          const rows = Math.min(2, Math.ceil(capturedTargets.length / cols));
+          const colW = (layout.contentWidth - gridGap) / cols;
+          const availableH = layout.contentTop - layout.contentBottom;
+          const rowH = (availableH - gridGap * (rows - 1)) / rows;
 
-        // Draw measurement tables in columns
-        if (hasMA) {
-          const currentUnit = document.getElementById('unitSelector')?.value || 'inch';
-          const drawTableA = drawMeasurementTable(
-            page,
-            dataA.strokes,
-            dataA.measurements,
-            currentUnit,
-            targetA.scopeKey,
-            i,
-            form,
-            { tableX: leftColX, tableW: colW }
-          );
-          drawTableA(tableTopY);
-        }
-        if (hasMB) {
-          const currentUnit = document.getElementById('unitSelector')?.value || 'inch';
-          const drawTableB = drawMeasurementTable(
-            page,
-            dataB.strokes,
-            dataB.measurements,
-            currentUnit,
-            targetB.scopeKey,
-            i,
-            form,
-            { tableX: rightColX, tableW: colW }
-          );
-          drawTableB(tableTopY);
+          capturedTargets.slice(0, 4).forEach((entryWithImage, idx) => {
+            const col = idx % cols;
+            const row = Math.floor(idx / cols);
+            const colX = layout.marginX + col * (colW + gridGap);
+            const rowTopY = layout.contentTop - row * (rowH + gridGap);
+            const caption = `${partLabels[entryWithImage.target.viewId] || entryWithImage.target.viewId} - ${entryWithImage.target.tabName || 'Frame'}`;
+
+            const frame = drawImageFrame(
+              page,
+              entryWithImage.image,
+              colW - 10,
+              rowH - 24,
+              rowTopY,
+              {
+                columnX: colX,
+                columnWidth: colW,
+              }
+            );
+
+            page.drawText(safePdfText(caption).slice(0, 48), {
+              x: colX + 4,
+              y: frame.imgY - 12,
+              size: typo.small,
+              font,
+              color: colors.textSecondary,
+            });
+          });
         }
 
         drawFooter(page, pageNum);
@@ -931,12 +1011,12 @@ export function initPdfExport() {
       const cardW = layout.contentWidth;
 
       // Helper to start a new page if needed
-      function checkPageBreak(neededHeight) {
+      const checkPageBreak = neededHeight => {
         if (y - neededHeight < layout.contentBottom) {
           return false;
         }
         return true;
-      }
+      };
 
       // ── Checks Section ──
       if (relations.checks?.length > 0) {
