@@ -244,18 +244,234 @@ export function initPdfExport() {
       'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:10000;display:flex;align-items:center;justify-content:center;';
     overlay.innerHTML = `<div style="background:white;border-radius:12px;padding:30px;max-width:500px;box-shadow:0 10px 40px rgba(0,0,0,0.3);"><h2 style="margin:0 0 20px 0;color:#333;">Export PDF - ${projectName}</h2><p style="color:#666;margin-bottom:15px;">Creating PDF with ${viewIds.length} page(s) and editable form fields.</p><div style="margin-bottom:15px;"><label style="display:block;margin-bottom:5px;font-weight:600;color:#333;">Image Quality:</label><select id="pdfQuality" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;"><option value="high">High Quality</option><option value="medium" selected>Medium Quality</option><option value="low">Low Quality</option></select></div><div style="margin-bottom:15px;"><label style="display:block;margin-bottom:5px;font-weight:600;color:#333;">Page Size:</label><select id="pdfPageSize" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;"><option value="letter" selected>Letter (8.5" × 11")</option><option value="a4">A4</option></select></div><label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:20px;"><input type="checkbox" id="includeMeasurements" checked style="transform:scale(1.3);"><span style="color:#333;">Include editable measurement fields</span></label><div style="display:flex;gap:10px;"><button id="generatePdfBtn" style="flex:1;padding:12px;background:#3b82f6;color:white;border:none;border-radius:8px;font-weight:600;cursor:pointer;">Generate PDF</button><button id="cancelPdfBtn" style="flex:1;padding:12px;background:#6b7280;color:white;border:none;border-radius:8px;font-weight:600;cursor:pointer;">Cancel</button></div><div id="pdfProgress" style="display:none;margin-top:20px;text-align:center;"><div style="width:100%;height:8px;background:#e5e7eb;border-radius:4px;overflow:hidden;margin-bottom:10px;"><div id="pdfProgressBar" style="width:0%;height:100%;background:#3b82f6;transition:width 0.3s;"></div></div><p id="pdfProgressText" style="color:#666;font-size:14px;">Preparing PDF...</p></div></div>`;
     document.body.appendChild(overlay);
+    const includeMeasurementsLabel = document.getElementById('includeMeasurements')?.parentElement;
+    if (includeMeasurementsLabel) {
+      const rendererWrap = document.createElement('div');
+      rendererWrap.style.marginBottom = '15px';
+      rendererWrap.innerHTML = `<label style="display:block;margin-bottom:5px;font-weight:600;color:#333;">Renderer:</label><select id="pdfRendererMode" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;"><option value="classic" selected>Classic (Local)</option><option value="modern">Modern (Beta)</option></select>`;
+      includeMeasurementsLabel.parentElement?.insertBefore(rendererWrap, includeMeasurementsLabel);
+    }
     document.getElementById('cancelPdfBtn').onclick = () => overlay.remove();
     document.getElementById('generatePdfBtn').onclick = async () => {
       const quality = document.getElementById('pdfQuality').value;
       const pageSize = document.getElementById('pdfPageSize').value;
       const includeMeasurements = document.getElementById('includeMeasurements').checked;
+      const rendererMode = document.getElementById('pdfRendererMode')?.value || 'classic';
       document.getElementById('pdfProgress').style.display = 'block';
       document.getElementById('generatePdfBtn').disabled = true;
       document.getElementById('cancelPdfBtn').disabled = true;
-      await generatePDFWithPDFLib(projectName, pageTargets, quality, pageSize, includeMeasurements);
+
+      try {
+        if (rendererMode === 'modern') {
+          await generatePDFWithServer(
+            projectName,
+            pageTargets,
+            quality,
+            pageSize,
+            includeMeasurements
+          );
+        } else {
+          await generatePDFWithPDFLib(
+            projectName,
+            pageTargets,
+            quality,
+            pageSize,
+            includeMeasurements
+          );
+        }
+      } catch (error) {
+        console.error('[PDF] Export failed:', error);
+        alert('PDF export failed. Falling back to classic renderer.');
+        await generatePDFWithPDFLib(
+          projectName,
+          pageTargets,
+          quality,
+          pageSize,
+          includeMeasurements
+        );
+      }
+
       overlay.remove();
     };
   };
+
+  async function generatePDFWithServer(
+    projectName,
+    pageTargets,
+    quality,
+    pageSize,
+    includeMeasurements
+  ) {
+    const progressBar = document.getElementById('pdfProgressBar');
+    const progressText = document.getElementById('pdfProgressText');
+    const metadata =
+      window.app?.projectManager?.getProjectMetadata?.() || window.projectMetadata || {};
+    const naming = metadata.naming || {};
+    const partLabels = metadata.imagePartLabels || {};
+    const metaPieceGroups = Array.isArray(metadata.pieceGroups) ? metadata.pieceGroups : [];
+    const groupedTargets = getGroupedPdfPageTargets(pageTargets, metaPieceGroups, partLabels);
+    const currentUnit = document.getElementById('unitSelector')?.value || 'inch';
+    const frameCountByView = pageTargets.reduce((acc, target) => {
+      acc[target.viewId] = (acc[target.viewId] || 0) + 1;
+      return acc;
+    }, {});
+
+    const namingLine = [naming.customerName, naming.sofaTypeLabel, naming.jobDate]
+      .map(part => String(part || '').trim())
+      .filter(Boolean)
+      .join('  |  ');
+
+    const formatTargetDisplayName = target => {
+      const partLabel = partLabels[target.viewId] || target.viewId;
+      const tabName = String(target.tabName || '').trim();
+      const frameCount = frameCountByView[target.viewId] || 1;
+      const isSingleFrameOne = frameCount <= 1 && /^frame\s*1$/i.test(tabName);
+      if (!tabName || isSingleFrameOne) return partLabel;
+      return `${partLabel} - ${tabName}`;
+    };
+
+    const getTargetMeasurementRows = target => {
+      if (!includeMeasurements) return [];
+      const measurements = getScopedMeasurements(target.scopeKey, {
+        scopeKey: target.scopeKey,
+        includeBase: target.includeBase,
+      });
+      const measuredStrokes = Object.keys(measurements);
+      const strokes = Array.from(
+        new Set([
+          ...getScopedStrokeLabels(target.scopeKey, {
+            scopeKey: target.scopeKey,
+            includeBase: target.includeBase,
+          }),
+          ...measuredStrokes,
+        ])
+      ).sort((a, b) => a.localeCompare(b));
+      return strokes.map(strokeLabel => {
+        const m = measurements[strokeLabel] || {};
+        let value = '';
+        if (currentUnit === 'inch') {
+          const whole = m.inchWhole || 0;
+          const frac = m.inchFraction || 0;
+          value =
+            whole > 0 || frac > 0
+              ? `${whole > 0 ? whole + '"' : ''}${frac > 0 ? ' ' + frac.toFixed(2) + '"' : ''}`.trim()
+              : '';
+        } else {
+          value = m.cm ? `${m.cm.toFixed(1)} cm` : '';
+        }
+        return {
+          label: strokeLabel,
+          value,
+        };
+      });
+    };
+
+    const captureViewImageDataUrl = async target => {
+      await window.app.projectManager.switchView(target.viewId);
+      if (target.tabId && typeof window.setActiveCaptureTab === 'function') {
+        window.setActiveCaptureTab(target.viewId, target.tabId);
+      }
+      await new Promise(resolve => setTimeout(resolve, 150));
+
+      const canvas = window.app.canvasManager.fabricCanvas;
+      const captureFrame = document.getElementById('captureFrame');
+      if (!canvas || !captureFrame) return '';
+      const qualityScales = { high: 3.0, medium: 2.0, low: 1.5 };
+      const scale = qualityScales[quality] || 2.0;
+      const frameRect = captureFrame.getBoundingClientRect();
+      const canvasEl = canvas.lowerCanvasEl;
+      const scaleX = canvasEl.width / canvasEl.offsetWidth;
+      const scaleY = canvasEl.height / canvasEl.offsetHeight;
+      const canvasRect = canvasEl.getBoundingClientRect();
+      const left = (frameRect.left - canvasRect.left) * scaleX;
+      const top = (frameRect.top - canvasRect.top) * scaleY;
+      const width = frameRect.width * scaleX;
+      const height = frameRect.height * scaleY;
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = width * scale;
+      tempCanvas.height = height * scale;
+      const ctx = tempCanvas.getContext('2d');
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.scale(scale, scale);
+      ctx.drawImage(canvasEl, left, top, width, height, 0, 0, width, height);
+      return tempCanvas.toDataURL('image/jpeg', 0.92);
+    };
+
+    const groups = [];
+    for (let i = 0; i < groupedTargets.length; i++) {
+      const entry = groupedTargets[i];
+      const mainTarget = entry.type === 'grouped' ? entry.mainTarget : entry.target;
+      const relatedTargets = entry.type === 'grouped' ? entry.relatedTargets || [] : [];
+      if (!mainTarget) continue;
+
+      progressText.textContent = `Preparing page data (${i + 1}/${groupedTargets.length})...`;
+      progressBar.style.width = `${(i / groupedTargets.length) * 100}%`;
+
+      const mainSrc = await captureViewImageDataUrl(mainTarget);
+      if (!mainSrc) continue;
+
+      const relatedFrames = [];
+      const relatedMeasurementCards = [];
+      for (const target of relatedTargets) {
+        const src = await captureViewImageDataUrl(target);
+        if (!src) continue;
+        const title = formatTargetDisplayName(target);
+        relatedFrames.push({ title, src });
+        relatedMeasurementCards.push({
+          title,
+          rows: getTargetMeasurementRows(target),
+        });
+      }
+
+      groups.push({
+        title: entry.note || formatTargetDisplayName(mainTarget),
+        subtitle: '',
+        mainImage: {
+          title: formatTargetDisplayName(mainTarget),
+          src: mainSrc,
+        },
+        mainMeasurements: getTargetMeasurementRows(mainTarget),
+        relatedFrames,
+        relatedMeasurementCards,
+      });
+    }
+
+    progressText.textContent = 'Rendering modern PDF...';
+    progressBar.style.width = '92%';
+    const response = await fetch('/api/pdf/render', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        source: 'report',
+        report: {
+          projectName,
+          namingLine,
+          groups,
+        },
+        options: {
+          renderer: 'hybrid',
+          pageSize,
+          filename: `${sanitizeFilenamePart(projectName, 'OpenPaint Project')}.pdf`,
+        },
+      }),
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error(`Server PDF render failed (${response.status}): ${errText}`);
+    }
+
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${sanitizeFilenamePart(projectName, 'OpenPaint Project')}.pdf`;
+    a.click();
+    URL.revokeObjectURL(url);
+    progressBar.style.width = '100%';
+    progressText.textContent = 'Done';
+  }
 
   async function generatePDFWithPDFLib(
     projectName,

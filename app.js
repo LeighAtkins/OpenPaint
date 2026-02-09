@@ -19,6 +19,8 @@ import {
 } from './server/db.js';
 import { spawn } from 'child_process';
 import { createClient } from '@supabase/supabase-js';
+import { pdfRenderRequestSchema, sanitizePdfFilename } from './server/pdf/schema.js';
+import { renderPdfFromRequest, resolvePdfRendererMode } from './server/pdf/service.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -176,6 +178,62 @@ app.get('/test', (req, res) => {
 // API Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+app.post('/api/pdf/render', async (req, res) => {
+  const startedAt = Date.now();
+  const requestId = crypto.randomUUID();
+  res.setHeader('X-Pdf-Request-Id', requestId);
+  try {
+    const parsed = pdfRenderRequestSchema.safeParse(req.body || {});
+    if (!parsed.success) {
+      return res.status(400).json({
+        success: false,
+        code: 'PDF_RENDER_BAD_REQUEST',
+        requestId,
+        errors: parsed.error.issues,
+      });
+    }
+
+    const payload = parsed.data;
+    const mode = resolvePdfRendererMode(payload.options?.renderer);
+    const pdfBuffer = await renderPdfFromRequest(payload, mode);
+    const filename = sanitizePdfFilename(
+      payload.options?.filename || payload.report?.projectName || 'openpaint-report.pdf'
+    );
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
+    res.setHeader('X-Pdf-Renderer', mode);
+    res.setHeader('X-Pdf-Duration-Ms', String(Date.now() - startedAt));
+    console.log('[PDF] Render success', {
+      requestId,
+      mode,
+      source: payload.source,
+      pageSize: payload.options?.pageSize,
+      durationMs: Date.now() - startedAt,
+    });
+    return res.status(200).send(pdfBuffer);
+  } catch (error) {
+    const code = error?.code || 'PDF_RENDER_FAILED';
+    console.error('[PDF] Render failed:', {
+      requestId,
+      code,
+      durationMs: Date.now() - startedAt,
+      error,
+    });
+    if (code === 'PDF_RENDERER_UNSUPPORTED' || code === 'PDF_RENDERER_MISSING_DEPENDENCY') {
+      return res
+        .status(501)
+        .json({ success: false, code, requestId, message: error.details || error.message });
+    }
+    return res.status(500).json({
+      success: false,
+      code,
+      requestId,
+      message: 'Failed to render PDF',
+    });
+  }
 });
 
 // Save project
