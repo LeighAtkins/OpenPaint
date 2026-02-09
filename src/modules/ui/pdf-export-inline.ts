@@ -439,27 +439,58 @@ export function initPdfExport() {
 
     progressText.textContent = 'Rendering modern PDF...';
     progressBar.style.width = '92%';
-    const response = await fetch('/api/pdf/render', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        source: 'report',
-        report: {
-          projectName,
-          namingLine,
-          groups,
-        },
-        options: {
-          renderer: 'hybrid',
-          pageSize,
-          filename: `${sanitizeFilenamePart(projectName, 'OpenPaint Project')}.pdf`,
-        },
-      }),
+
+    const requestBody = JSON.stringify({
+      source: 'report',
+      report: {
+        projectName,
+        namingLine,
+        groups,
+      },
+      options: {
+        renderer: 'hybrid',
+        pageSize,
+        filename: `${sanitizeFilenamePart(projectName, 'OpenPaint Project')}.pdf`,
+      },
     });
 
-    if (!response.ok) {
-      const errText = await response.text();
-      throw new Error(`Server PDF render failed (${response.status}): ${errText}`);
+    const endpointCandidates = [];
+    const explicitEndpoint = import.meta.env.VITE_PDF_RENDER_URL;
+    if (explicitEndpoint) {
+      endpointCandidates.push(explicitEndpoint);
+    }
+    endpointCandidates.push('/api/pdf/render', '/pdf/render');
+
+    let response = null;
+    let lastErrorText = '';
+    let lastStatus = 0;
+    for (const endpoint of endpointCandidates) {
+      const candidateResponse = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: requestBody,
+      });
+      if (candidateResponse.ok) {
+        response = candidateResponse;
+        break;
+      }
+
+      lastStatus = candidateResponse.status;
+      lastErrorText = await candidateResponse.text();
+      if (candidateResponse.status !== 404) {
+        throw new Error(`Server PDF render failed (${candidateResponse.status}): ${lastErrorText}`);
+      }
+    }
+
+    if (!response) {
+      const devHint = import.meta.env.DEV
+        ? ' Modern renderer needs a running backend endpoint; Vite dev alone returns 404.'
+        : '';
+      throw new Error(
+        `Server PDF render endpoint not found (${lastStatus || 404}).${devHint}${
+          lastErrorText ? ` ${lastErrorText}` : ''
+        }`
+      );
     }
 
     const blob = await response.blob();
