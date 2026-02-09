@@ -988,12 +988,12 @@ export function initPdfExport() {
 
         y -= 8;
       }
+
       // ── Connections Section (per-measurement links with status) ──
       if (relations.connections?.length > 0) {
         if (checkPageBreak(40)) {
           y = drawSectionHeader(page, 'Cross-image Connections', y);
           y -= 4;
-
 
           relations.connections.forEach(connection => {
             if (!checkPageBreak(42)) return;
@@ -1041,6 +1041,7 @@ export function initPdfExport() {
                 color: colors.textSecondary,
               });
             }
+
             y -= cardH + 6;
           });
 
