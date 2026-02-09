@@ -290,18 +290,21 @@ export function initPdfExport() {
 
     // ── Design System ────────────────────────────────────────────────
     const colors = {
-      headerBg: rgb(0.09, 0.11, 0.2), // dark navy
-      accentStripe: rgb(0.22, 0.47, 0.96), // vivid blue
-      accentLight: rgb(0.92, 0.95, 1.0), // light blue tint
+      pageBg: rgb(0.985, 0.989, 0.996),
+      headerBg: rgb(0.07, 0.12, 0.24),
+      accentStripe: rgb(0.2, 0.5, 0.93),
+      accentStripeSoft: rgb(0.36, 0.62, 0.97),
+      accentLight: rgb(0.93, 0.96, 1.0),
+      panelBg: rgb(0.97, 0.98, 1.0),
       white: rgb(1, 1, 1),
-      textPrimary: rgb(0.12, 0.12, 0.14),
-      textSecondary: rgb(0.4, 0.42, 0.48),
-      textMuted: rgb(0.58, 0.6, 0.65),
-      border: rgb(0.82, 0.84, 0.88),
-      borderLight: rgb(0.91, 0.93, 0.95),
-      tableRowAlt: rgb(0.96, 0.97, 0.99),
-      frameShadow: rgb(0.78, 0.8, 0.84),
-      frameBorder: rgb(0.7, 0.72, 0.76),
+      textPrimary: rgb(0.1, 0.14, 0.22),
+      textSecondary: rgb(0.29, 0.34, 0.45),
+      textMuted: rgb(0.45, 0.5, 0.58),
+      border: rgb(0.79, 0.84, 0.91),
+      borderLight: rgb(0.89, 0.92, 0.96),
+      tableRowAlt: rgb(0.95, 0.97, 1.0),
+      frameShadow: rgb(0.86, 0.9, 0.95),
+      frameBorder: rgb(0.75, 0.81, 0.9),
       statusPass: rgb(0.13, 0.59, 0.33),
       statusFail: rgb(0.82, 0.18, 0.18),
       statusWarn: rgb(0.8, 0.58, 0.08),
@@ -313,16 +316,16 @@ export function initPdfExport() {
     };
     const layout = {
       marginX: 40,
-      headerH: 56,
-      accentH: 3,
+      headerH: 62,
+      accentH: 4,
       footerH: 32,
-      contentTop: pageHeight - 56 - 3 - 16, // below header + accent + gap
+      contentTop: pageHeight - 62 - 4 - 16,
       contentBottom: 32 + 12, // above footer + gap
       contentWidth: pageWidth - 80,
     };
     const typo = {
-      title: 18,
-      subtitle: 10,
+      title: 17,
+      subtitle: 9,
       sectionHeader: 13,
       body: 10,
       table: 9,
@@ -360,7 +363,14 @@ export function initPdfExport() {
     }
 
     function drawHeader(page, titleText, subtitleText, namingText, pageNum) {
-      // Dark navy header bar
+      page.drawRectangle({
+        x: 0,
+        y: 0,
+        width: pageWidth,
+        height: pageHeight,
+        color: colors.pageBg,
+      });
+
       page.drawRectangle({
         x: 0,
         y: pageHeight - layout.headerH,
@@ -368,37 +378,50 @@ export function initPdfExport() {
         height: layout.headerH,
         color: colors.headerBg,
       });
-      // Accent stripe below header
+
       page.drawRectangle({
         x: 0,
         y: pageHeight - layout.headerH - layout.accentH,
         width: pageWidth,
-        height: layout.accentH,
+        height: layout.accentH / 2,
         color: colors.accentStripe,
       });
-      // Project name — centered
-      centerText(titleText, pageHeight - 24, typo.title, fontBold, colors.white, page);
-      // Naming line — centered below title
+      page.drawRectangle({
+        x: 0,
+        y: pageHeight - layout.headerH - layout.accentH,
+        width: pageWidth,
+        height: layout.accentH / 2,
+        color: colors.accentStripeSoft,
+      });
+
+      page.drawText('OPENPAINT', {
+        x: layout.marginX,
+        y: pageHeight - 20,
+        size: 7,
+        font: fontBold,
+        color: rgb(0.66, 0.76, 0.92),
+      });
+      centerText(titleText, pageHeight - 30, typo.title, fontBold, colors.white, page);
       if (namingText) {
-        centerText(namingText, pageHeight - 38, typo.small, font, rgb(0.72, 0.78, 0.9), page);
+        centerText(namingText, pageHeight - 45, typo.small, font, rgb(0.78, 0.83, 0.92), page);
       }
-      // Subtitle (page label) — left
+
       if (subtitleText) {
         page.drawText(safePdfText(subtitleText), {
           x: layout.marginX,
-          y: pageHeight - 52,
+          y: pageHeight - 56,
           size: typo.subtitle,
           font,
-          color: rgb(0.6, 0.68, 0.82),
+          color: rgb(0.7, 0.79, 0.95),
         });
       }
-      // Page number — right
+
       rightAlignText(
         `Page ${pageNum} of ${totalPages}`,
-        pageHeight - 52,
+        pageHeight - 56,
         typo.subtitle,
         font,
-        rgb(0.6, 0.68, 0.82),
+        rgb(0.7, 0.79, 0.95),
         page,
         pageWidth - layout.marginX
       );
@@ -406,15 +429,13 @@ export function initPdfExport() {
 
     function drawFooter(page, pageNum) {
       const footerY = 20;
-      // Separator line
       page.drawRectangle({
         x: layout.marginX,
         y: footerY + 10,
         width: layout.contentWidth,
-        height: 0.5,
-        color: colors.border,
+        height: 0.75,
+        color: colors.borderLight,
       });
-      // Date left
       page.drawText(safePdfText(`Generated: ${new Date().toLocaleDateString()}`), {
         x: layout.marginX,
         y: footerY,
@@ -435,7 +456,6 @@ export function initPdfExport() {
     }
 
     function drawImageFrame(page, image, maxWidth, maxHeight, topY, columnOpts) {
-      // columnOpts: optional { columnX, columnWidth } for half-page columns
       const imgAspect = image.width / image.height;
       let imgWidth = maxWidth;
       let imgHeight = imgWidth / imgAspect;
@@ -443,20 +463,19 @@ export function initPdfExport() {
         imgHeight = maxHeight;
         imgWidth = imgHeight * imgAspect;
       }
-      // Center within column or full page
       const colX = columnOpts?.columnX ?? 0;
       const colW = columnOpts?.columnWidth ?? pageWidth;
       const imgX = colX + (colW - imgWidth) / 2;
       const imgY = topY - imgHeight;
-      // Shadow (offset rectangle)
+
       page.drawRectangle({
-        x: imgX + 2,
-        y: imgY - 2,
+        x: imgX + 3,
+        y: imgY - 3,
         width: imgWidth,
         height: imgHeight,
         color: colors.frameShadow,
       });
-      // White mat border
+
       const pad = 4;
       page.drawRectangle({
         x: imgX - pad,
@@ -467,13 +486,22 @@ export function initPdfExport() {
         borderColor: colors.frameBorder,
         borderWidth: 0.75,
       });
-      // Image
       page.drawImage(image, { x: imgX, y: imgY, width: imgWidth, height: imgHeight });
       return { imgX, imgY, imgWidth, imgHeight };
     }
 
     function drawSectionHeader(page, text, y, startX) {
       const x = startX ?? layout.marginX;
+      const textW = fontBold.widthOfTextAtSize(safePdfText(text), typo.sectionHeader);
+      page.drawRectangle({
+        x: x - 6,
+        y: y - 7,
+        width: textW + 18,
+        height: 18,
+        color: colors.panelBg,
+        borderColor: colors.borderLight,
+        borderWidth: 0.75,
+      });
       page.drawText(safePdfText(text), {
         x,
         y,
@@ -481,13 +509,11 @@ export function initPdfExport() {
         font: fontBold,
         color: colors.textPrimary,
       });
-      // Accent underline
-      const textW = fontBold.widthOfTextAtSize(safePdfText(text), typo.sectionHeader);
       page.drawRectangle({
         x,
-        y: y - 4,
+        y: y - 6,
         width: textW + 8,
-        height: 2,
+        height: 1.5,
         color: colors.accentStripe,
       });
       return y - 22;
@@ -600,7 +626,7 @@ export function initPdfExport() {
           y: y - headerH + 6,
           width: tableW,
           height: headerH,
-          color: colors.headerBg,
+          color: colors.accentStripe,
         });
         page.drawText('Label', {
           x: tableX + 8,
@@ -642,7 +668,7 @@ export function initPdfExport() {
               y: y - rowH + 8,
               width: tableW,
               height: rowH,
-              color: colors.tableRowAlt,
+              color: colors.panelBg,
             });
           }
 
@@ -833,10 +859,11 @@ export function initPdfExport() {
           rightEndY = drawMainTable(rightStartY);
         }
 
-        const relatedRows = [];
+        const relatedMeasurementGroups = [];
         (entry.relatedTargets || []).forEach(target => {
           const { strokes, measurements } = getTargetStrokes(target.scopeKey, target.includeBase);
           const targetName = formatTargetDisplayName(target);
+          const rows = [];
           strokes.forEach((strokeLabel, idx) => {
             const m = measurements[strokeLabel] || {};
             let measurementValue = '';
@@ -850,22 +877,38 @@ export function initPdfExport() {
             } else {
               measurementValue = m.cm ? `${m.cm.toFixed(1)} cm` : '';
             }
-            relatedRows.push({
-              targetName,
+            rows.push({
               strokeLabel,
               measurementValue,
-              scopeKey: target.scopeKey,
               rowIndex: idx,
             });
           });
+
+          if (rows.length > 0) {
+            relatedMeasurementGroups.push({
+              targetName,
+              scopeKey: target.scopeKey,
+              rows,
+            });
+          }
         });
 
-        const relatedRowsLimit = 8;
-        const visibleRelatedRows = relatedRows.slice(0, relatedRowsLimit);
-        const relatedTableH =
-          visibleRelatedRows.length > 0 ? 32 + visibleRelatedRows.length * 18 : 0;
-        const relatedTableY = layout.contentBottom + 6;
-        const relatedGridBottom = relatedTableY + relatedTableH + 10;
+        const maxGroupCards = 4;
+        const visibleGroupCards = relatedMeasurementGroups.slice(0, maxGroupCards);
+        const maxRowsPerCard = 4;
+        const cardGap = 10;
+        const cardCols = visibleGroupCards.length > 1 ? 2 : 1;
+        const cardW =
+          cardCols === 1
+            ? layout.contentWidth
+            : (layout.contentWidth - cardGap * (cardCols - 1)) / cardCols;
+        const cardH = 28 + maxRowsPerCard * 18 + 12;
+        const cardRows = visibleGroupCards.length
+          ? Math.ceil(visibleGroupCards.length / cardCols)
+          : 0;
+        const relatedCardsH = cardRows > 0 ? cardRows * cardH + (cardRows - 1) * cardGap + 26 : 0;
+        const relatedCardsY = layout.contentBottom + 6;
+        const relatedGridBottom = relatedCardsY + relatedCardsH + 10;
 
         const relatedSectionTop = Math.min(heroFrame.imgY - 24, rightEndY - 12);
         if (relatedFrames.length > 0) {
@@ -905,113 +948,108 @@ export function initPdfExport() {
           });
         }
 
-        if (visibleRelatedRows.length > 0) {
-          const boxX = layout.marginX;
-          const boxY = relatedTableY;
-          const boxW = layout.contentWidth;
-          const boxH = relatedTableH;
-          const partColW = boxW * 0.5;
-          const labelColW = boxW * 0.2;
-          const valueColW = boxW - partColW - labelColW;
-
-          page.drawRectangle({
-            x: boxX,
-            y: boxY,
-            width: boxW,
-            height: boxH,
-            color: colors.accentLight,
-            borderColor: colors.border,
-            borderWidth: 0.75,
-          });
-
+        if (visibleGroupCards.length > 0) {
+          const sectionTitleY = relatedCardsY + relatedCardsH - 14;
           page.drawText('Related Measurements', {
-            x: boxX + 8,
-            y: boxY + boxH - 13,
+            x: layout.marginX,
+            y: sectionTitleY,
             size: typo.tableHeader,
             font: fontBold,
             color: colors.textPrimary,
           });
 
-          const headerY = boxY + boxH - 26;
-          page.drawRectangle({
-            x: boxX + 1,
-            y: headerY - 2,
-            width: boxW - 2,
-            height: 14,
-            color: colors.headerBg,
-          });
-          page.drawText('Part / Frame', {
-            x: boxX + 6,
-            y: headerY + 2,
-            size: typo.small,
-            font: fontBold,
-            color: colors.white,
-          });
-          page.drawText('Label', {
-            x: boxX + partColW + 6,
-            y: headerY + 2,
-            size: typo.small,
-            font: fontBold,
-            color: colors.white,
-          });
-          page.drawText('Value', {
-            x: boxX + partColW + labelColW + 6,
-            y: headerY + 2,
-            size: typo.small,
-            font: fontBold,
-            color: colors.white,
-          });
+          visibleGroupCards.forEach((group, groupIdx) => {
+            const gridRow = Math.floor(groupIdx / cardCols);
+            const gridCol = groupIdx % cardCols;
+            const cardX = layout.marginX + gridCol * (cardW + cardGap);
+            const cardTopY = sectionTitleY - 8 - gridRow * (cardH + cardGap);
+            const cardY = cardTopY - cardH;
+            const safeScope = sanitizePdfFieldPart(
+              group.scopeKey,
+              `scope_${i + 1}_${groupIdx + 1}`
+            );
 
-          visibleRelatedRows.forEach((row, idx) => {
-            const rowY = headerY - 18 * (idx + 1);
-            if (idx % 2 === 0) {
-              page.drawRectangle({
-                x: boxX + 1,
-                y: rowY,
-                width: boxW - 2,
-                height: 18,
-                color: colors.white,
-              });
-            }
-            page.drawText(safePdfText(row.targetName).slice(0, 38), {
-              x: boxX + 6,
-              y: rowY + 4,
-              size: typo.small,
-              font,
-              color: colors.textPrimary,
+            page.drawRectangle({
+              x: cardX,
+              y: cardY,
+              width: cardW,
+              height: cardH,
+              color: colors.panelBg,
+              borderColor: colors.border,
+              borderWidth: 0.75,
             });
-            page.drawText(safePdfText(row.strokeLabel).slice(0, 16), {
-              x: boxX + partColW + 6,
-              y: rowY + 4,
+
+            page.drawRectangle({
+              x: cardX,
+              y: cardTopY - 18,
+              width: cardW,
+              height: 18,
+              color: colors.accentStripe,
+            });
+            page.drawText(safePdfText(group.targetName).slice(0, 28), {
+              x: cardX + 8,
+              y: cardTopY - 12,
               size: typo.small,
               font: fontBold,
-              color: colors.textPrimary,
+              color: colors.white,
             });
 
-            const safeScope = sanitizePdfFieldPart(row.scopeKey, `scope_${i + 1}`);
-            const safeStroke = sanitizePdfFieldPart(row.strokeLabel, `s_${idx + 1}`);
-            const fieldName = createUniquePdfFieldName(
-              `gm_${safeScope}_${safeStroke}_${row.rowIndex + 1}`,
-              usedFieldNames
-            );
-            const textField = form.createTextField(fieldName);
-            textField.setText(row.measurementValue || '');
-            textField.addToPage(page, {
-              x: boxX + partColW + labelColW + 4,
-              y: rowY + 2,
-              width: valueColW - 10,
-              height: 14,
-              borderWidth: 0.75,
-              borderColor: colors.border,
-              backgroundColor: colors.white,
+            const labelColW = cardW * 0.44;
+            const valueColW = cardW - labelColW - 12;
+            const visibleRows = group.rows.slice(0, maxRowsPerCard);
+            visibleRows.forEach((row, rowIdx) => {
+              const rowY = cardTopY - 36 - rowIdx * 18;
+              if (rowIdx % 2 === 0) {
+                page.drawRectangle({
+                  x: cardX + 1,
+                  y: rowY - 2,
+                  width: cardW - 2,
+                  height: 18,
+                  color: colors.white,
+                });
+              }
+              page.drawText(safePdfText(row.strokeLabel).slice(0, 14), {
+                x: cardX + 8,
+                y: rowY + 3,
+                size: typo.small,
+                font: fontBold,
+                color: colors.textPrimary,
+              });
+
+              const safeStroke = sanitizePdfFieldPart(row.strokeLabel, `s_${rowIdx + 1}`);
+              const fieldName = createUniquePdfFieldName(
+                `gm_${safeScope}_${safeStroke}_${row.rowIndex + 1}`,
+                usedFieldNames
+              );
+              const textField = form.createTextField(fieldName);
+              textField.setText(row.measurementValue || '');
+              textField.addToPage(page, {
+                x: cardX + labelColW,
+                y: rowY + 1,
+                width: valueColW,
+                height: 14,
+                borderWidth: 0.75,
+                borderColor: colors.border,
+                backgroundColor: colors.white,
+              });
+              textField.setFontSize(typo.small);
             });
-            textField.setFontSize(typo.small);
+
+            if (group.rows.length > maxRowsPerCard) {
+              page.drawText(`+${group.rows.length - maxRowsPerCard} more`, {
+                x: cardX + 8,
+                y: cardY + 6,
+                size: typo.small,
+                font,
+                color: colors.textMuted,
+              });
+            }
           });
 
-          if (relatedRows.length > relatedRowsLimit) {
-            page.drawText(`+${relatedRows.length - relatedRowsLimit} more`, {
-              x: boxX + 8,
-              y: boxY + 4,
+          if (relatedMeasurementGroups.length > maxGroupCards) {
+            page.drawText(`+${relatedMeasurementGroups.length - maxGroupCards} related pieces`, {
+              x: layout.marginX,
+              y: relatedCardsY + 4,
               size: typo.small,
               font,
               color: colors.textMuted,
