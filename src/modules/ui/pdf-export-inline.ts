@@ -755,13 +755,24 @@ export function initPdfExport() {
       .map(part => String(part || '').trim())
       .filter(Boolean)
       .join('  |  ');
+    const frameCountByView = pageTargets.reduce((acc, target) => {
+      acc[target.viewId] = (acc[target.viewId] || 0) + 1;
+      return acc;
+    }, {});
+    const formatTargetDisplayName = target => {
+      const partLabel = partLabels[target.viewId] || target.viewId;
+      const tabName = String(target.tabName || '').trim();
+      const frameCount = frameCountByView[target.viewId] || 1;
+      const isSingleFrameOne = frameCount <= 1 && /^frame\s*1$/i.test(tabName);
+      if (!tabName || isSingleFrameOne) return partLabel;
+      return `${partLabel} - ${tabName}`;
+    };
 
     for (let i = 0; i < groupedTargets.length; i++) {
       const entry = groupedTargets[i];
       const pageNum = i + 1;
 
       if (entry.type === 'grouped') {
-        // ── Grouped page: hero main image + all related frames ──
         progressText.textContent = `Processing grouped page (${i + 1}/${groupedTargets.length})...`;
         progressBar.style.width = `${(i / groupedTargets.length) * 100}%`;
 
@@ -779,77 +790,93 @@ export function initPdfExport() {
         }
 
         const page = pdfDoc.addPage([pageWidth, pageHeight]);
-
+        const form = pdfDoc.getForm();
         const subtitle = (entry.partLabels || []).filter(Boolean).join(' + ');
         drawHeader(page, projectName, subtitle, namingLine, pageNum);
 
         const currentUnit = document.getElementById('unitSelector')?.value || 'inch';
-        const groupedMeasurementRows = [];
-        const groupedMeasurementTargets = [heroTarget, ...(entry.relatedTargets || [])].filter(
-          Boolean
-        );
+        const splitGap = 14;
+        const leftPaneW = layout.contentWidth * 0.56;
+        const rightPaneW = layout.contentWidth - leftPaneW - splitGap;
+        const leftPaneX = layout.marginX;
+        const rightPaneX = leftPaneX + leftPaneW + splitGap;
 
-        groupedMeasurementTargets.forEach(target => {
-          const { strokes, measurements } = getTargetStrokes(target.scopeKey, target.includeBase);
-          if (!strokes.length) return;
-          const targetPartLabel = partLabels[target.viewId] || target.viewId;
-          const targetName = `${targetPartLabel} - ${target.tabName || 'Frame'}`;
-          strokes.forEach(strokeLabel => {
-            const m = measurements[strokeLabel] || {};
-            let value = '';
-            if (currentUnit === 'inch') {
-              const whole = m.inchWhole || 0;
-              const frac = m.inchFraction || 0;
-              value =
-                whole > 0 || frac > 0
-                  ? `${whole > 0 ? whole + '"' : ''}${frac > 0 ? ' ' + frac.toFixed(2) + '"' : ''}`.trim()
-                  : '';
-            } else {
-              value = m.cm ? `${m.cm.toFixed(1)} cm` : '';
-            }
-            groupedMeasurementRows.push({
-              targetName,
-              strokeLabel,
-              value: value || '-',
-            });
-          });
+        const topStartY = layout.contentTop;
+        const leftStartY = drawSectionHeader(page, 'Main Piece', topStartY, leftPaneX);
+        const rightStartY = drawSectionHeader(page, 'Main Measurements', topStartY, rightPaneX);
+
+        const heroFrame = drawImageFrame(page, heroImage, leftPaneW - 10, 250, leftStartY + 2, {
+          columnX: leftPaneX,
+          columnWidth: leftPaneW,
         });
-
-        const hasGroupedMeasurements = groupedMeasurementRows.length > 0;
-        const measurementRowH = 14;
-        const measurementHeaderH = 18;
-        const maxVisibleRows = 10;
-        const measurementRowsToShow = groupedMeasurementRows.slice(0, maxVisibleRows);
-        const measurementSectionH = hasGroupedMeasurements
-          ? measurementHeaderH + measurementRowsToShow.length * measurementRowH + 20
-          : 0;
-        const visualBottomY = hasGroupedMeasurements
-          ? layout.contentBottom + measurementSectionH + 10
-          : layout.contentBottom;
-
-        // Hero area for main image (big, top)
-        const heroMaxH = Math.max(160, Math.min(280, (layout.contentTop - visualBottomY) * 0.55));
-        const heroFrame = drawImageFrame(
-          page,
-          heroImage,
-          layout.contentWidth - 20,
-          heroMaxH,
-          layout.contentTop
-        );
-        const heroLabel = partLabels[heroTarget.viewId] || heroTarget.viewId;
-        page.drawText(safePdfText(`${heroLabel} (main)`).slice(0, 64), {
-          x: layout.marginX + 4,
+        page.drawText(safePdfText(`${formatTargetDisplayName(heroTarget)} (main)`).slice(0, 64), {
+          x: leftPaneX + 4,
           y: heroFrame.imgY - 12,
           size: typo.small,
           font,
           color: colors.textSecondary,
         });
 
-        // Related frames area below hero image
+        const heroData = getTargetStrokes(heroTarget.scopeKey, heroTarget.includeBase);
+        let rightEndY = rightStartY;
+        if (heroData.strokes.length > 0) {
+          const drawMainTable = drawMeasurementTable(
+            page,
+            heroData.strokes,
+            heroData.measurements,
+            currentUnit,
+            heroTarget.scopeKey,
+            i,
+            form,
+            { tableX: rightPaneX, tableW: rightPaneW }
+          );
+          rightEndY = drawMainTable(rightStartY);
+        }
+
+        const relatedRows = [];
+        (entry.relatedTargets || []).forEach(target => {
+          const { strokes, measurements } = getTargetStrokes(target.scopeKey, target.includeBase);
+          const targetName = formatTargetDisplayName(target);
+          strokes.forEach((strokeLabel, idx) => {
+            const m = measurements[strokeLabel] || {};
+            let measurementValue = '';
+            if (currentUnit === 'inch') {
+              const whole = m.inchWhole || 0;
+              const frac = m.inchFraction || 0;
+              measurementValue =
+                whole > 0 || frac > 0
+                  ? `${whole > 0 ? whole + '"' : ''}${frac > 0 ? ' ' + frac.toFixed(2) + '"' : ''}`.trim()
+                  : '';
+            } else {
+              measurementValue = m.cm ? `${m.cm.toFixed(1)} cm` : '';
+            }
+            relatedRows.push({
+              targetName,
+              strokeLabel,
+              measurementValue,
+              scopeKey: target.scopeKey,
+              rowIndex: idx,
+            });
+          });
+        });
+
+        const relatedRowsLimit = 8;
+        const visibleRelatedRows = relatedRows.slice(0, relatedRowsLimit);
+        const relatedTableH =
+          visibleRelatedRows.length > 0 ? 32 + visibleRelatedRows.length * 18 : 0;
+        const relatedTableY = layout.contentBottom + 6;
+        const relatedGridBottom = relatedTableY + relatedTableH + 10;
+
+        const relatedSectionTop = Math.min(heroFrame.imgY - 24, rightEndY - 12);
         if (relatedFrames.length > 0) {
-          const sectionTop = heroFrame.imgY - 26;
-          const sectionBottom = visualBottomY;
-          const sectionHeight = Math.max(80, sectionTop - sectionBottom);
+          const sectionTop = drawSectionHeader(
+            page,
+            'Related Frames',
+            relatedSectionTop,
+            layout.marginX
+          );
+          const sectionBottom = Math.max(layout.contentBottom + 48, relatedGridBottom);
+          const sectionHeight = Math.max(70, sectionTop - sectionBottom);
 
           const maxCols = 4;
           const cols = Math.min(maxCols, Math.max(1, Math.ceil(Math.sqrt(relatedFrames.length))));
@@ -867,8 +894,7 @@ export function initPdfExport() {
               columnX: colX,
               columnWidth: cellW,
             });
-            const relatedLabel = partLabels[frameEntry.target.viewId] || frameEntry.target.viewId;
-            const caption = `${relatedLabel} - ${frameEntry.target.tabName || 'Frame'}`;
+            const caption = formatTargetDisplayName(frameEntry.target);
             page.drawText(safePdfText(caption).slice(0, 36), {
               x: colX + 2,
               y: Math.max(sectionBottom, frame.imgY - 10),
@@ -879,13 +905,14 @@ export function initPdfExport() {
           });
         }
 
-        if (hasGroupedMeasurements) {
+        if (visibleRelatedRows.length > 0) {
           const boxX = layout.marginX;
-          const boxY = layout.contentBottom;
+          const boxY = relatedTableY;
           const boxW = layout.contentWidth;
-          const boxH = measurementSectionH;
-          const partColW = boxW * 0.54;
-          const labelColW = boxW * 0.24;
+          const boxH = relatedTableH;
+          const partColW = boxW * 0.5;
+          const labelColW = boxW * 0.2;
+          const valueColW = boxW - partColW - labelColW;
 
           page.drawRectangle({
             x: boxX,
@@ -897,7 +924,7 @@ export function initPdfExport() {
             borderWidth: 0.75,
           });
 
-          page.drawText('Measurements', {
+          page.drawText('Related Measurements', {
             x: boxX + 8,
             y: boxY + boxH - 13,
             size: typo.tableHeader,
@@ -935,14 +962,14 @@ export function initPdfExport() {
             color: colors.white,
           });
 
-          measurementRowsToShow.forEach((row, idx) => {
-            const rowY = headerY - measurementRowH * (idx + 1);
+          visibleRelatedRows.forEach((row, idx) => {
+            const rowY = headerY - 18 * (idx + 1);
             if (idx % 2 === 0) {
               page.drawRectangle({
                 x: boxX + 1,
                 y: rowY,
                 width: boxW - 2,
-                height: measurementRowH,
+                height: 18,
                 color: colors.white,
               });
             }
@@ -960,17 +987,29 @@ export function initPdfExport() {
               font: fontBold,
               color: colors.textPrimary,
             });
-            page.drawText(safePdfText(row.value).slice(0, 14), {
-              x: boxX + partColW + labelColW + 6,
-              y: rowY + 4,
-              size: typo.small,
-              font,
-              color: colors.textSecondary,
+
+            const safeScope = sanitizePdfFieldPart(row.scopeKey, `scope_${i + 1}`);
+            const safeStroke = sanitizePdfFieldPart(row.strokeLabel, `s_${idx + 1}`);
+            const fieldName = createUniquePdfFieldName(
+              `gm_${safeScope}_${safeStroke}_${row.rowIndex + 1}`,
+              usedFieldNames
+            );
+            const textField = form.createTextField(fieldName);
+            textField.setText(row.measurementValue || '');
+            textField.addToPage(page, {
+              x: boxX + partColW + labelColW + 4,
+              y: rowY + 2,
+              width: valueColW - 10,
+              height: 14,
+              borderWidth: 0.75,
+              borderColor: colors.border,
+              backgroundColor: colors.white,
             });
+            textField.setFontSize(typo.small);
           });
 
-          if (groupedMeasurementRows.length > maxVisibleRows) {
-            page.drawText(`+${groupedMeasurementRows.length - maxVisibleRows} more`, {
+          if (relatedRows.length > relatedRowsLimit) {
+            page.drawText(`+${relatedRows.length - relatedRowsLimit} more`, {
               x: boxX + 8,
               y: boxY + 4,
               size: typo.small,
