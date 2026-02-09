@@ -101,8 +101,9 @@ function getGroupedPdfPageTargets(pageTargets, pieceGroups, partLabels) {
   const consumed = new Set(); // viewId values consumed into grouped entries
   const grouped = [];
 
-  // For each piece group, the main view + first related view go onto one grouped page.
-  // Extra related views and extra tabs become singles.
+  // For each piece group, render one grouped page with:
+  // - main view hero frame (first tab)
+  // - all frames from each related view
   (pieceGroups || []).forEach(group => {
     const mainId = group.mainViewId;
     const relatedIds = Array.isArray(group.relatedViewIds) ? group.relatedViewIds : [];
@@ -111,39 +112,34 @@ function getGroupedPdfPageTargets(pageTargets, pieceGroups, partLabels) {
     const mainTargets = targetsByView[mainId];
     if (!mainTargets?.length) return;
 
-    // Find first non-consumed related view that has targets
-    const pairedId = relatedIds.find(id => id && !consumed.has(id) && targetsByView[id]?.length);
-
-    if (pairedId) {
-      const pairedTargets = targetsByView[pairedId];
-      consumed.add(mainId);
-      consumed.add(pairedId);
-      grouped.push({
-        type: 'grouped',
-        targets: [mainTargets[0], pairedTargets[0]],
-        note: group.label || '',
-        partLabels: [
-          partLabels[mainId] ||
-            `view-${String((mainTargets[0].viewIndex || 0) + 1).padStart(2, '0')}`,
-          partLabels[pairedId] ||
-            `view-${String((pairedTargets[0].viewIndex || 0) + 1).padStart(2, '0')}`,
-        ],
-      });
-
-      // Extra tabs beyond the first become singles
-      mainTargets.slice(1).forEach(t => grouped.push({ type: 'single', target: t }));
-      pairedTargets.slice(1).forEach(t => grouped.push({ type: 'single', target: t }));
-
-      // Additional related views (beyond the first paired) become singles
-      relatedIds.forEach(id => {
-        if (id === pairedId || consumed.has(id)) return;
-        const targets = targetsByView[id];
-        if (!targets?.length) return;
-        consumed.add(id);
-        targets.forEach(t => grouped.push({ type: 'single', target: t }));
-      });
+    const validRelatedIds = relatedIds.filter(
+      id => id && id !== mainId && !consumed.has(id) && targetsByView[id]?.length
+    );
+    if (!validRelatedIds.length) {
+      return;
     }
-    // If no related view found, main stays unconsumed (will become singles below)
+
+    const mainTarget = mainTargets[0];
+    const relatedTargets = validRelatedIds.flatMap(id => targetsByView[id] || []);
+
+    consumed.add(mainId);
+    validRelatedIds.forEach(id => consumed.add(id));
+
+    grouped.push({
+      type: 'grouped',
+      mainTarget,
+      relatedTargets,
+      note: group.label || '',
+      partLabels: [
+        partLabels[mainId] || `view-${String((mainTarget?.viewIndex || 0) + 1).padStart(2, '0')}`,
+        ...validRelatedIds.map(id => {
+          const firstTarget = (targetsByView[id] || [])[0];
+          return (
+            partLabels[id] || `view-${String((firstTarget?.viewIndex || 0) + 1).padStart(2, '0')}`
+          );
+        }),
+      ],
+    });
   });
 
   // Remaining unconsumed views become singles
@@ -765,87 +761,81 @@ export function initPdfExport() {
       const pageNum = i + 1;
 
       if (entry.type === 'grouped') {
-        // ── Grouped page: two images side-by-side ──
-        const [targetA, targetB] = entry.targets;
+        // ── Grouped page: hero main image + all related frames ──
         progressText.textContent = `Processing grouped page (${i + 1}/${groupedTargets.length})...`;
         progressBar.style.width = `${(i / groupedTargets.length) * 100}%`;
 
-        // Capture both images
-        const imageA = await captureViewImage(targetA.viewId, targetA.tabId);
-        const imageB = await captureViewImage(targetB.viewId, targetB.tabId);
-        if (!imageA || !imageB) continue;
+        const heroTarget = entry.mainTarget;
+        const heroImage = heroTarget
+          ? await captureViewImage(heroTarget.viewId, heroTarget.tabId)
+          : null;
+        if (!heroImage) continue;
+
+        const relatedFrames = [];
+        for (const relatedTarget of entry.relatedTargets || []) {
+          const image = await captureViewImage(relatedTarget.viewId, relatedTarget.tabId);
+          if (!image) continue;
+          relatedFrames.push({ target: relatedTarget, image });
+        }
 
         const page = pdfDoc.addPage([pageWidth, pageHeight]);
-        const form = pdfDoc.getForm();
 
-        // Header with both part labels
-        const subtitle = `${entry.partLabels[0]} + ${entry.partLabels[1]}`;
+        const subtitle = (entry.partLabels || []).filter(Boolean).join(' + ');
         drawHeader(page, projectName, subtitle, namingLine, pageNum);
 
-        // Column layout: two columns with 12px gap
-        const colGap = 12;
-        const colW = (layout.contentWidth - colGap) / 2;
-        const leftColX = layout.marginX;
-        const rightColX = layout.marginX + colW + colGap;
-
-        // Get measurement data for both
-        const dataA = getTargetStrokes(targetA.scopeKey, targetA.includeBase);
-        const dataB = getTargetStrokes(targetB.scopeKey, targetB.includeBase);
-
-        const hasMA = dataA.strokes.length > 0;
-        const hasMB = dataB.strokes.length > 0;
-        const maxStrokeCount = Math.max(dataA.strokes.length, dataB.strokes.length);
-
-        // Image frame height: cap to leave room for table
-        const maxImgH =
-          hasMA || hasMB
-            ? Math.min(200, layout.contentTop - layout.contentBottom - maxStrokeCount * 22 - 80)
-            : layout.contentTop - layout.contentBottom - 20;
-        const imgMaxH = Math.max(120, maxImgH);
-
-        // Draw left column
-        const frameA = drawImageFrame(page, imageA, colW - 10, imgMaxH, layout.contentTop, {
-          columnX: leftColX,
-          columnWidth: colW,
+        // Hero area for main image (big, top)
+        const heroMaxH = Math.max(
+          180,
+          Math.min(300, (layout.contentTop - layout.contentBottom) * 0.5)
+        );
+        const heroFrame = drawImageFrame(
+          page,
+          heroImage,
+          layout.contentWidth - 20,
+          heroMaxH,
+          layout.contentTop
+        );
+        const heroLabel = partLabels[heroTarget.viewId] || heroTarget.viewId;
+        page.drawText(safePdfText(`${heroLabel} (main)`).slice(0, 64), {
+          x: layout.marginX + 4,
+          y: heroFrame.imgY - 12,
+          size: typo.small,
+          font,
+          color: colors.textSecondary,
         });
 
-        // Draw right column
-        const frameB = drawImageFrame(page, imageB, colW - 10, imgMaxH, layout.contentTop, {
-          columnX: rightColX,
-          columnWidth: colW,
-        });
+        // Related frames area below hero image
+        if (relatedFrames.length > 0) {
+          const sectionTop = heroFrame.imgY - 26;
+          const sectionBottom = layout.contentBottom + 4;
+          const sectionHeight = Math.max(80, sectionTop - sectionBottom);
 
-        // Use the lower of the two image bottoms for table start
-        const tableTopY = Math.min(frameA.imgY, frameB.imgY) - 12;
+          const maxCols = 4;
+          const cols = Math.min(maxCols, Math.max(1, Math.ceil(Math.sqrt(relatedFrames.length))));
+          const rows = Math.max(1, Math.ceil(relatedFrames.length / cols));
+          const gap = 8;
+          const cellW = (layout.contentWidth - gap * (cols - 1)) / cols;
+          const cellH = (sectionHeight - gap * (rows - 1)) / rows;
 
-        // Draw measurement tables in columns
-        if (hasMA) {
-          const currentUnit = document.getElementById('unitSelector')?.value || 'inch';
-          const drawTableA = drawMeasurementTable(
-            page,
-            dataA.strokes,
-            dataA.measurements,
-            currentUnit,
-            targetA.scopeKey,
-            i,
-            form,
-            { tableX: leftColX, tableW: colW }
-          );
-          drawTableA(tableTopY);
-        }
-        if (hasMB) {
-          const currentUnit = document.getElementById('unitSelector')?.value || 'inch';
-          const drawTableB = drawMeasurementTable(
-            page,
-            dataB.strokes,
-            dataB.measurements,
-            currentUnit,
-            targetB.scopeKey,
-            i,
-            form,
-            { tableX: rightColX, tableW: colW }
-          );
-          drawTableB(tableTopY);
+          relatedFrames.forEach((frameEntry, idx) => {
+            const row = Math.floor(idx / cols);
+            const col = idx % cols;
+            const colX = layout.marginX + col * (cellW + gap);
+            const rowTop = sectionTop - row * (cellH + gap);
+            const frame = drawImageFrame(page, frameEntry.image, cellW - 8, cellH - 18, rowTop, {
+              columnX: colX,
+              columnWidth: cellW,
+            });
+            const relatedLabel = partLabels[frameEntry.target.viewId] || frameEntry.target.viewId;
+            const caption = `${relatedLabel} - ${frameEntry.target.tabName || 'Frame'}`;
+            page.drawText(safePdfText(caption).slice(0, 36), {
+              x: colX + 2,
+              y: Math.max(sectionBottom, frame.imgY - 10),
+              size: typo.small,
+              font,
+              color: colors.textSecondary,
+            });
+          });
         }
 
         drawFooter(page, pageNum);
@@ -931,12 +921,12 @@ export function initPdfExport() {
       const cardW = layout.contentWidth;
 
       // Helper to start a new page if needed
-      function checkPageBreak(neededHeight) {
+      const checkPageBreak = neededHeight => {
         if (y - neededHeight < layout.contentBottom) {
           return false;
         }
         return true;
-      }
+      };
 
       // ── Checks Section ──
       if (relations.checks?.length > 0) {
