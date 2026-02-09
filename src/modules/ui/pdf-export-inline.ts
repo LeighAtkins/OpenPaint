@@ -989,60 +989,60 @@ export function initPdfExport() {
         y -= 8;
       }
 
-      // ── Connections Section (per-measurement links with status) ──
+      // ── Connections Section (checkboxes with description) ──
       if (relations.connections?.length > 0) {
         if (checkPageBreak(40)) {
           y = drawSectionHeader(page, 'Cross-image Connections', y);
           y -= 4;
 
-          relations.connections.forEach(connection => {
-            if (!checkPageBreak(42)) return;
+          const form = pdfDoc.getForm();
+          relations.connections.forEach((connection, cIdx) => {
+            if (!checkPageBreak(28)) return;
 
-            const cardH = 36;
-            // Card background
-            page.drawRectangle({
-              x: layout.marginX,
-              y: y - cardH,
-              width: cardW,
-              height: cardH,
-              color: colors.accentLight,
-              borderColor: colors.borderLight,
-              borderWidth: 0.5,
+            const rowH = 22;
+            // Alternating row background
+            if (cIdx % 2 === 0) {
+              page.drawRectangle({
+                x: layout.marginX,
+                y: y - rowH + 4,
+                width: cardW,
+                height: rowH,
+                color: colors.accentLight,
+              });
+            }
+
+            // Checkbox
+            const cbName = createUniquePdfFieldName(`conn_${cIdx}`, usedFieldNames);
+            const cb = form.createCheckBox(cbName);
+            cb.addToPage(page, {
+              x: layout.marginX + cardPadX,
+              y: y - 12,
+              width: 11,
+              height: 11,
             });
 
-            // Status badge
-            const badgeW = drawStatusBadge(
-              page,
-              connection.status,
-              layout.marginX + cardPadX,
-              y - 10
-            );
-
-            // Connection text: "FromDisplay <-> ToDisplay"
-            const fromLabel = safePdfText(connection.fromDisplay || connection.fromKey || '-');
-            const toLabel = safePdfText(connection.toDisplay || connection.toKey || '-');
-            const connText = `${fromLabel}  <->  ${toLabel}`;
-            page.drawText(connText.slice(0, 80), {
-              x: layout.marginX + cardPadX + badgeW + 8,
+            // Description text
+            const desc = safePdfText(connection.description || `Connection ${cIdx + 1}`);
+            page.drawText(desc.slice(0, 90), {
+              x: layout.marginX + cardPadX + 18,
               y: y - 10,
               size: typo.table,
-              font: fontMono,
+              font,
               color: colors.textPrimary,
             });
 
-            // Reason line
-            const isPending = String(connection.status || '').toLowerCase() === 'pending';
-            if (!isPending && connection.reason) {
-              page.drawText(safePdfText(connection.reason).slice(0, 100), {
-                x: layout.marginX + cardPadX,
-                y: y - 26,
+            // Note (if present)
+            if (connection.note) {
+              page.drawText(safePdfText(connection.note).slice(0, 80), {
+                x: layout.marginX + cardPadX + 18,
+                y: y - 20,
                 size: typo.small,
                 font,
                 color: colors.textSecondary,
               });
             }
 
-            y -= cardH + 6;
+            y -= rowH + 4;
           });
 
           y -= 8;

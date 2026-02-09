@@ -163,39 +163,6 @@ function evaluateChecks(checks, measurementIndex) {
   });
 }
 
-function evaluateConnections(connections, measurementLookup, tolerance = 0) {
-  return (connections || []).map(connection => {
-    const from = measurementLookup[connection.fromKey || ''];
-    const to = measurementLookup[connection.toKey || ''];
-    if (
-      !from ||
-      !to ||
-      from.value === null ||
-      from.value === undefined ||
-      to.value === null ||
-      to.value === undefined
-    ) {
-      return {
-        ...connection,
-        status: 'pending',
-        delta: null,
-        reason: 'Waiting for values (informational)',
-        fromDisplay: from?.display || connection.fromKey || '-',
-        toDisplay: to?.display || connection.toKey || '-',
-      };
-    }
-    const delta = Math.abs(from.value - to.value);
-    return {
-      ...connection,
-      status: delta <= tolerance ? 'pass' : 'fail',
-      delta,
-      reason: delta <= tolerance ? 'Connected values align' : 'Connected values differ',
-      fromDisplay: from.display,
-      toDisplay: to.display,
-    };
-  });
-}
-
 function evaluateMeasurementRelations() {
   const metadata = getMetadata();
   const checks = Array.isArray(metadata.measurementChecks) ? metadata.measurementChecks : [];
@@ -205,11 +172,10 @@ function evaluateMeasurementRelations() {
   const pieceGroups = Array.isArray(metadata.pieceGroups) ? metadata.pieceGroups : [];
   const index = buildMeasurementIndex();
   const checkResults = evaluateChecks(checks, index);
-  const connectionResults = evaluateConnections(connections, index.lookup, 0);
   return {
     unit: index.unit,
     checks: checkResults,
-    connections: connectionResults,
+    connections,
     pieceGroups,
     measurements: index.entries,
   };
@@ -295,6 +261,8 @@ async function openMeasurementRelationsEditor() {
     })
     .join('');
 
+  const coverStyle = metadata.naming?.coverStyle || '';
+
   const overlay = document.createElement('div');
   overlay.className = 'relations-overlay';
   overlay.innerHTML = `
@@ -306,6 +274,32 @@ async function openMeasurementRelationsEditor() {
         </div>
         <button id="closeRelationsEditor" type="button" style="border:1px solid #cbd5e1;background:#fff;border-radius:8px;padding:7px 10px;font-weight:600;cursor:pointer;">Close</button>
       </div>
+
+      <section style="background:#fffbeb;border:1px solid #f59e0b;border-radius:10px;padding:12px 14px;margin-top:10px;">
+        <h3 style="margin:0 0 8px;font-size:14px;color:#92400e;">Measuring Tips</h3>
+        <div style="display:flex;gap:24px;flex-wrap:wrap;font-size:12px;color:#78350f;">
+          <div>
+            <p style="margin:0 0 4px;font-weight:700;">DO:</p>
+            <ul style="margin:0;padding-left:18px;line-height:1.6;">
+              <li>Measure from seam to seam</li>
+              <li>Pull tape taut but not stretched</li>
+              <li>Note the widest/deepest point</li>
+            </ul>
+          </div>
+          <div>
+            <p style="margin:0 0 4px;font-weight:700;">DO NOT:</p>
+            <ul style="margin:0;padding-left:18px;line-height:1.6;">
+              <li>Include piping or trim in measurements</li>
+              <li>Measure over cushions</li>
+              <li>Round measurements — use exact values</li>
+            </ul>
+          </div>
+        </div>
+        <div style="margin-top:10px;display:flex;align-items:center;gap:8px;">
+          <label style="font-size:12px;font-weight:600;color:#92400e;white-space:nowrap;">Cover Style:</label>
+          <input id="coverStyleInput" type="text" value="${coverStyle.replace(/"/g, '&quot;')}" placeholder="e.g. Loose fit, Tight fit, Slipcover..." style="flex:1;border:1px solid #d97706;border-radius:7px;padding:5px 8px;font-size:12px;background:#fff;" />
+        </div>
+      </section>
 
       <section class="relations-section">
         <h3 style="margin:0 0 4px;font-size:14px;color:#0f172a;">Piece Groups</h3>
@@ -325,9 +319,9 @@ async function openMeasurementRelationsEditor() {
 
       <section class="relations-section">
         <h3 style="margin:0 0 8px;font-size:14px;color:#0f172a;">Cross-image Connections</h3>
-        <p style="margin:0 0 8px;font-size:11px;color:#64748b;">Link specific measurements across images to verify they connect at the same point.</p>
+        <p style="margin:0 0 8px;font-size:11px;color:#64748b;">Describe how pieces connect across images. These appear as checkboxes in the PDF.</p>
         <table class="relations-table">
-          <thead><tr><th>From</th><th>To</th><th>Note</th><th>Status</th><th></th></tr></thead>
+          <thead><tr><th>Description</th><th>Note</th><th></th></tr></thead>
           <tbody id="relationsConnectionsBody"></tbody>
         </table>
         <button id="addRelationConnection" type="button" style="margin-top:8px;border:1px solid #cbd5e1;background:#fff;border-radius:7px;padding:6px 10px;font-size:12px;cursor:pointer;">Add connection</button>
@@ -374,7 +368,7 @@ async function openMeasurementRelationsEditor() {
             <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
               <label style="font-size:11px;font-weight:600;color:#334155;white-space:nowrap;">Related:</label>
               <span id="relatedTags-${gIdx}">${relatedTags || '<span style="color:#94a3b8;font-size:11px;">None</span>'}</span>
-              <button data-add-related="${gIdx}" type="button" style="border:1px solid #cbd5e1;background:#fff;border-radius:6px;padding:2px 8px;font-size:11px;cursor:pointer;">+ Add</button>
+              <select data-add-related-select="${gIdx}" style="border:1px solid #cbd5e1;border-radius:6px;padding:2px 8px;font-size:11px;"></select>
             </div>
           </div>
           <button data-remove-group="${gIdx}" type="button" style="border:1px solid #fecaca;background:#fff;color:#b91c1c;border-radius:7px;padding:4px 8px;font-size:11px;cursor:pointer;">Remove</button>
@@ -399,18 +393,33 @@ async function openMeasurementRelationsEditor() {
         });
       });
 
-      // Add related image
-      card.querySelector(`[data-add-related="${gIdx}"]`)?.addEventListener('click', () => {
-        // Pick the first view not already used in this group
+      // Add related image via dropdown
+      const addSelect = card.querySelector(`[data-add-related-select="${gIdx}"]`);
+      if (addSelect) {
         const usedInGroup = new Set([group.mainViewId, ...(group.relatedViewIds || [])]);
-        const available = viewIds.find(id => !usedInGroup.has(id));
-        if (!available) return;
-        pieceGroups[gIdx] = {
-          ...group,
-          relatedViewIds: [...(group.relatedViewIds || []), available],
-        };
-        render();
-      });
+        const available = viewIds.filter(id => !usedInGroup.has(id));
+        if (available.length === 0) {
+          addSelect.innerHTML = '<option disabled selected>No images available</option>';
+          addSelect.disabled = true;
+        } else {
+          addSelect.innerHTML = '<option value="" disabled selected>+ Add related...</option>';
+          available.forEach(id => {
+            const label = metadata.imagePartLabels?.[id] || id;
+            const opt = document.createElement('option');
+            opt.value = id;
+            opt.textContent = label;
+            addSelect.appendChild(opt);
+          });
+          addSelect.addEventListener('change', () => {
+            if (!addSelect.value) return;
+            pieceGroups[gIdx] = {
+              ...group,
+              relatedViewIds: [...(group.relatedViewIds || []), addSelect.value],
+            };
+            render();
+          });
+        }
+      }
 
       // Remove group
       card.querySelector(`[data-remove-group="${gIdx}"]`)?.addEventListener('click', () => {
@@ -452,27 +461,19 @@ async function openMeasurementRelationsEditor() {
       checksBody.appendChild(row);
     });
 
-    // ── Connections (per-measurement fromKey/toKey) ──
+    // ── Connections (description + note) ──
     connectionsBody.innerHTML = '';
     if (!connections.length) {
       connectionsBody.innerHTML =
-        '<tr><td colspan="5" style="color:#64748b;">No connections yet.</td></tr>';
+        '<tr><td colspan="3" style="color:#64748b;">No connections yet.</td></tr>';
     }
     connections.forEach((connection, idx) => {
-      const status = evaluated.connections[idx]?.status || 'pending';
-      const reason = evaluated.connections[idx]?.reason || '';
       const row = document.createElement('tr');
       row.innerHTML = `
-        <td><select data-field="fromKey">${measurementOptions}</select></td>
-        <td><select data-field="toKey">${measurementOptions}</select></td>
-        <td><input data-field="note" value="${connection.note || ''}" placeholder="Optional" /></td>
-        <td><span class="status-chip ${status}">${status}</span><div style="font-size:10px;color:#64748b;">${reason}</div></td>
+        <td><input data-field="description" value="${(connection.description || '').replace(/"/g, '&quot;')}" placeholder="e.g. Front arm meets back panel at seam" /></td>
+        <td><input data-field="note" value="${(connection.note || '').replace(/"/g, '&quot;')}" placeholder="Optional" /></td>
         <td><button data-remove="${idx}" type="button" style="border:1px solid #fecaca;background:#fff;color:#b91c1c;border-radius:7px;padding:4px 8px;cursor:pointer;">Remove</button></td>
       `;
-      row.querySelector('[data-field="fromKey"]').value =
-        connection.fromKey || index.entries[0]?.key || '';
-      row.querySelector('[data-field="toKey"]').value =
-        connection.toKey || index.entries[0]?.key || '';
       row.querySelectorAll('[data-field]').forEach(input => {
         const field = input.dataset.field;
         input.addEventListener('change', () => {
@@ -506,19 +507,18 @@ async function openMeasurementRelationsEditor() {
   });
 
   overlay.querySelector('#addRelationConnection')?.addEventListener('click', () => {
-    const firstKey = index.entries[0]?.key || '';
-    connections = [
-      ...connections,
-      { id: `conn-${Date.now()}`, fromKey: firstKey, toKey: firstKey, note: '' },
-    ];
+    connections = [...connections, { id: `conn-${Date.now()}`, description: '', note: '' }];
     render();
   });
 
   overlay.querySelector('#saveRelations')?.addEventListener('click', () => {
+    const currentNaming = getMetadata().naming || {};
+    const coverStyleValue = overlay.querySelector('#coverStyleInput')?.value || '';
     setMetadata({
       measurementChecks: checks,
       measurementConnections: connections,
       pieceGroups,
+      naming: { ...currentNaming, coverStyle: coverStyleValue },
     });
     window.app?.projectManager?.showStatusMessage?.(
       'Measurement checks, connections, and piece groups saved.',
