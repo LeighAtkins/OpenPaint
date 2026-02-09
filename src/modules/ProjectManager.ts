@@ -10,6 +10,7 @@ import {
   mergeSofaMetadata,
   normalizeSofaMetadata,
 } from './sofa-metadata.js';
+import { sanitizeFilenamePart } from './utils/naming-utils.js';
 
 export class ProjectManager {
   constructor(canvasManager, historyManager) {
@@ -1417,7 +1418,7 @@ export class ProjectManager {
   async saveProject() {
     const projectNameInput = document.getElementById('projectName');
     const projectName = projectNameInput?.value?.trim() || 'OpenPaint Project';
-    const downloadName = `${projectName.replace(/\s+/g, '_')}_fabric.json`;
+    const downloadName = `${sanitizeFilenamePart(projectName, 'OpenPaint Project')}_fabric.json`;
 
     try {
       console.log('[Save] Starting saveProject');

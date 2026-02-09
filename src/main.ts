@@ -65,10 +65,7 @@ declare global {
     shareProject?: any;
     updateSharedProject?: any;
     openSofaTypePicker?: any;
-    openPieceConnectionEditor?: any;
-    openAdaptiveIntakePdf?: any;
-    evaluateSofaRules?: any;
-    openSofaRuleReview?: any;
+    openMeasurementRelationsEditor?: any;
     saveFabricProject?: any;
     updateStrokeVisibilityControls?: any;
     aiExports?: any;
@@ -88,12 +85,11 @@ import { initFrameCaptureToggle } from './modules/ui/frame-capture-toggle';
 import { initFrameCaptureVisibility } from './modules/ui/frame-capture-visibility';
 import { initToolbarLayout } from './modules/ui/toolbar-layout';
 import { initPdfExport } from './modules/ui/pdf-export-inline.js';
-import { initAdaptiveIntakePdf } from './modules/ui/adaptive-pdf-intake.js';
 import { initToolbarController } from './modules/ui/toolbar-controller.js';
 import { initScrollSelectSystem } from './modules/ui/scroll-select-init.js';
 import { initSofaTypePicker } from './modules/ui/sofa-type-picker.js';
-import { initPieceConnectionEditor } from './modules/ui/piece-connection-editor.js';
-import { initSofaRuleReview } from './modules/ui/sofa-rule-review.js';
+import { initProjectNaming } from './modules/ui/project-naming.js';
+import { initMeasurementRelations } from './modules/ui/measurement-relations.js';
 import { initStatusMessageHandler } from './modules/ui/status-message-handler';
 import { initStatusMessage } from './modules/ui/status-message';
 import { initAIExport } from './modules/ai/ai-export-loader';
@@ -149,9 +145,6 @@ async function bootstrap(): Promise<void> {
   // Initialize PDF export (uses pdf-lib npm package)
   initPdfExport();
 
-  // Initialize adaptive intake PDF preview/generation flow (beta)
-  initAdaptiveIntakePdf();
-
   // Initialize toolbar controller (wires up arrow toggles, dash patterns, etc.)
   initToolbarController();
 
@@ -161,11 +154,11 @@ async function bootstrap(): Promise<void> {
   // Initialize sofa type onboarding + save guard
   initSofaTypePicker();
 
-  // Initialize piece + connection editor launcher
-  initPieceConnectionEditor();
+  // Initialize naming controls and image part labeling
+  initProjectNaming();
 
-  // Initialize rule checks launcher for sofa intake metadata
-  initSofaRuleReview();
+  // Initialize lightweight measurement checks + connections editor
+  initMeasurementRelations();
   // Initialize status message handler
   initStatusMessageHandler();
 

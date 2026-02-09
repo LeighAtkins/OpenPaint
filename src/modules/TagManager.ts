@@ -684,6 +684,22 @@ export class TagManager {
     keys.forEach(key => this.removeTag(key));
   }
 
+  renameTagLabel(oldLabel, newLabel, imageLabel) {
+    const found = this.getTagObject(oldLabel, imageLabel);
+    if (!found) return false;
+
+    const { key, tagObj } = found;
+    tagObj.strokeLabel = newLabel;
+    const resolvedImageLabel = tagObj.imageLabel || this.normalizeImageLabel(imageLabel);
+    const newKey = this.getTagKey(newLabel, resolvedImageLabel);
+
+    this.tagObjects.delete(key);
+    this.tagObjects.set(newKey, tagObj);
+
+    this.updateTagText(newLabel, resolvedImageLabel);
+    return true;
+  }
+
   // Update tag text when measurement changes
   updateTagText(strokeLabel, imageLabel) {
     const found = this.getTagObject(strokeLabel, imageLabel);

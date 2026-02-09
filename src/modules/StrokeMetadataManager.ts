@@ -307,6 +307,61 @@ export class StrokeMetadataManager {
     return this.strokeMeasurements[imageLabel]?.[strokeLabel] || null;
   }
 
+  renameStrokeLabel(imageLabel, oldLabel, newLabel) {
+    imageLabel = this.normalizeImageLabel(imageLabel);
+    const nextLabel = String(newLabel || '')
+      .trim()
+      .toUpperCase();
+
+    if (!nextLabel || nextLabel === oldLabel) {
+      return { ok: true, label: oldLabel };
+    }
+
+    if (!/^[A-Z](?:\d+)?(?:\(\d+\))?$/.test(nextLabel)) {
+      return { ok: false, reason: 'invalid-format' };
+    }
+
+    const strokes = this.vectorStrokesByImage[imageLabel] || {};
+    if (!strokes[oldLabel]) {
+      return { ok: false, reason: 'missing-stroke' };
+    }
+
+    if (strokes[nextLabel]) {
+      return { ok: false, reason: 'duplicate' };
+    }
+
+    const strokeObj = strokes[oldLabel];
+    delete strokes[oldLabel];
+    strokes[nextLabel] = strokeObj;
+
+    if (strokeObj?.strokeMetadata) {
+      strokeObj.strokeMetadata.strokeLabel = nextLabel;
+    }
+
+    const moveKey = map => {
+      if (!map?.[imageLabel]) return;
+      if (!Object.prototype.hasOwnProperty.call(map[imageLabel], oldLabel)) return;
+      map[imageLabel][nextLabel] = map[imageLabel][oldLabel];
+      delete map[imageLabel][oldLabel];
+    };
+
+    moveKey(this.strokeVisibilityByImage);
+    moveKey(this.strokeLabelVisibility);
+    moveKey(this.strokeMeasurements);
+
+    if (Array.isArray(window.lineStrokesByImage?.[imageLabel])) {
+      window.lineStrokesByImage[imageLabel] = window.lineStrokesByImage[imageLabel].map(label =>
+        label === oldLabel ? nextLabel : label
+      );
+    }
+
+    if (window.app?.tagManager?.renameTagLabel) {
+      window.app.tagManager.renameTagLabel(oldLabel, nextLabel, imageLabel);
+    }
+
+    return { ok: true, label: nextLabel };
+  }
+
   // Generate next label (A1, A2, B1, etc.) - integrates with tag prediction system
   getNextLabel(imageLabel, mode = 'letters+numbers') {
     imageLabel = this.normalizeImageLabel(imageLabel);
@@ -894,10 +949,59 @@ export class StrokeMetadataManager {
       strokeName.className = 'stroke-name';
       strokeName.dataset.originalName = strokeLabel;
       strokeName.contentEditable = 'false';
-      strokeName.title = 'Straight Line';
+      strokeName.title = 'Click to rename stroke label';
       strokeName.style.borderColor = 'rgb(59, 130, 246)';
       strokeName.style.color = 'rgb(59, 130, 246)';
       strokeName.textContent = strokeLabel;
+
+      let originalStrokeName = strokeLabel;
+      strokeName.addEventListener('click', () => {
+        if (strokeName.contentEditable === 'true') return;
+        originalStrokeName = strokeName.textContent?.trim() || strokeLabel;
+        strokeName.contentEditable = 'true';
+        strokeName.focus();
+        const range = document.createRange();
+        range.selectNodeContents(strokeName);
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+      });
+
+      strokeName.addEventListener('keydown', e => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          strokeName.blur();
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          strokeName.textContent = originalStrokeName;
+          strokeName.blur();
+        }
+      });
+
+      strokeName.addEventListener('blur', () => {
+        if (strokeName.contentEditable !== 'true') return;
+        strokeName.contentEditable = 'false';
+        const requested = strokeName.textContent?.trim().toUpperCase() || '';
+        const renameResult = this.renameStrokeLabel(currentViewId, originalStrokeName, requested);
+
+        if (!renameResult.ok) {
+          strokeName.textContent = originalStrokeName;
+          if (renameResult.reason === 'duplicate') {
+            alert(`Stroke label ${requested} already exists in this view.`);
+          } else if (renameResult.reason === 'invalid-format') {
+            alert('Use labels like A, A1, or A1(2).');
+          }
+          return;
+        }
+
+        strokeName.textContent = renameResult.label;
+        if (renameResult.label !== originalStrokeName) {
+          this.updateStrokeVisibilityControls();
+          if (window.updateNextTagDisplay) {
+            window.updateNextTagDisplay();
+          }
+        }
+      });
 
       // Label toggle button (🏷️)
       const labelToggleBtn = document.createElement('button');
