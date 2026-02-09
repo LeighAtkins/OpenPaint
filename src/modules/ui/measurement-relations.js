@@ -232,8 +232,42 @@ function ensureStyles() {
   document.head.appendChild(style);
 }
 
-function openMeasurementRelationsEditor() {
+async function preWarmAllViews() {
+  const views = window.app?.projectManager?.views || {};
+  const viewIds = Object.keys(views).filter(id => views[id]?.image);
+  if (!viewIds.length) return;
+  const currentViewId = window.app?.projectManager?.currentViewId;
+  for (const viewId of viewIds) {
+    try {
+      await window.app.projectManager.switchView(viewId);
+      await new Promise(resolve => setTimeout(resolve, 80));
+    } catch (_) {
+      /* skip */
+    }
+  }
+  // Restore original view
+  if (currentViewId) {
+    try {
+      await window.app.projectManager.switchView(currentViewId);
+    } catch (_) {
+      /* skip */
+    }
+  }
+}
+
+async function openMeasurementRelationsEditor() {
   ensureStyles();
+
+  // Show brief loading overlay while pre-warming views
+  const loadingOverlay = document.createElement('div');
+  loadingOverlay.className = 'relations-overlay';
+  loadingOverlay.innerHTML =
+    '<div style="background:#fff;border-radius:12px;padding:24px 32px;box-shadow:0 8px 32px rgba(0,0,0,.2);text-align:center;"><p style="margin:0;font-size:14px;color:#334155;">Loading measurements from all images...</p></div>';
+  document.body.appendChild(loadingOverlay);
+
+  await preWarmAllViews();
+  loadingOverlay.remove();
+
   const metadata = getMetadata();
   let checks = Array.isArray(metadata.measurementChecks) ? [...metadata.measurementChecks] : [];
   let connections = Array.isArray(metadata.measurementConnections)

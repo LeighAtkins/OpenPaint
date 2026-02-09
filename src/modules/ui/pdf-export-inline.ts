@@ -209,22 +209,434 @@ export function initPdfExport() {
     const usedFieldNames = new Set();
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
     const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+    const fontMono = await pdfDoc.embedFont(StandardFonts.Courier);
     const metadata =
       window.app?.projectManager?.getProjectMetadata?.() || window.projectMetadata || {};
     const naming = metadata.naming || {};
     const partLabels = metadata.imagePartLabels || {};
+    // Pre-check whether checks/connections exist (for page count).
+    // Full evaluation is deferred until after the image loop so all views are loaded.
+    const metaChecks = Array.isArray(metadata.measurementChecks) ? metadata.measurementChecks : [];
+    const metaConnections = Array.isArray(metadata.measurementConnections)
+      ? metadata.measurementConnections
+      : [];
+    const hasRelationshipPage = metaChecks.length + metaConnections.length > 0;
     let relations = { checks: [], connections: [] };
-    if (typeof window.evaluateMeasurementRelations === 'function') {
-      try {
-        relations = window.evaluateMeasurementRelations() || relations;
-      } catch (error) {
-        console.warn('[PDF] Failed to evaluate measurement relations, continuing:', error);
-      }
-    }
     const pageSizes = { letter: { width: 612, height: 792 }, a4: { width: 595, height: 842 } };
     const { width: pageWidth, height: pageHeight } = pageSizes[pageSize] || pageSizes.letter;
     const qualityScales = { high: 3.0, medium: 2.0, low: 1.5 };
     const scale = qualityScales[quality] || 2.0;
+
+    // ── Design System ────────────────────────────────────────────────
+    const colors = {
+      headerBg: rgb(0.09, 0.11, 0.2), // dark navy
+      accentStripe: rgb(0.22, 0.47, 0.96), // vivid blue
+      accentLight: rgb(0.92, 0.95, 1.0), // light blue tint
+      white: rgb(1, 1, 1),
+      textPrimary: rgb(0.12, 0.12, 0.14),
+      textSecondary: rgb(0.4, 0.42, 0.48),
+      textMuted: rgb(0.58, 0.6, 0.65),
+      border: rgb(0.82, 0.84, 0.88),
+      borderLight: rgb(0.91, 0.93, 0.95),
+      tableRowAlt: rgb(0.96, 0.97, 0.99),
+      frameShadow: rgb(0.78, 0.8, 0.84),
+      frameBorder: rgb(0.7, 0.72, 0.76),
+      statusPass: rgb(0.13, 0.59, 0.33),
+      statusFail: rgb(0.82, 0.18, 0.18),
+      statusWarn: rgb(0.8, 0.58, 0.08),
+      statusPending: rgb(0.55, 0.57, 0.62),
+      badgePassBg: rgb(0.88, 0.97, 0.91),
+      badgeFailBg: rgb(0.99, 0.9, 0.9),
+      badgeWarnBg: rgb(1.0, 0.96, 0.88),
+      badgePendBg: rgb(0.93, 0.94, 0.95),
+    };
+    const layout = {
+      marginX: 40,
+      headerH: 56,
+      accentH: 3,
+      footerH: 32,
+      contentTop: pageHeight - 56 - 3 - 16, // below header + accent + gap
+      contentBottom: 32 + 12, // above footer + gap
+      contentWidth: pageWidth - 80,
+    };
+    const typo = {
+      title: 18,
+      subtitle: 10,
+      sectionHeader: 13,
+      body: 10,
+      table: 9,
+      tableHeader: 9,
+      small: 8,
+      footer: 7,
+    };
+
+    const totalPages = pageTargets.length + (hasRelationshipPage ? 1 : 0);
+
+    // ── Helper Functions ─────────────────────────────────────────────
+
+    function centerText(text, y, size, usedFont, color, page) {
+      const w = usedFont.widthOfTextAtSize(safePdfText(text), size);
+      page.drawText(safePdfText(text), {
+        x: (pageWidth - w) / 2,
+        y,
+        size,
+        font: usedFont,
+        color,
+      });
+    }
+
+    function rightAlignText(text, y, size, usedFont, color, page, rightMargin) {
+      const w = usedFont.widthOfTextAtSize(safePdfText(text), size);
+      page.drawText(safePdfText(text), {
+        x: rightMargin - w,
+        y,
+        size,
+        font: usedFont,
+        color,
+      });
+    }
+
+    function drawHeader(page, titleText, subtitleText, namingText, pageNum) {
+      // Dark navy header bar
+      page.drawRectangle({
+        x: 0,
+        y: pageHeight - layout.headerH,
+        width: pageWidth,
+        height: layout.headerH,
+        color: colors.headerBg,
+      });
+      // Accent stripe below header
+      page.drawRectangle({
+        x: 0,
+        y: pageHeight - layout.headerH - layout.accentH,
+        width: pageWidth,
+        height: layout.accentH,
+        color: colors.accentStripe,
+      });
+      // Project name — centered
+      centerText(titleText, pageHeight - 24, typo.title, fontBold, colors.white, page);
+      // Naming line — centered below title
+      if (namingText) {
+        centerText(namingText, pageHeight - 38, typo.small, font, rgb(0.72, 0.78, 0.9), page);
+      }
+      // Subtitle (page label) — left
+      if (subtitleText) {
+        page.drawText(safePdfText(subtitleText), {
+          x: layout.marginX,
+          y: pageHeight - 52,
+          size: typo.subtitle,
+          font,
+          color: rgb(0.6, 0.68, 0.82),
+        });
+      }
+      // Page number — right
+      rightAlignText(
+        `Page ${pageNum} of ${totalPages}`,
+        pageHeight - 52,
+        typo.subtitle,
+        font,
+        rgb(0.6, 0.68, 0.82),
+        page,
+        pageWidth - layout.marginX
+      );
+    }
+
+    function drawFooter(page, pageNum) {
+      const footerY = 20;
+      // Separator line
+      page.drawRectangle({
+        x: layout.marginX,
+        y: footerY + 10,
+        width: layout.contentWidth,
+        height: 0.5,
+        color: colors.border,
+      });
+      // Date left
+      page.drawText(safePdfText(`Generated: ${new Date().toLocaleDateString()}`), {
+        x: layout.marginX,
+        y: footerY,
+        size: typo.footer,
+        font,
+        color: colors.textMuted,
+      });
+      // Page right
+      rightAlignText(
+        `Page ${pageNum} of ${totalPages}`,
+        footerY,
+        typo.footer,
+        font,
+        colors.textMuted,
+        page,
+        pageWidth - layout.marginX
+      );
+    }
+
+    function drawImageFrame(page, image, maxWidth, maxHeight, topY) {
+      const imgAspect = image.width / image.height;
+      let imgWidth = maxWidth;
+      let imgHeight = imgWidth / imgAspect;
+      if (imgHeight > maxHeight) {
+        imgHeight = maxHeight;
+        imgWidth = imgHeight * imgAspect;
+      }
+      const imgX = (pageWidth - imgWidth) / 2;
+      const imgY = topY - imgHeight;
+      // Shadow (offset rectangle)
+      page.drawRectangle({
+        x: imgX + 2,
+        y: imgY - 2,
+        width: imgWidth,
+        height: imgHeight,
+        color: colors.frameShadow,
+      });
+      // White mat border
+      const pad = 4;
+      page.drawRectangle({
+        x: imgX - pad,
+        y: imgY - pad,
+        width: imgWidth + pad * 2,
+        height: imgHeight + pad * 2,
+        color: colors.white,
+        borderColor: colors.frameBorder,
+        borderWidth: 0.75,
+      });
+      // Image
+      page.drawImage(image, { x: imgX, y: imgY, width: imgWidth, height: imgHeight });
+      return { imgX, imgY, imgWidth, imgHeight };
+    }
+
+    function drawSectionHeader(page, text, y) {
+      page.drawText(safePdfText(text), {
+        x: layout.marginX,
+        y,
+        size: typo.sectionHeader,
+        font: fontBold,
+        color: colors.textPrimary,
+      });
+      // Accent underline
+      const textW = fontBold.widthOfTextAtSize(safePdfText(text), typo.sectionHeader);
+      page.drawRectangle({
+        x: layout.marginX,
+        y: y - 4,
+        width: textW + 8,
+        height: 2,
+        color: colors.accentStripe,
+      });
+      return y - 22;
+    }
+
+    function drawStatusBadge(page, status, x, y) {
+      const s = String(status || 'pending').toLowerCase();
+      const labelMap = { pass: 'PASS', fail: 'FAIL', warn: 'WARN', pending: 'PENDING' };
+      const bgMap = {
+        pass: colors.badgePassBg,
+        fail: colors.badgeFailBg,
+        warn: colors.badgeWarnBg,
+        pending: colors.badgePendBg,
+      };
+      const fgMap = {
+        pass: colors.statusPass,
+        fail: colors.statusFail,
+        warn: colors.statusWarn,
+        pending: colors.statusPending,
+      };
+      const label = labelMap[s] || 'PENDING';
+      const bg = bgMap[s] || colors.badgePendBg;
+      const fg = fgMap[s] || colors.statusPending;
+      const badgeW = fontBold.widthOfTextAtSize(label, 7) + 10;
+      const badgeH = 12;
+      // Badge background
+      page.drawRectangle({
+        x,
+        y: y - 2,
+        width: badgeW,
+        height: badgeH,
+        color: bg,
+        borderColor: fg,
+        borderWidth: 0.5,
+      });
+      // Badge text
+      page.drawText(label, {
+        x: x + 5,
+        y: y + 1,
+        size: 7,
+        font: fontBold,
+        color: fg,
+      });
+      return badgeW;
+    }
+
+    function drawMeasurementTable(
+      page,
+      strokes,
+      measurements,
+      currentUnit,
+      scopeKey,
+      pageIndex,
+      form
+    ) {
+      const safeView = sanitizePdfFieldPart(scopeKey, `view_${pageIndex + 1}`);
+      const tableX = layout.marginX;
+      const tableW = layout.contentWidth;
+      const rowH = 22;
+      const headerH = 20;
+      const labelColW = tableW * 0.45;
+      const valueColW = tableW * 0.55;
+
+      // Start Y — called after image frame, caller passes startY
+      return function (startY) {
+        let y = startY;
+
+        // Section header
+        y = drawSectionHeader(page, 'Measurements', y);
+        y -= 2;
+
+        // Unit checkboxes row
+        const unitRowY = y;
+        page.drawText('Unit:', {
+          x: tableX,
+          y: unitRowY,
+          size: typo.small,
+          font: fontBold,
+          color: colors.textSecondary,
+        });
+        const cmName = createUniquePdfFieldName(`unit_cm_${safeView}`, usedFieldNames);
+        const cmCheck = form.createCheckBox(cmName);
+        cmCheck.addToPage(page, { x: tableX + 32, y: unitRowY - 2, width: 10, height: 10 });
+        if (currentUnit === 'cm') cmCheck.check();
+        page.drawText('cm', {
+          x: tableX + 45,
+          y: unitRowY,
+          size: typo.small,
+          font,
+          color: colors.textSecondary,
+        });
+        const inchName = createUniquePdfFieldName(`unit_inch_${safeView}`, usedFieldNames);
+        const inchCheck = form.createCheckBox(inchName);
+        inchCheck.addToPage(page, { x: tableX + 68, y: unitRowY - 2, width: 10, height: 10 });
+        if (currentUnit === 'inch') inchCheck.check();
+        page.drawText('inch', {
+          x: tableX + 81,
+          y: unitRowY,
+          size: typo.small,
+          font,
+          color: colors.textSecondary,
+        });
+        y -= 18;
+
+        // Table header row
+        page.drawRectangle({
+          x: tableX,
+          y: y - headerH + 6,
+          width: tableW,
+          height: headerH,
+          color: colors.headerBg,
+        });
+        page.drawText('Label', {
+          x: tableX + 8,
+          y: y - 8,
+          size: typo.tableHeader,
+          font: fontBold,
+          color: colors.white,
+        });
+        page.drawText('Measurement', {
+          x: tableX + labelColW + 8,
+          y: y - 8,
+          size: typo.tableHeader,
+          font: fontBold,
+          color: colors.white,
+        });
+        y -= headerH + 2;
+
+        // Table rows
+        strokes.forEach((strokeLabel, idx) => {
+          if (y < layout.contentBottom + rowH) return; // don't overflow into footer
+
+          const m = measurements[strokeLabel] || {};
+          let measurement = '';
+          if (currentUnit === 'inch') {
+            const whole = m.inchWhole || 0;
+            const frac = m.inchFraction || 0;
+            measurement =
+              whole > 0 || frac > 0
+                ? `${whole > 0 ? whole + '"' : ''}${frac > 0 ? ' ' + frac.toFixed(2) + '"' : ''}`.trim()
+                : '';
+          } else {
+            measurement = m.cm ? `${m.cm.toFixed(1)} cm` : '';
+          }
+
+          // Alternating row background
+          if (idx % 2 === 0) {
+            page.drawRectangle({
+              x: tableX,
+              y: y - rowH + 8,
+              width: tableW,
+              height: rowH,
+              color: colors.tableRowAlt,
+            });
+          }
+
+          // Row border bottom
+          page.drawRectangle({
+            x: tableX,
+            y: y - rowH + 8,
+            width: tableW,
+            height: 0.5,
+            color: colors.borderLight,
+          });
+
+          // Label text
+          page.drawText(safePdfText(strokeLabel), {
+            x: tableX + 8,
+            y: y - 6,
+            size: typo.table,
+            font: fontBold,
+            color: colors.textPrimary,
+          });
+
+          // Editable form field for value
+          const safeStroke = sanitizePdfFieldPart(strokeLabel, `stroke_${idx + 1}`);
+          const fieldName = createUniquePdfFieldName(`m_${safeView}_${safeStroke}`, usedFieldNames);
+          const textField = form.createTextField(fieldName);
+          textField.setText(measurement);
+          textField.addToPage(page, {
+            x: tableX + labelColW + 6,
+            y: y - rowH + 10,
+            width: valueColW - 14,
+            height: rowH - 4,
+            borderWidth: 0.75,
+            borderColor: colors.border,
+            backgroundColor: colors.white,
+          });
+          textField.setFontSize(typo.table);
+
+          y -= rowH;
+        });
+
+        // Table outer border
+        const tableTopY = startY - 18 - 2; // after unit row
+        const tableBottomY = y + 8;
+        if (tableTopY > tableBottomY) {
+          page.drawRectangle({
+            x: tableX,
+            y: tableBottomY,
+            width: tableW,
+            height: tableTopY - tableBottomY + headerH,
+            borderColor: colors.border,
+            borderWidth: 0.75,
+          });
+        }
+
+        return y;
+      };
+    }
+
+    // ── Image Pages ──────────────────────────────────────────────────
+    const namingLine = [naming.customerName, naming.sofaTypeLabel, naming.jobDate]
+      .map(part => String(part || '').trim())
+      .filter(Boolean)
+      .join('  |  ');
+
     for (let i = 0; i < pageTargets.length; i++) {
       const target = pageTargets[i];
       const { viewId, tabId, tabName, scopeKey, includeBase } = target;
@@ -235,9 +647,12 @@ export function initPdfExport() {
         window.setActiveCaptureTab(viewId, tabId);
       }
       await new Promise(resolve => setTimeout(resolve, 150));
+
       const canvas = window.app.canvasManager.fabricCanvas;
       const captureFrame = document.getElementById('captureFrame');
       if (!canvas || !captureFrame) continue;
+
+      // Canvas capture (unchanged)
       const frameRect = captureFrame.getBoundingClientRect();
       const canvasEl = canvas.lowerCanvasEl;
       const scaleX = canvasEl.width / canvasEl.offsetWidth;
@@ -258,224 +673,232 @@ export function initPdfExport() {
       const imageData = tempCanvas.toDataURL('image/jpeg', 0.95);
       const imageBytes = Uint8Array.from(atob(imageData.split(',')[1]), c => c.charCodeAt(0));
       const image = await pdfDoc.embedJpg(imageBytes);
+
       const page = pdfDoc.addPage([pageWidth, pageHeight]);
       const form = pdfDoc.getForm();
-      page.drawRectangle({
-        x: 0,
-        y: pageHeight - 50,
-        width: pageWidth,
-        height: 50,
-        color: rgb(0.12, 0.25, 0.69),
-      });
-      page.drawText(safePdfText(projectName), {
-        x: pageWidth / 2 - projectName.length * 6,
-        y: pageHeight - 30,
-        size: 16,
-        font: fontBold,
-        color: rgb(1, 1, 1),
-      });
-      page.drawText(safePdfText(viewId), {
-        x: pageWidth / 2 - viewId.length * 4,
-        y: pageHeight - 45,
-        size: 10,
-        font,
-        color: rgb(0.8, 0.9, 1),
-      });
+      const pageNum = i + 1;
+
+      // Page label
       const partLabel =
         partLabels[viewId] || `view-${String(target.viewIndex + 1).padStart(2, '0')}`;
       const pageLabel = `${partLabel} - ${tabName}`;
-      page.drawText(safePdfText(pageLabel), {
-        x: 36,
-        y: pageHeight - 45,
-        size: 10,
-        font,
-        color: rgb(0.8, 0.9, 1),
-      });
-      const namingLine = [naming.customerName, naming.sofaTypeLabel, naming.jobDate]
-        .map(part => String(part || '').trim())
-        .filter(Boolean)
-        .join(' | ');
-      if (namingLine) {
-        page.drawText(safePdfText(namingLine), {
-          x: 36,
-          y: pageHeight - 58,
-          size: 8,
-          font,
-          color: rgb(0.88, 0.94, 1),
-        });
+
+      // Header
+      drawHeader(page, projectName, pageLabel, namingLine, pageNum);
+
+      // Image frame — allocate space based on whether we have measurements
+      const measurements = includeMeasurements
+        ? getScopedMeasurements(scopeKey, { scopeKey, includeBase })
+        : {};
+      const measuredStrokes = Object.keys(measurements);
+      const strokes = includeMeasurements
+        ? Array.from(
+            new Set([
+              ...getScopedStrokeLabels(scopeKey, { scopeKey, includeBase }),
+              ...measuredStrokes,
+            ])
+          ).sort((a, b) => a.localeCompare(b))
+        : [];
+
+      const hasMeasurements = strokes.length > 0;
+      // Reserve space: if measurements exist, cap image height to leave room for table
+      const maxImgH = hasMeasurements
+        ? Math.min(340, layout.contentTop - layout.contentBottom - strokes.length * 22 - 80)
+        : layout.contentTop - layout.contentBottom - 20;
+      const imgMaxH = Math.max(180, maxImgH);
+
+      const { imgY } = drawImageFrame(
+        page,
+        image,
+        layout.contentWidth - 20,
+        imgMaxH,
+        layout.contentTop
+      );
+
+      // Measurements table
+      if (hasMeasurements) {
+        const currentUnit = document.getElementById('unitSelector')?.value || 'inch';
+        const tableStartY = imgY - 16;
+        const drawTable = drawMeasurementTable(
+          page,
+          strokes,
+          measurements,
+          currentUnit,
+          scopeKey,
+          i,
+          form
+        );
+        drawTable(tableStartY);
       }
-      const imgAspect = image.width / image.height;
-      let imgWidth = 500;
-      let imgHeight = imgWidth / imgAspect;
-      if (imgHeight > 400) {
-        imgHeight = 400;
-        imgWidth = imgHeight * imgAspect;
+
+      // Footer
+      drawFooter(page, pageNum);
+    }
+
+    // ── Evaluate relationships AFTER image loop (all views now loaded) ──
+    if (hasRelationshipPage && typeof window.evaluateMeasurementRelations === 'function') {
+      try {
+        relations = window.evaluateMeasurementRelations() || relations;
+      } catch (error) {
+        console.warn('[PDF] Failed to evaluate measurement relations, continuing:', error);
       }
-      const imgX = (pageWidth - imgWidth) / 2;
-      const imgY = pageHeight - 70 - imgHeight;
-      page.drawImage(image, { x: imgX, y: imgY, width: imgWidth, height: imgHeight });
-      if (includeMeasurements) {
-        const measurements = getScopedMeasurements(scopeKey, { scopeKey, includeBase });
-        const measuredStrokes = Object.keys(measurements);
-        const strokes = Array.from(
-          new Set([
-            ...getScopedStrokeLabels(scopeKey, { scopeKey, includeBase }),
-            ...measuredStrokes,
-          ])
-        ).sort((a, b) => a.localeCompare(b));
-        if (strokes.length > 0) {
-          const currentUnit = document.getElementById('unitSelector')?.value || 'inch';
-          const measureY = imgY - 40;
+    }
+
+    // ── Relationship Summary Page ────────────────────────────────────
+    if (hasRelationshipPage) {
+      const page = pdfDoc.addPage([pageWidth, pageHeight]);
+      const pageNum = totalPages;
+
+      drawHeader(page, projectName, 'Measurement Checks & Connections', namingLine, pageNum);
+
+      let y = layout.contentTop;
+      const cardPadX = 10;
+      const cardW = layout.contentWidth;
+
+      // Helper to start a new page if needed
+      function checkPageBreak(neededHeight) {
+        if (y - neededHeight < layout.contentBottom) {
+          // For simplicity, just stop rendering (pagination of summary is rare)
+          return false;
+        }
+        return true;
+      }
+
+      // ── Checks Section ──
+      if (relations.checks?.length > 0) {
+        y = drawSectionHeader(page, 'Checks', y);
+        y -= 4;
+
+        relations.checks.forEach(check => {
+          if (!checkPageBreak(42)) return;
+
+          const cardH = 36;
+          // Card background
           page.drawRectangle({
-            x: 40,
-            y: measureY,
-            width: pageWidth - 80,
-            height: 25,
-            color: rgb(0.16, 0.38, 1),
+            x: layout.marginX,
+            y: y - cardH,
+            width: cardW,
+            height: cardH,
+            color: colors.accentLight,
+            borderColor: colors.borderLight,
+            borderWidth: 0.5,
           });
-          page.drawText('MEASUREMENTS', {
-            x: 50,
-            y: measureY + 8,
-            size: 12,
-            font: fontBold,
-            color: rgb(1, 1, 1),
+
+          // Status badge
+          const badgeW = drawStatusBadge(page, check.status, layout.marginX + cardPadX, y - 10);
+
+          // Formula in monospace
+          const formulaText = safePdfText(check.formula || check.id || 'Check');
+          page.drawText(formulaText.slice(0, 80), {
+            x: layout.marginX + cardPadX + badgeW + 8,
+            y: y - 10,
+            size: typo.table,
+            font: fontMono,
+            color: colors.textPrimary,
           });
-          const safeView = sanitizePdfFieldPart(scopeKey, `view_${i + 1}`);
-          const cmName = createUniquePdfFieldName(`unit_cm_${safeView}`, usedFieldNames);
-          const cmCheck = form.createCheckBox(cmName);
-          cmCheck.addToPage(page, { x: pageWidth - 150, y: measureY + 5, width: 12, height: 12 });
-          if (currentUnit === 'cm') cmCheck.check();
-          page.drawText('cm', {
-            x: pageWidth - 135,
-            y: measureY + 7,
-            size: 9,
-            font,
-            color: rgb(1, 1, 1),
-          });
-          const inchName = createUniquePdfFieldName(`unit_inch_${safeView}`, usedFieldNames);
-          const inchCheck = form.createCheckBox(inchName);
-          inchCheck.addToPage(page, { x: pageWidth - 80, y: measureY + 5, width: 12, height: 12 });
-          if (currentUnit === 'inch') inchCheck.check();
-          page.drawText('inch', {
-            x: pageWidth - 65,
-            y: measureY + 7,
-            size: 9,
-            font,
-            color: rgb(1, 1, 1),
-          });
-          const colWidth = (pageWidth - 100) / 3;
-          let yPos = measureY - 20;
-          let col = 0;
-          strokes.forEach((strokeLabel, idx) => {
-            const m = measurements[strokeLabel] || {};
-            let measurement = '';
-            if (currentUnit === 'inch') {
-              const whole = m.inchWhole || 0;
-              const frac = m.inchFraction || 0;
-              measurement =
-                whole > 0 || frac > 0
-                  ? `${whole > 0 ? whole + '"' : ''}${frac > 0 ? ' ' + frac.toFixed(2) + '"' : ''}`.trim()
-                  : '';
-            } else {
-              measurement = m.cm ? `${m.cm.toFixed(1)} cm` : '';
-            }
-            const x = 50 + col * colWidth;
-            page.drawText(strokeLabel, {
-              x,
-              y: yPos,
-              size: 8,
-              font: fontBold,
-              color: rgb(0, 0, 0),
+
+          // Reason (if not pending)
+          const isPending = String(check.status || '').toLowerCase() === 'pending';
+          if (!isPending && check.reason) {
+            page.drawText(safePdfText(check.reason).slice(0, 100), {
+              x: layout.marginX + cardPadX,
+              y: y - 26,
+              size: typo.small,
+              font,
+              color: colors.textSecondary,
             });
-            const safeStroke = sanitizePdfFieldPart(strokeLabel, `stroke_${idx + 1}`);
-            const fieldName = createUniquePdfFieldName(
-              `m_${safeView}_${safeStroke}`,
+          }
+
+          y -= cardH + 6;
+        });
+
+        y -= 8;
+      }
+
+      // ── Connections Section (checkboxes for customer verification) ──
+      if (relations.connections?.length > 0) {
+        if (!checkPageBreak(40)) {
+          // skip
+        } else {
+          y = drawSectionHeader(page, 'Linked Measurements', y);
+          page.drawText(
+            'Verify that each pair of measurements starts and ends at the same point.',
+            {
+              x: layout.marginX,
+              y: y + 4,
+              size: typo.small,
+              font,
+              color: colors.textSecondary,
+            }
+          );
+          y -= 14;
+
+          const form = pdfDoc.getForm();
+          relations.connections.forEach((connection, connIdx) => {
+            if (!checkPageBreak(28)) return;
+
+            const rowH = 24;
+            // Alternating row background
+            if (connIdx % 2 === 0) {
+              page.drawRectangle({
+                x: layout.marginX,
+                y: y - rowH + 4,
+                width: cardW,
+                height: rowH,
+                color: colors.tableRowAlt,
+              });
+            }
+            // Row border
+            page.drawRectangle({
+              x: layout.marginX,
+              y: y - rowH + 4,
+              width: cardW,
+              height: 0.5,
+              color: colors.borderLight,
+            });
+
+            // Checkbox
+            const connFieldName = createUniquePdfFieldName(
+              `link_${sanitizePdfFieldPart(connection.id || `conn_${connIdx + 1}`, `conn_${connIdx + 1}`)}`,
               usedFieldNames
             );
-            const textField = form.createTextField(fieldName);
-            textField.setText(measurement);
-            textField.addToPage(page, {
-              x,
-              y: yPos - 18,
-              width: colWidth - 10,
-              height: 15,
-              borderWidth: 1,
-              borderColor: rgb(0.4, 0.6, 1),
-              backgroundColor: rgb(1, 1, 1),
+            const checkbox = form.createCheckBox(connFieldName);
+            checkbox.addToPage(page, {
+              x: layout.marginX + cardPadX,
+              y: y - rowH + 8,
+              width: 12,
+              height: 12,
             });
-            textField.setFontSize(9);
-            col++;
-            if (col >= 3) {
-              col = 0;
-              yPos -= 30;
+
+            // Connection label text
+            const leftLabel = safePdfText(connection.fromDisplay || connection.fromKey || '-');
+            const rightLabel = safePdfText(connection.toDisplay || connection.toKey || '-');
+            const connText = `${leftLabel}  <->  ${rightLabel}`;
+            page.drawText(connText.slice(0, 90), {
+              x: layout.marginX + cardPadX + 18,
+              y: y - 10,
+              size: typo.table,
+              font: fontBold,
+              color: colors.textPrimary,
+            });
+
+            // Note if present
+            if (connection.note) {
+              page.drawText(safePdfText(connection.note).slice(0, 80), {
+                x: layout.marginX + cardPadX + 18,
+                y: y - 20,
+                size: typo.small - 1,
+                font,
+                color: colors.textMuted,
+              });
             }
+
+            y -= rowH + 2;
           });
         }
       }
-      page.drawText(
-        `Generated: ${new Date().toLocaleDateString()} | Page ${i + 1} of ${pageTargets.length}`,
-        { x: 40, y: 20, size: 8, font, color: rgb(0.4, 0.4, 0.4) }
-      );
-    }
 
-    // Relationship summary page
-    if ((relations.checks?.length || 0) + (relations.connections?.length || 0) > 0) {
-      const page = pdfDoc.addPage([pageWidth, pageHeight]);
-      page.drawRectangle({
-        x: 0,
-        y: pageHeight - 50,
-        width: pageWidth,
-        height: 50,
-        color: rgb(0.12, 0.25, 0.69),
-      });
-      page.drawText('Measurement Checks + Connections', {
-        x: 36,
-        y: pageHeight - 30,
-        size: 16,
-        font: fontBold,
-        color: rgb(1, 1, 1),
-      });
-      let y = pageHeight - 80;
-      page.drawText('Checks', { x: 36, y, size: 12, font: fontBold, color: rgb(0.1, 0.1, 0.1) });
-      y -= 16;
-      (relations.checks || []).forEach(check => {
-        const status = String(check.status || 'pending').toUpperCase();
-        const isPending = String(check.status || '').toLowerCase() === 'pending';
-        const text = `${check.formula || check.id || 'Check'} [${status}]${!isPending && check.reason ? ` - ${check.reason}` : ''}`;
-        page.drawText(safePdfText(text).slice(0, 120), {
-          x: 36,
-          y,
-          size: 9,
-          font,
-          color: rgb(0.2, 0.2, 0.2),
-        });
-        y -= 12;
-        if (y < 90) return;
-      });
-      y -= 6;
-      page.drawText('Connections', {
-        x: 36,
-        y,
-        size: 12,
-        font: fontBold,
-        color: rgb(0.1, 0.1, 0.1),
-      });
-      y -= 16;
-      (relations.connections || []).forEach(connection => {
-        const status = String(connection.status || 'pending').toUpperCase();
-        const left = connection.fromDisplay || connection.fromKey || '-';
-        const right = connection.toDisplay || connection.toKey || '-';
-        const isPending = String(connection.status || '').toLowerCase() === 'pending';
-        const label = `${left} <-> ${right} [${status}]${!isPending && connection.reason ? ` - ${connection.reason}` : ''}`;
-        page.drawText(safePdfText(label).slice(0, 120), {
-          x: 36,
-          y,
-          size: 9,
-          font,
-          color: rgb(0.2, 0.2, 0.2),
-        });
-        y -= 12;
-      });
+      drawFooter(page, pageNum);
     }
 
     progressBar.style.width = '100%';
