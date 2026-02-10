@@ -90,6 +90,68 @@ function getPdfPageTargets(viewIds) {
   return targets;
 }
 
+function getGroupedPdfPageTargets(pageTargets, pieceGroups, partLabels) {
+  // Build a map: viewId -> array of targets for that view
+  const targetsByView = {};
+  pageTargets.forEach(target => {
+    if (!targetsByView[target.viewId]) targetsByView[target.viewId] = [];
+    targetsByView[target.viewId].push(target);
+  });
+
+  const consumed = new Set(); // viewId values consumed into grouped entries
+  const grouped = [];
+
+  // For each piece group, render one grouped page with:
+  // - main view hero frame (first tab)
+  // - all frames from each related view
+  (pieceGroups || []).forEach(group => {
+    const mainId = group.mainViewId;
+    const relatedIds = Array.isArray(group.relatedViewIds) ? group.relatedViewIds : [];
+    if (!mainId || consumed.has(mainId)) return;
+
+    const mainTargets = targetsByView[mainId];
+    if (!mainTargets?.length) return;
+
+    const validRelatedIds = relatedIds.filter(
+      id => id && id !== mainId && !consumed.has(id) && targetsByView[id]?.length
+    );
+    if (!validRelatedIds.length) {
+      return;
+    }
+
+    const mainTarget = mainTargets[0];
+    const relatedTargets = validRelatedIds.flatMap(id => targetsByView[id] || []);
+
+    consumed.add(mainId);
+    validRelatedIds.forEach(id => consumed.add(id));
+
+    grouped.push({
+      type: 'grouped',
+      mainTarget,
+      relatedTargets,
+      note: group.label || '',
+      partLabels: [
+        partLabels[mainId] || `view-${String((mainTarget?.viewIndex || 0) + 1).padStart(2, '0')}`,
+        ...validRelatedIds.map(id => {
+          const firstTarget = (targetsByView[id] || [])[0];
+          return (
+            partLabels[id] || `view-${String((firstTarget?.viewIndex || 0) + 1).padStart(2, '0')}`
+          );
+        }),
+      ],
+    });
+  });
+
+  // Remaining unconsumed views become singles
+  pageTargets.forEach(target => {
+    if (!consumed.has(target.viewId)) {
+      grouped.push({ type: 'single', target });
+    }
+  });
+
+  return grouped;
+}
+
 function sanitizePdfFieldPart(value, fallback) {
   const cleaned = String(value || '')
     .trim()
@@ -182,18 +244,234 @@ export function initPdfExport() {
       'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:10000;display:flex;align-items:center;justify-content:center;';
     overlay.innerHTML = `<div style="background:white;border-radius:12px;padding:30px;max-width:500px;box-shadow:0 10px 40px rgba(0,0,0,0.3);"><h2 style="margin:0 0 20px 0;color:#333;">Export PDF - ${projectName}</h2><p style="color:#666;margin-bottom:15px;">Creating PDF with ${viewIds.length} page(s) and editable form fields.</p><div style="margin-bottom:15px;"><label style="display:block;margin-bottom:5px;font-weight:600;color:#333;">Image Quality:</label><select id="pdfQuality" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;"><option value="high">High Quality</option><option value="medium" selected>Medium Quality</option><option value="low">Low Quality</option></select></div><div style="margin-bottom:15px;"><label style="display:block;margin-bottom:5px;font-weight:600;color:#333;">Page Size:</label><select id="pdfPageSize" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;"><option value="letter" selected>Letter (8.5" × 11")</option><option value="a4">A4</option></select></div><label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:20px;"><input type="checkbox" id="includeMeasurements" checked style="transform:scale(1.3);"><span style="color:#333;">Include editable measurement fields</span></label><div style="display:flex;gap:10px;"><button id="generatePdfBtn" style="flex:1;padding:12px;background:#3b82f6;color:white;border:none;border-radius:8px;font-weight:600;cursor:pointer;">Generate PDF</button><button id="cancelPdfBtn" style="flex:1;padding:12px;background:#6b7280;color:white;border:none;border-radius:8px;font-weight:600;cursor:pointer;">Cancel</button></div><div id="pdfProgress" style="display:none;margin-top:20px;text-align:center;"><div style="width:100%;height:8px;background:#e5e7eb;border-radius:4px;overflow:hidden;margin-bottom:10px;"><div id="pdfProgressBar" style="width:0%;height:100%;background:#3b82f6;transition:width 0.3s;"></div></div><p id="pdfProgressText" style="color:#666;font-size:14px;">Preparing PDF...</p></div></div>`;
     document.body.appendChild(overlay);
+    const includeMeasurementsLabel = document.getElementById('includeMeasurements')?.parentElement;
+    if (includeMeasurementsLabel) {
+      const rendererWrap = document.createElement('div');
+      rendererWrap.style.marginBottom = '15px';
+      rendererWrap.innerHTML = `<label style="display:block;margin-bottom:5px;font-weight:600;color:#333;">Renderer:</label><select id="pdfRendererMode" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;"><option value="classic" selected>Classic (Local)</option><option value="modern">Modern (Beta)</option></select>`;
+      includeMeasurementsLabel.parentElement?.insertBefore(rendererWrap, includeMeasurementsLabel);
+    }
     document.getElementById('cancelPdfBtn').onclick = () => overlay.remove();
     document.getElementById('generatePdfBtn').onclick = async () => {
       const quality = document.getElementById('pdfQuality').value;
       const pageSize = document.getElementById('pdfPageSize').value;
       const includeMeasurements = document.getElementById('includeMeasurements').checked;
+      const rendererMode = document.getElementById('pdfRendererMode')?.value || 'classic';
       document.getElementById('pdfProgress').style.display = 'block';
       document.getElementById('generatePdfBtn').disabled = true;
       document.getElementById('cancelPdfBtn').disabled = true;
-      await generatePDFWithPDFLib(projectName, pageTargets, quality, pageSize, includeMeasurements);
+
+      try {
+        if (rendererMode === 'modern') {
+          await generatePDFWithServer(
+            projectName,
+            pageTargets,
+            quality,
+            pageSize,
+            includeMeasurements
+          );
+        } else {
+          await generatePDFWithPDFLib(
+            projectName,
+            pageTargets,
+            quality,
+            pageSize,
+            includeMeasurements
+          );
+        }
+      } catch (error) {
+        console.error('[PDF] Export failed:', error);
+        alert('PDF export failed. Falling back to classic renderer.');
+        await generatePDFWithPDFLib(
+          projectName,
+          pageTargets,
+          quality,
+          pageSize,
+          includeMeasurements
+        );
+      }
+
       overlay.remove();
     };
   };
+
+  async function generatePDFWithServer(
+    projectName,
+    pageTargets,
+    quality,
+    pageSize,
+    includeMeasurements
+  ) {
+    const progressBar = document.getElementById('pdfProgressBar');
+    const progressText = document.getElementById('pdfProgressText');
+    const metadata =
+      window.app?.projectManager?.getProjectMetadata?.() || window.projectMetadata || {};
+    const naming = metadata.naming || {};
+    const partLabels = metadata.imagePartLabels || {};
+    const metaPieceGroups = Array.isArray(metadata.pieceGroups) ? metadata.pieceGroups : [];
+    const groupedTargets = getGroupedPdfPageTargets(pageTargets, metaPieceGroups, partLabels);
+    const currentUnit = document.getElementById('unitSelector')?.value || 'inch';
+    const frameCountByView = pageTargets.reduce((acc, target) => {
+      acc[target.viewId] = (acc[target.viewId] || 0) + 1;
+      return acc;
+    }, {});
+
+    const namingLine = [naming.customerName, naming.sofaTypeLabel, naming.jobDate]
+      .map(part => String(part || '').trim())
+      .filter(Boolean)
+      .join('  |  ');
+
+    const formatTargetDisplayName = target => {
+      const partLabel = partLabels[target.viewId] || target.viewId;
+      const tabName = String(target.tabName || '').trim();
+      const frameCount = frameCountByView[target.viewId] || 1;
+      const isSingleFrameOne = frameCount <= 1 && /^frame\s*1$/i.test(tabName);
+      if (!tabName || isSingleFrameOne) return partLabel;
+      return `${partLabel} - ${tabName}`;
+    };
+
+    const getTargetMeasurementRows = target => {
+      if (!includeMeasurements) return [];
+      const measurements = getScopedMeasurements(target.scopeKey, {
+        scopeKey: target.scopeKey,
+        includeBase: target.includeBase,
+      });
+      const measuredStrokes = Object.keys(measurements);
+      const strokes = Array.from(
+        new Set([
+          ...getScopedStrokeLabels(target.scopeKey, {
+            scopeKey: target.scopeKey,
+            includeBase: target.includeBase,
+          }),
+          ...measuredStrokes,
+        ])
+      ).sort((a, b) => a.localeCompare(b));
+      return strokes.map(strokeLabel => {
+        const m = measurements[strokeLabel] || {};
+        let value = '';
+        if (currentUnit === 'inch') {
+          const whole = m.inchWhole || 0;
+          const frac = m.inchFraction || 0;
+          value =
+            whole > 0 || frac > 0
+              ? `${whole > 0 ? whole + '"' : ''}${frac > 0 ? ' ' + frac.toFixed(2) + '"' : ''}`.trim()
+              : '';
+        } else {
+          value = m.cm ? `${m.cm.toFixed(1)} cm` : '';
+        }
+        return {
+          label: strokeLabel,
+          value,
+        };
+      });
+    };
+
+    const captureViewImageDataUrl = async target => {
+      await window.app.projectManager.switchView(target.viewId);
+      if (target.tabId && typeof window.setActiveCaptureTab === 'function') {
+        window.setActiveCaptureTab(target.viewId, target.tabId);
+      }
+      await new Promise(resolve => setTimeout(resolve, 150));
+
+      const canvas = window.app.canvasManager.fabricCanvas;
+      const captureFrame = document.getElementById('captureFrame');
+      if (!canvas || !captureFrame) return '';
+      const qualityScales = { high: 3.0, medium: 2.0, low: 1.5 };
+      const scale = qualityScales[quality] || 2.0;
+      const frameRect = captureFrame.getBoundingClientRect();
+      const canvasEl = canvas.lowerCanvasEl;
+      const scaleX = canvasEl.width / canvasEl.offsetWidth;
+      const scaleY = canvasEl.height / canvasEl.offsetHeight;
+      const canvasRect = canvasEl.getBoundingClientRect();
+      const left = (frameRect.left - canvasRect.left) * scaleX;
+      const top = (frameRect.top - canvasRect.top) * scaleY;
+      const width = frameRect.width * scaleX;
+      const height = frameRect.height * scaleY;
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = width * scale;
+      tempCanvas.height = height * scale;
+      const ctx = tempCanvas.getContext('2d');
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.scale(scale, scale);
+      ctx.drawImage(canvasEl, left, top, width, height, 0, 0, width, height);
+      return tempCanvas.toDataURL('image/jpeg', 0.92);
+    };
+
+    const groups = [];
+    for (let i = 0; i < groupedTargets.length; i++) {
+      const entry = groupedTargets[i];
+      const mainTarget = entry.type === 'grouped' ? entry.mainTarget : entry.target;
+      const relatedTargets = entry.type === 'grouped' ? entry.relatedTargets || [] : [];
+      if (!mainTarget) continue;
+
+      progressText.textContent = `Preparing page data (${i + 1}/${groupedTargets.length})...`;
+      progressBar.style.width = `${(i / groupedTargets.length) * 100}%`;
+
+      const mainSrc = await captureViewImageDataUrl(mainTarget);
+      if (!mainSrc) continue;
+
+      const relatedFrames = [];
+      const relatedMeasurementCards = [];
+      for (const target of relatedTargets) {
+        const src = await captureViewImageDataUrl(target);
+        if (!src) continue;
+        const title = formatTargetDisplayName(target);
+        relatedFrames.push({ title, src });
+        relatedMeasurementCards.push({
+          title,
+          rows: getTargetMeasurementRows(target),
+        });
+      }
+
+      groups.push({
+        title: entry.note || formatTargetDisplayName(mainTarget),
+        subtitle: '',
+        mainImage: {
+          title: formatTargetDisplayName(mainTarget),
+          src: mainSrc,
+        },
+        mainMeasurements: getTargetMeasurementRows(mainTarget),
+        relatedFrames,
+        relatedMeasurementCards,
+      });
+    }
+
+    progressText.textContent = 'Rendering modern PDF...';
+    progressBar.style.width = '92%';
+    const response = await fetch('/api/pdf/render', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        source: 'report',
+        report: {
+          projectName,
+          namingLine,
+          groups,
+        },
+        options: {
+          renderer: 'hybrid',
+          pageSize,
+          filename: `${sanitizeFilenamePart(projectName, 'OpenPaint Project')}.pdf`,
+        },
+      }),
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error(`Server PDF render failed (${response.status}): ${errText}`);
+    }
+
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${sanitizeFilenamePart(projectName, 'OpenPaint Project')}.pdf`;
+    a.click();
+    URL.revokeObjectURL(url);
+    progressBar.style.width = '100%';
+    progressText.textContent = 'Done';
+  }
 
   async function generatePDFWithPDFLib(
     projectName,
@@ -214,14 +492,13 @@ export function initPdfExport() {
       window.app?.projectManager?.getProjectMetadata?.() || window.projectMetadata || {};
     const naming = metadata.naming || {};
     const partLabels = metadata.imagePartLabels || {};
-    // Pre-check whether checks/connections exist (for page count).
+    // Pre-check whether checks/connections/pieceGroups exist (for page count).
     // Full evaluation is deferred until after the image loop so all views are loaded.
     const metaChecks = Array.isArray(metadata.measurementChecks) ? metadata.measurementChecks : [];
     const metaConnections = Array.isArray(metadata.measurementConnections)
       ? metadata.measurementConnections
       : [];
-    const hasRelationshipPage = metaChecks.length + metaConnections.length > 0;
-    let relations = { checks: [], connections: [] };
+    const metaPieceGroups = Array.isArray(metadata.pieceGroups) ? metadata.pieceGroups : [];
     const pageSizes = { letter: { width: 612, height: 792 }, a4: { width: 595, height: 842 } };
     const { width: pageWidth, height: pageHeight } = pageSizes[pageSize] || pageSizes.letter;
     const qualityScales = { high: 3.0, medium: 2.0, low: 1.5 };
@@ -229,18 +506,21 @@ export function initPdfExport() {
 
     // ── Design System ────────────────────────────────────────────────
     const colors = {
-      headerBg: rgb(0.09, 0.11, 0.2), // dark navy
-      accentStripe: rgb(0.22, 0.47, 0.96), // vivid blue
-      accentLight: rgb(0.92, 0.95, 1.0), // light blue tint
+      pageBg: rgb(0.985, 0.989, 0.996),
+      headerBg: rgb(0.07, 0.12, 0.24),
+      accentStripe: rgb(0.2, 0.5, 0.93),
+      accentStripeSoft: rgb(0.36, 0.62, 0.97),
+      accentLight: rgb(0.93, 0.96, 1.0),
+      panelBg: rgb(0.97, 0.98, 1.0),
       white: rgb(1, 1, 1),
-      textPrimary: rgb(0.12, 0.12, 0.14),
-      textSecondary: rgb(0.4, 0.42, 0.48),
-      textMuted: rgb(0.58, 0.6, 0.65),
-      border: rgb(0.82, 0.84, 0.88),
-      borderLight: rgb(0.91, 0.93, 0.95),
-      tableRowAlt: rgb(0.96, 0.97, 0.99),
-      frameShadow: rgb(0.78, 0.8, 0.84),
-      frameBorder: rgb(0.7, 0.72, 0.76),
+      textPrimary: rgb(0.1, 0.14, 0.22),
+      textSecondary: rgb(0.29, 0.34, 0.45),
+      textMuted: rgb(0.45, 0.5, 0.58),
+      border: rgb(0.79, 0.84, 0.91),
+      borderLight: rgb(0.89, 0.92, 0.96),
+      tableRowAlt: rgb(0.95, 0.97, 1.0),
+      frameShadow: rgb(0.86, 0.9, 0.95),
+      frameBorder: rgb(0.75, 0.81, 0.9),
       statusPass: rgb(0.13, 0.59, 0.33),
       statusFail: rgb(0.82, 0.18, 0.18),
       statusWarn: rgb(0.8, 0.58, 0.08),
@@ -252,16 +532,16 @@ export function initPdfExport() {
     };
     const layout = {
       marginX: 40,
-      headerH: 56,
-      accentH: 3,
+      headerH: 62,
+      accentH: 4,
       footerH: 32,
-      contentTop: pageHeight - 56 - 3 - 16, // below header + accent + gap
+      contentTop: pageHeight - 62 - 4 - 16,
       contentBottom: 32 + 12, // above footer + gap
       contentWidth: pageWidth - 80,
     };
     const typo = {
-      title: 18,
-      subtitle: 10,
+      title: 17,
+      subtitle: 9,
       sectionHeader: 13,
       body: 10,
       table: 9,
@@ -270,7 +550,9 @@ export function initPdfExport() {
       footer: 7,
     };
 
-    const totalPages = pageTargets.length + (hasRelationshipPage ? 1 : 0);
+    // totalPages is computed after grouping; use a mutable variable so
+    // header/footer helpers (closed over this scope) can reference it.
+    let totalPages = pageTargets.length; // updated below after grouping
 
     // ── Helper Functions ─────────────────────────────────────────────
 
@@ -297,7 +579,14 @@ export function initPdfExport() {
     }
 
     function drawHeader(page, titleText, subtitleText, namingText, pageNum) {
-      // Dark navy header bar
+      page.drawRectangle({
+        x: 0,
+        y: 0,
+        width: pageWidth,
+        height: pageHeight,
+        color: colors.pageBg,
+      });
+
       page.drawRectangle({
         x: 0,
         y: pageHeight - layout.headerH,
@@ -305,37 +594,50 @@ export function initPdfExport() {
         height: layout.headerH,
         color: colors.headerBg,
       });
-      // Accent stripe below header
+
       page.drawRectangle({
         x: 0,
         y: pageHeight - layout.headerH - layout.accentH,
         width: pageWidth,
-        height: layout.accentH,
+        height: layout.accentH / 2,
         color: colors.accentStripe,
       });
-      // Project name — centered
-      centerText(titleText, pageHeight - 24, typo.title, fontBold, colors.white, page);
-      // Naming line — centered below title
+      page.drawRectangle({
+        x: 0,
+        y: pageHeight - layout.headerH - layout.accentH,
+        width: pageWidth,
+        height: layout.accentH / 2,
+        color: colors.accentStripeSoft,
+      });
+
+      page.drawText('OPENPAINT', {
+        x: layout.marginX,
+        y: pageHeight - 20,
+        size: 7,
+        font: fontBold,
+        color: rgb(0.66, 0.76, 0.92),
+      });
+      centerText(titleText, pageHeight - 30, typo.title, fontBold, colors.white, page);
       if (namingText) {
-        centerText(namingText, pageHeight - 38, typo.small, font, rgb(0.72, 0.78, 0.9), page);
+        centerText(namingText, pageHeight - 45, typo.small, font, rgb(0.78, 0.83, 0.92), page);
       }
-      // Subtitle (page label) — left
+
       if (subtitleText) {
         page.drawText(safePdfText(subtitleText), {
           x: layout.marginX,
-          y: pageHeight - 52,
+          y: pageHeight - 56,
           size: typo.subtitle,
           font,
-          color: rgb(0.6, 0.68, 0.82),
+          color: rgb(0.7, 0.79, 0.95),
         });
       }
-      // Page number — right
+
       rightAlignText(
         `Page ${pageNum} of ${totalPages}`,
-        pageHeight - 52,
+        pageHeight - 56,
         typo.subtitle,
         font,
-        rgb(0.6, 0.68, 0.82),
+        rgb(0.7, 0.79, 0.95),
         page,
         pageWidth - layout.marginX
       );
@@ -343,15 +645,13 @@ export function initPdfExport() {
 
     function drawFooter(page, pageNum) {
       const footerY = 20;
-      // Separator line
       page.drawRectangle({
         x: layout.marginX,
         y: footerY + 10,
         width: layout.contentWidth,
-        height: 0.5,
-        color: colors.border,
+        height: 0.75,
+        color: colors.borderLight,
       });
-      // Date left
       page.drawText(safePdfText(`Generated: ${new Date().toLocaleDateString()}`), {
         x: layout.marginX,
         y: footerY,
@@ -371,7 +671,7 @@ export function initPdfExport() {
       );
     }
 
-    function drawImageFrame(page, image, maxWidth, maxHeight, topY) {
+    function drawImageFrame(page, image, maxWidth, maxHeight, topY, columnOpts) {
       const imgAspect = image.width / image.height;
       let imgWidth = maxWidth;
       let imgHeight = imgWidth / imgAspect;
@@ -379,17 +679,19 @@ export function initPdfExport() {
         imgHeight = maxHeight;
         imgWidth = imgHeight * imgAspect;
       }
-      const imgX = (pageWidth - imgWidth) / 2;
+      const colX = columnOpts?.columnX ?? 0;
+      const colW = columnOpts?.columnWidth ?? pageWidth;
+      const imgX = colX + (colW - imgWidth) / 2;
       const imgY = topY - imgHeight;
-      // Shadow (offset rectangle)
+
       page.drawRectangle({
-        x: imgX + 2,
-        y: imgY - 2,
+        x: imgX + 3,
+        y: imgY - 3,
         width: imgWidth,
         height: imgHeight,
         color: colors.frameShadow,
       });
-      // White mat border
+
       const pad = 4;
       page.drawRectangle({
         x: imgX - pad,
@@ -400,26 +702,34 @@ export function initPdfExport() {
         borderColor: colors.frameBorder,
         borderWidth: 0.75,
       });
-      // Image
       page.drawImage(image, { x: imgX, y: imgY, width: imgWidth, height: imgHeight });
       return { imgX, imgY, imgWidth, imgHeight };
     }
 
-    function drawSectionHeader(page, text, y) {
+    function drawSectionHeader(page, text, y, startX) {
+      const x = startX ?? layout.marginX;
+      const textW = fontBold.widthOfTextAtSize(safePdfText(text), typo.sectionHeader);
+      page.drawRectangle({
+        x: x - 6,
+        y: y - 7,
+        width: textW + 18,
+        height: 18,
+        color: colors.panelBg,
+        borderColor: colors.borderLight,
+        borderWidth: 0.75,
+      });
       page.drawText(safePdfText(text), {
-        x: layout.marginX,
+        x,
         y,
         size: typo.sectionHeader,
         font: fontBold,
         color: colors.textPrimary,
       });
-      // Accent underline
-      const textW = fontBold.widthOfTextAtSize(safePdfText(text), typo.sectionHeader);
       page.drawRectangle({
-        x: layout.marginX,
-        y: y - 4,
+        x,
+        y: y - 6,
         width: textW + 8,
-        height: 2,
+        height: 1.5,
         color: colors.accentStripe,
       });
       return y - 22;
@@ -473,11 +783,13 @@ export function initPdfExport() {
       currentUnit,
       scopeKey,
       pageIndex,
-      form
+      form,
+      columnOpts
     ) {
+      // columnOpts: optional { tableX, tableW } for column-scoped tables
       const safeView = sanitizePdfFieldPart(scopeKey, `view_${pageIndex + 1}`);
-      const tableX = layout.marginX;
-      const tableW = layout.contentWidth;
+      const tableX = columnOpts?.tableX ?? layout.marginX;
+      const tableW = columnOpts?.tableW ?? layout.contentWidth;
       const rowH = 22;
       const headerH = 20;
       const labelColW = tableW * 0.45;
@@ -488,7 +800,7 @@ export function initPdfExport() {
         let y = startY;
 
         // Section header
-        y = drawSectionHeader(page, 'Measurements', y);
+        y = drawSectionHeader(page, 'Measurements', y, tableX);
         y -= 2;
 
         // Unit checkboxes row
@@ -530,7 +842,7 @@ export function initPdfExport() {
           y: y - headerH + 6,
           width: tableW,
           height: headerH,
-          color: colors.headerBg,
+          color: colors.accentStripe,
         });
         page.drawText('Label', {
           x: tableX + 8,
@@ -572,7 +884,7 @@ export function initPdfExport() {
               y: y - rowH + 8,
               width: tableW,
               height: rowH,
-              color: colors.tableRowAlt,
+              color: colors.panelBg,
             });
           }
 
@@ -631,17 +943,8 @@ export function initPdfExport() {
       };
     }
 
-    // ── Image Pages ──────────────────────────────────────────────────
-    const namingLine = [naming.customerName, naming.sofaTypeLabel, naming.jobDate]
-      .map(part => String(part || '').trim())
-      .filter(Boolean)
-      .join('  |  ');
-
-    for (let i = 0; i < pageTargets.length; i++) {
-      const target = pageTargets[i];
-      const { viewId, tabId, tabName, scopeKey, includeBase } = target;
-      progressText.textContent = `Processing ${viewId} - ${tabName} (${i + 1}/${pageTargets.length})...`;
-      progressBar.style.width = `${(i / pageTargets.length) * 100}%`;
+    // ── Canvas Capture Helper ────────────────────────────────────────
+    async function captureViewImage(viewId, tabId) {
       await window.app.projectManager.switchView(viewId);
       if (tabId && typeof window.setActiveCaptureTab === 'function') {
         window.setActiveCaptureTab(viewId, tabId);
@@ -650,9 +953,8 @@ export function initPdfExport() {
 
       const canvas = window.app.canvasManager.fabricCanvas;
       const captureFrame = document.getElementById('captureFrame');
-      if (!canvas || !captureFrame) continue;
+      if (!canvas || !captureFrame) return null;
 
-      // Canvas capture (unchanged)
       const frameRect = captureFrame.getBoundingClientRect();
       const canvasEl = canvas.lowerCanvasEl;
       const scaleX = canvasEl.width / canvasEl.offsetWidth;
@@ -672,70 +974,368 @@ export function initPdfExport() {
       ctx.drawImage(canvasEl, left, top, width, height, 0, 0, width, height);
       const imageData = tempCanvas.toDataURL('image/jpeg', 0.95);
       const imageBytes = Uint8Array.from(atob(imageData.split(',')[1]), c => c.charCodeAt(0));
-      const image = await pdfDoc.embedJpg(imageBytes);
+      return pdfDoc.embedJpg(imageBytes);
+    }
 
-      const page = pdfDoc.addPage([pageWidth, pageHeight]);
-      const form = pdfDoc.getForm();
+    function getTargetStrokes(scopeKey, includeBase) {
+      if (!includeMeasurements) return { strokes: [], measurements: {} };
+      const measurements = getScopedMeasurements(scopeKey, { scopeKey, includeBase });
+      const measuredStrokes = Object.keys(measurements);
+      const strokes = Array.from(
+        new Set([...getScopedStrokeLabels(scopeKey, { scopeKey, includeBase }), ...measuredStrokes])
+      ).sort((a, b) => a.localeCompare(b));
+      return { strokes, measurements };
+    }
+
+    // ── Build grouped targets ─────────────────────────────────────────
+    const groupedTargets = getGroupedPdfPageTargets(pageTargets, metaPieceGroups, partLabels);
+    const hasRelationshipPage = metaChecks.length > 0 || metaConnections.length > 0;
+    totalPages = groupedTargets.length + (hasRelationshipPage ? 1 : 0);
+
+    // ── Image Pages ──────────────────────────────────────────────────
+    const namingLine = [naming.customerName, naming.sofaTypeLabel, naming.jobDate]
+      .map(part => String(part || '').trim())
+      .filter(Boolean)
+      .join('  |  ');
+    const frameCountByView = pageTargets.reduce((acc, target) => {
+      acc[target.viewId] = (acc[target.viewId] || 0) + 1;
+      return acc;
+    }, {});
+    const formatTargetDisplayName = target => {
+      const partLabel = partLabels[target.viewId] || target.viewId;
+      const tabName = String(target.tabName || '').trim();
+      const frameCount = frameCountByView[target.viewId] || 1;
+      const isSingleFrameOne = frameCount <= 1 && /^frame\s*1$/i.test(tabName);
+      if (!tabName || isSingleFrameOne) return partLabel;
+      return `${partLabel} - ${tabName}`;
+    };
+
+    for (let i = 0; i < groupedTargets.length; i++) {
+      const entry = groupedTargets[i];
       const pageNum = i + 1;
 
-      // Page label
-      const partLabel =
-        partLabels[viewId] || `view-${String(target.viewIndex + 1).padStart(2, '0')}`;
-      const pageLabel = `${partLabel} - ${tabName}`;
+      if (entry.type === 'grouped') {
+        progressText.textContent = `Processing grouped page (${i + 1}/${groupedTargets.length})...`;
+        progressBar.style.width = `${(i / groupedTargets.length) * 100}%`;
 
-      // Header
-      drawHeader(page, projectName, pageLabel, namingLine, pageNum);
+        const heroTarget = entry.mainTarget;
+        const heroImage = heroTarget
+          ? await captureViewImage(heroTarget.viewId, heroTarget.tabId)
+          : null;
+        if (!heroImage) continue;
 
-      // Image frame — allocate space based on whether we have measurements
-      const measurements = includeMeasurements
-        ? getScopedMeasurements(scopeKey, { scopeKey, includeBase })
-        : {};
-      const measuredStrokes = Object.keys(measurements);
-      const strokes = includeMeasurements
-        ? Array.from(
-            new Set([
-              ...getScopedStrokeLabels(scopeKey, { scopeKey, includeBase }),
-              ...measuredStrokes,
-            ])
-          ).sort((a, b) => a.localeCompare(b))
-        : [];
+        const relatedFrames = [];
+        for (const relatedTarget of entry.relatedTargets || []) {
+          const image = await captureViewImage(relatedTarget.viewId, relatedTarget.tabId);
+          if (!image) continue;
+          relatedFrames.push({ target: relatedTarget, image });
+        }
 
-      const hasMeasurements = strokes.length > 0;
-      // Reserve space: if measurements exist, cap image height to leave room for table
-      const maxImgH = hasMeasurements
-        ? Math.min(340, layout.contentTop - layout.contentBottom - strokes.length * 22 - 80)
-        : layout.contentTop - layout.contentBottom - 20;
-      const imgMaxH = Math.max(180, maxImgH);
+        const page = pdfDoc.addPage([pageWidth, pageHeight]);
+        const form = pdfDoc.getForm();
+        const subtitle = (entry.partLabels || []).filter(Boolean).join(' + ');
+        drawHeader(page, projectName, subtitle, namingLine, pageNum);
 
-      const { imgY } = drawImageFrame(
-        page,
-        image,
-        layout.contentWidth - 20,
-        imgMaxH,
-        layout.contentTop
-      );
-
-      // Measurements table
-      if (hasMeasurements) {
         const currentUnit = document.getElementById('unitSelector')?.value || 'inch';
-        const tableStartY = imgY - 16;
-        const drawTable = drawMeasurementTable(
-          page,
-          strokes,
-          measurements,
-          currentUnit,
-          scopeKey,
-          i,
-          form
-        );
-        drawTable(tableStartY);
-      }
+        const splitGap = 14;
+        const leftPaneW = layout.contentWidth * 0.56;
+        const rightPaneW = layout.contentWidth - leftPaneW - splitGap;
+        const leftPaneX = layout.marginX;
+        const rightPaneX = leftPaneX + leftPaneW + splitGap;
 
-      // Footer
-      drawFooter(page, pageNum);
+        const topStartY = layout.contentTop;
+        const leftStartY = drawSectionHeader(page, 'Main Piece', topStartY, leftPaneX);
+        const rightStartY = drawSectionHeader(page, 'Main Measurements', topStartY, rightPaneX);
+
+        const heroFrame = drawImageFrame(page, heroImage, leftPaneW - 10, 250, leftStartY + 2, {
+          columnX: leftPaneX,
+          columnWidth: leftPaneW,
+        });
+        page.drawText(safePdfText(`${formatTargetDisplayName(heroTarget)} (main)`).slice(0, 64), {
+          x: leftPaneX + 4,
+          y: heroFrame.imgY - 12,
+          size: typo.small,
+          font,
+          color: colors.textSecondary,
+        });
+
+        const heroData = getTargetStrokes(heroTarget.scopeKey, heroTarget.includeBase);
+        let rightEndY = rightStartY;
+        if (heroData.strokes.length > 0) {
+          const drawMainTable = drawMeasurementTable(
+            page,
+            heroData.strokes,
+            heroData.measurements,
+            currentUnit,
+            heroTarget.scopeKey,
+            i,
+            form,
+            { tableX: rightPaneX, tableW: rightPaneW }
+          );
+          rightEndY = drawMainTable(rightStartY);
+        }
+
+        const relatedMeasurementGroups = [];
+        (entry.relatedTargets || []).forEach(target => {
+          const { strokes, measurements } = getTargetStrokes(target.scopeKey, target.includeBase);
+          const targetName = formatTargetDisplayName(target);
+          const rows = [];
+          strokes.forEach((strokeLabel, idx) => {
+            const m = measurements[strokeLabel] || {};
+            let measurementValue = '';
+            if (currentUnit === 'inch') {
+              const whole = m.inchWhole || 0;
+              const frac = m.inchFraction || 0;
+              measurementValue =
+                whole > 0 || frac > 0
+                  ? `${whole > 0 ? whole + '"' : ''}${frac > 0 ? ' ' + frac.toFixed(2) + '"' : ''}`.trim()
+                  : '';
+            } else {
+              measurementValue = m.cm ? `${m.cm.toFixed(1)} cm` : '';
+            }
+            rows.push({
+              strokeLabel,
+              measurementValue,
+              rowIndex: idx,
+            });
+          });
+
+          if (rows.length > 0) {
+            relatedMeasurementGroups.push({
+              targetName,
+              scopeKey: target.scopeKey,
+              rows,
+            });
+          }
+        });
+
+        const maxGroupCards = 4;
+        const visibleGroupCards = relatedMeasurementGroups.slice(0, maxGroupCards);
+        const maxRowsPerCard = 4;
+        const cardGap = 10;
+        const cardCols = visibleGroupCards.length > 1 ? 2 : 1;
+        const cardW =
+          cardCols === 1
+            ? layout.contentWidth
+            : (layout.contentWidth - cardGap * (cardCols - 1)) / cardCols;
+        const cardH = 28 + maxRowsPerCard * 18 + 12;
+        const cardRows = visibleGroupCards.length
+          ? Math.ceil(visibleGroupCards.length / cardCols)
+          : 0;
+        const relatedCardsH = cardRows > 0 ? cardRows * cardH + (cardRows - 1) * cardGap + 26 : 0;
+        const relatedCardsY = layout.contentBottom + 6;
+        const relatedGridBottom = relatedCardsY + relatedCardsH + 10;
+
+        const relatedSectionTop = Math.min(heroFrame.imgY - 24, rightEndY - 12);
+        if (relatedFrames.length > 0) {
+          const sectionTop = drawSectionHeader(
+            page,
+            'Related Frames',
+            relatedSectionTop,
+            layout.marginX
+          );
+          const sectionBottom = Math.max(layout.contentBottom + 48, relatedGridBottom);
+          const sectionHeight = Math.max(70, sectionTop - sectionBottom);
+
+          const maxCols = 4;
+          const cols = Math.min(maxCols, Math.max(1, Math.ceil(Math.sqrt(relatedFrames.length))));
+          const rows = Math.max(1, Math.ceil(relatedFrames.length / cols));
+          const gap = 8;
+          const cellW = (layout.contentWidth - gap * (cols - 1)) / cols;
+          const cellH = (sectionHeight - gap * (rows - 1)) / rows;
+
+          relatedFrames.forEach((frameEntry, idx) => {
+            const row = Math.floor(idx / cols);
+            const col = idx % cols;
+            const colX = layout.marginX + col * (cellW + gap);
+            const rowTop = sectionTop - row * (cellH + gap);
+            const frame = drawImageFrame(page, frameEntry.image, cellW - 8, cellH - 18, rowTop, {
+              columnX: colX,
+              columnWidth: cellW,
+            });
+            const caption = formatTargetDisplayName(frameEntry.target);
+            page.drawText(safePdfText(caption).slice(0, 36), {
+              x: colX + 2,
+              y: Math.max(sectionBottom, frame.imgY - 10),
+              size: typo.small,
+              font,
+              color: colors.textSecondary,
+            });
+          });
+        }
+
+        if (visibleGroupCards.length > 0) {
+          const sectionTitleY = relatedCardsY + relatedCardsH - 14;
+          page.drawText('Related Measurements', {
+            x: layout.marginX,
+            y: sectionTitleY,
+            size: typo.tableHeader,
+            font: fontBold,
+            color: colors.textPrimary,
+          });
+
+          visibleGroupCards.forEach((group, groupIdx) => {
+            const gridRow = Math.floor(groupIdx / cardCols);
+            const gridCol = groupIdx % cardCols;
+            const cardX = layout.marginX + gridCol * (cardW + cardGap);
+            const cardTopY = sectionTitleY - 8 - gridRow * (cardH + cardGap);
+            const cardY = cardTopY - cardH;
+            const safeScope = sanitizePdfFieldPart(
+              group.scopeKey,
+              `scope_${i + 1}_${groupIdx + 1}`
+            );
+
+            page.drawRectangle({
+              x: cardX,
+              y: cardY,
+              width: cardW,
+              height: cardH,
+              color: colors.panelBg,
+              borderColor: colors.border,
+              borderWidth: 0.75,
+            });
+
+            page.drawRectangle({
+              x: cardX,
+              y: cardTopY - 18,
+              width: cardW,
+              height: 18,
+              color: colors.accentStripe,
+            });
+            page.drawText(safePdfText(group.targetName).slice(0, 28), {
+              x: cardX + 8,
+              y: cardTopY - 12,
+              size: typo.small,
+              font: fontBold,
+              color: colors.white,
+            });
+
+            const labelColW = cardW * 0.44;
+            const valueColW = cardW - labelColW - 12;
+            const visibleRows = group.rows.slice(0, maxRowsPerCard);
+            visibleRows.forEach((row, rowIdx) => {
+              const rowY = cardTopY - 36 - rowIdx * 18;
+              if (rowIdx % 2 === 0) {
+                page.drawRectangle({
+                  x: cardX + 1,
+                  y: rowY - 2,
+                  width: cardW - 2,
+                  height: 18,
+                  color: colors.white,
+                });
+              }
+              page.drawText(safePdfText(row.strokeLabel).slice(0, 14), {
+                x: cardX + 8,
+                y: rowY + 3,
+                size: typo.small,
+                font: fontBold,
+                color: colors.textPrimary,
+              });
+
+              const safeStroke = sanitizePdfFieldPart(row.strokeLabel, `s_${rowIdx + 1}`);
+              const fieldName = createUniquePdfFieldName(
+                `gm_${safeScope}_${safeStroke}_${row.rowIndex + 1}`,
+                usedFieldNames
+              );
+              const textField = form.createTextField(fieldName);
+              textField.setText(row.measurementValue || '');
+              textField.addToPage(page, {
+                x: cardX + labelColW,
+                y: rowY + 1,
+                width: valueColW,
+                height: 14,
+                borderWidth: 0.75,
+                borderColor: colors.border,
+                backgroundColor: colors.white,
+              });
+              textField.setFontSize(typo.small);
+            });
+
+            if (group.rows.length > maxRowsPerCard) {
+              page.drawText(`+${group.rows.length - maxRowsPerCard} more`, {
+                x: cardX + 8,
+                y: cardY + 6,
+                size: typo.small,
+                font,
+                color: colors.textMuted,
+              });
+            }
+          });
+
+          if (relatedMeasurementGroups.length > maxGroupCards) {
+            page.drawText(`+${relatedMeasurementGroups.length - maxGroupCards} related pieces`, {
+              x: layout.marginX,
+              y: relatedCardsY + 4,
+              size: typo.small,
+              font,
+              color: colors.textMuted,
+            });
+          }
+        }
+
+        drawFooter(page, pageNum);
+      } else {
+        // ── Single page (existing logic) ──
+        const target = entry.target;
+        const { viewId, tabId, tabName, scopeKey, includeBase } = target;
+        progressText.textContent = `Processing ${viewId} - ${tabName} (${i + 1}/${groupedTargets.length})...`;
+        progressBar.style.width = `${(i / groupedTargets.length) * 100}%`;
+
+        const image = await captureViewImage(viewId, tabId);
+        if (!image) continue;
+
+        const page = pdfDoc.addPage([pageWidth, pageHeight]);
+        const form = pdfDoc.getForm();
+
+        // Page label
+        const partLabel =
+          partLabels[viewId] || `view-${String(target.viewIndex + 1).padStart(2, '0')}`;
+        const pageLabel = `${partLabel} - ${tabName}`;
+
+        // Header
+        drawHeader(page, projectName, pageLabel, namingLine, pageNum);
+
+        // Image frame — allocate space based on whether we have measurements
+        const { strokes, measurements } = getTargetStrokes(scopeKey, includeBase);
+
+        const hasMeasurements = strokes.length > 0;
+        // Reserve space: if measurements exist, cap image height to leave room for table
+        const maxImgH = hasMeasurements
+          ? Math.min(340, layout.contentTop - layout.contentBottom - strokes.length * 22 - 80)
+          : layout.contentTop - layout.contentBottom - 20;
+        const imgMaxH = Math.max(180, maxImgH);
+
+        const { imgY } = drawImageFrame(
+          page,
+          image,
+          layout.contentWidth - 20,
+          imgMaxH,
+          layout.contentTop
+        );
+
+        // Measurements table
+        if (hasMeasurements) {
+          const currentUnit = document.getElementById('unitSelector')?.value || 'inch';
+          const tableStartY = imgY - 16;
+          const drawTable = drawMeasurementTable(
+            page,
+            strokes,
+            measurements,
+            currentUnit,
+            scopeKey,
+            i,
+            form
+          );
+          drawTable(tableStartY);
+        }
+
+        // Footer
+        drawFooter(page, pageNum);
+      }
     }
 
     // ── Evaluate relationships AFTER image loop (all views now loaded) ──
+    let relations = { checks: [], connections: [], pieceGroups: [] };
     if (hasRelationshipPage && typeof window.evaluateMeasurementRelations === 'function') {
       try {
         relations = window.evaluateMeasurementRelations() || relations;
@@ -747,7 +1347,7 @@ export function initPdfExport() {
     // ── Relationship Summary Page ────────────────────────────────────
     if (hasRelationshipPage) {
       const page = pdfDoc.addPage([pageWidth, pageHeight]);
-      const pageNum = totalPages;
+      const pageNum = groupedTargets.length + 1;
 
       drawHeader(page, projectName, 'Measurement Checks & Connections', namingLine, pageNum);
 
@@ -756,13 +1356,12 @@ export function initPdfExport() {
       const cardW = layout.contentWidth;
 
       // Helper to start a new page if needed
-      function checkPageBreak(neededHeight) {
+      const checkPageBreak = neededHeight => {
         if (y - neededHeight < layout.contentBottom) {
-          // For simplicity, just stop rendering (pagination of summary is rare)
           return false;
         }
         return true;
-      }
+      };
 
       // ── Checks Section ──
       if (relations.checks?.length > 0) {
@@ -815,31 +1414,85 @@ export function initPdfExport() {
         y -= 8;
       }
 
-      // ── Connections Section (checkboxes for customer verification) ──
+      // ── Connections Section (per-measurement links with status) ──
       if (relations.connections?.length > 0) {
-        if (!checkPageBreak(40)) {
-          // skip
-        } else {
-          y = drawSectionHeader(page, 'Linked Measurements', y);
-          page.drawText(
-            'Verify that each pair of measurements starts and ends at the same point.',
-            {
+        if (checkPageBreak(40)) {
+          y = drawSectionHeader(page, 'Cross-image Connections', y);
+          y -= 4;
+
+          relations.connections.forEach(connection => {
+            if (!checkPageBreak(42)) return;
+
+            const cardH = 36;
+            // Card background
+            page.drawRectangle({
               x: layout.marginX,
-              y: y + 4,
-              size: typo.small,
-              font,
-              color: colors.textSecondary,
+              y: y - cardH,
+              width: cardW,
+              height: cardH,
+              color: colors.accentLight,
+              borderColor: colors.borderLight,
+              borderWidth: 0.5,
+            });
+
+            // Status badge
+            const badgeW = drawStatusBadge(
+              page,
+              connection.status,
+              layout.marginX + cardPadX,
+              y - 10
+            );
+
+            // Connection text: "FromDisplay <-> ToDisplay"
+            const fromLabel = safePdfText(connection.fromDisplay || connection.fromKey || '-');
+            const toLabel = safePdfText(connection.toDisplay || connection.toKey || '-');
+            const connText = `${fromLabel}  <->  ${toLabel}`;
+            page.drawText(connText.slice(0, 80), {
+              x: layout.marginX + cardPadX + badgeW + 8,
+              y: y - 10,
+              size: typo.table,
+              font: fontMono,
+              color: colors.textPrimary,
+            });
+
+            // Reason line
+            const isPending = String(connection.status || '').toLowerCase() === 'pending';
+            if (!isPending && connection.reason) {
+              page.drawText(safePdfText(connection.reason).slice(0, 100), {
+                x: layout.marginX + cardPadX,
+                y: y - 26,
+                size: typo.small,
+                font,
+                color: colors.textSecondary,
+              });
             }
-          );
+
+            y -= cardH + 6;
+          });
+
+          y -= 8;
+        }
+      }
+
+      // ── Piece Groups Section (lightweight listing) ──
+      const summaryPieceGroups = relations.pieceGroups || metaPieceGroups;
+      if (summaryPieceGroups.length > 0) {
+        if (checkPageBreak(40)) {
+          y = drawSectionHeader(page, 'Piece Groups', y);
+          page.drawText('Grouped images appear side-by-side in the PDF.', {
+            x: layout.marginX,
+            y: y + 4,
+            size: typo.small,
+            font,
+            color: colors.textSecondary,
+          });
           y -= 14;
 
-          const form = pdfDoc.getForm();
-          relations.connections.forEach((connection, connIdx) => {
-            if (!checkPageBreak(28)) return;
+          summaryPieceGroups.forEach((group, gIdx) => {
+            if (!checkPageBreak(22)) return;
 
-            const rowH = 24;
-            // Alternating row background
-            if (connIdx % 2 === 0) {
+            const rowH = 18;
+            if (gIdx % 2 === 0) {
               page.drawRectangle({
                 x: layout.marginX,
                 y: y - rowH + 4,
@@ -848,50 +1501,19 @@ export function initPdfExport() {
                 color: colors.tableRowAlt,
               });
             }
-            // Row border
-            page.drawRectangle({
-              x: layout.marginX,
-              y: y - rowH + 4,
-              width: cardW,
-              height: 0.5,
-              color: colors.borderLight,
-            });
 
-            // Checkbox
-            const connFieldName = createUniquePdfFieldName(
-              `link_${sanitizePdfFieldPart(connection.id || `conn_${connIdx + 1}`, `conn_${connIdx + 1}`)}`,
-              usedFieldNames
-            );
-            const checkbox = form.createCheckBox(connFieldName);
-            checkbox.addToPage(page, {
+            const mainLabel = safePdfText(partLabels[group.mainViewId] || group.mainViewId || '-');
+            const relatedLabels = (group.relatedViewIds || [])
+              .map(id => safePdfText(partLabels[id] || id || '-'))
+              .join(', ');
+            const groupText = `${mainLabel}  +  ${relatedLabels || 'none'}`;
+            page.drawText(groupText.slice(0, 90), {
               x: layout.marginX + cardPadX,
-              y: y - rowH + 8,
-              width: 12,
-              height: 12,
-            });
-
-            // Connection label text
-            const leftLabel = safePdfText(connection.fromDisplay || connection.fromKey || '-');
-            const rightLabel = safePdfText(connection.toDisplay || connection.toKey || '-');
-            const connText = `${leftLabel}  <->  ${rightLabel}`;
-            page.drawText(connText.slice(0, 90), {
-              x: layout.marginX + cardPadX + 18,
-              y: y - 10,
+              y: y - 8,
               size: typo.table,
               font: fontBold,
               color: colors.textPrimary,
             });
-
-            // Note if present
-            if (connection.note) {
-              page.drawText(safePdfText(connection.note).slice(0, 80), {
-                x: layout.marginX + cardPadX + 18,
-                y: y - 20,
-                size: typo.small - 1,
-                font,
-                color: colors.textMuted,
-              });
-            }
 
             y -= rowH + 2;
           });
