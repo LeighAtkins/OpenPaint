@@ -49,7 +49,7 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-app.post('/pdf/render', async (req, res) => {
+async function handlePdfRender(req, res) {
   const startedAt = Date.now();
   const requestId = crypto.randomUUID();
   res.setHeader('X-Pdf-Request-Id', requestId);
@@ -104,7 +104,10 @@ app.post('/pdf/render', async (req, res) => {
       message: 'Failed to render PDF',
     });
   }
-});
+}
+
+app.post('/pdf/render', handlePdfRender);
+app.post('/api/pdf/render', handlePdfRender);
 
 // Environment info
 app.get('/env', (req, res) => {
