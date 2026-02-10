@@ -297,10 +297,9 @@ export class ArrowManager {
       // If we draw in object space, it scales automatically.
       // So we just need `effectiveBaseSize`.
 
-      // SHORTENING LOGIC
-      // extensionDistance = scaledArrowSize + (strokeActualWidth * scale * 2)
-      // We use a simplified version: size + padding
-      const extensionDistance = (scaledArrowSize + strokeActualWidth * scale * 2) * 0.8;
+      // Keep straight-line endpoints aligned to the visual base of the arrow head.
+      // For our arrowhead geometry, base center sits one arrow-size unit behind tip.
+      const extensionDistance = scaledArrowSize;
 
       // We need to modify the drawing of the line to be shorter.
       // This is tricky because `originalRender` draws the full line.

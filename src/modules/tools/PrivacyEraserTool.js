@@ -5,7 +5,6 @@ export class PrivacyEraserTool extends BaseTool {
     super(canvasManager);
     this.brushWidth = 28;
     this.isDrawing = false;
-    this.wheelSizes = [2, 4, 6, 8, 10, 15, 20, 28, 36, 44, 52];
     this.onMouseWheelDom = this.onMouseWheelDom.bind(this);
   }
 
@@ -115,40 +114,42 @@ export class PrivacyEraserTool extends BaseTool {
       return;
     }
 
-    event.__privacyBrushHandled = true;
     event.preventDefault();
     event.stopPropagation();
 
-    const brushSelect = document.getElementById('brushSize');
-    const optionValues = Array.from(brushSelect?.options || [])
-      .map(option => parseInt(option.value, 10))
-      .filter(value => Number.isFinite(value));
-    const sizes = optionValues.length > 0 ? optionValues : this.wheelSizes;
-    const current = this.brushWidth;
-    const direction = event.deltaY > 0 ? -1 : 1;
-
-    let index = sizes.findIndex(size => size >= current);
-    if (index < 0) index = sizes.length - 1;
-    if (direction > 0) {
-      index = Math.min(sizes.length - 1, index + 1);
-    } else {
-      index = Math.max(0, index - 1);
+    // Only Ctrl + wheel adjusts privacy brush size.
+    if (!event.ctrlKey) {
+      return;
     }
 
-    const nextSize = sizes[index];
+    event.__privacyBrushHandled = true;
+
+    const brushInput = document.getElementById('brushSize');
+    const min = Math.max(1, parseInt(brushInput?.min || '1', 10) || 1);
+    const max = Math.max(min, parseInt(brushInput?.max || '300', 10) || 300);
+    const step = Math.max(1, parseInt(brushInput?.step || '1', 10) || 1);
+    const direction = event.deltaY < 0 ? 1 : -1;
+    const nextSize = Math.max(min, Math.min(max, this.brushWidth + direction * step));
+
+    if (nextSize === this.brushWidth) {
+      return;
+    }
+
     this.setWidth(nextSize);
 
-    if (brushSelect) {
-      brushSelect.value = String(nextSize);
-      brushSelect.dispatchEvent(new Event('change', { bubbles: true }));
+    if (brushInput) {
+      brushInput.value = String(nextSize);
+      brushInput.dispatchEvent(new Event('input', { bubbles: true }));
+      brushInput.dispatchEvent(new Event('change', { bubbles: true }));
     }
   }
 
   updateCursorPreview() {
     if (!this.canvas) return;
-    const diameter = Math.max(6, Math.min(80, Math.round(this.brushWidth)));
+    const diameter = Math.max(6, Math.min(220, Math.round(this.brushWidth)));
     const radius = Math.round(diameter / 2);
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${diameter}" height="${diameter}"><circle cx="${radius}" cy="${radius}" r="${Math.max(1, radius - 1)}" fill="rgba(239,68,68,0.12)" stroke="rgba(239,68,68,0.95)" stroke-width="2"/></svg>`;
+    const arm = Math.max(4, Math.floor(radius * 0.2));
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${diameter}" height="${diameter}"><circle cx="${radius}" cy="${radius}" r="${Math.max(1, radius - 1)}" fill="none" stroke="rgba(255,255,255,0.95)" stroke-width="2"/><line x1="${radius - arm}" y1="${radius}" x2="${radius + arm}" y2="${radius}" stroke="rgba(255,255,255,0.9)" stroke-width="1.5"/><line x1="${radius}" y1="${radius - arm}" x2="${radius}" y2="${radius + arm}" stroke="rgba(255,255,255,0.9)" stroke-width="1.5"/></svg>`;
     const encoded = `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
     this.canvas.freeDrawingCursor = `url("${encoded}") ${radius} ${radius}, crosshair`;
   }
