@@ -67,8 +67,16 @@ export default {
 				return json(env, origin, { error: 'measurement_guides_bucket_missing' }, 500);
 			}
 
-			const key = `measurement-guides/${view.charAt(0).toUpperCase()}${view.slice(1)}_${code}.svg`;
-			const object = await env.MEASUREMENT_GUIDES.get(key);
+			// Try with view prefix first (e.g., "Front_CODE.svg")
+			let key = `measurement-guides/${view.charAt(0).toUpperCase()}${view.slice(1)}_${code}.svg`;
+			let object = await env.MEASUREMENT_GUIDES.get(key);
+
+			// Fallback to no prefix (e.g., "CODE.svg") if prefixed version not found
+			if (!object || !object.body) {
+				key = `measurement-guides/${code}.svg`;
+				object = await env.MEASUREMENT_GUIDES.get(key);
+			}
+
 			if (!object || !object.body) {
 				return json(env, origin, { error: 'guide_not_found', key }, 404);
 			}

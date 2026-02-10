@@ -2,6 +2,7 @@ const HOTKEY = 'Backslash';
 const VIEWS = ['Front', 'Back', 'Side'];
 const FLASH_DURATION_MS = 1200;
 const GUIDE_HINT_KEY = 'openpaint:guideFlashHintSeen:v1';
+const GUIDE_CACHE_KEY = '2026-02-11-1';
 
 let flashOverlay = null;
 let galleryOverlay = null;
@@ -305,7 +306,23 @@ function showShortcutToast() {
 }
 
 function buildGuideUrl(code, view) {
-  return `/api/measurement-guides/svg?code=${encodeURIComponent(code)}&view=${encodeURIComponent(view)}`;
+  return `/api/measurement-guides/svg?code=${encodeURIComponent(code)}&view=${encodeURIComponent(view)}&v=${encodeURIComponent(GUIDE_CACHE_KEY)}`;
+}
+
+function attachGuideImageRecovery(root) {
+  if (!root) return;
+  root.querySelectorAll('img[data-guide-code][data-guide-view]').forEach(img => {
+    if (img.dataset.retryBound === '1') return;
+    img.dataset.retryBound = '1';
+    img.addEventListener('error', () => {
+      if (img.dataset.retried === '1') return;
+      img.dataset.retried = '1';
+      const code = img.dataset.guideCode;
+      const view = img.dataset.guideView || 'Front';
+      if (!code) return;
+      img.src = `${buildGuideUrl(code, view)}&cb=${Date.now()}`;
+    });
+  });
 }
 
 function saveGuideCodes(codes) {
@@ -358,6 +375,12 @@ function ensureOverlay(slide, slideCount) {
       </article>
     </div>
   `;
+  const img = flashOverlay.querySelector('img');
+  if (img) {
+    img.dataset.guideCode = slide.code;
+    img.dataset.guideView = slide.view;
+  }
+  attachGuideImageRecovery(flashOverlay);
 }
 
 function promptForCodes() {
@@ -427,31 +450,14 @@ function showGuideGallery() {
     document.body.appendChild(galleryOverlay);
   }
 
-  // Complete list of all uploaded guide codes
+  // All uploaded guide codes (Worker handles both Front_CODE.svg and CODE.svg)
   const allCodes = [
     'CC-BCH-B',
     'CC-BCH-W',
     'CC-BK-BE',
-    'CC-BK-BE2',
-    'CC-BK-HK',
-    'CC-BK-KE',
     'CC-BK-L',
     'CC-BK-T',
     'CC-BK-W',
-    'CC-BOL',
-    'CC-ST-BE',
-    'CC-ST-BE2',
-    'CC-ST-HK',
-    'CC-ST-KE',
-    'CC-ST-L',
-    'CC-ST-T',
-    'CC-ST-W',
-    'CCL-CH-L',
-    'CCL-CH-R',
-    'CS-X',
-    'CS0-CNRP',
-    'CS0-CNRP2',
-    'CS0-SNUG',
     'CS1-CNR',
     'CS1-CNR-W',
     'CS1-SRA-HB-L',
@@ -490,7 +496,6 @@ function showGuideGallery() {
     'CS1L-SA-HB',
     'CS1L-SA-SB',
     'CS1L-WA-SB',
-    'CS1X-NA',
     'CS3B-RA-HB',
     'CS3B-RA-RB',
     'CS3B-RA-SB',
@@ -537,12 +542,10 @@ function showGuideGallery() {
     'CS3L-SSA-SB-L',
     'CS3L-SSA-SB-R',
     'CS3L-WA-SB',
-    'CS3X-NA',
     'CS4-SSA-HB-L',
     'CS4-SSA-HB-R',
     'CS4-SSA-SB-L',
     'CS4-SSA-SB-R',
-    'CS5-NA-CNRP',
     'CS5B-RA-HB-L',
     'CS5B-RA-HB-R',
     'CS5B-RA-SB',
@@ -593,7 +596,6 @@ function showGuideGallery() {
     'CSDC-SA-SNUG',
     'CSDC-SNUG',
     'CSS-RA-HB',
-    'CSXOXO-SQ',
   ];
 
   const renderGallery = filteredCodes => {
@@ -604,7 +606,7 @@ function showGuideGallery() {
         <div class="guide-gallery-item" data-code="${code}">
           <div class="guide-gallery-item-label">${code}</div>
           <div class="guide-gallery-item-body">
-            <img src="${url}" alt="${code} Front view" loading="lazy" />
+            <img src="${url}" alt="${code} Front view" loading="lazy" data-guide-code="${code}" data-guide-view="Front" />
           </div>
         </div>
       `;
@@ -637,12 +639,13 @@ function showGuideGallery() {
             <div class="guide-gallery-item" data-code="${code}">
               <div class="guide-gallery-item-label">${code}</div>
               <div class="guide-gallery-item-body">
-                <img src="${url}" alt="${code} Front view" loading="lazy" />
+                <img src="${url}" alt="${code} Front view" loading="lazy" data-guide-code="${code}" data-guide-view="Front" />
               </div>
             </div>
           `;
           })
           .join('');
+        attachGuideImageRecovery(grid);
       }
     });
 
@@ -661,6 +664,7 @@ function showGuideGallery() {
   };
 
   renderGallery(allCodes);
+  attachGuideImageRecovery(galleryOverlay);
   requestAnimationFrame(() => galleryOverlay?.classList.add('visible'));
 }
 
