@@ -1,4 +1,4 @@
-import { closeBrowser, getBrowser } from './browser-pool.js';
+import { closeBrowser, getBrowser, isServerlessRuntime } from './browser-pool.js';
 
 const PAGE_FORMATS = {
   a4: 'A4',
@@ -15,8 +15,7 @@ export async function renderPdfWithPuppeteer({ html, options }) {
 
   for (let attempt = 1; attempt <= 2; attempt += 1) {
     const browser = await getBrowser();
-    const context = await browser.createBrowserContext();
-    const page = await context.newPage();
+    const page = await browser.newPage();
 
     try {
       await page.setRequestInterception(true);
@@ -128,7 +127,9 @@ export async function renderPdfWithPuppeteer({ html, options }) {
       }
     } finally {
       await page.close().catch(() => {});
-      await context.close().catch(() => {});
+      if (isServerlessRuntime()) {
+        await browser.close().catch(() => {});
+      }
     }
   }
 

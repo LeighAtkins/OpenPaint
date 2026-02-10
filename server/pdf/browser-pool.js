@@ -1,5 +1,9 @@
 let browserPromise = null;
 
+function isServerlessRuntime() {
+  return Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+}
+
 async function launchBrowser() {
   let puppeteerLib = null;
   let launchOptions = {
@@ -61,6 +65,10 @@ async function launchBrowser() {
 }
 
 export async function getBrowser() {
+  if (isServerlessRuntime()) {
+    return launchBrowser();
+  }
+
   if (!browserPromise) {
     browserPromise = launchBrowser().catch(error => {
       browserPromise = null;
@@ -82,8 +90,11 @@ export async function getBrowser() {
 }
 
 export async function closeBrowser() {
+  if (isServerlessRuntime()) return;
   if (!browserPromise) return;
   const browser = await browserPromise;
   await browser.close();
   browserPromise = null;
 }
+
+export { isServerlessRuntime };
