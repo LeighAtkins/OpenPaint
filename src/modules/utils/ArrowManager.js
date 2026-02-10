@@ -263,13 +263,9 @@ export class ArrowManager {
       const objScale = Math.max(Math.abs(this.scaleX || 1), Math.abs(this.scaleY || 1));
       const strokeActualWidth = strokeWidth * objScale;
 
-      // Get current scale (approximation from canvas or object)
-      // Ideally we use window.imageScaleByLabel[currentImageLabel] but accessing global state inside render is risky if context changes.
-      // However, the plan specifies using it.
-      let scale = 1;
-      if (window.imageScaleByLabel && window.currentImageLabel) {
-        scale = window.imageScaleByLabel[window.currentImageLabel] || 1;
-      }
+      // Keep arrow geometry in object-space units so arrowheads stay aligned
+      // with line endpoints regardless of viewport/image scaling adjustments.
+      const scale = 1;
 
       // Calculate effective arrow size
       // Formula: baseArrowSize = arrowSize || (strokeActualWidth * 2)
