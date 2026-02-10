@@ -84,9 +84,9 @@ export default {
 			// Read SVG content and transform it
 			let svgText = await object.text();
 
-			// Hide measurement boxes (groups starting with 'b' like bJ1cm, bF2cm, bL1cm)
-			// Keep only circle marker groups (starting with 'c' or 'm' like cJ1cm, mJ1cm)
-			svgText = svgText.replace(/<g id="b[^"]*"[^>]*>[\s\S]*?<\/g>/g, '');
+			// Hide measurement box groups (ids starting with "b") without mutating SVG structure.
+			// Removing nested <g> elements with regex can corrupt markup and break browser rendering.
+			svgText = svgText.replace(/(<svg[^>]*>)/, '$1\n<style>g[id^="b"]{display:none!important;}</style>');
 
 			// Add white background rectangle as first child of SVG
 			// Insert after opening <svg> tag
