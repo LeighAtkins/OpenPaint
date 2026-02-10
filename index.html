@@ -2478,19 +2478,17 @@
               class="tbtn"
             ></button>
           </div>
-          <select
+          <input
             id="brushSize"
+            type="number"
+            min="1"
+            max="300"
+            step="1"
+            value="2"
             class="border border-gray-300 rounded text-sm"
-            style="height: 34px; margin: 0; cursor: pointer; width: 60px; padding: 2px 4px"
-          >
-            <option value="2" selected>2px</option>
-            <option value="4">4px</option>
-            <option value="6">6px</option>
-            <option value="8">8px</option>
-            <option value="10">10px</option>
-            <option value="15">15px</option>
-            <option value="20">20px</option>
-          </select>
+            style="height: 34px; margin: 0; cursor: text; width: 72px; padding: 2px 6px"
+            title="Brush size in pixels (Ctrl + Mouse Wheel in Privacy Erase mode)"
+          />
           <button id="arrowStartBtn" class="tbtn icon-btn" title="Start Arrow">
             <svg
               width="20"

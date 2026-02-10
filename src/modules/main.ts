@@ -924,12 +924,13 @@ export class App {
     });
 
     // Line width/thickness control
-    const brushSizeSelect = document.getElementById('brushSize') as HTMLSelectElement | null;
+    const brushSizeSelect = document.getElementById('brushSize') as HTMLInputElement | null;
     if (brushSizeSelect) {
-      brushSizeSelect.addEventListener('change', (e: Event) => {
-        const target = e.target as HTMLSelectElement | null;
+      const handleBrushSizeChange = (e: Event) => {
+        const target = e.target as HTMLInputElement | null;
         if (!target) return;
-        const width = parseInt(target.value, 10);
+        const width = Math.max(1, Math.min(300, parseInt(target.value, 10) || 1));
+        target.value = String(width);
 
         // Update tool settings for new strokes
         this.toolManager.updateSettings({ width: width });
@@ -939,7 +940,10 @@ export class App {
 
         // Update selected shape elements only (text ignores brush size)
         this.updateSelectedTextAndShapes({ strokeWidth: width });
-      });
+      };
+
+      brushSizeSelect.addEventListener('change', handleBrushSizeChange);
+      brushSizeSelect.addEventListener('input', handleBrushSizeChange);
     }
 
     // Dash style control (dotted lines)
