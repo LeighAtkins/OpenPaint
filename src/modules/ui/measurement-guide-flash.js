@@ -1,10 +1,12 @@
 const HOTKEY = 'Backslash';
 const VIEWS = ['Front', 'Back', 'Side'];
 const FLASH_DURATION_MS = 1200;
+const GUIDE_HINT_KEY = 'openpaint:guideFlashHintSeen:v1';
 
 let flashOverlay = null;
 let hideTimer = null;
 let activeIndex = 0;
+let hintToastTimer = null;
 
 function getMetadata() {
   return window.app?.projectManager?.getProjectMetadata?.() || window.projectMetadata || {};
@@ -129,8 +131,73 @@ function ensureStyles() {
       .guide-flash-grid { grid-template-columns: 1fr; }
       .guide-flash-card { min-height: 140px; }
     }
+
+    .guide-flash-toast {
+      position: fixed;
+      right: 14px;
+      bottom: 14px;
+      z-index: 13320;
+      max-width: min(460px, calc(100vw - 24px));
+      background: rgba(15, 23, 42, 0.92);
+      color: #f8fafc;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      border-radius: 10px;
+      box-shadow: 0 14px 28px rgba(2, 6, 23, 0.45);
+      padding: 10px 12px;
+      font-size: 12px;
+      line-height: 1.35;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 140ms ease, transform 140ms ease;
+      pointer-events: none;
+    }
+    .guide-flash-toast.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
   `;
   document.head.appendChild(style);
+}
+
+function shouldShowHintToast() {
+  try {
+    return localStorage.getItem(GUIDE_HINT_KEY) !== '1';
+  } catch {
+    return true;
+  }
+}
+
+function markHintToastShown() {
+  try {
+    localStorage.setItem(GUIDE_HINT_KEY, '1');
+  } catch {
+    // no-op
+  }
+}
+
+function showShortcutToast() {
+  if (!shouldShowHintToast()) return;
+  ensureStyles();
+
+  let toast = document.getElementById('guideFlashShortcutToast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'guideFlashShortcutToast';
+    toast.className = 'guide-flash-toast';
+    document.body.appendChild(toast);
+  }
+
+  toast.textContent = 'Hint: Shift+\\ cycles to next guide image. Ctrl+\\ edits guide codes.';
+  requestAnimationFrame(() => toast.classList.add('visible'));
+
+  if (hintToastTimer) {
+    clearTimeout(hintToastTimer);
+  }
+  hintToastTimer = setTimeout(() => {
+    toast?.classList.remove('visible');
+  }, 2800);
+
+  markHintToastShown();
 }
 
 function buildGuideUrl(code, view) {
@@ -257,10 +324,12 @@ function onKeyDown(event) {
     if (!codes.length) return;
     activeIndex = 0;
     showGuideFlash();
+    showShortcutToast();
     return;
   }
 
   showGuideFlash({ cycleNext: event.shiftKey });
+  showShortcutToast();
 }
 
 export function initMeasurementGuideFlash() {
