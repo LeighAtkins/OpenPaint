@@ -175,6 +175,42 @@ function safePdfText(value) {
   return String(value || '').replace(/[^\x20-\x7E]/g, ' ');
 }
 
+async function requestServerRenderedPdf(payload) {
+  const endpoints = ['/api/pdf/render', '/pdf/render'];
+  let lastError = null;
+
+  for (const endpoint of endpoints) {
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errText = await response.text();
+        const looksLikeNotFound =
+          response.status === 404 &&
+          (errText.includes('NOT_FOUND') || errText.includes('The page could not be found'));
+        if (looksLikeNotFound) {
+          lastError = new Error(`Endpoint not found at ${endpoint}`);
+          continue;
+        }
+        throw new Error(`Server PDF render failed (${response.status}) at ${endpoint}: ${errText}`);
+      }
+
+      return response;
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  throw (
+    lastError ||
+    new Error('Server PDF render endpoint is unavailable. Check API deployment configuration.')
+  );
+}
+
 export function initPdfExport() {
   // Export utilities for saving multiple images and PDF generation with pdf-lib
   window.saveAllImages = async function () {
@@ -439,28 +475,19 @@ export function initPdfExport() {
 
     progressText.textContent = 'Rendering modern PDF...';
     progressBar.style.width = '92%';
-    const response = await fetch('/api/pdf/render', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        source: 'report',
-        report: {
-          projectName,
-          namingLine,
-          groups,
-        },
-        options: {
-          renderer: 'hybrid',
-          pageSize,
-          filename: `${sanitizeFilenamePart(projectName, 'OpenPaint Project')}.pdf`,
-        },
-      }),
+    const response = await requestServerRenderedPdf({
+      source: 'report',
+      report: {
+        projectName,
+        namingLine,
+        groups,
+      },
+      options: {
+        renderer: 'hybrid',
+        pageSize,
+        filename: `${sanitizeFilenamePart(projectName, 'OpenPaint Project')}.pdf`,
+      },
     });
-
-    if (!response.ok) {
-      const errText = await response.text();
-      throw new Error(`Server PDF render failed (${response.status}): ${errText}`);
-    }
 
     const blob = await response.blob();
     const url = URL.createObjectURL(blob);
