@@ -925,15 +925,17 @@ export class App {
 
     // Line width/thickness control
     const brushSizeSelect = document.getElementById('brushSize') as HTMLInputElement | null;
-    if (brushSizeSelect) {
-      const handleBrushSizeChange = (e: Event) => {
-        const target = e.target as HTMLInputElement | null;
-        if (!target) return;
-        const width = Math.max(1, Math.min(300, parseInt(target.value, 10) || 1));
-        target.value = String(width);
+    const parseBrushWidth = (value: string): number => {
+      const parsed = parseInt((value || '').replace(/[^\d]/g, ''), 10);
+      if (!Number.isFinite(parsed)) return 1;
+      return Math.max(1, Math.min(300, parsed));
+    };
+    const formatBrushWidth = (value: number): string => `${value}px`;
 
+    if (brushSizeSelect) {
+      const applyBrushWidth = (width: number) => {
         // Update tool settings for new strokes
-        this.toolManager.updateSettings({ width: width });
+        this.toolManager.updateSettings({ width });
 
         // Update selected strokes if any are selected (handles both single and multi-selection)
         this.updateSelectedStrokes('strokeWidth', width);
@@ -942,8 +944,78 @@ export class App {
         this.updateSelectedTextAndShapes({ strokeWidth: width });
       };
 
-      brushSizeSelect.addEventListener('change', handleBrushSizeChange);
-      brushSizeSelect.addEventListener('input', handleBrushSizeChange);
+      const handleBrushSizeInput = (e: Event) => {
+        const target = e.target as HTMLInputElement | null;
+        if (!target) return;
+        const width = parseBrushWidth(target.value);
+        applyBrushWidth(width);
+      };
+
+      const commitBrushSizeValue = (target: HTMLInputElement | null) => {
+        if (!target) return;
+        const width = parseBrushWidth(target.value);
+        target.value = formatBrushWidth(width);
+        applyBrushWidth(width);
+      };
+
+      brushSizeSelect.addEventListener('input', handleBrushSizeInput);
+      brushSizeSelect.addEventListener('change', e => {
+        commitBrushSizeValue(e.target as HTMLInputElement | null);
+      });
+      brushSizeSelect.addEventListener('blur', e => {
+        commitBrushSizeValue(e.target as HTMLInputElement | null);
+      });
+      brushSizeSelect.addEventListener('focus', e => {
+        const target = e.target as HTMLInputElement | null;
+        if (!target) return;
+        target.value = String(parseBrushWidth(target.value));
+      });
+      brushSizeSelect.addEventListener('keydown', e => {
+        if (e.key !== 'Enter') return;
+        e.preventDefault();
+        commitBrushSizeValue(e.target as HTMLInputElement | null);
+      });
+
+      // Initialize to canonical displayed format
+      commitBrushSizeValue(brushSizeSelect);
+    }
+
+    const upperCanvasEl = this.canvasManager.fabricCanvas?.upperCanvasEl as
+      | (HTMLCanvasElement & { __ctrlBrushWheelBound?: boolean })
+      | undefined;
+    if (upperCanvasEl && !upperCanvasEl.__ctrlBrushWheelBound) {
+      upperCanvasEl.__ctrlBrushWheelBound = true;
+      upperCanvasEl.addEventListener(
+        'wheel',
+        wheelEvent => {
+          if (!wheelEvent.ctrlKey) return;
+
+          const activeTool = this.toolManager?.activeToolName;
+          const resizableTools = new Set(['line', 'curve', 'arrow', 'pencil', 'shape', 'privacy']);
+          if (!activeTool || !resizableTools.has(activeTool)) {
+            return;
+          }
+
+          const target = document.getElementById('brushSize') as HTMLInputElement | null;
+          if (!target) return;
+
+          wheelEvent.preventDefault();
+          wheelEvent.stopPropagation();
+          (wheelEvent as unknown as { __brushSizeHandled?: boolean }).__brushSizeHandled = true;
+
+          const min = Math.max(1, parseInt(target.min || '1', 10) || 1);
+          const max = Math.max(min, parseInt(target.max || '300', 10) || 300);
+          const step = Math.max(1, parseInt(target.step || '1', 10) || 1);
+          const current = parseBrushWidth(target.value);
+          const direction = wheelEvent.deltaY < 0 ? 1 : -1;
+          const next = Math.max(min, Math.min(max, current + direction * step));
+
+          target.value = formatBrushWidth(next);
+          target.dispatchEvent(new Event('input', { bubbles: true }));
+          target.dispatchEvent(new Event('change', { bubbles: true }));
+        },
+        { passive: false }
+      );
     }
 
     // Dash style control (dotted lines)

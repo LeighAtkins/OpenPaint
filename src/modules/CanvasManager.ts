@@ -2122,13 +2122,7 @@ export class CanvasManager {
     if (!this.fabricCanvas) return;
 
     this.fabricCanvas.on('mouse:wheel', (opt: FabricIEvent) => {
-      if (window.app?.toolManager?.activeToolName === 'privacy') {
-        opt.e.preventDefault();
-        opt.e.stopPropagation();
-        return;
-      }
-
-      if (opt?.e?.__privacyBrushHandled) {
+      if (opt?.e?.__brushSizeHandled) {
         return;
       }
       const delta = opt.e.deltaY;
