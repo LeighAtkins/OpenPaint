@@ -222,6 +222,20 @@ export class CanvasManager {
     this.fabricCanvas.on('path:created', (e: FabricIEvent) => {
       const path = e.path;
       if (path) {
+        const activeToolName = window.app?.toolManager?.activeToolName;
+        const isPrivacyPath =
+          activeToolName === 'privacy' ||
+          path?.customData?.isPrivacyErase === true ||
+          path?.isPrivacyErase === true;
+
+        if (isPrivacyPath) {
+          path.set({
+            selectable: false,
+            evented: false,
+          });
+          return;
+        }
+
         // Make path selectable for moving/deleting
         path.set({
           selectable: true,
@@ -2108,6 +2122,9 @@ export class CanvasManager {
     if (!this.fabricCanvas) return;
 
     this.fabricCanvas.on('mouse:wheel', (opt: FabricIEvent) => {
+      if (opt?.e?.__privacyBrushHandled) {
+        return;
+      }
       const delta = opt.e.deltaY;
       let zoom = this.zoomLevel || this.fabricCanvas.getZoom();
       zoom *= 0.999 ** delta;
