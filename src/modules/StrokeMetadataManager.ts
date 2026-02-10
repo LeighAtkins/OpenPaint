@@ -363,13 +363,19 @@ export class StrokeMetadataManager {
   }
 
   // Generate next label (A1, A2, B1, etc.) - integrates with tag prediction system
-  getNextLabel(imageLabel, mode = 'letters+numbers') {
+  getNextLabel(imageLabel, mode) {
     imageLabel = this.normalizeImageLabel(imageLabel);
+    const resolvedMode =
+      mode === 'letters' || mode === 'letters+numbers'
+        ? mode
+        : window.tagMode === 'letters' || window.tagMode === 'letters+numbers'
+          ? window.tagMode
+          : 'letters+numbers';
     // First, try to use the tag prediction system from index.html
     if (window.calculateNextTag) {
       try {
         const tag = window.calculateNextTag();
-        if (tag && this.isValidTag(tag, mode)) {
+        if (tag && this.isValidTag(tag, resolvedMode)) {
           // Use the predicted tag and update the display
           this.updateTagPredictionAfterUse(imageLabel, tag);
           return tag;
@@ -383,7 +389,7 @@ export class StrokeMetadataManager {
     const nextTagDisplay = document.getElementById('nextTagDisplay');
     if (nextTagDisplay) {
       const tag = nextTagDisplay.textContent.trim().toUpperCase();
-      if (tag && this.isValidTag(tag, mode)) {
+      if (tag && this.isValidTag(tag, resolvedMode)) {
         // Use the predicted tag and update the display
         this.updateTagPredictionAfterUse(imageLabel, tag);
         return tag;
@@ -393,7 +399,7 @@ export class StrokeMetadataManager {
     // Fallback: calculate next tag
     const existing = Object.keys(this.vectorStrokesByImage[imageLabel] || {});
 
-    if (mode === 'letters') {
+    if (resolvedMode === 'letters') {
       // Letters only mode
       if (existing.length === 0) return 'A';
 
