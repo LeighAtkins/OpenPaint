@@ -27,6 +27,7 @@ const groupedSectionSchema = z.object({
 const reportSchema = z.object({
   projectName: z.string().min(1).max(160),
   namingLine: z.string().max(220).optional().default(''),
+  unit: z.enum(['inch', 'cm']).optional().default('inch'),
   groups: z.array(groupedSectionSchema).max(100).default([]),
 });
 

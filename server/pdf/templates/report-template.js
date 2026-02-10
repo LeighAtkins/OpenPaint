@@ -36,6 +36,16 @@ function fieldName(...parts) {
     .slice(0, 120);
 }
 
+function renderUnitToggle(unit) {
+  const normalized = String(unit || 'inch').toLowerCase() === 'cm' ? 'cm' : 'inch';
+  return `
+    <div class="unit-toggle" aria-label="Measurement units">
+      <span class="unit-pill ${normalized === 'inch' ? 'active' : ''}">inch</span>
+      <span class="unit-pill ${normalized === 'cm' ? 'active' : ''}">cm</span>
+    </div>
+  `;
+}
+
 function renderMeasurementsTable(rows, groupIndex) {
   if (!rows?.length) {
     return '<div class="card right"><p class="section-label">Main Measurements</p><p>No measurements</p></div>';
@@ -72,7 +82,7 @@ function renderMeasurementsTable(rows, groupIndex) {
 function renderRelatedFrames(frames) {
   if (!frames?.length) return '';
   return `
-    <div class="avoid-break">
+    <div>
       <p class="section-label">Related Frames</p>
       <div class="related-grid">
         ${frames
@@ -93,7 +103,7 @@ function renderRelatedFrames(frames) {
 function renderRelatedMeasurementCards(cards, groupIndex) {
   if (!cards?.length) return '';
   return `
-    <div class="avoid-break">
+    <div>
       <p class="section-label">Related Measurements</p>
       <div class="cards-grid">
         ${cards
@@ -140,7 +150,10 @@ export function renderReportTemplate(report, options = {}) {
       return `
       <section class="page" data-page-index="${index}">
         <header class="header">
-          <h1 class="title">${escapeHtml(report.projectName)}</h1>
+          <div class="header-top">
+            <h1 class="title">${escapeHtml(report.projectName)}</h1>
+            ${renderUnitToggle(report.unit)}
+          </div>
           <div class="meta">${escapeHtml(report.namingLine || '')}</div>
           <div class="meta">${escapeHtml(subtitle)}</div>
         </header>

@@ -283,6 +283,15 @@ export function initPdfExport() {
       'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:10000;display:flex;align-items:center;justify-content:center;';
     overlay.innerHTML = `<div style="background:white;border-radius:12px;padding:30px;max-width:500px;box-shadow:0 10px 40px rgba(0,0,0,0.3);"><h2 style="margin:0 0 20px 0;color:#333;">Export PDF - ${projectName}</h2><p style="color:#666;margin-bottom:15px;">Creating PDF with ${viewIds.length} page(s) and editable form fields.</p><div style="margin-bottom:15px;"><label style="display:block;margin-bottom:5px;font-weight:600;color:#333;">Image Quality:</label><select id="pdfQuality" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;"><option value="high">High Quality</option><option value="medium" selected>Medium Quality</option><option value="low">Low Quality</option></select></div><div style="margin-bottom:15px;"><label style="display:block;margin-bottom:5px;font-weight:600;color:#333;">Page Size:</label><select id="pdfPageSize" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;"><option value="letter" selected>Letter (8.5" × 11")</option><option value="a4">A4</option></select></div><label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:20px;"><input type="checkbox" id="includeMeasurements" checked style="transform:scale(1.3);"><span style="color:#333;">Include editable measurement fields</span></label><div style="display:flex;gap:10px;"><button id="generatePdfBtn" style="flex:1;padding:12px;background:#3b82f6;color:white;border:none;border-radius:8px;font-weight:600;cursor:pointer;">Generate PDF</button><button id="cancelPdfBtn" style="flex:1;padding:12px;background:#6b7280;color:white;border:none;border-radius:8px;font-weight:600;cursor:pointer;">Cancel</button></div><div id="pdfProgress" style="display:none;margin-top:20px;text-align:center;"><div style="width:100%;height:8px;background:#e5e7eb;border-radius:4px;overflow:hidden;margin-bottom:10px;"><div id="pdfProgressBar" style="width:0%;height:100%;background:#3b82f6;transition:width 0.3s;"></div></div><p id="pdfProgressText" style="color:#666;font-size:14px;">Preparing PDF...</p></div></div>`;
     document.body.appendChild(overlay);
+    const pageSizeSelect = document.getElementById('pdfPageSize');
+    if (pageSizeSelect) {
+      pageSizeSelect.value = 'a4';
+      pageSizeSelect.disabled = true;
+      const pageSizeWrap = pageSizeSelect.closest('div');
+      if (pageSizeWrap) {
+        pageSizeWrap.style.display = 'none';
+      }
+    }
     const includeMeasurementsLabel = document.getElementById('includeMeasurements')?.parentElement;
     if (includeMeasurementsLabel) {
       const rendererWrap = document.createElement('div');
@@ -293,7 +302,7 @@ export function initPdfExport() {
     document.getElementById('cancelPdfBtn').onclick = () => overlay.remove();
     document.getElementById('generatePdfBtn').onclick = async () => {
       const quality = document.getElementById('pdfQuality').value;
-      const pageSize = document.getElementById('pdfPageSize').value;
+      const pageSize = 'a4';
       const includeMeasurements = document.getElementById('includeMeasurements').checked;
       const rendererMode = document.getElementById('pdfRendererMode')?.value || 'classic';
       document.getElementById('pdfProgress').style.display = 'block';
@@ -476,6 +485,58 @@ export function initPdfExport() {
       });
     }
 
+    if (includeMeasurements && typeof window.evaluateMeasurementRelations === 'function') {
+      try {
+        const relations = window.evaluateMeasurementRelations() || {};
+        const relationChecks = Array.isArray(relations.checks) ? relations.checks : [];
+        const relationConnections = Array.isArray(relations.connections)
+          ? relations.connections
+          : [];
+        if (relationChecks.length || relationConnections.length) {
+          const relationRows = relationChecks.map(check => {
+            const status = String(check?.status || 'pending').toUpperCase();
+            const formula = check?.formula || check?.id || 'Formula Check';
+            const reason = check?.reason ? ` - ${check.reason}` : '';
+            return {
+              label: formula,
+              value: `${status}${reason}`,
+            };
+          });
+          const connectionRows = relationConnections.map(connection => {
+            const from = connection?.fromDisplay || connection?.fromKey || '-';
+            const to = connection?.toDisplay || connection?.toKey || '-';
+            const status = String(connection?.status || 'pending').toUpperCase();
+            const reason = connection?.reason ? ` - ${connection.reason}` : '';
+            return {
+              label: `${from} <-> ${to}`,
+              value: `${status}${reason}`,
+            };
+          });
+
+          groups.push({
+            title: 'Measurement Validation Summary',
+            subtitle: 'Formula checks and cross-image connections',
+            mainImage: {
+              title: 'Validation Overview',
+              src:
+                groups[0]?.mainImage?.src ||
+                'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI5NjAiIGhlaWdodD0iNTQwIj48cmVjdCB3aWR0aD0iOTYwIiBoZWlnaHQ9IjU0MCIgZmlsbD0iI0YxRjVGOSIgcng9IjE2Ii8+PHRleHQgeD0iNDgwIiB5PSIyODAiIGZvbnQtc2l6ZT0iMzYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiM0NzU1NjkiIGZvbnQtZmFtaWx5PSJBcmlhbCI+TWVhc3VyZW1lbnQgVmFsaWRhdGlvbiBTdW1tYXJ5PC90ZXh0Pjwvc3ZnPg==',
+            },
+            mainMeasurements: relationRows,
+            relatedFrames: [],
+            relatedMeasurementCards: [
+              {
+                title: 'Cross-image Connections',
+                rows: connectionRows,
+              },
+            ],
+          });
+        }
+      } catch (error) {
+        console.warn('[PDF] Failed to append relation summary page in modern renderer:', error);
+      }
+    }
+
     progressText.textContent = 'Rendering modern PDF...';
     progressBar.style.width = '92%';
     const response = await requestServerRenderedPdf({
@@ -483,6 +544,7 @@ export function initPdfExport() {
       report: {
         projectName,
         namingLine,
+        unit: currentUnit,
         groups,
       },
       options: {

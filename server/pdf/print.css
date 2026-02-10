@@ -39,11 +39,43 @@ body {
   margin-bottom: 14px;
 }
 
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
 .title {
   font-size: 22px;
   font-weight: 700;
   line-height: 1.1;
   margin: 0;
+}
+
+.unit-toggle {
+  display: inline-flex;
+  gap: 4px;
+  padding: 3px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+}
+
+.unit-pill {
+  font-size: 10px;
+  line-height: 1;
+  padding: 4px 7px;
+  border-radius: 999px;
+  color: #d7e6ff;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.unit-pill.active {
+  background: rgba(255, 255, 255, 0.92);
+  color: #16305e;
+  font-weight: 700;
 }
 
 .meta {
@@ -126,9 +158,11 @@ body {
 
 .related-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
   margin-bottom: 10px;
+  break-inside: auto;
+  page-break-inside: auto;
 }
 
 .thumb {
@@ -141,7 +175,7 @@ body {
 
 .thumb img {
   width: 100%;
-  height: 86px;
+  height: 126px;
   object-fit: contain;
   background: #f5f9ff;
 }
@@ -156,6 +190,8 @@ body {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
+  break-inside: auto;
+  page-break-inside: auto;
 }
 
 .measure-card {
