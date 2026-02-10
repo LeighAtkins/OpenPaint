@@ -201,7 +201,7 @@ function showShortcutToast() {
 }
 
 function buildGuideUrl(code, view) {
-  return `/measurement-guides/${view}_${encodeURIComponent(code)}.svg`;
+  return `/api/measurement-guides/svg?code=${encodeURIComponent(code)}&view=${encodeURIComponent(view)}`;
 }
 
 function saveGuideCodes(codes) {
