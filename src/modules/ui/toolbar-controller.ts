@@ -1978,7 +1978,11 @@ export function initToolbarController() {
     }
 
     // Simplified Tag System
-    let tagMode = 'letters+numbers'; // 'letters' or 'letters+numbers'
+    let tagMode =
+      window.tagMode === 'letters' || window.tagMode === 'letters+numbers'
+        ? window.tagMode
+        : 'letters+numbers'; // 'letters' or 'letters+numbers'
+    window.tagMode = tagMode;
     const resolveTagScopeLabel = () => {
       const fallback =
         window.currentImageLabel || window.app?.projectManager?.currentViewId || 'default';
@@ -2067,6 +2071,7 @@ export function initToolbarController() {
       tagModeToggle.addEventListener('click', () => {
         const oldMode = tagMode;
         tagMode = tagMode === 'letters' ? 'letters+numbers' : 'letters';
+        window.tagMode = tagMode;
         syncTagModeToggleLabel();
 
         // Automatically set the next appropriate tag when switching modes
@@ -2406,9 +2411,11 @@ export function initToolbarController() {
 
       if (isLetterOnly && tagMode !== 'letters') {
         tagMode = 'letters';
+        window.tagMode = tagMode;
         syncTagModeToggleLabel();
       } else if (isLetterNumber && tagMode !== 'letters+numbers') {
         tagMode = 'letters+numbers';
+        window.tagMode = tagMode;
         syncTagModeToggleLabel();
       }
 
