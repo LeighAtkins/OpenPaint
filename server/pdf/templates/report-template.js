@@ -128,6 +128,7 @@ function renderRelatedMeasurementCards(cards, groupIndex) {
 
 export function renderReportTemplate(report, options = {}) {
   const pageSize = String(options.pageSize || 'letter').toLowerCase();
+  const pageFormat = pageSize === 'a4' ? 'A4' : 'Letter';
   const pageCssVars =
     pageSize === 'a4'
       ? '--content-width: 182mm; --content-height: 269mm;'
@@ -175,6 +176,7 @@ export function renderReportTemplate(report, options = {}) {
       <meta name="viewport" content="width=device-width,initial-scale=1" />
       <style>:root { ${pageCssVars} }</style>
       <style>${getPrintCss()}</style>
+      <style>@page { size: ${pageFormat}; margin: 14mm; }</style>
     </head>
     <body>
       ${pages}
