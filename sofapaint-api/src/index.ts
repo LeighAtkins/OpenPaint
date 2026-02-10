@@ -73,13 +73,24 @@ export default {
 				return json(env, origin, { error: 'guide_not_found', key }, 404);
 			}
 
+			// Read SVG content and transform it
+			let svgText = await object.text();
+
+			// Hide measurement boxes (groups starting with 'b' like bJ1cm, bF2cm, bL1cm)
+			// Keep only circle marker groups (starting with 'c' or 'm' like cJ1cm, mJ1cm)
+			svgText = svgText.replace(/<g id="b[^"]*"[^>]*>[\s\S]*?<\/g>/g, '');
+
+			// Add white background rectangle as first child of SVG
+			// Insert after opening <svg> tag
+			svgText = svgText.replace(/(<svg[^>]*>)/, '$1\n<rect width="100%" height="100%" fill="#FFFFFF"/>');
+
 			const headers = new Headers({
 				...cors(env, origin),
 				'content-type': 'image/svg+xml; charset=utf-8',
 				'cache-control': 'private, max-age=300',
 				'x-robots-tag': 'noindex, noarchive',
 			});
-			return new Response(object.body, { status: 200, headers });
+			return new Response(svgText, { status: 200, headers });
 		}
 
 		// 1) Issue a Direct Creator Upload URL for Cloudflare Images

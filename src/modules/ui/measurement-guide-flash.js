@@ -4,9 +4,11 @@ const FLASH_DURATION_MS = 1200;
 const GUIDE_HINT_KEY = 'openpaint:guideFlashHintSeen:v1';
 
 let flashOverlay = null;
+let galleryOverlay = null;
 let hideTimer = null;
 let activeIndex = 0;
 let hintToastTimer = null;
+let bossKeyHeld = false;
 
 function getMetadata() {
   return window.app?.projectManager?.getProjectMetadata?.() || window.projectMetadata || {};
@@ -68,12 +70,12 @@ function ensureStyles() {
       inset: 12px 12px auto auto;
       width: min(860px, calc(100vw - 24px));
       z-index: 13300;
-      background: rgba(15, 23, 42, 0.88);
-      border: 1px solid rgba(148, 163, 184, 0.38);
+      background: rgba(255, 255, 255, 0.98);
+      border: 1px solid rgba(203, 213, 225, 0.8);
       border-radius: 14px;
-      box-shadow: 0 20px 45px rgba(2, 6, 23, 0.45);
+      box-shadow: 0 20px 45px rgba(15, 23, 42, 0.25);
       backdrop-filter: blur(7px);
-      color: #f8fafc;
+      color: #0f172a;
       transform: translateY(-6px) scale(0.98);
       opacity: 0;
       transition: opacity 120ms ease, transform 120ms ease;
@@ -89,10 +91,10 @@ function ensureStyles() {
       justify-content: space-between;
       gap: 10px;
       padding: 10px 12px 8px;
-      border-bottom: 1px solid rgba(148, 163, 184, 0.26);
+      border-bottom: 1px solid rgba(203, 213, 225, 0.6);
     }
-    .guide-flash-title { font-size: 13px; font-weight: 700; letter-spacing: .02em; }
-    .guide-flash-sub { font-size: 11px; color: rgba(226, 232, 240, 0.88); }
+    .guide-flash-title { font-size: 13px; font-weight: 700; letter-spacing: .02em; color: #0f172a; }
+    .guide-flash-sub { font-size: 11px; color: #64748b; }
     .guide-flash-grid {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -100,8 +102,8 @@ function ensureStyles() {
       padding: 10px;
     }
     .guide-flash-card {
-      background: rgba(30, 41, 59, 0.82);
-      border: 1px solid rgba(148, 163, 184, 0.22);
+      background: #f8fafc;
+      border: 1px solid rgba(203, 213, 225, 0.6);
       border-radius: 10px;
       overflow: hidden;
       min-height: 170px;
@@ -114,8 +116,8 @@ function ensureStyles() {
       text-transform: uppercase;
       letter-spacing: .06em;
       padding: 7px 9px;
-      border-bottom: 1px solid rgba(148, 163, 184, 0.24);
-      color: #cbd5e1;
+      border-bottom: 1px solid rgba(203, 213, 225, 0.6);
+      color: #475569;
     }
     .guide-flash-body {
       flex: 1;
@@ -123,7 +125,7 @@ function ensureStyles() {
       align-items: center;
       justify-content: center;
       padding: 8px;
-      background: rgba(15, 23, 42, 0.72);
+      background: #ffffff;
     }
     .guide-flash-body img { width: 100%; height: 100%; max-height: 220px; object-fit: contain; }
     .guide-flash-empty { font-size: 11px; color: #94a3b8; text-align: center; }
@@ -154,6 +156,108 @@ function ensureStyles() {
     .guide-flash-toast.visible {
       opacity: 1;
       transform: translateY(0);
+    }
+
+    .guide-gallery-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 13400;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(8px);
+      opacity: 0;
+      transition: opacity 150ms ease;
+      pointer-events: none;
+      overflow-y: auto;
+    }
+    .guide-gallery-overlay.visible {
+      opacity: 1;
+      pointer-events: all;
+    }
+    .guide-gallery-container {
+      max-width: 1400px;
+      margin: 40px auto;
+      padding: 0 20px 40px;
+    }
+    .guide-gallery-header {
+      background: rgba(255, 255, 255, 0.98);
+      border-radius: 14px;
+      padding: 20px 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    }
+    .guide-gallery-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: #0f172a;
+      margin: 0 0 12px;
+    }
+    .guide-gallery-search {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 14px;
+      outline: none;
+    }
+    .guide-gallery-search:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    .guide-gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 16px;
+    }
+    .guide-gallery-item {
+      background: rgba(255, 255, 255, 0.98);
+      border: 1px solid rgba(203, 213, 225, 0.8);
+      border-radius: 12px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 120ms ease, box-shadow 120ms ease;
+    }
+    .guide-gallery-item:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.2);
+    }
+    .guide-gallery-item-label {
+      font-size: 13px;
+      font-weight: 700;
+      color: #0f172a;
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(203, 213, 225, 0.6);
+    }
+    .guide-gallery-item-body {
+      padding: 12px;
+      background: #ffffff;
+      min-height: 240px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .guide-gallery-item-body img {
+      width: 100%;
+      height: auto;
+      max-height: 280px;
+      object-fit: contain;
+    }
+    .guide-gallery-close {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: rgba(255, 255, 255, 0.98);
+      border: 1px solid rgba(203, 213, 225, 0.8);
+      border-radius: 8px;
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #0f172a;
+      cursor: pointer;
+      z-index: 13401;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    .guide-gallery-close:hover {
+      background: #f1f5f9;
     }
   `;
   document.head.appendChild(style);
@@ -271,7 +375,7 @@ function promptForCodes() {
   return parsed;
 }
 
-function showGuideFlash({ cycleNext = false } = {}) {
+function showGuideFlash({ cycleNext = false, holdMode = false } = {}) {
   let codes = resolveGuideCodes();
   if (!codes.length) {
     codes = promptForCodes();
@@ -294,12 +398,15 @@ function showGuideFlash({ cycleNext = false } = {}) {
     flashOverlay?.classList.add('visible');
   });
 
-  if (hideTimer) {
-    clearTimeout(hideTimer);
+  // In hold mode, don't auto-hide - wait for keyup
+  if (!holdMode) {
+    if (hideTimer) {
+      clearTimeout(hideTimer);
+    }
+    hideTimer = setTimeout(() => {
+      hideGuideFlash();
+    }, FLASH_DURATION_MS);
   }
-  hideTimer = setTimeout(() => {
-    hideGuideFlash();
-  }, FLASH_DURATION_MS);
 }
 
 function hideGuideFlash() {
@@ -311,15 +418,266 @@ function hideGuideFlash() {
   flashOverlay.classList.remove('visible');
 }
 
+function showGuideGallery() {
+  ensureStyles();
+
+  if (!galleryOverlay) {
+    galleryOverlay = document.createElement('div');
+    galleryOverlay.className = 'guide-gallery-overlay';
+    document.body.appendChild(galleryOverlay);
+  }
+
+  // Complete list of all uploaded guide codes
+  const allCodes = [
+    'CC-BCH-B',
+    'CC-BCH-W',
+    'CC-BK-BE',
+    'CC-BK-BE2',
+    'CC-BK-HK',
+    'CC-BK-KE',
+    'CC-BK-L',
+    'CC-BK-T',
+    'CC-BK-W',
+    'CC-BOL',
+    'CC-ST-BE',
+    'CC-ST-BE2',
+    'CC-ST-HK',
+    'CC-ST-KE',
+    'CC-ST-L',
+    'CC-ST-T',
+    'CC-ST-W',
+    'CCL-CH-L',
+    'CCL-CH-R',
+    'CS-X',
+    'CS0-CNRP',
+    'CS0-CNRP2',
+    'CS0-SNUG',
+    'CS1-CNR',
+    'CS1-CNR-W',
+    'CS1-SRA-HB-L',
+    'CS1B-RA-HB',
+    'CS1B-RA-RB',
+    'CS1B-RA-SB',
+    'CS1B-SA-HB',
+    'CS1B-SA-HB2',
+    'CS1B-SA-SB',
+    'CS1B-SRA-HB-L',
+    'CS1B-SRA-HB-R',
+    'CS1B-SRA-SB-L',
+    'CS1B-SRA-SB-R',
+    'CS1B-SSA-HB-L',
+    'CS1B-SSA-HB-R',
+    'CS1B-SSA-SB-L',
+    'CS1B-SSA-SB-R',
+    'CS1B-SSA2-HB-L',
+    'CS1B-SSA2-HB-R',
+    'CS1B-SWA-HB-L',
+    'CS1B-SWA-HB-R',
+    'CS1B-SWA-SB-L',
+    'CS1B-SWA-SB-R',
+    'CS1B-SWA2-HB-L',
+    'CS1B-SWA2-HB-R',
+    'CS1B-SWA2-SB-L',
+    'CS1B-SWA2-SB-R',
+    'CS1B-WA-HB',
+    'CS1B-WA-SB',
+    'CS1B-WA-SB2',
+    'CS1L-ERA-HB',
+    'CS1L-RA-HB',
+    'CS1L-RA-RB',
+    'CS1L-RA-SB',
+    'CS1L-RA-WB',
+    'CS1L-SA-HB',
+    'CS1L-SA-SB',
+    'CS1L-WA-SB',
+    'CS1X-NA',
+    'CS3B-RA-HB',
+    'CS3B-RA-RB',
+    'CS3B-RA-SB',
+    'CS3B-SA-HB',
+    'CS3B-SA-HB2',
+    'CS3B-SA-SB',
+    'CS3B-SLA-HB',
+    'CS3B-SLA-HB2',
+    'CS3B-SLA-SB',
+    'CS3B-SLA-SB2',
+    'CS3B-SRA-HB-L',
+    'CS3B-SRA-HB-R',
+    'CS3B-SRA-SB-L',
+    'CS3B-SRA-SB-R',
+    'CS3B-SSA-HB-L',
+    'CS3B-SSA-HB-R',
+    'CS3B-SSA-SB-L',
+    'CS3B-SSA-SB-R',
+    'CS3B-SSA2-HB-L',
+    'CS3B-SSA2-HB-R',
+    'CS3B-SSLA-SB-L',
+    'CS3B-SSLA-SB-R',
+    'CS3B-SSLA2-SB',
+    'CS3B-SSLA2-SB-L',
+    'CS3B-SSLA2-SB-R',
+    'CS3B-SWA-HB-L',
+    'CS3B-SWA-HB-R',
+    'CS3B-SWA-SB-L',
+    'CS3B-SWA-SB-R',
+    'CS3B-SWA2-HB-L',
+    'CS3B-SWA2-HB-R',
+    'CS3B-SWA2-SB-L',
+    'CS3B-SWA2-SB-R',
+    'CS3B-WA-HB',
+    'CS3B-WA-SB',
+    'CS3B-WA-SB2',
+    'CS3B-WA2-HB',
+    'CS3L-ERA-HB',
+    'CS3L-RA-HB',
+    'CS3L-RA-RB',
+    'CS3L-RA-SB',
+    'CS3L-SA-HB',
+    'CS3L-SA-SB',
+    'CS3L-SSA-SB-L',
+    'CS3L-SSA-SB-R',
+    'CS3L-WA-SB',
+    'CS3X-NA',
+    'CS4-SSA-HB-L',
+    'CS4-SSA-HB-R',
+    'CS4-SSA-SB-L',
+    'CS4-SSA-SB-R',
+    'CS5-NA-CNRP',
+    'CS5B-RA-HB-L',
+    'CS5B-RA-HB-R',
+    'CS5B-RA-SB',
+    'CS5B-RA-SB-L',
+    'CS5B-RA-SB-R',
+    'CS5B-RA2-HB-L',
+    'CS5B-RA2-HB-R',
+    'CS5B-RA2-SB-L',
+    'CS5B-RA2-SB-R',
+    'CS5B-SA-HB',
+    'CS5B-SA-HB-L',
+    'CS5B-SA-HB-R',
+    'CS5B-SA-SB',
+    'CS5B-SA-SB-L',
+    'CS5B-SA-SB-R',
+    'CS5B-SA2-HB-L',
+    'CS5B-SA2-HB-R',
+    'CS5B-SA2-SB-L',
+    'CS5B-SA2-SB-R',
+    'CS5B-SWA2-SB-L',
+    'CS5B-SWA2-SB-R',
+    'CS5B-WA-HB-L',
+    'CS5B-WA-HB-R',
+    'CS5B-WA2-HB-L',
+    'CS5B-WA2-HB-R',
+    'CS5B-WA2-SB-L',
+    'CS5B-WA2-SB-R',
+    'CS5L-RA-HB-L',
+    'CS5L-RA-HB-R',
+    'CS5L-RA-SB-L',
+    'CS5L-RA-SB-R',
+    'CS5L-SA-HB-L',
+    'CS5L-SA-HB-R',
+    'CS5L-SA-SB-L',
+    'CS5L-SA-SB-R',
+    'CS5L-WA-HB-L',
+    'CS5L-WA-HB-R',
+    'CS5L-WA-SB-L',
+    'CS5L-WA-SB-R',
+    'CSAP-ERA',
+    'CSAP-RA',
+    'CSAP-SA',
+    'CSAP-SSLA',
+    'CSAP-WA',
+    'CSAP-WA2',
+    'CSDC-CNRP',
+    'CSDC-MSKT',
+    'CSDC-SA-SNUG',
+    'CSDC-SNUG',
+    'CSS-RA-HB',
+    'CSXOXO-SQ',
+  ];
+
+  const renderGallery = filteredCodes => {
+    const items = filteredCodes
+      .map(code => {
+        const url = buildGuideUrl(code, 'Front');
+        return `
+        <div class="guide-gallery-item" data-code="${code}">
+          <div class="guide-gallery-item-label">${code}</div>
+          <div class="guide-gallery-item-body">
+            <img src="${url}" alt="${code} Front view" loading="lazy" />
+          </div>
+        </div>
+      `;
+      })
+      .join('');
+
+    galleryOverlay.innerHTML = `
+      <button class="guide-gallery-close">Close (Esc)</button>
+      <div class="guide-gallery-container">
+        <div class="guide-gallery-header">
+          <h2 class="guide-gallery-title">Measurement Guide Gallery</h2>
+          <input type="text" class="guide-gallery-search" placeholder="Search guide codes..." />
+        </div>
+        <div class="guide-gallery-grid">${items}</div>
+      </div>
+    `;
+
+    const searchInput = galleryOverlay.querySelector('.guide-gallery-search');
+    const closeBtn = galleryOverlay.querySelector('.guide-gallery-close');
+
+    searchInput?.addEventListener('input', e => {
+      const query = e.target.value.toUpperCase();
+      const filtered = allCodes.filter(code => code.includes(query));
+      const grid = galleryOverlay.querySelector('.guide-gallery-grid');
+      if (grid) {
+        grid.innerHTML = filtered
+          .map(code => {
+            const url = buildGuideUrl(code, 'Front');
+            return `
+            <div class="guide-gallery-item" data-code="${code}">
+              <div class="guide-gallery-item-label">${code}</div>
+              <div class="guide-gallery-item-body">
+                <img src="${url}" alt="${code} Front view" loading="lazy" />
+              </div>
+            </div>
+          `;
+          })
+          .join('');
+      }
+    });
+
+    closeBtn?.addEventListener('click', hideGuideGallery);
+
+    galleryOverlay.querySelectorAll('.guide-gallery-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const code = item.getAttribute('data-code');
+        if (code) {
+          saveGuideCodes([code]);
+          hideGuideGallery();
+          showGuideFlash();
+        }
+      });
+    });
+  };
+
+  renderGallery(allCodes);
+  requestAnimationFrame(() => galleryOverlay?.classList.add('visible'));
+}
+
+function hideGuideGallery() {
+  if (!galleryOverlay) return;
+  galleryOverlay.classList.remove('visible');
+}
+
 function onKeyDown(event) {
   if (event.code !== HOTKEY) return;
   if (isTypingContext(event.target)) return;
-  if (event.repeat) return;
 
   event.preventDefault();
   event.stopPropagation();
 
-  if (event.ctrlKey) {
+  // Ctrl+\ = Edit codes
+  if (event.ctrlKey && !event.repeat) {
     const codes = promptForCodes();
     if (!codes.length) return;
     activeIndex = 0;
@@ -328,10 +686,43 @@ function onKeyDown(event) {
     return;
   }
 
-  showGuideFlash({ cycleNext: event.shiftKey });
-  showShortcutToast();
+  // Alt+\ = Open gallery browser
+  if (event.altKey && !event.repeat) {
+    showGuideGallery();
+    return;
+  }
+
+  // Shift+\ = Cycle to next guide (timed auto-hide)
+  if (event.shiftKey && !event.repeat) {
+    showGuideFlash({ cycleNext: true });
+    showShortcutToast();
+    return;
+  }
+
+  // \ (no modifiers) = Hold mode - show while key is held
+  if (!event.repeat && !bossKeyHeld) {
+    bossKeyHeld = true;
+    showGuideFlash({ holdMode: true });
+    showShortcutToast();
+  }
+}
+
+function onKeyUp(event) {
+  if (event.code !== HOTKEY) return;
+  if (bossKeyHeld) {
+    bossKeyHeld = false;
+    hideGuideFlash();
+  }
 }
 
 export function initMeasurementGuideFlash() {
   window.addEventListener('keydown', onKeyDown, { passive: false });
+  window.addEventListener('keyup', onKeyUp, { passive: false });
+
+  // Close gallery on Escape
+  window.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && galleryOverlay?.classList.contains('visible')) {
+      hideGuideGallery();
+    }
+  });
 }
