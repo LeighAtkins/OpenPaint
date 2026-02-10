@@ -98,12 +98,12 @@ body {
 }
 
 .left {
-  flex: 1.1;
+  flex: 2;
   padding: 10px;
 }
 
 .right {
-  flex: 0.9;
+  flex: 1;
   padding: 10px;
 }
 
@@ -118,7 +118,7 @@ body {
 
 .hero-image {
   width: 100%;
-  height: 255px;
+  height: 300px;
   object-fit: contain;
   background: #f2f7ff;
   border: 1px solid #dce7f8;
@@ -158,7 +158,7 @@ body {
 
 .related-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
   margin-bottom: 10px;
   break-inside: auto;
@@ -175,7 +175,7 @@ body {
 
 .thumb img {
   width: 100%;
-  height: 126px;
+  height: 180px;
   object-fit: contain;
   background: #f5f9ff;
 }
