@@ -28,4 +28,10 @@ describe('report template page size', () => {
     expect(html).toContain('@page { size: A4; margin: 14mm; }');
     expect(html).toContain('--content-width: 182mm; --content-height: 269mm;');
   });
+
+  test('renders unit toggle with active cm state', () => {
+    const html = renderReportTemplate({ ...sampleReport, unit: 'cm' }, { pageSize: 'a4' });
+    expect(html).toContain('<span class="unit-pill active">cm</span>');
+    expect(html).toContain('<span class="unit-pill ">inch</span>');
+  });
 });
