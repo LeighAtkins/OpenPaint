@@ -51,16 +51,16 @@ export default async function handler(req, res) {
     return res.status(200).send(pdfBuffer);
   } catch (error) {
     const code = error?.code || 'PDF_RENDER_FAILED';
+    const detail = error?.details || error?.message || String(error);
     if (code === 'PDF_RENDERER_UNSUPPORTED' || code === 'PDF_RENDERER_MISSING_DEPENDENCY') {
-      return res
-        .status(501)
-        .json({ success: false, code, requestId, message: error.details || error.message });
+      return res.status(501).json({ success: false, code, requestId, message: detail });
     }
     return res.status(500).json({
       success: false,
       code,
       requestId,
       message: 'Failed to render PDF',
+      detail,
     });
   }
 }

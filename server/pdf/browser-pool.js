@@ -42,7 +42,22 @@ async function launchBrowser() {
     }
   }
 
-  return puppeteerLib.launch(launchOptions);
+  try {
+    return await puppeteerLib.launch(launchOptions);
+  } catch (launchError) {
+    const message = String(launchError?.message || launchError || 'Unknown browser launch error');
+    const missingLibHint =
+      message.includes('error while loading shared libraries') ||
+      message.includes('libnss3.so') ||
+      message.includes('libnspr4.so') ||
+      message.includes('Failed to launch') ||
+      message.includes('Could not find Chrome');
+    const error = new Error('Failed to launch browser for PDF rendering');
+    error.code = missingLibHint ? 'PDF_RENDERER_MISSING_DEPENDENCY' : 'PDF_RENDER_FAILED';
+    error.details = message;
+    error.cause = launchError;
+    throw error;
+  }
 }
 
 export async function getBrowser() {
