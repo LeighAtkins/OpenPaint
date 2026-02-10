@@ -201,6 +201,9 @@ async function requestServerRenderedPdf(payload) {
 
       return response;
     } catch (error) {
+      if (String(error?.message || '').includes('Server PDF render failed')) {
+        throw error;
+      }
       lastError = error;
     }
   }
@@ -412,8 +415,8 @@ export function initPdfExport() {
       const canvas = window.app.canvasManager.fabricCanvas;
       const captureFrame = document.getElementById('captureFrame');
       if (!canvas || !captureFrame) return '';
-      const qualityScales = { high: 3.0, medium: 2.0, low: 1.5 };
-      const scale = qualityScales[quality] || 2.0;
+      const qualityScales = { high: 1.25, medium: 1.0, low: 0.85 };
+      const scale = qualityScales[quality] || 1.0;
       const frameRect = captureFrame.getBoundingClientRect();
       const canvasEl = canvas.lowerCanvasEl;
       const scaleX = canvasEl.width / canvasEl.offsetWidth;
@@ -431,7 +434,7 @@ export function initPdfExport() {
       ctx.imageSmoothingQuality = 'high';
       ctx.scale(scale, scale);
       ctx.drawImage(canvasEl, left, top, width, height, 0, 0, width, height);
-      return tempCanvas.toDataURL('image/jpeg', 0.92);
+      return tempCanvas.toDataURL('image/jpeg', 0.78);
     };
 
     const groups = [];
