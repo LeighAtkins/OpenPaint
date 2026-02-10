@@ -20,6 +20,8 @@ export function createDefaultSofaMetadata() {
     version: 1,
     sofaType: null,
     customSofaType: '',
+    measurementGuideCode: '',
+    measurementGuideCodes: [],
     naming: {
       customerName: '',
       sofaTypeLabel: '',
@@ -45,6 +47,15 @@ export function normalizeSofaMetadata(input) {
 
   const customSofaType =
     typeof source.customSofaType === 'string' ? source.customSofaType.trim() : '';
+  const measurementGuideCode =
+    typeof source.measurementGuideCode === 'string' ? source.measurementGuideCode.trim() : '';
+  const measurementGuideCodes = Array.isArray(source.measurementGuideCodes)
+    ? source.measurementGuideCodes
+        .map(code => (typeof code === 'string' ? code.trim().toUpperCase() : ''))
+        .filter(Boolean)
+    : measurementGuideCode
+      ? [measurementGuideCode.toUpperCase()]
+      : [];
 
   const measurementChecks = Array.isArray(source.measurementChecks)
     ? safeClone(source.measurementChecks, [])
@@ -78,6 +89,8 @@ export function normalizeSofaMetadata(input) {
     ...defaults,
     sofaType,
     customSofaType,
+    measurementGuideCode,
+    measurementGuideCodes,
     measurementChecks,
     measurementConnections,
     pieceGroups,
