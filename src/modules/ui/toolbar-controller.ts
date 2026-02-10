@@ -2057,11 +2057,17 @@ export function initToolbarController() {
 
     // Tag Mode Toggle functionality
     const tagModeToggle = document.getElementById('tagModeToggle');
+    const syncTagModeToggleLabel = () => {
+      if (tagModeToggle) {
+        tagModeToggle.textContent = tagMode === 'letters' ? 'Letters Only' : 'Letters + Numbers';
+      }
+    };
+
     if (tagModeToggle) {
       tagModeToggle.addEventListener('click', () => {
         const oldMode = tagMode;
         tagMode = tagMode === 'letters' ? 'letters+numbers' : 'letters';
-        tagModeToggle.textContent = tagMode === 'letters' ? 'Letters Only' : 'Letters + Numbers';
+        syncTagModeToggleLabel();
 
         // Automatically set the next appropriate tag when switching modes
         const currentImageLabel = resolveTagScopeLabel();
@@ -2084,6 +2090,8 @@ export function initToolbarController() {
         updateNextTagDisplay();
       });
     }
+
+    syncTagModeToggleLabel();
 
     // Calculate next tag based on current mode and existing tags
     function calculateNextTag() {
@@ -2381,7 +2389,9 @@ export function initToolbarController() {
         return;
       }
 
-      const valid = mode === 'letters' ? /^[A-Z]$/.test(input) : /^[A-Z]\d+$/.test(input);
+      const isLetterOnly = /^[A-Z]$/.test(input);
+      const isLetterNumber = /^[A-Z]\d+$/.test(input);
+      const valid = mode === 'letters' ? isLetterOnly : isLetterOnly || isLetterNumber;
 
       if (!valid) {
         // Show error briefly and restore original
@@ -2392,6 +2402,14 @@ export function initToolbarController() {
           e.target.classList.remove('text-red-600');
         }, 1000);
         return;
+      }
+
+      if (isLetterOnly && tagMode !== 'letters') {
+        tagMode = 'letters';
+        syncTagModeToggleLabel();
+      } else if (isLetterNumber && tagMode !== 'letters+numbers') {
+        tagMode = 'letters+numbers';
+        syncTagModeToggleLabel();
       }
 
       // Ensure labelsByImage exists, then set the next tag seed
