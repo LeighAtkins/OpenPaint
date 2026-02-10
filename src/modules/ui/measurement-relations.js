@@ -202,6 +202,7 @@ function evaluateMeasurementRelations() {
   const connections = Array.isArray(metadata.measurementConnections)
     ? metadata.measurementConnections
     : [];
+  const pieceGroups = Array.isArray(metadata.pieceGroups) ? metadata.pieceGroups : [];
   const index = buildMeasurementIndex();
   const checkResults = evaluateChecks(checks, index);
   const connectionResults = evaluateConnections(connections, index.lookup, 0);
@@ -209,6 +210,7 @@ function evaluateMeasurementRelations() {
     unit: index.unit,
     checks: checkResults,
     connections: connectionResults,
+    pieceGroups,
     measurements: index.entries,
   };
 }
@@ -228,6 +230,10 @@ function ensureStyles() {
     .status-chip.pass { background:#dcfce7; color:#166534; }
     .status-chip.fail { background:#fee2e2; color:#991b1b; }
     .status-chip.pending { background:#e2e8f0; color:#334155; }
+    .piece-group-card { border:1px solid #e2e8f0; border-radius:8px; padding:10px; margin-bottom:8px; background:#f8fafc; }
+    .piece-group-card .related-tag { display:inline-flex; align-items:center; gap:4px; background:#e2e8f0; border-radius:6px; padding:2px 8px; font-size:11px; margin:2px; }
+    .piece-group-card .related-tag button { border:none; background:transparent; color:#94a3b8; cursor:pointer; font-size:14px; line-height:1; padding:0 2px; }
+    .piece-group-card .related-tag button:hover { color:#ef4444; }
   `;
   document.head.appendChild(style);
 }
@@ -245,7 +251,6 @@ async function preWarmAllViews() {
       /* skip */
     }
   }
-  // Restore original view
   if (currentViewId) {
     try {
       await window.app.projectManager.switchView(currentViewId);
@@ -258,7 +263,6 @@ async function preWarmAllViews() {
 async function openMeasurementRelationsEditor() {
   ensureStyles();
 
-  // Show brief loading overlay while pre-warming views
   const loadingOverlay = document.createElement('div');
   loadingOverlay.className = 'relations-overlay';
   loadingOverlay.innerHTML =
@@ -273,10 +277,22 @@ async function openMeasurementRelationsEditor() {
   let connections = Array.isArray(metadata.measurementConnections)
     ? [...metadata.measurementConnections]
     : [];
+  let pieceGroups = Array.isArray(metadata.pieceGroups) ? [...metadata.pieceGroups] : [];
 
   const index = buildMeasurementIndex();
   const measurementOptions = index.entries
     .map(entry => `<option value="${entry.key}">${entry.display}</option>`)
+    .join('');
+
+  // Build view options for piece groups
+  const views = window.app?.projectManager?.views || {};
+  const viewIds = Object.keys(views).filter(id => views[id]?.image);
+  const viewOptions = viewIds
+    .map((id, idx) => {
+      const partLabel =
+        metadata.imagePartLabels?.[id] || `view-${String(idx + 1).padStart(2, '0')}`;
+      return `<option value="${id}">${partLabel} (${id})</option>`;
+    })
     .join('');
 
   const overlay = document.createElement('div');
@@ -285,11 +301,18 @@ async function openMeasurementRelationsEditor() {
     <section class="relations-card" role="dialog" aria-modal="true" aria-label="Measurement checks and connections">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
         <div>
-          <h2 style="margin:0;font-size:20px;color:#0f172a;">Measurement Checks + Connections</h2>
-          <p style="margin:4px 0 0;font-size:12px;color:#475569;">Tag formulas and linked measurements to highlight critical relationships in PDF exports.</p>
+          <h2 style="margin:0;font-size:20px;color:#0f172a;">Checks + Links</h2>
+          <p style="margin:4px 0 0;font-size:12px;color:#475569;">Tag formulas, link measurements, and group related images for PDF exports.</p>
         </div>
         <button id="closeRelationsEditor" type="button" style="border:1px solid #cbd5e1;background:#fff;border-radius:8px;padding:7px 10px;font-weight:600;cursor:pointer;">Close</button>
       </div>
+
+      <section class="relations-section">
+        <h3 style="margin:0 0 4px;font-size:14px;color:#0f172a;">Piece Groups</h3>
+        <p style="margin:0 0 8px;font-size:11px;color:#64748b;">Group related images so they appear side-by-side in PDF exports.</p>
+        <div id="pieceGroupsContainer"></div>
+        <button id="addPieceGroup" type="button" style="margin-top:8px;border:1px solid #cbd5e1;background:#fff;border-radius:7px;padding:6px 10px;font-size:12px;cursor:pointer;">Add group</button>
+      </section>
 
       <section class="relations-section">
         <h3 style="margin:0 0 8px;font-size:14px;color:#0f172a;">Formula Checks</h3>
@@ -302,6 +325,7 @@ async function openMeasurementRelationsEditor() {
 
       <section class="relations-section">
         <h3 style="margin:0 0 8px;font-size:14px;color:#0f172a;">Cross-image Connections</h3>
+        <p style="margin:0 0 8px;font-size:11px;color:#64748b;">Link specific measurements across images to verify they connect at the same point.</p>
         <table class="relations-table">
           <thead><tr><th>From</th><th>To</th><th>Note</th><th>Status</th><th></th></tr></thead>
           <tbody id="relationsConnectionsBody"></tbody>
@@ -315,11 +339,89 @@ async function openMeasurementRelationsEditor() {
     </section>
   `;
 
+  const pieceGroupsContainer = overlay.querySelector('#pieceGroupsContainer');
   const checksBody = overlay.querySelector('#relationsChecksBody');
   const connectionsBody = overlay.querySelector('#relationsConnectionsBody');
 
   const render = () => {
     const evaluated = evaluateMeasurementRelations();
+
+    // ── Piece Groups ──
+    pieceGroupsContainer.innerHTML = '';
+    if (!pieceGroups.length) {
+      pieceGroupsContainer.innerHTML =
+        '<p style="color:#64748b;font-size:12px;margin:4px 0;">No piece groups yet.</p>';
+    }
+    pieceGroups.forEach((group, gIdx) => {
+      const card = document.createElement('div');
+      card.className = 'piece-group-card';
+
+      // Build related image tags
+      const relatedTags = (group.relatedViewIds || [])
+        .map((rid, rIdx) => {
+          const rLabel = metadata.imagePartLabels?.[rid] || rid;
+          return `<span class="related-tag">${rLabel}<button data-remove-related="${rIdx}" title="Remove">&times;</button></span>`;
+        })
+        .join('');
+
+      card.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:start;gap:8px;">
+          <div style="flex:1;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+              <label style="font-size:11px;font-weight:600;color:#334155;white-space:nowrap;">Main Image:</label>
+              <select data-field="mainViewId" style="flex:1;border:1px solid #cbd5e1;border-radius:7px;padding:4px 6px;font-size:12px;">${viewOptions}</select>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+              <label style="font-size:11px;font-weight:600;color:#334155;white-space:nowrap;">Related:</label>
+              <span id="relatedTags-${gIdx}">${relatedTags || '<span style="color:#94a3b8;font-size:11px;">None</span>'}</span>
+              <button data-add-related="${gIdx}" type="button" style="border:1px solid #cbd5e1;background:#fff;border-radius:6px;padding:2px 8px;font-size:11px;cursor:pointer;">+ Add</button>
+            </div>
+          </div>
+          <button data-remove-group="${gIdx}" type="button" style="border:1px solid #fecaca;background:#fff;color:#b91c1c;border-radius:7px;padding:4px 8px;font-size:11px;cursor:pointer;">Remove</button>
+        </div>
+      `;
+
+      // Set main view select value
+      const mainSelect = card.querySelector('[data-field="mainViewId"]');
+      mainSelect.value = group.mainViewId || viewIds[0] || '';
+      mainSelect.addEventListener('change', () => {
+        pieceGroups[gIdx] = { ...group, mainViewId: mainSelect.value };
+      });
+
+      // Remove related image buttons
+      card.querySelectorAll('[data-remove-related]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const rIdx = Number(btn.dataset.removeRelated);
+          const updated = [...(group.relatedViewIds || [])];
+          updated.splice(rIdx, 1);
+          pieceGroups[gIdx] = { ...group, relatedViewIds: updated };
+          render();
+        });
+      });
+
+      // Add related image
+      card.querySelector(`[data-add-related="${gIdx}"]`)?.addEventListener('click', () => {
+        // Pick the first view not already used in this group
+        const usedInGroup = new Set([group.mainViewId, ...(group.relatedViewIds || [])]);
+        const available = viewIds.find(id => !usedInGroup.has(id));
+        if (!available) return;
+        pieceGroups[gIdx] = {
+          ...group,
+          relatedViewIds: [...(group.relatedViewIds || []), available],
+        };
+        render();
+      });
+
+      // Remove group
+      card.querySelector(`[data-remove-group="${gIdx}"]`)?.addEventListener('click', () => {
+        pieceGroups = pieceGroups.filter((_, i) => i !== gIdx);
+        render();
+      });
+
+      pieceGroupsContainer.appendChild(card);
+    });
+
+    // ── Checks ──
     checksBody.innerHTML = '';
     if (!checks.length) {
       checksBody.innerHTML = '<tr><td colspan="5" style="color:#64748b;">No checks yet.</td></tr>';
@@ -350,6 +452,7 @@ async function openMeasurementRelationsEditor() {
       checksBody.appendChild(row);
     });
 
+    // ── Connections (per-measurement fromKey/toKey) ──
     connectionsBody.innerHTML = '';
     if (!connections.length) {
       connectionsBody.innerHTML =
@@ -384,6 +487,19 @@ async function openMeasurementRelationsEditor() {
     });
   };
 
+  overlay.querySelector('#addPieceGroup')?.addEventListener('click', () => {
+    pieceGroups = [
+      ...pieceGroups,
+      {
+        id: `group-${Date.now()}`,
+        mainViewId: viewIds[0] || '',
+        relatedViewIds: [],
+        label: '',
+      },
+    ];
+    render();
+  });
+
   overlay.querySelector('#addRelationCheck')?.addEventListener('click', () => {
     checks = [...checks, { id: `check-${Date.now()}`, formula: '', tolerance: 0, note: '' }];
     render();
@@ -402,9 +518,10 @@ async function openMeasurementRelationsEditor() {
     setMetadata({
       measurementChecks: checks,
       measurementConnections: connections,
+      pieceGroups,
     });
     window.app?.projectManager?.showStatusMessage?.(
-      'Measurement checks and links saved.',
+      'Measurement checks, connections, and piece groups saved.',
       'success'
     );
     overlay.remove();
