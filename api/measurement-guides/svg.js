@@ -49,38 +49,15 @@ export default async function handler(req, res) {
 
   const headers = {
     'x-api-key': getWorkerApiKey(),
-    'content-type': 'application/json',
+    accept: 'image/svg+xml,application/json',
   };
 
   try {
-    const tokenResponse = await fetch(`${workerBase}/measurement-guides/token`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ code }),
-    });
-
-    if (!tokenResponse.ok) {
-      const detail = await tokenResponse.text();
-      return res.status(tokenResponse.status).json({
-        success: false,
-        message: 'Failed to request guide token',
-        detail,
-      });
-    }
-
-    const tokenData = await tokenResponse.json();
-    const token = String(tokenData?.token || '');
-    if (!token) {
-      return res
-        .status(502)
-        .json({ success: false, message: 'Token missing from worker response' });
-    }
-
     const svgResponse = await fetch(
-      `${workerBase}/measurement-guides/${encodeURIComponent(code)}/${encodeURIComponent(view)}.svg?token=${encodeURIComponent(token)}`,
+      `${workerBase}/measurement-guides/svg?code=${encodeURIComponent(code)}&view=${encodeURIComponent(view)}`,
       {
         method: 'GET',
-        headers: { 'x-api-key': getWorkerApiKey() },
+        headers,
       }
     );
 

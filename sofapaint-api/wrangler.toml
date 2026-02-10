@@ -6,7 +6,12 @@ compatibility_date = "2025-09-06"
 CF_ACCOUNT_ID = "665aca072a7cddbc216be6b25a6fd951"
 ALLOWED_ORIGINS = "https://sofapaint.vercel.app,https://leighatkins.github.io"
 ACCOUNT_HASH = "tJVRdWyUXVZJRoGHy-ATBQ"
+GUIDE_API_KEY = "dev-secret"
 
 # Bind Images to this Worker
 [images]
 binding = "IMAGES"
+
+[[r2_buckets]]
+binding = "MEASUREMENT_GUIDES"
+bucket_name = "openpaint-measurement-guides"
