@@ -67,7 +67,18 @@ export async function getBrowser() {
       throw error;
     });
   }
-  return browserPromise;
+
+  const browser = await browserPromise;
+  const connected = typeof browser?.isConnected === 'function' ? browser.isConnected() : true;
+  if (!connected) {
+    browserPromise = launchBrowser().catch(error => {
+      browserPromise = null;
+      throw error;
+    });
+    return browserPromise;
+  }
+
+  return browser;
 }
 
 export async function closeBrowser() {
