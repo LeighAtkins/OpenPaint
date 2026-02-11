@@ -930,7 +930,44 @@ export class App {
       if (!Number.isFinite(parsed)) return 1;
       return Math.max(1, Math.min(300, parsed));
     };
-    const formatBrushWidth = (value: number): string => `${value}px`;
+    const formatBrushWidth = (value: number): string => String(value);
+
+    const handleCtrlBrushWheel = (wheelEvent: WheelEvent): boolean => {
+      if (!wheelEvent.ctrlKey) return false;
+
+      const activeTool = this.toolManager?.activeToolName;
+      const resizableTools = new Set(['line', 'curve', 'arrow', 'pencil', 'shape', 'privacy']);
+      if (!activeTool || !resizableTools.has(activeTool)) {
+        return false;
+      }
+
+      const eventTarget = wheelEvent.target;
+      const targetElement = eventTarget instanceof Element ? eventTarget : null;
+      const insideCanvas = !!targetElement?.closest('#main-canvas-wrapper');
+      const insideBrushInput = !!targetElement?.closest('#brushSize');
+      if (!insideCanvas && !insideBrushInput) {
+        return false;
+      }
+
+      const target = document.getElementById('brushSize') as HTMLInputElement | null;
+      if (!target) return false;
+
+      const min = Math.max(1, parseInt(target.min || '1', 10) || 1);
+      const max = Math.max(min, parseInt(target.max || '300', 10) || 300);
+      const step = Math.max(1, parseInt(target.step || '1', 10) || 1);
+      const current = parseBrushWidth(target.value);
+      const direction = wheelEvent.deltaY < 0 ? 1 : -1;
+      const next = Math.max(min, Math.min(max, current + direction * step));
+
+      wheelEvent.preventDefault();
+      wheelEvent.stopPropagation();
+      (wheelEvent as unknown as { __brushSizeHandled?: boolean }).__brushSizeHandled = true;
+
+      target.value = formatBrushWidth(next);
+      target.dispatchEvent(new Event('input', { bubbles: true }));
+      target.dispatchEvent(new Event('change', { bubbles: true }));
+      return true;
+    };
 
     if (brushSizeSelect) {
       const applyBrushWidth = (width: number) => {
@@ -988,31 +1025,19 @@ export class App {
       upperCanvasEl.addEventListener(
         'wheel',
         wheelEvent => {
-          if (!wheelEvent.ctrlKey) return;
+          handleCtrlBrushWheel(wheelEvent);
+        },
+        { passive: false }
+      );
+    }
 
-          const activeTool = this.toolManager?.activeToolName;
-          const resizableTools = new Set(['line', 'curve', 'arrow', 'pencil', 'shape', 'privacy']);
-          if (!activeTool || !resizableTools.has(activeTool)) {
-            return;
-          }
-
-          const target = document.getElementById('brushSize') as HTMLInputElement | null;
-          if (!target) return;
-
-          wheelEvent.preventDefault();
-          wheelEvent.stopPropagation();
-          (wheelEvent as unknown as { __brushSizeHandled?: boolean }).__brushSizeHandled = true;
-
-          const min = Math.max(1, parseInt(target.min || '1', 10) || 1);
-          const max = Math.max(min, parseInt(target.max || '300', 10) || 300);
-          const step = Math.max(1, parseInt(target.step || '1', 10) || 1);
-          const current = parseBrushWidth(target.value);
-          const direction = wheelEvent.deltaY < 0 ? 1 : -1;
-          const next = Math.max(min, Math.min(max, current + direction * step));
-
-          target.value = formatBrushWidth(next);
-          target.dispatchEvent(new Event('input', { bubbles: true }));
-          target.dispatchEvent(new Event('change', { bubbles: true }));
+    const docWithBrushWheel = document as Document & { __ctrlBrushWheelBound?: boolean };
+    if (!docWithBrushWheel.__ctrlBrushWheelBound) {
+      docWithBrushWheel.__ctrlBrushWheelBound = true;
+      document.addEventListener(
+        'wheel',
+        wheelEvent => {
+          handleCtrlBrushWheel(wheelEvent);
         },
         { passive: false }
       );
