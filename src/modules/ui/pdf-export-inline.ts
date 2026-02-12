@@ -464,11 +464,6 @@ async function restorePdfExportSession(state) {
       canvasManager.fabricCanvas.selection =
         typeof state?.previousCanvasSelection === 'boolean' ? state.previousCanvasSelection : true;
       canvasManager.fabricCanvas.skipTargetFind = Boolean(state?.previousCanvasSkipTargetFind);
-      const restoreStats = restoreObjectDisplayState(
-        canvasManager.fabricCanvas,
-        state?.previousObjectDisplayState || []
-      );
-      logVectorDebugSnapshot('restorePdfExportSession:display-state-restored', restoreStats);
     }
 
     if (restoreViewId && typeof window.renderCaptureTabUI === 'function') {
@@ -491,6 +486,15 @@ async function restorePdfExportSession(state) {
         });
       }
     }
+
+    if (canvasManager?.fabricCanvas) {
+      const restoreStats = restoreObjectDisplayState(
+        canvasManager.fabricCanvas,
+        state?.previousObjectDisplayState || []
+      );
+      logVectorDebugSnapshot('restorePdfExportSession:display-state-restored', restoreStats);
+    }
+
     canvasManager?.fabricCanvas?.requestRenderAll?.();
     logVectorDebugSnapshot('restorePdfExportSession:after-restore', {
       restoredViewId: restoreViewId,
