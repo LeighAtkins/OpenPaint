@@ -874,6 +874,7 @@ export function initToolbarController() {
             id: masterTabId,
             name: 'Master',
             type: 'master',
+            captureFrame: frameRect,
             viewport,
           },
         ],
@@ -925,6 +926,7 @@ export function initToolbarController() {
           id: normalized.masterTabId,
           name: 'Master',
           type: 'master',
+          captureFrame: getCaptureFrameRectPixels(),
           viewport: buildViewportRecord(),
         });
         hasMaster = true;
@@ -1082,7 +1084,29 @@ export function initToolbarController() {
       if (!activeTab) return;
       if (activeTab.type === 'master') {
         setMasterViewActive(true);
-        captureFrame.style.borderColor = '#22c55e';
+        const stored = activeTab.captureFrame;
+        const rect = resolveCaptureFrameRect(stored);
+        captureFrame.style.left = `${rect.left}px`;
+        captureFrame.style.top = `${rect.top}px`;
+        captureFrame.style.width = `${rect.width}px`;
+        captureFrame.style.height = `${rect.height}px`;
+        activeTab.captureFrame = {
+          ...(stored || {}),
+          ...rect,
+          windowWidth: Math.max(window.innerWidth, 1),
+          windowHeight: Math.max(window.innerHeight, 1),
+          relativeLeft: rect.left / Math.max(window.innerWidth, 1),
+          relativeTop: rect.top / Math.max(window.innerHeight, 1),
+          relativeWidth: rect.width / Math.max(window.innerWidth, 1),
+          relativeHeight: rect.height / Math.max(window.innerHeight, 1),
+        };
+        captureFrame.style.borderColor = '#0f172a';
+        if (!activeTab.viewport) {
+          activeTab.viewport = buildViewportRecord();
+        }
+        if (activeTab.viewport) {
+          applyViewportRecord(activeTab.viewport);
+        }
         renderMasterOverlay(resolved);
         return;
       }
@@ -1234,12 +1258,8 @@ export function initToolbarController() {
     function updateTabFromMasterOverlayRect(label, tabId, masterRect) {
       const state = ensureCaptureTabsForLabel(label);
       const tab = state.tabs.find(item => item.id === tabId);
-      const master = state.tabs.find(item => item.type === 'master');
-      if (!tab || !master || tab.type === 'master') return;
-      const worldRect = computeWorldRectFromViewportRect(
-        masterRect,
-        master.viewport || buildViewportRecord()
-      );
+      if (!tab || tab.type === 'master') return;
+      const worldRect = computeWorldRectFromViewportRect(masterRect, buildViewportRecord());
       if (!worldRect) return;
       const existingRect = resolveCaptureFrameRect(tab.captureFrame);
       const centeredRect = buildCenteredRectFromSize(existingRect.width, existingRect.height);
@@ -1316,14 +1336,14 @@ export function initToolbarController() {
     function renderMasterOverlay(label) {
       if (!masterOverlay) return;
       const state = ensureCaptureTabsForLabel(label);
-      const master = state.tabs.find(item => item.type === 'master');
+      const currentViewport = buildViewportRecord();
       const highlightedTab = getHighlightedFrameTab(state, label);
       masterOverlay.innerHTML = '';
       state.tabs
         .filter(tab => tab.type !== 'master')
         .forEach(tab => {
           const worldRect = computeWorldRectForTab(tab);
-          const rect = mapWorldRectToViewport(worldRect, master?.viewport || buildViewportRecord());
+          const rect = mapWorldRectToViewport(worldRect, currentViewport);
           if (!rect) return;
           const frame = document.createElement('button');
           frame.type = 'button';
@@ -1599,8 +1619,28 @@ export function initToolbarController() {
         const label = getActiveLabel();
         const state = ensureCaptureTabsForLabel(label);
         const activeTab = getActiveTab(label);
-        if (!activeTab || activeTab.type === 'master') return;
+        if (!activeTab) return;
         const viewport = buildViewportRecord();
+
+        // Keep master viewport in sync while zooming/panning in Master mode.
+        // Without this, master overlay frames stay window-relative and drift
+        // from the background as the canvas viewport changes.
+        if (activeTab.type === 'master') {
+          const masterTab = state.tabs.find(tab => tab.type === 'master') || activeTab;
+          const previousMaster = masterTab.viewport || {};
+          if (
+            previousMaster.zoom === viewport.zoom &&
+            previousMaster.panX === viewport.panX &&
+            previousMaster.panY === viewport.panY &&
+            previousMaster.rotation === viewport.rotation
+          ) {
+            return;
+          }
+          masterTab.viewport = viewport;
+          renderMasterOverlay(label);
+          return;
+        }
+
         const previous = activeTab.viewport || {};
         if (
           previous.zoom === viewport.zoom &&

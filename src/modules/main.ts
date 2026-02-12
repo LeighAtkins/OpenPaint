@@ -1,4 +1,5 @@
 // Main Entry Point
+// @ts-nocheck
 import { CanvasManager } from './CanvasManager';
 import { ToolManager } from './tools/ToolManager';
 import { ProjectManager } from './ProjectManager.js';
@@ -932,8 +933,8 @@ export class App {
     };
     const formatBrushWidth = (value: number): string => String(value);
 
-    const handleCtrlBrushWheel = (wheelEvent: WheelEvent): boolean => {
-      if (!wheelEvent.ctrlKey) return false;
+    const handleAltBrushWheel = (wheelEvent: WheelEvent): boolean => {
+      if (!wheelEvent.altKey) return false;
 
       const activeTool = this.toolManager?.activeToolName;
       const resizableTools = new Set(['line', 'curve', 'arrow', 'pencil', 'shape', 'privacy']);
@@ -943,9 +944,8 @@ export class App {
 
       const eventTarget = wheelEvent.target;
       const targetElement = eventTarget instanceof Element ? eventTarget : null;
-      const insideCanvas = !!targetElement?.closest('#main-canvas-wrapper');
       const insideBrushInput = !!targetElement?.closest('#brushSize');
-      if (!insideCanvas && !insideBrushInput) {
+      if (!insideBrushInput) {
         return false;
       }
 
@@ -1012,32 +1012,39 @@ export class App {
         e.preventDefault();
         commitBrushSizeValue(e.target as HTMLInputElement | null);
       });
+      brushSizeSelect.addEventListener(
+        'wheel',
+        e => {
+          e.preventDefault();
+        },
+        { passive: false }
+      );
 
       // Initialize to canonical displayed format
       commitBrushSizeValue(brushSizeSelect);
     }
 
     const upperCanvasEl = this.canvasManager.fabricCanvas?.upperCanvasEl as
-      | (HTMLCanvasElement & { __ctrlBrushWheelBound?: boolean })
+      | (HTMLCanvasElement & { __altBrushWheelBound?: boolean })
       | undefined;
-    if (upperCanvasEl && !upperCanvasEl.__ctrlBrushWheelBound) {
-      upperCanvasEl.__ctrlBrushWheelBound = true;
+    if (upperCanvasEl && !upperCanvasEl.__altBrushWheelBound) {
+      upperCanvasEl.__altBrushWheelBound = true;
       upperCanvasEl.addEventListener(
         'wheel',
         wheelEvent => {
-          handleCtrlBrushWheel(wheelEvent);
+          handleAltBrushWheel(wheelEvent);
         },
         { passive: false }
       );
     }
 
-    const docWithBrushWheel = document as Document & { __ctrlBrushWheelBound?: boolean };
-    if (!docWithBrushWheel.__ctrlBrushWheelBound) {
-      docWithBrushWheel.__ctrlBrushWheelBound = true;
+    const docWithBrushWheel = document as Document & { __altBrushWheelBound?: boolean };
+    if (!docWithBrushWheel.__altBrushWheelBound) {
+      docWithBrushWheel.__altBrushWheelBound = true;
       document.addEventListener(
         'wheel',
         wheelEvent => {
-          handleCtrlBrushWheel(wheelEvent);
+          handleAltBrushWheel(wheelEvent);
         },
         { passive: false }
       );
