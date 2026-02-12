@@ -11,6 +11,15 @@ function toBaseViewId(scopeOrViewId) {
   return raw.split('::tab:')[0] || raw;
 }
 
+function getTabIdFromScopedLabel(scopeOrViewId) {
+  const raw = String(scopeOrViewId || '');
+  const marker = '::tab:';
+  const idx = raw.indexOf(marker);
+  if (idx < 0) return null;
+  const tabId = raw.slice(idx + marker.length).trim();
+  return tabId || null;
+}
+
 function getScopedMeasurements(scopeKey, options = {}) {
   const includeBase = options.includeBase === true;
   const allMeasurements = window.app?.metadataManager?.strokeMeasurements || {};
@@ -274,22 +283,17 @@ function buildVectorDebugSnapshot(label, extra = {}) {
 function logVectorDebugSnapshot(label, extra = {}) {
   try {
     const snapshot = buildVectorDebugSnapshot(label, extra);
-    const debugEnabled = /(^|[?&])debug(?:=1|=true)?(?:&|$)/i.test(
-      String(window.location?.search || '')
-    );
-    if (debugEnabled) {
-      const existing = Array.isArray(window.__pdfVectorDebugLog) ? window.__pdfVectorDebugLog : [];
-      existing.push(snapshot);
-      if (existing.length > 240) {
-        existing.shift();
-      }
-      window.__pdfVectorDebugLog = existing;
-      window.dispatchEvent(
-        new CustomEvent('openpaint:pdf-vector-debug', {
-          detail: snapshot,
-        })
-      );
+    const existing = Array.isArray(window.__pdfVectorDebugLog) ? window.__pdfVectorDebugLog : [];
+    existing.push(snapshot);
+    if (existing.length > 240) {
+      existing.shift();
     }
+    window.__pdfVectorDebugLog = existing;
+    window.dispatchEvent(
+      new CustomEvent('openpaint:pdf-vector-debug', {
+        detail: snapshot,
+      })
+    );
     console.groupCollapsed(
       `[PDF Vector Debug] ${label} | view=${snapshot.currentViewId || '-'} | vectors=${snapshot.vectorCount}`
     );
@@ -415,9 +419,19 @@ async function restorePdfExportSession(state) {
       await projectManager.switchView(restoreViewId, true);
     }
 
-    const restoreTabId = window.captureTabsByLabel?.[restoreViewId]?.activeTabId;
+    const scopedTabId = getTabIdFromScopedLabel(state?.previousScopedLabel || '');
+    const restoreTabId =
+      scopedTabId || window.captureTabsByLabel?.[restoreViewId]?.activeTabId || null;
     if (restoreViewId && restoreTabId && typeof window.setActiveCaptureTab === 'function') {
-      window.setActiveCaptureTab(restoreViewId, restoreTabId, { skipSave: true });
+      try {
+        window.setActiveCaptureTab(restoreViewId, restoreTabId, { skipSave: true });
+      } catch (tabError) {
+        logVectorDebugSnapshot('restorePdfExportSession:set-tab-error', {
+          restoreViewId,
+          restoreTabId,
+          error: String(tabError?.message || tabError),
+        });
+      }
     }
 
     if (state?.previousCaptureFrameStyle && captureFrame) {
@@ -458,15 +472,30 @@ async function restorePdfExportSession(state) {
     }
 
     if (restoreViewId && typeof window.renderCaptureTabUI === 'function') {
-      window.renderCaptureTabUI(restoreViewId);
+      try {
+        window.renderCaptureTabUI(restoreViewId);
+      } catch (renderError) {
+        logVectorDebugSnapshot('restorePdfExportSession:render-ui-error', {
+          restoreViewId,
+          error: String(renderError?.message || renderError),
+        });
+      }
     }
     if (restoreViewId && typeof window.syncCaptureTabCanvasVisibility === 'function') {
-      window.syncCaptureTabCanvasVisibility(restoreViewId);
+      try {
+        window.syncCaptureTabCanvasVisibility(restoreViewId);
+      } catch (syncError) {
+        logVectorDebugSnapshot('restorePdfExportSession:sync-visibility-error', {
+          restoreViewId,
+          error: String(syncError?.message || syncError),
+        });
+      }
     }
     canvasManager?.fabricCanvas?.requestRenderAll?.();
     logVectorDebugSnapshot('restorePdfExportSession:after-restore', {
       restoredViewId: restoreViewId,
       restoredTabId: window.captureTabsByLabel?.[restoreViewId]?.activeTabId || null,
+      scopedTabId,
     });
   } catch (restoreError) {
     console.warn('[PDF] Failed to fully restore editor state after export:', restoreError);
@@ -493,7 +522,8 @@ async function withTemporaryCaptureTarget(viewId, tabId, callback) {
     previousBaseLabel && window.captureTabsByLabel
       ? window.captureTabsByLabel[previousBaseLabel] || null
       : null;
-  const previousTabId = previousState?.activeTabId || null;
+  const previousTabId =
+    getTabIdFromScopedLabel(previousScopedLabel) || previousState?.activeTabId || null;
   const frameStyle = captureFrame
     ? {
         left: captureFrame.style.left,
@@ -516,11 +546,22 @@ async function withTemporaryCaptureTarget(viewId, tabId, callback) {
     safelyDiscardActiveObject(canvas);
     canvas?.requestRenderAll?.();
     if (projectManager?.switchView && viewId && projectManager.currentViewId !== viewId) {
+      if (!projectManager?.views?.[viewId]) {
+        throw new Error(`Target view is missing: ${viewId}`);
+      }
       await projectManager.switchView(viewId);
     }
     if (tabId && typeof window.setActiveCaptureTab === 'function') {
-      // Export should not mutate persisted tab/frame state while switching tabs.
-      window.setActiveCaptureTab(viewId, tabId, { skipSave: true });
+      try {
+        // Export should not mutate persisted tab/frame state while switching tabs.
+        window.setActiveCaptureTab(viewId, tabId, { skipSave: true });
+      } catch (setTabError) {
+        logVectorDebugSnapshot('withTemporaryCaptureTarget:set-tab-error', {
+          targetViewId: viewId,
+          targetTabId: tabId,
+          error: String(setTabError?.message || setTabError),
+        });
+      }
     }
     window.app?.canvasManager?.fabricCanvas?.requestRenderAll?.();
     await new Promise(resolve => setTimeout(resolve, 250));
@@ -534,12 +575,26 @@ async function withTemporaryCaptureTarget(viewId, tabId, callback) {
       if (
         projectManager?.switchView &&
         restoreTargetViewId &&
+        projectManager?.views?.[restoreTargetViewId] &&
         projectManager.currentViewId !== restoreTargetViewId
       ) {
         await projectManager.switchView(restoreTargetViewId);
       }
-      if (restoreTabId && typeof window.setActiveCaptureTab === 'function') {
-        window.setActiveCaptureTab(restoreTargetViewId, restoreTabId, { skipSave: true });
+      if (
+        restoreTargetViewId &&
+        restoreTabId &&
+        window.captureTabsByLabel?.[restoreTargetViewId] &&
+        typeof window.setActiveCaptureTab === 'function'
+      ) {
+        try {
+          window.setActiveCaptureTab(restoreTargetViewId, restoreTabId, { skipSave: true });
+        } catch (restoreTabError) {
+          logVectorDebugSnapshot('withTemporaryCaptureTarget:restore-tab-error', {
+            restoredViewId: restoreTargetViewId,
+            restoredTabId: restoreTabId,
+            error: String(restoreTabError?.message || restoreTabError),
+          });
+        }
       }
       if (captureFrame && frameStyle) {
         captureFrame.style.left = frameStyle.left;
@@ -617,6 +672,9 @@ async function requestServerRenderedPdf(payload) {
 
 export function initPdfExport() {
   ensurePdfDebugSurface();
+  logVectorDebugSnapshot('initPdfExport:ready', {
+    search: String(window.location?.search || ''),
+  });
   // Export utilities for saving multiple images and PDF generation with pdf-lib
   window.saveAllImages = async function () {
     const projectName = document.getElementById('projectName')?.value || 'OpenPaint';
