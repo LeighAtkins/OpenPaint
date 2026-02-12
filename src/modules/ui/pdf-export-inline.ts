@@ -415,6 +415,26 @@ function beginPdfExportSession() {
       : null,
   };
 
+  // Persist the currently edited frame/view once before suspending autosave.
+  // Without this, switching views for export can reload stale canvasData and drop recent edits.
+  if (projectManager && !window.__isLoadingProject) {
+    try {
+      if (typeof window.captureTabsSyncActive === 'function') {
+        window.captureTabsSyncActive(projectManager.currentViewId);
+      }
+      if (typeof projectManager.saveCurrentViewState === 'function') {
+        projectManager.saveCurrentViewState();
+      }
+      logVectorDebugSnapshot('beginPdfExportSession:pre-save-current-view', {
+        viewId: projectManager.currentViewId || null,
+      });
+    } catch (saveError) {
+      logVectorDebugSnapshot('beginPdfExportSession:pre-save-error', {
+        error: String(saveError?.message || saveError),
+      });
+    }
+  }
+
   window.__suspendSaveCurrentView = true;
   logVectorDebugSnapshot('beginPdfExportSession:before-lock');
   if (canvasManager?.fabricCanvas) {
