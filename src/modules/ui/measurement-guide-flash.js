@@ -9,7 +9,7 @@ let galleryOverlay = null;
 let hideTimer = null;
 let activeIndex = 0;
 let hintToastTimer = null;
-let bossKeyHeld = false;
+let isGuidePinnedVisible = false;
 
 function getMetadata() {
   return window.app?.projectManager?.getProjectMetadata?.() || window.projectMetadata || {};
@@ -68,23 +68,24 @@ function ensureStyles() {
   style.textContent = `
     .guide-flash-overlay {
       position: fixed;
-      inset: 12px 12px auto auto;
-      width: min(860px, calc(100vw - 24px));
+      left: 50%;
+      top: 10px;
+      width: min(1500px, calc(100vw - 24px));
       z-index: 13300;
-      background: rgba(255, 255, 255, 0.98);
-      border: 1px solid rgba(203, 213, 225, 0.8);
+      background: rgba(15, 23, 42, 0.28);
+      border: 1px solid rgba(148, 163, 184, 0.4);
       border-radius: 14px;
-      box-shadow: 0 20px 45px rgba(15, 23, 42, 0.25);
-      backdrop-filter: blur(7px);
-      color: #0f172a;
-      transform: translateY(-6px) scale(0.98);
+      box-shadow: 0 22px 55px rgba(15, 23, 42, 0.28);
+      backdrop-filter: blur(6px);
+      color: #f8fafc;
+      transform: translate(-50%, -6px) scale(0.98);
       opacity: 0;
       transition: opacity 120ms ease, transform 120ms ease;
       pointer-events: none;
     }
     .guide-flash-overlay.visible {
       opacity: 1;
-      transform: translateY(0) scale(1);
+      transform: translate(-50%, 0) scale(1);
     }
     .guide-flash-head {
       display: flex;
@@ -92,10 +93,10 @@ function ensureStyles() {
       justify-content: space-between;
       gap: 10px;
       padding: 10px 12px 8px;
-      border-bottom: 1px solid rgba(203, 213, 225, 0.6);
+      border-bottom: 1px solid rgba(148, 163, 184, 0.3);
     }
-    .guide-flash-title { font-size: 13px; font-weight: 700; letter-spacing: .02em; color: #0f172a; }
-    .guide-flash-sub { font-size: 11px; color: #64748b; }
+    .guide-flash-title { font-size: 13px; font-weight: 700; letter-spacing: .02em; color: #f8fafc; }
+    .guide-flash-sub { font-size: 11px; color: #cbd5e1; }
     .guide-flash-grid {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -103,11 +104,11 @@ function ensureStyles() {
       padding: 10px;
     }
     .guide-flash-card {
-      background: #f8fafc;
-      border: 1px solid rgba(203, 213, 225, 0.6);
+      background: rgba(248, 250, 252, 0.12);
+      border: 1px solid rgba(148, 163, 184, 0.3);
       border-radius: 10px;
       overflow: hidden;
-      min-height: 170px;
+      min-height: 220px;
       display: flex;
       flex-direction: column;
     }
@@ -117,8 +118,8 @@ function ensureStyles() {
       text-transform: uppercase;
       letter-spacing: .06em;
       padding: 7px 9px;
-      border-bottom: 1px solid rgba(203, 213, 225, 0.6);
-      color: #475569;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.3);
+      color: #e2e8f0;
     }
     .guide-flash-body {
       flex: 1;
@@ -126,9 +127,9 @@ function ensureStyles() {
       align-items: center;
       justify-content: center;
       padding: 8px;
-      background: #ffffff;
+      background: rgba(255, 255, 255, 0.08);
     }
-    .guide-flash-body img { width: 100%; height: 100%; max-height: 220px; object-fit: contain; }
+    .guide-flash-body img { width: 100%; height: 100%; max-height: min(78vh, 980px); object-fit: contain; }
     .guide-flash-empty { font-size: 11px; color: #94a3b8; text-align: center; }
     @media (max-width: 900px) {
       .guide-flash-grid { grid-template-columns: 1fr; }
@@ -292,7 +293,8 @@ function showShortcutToast() {
     document.body.appendChild(toast);
   }
 
-  toast.textContent = 'Hint: Shift+\\ cycles to next guide image. Ctrl+\\ edits guide codes.';
+  toast.textContent =
+    'Hint: \\ toggles guide overlay. Shift+\\ cycles next. Ctrl+\\ edits guide codes.';
   requestAnimationFrame(() => toast.classList.add('visible'));
 
   if (hintToastTimer) {
@@ -359,7 +361,7 @@ function ensureOverlay(slide, slideCount) {
     document.body.appendChild(flashOverlay);
   }
   const title = `${slide.code} · ${slide.view}`;
-  const hint = `${activeIndex + 1}/${slideCount} · \\ show · Shift+\\ next · Ctrl+\\ edit codes`;
+  const hint = `${activeIndex + 1}/${slideCount} · \\ toggle · Shift+\\ next · Ctrl+\\ edit codes`;
   const url = buildGuideUrl(slide.code, slide.view);
   flashOverlay.innerHTML = `
     <div class="guide-flash-head">
@@ -367,7 +369,7 @@ function ensureOverlay(slide, slideCount) {
       <div class="guide-flash-sub">${hint}</div>
     </div>
     <div class="guide-flash-grid" style="grid-template-columns: 1fr;">
-      <article class="guide-flash-card" style="min-height: 360px;">
+      <article class="guide-flash-card" style="min-height: min(78vh, 980px);">
         <div class="guide-flash-label">${title}</div>
         <div class="guide-flash-body">
           <img src="${url}" alt="${slide.view} model for ${slide.code}" />
@@ -421,11 +423,13 @@ function showGuideFlash({ cycleNext = false, holdMode = false } = {}) {
     flashOverlay?.classList.add('visible');
   });
 
-  // In hold mode, don't auto-hide - wait for keyup
+  if (hideTimer) {
+    clearTimeout(hideTimer);
+    hideTimer = null;
+  }
+
+  // In hold mode, don't auto-hide
   if (!holdMode) {
-    if (hideTimer) {
-      clearTimeout(hideTimer);
-    }
     hideTimer = setTimeout(() => {
       hideGuideFlash();
     }, FLASH_DURATION_MS);
@@ -685,7 +689,7 @@ function onKeyDown(event) {
     const codes = promptForCodes();
     if (!codes.length) return;
     activeIndex = 0;
-    showGuideFlash();
+    showGuideFlash({ holdMode: isGuidePinnedVisible });
     showShortcutToast();
     return;
   }
@@ -698,14 +702,19 @@ function onKeyDown(event) {
 
   // Shift+\ = Cycle to next guide (timed auto-hide)
   if (event.shiftKey && !event.repeat) {
-    showGuideFlash({ cycleNext: true });
+    showGuideFlash({ cycleNext: true, holdMode: isGuidePinnedVisible });
     showShortcutToast();
     return;
   }
 
-  // \ (no modifiers) = Hold mode - show while key is held
-  if (!event.repeat && !bossKeyHeld) {
-    bossKeyHeld = true;
+  // \ (no modifiers) = Toggle pinned visibility
+  if (!event.repeat) {
+    if (isGuidePinnedVisible && flashOverlay?.classList.contains('visible')) {
+      isGuidePinnedVisible = false;
+      hideGuideFlash();
+      return;
+    }
+    isGuidePinnedVisible = true;
     showGuideFlash({ holdMode: true });
     showShortcutToast();
   }
@@ -713,10 +722,6 @@ function onKeyDown(event) {
 
 function onKeyUp(event) {
   if (event.code !== HOTKEY) return;
-  if (bossKeyHeld) {
-    bossKeyHeld = false;
-    hideGuideFlash();
-  }
 }
 
 export function initMeasurementGuideFlash() {

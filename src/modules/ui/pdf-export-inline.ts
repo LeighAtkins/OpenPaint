@@ -175,6 +175,331 @@ function safePdfText(value) {
   return String(value || '').replace(/[^\x20-\x7E]/g, ' ');
 }
 
+function cloneSerializable(value, fallback = null) {
+  try {
+    return JSON.parse(JSON.stringify(value));
+  } catch {
+    return fallback;
+  }
+}
+
+function safelyDiscardActiveObject(canvas) {
+  if (!canvas?.getActiveObject || !canvas?.discardActiveObject) {
+    return;
+  }
+  try {
+    if (canvas.getActiveObject()) {
+      canvas.discardActiveObject();
+    }
+  } catch (error) {
+    console.warn('[PDF] Failed to discard active object safely:', error);
+  }
+}
+
+function buildVectorDebugSnapshot(label, extra = {}) {
+  const canvas = window.app?.canvasManager?.fabricCanvas;
+  const objects = canvas?.getObjects?.() || [];
+  const vectorObjects = objects.filter(obj => {
+    const type = String(obj?.type || '');
+    return (
+      type === 'line' ||
+      type === 'path' ||
+      type === 'polyline' ||
+      type === 'polygon' ||
+      obj?.strokeMetadata?.isVector === true ||
+      obj?.customData?.isVectorStroke === true ||
+      obj?.customData?.type === 'vector-stroke'
+    );
+  });
+
+  const summarizeObj = obj => {
+    const bbox =
+      typeof obj?.getBoundingRect === 'function' ? obj.getBoundingRect(true, true) : null;
+    return {
+      id: obj?.id || obj?.strokeMetadata?.id || obj?.customData?.id || null,
+      type: obj?.type || null,
+      label: obj?.strokeMetadata?.label || obj?.customData?.label || null,
+      imageLabel: obj?.strokeMetadata?.imageLabel || obj?.customData?.imageLabel || null,
+      visible: obj?.visible !== false,
+      opacity: typeof obj?.opacity === 'number' ? Number(obj.opacity.toFixed(3)) : null,
+      left: typeof obj?.left === 'number' ? Number(obj.left.toFixed(2)) : null,
+      top: typeof obj?.top === 'number' ? Number(obj.top.toFixed(2)) : null,
+      angle: typeof obj?.angle === 'number' ? Number(obj.angle.toFixed(2)) : null,
+      scaleX: typeof obj?.scaleX === 'number' ? Number(obj.scaleX.toFixed(4)) : null,
+      scaleY: typeof obj?.scaleY === 'number' ? Number(obj.scaleY.toFixed(4)) : null,
+      width: bbox?.width ? Number(bbox.width.toFixed(2)) : null,
+      height: bbox?.height ? Number(bbox.height.toFixed(2)) : null,
+    };
+  };
+
+  const viewport = window.app?.canvasManager?.getViewportState?.() || null;
+  const rotation = window.app?.canvasManager?.getRotationDegrees?.();
+  const activeObj = canvas?.getActiveObject?.() || null;
+
+  return {
+    label,
+    timestamp: new Date().toISOString(),
+    currentViewId: window.app?.projectManager?.currentViewId || null,
+    currentImageLabel: window.currentImageLabel || null,
+    objectCount: objects.length,
+    vectorCount: vectorObjects.length,
+    activeObjectType: activeObj?.type || null,
+    viewport,
+    rotation: typeof rotation === 'number' ? rotation : null,
+    viewportTransform: Array.isArray(canvas?.viewportTransform)
+      ? canvas.viewportTransform.map(value =>
+          typeof value === 'number' ? Number(value.toFixed(5)) : value
+        )
+      : null,
+    sampleVectors: vectorObjects.slice(0, 12).map(summarizeObj),
+    extra,
+  };
+}
+
+function logVectorDebugSnapshot(label, extra = {}) {
+  try {
+    const snapshot = buildVectorDebugSnapshot(label, extra);
+    const debugEnabled = /(^|[?&])debug(?:=1|=true)?(?:&|$)/i.test(
+      String(window.location?.search || '')
+    );
+    if (debugEnabled) {
+      const existing = Array.isArray(window.__pdfVectorDebugLog) ? window.__pdfVectorDebugLog : [];
+      existing.push(snapshot);
+      if (existing.length > 240) {
+        existing.shift();
+      }
+      window.__pdfVectorDebugLog = existing;
+      window.dispatchEvent(
+        new CustomEvent('openpaint:pdf-vector-debug', {
+          detail: snapshot,
+        })
+      );
+    }
+    console.groupCollapsed(
+      `[PDF Vector Debug] ${label} | view=${snapshot.currentViewId || '-'} | vectors=${snapshot.vectorCount}`
+    );
+    console.log(snapshot);
+    console.groupEnd();
+  } catch (error) {
+    console.warn('[PDF Vector Debug] Failed to capture snapshot:', error);
+  }
+}
+
+function beginPdfExportSession() {
+  const projectManager = window.app?.projectManager;
+  const canvasManager = window.app?.canvasManager;
+  const captureFrame = document.getElementById('captureFrame');
+  const state = {
+    previousWindowSuspendSave: Boolean(window.__suspendSaveCurrentView),
+    previousProjectSuspendSave: Boolean(projectManager?.suspendSave),
+    previousIsPdfExporting: Boolean(window.__isPdfExporting),
+    previousViewId: projectManager?.currentViewId || '',
+    previousScopedLabel: window.currentImageLabel || '',
+    previousCaptureTabsByLabel: cloneSerializable(window.captureTabsByLabel || {}, {}),
+    previousCaptureMasterTargets: cloneSerializable(
+      window.captureMasterDrawTargetByLabel || {},
+      {}
+    ),
+    previousViewportState: cloneSerializable(canvasManager?.getViewportState?.() || null, null),
+    previousRotationDegrees:
+      typeof canvasManager?.getRotationDegrees === 'function'
+        ? canvasManager.getRotationDegrees()
+        : null,
+    previousCanvasSelection: canvasManager?.fabricCanvas?.selection,
+    previousCanvasSkipTargetFind: canvasManager?.fabricCanvas?.skipTargetFind,
+    previousCaptureFrameStyle: captureFrame
+      ? {
+          left: captureFrame.style.left,
+          top: captureFrame.style.top,
+          width: captureFrame.style.width,
+          height: captureFrame.style.height,
+          borderColor: captureFrame.style.borderColor,
+        }
+      : null,
+  };
+
+  window.__suspendSaveCurrentView = true;
+  logVectorDebugSnapshot('beginPdfExportSession:before-lock');
+  if (canvasManager?.fabricCanvas) {
+    safelyDiscardActiveObject(canvasManager.fabricCanvas);
+    canvasManager.fabricCanvas.selection = false;
+    canvasManager.fabricCanvas.skipTargetFind = true;
+  }
+  if (projectManager) {
+    projectManager.suspendSave = true;
+  }
+  window.__isPdfExporting = true;
+  return state;
+}
+
+async function restorePdfExportSession(state) {
+  const projectManager = window.app?.projectManager;
+  const canvasManager = window.app?.canvasManager;
+  const captureFrame = document.getElementById('captureFrame');
+
+  try {
+    logVectorDebugSnapshot('restorePdfExportSession:start');
+    if (state?.previousCaptureTabsByLabel) {
+      window.captureTabsByLabel = cloneSerializable(state.previousCaptureTabsByLabel, {});
+    }
+    if (state?.previousCaptureMasterTargets) {
+      window.captureMasterDrawTargetByLabel = cloneSerializable(
+        state.previousCaptureMasterTargets,
+        {}
+      );
+    }
+
+    const restoreViewId = state?.previousViewId || projectManager?.currentViewId || '';
+    if (
+      restoreViewId &&
+      projectManager?.views?.[restoreViewId] &&
+      projectManager?.switchView &&
+      projectManager.currentViewId !== restoreViewId
+    ) {
+      await projectManager.switchView(restoreViewId, true);
+    }
+
+    const restoreTabId = window.captureTabsByLabel?.[restoreViewId]?.activeTabId;
+    if (restoreViewId && restoreTabId && typeof window.setActiveCaptureTab === 'function') {
+      window.setActiveCaptureTab(restoreViewId, restoreTabId, { skipSave: true });
+    }
+
+    if (state?.previousCaptureFrameStyle && captureFrame) {
+      captureFrame.style.left = state.previousCaptureFrameStyle.left;
+      captureFrame.style.top = state.previousCaptureFrameStyle.top;
+      captureFrame.style.width = state.previousCaptureFrameStyle.width;
+      captureFrame.style.height = state.previousCaptureFrameStyle.height;
+      captureFrame.style.borderColor = state.previousCaptureFrameStyle.borderColor;
+    }
+
+    if (state?.previousScopedLabel) {
+      window.currentImageLabel = state.previousScopedLabel;
+    }
+
+    if (typeof state?.previousRotationDegrees === 'number' && canvasManager?.setRotationDegrees) {
+      canvasManager.setRotationDegrees(state.previousRotationDegrees);
+    }
+
+    if (state?.previousViewportState && canvasManager?.setViewportState) {
+      canvasManager.setViewportState(state.previousViewportState);
+    }
+    if (canvasManager?.fabricCanvas) {
+      canvasManager.fabricCanvas.selection =
+        typeof state?.previousCanvasSelection === 'boolean' ? state.previousCanvasSelection : true;
+      canvasManager.fabricCanvas.skipTargetFind = Boolean(state?.previousCanvasSkipTargetFind);
+    }
+
+    if (restoreViewId && typeof window.renderCaptureTabUI === 'function') {
+      window.renderCaptureTabUI(restoreViewId);
+    }
+    if (restoreViewId && typeof window.syncCaptureTabCanvasVisibility === 'function') {
+      window.syncCaptureTabCanvasVisibility(restoreViewId);
+    }
+    canvasManager?.fabricCanvas?.requestRenderAll?.();
+    logVectorDebugSnapshot('restorePdfExportSession:after-restore', {
+      restoredViewId: restoreViewId,
+      restoredTabId: window.captureTabsByLabel?.[restoreViewId]?.activeTabId || null,
+    });
+  } catch (restoreError) {
+    console.warn('[PDF] Failed to fully restore editor state after export:', restoreError);
+    logVectorDebugSnapshot('restorePdfExportSession:error', {
+      error: String(restoreError?.message || restoreError),
+    });
+  } finally {
+    window.__suspendSaveCurrentView = Boolean(state?.previousWindowSuspendSave);
+    if (projectManager) {
+      projectManager.suspendSave = Boolean(state?.previousProjectSuspendSave);
+    }
+    window.__isPdfExporting = Boolean(state?.previousIsPdfExporting);
+  }
+}
+
+async function withTemporaryCaptureTarget(viewId, tabId, callback) {
+  const projectManager = window.app?.projectManager;
+  const canvas = window.app?.canvasManager?.fabricCanvas;
+  const captureFrame = document.getElementById('captureFrame');
+  const previousViewId = projectManager?.currentViewId || '';
+  const previousScopedLabel = window.currentImageLabel || '';
+  const previousBaseLabel = toBaseViewId(previousScopedLabel || previousViewId);
+  const previousState =
+    previousBaseLabel && window.captureTabsByLabel
+      ? window.captureTabsByLabel[previousBaseLabel] || null
+      : null;
+  const previousTabId = previousState?.activeTabId || null;
+  const frameStyle = captureFrame
+    ? {
+        left: captureFrame.style.left,
+        top: captureFrame.style.top,
+        width: captureFrame.style.width,
+        height: captureFrame.style.height,
+        borderColor: captureFrame.style.borderColor,
+      }
+    : null;
+
+  const restoreTargetViewId = previousViewId || viewId || '';
+  const restoreTabId = previousTabId;
+
+  try {
+    logVectorDebugSnapshot('withTemporaryCaptureTarget:before-switch', {
+      targetViewId: viewId,
+      targetTabId: tabId || null,
+    });
+    safelyDiscardActiveObject(canvas);
+    canvas?.requestRenderAll?.();
+    if (projectManager?.switchView && viewId && projectManager.currentViewId !== viewId) {
+      await projectManager.switchView(viewId);
+    }
+    if (tabId && typeof window.setActiveCaptureTab === 'function') {
+      // Export should not mutate persisted tab/frame state while switching tabs.
+      window.setActiveCaptureTab(viewId, tabId, { skipSave: true });
+    }
+    window.app?.canvasManager?.fabricCanvas?.requestRenderAll?.();
+    await new Promise(resolve => setTimeout(resolve, 250));
+    logVectorDebugSnapshot('withTemporaryCaptureTarget:after-switch', {
+      targetViewId: viewId,
+      targetTabId: tabId || null,
+    });
+    return await callback();
+  } finally {
+    try {
+      if (
+        projectManager?.switchView &&
+        restoreTargetViewId &&
+        projectManager.currentViewId !== restoreTargetViewId
+      ) {
+        await projectManager.switchView(restoreTargetViewId);
+      }
+      if (restoreTabId && typeof window.setActiveCaptureTab === 'function') {
+        window.setActiveCaptureTab(restoreTargetViewId, restoreTabId, { skipSave: true });
+      }
+      if (captureFrame && frameStyle) {
+        captureFrame.style.left = frameStyle.left;
+        captureFrame.style.top = frameStyle.top;
+        captureFrame.style.width = frameStyle.width;
+        captureFrame.style.height = frameStyle.height;
+        captureFrame.style.borderColor = frameStyle.borderColor;
+      }
+      if (previousScopedLabel) {
+        window.currentImageLabel = previousScopedLabel;
+      }
+      safelyDiscardActiveObject(canvas);
+      window.app?.canvasManager?.fabricCanvas?.requestRenderAll?.();
+      logVectorDebugSnapshot('withTemporaryCaptureTarget:after-restore', {
+        restoredViewId: restoreTargetViewId,
+        restoredTabId: restoreTabId,
+      });
+    } catch (restoreError) {
+      console.warn(
+        '[PDF] Failed to fully restore capture target state after export step:',
+        restoreError
+      );
+      logVectorDebugSnapshot('withTemporaryCaptureTarget:restore-error', {
+        error: String(restoreError?.message || restoreError),
+      });
+    }
+  }
+}
+
 async function requestServerRenderedPdf(payload) {
   const endpoints = ['/api/pdf/render', '/pdf/render'];
   let lastError = null;
@@ -305,6 +630,7 @@ export function initPdfExport() {
       const pageSize = 'a4';
       const includeMeasurements = document.getElementById('includeMeasurements').checked;
       const rendererMode = document.getElementById('pdfRendererMode')?.value || 'classic';
+      const exportSession = beginPdfExportSession();
       document.getElementById('pdfProgress').style.display = 'block';
       document.getElementById('generatePdfBtn').disabled = true;
       document.getElementById('cancelPdfBtn').disabled = true;
@@ -337,6 +663,8 @@ export function initPdfExport() {
           pageSize,
           includeMeasurements
         );
+      } finally {
+        await restorePdfExportSession(exportSession);
       }
 
       overlay.remove();
@@ -415,35 +743,31 @@ export function initPdfExport() {
     };
 
     const captureViewImageDataUrl = async target => {
-      await window.app.projectManager.switchView(target.viewId);
-      if (target.tabId && typeof window.setActiveCaptureTab === 'function') {
-        window.setActiveCaptureTab(target.viewId, target.tabId);
-      }
-      await new Promise(resolve => setTimeout(resolve, 150));
-
-      const canvas = window.app.canvasManager.fabricCanvas;
-      const captureFrame = document.getElementById('captureFrame');
-      if (!canvas || !captureFrame) return '';
-      const qualityScales = { high: 1.25, medium: 1.0, low: 0.85 };
-      const scale = qualityScales[quality] || 1.0;
-      const frameRect = captureFrame.getBoundingClientRect();
-      const canvasEl = canvas.lowerCanvasEl;
-      const scaleX = canvasEl.width / canvasEl.offsetWidth;
-      const scaleY = canvasEl.height / canvasEl.offsetHeight;
-      const canvasRect = canvasEl.getBoundingClientRect();
-      const left = (frameRect.left - canvasRect.left) * scaleX;
-      const top = (frameRect.top - canvasRect.top) * scaleY;
-      const width = frameRect.width * scaleX;
-      const height = frameRect.height * scaleY;
-      const tempCanvas = document.createElement('canvas');
-      tempCanvas.width = width * scale;
-      tempCanvas.height = height * scale;
-      const ctx = tempCanvas.getContext('2d');
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = 'high';
-      ctx.scale(scale, scale);
-      ctx.drawImage(canvasEl, left, top, width, height, 0, 0, width, height);
-      return tempCanvas.toDataURL('image/jpeg', 0.78);
+      return withTemporaryCaptureTarget(target.viewId, target.tabId, async () => {
+        const canvas = window.app.canvasManager.fabricCanvas;
+        const captureFrame = document.getElementById('captureFrame');
+        if (!canvas || !captureFrame) return '';
+        const qualityScales = { high: 1.25, medium: 1.0, low: 0.85 };
+        const scale = qualityScales[quality] || 1.0;
+        const frameRect = captureFrame.getBoundingClientRect();
+        const canvasEl = canvas.lowerCanvasEl;
+        const scaleX = canvasEl.width / canvasEl.offsetWidth;
+        const scaleY = canvasEl.height / canvasEl.offsetHeight;
+        const canvasRect = canvasEl.getBoundingClientRect();
+        const left = (frameRect.left - canvasRect.left) * scaleX;
+        const top = (frameRect.top - canvasRect.top) * scaleY;
+        const width = frameRect.width * scaleX;
+        const height = frameRect.height * scaleY;
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = width * scale;
+        tempCanvas.height = height * scale;
+        const ctx = tempCanvas.getContext('2d');
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.scale(scale, scale);
+        ctx.drawImage(canvasEl, left, top, width, height, 0, 0, width, height);
+        return tempCanvas.toDataURL('image/jpeg', 0.78);
+      });
     };
 
     const groups = [];
@@ -550,6 +874,7 @@ export function initPdfExport() {
       options: {
         renderer: 'hybrid',
         pageSize,
+        injectFormFields: false,
         filename: `${sanitizeFilenamePart(projectName, 'OpenPaint Project')}.pdf`,
       },
     });
@@ -1037,36 +1362,32 @@ export function initPdfExport() {
 
     // ── Canvas Capture Helper ────────────────────────────────────────
     async function captureViewImage(viewId, tabId) {
-      await window.app.projectManager.switchView(viewId);
-      if (tabId && typeof window.setActiveCaptureTab === 'function') {
-        window.setActiveCaptureTab(viewId, tabId);
-      }
-      await new Promise(resolve => setTimeout(resolve, 150));
+      return withTemporaryCaptureTarget(viewId, tabId, async () => {
+        const canvas = window.app.canvasManager.fabricCanvas;
+        const captureFrame = document.getElementById('captureFrame');
+        if (!canvas || !captureFrame) return null;
 
-      const canvas = window.app.canvasManager.fabricCanvas;
-      const captureFrame = document.getElementById('captureFrame');
-      if (!canvas || !captureFrame) return null;
-
-      const frameRect = captureFrame.getBoundingClientRect();
-      const canvasEl = canvas.lowerCanvasEl;
-      const scaleX = canvasEl.width / canvasEl.offsetWidth;
-      const scaleY = canvasEl.height / canvasEl.offsetHeight;
-      const canvasRect = canvasEl.getBoundingClientRect();
-      const left = (frameRect.left - canvasRect.left) * scaleX;
-      const top = (frameRect.top - canvasRect.top) * scaleY;
-      const width = frameRect.width * scaleX;
-      const height = frameRect.height * scaleY;
-      const tempCanvas = document.createElement('canvas');
-      tempCanvas.width = width * scale;
-      tempCanvas.height = height * scale;
-      const ctx = tempCanvas.getContext('2d');
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = 'high';
-      ctx.scale(scale, scale);
-      ctx.drawImage(canvasEl, left, top, width, height, 0, 0, width, height);
-      const imageData = tempCanvas.toDataURL('image/jpeg', 0.95);
-      const imageBytes = Uint8Array.from(atob(imageData.split(',')[1]), c => c.charCodeAt(0));
-      return pdfDoc.embedJpg(imageBytes);
+        const frameRect = captureFrame.getBoundingClientRect();
+        const canvasEl = canvas.lowerCanvasEl;
+        const scaleX = canvasEl.width / canvasEl.offsetWidth;
+        const scaleY = canvasEl.height / canvasEl.offsetHeight;
+        const canvasRect = canvasEl.getBoundingClientRect();
+        const left = (frameRect.left - canvasRect.left) * scaleX;
+        const top = (frameRect.top - canvasRect.top) * scaleY;
+        const width = frameRect.width * scaleX;
+        const height = frameRect.height * scaleY;
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = width * scale;
+        tempCanvas.height = height * scale;
+        const ctx = tempCanvas.getContext('2d');
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.scale(scale, scale);
+        ctx.drawImage(canvasEl, left, top, width, height, 0, 0, width, height);
+        const imageData = tempCanvas.toDataURL('image/jpeg', 0.95);
+        const imageBytes = Uint8Array.from(atob(imageData.split(',')[1]), c => c.charCodeAt(0));
+        return pdfDoc.embedJpg(imageBytes);
+      });
     }
 
     function getTargetStrokes(scopeKey, includeBase) {

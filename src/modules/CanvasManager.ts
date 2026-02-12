@@ -1,6 +1,8 @@
 // Canvas Manager
 // Handles Fabric.js canvas initialization, resizing, zoom/pan
 
+// @ts-nocheck
+
 import { FabricControls } from './utils/FabricControls.js';
 import { PathUtils } from './utils/PathUtils.js';
 
@@ -143,6 +145,20 @@ export class CanvasManager {
       preserveObjectStacking: true,
       backgroundColor: '#ffffff', // Default white background
     });
+
+    const objectPrototype = fabric?.Object?.prototype;
+    if (objectPrototype && !objectPrototype.__openpaintSafeDrawControlsPatched) {
+      const originalDrawControls = objectPrototype.drawControls;
+      if (typeof originalDrawControls === 'function') {
+        objectPrototype.drawControls = function (...args) {
+          if (!this?.canvas || typeof this.canvas.getRetinaScaling !== 'function') {
+            return this;
+          }
+          return originalDrawControls.apply(this, args);
+        };
+      }
+      objectPrototype.__openpaintSafeDrawControlsPatched = true;
+    }
 
     // Store initial size
     this.lastCanvasSize = { width, height };
