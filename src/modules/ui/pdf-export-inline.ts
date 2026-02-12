@@ -20,6 +20,43 @@ function getTabIdFromScopedLabel(scopeOrViewId) {
   return tabId || null;
 }
 
+function enforceScopedTabContext(viewId, scopedLabel) {
+  const scopedTabId = getTabIdFromScopedLabel(scopedLabel || '');
+  if (!viewId || !scopedTabId) {
+    return { enforced: false, reason: 'missing-view-or-tab' };
+  }
+
+  if (typeof window.setActiveCaptureTab === 'function') {
+    try {
+      window.setActiveCaptureTab(viewId, scopedTabId, { skipSave: true });
+    } catch (error) {
+      return {
+        enforced: false,
+        reason: 'set-active-tab-failed',
+        error: String(error?.message || error),
+      };
+    }
+  }
+
+  if (typeof window.syncCaptureTabCanvasVisibility === 'function') {
+    try {
+      window.syncCaptureTabCanvasVisibility(viewId);
+    } catch (error) {
+      return {
+        enforced: false,
+        reason: 'sync-visibility-failed',
+        error: String(error?.message || error),
+      };
+    }
+  }
+
+  window.currentImageLabel = scopedLabel;
+  window.app?.metadataManager?.updateStrokeVisibilityControls?.();
+  window.app?.canvasManager?.fabricCanvas?.requestRenderAll?.();
+
+  return { enforced: true, scopedTabId };
+}
+
 function getScopedMeasurements(scopeKey, options = {}) {
   const includeBase = options.includeBase === true;
   const allMeasurements = window.app?.metadataManager?.strokeMeasurements || {};
@@ -486,6 +523,20 @@ async function restorePdfExportSession(state) {
         });
       }
     }
+
+    const enforceResult = enforceScopedTabContext(restoreViewId, state?.previousScopedLabel || '');
+    logVectorDebugSnapshot('restorePdfExportSession:enforce-scoped-context', enforceResult);
+
+    setTimeout(() => {
+      const delayedResult = enforceScopedTabContext(
+        restoreViewId,
+        state?.previousScopedLabel || ''
+      );
+      logVectorDebugSnapshot(
+        'restorePdfExportSession:enforce-scoped-context-delayed',
+        delayedResult
+      );
+    }, 0);
 
     if (canvasManager?.fabricCanvas) {
       const restoreStats = restoreObjectDisplayState(
