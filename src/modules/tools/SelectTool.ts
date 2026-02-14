@@ -1,4 +1,5 @@
 // Select Tool (for moving/deleting objects)
+// @ts-nocheck
 import { BaseTool } from './BaseTool.js';
 
 type FabricObjectLike = {

@@ -10,7 +10,9 @@ import {
   mergeSofaMetadata,
   normalizeSofaMetadata,
 } from './sofa-metadata.js';
+import { FabricControls } from './utils/FabricControls.js';
 import { sanitizeFilenamePart } from './utils/naming-utils.js';
+import JSZip from 'jszip';
 
 export class ProjectManager {
   constructor(canvasManager, historyManager) {
@@ -20,6 +22,8 @@ export class ProjectManager {
     this.suspendSave = false;
     this.isSwitchingView = false;
     this.pendingSwitchViewId = null;
+    this.loadedProjectObjectUrls = [];
+    this.activeArchiveZip = null;
     this.projectMetadata = createDefaultSofaMetadata();
     window.projectMetadata = this.getProjectMetadata();
 
@@ -251,15 +255,14 @@ export class ProjectManager {
           }
 
           // Recreate custom controls for lines and curves
-          const FabricControls =
-            window.FabricControls || (await import('./utils/FabricControls.js')).FabricControls;
+          const ControlsApi = window.FabricControls || FabricControls;
 
           const objects = this.canvasManager.fabricCanvas.getObjects();
           objects.forEach(obj => {
             if (obj.type === 'line' && obj.strokeMetadata) {
-              FabricControls.createLineControls(obj);
+              ControlsApi.createLineControls(obj);
             } else if (obj.type === 'path' && obj.customPoints) {
-              FabricControls.createCurveControls(obj);
+              ControlsApi.createCurveControls(obj);
             } else if (
               (obj.type === 'i-text' || obj.type === 'text') &&
               obj.strokeMetadata?.type === 'text'
@@ -270,9 +273,6 @@ export class ProjectManager {
                   window.app.historyManager.saveState();
                 }
               });
-              console.log(
-                `[Load] Reattached event handlers for text element: "${obj.text?.substring(0, 30) || 'empty'}"`
-              );
             }
           });
 
@@ -1285,7 +1285,8 @@ export class ProjectManager {
     return result;
   }
 
-  async getProjectData() {
+  async getProjectData(options = {}) {
+    const { embedImages = true } = options;
     if (window.captureTabsSyncActive) {
       window.captureTabsSyncActive(this.currentViewId);
     }
@@ -1352,6 +1353,7 @@ export class ProjectManager {
         canvasJSON: null,
         imageDataURL: null,
         imageUrl: view.image || null,
+        imageAssetPath: null,
         metadata: {},
         tabs: null,
       };
@@ -1363,7 +1365,7 @@ export class ProjectManager {
         entry.canvasJSON = view.canvasData || null;
       }
 
-      if (view.image) {
+      if (embedImages && view.image) {
         try {
           console.log(`[Save] Embedding image for view ${viewId}`);
           entry.imageDataURL = await this.fetchImageAsDataURL(view.image);
@@ -1418,7 +1420,7 @@ export class ProjectManager {
   async saveProject() {
     const projectNameInput = document.getElementById('projectName');
     const projectName = projectNameInput?.value?.trim() || 'OpenPaint Project';
-    const downloadName = `${sanitizeFilenamePart(projectName, 'OpenPaint Project')}_fabric.json`;
+    const safeProjectName = sanitizeFilenamePart(projectName, 'OpenPaint Project');
 
     try {
       console.log('[Save] Starting saveProject');
@@ -1428,16 +1430,17 @@ export class ProjectManager {
         return;
       }
 
-      const projectData = await this.getProjectData();
+      const projectData = await this.getProjectData({ embedImages: false });
 
-      await this.downloadProjectData(projectData, downloadName);
+      await this.downloadProjectArchive(projectData, safeProjectName);
 
       const authManager = window.app?.authManager;
       const cloudManager = window.app?.cloudProjectManager;
       const user = authManager?.getUser ? authManager.getUser() : null;
 
       if (user && cloudManager?.saveProject) {
-        const result = await cloudManager.saveProject(projectData);
+        const cloudProjectData = await this.getProjectData({ embedImages: true });
+        const result = await cloudManager.saveProject(cloudProjectData);
         if (result?.error) {
           console.error('[Save] Cloud save failed:', result.error);
           this.showStatusMessage('Project saved locally. Cloud save failed.', 'error');
@@ -1464,6 +1467,126 @@ export class ProjectManager {
     });
   }
 
+  revokeLoadedProjectObjectUrls() {
+    (this.loadedProjectObjectUrls || []).forEach(url => {
+      try {
+        URL.revokeObjectURL(url);
+      } catch (error) {
+        console.warn('[Load] Failed to revoke object URL', error);
+      }
+    });
+    this.loadedProjectObjectUrls = [];
+    this.activeArchiveZip = null;
+  }
+
+  inferImageExtension(blob, fallbackName = 'png') {
+    const mime = blob?.type || '';
+    if (mime.includes('png')) return 'png';
+    if (mime.includes('jpeg') || mime.includes('jpg')) return 'jpg';
+    if (mime.includes('webp')) return 'webp';
+    if (mime.includes('gif')) return 'gif';
+    if (mime.includes('bmp')) return 'bmp';
+    if (mime.includes('svg')) return 'svg';
+
+    const lower = String(fallbackName || '').toLowerCase();
+    const dotIndex = lower.lastIndexOf('.');
+    if (dotIndex > -1 && dotIndex < lower.length - 1) {
+      return lower.slice(dotIndex + 1);
+    }
+    return 'png';
+  }
+
+  async downloadProjectArchive(projectData, fileNameBase) {
+    const zip = new JSZip();
+    const manifest = JSON.parse(JSON.stringify(projectData || {}));
+    manifest.archiveFormat = 'openpaint-zip-v1';
+
+    const viewIds = Object.keys(manifest.views || {});
+    for (const viewId of viewIds) {
+      const viewEntry = manifest.views[viewId] || {};
+      const liveView = this.views?.[viewId] || {};
+      const sourceUrl = liveView.image || viewEntry.imageDataURL || viewEntry.imageUrl;
+      if (!sourceUrl) continue;
+
+      try {
+        const response = await fetch(sourceUrl);
+        const blob = await response.blob();
+        const extension = this.inferImageExtension(blob, sourceUrl);
+        const safeViewId = sanitizeFilenamePart(viewId, 'view');
+        const imagePath = `images/${safeViewId}.${extension}`;
+        zip.file(imagePath, blob);
+
+        viewEntry.imageAssetPath = imagePath;
+        viewEntry.imageDataURL = null;
+        viewEntry.imageUrl = imagePath;
+      } catch (error) {
+        console.warn(`[Save] Failed to bundle image for ${viewId}:`, error);
+      }
+    }
+
+    zip.file('project.json', JSON.stringify(manifest, null, 2));
+
+    const blob = await zip.generateAsync({
+      type: 'blob',
+      compression: 'DEFLATE',
+      compressionOptions: { level: 6 },
+    });
+
+    const fileName = `${fileNameBase || 'OpenPaint Project'}.opaint`;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    a.click();
+    URL.revokeObjectURL(url);
+    console.log('[Save] Downloaded project archive as:', fileName);
+  }
+
+  isArchiveProjectFile(file) {
+    const name = String(file?.name || '').toLowerCase();
+    return name.endsWith('.opaint') || name.endsWith('.zip');
+  }
+
+  async parseProjectArchive(file) {
+    const zip = await JSZip.loadAsync(file);
+    const manifestFile = zip.file('project.json') || zip.file('manifest.json');
+    if (!manifestFile) {
+      throw new Error('Archive is missing project.json');
+    }
+
+    const manifestText = await manifestFile.async('string');
+    const projectData = JSON.parse(manifestText);
+    this.activeArchiveZip = zip;
+
+    return projectData;
+  }
+
+  async resolveArchiveImageUrl(imagePath) {
+    if (!imagePath || typeof imagePath !== 'string') return null;
+    if (!imagePath.startsWith('images/')) return imagePath;
+    if (!this.activeArchiveZip) return null;
+
+    const imageFile = this.activeArchiveZip.file(imagePath);
+    if (!imageFile) return null;
+
+    const blob = await imageFile.async('blob');
+    const objectUrl = URL.createObjectURL(blob);
+    this.loadedProjectObjectUrls.push(objectUrl);
+    return objectUrl;
+  }
+
+  async resolveViewImageUrl(viewData) {
+    if (!viewData) return null;
+    if (viewData.imageDataURL) return viewData.imageDataURL;
+
+    const archivePath = viewData.imageAssetPath || viewData.imageUrl;
+    if (archivePath && typeof archivePath === 'string' && archivePath.startsWith('images/')) {
+      return await this.resolveArchiveImageUrl(archivePath);
+    }
+
+    return viewData.imageUrl || null;
+  }
+
   async downloadProjectData(projectData, fileName) {
     const jsonStr = JSON.stringify(projectData, null, 2);
     const blob = new Blob([jsonStr], { type: 'application/json' });
@@ -1480,8 +1603,13 @@ export class ProjectManager {
     try {
       console.log('[Load] Loading project file:', file.name);
 
-      const text = await file.text();
-      const projectData = JSON.parse(text);
+      this.showStatusMessage('Reading project file...', 'info');
+      this.revokeLoadedProjectObjectUrls();
+
+      if (!this.isArchiveProjectFile(file)) {
+        throw new Error('Unsupported project format. Please load a .opaint project archive.');
+      }
+      const projectData = await this.parseProjectArchive(file);
 
       console.log('[Load] Parsed project data:', projectData.projectName || projectData.name);
 
@@ -1496,7 +1624,7 @@ export class ProjectManager {
 
       if (!projectData.version || !projectData.version.startsWith('2.0')) {
         this.showStatusMessage(
-          'This appears to be a legacy project format. Please use the legacy loader.',
+          'Unsupported archive version. Please load a project saved by this app (.opaint).',
           'error'
         );
         console.error('[Load] Unsupported project version:', projectData.version);
@@ -1504,7 +1632,7 @@ export class ProjectManager {
       }
 
       if (!projectData.views) {
-        this.showStatusMessage('Invalid project format: missing views', 'error');
+        this.showStatusMessage('Invalid .opaint file: missing views', 'error');
         return;
       }
 
@@ -1558,6 +1686,22 @@ export class ProjectManager {
       }
 
       console.log('[Load] Loading views:', orderedViewIds);
+      const targetView = projectData.currentViewId || orderedViewIds[0];
+      const deferredImageRegistrations = [];
+
+      const registerImageForView = async (viewId, imageUrl) => {
+        if (!imageUrl) return;
+        const filename = `${projectData.projectName || 'Project'} - ${viewId}`;
+        if (useRegistry) {
+          await imageRegistry.registerImage(viewId, imageUrl, filename, {
+            source: this.activeArchiveZip ? 'archive' : 'json',
+            refreshBackground: false,
+          });
+        } else if (window.addImageToSidebar) {
+          console.log(`[Load] Registering view ${viewId} with legacy system`);
+          window.addImageToSidebar(imageUrl, viewId, filename);
+        }
+      };
 
       for (const viewId of orderedViewIds) {
         const viewData = projectData.views[viewId];
@@ -1570,26 +1714,19 @@ export class ProjectManager {
           tabs: viewData.tabs || null,
         };
 
-        // Restore image from data URL if available
-        if (viewData.imageDataURL) {
-          this.views[viewId].image = viewData.imageDataURL;
-          console.log(`[Load] Restored image for view ${viewId} from data URL`);
-        } else if (viewData.imageUrl) {
-          this.views[viewId].image = viewData.imageUrl;
-          console.log(`[Load] Using image URL for view ${viewId}`);
-        }
-
-        const imageUrl = this.views[viewId].image;
-        if (imageUrl) {
-          const filename = `${projectData.projectName || 'Project'} - ${viewId}`;
-          if (useRegistry) {
-            await imageRegistry.registerImage(viewId, imageUrl, filename, {
-              source: 'json',
-              refreshBackground: false,
-            });
-          } else if (window.addImageToSidebar) {
-            console.log(`[Load] Registering view ${viewId} with legacy system`);
-            window.addImageToSidebar(imageUrl, viewId, filename);
+        const hasImageReference = Boolean(
+          viewData.imageDataURL || viewData.imageAssetPath || viewData.imageUrl
+        );
+        if (hasImageReference) {
+          if (viewId === targetView) {
+            const imageUrl = await this.resolveViewImageUrl(viewData);
+            this.views[viewId].image = imageUrl;
+            if (imageUrl) {
+              console.log(`[Load] Restored image for view ${viewId}`);
+            }
+            await registerImageForView(viewId, imageUrl);
+          } else {
+            deferredImageRegistrations.push({ viewId, viewData });
           }
         }
       }
@@ -1601,7 +1738,6 @@ export class ProjectManager {
       }
 
       // Switch to the saved current view or first view
-      const targetView = projectData.currentViewId || orderedViewIds[0];
       if (targetView && this.views[targetView]) {
         console.log(`[Load] Switching to view: ${targetView}`);
         await this.switchView(targetView, true);
@@ -1656,6 +1792,27 @@ export class ProjectManager {
         setTimeout(() => syncGalleryToView(0), 100);
       }
 
+      // Register remaining view images after first paint to keep load responsive
+      const registerDeferredImages = index => {
+        if (index >= deferredImageRegistrations.length) return;
+        const item = deferredImageRegistrations[index];
+        const run = async () => {
+          try {
+            const imageUrl = await this.resolveViewImageUrl(item.viewData);
+            this.views[item.viewId].image = imageUrl;
+            await registerImageForView(item.viewId, imageUrl);
+          } catch (error) {
+            console.warn('[Load] Deferred image registration failed', item.viewId, error);
+          } finally {
+            setTimeout(() => registerDeferredImages(index + 1), 0);
+          }
+        };
+        void run();
+      };
+      if (deferredImageRegistrations.length > 0) {
+        setTimeout(() => registerDeferredImages(0), 0);
+      }
+
       this.showStatusMessage('Project loaded successfully', 'success');
       console.log('[Load] Project load complete');
 
@@ -1680,7 +1837,7 @@ export class ProjectManager {
   promptLoadProject() {
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = '.json';
+    input.accept = '.opaint,.zip';
     input.onchange = async e => {
       const file = e.target.files[0];
       if (file) {

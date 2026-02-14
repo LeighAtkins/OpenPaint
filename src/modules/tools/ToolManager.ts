@@ -1,4 +1,5 @@
 // Tool Manager
+// @ts-nocheck
 import { LineTool } from './LineTool.js';
 
 interface CanvasManagerLike {

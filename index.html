@@ -2520,6 +2520,35 @@
               <polyline points="12 5 19 12 12 19"></polyline>
             </svg>
           </button>
+          <div class="relative inline-block">
+            <button id="arrowOptionsBtn" class="tbtn" title="Arrow options">Arrow Options</button>
+            <div
+              id="arrowOptionsMenu"
+              class="hidden absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg p-3 z-50 min-w-[240px]"
+            >
+              <div class="flex items-center justify-between gap-2 mb-2">
+                <span class="text-xs text-slate-600">Head Style</span>
+                <select id="arrowStyleTop" class="text-xs border border-slate-300 rounded px-2 py-1 bg-white">
+                  <option value="triangular">Triangular</option>
+                  <option value="open">Open V</option>
+                  <option value="hand-2">Hand Drawn</option>
+                  <option value="dimension">Dimension</option>
+                </select>
+              </div>
+              <div class="flex items-center justify-between gap-2 mb-2">
+                <span class="text-xs text-slate-600">Head Size</span>
+                <input id="arrowSizeTop" type="range" min="5" max="50" value="15" class="w-28 accent-blue-500" />
+              </div>
+              <div class="flex items-center justify-between gap-2 mb-2">
+                <span class="text-xs text-slate-600">Spread</span>
+                <input id="arrowSpreadTop" type="range" min="50" max="180" value="100" class="w-28 accent-blue-500" />
+              </div>
+              <label class="flex items-center gap-2 text-xs text-slate-700">
+                <input id="arrowGhostTop" type="checkbox" class="accent-blue-600" checked />
+                Keep dotted baseline (dimension)
+              </label>
+            </div>
+          </div>
           <button id="dottedBtn" class="tbtn" title="Line Style">
             <svg width="34" height="12" viewBox="0 0 34 12" aria-hidden="true">
               <line
@@ -2546,14 +2575,14 @@
             class="tinput"
             data-sharkid="__1"
           />
-          <button id="loadProject" title="Load Project" class="tbtn" aria-label="Load Project">
-            <span class="label-long">Load Project</span><span class="label-short">Load</span>
+          <button id="loadProject" title="Load .opaint" class="tbtn" aria-label="Load .opaint">
+            <span class="label-long">Load .opaint</span><span class="label-short">Load</span>
           </button>
           <button id="removeBgClientTop" class="tbtn" title="Remove background using server">
             Remove BG
           </button>
-          <button id="saveProjectTop" class="tbtn" title="Save Project" aria-label="Save Project">
-            <span class="label-long">Save Project</span><span class="label-short">Save</span>
+          <button id="saveProjectTop" class="tbtn" title="Save .opaint" aria-label="Save .opaint">
+            <span class="label-long">Save .opaint</span><span class="label-short">Save</span>
           </button>
           <button id="unitToggleBtn" class="tbtn" title="Toggle units">inches</button>
         </div>
@@ -2716,14 +2745,14 @@
 
           <!-- Action Buttons -->
           <div class="panel-divider pt-3 mt-2 space-y-2">
-            <!-- Load Project button -->
+            <!-- Load .opaint button -->
             <div class="flex justify-center">
               <button
                 id="loadProject"
-                title="Load project from ZIP file"
+                title="Load .opaint archive"
                 class="px-4 py-2 bg-white border border-gray-300 text-slate-700 text-xs font-semibold rounded-xl hover:bg-slate-50 transition-all"
               >
-                Load Project
+                Load .opaint
               </button>
             </div>
           </div>
@@ -2965,8 +2994,9 @@
                 class="text-xs border border-slate-300 rounded px-1 py-1 bg-white text-slate-700 focus:outline-none focus:border-blue-500"
               >
                 <option value="triangular">Triangular</option>
-                <option value="filled">Filled</option>
-                <option value="curved">Curved</option>
+                <option value="open">Open V</option>
+                <option value="hand-2">Hand Drawn</option>
+                <option value="dimension">Dimension</option>
               </select>
             </div>
             <div id="dashControls" class="flex items-center gap-3">
@@ -3174,6 +3204,14 @@
               aria-pressed="false"
             >
               Solid
+            </button>
+            <button
+              id="connectorToneBtn"
+              class="px-2 py-1 text-xs bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+              title="Cycle connector color"
+              aria-pressed="false"
+            >
+              Connector: White
             </button>
           </div>
         </div>

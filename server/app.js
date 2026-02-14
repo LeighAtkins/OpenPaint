@@ -3,13 +3,177 @@ import path from 'path';
 import fs from 'fs';
 import crypto from 'crypto';
 import { fileURLToPath } from 'url';
-import { pdfRenderRequestSchema, sanitizePdfFilename } from './pdf/schema.js';
-import { renderPdfFromRequest, resolvePdfRendererMode } from './pdf/service.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+
+function parseSetCookie(setCookieHeaders = []) {
+  const jar = {};
+  setCookieHeaders.forEach(value => {
+    if (!value || typeof value !== 'string') return;
+    const firstPart = value.split(';')[0] || '';
+    const eqIdx = firstPart.indexOf('=');
+    if (eqIdx <= 0) return;
+    const name = firstPart.slice(0, eqIdx).trim();
+    const cookieValue = firstPart.slice(eqIdx + 1).trim();
+    if (!name) return;
+    jar[name] = cookieValue;
+  });
+  return jar;
+}
+
+function mergeCookieJar(target, incoming) {
+  Object.entries(incoming || {}).forEach(([key, value]) => {
+    target[key] = value;
+  });
+  return target;
+}
+
+function buildCookieHeader(jar) {
+  return Object.entries(jar || {})
+    .map(([name, value]) => `${name}=${value}`)
+    .join('; ');
+}
+
+function getSetCookieArray(headers) {
+  if (!headers) return [];
+  if (typeof headers.getSetCookie === 'function') return headers.getSetCookie();
+  const single = headers.get?.('set-cookie');
+  return single ? [single] : [];
+}
+
+function normalizeCwCredentials(override = {}) {
+  const baseUrl = (
+    override.baseUrl ||
+    process.env.CW_BASE_URL ||
+    'https://cw40.comfort-works.com'
+  ).trim();
+  const username = (override.username || process.env.CW_USERNAME || '').trim();
+  const password = (override.password || process.env.CW_PASSWORD || '').trim();
+  return { baseUrl, username, password };
+}
+
+async function createCwSession(credentialsOverride = {}) {
+  const creds = normalizeCwCredentials(credentialsOverride);
+  if (!creds.username || !creds.password) {
+    const err = new Error('Missing CW credentials (username/password)');
+    err.code = 'CW_MISSING_CREDENTIALS';
+    throw err;
+  }
+
+  const cookieJar = {};
+  const loginUrl = `${creds.baseUrl.replace(/\/+$/, '')}/dashboard/login/`;
+
+  const loginPageRes = await fetch(loginUrl, {
+    method: 'GET',
+    redirect: 'manual',
+    headers: {
+      accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      'user-agent': 'OpenPaint-CW-Serverless/1.0',
+    },
+  });
+
+  mergeCookieJar(cookieJar, parseSetCookie(getSetCookieArray(loginPageRes.headers)));
+  const csrfToken = cookieJar.csrftoken;
+  if (!csrfToken) {
+    const err = new Error('Failed to fetch CSRF token from CW login page');
+    err.code = 'CW_CSRF_MISSING';
+    throw err;
+  }
+
+  const form = new URLSearchParams();
+  form.set('csrfmiddlewaretoken', csrfToken);
+  form.set('username', creds.username);
+  form.set('password', creds.password);
+  form.set('next', '');
+
+  const loginRes = await fetch(loginUrl, {
+    method: 'POST',
+    redirect: 'manual',
+    headers: {
+      accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      'content-type': 'application/x-www-form-urlencoded',
+      cookie: buildCookieHeader(cookieJar),
+      origin: creds.baseUrl,
+      referer: loginUrl,
+      'user-agent': 'OpenPaint-CW-Serverless/1.0',
+    },
+    body: form.toString(),
+  });
+
+  mergeCookieJar(cookieJar, parseSetCookie(getSetCookieArray(loginRes.headers)));
+  const loginStatus = loginRes.status;
+  const loginLocation = loginRes.headers.get('location') || '';
+  const isRedirect = loginStatus === 301 || loginStatus === 302;
+  const hasSession = Boolean(cookieJar.sessionid);
+
+  if (!isRedirect || !hasSession) {
+    const bodySnippet = (await loginRes.text().catch(() => '')).slice(0, 500);
+    const err = new Error('CW login failed');
+    err.code = 'CW_LOGIN_FAILED';
+    err.details = {
+      status: loginStatus,
+      location: loginLocation,
+      hasSession,
+      bodySnippet,
+    };
+    throw err;
+  }
+
+  return {
+    baseUrl: creds.baseUrl,
+    csrfToken: cookieJar.csrftoken || csrfToken,
+    cookieJar,
+    loginStatus,
+    loginLocation,
+  };
+}
+
+async function submitCwMeasureForm({ formId, payload = {}, credentialsOverride = {} }) {
+  const session = await createCwSession(credentialsOverride);
+  const targetUrl = `${session.baseUrl.replace(/\/+$/, '')}/order-management/measure-tool/measure-form/save-measure-form/${encodeURIComponent(formId)}/`;
+
+  const body = {
+    ...(payload && typeof payload === 'object' ? payload : {}),
+    form_ID: String(payload?.form_ID || formId),
+  };
+
+  const upstreamRes = await fetch(targetUrl, {
+    method: 'POST',
+    headers: {
+      accept: '*/*',
+      'content-type': 'text/plain;charset=UTF-8',
+      cookie: buildCookieHeader(session.cookieJar),
+      origin: session.baseUrl,
+      referer: `${session.baseUrl.replace(/\/+$/, '')}/dashboard/`,
+      'x-csrftoken': session.csrfToken,
+      'x-requested-with': 'XMLHttpRequest',
+      'user-agent': 'OpenPaint-CW-Serverless/1.0',
+    },
+    body: JSON.stringify(body),
+  });
+
+  const rawText = await upstreamRes.text().catch(() => '');
+  let parsed = null;
+  try {
+    parsed = rawText ? JSON.parse(rawText) : null;
+  } catch {
+    parsed = null;
+  }
+
+  return {
+    ok: upstreamRes.ok,
+    status: upstreamRes.status,
+    body: parsed || rawText,
+    session: {
+      loginStatus: session.loginStatus,
+      loginLocation: session.loginLocation,
+      hasSessionId: Boolean(session.cookieJar.sessionid),
+    },
+  };
+}
 
 // Try to load security middleware (optional - graceful fallback)
 let securityMiddleware;
@@ -54,6 +218,11 @@ async function handlePdfRender(req, res) {
   const requestId = crypto.randomUUID();
   res.setHeader('X-Pdf-Request-Id', requestId);
   try {
+    const [
+      { pdfRenderRequestSchema, sanitizePdfFilename },
+      { renderPdfFromRequest, resolvePdfRendererMode },
+    ] = await Promise.all([import('./pdf/schema.js'), import('./pdf/service.js')]);
+
     const parsed = pdfRenderRequestSchema.safeParse(req.body || {});
     if (!parsed.success) {
       return res.status(400).json({
@@ -241,6 +410,69 @@ app.post('/images/direct-upload', async (req, res) => {
     console.error('[Upload] Error:', error);
     res.status(500).json({ success: false, message: 'Upload failed' });
   }
+});
+
+// CW serverless preview integration: login + post measurement payload to existing form.
+app.post('/integrations/cw/test-save/:formId', async (req, res) => {
+  const startedAt = Date.now();
+  const { formId } = req.params;
+
+  try {
+    if (!formId) {
+      return res.status(400).json({
+        success: false,
+        code: 'CW_FORM_ID_REQUIRED',
+        message: 'formId is required',
+      });
+    }
+
+    const credentialsOverride = {
+      baseUrl: req.body?.baseUrl,
+      username: req.body?.username,
+      password: req.body?.password,
+    };
+
+    const result = await submitCwMeasureForm({
+      formId,
+      payload: req.body?.payload || {},
+      credentialsOverride,
+    });
+
+    return res.status(result.ok ? 200 : 502).json({
+      success: result.ok,
+      code: result.ok ? 'CW_SUBMIT_OK' : 'CW_SUBMIT_FAILED',
+      formId: String(formId),
+      durationMs: Date.now() - startedAt,
+      upstreamStatus: result.status,
+      session: result.session,
+      upstreamBody: result.body,
+    });
+  } catch (error) {
+    console.error('[CW Integration] serverless test-save failed:', {
+      code: error?.code,
+      message: error?.message,
+      details: error?.details || null,
+    });
+
+    return res.status(500).json({
+      success: false,
+      code: error?.code || 'CW_INTEGRATION_ERROR',
+      message: error?.message || 'CW integration failed',
+      details: error?.details || null,
+      formId: String(formId || ''),
+      durationMs: Date.now() - startedAt,
+    });
+  }
+});
+
+app.get('/integrations/cw/health', (req, res) => {
+  const baseUrl = (process.env.CW_BASE_URL || 'https://cw40.comfort-works.com').trim();
+  res.json({
+    ok: true,
+    baseUrl,
+    hasEnvUsername: Boolean((process.env.CW_USERNAME || '').trim()),
+    hasEnvPassword: Boolean((process.env.CW_PASSWORD || '').trim()),
+  });
 });
 
 // Legacy endpoints (without /api prefix) for backwards compatibility

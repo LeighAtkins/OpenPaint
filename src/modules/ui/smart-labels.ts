@@ -200,13 +200,13 @@
       // Load Project button (created by reparent)
       const loadBtn = document.getElementById('loadProject');
       if (loadBtn) {
-        wrapSmartLabel(loadBtn, 'Load Project', 'Load');
+        wrapSmartLabel(loadBtn, 'Load .opaint', 'Load');
       }
 
       // Save Project button (created dynamically)
       const saveBtn = document.getElementById('saveProjectTop');
       if (saveBtn) {
-        wrapSmartLabel(saveBtn, 'Save Project', 'Save');
+        wrapSmartLabel(saveBtn, 'Save .opaint', 'Save');
         // Make it visually distinct from bottom save button
         saveBtn.style.background = '#3b82f6'; // Blue instead of green
         saveBtn.style.borderColor = '#2563eb';

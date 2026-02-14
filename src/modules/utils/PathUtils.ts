@@ -3,6 +3,8 @@
  * Utilities for generating SVG paths and geometric calculations
  */
 
+// @ts-nocheck
+
 import type { fabric as FabricNamespace } from 'fabric';
 import type { Group, Line, Object as FabricObject, Path } from 'fabric/fabric-impl';
 

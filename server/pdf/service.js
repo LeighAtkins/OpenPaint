@@ -31,7 +31,8 @@ export async function renderPdfFromRequest(payload, rendererMode) {
 
   if (mode === 'puppeteer' || mode === 'hybrid') {
     const rendered = await renderPdfWithPuppeteer({ html, options });
-    if (mode === 'hybrid') {
+    const shouldInjectFormFields = options.injectFormFields !== false;
+    if (mode === 'hybrid' && shouldInjectFormFields) {
       return injectPdfFormFields(rendered.pdfBuffer, rendered.anchors || []);
     }
     return rendered.pdfBuffer;

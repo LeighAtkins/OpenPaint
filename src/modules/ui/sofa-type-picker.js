@@ -121,7 +121,7 @@ function openStartupChoiceOverlay({ onLoadProject, onBlankProject }) {
       <h2 class="sofa-picker-title">Start a project</h2>
       <p class="sofa-picker-subtitle">Choose how you want to begin.</p>
       <div class="sofa-start-actions">
-        <button type="button" class="sofa-start-btn" id="startupLoadProject">Load Project</button>
+        <button type="button" class="sofa-start-btn" id="startupLoadProject">Load .opaint</button>
         <button type="button" class="sofa-start-btn primary" id="startupBlankProject">Blank Project</button>
       </div>
     </section>
