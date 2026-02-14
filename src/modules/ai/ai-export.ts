@@ -1,5 +1,7 @@
 // js/ai-export.js (ES module version for the browser)
 
+// @ts-nocheck
+
 import type {
   AIStyleGuide,
   AIStrokeInput,

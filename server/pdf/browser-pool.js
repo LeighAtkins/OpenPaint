@@ -1,5 +1,9 @@
 let browserPromise = null;
 
+function isServerlessRuntime() {
+  return Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+}
+
 async function launchBrowser() {
   let puppeteerLib = null;
   let launchOptions = {
@@ -42,22 +46,55 @@ async function launchBrowser() {
     }
   }
 
-  return puppeteerLib.launch(launchOptions);
+  try {
+    return await puppeteerLib.launch(launchOptions);
+  } catch (launchError) {
+    const message = String(launchError?.message || launchError || 'Unknown browser launch error');
+    const missingLibHint =
+      message.includes('error while loading shared libraries') ||
+      message.includes('libnss3.so') ||
+      message.includes('libnspr4.so') ||
+      message.includes('Failed to launch') ||
+      message.includes('Could not find Chrome');
+    const error = new Error('Failed to launch browser for PDF rendering');
+    error.code = missingLibHint ? 'PDF_RENDERER_MISSING_DEPENDENCY' : 'PDF_RENDER_FAILED';
+    error.details = message;
+    error.cause = launchError;
+    throw error;
+  }
 }
 
 export async function getBrowser() {
+  if (isServerlessRuntime()) {
+    return launchBrowser();
+  }
+
   if (!browserPromise) {
     browserPromise = launchBrowser().catch(error => {
       browserPromise = null;
       throw error;
     });
   }
-  return browserPromise;
+
+  const browser = await browserPromise;
+  const connected = typeof browser?.isConnected === 'function' ? browser.isConnected() : true;
+  if (!connected) {
+    browserPromise = launchBrowser().catch(error => {
+      browserPromise = null;
+      throw error;
+    });
+    return browserPromise;
+  }
+
+  return browser;
 }
 
 export async function closeBrowser() {
+  if (isServerlessRuntime()) return;
   if (!browserPromise) return;
   const browser = await browserPromise;
   await browser.close();
   browserPromise = null;
 }
+
+export { isServerlessRuntime };

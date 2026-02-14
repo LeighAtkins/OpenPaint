@@ -16,6 +16,7 @@ export class TagManager {
     this.tagMode = 'letters+numbers'; // 'letters' or 'letters+numbers'
     this.tagBackgroundStyle = 'solid'; // 'solid', 'no-fill', 'clear-black', 'clear-color', 'clear-white'
     this.strokeColor = '#3b82f6'; // Default stroke color for clear-color style
+    this.connectorColor = '#ffffff';
 
     // Initialize showMeasurements to visible by default; sync checkbox state if present
     const showMeasurementsCheckbox = document.getElementById('toggleShowMeasurements');
@@ -334,6 +335,13 @@ export class TagManager {
       this.updateConnector(strokeLabel);
     });
 
+    tagGroup.on('modified', () => {
+      this.updateConnector(strokeLabel, imageLabel);
+      if (window.app?.historyManager?.saveState) {
+        window.app.historyManager.saveState({ force: true, reason: 'tag:modified' });
+      }
+    });
+
     // Update connector when connected stroke moves
     if (strokeObject) {
       strokeObject.on('moving', () => {
@@ -497,6 +505,27 @@ export class TagManager {
   }
 
   // Create a manipulatable connector line
+  createConnectorObject(x1, y1, x2, y2, tagObj, strokeObj, strokeLabel) {
+    return new fabric.Line([x1, y1, x2, y2], {
+      stroke: this.connectorColor,
+      strokeWidth: 1,
+      strokeDashArray: [6, 4],
+      opacity: 0.8,
+      selectable: false,
+      evented: false,
+      hasControls: false,
+      hasBorders: false,
+      lockRotation: true,
+      lockScalingFlip: true,
+      excludeFromExport: true,
+      isConnectorLine: true,
+      connectedTag: tagObj,
+      connectedStroke: strokeObj,
+      strokeLabel: strokeLabel,
+      imageLabel: tagObj.imageLabel || strokeObj?.strokeMetadata?.imageLabel || null,
+    });
+  }
+
   createManipulatableConnector(tagObj, strokeObj, strokeLabel) {
     const canvas = this.canvas;
     if (!canvas) return null;
@@ -511,27 +540,14 @@ export class TagManager {
     // Get closest stroke endpoint
     const strokeEndpoint = this.getClosestStrokeEndpoint(strokeObj, tagCenter);
 
-    // Create the connector line (non-interactive, just visual feedback)
-    const connector = new fabric.Line(
-      [tagCenter.x, tagCenter.y, strokeEndpoint.x, strokeEndpoint.y],
-      {
-        stroke: 'rgba(0, 0, 0, 0.35)',
-        strokeWidth: 1,
-        strokeDashArray: [6, 4],
-        opacity: 0.7,
-        selectable: false,
-        evented: false,
-        hasControls: false,
-        hasBorders: false,
-        lockRotation: true,
-        lockScalingFlip: true,
-        excludeFromExport: true,
-        isConnectorLine: true,
-        connectedTag: tagObj,
-        connectedStroke: strokeObj,
-        strokeLabel: strokeLabel,
-        imageLabel: tagObj.imageLabel || strokeObj?.strokeMetadata?.imageLabel || null,
-      }
+    const connector = this.createConnectorObject(
+      tagCenter.x,
+      tagCenter.y,
+      strokeEndpoint.x,
+      strokeEndpoint.y,
+      tagObj,
+      strokeObj,
+      strokeLabel
     );
 
     return connector;
@@ -623,24 +639,15 @@ export class TagManager {
       canvas.remove(connector);
 
       // Create new connector with updated endpoints
-      connector = new fabric.Line([tagCenter.x, tagCenter.y, strokeEndpoint.x, strokeEndpoint.y], {
-        stroke: 'rgba(0, 0, 0, 0.35)',
-        strokeWidth: 1,
-        strokeDashArray: [6, 4],
-        opacity: 0.7,
-        selectable: false,
-        evented: false,
-        hasControls: false,
-        hasBorders: false,
-        lockRotation: true,
-        lockScalingFlip: true,
-        excludeFromExport: true,
-        isConnectorLine: true,
-        connectedTag: tagObj,
-        connectedStroke: connectedStrokeObj,
-        strokeLabel: displayLabel,
-        imageLabel: tagObj.imageLabel || connectedStrokeObj?.strokeMetadata?.imageLabel || null,
-      });
+      connector = this.createConnectorObject(
+        tagCenter.x,
+        tagCenter.y,
+        strokeEndpoint.x,
+        strokeEndpoint.y,
+        tagObj,
+        connectedStrokeObj,
+        displayLabel
+      );
 
       canvas.add(connector);
       connector.sendToBack();
@@ -993,5 +1000,23 @@ export class TagManager {
       tagObj.connectorLine.set('visible', visible);
     }
     this.canvas.renderAll();
+  }
+
+  refreshAllConnectors(imageLabel) {
+    const normalized = imageLabel ? this.normalizeImageLabel(imageLabel) : null;
+    for (const tagObj of this.tagObjects.values()) {
+      if (!tagObj || !tagObj.strokeLabel) continue;
+      if (normalized && tagObj.imageLabel !== normalized) continue;
+      this.updateConnector(tagObj.strokeLabel, tagObj.imageLabel);
+    }
+  }
+
+  setConnectorColor(color) {
+    if (!color) return;
+    const allowed = ['#ffffff', '#9ca3af', '#000000'];
+    const normalized = String(color).toLowerCase();
+    if (!allowed.includes(normalized)) return;
+    this.connectorColor = normalized;
+    this.refreshAllConnectors();
   }
 }

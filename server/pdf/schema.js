@@ -27,6 +27,7 @@ const groupedSectionSchema = z.object({
 const reportSchema = z.object({
   projectName: z.string().min(1).max(160),
   namingLine: z.string().max(220).optional().default(''),
+  unit: z.enum(['inch', 'cm']).optional().default('inch'),
   groups: z.array(groupedSectionSchema).max(100).default([]),
 });
 
@@ -42,8 +43,9 @@ export const pdfRenderRequestSchema = z
         pageSize: z.enum(['a4', 'letter']).default('letter'),
         filename: z.string().max(200).optional(),
         landscape: z.boolean().default(false),
+        injectFormFields: z.boolean().default(true),
       })
-      .default({ pageSize: 'letter', landscape: false }),
+      .default({ pageSize: 'letter', landscape: false, injectFormFields: true }),
   })
   .superRefine((value, ctx) => {
     if (value.source === 'html' && !value.html) {

@@ -1,0 +1,931 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CW Serverless Relay Preview</title>
+    <style>
+      :root {
+        --bg: #0b1020;
+        --panel: #121a30;
+        --panel-2: #0f172a;
+        --text: #e6edf7;
+        --muted: #9fb0cf;
+        --ok: #16a34a;
+        --warn: #f59e0b;
+        --bad: #dc2626;
+        --accent: #22d3ee;
+        --border: #23304d;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        color: var(--text);
+        background:
+          radial-gradient(1200px 500px at 10% -20%, #1f2d57 0%, transparent 70%),
+          radial-gradient(1000px 600px at 90% -10%, #15335a 0%, transparent 70%), var(--bg);
+        min-height: 100vh;
+      }
+
+      .wrap {
+        max-width: 1100px;
+        margin: 28px auto;
+        padding: 0 16px 28px;
+      }
+
+      .card {
+        background: linear-gradient(180deg, var(--panel) 0%, var(--panel-2) 100%);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 18px;
+        box-shadow: 0 10px 28px rgba(0, 0, 0, 0.25);
+      }
+
+      h1 {
+        margin: 0 0 10px;
+        font-size: 24px;
+      }
+
+      p {
+        margin: 0;
+        color: var(--muted);
+      }
+
+      .grid {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        margin-top: 16px;
+      }
+
+      .full {
+        grid-column: 1 / -1;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 13px;
+        color: #c9d8f4;
+      }
+
+      input,
+      textarea {
+        width: 100%;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: #0a1124;
+        color: var(--text);
+        padding: 10px 12px;
+        font-size: 14px;
+      }
+
+      textarea {
+        min-height: 300px;
+        resize: vertical;
+        font-family: Consolas, 'Courier New', monospace;
+        line-height: 1.45;
+      }
+
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      button {
+        border: 1px solid transparent;
+        border-radius: 10px;
+        padding: 10px 14px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      .primary {
+        background: linear-gradient(90deg, #06b6d4 0%, #0891b2 100%);
+        color: #07121d;
+      }
+
+      .ghost {
+        background: transparent;
+        color: var(--text);
+        border-color: var(--border);
+      }
+
+      .status {
+        margin-top: 14px;
+        padding: 10px 12px;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        background: #0a1124;
+      }
+
+      .status.ok {
+        border-color: #1f8b4c;
+        color: #86efac;
+      }
+
+      .status.bad {
+        border-color: #7f1d1d;
+        color: #fca5a5;
+      }
+
+      pre {
+        margin: 14px 0 0;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 12px;
+        background: #080f22;
+        color: #d4def1;
+        white-space: pre-wrap;
+        word-break: break-word;
+        font-size: 13px;
+      }
+
+      .hint {
+        margin-top: 10px;
+        font-size: 12px;
+        color: #9fb0cf;
+      }
+
+      .insights {
+        margin-top: 14px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: #0a1124;
+        padding: 10px 12px;
+      }
+
+      .insights h3 {
+        margin: 0 0 8px;
+        font-size: 13px;
+        color: #c9d8f4;
+      }
+
+      .insights ul {
+        margin: 0;
+        padding-left: 18px;
+      }
+
+      .insights li {
+        margin: 4px 0;
+        font-size: 12px;
+        color: #c9d8f4;
+      }
+
+      .upload-row {
+        margin-top: 10px;
+        display: grid;
+        gap: 8px;
+        grid-template-columns: 2fr 1fr 2fr 2fr auto auto;
+      }
+
+      .upload-row input {
+        width: 100%;
+      }
+
+      .gallery {
+        margin-top: 12px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: #0a1124;
+        padding: 10px;
+      }
+
+      .gallery h3 {
+        margin: 0 0 8px;
+        font-size: 13px;
+        color: #c9d8f4;
+      }
+
+      .gallery-grid {
+        display: grid;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .slot {
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        min-height: 88px;
+        background: #091022;
+        position: relative;
+        cursor: pointer;
+        overflow: hidden;
+      }
+
+      .slot.active {
+        outline: 2px solid var(--accent);
+      }
+
+      .slot .slot-index {
+        position: absolute;
+        top: 6px;
+        left: 6px;
+        font-size: 11px;
+        background: rgba(0, 0, 0, 0.55);
+        border-radius: 6px;
+        padding: 2px 6px;
+      }
+
+      .slot .empty {
+        padding: 28px 8px 8px;
+        font-size: 11px;
+        color: #9fb0cf;
+        text-align: center;
+      }
+
+      .slot img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+
+      @media (max-width: 900px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="card">
+        <h1>CW Serverless Relay Preview</h1>
+        <p>Test login + submit to an existing CW form via the serverless relay endpoint.</p>
+
+        <form id="cwRelayForm">
+          <div class="grid">
+            <div>
+              <label for="baseUrl">CW Base URL</label>
+              <input id="baseUrl" value="https://cw40.comfort-works.com" />
+            </div>
+            <div>
+              <label for="formId">Form ID</label>
+              <input id="formId" value="322906" />
+            </div>
+            <div>
+              <label for="username">CW Username</label>
+              <input
+                id="username"
+                autocomplete="off"
+                placeholder="leigh.atkins@comfort-works.com"
+              />
+            </div>
+            <div>
+              <label for="password">CW Password</label>
+              <input id="password" type="password" autocomplete="off" placeholder="Password" />
+            </div>
+            <div class="full" style="display: flex; align-items: center; gap: 8px">
+              <input id="autoConfirm" type="checkbox" checked style="width: auto" />
+              <label for="autoConfirm" style="margin: 0">
+                Auto-sync confirmed flag (true only when all checks pass)
+              </label>
+            </div>
+
+            <div class="full">
+              <label for="payload">Payload JSON (request body for CW save-measure-form)</label>
+              <textarea id="payload">
+{
+  "form_data": {
+    "id": 322906,
+    "products": [],
+    "confirmed": false,
+    "lang": "en",
+    "user": "Admin",
+    "employeeName": "Preview Relay"
+  }
+}</textarea
+              >
+            </div>
+          </div>
+
+          <div class="row">
+            <button id="btnHealth" class="ghost" type="button">Check Relay Health</button>
+            <button id="btnFetchExisting" class="ghost" type="button">Fetch Existing</button>
+            <button id="btnFetchImages" class="ghost" type="button">Fetch Images</button>
+            <button id="btnLoadTemplate" class="ghost" type="button">
+              Load Form Save Template
+            </button>
+            <button id="btnLoadMeasureTemplate" class="ghost" type="button">
+              Load Measure-Form Template
+            </button>
+            <button id="btnSubmit" class="primary" type="submit">Login + Submit to CW</button>
+          </div>
+
+          <div id="status" class="status">Ready.</div>
+          <div id="insights" class="insights">
+            <h3>Sync Insights</h3>
+            <ul>
+              <li>No validation data yet.</li>
+            </ul>
+          </div>
+          <pre id="imagesResult">No fetched images yet.</pre>
+          <div id="imageGallery" class="gallery">
+            <h3>Image Slots (select slot to replace)</h3>
+            <div class="gallery-grid" id="imageGalleryGrid"></div>
+          </div>
+          <div class="upload-row">
+            <input id="uploadItemCode" placeholder="Item code (e.g. CC-ST-KE)" />
+            <input id="uploadFileIndex" type="number" min="1" max="6" placeholder="Index" />
+            <input id="uploadOrderlineId" placeholder="Optional orderline ID override" />
+            <input id="uploadFile" type="file" accept="image/*" />
+            <button id="btnUploadImage" class="primary" type="button">Upload Image</button>
+            <button id="btnDeleteImage" class="ghost" type="button">Delete Slot</button>
+          </div>
+          <pre id="fetchResult">No fetched measurements yet.</pre>
+          <pre id="outboundPreview">No outbound request yet.</pre>
+          <pre id="result">No request yet.</pre>
+          <div class="hint">
+            This page sends credentials only to your own serverless endpoint:
+            <code>/api/integrations/cw/test-save/:formId</code>. If payload includes
+            <code>query</code> + <code>operationName</code>, relay posts to
+            <code>/api/</code> (GraphQL). If payload includes <code>form_data</code> or
+            <code>postdata</code>, relay posts to
+            <code>/order-management/measure-tool/form/save/</code>. Otherwise it posts to
+            <code>save-measure-form</code>. Use <code>Fetch Existing</code> to pull current values
+            and load an editable payload. Use <code>Fetch Images</code> to pull current order images
+            mapped by item code. Uploads use
+            <code>/api/integrations/cw/images/:formId/upload</code> with max 6 per item code. Delete
+            uses CW <code>/dashboard/order/photo-delete</code> (with fallbacks) via
+            <code>/api/integrations/cw/images/:formId/delete</code>.
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script>
+      const statusEl = document.getElementById('status');
+      const resultEl = document.getElementById('result');
+      const fetchResultEl = document.getElementById('fetchResult');
+      const imagesResultEl = document.getElementById('imagesResult');
+      const btnHealth = document.getElementById('btnHealth');
+      const btnFetchExisting = document.getElementById('btnFetchExisting');
+      const btnFetchImages = document.getElementById('btnFetchImages');
+      const btnLoadTemplate = document.getElementById('btnLoadTemplate');
+      const btnLoadMeasureTemplate = document.getElementById('btnLoadMeasureTemplate');
+      const btnSubmit = document.getElementById('btnSubmit');
+      const btnUploadImage = document.getElementById('btnUploadImage');
+      const btnDeleteImage = document.getElementById('btnDeleteImage');
+      const payloadEl = document.getElementById('payload');
+      const relayFormEl = document.getElementById('cwRelayForm');
+      const outboundPreviewEl = document.getElementById('outboundPreview');
+      const autoConfirmEl = document.getElementById('autoConfirm');
+      const insightsEl = document.getElementById('insights');
+      const uploadItemCodeEl = document.getElementById('uploadItemCode');
+      const uploadFileIndexEl = document.getElementById('uploadFileIndex');
+      const uploadOrderlineIdEl = document.getElementById('uploadOrderlineId');
+      const uploadFileEl = document.getElementById('uploadFile');
+      const imageGalleryGridEl = document.getElementById('imageGalleryGrid');
+
+      const formSaveTemplate = {
+        form_data: {
+          id: 322906,
+          products: [],
+          confirmed: false,
+          lang: 'en',
+          user: 'Admin',
+          employeeName: 'Preview Relay',
+        },
+      };
+
+      const measureFormTemplate = {
+        form_ID: '322906',
+        employeeName: 'Leigh Atkins',
+        unit: 'cm',
+        user: 'Admin',
+        products: [
+          {
+            form_product_ID: 12262,
+            reference: 'CS1X-NA',
+            label: 'Boxed Seat Armless Chair Slipcover',
+            enabled: true,
+            model_list: [
+              {
+                set_model_ID: 15134,
+                name: 'CS1B-NA',
+                label: 'Frame',
+                files: [
+                  {
+                    name: 'Front_CS1B-NA',
+                    label: 'Frame',
+                    field_data: { A2: '25', A3: '11', C: '22', D: '2' },
+                    quantity: 1,
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      };
+      let lastFetchedTemplate = null;
+      let lastImageFetchData = null;
+
+      function renderImageGallery() {
+        if (!lastImageFetchData || !lastImageFetchData.imagesByItemCode) {
+          imageGalleryGridEl.innerHTML = '<div class="empty">No images fetched yet.</div>';
+          return;
+        }
+        const itemCode = uploadItemCodeEl.value.trim();
+        const images = itemCode ? lastImageFetchData.imagesByItemCode[itemCode] || [] : [];
+        const byIndex = new Map();
+        images.forEach(img => {
+          const idx = Number.parseInt(img?.index, 10);
+          if (Number.isFinite(idx)) byIndex.set(idx, img);
+        });
+        const activeIndex = Number.parseInt(uploadFileIndexEl.value || '', 10);
+        const slots = [];
+        for (let i = 1; i <= 6; i += 1) {
+          const img = byIndex.get(i);
+          const active = activeIndex === i ? ' active' : '';
+          if (img && img.imagePath) {
+            slots.push(
+              `<div class="slot${active}" data-slot="${i}" title="Slot ${i}"><span class="slot-index">${i}</span><img src="${img.imagePath}" alt="slot-${i}" /></div>`
+            );
+          } else {
+            slots.push(
+              `<div class="slot${active}" data-slot="${i}" title="Slot ${i}"><span class="slot-index">${i}</span><div class="empty">Empty</div></div>`
+            );
+          }
+        }
+        imageGalleryGridEl.innerHTML = slots.join('');
+        imageGalleryGridEl.querySelectorAll('[data-slot]').forEach(node => {
+          node.addEventListener('click', () => {
+            const slot = node.getAttribute('data-slot');
+            uploadFileIndexEl.value = String(slot);
+            renderImageGallery();
+          });
+        });
+      }
+
+      function setStatus(message, ok) {
+        statusEl.textContent = message;
+        statusEl.classList.remove('ok', 'bad');
+        if (ok === true) statusEl.classList.add('ok');
+        if (ok === false) statusEl.classList.add('bad');
+      }
+
+      function pretty(value) {
+        try {
+          return JSON.stringify(value, null, 2);
+        } catch (_) {
+          return String(value);
+        }
+      }
+
+      function renderInsights(source, mode) {
+        const data = source || {};
+        const validation = data.validation || null;
+        const summary = data.summary || null;
+        const measurementState = data.measurementState || null;
+        const confirmSync = data.confirmSync || null;
+
+        const lines = [];
+        lines.push(`Mode: ${mode}`);
+
+        if (summary) {
+          lines.push(`Fetched products: ${summary.productsCount ?? 0}`);
+          lines.push(`CW confirmed flag: ${summary.confirmed === true ? 'true' : 'false'}`);
+        }
+
+        if (validation && validation.totals) {
+          lines.push(`Blocking count: ${validation.totals.blockingCount ?? 0}`);
+          lines.push(
+            `Issues: errors=${validation.totals.errorCount ?? 0}, warnings=${validation.totals.warningCount ?? 0}, notices=${validation.totals.noticeCount ?? 0}`
+          );
+          lines.push(`Missing fields: ${validation.totals.missingFieldCount ?? 0}`);
+          lines.push(`Locally can confirm: ${validation.canConfirm ? 'true' : 'false'}`);
+        }
+
+        if (measurementState) {
+          if (measurementState.formConfirmed !== null) {
+            lines.push(
+              `Post-save form confirmed: ${measurementState.formConfirmed ? 'true' : 'false'}`
+            );
+          }
+          if (measurementState.anyLineMeasurementSubmitted !== null) {
+            lines.push(
+              `Any line submitted: ${measurementState.anyLineMeasurementSubmitted ? 'true' : 'false'}`
+            );
+          }
+        }
+
+        if (confirmSync && confirmSync.attempted) {
+          lines.push(
+            `Confirm sync: ${confirmSync.ok ? 'ok' : 'failed'} (target=${confirmSync.desiredConfirmed ? 'true' : 'false'})`
+          );
+          if (confirmSync.reason) lines.push(`Confirm reason: ${confirmSync.reason}`);
+        }
+
+        if (lines.length === 1) {
+          lines.push('No validation data yet.');
+        }
+
+        insightsEl.innerHTML = `<h3>Sync Insights</h3><ul>${lines.map(line => `<li>${line}</li>`).join('')}</ul>`;
+      }
+
+      function normalizePayloadText(value) {
+        if (!value) return '';
+        let text = String(value).trim();
+        if (text.startsWith('```')) {
+          text = text.replace(/^```[a-zA-Z]*\s*/, '').replace(/\s*```$/, '');
+        }
+        text = text
+          .replace(/\u2018|\u2019/g, "'")
+          .replace(/\u201C|\u201D/g, '"')
+          .trim();
+        return text;
+      }
+
+      async function checkHealth() {
+        setStatus('Checking relay health...', null);
+        resultEl.textContent = 'Loading...';
+        try {
+          const res = await fetch('/api/integrations/cw/health');
+          const data = await res.json();
+          setStatus(res.ok ? 'Relay health OK.' : 'Relay health check failed.', res.ok);
+          resultEl.textContent = pretty({ status: res.status, data });
+        } catch (error) {
+          setStatus('Health check request failed.', false);
+          resultEl.textContent = pretty({ error: error.message });
+        }
+      }
+
+      async function fetchExistingMeasurements() {
+        const baseUrl = document.getElementById('baseUrl').value.trim();
+        const formId = document.getElementById('formId').value.trim();
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value;
+
+        if (!formId) {
+          setStatus('Form ID is required.', false);
+          return;
+        }
+
+        setStatus('Fetching existing measurements from CW...', null);
+        fetchResultEl.textContent = 'Loading...';
+
+        try {
+          const res = await fetch(
+            `/api/integrations/cw/measurements/${encodeURIComponent(formId)}?lang=en`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                baseUrl,
+                username,
+                password,
+                employeeName: 'Leigh Atkins',
+                user: 'Admin',
+              }),
+            }
+          );
+          const data = await res.json();
+          lastFetchedTemplate = data?.payloadTemplate || null;
+          if (lastFetchedTemplate) {
+            payloadEl.value = pretty(lastFetchedTemplate);
+          }
+          setStatus(
+            res.ok
+              ? 'Fetched existing measurements and loaded editable payload.'
+              : 'Failed to fetch existing measurements.',
+            res.ok
+          );
+          fetchResultEl.textContent = pretty({ status: res.status, data });
+          renderInsights(data, 'fetch');
+        } catch (error) {
+          setStatus('Fetch existing request failed.', false);
+          fetchResultEl.textContent = pretty({ error: error.message });
+          renderInsights(null, 'fetch');
+        }
+      }
+
+      async function fetchImages() {
+        const baseUrl = document.getElementById('baseUrl').value.trim();
+        const formId = document.getElementById('formId').value.trim();
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value;
+
+        if (!formId) {
+          setStatus('Form ID is required.', false);
+          return;
+        }
+
+        setStatus('Fetching order images by item code...', null);
+        imagesResultEl.textContent = 'Loading...';
+
+        try {
+          const res = await fetch(
+            `/api/integrations/cw/images/${encodeURIComponent(formId)}?lang=en`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                baseUrl,
+                username,
+                password,
+              }),
+            }
+          );
+          const data = await res.json();
+          lastImageFetchData = data && data.data ? data.data : null;
+          const firstCode =
+            lastImageFetchData && lastImageFetchData.imagesByItemCode
+              ? Object.keys(lastImageFetchData.imagesByItemCode)[0]
+              : '';
+          if (firstCode && !uploadItemCodeEl.value) uploadItemCodeEl.value = firstCode;
+          const mappedLine =
+            firstCode && data?.data?.lineMappingByItemCode
+              ? data.data.lineMappingByItemCode[firstCode]
+              : null;
+          if (mappedLine?.lineId && !uploadOrderlineIdEl.value) {
+            uploadOrderlineIdEl.value = mappedLine.lineId;
+          }
+          renderImageGallery();
+          setStatus(
+            res.ok
+              ? 'Fetched images. Max 6 images per item code enforced in summary.'
+              : 'Failed to fetch images.',
+            res.ok
+          );
+          imagesResultEl.textContent = pretty({ status: res.status, data });
+        } catch (error) {
+          setStatus('Fetch images request failed.', false);
+          imagesResultEl.textContent = pretty({ error: error.message });
+          renderImageGallery();
+        }
+      }
+
+      function readFileAsDataUrl(file) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(String(reader.result || ''));
+          reader.onerror = () => reject(new Error('Failed to read file'));
+          reader.readAsDataURL(file);
+        });
+      }
+
+      async function uploadImage() {
+        const baseUrl = document.getElementById('baseUrl').value.trim();
+        const formId = document.getElementById('formId').value.trim();
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value;
+        const itemCode = uploadItemCodeEl.value.trim();
+        const orderlineId = uploadOrderlineIdEl.value.trim();
+        const file = uploadFileEl.files && uploadFileEl.files[0];
+        const fileIndexText = uploadFileIndexEl.value.trim();
+        const fileIndex = fileIndexText ? Number.parseInt(fileIndexText, 10) : null;
+
+        if (!formId) {
+          setStatus('Form ID is required.', false);
+          return;
+        }
+        if (!itemCode) {
+          setStatus('Item code is required for upload.', false);
+          return;
+        }
+        if (!file) {
+          setStatus('Select an image file to upload.', false);
+          return;
+        }
+
+        btnUploadImage.disabled = true;
+        setStatus('Uploading image to CW...', null);
+        try {
+          const fileBase64 = await readFileAsDataUrl(file);
+          const res = await fetch(
+            `/api/integrations/cw/images/${encodeURIComponent(formId)}/upload`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                baseUrl,
+                username,
+                password,
+                itemCode,
+                orderlineId,
+                fileIndex,
+                fileName: file.name,
+                mimeType: file.type || 'image/jpeg',
+                fileBase64,
+              }),
+            }
+          );
+          const data = await res.json();
+          setStatus(res.ok ? 'Image upload succeeded.' : 'Image upload failed.', res.ok);
+          imagesResultEl.textContent = pretty({ status: res.status, data });
+          if (res.ok) {
+            await fetchImages();
+          }
+        } catch (error) {
+          setStatus('Image upload request failed.', false);
+          imagesResultEl.textContent = pretty({ error: error.message });
+        } finally {
+          btnUploadImage.disabled = false;
+        }
+      }
+
+      async function deleteImage() {
+        const baseUrl = document.getElementById('baseUrl').value.trim();
+        const formId = document.getElementById('formId').value.trim();
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value;
+        const itemCode = uploadItemCodeEl.value.trim();
+        const orderlineId = uploadOrderlineIdEl.value.trim();
+        const fileIndexText = uploadFileIndexEl.value.trim();
+        const fileIndex = fileIndexText ? Number.parseInt(fileIndexText, 10) : null;
+
+        if (!formId) {
+          setStatus('Form ID is required.', false);
+          return;
+        }
+        if (!itemCode) {
+          setStatus('Item code is required for delete.', false);
+          return;
+        }
+        if (!fileIndex || fileIndex < 1 || fileIndex > 6) {
+          setStatus('Pick a slot index (1-6) to delete.', false);
+          return;
+        }
+
+        btnDeleteImage.disabled = true;
+        setStatus('Deleting image slot from CW...', null);
+        try {
+          const res = await fetch(
+            `/api/integrations/cw/images/${encodeURIComponent(formId)}/delete`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                baseUrl,
+                username,
+                password,
+                itemCode,
+                orderlineId,
+                fileIndex,
+              }),
+            }
+          );
+          const data = await res.json();
+          setStatus(res.ok ? 'Image delete succeeded.' : 'Image delete failed.', res.ok);
+          imagesResultEl.textContent = pretty({ status: res.status, data });
+          if (res.ok) {
+            await fetchImages();
+          }
+        } catch (error) {
+          setStatus('Image delete request failed.', false);
+          imagesResultEl.textContent = pretty({ error: error.message });
+        } finally {
+          btnDeleteImage.disabled = false;
+        }
+      }
+
+      async function submit() {
+        const baseUrl = document.getElementById('baseUrl').value.trim();
+        const formId = document.getElementById('formId').value.trim();
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value;
+        const autoConfirm = autoConfirmEl.checked;
+        const payloadText = payloadEl.value;
+
+        if (!formId) {
+          setStatus('Form ID is required.', false);
+          return;
+        }
+
+        let payload;
+        try {
+          const normalized = normalizePayloadText(payloadText);
+          payload = normalized ? JSON.parse(normalized) : {};
+          payloadEl.value = pretty(payload);
+        } catch (error) {
+          setStatus('Payload is not valid JSON.', false);
+          outboundPreviewEl.textContent = 'No network request sent: payload failed JSON parsing.';
+          resultEl.textContent = pretty({
+            error: error.message,
+            tip: 'Use valid JSON only (double quotes, no trailing commas, no markdown fences).',
+          });
+          return;
+        }
+
+        // Preflight: avoid common empty-payload submissions
+        if (payload && typeof payload === 'object') {
+          const isFormSave = payload.form_data && typeof payload.form_data === 'object';
+          const hasMeasureFormProducts =
+            Array.isArray(payload.products) && payload.products.length > 0;
+          const hasFormSaveProducts =
+            isFormSave &&
+            Array.isArray(payload.form_data.products) &&
+            payload.form_data.products.length > 0;
+          if (!hasMeasureFormProducts && !hasFormSaveProducts) {
+            setStatus('Payload has no products to submit.', false);
+            resultEl.textContent = pretty({
+              error: 'No products found in payload',
+              tip: 'Use Fetch Existing or Load Measure-Form Template before submitting.',
+            });
+            return;
+          }
+        }
+
+        btnSubmit.disabled = true;
+        setStatus('Submitting to CW via relay...', null);
+        resultEl.textContent = 'Working...';
+        outboundPreviewEl.textContent = pretty({
+          endpoint: `/api/integrations/cw/test-save/${encodeURIComponent(formId)}`,
+          body: {
+            baseUrl,
+            username: username ? '[provided]' : '[missing]',
+            password: password ? '[provided]' : '[missing]',
+            autoConfirm,
+            payload,
+          },
+        });
+
+        try {
+          const res = await fetch(`/api/integrations/cw/test-save/${encodeURIComponent(formId)}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              baseUrl,
+              username,
+              password,
+              autoConfirm,
+              payload,
+            }),
+          });
+
+          const raw = await res.text();
+          let data;
+          try {
+            data = raw ? JSON.parse(raw) : {};
+          } catch {
+            data = { success: false, message: 'Non-JSON response', raw };
+          }
+          const ok = Boolean(data && data.success);
+          const state = data && data.measurementState ? data.measurementState : null;
+          const confirmSync = data && data.confirmSync ? data.confirmSync : null;
+          const stateBits = [];
+          if (state && state.formConfirmed !== null) {
+            stateBits.push(`confirmed=${state.formConfirmed ? 'true' : 'false'}`);
+          }
+          if (confirmSync && confirmSync.attempted) {
+            stateBits.push(
+              `confirmSync=${confirmSync.ok ? 'ok' : 'failed'}(target=${confirmSync.desiredConfirmed ? 'true' : 'false'})`
+            );
+          }
+          if (state && state.anyLineMeasurementSubmitted !== null) {
+            stateBits.push(
+              `anyMeasurementSubmitted=${state.anyLineMeasurementSubmitted ? 'true' : 'false'}`
+            );
+          }
+          const suffix = stateBits.length ? ` (${stateBits.join(', ')})` : '';
+          setStatus((ok ? 'CW submit succeeded.' : 'CW submit failed.') + suffix, ok);
+          resultEl.textContent = pretty({ status: res.status, data });
+          renderInsights(data, 'submit');
+        } catch (error) {
+          setStatus('Request failed before server response.', false);
+          resultEl.textContent = pretty({ error: error.message });
+          renderInsights(null, 'submit');
+        } finally {
+          btnSubmit.disabled = false;
+        }
+      }
+
+      function loadTemplate() {
+        payloadEl.value = pretty(lastFetchedTemplate || formSaveTemplate);
+        setStatus(
+          lastFetchedTemplate
+            ? 'Loaded fetched measure-form payload template.'
+            : 'Loaded default form-save JSON template.',
+          true
+        );
+      }
+
+      function loadMeasureTemplate() {
+        payloadEl.value = pretty(measureFormTemplate);
+        setStatus('Loaded measure-form JSON template.', true);
+      }
+
+      btnHealth.addEventListener('click', checkHealth);
+      btnFetchExisting.addEventListener('click', fetchExistingMeasurements);
+      btnFetchImages.addEventListener('click', fetchImages);
+      btnUploadImage.addEventListener('click', uploadImage);
+      btnDeleteImage.addEventListener('click', deleteImage);
+      uploadItemCodeEl.addEventListener('input', renderImageGallery);
+      uploadFileIndexEl.addEventListener('input', renderImageGallery);
+      btnLoadTemplate.addEventListener('click', loadTemplate);
+      btnLoadMeasureTemplate.addEventListener('click', loadMeasureTemplate);
+      relayFormEl.addEventListener('submit', event => {
+        event.preventDefault();
+        submit();
+      });
+    </script>
+  </body>
+</html>

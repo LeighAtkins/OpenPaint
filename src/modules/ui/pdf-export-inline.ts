@@ -11,6 +11,52 @@ function toBaseViewId(scopeOrViewId) {
   return raw.split('::tab:')[0] || raw;
 }
 
+function getTabIdFromScopedLabel(scopeOrViewId) {
+  const raw = String(scopeOrViewId || '');
+  const marker = '::tab:';
+  const idx = raw.indexOf(marker);
+  if (idx < 0) return null;
+  const tabId = raw.slice(idx + marker.length).trim();
+  return tabId || null;
+}
+
+function enforceScopedTabContext(viewId, scopedLabel) {
+  const scopedTabId = getTabIdFromScopedLabel(scopedLabel || '');
+  if (!viewId || !scopedTabId) {
+    return { enforced: false, reason: 'missing-view-or-tab' };
+  }
+
+  if (typeof window.setActiveCaptureTab === 'function') {
+    try {
+      window.setActiveCaptureTab(viewId, scopedTabId, { skipSave: true });
+    } catch (error) {
+      return {
+        enforced: false,
+        reason: 'set-active-tab-failed',
+        error: String(error?.message || error),
+      };
+    }
+  }
+
+  if (typeof window.syncCaptureTabCanvasVisibility === 'function') {
+    try {
+      window.syncCaptureTabCanvasVisibility(viewId);
+    } catch (error) {
+      return {
+        enforced: false,
+        reason: 'sync-visibility-failed',
+        error: String(error?.message || error),
+      };
+    }
+  }
+
+  window.currentImageLabel = scopedLabel;
+  window.app?.metadataManager?.updateStrokeVisibilityControls?.();
+  window.app?.canvasManager?.fabricCanvas?.requestRenderAll?.();
+
+  return { enforced: true, scopedTabId };
+}
+
 function getScopedMeasurements(scopeKey, options = {}) {
   const includeBase = options.includeBase === true;
   const allMeasurements = window.app?.metadataManager?.strokeMeasurements || {};
@@ -175,7 +221,535 @@ function safePdfText(value) {
   return String(value || '').replace(/[^\x20-\x7E]/g, ' ');
 }
 
+function ensurePdfDebugSurface() {
+  if (!Array.isArray(window.__pdfVectorDebugLog)) {
+    window.__pdfVectorDebugLog = [];
+  }
+  window.__pdfVectorDebugReady = true;
+  if (typeof window.dumpPdfVectorDebug !== 'function') {
+    window.dumpPdfVectorDebug = function (count = 12) {
+      const size = Number.isFinite(Number(count)) ? Math.max(1, Number(count)) : 12;
+      return (window.__pdfVectorDebugLog || []).slice(-size);
+    };
+  }
+}
+
+ensurePdfDebugSurface();
+
+function cloneSerializable(value, fallback = null) {
+  try {
+    return JSON.parse(JSON.stringify(value));
+  } catch {
+    return fallback;
+  }
+}
+
+function safelyDiscardActiveObject(canvas) {
+  if (!canvas?.getActiveObject || !canvas?.discardActiveObject) {
+    return;
+  }
+  try {
+    if (canvas.getActiveObject()) {
+      canvas.discardActiveObject();
+    }
+  } catch (error) {
+    console.warn('[PDF] Failed to discard active object safely:', error);
+  }
+}
+
+function buildVectorDebugSnapshot(label, extra = {}) {
+  const canvas = window.app?.canvasManager?.fabricCanvas;
+  const objects = canvas?.getObjects?.() || [];
+  const vectorObjects = objects.filter(obj => {
+    const type = String(obj?.type || '');
+    return (
+      type === 'line' ||
+      type === 'path' ||
+      type === 'polyline' ||
+      type === 'polygon' ||
+      obj?.strokeMetadata?.isVector === true ||
+      obj?.customData?.isVectorStroke === true ||
+      obj?.customData?.type === 'vector-stroke'
+    );
+  });
+
+  const summarizeObj = obj => {
+    const bbox =
+      typeof obj?.getBoundingRect === 'function' ? obj.getBoundingRect(true, true) : null;
+    return {
+      id: obj?.id || obj?.strokeMetadata?.id || obj?.customData?.id || null,
+      type: obj?.type || null,
+      label: obj?.strokeMetadata?.label || obj?.customData?.label || null,
+      imageLabel: obj?.strokeMetadata?.imageLabel || obj?.customData?.imageLabel || null,
+      visible: obj?.visible !== false,
+      opacity: typeof obj?.opacity === 'number' ? Number(obj.opacity.toFixed(3)) : null,
+      left: typeof obj?.left === 'number' ? Number(obj.left.toFixed(2)) : null,
+      top: typeof obj?.top === 'number' ? Number(obj.top.toFixed(2)) : null,
+      angle: typeof obj?.angle === 'number' ? Number(obj.angle.toFixed(2)) : null,
+      scaleX: typeof obj?.scaleX === 'number' ? Number(obj.scaleX.toFixed(4)) : null,
+      scaleY: typeof obj?.scaleY === 'number' ? Number(obj.scaleY.toFixed(4)) : null,
+      width: bbox?.width ? Number(bbox.width.toFixed(2)) : null,
+      height: bbox?.height ? Number(bbox.height.toFixed(2)) : null,
+    };
+  };
+
+  const viewport = window.app?.canvasManager?.getViewportState?.() || null;
+  const rotation = window.app?.canvasManager?.getRotationDegrees?.();
+  const activeObj = canvas?.getActiveObject?.() || null;
+
+  return {
+    label,
+    timestamp: new Date().toISOString(),
+    currentViewId: window.app?.projectManager?.currentViewId || null,
+    currentImageLabel: window.currentImageLabel || null,
+    objectCount: objects.length,
+    vectorCount: vectorObjects.length,
+    activeObjectType: activeObj?.type || null,
+    viewport,
+    rotation: typeof rotation === 'number' ? rotation : null,
+    viewportTransform: Array.isArray(canvas?.viewportTransform)
+      ? canvas.viewportTransform.map(value =>
+          typeof value === 'number' ? Number(value.toFixed(5)) : value
+        )
+      : null,
+    sampleVectors: vectorObjects.slice(0, 12).map(summarizeObj),
+    extra,
+  };
+}
+
+function logVectorDebugSnapshot(label, extra = {}) {
+  try {
+    const snapshot = buildVectorDebugSnapshot(label, extra);
+    const existing = Array.isArray(window.__pdfVectorDebugLog) ? window.__pdfVectorDebugLog : [];
+    existing.push(snapshot);
+    if (existing.length > 240) {
+      existing.shift();
+    }
+    window.__pdfVectorDebugLog = existing;
+    window.dispatchEvent(
+      new CustomEvent('openpaint:pdf-vector-debug', {
+        detail: snapshot,
+      })
+    );
+    console.groupCollapsed(
+      `[PDF Vector Debug] ${label} | view=${snapshot.currentViewId || '-'} | vectors=${snapshot.vectorCount}`
+    );
+    console.log(snapshot);
+    console.groupEnd();
+  } catch (error) {
+    console.warn('[PDF Vector Debug] Failed to capture snapshot:', error);
+  }
+}
+
+function getObjectRestoreKey(obj, index = 0) {
+  const imageLabel =
+    obj?.strokeMetadata?.imageLabel || obj?.customData?.imageLabel || obj?.imageLabel || '';
+  const strokeLabel = obj?.strokeMetadata?.label || obj?.customData?.label || obj?.id || '';
+  const type = String(obj?.type || 'unknown');
+  return `${imageLabel}|${strokeLabel}|${type}|${index}`;
+}
+
+function captureObjectDisplayState(canvas) {
+  const objects = canvas?.getObjects?.() || [];
+  return objects.map((obj, index) => ({
+    key: getObjectRestoreKey(obj, index),
+    visible: obj?.visible !== false,
+    evented: obj?.evented !== false,
+    selectable: obj?.selectable !== false,
+    opacity: typeof obj?.opacity === 'number' ? obj.opacity : 1,
+  }));
+}
+
+function restoreObjectDisplayState(canvas, snapshot) {
+  const objects = canvas?.getObjects?.() || [];
+  const snapshotByKey = new Map((snapshot || []).map(entry => [entry.key, entry]));
+  let restored = 0;
+  objects.forEach((obj, index) => {
+    const key = getObjectRestoreKey(obj, index);
+    const state = snapshotByKey.get(key);
+    if (!state) return;
+    obj.visible = state.visible;
+    obj.evented = state.evented;
+    obj.selectable = state.selectable;
+    obj.opacity = typeof state.opacity === 'number' ? state.opacity : obj.opacity;
+    restored += 1;
+  });
+  return { restored, total: objects.length, snapshotSize: snapshotByKey.size };
+}
+
+function beginPdfExportSession() {
+  const projectManager = window.app?.projectManager;
+  const canvasManager = window.app?.canvasManager;
+  const captureFrame = document.getElementById('captureFrame');
+  const state = {
+    previousWindowSuspendSave: Boolean(window.__suspendSaveCurrentView),
+    previousProjectSuspendSave: Boolean(projectManager?.suspendSave),
+    previousIsPdfExporting: Boolean(window.__isPdfExporting),
+    previousViewId: projectManager?.currentViewId || '',
+    previousScopedLabel: window.currentImageLabel || '',
+    previousCaptureTabsByLabel: cloneSerializable(window.captureTabsByLabel || {}, {}),
+    previousCaptureMasterTargets: cloneSerializable(
+      window.captureMasterDrawTargetByLabel || {},
+      {}
+    ),
+    previousViewportState: cloneSerializable(canvasManager?.getViewportState?.() || null, null),
+    previousViewportTransform: cloneSerializable(
+      canvasManager?.fabricCanvas?.viewportTransform || null,
+      null
+    ),
+    previousRotationDegrees:
+      typeof canvasManager?.getRotationDegrees === 'function'
+        ? canvasManager.getRotationDegrees()
+        : null,
+    previousCanvasSelection: canvasManager?.fabricCanvas?.selection,
+    previousCanvasSkipTargetFind: canvasManager?.fabricCanvas?.skipTargetFind,
+    previousObjectDisplayState: captureObjectDisplayState(canvasManager?.fabricCanvas),
+    previousCaptureFrameStyle: captureFrame
+      ? {
+          left: captureFrame.style.left,
+          top: captureFrame.style.top,
+          width: captureFrame.style.width,
+          height: captureFrame.style.height,
+          borderColor: captureFrame.style.borderColor,
+        }
+      : null,
+  };
+
+  // Persist the currently edited frame/view once before suspending autosave.
+  // Without this, switching views for export can reload stale canvasData and drop recent edits.
+  if (projectManager && !window.__isLoadingProject) {
+    try {
+      if (typeof window.captureTabsSyncActive === 'function') {
+        window.captureTabsSyncActive(projectManager.currentViewId);
+      }
+      if (typeof projectManager.saveCurrentViewState === 'function') {
+        projectManager.saveCurrentViewState();
+      }
+      logVectorDebugSnapshot('beginPdfExportSession:pre-save-current-view', {
+        viewId: projectManager.currentViewId || null,
+      });
+    } catch (saveError) {
+      logVectorDebugSnapshot('beginPdfExportSession:pre-save-error', {
+        error: String(saveError?.message || saveError),
+      });
+    }
+  }
+
+  window.__suspendSaveCurrentView = true;
+  logVectorDebugSnapshot('beginPdfExportSession:before-lock');
+  if (canvasManager?.fabricCanvas) {
+    safelyDiscardActiveObject(canvasManager.fabricCanvas);
+    canvasManager.fabricCanvas.selection = false;
+    canvasManager.fabricCanvas.skipTargetFind = true;
+  }
+  if (projectManager) {
+    projectManager.suspendSave = true;
+  }
+  window.__isPdfExporting = true;
+  return state;
+}
+
+async function restorePdfExportSession(state) {
+  const projectManager = window.app?.projectManager;
+  const canvasManager = window.app?.canvasManager;
+  const captureFrame = document.getElementById('captureFrame');
+
+  try {
+    logVectorDebugSnapshot('restorePdfExportSession:start');
+    if (state?.previousCaptureTabsByLabel) {
+      window.captureTabsByLabel = cloneSerializable(state.previousCaptureTabsByLabel, {});
+    }
+    if (state?.previousCaptureMasterTargets) {
+      window.captureMasterDrawTargetByLabel = cloneSerializable(
+        state.previousCaptureMasterTargets,
+        {}
+      );
+    }
+
+    const restoreViewId = state?.previousViewId || projectManager?.currentViewId || '';
+    if (
+      restoreViewId &&
+      projectManager?.views?.[restoreViewId] &&
+      projectManager?.switchView &&
+      projectManager.currentViewId !== restoreViewId
+    ) {
+      await projectManager.switchView(restoreViewId, true);
+    }
+
+    const scopedTabId = getTabIdFromScopedLabel(state?.previousScopedLabel || '');
+    const restoreTabId =
+      scopedTabId || window.captureTabsByLabel?.[restoreViewId]?.activeTabId || null;
+    if (restoreViewId && restoreTabId && typeof window.setActiveCaptureTab === 'function') {
+      try {
+        window.setActiveCaptureTab(restoreViewId, restoreTabId, { skipSave: true });
+      } catch (tabError) {
+        logVectorDebugSnapshot('restorePdfExportSession:set-tab-error', {
+          restoreViewId,
+          restoreTabId,
+          error: String(tabError?.message || tabError),
+        });
+      }
+    }
+
+    if (state?.previousCaptureFrameStyle && captureFrame) {
+      captureFrame.style.left = state.previousCaptureFrameStyle.left;
+      captureFrame.style.top = state.previousCaptureFrameStyle.top;
+      captureFrame.style.width = state.previousCaptureFrameStyle.width;
+      captureFrame.style.height = state.previousCaptureFrameStyle.height;
+      captureFrame.style.borderColor = state.previousCaptureFrameStyle.borderColor;
+    }
+
+    if (state?.previousScopedLabel) {
+      window.currentImageLabel = state.previousScopedLabel;
+    }
+
+    if (typeof state?.previousRotationDegrees === 'number' && canvasManager?.setRotationDegrees) {
+      canvasManager.setRotationDegrees(state.previousRotationDegrees);
+    }
+
+    if (
+      Array.isArray(state?.previousViewportTransform) &&
+      state.previousViewportTransform.length === 6 &&
+      canvasManager?.fabricCanvas?.setViewportTransform
+    ) {
+      canvasManager.fabricCanvas.setViewportTransform(state.previousViewportTransform);
+      canvasManager.fabricCanvas.requestRenderAll?.();
+    } else if (state?.previousViewportState && canvasManager?.setViewportState) {
+      canvasManager.setViewportState(state.previousViewportState);
+    }
+    if (canvasManager?.fabricCanvas) {
+      canvasManager.fabricCanvas.selection =
+        typeof state?.previousCanvasSelection === 'boolean' ? state.previousCanvasSelection : true;
+      canvasManager.fabricCanvas.skipTargetFind = Boolean(state?.previousCanvasSkipTargetFind);
+    }
+
+    if (restoreViewId && typeof window.renderCaptureTabUI === 'function') {
+      try {
+        window.renderCaptureTabUI(restoreViewId);
+      } catch (renderError) {
+        logVectorDebugSnapshot('restorePdfExportSession:render-ui-error', {
+          restoreViewId,
+          error: String(renderError?.message || renderError),
+        });
+      }
+    }
+    if (restoreViewId && typeof window.syncCaptureTabCanvasVisibility === 'function') {
+      try {
+        window.syncCaptureTabCanvasVisibility(restoreViewId);
+      } catch (syncError) {
+        logVectorDebugSnapshot('restorePdfExportSession:sync-visibility-error', {
+          restoreViewId,
+          error: String(syncError?.message || syncError),
+        });
+      }
+    }
+
+    const enforceResult = enforceScopedTabContext(restoreViewId, state?.previousScopedLabel || '');
+    logVectorDebugSnapshot('restorePdfExportSession:enforce-scoped-context', enforceResult);
+
+    setTimeout(() => {
+      const delayedResult = enforceScopedTabContext(
+        restoreViewId,
+        state?.previousScopedLabel || ''
+      );
+      logVectorDebugSnapshot(
+        'restorePdfExportSession:enforce-scoped-context-delayed',
+        delayedResult
+      );
+    }, 0);
+
+    if (canvasManager?.fabricCanvas) {
+      const restoreStats = restoreObjectDisplayState(
+        canvasManager.fabricCanvas,
+        state?.previousObjectDisplayState || []
+      );
+      logVectorDebugSnapshot('restorePdfExportSession:display-state-restored', restoreStats);
+    }
+
+    canvasManager?.fabricCanvas?.requestRenderAll?.();
+    logVectorDebugSnapshot('restorePdfExportSession:after-restore', {
+      restoredViewId: restoreViewId,
+      restoredTabId: window.captureTabsByLabel?.[restoreViewId]?.activeTabId || null,
+      scopedTabId,
+    });
+  } catch (restoreError) {
+    console.warn('[PDF] Failed to fully restore editor state after export:', restoreError);
+    logVectorDebugSnapshot('restorePdfExportSession:error', {
+      error: String(restoreError?.message || restoreError),
+    });
+  } finally {
+    window.__suspendSaveCurrentView = Boolean(state?.previousWindowSuspendSave);
+    if (projectManager) {
+      projectManager.suspendSave = Boolean(state?.previousProjectSuspendSave);
+    }
+    window.__isPdfExporting = Boolean(state?.previousIsPdfExporting);
+  }
+}
+
+async function withTemporaryCaptureTarget(viewId, tabId, callback) {
+  const projectManager = window.app?.projectManager;
+  const canvas = window.app?.canvasManager?.fabricCanvas;
+  const captureFrame = document.getElementById('captureFrame');
+  const previousViewId = projectManager?.currentViewId || '';
+  const previousScopedLabel = window.currentImageLabel || '';
+  const previousBaseLabel = toBaseViewId(previousScopedLabel || previousViewId);
+  const previousState =
+    previousBaseLabel && window.captureTabsByLabel
+      ? window.captureTabsByLabel[previousBaseLabel] || null
+      : null;
+  const previousTabId =
+    getTabIdFromScopedLabel(previousScopedLabel) || previousState?.activeTabId || null;
+  const frameStyle = captureFrame
+    ? {
+        left: captureFrame.style.left,
+        top: captureFrame.style.top,
+        width: captureFrame.style.width,
+        height: captureFrame.style.height,
+        borderColor: captureFrame.style.borderColor,
+      }
+    : null;
+
+  const restoreTargetViewId = previousViewId || viewId || '';
+  const restoreTabId = previousTabId;
+  const previousViewportTransform = cloneSerializable(canvas?.viewportTransform || null, null);
+
+  try {
+    logVectorDebugSnapshot('withTemporaryCaptureTarget:before-switch', {
+      targetViewId: viewId,
+      targetTabId: tabId || null,
+    });
+    safelyDiscardActiveObject(canvas);
+    canvas?.requestRenderAll?.();
+    if (projectManager?.switchView && viewId && projectManager.currentViewId !== viewId) {
+      if (!projectManager?.views?.[viewId]) {
+        throw new Error(`Target view is missing: ${viewId}`);
+      }
+      await projectManager.switchView(viewId);
+    }
+    if (tabId && typeof window.setActiveCaptureTab === 'function') {
+      try {
+        // Export should not mutate persisted tab/frame state while switching tabs.
+        window.setActiveCaptureTab(viewId, tabId, { skipSave: true });
+      } catch (setTabError) {
+        logVectorDebugSnapshot('withTemporaryCaptureTarget:set-tab-error', {
+          targetViewId: viewId,
+          targetTabId: tabId,
+          error: String(setTabError?.message || setTabError),
+        });
+      }
+    }
+    window.app?.canvasManager?.fabricCanvas?.requestRenderAll?.();
+    await new Promise(resolve => setTimeout(resolve, 250));
+    logVectorDebugSnapshot('withTemporaryCaptureTarget:after-switch', {
+      targetViewId: viewId,
+      targetTabId: tabId || null,
+    });
+    return await callback();
+  } finally {
+    try {
+      if (
+        projectManager?.switchView &&
+        restoreTargetViewId &&
+        projectManager?.views?.[restoreTargetViewId] &&
+        projectManager.currentViewId !== restoreTargetViewId
+      ) {
+        await projectManager.switchView(restoreTargetViewId);
+      }
+      if (
+        restoreTargetViewId &&
+        restoreTabId &&
+        window.captureTabsByLabel?.[restoreTargetViewId] &&
+        typeof window.setActiveCaptureTab === 'function'
+      ) {
+        try {
+          window.setActiveCaptureTab(restoreTargetViewId, restoreTabId, { skipSave: true });
+        } catch (restoreTabError) {
+          logVectorDebugSnapshot('withTemporaryCaptureTarget:restore-tab-error', {
+            restoredViewId: restoreTargetViewId,
+            restoredTabId: restoreTabId,
+            error: String(restoreTabError?.message || restoreTabError),
+          });
+        }
+      }
+      if (captureFrame && frameStyle) {
+        captureFrame.style.left = frameStyle.left;
+        captureFrame.style.top = frameStyle.top;
+        captureFrame.style.width = frameStyle.width;
+        captureFrame.style.height = frameStyle.height;
+        captureFrame.style.borderColor = frameStyle.borderColor;
+      }
+      if (previousScopedLabel) {
+        window.currentImageLabel = previousScopedLabel;
+      }
+      if (
+        Array.isArray(previousViewportTransform) &&
+        previousViewportTransform.length === 6 &&
+        canvas?.setViewportTransform
+      ) {
+        canvas.setViewportTransform(previousViewportTransform);
+      }
+      safelyDiscardActiveObject(canvas);
+      window.app?.canvasManager?.fabricCanvas?.requestRenderAll?.();
+      logVectorDebugSnapshot('withTemporaryCaptureTarget:after-restore', {
+        restoredViewId: restoreTargetViewId,
+        restoredTabId: restoreTabId,
+      });
+    } catch (restoreError) {
+      console.warn(
+        '[PDF] Failed to fully restore capture target state after export step:',
+        restoreError
+      );
+      logVectorDebugSnapshot('withTemporaryCaptureTarget:restore-error', {
+        error: String(restoreError?.message || restoreError),
+      });
+    }
+  }
+}
+
+async function requestServerRenderedPdf(payload) {
+  const endpoints = ['/api/pdf/render', '/pdf/render'];
+  let lastError = null;
+
+  for (const endpoint of endpoints) {
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errText = await response.text();
+        const looksLikeNotFound =
+          response.status === 404 &&
+          (errText.includes('NOT_FOUND') || errText.includes('The page could not be found'));
+        if (looksLikeNotFound) {
+          lastError = new Error(`Endpoint not found at ${endpoint}`);
+          continue;
+        }
+        throw new Error(`Server PDF render failed (${response.status}) at ${endpoint}: ${errText}`);
+      }
+
+      return response;
+    } catch (error) {
+      if (String(error?.message || '').includes('Server PDF render failed')) {
+        throw error;
+      }
+      lastError = error;
+    }
+  }
+
+  throw (
+    lastError ||
+    new Error('Server PDF render endpoint is unavailable. Check API deployment configuration.')
+  );
+}
+
 export function initPdfExport() {
+  ensurePdfDebugSurface();
+  logVectorDebugSnapshot('initPdfExport:ready', {
+    search: String(window.location?.search || ''),
+  });
   // Export utilities for saving multiple images and PDF generation with pdf-lib
   window.saveAllImages = async function () {
     const projectName = document.getElementById('projectName')?.value || 'OpenPaint';
@@ -244,6 +818,15 @@ export function initPdfExport() {
       'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:10000;display:flex;align-items:center;justify-content:center;';
     overlay.innerHTML = `<div style="background:white;border-radius:12px;padding:30px;max-width:500px;box-shadow:0 10px 40px rgba(0,0,0,0.3);"><h2 style="margin:0 0 20px 0;color:#333;">Export PDF - ${projectName}</h2><p style="color:#666;margin-bottom:15px;">Creating PDF with ${viewIds.length} page(s) and editable form fields.</p><div style="margin-bottom:15px;"><label style="display:block;margin-bottom:5px;font-weight:600;color:#333;">Image Quality:</label><select id="pdfQuality" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;"><option value="high">High Quality</option><option value="medium" selected>Medium Quality</option><option value="low">Low Quality</option></select></div><div style="margin-bottom:15px;"><label style="display:block;margin-bottom:5px;font-weight:600;color:#333;">Page Size:</label><select id="pdfPageSize" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;"><option value="letter" selected>Letter (8.5" × 11")</option><option value="a4">A4</option></select></div><label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:20px;"><input type="checkbox" id="includeMeasurements" checked style="transform:scale(1.3);"><span style="color:#333;">Include editable measurement fields</span></label><div style="display:flex;gap:10px;"><button id="generatePdfBtn" style="flex:1;padding:12px;background:#3b82f6;color:white;border:none;border-radius:8px;font-weight:600;cursor:pointer;">Generate PDF</button><button id="cancelPdfBtn" style="flex:1;padding:12px;background:#6b7280;color:white;border:none;border-radius:8px;font-weight:600;cursor:pointer;">Cancel</button></div><div id="pdfProgress" style="display:none;margin-top:20px;text-align:center;"><div style="width:100%;height:8px;background:#e5e7eb;border-radius:4px;overflow:hidden;margin-bottom:10px;"><div id="pdfProgressBar" style="width:0%;height:100%;background:#3b82f6;transition:width 0.3s;"></div></div><p id="pdfProgressText" style="color:#666;font-size:14px;">Preparing PDF...</p></div></div>`;
     document.body.appendChild(overlay);
+    const pageSizeSelect = document.getElementById('pdfPageSize');
+    if (pageSizeSelect) {
+      pageSizeSelect.value = 'a4';
+      pageSizeSelect.disabled = true;
+      const pageSizeWrap = pageSizeSelect.closest('div');
+      if (pageSizeWrap) {
+        pageSizeWrap.style.display = 'none';
+      }
+    }
     const includeMeasurementsLabel = document.getElementById('includeMeasurements')?.parentElement;
     if (includeMeasurementsLabel) {
       const rendererWrap = document.createElement('div');
@@ -254,9 +837,10 @@ export function initPdfExport() {
     document.getElementById('cancelPdfBtn').onclick = () => overlay.remove();
     document.getElementById('generatePdfBtn').onclick = async () => {
       const quality = document.getElementById('pdfQuality').value;
-      const pageSize = document.getElementById('pdfPageSize').value;
+      const pageSize = 'a4';
       const includeMeasurements = document.getElementById('includeMeasurements').checked;
       const rendererMode = document.getElementById('pdfRendererMode')?.value || 'classic';
+      const exportSession = beginPdfExportSession();
       document.getElementById('pdfProgress').style.display = 'block';
       document.getElementById('generatePdfBtn').disabled = true;
       document.getElementById('cancelPdfBtn').disabled = true;
@@ -289,6 +873,8 @@ export function initPdfExport() {
           pageSize,
           includeMeasurements
         );
+      } finally {
+        await restorePdfExportSession(exportSession);
       }
 
       overlay.remove();
@@ -367,35 +953,31 @@ export function initPdfExport() {
     };
 
     const captureViewImageDataUrl = async target => {
-      await window.app.projectManager.switchView(target.viewId);
-      if (target.tabId && typeof window.setActiveCaptureTab === 'function') {
-        window.setActiveCaptureTab(target.viewId, target.tabId);
-      }
-      await new Promise(resolve => setTimeout(resolve, 150));
-
-      const canvas = window.app.canvasManager.fabricCanvas;
-      const captureFrame = document.getElementById('captureFrame');
-      if (!canvas || !captureFrame) return '';
-      const qualityScales = { high: 3.0, medium: 2.0, low: 1.5 };
-      const scale = qualityScales[quality] || 2.0;
-      const frameRect = captureFrame.getBoundingClientRect();
-      const canvasEl = canvas.lowerCanvasEl;
-      const scaleX = canvasEl.width / canvasEl.offsetWidth;
-      const scaleY = canvasEl.height / canvasEl.offsetHeight;
-      const canvasRect = canvasEl.getBoundingClientRect();
-      const left = (frameRect.left - canvasRect.left) * scaleX;
-      const top = (frameRect.top - canvasRect.top) * scaleY;
-      const width = frameRect.width * scaleX;
-      const height = frameRect.height * scaleY;
-      const tempCanvas = document.createElement('canvas');
-      tempCanvas.width = width * scale;
-      tempCanvas.height = height * scale;
-      const ctx = tempCanvas.getContext('2d');
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = 'high';
-      ctx.scale(scale, scale);
-      ctx.drawImage(canvasEl, left, top, width, height, 0, 0, width, height);
-      return tempCanvas.toDataURL('image/jpeg', 0.92);
+      return withTemporaryCaptureTarget(target.viewId, target.tabId, async () => {
+        const canvas = window.app.canvasManager.fabricCanvas;
+        const captureFrame = document.getElementById('captureFrame');
+        if (!canvas || !captureFrame) return '';
+        const qualityScales = { high: 1.25, medium: 1.0, low: 0.85 };
+        const scale = qualityScales[quality] || 1.0;
+        const frameRect = captureFrame.getBoundingClientRect();
+        const canvasEl = canvas.lowerCanvasEl;
+        const scaleX = canvasEl.width / canvasEl.offsetWidth;
+        const scaleY = canvasEl.height / canvasEl.offsetHeight;
+        const canvasRect = canvasEl.getBoundingClientRect();
+        const left = (frameRect.left - canvasRect.left) * scaleX;
+        const top = (frameRect.top - canvasRect.top) * scaleY;
+        const width = frameRect.width * scaleX;
+        const height = frameRect.height * scaleY;
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = width * scale;
+        tempCanvas.height = height * scale;
+        const ctx = tempCanvas.getContext('2d');
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.scale(scale, scale);
+        ctx.drawImage(canvasEl, left, top, width, height, 0, 0, width, height);
+        return tempCanvas.toDataURL('image/jpeg', 0.78);
+      });
     };
 
     const groups = [];
@@ -437,30 +1019,75 @@ export function initPdfExport() {
       });
     }
 
+    if (includeMeasurements && typeof window.evaluateMeasurementRelations === 'function') {
+      try {
+        const relations = window.evaluateMeasurementRelations() || {};
+        const relationChecks = Array.isArray(relations.checks) ? relations.checks : [];
+        const relationConnections = Array.isArray(relations.connections)
+          ? relations.connections
+          : [];
+        if (relationChecks.length || relationConnections.length) {
+          const relationRows = relationChecks.map(check => {
+            const status = String(check?.status || 'pending').toUpperCase();
+            const formula = check?.formula || check?.id || 'Formula Check';
+            const reason = check?.reason ? ` - ${check.reason}` : '';
+            return {
+              label: formula,
+              value: `${status}${reason}`,
+            };
+          });
+          const connectionRows = relationConnections.map(connection => {
+            const from = connection?.fromDisplay || connection?.fromKey || '-';
+            const to = connection?.toDisplay || connection?.toKey || '-';
+            const status = String(connection?.status || 'pending').toUpperCase();
+            const reason = connection?.reason ? ` - ${connection.reason}` : '';
+            return {
+              label: `${from} <-> ${to}`,
+              value: `${status}${reason}`,
+            };
+          });
+
+          groups.push({
+            title: 'Measurement Validation Summary',
+            subtitle: 'Formula checks and cross-image connections',
+            mainImage: {
+              title: 'Validation Overview',
+              src:
+                groups[0]?.mainImage?.src ||
+                'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI5NjAiIGhlaWdodD0iNTQwIj48cmVjdCB3aWR0aD0iOTYwIiBoZWlnaHQ9IjU0MCIgZmlsbD0iI0YxRjVGOSIgcng9IjE2Ii8+PHRleHQgeD0iNDgwIiB5PSIyODAiIGZvbnQtc2l6ZT0iMzYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiM0NzU1NjkiIGZvbnQtZmFtaWx5PSJBcmlhbCI+TWVhc3VyZW1lbnQgVmFsaWRhdGlvbiBTdW1tYXJ5PC90ZXh0Pjwvc3ZnPg==',
+            },
+            mainMeasurements: relationRows,
+            relatedFrames: [],
+            relatedMeasurementCards: [
+              {
+                title: 'Cross-image Connections',
+                rows: connectionRows,
+              },
+            ],
+          });
+        }
+      } catch (error) {
+        console.warn('[PDF] Failed to append relation summary page in modern renderer:', error);
+      }
+    }
+
     progressText.textContent = 'Rendering modern PDF...';
     progressBar.style.width = '92%';
-    const response = await fetch('/api/pdf/render', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        source: 'report',
-        report: {
-          projectName,
-          namingLine,
-          groups,
-        },
-        options: {
-          renderer: 'hybrid',
-          pageSize,
-          filename: `${sanitizeFilenamePart(projectName, 'OpenPaint Project')}.pdf`,
-        },
-      }),
+    const response = await requestServerRenderedPdf({
+      source: 'report',
+      report: {
+        projectName,
+        namingLine,
+        unit: currentUnit,
+        groups,
+      },
+      options: {
+        renderer: 'hybrid',
+        pageSize,
+        injectFormFields: false,
+        filename: `${sanitizeFilenamePart(projectName, 'OpenPaint Project')}.pdf`,
+      },
     });
-
-    if (!response.ok) {
-      const errText = await response.text();
-      throw new Error(`Server PDF render failed (${response.status}): ${errText}`);
-    }
 
     const blob = await response.blob();
     const url = URL.createObjectURL(blob);
@@ -945,36 +1572,32 @@ export function initPdfExport() {
 
     // ── Canvas Capture Helper ────────────────────────────────────────
     async function captureViewImage(viewId, tabId) {
-      await window.app.projectManager.switchView(viewId);
-      if (tabId && typeof window.setActiveCaptureTab === 'function') {
-        window.setActiveCaptureTab(viewId, tabId);
-      }
-      await new Promise(resolve => setTimeout(resolve, 150));
+      return withTemporaryCaptureTarget(viewId, tabId, async () => {
+        const canvas = window.app.canvasManager.fabricCanvas;
+        const captureFrame = document.getElementById('captureFrame');
+        if (!canvas || !captureFrame) return null;
 
-      const canvas = window.app.canvasManager.fabricCanvas;
-      const captureFrame = document.getElementById('captureFrame');
-      if (!canvas || !captureFrame) return null;
-
-      const frameRect = captureFrame.getBoundingClientRect();
-      const canvasEl = canvas.lowerCanvasEl;
-      const scaleX = canvasEl.width / canvasEl.offsetWidth;
-      const scaleY = canvasEl.height / canvasEl.offsetHeight;
-      const canvasRect = canvasEl.getBoundingClientRect();
-      const left = (frameRect.left - canvasRect.left) * scaleX;
-      const top = (frameRect.top - canvasRect.top) * scaleY;
-      const width = frameRect.width * scaleX;
-      const height = frameRect.height * scaleY;
-      const tempCanvas = document.createElement('canvas');
-      tempCanvas.width = width * scale;
-      tempCanvas.height = height * scale;
-      const ctx = tempCanvas.getContext('2d');
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = 'high';
-      ctx.scale(scale, scale);
-      ctx.drawImage(canvasEl, left, top, width, height, 0, 0, width, height);
-      const imageData = tempCanvas.toDataURL('image/jpeg', 0.95);
-      const imageBytes = Uint8Array.from(atob(imageData.split(',')[1]), c => c.charCodeAt(0));
-      return pdfDoc.embedJpg(imageBytes);
+        const frameRect = captureFrame.getBoundingClientRect();
+        const canvasEl = canvas.lowerCanvasEl;
+        const scaleX = canvasEl.width / canvasEl.offsetWidth;
+        const scaleY = canvasEl.height / canvasEl.offsetHeight;
+        const canvasRect = canvasEl.getBoundingClientRect();
+        const left = (frameRect.left - canvasRect.left) * scaleX;
+        const top = (frameRect.top - canvasRect.top) * scaleY;
+        const width = frameRect.width * scaleX;
+        const height = frameRect.height * scaleY;
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = width * scale;
+        tempCanvas.height = height * scale;
+        const ctx = tempCanvas.getContext('2d');
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.scale(scale, scale);
+        ctx.drawImage(canvasEl, left, top, width, height, 0, 0, width, height);
+        const imageData = tempCanvas.toDataURL('image/jpeg', 0.95);
+        const imageBytes = Uint8Array.from(atob(imageData.split(',')[1]), c => c.charCodeAt(0));
+        return pdfDoc.embedJpg(imageBytes);
+      });
     }
 
     function getTargetStrokes(scopeKey, includeBase) {

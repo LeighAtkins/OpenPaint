@@ -10,3 +10,7 @@ ACCOUNT_HASH = "tJVRdWyUXVZJRoGHy-ATBQ"
 # Bind Images to this Worker
 [images]
 binding = "IMAGES"
+
+[[r2_buckets]]
+binding = "MEASUREMENT_GUIDES"
+bucket_name = "openpaint-measurement-guides"

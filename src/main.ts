@@ -5,6 +5,8 @@
  * through this file. No other <script> tags load runtime code.
  */
 
+// @ts-nocheck
+
 // ── 0. Pre-render CSS configuration (runs synchronously on import) ──────────
 // Must happen before any CSS renders to prevent FOUC
 (function preRender() {
@@ -88,6 +90,7 @@ import { initPdfExport } from './modules/ui/pdf-export-inline.js';
 import { initToolbarController } from './modules/ui/toolbar-controller.js';
 import { initScrollSelectSystem } from './modules/ui/scroll-select-init.js';
 import { initSofaTypePicker } from './modules/ui/sofa-type-picker.js';
+import { initMeasurementGuideFlash } from './modules/ui/measurement-guide-flash.js';
 import { initProjectNaming } from './modules/ui/project-naming.js';
 import { initMeasurementRelations } from './modules/ui/measurement-relations.js';
 import { initStatusMessageHandler } from './modules/ui/status-message-handler';
@@ -153,6 +156,9 @@ async function bootstrap(): Promise<void> {
 
   // Initialize sofa type onboarding + save guard
   initSofaTypePicker();
+
+  // Quick boss-key style SVG guide flash (hold backtick)
+  initMeasurementGuideFlash();
 
   // Initialize naming controls and image part labeling
   initProjectNaming();

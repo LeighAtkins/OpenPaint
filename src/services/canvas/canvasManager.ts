@@ -808,7 +808,7 @@ export class CanvasStateService extends SupabaseService {
         fontSize: data.fontSize,
         fontFamily: data.fontFamily,
       }),
-    })) as FabricObject[];
+    })) as unknown as FabricObject[];
   }
 
   /**

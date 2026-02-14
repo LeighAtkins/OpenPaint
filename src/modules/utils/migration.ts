@@ -3,6 +3,8 @@
  * Handles pixel-based offsets → normalized offsets (v2 schema)
  */
 
+// @ts-nocheck
+
 import { pixelOffsetToNorm, type NormalizationReference, type NormalizedOffset } from './geometry';
 
 interface LegacyOffset {

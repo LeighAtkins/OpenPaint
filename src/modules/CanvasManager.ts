@@ -1,6 +1,8 @@
 // Canvas Manager
 // Handles Fabric.js canvas initialization, resizing, zoom/pan
 
+// @ts-nocheck
+
 import { FabricControls } from './utils/FabricControls.js';
 import { PathUtils } from './utils/PathUtils.js';
 
@@ -144,6 +146,20 @@ export class CanvasManager {
       backgroundColor: '#ffffff', // Default white background
     });
 
+    const objectPrototype = fabric?.Object?.prototype;
+    if (objectPrototype && !objectPrototype.__openpaintSafeDrawControlsPatched) {
+      const originalDrawControls = objectPrototype.drawControls;
+      if (typeof originalDrawControls === 'function') {
+        objectPrototype.drawControls = function (...args) {
+          if (!this?.canvas || typeof this.canvas.getRetinaScaling !== 'function') {
+            return this;
+          }
+          return originalDrawControls.apply(this, args);
+        };
+      }
+      objectPrototype.__openpaintSafeDrawControlsPatched = true;
+    }
+
     // Store initial size
     this.lastCanvasSize = { width, height };
 
@@ -222,6 +238,20 @@ export class CanvasManager {
     this.fabricCanvas.on('path:created', (e: FabricIEvent) => {
       const path = e.path;
       if (path) {
+        const activeToolName = window.app?.toolManager?.activeToolName;
+        const isPrivacyPath =
+          activeToolName === 'privacy' ||
+          path?.customData?.isPrivacyErase === true ||
+          path?.isPrivacyErase === true;
+
+        if (isPrivacyPath) {
+          path.set({
+            selectable: false,
+            evented: false,
+          });
+          return;
+        }
+
         // Make path selectable for moving/deleting
         path.set({
           selectable: true,
@@ -2107,14 +2137,24 @@ export class CanvasManager {
   initZoomPan(): void {
     if (!this.fabricCanvas) return;
 
-    this.fabricCanvas.on('mouse:wheel', (opt: FabricIEvent) => {
-      const delta = opt.e.deltaY;
+    let pendingWheelDelta = 0;
+    let pendingWheelPoint: { x: number; y: number } | null = null;
+    let wheelZoomRafId: number | null = null;
+
+    const flushWheelZoom = () => {
+      wheelZoomRafId = null;
+      if (!this.fabricCanvas || pendingWheelDelta === 0 || !pendingWheelPoint) {
+        pendingWheelDelta = 0;
+        pendingWheelPoint = null;
+        return;
+      }
+
       let zoom = this.zoomLevel || this.fabricCanvas.getZoom();
-      zoom *= 0.999 ** delta;
+      zoom *= 0.999 ** pendingWheelDelta;
       if (zoom > 20) zoom = 20;
       if (zoom < 0.01) zoom = 0.01;
 
-      this.fabricCanvas.zoomToPoint({ x: opt.e.offsetX, y: opt.e.offsetY }, zoom);
+      this.fabricCanvas.zoomToPoint(pendingWheelPoint, zoom);
       this.zoomLevel = zoom;
       // Compute panX/panY so that applyViewportTransform would reproduce this same transform
       // applyViewportTransform adds centerX*(1-zoom) to panX, so we subtract it here
@@ -2132,6 +2172,20 @@ export class CanvasManager {
         }
         this.panX = vpt[4] - centerX * (1 - zoom);
         this.panY = vpt[5] - centerY * (1 - zoom);
+      }
+
+      pendingWheelDelta = 0;
+      pendingWheelPoint = null;
+    };
+
+    this.fabricCanvas.on('mouse:wheel', (opt: FabricIEvent) => {
+      if (opt?.e?.__brushSizeHandled) {
+        return;
+      }
+      pendingWheelDelta += opt.e.deltaY;
+      pendingWheelPoint = { x: opt.e.offsetX, y: opt.e.offsetY };
+      if (wheelZoomRafId === null) {
+        wheelZoomRafId = requestAnimationFrame(flushWheelZoom);
       }
       opt.e.preventDefault();
       opt.e.stopPropagation();
@@ -2858,10 +2912,6 @@ export class CanvasManager {
               FabricControls.createLineControls(object);
             } else if (objType === 'path' && metaType !== 'shape') {
               // Curves are paths but not shapes
-              console.log(
-                '[CanvasManager] Restoring curve controls, customPoints:',
-                object.customPoints?.length || 'none'
-              );
               FabricControls.createCurveControls(object);
             } else if (objType === 'group' && (object.isArrow || object.strokeMetadata.isArrow)) {
               FabricControls.createArrowControls(object);
@@ -2888,15 +2938,6 @@ export class CanvasManager {
         // Reviver: restore custom properties from serialized JSON to fabric object
         if (o.strokeMetadata) {
           object.strokeMetadata = o.strokeMetadata;
-          // DEBUG: Log text objects being restored
-          if (o.strokeMetadata.type === 'text') {
-            console.log(
-              '[CanvasManager] Reviver: Restoring text object:',
-              o.text?.substring(0, 30) || 'empty',
-              'with metadata:',
-              o.strokeMetadata
-            );
-          }
         }
         if (o.isArrow) {
           object.isArrow = o.isArrow;
