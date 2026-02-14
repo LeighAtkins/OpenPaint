@@ -11,7 +11,13 @@ export class ArrowManager {
       startArrow: false,
       endArrow: false,
       arrowSize: 10,
+      arrowStyle: 'hand-2',
+      arrowSpread: 1,
+      ghostBaseline: true,
+      dimensionOffset: 18,
     };
+
+    this.dimensionDragState = null;
   }
 
   init() {
@@ -27,7 +33,11 @@ export class ArrowManager {
     const startBtn = document.getElementById('arrowStartBtn');
     const endBtn = document.getElementById('arrowEndBtn');
     const sizeInput = document.getElementById('arrowSize');
+    const sizeInputTop = document.getElementById('arrowSizeTop');
     const styleSelect = document.getElementById('arrowStyle');
+    const styleSelectTop = document.getElementById('arrowStyleTop');
+    const spreadInputTop = document.getElementById('arrowSpreadTop');
+    const ghostInputTop = document.getElementById('arrowGhostTop');
 
     if (startBtn) {
       startBtn.addEventListener('click', () => this.toggleArrow('start'));
@@ -44,9 +54,36 @@ export class ArrowManager {
       });
     }
 
+    if (sizeInputTop) {
+      sizeInputTop.addEventListener('input', e => {
+        const size = parseInt(e.target.value, 10);
+        this.updateSetting('arrowSize', size);
+      });
+    }
+
     if (styleSelect) {
       styleSelect.addEventListener('change', e => {
         this.updateSetting('arrowStyle', e.target.value);
+      });
+    }
+
+    if (styleSelectTop) {
+      styleSelectTop.addEventListener('change', e => {
+        this.updateSetting('arrowStyle', e.target.value);
+      });
+    }
+
+    if (spreadInputTop) {
+      spreadInputTop.addEventListener('input', e => {
+        const pct = parseInt(e.target.value, 10);
+        const spread = Math.max(0.5, Math.min(1.8, pct / 100));
+        this.updateSetting('arrowSpread', spread);
+      });
+    }
+
+    if (ghostInputTop) {
+      ghostInputTop.addEventListener('change', e => {
+        this.updateSetting('ghostBaseline', Boolean(e.target.checked));
       });
     }
 
@@ -54,6 +91,125 @@ export class ArrowManager {
     this.canvas.on('selection:created', e => this.updateButtonState(e.selected));
     this.canvas.on('selection:updated', e => this.updateButtonState(e.selected));
     this.canvas.on('selection:cleared', () => this.updateButtonState(null));
+
+    // Right-click + drag on dimension arrows to move the dimension line offset
+    this.canvas.on('mouse:down', opt => {
+      const evt = opt?.e;
+      const target = opt?.target;
+      if (!target || target.type !== 'line') return;
+      if (target.arrowSettings?.arrowStyle !== 'dimension') return;
+
+      const pointer = this.canvas.getPointer(evt);
+      target.__dimensionDragStart = {
+        object: target,
+        startPointer: { x: pointer.x, y: pointer.y },
+        startOffset: Number(target.arrowSettings?.dimensionOffset ?? 18),
+        anchorLeft: Number(target.left || 0),
+        anchorTop: Number(target.top || 0),
+      };
+
+      if (evt.button === 2) {
+        evt.preventDefault();
+        this.dimensionDragState = { ...target.__dimensionDragStart };
+        this.canvas.defaultCursor = 'ns-resize';
+      }
+    });
+
+    this.canvas.on('object:moving', opt => {
+      const target = opt?.target;
+      if (!target || target.type !== 'line') return;
+      if (target.arrowSettings?.arrowStyle !== 'dimension') return;
+
+      const drag = target.__dimensionDragStart;
+      const evt = opt?.e;
+      if (!drag || !evt) return;
+
+      const endpoints = this.getLineWorldEndpoints(target);
+      if (!endpoints) return;
+
+      const pointer = this.canvas.getPointer(evt);
+      const deltaX = pointer.x - drag.startPointer.x;
+      const deltaY = pointer.y - drag.startPointer.y;
+      const vx = endpoints.x2 - endpoints.x1;
+      const vy = endpoints.y2 - endpoints.y1;
+      const len = Math.hypot(vx, vy) || 1;
+      const nx = -vy / len;
+      const ny = vx / len;
+      const projected = deltaX * nx + deltaY * ny;
+
+      const nextOffset = Math.max(-2500, Math.min(2500, drag.startOffset + projected));
+      target.arrowSettings = target.arrowSettings || { ...this.defaultSettings };
+      target.arrowSettings.dimensionOffset = nextOffset;
+
+      // Keep source line fixed; only move the dimension overlay
+      target.set({
+        left: drag.anchorLeft,
+        top: drag.anchorTop,
+      });
+      target.setCoords();
+      this.syncArrowMetadata(target);
+      target.dirty = true;
+      this.canvas.requestRenderAll();
+    });
+
+    this.canvas.on('mouse:move', opt => {
+      if (!this.dimensionDragState) return;
+      const evt = opt?.e;
+      if (!evt) return;
+      evt.preventDefault();
+
+      const { object, startPointer, startOffset } = this.dimensionDragState;
+      if (!object || object.type !== 'line') return;
+
+      const endpoints = this.getLineWorldEndpoints(object);
+      if (!endpoints) return;
+
+      const pointer = this.canvas.getPointer(evt);
+      const deltaX = pointer.x - startPointer.x;
+      const deltaY = pointer.y - startPointer.y;
+      const vx = endpoints.x2 - endpoints.x1;
+      const vy = endpoints.y2 - endpoints.y1;
+      const len = Math.hypot(vx, vy) || 1;
+      const nx = -vy / len;
+      const ny = vx / len;
+      const projected = deltaX * nx + deltaY * ny;
+
+      const nextOffset = Math.max(-2500, Math.min(2500, startOffset + projected));
+      object.arrowSettings = object.arrowSettings || { ...this.defaultSettings };
+      object.arrowSettings.dimensionOffset = nextOffset;
+      this.syncArrowMetadata(object);
+      object.dirty = true;
+      this.canvas.requestRenderAll();
+    });
+
+    this.canvas.on('mouse:up', () => {
+      const active = this.canvas.getActiveObject?.();
+      const hadLeftDrag = Boolean(active?.__dimensionDragStart);
+      if (hadLeftDrag) {
+        delete active.__dimensionDragStart;
+      }
+
+      const hadRightDrag = Boolean(this.dimensionDragState);
+      if (hadRightDrag) {
+        this.dimensionDragState = null;
+        this.canvas.defaultCursor = 'default';
+      }
+
+      if ((hadLeftDrag || hadRightDrag) && window.app?.historyManager?.saveState) {
+        window.app.historyManager.saveState({ force: true, reason: 'arrow:dimension-offset' });
+      }
+    });
+
+    const upperCanvas = this.canvas.upperCanvasEl;
+    if (upperCanvas && !upperCanvas.__arrowContextMenuBound) {
+      upperCanvas.__arrowContextMenuBound = true;
+      upperCanvas.addEventListener('contextmenu', evt => {
+        const active = this.canvas.getActiveObject?.();
+        if (active?.type === 'line' && active?.arrowSettings?.arrowStyle === 'dimension') {
+          evt.preventDefault();
+        }
+      });
+    }
 
     // Listen for object creation to apply default settings
     this.canvas.on('object:added', e => {
@@ -121,6 +277,12 @@ export class ArrowManager {
           }
 
           obj.arrowSettings[key] = value;
+          if (key === 'arrowStyle' && value === 'dimension') {
+            if (!obj.arrowSettings.startArrow && !obj.arrowSettings.endArrow) {
+              obj.arrowSettings.startArrow = true;
+              obj.arrowSettings.endArrow = true;
+            }
+          }
           this.attachArrowRendering(obj);
           this.syncArrowMetadata(obj);
           obj.dirty = true;
@@ -132,6 +294,12 @@ export class ArrowManager {
     } else {
       // Update default settings
       this.defaultSettings[key] = value;
+      if (key === 'arrowStyle' && value === 'dimension') {
+        if (!this.defaultSettings.startArrow && !this.defaultSettings.endArrow) {
+          this.defaultSettings.startArrow = true;
+          this.defaultSettings.endArrow = true;
+        }
+      }
     }
   }
 
@@ -139,14 +307,20 @@ export class ArrowManager {
     const startBtn = document.getElementById('arrowStartBtn');
     const endBtn = document.getElementById('arrowEndBtn');
     const sizeInput = document.getElementById('arrowSize');
+    const sizeInputTop = document.getElementById('arrowSizeTop');
     const styleSelect = document.getElementById('arrowStyle');
+    const styleSelectTop = document.getElementById('arrowStyleTop');
+    const spreadInputTop = document.getElementById('arrowSpreadTop');
+    const ghostInputTop = document.getElementById('arrowGhostTop');
 
     let startActive = false;
     let startMixed = false;
     let endActive = false;
     let endMixed = false;
     let size = 15;
-    let style = 'triangular';
+    let style = 'hand-2';
+    let spread = 1;
+    let ghostBaseline = true;
     let isMixedSize = false;
     let isMixedStyle = false;
 
@@ -159,7 +333,9 @@ export class ArrowManager {
         const startStates = validObjects.map(obj => obj.arrowSettings?.startArrow ?? false);
         const endStates = validObjects.map(obj => obj.arrowSettings?.endArrow ?? false);
         const sizes = validObjects.map(obj => obj.arrowSettings?.arrowSize ?? 15);
-        const styles = validObjects.map(obj => obj.arrowSettings?.arrowStyle ?? 'triangular');
+        const styles = validObjects.map(obj => obj.arrowSettings?.arrowStyle ?? 'hand-2');
+        const spreads = validObjects.map(obj => obj.arrowSettings?.arrowSpread ?? 1);
+        const ghosts = validObjects.map(obj => obj.arrowSettings?.ghostBaseline ?? true);
 
         // All true, all false, or mixed
         startActive = startStates.every(s => s === true);
@@ -174,6 +350,12 @@ export class ArrowManager {
 
         style = styles[0];
         isMixedStyle = !styles.every(s => s === style);
+        spread = spreads[0];
+        ghostBaseline = ghosts.every(v => v === true)
+          ? true
+          : ghosts.every(v => v === false)
+            ? false
+            : ghosts[0];
       }
     }
     // Handle single object
@@ -182,19 +364,25 @@ export class ArrowManager {
         startArrow: false,
         endArrow: false,
         arrowSize: 15,
-        arrowStyle: 'triangular',
+        arrowStyle: 'hand-2',
+        arrowSpread: 1,
+        ghostBaseline: true,
       };
       startActive = settings.startArrow;
       endActive = settings.endArrow;
       size = settings.arrowSize || 15;
-      style = settings.arrowStyle || 'triangular';
+      style = settings.arrowStyle || 'hand-2';
+      spread = settings.arrowSpread ?? 1;
+      ghostBaseline = settings.ghostBaseline ?? true;
     }
     // Default settings when nothing is selected
     else {
       startActive = this.defaultSettings.startArrow;
       endActive = this.defaultSettings.endArrow;
       size = this.defaultSettings.arrowSize || 15;
-      style = this.defaultSettings.arrowStyle || 'triangular';
+      style = this.defaultSettings.arrowStyle || 'hand-2';
+      spread = this.defaultSettings.arrowSpread ?? 1;
+      ghostBaseline = this.defaultSettings.ghostBaseline ?? true;
     }
 
     // Update start arrow button
@@ -220,18 +408,60 @@ export class ArrowManager {
       sizeInput.style.opacity = isMixedSize ? '0.6' : '';
     }
 
+    if (sizeInputTop) {
+      sizeInputTop.value = size;
+      sizeInputTop.style.opacity = isMixedSize ? '0.6' : '';
+    }
+
     // Update style select
+    const styleForUi = style === 'hand-drawn' ? 'hand-1' : style;
     if (styleSelect) {
-      styleSelect.value = style;
+      styleSelect.value = styleForUi;
       styleSelect.style.opacity = isMixedStyle ? '0.6' : '';
+    }
+
+    if (styleSelectTop) {
+      styleSelectTop.value = styleForUi;
+      styleSelectTop.style.opacity = isMixedStyle ? '0.6' : '';
+    }
+
+    if (spreadInputTop) {
+      spreadInputTop.value = String(Math.round((spread || 1) * 100));
+    }
+
+    if (ghostInputTop) {
+      ghostInputTop.checked = Boolean(ghostBaseline);
     }
   }
 
   applyArrows(object) {
     // Apply current default settings to a new object
     object.arrowSettings = { ...this.defaultSettings };
+    object.objectCaching = false;
     this.attachArrowRendering(object);
     this.syncArrowMetadata(object);
+  }
+
+  captureBaselineGeometry(object) {
+    if (!object) return;
+    object.arrowSettings = object.arrowSettings || { ...this.defaultSettings };
+    if (object.arrowSettings.baselineCaptured) return;
+
+    if (object.type === 'line' && typeof object.calcLinePoints === 'function') {
+      const p = object.calcLinePoints();
+      object.arrowSettings.baseLine = { x1: p.x1, y1: p.y1, x2: p.x2, y2: p.y2 };
+      object.arrowSettings.baselineCaptured = true;
+      return;
+    }
+
+    if (object.type === 'path' && Array.isArray(object.path)) {
+      object.arrowSettings.basePath = JSON.parse(JSON.stringify(object.path));
+      object.arrowSettings.basePathOffset = {
+        x: object.pathOffset?.x || 0,
+        y: object.pathOffset?.y || 0,
+      };
+      object.arrowSettings.baselineCaptured = true;
+    }
   }
 
   syncArrowMetadata(object) {
@@ -240,8 +470,27 @@ export class ArrowManager {
     }
   }
 
+  getLineWorldEndpoints(object) {
+    if (!object || object.type !== 'line' || typeof object.calcLinePoints !== 'function') {
+      return null;
+    }
+
+    const p = object.calcLinePoints();
+    const matrix = object.calcTransformMatrix();
+    const fabricUtil = globalThis.fabric?.util;
+    if (!fabricUtil?.transformPoint || !globalThis.fabric?.Point) {
+      return null;
+    }
+
+    const p1 = fabricUtil.transformPoint(new globalThis.fabric.Point(p.x1, p.y1), matrix);
+    const p2 = fabricUtil.transformPoint(new globalThis.fabric.Point(p.x2, p.y2), matrix);
+    return { x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y };
+  }
+
   attachArrowRendering(object) {
     if (object._arrowRenderingAttached) return;
+
+    object.objectCaching = false;
 
     const originalRender = object._render;
     const self = this;
@@ -258,7 +507,14 @@ export class ArrowManager {
 
       ctx.save();
 
-      const { startArrow, endArrow, arrowSize, arrowStyle = 'triangular' } = this.arrowSettings;
+      const {
+        startArrow,
+        endArrow,
+        arrowSize,
+        arrowStyle = 'triangular',
+        arrowSpread = 1,
+        ghostBaseline = true,
+      } = this.arrowSettings;
       const strokeWidth = this.strokeWidth;
       const objScale = Math.max(Math.abs(this.scaleX || 1), Math.abs(this.scaleY || 1));
       const strokeActualWidth = strokeWidth * objScale;
@@ -297,9 +553,24 @@ export class ArrowManager {
       // If we draw in object space, it scales automatically.
       // So we just need `effectiveBaseSize`.
 
-      // Keep straight-line endpoints aligned to the visual base of the arrow head.
-      // For our arrowhead geometry, base center sits one arrow-size unit behind tip.
-      const extensionDistance = scaledArrowSize;
+      const normalizedStyle =
+        arrowStyle === 'hand-drawn'
+          ? 'hand-1'
+          : arrowStyle === 'double-line'
+            ? 'dimension'
+            : arrowStyle;
+
+      const extensionDistanceByStyle = {
+        triangular: 1,
+        filled: 1,
+        curved: 0.8,
+        open: 0,
+        'hand-1': 0.15,
+        'hand-2': 0.2,
+        'hand-3': 0.12,
+        dimension: 0,
+      };
+      const extensionDistance = scaledArrowSize * (extensionDistanceByStyle[normalizedStyle] ?? 1);
 
       // We need to modify the drawing of the line to be shorter.
       // This is tricky because `originalRender` draws the full line.
@@ -315,6 +586,11 @@ export class ArrowManager {
       //    Re-implementing line render is easy. Path is harder.
 
       if (this.type === 'line') {
+        if (!this.arrowSettings?.baselineCaptured && this.selectable) {
+          self.captureBaselineGeometry(this);
+          self.syncArrowMetadata(this);
+        }
+
         // Re-implement Line rendering with shortening
         const p = this.calcLinePoints();
         let x1 = p.x1;
@@ -332,6 +608,113 @@ export class ArrowManager {
         let endX = x2;
         let endY = y2;
 
+        if (ghostBaseline && normalizedStyle === 'dimension' && this.arrowSettings?.baseLine) {
+          const b = this.arrowSettings.baseLine;
+          ctx.save();
+          ctx.globalAlpha = 0.35;
+          ctx.setLineDash([5, 6]);
+          ctx.beginPath();
+          ctx.moveTo(b.x1, b.y1);
+          ctx.lineTo(b.x2, b.y2);
+          ctx.lineWidth = Math.max(1, this.strokeWidth * 0.85);
+          ctx.strokeStyle = this.stroke;
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        if (normalizedStyle === 'dimension') {
+          const lenSafe = Math.max(len, 1);
+          const nx = -dy / lenSafe;
+          const ny = dx / lenSafe;
+          const offset = Number(this.arrowSettings?.dimensionOffset ?? 18);
+
+          const d1x = x1 + nx * offset;
+          const d1y = y1 + ny * offset;
+          const d2x = x2 + nx * offset;
+          const d2y = y2 + ny * offset;
+
+          // Extension lines from measured line to dimension line
+          ctx.save();
+          ctx.globalAlpha = 0.55;
+          ctx.setLineDash([]);
+          ctx.beginPath();
+          ctx.moveTo(x1, y1);
+          ctx.lineTo(d1x, d1y);
+          ctx.moveTo(x2, y2);
+          ctx.lineTo(d2x, d2y);
+          ctx.lineWidth = Math.max(1, this.strokeWidth * 0.9);
+          ctx.strokeStyle = this.stroke;
+          ctx.stroke();
+          ctx.restore();
+
+          // Dotted dimension line between offset endpoints
+          ctx.save();
+          ctx.globalAlpha = 0.9;
+          ctx.setLineDash([4, 5]);
+          ctx.beginPath();
+          ctx.moveTo(d1x, d1y);
+          ctx.lineTo(d2x, d2y);
+          ctx.lineWidth = Math.max(1, this.strokeWidth);
+          ctx.strokeStyle = this.stroke;
+          ctx.stroke();
+          ctx.restore();
+
+          // End ticks
+          const tickHalf = Math.max(4, scaledArrowSize * 0.45);
+          ctx.save();
+          ctx.setLineDash([]);
+          ctx.beginPath();
+          ctx.moveTo(d1x - nx * tickHalf, d1y - ny * tickHalf);
+          ctx.lineTo(d1x + nx * tickHalf, d1y + ny * tickHalf);
+          ctx.moveTo(d2x - nx * tickHalf, d2y - ny * tickHalf);
+          ctx.lineTo(d2x + nx * tickHalf, d2y + ny * tickHalf);
+          ctx.lineWidth = Math.max(1, this.strokeWidth * 0.95);
+          ctx.strokeStyle = this.stroke;
+          ctx.stroke();
+          ctx.restore();
+
+          // Arrowheads on dimension line, pointing inward
+          if (startArrow) {
+            self.drawArrowhead(
+              ctx,
+              d1x,
+              d1y,
+              angle + Math.PI,
+              scaledArrowSize,
+              'open',
+              this.stroke,
+              arrowSpread
+            );
+          }
+          if (endArrow) {
+            self.drawArrowhead(
+              ctx,
+              d2x,
+              d2y,
+              angle,
+              scaledArrowSize,
+              'open',
+              this.stroke,
+              arrowSpread
+            );
+          }
+
+          // Keep original measured line as subtle dotted reference
+          ctx.save();
+          ctx.globalAlpha = 0.22;
+          ctx.setLineDash([3, 5]);
+          ctx.beginPath();
+          ctx.moveTo(x1, y1);
+          ctx.lineTo(x2, y2);
+          ctx.lineWidth = Math.max(1, this.strokeWidth * 0.9);
+          ctx.strokeStyle = this.stroke;
+          ctx.stroke();
+          ctx.restore();
+
+          ctx.restore();
+          return;
+        }
+
         if (startArrow) {
           startX = x1 + Math.cos(angle) * extensionDistance;
           startY = y1 + Math.sin(angle) * extensionDistance;
@@ -343,8 +726,9 @@ export class ArrowManager {
             y1,
             angle + Math.PI,
             scaledArrowSize,
-            arrowStyle,
-            this.stroke
+            normalizedStyle,
+            this.stroke,
+            arrowSpread
           );
         }
 
@@ -353,19 +737,32 @@ export class ArrowManager {
           endY = y2 - Math.sin(angle) * extensionDistance;
 
           // Draw end arrow
-          self.drawArrowhead(ctx, x2, y2, angle, scaledArrowSize, arrowStyle, this.stroke);
+          self.drawArrowhead(
+            ctx,
+            x2,
+            y2,
+            angle,
+            scaledArrowSize,
+            normalizedStyle,
+            this.stroke,
+            arrowSpread
+          );
         }
 
         // Draw the shortened line
+        ctx.setLineDash(this.strokeDashArray || []);
         ctx.beginPath();
         ctx.moveTo(startX, startY);
         ctx.lineTo(endX, endY);
         ctx.lineWidth = this.strokeWidth;
         ctx.strokeStyle = this.stroke;
         ctx.lineCap = this.strokeLineCap;
-        ctx.strokeDashArray = this.strokeDashArray;
         ctx.stroke();
       } else if (this.type === 'path') {
+        if (!this.arrowSettings?.baselineCaptured && this.selectable) {
+          self.captureBaselineGeometry(this);
+          self.syncArrowMetadata(this);
+        }
         originalRender.call(this, ctx);
 
         const path = this.path;
@@ -484,8 +881,9 @@ export class ArrowManager {
             startPoint.y - offsetY,
             startAngle,
             scaledArrowSize,
-            arrowStyle,
-            this.stroke
+            normalizedStyle,
+            this.stroke,
+            arrowSpread
           );
         }
 
@@ -496,8 +894,9 @@ export class ArrowManager {
             endPoint.y - offsetY,
             endAngle,
             scaledArrowSize,
-            arrowStyle,
-            this.stroke
+            normalizedStyle,
+            this.stroke,
+            arrowSpread
           );
         }
       }
@@ -508,7 +907,7 @@ export class ArrowManager {
     object._arrowRenderingAttached = true;
   }
 
-  drawArrowhead(ctx, x, y, angle, size, style, color) {
+  drawArrowhead(ctx, x, y, angle, size, style, color, spread = 1) {
     ctx.save();
     ctx.translate(x, y);
     ctx.rotate(angle);
@@ -526,7 +925,7 @@ export class ArrowManager {
     // Let's set a sensible default for the outline if not specified.
     ctx.lineWidth = 1;
 
-    const ARROW_TAN_30 = Math.tan(Math.PI / 6); // ~0.577
+    const ARROW_TAN_30 = Math.tan(Math.PI / 6) * Math.max(0.5, Math.min(1.8, spread));
 
     if (style === 'triangular') {
       // Filled triangular arrowhead with thin outline
@@ -554,6 +953,69 @@ export class ArrowManager {
       ctx.quadraticCurveTo(-curveSize, -curveSize * 0.5, -size, -size * ARROW_TAN_30);
       ctx.moveTo(0, 0);
       ctx.quadraticCurveTo(-curveSize, curveSize * 0.5, -size, size * ARROW_TAN_30);
+      ctx.stroke();
+    } else if (style === 'open') {
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(-size, -size * ARROW_TAN_30);
+      ctx.moveTo(0, 0);
+      ctx.lineTo(-size, size * ARROW_TAN_30);
+      ctx.stroke();
+    } else if (style === 'hand-1' || style === 'hand-drawn') {
+      ctx.lineWidth = 1.9;
+      const t = size * ARROW_TAN_30;
+      const wobble = Math.max(1.6, size * 0.16);
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.quadraticCurveTo(-size * 0.2, -t * 0.4 - wobble, -size * 0.98, -t * 1.08);
+      ctx.moveTo(0, 0);
+      ctx.quadraticCurveTo(-size * 0.25, t * 0.3 + wobble, -size * 1.05, t * 1.02);
+      ctx.moveTo(-size * 0.35, -t * 0.1);
+      ctx.quadraticCurveTo(-size * 0.65, -t * 0.6, -size * 1.08, -t * 0.86);
+      ctx.moveTo(-size * 0.28, t * 0.16);
+      ctx.quadraticCurveTo(-size * 0.62, t * 0.65, -size * 1.1, t * 0.9);
+      ctx.stroke();
+    } else if (style === 'hand-2') {
+      ctx.lineWidth = 2.1;
+      const t = size * ARROW_TAN_30;
+      const wobble = Math.max(0.9, size * 0.08);
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.beginPath();
+      // Draw as a single continuous stroke so the tip stays smooth at high zoom
+      ctx.moveTo(-size * 1.02, -t * 0.98);
+      ctx.bezierCurveTo(-size * 0.58, -t * 0.74, -size * 0.24, -t * 0.08 - wobble, 0, 0);
+      ctx.bezierCurveTo(
+        -size * 0.26,
+        t * 0.1 + wobble,
+        -size * 0.6,
+        t * 0.76,
+        -size * 1.04,
+        t * 0.94
+      );
+      ctx.stroke();
+    } else if (style === 'hand-3') {
+      ctx.lineWidth = 1.7;
+      const t = size * ARROW_TAN_30;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(-size * 0.94, -t * 1.02);
+      ctx.moveTo(-size * 0.16, -t * 0.2);
+      ctx.lineTo(-size * 1.06, -t * 0.86);
+      ctx.moveTo(0, 0);
+      ctx.lineTo(-size * 1.02, t * 0.96);
+      ctx.moveTo(-size * 0.2, t * 0.22);
+      ctx.lineTo(-size * 1.08, t * 0.9);
+      ctx.stroke();
+    } else if (style === 'dimension') {
+      ctx.lineWidth = 2;
+      const t = size * ARROW_TAN_30;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(-size, -t);
+      ctx.moveTo(0, 0);
+      ctx.lineTo(-size, t);
       ctx.stroke();
     } else {
       // Default fallback (triangular)

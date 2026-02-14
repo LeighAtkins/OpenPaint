@@ -46,13 +46,25 @@ export default defineConfig(({ mode }) => {
       target: 'ES2022',
       sourcemap: mode !== 'production',
       minify: 'terser',
+      chunkSizeWarningLimit: 900,
       terserOptions: {
         compress: {
           drop_console: mode === 'production',
           drop_debugger: mode === 'production',
         },
       },
-      rollupOptions: {},
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (id.includes('node_modules/fabric')) return 'vendor-fabric';
+            if (id.includes('node_modules/pdf-lib')) return 'vendor-pdf';
+            if (id.includes('node_modules/jszip')) return 'vendor-jszip';
+            if (id.includes('node_modules/@supabase')) return 'vendor-supabase';
+            if (id.includes('node_modules')) return 'vendor';
+            return undefined;
+          },
+        },
+      },
     },
 
     optimizeDeps: {

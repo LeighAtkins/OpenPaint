@@ -204,24 +204,29 @@ import { IMAGE_PANEL_STATES, setImagePanelState } from './panel-state.js';
       wasExpanded = isExpanded;
     }
 
-    // Initial check and periodic checks
+    // Initial check
     setTimeout(() => {
       checkIfExpandable();
     }, 500);
 
-    // Only run periodic checks on mobile (where expand/collapse matters)
-    const checkInterval = isMobileDevice()
-      ? setInterval(() => {
-          checkIfExpandable();
-        }, 2000)
-      : null;
-
-    // Clean up interval if not needed
-    if (!checkInterval && !isMobileDevice()) {
-      // On desktop, only check once after initial setup
+    // On desktop, only check once after initial setup
+    if (!isMobileDevice()) {
       setTimeout(() => {
         checkIfExpandable();
       }, 1000);
+    }
+
+    // Re-check when viewport or toolbar size changes instead of polling
+    const handleExpandableResize = () => {
+      checkIfExpandable();
+    };
+    window.addEventListener('resize', handleExpandableResize, { passive: true });
+    let toolbarResizeObserver: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== 'undefined') {
+      toolbarResizeObserver = new ResizeObserver(() => {
+        checkIfExpandable();
+      });
+      toolbarResizeObserver.observe(toolbarWrap);
     }
 
     // Also check on scroll
@@ -377,10 +382,17 @@ import { IMAGE_PANEL_STATES, setImagePanelState } from './panel-state.js';
       }, 150);
     });
 
-    // Cleanup interval on page unload
+    // Cleanup listeners on page unload
     window.addEventListener('beforeunload', () => {
-      if (checkInterval) {
-        clearInterval(checkInterval);
+      if (resizeTimeout) {
+        clearTimeout(resizeTimeout);
+      }
+      if (checkIfExpandableTimeout) {
+        clearTimeout(checkIfExpandableTimeout);
+      }
+      window.removeEventListener('resize', handleExpandableResize);
+      if (toolbarResizeObserver) {
+        toolbarResizeObserver.disconnect();
       }
     });
   })();

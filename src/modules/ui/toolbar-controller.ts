@@ -342,6 +342,66 @@ export function initToolbarController() {
       console.warn('[TagBackground] Button element not found');
     }
 
+    const connectorToneBtn = document.getElementById('connectorToneBtn');
+    const connectorPalette = [
+      { label: 'White', value: '#ffffff' },
+      { label: 'Gray', value: '#9ca3af' },
+      { label: 'Black', value: '#000000' },
+    ];
+
+    const syncConnectorToneBtn = () => {
+      if (!connectorToneBtn) return;
+      const current = String(window.app?.tagManager?.connectorColor || '#ffffff').toLowerCase();
+      const idx = connectorPalette.findIndex(item => item.value === current);
+      const active = idx >= 0 ? connectorPalette[idx] : connectorPalette[0];
+      connectorToneBtn.textContent = `Connector: ${active.label}`;
+    };
+
+    if (connectorToneBtn) {
+      connectorToneBtn.addEventListener('click', () => {
+        const tagManager = window.app?.tagManager;
+        if (!tagManager) return;
+        const current = String(tagManager.connectorColor || '#ffffff').toLowerCase();
+        const idx = connectorPalette.findIndex(item => item.value === current);
+        const next =
+          connectorPalette[(idx + 1 + connectorPalette.length) % connectorPalette.length];
+        tagManager.setConnectorColor(next.value);
+        syncConnectorToneBtn();
+      });
+      setTimeout(syncConnectorToneBtn, 600);
+    }
+
+    const arrowOptionsBtn = document.getElementById('arrowOptionsBtn');
+    const arrowOptionsMenu = document.getElementById('arrowOptionsMenu');
+    if (arrowOptionsBtn && arrowOptionsMenu) {
+      const closeArrowOptions = () => {
+        arrowOptionsMenu.classList.add('hidden');
+        arrowOptionsBtn.setAttribute('aria-expanded', 'false');
+      };
+
+      arrowOptionsBtn.setAttribute('aria-haspopup', 'true');
+      arrowOptionsBtn.setAttribute('aria-expanded', 'false');
+
+      arrowOptionsBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        const isOpen = !arrowOptionsMenu.classList.contains('hidden');
+        if (isOpen) {
+          closeArrowOptions();
+        } else {
+          arrowOptionsMenu.classList.remove('hidden');
+          arrowOptionsBtn.setAttribute('aria-expanded', 'true');
+        }
+      });
+
+      arrowOptionsMenu.addEventListener('click', e => {
+        e.stopPropagation();
+      });
+
+      document.addEventListener('click', () => {
+        closeArrowOptions();
+      });
+    }
+
     // Auto-update shared project when state saves (debounced)
     if (window.updateSharedProject && window.saveState && !window.__autoUpdateSharePatched) {
       window.__autoUpdateSharePatched = true;
@@ -570,13 +630,13 @@ export function initToolbarController() {
       // Load Project button (created by reparent)
       const loadBtn = document.getElementById('loadProject');
       if (loadBtn) {
-        wrapSmartLabel(loadBtn, 'Load Project', 'Load');
+        wrapSmartLabel(loadBtn, 'Load .opaint', 'Load');
       }
 
       // Save Project button (created dynamically)
       const saveBtn = document.getElementById('saveProjectTop');
       if (saveBtn) {
-        wrapSmartLabel(saveBtn, 'Save Project', 'Save');
+        wrapSmartLabel(saveBtn, 'Save .opaint', 'Save');
         // Make it visually distinct from bottom save button
         saveBtn.style.background = '#3b82f6'; // Blue instead of green
         saveBtn.style.borderColor = '#2563eb';
@@ -1009,21 +1069,90 @@ export function initToolbarController() {
       if (!resolved) return;
       saveActiveTabState(resolved);
     }
+    function getPreferredCaptureArea() {
+      const winW = Math.max(window.innerWidth, 1);
+      const winH = Math.max(window.innerHeight, 1);
+
+      const toolbarWrapEl = document.getElementById('toolbarWrap');
+      const canvasControlsEl =
+        document.getElementById('canvasControls') ||
+        document.getElementById('canvasControlsContent');
+      const strokePanelEl = document.getElementById('strokePanel');
+      const imagePanelEl = document.getElementById('imagePanel');
+
+      const verticalGap = 12;
+      const horizontalGap = 16;
+
+      const top = toolbarWrapEl
+        ? Math.round(toolbarWrapEl.getBoundingClientRect().bottom + verticalGap)
+        : verticalGap;
+      const bottom = canvasControlsEl
+        ? Math.round(canvasControlsEl.getBoundingClientRect().top - verticalGap)
+        : winH - verticalGap;
+
+      const left = strokePanelEl
+        ? Math.round(strokePanelEl.getBoundingClientRect().right + horizontalGap)
+        : horizontalGap;
+      const right = imagePanelEl
+        ? Math.round(imagePanelEl.getBoundingClientRect().left - horizontalGap)
+        : winW - horizontalGap;
+
+      const safeTop = Math.max(0, top);
+      const safeBottom = Math.min(winH, bottom);
+      const safeLeft = Math.max(0, left);
+      const safeRight = Math.min(winW, right);
+
+      if (safeRight <= safeLeft || safeBottom <= safeTop) {
+        return {
+          left: 0,
+          top: 0,
+          width: winW,
+          height: winH,
+        };
+      }
+
+      return {
+        left: safeLeft,
+        top: safeTop,
+        width: safeRight - safeLeft,
+        height: safeBottom - safeTop,
+      };
+    }
     function resolveCaptureFrameRect(stored) {
       const winW = Math.max(window.innerWidth, 1);
       const winH = Math.max(window.innerHeight, 1);
       const targetAspect = 4 / 3;
+      const preferredArea = getPreferredCaptureArea();
 
-      let fallbackWidth = Math.min(800, winW);
+      let fallbackWidth = Math.round(preferredArea.width * 0.96);
       let fallbackHeight = Math.round(fallbackWidth / targetAspect);
+      if (fallbackHeight > preferredArea.height * 0.96) {
+        fallbackHeight = Math.round(preferredArea.height * 0.96);
+        fallbackWidth = Math.round(fallbackHeight * targetAspect);
+      }
+      fallbackWidth = Math.max(200, Math.min(fallbackWidth, preferredArea.width));
+      fallbackHeight = Math.max(150, Math.min(fallbackHeight, preferredArea.height));
+
+      // Fallback to old defaults if preferred region is very constrained
+      if (fallbackWidth < 200 || fallbackHeight < 150) {
+        fallbackWidth = Math.min(800, winW);
+        fallbackHeight = Math.round(fallbackWidth / targetAspect);
+      }
+
       if (fallbackHeight > winH) {
         fallbackHeight = Math.min(600, winH);
         fallbackWidth = Math.round(fallbackHeight * targetAspect);
       }
 
       const fallback = {
-        left: Math.max(0, Math.round((winW - fallbackWidth) / 2)),
-        top: Math.max(0, Math.round((winH - fallbackHeight) / 2)),
+        left: Math.max(
+          preferredArea.left,
+          Math.round(preferredArea.left + (preferredArea.width - fallbackWidth) / 2)
+        ),
+        top: Math.max(
+          preferredArea.top,
+          Math.round(preferredArea.top + (preferredArea.height - fallbackHeight) / 2)
+        ),
         width: fallbackWidth,
         height: fallbackHeight,
       };
@@ -1246,11 +1375,18 @@ export function initToolbarController() {
       return document.body.classList.contains('capture-unlocked');
     }
     function buildCenteredRectFromSize(width, height) {
-      const nextWidth = Math.max(100, Math.min(width || 800, window.innerWidth));
-      const nextHeight = Math.max(80, Math.min(height || 600, window.innerHeight));
+      const preferredArea = getPreferredCaptureArea();
+      const nextWidth = Math.max(100, Math.min(width || 800, preferredArea.width));
+      const nextHeight = Math.max(80, Math.min(height || 600, preferredArea.height));
       return {
-        left: Math.max(0, Math.round((window.innerWidth - nextWidth) / 2)),
-        top: Math.max(0, Math.round((window.innerHeight - nextHeight) / 2)),
+        left: Math.max(
+          preferredArea.left,
+          Math.round(preferredArea.left + (preferredArea.width - nextWidth) / 2)
+        ),
+        top: Math.max(
+          preferredArea.top,
+          Math.round(preferredArea.top + (preferredArea.height - nextHeight) / 2)
+        ),
         width: Math.round(nextWidth),
         height: Math.round(nextHeight),
       };
@@ -1615,6 +1751,8 @@ export function initToolbarController() {
       if (!canvas || canvas.__captureTabViewportTracking) return false;
       canvas.__captureTabViewportTracking = true;
       let raf = null;
+      let lastSyncAt = 0;
+      const minSyncGapMs = 120;
       const sync = () => {
         const label = getActiveLabel();
         const state = ensureCaptureTabsForLabel(label);
@@ -1654,23 +1792,35 @@ export function initToolbarController() {
         state.lastNonMasterId = activeTab.id;
         renderMasterOverlay(label);
       };
-      const scheduleSync = () => {
+      const scheduleSync = (force = false) => {
+        const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
+        if (!force && now - lastSyncAt < minSyncGapMs) {
+          return;
+        }
         if (raf !== null) return;
         raf = requestAnimationFrame(() => {
           raf = null;
+          lastSyncAt = typeof performance !== 'undefined' ? performance.now() : Date.now();
           sync();
         });
       };
-      canvas.on('mouse:wheel', scheduleSync);
-      canvas.on('mouse:move', scheduleSync);
-      canvas.on('mouse:up', scheduleSync);
+      canvas.on('mouse:wheel', () => scheduleSync(true));
+      canvas.on('mouse:move', () => scheduleSync(false));
+      canvas.on('mouse:up', () => scheduleSync(true));
       return true;
     }
-    const viewportTrackingTimer = setInterval(() => {
+    const tryInstallViewportTracking = (attempt = 0) => {
       if (installTabViewportTracking()) {
-        clearInterval(viewportTrackingTimer);
+        return;
       }
-    }, 250);
+      if (attempt >= 20) {
+        return;
+      }
+      setTimeout(() => {
+        tryInstallViewportTracking(attempt + 1);
+      }, 250);
+    };
+    tryInstallViewportTracking();
 
     window.saveCurrentCaptureFrameForLabel = saveCurrentCaptureFrameForLabel;
     window.applyCaptureFrameForLabel = applyCaptureFrameForLabel;
@@ -1794,24 +1944,29 @@ export function initToolbarController() {
         wasExpanded = isExpanded;
       }
 
-      // Initial check and periodic checks
+      // Initial check
       setTimeout(() => {
         checkIfExpandable();
       }, 500);
 
-      // Only run periodic checks on mobile (where expand/collapse matters)
-      const checkInterval = isMobileDevice()
-        ? setInterval(() => {
-            checkIfExpandable();
-          }, 2000)
-        : null;
-
-      // Clean up interval if not needed
-      if (!checkInterval && !isMobileDevice()) {
-        // On desktop, only check once after initial setup
+      // On desktop, run one additional late check after initial setup
+      if (!isMobileDevice()) {
         setTimeout(() => {
           checkIfExpandable();
         }, 1000);
+      }
+
+      // Re-check when viewport or toolbar size changes instead of polling
+      const handleExpandableResize = () => {
+        checkIfExpandable();
+      };
+      window.addEventListener('resize', handleExpandableResize, { passive: true });
+      let toolbarResizeObserver = null;
+      if (typeof ResizeObserver !== 'undefined') {
+        toolbarResizeObserver = new ResizeObserver(() => {
+          checkIfExpandable();
+        });
+        toolbarResizeObserver.observe(toolbarWrap);
       }
 
       // Also check on scroll
@@ -1961,9 +2116,14 @@ export function initToolbarController() {
         }, 150);
       });
 
-      // Cleanup interval on page unload
+      // Cleanup listeners/observers on page unload
       window.addEventListener('beforeunload', () => {
-        clearInterval(checkInterval);
+        clearTimeout(resizeTimeout);
+        clearTimeout(checkIfExpandable.timeout);
+        window.removeEventListener('resize', handleExpandableResize);
+        if (toolbarResizeObserver) {
+          toolbarResizeObserver.disconnect();
+        }
       });
     })();
 
@@ -1997,11 +2157,122 @@ export function initToolbarController() {
     }
 
     // Show All Measurements functionality
+    const generateMeasurementsList = () => {
+      const metadataManager = window.app?.metadataManager;
+      if (!metadataManager) {
+        window.app?.projectManager?.showStatusMessage?.(
+          'Measurement data not available yet.',
+          'error'
+        );
+        return;
+      }
+
+      const rows = [];
+      const buckets = metadataManager.strokeMeasurements || {};
+      Object.entries(buckets).forEach(([scopeLabel, scopeMeasurements]) => {
+        if (!scopeMeasurements || typeof scopeMeasurements !== 'object') return;
+        Object.keys(scopeMeasurements).forEach(strokeLabel => {
+          const value = metadataManager.getMeasurementString(scopeLabel, strokeLabel);
+          if (!value) return;
+          rows.push({
+            scopeLabel,
+            strokeLabel,
+            value,
+          });
+        });
+      });
+
+      if (rows.length === 0) {
+        window.app?.projectManager?.showStatusMessage?.('No measurements to list yet.', 'info');
+        return;
+      }
+
+      rows.sort((a, b) => {
+        const scopeCompare = String(a.scopeLabel).localeCompare(String(b.scopeLabel), undefined, {
+          numeric: true,
+          sensitivity: 'base',
+        });
+        if (scopeCompare !== 0) return scopeCompare;
+        return String(a.strokeLabel).localeCompare(String(b.strokeLabel), undefined, {
+          numeric: true,
+          sensitivity: 'base',
+        });
+      });
+
+      const existing = document.getElementById('measurementsListModal');
+      if (existing) {
+        existing.remove();
+      }
+
+      const overlay = document.createElement('div');
+      overlay.id = 'measurementsListModal';
+      overlay.style.cssText =
+        'position:fixed;inset:0;background:rgba(15,23,42,0.45);z-index:12000;display:flex;align-items:center;justify-content:center;padding:20px;';
+
+      const panel = document.createElement('div');
+      panel.style.cssText =
+        'width:min(760px,95vw);max-height:min(78vh,720px);background:#fff;border-radius:12px;box-shadow:0 18px 45px rgba(2,6,23,.22);display:flex;flex-direction:column;overflow:hidden;';
+
+      const header = document.createElement('div');
+      header.style.cssText =
+        'display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid #e5e7eb;';
+      header.innerHTML = `<div style="font-weight:700;font-size:14px;color:#0f172a;">Measurements List (${rows.length})</div>`;
+
+      const closeBtn = document.createElement('button');
+      closeBtn.type = 'button';
+      closeBtn.textContent = 'Close';
+      closeBtn.style.cssText =
+        'border:1px solid #d1d5db;background:#fff;color:#334155;border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer;';
+      header.appendChild(closeBtn);
+
+      const body = document.createElement('div');
+      body.style.cssText = 'overflow:auto;padding:10px 12px;';
+
+      const table = document.createElement('table');
+      table.style.cssText = 'width:100%;border-collapse:collapse;font-size:12px;color:#0f172a;';
+      table.innerHTML =
+        '<thead><tr><th style="text-align:left;padding:8px;border-bottom:1px solid #e5e7eb;">View</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e5e7eb;">Label</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e5e7eb;">Measurement</th></tr></thead>';
+
+      const tbody = document.createElement('tbody');
+      rows.forEach(row => {
+        const tr = document.createElement('tr');
+        const viewCell = document.createElement('td');
+        viewCell.style.cssText = 'padding:8px;border-bottom:1px solid #f1f5f9;color:#475569;';
+        viewCell.textContent = String(row.scopeLabel);
+
+        const labelCell = document.createElement('td');
+        labelCell.style.cssText = 'padding:8px;border-bottom:1px solid #f1f5f9;font-weight:600;';
+        labelCell.textContent = String(row.strokeLabel);
+
+        const valueCell = document.createElement('td');
+        valueCell.style.cssText = 'padding:8px;border-bottom:1px solid #f1f5f9;';
+        valueCell.textContent = String(row.value);
+
+        tr.appendChild(viewCell);
+        tr.appendChild(labelCell);
+        tr.appendChild(valueCell);
+        tbody.appendChild(tr);
+      });
+      table.appendChild(tbody);
+      body.appendChild(table);
+
+      const closeModal = () => overlay.remove();
+      closeBtn.addEventListener('click', closeModal);
+      overlay.addEventListener('click', e => {
+        if (e.target === overlay) closeModal();
+      });
+
+      panel.appendChild(header);
+      panel.appendChild(body);
+      overlay.appendChild(panel);
+      document.body.appendChild(overlay);
+    };
+
+    window.generateMeasurementsList = generateMeasurementsList;
+
     if (showAllMeasurementsBtn) {
       showAllMeasurementsBtn.addEventListener('click', () => {
-        if (typeof window.generateMeasurementsList === 'function') {
-          window.generateMeasurementsList();
-        }
+        generateMeasurementsList();
       });
     }
 
@@ -5616,66 +5887,66 @@ export function initToolbarController() {
       }
     }, 2000);
 
-    // Track last known legacy count to avoid unnecessary syncs
+    // Sync legacy image list using mutation events instead of polling
     let lastLegacyCount = 0;
+    const syncLegacyListIfChanged = () => {
+      if (document.hidden) return;
 
-    // Also set up a periodic sync to catch any images that get added later (less frequent)
-    // Only run when tab is visible to reduce performance impact
-    let syncInterval;
-    const startSyncInterval = () => {
-      syncInterval = setInterval(() => {
-        // Skip if tab is not visible
-        if (document.hidden) return;
+      const imageListEl = document.getElementById('imageList');
+      const currentLegacyCount = imageListEl ? imageListEl.children.length : 0;
+      if (currentLegacyCount < lastLegacyCount) {
+        lastLegacyCount = currentLegacyCount;
+        return;
+      }
+      if (currentLegacyCount === lastLegacyCount) {
+        return;
+      }
 
-        const currentLegacyCount =
-          document.getElementById('imageList')?.querySelectorAll('.image-container').length || 0;
-        const currentRealImagesCount = imageGalleryData.filter(
-          item => !item.name?.includes('Demo Image') && !item.name?.includes('Blank Canvas')
-        ).length;
-
-        // Only sync if there's actually a change in legacy count
-        if (currentLegacyCount > lastLegacyCount) {
-          console.log('[PERIODIC] New legacy images detected, syncing...');
-          console.log(
-            `[PERIODIC] Legacy: ${currentLegacyCount} (was ${lastLegacyCount}), Gallery real: ${currentRealImagesCount}`
-          );
-
-          // No demo images are used anymore; skip clearing
-
-          syncLegacyImagesToGallery();
-
-          // Don't automatically switch views during periodic sync
-          // Let ProjectManager handle view switching based on user interaction
-          // Only update pills to reflect new images
-          if (typeof updatePills === 'function') {
-            setTimeout(() => {
-              updatePills();
-              if (typeof updateActivePill === 'function') {
-                updateActivePill();
-              }
-            }, 100);
-
-            if (typeof window.ensureImageListObserver === 'function') {
-              window.ensureImageListObserver();
-            } else {
-              window.__pendingImageListObserverInit = true;
-            }
+      syncLegacyImagesToGallery();
+      if (typeof updatePills === 'function') {
+        setTimeout(() => {
+          updatePills();
+          if (typeof updateActivePill === 'function') {
+            updateActivePill();
           }
+        }, 100);
 
-          lastLegacyCount = currentLegacyCount;
+        if (typeof window.ensureImageListObserver === 'function') {
+          window.ensureImageListObserver();
+        } else {
+          window.__pendingImageListObserverInit = true;
         }
-      }, 3000); // Check every 3 seconds instead of 2
+      }
+
+      lastLegacyCount = currentLegacyCount;
     };
 
-    // Start interval and handle visibility changes
-    startSyncInterval();
-    document.addEventListener('visibilitychange', () => {
-      if (document.hidden) {
-        clearInterval(syncInterval);
-      } else {
-        startSyncInterval();
+    const attachLegacyImageObserver = (attempt = 0) => {
+      const imageListEl = document.getElementById('imageList');
+      if (!imageListEl) {
+        if (attempt < 20) {
+          setTimeout(() => attachLegacyImageObserver(attempt + 1), 300);
+        }
+        return;
       }
-    });
+
+      lastLegacyCount = imageListEl.children.length;
+      const legacyImageObserver = new MutationObserver(() => {
+        syncLegacyListIfChanged();
+      });
+      legacyImageObserver.observe(imageListEl, { childList: true });
+
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) {
+          syncLegacyListIfChanged();
+        }
+      });
+
+      window.addEventListener('beforeunload', () => {
+        legacyImageObserver.disconnect();
+      });
+    };
+    attachLegacyImageObserver();
 
     // Force Show Panels (Fix for stuck hidden state)
     const mainPanels = ['strokePanel', 'imagePanel', 'canvasControls', 'topToolbar'];

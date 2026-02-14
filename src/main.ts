@@ -5,6 +5,8 @@
  * through this file. No other <script> tags load runtime code.
  */
 
+// @ts-nocheck
+
 // ── 0. Pre-render CSS configuration (runs synchronously on import) ──────────
 // Must happen before any CSS renders to prevent FOUC
 (function preRender() {

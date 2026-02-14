@@ -394,16 +394,25 @@ export class LineTool extends BaseTool {
       window.app.metadataManager.attachMetadata(this.line, imageLabel, strokeLabel);
       console.log(`Line created with label: ${strokeLabel}`);
 
+      const createdLine = this.line;
+      const commitHistory = () => {
+        if (window.app?.historyManager) {
+          window.app.historyManager.saveState({ force: true, reason: 'line:end' });
+        }
+      };
+
       // Create tag for the stroke
       if (window.app.tagManager) {
         setTimeout(() => {
-          window.app.tagManager.createTagForStroke(strokeLabel, imageLabel, this.line);
+          if (createdLine) {
+            window.app.tagManager.createTagForStroke(strokeLabel, imageLabel, createdLine);
+          }
+          commitHistory();
         }, 50);
+      } else {
+        commitHistory();
       }
-    }
-
-    // Save state after drawing completes
-    if (window.app?.historyManager) {
+    } else if (window.app?.historyManager) {
       window.app.historyManager.saveState({ force: true, reason: 'line:end' });
     }
 

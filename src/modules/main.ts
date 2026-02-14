@@ -932,12 +932,12 @@ export class App {
       return Math.max(1, Math.min(300, parsed));
     };
     const formatBrushWidth = (value: number): string => String(value);
+    const resizableTools = new Set(['line', 'curve', 'arrow', 'pencil', 'shape', 'privacy']);
 
     const handleAltBrushWheel = (wheelEvent: WheelEvent): boolean => {
       if (!wheelEvent.altKey) return false;
 
       const activeTool = this.toolManager?.activeToolName;
-      const resizableTools = new Set(['line', 'curve', 'arrow', 'pencil', 'shape', 'privacy']);
       if (!activeTool || !resizableTools.has(activeTool)) {
         return false;
       }
@@ -1015,6 +1015,7 @@ export class App {
       brushSizeSelect.addEventListener(
         'wheel',
         e => {
+          handleAltBrushWheel(e as WheelEvent);
           e.preventDefault();
         },
         { passive: false }
@@ -1022,32 +1023,6 @@ export class App {
 
       // Initialize to canonical displayed format
       commitBrushSizeValue(brushSizeSelect);
-    }
-
-    const upperCanvasEl = this.canvasManager.fabricCanvas?.upperCanvasEl as
-      | (HTMLCanvasElement & { __altBrushWheelBound?: boolean })
-      | undefined;
-    if (upperCanvasEl && !upperCanvasEl.__altBrushWheelBound) {
-      upperCanvasEl.__altBrushWheelBound = true;
-      upperCanvasEl.addEventListener(
-        'wheel',
-        wheelEvent => {
-          handleAltBrushWheel(wheelEvent);
-        },
-        { passive: false }
-      );
-    }
-
-    const docWithBrushWheel = document as Document & { __altBrushWheelBound?: boolean };
-    if (!docWithBrushWheel.__altBrushWheelBound) {
-      docWithBrushWheel.__altBrushWheelBound = true;
-      document.addEventListener(
-        'wheel',
-        wheelEvent => {
-          handleAltBrushWheel(wheelEvent);
-        },
-        { passive: false }
-      );
     }
 
     // Dash style control (dotted lines)

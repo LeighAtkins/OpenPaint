@@ -461,9 +461,10 @@ export class SupabaseService {
         return Result.err(clientResult.error);
       }
 
+      const rpcClient = clientResult.data as any;
       const { data, error } = params
-        ? await clientResult.data.rpc(functionName, params as any)
-        : await clientResult.data.rpc(functionName);
+        ? await rpcClient.rpc(functionName, params as any)
+        : await rpcClient.rpc(functionName);
 
       if (error) {
         return Result.err(

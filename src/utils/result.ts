@@ -3,9 +3,9 @@
  * Inspired by Rust's Result<T, E>
  */
 
-export type Result<T, E = Error> = 
-  | { success: true; data: T }
-  | { success: false; error: E };
+export type Result<T, E = Error> =
+  | { success: true; data: T; error?: never }
+  | { success: false; error: E; data?: never };
 
 export const Result = {
   ok<T>(data: T): Result<T, never> {
@@ -28,7 +28,7 @@ export const Result = {
     if (result.success) {
       return Result.ok(fn(result.data));
     }
-    return result;
+    return result as Result<U, E>;
   },
 
   mapErr<T, E, F>(result: Result<T, E>, fn: (error: E) => F): Result<T, F> {
@@ -38,14 +38,11 @@ export const Result = {
     return result;
   },
 
-  flatMap<T, U, E>(
-    result: Result<T, E>,
-    fn: (data: T) => Result<U, E>
-  ): Result<U, E> {
+  flatMap<T, U, E>(result: Result<T, E>, fn: (data: T) => Result<U, E>): Result<U, E> {
     if (result.success) {
       return fn(result.data);
     }
-    return result;
+    return result as Result<U, E>;
   },
 
   unwrap<T, E>(result: Result<T, E>): T {
@@ -88,7 +85,7 @@ export const Result = {
     } catch (error) {
       const mappedError = errorMapper
         ? errorMapper(error)
-        : (error instanceof Error ? error : new Error(String(error))) as E;
+        : ((error instanceof Error ? error : new Error(String(error))) as E);
       return Result.err(mappedError);
     }
   },
@@ -106,7 +103,9 @@ export const Result = {
       }
       values.push(result.data);
     }
-    return Result.ok(values as { [K in keyof T]: T[K] extends Result<infer U, unknown> ? U : never });
+    return Result.ok(
+      values as { [K in keyof T]: T[K] extends Result<infer U, unknown> ? U : never }
+    );
   },
 } as const;
 
@@ -127,15 +126,13 @@ export class AsyncResult<T, E = Error> {
   }
 
   map<U>(fn: (data: T) => U): AsyncResult<U, E> {
-    return new AsyncResult(
-      this.promise.then(result => Result.map(result, fn))
-    );
+    return new AsyncResult<U, E>(this.promise.then(result => Result.map(result, fn)));
   }
 
   flatMap<U>(fn: (data: T) => AsyncResult<U, E>): AsyncResult<U, E> {
-    return new AsyncResult(
+    return new AsyncResult<U, E>(
       this.promise.then(async result => {
-        if (!result.success) return result;
+        if (!result.success) return result as Result<U, E>;
         return fn(result.data).run();
       })
     );

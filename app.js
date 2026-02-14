@@ -19,8 +19,6 @@ import {
 } from './server/db.js';
 import { spawn } from 'child_process';
 import { createClient } from '@supabase/supabase-js';
-import { pdfRenderRequestSchema, sanitizePdfFilename } from './server/pdf/schema.js';
-import { renderPdfFromRequest, resolvePdfRendererMode } from './server/pdf/service.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -50,14 +48,14 @@ console.log('[Cloudflare Images] Account ID:', CF_ACCOUNT_ID ? 'configured' : 'm
 console.log('[Cloudflare Images] API Token:', CF_IMAGES_API_TOKEN ? 'configured' : 'missing');
 console.log('[Cloudflare Images] Account Hash:', CF_ACCOUNT_HASH ? 'configured' : 'missing');
 
-// Supabase configuration
-const SUPABASE_URL = process.env.VITE_SUPABASE_URL || '';
+// Supabase client configuration (public env fallback)
+const SUPABASE_CLIENT_URL = process.env.VITE_SUPABASE_URL || '';
 const SUPABASE_SERVICE_KEY =
   process.env.VITE_SUPABASE_SERVICE_KEY || process.env.VITE_SUPABASE_ANON_KEY || '';
 let supabaseClient = null;
 
-if (SUPABASE_URL && SUPABASE_SERVICE_KEY) {
-  supabaseClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+if (SUPABASE_CLIENT_URL && SUPABASE_SERVICE_KEY) {
+  supabaseClient = createClient(SUPABASE_CLIENT_URL, SUPABASE_SERVICE_KEY);
   console.log('[Supabase] Client initialized');
 } else {
   console.warn('[Supabase] Missing URL or key, Supabase features disabled');
@@ -65,6 +63,168 @@ if (SUPABASE_URL && SUPABASE_SERVICE_KEY) {
 
 function joinUrl(base, path) {
   return `${String(base).replace(/\/+$/, '')}/${String(path).replace(/^\/+/, '')}`;
+}
+
+function parseSetCookie(setCookieHeaders = []) {
+  const jar = {};
+  setCookieHeaders.forEach(value => {
+    if (!value || typeof value !== 'string') return;
+    const [pair] = value.split(';');
+    const eqIndex = pair.indexOf('=');
+    if (eqIndex <= 0) return;
+    const name = pair.slice(0, eqIndex).trim();
+    const cookieValue = pair.slice(eqIndex + 1).trim();
+    if (!name) return;
+    jar[name] = cookieValue;
+  });
+  return jar;
+}
+
+function mergeCookieJar(target, incoming) {
+  Object.entries(incoming || {}).forEach(([name, value]) => {
+    target[name] = value;
+  });
+  return target;
+}
+
+function buildCookieHeader(jar) {
+  return Object.entries(jar || {})
+    .map(([name, value]) => `${name}=${value}`)
+    .join('; ');
+}
+
+function getSetCookieArray(headers) {
+  if (!headers) return [];
+  if (typeof headers.getSetCookie === 'function') {
+    return headers.getSetCookie();
+  }
+  const single = headers.get?.('set-cookie');
+  if (!single) return [];
+  return [single];
+}
+
+async function createCwSession(credentialsOverride = {}) {
+  const baseUrl = (
+    credentialsOverride.baseUrl ||
+    process.env.CW_BASE_URL ||
+    'https://cw40.comfort-works.com'
+  ).trim();
+  const username = (credentialsOverride.username || process.env.CW_USERNAME || '').trim();
+  const password = (credentialsOverride.password || process.env.CW_PASSWORD || '').trim();
+
+  if (!username || !password) {
+    const err = new Error('Missing CW_USERNAME or CW_PASSWORD');
+    err.code = 'CW_MISSING_CREDENTIALS';
+    throw err;
+  }
+
+  const jar = {};
+  const loginPageUrl = joinUrl(baseUrl, '/dashboard/login/');
+
+  const loginPageRes = await fetch(loginPageUrl, {
+    method: 'GET',
+    redirect: 'manual',
+    headers: {
+      accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      'user-agent': 'OpenPaint CW Relay/1.0',
+    },
+  });
+
+  mergeCookieJar(jar, parseSetCookie(getSetCookieArray(loginPageRes.headers)));
+  const csrfToken = jar.csrftoken;
+  if (!csrfToken) {
+    const err = new Error('Unable to obtain CSRF token from login page');
+    err.code = 'CW_CSRF_MISSING';
+    throw err;
+  }
+
+  const loginForm = new URLSearchParams();
+  loginForm.set('csrfmiddlewaretoken', csrfToken);
+  loginForm.set('username', username);
+  loginForm.set('password', password);
+  loginForm.set('next', '');
+
+  const loginRes = await fetch(loginPageUrl, {
+    method: 'POST',
+    redirect: 'manual',
+    headers: {
+      accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      'content-type': 'application/x-www-form-urlencoded',
+      cookie: buildCookieHeader(jar),
+      origin: baseUrl,
+      referer: loginPageUrl,
+      'user-agent': 'OpenPaint CW Relay/1.0',
+    },
+    body: loginForm.toString(),
+  });
+
+  mergeCookieJar(jar, parseSetCookie(getSetCookieArray(loginRes.headers)));
+
+  const loginStatus = loginRes.status;
+  const loginLocation = loginRes.headers.get('location') || '';
+  const success = loginStatus === 302 || loginStatus === 301;
+
+  if (!success || !jar.sessionid) {
+    const bodyText = await loginRes.text().catch(() => '');
+    const err = new Error('CW login failed');
+    err.code = 'CW_LOGIN_FAILED';
+    err.details = {
+      status: loginStatus,
+      location: loginLocation,
+      hasSessionId: Boolean(jar.sessionid),
+      bodySnippet: bodyText.slice(0, 500),
+    };
+    throw err;
+  }
+
+  return {
+    baseUrl,
+    cookieJar: jar,
+    csrfToken: jar.csrftoken || csrfToken,
+  };
+}
+
+async function submitCwMeasureForm({ formId, payload, credentialsOverride = {} }) {
+  const session = await createCwSession(credentialsOverride);
+  const targetUrl = joinUrl(
+    session.baseUrl,
+    `/order-management/measure-tool/measure-form/save-measure-form/${encodeURIComponent(formId)}/`
+  );
+
+  const bodyPayload =
+    payload && typeof payload === 'object'
+      ? { ...payload, form_ID: String(payload.form_ID || formId) }
+      : { form_ID: String(formId) };
+
+  const response = await fetch(targetUrl, {
+    method: 'POST',
+    headers: {
+      accept: '*/*',
+      'content-type': 'text/plain;charset=UTF-8',
+      cookie: buildCookieHeader(session.cookieJar),
+      origin: session.baseUrl,
+      referer: joinUrl(session.baseUrl, '/dashboard/'),
+      'x-csrftoken': session.csrfToken,
+      'x-requested-with': 'XMLHttpRequest',
+      'user-agent': 'OpenPaint CW Relay/1.0',
+    },
+    body: JSON.stringify(bodyPayload),
+  });
+
+  const rawText = await response.text().catch(() => '');
+  let parsedBody = null;
+  try {
+    parsedBody = rawText ? JSON.parse(rawText) : null;
+  } catch {
+    parsedBody = null;
+  }
+
+  return {
+    ok: response.ok,
+    status: response.status,
+    body: parsedBody || rawText,
+    rawText,
+  };
 }
 
 // In-memory storage for shared projects (in production, use a database)
@@ -185,6 +345,11 @@ app.post('/api/pdf/render', async (req, res) => {
   const requestId = crypto.randomUUID();
   res.setHeader('X-Pdf-Request-Id', requestId);
   try {
+    const [
+      { pdfRenderRequestSchema, sanitizePdfFilename },
+      { renderPdfFromRequest, resolvePdfRendererMode },
+    ] = await Promise.all([import('./server/pdf/schema.js'), import('./server/pdf/service.js')]);
+
     const parsed = pdfRenderRequestSchema.safeParse(req.body || {});
     if (!parsed.success) {
       return res.status(400).json({
@@ -480,6 +645,63 @@ app.post('/api/projects/:projectId/share', (req, res) => {
   } catch (error) {
     res.status(500).json({ success: false, message: 'Failed to share project' });
   }
+});
+
+// CW integration smoke test: login + save-measure-form for an existing form ID
+app.post('/api/integrations/cw/test-save/:formId', async (req, res) => {
+  const startedAt = Date.now();
+  const { formId } = req.params;
+
+  try {
+    if (!formId) {
+      return res.status(400).json({
+        success: false,
+        code: 'CW_FORM_ID_REQUIRED',
+        message: 'formId is required',
+      });
+    }
+
+    const credentialsOverride = {
+      baseUrl: req.body?.baseUrl,
+      username: req.body?.username,
+      password: req.body?.password,
+    };
+
+    const result = await submitCwMeasureForm({
+      formId,
+      payload: req.body?.payload || req.body || {},
+      credentialsOverride,
+    });
+
+    return res.status(result.ok ? 200 : 502).json({
+      success: result.ok,
+      code: result.ok ? 'CW_SUBMIT_OK' : 'CW_SUBMIT_FAILED',
+      formId: String(formId),
+      upstreamStatus: result.status,
+      durationMs: Date.now() - startedAt,
+      upstreamBody: result.body,
+    });
+  } catch (error) {
+    console.error('[CW Integration] test-save failed:', error);
+    return res.status(500).json({
+      success: false,
+      code: error?.code || 'CW_INTEGRATION_ERROR',
+      message: error?.message || 'CW integration failed',
+      details: error?.details || null,
+      formId: String(formId || ''),
+      durationMs: Date.now() - startedAt,
+    });
+  }
+});
+
+app.get('/api/integrations/cw/health', (req, res) => {
+  const baseUrl = (process.env.CW_BASE_URL || 'https://cw40.comfort-works.com').trim();
+  return res.json({
+    ok: true,
+    baseUrl,
+    hasEnvUsername: Boolean((process.env.CW_USERNAME || '').trim()),
+    hasEnvPassword: Boolean((process.env.CW_PASSWORD || '').trim()),
+  });
 });
 
 // ============== END PROJECT CRUD API ROUTES ==============

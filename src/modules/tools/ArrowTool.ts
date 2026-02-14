@@ -215,20 +215,27 @@ export class ArrowTool extends BaseTool {
 
       console.log(`Arrow created with label: ${strokeLabel}`);
 
+      const createdArrow = group;
+      const commitHistory = () => {
+        if (window.app?.historyManager) {
+          window.app.historyManager.saveState({ force: true, reason: 'arrow:end' });
+        }
+      };
+
       // Create tag for the arrow
       if (window.app.tagManager) {
         setTimeout(() => {
-          window.app.tagManager.createTagForStroke(strokeLabel, imageLabel, group);
+          window.app.tagManager.createTagForStroke(strokeLabel, imageLabel, createdArrow);
+          commitHistory();
         }, 50);
+      } else {
+        commitHistory();
       }
+    } else if (window.app?.historyManager) {
+      window.app.historyManager.saveState({ force: true, reason: 'arrow:end' });
     }
 
     this.canvas.requestRenderAll();
-
-    // Save state after drawing completes
-    if (window.app?.historyManager) {
-      window.app.historyManager.saveState({ force: true, reason: 'arrow:end' });
-    }
   }
 
   setColor(color) {

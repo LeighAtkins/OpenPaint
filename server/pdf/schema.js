@@ -43,8 +43,9 @@ export const pdfRenderRequestSchema = z
         pageSize: z.enum(['a4', 'letter']).default('letter'),
         filename: z.string().max(200).optional(),
         landscape: z.boolean().default(false),
+        injectFormFields: z.boolean().default(true),
       })
-      .default({ pageSize: 'letter', landscape: false }),
+      .default({ pageSize: 'letter', landscape: false, injectFormFields: true }),
   })
   .superRefine((value, ctx) => {
     if (value.source === 'html' && !value.html) {
