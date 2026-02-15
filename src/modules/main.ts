@@ -7,6 +7,7 @@ import { HistoryManager } from './HistoryManager.js';
 import { StrokeMetadataManager } from './StrokeMetadataManager.js';
 import { UploadManager } from './UploadManager.js';
 import { imageRegistry } from './ImageRegistry.js';
+import { PathUtils } from './utils/PathUtils';
 
 // Deferred managers are dynamically loaded JS modules with varying shapes
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -33,6 +34,23 @@ export class App {
   firstStrokeCommitInProgress: boolean;
   currentUnit: 'inch' | 'cm';
   captureFrameScale: number;
+  currentDashSettings: {
+    style: string;
+    pattern: number[];
+    splitRatio: number;
+    mixedEnabled: boolean;
+    dashFirst: boolean;
+  };
+  dashSplitHandle: any | null;
+  dashSplitDragState: {
+    target: any;
+    prevLockMovementX: boolean;
+    prevLockMovementY: boolean;
+  } | null;
+  dashSplitCursorState: {
+    hovering: boolean;
+    savedCursor: string | null;
+  };
 
   constructor() {
     this.canvasManager = new CanvasManager('canvas');
@@ -54,6 +72,19 @@ export class App {
     this.firstStrokeCommitInProgress = false;
     this.currentUnit = 'inch';
     this.captureFrameScale = 1.0;
+    this.currentDashSettings = {
+      style: 'solid',
+      pattern: [],
+      splitRatio: 0.5,
+      mixedEnabled: false,
+      dashFirst: true,
+    };
+    this.dashSplitHandle = null;
+    this.dashSplitDragState = null;
+    this.dashSplitCursorState = {
+      hovering: false,
+      savedCursor: null,
+    };
 
     if (typeof performance !== 'undefined' && performance.mark) {
       performance.mark('app-init-start');
@@ -108,6 +139,9 @@ export class App {
       if (this.canvasManager.fabricCanvas) {
         this.canvasManager.fabricCanvas.on('object:added', (e: any) => {
           const obj = e.target;
+          if (this.isDashDrawableObject(obj)) {
+            this.applyDashSettingsToObject(obj, this.currentDashSettings);
+          }
           if (obj && obj.evented !== false && !obj.isTag) {
             // Check if we're in a drawing tool - if so, don't auto-enable objects
             // (drawing tools will manage object states to prevent accidental dragging)
@@ -333,14 +367,601 @@ export class App {
     }
   }
 
+  getDashPatternForStyle(style: string): number[] {
+    const patterns: Record<string, number[]> = {
+      solid: [],
+      dotted: [2, 5],
+      small: [5, 5],
+      medium: [10, 5],
+      large: [15, 5],
+      'dot-dash': [5, 5, 1, 5],
+      mixed: [2, 5],
+      custom: [5, 5],
+    };
+    return patterns[style] || [];
+  }
+
+  isDashDrawableObject(obj: any): boolean {
+    if (!obj) return false;
+    if (obj.isTag || obj.isConnectorLine) return false;
+    if (obj.type === 'line' || obj.type === 'path') return true;
+    if (obj.type === 'i-text' || obj.type === 'text') return true;
+    return obj.strokeMetadata?.type === 'shape';
+  }
+
+  attachMixedDashRenderer(obj: any): void {
+    if (!obj || obj._mixedDashRendererAttached) return;
+    const originalRender = obj._render;
+    if (typeof originalRender !== 'function') return;
+
+    obj._render = function (ctx: CanvasRenderingContext2D) {
+      const dashSettings = this.dashSettings || {};
+      const pattern = Array.isArray(this.strokeDashArray) ? this.strokeDashArray : [];
+      const hasMixedDash = dashSettings.mixedEnabled && pattern.length > 0;
+
+      if (!hasMixedDash) {
+        originalRender.call(this, ctx);
+        return;
+      }
+
+      const splitRatio = Math.max(0.05, Math.min(0.95, Number(dashSettings.splitRatio ?? 0.5)));
+      const dashFirst = dashSettings.dashFirst !== false;
+
+      // Pass 1: full dashed render.
+      originalRender.call(this, ctx);
+
+      // Pass 2: overlay solid stroke on the trailing side.
+      const prevDash = this.strokeDashArray;
+      const prevFill = this.fill;
+      const dims = this._getNonTransformedDimensions
+        ? this._getNonTransformedDimensions()
+        : { x: this.width || 0, y: this.height || 0 };
+      const width = Math.max(2, Number(dims?.x || 0) + Number(this.strokeWidth || 1) * 2);
+      const height = Math.max(2, Number(dims?.y || 0) + Number(this.strokeWidth || 1) * 2);
+
+      let startX = -width / 2;
+      let endX = width / 2;
+      if (this.type === 'line') {
+        if (typeof this.x1 === 'number' && typeof this.x2 === 'number') {
+          startX = Number(this.x1);
+          endX = Number(this.x2);
+        } else if (typeof this.calcLinePoints === 'function') {
+          const pts = this.calcLinePoints();
+          startX = Number(pts?.x1 ?? startX);
+          endX = Number(pts?.x2 ?? endX);
+        }
+      } else if (this.type === 'path' && Array.isArray(this.path) && this.path.length > 1) {
+        const first = this.path[0];
+        const last = this.path[this.path.length - 1];
+        if (first?.[0] === 'M' && typeof first[1] === 'number') {
+          startX = Number(first[1]);
+        }
+        if (last?.[0] === 'L' && typeof last[1] === 'number') {
+          endX = Number(last[1]);
+        } else if (last?.[0] === 'C' && typeof last[5] === 'number') {
+          endX = Number(last[5]);
+        } else if (last?.[0] === 'Q' && typeof last[3] === 'number') {
+          endX = Number(last[3]);
+        }
+      }
+
+      const startOnLeft = startX <= endX;
+      const solidOnRight = dashFirst ? startOnLeft : !startOnLeft;
+      const splitRatioX = startOnLeft ? splitRatio : 1 - splitRatio;
+
+      ctx.save();
+      ctx.beginPath();
+      if (solidOnRight) {
+        ctx.rect(
+          -width / 2 + width * splitRatioX,
+          -height / 2 - 4,
+          width * (1 - splitRatioX) + 8,
+          height + 8
+        );
+      } else {
+        ctx.rect(-width / 2 - 8, -height / 2 - 4, width * splitRatioX + 8, height + 8);
+      }
+      ctx.clip();
+
+      this.strokeDashArray = null;
+      if (this.type !== 'line' && this.type !== 'path') {
+        this.fill = 'rgba(0,0,0,0)';
+      }
+      originalRender.call(this, ctx);
+
+      this.strokeDashArray = prevDash;
+      this.fill = prevFill;
+      ctx.restore();
+    };
+
+    obj._mixedDashRendererAttached = true;
+    obj.objectCaching = false;
+    obj.dirty = true;
+  }
+
+  applyDashSettingsToObject(
+    obj: any,
+    {
+      style,
+      pattern,
+      splitRatio,
+      mixedEnabled,
+      dashFirst,
+    }: {
+      style: string;
+      pattern: number[];
+      splitRatio: number;
+      mixedEnabled: boolean;
+      dashFirst: boolean;
+    }
+  ): void {
+    if (!this.isDashDrawableObject(obj)) return;
+
+    if (obj.type === 'i-text' || obj.type === 'text') {
+      if (style === 'solid') {
+        obj.set('strokeDashArray', null);
+        obj.dashSettings = {
+          style,
+          splitRatio,
+          mixedEnabled,
+          dashFirst,
+          pattern: pattern || [],
+        };
+        obj.dirty = true;
+        return;
+      }
+      const strokeColor =
+        obj.stroke && obj.stroke !== 'transparent' ? obj.stroke : obj.fill || '#111827';
+      const currentWidth = Number(obj.strokeWidth || 0);
+      obj.set({
+        stroke: strokeColor,
+        strokeWidth: Math.max(1, currentWidth || 1),
+      });
+    }
+
+    const nextPattern = pattern?.length ? pattern : null;
+    obj.set('strokeDashArray', nextPattern);
+    obj.dashSettings = {
+      style,
+      splitRatio,
+      mixedEnabled,
+      dashFirst,
+      pattern: pattern || [],
+    };
+
+    if (mixedEnabled) {
+      this.attachMixedDashRenderer(obj);
+    }
+
+    obj.dirty = true;
+  }
+
+  applyDashSettingsToTools(pattern: number[]): void {
+    const activeTool = this.toolManager.activeTool as any;
+    if (activeTool?.setDashPattern) {
+      activeTool.setDashPattern(pattern);
+    }
+
+    const dashCapable = ['line', 'curve', 'arrow', 'shape'];
+    dashCapable.forEach((name: string) => {
+      const tool = this.toolManager.tools[name];
+      if (tool?.setDashPattern) {
+        tool.setDashPattern(pattern);
+      }
+    });
+  }
+
+  applyDashSettingsToSelection(): void {
+    const canvas = this.canvasManager.fabricCanvas;
+    if (!canvas) return;
+    const activeObjects = canvas.getActiveObjects();
+    if (!activeObjects?.length) return;
+    activeObjects.forEach((obj: any) => {
+      this.applyDashSettingsToObject(obj, this.currentDashSettings);
+    });
+    canvas.requestRenderAll();
+    this.updateDashSplitHandleForSelection();
+  }
+
+  getDashTargetObjectFromSelection(): any | null {
+    const canvas = this.canvasManager.fabricCanvas;
+    if (!canvas) return null;
+    const activeObjects = canvas.getActiveObjects?.() || [];
+    if (activeObjects.length !== 1) return null;
+    const target = activeObjects[0];
+    if (!this.isDashDrawableObject(target)) return null;
+    const ds = target.dashSettings || {};
+    if (!ds.mixedEnabled) return null;
+    return target;
+  }
+
+  ensureDashSplitHandle(): any | null {
+    const canvas = this.canvasManager.fabricCanvas;
+    const fabricLib = (globalThis as any).fabric;
+    if (!canvas || !fabricLib) return null;
+    if (this.dashSplitHandle) return this.dashSplitHandle;
+
+    this.dashSplitHandle = new fabricLib.Circle({
+      radius: 7,
+      fill: '#2563eb',
+      stroke: '#ffffff',
+      strokeWidth: 2,
+      selectable: false,
+      evented: false,
+      hasControls: false,
+      hasBorders: false,
+      hoverCursor: 'ew-resize',
+      visible: false,
+      originX: 'center',
+      originY: 'center',
+      excludeFromExport: true,
+      isDashSplitHandle: true,
+    });
+    canvas.add(this.dashSplitHandle);
+    return this.dashSplitHandle;
+  }
+
+  getDashLineEndpoints(
+    target: any
+  ): { p1: { x: number; y: number }; p2: { x: number; y: number } } | null {
+    const fabricLib = (globalThis as any).fabric;
+    const util = fabricLib?.util;
+    if (
+      !target ||
+      target.type !== 'line' ||
+      !target.calcLinePoints ||
+      !util?.transformPoint ||
+      !fabricLib?.Point
+    ) {
+      return null;
+    }
+    const pts = target.calcLinePoints();
+    const matrix = target.calcTransformMatrix();
+    const p1 = util.transformPoint(new fabricLib.Point(pts.x1, pts.y1), matrix);
+    const p2 = util.transformPoint(new fabricLib.Point(pts.x2, pts.y2), matrix);
+    return { p1: { x: p1.x, y: p1.y }, p2: { x: p2.x, y: p2.y } };
+  }
+
+  getDashStrokePolyline(target: any): Array<{ x: number; y: number }> {
+    if (!target) return [];
+
+    const line = this.getDashLineEndpoints(target);
+    if (line) {
+      return [line.p1, line.p2];
+    }
+
+    if (target.type === 'path') {
+      if (Array.isArray(target.customPoints) && target.customPoints.length >= 2) {
+        return target.customPoints.map((p: any) => ({ x: Number(p.x), y: Number(p.y) }));
+      }
+      const sampled = PathUtils.samplePathPoints(target, 80);
+      if (sampled.length >= 2) {
+        return sampled.map(p => ({ x: Number(p.x), y: Number(p.y) }));
+      }
+    }
+
+    const fabricLib = (globalThis as any).fabric;
+    const util = fabricLib?.util;
+    if (!util?.transformPoint || !fabricLib?.Point) {
+      return [];
+    }
+    const dims = target._getNonTransformedDimensions
+      ? target._getNonTransformedDimensions()
+      : { x: target.width || 0, y: target.height || 0 };
+    const width = Math.max(2, Number(dims?.x || 0) + Number(target.strokeWidth || 1) * 2);
+    const matrix = target.calcTransformMatrix();
+    const start = util.transformPoint(new fabricLib.Point(-width / 2, 0), matrix);
+    const end = util.transformPoint(new fabricLib.Point(width / 2, 0), matrix);
+    return [
+      { x: Number(start.x), y: Number(start.y) },
+      { x: Number(end.x), y: Number(end.y) },
+    ];
+  }
+
+  getPolylinePointAtRatio(
+    points: Array<{ x: number; y: number }>,
+    ratio: number
+  ): { x: number; y: number } | null {
+    if (!Array.isArray(points) || points.length < 2) return null;
+    const r = Math.max(0, Math.min(1, Number(ratio)));
+    const lengths: number[] = [];
+    let total = 0;
+    for (let i = 0; i < points.length - 1; i++) {
+      const a = points[i]!;
+      const b = points[i + 1]!;
+      const len = Math.hypot(b.x - a.x, b.y - a.y);
+      lengths.push(len);
+      total += len;
+    }
+    if (total <= 0) return { ...points[0]! };
+    const targetDist = total * r;
+    let acc = 0;
+    for (let i = 0; i < lengths.length; i++) {
+      const segLen = lengths[i]!;
+      const nextAcc = acc + segLen;
+      if (targetDist <= nextAcc || i === lengths.length - 1) {
+        const t = segLen > 0 ? (targetDist - acc) / segLen : 0;
+        const a = points[i]!;
+        const b = points[i + 1]!;
+        return {
+          x: a.x + (b.x - a.x) * t,
+          y: a.y + (b.y - a.y) * t,
+        };
+      }
+      acc = nextAcc;
+    }
+    return { ...points[points.length - 1]! };
+  }
+
+  getClosestRatioOnPolyline(
+    points: Array<{ x: number; y: number }>,
+    pointer: { x: number; y: number }
+  ): number {
+    if (!Array.isArray(points) || points.length < 2 || !pointer) return 0.5;
+
+    const lengths: number[] = [];
+    let total = 0;
+    for (let i = 0; i < points.length - 1; i++) {
+      const a = points[i]!;
+      const b = points[i + 1]!;
+      const len = Math.hypot(b.x - a.x, b.y - a.y);
+      lengths.push(len);
+      total += len;
+    }
+    if (total <= 0) return 0.5;
+
+    let bestRatio = 0;
+    let bestDistSq = Number.POSITIVE_INFINITY;
+    let acc = 0;
+
+    for (let i = 0; i < points.length - 1; i++) {
+      const a = points[i]!;
+      const b = points[i + 1]!;
+      const vx = b.x - a.x;
+      const vy = b.y - a.y;
+      const segLenSq = vx * vx + vy * vy;
+      if (segLenSq <= 0) {
+        acc += lengths[i]!;
+        continue;
+      }
+      let t = ((pointer.x - a.x) * vx + (pointer.y - a.y) * vy) / segLenSq;
+      t = Math.max(0, Math.min(1, t));
+      const px = a.x + vx * t;
+      const py = a.y + vy * t;
+      const dx = pointer.x - px;
+      const dy = pointer.y - py;
+      const distSq = dx * dx + dy * dy;
+      if (distSq < bestDistSq) {
+        bestDistSq = distSq;
+        const distAlong = acc + lengths[i]! * t;
+        bestRatio = distAlong / total;
+      }
+      acc += lengths[i]!;
+    }
+
+    return Math.max(0, Math.min(1, bestRatio));
+  }
+
+  getSplitHandleCanvasPoint(target: any, splitRatio: number): { x: number; y: number } | null {
+    const points = this.getDashStrokePolyline(target);
+    return this.getPolylinePointAtRatio(points, splitRatio);
+  }
+
+  updateDashSplitHandleForSelection(): void {
+    const canvas = this.canvasManager.fabricCanvas;
+    if (!canvas) return;
+    const handle = this.ensureDashSplitHandle();
+    if (!handle) return;
+
+    const dragTarget = this.dashSplitDragState?.target || null;
+    const target = dragTarget || this.getDashTargetObjectFromSelection();
+    if (!target) {
+      handle.set({ visible: false, ownerObject: null });
+      canvas.requestRenderAll();
+      return;
+    }
+
+    const ds = target.dashSettings || this.currentDashSettings;
+    const splitRatio = Math.max(0, Math.min(1, Number(ds.splitRatio ?? 0.5)));
+    const point = this.getSplitHandleCanvasPoint(target, splitRatio);
+    if (!point) {
+      handle.set({ visible: false, ownerObject: null });
+      canvas.requestRenderAll();
+      return;
+    }
+
+    handle.set({
+      left: point.x,
+      top: point.y,
+      visible: true,
+      ownerObject: target,
+    });
+    canvas.bringToFront(handle);
+    canvas.requestRenderAll();
+  }
+
+  isPointerNearDashSplitHandle(pointer: { x: number; y: number }): boolean {
+    const handle = this.dashSplitHandle;
+    if (!handle || !handle.visible || !pointer) return false;
+    const dx = Number(pointer.x) - Number(handle.left || 0);
+    const dy = Number(pointer.y) - Number(handle.top || 0);
+    const radius = Number(handle.radius || 7) + 6;
+    return dx * dx + dy * dy <= radius * radius;
+  }
+
+  updateDashSplitFromPointer(pointer: { x: number; y: number }, target: any): void {
+    if (!pointer || !target) {
+      return;
+    }
+
+    const polyline = this.getDashStrokePolyline(target);
+    const splitRatio = this.getClosestRatioOnPolyline(polyline, pointer);
+
+    const ds = target.dashSettings || this.currentDashSettings;
+    ds.splitRatio = splitRatio;
+    ds.mixedEnabled = true;
+    target.dashSettings = ds;
+    target.dirty = true;
+
+    this.currentDashSettings = {
+      ...this.currentDashSettings,
+      style: 'mixed',
+      mixedEnabled: true,
+      splitRatio,
+      pattern: this.getDashPatternForStyle('mixed'),
+      dashFirst: ds.dashFirst !== false,
+    };
+
+    const dashSplitInput = document.getElementById('dashSplitInput') as HTMLInputElement | null;
+    const dashStyleSelect = document.getElementById('dashStyleSelect') as HTMLSelectElement | null;
+    const dashSplitWrap = document.getElementById('dashSplitWrap');
+    if (dashSplitInput) {
+      dashSplitInput.value = String(Math.round(splitRatio * 100));
+    }
+    if (dashStyleSelect) {
+      dashStyleSelect.value = 'mixed';
+    }
+    dashSplitWrap?.classList.remove('hidden');
+    dashSplitWrap?.classList.add('flex');
+
+    this.canvasManager.fabricCanvas?.requestRenderAll();
+    this.updateDashSplitHandleForSelection();
+  }
+
+  initDashSplitHandleSystem(): void {
+    const canvas = this.canvasManager.fabricCanvas;
+    if (!canvas || (canvas as any).__dashSplitBound) return;
+    (canvas as any).__dashSplitBound = true;
+
+    this.ensureDashSplitHandle();
+
+    canvas.on('selection:created', () => this.updateDashSplitHandleForSelection());
+    canvas.on('selection:updated', () => this.updateDashSplitHandleForSelection());
+    canvas.on('selection:cleared', () => this.updateDashSplitHandleForSelection());
+    canvas.on('object:moving', () => this.updateDashSplitHandleForSelection());
+    canvas.on('object:scaling', () => this.updateDashSplitHandleForSelection());
+    canvas.on('object:rotating', () => this.updateDashSplitHandleForSelection());
+    canvas.on('object:modified', () => this.updateDashSplitHandleForSelection());
+
+    canvas.on('mouse:down:before', (opt: any) => {
+      const target = this.getDashTargetObjectFromSelection();
+      if (!target) return;
+      const pointer = canvas.getPointer(opt.e);
+      if (!this.isPointerNearDashSplitHandle(pointer)) return;
+      opt?.e?.preventDefault?.();
+      opt?.e?.stopPropagation?.();
+      this.dashSplitDragState = {
+        target,
+        prevLockMovementX: Boolean(target.lockMovementX),
+        prevLockMovementY: Boolean(target.lockMovementY),
+      };
+      target.set({ lockMovementX: true, lockMovementY: true });
+      target.setCoords?.();
+      canvas.skipTargetFind = true;
+      if (canvas.upperCanvasEl) {
+        if (this.dashSplitCursorState.savedCursor === null) {
+          this.dashSplitCursorState.savedCursor = canvas.upperCanvasEl.style.cursor || '';
+        }
+        canvas.upperCanvasEl.style.cursor = 'grabbing';
+      }
+    });
+
+    canvas.on('mouse:down', (opt: any) => {
+      if (this.dashSplitDragState) {
+        opt?.e?.preventDefault?.();
+        return;
+      }
+      const target = this.getDashTargetObjectFromSelection();
+      if (!target) return;
+      const pointer = canvas.getPointer(opt.e);
+      if (!this.isPointerNearDashSplitHandle(pointer)) return;
+      opt?.e?.preventDefault?.();
+      opt?.e?.stopPropagation?.();
+      this.dashSplitDragState = {
+        target,
+        prevLockMovementX: Boolean(target.lockMovementX),
+        prevLockMovementY: Boolean(target.lockMovementY),
+      };
+      target.set({ lockMovementX: true, lockMovementY: true });
+      target.setCoords?.();
+      if (canvas.upperCanvasEl) {
+        if (this.dashSplitCursorState.savedCursor === null) {
+          this.dashSplitCursorState.savedCursor = canvas.upperCanvasEl.style.cursor || '';
+        }
+        canvas.upperCanvasEl.style.cursor = 'grabbing';
+      }
+    });
+
+    canvas.on('mouse:move', (opt: any) => {
+      const pointer = canvas.getPointer(opt.e);
+      if (!this.dashSplitDragState) {
+        if (canvas.upperCanvasEl) {
+          const hovering = this.isPointerNearDashSplitHandle(pointer);
+          if (hovering && !this.dashSplitCursorState.hovering) {
+            this.dashSplitCursorState.savedCursor = canvas.upperCanvasEl.style.cursor || '';
+            canvas.upperCanvasEl.style.cursor = 'grab';
+            this.dashSplitCursorState.hovering = true;
+          } else if (!hovering && this.dashSplitCursorState.hovering) {
+            canvas.upperCanvasEl.style.cursor = this.dashSplitCursorState.savedCursor || '';
+            this.dashSplitCursorState.savedCursor = null;
+            this.dashSplitCursorState.hovering = false;
+          }
+        }
+        return;
+      }
+      opt?.e?.preventDefault?.();
+      if (canvas.upperCanvasEl) {
+        canvas.upperCanvasEl.style.cursor = 'grabbing';
+      }
+      this.updateDashSplitFromPointer(pointer, this.dashSplitDragState.target);
+    });
+
+    canvas.on('mouse:up', () => {
+      const dragState = this.dashSplitDragState;
+      const hadDrag = Boolean(dragState);
+      if (dragState?.target) {
+        dragState.target.set({
+          lockMovementX: dragState.prevLockMovementX,
+          lockMovementY: dragState.prevLockMovementY,
+        });
+        dragState.target.setCoords?.();
+      }
+      this.dashSplitDragState = null;
+      canvas.skipTargetFind = false;
+      if (canvas.upperCanvasEl) {
+        canvas.upperCanvasEl.style.cursor = this.dashSplitCursorState.savedCursor || '';
+      }
+      this.dashSplitCursorState.savedCursor = null;
+      this.dashSplitCursorState.hovering = false;
+      if (hadDrag && this.historyManager?.saveState) {
+        this.historyManager.saveState({ force: true, reason: 'dash:split-adjust' });
+      }
+    });
+
+    canvas.on('after:render', () => {
+      if (this.dashSplitDragState) return;
+      const handle = this.dashSplitHandle;
+      const target = handle?.ownerObject;
+      if (!handle || !handle.visible || !target) return;
+      const ds = target.dashSettings || this.currentDashSettings;
+      const splitRatio = Math.max(0, Math.min(1, Number(ds.splitRatio ?? 0.5)));
+      const point = this.getSplitHandleCanvasPoint(target, splitRatio);
+      if (!point) return;
+      handle.set({ left: point.x, top: point.y });
+      handle.setCoords();
+    });
+  }
+
   updateSelectedTextAndShapes({
     color,
     strokeWidth,
     fontSize,
+    fontFamily,
   }: {
     color?: string;
     strokeWidth?: number;
     fontSize?: number;
+    fontFamily?: string;
   }): void {
     if (!this.canvasManager.fabricCanvas) return;
 
@@ -361,6 +982,9 @@ export class App {
         }
         if (fontSize) {
           obj.set('fontSize', fontSize);
+        }
+        if (fontFamily) {
+          obj.set('fontFamily', fontFamily);
         }
         obj.set('backgroundColor', textBgEnabled ? '#ffffff' : 'transparent');
         obj.dirty = true;
@@ -476,21 +1100,22 @@ export class App {
     const drawingModeOptions = document.querySelectorAll<HTMLElement>('[data-drawing-mode]');
     const textModeToggles = document.querySelectorAll<HTMLElement>('#textModeToggle');
     const textModeWrappers = document.querySelectorAll<HTMLElement>('#textModeWrapper');
-    const textModeOptions = document.querySelectorAll<HTMLElement>('[data-text-size]');
+    const textFontOptions = document.querySelectorAll<HTMLElement>('[data-text-font]');
     const clearBtn = document.getElementById('clear');
     let preferredTextWrapper: HTMLElement | null = null;
 
-    const textToolSizeMultipliers: Record<string, number> = {
-      small: 0.75,
-      medium: 1,
-      large: 1.35,
+    const textToolFontFamilies: Record<string, string> = {
+      handdrawn: 'Caveat',
+      rounded: 'Nunito',
+      mono: 'Space Mono',
+      classic: 'Georgia',
     };
 
     const getCurrentTextSize = () => {
       const viewId = window.app?.projectManager?.currentViewId;
       const base = viewId ? window.originalImageDimensions?.[viewId] : null;
       const baseWidth = base?.width || 1200;
-      return Math.max(12, Math.round((baseWidth / 1200) * 12));
+      return Math.max(24, Math.round((baseWidth / 1200) * 24));
     };
 
     const syncTextCursor = () => {
@@ -512,14 +1137,11 @@ export class App {
       return preferredTextWrapper;
     };
 
-    const setActiveTextSizeOption = (size: string) => {
-      const allOptions = document.querySelectorAll<HTMLElement>('[data-text-size]');
+    const setActiveTextFontOption = (font: string) => {
+      const allOptions = document.querySelectorAll<HTMLElement>('[data-text-font]');
       allOptions.forEach(option => option.classList.remove('active'));
-      const matchingOptions = document.querySelectorAll<HTMLElement>(`[data-text-size="${size}"]`);
+      const matchingOptions = document.querySelectorAll<HTMLElement>(`[data-text-font="${font}"]`);
       matchingOptions.forEach(option => option.classList.add('active'));
-
-      const label = `${size.charAt(0).toUpperCase()}${size.slice(1)} Text`;
-      textModeToggles.forEach(toggle => this.updateToggleLabel(toggle, label));
     };
 
     const updateDrawingModeState = () => {
@@ -591,16 +1213,20 @@ export class App {
         if (wrapper instanceof HTMLElement) {
           preferredTextWrapper = wrapper;
         }
-        if (wrapper) wrapper.classList.toggle('shape-open');
-
-        // Keep text tool activation tied to selecting a size option.
-        // If no size is active yet, default to medium for the opened menu.
-        const hasActiveSize = wrapper
-          ? !!wrapper.querySelector('[data-text-size].active')
-          : !!document.querySelector('[data-text-size].active');
-        if (!hasActiveSize) {
-          setActiveTextSizeOption('medium');
-        }
+        void (async () => {
+          const fontSize = getCurrentTextSize();
+          const tool = await this.toolManager.ensureTool('text');
+          if (tool?.setFontSize) {
+            tool.setFontSize(fontSize);
+          }
+          this.toolManager.updateSettings({ fontSize });
+          this.updateSelectedTextAndShapes({ fontSize });
+          this.toolManager.previousToolName = this.toolManager.activeToolName || 'line';
+          this.toolManager.selectTool('text');
+          syncTextCursor();
+          updateTextToggleState();
+          if (wrapper) wrapper.classList.remove('shape-open');
+        })();
       });
     });
 
@@ -763,21 +1389,20 @@ export class App {
       });
     });
 
-    textModeOptions.forEach(btn => {
+    textFontOptions.forEach(btn => {
       btn.addEventListener(
         'click',
         () =>
           void (async () => {
-            const size = btn.getAttribute('data-text-size');
-            if (!size) return;
-            const scale = textToolSizeMultipliers[size] || textToolSizeMultipliers['medium'];
-            const fontSize = Math.max(12, Math.round(getCurrentTextSize() * (scale ?? 1)));
+            const font = btn.getAttribute('data-text-font');
+            if (!font) return;
+            const fontFamily = textToolFontFamilies[font] || textToolFontFamilies['rounded'];
             const tool = await this.toolManager.ensureTool('text');
-            if (tool?.setFontSize) {
-              tool.setFontSize(fontSize);
+            if (tool?.setFontFamily) {
+              tool.setFontFamily(fontFamily);
             }
-            this.toolManager.updateSettings({ fontSize });
-            this.updateSelectedTextAndShapes({ fontSize });
+            this.toolManager.updateSettings({ fontFamily });
+            this.updateSelectedTextAndShapes({ fontFamily });
             this.toolManager.previousToolName = this.toolManager.activeToolName || 'line';
             this.toolManager.selectTool('text');
             syncTextCursor();
@@ -786,20 +1411,16 @@ export class App {
             if (parentDropdown instanceof HTMLElement) {
               preferredTextWrapper = parentDropdown;
             }
-            setActiveTextSizeOption(size);
-            textModeWrappers.forEach(wrapper => {
-              wrapper.classList.remove('text-size-small', 'text-size-medium', 'text-size-large');
-              wrapper.classList.add(`text-size-${size}`);
-            });
+            setActiveTextFontOption(font);
             const wrapper = btn.closest('.shape-toggle');
             if (wrapper) wrapper.classList.remove('shape-open');
           })()
       );
     });
 
-    if (textModeOptions.length > 0) {
-      setActiveTextSizeOption('medium');
-      textModeWrappers.forEach(wrapper => wrapper.classList.add('text-size-medium'));
+    if (textFontOptions.length > 0) {
+      setActiveTextFontOption('rounded');
+      this.toolManager.updateSettings({ fontFamily: textToolFontFamilies['rounded'] });
     }
 
     shapeFillToggles.forEach(toggle => {
@@ -1025,46 +1646,132 @@ export class App {
       commitBrushSizeValue(brushSizeSelect);
     }
 
-    // Dash style control (dotted lines)
+    // Dash style controls (solid/dotted/partial split)
     const dashStyleSelect = document.getElementById('dashStyleSelect') as HTMLSelectElement | null;
+    const dottedBtn = document.getElementById('dottedBtn') as HTMLButtonElement | null;
+    const dashControls = document.getElementById('dashControls');
+    let dashSplitInput = document.getElementById('dashSplitInput') as HTMLInputElement | null;
+
+    if (dashControls && !dashSplitInput) {
+      const splitWrap = document.createElement('label');
+      splitWrap.id = 'dashSplitWrap';
+      splitWrap.className = 'hidden items-center gap-2';
+      splitWrap.innerHTML =
+        '<span class="text-xs text-slate-500">Split</span><input id="dashSplitInput" type="range" min="0" max="100" value="50" class="w-24 accent-blue-500" aria-label="Dashed split position" /><button id="dashSplitHalfBtn" type="button" class="text-xs px-2 py-1 border border-slate-300 rounded bg-white hover:bg-slate-50">1/2</button><button id="dashSplitOrderBtn" type="button" class="text-xs px-2 py-1 border border-slate-300 rounded bg-white hover:bg-slate-50">Dash -> Solid</button>';
+      dashControls.appendChild(splitWrap);
+      dashSplitInput = splitWrap.querySelector('#dashSplitInput') as HTMLInputElement | null;
+    }
+    const dashSplitHalfBtn = document.getElementById(
+      'dashSplitHalfBtn'
+    ) as HTMLButtonElement | null;
+    const dashSplitOrderBtn = document.getElementById(
+      'dashSplitOrderBtn'
+    ) as HTMLButtonElement | null;
+
+    const dashedCycle = ['solid', 'dotted', 'small', 'medium', 'large', 'dot-dash', 'mixed'];
+    const setLineStyleIcon = (style: string) => {
+      if (!dottedBtn) return;
+      const iconMap: Record<string, string> = {
+        solid:
+          '<svg width="34" height="12" viewBox="0 0 34 12" aria-hidden="true"><line x1="2" y1="6" x2="32" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+        dotted:
+          '<svg width="34" height="12" viewBox="0 0 34 12" aria-hidden="true"><line x1="2" y1="6" x2="32" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-dasharray="2 5"/></svg>',
+        small:
+          '<svg width="34" height="12" viewBox="0 0 34 12" aria-hidden="true"><line x1="2" y1="6" x2="32" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-dasharray="5 5"/></svg>',
+        medium:
+          '<svg width="34" height="12" viewBox="0 0 34 12" aria-hidden="true"><line x1="2" y1="6" x2="32" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-dasharray="8 5"/></svg>',
+        large:
+          '<svg width="34" height="12" viewBox="0 0 34 12" aria-hidden="true"><line x1="2" y1="6" x2="32" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-dasharray="12 7"/></svg>',
+        'dot-dash':
+          '<svg width="34" height="12" viewBox="0 0 34 12" aria-hidden="true"><line x1="2" y1="6" x2="32" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-dasharray="5 5 1 5"/></svg>',
+        mixed:
+          '<svg width="34" height="12" viewBox="0 0 34 12" aria-hidden="true"><line x1="2" y1="6" x2="17" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-dasharray="2 5"/><line x1="17" y1="6" x2="32" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="17" cy="6" r="2" fill="currentColor"/></svg>',
+      };
+      dottedBtn.innerHTML = iconMap[style] || iconMap.solid;
+    };
+
+    const applyDashStyle = (style: string) => {
+      const normalizedStyle = style || 'solid';
+      const mixedEnabled = normalizedStyle === 'mixed';
+      const pattern = this.getDashPatternForStyle(normalizedStyle);
+      const splitRatio = Math.max(0, Math.min(1, Number(dashSplitInput?.value || 50) / 100));
+      const dashFirst = this.currentDashSettings.dashFirst !== false;
+
+      this.currentDashSettings = {
+        style: normalizedStyle,
+        pattern,
+        splitRatio,
+        mixedEnabled,
+        dashFirst,
+      };
+
+      this.applyDashSettingsToTools(pattern);
+      this.applyDashSettingsToSelection();
+
+      if (dashStyleSelect && dashStyleSelect.value !== normalizedStyle) {
+        dashStyleSelect.value = normalizedStyle;
+      }
+      if (dashSplitInput) {
+        const wrap = document.getElementById('dashSplitWrap');
+        wrap?.classList.toggle('hidden', !mixedEnabled);
+        wrap?.classList.toggle('flex', mixedEnabled);
+      }
+      if (dashSplitOrderBtn) {
+        dashSplitOrderBtn.textContent = dashFirst ? 'Dash -> Solid' : 'Solid -> Dash';
+      }
+      setLineStyleIcon(normalizedStyle);
+      this.updateDashSplitHandleForSelection();
+    };
+
     if (dashStyleSelect) {
       dashStyleSelect.addEventListener('change', (e: Event) => {
         const target = e.target as HTMLSelectElement | null;
         if (!target) return;
-        const style = target.value;
-        const patterns: Record<string, number[]> = {
-          solid: [],
-          small: [5, 5],
-          medium: [10, 5],
-          large: [15, 5],
-          'dot-dash': [5, 5, 1, 5],
-          dotted: [2, 5],
-          custom: [5, 5],
-        };
-
-        const pattern = patterns[style] || [];
-
-        // Apply to all tools that support dash patterns
-        const activeTool = this.toolManager.activeTool as any;
-        if (activeTool?.setDashPattern) {
-          activeTool.setDashPattern(pattern);
-        }
-
-        // Apply to all line-based tools
-        if (this.toolManager.tools.line) {
-          this.toolManager.tools.line.setDashPattern(pattern);
-        }
-        if (this.toolManager.tools.curve) {
-          this.toolManager.tools.curve.setDashPattern(pattern);
-        }
-        if (this.toolManager.tools.arrow) {
-          this.toolManager.tools.arrow.setDashPattern(pattern);
-        }
-        if (this.toolManager.tools.shape) {
-          this.toolManager.tools.shape.setDashPattern(pattern);
-        }
+        applyDashStyle(target.value);
       });
     }
+
+    if (dashSplitInput) {
+      dashSplitInput.addEventListener('input', () => {
+        if (this.currentDashSettings.style !== 'mixed') return;
+        applyDashStyle('mixed');
+      });
+    }
+
+    if (dashSplitHalfBtn) {
+      dashSplitHalfBtn.addEventListener('click', () => {
+        if (!dashSplitInput) return;
+        dashSplitInput.value = '50';
+        applyDashStyle('mixed');
+      });
+    }
+
+    if (dashSplitOrderBtn) {
+      dashSplitOrderBtn.addEventListener('click', () => {
+        this.currentDashSettings.dashFirst = !this.currentDashSettings.dashFirst;
+        applyDashStyle('mixed');
+      });
+    }
+
+    if (dottedBtn) {
+      dottedBtn.addEventListener(
+        'click',
+        e => {
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          const current = this.currentDashSettings.style || 'solid';
+          const currentIndex = dashedCycle.indexOf(current);
+          const nextStyle =
+            dashedCycle[(currentIndex + 1 + dashedCycle.length) % dashedCycle.length];
+          applyDashStyle(nextStyle || 'solid');
+        },
+        true
+      );
+      setLineStyleIcon(this.currentDashSettings.style);
+    }
+
+    this.initDashSplitHandleSystem();
+    this.updateDashSplitHandleForSelection();
 
     // Image fit mode control
     const fitModeSelect = document.getElementById('fitModeSelect') as HTMLSelectElement | null;
