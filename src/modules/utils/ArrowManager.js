@@ -32,6 +32,8 @@ export class ArrowManager {
   bindEvents() {
     const startBtn = document.getElementById('arrowStartBtn');
     const endBtn = document.getElementById('arrowEndBtn');
+    const optionsBtn = document.getElementById('arrowOptionsBtn');
+    const optionsMenu = document.getElementById('arrowOptionsMenu');
     const sizeInput = document.getElementById('arrowSize');
     const sizeInputTop = document.getElementById('arrowSizeTop');
     const styleSelect = document.getElementById('arrowStyle');
@@ -40,11 +42,54 @@ export class ArrowManager {
     const ghostInputTop = document.getElementById('arrowGhostTop');
 
     if (startBtn) {
-      startBtn.addEventListener('click', () => this.toggleArrow('start'));
+      startBtn.addEventListener(
+        'click',
+        e => {
+          e.stopImmediatePropagation();
+          this.toggleArrow('start');
+        },
+        true
+      );
+      startBtn.addEventListener('contextmenu', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.openOptionsMenuFromButton(startBtn, optionsMenu);
+      });
+      startBtn.addEventListener('dblclick', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.openOptionsMenuFromButton(startBtn, optionsMenu);
+      });
     }
 
     if (endBtn) {
-      endBtn.addEventListener('click', () => this.toggleArrow('end'));
+      endBtn.addEventListener(
+        'click',
+        e => {
+          e.stopImmediatePropagation();
+          this.toggleArrow('end');
+        },
+        true
+      );
+      endBtn.addEventListener('contextmenu', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.openOptionsMenuFromButton(endBtn, optionsMenu);
+      });
+      endBtn.addEventListener('dblclick', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.openOptionsMenuFromButton(endBtn, optionsMenu);
+      });
+    }
+
+    if (optionsBtn && optionsMenu) {
+      optionsBtn.classList.add('hidden');
+      const closeMenu = () => {
+        optionsMenu.classList.add('hidden');
+      };
+      document.addEventListener('click', closeMenu);
+      optionsMenu.addEventListener('click', e => e.stopPropagation());
     }
 
     if (sizeInput) {
@@ -91,6 +136,7 @@ export class ArrowManager {
     this.canvas.on('selection:created', e => this.updateButtonState(e.selected));
     this.canvas.on('selection:updated', e => this.updateButtonState(e.selected));
     this.canvas.on('selection:cleared', () => this.updateButtonState(null));
+    this.updateButtonState(null);
 
     // Right-click + drag on dimension arrows to move the dimension line offset
     this.canvas.on('mouse:down', opt => {
@@ -300,6 +346,53 @@ export class ArrowManager {
           this.defaultSettings.endArrow = true;
         }
       }
+      this.updateButtonState(null);
+    }
+  }
+
+  openOptionsMenuFromButton(button, menu) {
+    if (!button || !menu) return;
+    const rect = button.getBoundingClientRect();
+    menu.classList.remove('hidden');
+    menu.style.position = 'fixed';
+    menu.style.left = `${Math.round(rect.left)}px`;
+    menu.style.top = `${Math.round(rect.bottom + 8)}px`;
+    menu.style.zIndex = '10050';
+  }
+
+  buildArrowIconSvg(side, style) {
+    const startLine = side === 'start' ? '19' : '5';
+    const endLine = side === 'start' ? '5' : '19';
+    if (style === 'dimension') {
+      return `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="${startLine}" y1="12" x2="${endLine}" y2="12" stroke-dasharray="3 3"></line><line x1="8" y1="6" x2="8" y2="18"></line><line x1="16" y1="6" x2="16" y2="18"></line></svg>`;
+    }
+    if (style === 'open') {
+      return side === 'start'
+        ? '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="13 18 5 12 13 6"></polyline></svg>'
+        : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="11 6 19 12 11 18"></polyline></svg>';
+    }
+    if (style === 'hand-2') {
+      return side === 'start'
+        ? '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12 C15 11,10 13,5 12"></path><path d="M12.2 18.2 L5 12 L12.5 5.2"></path></svg>'
+        : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12 C9 11,14 13,19 12"></path><path d="M11.8 5.2 L19 12 L11.5 18.2"></path></svg>';
+    }
+    return side === 'start'
+      ? '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>'
+      : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>';
+  }
+
+  updateArrowButtonIcons(style) {
+    const startBtn = document.getElementById('arrowStartBtn');
+    const endBtn = document.getElementById('arrowEndBtn');
+    const normalizedStyle = style === 'hand-drawn' ? 'hand-2' : style || 'triangular';
+
+    if (startBtn) {
+      startBtn.innerHTML = this.buildArrowIconSvg('start', normalizedStyle);
+      startBtn.setAttribute('title', 'Start Arrow (right-click for options)');
+    }
+    if (endBtn) {
+      endBtn.innerHTML = this.buildArrowIconSvg('end', normalizedStyle);
+      endBtn.setAttribute('title', 'End Arrow (right-click for options)');
     }
   }
 
@@ -414,7 +507,8 @@ export class ArrowManager {
     }
 
     // Update style select
-    const styleForUi = style === 'hand-drawn' ? 'hand-1' : style;
+    const styleForUi =
+      style === 'hand-drawn' || style === 'hand-1' || style === 'hand-3' ? 'hand-2' : style;
     if (styleSelect) {
       styleSelect.value = styleForUi;
       styleSelect.style.opacity = isMixedStyle ? '0.6' : '';
@@ -424,6 +518,8 @@ export class ArrowManager {
       styleSelectTop.value = styleForUi;
       styleSelectTop.style.opacity = isMixedStyle ? '0.6' : '';
     }
+
+    this.updateArrowButtonIcons(styleForUi);
 
     if (spreadInputTop) {
       spreadInputTop.value = String(Math.round((spread || 1) * 100));
