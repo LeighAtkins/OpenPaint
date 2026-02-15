@@ -368,7 +368,7 @@ export class LineTool extends BaseTool {
     this.line.set({
       selectable: true,
       evented: true,
-      perPixelTargetFind: true, // Only select when clicking the actual line
+      perPixelTargetFind: false,
     });
 
     // Add custom controls

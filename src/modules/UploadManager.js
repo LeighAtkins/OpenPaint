@@ -91,7 +91,7 @@ export class UploadManager {
 
   async handleFiles(fileList) {
     if (this.isHandlingUpload) {
-      this.showStatus('Upload already in progress. Please wait…', 'info');
+      this.showStatus('Upload already in progress. Please wait...', 'info');
       return;
     }
 
@@ -116,7 +116,7 @@ export class UploadManager {
 
     this.isHandlingUpload = true;
 
-    this.showStatus(`Uploading ${files.length} image${files.length > 1 ? 's' : ''}…`, 'info');
+    this.showStatus(`Uploading ${files.length} image${files.length > 1 ? 's' : ''}...`, 'info');
 
     // Remember the current view before uploads to preserve it
     const currentViewBeforeUpload = this.projectManager.currentViewId;

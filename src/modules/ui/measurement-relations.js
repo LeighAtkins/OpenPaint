@@ -220,22 +220,48 @@ function ensureStyles() {
   const style = document.createElement('style');
   style.id = 'measurementRelationsStyles';
   style.textContent = `
-    .relations-overlay { position: fixed; inset: 0; background: rgba(15,23,42,.58); z-index: 12700; display:flex; align-items:center; justify-content:center; padding:20px; }
-    .relations-card { width:min(980px,100%); max-height:88vh; overflow:auto; background:#fff; border-radius:16px; padding:16px; box-shadow:0 24px 45px rgba(15,23,42,.24); }
-    .relations-section { border:1px solid #e2e8f0; border-radius:10px; padding:10px; margin-top:10px; }
-    .relations-table { width:100%; border-collapse:collapse; font-size:12px; }
-    .relations-table th,.relations-table td { border-bottom:1px solid #e2e8f0; padding:6px; text-align:left; }
-    .relations-table input,.relations-table select { width:100%; border:1px solid #cbd5e1; border-radius:7px; padding:4px 6px; font-size:12px; }
-    .status-chip { font-size:10px; font-weight:700; border-radius:999px; padding:2px 7px; text-transform:uppercase; }
-    .status-chip.pass { background:#dcfce7; color:#166534; }
-    .status-chip.fail { background:#fee2e2; color:#991b1b; }
-    .status-chip.pending { background:#e2e8f0; color:#334155; }
-    .piece-group-card { border:1px solid #e2e8f0; border-radius:8px; padding:10px; margin-bottom:8px; background:#f8fafc; }
-    .piece-group-card .related-tag { display:inline-flex; align-items:center; gap:4px; background:#e2e8f0; border-radius:6px; padding:2px 8px; font-size:11px; margin:2px; }
-    .piece-group-card .related-tag button { border:none; background:transparent; color:#94a3b8; cursor:pointer; font-size:14px; line-height:1; padding:0 2px; }
-    .piece-group-card .related-tag button:hover { color:#ef4444; }
+    .relations-overlay { position: fixed; inset: 0; background: rgba(11,13,16,0.5); z-index: 12700; display:flex; align-items:center; justify-content:center; padding:20px; }
+    .relations-card { width:min(980px,100%); max-height:88vh; overflow:auto; background:#fff; border-radius:16px; padding:20px; box-shadow:0 24px 48px rgba(11,13,16,0.18),0 8px 16px rgba(11,13,16,0.08); font-family:'Instrument Sans','Inter',sans-serif; }
+    .relations-section { border:1px solid #E7EAEE; border-radius:16px; padding:16px; margin-top:12px; }
+    .relations-table { width:100%; border-collapse:collapse; font-size:13px; }
+    .relations-table th,.relations-table td { border-bottom:1px solid #E7EAEE; padding:8px; text-align:left; }
+    .relations-table th { color:#3E4752; font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; }
+    .relations-table input,.relations-table select { width:100%; border:1px solid #E7EAEE; border-radius:12px; padding:8px 10px; font-size:13px; font-family:'Instrument Sans','Inter',sans-serif; outline:none; transition:border-color 0.15s,box-shadow 0.15s; }
+    .relations-table input:focus,.relations-table select:focus { border-color:#2D6BFF; box-shadow:0 0 0 2px rgba(45,107,255,0.35); }
+    .status-chip { font-size:10px; font-weight:700; border-radius:999px; padding:2px 8px; text-transform:uppercase; letter-spacing:0.04em; }
+    .status-chip.pass { background:rgba(30,158,90,0.08); color:#1E9E5A; }
+    .status-chip.fail { background:rgba(226,74,59,0.06); color:#E24A3B; }
+    .status-chip.pending { background:rgba(62,71,82,0.08); color:#3E4752; }
+    .piece-group-card { border:1px solid #E7EAEE; border-radius:16px; padding:14px; margin-bottom:10px; background:#F6F7F9; }
+    .piece-group-card .related-tag { display:inline-flex; align-items:center; gap:4px; background:#fff; border:1px solid #E7EAEE; border-radius:10px; padding:4px 10px; font-size:12px; margin:3px; }
+    .piece-group-card .related-tag button { border:none; background:transparent; color:#9CA3AF; cursor:pointer; font-size:14px; line-height:1; padding:0 2px; }
+    .piece-group-card .related-tag button:hover { color:#E24A3B; }
+    .piece-group-thumb { width:60px; height:40px; object-fit:cover; border-radius:8px; border:1px solid #E7EAEE; background:#fff; flex-shrink:0; }
+    .piece-group-thumb-strip { display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; }
+    .piece-group-thumb-item { display:flex; flex-direction:column; align-items:center; gap:2px; cursor:pointer; padding:4px; border-radius:10px; border:1px solid transparent; transition:border-color 0.15s; }
+    .piece-group-thumb-item:hover { border-color:#2D6BFF; }
+    .piece-group-thumb-item.selected { border-color:#2D6BFF; background:rgba(45,107,255,0.06); }
+    .piece-group-thumb-item span { font-size:9px; color:#3E4752; max-width:64px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-align:center; }
+    .relations-pdf-layout { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+    .relations-pdf-layout-preview { display:flex; gap:4px; align-items:flex-end; padding:8px; background:#F6F7F9; border:1px solid #E7EAEE; border-radius:12px; min-height:48px; }
+    .relations-pdf-page-icon { width:24px; height:32px; border-radius:3px; border:1px solid #D5DAE2; background:#fff; display:flex; align-items:center; justify-content:center; font-size:8px; color:#3E4752; font-weight:600; }
+    .relations-pdf-page-icon.grouped { border-color:#2D6BFF; background:rgba(45,107,255,0.06); }
   `;
   document.head.appendChild(style);
+}
+
+function getViewThumbnailDataUrl(viewId) {
+  try {
+    const views = window.app?.projectManager?.views || {};
+    const view = views[viewId];
+    if (!view?.image) return null;
+    const img = view.image;
+    if (typeof img === 'string' && img.startsWith('data:')) return img;
+    if (img?.src) return img.src;
+    return null;
+  } catch {
+    return null;
+  }
 }
 
 async function preWarmAllViews() {
@@ -266,7 +292,7 @@ async function openMeasurementRelationsEditor() {
   const loadingOverlay = document.createElement('div');
   loadingOverlay.className = 'relations-overlay';
   loadingOverlay.innerHTML =
-    '<div style="background:#fff;border-radius:12px;padding:24px 32px;box-shadow:0 8px 32px rgba(0,0,0,.2);text-align:center;"><p style="margin:0;font-size:14px;color:#334155;">Loading measurements from all images...</p></div>';
+    '<div style="background:#fff;border-radius:16px;padding:28px 36px;box-shadow:0 24px 48px rgba(11,13,16,0.18);text-align:center;font-family:\'Instrument Sans\',\'Inter\',sans-serif;"><p style="margin:0;font-size:14px;color:#3E4752;">Loading measurements from all images\u2026</p></div>';
   document.body.appendChild(loadingOverlay);
 
   await preWarmAllViews();
@@ -295,46 +321,69 @@ async function openMeasurementRelationsEditor() {
     })
     .join('');
 
+  // Collect thumbnail data URLs for all views
+  const viewThumbnails = {};
+  viewIds.forEach(id => {
+    viewThumbnails[id] = getViewThumbnailDataUrl(id);
+  });
+
   const overlay = document.createElement('div');
   overlay.className = 'relations-overlay';
   overlay.innerHTML = `
     <section class="relations-card" role="dialog" aria-modal="true" aria-label="Measurement checks and connections">
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:4px;">
         <div>
-          <h2 style="margin:0;font-size:20px;color:#0f172a;">Checks + Links</h2>
-          <p style="margin:4px 0 0;font-size:12px;color:#475569;">Tag formulas, link measurements, and group related images for PDF exports.</p>
+          <h2 style="margin:0;font-size:24px;color:#0B0D10;font-weight:700;font-family:'Instrument Sans','Inter',sans-serif;">Checks + Links</h2>
+          <p style="margin:4px 0 0;font-size:13px;color:#3E4752;">Tag formulas, link measurements, and group related images for PDF exports.</p>
         </div>
-        <button id="closeRelationsEditor" type="button" style="border:1px solid #cbd5e1;background:#fff;border-radius:8px;padding:7px 10px;font-weight:600;cursor:pointer;">Close</button>
+        <button id="closeRelationsEditor" type="button" style="border:1px solid #E7EAEE;background:#fff;border-radius:12px;padding:8px 12px;font-weight:600;cursor:pointer;font-family:'Instrument Sans','Inter',sans-serif;font-size:13px;color:#0B0D10;">Close</button>
       </div>
 
-      <section class="relations-section">
-        <h3 style="margin:0 0 4px;font-size:14px;color:#0f172a;">Piece Groups</h3>
-        <p style="margin:0 0 8px;font-size:11px;color:#64748b;">Group related images so they appear side-by-side in PDF exports.</p>
-        <div id="pieceGroupsContainer"></div>
-        <button id="addPieceGroup" type="button" style="margin-top:8px;border:1px solid #cbd5e1;background:#fff;border-radius:7px;padding:6px 10px;font-size:12px;cursor:pointer;">Add group</button>
+      <section class="relations-section" id="pdfLayoutSection">
+        <h3 style="margin:0 0 6px;font-size:16px;color:#151A20;font-weight:600;">PDF Layout</h3>
+        <p style="margin:0 0 10px;font-size:12px;color:#3E4752;">Preview how piece groups map to PDF pages.</p>
+        <div class="relations-pdf-layout">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:12px;color:#3E4752;font-weight:600;">Page size:</span>
+            <span style="font-size:12px;color:#0B0D10;background:#F6F7F9;border:1px solid #E7EAEE;border-radius:8px;padding:4px 10px;">Letter</span>
+          </div>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;color:#0B0D10;">
+            <input type="checkbox" id="relationsIncludeMeasurements" checked style="accent-color:#0B0D10;transform:scale(1.1);">
+            Include measurements
+          </label>
+          <button id="relationsQuickExport" type="button" style="border:none;background:#0B0D10;color:#fff;border-radius:12px;padding:8px 16px;font-weight:600;cursor:pointer;font-family:'Instrument Sans','Inter',sans-serif;font-size:12px;">Export PDF</button>
+        </div>
+        <div id="pdfLayoutPreview" class="relations-pdf-layout-preview" style="margin-top:10px;"></div>
       </section>
 
       <section class="relations-section">
-        <h3 style="margin:0 0 8px;font-size:14px;color:#0f172a;">Formula Checks</h3>
+        <h3 style="margin:0 0 6px;font-size:16px;color:#151A20;font-weight:600;">Piece Groups</h3>
+        <p style="margin:0 0 10px;font-size:12px;color:#3E4752;">Group related images so they appear side-by-side in PDF exports.</p>
+        <div id="pieceGroupsContainer"></div>
+        <button id="addPieceGroup" type="button" style="margin-top:8px;border:1px solid #E7EAEE;background:#fff;border-radius:12px;padding:8px 14px;font-size:12px;cursor:pointer;font-weight:600;font-family:'Instrument Sans','Inter',sans-serif;color:#0B0D10;">+ Add group</button>
+      </section>
+
+      <section class="relations-section">
+        <h3 style="margin:0 0 8px;font-size:16px;color:#151A20;font-weight:600;">Formula Checks</h3>
         <table class="relations-table">
           <thead><tr><th>Formula</th><th>Tolerance</th><th>Note</th><th>Status</th><th></th></tr></thead>
           <tbody id="relationsChecksBody"></tbody>
         </table>
-        <button id="addRelationCheck" type="button" style="margin-top:8px;border:1px solid #cbd5e1;background:#fff;border-radius:7px;padding:6px 10px;font-size:12px;cursor:pointer;">Add check</button>
+        <button id="addRelationCheck" type="button" style="margin-top:8px;border:1px solid #E7EAEE;background:#fff;border-radius:12px;padding:8px 14px;font-size:12px;cursor:pointer;font-weight:600;font-family:'Instrument Sans','Inter',sans-serif;color:#0B0D10;">+ Add check</button>
       </section>
 
       <section class="relations-section">
-        <h3 style="margin:0 0 8px;font-size:14px;color:#0f172a;">Cross-image Connections</h3>
-        <p style="margin:0 0 8px;font-size:11px;color:#64748b;">Link specific measurements across images to verify they connect at the same point.</p>
+        <h3 style="margin:0 0 8px;font-size:16px;color:#151A20;font-weight:600;">Cross-image Connections</h3>
+        <p style="margin:0 0 8px;font-size:12px;color:#3E4752;">Link specific measurements across images to verify they connect at the same point.</p>
         <table class="relations-table">
           <thead><tr><th>From</th><th>To</th><th>Note</th><th>Status</th><th></th></tr></thead>
           <tbody id="relationsConnectionsBody"></tbody>
         </table>
-        <button id="addRelationConnection" type="button" style="margin-top:8px;border:1px solid #cbd5e1;background:#fff;border-radius:7px;padding:6px 10px;font-size:12px;cursor:pointer;">Add connection</button>
+        <button id="addRelationConnection" type="button" style="margin-top:8px;border:1px solid #E7EAEE;background:#fff;border-radius:12px;padding:8px 14px;font-size:12px;cursor:pointer;font-weight:600;font-family:'Instrument Sans','Inter',sans-serif;color:#0B0D10;">+ Add connection</button>
       </section>
 
-      <div style="margin-top:12px;display:flex;justify-content:flex-end;gap:8px;">
-        <button id="saveRelations" type="button" style="border:none;background:#1d4ed8;color:#fff;border-radius:8px;padding:8px 12px;font-weight:600;cursor:pointer;">Save tags</button>
+      <div style="margin-top:16px;display:flex;justify-content:flex-end;gap:10px;">
+        <button id="saveRelations" type="button" style="border:none;background:#0B0D10;color:#fff;border-radius:12px;padding:10px 20px;font-weight:600;cursor:pointer;font-family:'Instrument Sans','Inter',sans-serif;font-size:14px;">Save tags</button>
       </div>
     </section>
   `;
@@ -342,42 +391,115 @@ async function openMeasurementRelationsEditor() {
   const pieceGroupsContainer = overlay.querySelector('#pieceGroupsContainer');
   const checksBody = overlay.querySelector('#relationsChecksBody');
   const connectionsBody = overlay.querySelector('#relationsConnectionsBody');
+  const pdfLayoutPreview = overlay.querySelector('#pdfLayoutPreview');
+
+  const renderPdfLayoutPreview = () => {
+    if (!pdfLayoutPreview) return;
+    pdfLayoutPreview.innerHTML = '';
+
+    // Grouped view IDs
+    const consumed = new Set();
+    pieceGroups.forEach(group => {
+      if (!group.mainViewId) return;
+      const ids = [group.mainViewId, ...(group.relatedViewIds || [])].filter(Boolean);
+      ids.forEach(id => consumed.add(id));
+      const pageIcon = document.createElement('div');
+      pageIcon.className = 'relations-pdf-page-icon grouped';
+      pageIcon.textContent = ids.length > 1 ? `${ids.length}` : '1';
+      pageIcon.title = `Grouped: ${ids.map(id => metadata.imagePartLabels?.[id] || id).join(', ')}`;
+      pdfLayoutPreview.appendChild(pageIcon);
+    });
+
+    // Ungrouped singles
+    viewIds.forEach(id => {
+      if (consumed.has(id)) return;
+      const pageIcon = document.createElement('div');
+      pageIcon.className = 'relations-pdf-page-icon';
+      pageIcon.textContent = '1';
+      pageIcon.title = metadata.imagePartLabels?.[id] || id;
+      pdfLayoutPreview.appendChild(pageIcon);
+    });
+
+    if (!pdfLayoutPreview.children.length) {
+      pdfLayoutPreview.innerHTML =
+        '<span style="font-size:11px;color:#3E4752;">No pages to preview</span>';
+    }
+  };
 
   const render = () => {
     const evaluated = evaluateMeasurementRelations();
+
+    renderPdfLayoutPreview();
 
     // ── Piece Groups ──
     pieceGroupsContainer.innerHTML = '';
     if (!pieceGroups.length) {
       pieceGroupsContainer.innerHTML =
-        '<p style="color:#64748b;font-size:12px;margin:4px 0;">No piece groups yet.</p>';
+        '<p style="color:#3E4752;font-size:12px;margin:4px 0;">No piece groups yet.</p>';
     }
     pieceGroups.forEach((group, gIdx) => {
       const card = document.createElement('div');
       card.className = 'piece-group-card';
 
-      // Build related image tags
+      // Build related image tags with thumbnails
       const relatedTags = (group.relatedViewIds || [])
         .map((rid, rIdx) => {
           const rLabel = metadata.imagePartLabels?.[rid] || rid;
-          return `<span class="related-tag">${rLabel}<button data-remove-related="${rIdx}" title="Remove">&times;</button></span>`;
+          const thumbSrc = viewThumbnails[rid];
+          const thumbImg = thumbSrc
+            ? `<img src="${thumbSrc}" class="piece-group-thumb" style="width:32px;height:22px;border-radius:4px;margin-right:2px;" alt="${rLabel}" />`
+            : '';
+          return `<span class="related-tag">${thumbImg}${rLabel}<button data-remove-related="${rIdx}" title="Remove">&times;</button></span>`;
         })
         .join('');
 
+      // Main image thumbnail
+      const mainThumbSrc = viewThumbnails[group.mainViewId];
+      const mainThumbHtml = mainThumbSrc
+        ? `<img src="${mainThumbSrc}" class="piece-group-thumb" alt="Main" />`
+        : '';
+
+      // Available images strip (un-selected images)
+      const usedInGroup = new Set([group.mainViewId, ...(group.relatedViewIds || [])]);
+      const availableIds = viewIds.filter(id => !usedInGroup.has(id));
+
       card.innerHTML = `
-        <div style="display:flex;justify-content:space-between;align-items:start;gap:8px;">
+        <div style="display:flex;justify-content:space-between;align-items:start;gap:10px;">
           <div style="flex:1;">
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-              <label style="font-size:11px;font-weight:600;color:#334155;white-space:nowrap;">Main Image:</label>
-              <select data-field="mainViewId" style="flex:1;border:1px solid #cbd5e1;border-radius:7px;padding:4px 6px;font-size:12px;">${viewOptions}</select>
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+              ${mainThumbHtml}
+              <div style="flex:1;">
+                <label style="font-size:11px;font-weight:600;color:#3E4752;letter-spacing:0.08em;text-transform:uppercase;display:block;margin-bottom:4px;">Main Image</label>
+                <select data-field="mainViewId" style="width:100%;border:1px solid #E7EAEE;border-radius:12px;padding:8px 10px;font-size:13px;font-family:'Instrument Sans','Inter',sans-serif;outline:none;">${viewOptions}</select>
+              </div>
             </div>
-            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-              <label style="font-size:11px;font-weight:600;color:#334155;white-space:nowrap;">Related:</label>
-              <span id="relatedTags-${gIdx}">${relatedTags || '<span style="color:#94a3b8;font-size:11px;">None</span>'}</span>
-              <button data-add-related="${gIdx}" type="button" style="border:1px solid #cbd5e1;background:#fff;border-radius:6px;padding:2px 8px;font-size:11px;cursor:pointer;">+ Add</button>
+            <div style="margin-bottom:6px;">
+              <label style="font-size:11px;font-weight:600;color:#3E4752;letter-spacing:0.08em;text-transform:uppercase;display:block;margin-bottom:4px;">Related</label>
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                ${relatedTags || '<span style="color:#9CA3AF;font-size:12px;">None</span>'}
+                <button data-add-related="${gIdx}" type="button" style="border:1px solid #E7EAEE;background:#fff;border-radius:10px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:600;color:#0B0D10;">+ Add</button>
+              </div>
             </div>
+            ${
+              availableIds.length
+                ? `
+              <div class="piece-group-thumb-strip">
+                ${availableIds
+                  .map(id => {
+                    const label = metadata.imagePartLabels?.[id] || id;
+                    const src = viewThumbnails[id];
+                    return `<div class="piece-group-thumb-item" data-add-thumb-related="${gIdx}" data-thumb-view-id="${id}" title="Click to add ${label}">
+                    ${src ? `<img src="${src}" class="piece-group-thumb" alt="${label}" />` : '<div class="piece-group-thumb" style="display:flex;align-items:center;justify-content:center;font-size:9px;color:#9CA3AF;">?</div>'}
+                    <span>${label}</span>
+                  </div>`;
+                  })
+                  .join('')}
+              </div>
+            `
+                : ''
+            }
           </div>
-          <button data-remove-group="${gIdx}" type="button" style="border:1px solid #fecaca;background:#fff;color:#b91c1c;border-radius:7px;padding:4px 8px;font-size:11px;cursor:pointer;">Remove</button>
+          <button data-remove-group="${gIdx}" type="button" style="border:1px solid rgba(226,74,59,0.2);background:#fff;color:#E24A3B;border-radius:12px;padding:6px 10px;font-size:11px;cursor:pointer;font-weight:600;">Remove</button>
         </div>
       `;
 
@@ -386,6 +508,7 @@ async function openMeasurementRelationsEditor() {
       mainSelect.value = group.mainViewId || viewIds[0] || '';
       mainSelect.addEventListener('change', () => {
         pieceGroups[gIdx] = { ...group, mainViewId: mainSelect.value };
+        render();
       });
 
       // Remove related image buttons
@@ -399,17 +522,29 @@ async function openMeasurementRelationsEditor() {
         });
       });
 
-      // Add related image
+      // Add related image (from + Add button)
       card.querySelector(`[data-add-related="${gIdx}"]`)?.addEventListener('click', () => {
-        // Pick the first view not already used in this group
-        const usedInGroup = new Set([group.mainViewId, ...(group.relatedViewIds || [])]);
-        const available = viewIds.find(id => !usedInGroup.has(id));
+        const currentUsed = new Set([group.mainViewId, ...(group.relatedViewIds || [])]);
+        const available = viewIds.find(id => !currentUsed.has(id));
         if (!available) return;
         pieceGroups[gIdx] = {
           ...group,
           relatedViewIds: [...(group.relatedViewIds || []), available],
         };
         render();
+      });
+
+      // Add related via thumbnail click
+      card.querySelectorAll('[data-add-thumb-related]').forEach(thumb => {
+        thumb.addEventListener('click', () => {
+          const addViewId = thumb.dataset.thumbViewId;
+          if (!addViewId) return;
+          pieceGroups[gIdx] = {
+            ...group,
+            relatedViewIds: [...(group.relatedViewIds || []), addViewId],
+          };
+          render();
+        });
       });
 
       // Remove group
@@ -424,7 +559,7 @@ async function openMeasurementRelationsEditor() {
     // ── Checks ──
     checksBody.innerHTML = '';
     if (!checks.length) {
-      checksBody.innerHTML = '<tr><td colspan="5" style="color:#64748b;">No checks yet.</td></tr>';
+      checksBody.innerHTML = '<tr><td colspan="5" style="color:#3E4752;">No checks yet.</td></tr>';
     }
     checks.forEach((check, idx) => {
       const status = evaluated.checks[idx]?.status || 'pending';
@@ -434,8 +569,8 @@ async function openMeasurementRelationsEditor() {
         <td><input data-field="formula" value="${check.formula || ''}" placeholder="e.g. B1 + F1 = G1" /></td>
         <td><input data-field="tolerance" type="number" step="0.1" value="${check.tolerance ?? 0}" /></td>
         <td><input data-field="note" value="${check.note || ''}" placeholder="Optional" /></td>
-        <td><span class="status-chip ${status}">${status}</span><div style="font-size:10px;color:#64748b;">${reason}</div></td>
-        <td><button data-remove="${idx}" type="button" style="border:1px solid #fecaca;background:#fff;color:#b91c1c;border-radius:7px;padding:4px 8px;cursor:pointer;">Remove</button></td>
+        <td><span class="status-chip ${status}">${status}</span><div style="font-size:10px;color:#3E4752;margin-top:2px;">${reason}</div></td>
+        <td><button data-remove="${idx}" type="button" style="border:1px solid rgba(226,74,59,0.2);background:#fff;color:#E24A3B;border-radius:12px;padding:5px 10px;cursor:pointer;font-size:11px;font-weight:600;">Remove</button></td>
       `;
       row.querySelectorAll('[data-field]').forEach(input => {
         const field = input.dataset.field;
@@ -456,7 +591,7 @@ async function openMeasurementRelationsEditor() {
     connectionsBody.innerHTML = '';
     if (!connections.length) {
       connectionsBody.innerHTML =
-        '<tr><td colspan="5" style="color:#64748b;">No connections yet.</td></tr>';
+        '<tr><td colspan="5" style="color:#3E4752;">No connections yet.</td></tr>';
     }
     connections.forEach((connection, idx) => {
       const status = evaluated.connections[idx]?.status || 'pending';
@@ -466,8 +601,8 @@ async function openMeasurementRelationsEditor() {
         <td><select data-field="fromKey">${measurementOptions}</select></td>
         <td><select data-field="toKey">${measurementOptions}</select></td>
         <td><input data-field="note" value="${connection.note || ''}" placeholder="Optional" /></td>
-        <td><span class="status-chip ${status}">${status}</span><div style="font-size:10px;color:#64748b;">${reason}</div></td>
-        <td><button data-remove="${idx}" type="button" style="border:1px solid #fecaca;background:#fff;color:#b91c1c;border-radius:7px;padding:4px 8px;cursor:pointer;">Remove</button></td>
+        <td><span class="status-chip ${status}">${status}</span><div style="font-size:10px;color:#3E4752;margin-top:2px;">${reason}</div></td>
+        <td><button data-remove="${idx}" type="button" style="border:1px solid rgba(226,74,59,0.2);background:#fff;color:#E24A3B;border-radius:12px;padding:5px 10px;cursor:pointer;font-size:11px;font-weight:600;">Remove</button></td>
       `;
       row.querySelector('[data-field="fromKey"]').value =
         connection.fromKey || index.entries[0]?.key || '';
@@ -512,6 +647,22 @@ async function openMeasurementRelationsEditor() {
       { id: `conn-${Date.now()}`, fromKey: firstKey, toKey: firstKey, note: '' },
     ];
     render();
+  });
+
+  // Quick export PDF from relations editor
+  overlay.querySelector('#relationsQuickExport')?.addEventListener('click', () => {
+    // Save current state first
+    setMetadata({
+      measurementChecks: checks,
+      measurementConnections: connections,
+      pieceGroups,
+    });
+    overlay.remove();
+    // Trigger PDF export dialog
+    const projectName = document.getElementById('projectName')?.value || 'OpenPaint';
+    if (typeof window.showPDFExportDialog === 'function') {
+      window.showPDFExportDialog(projectName);
+    }
   });
 
   overlay.querySelector('#saveRelations')?.addEventListener('click', () => {

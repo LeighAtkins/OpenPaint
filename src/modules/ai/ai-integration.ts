@@ -208,7 +208,7 @@ async function generateSofaBasics(): Promise<void> {
     }
 
     window.aiIntegration.isGenerating = true;
-    showAIMessage('Preparing image for AI analysis...', 'info');
+    showAIMessage('Preparing image for AI analysis', 'info');
 
     // Get image dimensions
     const dimensions = getCurrentImageDimensions();
@@ -223,7 +223,7 @@ async function generateSofaBasics(): Promise<void> {
     window.aiIntegration.currentImageId = imageId;
     window.aiIntegration.currentImageUrl = deliveryUrl;
 
-    showAIMessage('Image uploaded. Opening calibration dialog...', 'info');
+    showAIMessage('Image uploaded. Opening calibration dialog', 'info');
 
     // Show calibration dialog
     showCalibrationDialog(dimensions);
@@ -297,7 +297,7 @@ async function handleCalibrationSubmit(event: Event): Promise<void> {
     const dialog = document.getElementById('ai-calibration-dialog') as HTMLDialogElement | null;
     dialog?.close();
 
-    showAIMessage('Generating AI dimensions...', 'info');
+    showAIMessage('Generating AI dimensions', 'info');
 
     // Prepare payload for Worker
     const dimensions = getCurrentImageDimensions();

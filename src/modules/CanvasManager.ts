@@ -146,6 +146,17 @@ export class CanvasManager {
       backgroundColor: '#ffffff', // Default white background
     });
 
+    // Prefer tolerance-based hit testing over per-pixel readbacks for smoother dragging.
+    this.fabricCanvas.perPixelTargetFind = false;
+    this.fabricCanvas.targetFindTolerance = 8;
+
+    this.fabricCanvas.on('object:added', (evt: FabricIEvent) => {
+      const obj = evt?.target;
+      if (obj && obj.perPixelTargetFind) {
+        obj.perPixelTargetFind = false;
+      }
+    });
+
     const objectPrototype = fabric?.Object?.prototype;
     if (objectPrototype && !objectPrototype.__openpaintSafeDrawControlsPatched) {
       const originalDrawControls = objectPrototype.drawControls;
@@ -2260,6 +2271,7 @@ export class CanvasManager {
     // Note: Tags are non-selectable, so only strokes trigger this handler
     this.fabricCanvas.on('object:moving', (e: FabricIEvent) => {
       const movingObj = e.target;
+      if (!movingObj) return;
 
       const getWorldCenter = (obj: FabricObject) => {
         const center = obj.getCenterPoint();
@@ -2318,6 +2330,7 @@ export class CanvasManager {
       };
 
       if (!window.app?.tagManager) return;
+      let didUpdateConnectors = false;
 
       // Handle both single objects and multi-selections (activeSelection)
       if (movingObj.type === 'activeSelection') {
@@ -2340,6 +2353,7 @@ export class CanvasManager {
             for (const [strokeLabel, tagObj] of tagManager.tagObjects.entries()) {
               if (tagObj.connectedStroke === obj) {
                 tagManager.updateConnector(tagObj.strokeLabel || strokeLabel, tagObj.imageLabel);
+                didUpdateConnectors = true;
                 break;
               }
             }
@@ -2357,13 +2371,16 @@ export class CanvasManager {
         for (const [strokeLabel, tagObj] of tagManager.tagObjects.entries()) {
           if (tagObj.connectedStroke === movingObj) {
             tagManager.updateConnector(tagObj.strokeLabel || strokeLabel, tagObj.imageLabel);
+            didUpdateConnectors = true;
             break;
           }
         }
       }
 
-      // Request render to ensure connectors and tags display correctly
-      this.fabricCanvas.requestRenderAll();
+      // Request render only when connector geometry changed.
+      if (didUpdateConnectors) {
+        this.fabricCanvas.requestRenderAll();
+      }
     });
 
     const updateTagConnectorsForScaling = (scalingObj: FabricObject) => {

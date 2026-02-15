@@ -622,7 +622,7 @@ function showGuideGallery() {
       <div class="guide-gallery-container">
         <div class="guide-gallery-header">
           <h2 class="guide-gallery-title">Measurement Guide Gallery</h2>
-          <input type="text" class="guide-gallery-search" placeholder="Search guide codes..." />
+          <input type="text" class="guide-gallery-search" placeholder="Search guide codes\u2026" />
         </div>
         <div class="guide-gallery-grid">${items}</div>
       </div>

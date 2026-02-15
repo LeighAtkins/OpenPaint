@@ -297,7 +297,7 @@ export class TagManager {
       hasBorders: false,
       lockRotation: true,
       hoverCursor: 'move',
-      perPixelTargetFind: true, // Only select when clicking visible parts
+      perPixelTargetFind: false,
       excludeFromExport: true, // Don't serialize tags - they're recreated from stroke metadata
       // Custom properties
       isTag: true,

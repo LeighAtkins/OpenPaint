@@ -36,6 +36,29 @@ function fieldName(...parts) {
     .slice(0, 120);
 }
 
+function detectRowStatus(value) {
+  const text = String(value || '').toLowerCase();
+  if (/\b(pass|ok|approved|match)\b/.test(text)) return 'pass';
+  if (/\b(fail|error|invalid|mismatch)\b/.test(text)) return 'fail';
+  if (/\b(warn|warning|review|check)\b/.test(text)) return 'warn';
+  if (/\b(pending|todo|n\/a|na|unknown)\b/.test(text)) return 'pending';
+  return null;
+}
+
+function renderStatusBadge(status) {
+  if (!status) return '';
+  const label = status.toUpperCase();
+  const icon =
+    status === 'pass'
+      ? '<span class="status-dot" style="color:#1E9E5A;">&#10003;</span>'
+      : status === 'fail'
+        ? '<span class="status-dot" style="color:#E24A3B;">&#10005;</span>'
+        : status === 'warn'
+          ? '<span class="status-dot" style="color:#E7A400;">!</span>'
+          : '<span class="status-dot">?</span>';
+  return `<span class="status-badge status-${status}">${icon}${label}</span>`;
+}
+
 function renderUnitToggle(unit) {
   const normalized = String(unit || 'inch').toLowerCase() === 'cm' ? 'cm' : 'inch';
   return `
@@ -52,20 +75,22 @@ function renderMeasurementsTable(rows, groupIndex) {
   }
 
   const body = rows
-    .map(
-      (row, rowIndex) => `
+    .map((row, rowIndex) => {
+      const rowStatus = detectRowStatus(row.value);
+      return `
       <tr>
         <td>${escapeHtml(row.label)}</td>
         <td>
+          ${rowStatus ? `<div class="measure-cell-head">${renderStatusBadge(rowStatus)}</div>` : ''}
           <div
-            class="input-box pdf-field-anchor"
+            class="input-box pdf-field-anchor ${rowStatus ? `input-${rowStatus}` : ''}"
             data-field-name="${escapeHtml(fieldName('main', groupIndex + 1, row.label, rowIndex + 1))}"
             data-field-value="${escapeHtml(row.value || '')}"
           >${escapeHtml(row.value || '')}</div>
         </td>
       </tr>
-    `
-    )
+    `;
+    })
     .join('');
 
   return `
@@ -110,18 +135,22 @@ function renderRelatedMeasurementCards(cards, groupIndex) {
           .map((card, cardIndex) => {
             const rows = (card.rows || [])
               .slice(0, 4)
-              .map(
-                (row, rowIndex) => `
+              .map((row, rowIndex) => {
+                const rowStatus = detectRowStatus(row.value);
+                return `
                 <div class="measure-row">
                   <div class="measure-label">${escapeHtml(row.label)}</div>
-                  <div
-                    class="input-box pdf-field-anchor"
-                    data-field-name="${escapeHtml(fieldName('rel', groupIndex + 1, card.title, row.label, cardIndex + 1, rowIndex + 1))}"
-                    data-field-value="${escapeHtml(row.value || '')}"
-                  >${escapeHtml(row.value || '')}</div>
+                  <div class="measure-value-wrap">
+                    ${renderStatusBadge(rowStatus)}
+                    <div
+                      class="input-box pdf-field-anchor ${rowStatus ? `input-${rowStatus}` : ''}"
+                      data-field-name="${escapeHtml(fieldName('rel', groupIndex + 1, card.title, row.label, cardIndex + 1, rowIndex + 1))}"
+                      data-field-value="${escapeHtml(row.value || '')}"
+                    >${escapeHtml(row.value || '')}</div>
+                  </div>
                 </div>
-              `
-              )
+              `;
+              })
               .join('');
             return `
               <div class="measure-card">
@@ -152,10 +181,13 @@ export function renderReportTemplate(report, options = {}) {
         <header class="header">
           <div class="header-top">
             <h1 class="title">${escapeHtml(report.projectName)}</h1>
-            ${renderUnitToggle(report.unit)}
+            <div class="header-right">
+              <span class="sheet-tag">Sheet ${index + 1}</span>
+              ${renderUnitToggle(report.unit)}
+            </div>
           </div>
-          <div class="meta">${escapeHtml(report.namingLine || '')}</div>
-          <div class="meta">${escapeHtml(subtitle)}</div>
+          <div class="meta meta-primary">${escapeHtml(report.namingLine || '')}</div>
+          <div class="meta meta-secondary">${escapeHtml(subtitle)}</div>
         </header>
 
         <div class="split avoid-break">
@@ -164,7 +196,7 @@ export function renderReportTemplate(report, options = {}) {
             <img class="hero-image" src="${escapeHtml(group.mainImage.src)}" alt="${escapeHtml(
               group.mainImage.title || 'Main image'
             )}" />
-            <div class="meta">${escapeHtml(group.mainImage.title || '')}</div>
+            <div class="figure-caption">${escapeHtml(group.mainImage.title || '')}</div>
           </div>
           ${renderMeasurementsTable(group.mainMeasurements || [], index)}
         </div>
@@ -187,6 +219,9 @@ export function renderReportTemplate(report, options = {}) {
     <head>
       <meta charset="utf-8" />
       <meta name="viewport" content="width=device-width,initial-scale=1" />
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+      <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
       <style>:root { ${pageCssVars} }</style>
       <style>${getPrintCss()}</style>
       <style>@page { size: ${pageFormat}; margin: 14mm; }</style>

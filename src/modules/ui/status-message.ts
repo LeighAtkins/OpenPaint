@@ -19,7 +19,7 @@ const getStatusElement = (): StatusElement => {
                 font-size: 14px;
                 z-index: 9999;
                 opacity: 0;
-                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
                 max-width: 80%;
                 text-align: center;
                 box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -28,6 +28,8 @@ const getStatusElement = (): StatusElement => {
                 gap: 10px;
                 backdrop-filter: blur(8px);
             `;
+    statusElement.setAttribute('role', 'status');
+    statusElement.setAttribute('aria-live', 'polite');
     document.body.appendChild(statusElement);
   }
 

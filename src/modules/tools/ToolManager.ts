@@ -10,6 +10,7 @@ export interface ToolSettings {
   color?: string;
   width?: number;
   fontSize?: number;
+  fontFamily?: string;
 }
 
 export interface ToolInstance {
@@ -18,6 +19,7 @@ export interface ToolInstance {
   setColor?: (color: string) => void;
   setWidth?: (width: number) => void;
   setFontSize?: (fontSize: number) => void;
+  setFontFamily?: (fontFamily: string) => void;
 }
 
 type ToolConstructor = new (canvasManager: CanvasManagerLike) => ToolInstance;
@@ -67,6 +69,7 @@ export class ToolManager {
     this.currentSettings = {
       color: '#3b82f6', // Default to bright blue
       width: 2,
+      fontFamily: 'Nunito',
     };
   }
 
@@ -136,6 +139,18 @@ export class ToolManager {
       return;
     }
 
+    const isAlreadyActive = this.activeTool === tool && this.activeToolName === toolName;
+    if (isAlreadyActive) {
+      // Avoid duplicate activate() calls when the same tool is selected again.
+      // Some tools register canvas/document listeners in activate(), which would otherwise stack.
+      this.updateSettings(this.currentSettings);
+      console.log(`Tool selected: ${toolName}`);
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('toolchange', { detail: { tool: toolName } }));
+      }
+      return;
+    }
+
     if (this.activeTool && this.activeTool !== tool) {
       this.activeTool.deactivate();
     }
@@ -156,14 +171,17 @@ export class ToolManager {
     this.currentSettings = { ...this.currentSettings, ...settings };
 
     if (this.activeTool) {
-      if (settings.color && this.activeTool.setColor) {
+      if (typeof settings.color === 'string' && this.activeTool.setColor) {
         this.activeTool.setColor(settings.color);
       }
-      if (settings.width && this.activeTool.setWidth) {
+      if (typeof settings.width === 'number' && this.activeTool.setWidth) {
         this.activeTool.setWidth(settings.width);
       }
-      if (settings.fontSize && this.activeTool.setFontSize) {
+      if (typeof settings.fontSize === 'number' && this.activeTool.setFontSize) {
         this.activeTool.setFontSize(settings.fontSize);
+      }
+      if (typeof settings.fontFamily === 'string' && this.activeTool.setFontFamily) {
+        this.activeTool.setFontFamily(settings.fontFamily);
       }
     }
   }

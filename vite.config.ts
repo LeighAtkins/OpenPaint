@@ -72,9 +72,23 @@ export default defineConfig(({ mode }) => {
     },
 
     server: {
-      port: 3000,
+      port: 5173,
       strictPort: true,
       host: true,
+      proxy: {
+        '/api': {
+          target: 'http://localhost:3000',
+          changeOrigin: true,
+        },
+        '/ai': {
+          target: 'http://localhost:3000',
+          changeOrigin: true,
+        },
+        '/uploads': {
+          target: 'http://localhost:3000',
+          changeOrigin: true,
+        },
+      },
     },
 
     preview: {

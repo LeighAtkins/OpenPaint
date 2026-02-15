@@ -1,46 +1,52 @@
+/* ============================================================
+   OpenPaint — Obscura Editorial-Generative Theme
+   All visual tokens reference css/obscura-tokens.css
+   ============================================================ */
+
+/* ── Stroke measure button ───────────────────────────────────── */
 .stroke-visibility-item .stroke-measure-btn {
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 14px;
+  font-size: var(--ob-text-body);
   padding: 2px;
-  margin-left: 5px;
+  margin-left: var(--ob-sp-1);
   opacity: 0.7;
-  transition: opacity 0.2s ease;
+  transition: opacity var(--ob-duration-fast) var(--ob-ease-standard);
 }
 
 .stroke-visibility-item .stroke-measure-btn:hover {
   opacity: 1;
 }
 
-/* Tag size buttons */
+/* ── Tag size buttons ────────────────────────────────────────── */
 .tag-size-container {
   display: inline-flex;
   align-items: center;
-  margin-left: 8px;
+  margin-left: var(--ob-sp-2);
   gap: 2px;
 }
 
 .tag-size-btn {
-  background: #f0f0f0;
-  border: 1px solid #ccc;
-  border-radius: 3px;
+  background: var(--ob-paper);
+  border: var(--ob-border-width) solid var(--ob-border-color);
+  border-radius: 6px;
   cursor: pointer;
-  font-size: 12px;
-  font-weight: bold;
+  font-size: var(--ob-text-meta);
+  font-weight: var(--ob-weight-semibold);
   width: 18px;
   height: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 0;
-  transition: all 0.2s ease;
+  transition: all var(--ob-duration-fast) var(--ob-ease-standard);
   opacity: 0.8;
 }
 
 .tag-size-btn:hover:not(:disabled) {
-  background: #e0e0e0;
-  border-color: #999;
+  background: var(--ob-fog);
+  border-color: var(--ob-slate);
   opacity: 1;
 }
 
@@ -50,95 +56,96 @@
 }
 
 .tag-size-btn.tag-size-bigger {
-  color: #28a745;
+  color: var(--ob-success);
 }
 
 .tag-size-btn.tag-size-smaller {
-  color: #dc3545;
+  color: var(--ob-danger);
 }
 
+/* ── Tag container ───────────────────────────────────────────── */
 .tag-container {
-  padding: 4px 8px;
-  border-radius: 4px;
-  background-color: #f0f0f0;
-  transition: background-color 0.2s ease;
+  padding: var(--ob-sp-1) var(--ob-sp-2);
+  border-radius: var(--ob-radius-button);
+  background-color: var(--ob-paper);
+  transition: background-color var(--ob-duration-fast) var(--ob-ease-standard);
   margin: 2px 0;
-  font-size: 14px;
-  border: 1px solid #ddd;
+  font-size: var(--ob-text-body);
+  border: var(--ob-border-width) solid var(--ob-border-color);
   display: inline-block;
   width: 100%;
   box-sizing: border-box;
 }
 
 .tag-container:hover {
-  background-color: #e0e0e0;
-  border-color: #ccc;
+  background-color: var(--ob-fog);
+  border-color: var(--ob-slate);
 }
 
 .tag-container input {
-  border: 1px solid #ccc;
-  border-radius: 2px;
-  font-size: 14px;
+  border: var(--ob-border-width) solid var(--ob-border-color);
+  border-radius: var(--ob-radius-input);
+  font-size: var(--ob-text-body);
   font-family: inherit;
-  background: white;
+  background: var(--ob-bg-surface);
   width: 100%;
 }
 
 .tag-container input:focus {
   outline: none;
-  border-color: #007bff;
-  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+  border-color: var(--ob-signal);
+  box-shadow: 0 0 0 2px var(--ob-signal-ring);
 }
 
+/* ── Focus mode ──────────────────────────────────────────────── */
 .focus-mode-indicator {
   pointer-events: none;
 }
 
 .focus-mode-indicator > div {
-  font-size: 14px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  font-size: var(--ob-text-body);
+  box-shadow: var(--ob-shadow-soft);
 }
 
-/* Make sure image labels are visible and properly styled */
+/* ── Image labels ────────────────────────────────────────────── */
 .image-label {
-  margin: 4px 0;
+  margin: var(--ob-sp-1) 0;
   padding: 2px;
   width: 100%;
 }
 
-/* Tag controls container */
+/* ── Tag controls ────────────────────────────────────────────── */
 .tag-controls {
   position: absolute;
-  top: 5px;
-  right: 5px;
+  top: var(--ob-sp-1);
+  right: var(--ob-sp-1);
   display: flex;
-  gap: 5px;
+  gap: var(--ob-sp-1);
   z-index: 5;
 }
 
-/* Tag control buttons */
 .tag-edit-button,
 .tag-focus-button {
   width: 24px;
   height: 24px;
-  border-radius: 50%;
-  border: 1px solid #ccc;
-  background-color: white;
+  border-radius: var(--ob-radius-chip);
+  border: var(--ob-border-width) solid var(--ob-border-color);
+  background-color: var(--ob-bg-surface);
   cursor: pointer;
-  font-size: 12px;
+  font-size: var(--ob-text-meta);
   padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
+  transition: all var(--ob-duration-fast) var(--ob-ease-standard);
   opacity: 0.7;
 }
 
 .tag-edit-button:hover,
 .tag-focus-button:hover {
   opacity: 1;
-  transform: scale(1.1);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transform: scale(1.05);
+  box-shadow: var(--ob-shadow-soft);
 }
 
 .tag-edit-button:active,
@@ -146,94 +153,87 @@
   transform: scale(0.95);
 }
 
-/* Make sure the image container has position relative for proper button positioning */
+/* ── Image container ─────────────────────────────────────────── */
 .image-container {
   position: relative;
+  border-left: 2px solid transparent;
+  transition: all var(--ob-duration-base) var(--ob-ease-standard);
 }
 
-/* Responsive label behavior for buttons */
+.image-container:hover {
+  border-left-color: var(--ob-signal);
+  background-color: var(--ob-paper);
+}
+
+.image-container[aria-selected='true'] {
+  border-left-color: var(--ob-signal);
+  background-color: var(--ob-signal-soft);
+}
+
+/* ── Responsive labels ───────────────────────────────────────── */
 .label-long {
-  display: inline;
+  display: inline-block;
+  white-space: nowrap;
 }
 
 .label-short {
   display: none;
+  white-space: nowrap;
 }
 
 @media (max-width: 640px) {
-  .label-long {
-    display: none;
-  }
-
-  .label-short {
-    display: inline;
-  }
-}
-/* === CONSOLIDATED FROM index.html === */
-/* Custom styles for image list and tag system */
-.image-container {
-  border-left: 2px solid transparent;
-  transition: all 0.2s ease;
+  .label-long { display: none; }
+  .label-short { display: inline; }
 }
 
-.image-container:hover {
-  border-left-color: #3b82f6;
-  background-color: #f8fafc;
-}
-
-.image-container[aria-selected='true'] {
-  border-left-color: #3b82f6;
-  background-color: #eff6ff;
-}
-
+/* ── Tag badge ───────────────────────────────────────────────── */
 .tag-badge {
   display: inline-block;
-  background-color: #e0e7ff;
-  color: #3730a3;
+  background-color: var(--ob-signal-soft);
+  color: var(--ob-signal);
   font-size: 10px;
-  font-weight: 500;
+  font-weight: var(--ob-weight-medium);
   padding: 2px 6px;
-  border-radius: 6px;
+  border-radius: var(--ob-radius-chip);
   line-height: 1;
+  border: var(--ob-border-width) solid var(--ob-border-color);
 }
 
 .no-tags {
   font-size: 10px;
-  color: #9ca3af;
+  color: var(--ob-text-secondary);
   font-style: italic;
 }
 
 .image-label:hover {
-  background-color: #f1f5f9 !important;
+  background-color: var(--ob-paper) !important;
 }
 
-/* Modern slider styling (align with original OpenPaint) */
+/* ── Slider (range input) ────────────────────────────────────── */
 .slider {
-  --accent: #3b82f6;
-  --p: 0; /* 0..1 progress (set by JS) */
-  --filled: 30%; /* legacy percent for compatibility */
-  --track-h: 6px; /* track height */
-  --thumb: 16px; /* thumb diameter (px) */
-  /* align fill end exactly under thumb center across browsers */
+  --accent: var(--ob-signal);
+  --p: 0;
+  --filled: 30%;
+  --track-h: 4px;
+  --thumb: 14px;
   --pos: calc((var(--p) * (100% - var(--thumb))) + (var(--thumb) / 2));
   -webkit-appearance: none;
   appearance: none;
   outline: none;
-  border-radius: 9999px;
+  border-radius: var(--ob-radius-chip);
   height: var(--track-h);
-  background: transparent; /* let track draw the background */
+  background: transparent;
 }
 
-/* WebKit/Blink track + thumb */
 .slider::-webkit-slider-runnable-track {
   height: var(--track-h);
-  border-radius: 9999px;
+  border-radius: var(--ob-radius-chip);
   background: linear-gradient(
     to right,
     var(--accent) 0,
     var(--accent) var(--pos),
-    #e5e7eb var(--pos),
-    #e5e7eb 100%
+    var(--ob-fog) var(--pos),
+    var(--ob-fog) 100%
   );
 }
 
@@ -243,64 +243,52 @@
   width: var(--thumb);
   height: var(--thumb);
   border-radius: 50%;
-  background: var(--accent);
+  background: var(--ob-ink);
   cursor: pointer;
-  /* keep a subtle depth but pull the blue glow inside the thumb */
-  box-shadow:
-    inset 0 0 0 3px rgba(59, 130, 246, 0.45),
-    0 1px 2px rgba(0, 0, 0, 0.07);
-  transition: all 0.2s ease;
-  /* center the thumb on a thin track */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  transition: all var(--ob-duration-fast) var(--ob-ease-standard);
   margin-top: calc((var(--track-h) - var(--thumb)) / 2);
+  border: 2px solid var(--ob-white);
 }
 
 .slider::-webkit-slider-thumb:hover {
-  transform: scale(1.08);
-  box-shadow:
-    inset 0 0 0 4px rgba(59, 130, 246, 0.55),
-    0 2px 3px rgba(0, 0, 0, 0.08);
+  transform: scale(1.12);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
 }
 
-/* Firefox track + thumb + progress */
 .slider::-moz-range-track {
   height: var(--track-h);
-  border-radius: 9999px;
-  background: #e5e7eb;
+  border-radius: var(--ob-radius-chip);
+  background: var(--ob-fog);
 }
 
 .slider::-moz-range-progress {
   height: var(--track-h);
-  border-radius: 9999px;
+  border-radius: var(--ob-radius-chip);
   background: var(--accent);
 }
 
 .slider::-moz-range-thumb {
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
-  background: var(--accent);
+  background: var(--ob-ink);
   cursor: pointer;
-  border: none;
-  box-shadow:
-    inset 0 0 0 3px rgba(59, 130, 246, 0.45),
-    0 1px 2px rgba(0, 0, 0, 0.07);
-  transition: all 0.2s ease;
+  border: 2px solid var(--ob-white);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  transition: all var(--ob-duration-fast) var(--ob-ease-standard);
 }
 
 .slider::-moz-range-thumb:hover {
-  transform: scale(1.08);
-  box-shadow:
-    inset 0 0 0 4px rgba(59, 130, 246, 0.55),
-    0 2px 3px rgba(0, 0, 0, 0.08);
+  transform: scale(1.12);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
 }
 
-/* Match original OpenPaint slider width */
 #brushSize {
   width: 120px;
   margin: 0;
 }
 
-/* Remove native focus outline while keeping custom inset ring */
 .slider {
   -webkit-tap-highlight-color: transparent;
 }
@@ -312,52 +300,45 @@
 .slider::-moz-focus-outer {
   border: 0;
 }
-/* Hide UI until initialization completes to prevent flash */
+
+/* ── App loading ─────────────────────────────────────────────── */
 .app-loading body {
   visibility: hidden !important;
 }
 
-/* Hide toolbar completely until ready - prevents any flicker */
 #topToolbar:not(.toolbar-ready) {
-  display: none !important; /* Completely remove from layout */
+  display: none !important;
 }
 
-/* Show toolbar only when ready */
 #topToolbar.toolbar-ready {
   display: block !important;
   opacity: 1 !important;
   visibility: visible !important;
-  transition: none !important; /* Disable transitions during initialization to prevent flicker */
+  transition: none !important;
 }
 
-/* After initialization completes, enable smooth transitions */
 #topToolbar.toolbar-ready.toolbar-stable {
-  transition:
-    opacity 0.2s ease,
-    visibility 0s;
+  transition: opacity var(--ob-duration-base) var(--ob-ease-standard), visibility 0s;
 }
 
-/* Panels load immediately - no hiding during app-loading */
-/* They start expanded and visible by default */
-
-/* Ensure stable toolbar layout from the start */
+/* ── Top toolbar ─────────────────────────────────────────────── */
 #topToolbar {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
-  z-index: 40;
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border-bottom: 1px solid rgb(226, 232, 240);
+  z-index: var(--ob-z-toolbar);
+  background: rgba(246, 247, 249, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: var(--ob-border-width) solid var(--ob-border-color);
   height: 48px;
 }
 
 .toolbar-wrap {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 0 12px;
+  padding: 0 var(--ob-sp-3);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -370,57 +351,35 @@
   position: relative;
   display: flex;
   align-items: center;
-  flex-shrink: 0; /* Prevent shrinking that causes layout shifts */
-  min-width: 0; /* Allow flex items to shrink below content size if needed */
+  flex-shrink: 0;
+  min-width: 0;
 }
 
-/* Stabilize button widths to prevent jumping */
 #tbLeft .tbtn,
 #tbRight .tbtn {
-  min-width: fit-content; /* Ensure buttons don't collapse */
-  white-space: nowrap; /* Prevent text wrapping */
-}
-
-/* Ensure label spans don't cause width changes */
-.label-long,
-.label-short {
-  display: inline-block; /* Use inline-block for more stable layout */
+  min-width: fit-content;
   white-space: nowrap;
 }
 
-/* Mobile: Make toolbar horizontally scrollable by default */
+/* ── Mobile toolbar ──────────────────────────────────────────── */
 @media (max-width: 768px) {
   .toolbar-wrap {
     overflow-x: auto;
     overflow-y: hidden;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: thin;
-    scrollbar-color: rgba(148, 163, 184, 0.5) transparent;
+    scrollbar-color: var(--ob-fog) transparent;
     justify-content: flex-start;
-    gap: 12px;
-    padding: 0 8px;
+    gap: var(--ob-sp-3);
+    padding: 0 var(--ob-sp-2);
     position: relative;
     cursor: pointer;
   }
 
-  .toolbar-wrap::-webkit-scrollbar {
-    height: 4px;
-  }
+  .toolbar-wrap::-webkit-scrollbar { height: 3px; }
+  .toolbar-wrap::-webkit-scrollbar-track { background: transparent; }
+  .toolbar-wrap::-webkit-scrollbar-thumb { background: var(--ob-fog); border-radius: 2px; }
 
-  .toolbar-wrap::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  .toolbar-wrap::-webkit-scrollbar-thumb {
-    background: rgba(148, 163, 184, 0.5);
-    border-radius: 2px;
-  }
-
-  .toolbar-wrap::-webkit-scrollbar-thumb:hover {
-    background: rgba(148, 163, 184, 0.7);
-  }
-
-  /* Prevent toolbar groups from wrapping in scrollable mode */
   .toolbar-wrap:not(.expanded) #tbLeft,
   .toolbar-wrap:not(.expanded) #tbCenter,
   .toolbar-wrap:not(.expanded) #tbRight {
@@ -428,7 +387,6 @@
     flex-wrap: nowrap;
   }
 
-  /* Ensure buttons don't shrink in scrollable mode */
   .toolbar-wrap:not(.expanded) .tbtn,
   .toolbar-wrap:not(.expanded) .tinput,
   .toolbar-wrap:not(.expanded) .color-swatches,
@@ -436,29 +394,26 @@
     flex-shrink: 0;
   }
 
-  /* Expanded/wrapped mode - up to 5 rows */
   .toolbar-wrap.expanded {
     overflow-x: visible;
     overflow-y: visible;
     flex-wrap: wrap;
     align-content: flex-start;
     height: auto;
-    max-height: calc(5 * (32px + 6px)); /* 5 rows: button height + gap */
-    padding: 8px;
+    max-height: calc(5 * (36px + 6px));
+    padding: var(--ob-sp-2);
     gap: 6px;
   }
 
-  /* In expanded mode, flatten groups so items wrap together */
   .toolbar-wrap.expanded #tbLeft,
   .toolbar-wrap.expanded #tbCenter,
   .toolbar-wrap.expanded #tbRight {
     flex-wrap: wrap;
     flex-shrink: 1;
     gap: 6px;
-    display: contents; /* Flatten structure so items wrap together */
+    display: contents;
   }
 
-  /* Ensure items maintain spacing in expanded mode */
   .toolbar-wrap.expanded .group-gap > * {
     margin-right: 6px;
     margin-bottom: 0;
@@ -471,290 +426,52 @@
     flex-shrink: 0;
   }
 
-  /* Visual indicator at bottom for tap area */
+  /* Subtle bottom indicator */
   .toolbar-wrap::after {
     content: '';
     position: absolute;
     bottom: 0;
     left: 0;
     right: 0;
-    height: 8px;
-    background: linear-gradient(to top, rgba(148, 163, 184, 0.1), transparent);
+    height: 6px;
+    background: linear-gradient(to top, rgba(62, 71, 82, 0.04), transparent);
     pointer-events: none;
     opacity: 0.5;
-    transition: opacity 0.2s;
+    transition: opacity var(--ob-duration-fast);
   }
 
-  .toolbar-wrap.expanded::after {
-    opacity: 0;
-  }
+  .toolbar-wrap.expanded::after { opacity: 0; }
 
-  /* Blue glow animation when expandable */
-  @keyframes blueGlow {
-    0%,
-    100% {
-      box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
-    }
-    50% {
-      box-shadow: 0 0 12px 4px rgba(59, 130, 246, 0.6);
-    }
+  /* Signal glow when expandable */
+  @keyframes signalPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(45, 107, 255, 0); }
+    50% { box-shadow: 0 0 8px 3px rgba(45, 107, 255, 0.3); }
   }
 
   .toolbar-wrap.expandable {
-    animation: blueGlow 0.5s ease-in-out;
-    animation-fill-mode: none; /* Don't persist animation state */
+    animation: signalPulse 0.5s ease-in-out;
+    animation-fill-mode: none;
   }
 
   .toolbar-wrap.tapped {
-    animation: blueGlow 1s ease-in-out;
-    animation-fill-mode: none; /* Don't persist animation state */
+    animation: signalPulse 1s ease-in-out;
+    animation-fill-mode: none;
   }
 
-  /* Glow on hover only if expandable (when scrollable) */
   .toolbar-wrap:not(.expanded)[data-scrollable='true']:hover:not(.no-glow) {
-    box-shadow: 0 0 12px 4px rgba(59, 130, 246, 0.6);
-    transition: box-shadow 0.2s ease-in-out;
+    box-shadow: 0 0 8px 3px rgba(45, 107, 255, 0.25);
+    transition: box-shadow var(--ob-duration-base) var(--ob-ease-standard);
   }
 
-  /* Ensure no glow when not hovering (even if scrollable) */
   .toolbar-wrap:not(.expanded)[data-scrollable='true']:not(:hover):not(.expandable):not(.tapped) {
     box-shadow: none !important;
   }
 
-  /* Force no glow when no-glow class is present */
-  .toolbar-wrap.no-glow {
-    box-shadow: none !important;
-  }
-}
+  .toolbar-wrap.no-glow { box-shadow: none !important; }
 
-.group-gap > * {
-  margin-right: 6px;
-}
+  .label-long { display: none; }
+  .label-short { display: inline-block; }
 
-.group-gap > *:last-child {
-  margin-right: 0;
-}
-
-/* Ensure all toolbar buttons have consistent sizing */
-.tbtn {
-  height: 32px;
-  padding: 0 10px;
-  border-radius: 8px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  border: 1px solid rgba(148, 163, 184, 0.6);
-  background: #fff;
-  font-size: 12px;
-  line-height: 1;
-  transition: all 0.15s ease;
-  white-space: nowrap;
-}
-
-.tinput {
-  height: 32px;
-  padding: 0 10px;
-  border-radius: 8px;
-  border: 1px solid rgba(148, 163, 184, 0.6);
-  background: #fff;
-  font-size: 12px;
-  line-height: 1;
-  transition: all 0.15s ease;
-}
-
-.icon-btn {
-  width: 32px;
-  justify-content: center;
-  padding: 0;
-}
-
-/* Rotate controls: big swing hover state */
-#rotateLeftCtrl,
-#rotateRightCtrl {
-  position: relative;
-  overflow: hidden;
-  transform-origin: 50% 60%;
-  transition:
-    transform 0.18s ease,
-    box-shadow 0.18s ease,
-    border-color 0.18s ease,
-    background 0.18s ease,
-    color 0.18s ease;
-}
-
-#rotateLeftCtrl::after,
-#rotateRightCtrl::after {
-  content: '';
-  position: absolute;
-  inset: -40%;
-  background: radial-gradient(
-    circle at 30% 30%,
-    rgba(59, 130, 246, 0.25),
-    rgba(14, 116, 144, 0.0) 60%
-  );
-  opacity: 0;
-  transition: opacity 0.18s ease;
-  pointer-events: none;
-}
-
-#rotateLeftCtrl:hover,
-#rotateRightCtrl:hover {
-  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-  border-color: rgba(59, 130, 246, 0.6);
-  box-shadow:
-    0 10px 24px rgba(15, 23, 42, 0.18),
-    0 0 0 2px rgba(59, 130, 246, 0.15);
-  color: #0f172a;
-}
-
-#rotateLeftCtrl:hover {
-  transform: rotate(-12deg) scale(1.08);
-}
-
-#rotateRightCtrl:hover {
-  transform: rotate(12deg) scale(1.08);
-}
-
-#rotateLeftCtrl:hover::after,
-#rotateRightCtrl:hover::after {
-  opacity: 1;
-}
-
-#rotateLeftCtrl:active,
-#rotateRightCtrl:active {
-  transform: scale(0.96);
-  box-shadow:
-    0 6px 14px rgba(15, 23, 42, 0.12),
-    0 0 0 2px rgba(59, 130, 246, 0.12);
-}
-
-#rotateLeftCtrl:focus-visible,
-#rotateRightCtrl:focus-visible {
-  outline: 2px solid rgba(59, 130, 246, 0.65);
-  outline-offset: 2px;
-}
-
-/* Specific button styles to prevent layout shifts */
-#paste {
-  padding: 8px 16px;
-  background: rgb(59, 130, 246);
-  color: white;
-  font-weight: 600;
-  border-radius: 12px;
-  border: none;
-}
-
-#clear {
-  padding: 8px 16px;
-  background: rgb(239, 68, 68);
-  color: white;
-  font-weight: 600;
-  border-radius: 12px;
-  border: none;
-}
-
-#drawingModeToggle {
-  padding: 8px 16px;
-  background: white;
-  color: rgb(34, 197, 94);
-  font-weight: 600;
-  border-radius: 12px;
-  border: 2px solid rgb(34, 197, 94);
-}
-
-#projectName {
-  width: 140px;
-  padding: 8px 12px;
-  border: 1px solid rgb(209, 213, 219);
-  border-radius: 12px;
-  background: white;
-  font-size: 14px;
-}
-
-#loadProject {
-  padding: 8px 16px;
-  background: white;
-  color: rgb(51, 65, 85);
-  font-weight: 600;
-  border-radius: 12px;
-  border: 1px solid rgb(209, 213, 219);
-  font-size: 12px;
-}
-
-#saveProjectTop {
-  padding: 8px 16px;
-  background: rgb(59, 130, 246);
-  color: white;
-  font-weight: 700;
-  border-radius: 12px;
-  border: 1px solid rgb(37, 99, 235);
-  font-size: 14px;
-}
-
-#updateShareBtn {
-  padding: 6px 12px;
-  background: rgb(14, 165, 233);
-  color: white;
-  font-weight: 600;
-  border-radius: 12px;
-  border: 1px solid rgb(2, 132, 199);
-  margin-left: 8px;
-}
-
-#unitToggleBtn {
-  padding: 6px 12px;
-  background: white;
-  color: rgb(51, 65, 85);
-  font-weight: 600;
-  border-radius: 12px;
-  border: 1px solid rgb(209, 213, 219);
-}
-
-/* Color swatches */
-.color-swatches {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.color-swatches button {
-  width: 20px;
-  height: 20px;
-  border-radius: 9999px;
-  border: 2px solid white;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
-  margin: 0;
-  padding: 0;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.color-swatches button:hover {
-  transform: scale(1.1);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
-}
-
-/* Responsive text labels */
-.label-long {
-  display: inline-block;
-  white-space: nowrap;
-}
-
-.label-short {
-  display: none;
-  white-space: nowrap;
-}
-
-@media (max-width: 768px) {
-  .label-long {
-    display: none;
-  }
-
-  .label-short {
-    display: inline-block;
-  }
-
-  /* Constrain panel widths on mobile to trigger scrolling */
   #toolsPanel {
     max-width: calc(100vw - 2rem);
     left: 1rem !important;
@@ -767,7 +484,6 @@
     -webkit-overflow-scrolling: touch;
   }
 
-  /* Enable horizontal scrolling for panel content on mobile */
   #toolsPanelContent,
   #canvasControlsContent {
     overflow-x: auto !important;
@@ -777,62 +493,243 @@
     flex-wrap: nowrap !important;
   }
 
-  /* Ensure buttons don't shrink */
-  #canvasControlsContent > * {
-    flex-shrink: 0;
-  }
+  #canvasControlsContent > * { flex-shrink: 0; }
 
-  /* Prevent wrapping on flex rows inside panels */
   #toolsPanelContent .flex.items-center,
   #toolsPanelContent > div,
   #canvasControlsContent.flex {
     flex-wrap: nowrap !important;
   }
 
-  /* Ensure buttons don't shrink */
   #toolsPanelContent button,
   #canvasControlsContent button,
   #canvasControlsContent select {
     flex-shrink: 0;
   }
 
-  /* Hide scrollbars for cleaner look */
   #toolsPanelContent::-webkit-scrollbar,
-  #canvasControlsContent::-webkit-scrollbar {
-    height: 4px;
-  }
+  #canvasControlsContent::-webkit-scrollbar { height: 3px; }
 
   #toolsPanelContent::-webkit-scrollbar-thumb,
   #canvasControlsContent::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.2);
+    background: var(--ob-fog);
     border-radius: 2px;
   }
 }
 
+.group-gap > * { margin-right: 6px; }
+.group-gap > *:last-child { margin-right: 0; }
+
+/* ── Toolbar buttons ─────────────────────────────────────────── */
+.tbtn {
+  height: var(--ob-btn-sm-h);
+  padding: 0 var(--ob-btn-sm-px);
+  border-radius: var(--ob-radius-button);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: var(--ob-border-width) solid var(--ob-border-color);
+  background: var(--ob-bg-surface);
+  color: var(--ob-text-primary);
+  font-size: var(--ob-text-meta);
+  font-family: var(--ob-font-sans);
+  font-weight: var(--ob-weight-medium);
+  line-height: 1;
+  transition: all var(--ob-duration-base) var(--ob-ease-standard);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.tinput {
+  height: var(--ob-btn-sm-h);
+  padding: 0 var(--ob-btn-sm-px);
+  border-radius: var(--ob-radius-input);
+  border: var(--ob-border-width) solid var(--ob-border-color);
+  background: var(--ob-bg-surface);
+  color: var(--ob-text-primary);
+  font-size: var(--ob-text-meta);
+  font-family: var(--ob-font-sans);
+  line-height: 1;
+  transition: border-color var(--ob-duration-base) var(--ob-ease-standard), box-shadow var(--ob-duration-base) var(--ob-ease-standard);
+}
+
+.icon-btn {
+  width: 36px;
+  justify-content: center;
+  padding: 0;
+}
+
+/* ── Rotate controls ─────────────────────────────────────────── */
+#rotateLeftCtrl,
+#rotateRightCtrl {
+  position: relative;
+  overflow: hidden;
+  transform-origin: 50% 60%;
+  transition: all var(--ob-duration-base) var(--ob-ease-standard);
+}
+
+#rotateLeftCtrl::after,
+#rotateRightCtrl::after {
+  content: '';
+  position: absolute;
+  inset: -40%;
+  background: radial-gradient(circle at 30% 30%, rgba(45, 107, 255, 0.15), transparent 60%);
+  opacity: 0;
+  transition: opacity var(--ob-duration-base) var(--ob-ease-standard);
+  pointer-events: none;
+}
+
+#rotateLeftCtrl:hover,
+#rotateRightCtrl:hover {
+  background: var(--ob-paper);
+  border-color: var(--ob-signal);
+  box-shadow: var(--ob-shadow-soft);
+  color: var(--ob-ink);
+}
+
+#rotateLeftCtrl:hover { transform: rotate(-8deg) scale(1.04); }
+#rotateRightCtrl:hover { transform: rotate(8deg) scale(1.04); }
+
+#rotateLeftCtrl:hover::after,
+#rotateRightCtrl:hover::after { opacity: 1; }
+
+#rotateLeftCtrl:active,
+#rotateRightCtrl:active {
+  transform: scale(0.96);
+  box-shadow: var(--ob-shadow-soft);
+}
+
+#rotateLeftCtrl:focus-visible,
+#rotateRightCtrl:focus-visible {
+  outline: 2px solid var(--ob-signal);
+  outline-offset: 2px;
+}
+
+/* ── Specific button styles ──────────────────────────────────── */
+#paste {
+  padding: var(--ob-sp-2) var(--ob-sp-4);
+  background: var(--ob-ink);
+  color: var(--ob-white);
+  font-weight: var(--ob-weight-semibold);
+  border-radius: var(--ob-radius-button);
+  border: none;
+}
+
+#clear {
+  padding: var(--ob-sp-2) var(--ob-sp-4);
+  background: var(--ob-danger);
+  color: var(--ob-white);
+  font-weight: var(--ob-weight-semibold);
+  border-radius: var(--ob-radius-button);
+  border: none;
+}
+
+#drawingModeToggle {
+  padding: var(--ob-sp-2) var(--ob-sp-4);
+  background: var(--ob-bg-surface);
+  color: var(--ob-signal);
+  font-weight: var(--ob-weight-semibold);
+  border-radius: var(--ob-radius-button);
+  border: var(--ob-border-width) solid var(--ob-signal);
+}
+
+#projectName {
+  width: 140px;
+  padding: var(--ob-sp-2) var(--ob-sp-3);
+  border: var(--ob-border-width) solid var(--ob-border-color);
+  border-radius: var(--ob-radius-input);
+  background: var(--ob-bg-surface);
+  font-size: var(--ob-text-body);
+  font-family: var(--ob-font-sans);
+  color: var(--ob-text-primary);
+}
+
+#loadProject {
+  padding: var(--ob-sp-2) var(--ob-sp-4);
+  background: var(--ob-bg-surface);
+  color: var(--ob-text-primary);
+  font-weight: var(--ob-weight-semibold);
+  border-radius: var(--ob-radius-button);
+  border: var(--ob-border-width) solid var(--ob-border-color);
+  font-size: var(--ob-text-meta);
+}
+
+#saveProjectTop {
+  padding: var(--ob-sp-2) var(--ob-sp-4);
+  background: var(--ob-ink);
+  color: var(--ob-white);
+  font-weight: var(--ob-weight-bold);
+  border-radius: var(--ob-radius-button);
+  border: none;
+  font-size: var(--ob-text-body);
+}
+
+#updateShareBtn {
+  padding: 6px var(--ob-sp-3);
+  background: var(--ob-signal);
+  color: var(--ob-white);
+  font-weight: var(--ob-weight-semibold);
+  border-radius: var(--ob-radius-button);
+  border: none;
+  margin-left: var(--ob-sp-2);
+}
+
+#unitToggleBtn {
+  padding: 6px var(--ob-sp-3);
+  background: var(--ob-bg-surface);
+  color: var(--ob-text-primary);
+  font-weight: var(--ob-weight-semibold);
+  border-radius: var(--ob-radius-button);
+  border: var(--ob-border-width) solid var(--ob-border-color);
+}
+
+/* ── Color swatches ──────────────────────────────────────────── */
+.color-swatches {
+  display: flex;
+  align-items: center;
+  gap: var(--ob-sp-1);
+}
+
+.color-swatches button {
+  width: 20px;
+  height: 20px;
+  border-radius: var(--ob-radius-chip);
+  border: 2px solid var(--ob-white);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+  margin: 0;
+  padding: 0;
+  cursor: pointer;
+  transition: transform var(--ob-duration-fast) var(--ob-ease-standard);
+}
+
+.color-swatches button:hover {
+  transform: scale(1.12);
+  box-shadow: var(--ob-shadow-soft);
+}
+
+/* ── Body base ───────────────────────────────────────────────── */
 body {
   margin: 0;
   padding: 0;
   overflow: hidden;
-  font-family:
-    system-ui,
-    -apple-system,
-    sans-serif;
+  font-family: var(--ob-font-sans);
+  color: var(--ob-text-primary);
+  background-color: var(--ob-bg-app);
 }
 
-/* Fullscreen canvas styles */
+/* ── Canvas ──────────────────────────────────────────────────── */
 #canvas {
   position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
   height: 100vh;
-  z-index: 5; /* Above background (z-1) but below UI panels (z-30) */
+  z-index: var(--ob-z-canvas);
   cursor: crosshair;
-  background: #f8f9fa;
-  touch-action: none; /* Prevent scrolling on touch devices */
+  background: var(--ob-paper);
+  touch-action: none;
 }
 
-/* Fabric.js wrappers need the same fullscreen treatment */
 .canvas-container,
 .canvas-container canvas {
   position: fixed !important;
@@ -843,20 +740,13 @@ body {
 }
 
 .canvas-container {
-  z-index: 5;
-  pointer-events: none; /* Upper canvas will capture events */
+  z-index: var(--ob-z-canvas);
+  pointer-events: none;
 }
 
-.canvas-container .lower-canvas {
-  z-index: 5;
-}
+.canvas-container .lower-canvas { z-index: 5; }
+.canvas-container .upper-canvas { z-index: 6; pointer-events: auto; }
 
-.canvas-container .upper-canvas {
-  z-index: 6;
-  pointer-events: auto;
-}
-
-/* Keep placeholder content visible without needing to scroll */
 #frame-capture {
   position: fixed;
   top: 0;
@@ -868,134 +758,99 @@ body {
   align-items: center;
   justify-content: center;
   pointer-events: none;
+  scroll-behavior: smooth;
 }
 
-#frame-content {
-  pointer-events: auto;
-}
+#frame-content { pointer-events: auto; }
 
-/* Fabric.js containers ensure event surface aligns with original canvas */
-.canvas-container,
-.canvas-container canvas {
-  position: fixed !important;
-  top: 0;
-  left: 0;
-  width: 100vw !important;
-  height: 100vh !important;
-}
+#frame-capture section { scroll-margin-top: 2rem; }
 
-.canvas-container {
-  z-index: 5;
-  pointer-events: none; /* let upper canvas capture events */
-}
-
-.canvas-container .upper-canvas {
-  z-index: 6;
-  pointer-events: auto;
-}
-
-.canvas-container .lower-canvas {
-  z-index: 5;
-}
-
-/* Frame capture placeholder sits centered behind canvas */
-#frame-capture {
-  position: absolute;
-  inset: 0;
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-  z-index: 2;
-}
-
-#frame-content {
-  pointer-events: auto;
-}
-
-/* Modern floating panel base styles */
+/* ── Floating panels ─────────────────────────────────────────── */
 .floating-panel {
   backdrop-filter: blur(20px);
-  background: rgba(255, 255, 255, 0.98);
-  box-shadow:
-    0 10px 25px -3px rgba(0, 0, 0, 0.1),
-    0 4px 6px -2px rgba(0, 0, 0, 0.05),
-    0 0 0 1px rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  -webkit-backdrop-filter: blur(20px);
+  background: rgba(255, 255, 255, 0.96);
+  border: var(--ob-border-width) solid var(--ob-border-color);
+  box-shadow: var(--ob-shadow-panel);
+  transition: all var(--ob-duration-base) var(--ob-ease-standard);
+  border-radius: var(--ob-radius-card);
 }
 
 .floating-panel:hover {
-  background: rgba(255, 255, 255, 0.99);
+  background: rgba(255, 255, 255, 0.98);
 }
 
-/* Only apply hover transform to main panels, not side panels */
 #projectPanel:hover,
 #toolsPanel:hover,
 #canvasControls:hover {
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  box-shadow: var(--ob-shadow-elevated);
   transform: translateY(-1px);
 }
 
 .floating-panel.dragging {
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  box-shadow: var(--ob-shadow-elevated);
   transform: none !important;
   transition: none !important;
 }
 
-/* Modern capture frame styles */
-#captureOverlay {
-  backdrop-filter: none;
+.floating-panel .cursor-move {
+  border-bottom: var(--ob-border-width) solid var(--ob-border-color) !important;
 }
+
+/* Panel buttons: restrained hover */
+.floating-panel button {
+  box-shadow: none !important;
+  transform: none !important;
+}
+.floating-panel button:hover {
+  transform: translateY(-1px) !important;
+}
+
+.panel-divider {
+  border-top: var(--ob-border-width) solid var(--ob-border-color);
+}
+
+.floating-panel:not(.minimized) {
+  box-shadow: var(--ob-shadow-panel);
+}
+
+.floating-panel.dragging {
+  z-index: 9999 !important;
+  transform: none !important;
+  transition: none !important;
+}
+
+/* ── Capture frame ───────────────────────────────────────────── */
+#captureOverlay { backdrop-filter: none; }
 
 .capture-frame {
   background: transparent;
   transition: none !important;
 }
+.capture-frame.locked { cursor: default; }
+.capture-frame.unlocked { cursor: move; }
+.capture-frame.dragging { transition: none !important; }
 
-.capture-frame.locked {
-  cursor: default;
-}
-
-.capture-frame.unlocked {
-  cursor: move;
-}
-
-/* Capture frame dragging - no transitions for 1:1 movement */
-.capture-frame.dragging {
-  transition: none !important;
-}
-
-/* Modern resize handles - smaller and more discrete */
 .resize-handle {
   position: absolute;
   opacity: 0;
-  transition:
-    opacity 0.2s ease,
-    transform 0.2s ease;
+  transition: opacity var(--ob-duration-fast) var(--ob-ease-standard), transform var(--ob-duration-fast) var(--ob-ease-standard);
 }
 
 .capture-frame.unlocked:hover .resize-handle,
-.capture-frame.unlocked .resize-handle:hover {
-  opacity: 1;
-}
+.capture-frame.unlocked .resize-handle:hover { opacity: 1; }
 
 .resize-handle:hover {
   transform: scale(1.3);
-  background: #3b82f6 !important;
-  border-color: white !important;
+  background: var(--ob-signal) !important;
+  border-color: var(--ob-white) !important;
 }
 
-/* Dark overlay - no transitions for instant response */
-#darkOverlay {
-  transition: none;
-}
+#darkOverlay { transition: none; }
 
-/* macOS style popup */
 #lockPopup {
-  font-size: 14px;
-  font-weight: 500;
+  font-size: var(--ob-text-body);
+  font-weight: var(--ob-weight-medium);
 }
 
 #lockPopup.show {
@@ -1004,79 +859,44 @@ body {
 }
 
 @keyframes fadeInOut {
-  0% {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(0.8);
-  }
-  20% {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
-  }
-  80% {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
-  }
-  100% {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(0.8);
-  }
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
+  20% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  80% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
 }
 
-/* Lock button states */
-#captureLockButton .locked-icon {
-  display: none;
-}
+#captureLockButton .locked-icon { display: none; }
+#captureLockButton .unlocked-icon { display: block; }
+#captureLockButton.locked .locked-icon { display: block; }
+#captureLockButton.locked .unlocked-icon { display: none; }
+.capture-frame.locked .resize-handles { display: none; }
 
-#captureLockButton .unlocked-icon {
-  display: block;
-}
-
-#captureLockButton.locked .locked-icon {
-  display: block;
-}
-
-#captureLockButton.locked .unlocked-icon {
-  display: none;
-}
-
-/* Hide resize handles when locked */
-.capture-frame.locked .resize-handles {
-  display: none;
-}
-
-/* Drag over canvas effects */
 #canvas.drag-over {
-  background: rgba(76, 175, 80, 0.05);
+  background: rgba(30, 158, 90, 0.04);
 }
 
-/* Panel minimization styles */
+/* ── Panel minimization ──────────────────────────────────────── */
 .floating-panel.minimized {
   max-height: none !important;
-  height: auto !important; /* Override any inline height when minimized */
-}
-
-.floating-panel.minimized .cursor-move {
-  border-bottom: none;
-}
-
-/* When elementsBody is hidden, ensure panel shrinks to header only */
-#strokePanel:has(#elementsBody.hidden) {
   height: auto !important;
+  box-shadow: var(--ob-shadow-soft);
 }
+
+.floating-panel.minimized .cursor-move { border-bottom: none; }
+
+#strokePanel:has(#elementsBody.hidden) { height: auto !important; }
 
 #imagePanel:has(#imagePanelContent.hidden) {
   height: auto !important;
-  min-height: 140px !important; /* Header + name box + some padding */
+  min-height: 140px !important;
 }
 
-/* Ensure entire panels load simultaneously - no sequential loading */
 #imagePanel,
 #strokePanel {
   display: flex;
   flex-direction: column !important;
 }
 
-/* Ensure all panel parts load together (no header-first loading) */
 #imagePanelHeader,
 #imagePanel > .px-3.bg-white.border-b.border-slate-200.py-2,
 #imagePanelContent,
@@ -1086,18 +906,12 @@ body {
   opacity: 1;
 }
 
-/* Disable transitions on initial load to prevent sequential appearance */
 #imagePanel:not([data-loaded]),
-#strokePanel:not([data-loaded]) {
-  transition: none !important;
-}
+#strokePanel:not([data-loaded]) { transition: none !important; }
 
 #imagePanelContent:not([data-loaded]),
-#elementsBody:not([data-loaded]) {
-  transition: none !important;
-}
+#elementsBody:not([data-loaded]) { transition: none !important; }
 
-/* Ensure image name header is always visible and not squished */
 #imagePanel > .px-3.bg-white.border-b.border-slate-200.py-2 {
   flex-shrink: 0 !important;
   min-height: 60px !important;
@@ -1106,137 +920,98 @@ body {
   display: block !important;
 }
 
-/* Ensure the image name input is always visible */
 #currentImageNameBox {
   display: block !important;
   width: 100% !important;
 }
 
-/* On mobile, allow JavaScript to control visibility */
 @media (max-width: 768px) {
-  #imagePanel[style*='display: none'] {
-    display: none !important;
-  }
+  #imagePanel[style*='display: none'] { display: none !important; }
 }
 
-/* Ensure content area doesn't affect header visibility */
 #imagePanelContent {
   flex: 1 1 auto !important;
   min-height: 0 !important;
   overflow: hidden !important;
 }
 
-/* Panel toggle icons for mobile */
+/* ── Panel toggle icons (mobile) ─────────────────────────────── */
 .panel-toggle-icon {
   position: fixed;
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  display: none; /* Hidden by default, shown via JS on mobile */
+  width: 48px;
+  height: 48px;
+  border-radius: var(--ob-radius-card);
+  display: none;
   align-items: center;
   justify-content: center;
-  font-size: 28px;
+  font-size: 24px;
   cursor: pointer;
   z-index: 10100;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  transition:
-    opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-    transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: var(--ob-shadow-soft);
+  transition: opacity var(--ob-duration-slow) var(--ob-ease-standard), transform var(--ob-duration-slow) var(--ob-ease-standard);
   user-select: none;
   pointer-events: auto;
-  opacity: 0; /* Start hidden to prevent pop-in */
+  opacity: 0;
 }
 
-/* Smooth fade-in when shown */
 .panel-toggle-icon[style*='display: flex'] {
   opacity: 1;
-  transition:
-    opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-    transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .panel-toggle-icon:hover {
-  transform: scale(1.1);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+  transform: scale(1.06);
+  box-shadow: var(--ob-shadow-elevated);
 }
 
-.panel-toggle-icon:active {
-  transform: scale(0.95);
-}
+.panel-toggle-icon:active { transform: scale(0.95); }
 
 #strokePanelIcon {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--ob-ink);
+  color: var(--ob-white);
 }
 
 #imagePanelIcon {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  background: var(--ob-charcoal);
+  color: var(--ob-white);
 }
 
-/* Position when minimized */
-#strokePanelIcon.minimized {
-  left: 1rem;
-  bottom: 5rem;
-  top: auto;
-}
+#strokePanelIcon.minimized { left: 1rem; bottom: 5rem; top: auto; }
+#imagePanelIcon.minimized { right: 1rem; bottom: 5rem; top: auto; }
 
-#imagePanelIcon.minimized {
-  right: 1rem;
-  bottom: 5rem;
-  top: auto;
-}
-
-/* Mobile: Position canvasControls above the panel toggle icons */
 @media (max-width: 768px) {
   #canvasControls {
-    bottom: calc(
-      5rem + 56px + 1rem
-    ) !important; /* Above icons (5rem) + icon height (56px) + spacing (1rem) */
+    bottom: calc(5rem + 48px + 1rem) !important;
     left: 50% !important;
     transform: translateX(-50%) !important;
   }
 }
 
-/* Position when expanded */
-#strokePanelIcon.expanded {
-  left: 0.5rem;
-  top: 0.5rem;
-  bottom: auto;
-}
+#strokePanelIcon.expanded { left: 0.5rem; top: 0.5rem; bottom: auto; }
+#imagePanelIcon.expanded { right: 0.5rem; top: 0.5rem; left: auto; bottom: auto; }
 
-#imagePanelIcon.expanded {
-  right: 0.5rem;
-  top: 0.5rem;
-  left: auto;
-  bottom: auto;
-}
-
-/* Minimal Numeric Pill Strip Styling */
+/* ── Navigation strip (bottom) ───────────────────────────────── */
 #mini-stepper {
   scrollbar-width: none;
   -ms-overflow-style: none;
-  min-height: 60px;
+  min-height: 56px;
 }
+#mini-stepper::-webkit-scrollbar { display: none; }
 
-#mini-stepper::-webkit-scrollbar {
-  display: none;
-}
-
-/* Navigation container styling - Always visible, independent of panel state */
 #navigation-container {
-  background: white;
-  box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
+  background: var(--ob-bg-surface);
+  box-shadow: 0 -1px 3px rgba(0, 0, 0, 0.06);
   position: fixed !important;
   bottom: 0 !important;
   left: 0 !important;
   right: 0 !important;
-  z-index: 5000 !important;
+  z-index: var(--ob-z-nav) !important;
   width: 100% !important;
   display: block !important;
   visibility: visible !important;
   opacity: 1 !important;
+  border-top: var(--ob-border-width) solid var(--ob-border-color);
 }
 
-/* Ensure navigation container stays visible even when imagePanel is minimized */
 #imagePanel.minimized ~ #navigation-container,
 #imagePanel:has(#imagePanelContent.hidden) ~ #navigation-container,
 body:has(#imagePanel.minimized) #navigation-container,
@@ -1246,46 +1021,45 @@ body:has(#imagePanel:has(#imagePanelContent.hidden)) #navigation-container {
   opacity: 1 !important;
 }
 
-/* Ensure the navigation strip is always visible */
 nav[aria-label='Image quick nav'] {
   display: block !important;
   visibility: visible !important;
 }
 
-/* Ensure navigation container is never affected by panel collapse */
 #navigation-container,
-#navigation-container * {
-  pointer-events: auto !important;
-}
+#navigation-container * { pointer-events: auto !important; }
 
 #mini-stepper .step {
   min-width: 2rem;
   min-height: 2rem;
-  border: 1px solid transparent;
+  border: var(--ob-border-width) solid transparent;
   cursor: pointer;
   position: relative;
   z-index: 10;
+  border-radius: var(--ob-radius-chip);
+  font-family: var(--ob-font-sans);
+  font-weight: var(--ob-weight-semibold);
+  transition: all var(--ob-duration-fast) var(--ob-ease-standard);
 }
 
 #mini-stepper .step:hover {
-  transform: scale(1.05);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transform: scale(1.04);
+  box-shadow: var(--ob-shadow-soft);
   z-index: 20;
 }
 
 #mini-stepper .step:focus {
-  outline: 2px solid #3b82f6;
+  outline: 2px solid var(--ob-signal);
   outline-offset: 2px;
   z-index: 20;
 }
 
 #mini-stepper .step[aria-current='true'] {
-  transform: scale(1.05);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  transform: scale(1.04);
+  box-shadow: var(--ob-shadow-soft);
   z-index: 20;
 }
 
-/* Ensure pills are always clickable */
 #mini-stepper button {
   pointer-events: auto !important;
   user-select: none;
@@ -1295,7 +1069,6 @@ nav[aria-label='Image quick nav'] {
   justify-content: center !important;
 }
 
-/* Ensure stepper is always visible - independent of panel state */
 #mini-stepper {
   display: flex !important;
   visibility: visible !important;
@@ -1310,8 +1083,8 @@ nav[aria-label='Image quick nav'] {
   left: 0;
   width: 32px;
   height: 32px;
-  border-radius: 9999px;
-  background: #0f172a;
+  border-radius: var(--ob-radius-chip);
+  background: var(--ob-ink);
   transform: translate3d(0, -50%, 0);
   transition: transform 120ms linear;
   will-change: transform;
@@ -1319,12 +1092,8 @@ nav[aria-label='Image quick nav'] {
   z-index: 5;
 }
 
-#mini-stepper .step {
-  position: relative;
-  z-index: 10;
-}
+#mini-stepper .step { position: relative; z-index: 10; }
 
-/* Ensure stepper stays visible when imagePanel is minimized */
 #imagePanel.minimized ~ #navigation-container #mini-stepper,
 #imagePanel:has(#imagePanelContent.hidden) ~ #navigation-container #mini-stepper,
 body:has(#imagePanel.minimized) #mini-stepper,
@@ -1334,24 +1103,12 @@ body:has(#imagePanel:has(#imagePanelContent.hidden)) #mini-stepper {
   opacity: 1 !important;
 }
 
-/* Ensure frame capture container allows scrolling */
-#frame-capture {
-  scroll-behavior: smooth;
-}
-
-/* Section styling for better visual separation */
-#frame-capture section {
-  scroll-margin-top: 2rem;
-}
-
-/* Responsive adjustments for mobile */
 @media (max-width: 768px) {
   #mini-stepper .step {
     min-width: 2.5rem;
     min-height: 2.5rem;
     font-size: 0.875rem;
   }
-
   #mini-stepper {
     gap: 0.75rem;
     padding-left: 1rem;
@@ -1359,11 +1116,11 @@ body:has(#imagePanel:has(#imagePanelContent.hidden)) #mini-stepper {
   }
 }
 
-/* Smooth transitions for all panel content */
+/* ── Panel content transitions ───────────────────────────────── */
 .floating-panel [id$='Content'],
 .floating-panel [id$='Controls'],
 #elementsBody {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all var(--ob-duration-slow) var(--ob-ease-standard);
   overflow: hidden;
 }
 
@@ -1378,38 +1135,24 @@ body:has(#imagePanel:has(#imagePanelContent.hidden)) #mini-stepper {
   opacity: 0;
 }
 
-/* Enhanced button hover effects */
 .floating-panel button[id^='toggle']:hover svg {
-  transform: scale(1.1);
+  transform: scale(1.06);
 }
 
-/* Make canvasControls scrollable on all screen sizes */
+/* ── Canvas controls scrolling ───────────────────────────────── */
 #canvasControls {
   overflow-x: auto;
   overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
-  scrollbar-color: rgba(148, 163, 184, 0.5) transparent;
+  scrollbar-color: var(--ob-fog) transparent;
 }
 
-#canvasControls::-webkit-scrollbar {
-  height: 4px;
-}
+#canvasControls::-webkit-scrollbar { height: 3px; }
+#canvasControls::-webkit-scrollbar-track { background: transparent; }
+#canvasControls::-webkit-scrollbar-thumb { background: var(--ob-fog); border-radius: 2px; }
+#canvasControls::-webkit-scrollbar-thumb:hover { background: var(--ob-slate); }
 
-#canvasControls::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-#canvasControls::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.5);
-  border-radius: 2px;
-}
-
-#canvasControls::-webkit-scrollbar-thumb:hover {
-  background: rgba(148, 163, 184, 0.7);
-}
-
-/* Allow overflow for canvas controls to show hover menu and enable scrolling */
 #canvasControlsContent {
   overflow-x: auto;
   overflow-y: hidden;
@@ -1417,245 +1160,168 @@ body:has(#imagePanel:has(#imagePanelContent.hidden)) #mini-stepper {
   flex-wrap: nowrap !important;
   min-width: max-content;
   scrollbar-width: thin;
-  scrollbar-color: rgba(148, 163, 184, 0.5) transparent;
+  scrollbar-color: var(--ob-fog) transparent;
 }
 
-#canvasControlsContent::-webkit-scrollbar {
-  height: 4px;
-}
+#canvasControlsContent::-webkit-scrollbar { height: 3px; }
+#canvasControlsContent::-webkit-scrollbar-track { background: transparent; }
+#canvasControlsContent::-webkit-scrollbar-thumb { background: var(--ob-fog); border-radius: 2px; }
+#canvasControlsContent::-webkit-scrollbar-thumb:hover { background: var(--ob-slate); }
 
-#canvasControlsContent::-webkit-scrollbar-track {
-  background: transparent;
-}
+#canvasControlsContent > * { flex-shrink: 0; }
 
-#canvasControlsContent::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.5);
-  border-radius: 2px;
-}
+/* ── Toolbar label sizing system ─────────────────────────────── */
+.label-long { display: inline-block; white-space: nowrap; }
+.label-short { display: none; white-space: nowrap; }
 
-#canvasControlsContent::-webkit-scrollbar-thumb:hover {
-  background: rgba(148, 163, 184, 0.7);
-}
-
-/* Ensure buttons and controls don't shrink */
-#canvasControlsContent > * {
-  flex-shrink: 0;
-}
-
-/* Note: overflow-x: auto takes precedence for horizontal scrolling */
-/* Vertical overflow remains visible for dropdown menus */
-
-/* STEP 2: CSS variants - Use data-toolbar-mode to control label display */
-/* 
-         * Toolbar Label Sizing System:
-         * 
-         * This system uses a global data-toolbar-mode attribute on <html> to control
-         * toolbar label display, preventing flicker and pop-in during page load.
-         * 
-         * How it works:
-         * 1. Early script (in <head>) sets data-toolbar-mode='full' or 'compact' based on viewport width
-         * 2. CSS reads this attribute to show/hide .label-long and .label-short spans
-         * 3. JS fallback recalculates after fonts load and on window resize
-         * 4. ResizeObserver is disabled for toolbar containers to prevent flicker loops
-         * 
-         * Benefits:
-         * - No DOM rewrites (only attribute changes)
-         * - CSS handles display immediately (no JS delay)
-         * - Prevents flicker by determining size before toolbar becomes visible
-         * - Works on both desktop and mobile
-         */
-/* Base state: show long labels, hide short labels */
-.label-long {
-  display: inline-block;
-  white-space: nowrap;
-}
-.label-short {
-  display: none;
-  white-space: nowrap;
-}
-
-/* When toolbar mode is 'compact', show short labels instead */
 [data-toolbar-mode='compact'] .smart-label-scope .label-long,
-[data-toolbar-mode='compact'] .toolbar-wrap .label-long {
-  display: none !important;
-}
+[data-toolbar-mode='compact'] .toolbar-wrap .label-long { display: none !important; }
 [data-toolbar-mode='compact'] .smart-label-scope .label-short,
-[data-toolbar-mode='compact'] .toolbar-wrap .label-short {
-  display: inline-block !important;
-}
+[data-toolbar-mode='compact'] .toolbar-wrap .label-short { display: inline-block !important; }
 
-/* When toolbar mode is 'full', ensure full labels show (override any compact classes) */
 [data-toolbar-mode='full'] .smart-label-scope .label-long,
 [data-toolbar-mode='full'] .toolbar-wrap .label-long,
 [data-toolbar-mode='full'] .smart-label-scope.compact .label-long,
-[data-toolbar-mode='full'] .toolbar-wrap.compact .label-long {
-  display: inline-block !important;
-}
+[data-toolbar-mode='full'] .toolbar-wrap.compact .label-long { display: inline-block !important; }
 [data-toolbar-mode='full'] .smart-label-scope .label-short,
 [data-toolbar-mode='full'] .toolbar-wrap .label-short,
 [data-toolbar-mode='full'] .smart-label-scope.compact .label-short,
-[data-toolbar-mode='full'] .toolbar-wrap.compact .label-short {
-  display: none !important;
-}
+[data-toolbar-mode='full'] .toolbar-wrap.compact .label-short { display: none !important; }
 
-/* Legacy support: Keep old compact class behavior for non-toolbar elements */
-.smart-label-scope.compact:not(.toolbar-wrap):not([id^='tb']) .label-long {
-  display: none;
-}
-.smart-label-scope.compact:not(.toolbar-wrap):not([id^='tb']) .label-short {
-  display: inline-block;
-}
+.smart-label-scope.compact:not(.toolbar-wrap):not([id^='tb']) .label-long { display: none; }
+.smart-label-scope.compact:not(.toolbar-wrap):not([id^='tb']) .label-short { display: inline-block; }
 
-/* Button width reservations to prevent layout shift */
-#paste {
-  min-width: 60px; /* "Upload" short label width */
-  max-width: 140px; /* "Upload Images" long label width */
-}
-#saveProjectTop {
-  min-width: 50px; /* "Save" short label width */
-  max-width: 120px; /* "Save Project" long label width */
-}
-#loadProject {
-  min-width: 50px; /* "Load" short label width */
-  max-width: 120px; /* "Load Project" long label width */
-}
-#exportAISVG {
-  min-width: 70px; /* "AI SVG" short label width */
-  max-width: 130px; /* "AI SVG Export" long label width */
-}
-#drawingModeToggle {
-  min-width: 70px; /* "Straight" short label width */
-  max-width: 120px; /* "Straight Line" long label width */
-}
-#textModeToggle {
-  min-width: 40px; /* "Text" short label width */
-  max-width: 60px; /* "Text" long label width */
-}
-#projectName {
-  min-width: 100px;
-  max-width: 200px;
-}
+/* Button width reservations */
+#paste { min-width: 60px; max-width: 140px; }
+#saveProjectTop { min-width: 50px; max-width: 120px; }
+#loadProject { min-width: 50px; max-width: 120px; }
+#exportAISVG { min-width: 70px; max-width: 130px; }
+#drawingModeToggle { min-width: 70px; max-width: 120px; }
+#textModeToggle { min-width: 40px; max-width: 60px; }
+#projectName { min-width: 100px; max-width: 200px; }
 
-/* Text mode active state */
+/* ── Active states ───────────────────────────────────────────── */
 .text-mode-active {
-  background: #3b82f6 !important;
-  color: white !important;
-  border-color: #2563eb !important;
+  background: var(--ob-signal) !important;
+  color: var(--ob-white) !important;
+  border-color: var(--ob-signal) !important;
 }
 
-/* Active state for minimized panels */
-.floating-panel.minimized {
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+.tbtn.active {
+  border-color: var(--ob-signal);
+  background: var(--ob-signal-soft);
+  color: var(--ob-signal);
 }
 
-/* Enhanced arrow button styling */
+.tbtn:hover,
+.tselect:hover,
+.tinput:hover {
+  border-color: var(--ob-signal);
+  box-shadow: 0 1px 3px rgba(45, 107, 255, 0.08);
+}
+
+/* ── Arrow button styling ────────────────────────────────────── */
 #startArrow.active,
 #endArrow.active,
 #arrowStartBtn.active,
 #arrowEndBtn.active {
-  background: linear-gradient(135deg, #3b82f6, #2563eb) !important;
-  color: white !important;
-  transform: scale(1.05) !important;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4) !important;
-  border: 2px solid #1d4ed8 !important;
-  font-weight: 600 !important;
+  background: var(--ob-ink) !important;
+  color: var(--ob-white) !important;
+  transform: scale(1.02) !important;
+  box-shadow: var(--ob-shadow-soft) !important;
+  border: var(--ob-border-width) solid var(--ob-ink) !important;
+  font-weight: var(--ob-weight-semibold) !important;
 }
 
 #startArrow.active:hover,
 #endArrow.active:hover,
 #arrowStartBtn.active:hover,
 #arrowEndBtn.active:hover {
-  background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
-  transform: scale(1.08) !important;
-  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.5) !important;
+  background: var(--ob-charcoal) !important;
+  transform: scale(1.04) !important;
+  box-shadow: var(--ob-shadow-elevated) !important;
 }
 
-/* Arrow button transitions */
 #startArrow,
 #endArrow,
 #arrowStartBtn,
 #arrowEndBtn {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  transition: all var(--ob-duration-base) var(--ob-ease-standard) !important;
 }
 
-.floating-panel:not(.minimized) {
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+/* ── Dash split slider ───────────────────────────────────────── */
+#dashSplitInput { cursor: ew-resize; }
+
+#dashSplitInput::-webkit-slider-thumb {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: var(--ob-radius-chip);
+  background: var(--ob-ink);
+  border: 2px solid var(--ob-white);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
 }
 
-/* Ensure proper dragging behavior */
-.floating-panel.dragging {
-  z-index: 9999 !important;
-  transform: none !important;
-  transition: none !important;
+#dashSplitInput::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: var(--ob-radius-chip);
+  background: var(--ob-ink);
+  border: 2px solid var(--ob-white);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
 }
 
-/* Keep Elements header always visible; body uses remaining space */
+/* ── Elements panel layout ───────────────────────────────────── */
 #strokePanel {
   display: flex;
   flex-direction: column;
-  /* Let the panel grow to near full viewport height while preserving drag behavior */
   max-height: calc(100vh - 24px) !important;
 }
-#elementsHeader {
-  flex: 0 0 auto;
-}
+#elementsHeader { flex: 0 0 auto; }
 #elementsBody {
   flex: 1 1 auto;
   overflow: hidden;
   display: flex;
   flex-direction: column;
 }
-/* removed elementsResizeHandle */
 #elementsControls {
   position: sticky;
   top: 0;
   z-index: 10;
-  background: white;
+  background: var(--ob-bg-surface);
 }
 
-/* Header dragging styles */
-.cursor-move:active {
-  cursor: grabbing !important;
-}
+.cursor-move:active { cursor: grabbing !important; }
 
-/* Fix stroke visibility item layout */
+/* ── Stroke visibility items ─────────────────────────────────── */
 .stroke-visibility-item {
   display: flex !important;
   align-items: center !important;
-  gap: 8px !important;
-  padding: 8px !important;
-  margin-bottom: 4px !important;
-  background: white !important;
-  border-radius: 6px !important;
-  border: 1px solid #e5e7eb !important;
-  transition: all 0.2s ease !important;
+  gap: var(--ob-sp-2) !important;
+  padding: var(--ob-sp-2) var(--ob-sp-3) !important;
+  margin-bottom: var(--ob-sp-1) !important;
+  background: var(--ob-bg-surface) !important;
+  border-radius: var(--ob-radius-button) !important;
+  border: var(--ob-border-width) solid var(--ob-border-color) !important;
+  transition: all var(--ob-duration-fast) var(--ob-ease-standard) !important;
 }
 
-/* Ensure the strokes list flows vertically and doesn't overlap */
 #strokesList {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--ob-sp-1);
 }
-.stroke-actions-panel {
-  display: block;
-  margin: 6px 0;
-}
-.stroke-actions-buttons {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-/* Make the strokes area adjustable but constrained so new items never overlap headers */
+.stroke-actions-panel { display: block; margin: 6px 0; }
+.stroke-actions-buttons { display: flex; gap: var(--ob-sp-2); flex-wrap: wrap; }
 
 #strokeVisibilityControls hr {
-  margin: 6px 0;
+  margin: var(--ob-sp-2) 0;
+  border-color: var(--ob-border-color);
 }
 
 .stroke-visibility-item:hover {
-  background-color: #f9fafb !important;
-  border-color: #d1d5db !important;
+  background-color: var(--ob-paper) !important;
+  border-color: var(--ob-slate) !important;
 }
 
 .stroke-label-container {
@@ -1666,11 +1332,11 @@ body:has(#imagePanel:has(#imagePanelContent.hidden)) #mini-stepper {
 }
 
 .stroke-name {
-  font-weight: 600 !important;
-  font-size: 14px !important;
+  font-weight: var(--ob-weight-semibold) !important;
+  font-size: var(--ob-text-body) !important;
   padding: 2px 6px !important;
-  border-radius: 4px !important;
-  border: 1px solid currentColor !important;
+  border-radius: 6px !important;
+  border: var(--ob-border-width) solid currentColor !important;
   min-width: auto !important;
 }
 
@@ -1678,137 +1344,101 @@ body:has(#imagePanel:has(#imagePanelContent.hidden)) #mini-stepper {
   background: none !important;
   border: none !important;
   cursor: pointer !important;
-  font-size: 16px !important;
+  font-size: var(--ob-text-body) !important;
   line-height: 1 !important;
   padding: 2px !important;
-  opacity: 0.8 !important;
+  opacity: 0.7 !important;
 }
 
-.stroke-label-toggle-btn:hover {
-  opacity: 1 !important;
-}
+.stroke-label-toggle-btn:hover { opacity: 1 !important; }
 
 .stroke-measurement {
-  font-size: 13px !important;
-  color: #6b7280 !important;
-  font-weight: 500 !important;
+  font-size: var(--ob-text-meta) !important;
+  color: var(--ob-text-secondary) !important;
+  font-weight: var(--ob-weight-medium) !important;
+  font-family: var(--ob-font-mono) !important;
+  font-variant-numeric: tabular-nums;
 }
 
 .stroke-delete-btn {
   background: none !important;
   border: none !important;
-  color: #ef4444 !important;
+  color: var(--ob-danger) !important;
   cursor: pointer !important;
-  font-size: 16px !important;
-  font-weight: bold !important;
+  font-size: var(--ob-text-body) !important;
+  font-weight: var(--ob-weight-bold) !important;
   padding: 2px 6px !important;
-  border-radius: 4px !important;
-  opacity: 0.7 !important;
-  transition: all 0.2s ease !important;
+  border-radius: 6px !important;
+  opacity: 0.6 !important;
+  transition: all var(--ob-duration-fast) var(--ob-ease-standard) !important;
 }
 
 .stroke-delete-btn:hover {
   opacity: 1 !important;
-  background-color: #fef2f2 !important;
+  background-color: var(--ob-danger-soft) !important;
 }
 
-/* Force scrollbars to always show when content overflows */
+/* ── Scrollbars ──────────────────────────────────────────────── */
 #strokeVisibilityControls {
   scroll-behavior: smooth;
   overflow-y: scroll !important;
-  scrollbar-width: auto !important;
-  scrollbar-color: #9ca3af #f3f4f6 !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: var(--ob-fog) var(--ob-paper) !important;
 }
 
-/* Ensure outer image panel content never scrolls; inner #imageList handles scrolling */
-#imagePanelContent {
-  overflow: hidden !important;
-}
+#imagePanelContent { overflow: hidden !important; }
 
-#strokeVisibilityControls::-webkit-scrollbar {
-  width: 8px !important;
-  display: block !important;
-}
+#strokeVisibilityControls::-webkit-scrollbar { width: 6px !important; display: block !important; }
+#strokeVisibilityControls::-webkit-scrollbar-track { background: var(--ob-paper) !important; border-radius: 3px !important; }
+#strokeVisibilityControls::-webkit-scrollbar-thumb { background: var(--ob-fog) !important; border-radius: 3px !important; }
+#strokeVisibilityControls::-webkit-scrollbar-thumb:hover { background: var(--ob-slate) !important; }
 
-#strokeVisibilityControls::-webkit-scrollbar-track {
-  background: #f3f4f6 !important;
-  border-radius: 4px !important;
-}
-
-#strokeVisibilityControls::-webkit-scrollbar-thumb {
-  background: #9ca3af !important;
-  border-radius: 4px !important;
-  border: 1px solid #f3f4f6 !important;
-}
-
-#strokeVisibilityControls::-webkit-scrollbar-thumb:hover {
-  background: #6b7280 !important;
-}
-
-/* Keep focus treatment tidy */
+/* ── Input focus states ──────────────────────────────────────── */
 #brushSize:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+  box-shadow: 0 0 0 2px var(--ob-signal), 0 0 0 4px var(--ob-signal-ring);
 }
 
-/* Modern input styling */
 input[type='text'],
 input[type='number'],
 select {
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all var(--ob-duration-base) var(--ob-ease-standard);
+  font-family: var(--ob-font-sans);
 }
 
 input[type='text']:focus,
 input[type='number']:focus,
 select:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow:
-    0 0 0 2px #3b82f6,
-    0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: var(--ob-signal);
+  box-shadow: 0 0 0 2px var(--ob-signal), 0 0 0 4px var(--ob-signal-ring);
 }
 
-/* Enhanced color picker active state */
+/* ── Color picker active state ───────────────────────────────── */
 [data-color].active {
-  border-color: #1f2937 !important;
-  box-shadow:
-    0 0 0 3px rgba(255, 255, 255, 1),
-    0 0 0 6px #1f2937 !important;
+  border-color: var(--ob-ink) !important;
+  box-shadow: 0 0 0 2px var(--ob-white), 0 0 0 4px var(--ob-ink) !important;
   transform: scale(1.15);
 }
 
-/* Image Gallery Styling */
+/* ── Image gallery ───────────────────────────────────────────── */
 #imageGallery {
   scrollbar-width: thin;
-  scrollbar-color: #cbd5e1 #f1f5f9;
+  scrollbar-color: var(--ob-fog) var(--ob-paper);
 }
 
-#imageGallery::-webkit-scrollbar {
-  height: 6px;
-}
+#imageGallery::-webkit-scrollbar { height: 4px; }
+#imageGallery::-webkit-scrollbar-track { background: var(--ob-paper); border-radius: 2px; }
+#imageGallery::-webkit-scrollbar-thumb { background: var(--ob-fog); border-radius: 2px; }
+#imageGallery::-webkit-scrollbar-thumb:hover { background: var(--ob-slate); }
 
-#imageGallery::-webkit-scrollbar-track {
-  background: #f1f5f9;
-  border-radius: 3px;
-}
-
-#imageGallery::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 3px;
-}
-
-#imageGallery::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
-}
-
-/* Image thumbnail styling */
 .image-thumbnail {
   flex-shrink: 0;
   width: 120px;
   height: 120px;
-  border-radius: 12px;
+  border-radius: var(--ob-radius-card);
   border: 2px solid transparent;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all var(--ob-duration-base) var(--ob-ease-standard);
   cursor: pointer;
   scroll-snap-align: center;
   background-size: cover;
@@ -1819,29 +1449,27 @@ select:focus {
 }
 
 .image-thumbnail:hover {
-  border-color: #cbd5e1;
-  transform: scale(1.05);
-  box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1);
+  border-color: var(--ob-fog);
+  transform: scale(1.03);
+  box-shadow: var(--ob-shadow-soft);
 }
 
 .image-thumbnail.active {
-  border-color: #3b82f6;
-  box-shadow:
-    0 0 0 2px rgba(59, 130, 246, 0.2),
-    0 10px 25px -3px rgba(0, 0, 0, 0.15);
-  transform: scale(1.05);
+  border-color: var(--ob-signal);
+  box-shadow: 0 0 0 2px var(--ob-signal-ring), var(--ob-shadow-soft);
+  transform: scale(1.03);
 }
 
 .image-thumbnail.dragging {
   opacity: 0.5;
-  transform: rotate(5deg);
+  transform: rotate(3deg);
   z-index: 1000;
 }
 
 .image-thumbnail.drag-over {
-  border-color: #10b981;
-  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.5);
-  transform: translateY(-1px) scale(1.05);
+  border-color: var(--ob-success);
+  box-shadow: 0 0 0 2px rgba(30, 158, 90, 0.3);
+  transform: translateY(-1px) scale(1.03);
 }
 
 .image-thumbnail .image-overlay {
@@ -1849,19 +1477,19 @@ select:focus {
   bottom: 0;
   left: 0;
   right: 0;
-  background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
-  color: white;
-  padding: 8px;
+  background: linear-gradient(transparent, rgba(11, 13, 16, 0.7));
+  color: var(--ob-white);
+  padding: var(--ob-sp-2);
   font-size: 11px;
-  font-weight: 500;
+  font-weight: var(--ob-weight-medium);
   text-align: center;
-  border-radius: 0 0 10px 10px;
+  border-radius: 0 0 14px 14px;
 }
 
 .thumbnail-controls {
   position: absolute;
-  top: 4px;
-  right: 4px;
+  top: var(--ob-sp-1);
+  right: var(--ob-sp-1);
   display: none;
   flex-direction: column;
   gap: 2px;
@@ -1869,125 +1497,115 @@ select:focus {
 
 .delete-control {
   position: absolute;
-  top: 4px;
-  left: 4px;
+  top: var(--ob-sp-1);
+  left: var(--ob-sp-1);
   display: none;
 }
 
 .image-thumbnail:hover .thumbnail-controls,
-.image-thumbnail:hover .delete-control {
-  display: flex;
-}
+.image-thumbnail:hover .delete-control { display: flex; }
 
 .control-btn {
   width: 24px;
   height: 24px;
   border: none;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.9);
-  color: #374151;
-  font-size: 12px;
+  border-radius: var(--ob-radius-chip);
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--ob-text-primary);
+  font-size: var(--ob-text-meta);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.15s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all var(--ob-duration-fast) var(--ob-ease-standard);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .control-btn:hover {
-  background: white;
-  transform: scale(1.1);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  background: var(--ob-white);
+  transform: scale(1.08);
+  box-shadow: var(--ob-shadow-soft);
 }
 
 .delete-btn {
-  background: #dc2626 !important;
-  color: white !important;
-  font-weight: bold;
+  background: var(--ob-danger) !important;
+  color: var(--ob-white) !important;
+  font-weight: var(--ob-weight-bold);
 }
 
 .delete-btn:hover {
-  background: #b91c1c !important;
-  transform: scale(1.1);
+  filter: brightness(0.9);
+  transform: scale(1.08);
 }
 
 .rotate-btn:hover {
-  background: #dbeafe;
-  color: #2563eb;
+  background: var(--ob-signal-soft);
+  color: var(--ob-signal);
 }
 
 .flip-btn:hover {
-  background: #d1fae5;
-  color: #059669;
+  background: rgba(30, 158, 90, 0.08);
+  color: var(--ob-success);
 }
 
-/* Navigation dots styling */
+/* ── Navigation dots ─────────────────────────────────────────── */
 .nav-dot {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
-  background: #cbd5e1;
-  transition: all 0.2s ease;
+  background: var(--ob-fog);
+  transition: all var(--ob-duration-fast) var(--ob-ease-standard);
   cursor: pointer;
 }
 
 .nav-dot:hover {
-  background: #94a3b8;
-  transform: scale(1.2);
-}
-
-.nav-dot.active {
-  background: #3b82f6;
+  background: var(--ob-slate);
   transform: scale(1.3);
 }
 
-/* Modernize panel chrome and add optional sketchbook vibe */
-.floating-panel {
-  border: 1px solid rgba(15, 23, 42, 0.06);
-  box-shadow: 0 12px 28px rgba(2, 6, 23, 0.08);
-}
-.floating-panel .cursor-move {
-  border-bottom: 1px solid rgba(15, 23, 42, 0.06) !important;
-}
-/* Tone down button effects for a cleaner feel */
-.floating-panel button {
-  box-shadow: 0 1px 2px rgba(2, 6, 23, 0.06) !important;
-  transform: none !important;
-}
-.floating-panel button:hover {
-  transform: translateY(-1px) !important;
-}
-/* Minimal divider */
-.panel-divider {
-  border-top: 1px solid rgba(15, 23, 42, 0.08);
+.nav-dot.active {
+  background: var(--ob-ink);
+  transform: scale(1.5);
 }
 
-/* Top toolbar styles - now handled by comprehensive CSS above */
-.tbtn.active {
-  border-color: rgba(59, 130, 246, 0.9);
-  background: #eff6ff;
-  color: #1e40af;
-}
-.tbtn:hover,
-.tselect:hover,
-.tinput:hover {
-  border-color: rgba(59, 130, 246, 0.8);
-  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1);
-}
+/* ── Popover ─────────────────────────────────────────────────── */
 .popover {
   position: absolute;
   top: 40px;
   left: 0;
-  background: #fff;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  box-shadow: 0 8px 24px rgba(2, 6, 23, 0.12);
-  padding: 12px;
+  background: var(--ob-bg-surface);
+  border: var(--ob-border-width) solid var(--ob-border-color);
+  border-radius: var(--ob-radius-card);
+  box-shadow: var(--ob-shadow-elevated);
+  padding: var(--ob-sp-3);
   display: none;
-  z-index: 60;
+  z-index: var(--ob-z-dropdown);
   min-width: 120px;
 }
-.popover.show {
-  display: block;
+.popover.show { display: block; }
+
+/* ── Global focus ring ───────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--ob-signal);
+  outline-offset: 2px;
+}
+
+/* Override for inputs that have custom focus */
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+.slider:focus-visible,
+.tbtn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--ob-signal), 0 0 0 4px var(--ob-signal-ring);
+}
+
+/* ── Tabular numerals ────────────────────────────────────────── */
+.rotate-fine-value,
+#rotateFineValue,
+#brushSize,
+#scaleButton,
+.step,
+.stroke-measurement {
+  font-variant-numeric: tabular-nums;
 }

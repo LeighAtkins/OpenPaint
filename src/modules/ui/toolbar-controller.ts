@@ -637,12 +637,24 @@ export function initToolbarController() {
       const saveBtn = document.getElementById('saveProjectTop');
       if (saveBtn) {
         wrapSmartLabel(saveBtn, 'Save .opaint', 'Save');
-        // Make it visually distinct from bottom save button
-        saveBtn.style.background = '#3b82f6'; // Blue instead of green
-        saveBtn.style.borderColor = '#2563eb';
-        saveBtn.style.fontWeight = '700';
-        saveBtn.style.fontSize = '14px';
-        saveBtn.style.padding = '8px 16px';
+        // Match Upload Images button styling
+        const uploadBtn = document.getElementById('paste');
+        if (uploadBtn) {
+          const uploadStyles = window.getComputedStyle(uploadBtn);
+          saveBtn.style.background = uploadStyles.background;
+          saveBtn.style.borderColor = uploadStyles.borderColor;
+          saveBtn.style.color = uploadStyles.color;
+          saveBtn.style.fontWeight = uploadStyles.fontWeight;
+          saveBtn.style.fontSize = uploadStyles.fontSize;
+          saveBtn.style.padding = uploadStyles.padding;
+        } else {
+          saveBtn.style.background = '#111827';
+          saveBtn.style.borderColor = '#111827';
+          saveBtn.style.color = '#ffffff';
+          saveBtn.style.fontWeight = '700';
+          saveBtn.style.fontSize = '14px';
+          saveBtn.style.padding = '8px 16px';
+        }
       }
 
       // Immediate check for all containers (skip if already calculated)
@@ -1449,6 +1461,7 @@ export function initToolbarController() {
           const close = document.createElement('span');
           close.className = 'capture-tab-close';
           close.textContent = 'x';
+          close.setAttribute('aria-label', `Close tab ${tab.name || 'Frame'}`);
           close.dataset.action = 'close';
           button.appendChild(close);
         }
@@ -1484,6 +1497,7 @@ export function initToolbarController() {
           const frame = document.createElement('button');
           frame.type = 'button';
           frame.className = 'capture-tab-frame';
+          frame.setAttribute('aria-label', `Frame ${tab.name || 'Untitled'}`);
           const isMasterActive =
             state.activeTabId === state.masterTabId || state.activeTabId === 'master';
           const isDrawTarget = isMasterActive && tab.id === highlightedTab?.id;
@@ -1600,6 +1614,7 @@ export function initToolbarController() {
           selector.type = 'button';
           selector.className = 'capture-tab-frame-label selectable';
           selector.textContent = tab.name || 'Frame';
+          selector.setAttribute('aria-label', `Select frame ${tab.name || 'Frame'}`);
           selector.style.position = 'absolute';
           selector.style.left = `${rect.left + 8}px`;
           selector.style.top = `${rect.top + 8}px`;

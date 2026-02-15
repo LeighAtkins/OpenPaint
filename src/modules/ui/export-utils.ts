@@ -114,7 +114,7 @@ window.showPDFExportDialog = async function (projectName) {
         <div style="width:100%;height:8px;background:#e5e7eb;border-radius:4px;overflow:hidden;margin-bottom:10px;">
           <div id="pdfProgressBar" style="width:0%;height:100%;background:#3b82f6;transition:width 0.3s;"></div>
         </div>
-        <p id="pdfProgressText" style="color:#666;font-size:14px;">Preparing PDF...</p>
+        <p id="pdfProgressText" style="color:#666;font-size:14px;">Preparing PDF\u2026</p>
       </div>
     </div>
   `;
@@ -158,7 +158,7 @@ async function generatePDFWithPDFLib(projectName, viewIds, quality, pageSize, in
 
   for (let i = 0; i < viewIds.length; i++) {
     const viewId = viewIds[i];
-    progressText.textContent = `Processing ${viewId} (${i + 1}/${viewIds.length})...`;
+    progressText.textContent = `Processing ${viewId} (${i + 1}/${viewIds.length})\u2026`;
     progressBar.style.width = `${(i / viewIds.length) * 100}%`;
 
     await window.app.projectManager.switchView(viewId);
@@ -340,7 +340,7 @@ async function generatePDFWithPDFLib(projectName, viewIds, quality, pageSize, in
   }
 
   progressBar.style.width = '100%';
-  progressText.textContent = 'Saving PDF...';
+  progressText.textContent = 'Saving PDF\u2026';
 
   const pdfBytes = await pdfDoc.save();
   const blob = new Blob([pdfBytes], { type: 'application/pdf' });

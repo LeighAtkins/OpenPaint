@@ -12,6 +12,7 @@ interface CanvasMouseEvent {
 export class TextTool extends BaseTool {
   textColor: string;
   fontSize: number;
+  fontFamily: string;
   strokeWidth: number;
   backgroundEnabled: boolean;
   activeTextObject: any | null;
@@ -20,7 +21,8 @@ export class TextTool extends BaseTool {
   constructor(canvasManager: any) {
     super(canvasManager);
     this.textColor = '#000000';
-    this.fontSize = 20;
+    this.fontSize = 24;
+    this.fontFamily = 'Nunito';
     this.strokeWidth = 1;
     this.backgroundEnabled = false;
     this.onMouseDown = this.onMouseDown.bind(this);
@@ -34,6 +36,8 @@ export class TextTool extends BaseTool {
     this.canvas.selection = false;
     this.canvas.defaultCursor = 'text';
     this.skipNextClick = false;
+    this.canvas.off('mouse:down', this.onMouseDown);
+    document.removeEventListener('keydown', this.onKeyDown, true);
     this.canvas.on('mouse:down', this.onMouseDown);
     document.addEventListener('keydown', this.onKeyDown, true);
   }
@@ -121,7 +125,7 @@ export class TextTool extends BaseTool {
     const text = new fabric.IText('', {
       left: pointer.x,
       top: pointer.y,
-      fontFamily: 'Arial',
+      fontFamily: this.fontFamily,
       fill: this.textColor,
       fontSize: this.fontSize,
       selectable: true,
@@ -139,19 +143,7 @@ export class TextTool extends BaseTool {
     this.canvas.setActiveObject(text);
     this.activeTextObject = text;
 
-    // Enter editing mode FIRST so cursor appears immediately
-    text.enterEditing();
-    text.selectAll();
-    // Ensure hidden textarea gets focus - try immediately and with a small delay
-    // in case Fabric.js hasn't fully set it up yet
-    if (text.hiddenTextarea) {
-      text.hiddenTextarea.focus();
-    }
-    requestAnimationFrame(() => {
-      if (text.hiddenTextarea) {
-        text.hiddenTextarea.focus();
-      }
-    });
+    void this.enterEditingWithSyncedFont(text);
 
     // Attach metadata for visibility tracking (has 50ms delay, runs in background)
     if (window.app && window.app.metadataManager && window.app.projectManager) {
@@ -169,11 +161,7 @@ export class TextTool extends BaseTool {
 
   editExistingText(textObj: any) {
     this.activeTextObject = textObj;
-    textObj.enterEditing();
-    textObj.selectAll();
-    if (textObj.hiddenTextarea) {
-      textObj.hiddenTextarea.focus();
-    }
+    void this.enterEditingWithSyncedFont(textObj);
 
     const onEditingExited = () => {
       textObj.off('editing:exited', onEditingExited);
@@ -234,12 +222,109 @@ export class TextTool extends BaseTool {
     }
   }
 
-  setFontSize(size: string) {
-    this.fontSize = parseInt(size, 10);
+  setFontSize(size: number | string) {
+    this.fontSize = typeof size === 'number' ? size : parseInt(size, 10);
     const activeObj = this.canvas.getActiveObject();
     if (activeObj && (activeObj.type === 'i-text' || activeObj.type === 'text')) {
       activeObj.set('fontSize', this.fontSize);
+      this.syncTextMetrics(activeObj);
       this.canvas.requestRenderAll();
+    }
+  }
+
+  setFontFamily(fontFamily: string) {
+    this.fontFamily = fontFamily;
+    const activeObj = this.canvas.getActiveObject();
+    if (activeObj && (activeObj.type === 'i-text' || activeObj.type === 'text')) {
+      activeObj.set('fontFamily', this.fontFamily);
+      this.syncTextMetrics(activeObj);
+      this.canvas.requestRenderAll();
+    }
+  }
+
+  syncTextMetrics(textObj: any) {
+    if (!textObj) return;
+
+    if (typeof textObj.initDimensions === 'function') {
+      textObj.initDimensions();
+    }
+    if (typeof textObj.setCoords === 'function') {
+      textObj.setCoords();
+    }
+
+    const applyTextareaStyle = () => {
+      if (!textObj.hiddenTextarea) return;
+      textObj.hiddenTextarea.style.fontFamily = textObj.fontFamily || this.fontFamily;
+      textObj.hiddenTextarea.style.fontSize = `${textObj.fontSize || this.fontSize}px`;
+      textObj.hiddenTextarea.style.lineHeight = String(textObj.lineHeight || 1.16);
+      textObj.hiddenTextarea.style.fontWeight = String(textObj.fontWeight || 'normal');
+      textObj.hiddenTextarea.style.fontStyle = String(textObj.fontStyle || 'normal');
+    };
+
+    applyTextareaStyle();
+
+    const fontSet = (document as Document & { fonts?: FontFaceSet }).fonts;
+    if (!fontSet || typeof fontSet.load !== 'function') {
+      this.canvas.requestRenderAll();
+      return;
+    }
+
+    const fontSize = Number(textObj.fontSize || this.fontSize || 24);
+    const family = String(textObj.fontFamily || this.fontFamily || 'sans-serif');
+    void fontSet
+      .load(`${fontSize}px "${family}"`)
+      .then(() => {
+        if (typeof textObj.initDimensions === 'function') {
+          textObj.initDimensions();
+        }
+        if (typeof textObj.setCoords === 'function') {
+          textObj.setCoords();
+        }
+        applyTextareaStyle();
+        this.canvas.requestRenderAll();
+      })
+      .catch(() => {
+        this.canvas.requestRenderAll();
+      });
+  }
+
+  async enterEditingWithSyncedFont(textObj: any) {
+    if (!textObj) return;
+
+    await this.ensureFontReady(
+      textObj.fontFamily || this.fontFamily,
+      textObj.fontSize || this.fontSize
+    );
+
+    textObj.enterEditing();
+    textObj.selectAll();
+    this.syncTextMetrics(textObj);
+
+    const focusTextarea = () => {
+      if (textObj.hiddenTextarea) {
+        textObj.hiddenTextarea.focus();
+        textObj.hiddenTextarea.style.fontFamily = textObj.fontFamily || this.fontFamily;
+        textObj.hiddenTextarea.style.fontSize = `${textObj.fontSize || this.fontSize}px`;
+        textObj.hiddenTextarea.style.lineHeight = String(textObj.lineHeight || 1.16);
+        textObj.hiddenTextarea.style.fontWeight = String(textObj.fontWeight || 'normal');
+        textObj.hiddenTextarea.style.fontStyle = String(textObj.fontStyle || 'normal');
+      }
+    };
+
+    focusTextarea();
+    requestAnimationFrame(focusTextarea);
+  }
+
+  async ensureFontReady(fontFamily: string, fontSize: number) {
+    const fontSet = (document as Document & { fonts?: FontFaceSet }).fonts;
+    if (!fontSet || typeof fontSet.load !== 'function') {
+      return;
+    }
+
+    try {
+      await fontSet.load(`${fontSize || 24}px "${fontFamily || this.fontFamily}"`);
+    } catch {
+      // Best effort only.
     }
   }
 

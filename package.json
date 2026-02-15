@@ -11,6 +11,9 @@
   "scripts": {
     "start": "node app.js",
     "dev": "vite --host",
+    "dev:all": "node scripts/dev-all-safe.mjs",
+    "dev:all:raw": "concurrently -k \"npm:dev:server\" \"npm:dev\"",
+    "dev:all:safe": "node scripts/dev-all-safe.mjs",
     "dev:safe": "VITE_SAFE_DEV=1 vite --host",
     "dev:server": "node app.js",
     "dev:legacy": "node app.js",
@@ -77,6 +80,7 @@
     "@vitest/coverage-v8": "^4.0.13",
     "@vitest/ui": "^4.0.13",
     "autoprefixer": "^10.4.21",
+    "concurrently": "^9.2.1",
     "baseline-browser-mapping": "^2.9.18",
     "eslint": "^8.57.1",
     "eslint-config-prettier": "^10.1.8",
