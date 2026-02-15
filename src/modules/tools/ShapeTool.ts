@@ -157,7 +157,7 @@ export class ShapeTool extends BaseTool {
     this.shape.set({
       selectable: true,
       evented: true,
-      perPixelTargetFind: true,
+      perPixelTargetFind: false,
     });
 
     this.shape.setCoords();

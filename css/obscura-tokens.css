@@ -1,0 +1,159 @@
+/* ============================================================
+   Obscura Editorial-Generative Design Tokens v1.0
+   Single source of truth for the entire visual system.
+   ============================================================ */
+
+:root {
+  /* ── Typography ────────────────────────────────────────────── */
+  --ob-font-sans: 'Instrument Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --ob-font-serif: 'Fraunces', 'Georgia', serif;
+  --ob-font-mono: 'JetBrains Mono', 'SF Mono', 'Consolas', monospace;
+  --ob-font-hand: 'Caveat', cursive;
+
+  /* Type scale */
+  --ob-text-display: 56px;
+  --ob-text-h1: 40px;
+  --ob-text-h2: 28px;
+  --ob-text-h3: 20px;
+  --ob-text-body: 16px;
+  --ob-text-meta: 13px;
+  --ob-text-mono: 13px;
+
+  /* Line heights */
+  --ob-lh-display: 64px;
+  --ob-lh-h1: 48px;
+  --ob-lh-h2: 36px;
+  --ob-lh-h3: 28px;
+  --ob-lh-body: 24px;
+  --ob-lh-meta: 18px;
+
+  /* Font weights */
+  --ob-weight-regular: 400;
+  --ob-weight-medium: 500;
+  --ob-weight-semibold: 600;
+  --ob-weight-bold: 700;
+
+  /* Letter spacing */
+  --ob-tracking-tight: -0.02em;
+  --ob-tracking-normal: 0em;
+  --ob-tracking-wide: 0.08em;
+
+  /* ── Color Palette ─────────────────────────────────────────── */
+
+  /* Neutrals */
+  --ob-ink: #0B0D10;
+  --ob-charcoal: #151A20;
+  --ob-slate: #3E4752;
+  --ob-fog: #E7EAEE;
+  --ob-paper: #F6F7F9;
+  --ob-white: #FFFFFF;
+
+  /* Accents */
+  --ob-signal: #2D6BFF;
+  --ob-signal-soft: rgba(45, 107, 255, 0.08);
+  --ob-signal-ring: rgba(45, 107, 255, 0.35);
+  --ob-success: #1E9E5A;
+  --ob-warning: #E7A400;
+  --ob-danger: #E24A3B;
+  --ob-danger-soft: rgba(226, 74, 59, 0.06);
+
+  /* Functional aliases */
+  --ob-text-primary: var(--ob-ink);
+  --ob-text-secondary: var(--ob-slate);
+  --ob-text-heading: var(--ob-charcoal);
+  --ob-border: var(--ob-fog);
+  --ob-bg-app: var(--ob-paper);
+  --ob-bg-surface: var(--ob-white);
+
+  /* ── Spacing (8px base unit) ───────────────────────────────── */
+  --ob-sp-1: 4px;
+  --ob-sp-2: 8px;
+  --ob-sp-3: 12px;
+  --ob-sp-4: 16px;
+  --ob-sp-5: 24px;
+  --ob-sp-6: 32px;
+  --ob-sp-7: 48px;
+  --ob-sp-8: 64px;
+
+  /* ── Surfaces ──────────────────────────────────────────────── */
+  --ob-radius-card: 16px;
+  --ob-radius-button: 12px;
+  --ob-radius-chip: 999px;
+  --ob-radius-input: 12px;
+
+  --ob-shadow-soft: 0 1px 2px rgba(0,0,0,0.06), 0 10px 30px rgba(0,0,0,0.06);
+  --ob-shadow-elevated: 0 4px 12px rgba(0,0,0,0.08), 0 20px 40px rgba(0,0,0,0.06);
+  --ob-shadow-panel: 0 2px 8px rgba(11,13,16,0.06), 0 12px 28px rgba(11,13,16,0.08);
+
+  --ob-border-width: 1px;
+  --ob-border-color: var(--ob-fog);
+
+  /* ── Motion ────────────────────────────────────────────────── */
+  --ob-duration-fast: 120ms;
+  --ob-duration-base: 180ms;
+  --ob-duration-slow: 260ms;
+  --ob-ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ob-ease-exit: cubic-bezier(0.4, 0, 1, 1);
+
+  /* ── Button densities ──────────────────────────────────────── */
+  --ob-btn-sm-h: 36px;
+  --ob-btn-sm-px: 12px;
+  --ob-btn-md-h: 44px;
+  --ob-btn-md-px: 16px;
+  --ob-btn-lg-h: 52px;
+  --ob-btn-lg-px: 18px;
+
+  /* ── Z-index scale ─────────────────────────────────────────── */
+  --ob-z-canvas: 5;
+  --ob-z-panel: 30;
+  --ob-z-toolbar: 40;
+  --ob-z-dropdown: 60;
+  --ob-z-modal: 1000;
+  --ob-z-nav: 5000;
+  --ob-z-toast: 6000;
+}
+
+/* ── Reduced motion ──────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --ob-duration-fast: 0ms;
+    --ob-duration-base: 0ms;
+    --ob-duration-slow: 0ms;
+  }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ── Generative Textures ─────────────────────────────────────── */
+
+/* Film grain overlay — apply to large surfaces only */
+.ob-grain::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 256px 256px;
+  mix-blend-mode: multiply;
+  z-index: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ob-grain::after {
+    display: none;
+  }
+}
+
+/* Paper texture for "publication" moments */
+.ob-paper-texture {
+  background-color: var(--ob-paper);
+  background-image:
+    radial-gradient(ellipse at 20% 50%, rgba(200, 195, 188, 0.06) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 20%, rgba(180, 175, 170, 0.04) 0%, transparent 50%);
+}

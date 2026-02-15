@@ -8,15 +8,38 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=JetBrains+Mono:wght@400;500;600;700&family=Caveat:wght@400;500;600;700&family=Nunito:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap"
       rel="stylesheet"
     />
+    <link rel="stylesheet" href="/css/obscura-tokens.css" />
     <link rel="stylesheet" href="/css/tailwind.build.css" />
     <style>
+      /* Obscura Editorial-Generative — Font aliases */
+      :root {
+        --font-sans: var(--ob-font-sans);
+        --font-ui: var(--ob-font-sans);
+        --font-mono: var(--ob-font-mono);
+        --font-hand: var(--ob-font-hand);
+        --font-handwriting: var(--ob-font-hand);
+        --font-measurement: var(--ob-font-mono);
+        --font-annotation: var(--ob-font-hand);
+      }
+
+      /* Apply fonts to specific contexts */
+      body {
+        font-family: var(--ob-font-sans);
+        color: var(--ob-text-primary);
+      }
+
+      /* Hand-drawn aesthetic for shape icons */
+      .shape-icon.handdrawn svg {
+        font-family: var(--font-hand);
+      }
+
       /* Custom styles for image list and tag system */
       .image-container {
         border-left: 2px solid transparent;
-        transition: all 0.2s ease;
+        transition: border-color 0.2s ease, background-color 0.2s ease;
       }
 
       .image-container:hover {
@@ -214,11 +237,11 @@
         top: 0;
         left: 0;
         right: 0;
-        z-index: 40;
-        background: rgba(255, 255, 255, 0.85);
-        backdrop-filter: blur(8px);
-        -webkit-backdrop-filter: blur(8px);
-        border-bottom: 1px solid rgb(226, 232, 240);
+        z-index: var(--ob-z-toolbar);
+        background: rgba(255, 255, 255, 0.92);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-bottom: var(--ob-border-width) solid var(--ob-border-color);
         height: 48px;
       }
 
@@ -417,29 +440,35 @@
 
       /* Ensure all toolbar buttons have consistent sizing */
       .tbtn {
-        height: 32px;
-        padding: 0 10px;
-        border-radius: 8px;
+        height: var(--ob-btn-sm-h);
+        padding: 0 var(--ob-btn-sm-px);
+        border-radius: var(--ob-radius-button);
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        border: 1px solid rgba(148, 163, 184, 0.6);
-        background: #fff;
-        font-size: 12px;
+        border: var(--ob-border-width) solid var(--ob-border-color);
+        background: var(--ob-bg-surface);
+        color: var(--ob-text-primary);
+        font-size: var(--ob-text-meta);
+        font-family: var(--ob-font-sans);
+        font-weight: var(--ob-weight-medium);
         line-height: 1;
-        transition: all 0.15s ease;
+        transition: all var(--ob-duration-base) var(--ob-ease-standard);
         white-space: nowrap;
+        cursor: pointer;
       }
 
       .tinput {
-        height: 32px;
-        padding: 0 10px;
-        border-radius: 8px;
-        border: 1px solid rgba(148, 163, 184, 0.6);
-        background: #fff;
-        font-size: 12px;
+        height: var(--ob-btn-sm-h);
+        padding: 0 var(--ob-btn-sm-px);
+        border-radius: var(--ob-radius-input);
+        border: var(--ob-border-width) solid var(--ob-border-color);
+        background: var(--ob-bg-surface);
+        color: var(--ob-text-primary);
+        font-size: var(--ob-text-meta);
+        font-family: var(--ob-font-sans);
         line-height: 1;
-        transition: all 0.15s ease;
+        transition: border-color var(--ob-duration-base) var(--ob-ease-standard), box-shadow var(--ob-duration-base) var(--ob-ease-standard);
       }
 
       .icon-btn {
@@ -528,12 +557,12 @@
         opacity: 0;
         pointer-events: none;
         background: rgba(255, 255, 255, 0.98);
-        border: 1px solid rgba(148, 163, 184, 0.5);
-        box-shadow: 0 12px 32px rgba(15, 23, 42, 0.2);
-        border-radius: 14px;
-        padding: 8px 10px 14px;
+        border: var(--ob-border-width) solid var(--ob-border-color);
+        box-shadow: var(--ob-shadow-elevated);
+        border-radius: var(--ob-radius-card);
+        padding: var(--ob-sp-2) var(--ob-sp-3) var(--ob-sp-4);
         min-width: 220px;
-        transition: opacity 0.16s ease, transform 0.16s ease;
+        transition: opacity var(--ob-duration-base) var(--ob-ease-standard), transform var(--ob-duration-base) var(--ob-ease-standard);
       }
 
       .rotate-fine-wrap:hover .rotate-fine-panel,
@@ -641,32 +670,32 @@
       }
 
 
-      /* Specific button styles to prevent layout shifts */
+      /* Specific button styles — Obscura primary/secondary/destructive */
       #paste {
         padding: 8px 16px;
-        background: rgb(59, 130, 246);
-        color: white;
-        font-weight: 600;
-        border-radius: 12px;
+        background: var(--ob-ink);
+        color: var(--ob-white);
+        font-weight: var(--ob-weight-semibold);
+        border-radius: var(--ob-radius-button);
         border: none;
       }
 
       #clear {
         padding: 8px 16px;
-        background: rgb(239, 68, 68);
-        color: white;
-        font-weight: 600;
-        border-radius: 12px;
+        background: var(--ob-danger);
+        color: var(--ob-white);
+        font-weight: var(--ob-weight-semibold);
+        border-radius: var(--ob-radius-button);
         border: none;
       }
 
       #drawingModeToggle {
         padding: 8px 16px;
-        background: white;
-        color: rgb(34, 197, 94);
-        font-weight: 600;
-        border-radius: 12px;
-        border: 2px solid rgb(34, 197, 94);
+        background: var(--ob-bg-surface);
+        color: var(--ob-signal);
+        font-weight: var(--ob-weight-semibold);
+        border-radius: var(--ob-radius-button);
+        border: var(--ob-border-width) solid var(--ob-signal);
       }
 
       .shape-toggle {
@@ -678,6 +707,31 @@
       .shape-toggle .shape-icon {
         margin-left: 6px;
         font-size: 14px;
+      }
+
+      .shape-toggle .shape-icon.handdrawn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .shape-toggle .shape-icon.handdrawn svg {
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      .shape-menu .handdrawn-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 18px;
+        height: 18px;
+        margin-right: 6px;
+      }
+
+      .shape-menu .handdrawn-icon svg {
+        stroke-linecap: round;
+        stroke-linejoin: round;
       }
 
       .shape-toggle.shape-disabled {
@@ -697,15 +751,15 @@
         position: absolute;
         top: calc(100% + 6px);
         left: 0;
-        background: #fff;
-        border: 1px solid #d1d5db;
-        border-radius: 8px;
-        padding: 6px;
+        background: var(--ob-bg-surface);
+        border: var(--ob-border-width) solid var(--ob-border-color);
+        border-radius: var(--ob-radius-card);
+        padding: var(--ob-sp-2);
         display: none;
         flex-direction: column;
-        gap: 4px;
-        box-shadow: 0 6px 18px rgba(15, 23, 42, 0.12);
-        z-index: 60;
+        gap: var(--ob-sp-1);
+        box-shadow: var(--ob-shadow-elevated);
+        z-index: var(--ob-z-dropdown);
         min-width: 120px;
       }
 
@@ -718,42 +772,30 @@
       }
 
       .text-mode-toggle > #textModeToggle {
-        border-color: #cbd5e1;
-        color: #475569;
-        background: #f8fafc;
+        border-color: var(--ob-border-color);
+        color: var(--ob-text-secondary);
+        background: var(--ob-paper);
       }
 
       #shapeModeWrapper > #shapeModeToggle {
-        border-color: #cbd5e1;
-        color: #475569;
-        background: #f8fafc;
+        border-color: var(--ob-border-color);
+        color: var(--ob-text-secondary);
+        background: var(--ob-paper);
       }
 
       .text-mode-toggle.shape-active > #textModeToggle {
-        border-color: #3b82f6;
-        color: #1d4ed8;
-        background: #eff6ff;
+        border-color: var(--ob-signal);
+        color: var(--ob-signal);
+        background: var(--ob-signal-soft);
       }
 
       #shapeModeWrapper.shape-active > #shapeModeToggle {
-        border-color: #3b82f6;
-        color: #1d4ed8;
-        background: #eff6ff;
+        border-color: var(--ob-signal);
+        color: var(--ob-signal);
+        background: var(--ob-signal-soft);
       }
 
       .text-mode-toggle .shape-icon {
-        font-size: 14px;
-      }
-
-      .text-mode-toggle.text-size-small .shape-icon {
-        font-size: 10px;
-      }
-
-      .text-mode-toggle.text-size-medium .shape-icon {
-        font-size: 12px;
-      }
-
-      .text-mode-toggle.text-size-large .shape-icon {
         font-size: 14px;
       }
 
@@ -763,30 +805,46 @@
         gap: 6px;
         width: 100%;
         padding: 6px 8px;
-        border: 1px solid transparent;
-        background: #fff;
-        border-radius: 6px;
-        font-size: 12px;
+        border: var(--ob-border-width) solid transparent;
+        background: var(--ob-bg-surface);
+        border-radius: var(--ob-radius-button);
+        font-size: var(--ob-text-meta);
+        font-family: var(--ob-font-sans);
         cursor: pointer;
         outline: none;
-        color: #374151;
-        transition: background 0.15s, border-color 0.15s;
+        color: var(--ob-text-primary);
+        transition: background var(--ob-duration-fast) var(--ob-ease-standard), border-color var(--ob-duration-fast) var(--ob-ease-standard);
+      }
+
+      .shape-toggle .shape-menu button .handdrawn-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 18px;
+        height: 18px;
+        flex-shrink: 0;
+      }
+
+      .shape-toggle .shape-menu button .handdrawn-icon svg {
+        stroke-linecap: round;
+        stroke-linejoin: round;
       }
 
       .shape-toggle .shape-menu button:hover:not(.active) {
-        background: #f3f4f6;
-        border-color: #d1d5db;
+        background: var(--ob-paper);
+        border-color: var(--ob-border-color);
       }
 
       .shape-toggle .shape-menu button:focus-visible {
-        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+        box-shadow: 0 0 0 2px var(--ob-signal-ring);
+        outline: none;
       }
 
       .shape-toggle .shape-menu button.active {
-        border-color: #3b82f6;
-        background: #eff6ff;
-        color: #1d4ed8;
-        font-weight: 500;
+        border-color: var(--ob-signal);
+        background: var(--ob-signal-soft);
+        color: var(--ob-signal);
+        font-weight: var(--ob-weight-medium);
       }
 
       .shape-toggle .shape-menu button.active::before {
@@ -794,52 +852,102 @@
         font-weight: bold;
       }
 
+      /* Menu section titles */
+      .shape-menu .menu-section-title {
+        font-size: 10px;
+        font-weight: var(--ob-weight-semibold);
+        text-transform: uppercase;
+        letter-spacing: var(--ob-tracking-wide);
+        color: var(--ob-text-secondary);
+        padding: var(--ob-sp-2) var(--ob-sp-2) var(--ob-sp-1);
+        margin-bottom: 2px;
+        border-top: var(--ob-border-width) solid var(--ob-border-color);
+        margin-top: var(--ob-sp-1);
+      }
+
+      .shape-menu .menu-section-title:first-child {
+        border-top: none;
+        margin-top: 0;
+        padding-top: 2px;
+      }
+
+      /* Font preview buttons */
+      .shape-menu button .font-preview {
+        display: block;
+        width: 100%;
+        font-size: 14px;
+        text-align: left;
+        padding: 2px 0;
+      }
+
+      .shape-menu button.font-handdrawn .font-preview {
+        font-family: 'Caveat', cursive;
+        font-size: 16px;
+      }
+
+      .shape-menu button.font-rounded .font-preview {
+        font-family: 'Nunito', sans-serif;
+        font-weight: 500;
+      }
+
+      .shape-menu button.font-mono .font-preview {
+        font-family: 'Space Mono', monospace;
+        font-size: 12px;
+      }
+
+      .shape-menu button.font-classic .font-preview {
+        font-family: Georgia, serif;
+        font-style: italic;
+      }
+
       #projectName {
         width: 140px;
         padding: 8px 12px;
-        border: 1px solid rgb(209, 213, 219);
-        border-radius: 12px;
-        background: white;
-        font-size: 14px;
+        border: var(--ob-border-width) solid var(--ob-border-color);
+        border-radius: var(--ob-radius-input);
+        background: var(--ob-bg-surface);
+        font-size: var(--ob-text-body);
+        font-family: var(--ob-font-sans);
+        color: var(--ob-text-primary);
       }
 
       #loadProject {
         padding: 8px 16px;
-        background: white;
-        color: rgb(51, 65, 85);
-        font-weight: 600;
-        border-radius: 12px;
-        border: 1px solid rgb(209, 213, 219);
-        font-size: 12px;
+        background: var(--ob-bg-surface);
+        color: var(--ob-text-primary);
+        font-weight: var(--ob-weight-semibold);
+        border-radius: var(--ob-radius-button);
+        border: var(--ob-border-width) solid var(--ob-border-color);
+        font-size: var(--ob-text-meta);
       }
 
       #saveProjectTop {
         padding: 8px 16px;
-        background: rgb(59, 130, 246);
-        color: white;
-        font-weight: 700;
-        border-radius: 12px;
-        border: 1px solid rgb(37, 99, 235);
-        font-size: 14px;
+        background: var(--ob-ink);
+        color: var(--ob-white);
+        font-weight: var(--ob-weight-bold);
+        border-radius: var(--ob-radius-button);
+        border: none;
+        font-size: var(--ob-text-body);
       }
 
       #updateShareBtn {
         padding: 6px 12px;
-        background: rgb(14, 165, 233);
-        color: white;
-        font-weight: 600;
-        border-radius: 12px;
-        border: 1px solid rgb(2, 132, 199);
+        background: var(--ob-signal);
+        color: var(--ob-white);
+        font-weight: var(--ob-weight-semibold);
+        border-radius: var(--ob-radius-button);
+        border: none;
         margin-left: 8px;
       }
 
       #unitToggleBtn {
         padding: 6px 12px;
-        background: white;
-        color: rgb(51, 65, 85);
-        font-weight: 600;
-        border-radius: 12px;
-        border: 1px solid rgb(209, 213, 219);
+        background: var(--ob-bg-surface);
+        color: var(--ob-text-primary);
+        font-weight: var(--ob-weight-semibold);
+        border-radius: var(--ob-radius-button);
+        border: var(--ob-border-width) solid var(--ob-border-color);
       }
 
       /* Color swatches */
@@ -877,7 +985,7 @@
         margin: 0;
         padding: 0;
         cursor: pointer;
-        transition: all 0.2s ease;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
       }
 
       .color-swatches button:hover {
@@ -963,7 +1071,31 @@
       body {
         margin: 0;
         padding: 0;
-        font-weight: 500;
+        font-weight: var(--ob-weight-medium);
+      }
+
+      /* Respect reduced motion preference */
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+          scroll-behavior: auto !important;
+        }
+      }
+
+      /* Focus-visible for sliders (replace bare outline:none) */
+      .slider:focus-visible {
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5) !important;
+      }
+
+      /* Tabular nums for measurement displays */
+      .rotate-fine-value,
+      #rotateFineValue,
+      #brushSize,
+      #scaleButton,
+      .step {
+        font-variant-numeric: tabular-nums;
       }
 
       #lockPopup.show {
@@ -1336,11 +1468,11 @@
         }
       }
 
-      /* Smooth transitions for all panel content */
+      /* Smooth transitions for panel content */
       .floating-panel [id$='Content'],
       .floating-panel [id$='Controls'],
       #elementsBody {
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), padding 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         overflow: hidden;
       }
 
@@ -1697,6 +1829,7 @@
         font-size: 13px !important;
         color: #6b7280 !important;
         font-weight: 500 !important;
+        font-family: var(--font-mono) !important;
         user-select: text !important;
         cursor: pointer !important;
         padding: 1px 4px !important;
@@ -2361,8 +2494,8 @@
   </head>
 
   <body
-    class="bg-gray-50 h-screen overflow-hidden"
-    style="padding-top: 48px"
+    class="h-screen overflow-hidden"
+    style="padding-top: 48px; background-color: var(--ob-paper); font-family: var(--ob-font-sans);"
     data-heic-worker-url="https://openpaint-heic-converter.sofapaint-api.workers.dev"
   >
     <!-- Top Toolbar -->
@@ -2395,12 +2528,28 @@
           <div id="textModeWrapper" class="shape-toggle text-mode-toggle">
             <button id="textModeToggle" class="tbtn" title="Text Tool" aria-label="Text Tool">
               <span class="label-long">Text</span><span class="label-short">Text</span>
-              <span class="shape-icon" aria-hidden="true">▾</span>
+              <span class="shape-icon handdrawn" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M5 6H19"/>
+                  <path d="M12 6V18"/>
+                  <path d="M9 18H15"/>
+                </svg>
+              </span>
             </button>
             <div class="shape-menu" id="textModeMenu">
-              <button type="button" data-text-size="small">Small</button>
-              <button type="button" data-text-size="medium">Medium</button>
-              <button type="button" data-text-size="large">Large</button>
+              <div class="menu-section-title">Font Style</div>
+              <button type="button" data-text-font="handdrawn" class="font-handdrawn">
+                <span class="font-preview" style="font-family: 'Caveat', cursive;">Aa Handwritten</span>
+              </button>
+              <button type="button" data-text-font="rounded" class="font-rounded">
+                <span class="font-preview" style="font-family: 'Nunito', sans-serif;">Aa Rounded</span>
+              </button>
+              <button type="button" data-text-font="mono" class="font-mono">
+                <span class="font-preview" style="font-family: 'Space Mono', monospace;">Aa Mono</span>
+              </button>
+              <button type="button" data-text-font="classic" class="font-classic">
+                <span class="font-preview" style="font-family: Georgia, serif;">Aa Classic</span>
+              </button>
             </div>
           </div>
           <div id="shapeModeWrapper" class="shape-toggle">
@@ -2412,13 +2561,25 @@
               aria-pressed="false"
             >
               <span class="label-long">Shapes</span><span class="label-short">Shapes</span>
-              <span class="shape-icon" aria-hidden="true">▭</span>
+              <span class="shape-icon handdrawn" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 5.5 Q4.5 5 5 5.5 L19 5.5 Q19.5 5.5 19.5 6 L19.5 18.5 Q19.5 19 19 19 L5 18.5 Q4.5 18.5 4.5 18 L4.5 6 Q4.5 5.5 4 5.5 Z"/>
+                </svg>
+              </span>
             </button>
             <div class="shape-menu" id="shapeModeMenu">
-              <button type="button" data-shape-option="square">▭ Rectangle</button>
-              <button type="button" data-shape-option="triangle">▲ Triangle</button>
-              <button type="button" data-shape-option="circle">● Circle</button>
-              <button type="button" data-shape-option="star">★ Star</button>
+              <button type="button" data-shape-option="square">
+                <span class="handdrawn-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="1"/></svg></span> Rectangle
+              </button>
+              <button type="button" data-shape-option="triangle">
+                <span class="handdrawn-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3 L22 21 L2 21 Z"/></svg></span> Triangle
+              </button>
+              <button type="button" data-shape-option="circle">
+                <span class="handdrawn-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/></svg></span> Circle
+              </button>
+              <button type="button" data-shape-option="star">
+                <span class="handdrawn-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 L14.5 9 L22 9 L16 14 L18.5 22 L12 17.5 L5.5 22 L8 14 L2 9 L9.5 9 Z"/></svg></span> Star
+              </button>
               <button type="button" class="shape-fill-toggle" data-shape-fill-toggle="true">
                 Fill: Solid
               </button>
@@ -2489,8 +2650,9 @@
             class="border border-gray-300 rounded text-sm"
             style="height: 34px; margin: 0; cursor: text; width: 72px; padding: 2px 6px"
             title="Brush size in pixels (Alt + Mouse Wheel over brush size input)"
+            aria-label="Brush size"
           />
-          <button id="arrowStartBtn" class="tbtn icon-btn" title="Start Arrow">
+          <button id="arrowStartBtn" class="tbtn icon-btn" title="Start Arrow" aria-label="Start arrow">
             <svg
               width="20"
               height="20"
@@ -2500,12 +2662,13 @@
               stroke-width="2"
               stroke-linecap="round"
               stroke-linejoin="round"
+              aria-hidden="true"
             >
               <line x1="19" y1="12" x2="5" y2="12"></line>
               <polyline points="12 19 5 12 12 5"></polyline>
             </svg>
           </button>
-          <button id="arrowEndBtn" class="tbtn icon-btn" title="End Arrow">
+          <button id="arrowEndBtn" class="tbtn icon-btn" title="End Arrow" aria-label="End arrow">
             <svg
               width="20"
               height="20"
@@ -2515,6 +2678,7 @@
               stroke-width="2"
               stroke-linecap="round"
               stroke-linejoin="round"
+              aria-hidden="true"
             >
               <line x1="5" y1="12" x2="19" y2="12"></line>
               <polyline points="12 5 19 12 12 19"></polyline>
@@ -2549,7 +2713,7 @@
               </label>
             </div>
           </div>
-          <button id="dottedBtn" class="tbtn" title="Line Style">
+          <button id="dottedBtn" class="tbtn" title="Line Style" aria-label="Toggle line style">
             <svg width="34" height="12" viewBox="0 0 34 12" aria-hidden="true">
               <line
                 x1="2"
@@ -2562,29 +2726,26 @@
               ></line>
             </svg>
           </button>
-          <button id="undoBtn" class="tbtn icon-btn" title="Undo">↺</button>
-          <button id="redoBtn" class="tbtn icon-btn" title="Redo">↻</button>
+          <button id="undoBtn" class="tbtn icon-btn" title="Undo (Ctrl+Z)" aria-label="Undo">↺</button>
+          <button id="redoBtn" class="tbtn icon-btn" title="Redo (Ctrl+Y)" aria-label="Redo">↻</button>
         </div>
         <div id="tbCenter" class="group-gap"></div>
         <div id="tbRight" class="group-gap smart-label-scope">
           <input
             type="text"
             id="projectName"
-            placeholder="Customer - Sofa Type - Date"
-            value="New Sofa"
+            placeholder="Project name\u2026"
+            value=""
             class="tinput"
-            data-sharkid="__1"
+            aria-label="Project name"
           />
-          <button id="loadProject" title="Load .opaint" class="tbtn" aria-label="Load .opaint">
-            <span class="label-long">Load .opaint</span><span class="label-short">Load</span>
+          <button id="loadProject" title="Open project" class="tbtn" aria-label="Open project">
+            <span class="label-long">Open</span><span class="label-short">Open</span>
           </button>
-          <button id="removeBgClientTop" class="tbtn" title="Remove background using server">
-            Remove BG
+          <button id="saveProjectTop" class="tbtn" title="Save project" aria-label="Save project">
+            <span class="label-long">Save</span><span class="label-short">Save</span>
           </button>
-          <button id="saveProjectTop" class="tbtn" title="Save .opaint" aria-label="Save .opaint">
-            <span class="label-long">Save .opaint</span><span class="label-short">Save</span>
-          </button>
-          <button id="unitToggleBtn" class="tbtn" title="Toggle units">inches</button>
+          <button id="unitToggleBtn" class="tbtn" title="Toggle measurement units" aria-label="Toggle units">inches</button>
         </div>
       </div>
     </div>
@@ -2907,12 +3068,28 @@
                 aria-label="Text Tool"
               >
                 <span class="label-long">Text</span><span class="label-short">Text</span>
-                <span class="shape-icon" aria-hidden="true">▾</span>
+                <span class="shape-icon handdrawn" aria-hidden="true">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M5 6H19"/>
+                    <path d="M12 6V18"/>
+                    <path d="M9 18H15"/>
+                  </svg>
+                </span>
               </button>
               <div class="shape-menu" id="textModeMenu">
-                <button type="button" data-text-size="small">Small</button>
-                <button type="button" data-text-size="medium">Medium</button>
-                <button type="button" data-text-size="large">Large</button>
+                <div class="menu-section-title">Font Style</div>
+                <button type="button" data-text-font="handdrawn" class="font-handdrawn">
+                  <span class="font-preview" style="font-family: 'Caveat', cursive;">Aa Handwritten</span>
+                </button>
+                <button type="button" data-text-font="rounded" class="font-rounded">
+                  <span class="font-preview" style="font-family: 'Nunito', sans-serif;">Aa Rounded</span>
+                </button>
+                <button type="button" data-text-font="mono" class="font-mono">
+                  <span class="font-preview" style="font-family: 'Space Mono', monospace;">Aa Mono</span>
+                </button>
+                <button type="button" data-text-font="classic" class="font-classic">
+                  <span class="font-preview" style="font-family: Georgia, serif;">Aa Classic</span>
+                </button>
               </div>
             </div>
             <div id="shapeModeWrapper" class="shape-toggle">
@@ -2924,13 +3101,25 @@
                 aria-pressed="false"
               >
                 <span class="label-long">Shapes</span><span class="label-short">Shapes</span>
-                <span class="shape-icon" aria-hidden="true">▭</span>
+                <span class="shape-icon handdrawn" aria-hidden="true">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 5.5 Q4.5 5 5 5.5 L19 5.5 Q19.5 5.5 19.5 6 L19.5 18.5 Q19.5 19 19 19 L5 18.5 Q4.5 18.5 4.5 18 L4.5 6 Q4.5 5.5 4 5.5 Z"/>
+                  </svg>
+                </span>
               </button>
               <div class="shape-menu" id="shapeModeMenu">
-                <button type="button" data-shape-option="square">▭ Rectangle</button>
-                <button type="button" data-shape-option="triangle">▲ Triangle</button>
-                <button type="button" data-shape-option="circle">● Circle</button>
-                <button type="button" data-shape-option="star">★ Star</button>
+                <button type="button" data-shape-option="square">
+                  <span class="handdrawn-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="1"/></svg></span> Rectangle
+                </button>
+                <button type="button" data-shape-option="triangle">
+                  <span class="handdrawn-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3 L22 21 L2 21 Z"/></svg></span> Triangle
+                </button>
+                <button type="button" data-shape-option="circle">
+                  <span class="handdrawn-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/></svg></span> Circle
+                </button>
+                <button type="button" data-shape-option="star">
+                  <span class="handdrawn-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 L14.5 9 L22 9 L16 14 L18.5 22 L12 17.5 L5.5 22 L8 14 L2 9 L9.5 9 Z"/></svg></span> Star
+                </button>
                 <button type="button" class="shape-fill-toggle" data-shape-fill-toggle="true">
                   Fill: Solid
                 </button>
@@ -2944,7 +3133,7 @@
           <div class="flex items-center gap-4">
             <div id="arrowControls" class="flex items-center gap-3">
               <span class="text-sm font-semibold text-slate-700">Arrows:</span>
-              <button id="arrowStartBtn" class="tbtn icon-btn" title="Start Arrow">
+              <button id="arrowStartBtn" class="tbtn icon-btn" title="Start Arrow" aria-label="Start arrow">
                 <svg
                   width="20"
                   height="20"
@@ -2959,7 +3148,7 @@
                   <polyline points="12 19 5 12 12 5"></polyline>
                 </svg>
               </button>
-              <button id="arrowEndBtn" class="tbtn icon-btn" title="End Arrow">
+              <button id="arrowEndBtn" class="tbtn icon-btn" title="End Arrow" aria-label="End arrow">
                 <svg
                   width="20"
                   height="20"
@@ -3011,6 +3200,7 @@
                 <option value="medium">Medium Dash</option>
                 <option value="large">Large Dash</option>
                 <option value="dot-dash">Dot-Dash</option>
+                <option value="mixed">Split Dash</option>
                 <option value="custom">Custom</option>
               </select>
               <div id="customDashControls" class="hidden items-center gap-2">
@@ -3073,8 +3263,9 @@
         </div>
         <button
           id="toggleStrokePanel"
-          class="text-slate-500 hover:text-slate-700 rounded-lg p-1 transition-all"
+          class="text-slate-500 hover:text-slate-700 rounded-lg p-1 transition-colors"
           title="Minimize/Expand Panel"
+          aria-label="Toggle elements panel"
         >
           <svg
             class="w-4 h-4"
@@ -3261,8 +3452,9 @@
           </label>
           <button
             id="toggleImagePanel"
-            class="text-slate-500 hover:text-slate-700 rounded-lg p-1 transition-all"
+            class="text-slate-500 hover:text-slate-700 rounded-lg p-1 transition-colors"
             title="Minimize/Expand Panel"
+            aria-label="Toggle image panel"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
@@ -3284,7 +3476,7 @@
           id="currentImageNameBox"
           type="text"
           class="w-full px-2 py-1 border border-slate-300 rounded-md text-[12px] focus:outline-none focus:ring-2 focus:ring-primary-300"
-          placeholder="front, back, left arm, cushion top"
+          placeholder="e.g. front, back, cushion\u2026"
         />
       </div>
       <div
@@ -3572,7 +3764,7 @@
         <div id="quickSave" class="relative ml-2">
           <button
             id="quickSaveBtn"
-            class="px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-xs rounded-lg"
+            class="px-3 py-1 bg-black hover:bg-slate-900 border border-black text-white text-xs rounded-lg"
           >
             Save
           </button>
@@ -3639,7 +3831,7 @@
           class="border border-gray-300 rounded mb-4 relative bg-gray-50 min-h-[400px] flex items-center justify-center"
         >
           <!-- SVG overlay will be inserted here -->
-          <p class="text-gray-400">Loading preview...</p>
+          <p class="text-gray-400">Loading preview\u2026</p>
         </div>
         <div class="flex gap-2 flex-wrap">
           <button
@@ -3687,6 +3879,7 @@
           <button
             onclick="document.getElementById('ai-calibration-dialog').close()"
             class="text-slate-400 hover:text-slate-600 text-xl"
+            aria-label="Close dialog"
           >
             &times;
           </button>
@@ -3712,7 +3905,7 @@
               min="0.1"
               max="1000"
               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-              placeholder="Enter real width"
+              placeholder="Enter real width\u2026"
               required
             />
           </div>
@@ -3762,6 +3955,7 @@
           <button
             onclick="document.getElementById('ai-preview-modal').close()"
             class="text-slate-400 hover:text-slate-600 text-xl"
+            aria-label="Close dialog"
           >
             &times;
           </button>

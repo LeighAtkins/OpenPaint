@@ -31,12 +31,14 @@ export async function injectPdfFormFields(pdfBuffer, anchors = []) {
 
     const textField = form.createTextField(finalName);
     textField.setText(String(anchor.value || ''));
+    const insetX = 3;
+    const insetY = 2;
     textField.addToPage(page, {
-      x: anchor.x,
-      y: anchor.y,
-      width: Math.max(20, anchor.width),
-      height: Math.max(10, anchor.height),
-      borderWidth: 0.75,
+      x: anchor.x + insetX,
+      y: anchor.y + insetY,
+      width: Math.max(20, anchor.width - insetX * 2),
+      height: Math.max(10, anchor.height - insetY * 2),
+      borderWidth: 0,
     });
     textField.setFontSize(10);
   });

@@ -207,12 +207,24 @@
       const saveBtn = document.getElementById('saveProjectTop');
       if (saveBtn) {
         wrapSmartLabel(saveBtn, 'Save .opaint', 'Save');
-        // Make it visually distinct from bottom save button
-        saveBtn.style.background = '#3b82f6'; // Blue instead of green
-        saveBtn.style.borderColor = '#2563eb';
-        saveBtn.style.fontWeight = '700';
-        saveBtn.style.fontSize = '14px';
-        saveBtn.style.padding = '8px 16px';
+        // Match Upload Images button styling
+        const uploadBtn = document.getElementById('paste');
+        if (uploadBtn) {
+          const uploadStyles = window.getComputedStyle(uploadBtn);
+          saveBtn.style.background = uploadStyles.background;
+          saveBtn.style.borderColor = uploadStyles.borderColor;
+          saveBtn.style.color = uploadStyles.color;
+          saveBtn.style.fontWeight = uploadStyles.fontWeight;
+          saveBtn.style.fontSize = uploadStyles.fontSize;
+          saveBtn.style.padding = uploadStyles.padding;
+        } else {
+          saveBtn.style.background = '#111827';
+          saveBtn.style.borderColor = '#111827';
+          saveBtn.style.color = '#ffffff';
+          saveBtn.style.fontWeight = '700';
+          saveBtn.style.fontSize = '14px';
+          saveBtn.style.padding = '8px 16px';
+        }
       }
 
       // Immediate check for all containers (skip if already calculated)

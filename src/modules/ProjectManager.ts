@@ -680,7 +680,7 @@ export class ProjectManager {
       const shareBtn = document.getElementById('shareProjectBtn');
       if (shareBtn) originalText = shareBtn.textContent;
       if (shareBtn) {
-        shareBtn.textContent = 'Creating Share Link...';
+        shareBtn.textContent = 'Creating share link';
         shareBtn.disabled = true;
       }
 
@@ -934,7 +934,7 @@ export class ProjectManager {
 
       const btn = document.getElementById('updateShareBtn');
       if (btn) {
-        btn.textContent = 'Updating...';
+        btn.textContent = 'Updating share link';
         btn.disabled = true;
       }
 
@@ -1603,7 +1603,7 @@ export class ProjectManager {
     try {
       console.log('[Load] Loading project file:', file.name);
 
-      this.showStatusMessage('Reading project file...', 'info');
+      this.showStatusMessage('Reading project file', 'info');
       this.revokeLoadedProjectObjectUrls();
 
       if (!this.isArchiveProjectFile(file)) {

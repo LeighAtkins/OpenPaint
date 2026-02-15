@@ -1,76 +1,80 @@
 /* Custom styles that can't be easily replaced by Tailwind */
 .image-container {
     position: relative;
-    margin-bottom: 15px;
-    border-radius: 4px;
+    margin-bottom: var(--ob-sp-4);
+    border-radius: var(--ob-radius-card);
     cursor: pointer;
-    transition: all 0.2s ease;
-    background: white;
+    transition: all var(--ob-duration-base) var(--ob-ease-standard);
+    background: var(--ob-white);
     border: 2px solid transparent;
 }
 .image-container.active {
-    border-color: #4CAF50;
-    box-shadow: 0 2px 8px rgba(76, 175, 80, 0.2);
+    border-color: var(--ob-signal);
+    box-shadow: 0 2px 8px var(--ob-signal-soft);
 }
 .pasted-image {
     width: 100%;
     height: auto;
-    border-radius: 4px;
+    border-radius: var(--ob-radius-card);
     display: block;
 }
 .image-label {
     position: absolute;
-    top: 8px;
-    left: 8px;
-    background: rgba(0, 0, 0, 0.6);
-    color: white;
-    padding: 4px 8px;
-    border-radius: 3px;
-    font-size: 12px;
-    font-weight: bold;
+    top: var(--ob-sp-2);
+    left: var(--ob-sp-2);
+    background: rgba(11, 13, 16, 0.7);
+    color: var(--ob-white);
+    padding: var(--ob-sp-1) var(--ob-sp-2);
+    border-radius: var(--ob-radius-button);
+    font-size: var(--ob-text-mono);
+    font-weight: var(--ob-weight-semibold);
     text-transform: uppercase;
+    letter-spacing: var(--ob-tracking-wide);
+    font-family: var(--ob-font-mono);
 }
 .image-strokes {
     position: absolute;
-    bottom: 8px;
-    right: 8px;
-    background: rgba(0, 0, 0, 0.6);
-    color: white;
+    bottom: var(--ob-sp-2);
+    right: var(--ob-sp-2);
+    background: rgba(11, 13, 16, 0.7);
+    color: var(--ob-white);
     padding: 3px 6px;
-    border-radius: 3px;
+    border-radius: var(--ob-radius-button);
     font-size: 10px;
     max-width: 45%;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    font-family: var(--ob-font-mono);
 }
 .image-scale {
     position: absolute;
-    bottom: 8px;
-    left: 8px;
-    background: rgba(0, 0, 0, 0.6);
-    color: white;
+    bottom: var(--ob-sp-2);
+    left: var(--ob-sp-2);
+    background: rgba(11, 13, 16, 0.7);
+    color: var(--ob-white);
     padding: 3px 6px;
-    border-radius: 3px;
+    border-radius: var(--ob-radius-button);
     font-size: 10px;
     max-width: 45%;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    font-family: var(--ob-font-mono);
 }
 .image-container:hover {
     transform: scale(1.02);
-    box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+    box-shadow: var(--ob-shadow-soft);
 }
 #canvas {
-    background-color: white;
+    background-color: var(--ob-white);
     cursor: crosshair;
-    transition: all 0.3s ease;
+    transition: all var(--ob-duration-slow) var(--ob-ease-standard);
 }
 #canvas.drag-over {
-    border: 2px dashed #4CAF50;
-    box-shadow: 0 0 10px rgba(76, 175, 80, 0.4);
-    background-color: rgba(76, 175, 80, 0.05);
+    border: 2px dashed var(--ob-signal);
+    box-shadow: 0 0 10px var(--ob-signal-soft);
+    background-color: var(--ob-signal-soft);
 }
 
 /* Color palette and buttons */
@@ -78,51 +82,52 @@
     width: 28px;
     height: 28px;
     border-radius: 50%;
-    border: 2px solid #ddd;
+    border: 2px solid var(--ob-fog);
     cursor: pointer;
     padding: 0;
     margin: 0;
+    transition: border-color var(--ob-duration-fast) var(--ob-ease-standard);
 }
 .color-btn.active {
-    border-color: #333;
-    box-shadow: 0 0 0 2px white, 0 0 0 4px #666;
+    border-color: var(--ob-ink);
+    box-shadow: 0 0 0 2px var(--ob-white), 0 0 0 4px var(--ob-slate);
 }
 
 /* Stroke visibility controls */
 .stroke-visibility-item {
     display: flex;
     align-items: center;
-    margin-bottom: 10px;
-    padding: 8px;
-    background-color: white;
-    border-radius: 4px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    margin-bottom: var(--ob-sp-2);
+    padding: var(--ob-sp-2);
+    background-color: var(--ob-white);
+    border-radius: var(--ob-radius-button);
+    box-shadow: 0 1px 3px rgba(11, 13, 16, 0.06);
     position: relative;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all var(--ob-duration-base) var(--ob-ease-standard);
     border-left: 3px solid transparent;
 }
 
 /* Hover state */
 .stroke-visibility-item:hover {
-    background-color: #f0f8ff;
+    background-color: var(--ob-signal-soft);
     transform: translateY(-1px);
-    box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+    box-shadow: 0 2px 5px rgba(11, 13, 16, 0.1);
 }
 
-/* Selected state - blue highlight */
+/* Selected state */
 .stroke-visibility-item[data-selected="true"] {
-    background-color: #e6f7ff;
-    border-left: 3px solid #4CAF50;
+    background-color: var(--ob-signal-soft);
+    border-left: 3px solid var(--ob-signal);
     transform: translateY(-1px);
-    box-shadow: 0 3px 6px rgba(76, 175, 80, 0.2);
+    box-shadow: 0 3px 6px rgba(45, 107, 255, 0.12);
 }
 
-/* EDIT MODE - orange highlight */
+/* EDIT MODE - warning highlight */
 .stroke-visibility-item[data-edit-mode="true"] {
-    background-color: #FFF3E0 !important;
-    border-left: 5px solid #FF9800 !important;
-    box-shadow: 0 3px 8px rgba(255, 152, 0, 0.3) !important;
+    background-color: rgba(231, 164, 0, 0.06) !important;
+    border-left: 5px solid var(--ob-warning) !important;
+    box-shadow: 0 3px 8px rgba(231, 164, 0, 0.15) !important;
 }
 
 /* Multi-selection controls */
@@ -130,74 +135,75 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 8px;
-    background-color: #f0f7ff;
-    border-radius: 4px;
-    margin-bottom: 10px;
+    padding: var(--ob-sp-2);
+    background-color: var(--ob-signal-soft);
+    border-radius: var(--ob-radius-button);
+    margin-bottom: var(--ob-sp-2);
 }
 
 .selection-count {
-    font-size: 0.9em;
-    color: #555;
-    font-weight: 500;
+    font-size: var(--ob-text-meta);
+    color: var(--ob-slate);
+    font-weight: var(--ob-weight-medium);
 }
 
 .action-buttons {
     display: flex;
-    gap: 5px;
+    gap: var(--ob-sp-1);
 }
 
 .stroke-action-button {
-    padding: 4px 8px;
-    background-color: white;
-    border: 1px solid #ccc;
-    border-radius: 4px;
+    padding: var(--ob-sp-1) var(--ob-sp-2);
+    background-color: var(--ob-white);
+    border: var(--ob-border-width) solid var(--ob-fog);
+    border-radius: var(--ob-radius-button);
     cursor: pointer;
-    font-size: 0.85em;
-    transition: all 0.2s ease;
+    font-size: var(--ob-text-meta);
+    font-family: var(--ob-font-sans);
+    transition: all var(--ob-duration-base) var(--ob-ease-standard);
 }
 
 .stroke-action-button:hover {
-    background-color: #f0f0f0;
+    background-color: var(--ob-paper);
     transform: translateY(-1px);
 }
 
 .delete-button {
-    background-color: #fff2f2;
-    border-color: #ffcece;
-    color: #e55;
+    background-color: var(--ob-danger-soft);
+    border-color: rgba(226, 74, 59, 0.2);
+    color: var(--ob-danger);
 }
 
 .delete-button:hover {
-    background-color: #ffe0e0;
-    border-color: #ffa0a0;
+    background-color: rgba(226, 74, 59, 0.12);
+    border-color: rgba(226, 74, 59, 0.3);
 }
 
 /* Delete button in stroke item */
 .stroke-delete-btn {
     position: absolute;
-    top: 4px;
-    right: 4px;
+    top: var(--ob-sp-1);
+    right: var(--ob-sp-1);
     width: 18px;
     height: 18px;
     line-height: 15px;
     font-size: 14px;
     text-align: center;
-    background-color: #ff5555 !important;
+    background-color: var(--ob-danger) !important;
     border: none;
     border-radius: 50%;
-    color: white !important;
+    color: var(--ob-white) !important;
     cursor: pointer;
     opacity: 0.6;
-    transition: all 0.2s ease;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    transition: all var(--ob-duration-base) var(--ob-ease-standard);
+    box-shadow: 0 1px 2px rgba(11, 13, 16, 0.15);
 }
 
 .stroke-delete-btn:hover {
-    background-color: #ff3333 !important;
+    background-color: #c93a2e !important;
     transform: scale(1.1);
     opacity: 1;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    box-shadow: 0 2px 4px rgba(11, 13, 16, 0.2);
 }
 
 .stroke-visibility-item:hover .stroke-delete-btn {
@@ -213,7 +219,7 @@
     padding: 2px 5px;
     margin-left: 5px;
     opacity: 0.7;
-    transition: opacity 0.2s ease;
+    transition: opacity var(--ob-duration-base) var(--ob-ease-standard);
     background-color: transparent !important;
     color: inherit !important;
 }
@@ -229,33 +235,33 @@
     position: fixed;
     top: 20px;
     left: 0px;
-    background: #f5f5f5;
-    padding: 10px;
-    border-radius: 4px;
+    background: var(--ob-paper);
+    padding: var(--ob-sp-3);
+    border-radius: var(--ob-radius-card);
     max-height: calc(100vh - 40px);
     overflow-y: auto;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    box-shadow: var(--ob-shadow-panel);
     cursor: move;
-    z-index: 100;
+    z-index: var(--ob-z-panel);
 }
 .image-sidebar {
     width: 220px;
     position: fixed;
     top: 20px;
     right: 0px;
-    background: #f5f5f5;
+    background: var(--ob-paper);
     padding: 0;
-    border-radius: 4px;
+    border-radius: var(--ob-radius-card);
     max-height: calc(100vh - 40px);
     overflow-y: auto;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    box-shadow: var(--ob-shadow-panel);
     cursor: move;
-    z-index: 100;
+    z-index: var(--ob-z-panel);
 }
 
 /* Drawing mode toggle styling */
 #drawingModeToggle.straight-mode {
-    background-color: #e8f5e9;
+    background-color: var(--ob-signal-soft);
 }
 #drawingModeToggle.straight-mode::before {
     border-radius: 0;
@@ -266,8 +272,8 @@
     display: block;
 }
 .scale-option.active {
-    background-color: #4CAF50;
-    color: white;
+    background-color: var(--ob-ink);
+    color: var(--ob-white);
 }
 
 /* Measurement dialog styles */
@@ -277,34 +283,36 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: rgba(11, 13, 16, 0.5);
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 1000;
+    z-index: var(--ob-z-modal);
 }
 
 .measurement-dialog {
-    background-color: white;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    background-color: var(--ob-white);
+    padding: var(--ob-sp-5);
+    border-radius: var(--ob-radius-card);
+    box-shadow: var(--ob-shadow-elevated);
     width: 400px;
     max-width: 90%;
 }
 
 .measurement-dialog h3 {
     margin-top: 0;
-    margin-bottom: 15px;
-    font-size: 18px;
-    color: #333;
+    margin-bottom: var(--ob-sp-4);
+    font-size: var(--ob-text-h3);
+    color: var(--ob-charcoal);
+    font-family: var(--ob-font-sans);
+    font-weight: var(--ob-weight-semibold);
 }
 
 .measurement-dialog-inputs {
     display: flex;
     flex-direction: column;
-    gap: 15px;
-    margin-bottom: 20px;
+    gap: var(--ob-sp-4);
+    margin-bottom: var(--ob-sp-5);
 }
 
 .inch-container, .cm-container {
@@ -315,30 +323,42 @@
 
 .inch-inputs {
     display: flex;
-    gap: 5px;
+    gap: var(--ob-sp-1);
 }
 
 .button-container {
     display: flex;
     justify-content: flex-end;
-    gap: 10px;
+    gap: var(--ob-sp-3);
 }
 
 .button-container button {
-    padding: 8px 16px;
+    padding: var(--ob-sp-2) var(--ob-sp-4);
     border: none;
-    border-radius: 4px;
+    border-radius: var(--ob-radius-button);
     cursor: pointer;
+    font-family: var(--ob-font-sans);
+    font-weight: var(--ob-weight-medium);
+    transition: all var(--ob-duration-fast) var(--ob-ease-standard);
 }
 
 .button-container button:first-child {
-    background-color: #4CAF50;
-    color: white;
+    background-color: var(--ob-ink);
+    color: var(--ob-white);
+}
+
+.button-container button:first-child:hover {
+    opacity: 0.9;
 }
 
 .button-container button:last-child {
-    background-color: #f1f1f1;
-    color: #333;
+    background-color: var(--ob-paper);
+    color: var(--ob-ink);
+    border: var(--ob-border-width) solid var(--ob-fog);
+}
+
+.button-container button:last-child:hover {
+    background-color: var(--ob-fog);
 }
 
 /* Status message styling */
@@ -346,14 +366,16 @@
     position: fixed;
     bottom: 20px;
     right: 20px;
-    padding: 12px 20px;
-    background-color: rgba(0, 0, 0, 0.8);
-    color: white;
-    border-radius: 4px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-    z-index: 1000;
+    padding: var(--ob-sp-3) var(--ob-sp-5);
+    background-color: var(--ob-charcoal);
+    color: var(--ob-white);
+    border-radius: var(--ob-radius-button);
+    box-shadow: var(--ob-shadow-elevated);
+    z-index: var(--ob-z-toast);
     opacity: 0;
-    transition: opacity 0.3s ease;
+    transition: opacity var(--ob-duration-slow) var(--ob-ease-standard);
+    font-family: var(--ob-font-sans);
+    font-size: var(--ob-text-meta);
 }
 
 #statusMessage.visible {
@@ -365,33 +387,31 @@
     flex: 1;
     display: flex;
     align-items: center;
-    margin-left: 8px;
+    margin-left: var(--ob-sp-2);
     flex-wrap: wrap;
 }
 
 /* Style the stroke name label */
 .stroke-name {
-    font-weight: 500;
+    font-weight: var(--ob-weight-medium);
     padding: 2px 6px;
-    border-radius: 3px;
+    border-radius: var(--ob-radius-button);
     border-left: 3px solid;
-    margin-right: 5px;
-    background-color: rgba(0, 0, 0, 0.03);
-    transition: all 0.2s ease;
+    margin-right: var(--ob-sp-1);
+    background-color: rgba(11, 13, 16, 0.02);
+    transition: all var(--ob-duration-base) var(--ob-ease-standard);
 }
 
 /* Special styling for edit mode */
 .stroke-visibility-item[data-edit-mode="true"] .stroke-label-container {
-    background-color: rgba(255, 102, 0, 0.1);
-    border-radius: 4px;
-    padding: 4px 8px;
+    background-color: rgba(231, 164, 0, 0.06);
+    border-radius: var(--ob-radius-button);
+    padding: var(--ob-sp-1) var(--ob-sp-2);
     margin: -2px 0;
 }
 
 .stroke-visibility-item[data-edit-mode="true"] .stroke-name {
-    font-weight: 600;
+    font-weight: var(--ob-weight-semibold);
     transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 4px rgba(11, 13, 16, 0.08);
 }
-
- 

@@ -688,6 +688,7 @@ export class StrokeMetadataManager {
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
         checkbox.checked = textObj.visible;
+        checkbox.setAttribute('aria-label', `Toggle visibility for text element ${index + 1}`);
         checkbox.style.marginRight = '8px';
 
         checkbox.addEventListener('change', e => {
@@ -709,9 +710,12 @@ export class StrokeMetadataManager {
         textPreview.className = 'stroke-name';
         textPreview.style.color = '#475569';
         textPreview.style.borderColor = 'transparent';
-        textPreview.textContent = textObj.text
-          ? textObj.text.substring(0, 15) + (textObj.text.length > 15 ? '...' : '')
-          : 'Text';
+        textPreview.textContent = textObj.text || 'Text';
+        textPreview.style.display = 'inline-block';
+        textPreview.style.maxWidth = '140px';
+        textPreview.style.overflow = 'hidden';
+        textPreview.style.whiteSpace = 'nowrap';
+        textPreview.style.textOverflow = 'ellipsis';
         textPreview.title = textObj.text || 'Text Element';
 
         // Text background toggle
@@ -725,6 +729,7 @@ export class StrokeMetadataManager {
         const bgCheckbox = document.createElement('input');
         bgCheckbox.type = 'checkbox';
         bgCheckbox.checked = textObj.backgroundColor !== 'transparent' && !!textObj.backgroundColor;
+        bgCheckbox.setAttribute('aria-label', `Toggle text background for element ${index + 1}`);
         bgCheckbox.style.cursor = 'pointer';
 
         const bgLabel = document.createElement('span');
@@ -745,9 +750,11 @@ export class StrokeMetadataManager {
 
         // Delete button
         const deleteBtn = document.createElement('button');
+        deleteBtn.type = 'button';
         deleteBtn.className =
           'delete-image-btn opacity-0 group-hover:opacity-100 transition-opacity';
         deleteBtn.title = 'Delete this text';
+        deleteBtn.setAttribute('aria-label', 'Delete text element');
         deleteBtn.style.cursor = 'pointer';
         deleteBtn.style.background = 'rgba(255, 255, 255, 0.9)';
         deleteBtn.style.border = '1px solid rgb(204, 204, 204)';
@@ -815,6 +822,10 @@ export class StrokeMetadataManager {
         checkbox.type = 'checkbox';
         const shapeVisible = shapeObj.strokeMetadata?.visible !== false;
         checkbox.checked = shapeVisible;
+        checkbox.setAttribute(
+          'aria-label',
+          `Toggle visibility for ${shapeObj.strokeMetadata?.shapeName || `shape ${index + 1}`}`
+        );
         checkbox.style.marginRight = '8px';
 
         if (shapeObj.visible !== shapeVisible) {
@@ -847,9 +858,11 @@ export class StrokeMetadataManager {
         shapeLabel.title = shapeLabel.textContent;
 
         const deleteBtn = document.createElement('button');
+        deleteBtn.type = 'button';
         deleteBtn.className =
           'delete-image-btn opacity-0 group-hover:opacity-100 transition-opacity';
         deleteBtn.title = 'Delete this shape';
+        deleteBtn.setAttribute('aria-label', 'Delete shape element');
         deleteBtn.style.cursor = 'pointer';
         deleteBtn.style.background = 'rgba(255, 255, 255, 0.9)';
         deleteBtn.style.border = '1px solid rgb(204, 204, 204)';
@@ -930,6 +943,7 @@ export class StrokeMetadataManager {
       const checkbox = document.createElement('input');
       checkbox.type = 'checkbox';
       checkbox.id = `visibility-${strokeLabel}`;
+      checkbox.setAttribute('aria-label', `Toggle visibility for stroke ${strokeLabel}`);
       const strokeVisible = this.strokeVisibilityByImage[currentViewId]?.[strokeLabel] !== false;
       checkbox.checked = strokeVisible;
 
@@ -1011,13 +1025,18 @@ export class StrokeMetadataManager {
 
       // Label toggle button (🏷️)
       const labelToggleBtn = document.createElement('button');
+      labelToggleBtn.type = 'button';
       labelToggleBtn.className = 'stroke-label-toggle-btn';
       const labelVisible = this.strokeLabelVisibility[currentViewId]?.[strokeLabel] !== false;
       labelToggleBtn.title = labelVisible ? 'Hide Label' : 'Show Label';
+      labelToggleBtn.setAttribute('aria-label', labelVisible ? 'Hide label' : 'Show label');
+      labelToggleBtn.setAttribute('aria-pressed', String(labelVisible));
       labelToggleBtn.textContent = '🏷️';
 
       labelToggleBtn.addEventListener('click', () => {
         const newVisibility = !labelVisible;
+        labelToggleBtn.setAttribute('aria-label', newVisibility ? 'Hide label' : 'Show label');
+        labelToggleBtn.setAttribute('aria-pressed', String(newVisibility));
         this.setLabelVisibility(currentViewId, strokeLabel, newVisibility);
         if (window.app?.tagManager) {
           window.app.tagManager.updateTagVisibility(strokeLabel, currentViewId, newVisibility);
@@ -1110,8 +1129,10 @@ export class StrokeMetadataManager {
 
       // Review toggle button (★)
       const reviewBtn = document.createElement('button');
+      reviewBtn.type = 'button';
       reviewBtn.className = 'stroke-review-toggle-btn';
       reviewBtn.title = 'Mark for review';
+      reviewBtn.setAttribute('aria-label', `Mark stroke ${strokeLabel} for review`);
       reviewBtn.style.fontSize = '14px';
       reviewBtn.style.padding = '2px 6px';
       reviewBtn.style.borderRadius = '3px';
@@ -1122,8 +1143,10 @@ export class StrokeMetadataManager {
 
       // Delete button (×)
       const deleteBtn = document.createElement('button');
+      deleteBtn.type = 'button';
       deleteBtn.className = 'delete-image-btn opacity-0 group-hover:opacity-100 transition-opacity';
       deleteBtn.title = 'Delete this stroke';
+      deleteBtn.setAttribute('aria-label', `Delete stroke ${strokeLabel}`);
       // Removed absolute positioning
       deleteBtn.style.cursor = 'pointer';
       deleteBtn.style.background = 'rgba(255, 255, 255, 0.9)';

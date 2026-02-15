@@ -544,8 +544,10 @@
     deleteControl.className = 'delete-control';
 
     const deleteBtn = document.createElement('button');
+    deleteBtn.type = 'button';
     deleteBtn.className = 'control-btn delete-btn';
     deleteBtn.innerHTML = '&times;';
+    deleteBtn.setAttribute('aria-label', `Delete image ${index + 1}`);
     deleteBtn.title = 'Delete image';
     deleteBtn.addEventListener('click', e => {
       e.stopPropagation();

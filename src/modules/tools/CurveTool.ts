@@ -380,7 +380,7 @@ export class CurveTool extends BaseTool {
       strokeDashArray: this.dashPattern.length > 0 ? this.dashPattern : null,
       selectable: true,
       evented: true,
-      perPixelTargetFind: true, // Only select when clicking the actual line
+      perPixelTargetFind: false,
     });
 
     // Store points on the object for editing

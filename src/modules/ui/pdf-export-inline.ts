@@ -92,6 +92,47 @@ function getScopedStrokeLabels(scopeKey, options = {}) {
   return Array.from(labels).sort((a, b) => a.localeCompare(b));
 }
 
+function getPdfNamingValues() {
+  const metadata =
+    window.app?.projectManager?.getProjectMetadata?.() || window.projectMetadata || {};
+  const naming = metadata.naming || {};
+  const readValue = selectors => {
+    for (const selector of selectors) {
+      const el = document.querySelector(selector);
+      if (!el) continue;
+      const value = typeof el.value === 'string' ? el.value.trim() : '';
+      if (value) return value;
+    }
+    return '';
+  };
+
+  const customerName =
+    readValue([
+      '#projectNamingCustomer',
+      '#customerName',
+      '#pdfCustomerName',
+      '[name="customerName"]',
+    ]) || String(naming.customerName || '').trim();
+  const sofaTypeLabel =
+    readValue([
+      '#projectNamingSofaType',
+      '#sofaType',
+      '#sofaTypeLabel',
+      '#pdfSofaType',
+      '[name="sofaTypeLabel"]',
+    ]) || String(naming.sofaTypeLabel || '').trim();
+  const jobDate =
+    readValue(['#projectNamingDate', '#jobDate', '#pdfJobDate', '[name="jobDate"]']) ||
+    String(naming.jobDate || '').trim();
+
+  return { customerName, sofaTypeLabel, jobDate };
+}
+
+function buildPdfNamingLine() {
+  const { customerName, sofaTypeLabel, jobDate } = getPdfNamingValues();
+  return [customerName, sofaTypeLabel, jobDate].filter(Boolean).join('  |  ');
+}
+
 function getPdfPageTargets(viewIds) {
   const ensureTabs =
     typeof window.ensureCaptureTabsForLabel === 'function'
@@ -721,8 +762,9 @@ async function requestServerRenderedPdf(payload) {
       if (!response.ok) {
         const errText = await response.text();
         const looksLikeNotFound =
-          response.status === 404 &&
-          (errText.includes('NOT_FOUND') || errText.includes('The page could not be found'));
+          response.status === 404 ||
+          errText.includes('NOT_FOUND') ||
+          errText.includes('The page could not be found');
         if (looksLikeNotFound) {
           lastError = new Error(`Endpoint not found at ${endpoint}`);
           continue;
@@ -739,10 +781,11 @@ async function requestServerRenderedPdf(payload) {
     }
   }
 
-  throw (
+  const unavailableError =
     lastError ||
-    new Error('Server PDF render endpoint is unavailable. Check API deployment configuration.')
-  );
+    new Error('Server PDF render endpoint is unavailable. Check API deployment configuration.');
+  unavailableError.name = 'PdfRenderEndpointUnavailableError';
+  throw unavailableError;
 }
 
 export function initPdfExport() {
@@ -815,29 +858,31 @@ export function initPdfExport() {
     }
     const overlay = document.createElement('div');
     overlay.style.cssText =
-      'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:10000;display:flex;align-items:center;justify-content:center;';
-    overlay.innerHTML = `<div style="background:white;border-radius:12px;padding:30px;max-width:500px;box-shadow:0 10px 40px rgba(0,0,0,0.3);"><h2 style="margin:0 0 20px 0;color:#333;">Export PDF - ${projectName}</h2><p style="color:#666;margin-bottom:15px;">Creating PDF with ${viewIds.length} page(s) and editable form fields.</p><div style="margin-bottom:15px;"><label style="display:block;margin-bottom:5px;font-weight:600;color:#333;">Image Quality:</label><select id="pdfQuality" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;"><option value="high">High Quality</option><option value="medium" selected>Medium Quality</option><option value="low">Low Quality</option></select></div><div style="margin-bottom:15px;"><label style="display:block;margin-bottom:5px;font-weight:600;color:#333;">Page Size:</label><select id="pdfPageSize" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;"><option value="letter" selected>Letter (8.5" × 11")</option><option value="a4">A4</option></select></div><label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:20px;"><input type="checkbox" id="includeMeasurements" checked style="transform:scale(1.3);"><span style="color:#333;">Include editable measurement fields</span></label><div style="display:flex;gap:10px;"><button id="generatePdfBtn" style="flex:1;padding:12px;background:#3b82f6;color:white;border:none;border-radius:8px;font-weight:600;cursor:pointer;">Generate PDF</button><button id="cancelPdfBtn" style="flex:1;padding:12px;background:#6b7280;color:white;border:none;border-radius:8px;font-weight:600;cursor:pointer;">Cancel</button></div><div id="pdfProgress" style="display:none;margin-top:20px;text-align:center;"><div style="width:100%;height:8px;background:#e5e7eb;border-radius:4px;overflow:hidden;margin-bottom:10px;"><div id="pdfProgressBar" style="width:0%;height:100%;background:#3b82f6;transition:width 0.3s;"></div></div><p id="pdfProgressText" style="color:#666;font-size:14px;">Preparing PDF...</p></div></div>`;
+      'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(11,13,16,0.5);z-index:10000;display:flex;align-items:center;justify-content:center;padding:16px;';
+    overlay.innerHTML = `<div style="background:#fff;border-radius:16px;padding:30px;max-width:520px;width:min(100%,520px);box-shadow:0 24px 48px rgba(11,13,16,0.18),0 8px 16px rgba(11,13,16,0.08);font-family:'Instrument Sans','Inter',sans-serif;color:#0B0D10;"><h2 style="margin:0 0 8px 0;color:#151A20;font-size:24px;font-weight:700;font-family:'Instrument Sans','Inter',sans-serif;">Export PDF - ${projectName}</h2><p style="color:#3E4752;margin:0 0 20px 0;font-size:13px;">Creating PDF with ${viewIds.length} page(s) and editable form fields.</p><div style="margin-bottom:16px;"><label style="display:block;margin-bottom:6px;font-weight:600;color:#3E4752;font-size:13px;letter-spacing:0.08em;text-transform:uppercase;">Image Quality</label><select id="pdfQuality" style="width:100%;padding:10px 14px;border:1px solid #E7EAEE;border-radius:12px;font-size:14px;background:#fff;font-family:'Instrument Sans','Inter',sans-serif;outline:none;"><option value="high">High Quality</option><option value="medium" selected>Medium Quality</option><option value="low">Low Quality</option></select></div><div style="margin-bottom:16px;"><label style="display:block;margin-bottom:6px;font-weight:600;color:#3E4752;font-size:13px;letter-spacing:0.08em;text-transform:uppercase;">Page Size</label><select id="pdfPageSize" style="width:100%;padding:10px 14px;border:1px solid #E7EAEE;border-radius:12px;font-size:14px;background:#fff;font-family:'Instrument Sans','Inter',sans-serif;outline:none;"><option value="letter" selected>Letter (8.5" × 11")</option><option value="a4">A4</option></select></div><label style="display:flex;align-items:center;gap:10px;cursor:pointer;margin-bottom:20px;padding:12px 14px;border:1px solid #E7EAEE;border-radius:12px;background:#F6F7F9;"><input type="checkbox" id="includeMeasurements" checked style="transform:scale(1.3);accent-color:#0B0D10;"><span style="color:#0B0D10;font-size:14px;">Include editable measurement fields</span></label><div style="display:flex;gap:10px;"><button id="generatePdfBtn" style="flex:1;padding:12px;background:#0B0D10;color:#fff;border:none;border-radius:12px;font-weight:600;cursor:pointer;font-family:'Instrument Sans','Inter',sans-serif;font-size:14px;">Generate PDF</button><button id="cancelPdfBtn" style="flex:1;padding:12px;background:#F6F7F9;color:#0B0D10;border:1px solid #E7EAEE;border-radius:12px;font-weight:600;cursor:pointer;font-family:'Instrument Sans','Inter',sans-serif;font-size:14px;">Cancel</button></div><div id="pdfProgress" style="display:none;margin-top:20px;text-align:center;"><div style="width:100%;height:8px;background:#E7EAEE;border-radius:999px;overflow:hidden;margin-bottom:10px;"><div id="pdfProgressBar" style="width:0%;height:100%;background:#0B0D10;transition:width 0.3s;border-radius:999px;"></div></div><p id="pdfProgressText" style="color:#3E4752;font-size:14px;font-family:'Instrument Sans','Inter',sans-serif;">Preparing PDF...</p></div></div>`;
     document.body.appendChild(overlay);
+
     const pageSizeSelect = document.getElementById('pdfPageSize');
     if (pageSizeSelect) {
       pageSizeSelect.value = 'a4';
-      pageSizeSelect.disabled = true;
+      pageSizeSelect.disabled = false;
       const pageSizeWrap = pageSizeSelect.closest('div');
       if (pageSizeWrap) {
-        pageSizeWrap.style.display = 'none';
+        pageSizeWrap.style.display = 'block';
       }
     }
     const includeMeasurementsLabel = document.getElementById('includeMeasurements')?.parentElement;
     if (includeMeasurementsLabel) {
       const rendererWrap = document.createElement('div');
-      rendererWrap.style.marginBottom = '15px';
-      rendererWrap.innerHTML = `<label style="display:block;margin-bottom:5px;font-weight:600;color:#333;">Renderer:</label><select id="pdfRendererMode" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;"><option value="classic" selected>Classic (Local)</option><option value="modern">Modern (Beta)</option></select>`;
+      rendererWrap.style.marginBottom = '16px';
+      rendererWrap.innerHTML = `<label style="display:block;margin-bottom:6px;font-weight:600;color:#3E4752;font-size:13px;letter-spacing:0.08em;text-transform:uppercase;">Renderer</label><select id="pdfRendererMode" style="width:100%;padding:10px 14px;border:1px solid #E7EAEE;border-radius:12px;font-size:14px;background:#fff;font-family:'Instrument Sans','Inter',sans-serif;outline:none;"><option value="classic" selected>Classic (Local)</option><option value="modern">Modern (Beta)</option></select>`;
+      rendererWrap.style.fontFamily = "'Instrument Sans','Inter',sans-serif";
       includeMeasurementsLabel.parentElement?.insertBefore(rendererWrap, includeMeasurementsLabel);
     }
     document.getElementById('cancelPdfBtn').onclick = () => overlay.remove();
     document.getElementById('generatePdfBtn').onclick = async () => {
       const quality = document.getElementById('pdfQuality').value;
-      const pageSize = 'a4';
+      const pageSize = document.getElementById('pdfPageSize')?.value || 'a4';
       const includeMeasurements = document.getElementById('includeMeasurements').checked;
       const rendererMode = document.getElementById('pdfRendererMode')?.value || 'classic';
       const exportSession = beginPdfExportSession();
@@ -865,7 +910,16 @@ export function initPdfExport() {
         }
       } catch (error) {
         console.error('[PDF] Export failed:', error);
-        alert('PDF export failed. Falling back to classic renderer.');
+        const progressTextEl = document.getElementById('pdfProgressText');
+        if (progressTextEl) {
+          progressTextEl.textContent =
+            rendererMode === 'modern'
+              ? 'Modern renderer unavailable. Falling back to classic export...'
+              : 'Export failed. Retrying with classic export...';
+        }
+        if (rendererMode !== 'modern') {
+          alert('PDF export failed. Falling back to classic renderer.');
+        }
         await generatePDFWithPDFLib(
           projectName,
           pageTargets,
@@ -892,7 +946,6 @@ export function initPdfExport() {
     const progressText = document.getElementById('pdfProgressText');
     const metadata =
       window.app?.projectManager?.getProjectMetadata?.() || window.projectMetadata || {};
-    const naming = metadata.naming || {};
     const partLabels = metadata.imagePartLabels || {};
     const metaPieceGroups = Array.isArray(metadata.pieceGroups) ? metadata.pieceGroups : [];
     const groupedTargets = getGroupedPdfPageTargets(pageTargets, metaPieceGroups, partLabels);
@@ -902,10 +955,7 @@ export function initPdfExport() {
       return acc;
     }, {});
 
-    const namingLine = [naming.customerName, naming.sofaTypeLabel, naming.jobDate]
-      .map(part => String(part || '').trim())
-      .filter(Boolean)
-      .join('  |  ');
+    const namingLine = buildPdfNamingLine();
 
     const formatTargetDisplayName = target => {
       const partLabel = partLabels[target.viewId] || target.viewId;
@@ -987,7 +1037,7 @@ export function initPdfExport() {
       const relatedTargets = entry.type === 'grouped' ? entry.relatedTargets || [] : [];
       if (!mainTarget) continue;
 
-      progressText.textContent = `Preparing page data (${i + 1}/${groupedTargets.length})...`;
+      progressText.textContent = `Preparing page data (${i + 1}/${groupedTargets.length})\u2026`;
       progressBar.style.width = `${(i / groupedTargets.length) * 100}%`;
 
       const mainSrc = await captureViewImageDataUrl(mainTarget);
@@ -1071,7 +1121,7 @@ export function initPdfExport() {
       }
     }
 
-    progressText.textContent = 'Rendering modern PDF...';
+    progressText.textContent = 'Rendering modern PDF\u2026';
     progressBar.style.width = '92%';
     const response = await requestServerRenderedPdf({
       source: 'report',
@@ -1084,7 +1134,7 @@ export function initPdfExport() {
       options: {
         renderer: 'hybrid',
         pageSize,
-        injectFormFields: false,
+        injectFormFields: includeMeasurements,
         filename: `${sanitizeFilenamePart(projectName, 'OpenPaint Project')}.pdf`,
       },
     });
@@ -1117,7 +1167,6 @@ export function initPdfExport() {
     const fontMono = await pdfDoc.embedFont(StandardFonts.Courier);
     const metadata =
       window.app?.projectManager?.getProjectMetadata?.() || window.projectMetadata || {};
-    const naming = metadata.naming || {};
     const partLabels = metadata.imagePartLabels || {};
     // Pre-check whether checks/connections/pieceGroups exist (for page count).
     // Full evaluation is deferred until after the image loop so all views are loaded.
@@ -1133,21 +1182,21 @@ export function initPdfExport() {
 
     // ── Design System ────────────────────────────────────────────────
     const colors = {
-      pageBg: rgb(0.985, 0.989, 0.996),
-      headerBg: rgb(0.07, 0.12, 0.24),
-      accentStripe: rgb(0.2, 0.5, 0.93),
-      accentStripeSoft: rgb(0.36, 0.62, 0.97),
-      accentLight: rgb(0.93, 0.96, 1.0),
-      panelBg: rgb(0.97, 0.98, 1.0),
+      pageBg: rgb(0.972, 0.976, 0.992),
+      headerBg: rgb(0.07, 0.1, 0.18),
+      accentStripe: rgb(0.345, 0.4, 0.95),
+      accentStripeSoft: rgb(0.3, 0.45, 0.8),
+      accentLight: rgb(0.93, 0.95, 0.995),
+      panelBg: rgb(0.985, 0.99, 1),
       white: rgb(1, 1, 1),
-      textPrimary: rgb(0.1, 0.14, 0.22),
-      textSecondary: rgb(0.29, 0.34, 0.45),
-      textMuted: rgb(0.45, 0.5, 0.58),
-      border: rgb(0.79, 0.84, 0.91),
-      borderLight: rgb(0.89, 0.92, 0.96),
-      tableRowAlt: rgb(0.95, 0.97, 1.0),
-      frameShadow: rgb(0.86, 0.9, 0.95),
-      frameBorder: rgb(0.75, 0.81, 0.9),
+      textPrimary: rgb(0.07, 0.09, 0.16),
+      textSecondary: rgb(0.28, 0.34, 0.44),
+      textMuted: rgb(0.45, 0.5, 0.6),
+      border: rgb(0.78, 0.82, 0.9),
+      borderLight: rgb(0.88, 0.91, 0.96),
+      tableRowAlt: rgb(0.96, 0.97, 1),
+      frameShadow: rgb(0.9, 0.93, 0.97),
+      frameBorder: rgb(0.76, 0.81, 0.9),
       statusPass: rgb(0.13, 0.59, 0.33),
       statusFail: rgb(0.82, 0.18, 0.18),
       statusWarn: rgb(0.8, 0.58, 0.08),
@@ -1205,6 +1254,15 @@ export function initPdfExport() {
       });
     }
 
+    function drawSketchFrame(page, x, y, width, height, color) {
+      void page;
+      void x;
+      void y;
+      void width;
+      void height;
+      void color;
+    }
+
     function drawHeader(page, titleText, subtitleText, namingText, pageNum) {
       page.drawRectangle({
         x: 0,
@@ -1242,11 +1300,11 @@ export function initPdfExport() {
         y: pageHeight - 20,
         size: 7,
         font: fontBold,
-        color: rgb(0.66, 0.76, 0.92),
+        color: rgb(0.62, 0.7, 0.88),
       });
       centerText(titleText, pageHeight - 30, typo.title, fontBold, colors.white, page);
       if (namingText) {
-        centerText(namingText, pageHeight - 45, typo.small, font, rgb(0.78, 0.83, 0.92), page);
+        centerText(namingText, pageHeight - 45, typo.small, font, rgb(0.75, 0.81, 0.93), page);
       }
 
       if (subtitleText) {
@@ -1255,7 +1313,7 @@ export function initPdfExport() {
           y: pageHeight - 56,
           size: typo.subtitle,
           font,
-          color: rgb(0.7, 0.79, 0.95),
+          color: rgb(0.73, 0.8, 0.93),
         });
       }
 
@@ -1264,7 +1322,7 @@ export function initPdfExport() {
         pageHeight - 56,
         typo.subtitle,
         font,
-        rgb(0.7, 0.79, 0.95),
+        rgb(0.73, 0.8, 0.93),
         page,
         pageWidth - layout.marginX
       );
@@ -1329,6 +1387,14 @@ export function initPdfExport() {
         borderColor: colors.frameBorder,
         borderWidth: 0.75,
       });
+      drawSketchFrame(
+        page,
+        imgX - pad,
+        imgY - pad,
+        imgWidth + pad * 2,
+        imgHeight + pad * 2,
+        colors.border
+      );
       page.drawImage(image, { x: imgX, y: imgY, width: imgWidth, height: imgHeight });
       return { imgX, imgY, imgWidth, imgHeight };
     }
@@ -1345,6 +1411,7 @@ export function initPdfExport() {
         borderColor: colors.borderLight,
         borderWidth: 0.75,
       });
+      drawSketchFrame(page, x - 6, y - 7, textW + 18, 18, colors.border);
       page.drawText(safePdfText(text), {
         x,
         y,
@@ -1616,10 +1683,7 @@ export function initPdfExport() {
     totalPages = groupedTargets.length + (hasRelationshipPage ? 1 : 0);
 
     // ── Image Pages ──────────────────────────────────────────────────
-    const namingLine = [naming.customerName, naming.sofaTypeLabel, naming.jobDate]
-      .map(part => String(part || '').trim())
-      .filter(Boolean)
-      .join('  |  ');
+    const namingLine = buildPdfNamingLine();
     const frameCountByView = pageTargets.reduce((acc, target) => {
       acc[target.viewId] = (acc[target.viewId] || 0) + 1;
       return acc;
@@ -1638,7 +1702,7 @@ export function initPdfExport() {
       const pageNum = i + 1;
 
       if (entry.type === 'grouped') {
-        progressText.textContent = `Processing grouped page (${i + 1}/${groupedTargets.length})...`;
+        progressText.textContent = `Processing grouped page (${i + 1}/${groupedTargets.length})\u2026`;
         progressBar.style.width = `${(i / groupedTargets.length) * 100}%`;
 
         const heroTarget = entry.mainTarget;
@@ -1901,7 +1965,7 @@ export function initPdfExport() {
         // ── Single page (existing logic) ──
         const target = entry.target;
         const { viewId, tabId, tabName, scopeKey, includeBase } = target;
-        progressText.textContent = `Processing ${viewId} - ${tabName} (${i + 1}/${groupedTargets.length})...`;
+        progressText.textContent = `Processing ${viewId} \u2013 ${tabName} (${i + 1}/${groupedTargets.length})\u2026`;
         progressBar.style.width = `${(i / groupedTargets.length) * 100}%`;
 
         const image = await captureViewImage(viewId, tabId);
@@ -2147,7 +2211,7 @@ export function initPdfExport() {
     }
 
     progressBar.style.width = '100%';
-    progressText.textContent = 'Saving PDF...';
+    progressText.textContent = 'Saving PDF\u2026';
     const pdfBytes = await pdfDoc.save();
     const blob = new Blob([pdfBytes], { type: 'application/pdf' });
     const url = URL.createObjectURL(blob);

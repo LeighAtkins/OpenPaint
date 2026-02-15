@@ -121,8 +121,8 @@ function openStartupChoiceOverlay({ onLoadProject, onBlankProject }) {
       <h2 class="sofa-picker-title">Start a project</h2>
       <p class="sofa-picker-subtitle">Choose how you want to begin.</p>
       <div class="sofa-start-actions">
-        <button type="button" class="sofa-start-btn" id="startupLoadProject">Load .opaint</button>
-        <button type="button" class="sofa-start-btn primary" id="startupBlankProject">Blank Project</button>
+        <button type="button" class="sofa-start-btn" id="startupLoadProject">Open Project</button>
+        <button type="button" class="sofa-start-btn primary" id="startupBlankProject">New Project</button>
       </div>
     </section>
   `;
@@ -160,7 +160,7 @@ function createPickerOverlay({
       <p class="sofa-picker-subtitle">${subtitle}</p>
       <div class="sofa-picker-grid" id="sofaPickerGrid"></div>
       <div class="sofa-picker-custom" id="sofaPickerCustomWrap">
-        <input id="sofaPickerCustomInput" type="text" maxlength="80" placeholder="Enter custom sofa type" />
+        <input id="sofaPickerCustomInput" type="text" maxlength="80" placeholder="Enter custom sofa type\u2026" aria-label="Custom sofa type" />
       </div>
       <div class="sofa-picker-actions">
         ${showSkip ? `<button type="button" class="sofa-picker-btn secondary" id="sofaPickerSkip">${skipLabel}</button>` : ''}
@@ -239,48 +239,13 @@ function hasSofaTypeSelected() {
 }
 
 function showInitialPickerIfNeeded() {
+  // Start blank immediately - no startup overlay, no picker.
+  // Users can change sofa type later via the picker button.
   if (hasSofaTypeSelected()) return;
   if (hasAnyProjectImages()) return;
 
-  const openSofaPicker = () => {
-    const currentMetadata = getCurrentMetadata();
-
-    createPickerOverlay({
-      title: 'Step 1: Identify your sofa type',
-      subtitle: 'Choose a sofa type to improve naming, photo prompts, and PDF intake guidance.',
-      showSkip: true,
-      initialType: currentMetadata.sofaType,
-      initialCustomType: currentMetadata.customSofaType || '',
-      onContinue: ({ sofaType, customSofaType }) => {
-        setSofaTypeMetadata(sofaType, customSofaType);
-        applyProjectNameFromSelection(sofaType, customSofaType);
-      },
-      onSkip: () => {
-        setSofaTypeMetadata(null, '');
-      },
-    });
-  };
-
-  const loadProject = () => {
-    if (window.projectManager?.promptLoadProject) {
-      window.projectManager.promptLoadProject();
-      return;
-    }
-    if (window.app?.projectManager?.promptLoadProject) {
-      window.app.projectManager.promptLoadProject();
-    }
-  };
-
-  if (!window.__startupChoiceShown) {
-    window.__startupChoiceShown = true;
-    openStartupChoiceOverlay({
-      onLoadProject: loadProject,
-      onBlankProject: openSofaPicker,
-    });
-    return;
-  }
-
-  openSofaPicker();
+  // Just silently set null type so the app is ready to use
+  setSofaTypeMetadata(null, '');
 }
 
 function installSaveGuard() {
