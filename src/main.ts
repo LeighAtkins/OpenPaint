@@ -96,7 +96,7 @@ import { initMeasurementRelations } from './modules/ui/measurement-relations.js'
 import { initStatusMessageHandler } from './modules/ui/status-message-handler';
 import { initStatusMessage } from './modules/ui/status-message';
 import { initAIExport } from './modules/ai/ai-export-loader';
-import { isAuthEnabled } from '@/utils/env';
+import { isAuthEnabled, isSupabaseConfigured } from '@/utils/env';
 import { authService } from '@/services/auth/authService';
 import { initAuthUI } from './modules/ui/auth-ui';
 
@@ -140,7 +140,7 @@ async function bootstrap(): Promise<void> {
   initFrameCaptureToggle();
 
   // ── Initialize auth (restores session, processes OAuth callback hash) ──
-  if (isAuthEnabled()) {
+  if (isAuthEnabled() && isSupabaseConfigured()) {
     await authService.initialize();
   }
 
