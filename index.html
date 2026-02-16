@@ -1097,6 +1097,66 @@
       body.dark-mode body {
         background-color: var(--bg-primary) !important;
       }
+
+      /* ============================================
+         INLINE STYLE OVERRIDES FOR DARK MODE
+         ============================================ */
+
+      /* Override inline styles that set background: white */
+      body.dark-mode #drawingModeToggle {
+        background: var(--bg-secondary) !important;
+        color: #22c55e !important;
+        border-color: #22c55e !important;
+      }
+
+      body.dark-mode #projectName {
+        background: var(--bg-tertiary) !important;
+        color: var(--text-primary) !important;
+        border-color: var(--border-color) !important;
+      }
+
+      body.dark-mode #loadProject {
+        background: var(--bg-secondary) !important;
+        color: var(--text-primary) !important;
+        border-color: var(--border-color) !important;
+      }
+
+      body.dark-mode #updateShareBtn {
+        background: var(--accent) !important;
+        color: #0f172a !important;
+        border-color: var(--accent-hover) !important;
+      }
+
+      body.dark-mode #unitToggleBtn {
+        background: var(--bg-secondary) !important;
+        color: var(--text-primary) !important;
+        border-color: var(--border-color) !important;
+      }
+
+      /* Override canvas container inline style */
+      body.dark-mode .bg-white.shadow-inner {
+        background-color: var(--bg-primary) !important;
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15) !important;
+      }
+
+      /* Override any remaining white inline backgrounds */
+      body.dark-mode [style*="background: white"],
+      body.dark-mode [style*="background: #fff"],
+      body.dark-mode [style*="background-color: white"],
+      body.dark-mode [style*="background-color: #fff"],
+      body.dark-mode [style*="background-color: #ffffff"] {
+        background-color: var(--bg-secondary) !important;
+        background: var(--bg-secondary) !important;
+      }
+
+      body.dark-mode [style*="background: white !important"],
+      body.dark-mode [style*="background: #fff !important"],
+      body.dark-mode [style*="background-color: white !important"],
+      body.dark-mode [style*="background-color: #fff !important"],
+      body.dark-mode [style*="background-color: #ffffff !important"] {
+        background-color: var(--bg-secondary) !important !important;
+        background: var(--bg-secondary) !important !important;
+      }
     </style>
 
     <!-- Loading optimization and debug gate -->
