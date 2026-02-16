@@ -58,5 +58,5 @@ export function isSupabaseConfigured(): boolean {
 }
 
 export function isAuthEnabled(): boolean {
-  return env.enableAuth && isSupabaseConfigured();
+  return env.enableAuth;
 }

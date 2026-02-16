@@ -6,7 +6,7 @@
  */
 
 import { authService, type AuthUser } from '@/services/auth/authService';
-import { isAuthEnabled } from '@/utils/env';
+import { isAuthEnabled, isSupabaseConfigured } from '@/utils/env';
 
 // ── Styles (injected once) ───────────────────────────────────────────────
 
@@ -344,6 +344,15 @@ function closeModal(): void {
 async function handleGoogleSignIn(): Promise<void> {
   const btn = document.getElementById('authGoogleBtn') as HTMLButtonElement | null;
   const errorEl = document.getElementById('authError');
+
+  if (!isSupabaseConfigured()) {
+    if (errorEl) {
+      errorEl.textContent =
+        'Cloud services are not configured. Please set up Supabase credentials.';
+      errorEl.classList.add('visible');
+    }
+    return;
+  }
 
   if (btn) btn.disabled = true;
   if (errorEl) {
