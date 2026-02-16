@@ -1157,7 +1157,659 @@
         background-color: var(--bg-secondary) !important !important;
         background: var(--bg-secondary) !important !important;
       }
+    
+      /* ============================================
+         MINI STEPPER OVERRIDES
+         ============================================ */
+
+      body.dark-mode #mini-stepper {
+        background: var(--bg-secondary) !important;
+        border-bottom: 1px solid var(--border-color) !important;
+      }
+
+      body.dark-mode #mini-stepper .step {
+        background: var(--bg-tertiary) !important;
+        border-color: var(--border-color) !important;
+        color: var(--text-primary) !important;
+      }
+
+      body.dark-mode #mini-stepper .step:hover {
+        background: var(--bg-hover) !important;
+        border-color: var(--accent) !important;
+        color: var(--text-primary) !important;
+      }
+
+      body.dark-mode #mini-stepper .step[aria-current="true"] {
+        background: var(--accent) !important;
+        color: #0f172a !important;
+        border-color: var(--accent-hover) !important;
+      }
+
+      body.dark-mode #mini-stepper .text-slate-500 {
+        color: var(--text-primary) !important;
+      }
+
+      /* ============================================
+         CAPTURE TAB BAR OVERRIDES
+         ============================================ */
+
+      body.dark-mode #captureTabBar {
+        background: var(--bg-secondary) !important;
+        border-bottom: 1px solid var(--border-color) !important;
+      }
+
+      body.dark-mode .capture-tab {
+        background: var(--bg-tertiary) !important;
+        border-color: var(--border-color) !important;
+        color: var(--text-primary) !important;
+      }
+
+      body.dark-mode .capture-tab.active {
+        background: var(--accent) !important;
+        color: #0f172a !important;
+        border-color: var(--accent-hover) !important;
+      }
+
+      body.dark-mode .capture-tab-close {
+        color: var(--text-muted) !important;
+      }
+
+      body.dark-mode .capture-tab-add {
+        background: var(--accent) !important;
+        color: #0f172a !important;
+      }
+
+      body.dark-mode .capture-tab.master {
+        background: var(--bg-secondary) !important;
+        color: var(--text-primary) !important;
+      }
+
+      body.dark-mode .capture-tab.master:hover {
+        background: var(--bg-hover) !important;
+        color: var(--text-primary) !important;
+      }
+
+      /* ============================================
+         ELEMENTS PANEL OVERRIDES
+         ============================================ */
+
+      body.dark-mode #elementsBody {
+        background: var(--bg-secondary) !important;
+        border-color: var(--border-color) !important;
+      }
+
+      body.dark-mode #elementsControls {
+        background: var(--bg-secondary) !important;
+        border-bottom: 1px solid var(--border-color) !important;
+      }
+
+      body.dark-mode #elementsControls button {
+        background: var(--bg-tertiary) !important;
+        color: var(--text-primary) !important;
+        border-color: var(--border-color) !important;
+      }
+
+      body.dark-mode #elementsControls button:hover {
+        background: var(--bg-hover) !important;
+        border-color: var(--accent) !important;
+        color: var(--text-primary) !important;
+      }
+
+      body.dark-mode #elementsControls button.active {
+        background: var(--accent) !important;
+        color: #0f172a !important;
+        border-color: var(--accent-hover) !important;
+      }
+
+      body.dark-mode #elementsControls .text-slate-100,
+      body.dark-mode #elementsControls .text-slate-500 {
+        background: var(--bg-tertiary) !important;
+        color: var(--text-primary) !important;
+        border-color: var(--border-color) !important;
+      }
+
+      body.dark-mode #elementsControls .text-slate-600,
+      body.dark-mode #elementsControls .text-slate-700 {
+        color: var(--text-primary) !important;
+      }
+
+      /* Tag controls */
+      body.dark-mode #nextTagDisplay {
+        background: var(--bg-tertiary) !important;
+        border-color: var(--border-color) !important;
+        color: var(--text-primary) !important;
+      }
+
+      body.dark-mode #nextTagDisplay:focus {
+        outline-color: var(--accent) !important;
+        box-shadow: 0 0 2px rgba(96, 165, 250, 0.3) !important;
+      }
+
+      body.dark-mode #nextTagDisplay::placeholder {
+        color: var(--text-muted) !important;
+      }
+
+      body.dark-mode .tag-size-label {
+        color: var(--text-secondary) !important;
+      }
+
+      body.dark-mode .bg-gray-50.border.border-gray-200.rounded {
+        background: var(--bg-tertiary) !important;
+        border-color: var(--border-color) !important;
+        color: var(--text-primary) !important;
+      }
+
+      body.dark-mode .bg-gray-50.border.border-gray-200.rounded:hover {
+        background: var(--bg-hover) !important;
+        border-color: var(--accent) !important;
+        color: var(--text-primary) !important;
+      }
+
+      body.dark-mode .currentTagSize {
+        color: var(--text-primary) !important;
+      }
+
+      /* Toggle checkboxes */
+      body.dark-mode .accent-blue-600 {
+        background: var(--bg-tertiary) !important;
+        color: var(--accent) !important;
+      }
+
+      body.dark-mode .bg-gray-50.border.border-gray-200.rounded-lg {
+        background: var(--bg-tertiary) !important;
+        border-color: var(--border-color) !important;
+        color: var(--text-primary) !important;
+      }
+
+      body.dark-mode .bg-gray-50.border.border-gray-200.rounded-lg:hover {
+        background: var(--bg-hover) !important;
+        border-color: var(--accent) !important;
+        color: var(--text-primary) !important;
+      }
+
+      /* Label buttons */
+      body.dark-mode .bg-gray-50.border.border-gray-200.rounded {
+        background: var(--bg-tertiary) !important;
+        border-color: var(--border-color) !important;
+        color: var(--text-primary) !important;
+      }
+
+      body.dark-mode .bg-gray-50.border.border-gray-200.rounded:hover {
+        background: var(--bg-hover) !important;
+        border-color: var(--accent) !important;
+        color: var(--text-primary) !important;
+      }
+
+      body.dark-mode #unitToggleBtnSecondary {
+        background: var(--bg-tertiary) !important;
+        color: var(--text-primary) !important;
+        border-color: var(--border-color) !important;
+      }
+
+      body.dark-mode #unitToggleBtnSecondary:hover {
+        background: var(--bg-hover) !important;
+        border-color: var(--accent) !important;
+        color: var(--text-primary) !important;
+      }
+
+      body.dark-mode #labelShapeToggleBtn {
+        background: var(--bg-secondary) !important;
+        color: var(--text-primary) !important;
+        border-color: var(--accent) !important;
+      }
+
+      body.dark-mode #labelBackgroundToggleBtn {
+        background: var(--bg-secondary) !important;
+        color: var(--text-primary) !important;
+        border-color: var(--accent) !important;
+      }
+
+      body.dark-mode #labelShapeToggleBtn:hover {
+        background: var(--bg-tertiary) !important;
+        border-color: var(--accent-hover) !important;
+        color: var(--text-primary) !important;
+      }
+
+      body.dark-mode #labelBackgroundToggleBtn:hover {
+        background: var(--bg-hover) !important;
+        border-color: var(--accent) !important;
+        color: var(--text-primary) !important;
+      }
+
+      /* Tag size buttons */
+      body.dark-mode .bg-white.border.border.gray-300.rounded {
+        background: var(--bg-tertiary) !important;
+        border-color: var(--border-color) !important;
+        color: var(--text-primary) !important;
+      }
+
+      body.dark-mode .bg-white.border.border-gray-300.rounded:hover {
+        background: var(--bg-hover) !important;
+        border-color: var(--accent) !important;
+        color: var(--text-primary) !important;
+      }
+
+      /* Toggle checkboxes labels */
+      body.dark-mode .text-slate-50 {
+        color: var(--text-secondary) !important;
+      }
+
+      body.dark-mode .text-slate-600 {
+        color: var(--text-primary) !important;
+      }
+
+      body.dark-mode .text-slate-700 {
+        color: var(--text-primary) !important;
+      }
+
+      /* Check measurements button */
+      body.dark-mode .bg-green-100.hover:bg-green-200.text-green-700.rounded-lg.transition-all.font-medium {
+        background: var(--bg-tertiary) !important;
+        color: #22c55e !important;
+        border-color: var(--border-color) !important;
+      }
+
+      body.dark-mode .bg-green-100.hover:bg-green-200.text-green-700.rounded-lg.transition-all.font-medium:hover {
+        background: #16a34a !important;
+        color: #0f172a !important;
+        border-color: var(--accent) !important;
+      }
+
+      /* Show list button */
+      body.dark-mode .bg-blue-100.hover:bg-blue-200.text-blue-700.rounded-lg.transition-all.font-medium {
+        background: var(--bg-tertiary) !important;
+        color: #3b82f6 !important;
+        border-color: var(--border-color) !important;
+      }
+
+      body.dark-mode .bg-blue-100.hover:bg-blue-200.text-blue-700.rounded-lg.transition-all.font-medium:hover {
+        background: var(--accent) !important;
+        color: #0f172a !important;
+        border-color: var(--accent-hover) !important;
+      }
+
+      /* View submitted button */
+      body.dark-mode .bg-blue-100.hover:bg-blue-200.text-blue-700.rounded-lg.transition-all.font-medium {
+        background: var(--bg-tertiary) !important;
+        color: #3b82f6 !important;
+        border-color: var(--border-color) !important;
+      }
+
+      body.dark-mode .bg-blue-100.hover:bg-blue-200.text-blue-700.rounded-lg.transition-all.font-medium:hover {
+        background: var(--accent) !important;
+        color: #0f172a !important;
+        border-color: var(--accent-hover) !important;
+      }
+
+      /* Toggle checkboxes */
+      body.dark-mode .text-slate-50 {
+        color: var(--text-secondary) !important;
+      }
+
+      body.dark-mode .bg-slate-50.border.border-gray-200.rounded-lg {
+        background: var(--bg-tertiary) !important;
+        border-color: var(--border-color) !important;
+        color: var(--text-primary) !important;
+      }
+
+      body.dark-mode .bg-slate-50.border.border-gray-200.rounded-lg:hover {
+        background: var(--bg-hover) !important;
+        border-color: var(--accent) !important;
+        color: var(--text-primary) !important;
+      }
+
+      /* Toggle buttons */
+      body.dark-mode .bg-blue-100.hover:bg-blue-200.text-blue-700.rounded-lg.transition-all.font-medium {
+        background: var(--bg-tertiary) !important;
+        color: #3b82f6 !important;
+        border-color: var(--border-color) !important;
+      }
+
+      body.dark-mode .bg-blue-100.hover:bg-blue-200.text-blue-700.rounded-lg.transition-all.font-medium:hover {
+        background: var(--accent) !important;
+        color: #0f172a !important;
+        border-color: var(--accent-hover) !important;
+      }
+
+      /* ============================================
+         STROKE VISIBILITY CONTROLS
+         ============================================ */
+
+      body.dark-mode #strokeVisibilityControls {
+        background: var(--bg-secondary) !important;
+        border-color: var(--border-color) !important;
+      }
+
+      body.dark-mode #strokesList {
+        background: var(--bg-secondary) !important;
+      }
+
+      body.dark-mode #strokesList h4 {
+        color: var(--text-primary) !important;
+      }
+
+      body.dark-mode #strokesList hr {
+        border-color: var(--border-light) !important;
+      }
+
+      body.dark-mode .text-slate-600 {
+        color: var(--text-secondary) !important;
+      }
+
+      body.dark-mode .text-gray-500 {
+        color: var(--text-muted) !important;
+      }
+
+      /* ============================================
+         IMAGE LIST
+         ============================================ */
+
+      body.dark-mode #imageList {
+        background: var(--bg-secondary) !important;
+        border-color: var(--border-color) !important;
+      }
+</style>
+
+      /* ============================================
+         MINI STEPPER OVERRIDES
+         ============================================ */
+
+      body.dark-mode #mini-stepper {
+        background: var(--bg-secondary) !important;
+        border-bottom: 1px solid var(--border-color) !important;
+      }
+
+      body.dark-mode #mini-stepper .step {
+        background: var(--bg-tertiary) !important;
+        border-color: var(--border-color) !important;
+        color: var(--text-primary) !important;
+      }
+
+      body.dark-mode #mini-stepper .step:hover {
+        background: var(--bg-hover) !important;
+        border-color: var(--accent) !important;
+        color: var(--text-primary) !important;
+      }
+
+      body.dark-mode #mini-stepper .step[aria-current="true"] {
+        background: var(--accent) !important;
+        color: #0f172a !important;
+        border-color: var(--accent-hover) !important;
+      }
+
+      body.dark-mode #mini-stepper .text-slate-500 {
+        color: var(--text-primary) !important;
+      }
+
+      /* ============================================
+         CAPTURE TAB BAR OVERRIDES
+         ============================================ */
+
+      body.dark-mode #captureTabBar {
+        background: var(--bg-secondary) !important;
+        border-bottom: 1px solid var(--border-color) !important;
+      }
+
+      body.dark-mode .capture-tab {
+        background: var(--bg-tertiary) !important;
+        border-color: var(--border-color) !important;
+        color: var(--text-primary) !important;
+      }
+
+      body.dark-mode .capture-tab.active {
+        background: var(--accent) !important;
+        color: #0f172a !important;
+        border-color: var(--accent-hover) !important;
+      }
+
+      body.dark-mode .capture-tab-close {
+        color: var(--text-muted) !important;
+      }
+
+      body.dark-mode .capture-tab-add {
+        background: var(--accent) !important;
+        color: #0f172a !important;
+      }
+
+      body.dark-mode .capture-tab.master {
+        background: var(--bg-secondary) !important;
+        color: var(--text-primary) !important;
+      }
+
+      body.dark-mode .capture-tab.master:hover {
+        background: var(--bg-hover) !important;
+        color: var(--text-primary) !important;
+      }
+
+      /* ============================================
+         ELEMENTS PANEL OVERRIDES
+         ============================================ */
+
+      body.dark-mode #elementsBody {
+        background: var(--bg-secondary) !important;
+        border-color: var(--border-color) !important;
+      }
+
+      body.dark-mode #elementsControls {
+        background: var(--bg-secondary) !important;
+        border-bottom: 1px solid var(--border-color) !important;
+      }
+
+      body.dark-mode #elementsControls button {
+        background: var(--bg-tertiary) !important;
+        color: var(--text-primary) !important;
+        border-color: var(--border-color) !important;
+      }
+
+      body.dark-mode #elementsControls button:hover {
+        background: var(--bg-hover) !important;
+        border-color: var(--accent) !important;
+        color: var(--text-primary) !important;
+      }
+
+      body.dark-mode #elementsControls button.active {
+        background: var(--accent) !important;
+        color: #0f172a !important;
+        border-color: var(--accent-hover) !important;
+      }
+
+      body.dark-mode #elementsControls .text-slate-100,
+      body.dark-mode #elementsControls .text-slate-500 {
+        background: var(--bg-tertiary) !important;
+        color: var(--text-primary) !important;
+        border-color: var(--border-color) !important;
+      }
+
+      body.dark-mode #elementsControls .text-slate-600,
+      body.dark-mode #elementsControls .text-slate-700 {
+        color: var(--text-primary) !important;
+      }
+
+      /* Tag display and controls */
+      body.dark-mode #nextTagDisplay {
+        background: var(--bg-tertiary) !important;
+        border-color: var(--border-color) !important;
+        color: var(--text-primary) !important;
+      }
+
+      body.dark-mode #nextTagDisplay:focus {
+        outline-color: var(--accent) !important;
+        box-shadow: 0 0 2px rgba(96, 165, 250, 0.3) !important;
+      }
+
+      body.dark-mode #nextTagDisplay::placeholder {
+        color: var(--text-muted) !important;
+      }
+
+      body.dark-mode .tag-size-label {
+        color: var(--text-secondary) !important;
+      }
+
+      body.dark-mode .bg-gray-50.border.border-gray-200.rounded {
+        background: var(--bg-tertiary) !important;
+        border-color: var(--border-color) !important;
+        color: var(--text-primary) !important;
+      }
+
+      body.dark-mode .bg-gray-50.border.border-gray-200.rounded:hover {
+        background: var(--bg-hover) !important;
+        border-color: var(--accent) !important;
+        color: var(--text-primary) !important;
+      }
+
+      body.dark-mode #currentTagSize {
+        color: var(--text-primary) !important;
+      }
+
+      body.dark-mode .accent-blue-600 {
+        background: var(--bg-tertiary) !important;
+        color: var(--accent) !important;
+      }
+
+      body.dark-mode .bg-gray-50.border.border-gray-200.rounded-lg {
+        background: var(--bg-tertiary) !important;
+        border-color: var(--border-color) !important;
+        color: var(--text-primary) !important;
+      }
+
+      body.dark-mode .bg-gray-50.border.border-gray-200.rounded-lg:hover {
+        background: var(--bg-hover) !important;
+        border-color: var(--accent) !important;
+        color: var(--text-primary) !important;
+      }
+
+      body.dark-mode #toggleShowMeasurements,
+      body.dark-mode #toggleReviewOnly,
+      body.dark-mode #labelShapeToggleBtn,
+      body.dark-mode #labelBackgroundToggleBtn {
+        background: var(--bg-secondary) !important;
+        color: var(--text-primary) !important;
+        border-color: var(--border-color) !important;
+      }
+
+      body.dark-mode #toggleShowMeasurements:hover,
+      body.dark-mode #toggleReviewOnly:hover,
+      body.dark-mode #labelShapeToggleBtn:hover,
+      body.dark-mode #labelBackgroundToggleBtn:hover {
+        background: var(--bg-hover) !important;
+        border-color: var(--accent) !important;
+        color: var(--text-primary) !important;
+      }
+
+      body.dark-mode .bg-slate-50.border.border-slate-200.rounded-lg {
+        background: var(--bg-tertiary) !important;
+        border-color: var(--border-color) !important;
+        color: var(--text-primary) !important;
+      }
+
+      body.dark-mode .bg-slate-50.border.border-slate-200.rounded-lg:hover {
+        background: var(--bg-hover) !important;
+        border-color: var(--accent) !important;
+        color: var(--text-primary) !important;
+      }
+
+      body.dark-mode #decreaseAllTagSize,
+      body.dark-mode #increaseAllTagSize {
+        background: var(--bg-secondary) !important;
+        border-color: var(--border-color) !important;
+        color: var(--text-primary) !important;
+      }
+
+      body.dark-mode #decreaseAllTagSize:hover,
+      body.dark-mode #increaseAllTagSize:hover {
+        background: var(--bg-hover) !important;
+        border-color: var(--accent) !important;
+        color: var(--text-primary) !important;
+      }
+
+      body.dark-mode .w-5.h-5.bg-white.border.border-gray-300.rounded {
+        background: var(--bg-secondary) !important;
+        border-color: var(--border-color) !important;
+        color: var(--text-primary) !important;
+      }
+
+      body.dark-mode .w-5.h-5.bg-white.border.border-gray-300.rounded:hover {
+        background: var(--bg-hover) !important;
+        border-color: var(--accent) !important;
+        color: var(--text-primary) !important;
+      }
+
+      body.dark-mode .text-gray-500.text-xs.mb-1 {
+        color: var(--text-secondary) !important;
+      }
+
+      /* Unit toggle and shape buttons */
+      body.dark-mode #unitToggleBtnSecondary {
+        background: var(--bg-secondary) !important;
+        color: var(--text-primary) !important;
+        border-color: var(--border-color) !important;
+      }
+
+      body.dark-mode #unitToggleBtnSecondary:hover {
+        background: var(--bg-hover) !important;
+        border-color: var(--accent) !important;
+        color: var(--text-primary) !important;
+      }
+
+      /* Open relations button */
+      body.dark-mode #openMeasurementRelationsBtn {
+        background: var(--bg-secondary) !important;
+        color: var(--text-primary) !important;
+        border-color: var(--border-color) !important;
+      }
+
+      body.dark-mode #openMeasurementRelationsBtn:hover {
+        background: var(--bg-hover) !important;
+        border-color: var(--accent) !important;
+        color: var(--text-primary) !important;
+      }
+
+      /* ============================================
+         STROKE VISIBILITY CONTROLS OVERRIDES
+         ============================================ */
+
+      body.dark-mode #strokeVisibilityControls {
+        background: var(--bg-secondary) !important;
+        border-color: var(--border-color) !important;
+      }
+
+      body.dark-mode #strokesList {
+        background: var(--bg-secondary) !important;
+      }
+
+      body.dark-mode #strokesList h4 {
+        color: var(--text-primary) !important;
+      }
+
+      body.dark-mode #strokesList hr {
+        border-color: var(--border-light) !important;
+      }
+
+      body.dark-mode .text-slate-600 {
+        color: var(--text-secondary) !important;
+      }
+
+      body.dark-mode .text-gray-500 {
+        color: var(--text-muted) !important;
+      }
+
+      /* ============================================
+         IMAGE LIST OVERRIDES
+         ============================================ */
+
+      body.dark-mode #imageList {
+        background: var(--bg-secondary) !important;
+        border-color: var(--border-color) !important;
+      }
     </style>
+      body.dark-mode [style*="background: white"],
+      body.dark-mode [style*="background: #fff"],
+      body.dark-mode [style*="background-color: white"],
+      body.dark-mode [style*="background-color: #fff"],
+      body.dark-mode [style*="background-color: #ffffff"] {
+        background-color: var(--bg-secondary) !important;
+        background: var(--bg-secondary) !important;
+      }
 
     <!-- Loading optimization and debug gate -->
     <style>
