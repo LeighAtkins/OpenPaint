@@ -750,6 +750,353 @@
       .copy-icon-container svg {
         transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
       }
+
+      /* ============================================
+         TAILWIND CLASS OVERRIDES FOR DARK MODE
+         ============================================ */
+
+      /* Override hardcoded Tailwind background colors */
+      body.dark-mode .bg-white,
+      body.dark-mode .bg-slate-50,
+      body.dark-mode .bg-gray-50 {
+        background-color: var(--bg-secondary) !important;
+      }
+
+      body.dark-mode .bg-gray-100 {
+        background-color: var(--bg-tertiary) !important;
+      }
+
+      /* Override hardcoded Tailwind text colors */
+      body.dark-mode .text-slate-700,
+      body.dark-mode .text-slate-800,
+      body.dark-mode .text-slate-900 {
+        color: var(--text-primary) !important;
+      }
+
+      body.dark-mode .text-slate-600,
+      body.dark-mode .text-slate-500,
+      body.dark-mode .text-slate-400 {
+        color: var(--text-secondary) !important;
+      }
+
+      body.dark-mode .text-gray-700,
+      body.dark-mode .text-gray-600,
+      body.dark-mode .text-gray-500 {
+        color: var(--text-secondary) !important;
+      }
+
+      body.dark-mode .text-gray-400,
+      body.dark-mode .text-gray-500 {
+        color: var(--text-muted) !important;
+      }
+
+      /* Override hardcoded Tailwind border colors */
+      body.dark-mode .border-gray-300,
+      body.dark-mode .border-gray-200,
+      body.dark-mode .border-slate-200,
+      body.dark-mode .border-slate-300 {
+        border-color: var(--border-color) !important;
+      }
+
+      body.dark-mode .border-gray-200\/50,
+      body.dark-mode .border-slate-200\/50 {
+        border-color: var(--border-light) !important;
+      }
+
+      body.dark-mode .border-gray-100,
+      body.dark-mode .border-slate-100 {
+        border-color: var(--border-light) !important;
+      }
+
+      /* Override hover states */
+      body.dark-mode .hover\:bg-slate-50:hover,
+      body.dark-mode .hover\:bg-gray-50:hover,
+      body.dark-mode .hover\:bg-white:hover {
+        background-color: var(--bg-tertiary) !important;
+      }
+
+      body.dark-mode .hover\:shadow-md:hover {
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3) !important;
+      }
+
+      body.dark-mode .hover\:shadow-lg:hover {
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.3) !important;
+      }
+
+      body.dark-mode .hover\:shadow-xl:hover {
+        box-shadow: 0 20px 32px rgba(0, 0, 0, 0.3) !important;
+      }
+
+      /* Focus ring overrides */
+      body.dark-mode .focus\:ring-purple-500:focus,
+      body.dark-mode .focus\:ring-primary-500:focus {
+        outline-color: var(--accent) !important;
+        box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.3) !important;
+      }
+
+      body.dark-mode .focus\:border-purple-500:focus,
+      body.dark-mode .focus\:border-primary-500:focus {
+        border-color: var(--accent) !important;
+      }
+
+      /* Panel specific overrides */
+      body.dark-mode .bg-white.border-gray-200,
+      body.dark-mode .border-gray-200.shadow-xl {
+        background-color: var(--bg-secondary) !important;
+        border-color: var(--border-color) !important;
+        box-shadow: 0 20px 32px rgba(0, 0, 0, 0.3) !important;
+      }
+
+      body.dark-mode .border-gray-100.bg-gray-50 {
+        background-color: var(--bg-tertiary) !important;
+        border-color: var(--border-color) !important;
+      }
+
+      body.dark-mode .border-gray-300.bg-white {
+        background-color: var(--bg-secondary) !important;
+        border-color: var(--border-color) !important;
+      }
+
+      body.dark-mode .border-gray-300.bg-white.shadow-sm {
+        background-color: var(--bg-secondary) !important;
+        border-color: var(--border-color) !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+      }
+
+      body.dark-mode .border-gray-300.shadow-md:hover {
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3) !important;
+      }
+
+      /* Dropdown/Menu overrides */
+      body.dark-mode .bg-white.border-gray-200.rounded-xl {
+        background-color: var(--bg-secondary) !important;
+        border-color: var(--border-color) !important;
+      }
+
+      body.dark-mode .bg-white.border.border-gray-300.rounded-lg {
+        background-color: var(--bg-secondary) !important;
+        border-color: var(--border-color) !important;
+      }
+
+      body.dark-mode .bg-white.border-gray-300.rounded.text-sm {
+        background-color: var(--bg-secondary) !important;
+        border-color: var(--border-color) !important;
+        color: var(--text-primary) !important;
+      }
+
+      body.dark-mode .bg-white.border-gray-300.rounded-lg.shadow-sm {
+        background-color: var(--bg-secondary) !important;
+        border-color: var(--border-color) !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+      }
+
+      body.dark-mode .bg-white.border-gray-300.rounded-lg.shadow-md {
+        background-color: var(--bg-secondary) !important;
+        border-color: var(--border-color) !important;
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3) !important;
+      }
+
+      body.dark-mode .bg-white.border-gray-300.rounded-lg.shadow-sm.font-medium {
+        background-color: var(--bg-secondary) !important;
+        border-color: var(--border-color) !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+        color: var(--text-primary) !important;
+      }
+
+      body.dark-mode .bg-white.border-gray-300.rounded-lg.shadow-sm.hover\:shadow-md {
+        background-color: var(--bg-secondary) !important;
+        border-color: var(--border-color) !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+      }
+
+      body.dark-mode .bg-white.border-gray-300.rounded-lg.shadow-sm.font-medium:hover\:shadow-md:hover {
+        background-color: var(--bg-secondary) !important;
+        border-color: var(--border-color) !important;
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3) !important;
+        color: var(--text-primary) !important;
+      }
+
+      body.dark-mode .bg-white.border-gray-200.rounded-lg.text-slate-700 {
+        background-color: var(--bg-secondary) !important;
+        border-color: var(--border-color) !important;
+        color: var(--text-primary) !important;
+      }
+
+      body.dark-mode .bg-white.border-gray-200.rounded-lg.text-slate-700.shadow-sm:hover\:shadow-md:hover {
+        background-color: var(--bg-secondary) !important;
+        border-color: var(--border-color) !important;
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3) !important;
+        color: var(--text-primary) !important;
+      }
+
+      /* Button style overrides */
+      body.dark-mode .bg-white.border-gray-300.rounded-lg.font-medium {
+        background-color: var(--bg-secondary) !important;
+        border-color: var(--border-color) !important;
+        color: var(--text-primary) !important;
+      }
+
+      body.dark-mode .bg-white.border-gray-300.rounded-lg.font-medium.shadow-sm {
+        background-color: var(--bg-secondary) !important;
+        border-color: var(--border-color) !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+        color: var(--text-primary) !important;
+      }
+
+      body.dark-mode .bg-white.border-gray-300.rounded-lg.font-medium.shadow-sm.hover\:shadow-md:hover {
+        background-color: var(--bg-secondary) !important;
+        border-color: var(--border-color) !important;
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3) !important;
+        color: var(--text-primary) !important;
+      }
+
+      body.dark-mode .bg-white.border-gray-300.rounded-lg.font-medium.shadow-sm.hover\:shadow-md:hover:hover\:bg-gray-50:hover {
+        background-color: var(--bg-tertiary) !important;
+        border-color: var(--border-color) !important;
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3) !important;
+        color: var(--text-primary) !important;
+      }
+
+      body.dark-mode .bg-white.border-gray-300.rounded-lg.font-medium.shadow-sm.hover\:shadow-md.active\:scale-95:active {
+        background-color: var(--bg-hover) !important;
+        border-color: var(--border-color) !important;
+        transform: scale(0.95) !important;
+      }
+
+      body.dark-mode .bg-white.border-gray-300.rounded-xl.text-sm.font-semibold {
+        background-color: var(--bg-secondary) !important;
+        border-color: var(--border-color) !important;
+        color: var(--text-primary) !important;
+      }
+
+      body.dark-mode .bg-white.border-gray-300.rounded-xl.text-sm.font-semibold.focus\:outline-none.focus\:ring-2.focus\:ring-purple-500.focus\:border-purple-500.transition-all.duration-200.shadow-sm {
+        background-color: var(--bg-secondary) !important;
+        border-color: var(--border-color) !important;
+        color: var(--text-primary) !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+      }
+
+      body.dark-mode .bg-white.border-gray-300.rounded-xl.text-sm.font-semibold.hover\:bg-gray-50.hover {
+        background-color: var(--bg-tertiary) !important;
+        border-color: var(--border-color) !important;
+        color: var(--text-primary) !important;
+      }
+
+      /* Input style overrides */
+      body.dark-mode .px-3.py-2.border.border-gray-300.rounded-xl.text-sm.bg-white {
+        background-color: var(--bg-tertiary) !important;
+        border-color: var(--border-color) !important;
+        color: var(--text-primary) !important;
+      }
+
+      body.dark-mode .px-4.py-2.bg-white.border.border-gray-300.rounded-lg.text-sm.flex-1 {
+        background-color: var(--bg-tertiary) !important;
+        border-color: var(--border-color) !important;
+        color: var(--text-primary) !important;
+      }
+
+      body.dark-mode .px-2.py-1.border.border-gray-300.rounded.text-sm {
+        background-color: var(--bg-tertiary) !important;
+        border-color: var(--border-color) !important;
+        color: var(--text-primary) !important;
+      }
+
+      body.dark-mode .px-2.py-1.border.border-gray-300.rounded-lg.text-xs {
+        background-color: var(--bg-tertiary) !important;
+        border-color: var(--border-color) !important;
+        color: var(--text-primary) !important;
+      }
+
+      body.dark-mode .px-4.py-2.bg-white.border.border-gray-300.rounded-lg.text-xs {
+        background-color: var(--bg-tertiary) !important;
+        border-color: var(--border-color) !important;
+        color: var(--text-primary) !important;
+      }
+
+      body.dark-mode .px-2.py-1.5.border.border-gray-300.rounded-lg.text-xs.focus\:outline-none {
+        background-color: var(--bg-tertiary) !important;
+        border-color: var(--border-color) !important;
+        color: var(--text-primary) !important;
+      }
+
+      body.dark-mode .w-16.px-2.py-1.border.border-gray-300.rounded.text-sm {
+        background-color: var(--bg-tertiary) !important;
+        border-color: var(--border-color) !important;
+        color: var(--text-primary) !important;
+      }
+
+      body.dark-mode .w-16.px-2.py-1.5.border.border-gray-300.rounded-lg.text-xs.focus\:outline-none {
+        background-color: var(--bg-tertiary) !important;
+        border-color: var(--border-color) !important;
+        color: var(--text-primary) !important;
+      }
+
+      body.dark-mode select.px-2.py-1.border.border-gray-300.rounded.text-sm,
+      body.dark-mode select.w-16.px-2.py-1.border.border-gray-300.rounded.text-sm {
+        background-color: var(--bg-tertiary) !important;
+        border-color: var(--border-color) !important;
+        color: var(--text-primary) !important;
+      }
+
+      /* Label and text overrides */
+      body.dark-mode .px-4.py-2.bg-white.border.border-gray-300.text-slate-700.text-xs.font-semibold.rounded-xl {
+        background-color: var(--bg-tertiary) !important;
+        border-color: var(--border-color) !important;
+        color: var(--text-primary) !important;
+      }
+
+      body.dark-mode .px-3.py-1.bg-white.border.border-gray-300.text-slate-700.text-xs.font-semibold.rounded-lg {
+        background-color: var(--bg-tertiary) !important;
+        border-color: var(--border-color) !important;
+        color: var(--text-primary) !important;
+      }
+
+      body.dark-mode .px-2.py-1.text-xs.bg-white.border.border-gray-300.rounded-lg.hover\:bg-gray-50.transition-all {
+        background-color: var(--bg-tertiary) !important;
+        border-color: var(--border-color) !important;
+        color: var(--text-primary) !important;
+      }
+
+      body.dark-mode .px-2.py-1.text-xs.bg-white.border.border-gray-300.rounded-lg.hover\:bg-gray-50.transition-all:hover {
+        background-color: var(--bg-hover) !important;
+        border-color: var(--border-color) !important;
+        color: var(--text-primary) !important;
+      }
+
+      /* Container overrides */
+      body.dark-mode .border.border-gray-300.rounded.mb-4.relative.bg-gray-50 {
+        background-color: var(--bg-tertiary) !important;
+        border-color: var(--border-color) !important;
+      }
+
+      body.dark-mode .absolute.-bottom-8.-right-8.w-8.h-8.bg-white.border.border-gray-300.rounded {
+        background-color: var(--bg-tertiary) !important;
+        border-color: var(--border-color) !important;
+      }
+
+      body.dark-mode .absolute.-bottom-8.-right-8.w-8.h-8.bg-white.border.border-gray-300.rounded.hover\:bg-gray-50.hover\:shadow-md.transition-colors {
+        background-color: var(--bg-tertiary) !important;
+        border-color: var(--border-color) !important;
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3) !important;
+      }
+
+      body.dark-mode .border.border-gray-300.rounded.mb-4.relative.bg-gray-50.min-h-\\[400px\\] {
+        background-color: var(--bg-tertiary) !important;
+        border-color: var(--border-color) !important;
+      }
+
+      /* Canvas container */
+      body.dark-mode #canvas {
+        background-color: var(--bg-primary) !important;
+      }
+
+      body.dark-mode #main-layout {
+        background-color: var(--bg-primary) !important;
+      }
+
+      body.dark-mode body {
+        background-color: var(--bg-primary) !important;
+      }
     </style>
 
     <!-- Loading optimization and debug gate -->
