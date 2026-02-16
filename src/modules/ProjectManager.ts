@@ -37,9 +37,26 @@ export class ProjectManager {
         metadata: null,
         rotation: 0,
         tabs: null,
+        viewport: null,
       },
-      side: { id: 'side', image: null, canvasData: null, metadata: null, rotation: 0, tabs: null },
-      back: { id: 'back', image: null, canvasData: null, metadata: null, rotation: 0, tabs: null },
+      side: {
+        id: 'side',
+        image: null,
+        canvasData: null,
+        metadata: null,
+        rotation: 0,
+        tabs: null,
+        viewport: null,
+      },
+      back: {
+        id: 'back',
+        image: null,
+        canvasData: null,
+        metadata: null,
+        rotation: 0,
+        tabs: null,
+        viewport: null,
+      },
       cushion: {
         id: 'cushion',
         image: null,
@@ -47,6 +64,7 @@ export class ProjectManager {
         metadata: null,
         rotation: 0,
         tabs: null,
+        viewport: null,
       },
     };
   }
@@ -129,10 +147,6 @@ export class ProjectManager {
 
     console.log(`Switching to view: ${viewId}`);
 
-    // Capture current viewport state to maintain continuity across image switches
-    // This prevents "shifting the frame" when scrolling through images
-    const currentViewportState = this.canvasManager.getViewportState();
-
     // 1. Save current state (skip during project load to avoid clobbering loaded data)
     if (
       !this.isLoadingProject &&
@@ -172,7 +186,8 @@ export class ProjectManager {
       this.updateThumbnailRotation(viewId, view.rotation);
     }
 
-    // 4. Clear canvas
+    // 4. Discard selection so control anchors don't persist across views, then clear
+    this.canvasManager.fabricCanvas?.discardActiveObject();
     this.canvasManager.clear();
 
     if (window.ensureCaptureTabsForLabel) {
@@ -312,8 +327,10 @@ export class ProjectManager {
             }
           }
 
-          // Restore viewport state to maintain continuity
-          this.canvasManager.setViewportState(currentViewportState);
+          // Restore per-image viewport (zoom/pan) if previously saved
+          if (view.viewport) {
+            this.canvasManager.setViewportState(view.viewport);
+          }
           resolve();
         });
       });
@@ -323,8 +340,10 @@ export class ProjectManager {
         window.app.metadataManager.clearImageMetadata(viewId);
       }
 
-      // Restore viewport state to maintain continuity
-      this.canvasManager.setViewportState(currentViewportState);
+      // Restore per-image viewport (zoom/pan) if previously saved
+      if (view.viewport) {
+        this.canvasManager.setViewportState(view.viewport);
+      }
 
       this.historyManager.saveState();
     }
@@ -360,6 +379,7 @@ export class ProjectManager {
     if (this.views[this.currentViewId]) {
       this.views[this.currentViewId].canvasData = json;
       this.views[this.currentViewId].rotation = this.canvasManager.getRotationDegrees();
+      this.views[this.currentViewId].viewport = this.canvasManager.getViewportState();
       if (window.captureTabsByLabel?.[this.currentViewId]) {
         try {
           this.views[this.currentViewId].tabs = JSON.parse(
@@ -464,6 +484,7 @@ export class ProjectManager {
         metadata: null,
         rotation: 0,
         tabs: null,
+        viewport: null,
       };
     }
 
@@ -1411,6 +1432,13 @@ export class ProjectManager {
 
       entry.tabs = deepClone(window.captureTabsByLabel?.[viewId] || view.tabs);
 
+      // Persist per-image viewport (zoom/pan) so framing is restored on load
+      if (viewId === this.currentViewId) {
+        entry.viewport = this.canvasManager.getViewportState();
+      } else if (view.viewport) {
+        entry.viewport = deepClone(view.viewport);
+      }
+
       projectData.views[viewId] = entry;
     }
 
@@ -1712,6 +1740,7 @@ export class ProjectManager {
           canvasData: viewData.canvasJSON,
           metadata: viewData.metadata || {},
           tabs: viewData.tabs || null,
+          viewport: viewData.viewport || null,
         };
 
         const hasImageReference = Boolean(

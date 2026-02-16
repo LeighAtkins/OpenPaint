@@ -924,8 +924,8 @@ export class TagManager {
       setTimeout(() => {
         this.metadataManager.updateStrokeVisibilityControls();
 
-        // Focus the measurement input after controls are updated
-        if (this.metadataManager.focusMeasurementInput) {
+        // Focus the measurement input after controls are updated (skip during paste)
+        if (this.metadataManager._shouldAutoFocus && this.metadataManager.focusMeasurementInput) {
           this.metadataManager.focusMeasurementInput(strokeLabel);
         }
       }, 100); // Small delay to ensure all metadata is properly set

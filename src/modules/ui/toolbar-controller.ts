@@ -820,6 +820,9 @@ export function initToolbarController() {
       const canvas = window.app?.canvasManager?.fabricCanvas;
       if (!canvas || !state || !activeTab) return;
 
+      // Discard selection before toggling visibility so control anchors don't persist
+      canvas.discardActiveObject();
+
       const tagManager = window.app?.tagManager;
       const metadataManager = window.app?.metadataManager;
       if (tagManager && metadataManager) {
@@ -1638,6 +1641,9 @@ export function initToolbarController() {
       const state = ensureCaptureTabsForLabel(baseLabel);
       const targetTab = state.tabs.find(tab => tab.id === tabId);
       if (!targetTab) return;
+      // Discard selection early so control anchors don't persist across tab switches
+      const _tabCanvas = window.app?.canvasManager?.fabricCanvas;
+      if (_tabCanvas) _tabCanvas.discardActiveObject();
       if (!options.skipSave) {
         saveActiveTabState(baseLabel);
       }
