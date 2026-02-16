@@ -13,6 +13,198 @@
     />
     <link rel="stylesheet" href="/css/tailwind.build.css" />
     <style>
+      /* Dark Mode Theme */
+      body.dark-mode {
+        --bg-primary: #0f172a;
+        --bg-secondary: #1e293b;
+        --bg-tertiary: #334155;
+        --text-primary: #f1f5f9;
+        --text-secondary: #cbd5e1;
+        --text-muted: #94a3b8;
+        --border-color: #475569;
+        --border-light: #334155;
+      }
+
+      body.dark-mode #topToolbar {
+        background: rgba(15, 23, 42, 0.85);
+        border-bottom: 1px solid rgb(51, 65, 85);
+      }
+
+      body.dark-mode .tbtn,
+      body.dark-mode .tinput {
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        border-color: var(--border-color);
+      }
+
+      body.dark-mode .tbtn:hover,
+      body.dark-mode .tinput:hover {
+        background: var(--bg-tertiary);
+        border-color: #60a5fa;
+      }
+
+      body.dark-mode .floating-panel {
+        background: var(--bg-secondary);
+        border-color: var(--border-color);
+      }
+
+      body.dark-mode .cursor-move {
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+        border-color: var(--border-color);
+      }
+
+      body.dark-mode #navigation-container {
+        background: var(--bg-secondary);
+      }
+
+      body.dark-mode #mini-stepper {
+        background: var(--bg-secondary);
+      }
+
+      body.dark-mode #mini-stepper-indicator {
+        background: #60a5fa;
+      }
+
+      body.dark-mode .step[aria-current="true"] {
+        background: #60a5fa !important;
+        color: #0f172a !important;
+        border-color: #60a5fa !important;
+      }
+
+      body.dark-mode .step {
+        color: var(--text-primary);
+        border-color: var(--border-color);
+      }
+
+      body.dark-mode #imagePanelContent,
+      body.dark-mode #imageList {
+        background: var(--bg-secondary);
+      }
+
+      body.dark-mode #strokePanel,
+      body.dark-mode #elementsBody {
+        background: var(--bg-secondary);
+      }
+
+      body.dark-mode #elementsControls {
+        background: var(--bg-secondary);
+      }
+
+      body.dark-mode .stroke-visibility-item {
+        background: var(--bg-secondary);
+        border-color: var(--border-color);
+        color: var(--text-primary);
+      }
+
+      body.dark-mode .stroke-visibility-item:hover {
+        background-color: var(--bg-tertiary);
+        border-color: #60a5fa;
+      }
+
+      body.dark-mode .stroke-measurement {
+        color: var(--text-muted);
+      }
+
+      body.dark-mode .stroke-measurement.empty-measurement {
+        border-color: var(--border-color);
+      }
+
+      body.dark-mode .stroke-measurement:focus,
+      body.dark-mode .stroke-measurement[contenteditable='true'] {
+        outline: 1px solid #60a5fa;
+        background-color: var(--bg-secondary);
+      }
+
+      body.dark-mode .stroke-measurement:hover {
+        background-color: var(--bg-tertiary);
+        color: var(--text-primary);
+      }
+
+      body.dark-mode .image-container:hover {
+        background-color: var(--bg-tertiary);
+      }
+
+      body.dark-mode .image-container[aria-selected='true'] {
+        background-color: rgba(96, 165, 250, 0.2);
+      }
+
+      body.dark-mode .tag-badge {
+        background-color: rgba(96, 165, 250, 0.2);
+        color: #93c5fd;
+      }
+
+      body.dark-mode .no-tags {
+        color: var(--text-muted);
+      }
+
+      body.dark-mode .image-label:hover {
+        background-color: var(--bg-tertiary) !important;
+      }
+
+      body.dark-mode #projectName {
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        border-color: var(--border-color);
+      }
+
+      body.dark-mode .shape-menu {
+        background: var(--bg-secondary);
+        border-color: var(--border-color);
+      }
+
+      body.dark-mode .shape-menu button {
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+      }
+
+      body.dark-mode .shape-menu button:hover:not(.active) {
+        background: var(--bg-tertiary);
+        border-color: var(--border-color);
+      }
+
+      body.dark-mode .shape-menu button.active {
+        background: rgba(96, 165, 250, 0.2);
+        color: #93c5fd;
+        border-color: #60a5fa;
+      }
+
+      body.dark-mode .rotate-fine-panel {
+        background: rgba(15, 23, 42, 0.98);
+        border-color: var(--border-color);
+      }
+
+      body.dark-mode .rotate-fine-label {
+        color: var(--text-primary);
+      }
+
+      body.dark-mode #strokeVisibilityControls::-webkit-scrollbar-track {
+        background: var(--bg-secondary);
+      }
+
+      body.dark-mode #strokeVisibilityControls::-webkit-scrollbar-thumb {
+        background: var(--text-muted);
+        border-color: var(--bg-secondary);
+      }
+
+      body.dark-mode #toolbar-wrap::-webkit-scrollbar-thumb {
+        background: rgba(148, 163, 184, 0.3);
+      }
+
+      body.dark-mode #toolbar-wrap::-webkit-scrollbar-thumb:hover {
+        background: rgba(148, 163, 184, 0.5);
+      }
+
+      body.dark-mode #canvasControls::-webkit-scrollbar-thumb,
+      body.dark-mode #canvasControlsContent::-webkit-scrollbar-thumb {
+        background: rgba(148, 163, 184, 0.3);
+      }
+
+      body.dark-mode #canvasControls::-webkit-scrollbar-thumb:hover,
+      body.dark-mode #canvasControlsContent::-webkit-scrollbar-thumb:hover {
+        background: rgba(148, 163, 184, 0.5);
+      }
+
       /* Custom styles for image list and tag system */
       .image-container {
         border-left: 2px solid transparent;
@@ -2557,6 +2749,10 @@
             <span class="label-long">Save Project</span><span class="label-short">Save</span>
           </button>
           <button id="unitToggleBtn" class="tbtn" title="Toggle units">inches</button>
+          <button id="darkModeToggle" class="tbtn icon-btn" title="Toggle dark mode" aria-label="Toggle dark mode">
+            <span class="dark-mode-icon">🌙</span>
+            <span class="light-mode-icon" style="display: none;">☀️</span>
+          </button>
         </div>
       </div>
     </div>
