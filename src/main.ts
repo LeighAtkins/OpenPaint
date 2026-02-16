@@ -93,6 +93,7 @@ import { initMeasurementRelations } from './modules/ui/measurement-relations.js'
 import { initStatusMessageHandler } from './modules/ui/status-message-handler';
 import { initStatusMessage } from './modules/ui/status-message';
 import { initAIExport } from './modules/ai/ai-export-loader';
+import { initDarkMode } from './modules/ui/dark-mode';
 
 // ── 5. Standalone UI modules ─────────────────────────────────────────────────
 import './modules/ui/toolbar-init.js';
@@ -161,6 +162,9 @@ async function bootstrap(): Promise<void> {
   initMeasurementRelations();
   // Initialize status message handler
   initStatusMessageHandler();
+
+  // Initialize dark mode toggle
+  initDarkMode();
 
   // Initialize AI export (async, non-blocking)
   initAIExport().catch((error: unknown) => {

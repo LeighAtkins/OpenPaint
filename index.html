@@ -13,6 +13,582 @@
     />
     <link rel="stylesheet" href="/css/tailwind.build.css" />
     <style>
+      /* ============================================
+         DARK MODE THEME
+         ============================================ */
+
+      /* CSS Variables for dark mode */
+      body.dark-mode {
+        --bg-primary: #0f172a;
+        --bg-secondary: #1e293b;
+        --bg-tertiary: #334155;
+        --bg-hover: #475569;
+        --text-primary: #f1f5f9;
+        --text-secondary: #cbd5e1;
+        --text-muted: #94a3b8;
+        --border-color: #475569;
+        --border-light: #334155;
+        --accent: #60a5fa;
+        --accent-hover: #3b82f6;
+      }
+
+      /* Body and main containers */
+      body.dark-mode {
+        background-color: var(--bg-primary);
+        color: var(--text-primary);
+      }
+
+      body.dark-mode #main-layout {
+        background-color: var(--bg-primary);
+      }
+
+      /* Toolbar */
+      body.dark-mode #topToolbar {
+        background: rgba(15, 23, 42, 0.95);
+        border-bottom: 1px solid var(--border-color);
+      }
+
+      /* Toolbar buttons and inputs */
+      body.dark-mode .tbtn,
+      body.dark-mode .tinput {
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        border-color: var(--border-color);
+      }
+
+      body.dark-mode .tbtn:hover,
+      body.dark-mode .tinput:hover {
+        background: var(--bg-tertiary);
+        border-color: var(--accent);
+        color: var(--text-primary);
+      }
+
+      body.dark-mode .tbtn:active {
+        background: var(--bg-hover);
+        transform: scale(0.98);
+      }
+
+      /* Toolbar specific buttons */
+      body.dark-mode #paste {
+        background: var(--accent);
+        color: #0f172a;
+      }
+
+      body.dark-mode #clear {
+        background: rgb(220, 38, 38);
+        color: var(--text-primary);
+      }
+
+      body.dark-mode #drawingModeToggle {
+        background: var(--bg-secondary);
+        color: #22c55e;
+        border-color: #22c55e;
+      }
+
+      body.dark-mode #saveProjectTop {
+        background: var(--accent);
+        color: #0f172a;
+        border-color: var(--accent-hover);
+      }
+
+      /* Icon buttons */
+      body.dark-mode .icon-btn {
+        background: var(--bg-secondary);
+        color: var(--text-secondary);
+        border-color: var(--border-color);
+      }
+
+      body.dark-mode .icon-btn:hover {
+        background: var(--bg-tertiary);
+        border-color: var(--accent);
+        color: var(--text-primary);
+      }
+
+      /* Floating panels */
+      body.dark-mode .floating-panel {
+        background: var(--bg-secondary);
+        border-color: var(--border-color);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      }
+
+      body.dark-mode .floating-panel.minimized {
+        background: var(--bg-secondary);
+      }
+
+      /* Panel headers */
+      body.dark-mode .cursor-move {
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+        border-color: var(--border-color);
+      }
+
+      body.dark-mode .cursor-move:active {
+        cursor: grabbing !important;
+      }
+
+      /* Stroke panel */
+      body.dark-mode #strokePanel {
+        background: var(--bg-secondary);
+      }
+
+      body.dark-mode #elementsHeader {
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+        border-color: var(--border-color);
+      }
+
+      body.dark-mode #elementsBody {
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+      }
+
+      body.dark-mode #elementsControls {
+        background: var(--bg-secondary);
+      }
+
+      body.dark-mode #strokeVisibilityControls {
+        background: var(--bg-secondary);
+      }
+
+      /* Stroke visibility items */
+      body.dark-mode .stroke-visibility-item {
+        background: var(--bg-secondary);
+        border-color: var(--border-color);
+        color: var(--text-primary);
+      }
+
+      body.dark-mode .stroke-visibility-item:hover {
+        background-color: var(--bg-tertiary);
+        border-color: var(--accent);
+      }
+
+      body.dark-mode .stroke-name {
+        color: var(--text-primary);
+        border-color: var(--border-color);
+      }
+
+      body.dark-mode .stroke-measurement {
+        color: var(--text-muted);
+        border-color: var(--border-light);
+      }
+
+      body.dark-mode .stroke-measurement.empty-measurement {
+        border-color: var(--border-color);
+      }
+
+      body.dark-mode .stroke-measurement:focus,
+      body.dark-mode .stroke-measurement[contenteditable='true'] {
+        outline: 1px solid var(--accent);
+        background-color: var(--bg-tertiary);
+        color: var(--text-primary);
+      }
+
+      body.dark-mode .stroke-measurement:hover {
+        background-color: var(--bg-tertiary);
+        color: var(--text-primary);
+      }
+
+      body.dark-mode .stroke-delete-btn {
+        color: #f87171;
+      }
+
+      body.dark-mode .stroke-delete-btn:hover {
+        background-color: rgba(248, 113, 113, 0.1);
+      }
+
+      /* Stroke visibility scrollbars */
+      body.dark-mode #strokeVisibilityControls::-webkit-scrollbar {
+        width: 8px;
+      }
+
+      body.dark-mode #strokeVisibilityControls::-webkit-scrollbar-track {
+        background: var(--bg-tertiary);
+      }
+
+      body.dark-mode #strokeVisibilityControls::-webkit-scrollbar-thumb {
+        background: var(--text-muted);
+        border-radius: 4px;
+        border: 1px solid var(--bg-tertiary);
+      }
+
+      body.dark-mode #strokeVisibilityControls::-webkit-scrollbar-thumb:hover {
+        background: var(--text-secondary);
+      }
+
+      /* Image panel */
+      body.dark-mode #imagePanel {
+        background: var(--bg-secondary);
+      }
+
+      body.dark-mode #imagePanelContent {
+        background: var(--bg-secondary);
+      }
+
+      body.dark-mode #imageList {
+        background: var(--bg-secondary);
+      }
+
+      body.dark-mode .image-container:hover {
+        background-color: var(--bg-tertiary);
+      }
+
+      body.dark-mode .image-container[aria-selected='true'] {
+        background-color: rgba(96, 165, 250, 0.2);
+        border-left-color: var(--accent);
+      }
+
+      body.dark-mode .tag-badge {
+        background-color: rgba(96, 165, 250, 0.2);
+        color: #93c5fd;
+      }
+
+      body.dark-mode .no-tags {
+        color: var(--text-muted);
+      }
+
+      body.dark-mode .image-label:hover {
+        background-color: var(--bg-tertiary) !important;
+      }
+
+      body.dark-mode #currentImageNameBox {
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        border-color: var(--border-color);
+      }
+
+      /* Navigation container */
+      body.dark-mode #navigation-container {
+        background: var(--bg-secondary);
+        border-top: 1px solid var(--border-color);
+        box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.3);
+      }
+
+      body.dark-mode #mini-stepper {
+        background: var(--bg-secondary);
+      }
+
+      body.dark-mode #mini-stepper-indicator {
+        background: var(--accent);
+        box-shadow: 0 4px 8px rgba(96, 165, 250, 0.3);
+      }
+
+      body.dark-mode .step {
+        color: var(--text-primary);
+        border-color: var(--border-color);
+      }
+
+      body.dark-mode .step:hover {
+        background-color: var(--bg-tertiary);
+        border-color: var(--accent);
+      }
+
+      body.dark-mode .step[aria-current='true'] {
+        background: var(--accent) !important;
+        color: #0f172a !important;
+        border-color: var(--accent) !important;
+      }
+
+      /* Canvas controls */
+      body.dark-mode #canvasControls {
+        background: rgba(30, 41, 59, 0.9);
+        border-color: var(--border-color);
+      }
+
+      body.dark-mode #canvasControls .tbtn {
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        border-color: var(--border-color);
+      }
+
+      /* Shape menus */
+      body.dark-mode .shape-menu {
+        background: var(--bg-secondary);
+        border-color: var(--border-color);
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+      }
+
+      body.dark-mode .shape-menu button {
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+      }
+
+      body.dark-mode .shape-menu button:hover:not(.active) {
+        background: var(--bg-tertiary);
+        border-color: var(--border-color);
+      }
+
+      body.dark-mode .shape-menu button.active {
+        background: rgba(96, 165, 250, 0.2);
+        color: #93c5fd;
+        border-color: var(--accent);
+      }
+
+      body.dark-mode #shapeModeToggle,
+      body.dark-mode #textModeToggle {
+        background: var(--bg-secondary);
+        color: var(--text-secondary);
+        border-color: var(--border-color);
+      }
+
+      body.dark-mode .text-mode-active {
+        background: var(--accent) !important;
+        color: #0f172a !important;
+        border-color: var(--accent-hover) !important;
+      }
+
+      /* Arrow buttons */
+      body.dark-mode #startArrow.active,
+      body.dark-mode #endArrow.active,
+      body.dark-mode #arrowStartBtn.active,
+      body.dark-mode #arrowEndBtn.active {
+        background: var(--accent) !important;
+        color: #0f172a !important;
+      }
+
+      body.dark-mode #rotateLeftCtrl,
+      body.dark-mode #rotateRightCtrl {
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        border-color: var(--border-color);
+      }
+
+      body.dark-mode #rotateLeftCtrl:hover,
+      body.dark-mode #rotateRightCtrl:hover {
+        background: var(--bg-tertiary);
+        border-color: var(--accent);
+      }
+
+      /* Rotate fine panel */
+      body.dark-mode .rotate-fine-panel {
+        background: rgba(15, 23, 42, 0.98);
+        border-color: var(--border-color);
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
+      }
+
+      body.dark-mode .rotate-fine-label {
+        color: var(--text-primary);
+      }
+
+      body.dark-mode .rotate-fine-value {
+        color: var(--text-primary);
+      }
+
+      /* Slider styling */
+      body.dark-mode .slider::-webkit-slider-runnable-track {
+        background: linear-gradient(
+          to right,
+          var(--accent) 0,
+          var(--accent) var(--pos),
+          var(--border-color) var(--pos),
+          var(--border-color) 100%
+        );
+      }
+
+      body.dark-mode .slider::-moz-range-track {
+        background: var(--border-color);
+      }
+
+      /* Color swatches */
+      body.dark-mode .color-swatches button {
+        border-color: var(--border-color);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+      }
+
+      body.dark-mode .color-swatches button:hover {
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      }
+
+      /* Text background toggle */
+      body.dark-mode .text-bg-toggle {
+        background: var(--bg-secondary);
+        color: var(--text-secondary);
+        border-color: var(--border-color);
+      }
+
+      /* Dialogs and modals */
+      body.dark-mode dialog,
+      body.dark-mode .modal {
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        border-color: var(--border-color);
+      }
+
+      body.dark-mode dialog::backdrop {
+        background: rgba(0, 0, 0, 0.7);
+      }
+
+      body.dark-mode .dialog-title {
+        color: var(--text-primary);
+      }
+
+      body.dark-mode .dialog-content {
+        color: var(--text-secondary);
+      }
+
+      /* Form elements in dialogs */
+      body.dark-mode input[type="text"],
+      body.dark-mode input[type="number"],
+      body.dark-mode input[type="email"],
+      body.dark-mode textarea,
+      body.dark-mode select {
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+        border-color: var(--border-color);
+      }
+
+      body.dark-mode input:focus,
+      body.dark-mode textarea:focus,
+      body.dark-mode select:focus {
+        outline-color: var(--accent);
+        border-color: var(--accent);
+      }
+
+      body.dark-mode input::placeholder,
+      body.dark-mode textarea::placeholder {
+        color: var(--text-muted);
+      }
+
+      /* Labels */
+      body.dark-mode label {
+        color: var(--text-secondary);
+      }
+
+      body.dark-mode .text-sm,
+      body.dark-mode .text-xs {
+        color: var(--text-secondary);
+      }
+
+      /* Status messages */
+      body.dark-mode .status-message {
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        border-color: var(--border-color);
+      }
+
+      body.dark-mode .status-success {
+        background: rgba(34, 197, 94, 0.2);
+        color: #22c55e;
+      }
+
+      body.dark-mode .status-error {
+        background: rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+      }
+
+      /* Tooltips */
+      body.dark-mode [title]:hover::after {
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+        border-color: var(--border-color);
+      }
+
+      /* Context menu styling (if exists) */
+      body.dark-mode .context-menu {
+        background: var(--bg-secondary);
+        border-color: var(--border-color);
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+      }
+
+      body.dark-mode .context-menu-item {
+        color: var(--text-primary);
+      }
+
+      body.dark-mode .context-menu-item:hover {
+        background: var(--bg-tertiary);
+      }
+
+      /* Toolbar scrollbars on mobile */
+      body.dark-mode .toolbar-wrap::-webkit-scrollbar-thumb {
+        background: rgba(148, 163, 184, 0.3);
+      }
+
+      body.dark-mode .toolbar-wrap::-webkit-scrollbar-thumb:hover {
+        background: rgba(148, 163, 184, 0.5);
+      }
+
+      /* Canvas controls scrollbars */
+      body.dark-mode #canvasControls::-webkit-scrollbar-thumb,
+      body.dark-mode #canvasControlsContent::-webkit-scrollbar-thumb {
+        background: rgba(148, 163, 184, 0.3);
+      }
+
+      body.dark-mode #canvasControls::-webkit-scrollbar-thumb:hover,
+      body.dark-mode #canvasControlsContent::-webkit-scrollbar-thumb:hover {
+        background: rgba(148, 163, 184, 0.5);
+      }
+
+      /* AI Preview Modal */
+      body.dark-mode #ai-preview-modal {
+        background: var(--bg-secondary);
+        border-color: var(--border-color);
+      }
+
+      body.dark-mode #ai-status-text {
+        color: var(--text-secondary);
+      }
+
+      body.dark-mode #ai-dimension-summary {
+        background: var(--bg-tertiary);
+        border-color: var(--border-color);
+      }
+
+      body.dark-mode #ai-preview-modal button {
+        color: var(--text-primary);
+      }
+
+      /* Generate dialog */
+      body.dark-mode dialog {
+        background: var(--bg-secondary);
+      }
+
+      body.dark-mode dialog h3 {
+        color: var(--text-primary);
+      }
+
+      body.dark-mode dialog label {
+        color: var(--text-secondary);
+      }
+
+      body.dark-mode dialog input,
+      body.dark-mode dialog select {
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+        border-color: var(--border-color);
+      }
+
+      body.dark-mode dialog button {
+        color: var(--text-primary);
+      }
+
+      /* Panel toggle icons */
+      body.dark-mode .panel-toggle-icon {
+        background: rgba(30, 41, 59, 0.9);
+      }
+
+      /* Fine rotate grid */
+      body.dark-mode #fineRotateGrid {
+        background-image:
+          linear-gradient(rgba(96, 165, 250, 0.1) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(96, 165, 250, 0.1) 1px, transparent 1px);
+      }
+
+      /* Lock popup */
+      body.dark-mode #lockPopup {
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        border-color: var(--border-color);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      }
+
+      /* Canvas drag over */
+      body.dark-mode #canvas.drag-over {
+        background: rgba(76, 175, 80, 0.05);
+      }
+
+      /* ============================================
+         END DARK MODE THEME
+         ============================================ */
+
       /* Custom styles for image list and tag system */
       .image-container {
         border-left: 2px solid transparent;
@@ -2557,6 +3133,10 @@
             <span class="label-long">Save Project</span><span class="label-short">Save</span>
           </button>
           <button id="unitToggleBtn" class="tbtn" title="Toggle units">inches</button>
+          <button id="darkModeToggle" class="tbtn icon-btn" title="Toggle dark mode" aria-label="Toggle dark mode">
+            <span class="dark-mode-icon">🌙</span>
+            <span class="light-mode-icon" style="display: none;">☀️</span>
+          </button>
         </div>
       </div>
     </div>
