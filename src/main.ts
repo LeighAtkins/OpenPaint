@@ -96,6 +96,9 @@ import { initMeasurementRelations } from './modules/ui/measurement-relations.js'
 import { initStatusMessageHandler } from './modules/ui/status-message-handler';
 import { initStatusMessage } from './modules/ui/status-message';
 import { initAIExport } from './modules/ai/ai-export-loader';
+import { isAuthEnabled } from '@/utils/env';
+import { authService } from '@/services/auth/authService';
+import { initAuthUI } from './modules/ui/auth-ui';
 
 // ── 5. Standalone UI modules ─────────────────────────────────────────────────
 import './modules/ui/toolbar-init.js';
@@ -136,6 +139,11 @@ async function bootstrap(): Promise<void> {
   initPanelRelocation();
   initFrameCaptureToggle();
 
+  // ── Initialize auth (restores session, processes OAuth callback hash) ──
+  if (isAuthEnabled()) {
+    await authService.initialize();
+  }
+
   // ── Initialize the core App (from modules/main.ts) ──
   // The App class self-initializes on DOMContentLoaded via its own listener.
   // We import it here so Vite bundles it; its DOMContentLoaded listener
@@ -167,6 +175,9 @@ async function bootstrap(): Promise<void> {
   initMeasurementRelations();
   // Initialize status message handler
   initStatusMessageHandler();
+
+  // Initialize auth UI (toolbar button + modal + auth state listener)
+  initAuthUI();
 
   // Initialize AI export (async, non-blocking)
   initAIExport().catch((error: unknown) => {
