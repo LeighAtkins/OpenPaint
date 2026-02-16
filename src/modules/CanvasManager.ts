@@ -1502,6 +1502,7 @@ export class CanvasManager {
 
   copySelectedObjects(): void {
     if (!this.fabricCanvas) return;
+    const activeObject = this.fabricCanvas.getActiveObject();
     const activeObjects = this.fabricCanvas.getActiveObjects();
     if (!activeObjects || activeObjects.length === 0) return;
 
@@ -1510,8 +1511,32 @@ export class CanvasManager {
     );
     if (exportable.length === 0) return;
 
+    // When multiple objects are selected, Fabric wraps them in an ActiveSelection
+    // where each child's left/top is relative to the group center.
+    // Temporarily discard the selection so Fabric restores absolute coordinates,
+    // then serialize, then re-select.
+    const isMultiSelect = activeObject && activeObject.type === 'activeSelection';
+    if (isMultiSelect) {
+      this.fabricCanvas.discardActiveObject();
+    }
+
     const customProps = ['strokeMetadata', 'isArrow', 'customPoints', 'tagOffset', 'arrowSettings'];
-    const serialized = exportable.map(obj => obj.toObject(customProps));
+    const serialized = exportable.map(obj => {
+      const data = obj.toObject(customProps);
+      // Preserve original stroke label so paste can reuse it when no conflict
+      const label = obj.strokeMetadata?.strokeLabel || obj.strokeMetadata?.label;
+      if (label) {
+        data._originalStrokeLabel = label;
+      }
+      return data;
+    });
+
+    // Restore the multi-selection
+    if (isMultiSelect && exportable.length > 1) {
+      const selection = new fabric.ActiveSelection(exportable, { canvas: this.fabricCanvas });
+      this.fabricCanvas.setActiveObject(selection);
+      this.fabricCanvas.requestRenderAll();
+    }
 
     this.clipboard = {
       objects: serialized,
@@ -1524,15 +1549,34 @@ export class CanvasManager {
   pasteClipboardObjects(): void {
     if (!this.fabricCanvas || !this.clipboard?.objects?.length) return;
 
-    const imageLabel = window.app?.projectManager?.currentViewId || window.currentImageLabel;
+    // Prefer scoped label (currentImageLabel) so paste targets the active tab
+    const imageLabel = window.currentImageLabel || window.app?.projectManager?.currentViewId;
     const offset = 12 * (this.clipboardPasteCount + 1);
     this.clipboardPasteCount += 1;
     const payload = JSON.parse(JSON.stringify(this.clipboard.objects));
 
+    // Suppress auto-focus during paste so measurement inputs don't steal focus / cause addRange errors
+    const metadataManager = window.app?.metadataManager;
+    if (metadataManager) metadataManager._shouldAutoFocus = false;
+
     fabric.util.enlivenObjects(payload, (objects: FabricObject[]) => {
       const pastedObjects = [];
-      objects.forEach(obj => {
+      objects.forEach((obj, idx) => {
         if (!obj) return;
+        // Transfer _originalStrokeLabel from serialized payload since enlivenObjects drops it
+        if (payload[idx]?._originalStrokeLabel) {
+          obj._originalStrokeLabel = payload[idx]._originalStrokeLabel;
+        }
+
+        // Re-initialize text dimensions after deserialization so text renders visually
+        if (
+          (obj.type === 'i-text' || obj.type === 'text' || obj.type === 'textbox') &&
+          typeof obj.initDimensions === 'function'
+        ) {
+          obj.initDimensions();
+          obj.dirty = true;
+        }
+
         obj.set({
           left: (obj.left || 0) + offset,
           top: (obj.top || 0) + offset,
@@ -1555,8 +1599,8 @@ export class CanvasManager {
       }
 
       this.fabricCanvas.requestRenderAll();
-      if (window.app?.metadataManager?.updateStrokeVisibilityControls) {
-        window.app.metadataManager.updateStrokeVisibilityControls();
+      if (metadataManager?.updateStrokeVisibilityControls) {
+        metadataManager.updateStrokeVisibilityControls();
       }
       if (window.app?.historyManager) {
         window.app.historyManager.saveState();
@@ -1585,7 +1629,30 @@ export class CanvasManager {
       return;
     }
 
-    const strokeLabel = metadataManager.getNextLabel(imageLabel);
+    // Smart tag deduplication: preserve original label when no conflict, suffix when duplicate
+    const originalLabel = obj._originalStrokeLabel || meta.strokeLabel || meta.label;
+    let strokeLabel: string;
+    if (originalLabel) {
+      // Use the scoped label (same normalization as attachMetadata) for conflict check
+      const scopedLabel = metadataManager.normalizeImageLabel(imageLabel);
+      const existingLabels = Object.keys(metadataManager.vectorStrokesByImage?.[scopedLabel] || {});
+      if (!existingLabels.includes(originalLabel)) {
+        strokeLabel = originalLabel;
+      } else {
+        // Find next available suffixed version
+        let n = 1;
+        while (existingLabels.includes(`${originalLabel}(${n})`)) {
+          n++;
+        }
+        strokeLabel = `${originalLabel}(${n})`;
+      }
+      // Update tag prediction so next-tag display stays in sync
+      metadataManager.updateTagPredictionAfterUse(imageLabel, strokeLabel);
+    } else {
+      strokeLabel = metadataManager.getNextLabel(imageLabel);
+    }
+    // Clean up temporary property
+    delete obj._originalStrokeLabel;
     metadataManager.attachMetadata(obj, imageLabel, strokeLabel);
     if (window.app?.tagManager) {
       window.app.tagManager.createTagForStroke(strokeLabel, imageLabel, obj);
