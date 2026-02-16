@@ -10,6 +10,7 @@ interface ParsedEnv {
     url: string;
     anonKey: string;
   };
+  enableAuth: boolean;
   isDevelopment: boolean;
   isProduction: boolean;
   isTest: boolean;
@@ -23,7 +24,7 @@ function parseEnv(): ParsedEnv {
 
   // In development, warn but don't crash if env vars are missing
   const result = EnvSchema.safeParse(rawEnv);
-  
+
   if (!result.success) {
     console.warn('[ENV] Missing environment variables:', result.error.flatten());
     return {
@@ -31,6 +32,7 @@ function parseEnv(): ParsedEnv {
         url: '',
         anonKey: '',
       },
+      enableAuth: import.meta.env['VITE_ENABLE_AUTH'] === 'true',
       isDevelopment: import.meta.env['DEV'] as boolean,
       isProduction: import.meta.env['PROD'] as boolean,
       isTest: import.meta.env['MODE'] === 'test',
@@ -42,6 +44,7 @@ function parseEnv(): ParsedEnv {
       url: result.data.VITE_SUPABASE_URL,
       anonKey: result.data.VITE_SUPABASE_ANON_KEY,
     },
+    enableAuth: import.meta.env['VITE_ENABLE_AUTH'] === 'true',
     isDevelopment: import.meta.env['DEV'] as boolean,
     isProduction: import.meta.env['PROD'] as boolean,
     isTest: import.meta.env['MODE'] === 'test',
@@ -52,4 +55,8 @@ export const env = parseEnv();
 
 export function isSupabaseConfigured(): boolean {
   return Boolean(env.supabase.url && env.supabase.anonKey);
+}
+
+export function isAuthEnabled(): boolean {
+  return env.enableAuth && isSupabaseConfigured();
 }

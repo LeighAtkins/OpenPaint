@@ -60,6 +60,7 @@ export class AuthService {
   private client: SupabaseClient<Database> | null = null;
   private currentUser: AuthUser | null = null;
   private sessionListeners: Array<(user: AuthUser | null) => void> = [];
+  private initialized = false;
 
   /**
    * Initialize the service with a Supabase client
@@ -77,6 +78,114 @@ export class AuthService {
   }
 
   /**
+   * Initialize the auth service on app boot.
+   * Restores session from localStorage and processes OAuth hash tokens.
+   */
+  async initialize(): Promise<void> {
+    if (this.initialized) return;
+    this.initialized = true;
+
+    const clientResult = await this.getClient();
+    if (!clientResult.success) {
+      console.warn('[Auth] Could not initialize:', clientResult.error.message);
+      return;
+    }
+
+    // getSession() restores from localStorage and processes OAuth hash tokens
+    const {
+      data: { session },
+      error,
+    } = await clientResult.data.auth.getSession();
+    if (error) {
+      console.warn('[Auth] Session restore failed:', error.message);
+      return;
+    }
+
+    if (session?.user) {
+      await this.ensureProfile(session.user);
+      const userResult = await this.enrichUserWithProfile(session.user);
+      if (userResult.success) {
+        this.currentUser = userResult.data;
+        this.notifySessionListeners(this.currentUser);
+      }
+    }
+  }
+
+  /**
+   * Sign in with Google OAuth.
+   * Redirects the browser to Google consent screen.
+   */
+  async signInWithGoogle(): Promise<Result<{ url: string }, AppError>> {
+    try {
+      const clientResult = await this.getClient();
+      if (!clientResult.success) {
+        return Result.err(clientResult.error);
+      }
+
+      const { data, error } = await clientResult.data.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin,
+        },
+      });
+
+      if (error) {
+        return Result.err(this.mapAuthError(error));
+      }
+
+      if (!data.url) {
+        return Result.err(
+          new AppError(ErrorCode.AUTH_ERROR, 'No redirect URL returned from OAuth')
+        );
+      }
+
+      return Result.ok({ url: data.url });
+    } catch (error) {
+      return Result.err(
+        new AppError(
+          ErrorCode.AUTH_ERROR,
+          `Google sign-in failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+        )
+      );
+    }
+  }
+
+  /**
+   * Ensure a user_profiles row exists for an OAuth user.
+   * Fallback in case the DB trigger isn't set up.
+   */
+  private async ensureProfile(user: User): Promise<void> {
+    try {
+      const clientResult = await this.getClient();
+      if (!clientResult.success) return;
+
+      const { data: existing } = await clientResult.data
+        .from(DATABASE_TABLES.USER_PROFILES)
+        .select('id')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (existing) return;
+
+      const meta = user.user_metadata || {};
+      const profileData: UserProfileInsert = {
+        id: user.id,
+        email: user.email || '',
+        display_name:
+          (meta['full_name'] as string) || (user.email ? user.email.split('@')[0] : undefined),
+        avatar_url: meta['avatar_url'] as string | undefined,
+        preferences: DEFAULT_USER_PREFERENCES,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+
+      await clientResult.data.from(DATABASE_TABLES.USER_PROFILES).insert(profileData as any);
+    } catch (error) {
+      console.error('[Auth] Failed to ensure profile:', error);
+    }
+  }
+
+  /**
    * Set up auth state change listener
    */
   private setupAuthListener(): void {
@@ -86,6 +195,7 @@ export class AuthService {
       switch (event) {
         case 'SIGNED_IN':
           if (session?.user) {
+            await this.ensureProfile(session.user);
             const userResult = await this.enrichUserWithProfile(session.user);
             if (userResult.success) {
               this.currentUser = userResult.data;
