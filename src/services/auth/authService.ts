@@ -107,8 +107,19 @@ export class AuthService {
         const userResult = await this.enrichUserWithProfile(session.user);
         if (userResult.success) {
           this.currentUser = userResult.data;
-          this.notifySessionListeners(this.currentUser);
+        } else {
+          console.warn(
+            '[Auth] Profile enrichment failed, using basic data:',
+            userResult.error.message
+          );
+          this.currentUser = {
+            id: session.user.id,
+            email: session.user.email || '',
+            emailConfirmed: session.user.email_confirmed_at !== null,
+            createdAt: session.user.created_at,
+          };
         }
+        this.notifySessionListeners(this.currentUser);
       }
     } catch (err) {
       // AbortError from Web Locks API is non-fatal — session may still be restored
@@ -206,8 +217,20 @@ export class AuthService {
             const userResult = await this.enrichUserWithProfile(session.user);
             if (userResult.success) {
               this.currentUser = userResult.data;
-              this.notifySessionListeners(this.currentUser);
+            } else {
+              // Profile enrichment failed — still sign in with basic user data
+              console.warn(
+                '[Auth] Profile enrichment failed, using basic data:',
+                userResult.error.message
+              );
+              this.currentUser = {
+                id: session.user.id,
+                email: session.user.email || '',
+                emailConfirmed: session.user.email_confirmed_at !== null,
+                createdAt: session.user.created_at,
+              };
             }
+            this.notifySessionListeners(this.currentUser);
           }
           break;
 
