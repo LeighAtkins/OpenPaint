@@ -1612,6 +1612,24 @@ export class ProjectManager {
     console.log('[Save] Downloaded project as:', fileName);
   }
 
+  async loadProjectFromData(projectData) {
+    try {
+      console.log('[Load] Loading project from data:', projectData.projectName || projectData.name);
+
+      this.showStatusMessage('Loading cloud project...', 'info');
+      this.revokeLoadedProjectObjectUrls();
+
+      await this._restoreFromProjectData(projectData);
+    } catch (error) {
+      console.error('[Load] Failed to load project from data:', error);
+      this.showStatusMessage('Failed to load project: ' + error.message, 'error');
+      window.__isLoadingProject = false;
+      window.__suspendSaveCurrentView = false;
+      this.isLoadingProject = false;
+      this.suspendSave = false;
+    }
+  }
+
   async loadProject(file) {
     try {
       console.log('[Load] Loading project file:', file.name);
@@ -1626,6 +1644,19 @@ export class ProjectManager {
 
       console.log('[Load] Parsed project data:', projectData.projectName || projectData.name);
 
+      await this._restoreFromProjectData(projectData);
+    } catch (error) {
+      console.error('[Load] Failed to load project:', error);
+      this.showStatusMessage('Failed to load project: ' + error.message, 'error');
+      window.__isLoadingProject = false;
+      window.__suspendSaveCurrentView = false;
+      this.isLoadingProject = false;
+      this.suspendSave = false;
+    }
+  }
+
+  async _restoreFromProjectData(projectData) {
+    try {
       // Mark project load in progress to prevent auto-switches and saves
       window.__isLoadingProject = true;
       window.__suspendSaveCurrentView = true;
@@ -1841,239 +1872,6 @@ export class ProjectManager {
     } catch (error) {
       console.error('[Load] Failed to load project:', error);
       this.showStatusMessage('Failed to load project: ' + error.message, 'error');
-      window.__isLoadingProject = false;
-      window.__suspendSaveCurrentView = false;
-      this.isLoadingProject = false;
-      this.suspendSave = false;
-    }
-  }
-
-  async loadProjectFromData(projectData: Record<string, unknown>): Promise<void> {
-    try {
-      console.log('[CloudLoad] Loading project from cloud data');
-
-      this.showStatusMessage('Loading project from cloud...', 'info');
-      this.revokeLoadedProjectObjectUrls();
-
-      console.log('[CloudLoad] Parsed project data:', projectData.projectName || projectData.name);
-
-      // Mark project load in progress to prevent auto-switches and saves
-      window.__isLoadingProject = true;
-      window.__suspendSaveCurrentView = true;
-      this.isLoadingProject = true;
-      this.suspendSave = true;
-
-      // Prevent scroll-select auto-switching during load without toggling UI state
-      window.__suppressScrollSelectUntil = Date.now() + 3000;
-
-      const version = projectData.version as string | undefined;
-      if (!version || !version.startsWith('2.0')) {
-        this.showStatusMessage(
-          'Unsupported archive version. Please load a project saved by this app (.opaint).',
-          'error'
-        );
-        console.error('[CloudLoad] Unsupported project version:', version);
-        return;
-      }
-
-      const views = projectData.views as Record<string, unknown> | undefined;
-      if (!views) {
-        this.showStatusMessage('Invalid project data: missing views', 'error');
-        return;
-      }
-
-      // Update project name
-      const projectNameInput = document.getElementById('projectName');
-      if (projectNameInput && projectData.projectName) {
-        projectNameInput.value = projectData.projectName as string;
-      }
-
-      this.projectMetadata = normalizeSofaMetadata(projectData.metadata as any);
-      window.projectMetadata = this.getProjectMetadata();
-
-      // Clear existing views and recreate from saved data
-      this.views = {};
-
-      // Clear image gallery to prevent duplicate detection issues
-      if (window.imageGallery?.clearGallery) {
-        window.imageGallery.clearGallery();
-        console.log('[CloudLoad] Cleared image gallery');
-      }
-
-      const useRegistry =
-        typeof imageRegistry?.isEnabled === 'function' && imageRegistry.isEnabled();
-      if (useRegistry) {
-        await imageRegistry.whenReady();
-        imageRegistry.reset();
-      }
-
-      // Load each view
-      const viewIds = Object.keys(views);
-      const preferredOrder = ['front', 'side', 'back', 'cushion', 'left', 'right'];
-      const orderFromProject = Array.isArray(projectData.viewOrder)
-        ? projectData.viewOrder
-        : Array.isArray(projectData.imageLabels)
-          ? projectData.imageLabels
-          : [];
-      let orderedViewIds = [];
-      if (orderFromProject.length) {
-        const filtered = orderFromProject.filter(id => viewIds.includes(id));
-        const remaining = viewIds.filter(id => !filtered.includes(id));
-        orderedViewIds = filtered.concat(remaining);
-      } else {
-        orderedViewIds = [...viewIds].sort((a, b) => {
-          const aIndex = preferredOrder.indexOf(a);
-          const bIndex = preferredOrder.indexOf(b);
-          const aScore = aIndex === -1 ? Number.MAX_SAFE_INTEGER : aIndex;
-          const bScore = bIndex === -1 ? Number.MAX_SAFE_INTEGER : bIndex;
-          if (aScore !== bScore) return aScore - bScore;
-          return a.localeCompare(b);
-        });
-      }
-
-      console.log('[CloudLoad] Loading views:', orderedViewIds);
-      const targetView = (projectData.currentViewId as string) || orderedViewIds[0];
-      const deferredImageRegistrations = [];
-
-      const registerImageForView = async (viewId: string, imageUrl: string | null) => {
-        if (!imageUrl) return;
-        const filename = `${projectData.projectName || 'Project'} - ${viewId}`;
-        if (useRegistry) {
-          await imageRegistry.registerImage(viewId, imageUrl, filename, {
-            source: 'json',
-            refreshBackground: false,
-          });
-        } else if (window.addImageToSidebar) {
-          console.log(`[CloudLoad] Registering view ${viewId} with legacy system`);
-          window.addImageToSidebar(imageUrl, viewId, filename);
-        }
-      };
-
-      for (const viewId of orderedViewIds) {
-        const viewData = views[viewId] as Record<string, unknown>;
-
-        this.views[viewId] = {
-          id: viewId,
-          image: null,
-          canvasData: viewData.canvasJSON as any,
-          metadata: (viewData.metadata as Record<string, unknown>) || {},
-          tabs: viewData.tabs as any,
-          viewport: viewData.viewport as any,
-        };
-
-        const hasImageReference = Boolean(
-          viewData.imageDataURL || viewData.imageAssetPath || viewData.imageUrl
-        );
-        if (hasImageReference) {
-          if (viewId === targetView) {
-            const imageUrl = await this.resolveViewImageUrl(viewData as any);
-            this.views[viewId].image = imageUrl;
-            if (imageUrl) {
-              console.log(`[CloudLoad] Restored image for view ${viewId}`);
-            }
-            await registerImageForView(viewId, imageUrl);
-          } else {
-            deferredImageRegistrations.push({ viewId, viewData });
-          }
-        }
-      }
-
-      if (window.setCaptureTabsForLabel) {
-        orderedViewIds.forEach(viewId => {
-          window.setCaptureTabsForLabel(viewId, views?.[viewId]?.tabs || null);
-        });
-      }
-
-      // Switch to the saved current view or first view
-      if (targetView && this.views[targetView]) {
-        console.log(`[CloudLoad] Switching to view: ${targetView}`);
-        await this.switchView(targetView, true);
-        if (window.renderCaptureTabUI) {
-          window.renderCaptureTabUI(targetView);
-        }
-        if (window.syncCaptureTabCanvasVisibility) {
-          window.syncCaptureTabCanvasVisibility(targetView);
-        }
-        if (window.applyCaptureFrameForLabel) {
-          window.applyCaptureFrameForLabel(targetView);
-        }
-        // Force a background re-apply after switch to avoid "blank until click"
-        if (this.views[targetView]?.image) {
-          await this.setBackgroundImage(this.views[targetView].image);
-          this.canvasManager?.fabricCanvas?.requestRenderAll?.();
-        }
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            if (this.canvasManager?.resize) {
-              this.canvasManager.resize();
-            }
-            const current = this.views[targetView];
-            if (current?.image && this.currentViewId === targetView) {
-              console.log('[CloudLoad] Post-load refresh of background image:', targetView);
-              this.setBackgroundImage(current.image);
-              this.canvasManager?.fabricCanvas?.requestRenderAll?.();
-            }
-          });
-        });
-        const lateRefresh = () => {
-          const current = this.views[targetView];
-          if (!current?.image || this.currentViewId !== targetView) return;
-          const canvas = this.canvasManager?.fabricCanvas;
-          const hasBg = !!canvas?.backgroundImage;
-          if (!hasBg) {
-            console.log('[CloudLoad] Late refresh of background image:', targetView);
-            this.setBackgroundImage(current.image);
-          }
-        };
-        setTimeout(lateRefresh, 250);
-        setTimeout(lateRefresh, 800);
-
-        // Align gallery selection/scroll to the current view without switching views
-        const syncGalleryToView = (attempt: number) => {
-          if (!window.imageGallery?.syncToLabel) return;
-          const ok = window.imageGallery.syncToLabel(targetView, { scroll: true, smooth: false });
-          if (!ok && attempt < 5) {
-            setTimeout(() => syncGalleryToView(attempt + 1), 150);
-          }
-        };
-        setTimeout(() => syncGalleryToView(0), 100);
-      }
-
-      // Register remaining view images after first paint to keep load responsive
-      const registerDeferredImages = (index: number) => {
-        if (index >= deferredImageRegistrations.length) return;
-        const item = deferredImageRegistrations[index];
-        const run = async () => {
-          try {
-            const imageUrl = await this.resolveViewImageUrl(item.viewData as any);
-            this.views[item.viewId].image = imageUrl;
-            await registerImageForView(item.viewId, imageUrl);
-          } catch (error) {
-            console.warn('[CloudLoad] Deferred image registration failed', item.viewId, error);
-          } finally {
-            setTimeout(() => registerDeferredImages(index + 1), 0);
-          }
-        };
-        void run();
-      };
-      if (deferredImageRegistrations.length > 0) {
-        setTimeout(() => registerDeferredImages(0), 0);
-      }
-
-      this.showStatusMessage('Project loaded successfully', 'success');
-      console.log('[CloudLoad] Project load complete');
-
-      // Re-enable scroll-select after load settles
-      setTimeout(() => {
-        window.__suppressScrollSelectUntil = 0;
-        window.__isLoadingProject = false;
-        window.__suspendSaveCurrentView = false;
-        this.isLoadingProject = false;
-        this.suspendSave = false;
-      }, 3500);
-    } catch (error) {
-      console.error('[CloudLoad] Failed to load project:', error);
-      this.showStatusMessage('Failed to load project: ' + (error as Error).message, 'error');
       window.__isLoadingProject = false;
       window.__suspendSaveCurrentView = false;
       this.isLoadingProject = false;
