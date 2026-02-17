@@ -1,8 +1,8 @@
 /**
  * Auth UI — toolbar button, modal, and state management
  *
- * Creates the "Sign in" button in #tbRight, a Google OAuth modal,
- * and toggles cloud features based on auth state.
+ * Creates a compact "Sign in" button in #tbRight, a Google OAuth modal,
+ * and shows a minimal avatar+name when signed in.
  */
 
 import { authService, type AuthUser } from '@/services/auth/authService';
@@ -11,70 +11,90 @@ import { isAuthEnabled, isSupabaseConfigured } from '@/utils/env';
 // ── Styles (injected once) ───────────────────────────────────────────────
 
 const AUTH_STYLES = /* css */ `
-  /* Auth toolbar area */
+  /* ── Fix toolbar overflow — let tbRight shrink so auth doesn't push off-screen ── */
+  #tbRight {
+    flex-shrink: 1 !important;
+    min-width: 0 !important;
+    overflow: hidden;
+  }
+
+  .toolbar-wrap {
+    overflow: hidden;
+  }
+
+  /* ── Auth toolbar area ── */
   .auth-toolbar-group {
     display: flex;
     align-items: center;
-    gap: 6px;
-    margin-left: 8px;
+    gap: 4px;
+    margin-left: 6px;
     min-width: 0;
-    flex: 0 1 auto;
-    max-width: min(34vw, 300px);
-    justify-content: flex-end;
-    overflow: hidden;
+    flex-shrink: 1;
   }
 
   .auth-sign-in-btn {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    min-width: 88px;
-    justify-content: center;
+    gap: 5px;
+    white-space: nowrap;
     flex-shrink: 0;
   }
 
+  /* ── Signed-in user area: avatar · name · sign out ── */
   .auth-user-area {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     min-width: 0;
-    max-width: 220px;
-    overflow: hidden;
   }
 
   .auth-avatar {
-    width: 26px;
-    height: 26px;
+    width: 24px;
+    height: 24px;
     border-radius: 50%;
     object-fit: cover;
     border: 2px solid var(--ob-border-color, #d1d5db);
+    flex-shrink: 0;
   }
 
   .auth-display-name {
-    font-size: var(--ob-text-meta, 12px);
-    color: var(--ob-text-primary, #1f2937);
-    max-width: 68px;
+    font-size: 12px;
+    color: var(--ob-text-primary, #374151);
+    max-width: 90px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     flex-shrink: 1;
+    min-width: 0;
   }
 
   .auth-sign-out-btn {
     font-size: 11px;
-    padding: 2px 8px;
+    padding: 2px 6px;
     background: none;
     border: 1px solid var(--ob-border-color, #d1d5db);
     border-radius: 4px;
-    color: var(--ob-text-primary, #6b7280);
+    color: var(--ob-text-secondary, #6b7280);
     cursor: pointer;
     flex-shrink: 0;
+    white-space: nowrap;
   }
   .auth-sign-out-btn:hover {
     background: var(--ob-bg-surface, #f3f4f6);
+    color: var(--ob-text-primary, #374151);
   }
 
-  /* Modal overlay */
+  /* Responsive: hide name on tight viewports, keep avatar + sign out */
+  @media (max-width: 1100px) {
+    .auth-display-name { display: none; }
+  }
+
+  @media (max-width: 768px) {
+    .auth-sign-out-btn { display: none; }
+    .auth-avatar { width: 22px; height: 22px; }
+  }
+
+  /* ── Modal overlay ── */
   .auth-modal-overlay {
     position: fixed;
     inset: 0;
@@ -90,7 +110,6 @@ const AUTH_STYLES = /* css */ `
     opacity: 1;
   }
 
-  /* Modal card */
   .auth-modal-card {
     background: #fff;
     border-radius: 12px;
@@ -118,9 +137,7 @@ const AUTH_STYLES = /* css */ `
     line-height: 1;
     padding: 4px;
   }
-  .auth-modal-close:hover {
-    color: #374151;
-  }
+  .auth-modal-close:hover { color: #374151; }
 
   .auth-modal-heading {
     font-size: 20px;
@@ -137,7 +154,6 @@ const AUTH_STYLES = /* css */ `
     margin: 0 0 24px;
   }
 
-  /* Google sign-in button (matches Google's brand guidelines) */
   .auth-google-btn {
     display: flex;
     align-items: center;
@@ -158,13 +174,8 @@ const AUTH_STYLES = /* css */ `
     background: #f8f9fa;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
   }
-  .auth-google-btn:active {
-    background: #e8eaed;
-  }
-  .auth-google-btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
+  .auth-google-btn:active { background: #e8eaed; }
+  .auth-google-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
   .auth-google-logo {
     width: 18px;
@@ -182,56 +193,13 @@ const AUTH_STYLES = /* css */ `
     color: #991b1b;
     display: none;
   }
-  .auth-error.visible {
-    display: block;
-  }
+  .auth-error.visible { display: block; }
 
   .auth-guest-note {
     margin-top: 20px;
     font-size: 12px;
     color: #9ca3af;
     text-align: center;
-  }
-
-  /* Cloud feature buttons (hidden when logged out) */
-  .auth-cloud-btn {
-    display: none;
-  }
-  .auth-cloud-btn.visible {
-    display: inline-flex;
-    flex-shrink: 0;
-  }
-
-  @media (max-width: 1500px) {
-    .auth-display-name {
-      display: none;
-    }
-  }
-
-  @media (max-width: 1360px) {
-    .auth-toolbar-group {
-      max-width: 260px;
-    }
-
-    .auth-display-name {
-      display: none;
-    }
-
-    .auth-toolbar-group .label-long {
-      display: none;
-    }
-  }
-
-  @media (max-width: 1240px) {
-    #authMyProjectsBtn {
-      display: none !important;
-    }
-  }
-
-  @media (max-width: 1120px) {
-    #authCloudSaveBtn {
-      display: none !important;
-    }
   }
 `;
 
@@ -261,7 +229,7 @@ function createToolbarGroup(): HTMLElement {
   signInBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span class="label-long">Sign in</span>`;
   signInBtn.addEventListener('click', openModal);
 
-  // User area (shown when logged in)
+  // User area (shown when logged in): avatar + name + sign out
   const userArea = document.createElement('div');
   userArea.className = 'auth-user-area';
   userArea.id = 'authUserArea';
@@ -286,25 +254,8 @@ function createToolbarGroup(): HTMLElement {
   userArea.appendChild(displayName);
   userArea.appendChild(signOutBtn);
 
-  // Cloud buttons (hidden until logged in)
-  const cloudSaveBtn = document.createElement('button');
-  cloudSaveBtn.className = 'tbtn auth-cloud-btn';
-  cloudSaveBtn.id = 'authCloudSaveBtn';
-  cloudSaveBtn.title = 'Save to cloud';
-  cloudSaveBtn.setAttribute('aria-label', 'Cloud save');
-  cloudSaveBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg><span class="label-long">Cloud Save</span>`;
-
-  const myProjectsBtn = document.createElement('button');
-  myProjectsBtn.className = 'tbtn auth-cloud-btn';
-  myProjectsBtn.id = 'authMyProjectsBtn';
-  myProjectsBtn.title = 'My Projects';
-  myProjectsBtn.setAttribute('aria-label', 'My Projects');
-  myProjectsBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg><span class="label-long">My Projects</span>`;
-
   group.appendChild(signInBtn);
   group.appendChild(userArea);
-  group.appendChild(cloudSaveBtn);
-  group.appendChild(myProjectsBtn);
 
   return group;
 }
@@ -365,11 +316,9 @@ function createModal(): HTMLElement {
 function openModal(): void {
   if (!modalOverlay) return;
   modalOverlay.style.display = 'flex';
-  // Allow reflow before adding visible class for transition
   requestAnimationFrame(() => {
     modalOverlay!.classList.add('visible');
   });
-  // Hide error on open
   const errorEl = document.getElementById('authError');
   if (errorEl) {
     errorEl.classList.remove('visible');
@@ -414,10 +363,7 @@ async function handleGoogleSignIn(): Promise<void> {
       errorEl.textContent = result.error.message || 'Sign-in failed. Please try again.';
       errorEl.classList.add('visible');
     }
-    return;
   }
-
-  // Browser will navigate to Google consent — no need to re-enable button
 }
 
 async function handleSignOut(): Promise<void> {
@@ -433,12 +379,16 @@ function updateAuthUI(user: AuthUser | null): void {
   const displayName = document.getElementById('authDisplayName');
 
   if (user) {
-    // Logged in
     if (signInBtn) signInBtn.style.display = 'none';
     if (userArea) userArea.style.display = 'flex';
 
-    const name = user.profile?.display_name || user.email.split('@')[0];
-    if (displayName) displayName.textContent = name;
+    // Show first name only for compactness
+    const fullName = user.profile?.display_name || user.email.split('@')[0];
+    const firstName = fullName.split(' ')[0];
+    if (displayName) {
+      displayName.textContent = firstName;
+      displayName.title = fullName;
+    }
 
     if (avatar) {
       if (user.profile?.avatar_url) {
@@ -449,21 +399,11 @@ function updateAuthUI(user: AuthUser | null): void {
       }
     }
 
-    showCloudFeatures(true);
     closeModal();
   } else {
-    // Logged out
     if (signInBtn) signInBtn.style.display = 'inline-flex';
     if (userArea) userArea.style.display = 'none';
-    showCloudFeatures(false);
   }
-}
-
-function showCloudFeatures(show: boolean): void {
-  const cloudBtns = document.querySelectorAll<HTMLElement>('.auth-cloud-btn');
-  cloudBtns.forEach(btn => {
-    btn.classList.toggle('visible', show);
-  });
 }
 
 // ── Initialization ───────────────────────────────────────────────────────
@@ -471,27 +411,21 @@ function showCloudFeatures(show: boolean): void {
 export function initAuthUI(): void {
   if (!isAuthEnabled()) return;
 
-  // Inject styles
   const style = document.createElement('style');
   style.textContent = AUTH_STYLES;
   document.head.appendChild(style);
 
-  // Create and append toolbar group
   const tbRight = document.getElementById('tbRight');
   if (tbRight) {
     toolbarGroup = createToolbarGroup();
     tbRight.appendChild(toolbarGroup);
   }
 
-  // Create and append modal
   modalOverlay = createModal();
   document.body.appendChild(modalOverlay);
 
   // Listen for auth state changes (if already signed in, callback fires immediately)
   unsubscribe = authService.onAuthStateChange(updateAuthUI);
-
-  // Render immediately from current in-memory state to reduce flicker.
-  updateAuthUI(authService.getCurrentUser());
 }
 
 // ── Cleanup (for testing) ────────────────────────────────────────────────
