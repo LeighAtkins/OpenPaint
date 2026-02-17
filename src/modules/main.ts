@@ -176,18 +176,53 @@ export class App {
       // Setup UI bindings
       this.setupUI();
 
-      // Add Tab key handler to cycle through drawing modes
-      this.setupKeyboardShortcuts();
+      // Touch event support for mobile devices
+      document.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        if (e.touches.length === 1) {
+          const touch = e.touches[0];
+          this.canvasManager.handleTouchStart(touch);
+        }
+      }, { passive: false });
 
-      // Add resize listener
-      window.addEventListener('resize', () => {
-        this.canvasManager.resize();
+      document.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        if (e.touches.length === 1) {
+          const touch = e.touches[0];
+          this.canvasManager.handleTouchMove(touch);
+        }
+      }, { passive: false });
+
+      document.addEventListener('touchend', (e) => {
+        if (e.touches.length === 1) {
+          const touch = e.touches[0];
+          this.canvasManager.handleTouchEnd(touch);
+        }
+      }, { passive: false });
+
+      // Pinch-to-zoom for mobile
+      document.addEventListener('gesturestart', (e) => {
+        if (e.touches.length === 2) {
+          // Calculate pinch distance
+          const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, 2);
+          const initialPinchDist = Math.hypot(e.touches[0].clientY - e.touches[1].clientY, 2);
+
+          document.addEventListener('gesturechange', (e) => {
+            if (e.touches.length === 2) {
+              const currentDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, 2);
+              const currentPinchDist = Math.hypot(e.touches[0].clientY - e.touches[1].clientY, 2);
+              const scaleChange = currentDist / initialPinchDist;
+
+              // Apply zoom centered on pinch point
+              const centerX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+              const centerY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+              this.canvasManager.zoomToPoint({ x: centerX, y: centerY });
+            }
+          });
+        }
       });
 
-      // Expose resize globally
-      window.resizeCanvas = () => {
-        return this.canvasManager.resize();
-      };
+      // Setup UI bindings
 
       this.scheduleDeferredInit();
       this.markFirstPaint();
