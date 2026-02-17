@@ -16,13 +16,36 @@
   const toolbarMode = isMobile ? 'compact' : 'full';
   document.documentElement.setAttribute('data-toolbar-mode', toolbarMode);
   document.documentElement.setAttribute('data-toolbar-initial', toolbarMode);
+
+  // Fail-open safety: never leave the app permanently hidden.
+  // If bootstrap crashes before cleanup, reveal UI so users can still interact.
+  window.setTimeout(() => {
+    document.documentElement.classList.remove('app-loading');
+  }, 6000);
+
+  window.addEventListener(
+    'pageshow',
+    () => {
+      document.documentElement.classList.remove('app-loading');
+    },
+    { once: true }
+  );
 })();
 
 // Suppress autofill extension errors
 window.addEventListener('error', event => {
   if (event.message && event.message.includes('autofill.bundle.js')) {
     event.preventDefault();
+    return;
   }
+
+  // If a top-level runtime error occurs before bootstrap cleanup,
+  // ensure the UI is still revealed.
+  document.documentElement.classList.remove('app-loading');
+});
+
+window.addEventListener('unhandledrejection', () => {
+  document.documentElement.classList.remove('app-loading');
 });
 
 // ── 1. Vendor libraries (must load before app modules) ──────────────────────
