@@ -139,11 +139,18 @@ async function bootstrap(): Promise<void> {
   initPanelRelocation();
   initFrameCaptureToggle();
 
-  // ── Initialize auth (non-blocking — app loads while session resolves) ──
+  // ── Initialize auth (non-blocking by default; blocking on OAuth callback URL) ──
   if (isAuthEnabled() && isSupabaseConfigured()) {
-    authService.initialize().catch((err: unknown) => {
-      console.warn('[Auth] Non-blocking init error:', err);
-    });
+    const hasOAuthCode = new URLSearchParams(window.location.search).has('code');
+    if (hasOAuthCode) {
+      await authService.initialize().catch((err: unknown) => {
+        console.warn('[Auth] Callback init error:', err);
+      });
+    } else {
+      authService.initialize().catch((err: unknown) => {
+        console.warn('[Auth] Non-blocking init error:', err);
+      });
+    }
   }
 
   // ── Initialize the core App (from modules/main.ts) ──

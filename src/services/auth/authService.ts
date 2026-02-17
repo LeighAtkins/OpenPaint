@@ -61,6 +61,7 @@ export class AuthService {
   private currentUser: AuthUser | null = null;
   private sessionListeners: Array<(user: AuthUser | null) => void> = [];
   private initialized = false;
+  private initPromise: Promise<void> | null = null;
 
   /**
    * Initialize the service with a Supabase client
@@ -83,82 +84,90 @@ export class AuthService {
    */
   async initialize(): Promise<void> {
     if (this.initialized) return;
-    this.initialized = true;
+    if (this.initPromise) return this.initPromise;
 
-    try {
-      const clientResult = await this.getClient();
-      if (!clientResult.success) {
-        console.warn('[Auth] Could not initialize:', clientResult.error.message);
-        return;
-      }
-
-      // getSession() restores from localStorage and may process OAuth callback state.
-      const {
-        data: { session },
-        error,
-      } = await clientResult.data.auth.getSession();
-      if (error) {
-        console.warn(
-          '[Auth] Session restore failed, continuing with callback fallback:',
-          error.message
-        );
-      }
-
-      let resolvedSession: Session | null = session ?? null;
-
-      // Explicit OAuth PKCE callback fallback:
-      // If a code exists in URL but no session was restored, try exchanging manually.
-      if (!resolvedSession?.user && typeof window !== 'undefined') {
-        const params = new URLSearchParams(window.location.search);
-        const code = params.get('code');
-        if (code) {
-          const { data: exchangeData, error: exchangeError } =
-            await clientResult.data.auth.exchangeCodeForSession(code);
-
-          if (exchangeError) {
-            console.warn('[Auth] PKCE code exchange failed:', exchangeError.message);
-          } else {
-            resolvedSession = exchangeData.session;
-          }
-
-          // Cleanup OAuth params to avoid repeated processing on refresh.
-          params.delete('code');
-          params.delete('state');
-          params.delete('error');
-          params.delete('error_description');
-          const nextQuery = params.toString();
-          const nextUrl = `${window.location.pathname}${nextQuery ? `?${nextQuery}` : ''}${window.location.hash}`;
-          window.history.replaceState({}, document.title, nextUrl);
+    this.initPromise = (async () => {
+      try {
+        const clientResult = await this.getClient();
+        if (!clientResult.success) {
+          console.warn('[Auth] Could not initialize:', clientResult.error.message);
+          return;
         }
-      }
 
-      if (resolvedSession?.user) {
-        await this.ensureProfile(resolvedSession.user);
-        const userResult = await this.enrichUserWithProfile(resolvedSession.user);
-        if (userResult.success) {
-          this.currentUser = userResult.data;
-        } else {
+        // getSession() restores from localStorage and may process OAuth callback state.
+        const {
+          data: { session },
+          error,
+        } = await clientResult.data.auth.getSession();
+        if (error) {
           console.warn(
-            '[Auth] Profile enrichment failed, using basic data:',
-            userResult.error.message
+            '[Auth] Session restore failed, continuing with callback fallback:',
+            error.message
           );
-          this.currentUser = {
-            id: resolvedSession.user.id,
-            email: resolvedSession.user.email || '',
-            emailConfirmed: resolvedSession.user.email_confirmed_at !== null,
-            createdAt: resolvedSession.user.created_at,
-          };
         }
-        this.notifySessionListeners(this.currentUser);
-      } else {
-        this.currentUser = null;
-        this.notifySessionListeners(null);
+
+        let resolvedSession: Session | null = session ?? null;
+
+        // Explicit OAuth PKCE callback fallback:
+        // If a code exists in URL but no session was restored, try exchanging manually.
+        if (!resolvedSession?.user && typeof window !== 'undefined') {
+          const params = new URLSearchParams(window.location.search);
+          const code = params.get('code');
+          if (code) {
+            const { data: exchangeData, error: exchangeError } =
+              await clientResult.data.auth.exchangeCodeForSession(code);
+
+            if (exchangeError) {
+              console.warn('[Auth] PKCE code exchange failed:', exchangeError.message);
+            } else {
+              resolvedSession = exchangeData.session;
+            }
+
+            // Cleanup OAuth params to avoid repeated processing on refresh.
+            params.delete('code');
+            params.delete('state');
+            params.delete('error');
+            params.delete('error_description');
+            const nextQuery = params.toString();
+            const nextUrl = `${window.location.pathname}${nextQuery ? `?${nextQuery}` : ''}${window.location.hash}`;
+            window.history.replaceState({}, document.title, nextUrl);
+          }
+        }
+
+        if (resolvedSession?.user) {
+          await this.ensureProfile(resolvedSession.user);
+          const userResult = await this.enrichUserWithProfile(resolvedSession.user);
+          if (userResult.success) {
+            this.currentUser = userResult.data;
+          } else {
+            console.warn(
+              '[Auth] Profile enrichment failed, using basic data:',
+              userResult.error.message
+            );
+            this.currentUser = {
+              id: resolvedSession.user.id,
+              email: resolvedSession.user.email || '',
+              emailConfirmed: resolvedSession.user.email_confirmed_at !== null,
+              createdAt: resolvedSession.user.created_at,
+            };
+          }
+          this.notifySessionListeners(this.currentUser);
+        } else {
+          this.currentUser = null;
+          this.notifySessionListeners(null);
+        }
+
+        this.initialized = true;
+      } catch (err) {
+        // AbortError from Web Locks API is non-fatal — session may still be restored
+        // via onAuthStateChange listener
+        console.warn('[Auth] Initialize error (non-fatal):', err);
+      } finally {
+        this.initPromise = null;
       }
-    } catch (err) {
-      // AbortError from Web Locks API is non-fatal — session may still be restored
-      // via onAuthStateChange listener
-      console.warn('[Auth] Initialize error (non-fatal):', err);
-    }
+    })();
+
+    return this.initPromise;
   }
 
   /**
