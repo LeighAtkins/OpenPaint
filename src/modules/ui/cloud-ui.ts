@@ -218,7 +218,7 @@ function showCloudFeatures(show: boolean): void {
     '.cloud-save-btn, .cloud-projects-btn'
   );
   btns.forEach(btn => {
-    btn.classList.toggle('visible', show);
+    btn.style.display = show ? 'inline-flex' : 'none';
   });
 }
 
@@ -261,36 +261,45 @@ async function loadProjectsList(search?: string): Promise<void> {
   for (const project of projects) {
     const card = document.createElement('div');
     card.className = 'cloud-project-card';
-    card.innerHTML = `
-      <div class="cloud-project-info">
-        <div class="cloud-project-name">${project.name}</div>
-        <div class="cloud-project-date">${formatDate(project.updated_at)}</div>
-      </div>
-      <div class="cloud-project-actions">
-        <button class="cloud-load-btn" data-project-id="${project.id}">Load</button>
-        <button class="cloud-delete-btn" data-project-id="${project.id}">Delete</button>
-      </div>
-    `;
+
+    const info = document.createElement('div');
+    info.className = 'cloud-project-info';
+
+    const nameEl = document.createElement('div');
+    nameEl.className = 'cloud-project-name';
+    nameEl.textContent = project.name;
+
+    const dateEl = document.createElement('div');
+    dateEl.className = 'cloud-project-date';
+    dateEl.textContent = formatDate(project.updated_at);
+
+    info.appendChild(nameEl);
+    info.appendChild(dateEl);
+
+    const actions = document.createElement('div');
+    actions.className = 'cloud-project-actions';
+
+    const loadBtn = document.createElement('button');
+    loadBtn.className = 'cloud-load-btn';
+    loadBtn.textContent = 'Load';
+    loadBtn.addEventListener('click', () => void handleLoadProject(project.id));
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'cloud-delete-btn';
+    deleteBtn.textContent = 'Delete';
+    deleteBtn.addEventListener('click', () => {
+      if (confirm(`Delete "${project.name}"? This cannot be undone.`)) {
+        void handleDeleteProject(project.id);
+      }
+    });
+
+    actions.appendChild(loadBtn);
+    actions.appendChild(deleteBtn);
+
+    card.appendChild(info);
+    card.appendChild(actions);
     listEl.appendChild(card);
   }
-
-  listEl.querySelectorAll('.cloud-load-btn').forEach(btn => {
-    btn.addEventListener('click', async e => {
-      const projectId = (e.target as HTMLElement).dataset.projectId;
-      if (projectId) {
-        await handleLoadProject(projectId);
-      }
-    });
-  });
-
-  listEl.querySelectorAll('.cloud-delete-btn').forEach(btn => {
-    btn.addEventListener('click', async e => {
-      const projectId = (e.target as HTMLElement).dataset.projectId;
-      if (projectId && confirm('Are you sure you want to delete this project?')) {
-        await handleDeleteProject(projectId);
-      }
-    });
-  });
 }
 
 async function handleLoadProject(projectId: string): Promise<void> {
@@ -336,8 +345,8 @@ async function handleLoadProject(projectId: string): Promise<void> {
 
   closeCloudModal();
 
-  if (window.app?.showStatusMessage) {
-    window.app.showStatusMessage('Project loaded from cloud', 'success');
+  if (typeof window.showStatusMessage === 'function') {
+    window.showStatusMessage('Project loaded from cloud', 'success');
   }
 }
 
@@ -351,8 +360,8 @@ async function handleDeleteProject(projectId: string): Promise<void> {
 
   await loadProjectsList();
 
-  if (window.app?.showStatusMessage) {
-    window.app.showStatusMessage('Project deleted', 'success');
+  if (typeof window.showStatusMessage === 'function') {
+    window.showStatusMessage('Project deleted', 'success');
   }
 }
 
@@ -389,8 +398,8 @@ async function handleCloudSave(): Promise<void> {
 
     cloudSaveService.setCurrentProjectId(result.data.id);
 
-    if (window.app?.showStatusMessage) {
-      window.app.showStatusMessage('Project saved to cloud', 'success');
+    if (typeof window.showStatusMessage === 'function') {
+      window.showStatusMessage('Project saved to cloud', 'success');
     }
   } catch (error) {
     alert('Failed to save: ' + (error instanceof Error ? error.message : 'Unknown error'));
