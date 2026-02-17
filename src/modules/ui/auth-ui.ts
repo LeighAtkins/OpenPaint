@@ -11,15 +11,17 @@ import { isAuthEnabled, isSupabaseConfigured } from '@/utils/env';
 // ── Styles (injected once) ───────────────────────────────────────────────
 
 const AUTH_STYLES = /* css */ `
-  /* ── Fix toolbar overflow — let tbRight shrink so auth doesn't push off-screen ── */
+  /* ── Fix toolbar overflow — let tbRight sit next to tbLeft, not far-right ── */
   #tbRight {
     flex-shrink: 1 !important;
     min-width: 0 !important;
     overflow: hidden;
+    margin-left: 0 !important;
   }
 
   .toolbar-wrap {
     overflow: hidden;
+    gap: 8px;
   }
 
   /* ── Auth toolbar area ── */
