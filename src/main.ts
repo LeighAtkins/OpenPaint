@@ -195,11 +195,14 @@ async function bootstrap(): Promise<void> {
         timestamp: Date.now(),
       };
       if (hasOAuthCodeAtBootstrap) {
+        // Explicit callback processing first to guarantee token exchange path runs.
+        await awaitWithTimeout(authService.processOAuthCallbackIfPresent(), 8000);
+
         const authInitResult = await awaitWithTimeout(
           authService.initialize().catch((err: unknown) => {
             console.warn('[Auth] Callback init error:', err);
           }),
-          5000
+          3000
         );
         if (authInitResult === null) {
           console.warn('[Auth] Callback init timed out; continuing bootstrap.');

@@ -249,6 +249,47 @@ export class AuthService {
   }
 
   /**
+   * Force-process OAuth callback code from URL if present.
+   * Returns true when a code param was present and processed.
+   */
+  async processOAuthCallbackIfPresent(): Promise<boolean> {
+    try {
+      if (typeof window === 'undefined') return false;
+
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get('code');
+      if (!code) return false;
+
+      const clientResult = await this.getClient();
+      if (!clientResult.success) return false;
+
+      this.callbackHydrationStartedAt = Date.now();
+
+      const { error } = await clientResult.data.auth.exchangeCodeForSession(code);
+      if (error) {
+        console.warn('[Auth] Explicit callback code exchange failed:', error.message);
+      }
+
+      // Always clean callback params to avoid repeated processing.
+      params.delete('code');
+      params.delete('state');
+      params.delete('error');
+      params.delete('error_description');
+      const nextQuery = params.toString();
+      const nextUrl = `${window.location.pathname}${nextQuery ? `?${nextQuery}` : ''}${window.location.hash}`;
+      window.history.replaceState({}, document.title, nextUrl);
+
+      // Reconcile user immediately after exchange.
+      await this.refreshCurrentUserFromClient();
+
+      return true;
+    } catch (error) {
+      console.warn('[Auth] processOAuthCallbackIfPresent failed:', error);
+      return false;
+    }
+  }
+
+  /**
    * Sign in with Google OAuth.
    * Redirects the browser to Google consent screen.
    */
