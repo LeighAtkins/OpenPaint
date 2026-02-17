@@ -139,9 +139,11 @@ async function bootstrap(): Promise<void> {
   initPanelRelocation();
   initFrameCaptureToggle();
 
-  // ── Initialize auth (restores session, processes OAuth callback hash) ──
+  // ── Initialize auth (non-blocking — app loads while session resolves) ──
   if (isAuthEnabled() && isSupabaseConfigured()) {
-    await authService.initialize();
+    authService.initialize().catch((err: unknown) => {
+      console.warn('[Auth] Non-blocking init error:', err);
+    });
   }
 
   // ── Initialize the core App (from modules/main.ts) ──
