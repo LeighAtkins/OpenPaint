@@ -15,7 +15,6 @@ const AUTH_STYLES = /* css */ `
   #tbRight {
     flex-shrink: 1 !important;
     min-width: 0 !important;
-    overflow: hidden;
     margin-left: 0 !important;
   }
 
