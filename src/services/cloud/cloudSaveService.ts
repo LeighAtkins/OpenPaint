@@ -3,7 +3,6 @@ import { getSupabaseClient, DATABASE_TABLES } from '@/config/supabase.config';
 import { Result } from '@/utils/result';
 import { AppError, ErrorCode } from '@/types/app.types';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Database } from '@/types/supabase.types';
 
 export interface CloudProjectSummary {
   id: string;
@@ -43,6 +42,16 @@ class CloudSaveService {
     this.currentCloudProjectId = null;
   }
 
+  /**
+   * Get the current user ID from the cached session (no network call).
+   */
+  private async getUserId(client: SupabaseClient<any>): Promise<string | null> {
+    const {
+      data: { session },
+    } = await client.auth.getSession();
+    return session?.user?.id ?? null;
+  }
+
   async saveProject(options: SaveProjectOptions): Promise<Result<CloudProject, AppError>> {
     const clientResult = getSupabaseClient();
     if (!clientResult.success) {
@@ -53,7 +62,7 @@ class CloudSaveService {
     const { name, projectData, currentProjectId } = options;
 
     try {
-      // Estimate payload size — warn if over 4MB (Supabase REST limit is ~8MB)
+      // Estimate payload size
       const payloadSize = JSON.stringify(projectData).length;
       const payloadMB = (payloadSize / (1024 * 1024)).toFixed(1);
       console.log(`[CloudSave] Payload size: ${payloadMB} MB`);
@@ -66,11 +75,7 @@ class CloudSaveService {
         );
       }
 
-      const {
-        data: { user },
-      } = await client.auth.getUser();
-      const userId = user?.id;
-
+      const userId = await this.getUserId(client);
       if (!userId) {
         return Result.err(
           new AppError(ErrorCode.AUTH_ERROR, 'You must be signed in to save to the cloud')
@@ -80,77 +85,63 @@ class CloudSaveService {
       const now = new Date().toISOString();
       const projectId = currentProjectId || this.currentCloudProjectId;
 
-      // Use AbortController for timeout (30s)
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 30000);
+      console.log(
+        `[CloudSave] Saving project "${name}" (${projectId ? 'update ' + projectId : 'new'})...`
+      );
 
-      try {
-        if (projectId) {
-          // Update existing — only return id, name, dates (not the huge data column)
-          const { data, error } = await client
-            .from(DATABASE_TABLES.PROJECTS)
-            .update({
-              name,
-              data: projectData,
-              updated_at: now,
-            } as any)
-            .eq('id', projectId)
-            .eq('user_id', userId)
-            .select('id, name, user_id, created_at, updated_at')
-            .single()
-            .abortSignal(controller.signal);
+      if (projectId) {
+        const { data, error } = await client
+          .from(DATABASE_TABLES.PROJECTS)
+          .update({
+            name,
+            data: projectData,
+            updated_at: now,
+          } as any)
+          .eq('id', projectId)
+          .eq('user_id', userId)
+          .select('id, name, user_id, created_at, updated_at')
+          .single();
 
-          if (error) {
-            return Result.err(
-              new AppError(
-                ErrorCode.SUPABASE_QUERY_ERROR,
-                `Failed to update project: ${error.message}`
-              )
-            );
-          }
-
-          return Result.ok({ ...data, data: {} } as CloudProject);
-        } else {
-          // Insert new — only return id, name, dates (not the huge data column)
-          const { data, error } = await client
-            .from(DATABASE_TABLES.PROJECTS)
-            .insert({
-              name,
-              user_id: userId,
-              data: projectData,
-              is_public: false,
-              tags: [],
-            } as any)
-            .select('id, name, user_id, created_at, updated_at')
-            .single()
-            .abortSignal(controller.signal);
-
-          if (error) {
-            return Result.err(
-              new AppError(
-                ErrorCode.SUPABASE_QUERY_ERROR,
-                `Failed to save project: ${error.message}`
-              )
-            );
-          }
-
-          if (data?.id) {
-            this.currentCloudProjectId = data.id;
-          }
-          return Result.ok({ ...data, data: {} } as CloudProject);
+        if (error) {
+          console.error('[CloudSave] Update error:', error);
+          return Result.err(
+            new AppError(
+              ErrorCode.SUPABASE_QUERY_ERROR,
+              `Failed to update project: ${error.message}`
+            )
+          );
         }
-      } finally {
-        clearTimeout(timeout);
+
+        console.log('[CloudSave] Update succeeded');
+        return Result.ok({ ...data, data: {} } as CloudProject);
+      } else {
+        const { data, error } = await client
+          .from(DATABASE_TABLES.PROJECTS)
+          .insert({
+            name,
+            user_id: userId,
+            data: projectData,
+            is_public: false,
+            tags: [],
+          } as any)
+          .select('id, name, user_id, created_at, updated_at')
+          .single();
+
+        if (error) {
+          console.error('[CloudSave] Insert error:', error);
+          return Result.err(
+            new AppError(ErrorCode.SUPABASE_QUERY_ERROR, `Failed to save project: ${error.message}`)
+          );
+        }
+
+        if (data?.id) {
+          this.currentCloudProjectId = data.id;
+        }
+        console.log('[CloudSave] Insert succeeded, id:', data?.id);
+        return Result.ok({ ...data, data: {} } as CloudProject);
       }
     } catch (error) {
-      if (error instanceof DOMException && error.name === 'AbortError') {
-        return Result.err(
-          new AppError(
-            ErrorCode.NETWORK_ERROR,
-            'Cloud save timed out. The project may be too large. Try with fewer images.'
-          )
-        );
-      }
+      console.error('[CloudSave] Exception:', error);
       return Result.err(
         new AppError(
           ErrorCode.UNKNOWN_ERROR,
@@ -169,9 +160,7 @@ class CloudSaveService {
     const client = clientResult.data as unknown as SupabaseClient<any>;
 
     try {
-      const user = client.auth.getUser();
-      const userId = (await user).data.user?.id;
-
+      const userId = await this.getUserId(client);
       if (!userId) {
         return Result.err(
           new AppError(ErrorCode.AUTH_ERROR, 'You must be signed in to list projects')
@@ -217,9 +206,7 @@ class CloudSaveService {
     const client = clientResult.data as unknown as SupabaseClient<any>;
 
     try {
-      const user = client.auth.getUser();
-      const userId = (await user).data.user?.id;
-
+      const userId = await this.getUserId(client);
       if (!userId) {
         return Result.err(
           new AppError(ErrorCode.AUTH_ERROR, 'You must be signed in to load projects')
@@ -267,9 +254,7 @@ class CloudSaveService {
     const client = clientResult.data as unknown as SupabaseClient<any>;
 
     try {
-      const user = client.auth.getUser();
-      const userId = (await user).data.user?.id;
-
+      const userId = await this.getUserId(client);
       if (!userId) {
         return Result.err(
           new AppError(ErrorCode.AUTH_ERROR, 'You must be signed in to delete projects')
