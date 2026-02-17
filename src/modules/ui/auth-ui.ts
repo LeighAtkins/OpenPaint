@@ -19,7 +19,7 @@ const AUTH_STYLES = /* css */ `
     margin-left: 8px;
     min-width: 0;
     flex: 0 1 auto;
-    max-width: min(40vw, 360px);
+    max-width: min(34vw, 300px);
     justify-content: flex-end;
     overflow: hidden;
   }
@@ -38,7 +38,7 @@ const AUTH_STYLES = /* css */ `
     align-items: center;
     gap: 8px;
     min-width: 0;
-    max-width: 200px;
+    max-width: 150px;
     overflow: hidden;
   }
 
@@ -53,7 +53,7 @@ const AUTH_STYLES = /* css */ `
   .auth-display-name {
     font-size: var(--ob-text-meta, 12px);
     color: var(--ob-text-primary, #1f2937);
-    max-width: 100px;
+    max-width: 68px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -61,8 +61,8 @@ const AUTH_STYLES = /* css */ `
   }
 
   .auth-sign-out-btn {
-    font-size: 11px;
-    padding: 2px 8px;
+    font-size: 10px;
+    padding: 2px 6px;
     background: none;
     border: 1px solid var(--ob-border-color, #d1d5db);
     border-radius: 4px;
@@ -203,7 +203,7 @@ const AUTH_STYLES = /* css */ `
 
   @media (max-width: 1500px) {
     .auth-display-name {
-      max-width: 84px;
+      display: none;
     }
   }
 
@@ -278,7 +278,7 @@ function createToolbarGroup(): HTMLElement {
 
   const signOutBtn = document.createElement('button');
   signOutBtn.className = 'auth-sign-out-btn';
-  signOutBtn.textContent = 'Sign out';
+  signOutBtn.textContent = 'Out';
   signOutBtn.addEventListener('click', handleSignOut);
 
   userArea.appendChild(avatar);
