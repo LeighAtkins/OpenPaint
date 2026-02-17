@@ -256,13 +256,9 @@ export class AuthService {
             break;
         }
       } catch (error) {
-        console.error('[Auth] Auth state change handler error:', error);
-        // Still try to set basic user data if we have a session
-        if (
-          (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') &&
-          session?.user &&
-          !this.currentUser
-        ) {
+        console.error('[Auth] Auth state listener failed, applying fallback user state:', error);
+
+        if ((event === 'INITIAL_SESSION' || event === 'SIGNED_IN') && session?.user) {
           this.currentUser = {
             id: session.user.id,
             email: session.user.email || '',
@@ -270,6 +266,12 @@ export class AuthService {
             createdAt: session.user.created_at,
           };
           this.notifySessionListeners(this.currentUser);
+          return;
+        }
+
+        if (event === 'SIGNED_OUT') {
+          this.currentUser = null;
+          this.notifySessionListeners(null);
         }
       }
     });
