@@ -729,6 +729,32 @@ export class AuthService {
   }
 
   /**
+   * Reconcile in-memory auth user from current Supabase client state.
+   * Useful when OAuth/token exchange succeeded but UI initialized before hydration settled.
+   */
+  async refreshCurrentUserFromClient(): Promise<void> {
+    try {
+      const clientResult = await this.getClient();
+      if (!clientResult.success) {
+        return;
+      }
+
+      const {
+        data: { user },
+      } = await clientResult.data.auth.getUser();
+
+      if (user) {
+        await this.setCurrentUserFromSupabaseUser(user);
+      } else {
+        this.currentUser = null;
+        this.notifySessionListeners(null);
+      }
+    } catch (error) {
+      console.warn('[Auth] refreshCurrentUserFromClient failed:', error);
+    }
+  }
+
+  /**
    * Update user profile
    */
   async updateProfile(data: UpdateProfileData): Promise<Result<UserProfileRow, AppError>> {

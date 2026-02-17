@@ -472,6 +472,29 @@ export function initAuthUI(): void {
   // Set initial state from current user (may already be signed in from initialize())
   updateAuthUI(authService.getCurrentUser());
 
+  // Reconcile auth state after UI mount in case callback/session hydration
+  // completed slightly before/after UI initialization.
+  const reconcileAuthState = async () => {
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      await authService.refreshCurrentUserFromClient();
+      const user = authService.getCurrentUser();
+      if (user) {
+        updateAuthUI(user);
+        callbackSettling = false;
+        return;
+      }
+
+      await new Promise(resolve => {
+        setTimeout(resolve, 200 * (attempt + 1));
+      });
+    }
+
+    callbackSettling = false;
+    updateAuthUI(authService.getCurrentUser());
+  };
+
+  void reconcileAuthState();
+
   if (callbackSettling) {
     setTimeout(() => {
       callbackSettling = false;
