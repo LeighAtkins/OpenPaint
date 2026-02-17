@@ -199,6 +199,7 @@ export class AuthService {
 
     this.client.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session | null) => {
       switch (event) {
+        case 'INITIAL_SESSION':
         case 'SIGNED_IN':
           if (session?.user) {
             await this.ensureProfile(session.user);
