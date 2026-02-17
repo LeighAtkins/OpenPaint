@@ -102,7 +102,7 @@ export class MeasurementsService extends SupabaseService {
       }
 
       const project = projectResult.data;
-      if (project.user_id !== currentUser.id) {
+      if (project.created_by !== currentUser.id) {
         return Result.err(
           new AppError(ErrorCode.AUTH_ERROR, 'Not authorized to add measurements to this project')
         );
@@ -188,7 +188,7 @@ export class MeasurementsService extends SupabaseService {
       }
 
       const project = projectResult.data;
-      if (project.user_id !== currentUser.id) {
+      if (project.created_by !== currentUser.id) {
         return Result.err(
           new AppError(
             ErrorCode.AUTH_ERROR,
@@ -277,7 +277,7 @@ export class MeasurementsService extends SupabaseService {
       }
 
       const project = projectResult.data;
-      if (project.user_id !== currentUser.id) {
+      if (project.created_by !== currentUser.id) {
         return Result.err(
           new AppError(
             ErrorCode.AUTH_ERROR,
@@ -333,7 +333,7 @@ export class MeasurementsService extends SupabaseService {
       const project = projectResult.data;
 
       // Check access permissions (owner or public project)
-      if (project.user_id !== currentUser.id && !project.is_public) {
+      if (project.created_by !== currentUser.id) {
         return Result.err(
           new AppError(ErrorCode.AUTH_ERROR, 'Not authorized to view measurements in this project')
         );
@@ -392,7 +392,7 @@ export class MeasurementsService extends SupabaseService {
       const project = projectResult.data;
 
       // Check access permissions
-      if (project.user_id !== currentUser.id && !project.is_public) {
+      if (project.created_by !== currentUser.id) {
         return Result.err(
           new AppError(ErrorCode.AUTH_ERROR, 'Not authorized to view measurements in this project')
         );
@@ -446,7 +446,7 @@ export class MeasurementsService extends SupabaseService {
       }
 
       const project = projectResult.data;
-      if (project.user_id !== currentUser.id) {
+      if (project.created_by !== currentUser.id) {
         return Result.err(
           new AppError(
             ErrorCode.AUTH_ERROR,
@@ -531,7 +531,7 @@ export class MeasurementsService extends SupabaseService {
       const project = projectResult.data;
 
       // Check access permissions
-      if (project.user_id !== currentUser.id && !project.is_public) {
+      if (project.created_by !== currentUser.id) {
         return Result.err(
           new AppError(
             ErrorCode.AUTH_ERROR,
@@ -631,7 +631,7 @@ export class MeasurementsService extends SupabaseService {
       }
 
       const project = projectResult.data;
-      if (project.user_id !== currentUser.id) {
+      if (project.created_by !== currentUser.id) {
         return Result.err(
           new AppError(
             ErrorCode.AUTH_ERROR,

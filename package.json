@@ -10,6 +10,7 @@
   },
   "scripts": {
     "start": "node app.js",
+    "op": "node scripts/op-cli.mjs",
     "dev": "vite --host",
     "dev:all": "node scripts/dev-all-safe.mjs",
     "dev:all:raw": "concurrently -k \"npm:dev:server\" \"npm:dev\"",

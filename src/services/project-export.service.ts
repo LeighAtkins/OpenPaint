@@ -104,7 +104,7 @@ export class ProjectExportService extends SupabaseService {
       const project = projectResult.data;
 
       // Check access permissions
-      if (project.user_id !== currentUser.id && !project.is_public) {
+      if (project.created_by !== currentUser.id) {
         return Result.err(
           new AppError(ErrorCode.AUTH_ERROR, 'Not authorized to export this project')
         );
@@ -253,8 +253,7 @@ export class ProjectExportService extends SupabaseService {
         exportedBy: currentUser.email,
         project: {
           id: project.id,
-          name: project.name,
-          description: project.description,
+          name: project.project_name,
           data: project.data,
         },
       };
@@ -359,8 +358,7 @@ export class ProjectExportService extends SupabaseService {
         },
         project: {
           id: project.id,
-          name: project.name,
-          description: project.description,
+          name: project.project_name,
           data: project.data,
         },
         measurements: options.includeMeasurements ? measurements : [],
@@ -483,15 +481,14 @@ export class ProjectExportService extends SupabaseService {
 
       const pdfContent = `
         PROJECT REPORT
-        
-        Project: ${project.name}
-        Description: ${project.description || 'No description'}
+
+        Project: ${project.project_name}
         Exported: ${new Date().toISOString()}
         Exported by: ${currentUser.email}
-        
+
         Images: ${images.length}
         Measurements: ${measurements.length}
-        
+
         TODO: Implement PDF generation
       `;
 
@@ -565,9 +562,7 @@ export class ProjectExportService extends SupabaseService {
       // Create new project
       const createProjectResult = await projectService.createProject({
         name: `${importData.project.name} (Imported)`,
-        description: importData.project.description,
         settings: importData.project.data?.settings,
-        isPublic: false,
         tags: [],
       });
 
@@ -772,9 +767,7 @@ export class ProjectExportService extends SupabaseService {
           {
             data: updatedData,
             updated_at: new Date().toISOString(),
-            version: project.version + 1,
-          },
-          project.version
+          }
         );
       }
     } catch (error) {

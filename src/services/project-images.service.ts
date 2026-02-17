@@ -68,7 +68,7 @@ export class ProjectImagesService extends SupabaseService {
       }
 
       const project = projectResult.data;
-      if (project.user_id !== currentUser.id) {
+      if (project.created_by !== currentUser.id) {
         return Result.err(
           new AppError(ErrorCode.AUTH_ERROR, 'Not authorized to upload images to this project')
         );
@@ -169,7 +169,7 @@ export class ProjectImagesService extends SupabaseService {
       }
 
       const project = projectResult.data;
-      if (project.user_id !== currentUser.id) {
+      if (project.created_by !== currentUser.id) {
         return Result.err(
           new AppError(ErrorCode.AUTH_ERROR, 'Not authorized to upload images to this project')
         );
@@ -258,7 +258,7 @@ export class ProjectImagesService extends SupabaseService {
       }
 
       const project = projectResult.data;
-      if (project.user_id !== currentUser.id) {
+      if (project.created_by !== currentUser.id) {
         return Result.err(
           new AppError(ErrorCode.AUTH_ERROR, 'Not authorized to modify images in this project')
         );
@@ -357,7 +357,7 @@ export class ProjectImagesService extends SupabaseService {
       }
 
       const project = projectResult.data;
-      if (project.user_id !== currentUser.id) {
+      if (project.created_by !== currentUser.id) {
         return Result.err(
           new AppError(ErrorCode.AUTH_ERROR, 'Not authorized to delete images from this project')
         );
@@ -469,7 +469,7 @@ export class ProjectImagesService extends SupabaseService {
       }
 
       const project = projectResult.data;
-      if (project.user_id !== currentUser.id) {
+      if (project.created_by !== currentUser.id) {
         return Result.err(
           new AppError(ErrorCode.AUTH_ERROR, 'Not authorized to modify images in this project')
         );
@@ -726,7 +726,7 @@ export class ProjectImagesService extends SupabaseService {
           {
             data: updatedData,
             updated_at: new Date().toISOString(),
-            version: project.version + 1,
+            version: ,
           },
           project.version
         );
@@ -784,7 +784,7 @@ export class ProjectImagesService extends SupabaseService {
           {
             data: updatedData,
             updated_at: new Date().toISOString(),
-            version: project.version + 1,
+            version: ,
           },
           project.version
         );
@@ -832,7 +832,7 @@ export class ProjectImagesService extends SupabaseService {
           {
             data: updatedData,
             updated_at: new Date().toISOString(),
-            version: project.version + 1,
+            version: ,
           },
           project.version
         );

@@ -15,14 +15,12 @@ create table public.user_profiles (
 -- Projects Table
 create table public.projects (
   id uuid default uuid_generate_v4() primary key,
-  user_id uuid references auth.users on delete cascade not null,
-  name text not null,
-  description text,
-  is_public boolean default false,
-  version integer default 1,
+  created_by uuid references auth.users on delete cascade not null,
+  project_name text not null,
+  customer_name text,
+  sofa_model text,
   data jsonb default '{}'::jsonb not null,
   tags text[] default array[]::text[],
-  thumbnail_url text,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
   updated_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
@@ -63,34 +61,30 @@ create policy "Users can update own profile."
   using ( auth.uid() = id );
 
 -- RLS Policies: Projects
-create policy "Projects are viewable by everyone if public."
-  on public.projects for select
-  using ( is_public = true );
-
 create policy "Users can view their own projects."
   on public.projects for select
-  using ( auth.uid() = user_id );
+  using ( auth.uid() = created_by );
 
 create policy "Users can insert their own projects."
   on public.projects for insert
-  with check ( auth.uid() = user_id );
+  with check ( auth.uid() = created_by );
 
 create policy "Users can update their own projects."
   on public.projects for update
-  using ( auth.uid() = user_id );
+  using ( auth.uid() = created_by );
 
 create policy "Users can delete their own projects."
   on public.projects for delete
-  using ( auth.uid() = user_id );
+  using ( auth.uid() = created_by );
 
 -- RLS Policies: Project Images
-create policy "Project images are viewable if project is viewable."
+create policy "Project images are viewable by project owner."
   on public.project_images for select
   using (
     exists (
       select 1 from public.projects
       where projects.id = project_images.project_id
-      and (projects.is_public = true or projects.user_id = auth.uid())
+      and projects.created_by = auth.uid()
     )
   );
 
@@ -100,7 +94,7 @@ create policy "Users can insert images to their own projects."
     exists (
       select 1 from public.projects
       where projects.id = project_images.project_id
-      and projects.user_id = auth.uid()
+      and projects.created_by = auth.uid()
     )
   );
 
@@ -110,7 +104,7 @@ create policy "Users can update images in their own projects."
     exists (
       select 1 from public.projects
       where projects.id = project_images.project_id
-      and projects.user_id = auth.uid()
+      and projects.created_by = auth.uid()
     )
   );
 
@@ -120,7 +114,7 @@ create policy "Users can delete images from their own projects."
     exists (
       select 1 from public.projects
       where projects.id = project_images.project_id
-      and projects.user_id = auth.uid()
+      and projects.created_by = auth.uid()
     )
   );
 
