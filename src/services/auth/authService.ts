@@ -516,7 +516,7 @@ export class AuthService {
         );
       }
 
-      const { error } = await client.auth.signOut({ scope: 'global' });
+      const { error } = await client.auth.signOut();
       if (error) {
         return Result.err(this.mapAuthError(error));
       }
