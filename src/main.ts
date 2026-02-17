@@ -99,6 +99,7 @@ import { initAIExport } from './modules/ai/ai-export-loader';
 import { isAuthEnabled, isSupabaseConfigured } from '@/utils/env';
 import { authService } from '@/services/auth/authService';
 import { initAuthUI } from './modules/ui/auth-ui';
+import { initCloudUI } from './modules/ui/cloud-ui';
 
 // ── 5. Standalone UI modules ─────────────────────────────────────────────────
 import './modules/ui/toolbar-init.js';
@@ -180,6 +181,9 @@ async function bootstrap(): Promise<void> {
 
   // Initialize auth UI (toolbar button + modal + auth state listener)
   initAuthUI();
+
+  // Initialize cloud UI (cloud save button + My Projects modal)
+  initCloudUI();
 
   // Initialize AI export (async, non-blocking)
   initAIExport().catch((error: unknown) => {
