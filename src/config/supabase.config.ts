@@ -85,14 +85,34 @@ export function initializeSupabase(): Result<SupabaseClient<Database>, AppError>
     }
 
     // Create client with enhanced configuration
-    // NOTE: Use a lightweight lock shim instead of the browser LockManager.
+    // NOTE: Use an in-memory lock shim instead of the browser LockManager.
     // Some browsers/environments throw unhandled AbortError from navigator.locks
-    // during Supabase auth bootstrap, which can interrupt OAuth callback handling.
+    // during Supabase auth bootstrap. This shim preserves serialization semantics
+    // without relying on navigator.locks.
+    const lockQueues = new Map<string, Promise<void>>();
     const lockShim = async (
-      _name: string,
+      name: string,
       _acquireTimeout: number,
       fn: () => Promise<unknown>
-    ): Promise<unknown> => fn();
+    ): Promise<unknown> => {
+      const previous = lockQueues.get(name) || Promise.resolve();
+      let releaseCurrent: (() => void) | null = null;
+      const current = new Promise<void>(resolve => {
+        releaseCurrent = resolve;
+      });
+
+      lockQueues.set(name, current);
+      await previous;
+
+      try {
+        return await fn();
+      } finally {
+        if (releaseCurrent) releaseCurrent();
+        if (lockQueues.get(name) === current) {
+          lockQueues.delete(name);
+        }
+      }
+    };
 
     supabaseClient = createClient<Database>(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey, {
       auth: {
