@@ -34,20 +34,15 @@ export interface ProjectQueryOptions {
 // Project creation data
 export interface CreateProjectData {
   name: string;
-  description?: string;
   settings?: Partial<ProjectSettings>;
-  isPublic?: boolean;
   tags?: string[];
 }
 
 // Project update data
 export interface UpdateProjectData {
   name?: string;
-  description?: string;
   settings?: Partial<ProjectSettings>;
-  isPublic?: boolean;
   tags?: string[];
-  thumbnailFile?: File;
 }
 
 // Default project settings
@@ -107,16 +102,11 @@ export class ProjectService extends SupabaseService {
 
       // Create project record
       const projectInsert: ProjectInsert = {
-        user_id: currentUser.id,
-        name: data.name.trim(),
+        created_by: currentUser.id,
+        project_name: data.name.trim(),
         data: projectData,
         tags: data.tags || [],
-        is_public: data.isPublic || false,
-        version: 1,
       };
-      if (data.description?.trim()) {
-        projectInsert.description = data.description.trim();
-      }
 
       const result = await this.insert<ProjectRow>(DATABASE_TABLES.PROJECTS, projectInsert as any);
       if (!result.success) {
@@ -223,7 +213,7 @@ export class ProjectService extends SupabaseService {
       const project = projectResult.data;
 
       // Check ownership
-      if (project.user_id !== currentUser.id) {
+      if (project.created_by !== currentUser.id) {
         return Result.err(
           new AppError(ErrorCode.AUTH_ERROR, 'Not authorized to update this project')
         );
@@ -234,15 +224,6 @@ export class ProjectService extends SupabaseService {
         const validationResult = this.validateProjectName(data.name);
         if (!validationResult.success) {
           return Result.err(validationResult.error);
-        }
-      }
-
-      // Generate thumbnail if file provided
-      let thumbnailUrl: string | undefined;
-      if (data.thumbnailFile) {
-        const thumbnailResult = await this.generateProjectThumbnail(projectId, data.thumbnailFile);
-        if (thumbnailResult.success) {
-          thumbnailUrl = thumbnailResult.data;
         }
       }
 
@@ -261,14 +242,10 @@ export class ProjectService extends SupabaseService {
 
       // Prepare update
       const updateData: ProjectUpdate = {
-        ...(data.name && { name: data.name.trim() }),
-        ...(data.description !== undefined && { description: data.description?.trim() }),
-        ...(data.isPublic !== undefined && { is_public: data.isPublic }),
+        ...(data.name && { project_name: data.name.trim() }),
         ...(data.tags && { tags: data.tags }),
-        ...(thumbnailUrl && { thumbnail_url: thumbnailUrl }),
         data: updatedProjectData,
         updated_at: new Date().toISOString(),
-        version: project.version + 1,
       };
 
       const result = await this.update<ProjectRow>(
@@ -310,7 +287,7 @@ export class ProjectService extends SupabaseService {
 
       const project = projectResult.data;
 
-      if (project.user_id !== currentUser.id) {
+      if (project.created_by !== currentUser.id) {
         return Result.err(
           new AppError(ErrorCode.AUTH_ERROR, 'Not authorized to delete this project')
         );
@@ -324,16 +301,6 @@ export class ProjectService extends SupabaseService {
         // Delete image records
         for (const image of project.images) {
           await this.delete(DATABASE_TABLES.PROJECT_IMAGES, image.id);
-        }
-      }
-
-      // Delete thumbnail if exists
-      if (project.thumbnail_url) {
-        // Extract path from URL and delete
-        // This is a simplified approach - in production you'd need proper path extraction
-        const thumbnailPath = project.thumbnail_url.split('/').pop();
-        if (thumbnailPath) {
-          await storageService.deleteFile('PROJECT_THUMBNAILS', thumbnailPath);
         }
       }
 
@@ -369,7 +336,7 @@ export class ProjectService extends SupabaseService {
 
       // Build filters
       const filters: Record<string, any> = {
-        user_id: currentUser.id,
+        created_by: currentUser.id,
       };
 
       // Add tag filtering if specified
@@ -396,20 +363,13 @@ export class ProjectService extends SupabaseService {
       const summaries: ProjectSummary[] = result.data.data.map(project => {
         const summary: ProjectSummary = {
           id: project.id,
-          name: project.name,
+          name: project.project_name,
           tags: project.tags,
           created_at: project.created_at,
           updated_at: project.updated_at,
           image_count: project.data.metadata.totalImages,
           measurement_count: project.data.metadata.totalMeasurements,
-          is_public: project.is_public,
         };
-        if (project.description) {
-          summary.description = project.description;
-        }
-        if (project.thumbnail_url) {
-          summary.thumbnail_url = project.thumbnail_url;
-        }
         return summary;
       });
 
@@ -484,9 +444,7 @@ export class ProjectService extends SupabaseService {
       // Create new project data
       const createData: CreateProjectData = {
         name: newName,
-        description: `Copy of ${original.name}`,
         settings: original.data.settings,
-        isPublic: false, // Copies are private by default
         tags: [...original.tags],
       };
 
@@ -545,7 +503,7 @@ export class ProjectService extends SupabaseService {
       // Get all projects for user
       const projectsResult = await this.select<ProjectRow>(
         DATABASE_TABLES.PROJECTS,
-        { user_id: targetUserId },
+        { created_by: targetUserId },
         { orderBy: 'updated_at', ascending: false, limit: 1000 }
       );
 
@@ -558,27 +516,20 @@ export class ProjectService extends SupabaseService {
       // Calculate statistics
       const stats = {
         totalProjects: projects.length,
-        publicProjects: projects.filter(p => p.is_public).length,
+        publicProjects: 0, // Not tracking public/private anymore
         totalImages: projects.reduce((sum, p) => sum + p.data.metadata.totalImages, 0),
         totalMeasurements: projects.reduce((sum, p) => sum + p.data.metadata.totalMeasurements, 0),
         storageUsed: projects.reduce((sum, p) => sum + p.data.metadata.projectSize, 0),
         recentActivity: projects.slice(0, 5).map(project => {
           const summary: ProjectSummary = {
             id: project.id,
-            name: project.name,
+            name: project.project_name,
             tags: project.tags,
             created_at: project.created_at,
             updated_at: project.updated_at,
             image_count: project.data.metadata.totalImages,
             measurement_count: project.data.metadata.totalMeasurements,
-            is_public: project.is_public,
           };
-          if (project.description) {
-            summary.description = project.description;
-          }
-          if (project.thumbnail_url) {
-            summary.thumbnail_url = project.thumbnail_url;
-          }
           return summary;
         }),
       };
@@ -621,7 +572,7 @@ export class ProjectService extends SupabaseService {
       const project = projectResult.data;
 
       // Check ownership
-      if (project.user_id !== currentUser.id) {
+      if (project.created_by !== currentUser.id) {
         return Result.err(
           new AppError(ErrorCode.AUTH_ERROR, 'Not authorized to update this project')
         );
@@ -659,9 +610,7 @@ export class ProjectService extends SupabaseService {
         {
           data: updatedData,
           updated_at: new Date().toISOString(),
-          version: project.version + 1,
-        },
-        project.version
+        }
       );
 
       return updateResult;
@@ -684,12 +633,7 @@ export class ProjectService extends SupabaseService {
     userId: string
   ): Promise<Result<boolean, AppError>> {
     // Owner always has access
-    if (project.user_id === userId) {
-      return Result.ok(true);
-    }
-
-    // Public projects can be read by anyone
-    if (project.is_public) {
+    if (project.created_by === userId) {
       return Result.ok(true);
     }
 
@@ -712,52 +656,6 @@ export class ProjectService extends SupabaseService {
     }
 
     return Result.ok(true);
-  }
-
-  /**
-   * Generate thumbnail for project
-   */
-  private async generateProjectThumbnail(
-    projectId: string,
-    thumbnailFile: File
-  ): Promise<Result<string, AppError>> {
-    try {
-      const currentUser = authService.getCurrentUser();
-      if (!currentUser) {
-        return Result.err(
-          new AppError(ErrorCode.AUTH_ERROR, 'Must be authenticated to upload thumbnail')
-        );
-      }
-
-      // Upload thumbnail using uploadFile with thumbnail config
-      const storagePath = `${currentUser.id}/${projectId}/thumbnails/${Date.now()}_${thumbnailFile.name}`;
-      const uploadResult = await storageService['uploadFile'](
-        'PROJECT_THUMBNAILS',
-        storagePath,
-        thumbnailFile,
-        {
-          maxFileSizeMB: 5,
-          allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp'],
-          generateThumbnail: false,
-          compressionQuality: 0.75,
-        }
-      );
-
-      if (!uploadResult.success) {
-        return Result.err(uploadResult.error);
-      }
-
-      // Return the public URL
-      return Result.ok(uploadResult.data.url);
-    } catch (error) {
-      return Result.err(
-        new AppError(
-          ErrorCode.STORAGE_ERROR,
-          `Failed to generate thumbnail: ${error instanceof Error ? error.message : 'Unknown error'}`,
-          { projectId }
-        )
-      );
-    }
   }
 
   /**

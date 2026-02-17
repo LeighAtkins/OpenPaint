@@ -14,9 +14,8 @@ export class CloudProjectManager {
       const { data: project, error: projectError } = await this.supabase
         .from('projects')
         .upsert({
-          user_id: user.id,
-          name: projectData.name || 'Untitled Project',
-          description: projectData.description,
+          created_by: user.id,
+          project_name: projectData.name || 'Untitled Project',
           data: projectData, // Store full JSON for now
           updated_at: new Date(),
         })
@@ -44,7 +43,7 @@ export class CloudProjectManager {
     const { data, error } = await this.supabase
       .from('projects')
       .select('*')
-      .eq('user_id', user.id)
+      .eq('created_by', user.id)
       .order('updated_at', { ascending: false });
 
     return { data, error };

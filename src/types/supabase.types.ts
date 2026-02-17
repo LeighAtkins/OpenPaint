@@ -7,42 +7,36 @@ export interface Database {
       projects: {
         Row: {
           id: string;
-          user_id: string;
-          name: string;
-          description?: string;
-          thumbnail_url?: string;
+          created_by: string;
+          project_name: string;
+          customer_name?: string;
+          sofa_model?: string;
           data: ProjectData;
           tags: string[];
-          is_public: boolean;
           created_at: string;
           updated_at: string;
-          version: number;
         };
         Insert: {
           id?: string;
-          user_id: string;
-          name: string;
-          description?: string;
-          thumbnail_url?: string;
+          created_by: string;
+          project_name: string;
+          customer_name?: string;
+          sofa_model?: string;
           data: ProjectData;
           tags?: string[];
-          is_public?: boolean;
           created_at?: string;
           updated_at?: string;
-          version?: number;
         };
         Update: {
           id?: string;
-          user_id?: string;
-          name?: string;
-          description?: string;
-          thumbnail_url?: string;
+          created_by?: string;
+          project_name?: string;
+          customer_name?: string;
+          sofa_model?: string;
           data?: ProjectData;
           tags?: string[];
-          is_public?: boolean;
           created_at?: string;
           updated_at?: string;
-          version?: number;
         };
       };
 
@@ -332,12 +326,9 @@ export interface PaginatedResponse<T> {
 export interface ProjectSummary {
   id: string;
   name: string;
-  description?: string;
-  thumbnail_url?: string;
   tags: string[];
   created_at: string;
   updated_at: string;
   image_count: number;
   measurement_count: number;
-  is_public: boolean;
 }
