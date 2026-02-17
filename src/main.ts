@@ -158,6 +158,13 @@ function runSafe(step: string, fn: () => void): void {
   }
 }
 
+async function awaitWithTimeout<T>(promise: Promise<T>, ms: number): Promise<T | null> {
+  const timeout = new Promise<null>(resolve => {
+    window.setTimeout(() => resolve(null), ms);
+  });
+  return Promise.race([promise, timeout]);
+}
+
 async function bootstrap(): Promise<void> {
   logger.info(CONTEXT, 'Bootstrapping OpenPaint...');
   logger.info(CONTEXT, `Environment: ${env.isDevelopment ? 'development' : 'production'}`);
@@ -187,9 +194,15 @@ async function bootstrap(): Promise<void> {
         timestamp: Date.now(),
       };
       if (hasOAuthCode) {
-        await authService.initialize().catch((err: unknown) => {
-          console.warn('[Auth] Callback init error:', err);
-        });
+        const authInitResult = await awaitWithTimeout(
+          authService.initialize().catch((err: unknown) => {
+            console.warn('[Auth] Callback init error:', err);
+          }),
+          5000
+        );
+        if (authInitResult === null) {
+          console.warn('[Auth] Callback init timed out; continuing bootstrap.');
+        }
 
         window.setTimeout(() => {
           if (typeof window.updateImageListPadding !== 'function') {
