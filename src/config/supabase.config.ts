@@ -85,13 +85,25 @@ export function initializeSupabase(): Result<SupabaseClient<Database>, AppError>
     }
 
     // Create client with enhanced configuration
+    // NOTE: Use a lightweight lock shim instead of the browser LockManager.
+    // Some browsers/environments throw unhandled AbortError from navigator.locks
+    // during Supabase auth bootstrap, which can interrupt OAuth callback handling.
+    const lockShim = async (
+      _name: string,
+      _acquireTimeout: number,
+      fn: () => Promise<unknown>
+    ): Promise<unknown> => fn();
+
     supabaseClient = createClient<Database>(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey, {
       auth: {
         autoRefreshToken: true,
         persistSession: true,
         ...(typeof window !== 'undefined' && { storage: window.localStorage }),
-        detectSessionInUrl: true,
+        // We handle OAuth code callbacks explicitly in authService.initialize().
+        // Disabling automatic URL detection prevents duplicate callback processing.
+        detectSessionInUrl: false,
         flowType: 'pkce',
+        lock: lockShim as any,
       },
       realtime: {
         params: {
