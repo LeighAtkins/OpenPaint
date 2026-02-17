@@ -30,7 +30,7 @@ const CLOUD_UI_STYLES = /* css */ `
     position: fixed;
     inset: 0;
     z-index: 10001;
-    display: flex;
+    display: none;
     align-items: center;
     justify-content: center;
     background: rgba(0, 0, 0, 0.5);
