@@ -186,14 +186,15 @@ async function bootstrap(): Promise<void> {
     runSafe('initScrollSelectSystem-early', () => initScrollSelectSystem());
     window.__openpaintInitState = { phase: 'pre-ui-init-done', timestamp: Date.now() };
 
+    const hasOAuthCodeAtBootstrap = new URLSearchParams(window.location.search).has('code');
+
     // ── Initialize auth (non-blocking by default; blocking on OAuth callback URL) ──
     if (isAuthEnabled() && isSupabaseConfigured()) {
-      const hasOAuthCode = new URLSearchParams(window.location.search).has('code');
       window.__openpaintInitState = {
-        phase: hasOAuthCode ? 'auth-init-callback' : 'auth-init-normal',
+        phase: hasOAuthCodeAtBootstrap ? 'auth-init-callback' : 'auth-init-normal',
         timestamp: Date.now(),
       };
-      if (hasOAuthCode) {
+      if (hasOAuthCodeAtBootstrap) {
         const authInitResult = await awaitWithTimeout(
           authService.initialize().catch((err: unknown) => {
             console.warn('[Auth] Callback init error:', err);
@@ -238,6 +239,23 @@ async function bootstrap(): Promise<void> {
     runSafe('initProjectNaming', () => initProjectNaming());
     runSafe('initMeasurementRelations', () => initMeasurementRelations());
     runSafe('initStatusMessageHandler', () => initStatusMessageHandler());
+
+    // Post-callback reconciliation loop:
+    // Some browsers persist auth state asynchronously after PKCE exchange.
+    // Keep reconciling briefly so UI reflects signed-in state deterministically.
+    if (hasOAuthCodeAtBootstrap && isAuthEnabled() && isSupabaseConfigured()) {
+      void (async () => {
+        for (let attempt = 0; attempt < 20; attempt += 1) {
+          await authService.refreshCurrentUserFromClient();
+          if (authService.isAuthenticated()) {
+            break;
+          }
+          await new Promise(resolve => {
+            setTimeout(resolve, 500);
+          });
+        }
+      })();
+    }
 
     // Initialize AI export (async, non-blocking)
     initAIExport().catch((error: unknown) => {
