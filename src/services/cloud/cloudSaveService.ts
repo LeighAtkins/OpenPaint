@@ -53,8 +53,23 @@ class CloudSaveService {
     const { name, projectData, currentProjectId } = options;
 
     try {
-      const user = client.auth.getUser();
-      const userId = (await user).data.user?.id;
+      // Estimate payload size — warn if over 4MB (Supabase REST limit is ~8MB)
+      const payloadSize = JSON.stringify(projectData).length;
+      const payloadMB = (payloadSize / (1024 * 1024)).toFixed(1);
+      console.log(`[CloudSave] Payload size: ${payloadMB} MB`);
+      if (payloadSize > 50 * 1024 * 1024) {
+        return Result.err(
+          new AppError(
+            ErrorCode.VALIDATION_ERROR,
+            `Project is too large to save to cloud (${payloadMB} MB). Try reducing image count or size.`
+          )
+        );
+      }
+
+      const {
+        data: { user },
+      } = await client.auth.getUser();
+      const userId = user?.id;
 
       if (!userId) {
         return Result.err(
@@ -65,54 +80,77 @@ class CloudSaveService {
       const now = new Date().toISOString();
       const projectId = currentProjectId || this.currentCloudProjectId;
 
-      if (projectId) {
-        const { data, error } = await client
-          .from(DATABASE_TABLES.PROJECTS)
-          .update({
-            name,
-            data: projectData,
-            updated_at: now,
-          } as any)
-          .eq('id', projectId)
-          .eq('user_id', userId)
-          .select()
-          .single();
+      // Use AbortController for timeout (30s)
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 30000);
 
-        if (error) {
-          return Result.err(
-            new AppError(
-              ErrorCode.SUPABASE_QUERY_ERROR,
-              `Failed to update project: ${error.message}`
-            )
-          );
+      try {
+        if (projectId) {
+          // Update existing — only return id, name, dates (not the huge data column)
+          const { data, error } = await client
+            .from(DATABASE_TABLES.PROJECTS)
+            .update({
+              name,
+              data: projectData,
+              updated_at: now,
+            } as any)
+            .eq('id', projectId)
+            .eq('user_id', userId)
+            .select('id, name, user_id, created_at, updated_at')
+            .single()
+            .abortSignal(controller.signal);
+
+          if (error) {
+            return Result.err(
+              new AppError(
+                ErrorCode.SUPABASE_QUERY_ERROR,
+                `Failed to update project: ${error.message}`
+              )
+            );
+          }
+
+          return Result.ok({ ...data, data: {} } as CloudProject);
+        } else {
+          // Insert new — only return id, name, dates (not the huge data column)
+          const { data, error } = await client
+            .from(DATABASE_TABLES.PROJECTS)
+            .insert({
+              name,
+              user_id: userId,
+              data: projectData,
+              is_public: false,
+              tags: [],
+            } as any)
+            .select('id, name, user_id, created_at, updated_at')
+            .single()
+            .abortSignal(controller.signal);
+
+          if (error) {
+            return Result.err(
+              new AppError(
+                ErrorCode.SUPABASE_QUERY_ERROR,
+                `Failed to save project: ${error.message}`
+              )
+            );
+          }
+
+          if (data?.id) {
+            this.currentCloudProjectId = data.id;
+          }
+          return Result.ok({ ...data, data: {} } as CloudProject);
         }
-
-        return Result.ok(data as CloudProject);
-      } else {
-        const { data, error } = await client
-          .from(DATABASE_TABLES.PROJECTS)
-          .insert({
-            name,
-            user_id: userId,
-            data: projectData,
-            is_public: false,
-            tags: [],
-          } as any)
-          .select()
-          .single();
-
-        if (error) {
-          return Result.err(
-            new AppError(ErrorCode.SUPABASE_QUERY_ERROR, `Failed to save project: ${error.message}`)
-          );
-        }
-
-        if (data && data.id) {
-          this.currentCloudProjectId = data.id;
-        }
-        return Result.ok(data as CloudProject);
+      } finally {
+        clearTimeout(timeout);
       }
     } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        return Result.err(
+          new AppError(
+            ErrorCode.NETWORK_ERROR,
+            'Cloud save timed out. The project may be too large. Try with fewer images.'
+          )
+        );
+      }
       return Result.err(
         new AppError(
           ErrorCode.UNKNOWN_ERROR,
