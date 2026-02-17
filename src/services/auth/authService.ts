@@ -134,9 +134,10 @@ export class AuthService {
           }
         }
 
-        if (resolvedSession?.user) {
-          await this.ensureProfile(resolvedSession.user);
-          const userResult = await this.enrichUserWithProfile(resolvedSession.user);
+        const resolvedUser = resolvedSession?.user ?? null;
+        if (resolvedUser) {
+          await this.ensureProfile(resolvedUser);
+          const userResult = await this.enrichUserWithProfile(resolvedUser);
           if (userResult.success) {
             this.currentUser = userResult.data;
           } else {
@@ -145,16 +146,43 @@ export class AuthService {
               userResult.error.message
             );
             this.currentUser = {
-              id: resolvedSession.user.id,
-              email: resolvedSession.user.email || '',
-              emailConfirmed: resolvedSession.user.email_confirmed_at !== null,
-              createdAt: resolvedSession.user.created_at,
+              id: resolvedUser.id,
+              email: resolvedUser.email || '',
+              emailConfirmed: resolvedUser.email_confirmed_at !== null,
+              createdAt: resolvedUser.created_at,
             };
           }
           this.notifySessionListeners(this.currentUser);
         } else {
-          this.currentUser = null;
-          this.notifySessionListeners(null);
+          // Fallback: token exchange can succeed while getSession() is briefly null.
+          // Check current user directly before treating as signed out.
+          const {
+            data: { user: currentAuthUser },
+            error: userError,
+          } = await clientResult.data.auth.getUser();
+
+          if (userError) {
+            console.warn('[Auth] getUser fallback failed:', userError.message);
+          }
+
+          if (currentAuthUser) {
+            await this.ensureProfile(currentAuthUser);
+            const userResult = await this.enrichUserWithProfile(currentAuthUser);
+            if (userResult.success) {
+              this.currentUser = userResult.data;
+            } else {
+              this.currentUser = {
+                id: currentAuthUser.id,
+                email: currentAuthUser.email || '',
+                emailConfirmed: currentAuthUser.email_confirmed_at !== null,
+                createdAt: currentAuthUser.created_at,
+              };
+            }
+            this.notifySessionListeners(this.currentUser);
+          } else {
+            this.currentUser = null;
+            this.notifySessionListeners(null);
+          }
         }
 
         this.initialized = true;
