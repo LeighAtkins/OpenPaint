@@ -61,231 +61,120 @@ export class AuthService {
   private currentUser: AuthUser | null = null;
   private sessionListeners: Array<(user: AuthUser | null) => void> = [];
   private initialized = false;
-  private initPromise: Promise<void> | null = null;
-  private lastKnownSignedInAt = 0;
-  private callbackHydrationStartedAt = 0;
 
-  private async sleep(ms: number): Promise<void> {
-    await new Promise(resolve => setTimeout(resolve, ms));
-  }
-
+  /**
+   * Build a basic AuthUser from a Supabase User (no profile query needed)
+   */
   private buildBasicUser(user: User): AuthUser {
+    const meta = user.user_metadata || {};
     return {
       id: user.id,
       email: user.email || '',
       emailConfirmed: user.email_confirmed_at !== null,
       createdAt: user.created_at,
+      lastSignInAt: user.last_sign_in_at || undefined,
+      // Synthesize a minimal profile from Google metadata so the UI has a name/avatar
+      profile: {
+        id: user.id,
+        email: user.email || '',
+        display_name: (meta['full_name'] as string) || user.email?.split('@')[0] || null,
+        avatar_url: (meta['avatar_url'] as string) || null,
+        preferences: DEFAULT_USER_PREFERENCES,
+        created_at: user.created_at,
+        updated_at: user.created_at,
+        last_login_at: null,
+        storage_used: 0,
+      } as UserProfileRow,
     };
   }
 
-  private async setCurrentUserFromSupabaseUser(user: User): Promise<void> {
-    await this.ensureProfile(user);
-    const userResult = await this.enrichUserWithProfile(user);
-    if (userResult.success) {
-      this.currentUser = userResult.data;
-    } else {
-      console.warn('[Auth] Profile enrichment failed, using basic data:', userResult.error.message);
-      this.currentUser = this.buildBasicUser(user);
-    }
-    this.lastKnownSignedInAt = Date.now();
+  /**
+   * Set currentUser from a Supabase User and notify listeners.
+   * Tries to load the DB profile; falls back to metadata-based profile.
+   */
+  private async setCurrentUser(user: User): Promise<void> {
+    // Start with basic user from metadata (always works, no API calls)
+    this.currentUser = this.buildBasicUser(user);
+    // Notify listeners immediately so UI updates right away
     this.notifySessionListeners(this.currentUser);
+
+    // Then try to enrich with DB profile in the background (non-blocking)
+    try {
+      const enriched = await this.enrichUserWithProfile(user);
+      if (enriched.success) {
+        this.currentUser = enriched.data;
+        this.notifySessionListeners(this.currentUser);
+      }
+    } catch {
+      // Profile enrichment is optional — basic user data is sufficient
+    }
+
+    // Best-effort: ensure a profile row exists for future use
+    this.ensureProfile(user).catch(() => {});
   }
 
-  /**
-   * Initialize the service with a Supabase client
-   */
-  private async getClient(): Promise<Result<SupabaseClient<Database>, AppError>> {
+  private getClientSync(): SupabaseClient<Database> | null {
     if (!this.client) {
       const result = getSupabaseClient();
-      if (!result.success) {
-        return result;
-      }
+      if (!result.success) return null;
       this.client = result.data;
-      this.setupAuthListener();
     }
-    return Result.ok(this.client);
+    return this.client;
   }
 
   /**
    * Initialize the auth service on app boot.
-   * Restores session from localStorage and processes OAuth hash tokens.
+   * Restores session from localStorage and processes OAuth callback codes.
    */
   async initialize(): Promise<void> {
     if (this.initialized) return;
-    if (this.initPromise) return this.initPromise;
+    this.initialized = true;
 
-    this.initPromise = (async () => {
-      try {
-        const clientResult = await this.getClient();
-        if (!clientResult.success) {
-          console.warn('[Auth] Could not initialize:', clientResult.error.message);
-          return;
-        }
+    const client = this.getClientSync();
+    if (!client) {
+      console.warn('[Auth] Supabase client not available');
+      return;
+    }
 
-        // getSession() restores from localStorage and may process OAuth callback state.
-        const {
-          data: { session },
-          error,
-        } = await clientResult.data.auth.getSession();
-        if (error) {
-          console.warn(
-            '[Auth] Session restore failed, continuing with callback fallback:',
-            error.message
-          );
-        }
+    // Set up the auth state listener FIRST so we catch all events
+    this.setupAuthListener(client);
 
-        let resolvedSession: Session | null = session ?? null;
-        let cleanedCallbackUrl: string | null = null;
-
-        // Explicit OAuth PKCE callback fallback:
-        // If a code exists in URL but no session was restored, try exchanging manually.
-        let hadOAuthCode = false;
-        if (!resolvedSession?.user && typeof window !== 'undefined') {
-          const params = new URLSearchParams(window.location.search);
-          const code = params.get('code');
-          if (code) {
-            hadOAuthCode = true;
-            this.callbackHydrationStartedAt = Date.now();
-            const { data: exchangeData, error: exchangeError } =
-              await clientResult.data.auth.exchangeCodeForSession(code);
-
-            if (exchangeError) {
-              console.warn('[Auth] PKCE code exchange failed:', exchangeError.message);
-            } else {
-              resolvedSession = exchangeData.session;
-            }
-
-            // Cleanup OAuth params to avoid repeated processing on refresh.
-            params.delete('code');
-            params.delete('state');
-            params.delete('error');
-            params.delete('error_description');
-            const nextQuery = params.toString();
-            const nextUrl = `${window.location.pathname}${nextQuery ? `?${nextQuery}` : ''}${window.location.hash}`;
-            cleanedCallbackUrl = nextUrl;
-            window.history.replaceState({}, document.title, nextUrl);
-          }
-        }
-
-        // OAuth callback can be eventually consistent across storage/session hydration.
-        // If we just exchanged a code but still don't see a user, retry briefly.
-        let fallbackUser: User | null = null;
-        if (!resolvedSession?.user && hadOAuthCode) {
-          for (let attempt = 0; attempt < 15; attempt += 1) {
-            await this.sleep(300);
-
-            const {
-              data: { session: retrySession },
-            } = await clientResult.data.auth.getSession();
-            if (retrySession?.user) {
-              resolvedSession = retrySession;
-              break;
-            }
-
-            const {
-              data: { user: retryUser },
-            } = await clientResult.data.auth.getUser();
-            if (retryUser) {
-              fallbackUser = retryUser;
-              break;
-            }
-          }
-        }
-
-        const resolvedUser = resolvedSession?.user ?? fallbackUser ?? null;
-        if (resolvedUser) {
-          await this.setCurrentUserFromSupabaseUser(resolvedUser);
-
-          // One-time hard reload after OAuth callback to guarantee clean app bootstrap.
-          // This avoids intermittent post-auth partial UI state caused by callback-time races.
-          if (hadOAuthCode && cleanedCallbackUrl && typeof window !== 'undefined') {
-            const reloadKey = '__openpaint_auth_callback_reload_done';
-            const alreadyReloaded = window.sessionStorage.getItem(reloadKey) === '1';
-            if (!alreadyReloaded) {
-              window.sessionStorage.setItem(reloadKey, '1');
-              window.location.replace(cleanedCallbackUrl);
-              return;
-            }
-          }
-        } else {
-          // Fallback: token exchange can succeed while getSession() is briefly null.
-          // Check current user directly before treating as signed out.
-          const {
-            data: { user: currentAuthUser },
-            error: userError,
-          } = await clientResult.data.auth.getUser();
-
-          if (userError) {
-            console.warn('[Auth] getUser fallback failed:', userError.message);
-          }
-
-          if (currentAuthUser) {
-            await this.setCurrentUserFromSupabaseUser(currentAuthUser);
-          } else {
-            this.currentUser = null;
-            this.notifySessionListeners(null);
-          }
-        }
-
-        // Clear one-time reload marker once we're on a normal non-callback URL.
-        if (
-          typeof window !== 'undefined' &&
-          !new URLSearchParams(window.location.search).has('code')
-        ) {
-          window.sessionStorage.removeItem('__openpaint_auth_callback_reload_done');
-        }
-
-        this.initialized = true;
-      } catch (err) {
-        // AbortError from Web Locks API is non-fatal — session may still be restored
-        // via onAuthStateChange listener
-        console.warn('[Auth] Initialize error (non-fatal):', err);
-      } finally {
-        this.initPromise = null;
-      }
-    })();
-
-    return this.initPromise;
-  }
-
-  /**
-   * Force-process OAuth callback code from URL if present.
-   * Returns true when a code param was present and processed.
-   */
-  async processOAuthCallbackIfPresent(): Promise<boolean> {
-    try {
-      if (typeof window === 'undefined') return false;
-
+    // Check for OAuth callback code in URL
+    if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const code = params.get('code');
-      if (!code) return false;
+      if (code) {
+        console.log('[Auth] Processing OAuth callback code...');
+        try {
+          const { error } = await client.auth.exchangeCodeForSession(code);
+          if (error) {
+            console.warn('[Auth] Code exchange failed:', error.message);
+          }
+        } catch (err) {
+          console.warn('[Auth] Code exchange error:', err);
+        }
 
-      const clientResult = await this.getClient();
-      if (!clientResult.success) return false;
-
-      this.callbackHydrationStartedAt = Date.now();
-
-      const { error } = await clientResult.data.auth.exchangeCodeForSession(code);
-      if (error) {
-        console.warn('[Auth] Explicit callback code exchange failed:', error.message);
+        // Clean callback params from URL
+        params.delete('code');
+        params.delete('state');
+        params.delete('error');
+        params.delete('error_description');
+        const nextQuery = params.toString();
+        const nextUrl = `${window.location.pathname}${nextQuery ? `?${nextQuery}` : ''}${window.location.hash}`;
+        window.history.replaceState({}, document.title, nextUrl);
       }
+    }
 
-      // Always clean callback params to avoid repeated processing.
-      params.delete('code');
-      params.delete('state');
-      params.delete('error');
-      params.delete('error_description');
-      const nextQuery = params.toString();
-      const nextUrl = `${window.location.pathname}${nextQuery ? `?${nextQuery}` : ''}${window.location.hash}`;
-      window.history.replaceState({}, document.title, nextUrl);
-
-      // Reconcile user immediately after exchange.
-      await this.refreshCurrentUserFromClient();
-
-      return true;
-    } catch (error) {
-      console.warn('[Auth] processOAuthCallbackIfPresent failed:', error);
-      return false;
+    // Restore session from localStorage
+    try {
+      const {
+        data: { session },
+      } = await client.auth.getSession();
+      if (session?.user && !this.currentUser) {
+        await this.setCurrentUser(session.user);
+      }
+    } catch (err) {
+      console.warn('[Auth] Session restore error:', err);
     }
   }
 
@@ -295,12 +184,14 @@ export class AuthService {
    */
   async signInWithGoogle(): Promise<Result<{ url: string }, AppError>> {
     try {
-      const clientResult = await this.getClient();
-      if (!clientResult.success) {
-        return Result.err(clientResult.error);
+      const client = this.getClientSync();
+      if (!client) {
+        return Result.err(
+          new AppError(ErrorCode.SUPABASE_NOT_CONFIGURED, 'Supabase client not available')
+        );
       }
 
-      const { data, error } = await clientResult.data.auth.signInWithOAuth({
+      const { data, error } = await client.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: window.location.origin,
@@ -330,14 +221,13 @@ export class AuthService {
 
   /**
    * Ensure a user_profiles row exists for an OAuth user.
-   * Fallback in case the DB trigger isn't set up.
    */
   private async ensureProfile(user: User): Promise<void> {
-    try {
-      const clientResult = await this.getClient();
-      if (!clientResult.success) return;
+    const client = this.getClientSync();
+    if (!client) return;
 
-      const { data: existing } = await clientResult.data
+    try {
+      const { data: existing } = await client
         .from(DATABASE_TABLES.USER_PROFILES)
         .select('id')
         .eq('id', user.id)
@@ -357,73 +247,50 @@ export class AuthService {
         updated_at: new Date().toISOString(),
       };
 
-      await clientResult.data.from(DATABASE_TABLES.USER_PROFILES).insert(profileData as any);
-    } catch (error) {
-      console.error('[Auth] Failed to ensure profile:', error);
+      await client.from(DATABASE_TABLES.USER_PROFILES).insert(profileData as any);
+    } catch {
+      // Non-critical — profile will be created on next sign-in
     }
   }
 
   /**
    * Set up auth state change listener
    */
-  private setupAuthListener(): void {
-    if (!this.client) return;
-
-    this.client.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session | null) => {
+  private setupAuthListener(client: SupabaseClient<Database>): void {
+    client.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session | null) => {
       try {
         switch (event) {
           case 'INITIAL_SESSION':
           case 'SIGNED_IN':
             if (session?.user) {
-              await this.setCurrentUserFromSupabaseUser(session.user);
+              await this.setCurrentUser(session.user);
             }
             break;
 
           case 'SIGNED_OUT':
-            // Guard against transient SIGNED_OUT during callback/session hydration.
-            if (
-              (Date.now() - this.lastKnownSignedInAt < 15000 ||
-                Date.now() - this.callbackHydrationStartedAt < 30000) &&
-              this.client
-            ) {
-              for (let attempt = 0; attempt < 10; attempt += 1) {
-                const {
-                  data: { user: maybeUser },
-                } = await this.client.auth.getUser();
-                if (maybeUser) {
-                  await this.setCurrentUserFromSupabaseUser(maybeUser);
-                  return;
-                }
-                await this.sleep(300);
-              }
-            }
             this.currentUser = null;
             this.notifySessionListeners(null);
             break;
 
           case 'TOKEN_REFRESHED':
-            // User session refreshed, no action needed
             break;
 
           case 'USER_UPDATED':
-            if (session?.user && this.currentUser) {
-              await this.setCurrentUserFromSupabaseUser(session.user);
+            if (session?.user) {
+              await this.setCurrentUser(session.user);
             }
             break;
         }
       } catch (error) {
-        console.error('[Auth] Auth state listener failed, applying fallback user state:', error);
-
-        if ((event === 'INITIAL_SESSION' || event === 'SIGNED_IN') && session?.user) {
+        console.error('[Auth] Auth state listener error:', error);
+        // Last resort: if we have a session user, set basic data
+        if (
+          (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') &&
+          session?.user &&
+          !this.currentUser
+        ) {
           this.currentUser = this.buildBasicUser(session.user);
-          this.lastKnownSignedInAt = Date.now();
           this.notifySessionListeners(this.currentUser);
-          return;
-        }
-
-        if (event === 'SIGNED_OUT') {
-          this.currentUser = null;
-          this.notifySessionListeners(null);
         }
       }
     });
@@ -444,7 +311,7 @@ export class AuthService {
 
   /**
    * Subscribe to auth state changes.
-   * If already authenticated, the callback is invoked immediately with the current user.
+   * If already authenticated, the callback is invoked immediately.
    */
   onAuthStateChange(callback: (user: AuthUser | null) => void): () => void {
     this.sessionListeners.push(callback);
@@ -458,7 +325,6 @@ export class AuthService {
       }
     }
 
-    // Return unsubscribe function
     return () => {
       const index = this.sessionListeners.indexOf(callback);
       if (index > -1) {
@@ -468,17 +334,18 @@ export class AuthService {
   }
 
   /**
-   * Enrich Supabase user with profile data
+   * Enrich Supabase user with profile data from DB
    */
   private async enrichUserWithProfile(user: User): Promise<Result<AuthUser, AppError>> {
-    try {
-      const clientResult = await this.getClient();
-      if (!clientResult.success) {
-        return Result.err(clientResult.error);
-      }
+    const client = this.getClientSync();
+    if (!client) {
+      return Result.err(
+        new AppError(ErrorCode.SUPABASE_NOT_CONFIGURED, 'Supabase client not available')
+      );
+    }
 
-      // Get user profile
-      const { data: profile, error } = await clientResult.data
+    try {
+      const { data: profile, error } = await client
         .from(DATABASE_TABLES.USER_PROFILES)
         .select('*')
         .eq('id', user.id)
@@ -525,18 +392,18 @@ export class AuthService {
     credentials: SignUpCredentials
   ): Promise<Result<{ user: AuthUser; needsVerification: boolean }, AppError>> {
     try {
-      const clientResult = await this.getClient();
-      if (!clientResult.success) {
-        return Result.err(clientResult.error);
+      const client = this.getClientSync();
+      if (!client) {
+        return Result.err(
+          new AppError(ErrorCode.SUPABASE_NOT_CONFIGURED, 'Supabase client not available')
+        );
       }
 
-      // Validate credentials
       const validationResult = this.validateCredentials(credentials);
       if (!validationResult.success) {
         return Result.err(validationResult.error);
       }
 
-      // Sign up with Supabase Auth
       const signUpOptions: { emailRedirectTo?: string; data?: object } = {};
       if (credentials.redirectUrl) {
         signUpOptions.emailRedirectTo = credentials.redirectUrl;
@@ -545,7 +412,7 @@ export class AuthService {
         signUpOptions.data = { display_name: credentials.displayName };
       }
 
-      const { data, error } = await clientResult.data.auth.signUp({
+      const { data, error } = await client.auth.signUp({
         email: credentials.email,
         password: credentials.password,
         ...(Object.keys(signUpOptions).length > 0 ? { options: signUpOptions } : {}),
@@ -559,7 +426,6 @@ export class AuthService {
         return Result.err(new AppError(ErrorCode.AUTH_ERROR, 'Sign up failed - no user returned'));
       }
 
-      // Create user profile
       const profileData: UserProfileInsert = {
         id: data.user.id,
         email: credentials.email,
@@ -569,13 +435,10 @@ export class AuthService {
         profileData.display_name = credentials.displayName;
       }
       const profileResult = await this.createUserProfile(data.user.id, profileData);
-
       if (!profileResult.success) {
-        // Log error but don't fail signup
         console.error('Failed to create user profile:', profileResult.error);
       }
 
-      // Enrich user data
       const userResult = await this.enrichUserWithProfile(data.user);
       if (!userResult.success) {
         return Result.err(userResult.error);
@@ -601,12 +464,14 @@ export class AuthService {
    */
   async signIn(credentials: SignInCredentials): Promise<Result<AuthUser, AppError>> {
     try {
-      const clientResult = await this.getClient();
-      if (!clientResult.success) {
-        return Result.err(clientResult.error);
+      const client = this.getClientSync();
+      if (!client) {
+        return Result.err(
+          new AppError(ErrorCode.SUPABASE_NOT_CONFIGURED, 'Supabase client not available')
+        );
       }
 
-      const { data, error } = await clientResult.data.auth.signInWithPassword({
+      const { data, error } = await client.auth.signInWithPassword({
         email: credentials.email,
         password: credentials.password,
       });
@@ -619,10 +484,8 @@ export class AuthService {
         return Result.err(new AppError(ErrorCode.AUTH_ERROR, 'Sign in failed - no user returned'));
       }
 
-      // Update last login time
       await this.updateLastLogin(data.user.id);
 
-      // Enrich user data
       const userResult = await this.enrichUserWithProfile(data.user);
       if (!userResult.success) {
         return Result.err(userResult.error);
@@ -646,13 +509,14 @@ export class AuthService {
    */
   async signOut(): Promise<Result<boolean, AppError>> {
     try {
-      const clientResult = await this.getClient();
-      if (!clientResult.success) {
-        return Result.err(clientResult.error);
+      const client = this.getClientSync();
+      if (!client) {
+        return Result.err(
+          new AppError(ErrorCode.SUPABASE_NOT_CONFIGURED, 'Supabase client not available')
+        );
       }
 
-      const { error } = await clientResult.data.auth.signOut();
-
+      const { error } = await client.auth.signOut();
       if (error) {
         return Result.err(this.mapAuthError(error));
       }
@@ -674,9 +538,11 @@ export class AuthService {
    */
   async resetPassword(credentials: ResetPasswordCredentials): Promise<Result<boolean, AppError>> {
     try {
-      const clientResult = await this.getClient();
-      if (!clientResult.success) {
-        return Result.err(clientResult.error);
+      const client = this.getClientSync();
+      if (!client) {
+        return Result.err(
+          new AppError(ErrorCode.SUPABASE_NOT_CONFIGURED, 'Supabase client not available')
+        );
       }
 
       const resetOptions: { redirectTo?: string } = {};
@@ -684,7 +550,7 @@ export class AuthService {
         resetOptions.redirectTo = credentials.redirectUrl;
       }
 
-      const { error } = await clientResult.data.auth.resetPasswordForEmail(
+      const { error } = await client.auth.resetPasswordForEmail(
         credentials.email,
         Object.keys(resetOptions).length > 0 ? resetOptions : undefined
       );
@@ -710,15 +576,14 @@ export class AuthService {
    */
   async updatePassword(newPassword: string): Promise<Result<boolean, AppError>> {
     try {
-      const clientResult = await this.getClient();
-      if (!clientResult.success) {
-        return Result.err(clientResult.error);
+      const client = this.getClientSync();
+      if (!client) {
+        return Result.err(
+          new AppError(ErrorCode.SUPABASE_NOT_CONFIGURED, 'Supabase client not available')
+        );
       }
 
-      const { error } = await clientResult.data.auth.updateUser({
-        password: newPassword,
-      });
-
+      const { error } = await client.auth.updateUser({ password: newPassword });
       if (error) {
         return Result.err(this.mapAuthError(error));
       }
@@ -734,34 +599,27 @@ export class AuthService {
     }
   }
 
-  /**
-   * Get current authenticated user
-   */
   getCurrentUser(): AuthUser | null {
     return this.currentUser;
   }
 
-  /**
-   * Check if user is authenticated
-   */
   isAuthenticated(): boolean {
     return this.currentUser !== null;
   }
 
-  /**
-   * Get current session
-   */
   async getCurrentSession(): Promise<Result<Session | null, AppError>> {
     try {
-      const clientResult = await this.getClient();
-      if (!clientResult.success) {
-        return Result.err(clientResult.error);
+      const client = this.getClientSync();
+      if (!client) {
+        return Result.err(
+          new AppError(ErrorCode.SUPABASE_NOT_CONFIGURED, 'Supabase client not available')
+        );
       }
 
       const {
         data: { session },
         error,
-      } = await clientResult.data.auth.getSession();
+      } = await client.auth.getSession();
 
       if (error) {
         return Result.err(this.mapAuthError(error));
@@ -779,32 +637,6 @@ export class AuthService {
   }
 
   /**
-   * Reconcile in-memory auth user from current Supabase client state.
-   * Useful when OAuth/token exchange succeeded but UI initialized before hydration settled.
-   */
-  async refreshCurrentUserFromClient(): Promise<void> {
-    try {
-      const clientResult = await this.getClient();
-      if (!clientResult.success) {
-        return;
-      }
-
-      const {
-        data: { user },
-      } = await clientResult.data.auth.getUser();
-
-      if (user) {
-        await this.setCurrentUserFromSupabaseUser(user);
-      } else {
-        this.currentUser = null;
-        this.notifySessionListeners(null);
-      }
-    } catch (error) {
-      console.warn('[Auth] refreshCurrentUserFromClient failed:', error);
-    }
-  }
-
-  /**
    * Update user profile
    */
   async updateProfile(data: UpdateProfileData): Promise<Result<UserProfileRow, AppError>> {
@@ -813,9 +645,11 @@ export class AuthService {
         return Result.err(new AppError(ErrorCode.AUTH_ERROR, 'No authenticated user'));
       }
 
-      const clientResult = await this.getClient();
-      if (!clientResult.success) {
-        return Result.err(clientResult.error);
+      const client = this.getClientSync();
+      if (!client) {
+        return Result.err(
+          new AppError(ErrorCode.SUPABASE_NOT_CONFIGURED, 'Supabase client not available')
+        );
       }
 
       const updateData: UserProfileUpdate = {
@@ -837,7 +671,7 @@ export class AuthService {
         };
       }
 
-      const { data: profile, error } = await clientResult.data
+      const { data: profile, error } = await client
         .from(DATABASE_TABLES.USER_PROFILES)
         .update(updateData as unknown as never)
         .eq('id', this.currentUser.id)
@@ -853,7 +687,6 @@ export class AuthService {
         );
       }
 
-      // Update current user
       if (this.currentUser.profile) {
         this.currentUser.profile = profile;
       }
@@ -876,12 +709,14 @@ export class AuthService {
     userId: string,
     data: Omit<UserProfileInsert, 'id' | 'created_at' | 'updated_at'>
   ): Promise<Result<UserProfileRow, AppError>> {
-    try {
-      const clientResult = await this.getClient();
-      if (!clientResult.success) {
-        return Result.err(clientResult.error);
-      }
+    const client = this.getClientSync();
+    if (!client) {
+      return Result.err(
+        new AppError(ErrorCode.SUPABASE_NOT_CONFIGURED, 'Supabase client not available')
+      );
+    }
 
+    try {
       const profileData: UserProfileInsert = {
         id: userId,
         ...data,
@@ -889,7 +724,7 @@ export class AuthService {
         updated_at: new Date().toISOString(),
       };
 
-      const { data: profile, error } = await clientResult.data
+      const { data: profile, error } = await client
         .from(DATABASE_TABLES.USER_PROFILES)
         .insert(profileData as any)
         .select()
@@ -920,40 +755,33 @@ export class AuthService {
    * Update last login timestamp
    */
   private async updateLastLogin(userId: string): Promise<void> {
-    try {
-      const clientResult = await this.getClient();
-      if (!clientResult.success) return;
+    const client = this.getClientSync();
+    if (!client) return;
 
-      await clientResult.data
+    try {
+      await client
         .from(DATABASE_TABLES.USER_PROFILES)
         .update({ last_login_at: new Date().toISOString() } as unknown as never)
         .eq('id', userId);
-    } catch (error) {
-      // Log but don't fail authentication
-      console.error('Failed to update last login:', error);
+    } catch {
+      // Non-critical
     }
   }
 
-  /**
-   * Validate sign up credentials
-   */
   private validateCredentials(
     credentials: SignUpCredentials | SignInCredentials
   ): Result<true, AppError> {
-    // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(credentials.email)) {
       return Result.err(new AppError(ErrorCode.VALIDATION_ERROR, 'Invalid email format'));
     }
 
-    // Password validation
     if (credentials.password.length < 6) {
       return Result.err(
         new AppError(ErrorCode.VALIDATION_ERROR, 'Password must be at least 6 characters')
       );
     }
 
-    // Display name validation (for sign up)
     if ('displayName' in credentials && credentials.displayName) {
       if (credentials.displayName.length > 50) {
         return Result.err(
@@ -965,9 +793,6 @@ export class AuthService {
     return Result.ok(true);
   }
 
-  /**
-   * Map Supabase auth errors to AppError
-   */
   private mapAuthError(authError: AuthError): AppError {
     switch (authError.message) {
       case 'Invalid login credentials':
@@ -993,22 +818,20 @@ export class AuthService {
     }
   }
 
-  /**
-   * Delete user account (requires re-authentication)
-   */
   async deleteAccount(): Promise<Result<boolean, AppError>> {
     try {
       if (!this.currentUser) {
         return Result.err(new AppError(ErrorCode.AUTH_ERROR, 'No authenticated user'));
       }
 
-      const clientResult = await this.getClient();
-      if (!clientResult.success) {
-        return Result.err(clientResult.error);
+      const client = this.getClientSync();
+      if (!client) {
+        return Result.err(
+          new AppError(ErrorCode.SUPABASE_NOT_CONFIGURED, 'Supabase client not available')
+        );
       }
 
-      // Delete user profile first
-      const { error: profileError } = await clientResult.data
+      const { error: profileError } = await client
         .from(DATABASE_TABLES.USER_PROFILES)
         .delete()
         .eq('id', this.currentUser.id);
@@ -1017,10 +840,7 @@ export class AuthService {
         console.error('Failed to delete user profile:', profileError);
       }
 
-      // Delete auth user
-      const { error: authError } = await clientResult.data.auth.admin.deleteUser(
-        this.currentUser.id
-      );
+      const { error: authError } = await client.auth.admin.deleteUser(this.currentUser.id);
 
       if (authError) {
         return Result.err(

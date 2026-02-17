@@ -16,36 +16,13 @@
   const toolbarMode = isMobile ? 'compact' : 'full';
   document.documentElement.setAttribute('data-toolbar-mode', toolbarMode);
   document.documentElement.setAttribute('data-toolbar-initial', toolbarMode);
-
-  // Fail-open safety: never leave the app permanently hidden.
-  // If bootstrap crashes before cleanup, reveal UI so users can still interact.
-  window.setTimeout(() => {
-    document.documentElement.classList.remove('app-loading');
-  }, 6000);
-
-  window.addEventListener(
-    'pageshow',
-    () => {
-      document.documentElement.classList.remove('app-loading');
-    },
-    { once: true }
-  );
 })();
 
 // Suppress autofill extension errors
 window.addEventListener('error', event => {
   if (event.message && event.message.includes('autofill.bundle.js')) {
     event.preventDefault();
-    return;
   }
-
-  // If a top-level runtime error occurs before bootstrap cleanup,
-  // ensure the UI is still revealed.
-  document.documentElement.classList.remove('app-loading');
-});
-
-window.addEventListener('unhandledrejection', () => {
-  document.documentElement.classList.remove('app-loading');
 });
 
 // ── 1. Vendor libraries (must load before app modules) ──────────────────────
@@ -99,11 +76,6 @@ declare global {
     enhanceAnnotations?: any;
     saveCurrentCaptureFrameForLabel?: any;
     __TEXT_DEBUG?: boolean;
-    __openpaintInitState?: {
-      phase: string;
-      timestamp: number;
-    };
-    __scrollSelectInitDone?: boolean;
   }
 }
 
@@ -150,165 +122,112 @@ initStatusMessage();
 
 const CONTEXT = 'OpenPaint';
 
-function runSafe(step: string, fn: () => void): void {
-  try {
-    fn();
-  } catch (error) {
-    console.error(`[Bootstrap] ${step} failed:`, error);
-  }
-}
-
-async function awaitWithTimeout<T>(promise: Promise<T>, ms: number): Promise<T | null> {
-  const timeout = new Promise<null>(resolve => {
-    window.setTimeout(() => resolve(null), ms);
-  });
-  return Promise.race([promise, timeout]);
-}
-
 async function bootstrap(): Promise<void> {
   logger.info(CONTEXT, 'Bootstrapping OpenPaint...');
   logger.info(CONTEXT, `Environment: ${env.isDevelopment ? 'development' : 'production'}`);
-  window.__openpaintInitState = { phase: 'bootstrap-start', timestamp: Date.now() };
 
-  try {
-    // Wait for DOM to be ready
-    if (document.readyState === 'loading') {
-      await new Promise<void>(resolve => {
-        document.addEventListener('DOMContentLoaded', () => resolve());
-      });
-    }
-
-    // ── Run pre-DOM-ready UI init ──
-    runSafe('initToolbarSizing', () => initToolbarSizing());
-    runSafe('initToolbarReady', () => initToolbarReady());
-    runSafe('initPanelRelocation', () => initPanelRelocation());
-    runSafe('initFrameCaptureToggle', () => initFrameCaptureToggle());
-    runSafe('initScrollSelectSystem-early', () => initScrollSelectSystem());
-    window.__openpaintInitState = { phase: 'pre-ui-init-done', timestamp: Date.now() };
-
-    const hasOAuthCodeAtBootstrap = new URLSearchParams(window.location.search).has('code');
-
-    // ── Initialize auth (non-blocking by default; blocking on OAuth callback URL) ──
-    if (isAuthEnabled() && isSupabaseConfigured()) {
-      window.__openpaintInitState = {
-        phase: hasOAuthCodeAtBootstrap ? 'auth-init-callback' : 'auth-init-normal',
-        timestamp: Date.now(),
-      };
-      if (hasOAuthCodeAtBootstrap) {
-        // Explicit callback processing first to guarantee token exchange path runs.
-        await awaitWithTimeout(authService.processOAuthCallbackIfPresent(), 8000);
-
-        const authInitResult = await awaitWithTimeout(
-          authService.initialize().catch((err: unknown) => {
-            console.warn('[Auth] Callback init error:', err);
-          }),
-          3000
-        );
-        if (authInitResult === null) {
-          console.warn('[Auth] Callback init timed out; continuing bootstrap.');
-        }
-
-        window.setTimeout(() => {
-          if (typeof window.updateImageListPadding !== 'function') {
-            runSafe('initScrollSelectSystem-watchdog', () => initScrollSelectSystem());
-          }
-        }, 2000);
-      } else {
-        authService.initialize().catch((err: unknown) => {
-          console.warn('[Auth] Non-blocking init error:', err);
-        });
-      }
-    }
-
-    // Initialize auth UI as early as possible to avoid missing toolbar state updates
-    runSafe('initAuthUI', () => initAuthUI());
-    window.__openpaintInitState = { phase: 'auth-ui-init-done', timestamp: Date.now() };
-
-    // ── Initialize the core App (from modules/main.ts) ──
-    // The App class self-initializes on DOMContentLoaded via its own listener.
-    // We import it here so Vite bundles it; its DOMContentLoaded listener
-    // will fire since the DOM is already ready at this point.
-    await import('./modules/main');
-    window.__openpaintInitState = { phase: 'core-imported', timestamp: Date.now() };
-
-    // ── Post-app initialization ──
-    // These run after the App has initialized and set window.app
-    runSafe('initPdfExport', () => initPdfExport());
-    runSafe('initToolbarController', () => initToolbarController());
-    runSafe('initScrollSelectSystem', () => initScrollSelectSystem());
-    window.__openpaintInitState = { phase: 'scroll-select-init-done', timestamp: Date.now() };
-    runSafe('initSofaTypePicker', () => initSofaTypePicker());
-    runSafe('initMeasurementGuideFlash', () => initMeasurementGuideFlash());
-    runSafe('initProjectNaming', () => initProjectNaming());
-    runSafe('initMeasurementRelations', () => initMeasurementRelations());
-    runSafe('initStatusMessageHandler', () => initStatusMessageHandler());
-
-    // Post-callback reconciliation loop:
-    // Some browsers persist auth state asynchronously after PKCE exchange.
-    // Keep reconciling briefly so UI reflects signed-in state deterministically.
-    if (hasOAuthCodeAtBootstrap && isAuthEnabled() && isSupabaseConfigured()) {
-      void (async () => {
-        for (let attempt = 0; attempt < 20; attempt += 1) {
-          await authService.refreshCurrentUserFromClient();
-          if (authService.isAuthenticated()) {
-            break;
-          }
-          await new Promise(resolve => {
-            setTimeout(resolve, 500);
-          });
-        }
-      })();
-    }
-
-    // Initialize AI export (async, non-blocking)
-    initAIExport().catch((error: unknown) => {
-      console.warn('[AI Export] Non-critical init failure:', error);
+  // Wait for DOM to be ready
+  if (document.readyState === 'loading') {
+    await new Promise<void>(resolve => {
+      document.addEventListener('DOMContentLoaded', () => resolve());
     });
+  }
 
-    // Enhanced error handling
-    window.addEventListener('error', event => {
-      logger.error(CONTEXT, 'Global error caught', {
-        message: event.message,
-        filename: event.filename,
-        lineno: event.lineno,
-        colno: event.colno,
-        error: event.error,
-      });
+  // ── Run pre-DOM-ready UI init ──
+  initToolbarSizing();
+  initToolbarReady();
+  initPanelRelocation();
+  initFrameCaptureToggle();
+
+  // ── Initialize auth (non-blocking — app loads while auth resolves) ──
+  if (isAuthEnabled() && isSupabaseConfigured()) {
+    authService.initialize().catch((err: unknown) => {
+      console.warn('[Auth] Non-blocking init error:', err);
     });
+  }
 
-    window.addEventListener('unhandledrejection', event => {
-      logger.error(CONTEXT, 'Unhandled promise rejection', event.reason);
-      event.preventDefault();
+  // ── Initialize the core App (from modules/main.ts) ──
+  // The App class self-initializes on DOMContentLoaded via its own listener.
+  // We import it here so Vite bundles it; its DOMContentLoaded listener
+  // will fire since the DOM is already ready at this point.
+  await import('./modules/main');
+
+  // ── Post-app initialization ──
+  // These run after the App has initialized and set window.app
+
+  // Initialize PDF export (uses pdf-lib npm package)
+  initPdfExport();
+
+  // Initialize toolbar controller (wires up arrow toggles, dash patterns, etc.)
+  initToolbarController();
+
+  // Initialize scroll-select system and mini-stepper
+  initScrollSelectSystem();
+
+  // Initialize sofa type onboarding + save guard
+  initSofaTypePicker();
+
+  // Quick boss-key style SVG guide flash (hold backtick)
+  initMeasurementGuideFlash();
+
+  // Initialize naming controls and image part labeling
+  initProjectNaming();
+
+  // Initialize lightweight measurement checks + connections editor
+  initMeasurementRelations();
+  // Initialize status message handler
+  initStatusMessageHandler();
+
+  // Initialize auth UI (toolbar button + modal + auth state listener)
+  initAuthUI();
+
+  // Initialize AI export (async, non-blocking)
+  initAIExport().catch((error: unknown) => {
+    console.warn('[AI Export] Non-critical init failure:', error);
+  });
+
+  // Enhanced error handling
+  window.addEventListener('error', event => {
+    logger.error(CONTEXT, 'Global error caught', {
+      message: event.message,
+      filename: event.filename,
+      lineno: event.lineno,
+      colno: event.colno,
+      error: event.error,
     });
+  });
 
-    // Expose TypeScript utilities
-    if (!window.paintApp) {
-      window.paintApp = {} as any;
-    }
-    (window.paintApp as any).ts = {
+  window.addEventListener('unhandledrejection', event => {
+    logger.error(CONTEXT, 'Unhandled promise rejection', event.reason);
+    event.preventDefault();
+  });
+
+  // Expose TypeScript utilities
+  if (!window.paintApp) {
+    window.paintApp = {} as any;
+  }
+  (window.paintApp as any).ts = {
+    logger,
+    env,
+    version: '2.0.0',
+  };
+
+  // Development helpers
+  if (env.isDevelopment) {
+    (window as any).__openpaint_ts_dev = {
       logger,
       env,
-      version: '2.0.0',
+      getState: () => ({
+        appPresent: !!window.app,
+      }),
     };
-
-    // Development helpers
-    if (env.isDevelopment) {
-      (window as any).__openpaint_ts_dev = {
-        logger,
-        env,
-        getState: () => ({
-          appPresent: !!window.app,
-        }),
-      };
-      logger.debug(CONTEXT, 'Development helpers exposed at window.__openpaint_ts_dev');
-    }
-
-    logger.info(CONTEXT, 'Bootstrap complete');
-    window.__openpaintInitState = { phase: 'bootstrap-complete', timestamp: Date.now() };
-  } finally {
-    // Always reveal UI, even if some bootstrap step fails.
-    document.documentElement.classList.remove('app-loading');
+    logger.debug(CONTEXT, 'Development helpers exposed at window.__openpaint_ts_dev');
   }
+
+  // Remove loading class
+  document.documentElement.classList.remove('app-loading');
+
+  logger.info(CONTEXT, 'Bootstrap complete');
 }
 
 // ── Start ──
