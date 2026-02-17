@@ -99,6 +99,11 @@ declare global {
     enhanceAnnotations?: any;
     saveCurrentCaptureFrameForLabel?: any;
     __TEXT_DEBUG?: boolean;
+    __openpaintInitState?: {
+      phase: string;
+      timestamp: number;
+    };
+    __scrollSelectInitDone?: boolean;
   }
 }
 
@@ -156,6 +161,7 @@ function runSafe(step: string, fn: () => void): void {
 async function bootstrap(): Promise<void> {
   logger.info(CONTEXT, 'Bootstrapping OpenPaint...');
   logger.info(CONTEXT, `Environment: ${env.isDevelopment ? 'development' : 'production'}`);
+  window.__openpaintInitState = { phase: 'bootstrap-start', timestamp: Date.now() };
 
   try {
     // Wait for DOM to be ready
@@ -170,14 +176,26 @@ async function bootstrap(): Promise<void> {
     runSafe('initToolbarReady', () => initToolbarReady());
     runSafe('initPanelRelocation', () => initPanelRelocation());
     runSafe('initFrameCaptureToggle', () => initFrameCaptureToggle());
+    runSafe('initScrollSelectSystem-early', () => initScrollSelectSystem());
+    window.__openpaintInitState = { phase: 'pre-ui-init-done', timestamp: Date.now() };
 
     // ── Initialize auth (non-blocking by default; blocking on OAuth callback URL) ──
     if (isAuthEnabled() && isSupabaseConfigured()) {
       const hasOAuthCode = new URLSearchParams(window.location.search).has('code');
+      window.__openpaintInitState = {
+        phase: hasOAuthCode ? 'auth-init-callback' : 'auth-init-normal',
+        timestamp: Date.now(),
+      };
       if (hasOAuthCode) {
         await authService.initialize().catch((err: unknown) => {
           console.warn('[Auth] Callback init error:', err);
         });
+
+        window.setTimeout(() => {
+          if (typeof window.updateImageListPadding !== 'function') {
+            runSafe('initScrollSelectSystem-watchdog', () => initScrollSelectSystem());
+          }
+        }, 2000);
       } else {
         authService.initialize().catch((err: unknown) => {
           console.warn('[Auth] Non-blocking init error:', err);
@@ -187,18 +205,21 @@ async function bootstrap(): Promise<void> {
 
     // Initialize auth UI as early as possible to avoid missing toolbar state updates
     runSafe('initAuthUI', () => initAuthUI());
+    window.__openpaintInitState = { phase: 'auth-ui-init-done', timestamp: Date.now() };
 
     // ── Initialize the core App (from modules/main.ts) ──
     // The App class self-initializes on DOMContentLoaded via its own listener.
     // We import it here so Vite bundles it; its DOMContentLoaded listener
     // will fire since the DOM is already ready at this point.
     await import('./modules/main');
+    window.__openpaintInitState = { phase: 'core-imported', timestamp: Date.now() };
 
     // ── Post-app initialization ──
     // These run after the App has initialized and set window.app
     runSafe('initPdfExport', () => initPdfExport());
     runSafe('initToolbarController', () => initToolbarController());
     runSafe('initScrollSelectSystem', () => initScrollSelectSystem());
+    window.__openpaintInitState = { phase: 'scroll-select-init-done', timestamp: Date.now() };
     runSafe('initSofaTypePicker', () => initSofaTypePicker());
     runSafe('initMeasurementGuideFlash', () => initMeasurementGuideFlash());
     runSafe('initProjectNaming', () => initProjectNaming());
@@ -249,6 +270,7 @@ async function bootstrap(): Promise<void> {
     }
 
     logger.info(CONTEXT, 'Bootstrap complete');
+    window.__openpaintInitState = { phase: 'bootstrap-complete', timestamp: Date.now() };
   } finally {
     // Always reveal UI, even if some bootstrap step fails.
     document.documentElement.classList.remove('app-loading');

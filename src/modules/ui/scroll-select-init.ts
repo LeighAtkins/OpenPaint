@@ -9,6 +9,11 @@ declare const imageGalleryData:
 // Extracted from index.html inline scripts
 
 export function initScrollSelectSystem() {
+  if ((window as any).__scrollSelectInitDone) {
+    return;
+  }
+  (window as any).__scrollSelectInitDone = true;
+
   function updateImageListPadding() {
     const imageList = document.getElementById('imageList');
     if (!imageList) return;
