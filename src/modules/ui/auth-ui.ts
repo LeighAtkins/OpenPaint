@@ -198,6 +198,7 @@ const GOOGLE_LOGO_SVG = `<svg viewBox="0 0 24 24" class="auth-google-logo"><path
 let toolbarGroup: HTMLElement | null = null;
 let modalOverlay: HTMLElement | null = null;
 let unsubscribe: (() => void) | null = null;
+let signInInProgress = false;
 
 // ── Toolbar button creation ──────────────────────────────────────────────
 
@@ -345,6 +346,8 @@ async function handleGoogleSignIn(): Promise<void> {
   const btn = document.getElementById('authGoogleBtn') as HTMLButtonElement | null;
   const errorEl = document.getElementById('authError');
 
+  if (signInInProgress) return;
+
   if (!isSupabaseConfigured()) {
     if (errorEl) {
       errorEl.textContent =
@@ -355,6 +358,7 @@ async function handleGoogleSignIn(): Promise<void> {
   }
 
   if (btn) btn.disabled = true;
+  signInInProgress = true;
   if (errorEl) {
     errorEl.classList.remove('visible');
     errorEl.textContent = '';
@@ -364,6 +368,7 @@ async function handleGoogleSignIn(): Promise<void> {
 
   if (!result.success) {
     if (btn) btn.disabled = false;
+    signInInProgress = false;
     if (errorEl) {
       errorEl.textContent = result.error.message || 'Sign-in failed. Please try again.';
       errorEl.classList.add('visible');
@@ -387,6 +392,7 @@ function updateAuthUI(user: AuthUser | null): void {
   const displayName = document.getElementById('authDisplayName');
 
   if (user) {
+    signInInProgress = false;
     // Logged in
     if (signInBtn) signInBtn.style.display = 'none';
     if (userArea) userArea.style.display = 'flex';

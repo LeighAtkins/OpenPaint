@@ -98,11 +98,13 @@ export class AuthService {
         error,
       } = await clientResult.data.auth.getSession();
       if (error) {
-        console.warn('[Auth] Session restore failed:', error.message);
-        return;
+        console.warn(
+          '[Auth] Session restore failed, continuing with callback fallback:',
+          error.message
+        );
       }
 
-      let resolvedSession: Session | null = session;
+      let resolvedSession: Session | null = session ?? null;
 
       // Explicit OAuth PKCE callback fallback:
       // If a code exists in URL but no session was restored, try exchanging manually.
@@ -148,6 +150,9 @@ export class AuthService {
           };
         }
         this.notifySessionListeners(this.currentUser);
+      } else {
+        this.currentUser = null;
+        this.notifySessionListeners(null);
       }
     } catch (err) {
       // AbortError from Web Locks API is non-fatal — session may still be restored
