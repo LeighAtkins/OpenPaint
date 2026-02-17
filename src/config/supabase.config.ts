@@ -91,6 +91,7 @@ export function initializeSupabase(): Result<SupabaseClient<Database>, AppError>
         persistSession: true,
         ...(typeof window !== 'undefined' && { storage: window.localStorage }),
         detectSessionInUrl: true,
+        flowType: 'pkce',
       },
       realtime: {
         params: {

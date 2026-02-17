@@ -85,29 +85,35 @@ export class AuthService {
     if (this.initialized) return;
     this.initialized = true;
 
-    const clientResult = await this.getClient();
-    if (!clientResult.success) {
-      console.warn('[Auth] Could not initialize:', clientResult.error.message);
-      return;
-    }
-
-    // getSession() restores from localStorage and processes OAuth hash tokens
-    const {
-      data: { session },
-      error,
-    } = await clientResult.data.auth.getSession();
-    if (error) {
-      console.warn('[Auth] Session restore failed:', error.message);
-      return;
-    }
-
-    if (session?.user) {
-      await this.ensureProfile(session.user);
-      const userResult = await this.enrichUserWithProfile(session.user);
-      if (userResult.success) {
-        this.currentUser = userResult.data;
-        this.notifySessionListeners(this.currentUser);
+    try {
+      const clientResult = await this.getClient();
+      if (!clientResult.success) {
+        console.warn('[Auth] Could not initialize:', clientResult.error.message);
+        return;
       }
+
+      // getSession() restores from localStorage and processes OAuth hash tokens
+      const {
+        data: { session },
+        error,
+      } = await clientResult.data.auth.getSession();
+      if (error) {
+        console.warn('[Auth] Session restore failed:', error.message);
+        return;
+      }
+
+      if (session?.user) {
+        await this.ensureProfile(session.user);
+        const userResult = await this.enrichUserWithProfile(session.user);
+        if (userResult.success) {
+          this.currentUser = userResult.data;
+          this.notifySessionListeners(this.currentUser);
+        }
+      }
+    } catch (err) {
+      // AbortError from Web Locks API is non-fatal — session may still be restored
+      // via onAuthStateChange listener
+      console.warn('[Auth] Initialize error (non-fatal):', err);
     }
   }
 
