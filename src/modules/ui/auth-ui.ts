@@ -38,7 +38,7 @@ const AUTH_STYLES = /* css */ `
     align-items: center;
     gap: 8px;
     min-width: 0;
-    max-width: 150px;
+    max-width: 220px;
     overflow: hidden;
   }
 
@@ -61,13 +61,14 @@ const AUTH_STYLES = /* css */ `
   }
 
   .auth-sign-out-btn {
-    font-size: 10px;
-    padding: 2px 6px;
+    font-size: 11px;
+    padding: 2px 8px;
     background: none;
     border: 1px solid var(--ob-border-color, #d1d5db);
     border-radius: 4px;
     color: var(--ob-text-primary, #6b7280);
     cursor: pointer;
+    flex-shrink: 0;
   }
   .auth-sign-out-btn:hover {
     background: var(--ob-bg-surface, #f3f4f6);
@@ -278,7 +279,7 @@ function createToolbarGroup(): HTMLElement {
 
   const signOutBtn = document.createElement('button');
   signOutBtn.className = 'auth-sign-out-btn';
-  signOutBtn.textContent = 'Out';
+  signOutBtn.textContent = 'Sign out';
   signOutBtn.addEventListener('click', handleSignOut);
 
   userArea.appendChild(avatar);
