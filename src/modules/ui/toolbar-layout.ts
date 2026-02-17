@@ -3,6 +3,12 @@
 export function initToolbarLayout(): void {
   'use strict';
 
+  const key = '__openpaintToolbarModeInitDone';
+  if ((window as any)[key]) {
+    return;
+  }
+  (window as any)[key] = true;
+
   let resizeTimer: ReturnType<typeof setTimeout> | null = null;
   let isCalculating = false;
 

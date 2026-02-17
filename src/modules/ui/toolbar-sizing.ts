@@ -1,6 +1,10 @@
 // Toolbar sizing recalculation after fonts load
 
 export function initToolbarSizing(): void {
+  if ((window as any).__openpaintToolbarModeInitDone) {
+    return;
+  }
+
   // STEP 3: JS fallback - Re-check sizing after fonts load and on resize
   // This updates the global data-toolbar-mode attribute (no DOM rewrites)
   let resizeTimer: ReturnType<typeof setTimeout> | null = null;

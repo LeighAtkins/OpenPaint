@@ -17,18 +17,29 @@ const AUTH_STYLES = /* css */ `
     align-items: center;
     gap: 6px;
     margin-left: 8px;
+    min-width: 0;
+    flex: 0 1 auto;
+    max-width: min(40vw, 360px);
+    justify-content: flex-end;
+    overflow: hidden;
   }
 
   .auth-sign-in-btn {
     display: inline-flex;
     align-items: center;
     gap: 6px;
+    min-width: 88px;
+    justify-content: center;
+    flex-shrink: 0;
   }
 
   .auth-user-area {
     display: inline-flex;
     align-items: center;
     gap: 8px;
+    min-width: 0;
+    max-width: 200px;
+    overflow: hidden;
   }
 
   .auth-avatar {
@@ -42,10 +53,11 @@ const AUTH_STYLES = /* css */ `
   .auth-display-name {
     font-size: var(--ob-text-meta, 12px);
     color: var(--ob-text-primary, #1f2937);
-    max-width: 120px;
+    max-width: 100px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    flex-shrink: 1;
   }
 
   .auth-sign-out-btn {
@@ -186,6 +198,39 @@ const AUTH_STYLES = /* css */ `
   }
   .auth-cloud-btn.visible {
     display: inline-flex;
+    flex-shrink: 0;
+  }
+
+  @media (max-width: 1500px) {
+    .auth-display-name {
+      max-width: 84px;
+    }
+  }
+
+  @media (max-width: 1360px) {
+    .auth-toolbar-group {
+      max-width: 260px;
+    }
+
+    .auth-display-name {
+      display: none;
+    }
+
+    .auth-toolbar-group .label-long {
+      display: none;
+    }
+  }
+
+  @media (max-width: 1240px) {
+    #authMyProjectsBtn {
+      display: none !important;
+    }
+  }
+
+  @media (max-width: 1120px) {
+    #authCloudSaveBtn {
+      display: none !important;
+    }
   }
 `;
 
@@ -443,6 +488,9 @@ export function initAuthUI(): void {
 
   // Listen for auth state changes (if already signed in, callback fires immediately)
   unsubscribe = authService.onAuthStateChange(updateAuthUI);
+
+  // Render immediately from current in-memory state to reduce flicker.
+  updateAuthUI(authService.getCurrentUser());
 }
 
 // ── Cleanup (for testing) ────────────────────────────────────────────────
