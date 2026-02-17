@@ -103,7 +103,13 @@ class CloudSaveService {
           .single();
 
         if (error) {
-          console.error('[CloudSave] Update error:', error);
+          console.error(
+            '[CloudSave] Update error:',
+            error.code,
+            error.message,
+            error.details,
+            error.hint
+          );
           return Result.err(
             new AppError(
               ErrorCode.SUPABASE_QUERY_ERROR,
@@ -121,14 +127,18 @@ class CloudSaveService {
             name,
             user_id: userId,
             data: projectData,
-            is_public: false,
-            tags: [],
           } as any)
           .select('id, name, user_id, created_at, updated_at')
           .single();
 
         if (error) {
-          console.error('[CloudSave] Insert error:', error);
+          console.error(
+            '[CloudSave] Insert error:',
+            error.code,
+            error.message,
+            error.details,
+            error.hint
+          );
           return Result.err(
             new AppError(ErrorCode.SUPABASE_QUERY_ERROR, `Failed to save project: ${error.message}`)
           );
