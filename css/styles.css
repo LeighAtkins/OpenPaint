@@ -361,10 +361,19 @@
   min-width: 0;
 }
 
-#tbRight {
-  flex: 0 1 auto;
+#tbLeft {
+  flex: 1 1 auto;
+  justify-content: flex-start;
+}
+
+#tbCenter {
+  flex: 0 0 auto;
   justify-content: center;
-  max-width: min(48vw, 680px);
+}
+
+#tbRight {
+  flex: 1 1 auto;
+  justify-content: center;
   overflow: hidden;
 }
 
@@ -403,6 +412,7 @@
   .toolbar-wrap:not(.expanded) #tbLeft,
   .toolbar-wrap:not(.expanded) #tbCenter,
   .toolbar-wrap:not(.expanded) #tbRight {
+    flex: 0 0 auto;
     flex-shrink: 0;
     flex-wrap: nowrap;
   }
