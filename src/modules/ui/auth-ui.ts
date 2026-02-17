@@ -199,6 +199,18 @@ let toolbarGroup: HTMLElement | null = null;
 let modalOverlay: HTMLElement | null = null;
 let unsubscribe: (() => void) | null = null;
 let signInInProgress = false;
+let callbackSettling = new URLSearchParams(window.location.search).has('code');
+
+function setSignInButtonPending(pending: boolean): void {
+  const signInBtn = document.getElementById('authSignInBtn') as HTMLButtonElement | null;
+  if (!signInBtn) return;
+  signInBtn.disabled = pending;
+  signInBtn.style.opacity = pending ? '0.7' : '1';
+  signInBtn.style.pointerEvents = pending ? 'none' : 'auto';
+  signInBtn.innerHTML = pending
+    ? '<span class="label-long">Signing in...</span>'
+    : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span class="label-long">Sign in</span>';
+}
 
 // ── Toolbar button creation ──────────────────────────────────────────────
 
@@ -393,6 +405,7 @@ function updateAuthUI(user: AuthUser | null): void {
 
   if (user) {
     signInInProgress = false;
+    callbackSettling = false;
     // Logged in
     if (signInBtn) signInBtn.style.display = 'none';
     if (userArea) userArea.style.display = 'flex';
@@ -413,7 +426,13 @@ function updateAuthUI(user: AuthUser | null): void {
     closeModal();
   } else {
     // Logged out
+    if (callbackSettling) {
+      setSignInButtonPending(true);
+      showCloudFeatures(false);
+      return;
+    }
     if (signInBtn) signInBtn.style.display = 'inline-flex';
+    setSignInButtonPending(false);
     if (userArea) userArea.style.display = 'none';
     showCloudFeatures(false);
   }
@@ -452,6 +471,13 @@ export function initAuthUI(): void {
 
   // Set initial state from current user (may already be signed in from initialize())
   updateAuthUI(authService.getCurrentUser());
+
+  if (callbackSettling) {
+    setTimeout(() => {
+      callbackSettling = false;
+      updateAuthUI(authService.getCurrentUser());
+    }, 4500);
+  }
 }
 
 // ── Cleanup (for testing) ────────────────────────────────────────────────

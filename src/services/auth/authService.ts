@@ -62,9 +62,32 @@ export class AuthService {
   private sessionListeners: Array<(user: AuthUser | null) => void> = [];
   private initialized = false;
   private initPromise: Promise<void> | null = null;
+  private lastKnownSignedInAt = 0;
 
   private async sleep(ms: number): Promise<void> {
     await new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  private buildBasicUser(user: User): AuthUser {
+    return {
+      id: user.id,
+      email: user.email || '',
+      emailConfirmed: user.email_confirmed_at !== null,
+      createdAt: user.created_at,
+    };
+  }
+
+  private async setCurrentUserFromSupabaseUser(user: User): Promise<void> {
+    await this.ensureProfile(user);
+    const userResult = await this.enrichUserWithProfile(user);
+    if (userResult.success) {
+      this.currentUser = userResult.data;
+    } else {
+      console.warn('[Auth] Profile enrichment failed, using basic data:', userResult.error.message);
+      this.currentUser = this.buildBasicUser(user);
+    }
+    this.lastKnownSignedInAt = Date.now();
+    this.notifySessionListeners(this.currentUser);
   }
 
   /**
@@ -167,23 +190,7 @@ export class AuthService {
 
         const resolvedUser = resolvedSession?.user ?? fallbackUser ?? null;
         if (resolvedUser) {
-          await this.ensureProfile(resolvedUser);
-          const userResult = await this.enrichUserWithProfile(resolvedUser);
-          if (userResult.success) {
-            this.currentUser = userResult.data;
-          } else {
-            console.warn(
-              '[Auth] Profile enrichment failed, using basic data:',
-              userResult.error.message
-            );
-            this.currentUser = {
-              id: resolvedUser.id,
-              email: resolvedUser.email || '',
-              emailConfirmed: resolvedUser.email_confirmed_at !== null,
-              createdAt: resolvedUser.created_at,
-            };
-          }
-          this.notifySessionListeners(this.currentUser);
+          await this.setCurrentUserFromSupabaseUser(resolvedUser);
         } else {
           // Fallback: token exchange can succeed while getSession() is briefly null.
           // Check current user directly before treating as signed out.
@@ -197,19 +204,7 @@ export class AuthService {
           }
 
           if (currentAuthUser) {
-            await this.ensureProfile(currentAuthUser);
-            const userResult = await this.enrichUserWithProfile(currentAuthUser);
-            if (userResult.success) {
-              this.currentUser = userResult.data;
-            } else {
-              this.currentUser = {
-                id: currentAuthUser.id,
-                email: currentAuthUser.email || '',
-                emailConfirmed: currentAuthUser.email_confirmed_at !== null,
-                createdAt: currentAuthUser.created_at,
-              };
-            }
-            this.notifySessionListeners(this.currentUser);
+            await this.setCurrentUserFromSupabaseUser(currentAuthUser);
           } else {
             this.currentUser = null;
             this.notifySessionListeners(null);
@@ -315,28 +310,21 @@ export class AuthService {
           case 'INITIAL_SESSION':
           case 'SIGNED_IN':
             if (session?.user) {
-              await this.ensureProfile(session.user);
-              const userResult = await this.enrichUserWithProfile(session.user);
-              if (userResult.success) {
-                this.currentUser = userResult.data;
-              } else {
-                // Profile enrichment failed — still sign in with basic user data
-                console.warn(
-                  '[Auth] Profile enrichment failed, using basic data:',
-                  userResult.error.message
-                );
-                this.currentUser = {
-                  id: session.user.id,
-                  email: session.user.email || '',
-                  emailConfirmed: session.user.email_confirmed_at !== null,
-                  createdAt: session.user.created_at,
-                };
-              }
-              this.notifySessionListeners(this.currentUser);
+              await this.setCurrentUserFromSupabaseUser(session.user);
             }
             break;
 
           case 'SIGNED_OUT':
+            // Guard against transient SIGNED_OUT during callback/session hydration.
+            if (Date.now() - this.lastKnownSignedInAt < 10000 && this.client) {
+              const {
+                data: { user: maybeUser },
+              } = await this.client.auth.getUser();
+              if (maybeUser) {
+                await this.setCurrentUserFromSupabaseUser(maybeUser);
+                break;
+              }
+            }
             this.currentUser = null;
             this.notifySessionListeners(null);
             break;
@@ -347,12 +335,7 @@ export class AuthService {
 
           case 'USER_UPDATED':
             if (session?.user && this.currentUser) {
-              // Re-enrich user data
-              const userResult = await this.enrichUserWithProfile(session.user);
-              if (userResult.success) {
-                this.currentUser = userResult.data;
-                this.notifySessionListeners(this.currentUser);
-              }
+              await this.setCurrentUserFromSupabaseUser(session.user);
             }
             break;
         }
@@ -360,12 +343,8 @@ export class AuthService {
         console.error('[Auth] Auth state listener failed, applying fallback user state:', error);
 
         if ((event === 'INITIAL_SESSION' || event === 'SIGNED_IN') && session?.user) {
-          this.currentUser = {
-            id: session.user.id,
-            email: session.user.email || '',
-            emailConfirmed: session.user.email_confirmed_at !== null,
-            createdAt: session.user.created_at,
-          };
+          this.currentUser = this.buildBasicUser(session.user);
+          this.lastKnownSignedInAt = Date.now();
           this.notifySessionListeners(this.currentUser);
           return;
         }
