@@ -198,19 +198,6 @@ const GOOGLE_LOGO_SVG = `<svg viewBox="0 0 24 24" class="auth-google-logo"><path
 let toolbarGroup: HTMLElement | null = null;
 let modalOverlay: HTMLElement | null = null;
 let unsubscribe: (() => void) | null = null;
-let signInInProgress = false;
-let callbackSettling = new URLSearchParams(window.location.search).has('code');
-
-function setSignInButtonPending(pending: boolean): void {
-  const signInBtn = document.getElementById('authSignInBtn') as HTMLButtonElement | null;
-  if (!signInBtn) return;
-  signInBtn.disabled = pending;
-  signInBtn.style.opacity = pending ? '0.7' : '1';
-  signInBtn.style.pointerEvents = pending ? 'none' : 'auto';
-  signInBtn.innerHTML = pending
-    ? '<span class="label-long">Signing in...</span>'
-    : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span class="label-long">Sign in</span>';
-}
 
 // ── Toolbar button creation ──────────────────────────────────────────────
 
@@ -358,8 +345,6 @@ async function handleGoogleSignIn(): Promise<void> {
   const btn = document.getElementById('authGoogleBtn') as HTMLButtonElement | null;
   const errorEl = document.getElementById('authError');
 
-  if (signInInProgress) return;
-
   if (!isSupabaseConfigured()) {
     if (errorEl) {
       errorEl.textContent =
@@ -370,7 +355,6 @@ async function handleGoogleSignIn(): Promise<void> {
   }
 
   if (btn) btn.disabled = true;
-  signInInProgress = true;
   if (errorEl) {
     errorEl.classList.remove('visible');
     errorEl.textContent = '';
@@ -380,7 +364,6 @@ async function handleGoogleSignIn(): Promise<void> {
 
   if (!result.success) {
     if (btn) btn.disabled = false;
-    signInInProgress = false;
     if (errorEl) {
       errorEl.textContent = result.error.message || 'Sign-in failed. Please try again.';
       errorEl.classList.add('visible');
@@ -404,8 +387,6 @@ function updateAuthUI(user: AuthUser | null): void {
   const displayName = document.getElementById('authDisplayName');
 
   if (user) {
-    signInInProgress = false;
-    callbackSettling = false;
     // Logged in
     if (signInBtn) signInBtn.style.display = 'none';
     if (userArea) userArea.style.display = 'flex';
@@ -426,13 +407,7 @@ function updateAuthUI(user: AuthUser | null): void {
     closeModal();
   } else {
     // Logged out
-    if (callbackSettling) {
-      setSignInButtonPending(true);
-      showCloudFeatures(false);
-      return;
-    }
     if (signInBtn) signInBtn.style.display = 'inline-flex';
-    setSignInButtonPending(false);
     if (userArea) userArea.style.display = 'none';
     showCloudFeatures(false);
   }
@@ -466,41 +441,8 @@ export function initAuthUI(): void {
   modalOverlay = createModal();
   document.body.appendChild(modalOverlay);
 
-  // Listen for auth state changes
+  // Listen for auth state changes (if already signed in, callback fires immediately)
   unsubscribe = authService.onAuthStateChange(updateAuthUI);
-
-  // Set initial state from current user (may already be signed in from initialize())
-  updateAuthUI(authService.getCurrentUser());
-
-  // Reconcile auth state after UI mount in case callback/session hydration
-  // completed slightly before/after UI initialization.
-  const reconcileAuthState = async () => {
-    for (let attempt = 0; attempt < 20; attempt += 1) {
-      await authService.refreshCurrentUserFromClient();
-      const user = authService.getCurrentUser();
-      if (user) {
-        updateAuthUI(user);
-        callbackSettling = false;
-        return;
-      }
-
-      await new Promise(resolve => {
-        setTimeout(resolve, 500);
-      });
-    }
-
-    callbackSettling = false;
-    updateAuthUI(authService.getCurrentUser());
-  };
-
-  void reconcileAuthState();
-
-  if (callbackSettling) {
-    setTimeout(() => {
-      callbackSettling = false;
-      updateAuthUI(authService.getCurrentUser());
-    }, 4500);
-  }
 }
 
 // ── Cleanup (for testing) ────────────────────────────────────────────────
