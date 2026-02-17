@@ -739,15 +739,6 @@
   margin-left: var(--ob-sp-2);
 }
 
-#unitToggleBtn {
-  padding: 6px var(--ob-sp-3);
-  background: var(--ob-bg-surface);
-  color: var(--ob-text-primary);
-  font-weight: var(--ob-weight-semibold);
-  border-radius: var(--ob-radius-button);
-  border: var(--ob-border-width) solid var(--ob-border-color);
-}
-
 /* ── Color swatches ──────────────────────────────────────────── */
 .color-swatches {
   display: flex;

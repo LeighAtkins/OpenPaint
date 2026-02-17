@@ -1981,6 +1981,9 @@ export class App {
   setupUnitToggle(): void {
     const unitToggle = document.getElementById('unitToggleBtn');
     const unitToggleSecondary = document.getElementById('unitToggleBtnSecondary');
+    const unitToggles = [unitToggle, unitToggleSecondary].filter(
+      (el): el is HTMLElement => el instanceof HTMLElement
+    );
     const unitSelector = document.getElementById('unitSelector') as HTMLSelectElement | null;
 
     // Initialize currentUnit state
@@ -1994,8 +1997,9 @@ export class App {
       }
 
       const unitLabel = unit === 'inch' ? 'inches' : 'cm';
-      if (unitToggle) unitToggle.textContent = unitLabel;
-      if (unitToggleSecondary) unitToggleSecondary.textContent = unitLabel;
+      unitToggles.forEach(toggle => {
+        toggle.textContent = unitLabel;
+      });
 
       if (this.measurementSystem) {
         this.measurementSystem.setUnit(unitLabel);
@@ -2013,17 +2017,11 @@ export class App {
     }
     applyUnit('inch');
 
-    if (unitToggle) {
-      unitToggle.addEventListener('click', () => {
+    unitToggles.forEach(toggle => {
+      toggle.addEventListener('click', () => {
         applyUnit(this.currentUnit === 'inch' ? 'cm' : 'inch');
       });
-    }
-
-    if (unitToggleSecondary) {
-      unitToggleSecondary.addEventListener('click', () => {
-        applyUnit(this.currentUnit === 'inch' ? 'cm' : 'inch');
-      });
-    }
+    });
 
     // Also listen for direct changes to unit selector
     if (unitSelector) {
