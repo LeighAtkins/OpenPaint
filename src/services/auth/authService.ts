@@ -209,50 +209,68 @@ export class AuthService {
     if (!this.client) return;
 
     this.client.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session | null) => {
-      switch (event) {
-        case 'INITIAL_SESSION':
-        case 'SIGNED_IN':
-          if (session?.user) {
-            await this.ensureProfile(session.user);
-            const userResult = await this.enrichUserWithProfile(session.user);
-            if (userResult.success) {
-              this.currentUser = userResult.data;
-            } else {
-              // Profile enrichment failed — still sign in with basic user data
-              console.warn(
-                '[Auth] Profile enrichment failed, using basic data:',
-                userResult.error.message
-              );
-              this.currentUser = {
-                id: session.user.id,
-                email: session.user.email || '',
-                emailConfirmed: session.user.email_confirmed_at !== null,
-                createdAt: session.user.created_at,
-              };
-            }
-            this.notifySessionListeners(this.currentUser);
-          }
-          break;
-
-        case 'SIGNED_OUT':
-          this.currentUser = null;
-          this.notifySessionListeners(null);
-          break;
-
-        case 'TOKEN_REFRESHED':
-          // User session refreshed, no action needed
-          break;
-
-        case 'USER_UPDATED':
-          if (session?.user && this.currentUser) {
-            // Re-enrich user data
-            const userResult = await this.enrichUserWithProfile(session.user);
-            if (userResult.success) {
-              this.currentUser = userResult.data;
+      try {
+        switch (event) {
+          case 'INITIAL_SESSION':
+          case 'SIGNED_IN':
+            if (session?.user) {
+              await this.ensureProfile(session.user);
+              const userResult = await this.enrichUserWithProfile(session.user);
+              if (userResult.success) {
+                this.currentUser = userResult.data;
+              } else {
+                // Profile enrichment failed — still sign in with basic user data
+                console.warn(
+                  '[Auth] Profile enrichment failed, using basic data:',
+                  userResult.error.message
+                );
+                this.currentUser = {
+                  id: session.user.id,
+                  email: session.user.email || '',
+                  emailConfirmed: session.user.email_confirmed_at !== null,
+                  createdAt: session.user.created_at,
+                };
+              }
               this.notifySessionListeners(this.currentUser);
             }
-          }
-          break;
+            break;
+
+          case 'SIGNED_OUT':
+            this.currentUser = null;
+            this.notifySessionListeners(null);
+            break;
+
+          case 'TOKEN_REFRESHED':
+            // User session refreshed, no action needed
+            break;
+
+          case 'USER_UPDATED':
+            if (session?.user && this.currentUser) {
+              // Re-enrich user data
+              const userResult = await this.enrichUserWithProfile(session.user);
+              if (userResult.success) {
+                this.currentUser = userResult.data;
+                this.notifySessionListeners(this.currentUser);
+              }
+            }
+            break;
+        }
+      } catch (error) {
+        console.error('[Auth] Auth state change handler error:', error);
+        // Still try to set basic user data if we have a session
+        if (
+          (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') &&
+          session?.user &&
+          !this.currentUser
+        ) {
+          this.currentUser = {
+            id: session.user.id,
+            email: session.user.email || '',
+            emailConfirmed: session.user.email_confirmed_at !== null,
+            createdAt: session.user.created_at,
+          };
+          this.notifySessionListeners(this.currentUser);
+        }
       }
     });
   }
@@ -271,10 +289,20 @@ export class AuthService {
   }
 
   /**
-   * Subscribe to auth state changes
+   * Subscribe to auth state changes.
+   * If already authenticated, the callback is invoked immediately with the current user.
    */
   onAuthStateChange(callback: (user: AuthUser | null) => void): () => void {
     this.sessionListeners.push(callback);
+
+    // If already authenticated, immediately notify the new listener
+    if (this.currentUser) {
+      try {
+        callback(this.currentUser);
+      } catch (error) {
+        console.error('Session listener error:', error);
+      }
+    }
 
     // Return unsubscribe function
     return () => {
