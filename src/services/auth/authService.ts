@@ -134,6 +134,7 @@ export class AuthService {
         }
 
         let resolvedSession: Session | null = session ?? null;
+        let cleanedCallbackUrl: string | null = null;
 
         // Explicit OAuth PKCE callback fallback:
         // If a code exists in URL but no session was restored, try exchanging manually.
@@ -159,6 +160,7 @@ export class AuthService {
             params.delete('error_description');
             const nextQuery = params.toString();
             const nextUrl = `${window.location.pathname}${nextQuery ? `?${nextQuery}` : ''}${window.location.hash}`;
+            cleanedCallbackUrl = nextUrl;
             window.history.replaceState({}, document.title, nextUrl);
           }
         }
@@ -191,6 +193,18 @@ export class AuthService {
         const resolvedUser = resolvedSession?.user ?? fallbackUser ?? null;
         if (resolvedUser) {
           await this.setCurrentUserFromSupabaseUser(resolvedUser);
+
+          // One-time hard reload after OAuth callback to guarantee clean app bootstrap.
+          // This avoids intermittent post-auth partial UI state caused by callback-time races.
+          if (hadOAuthCode && cleanedCallbackUrl && typeof window !== 'undefined') {
+            const reloadKey = '__openpaint_auth_callback_reload_done';
+            const alreadyReloaded = window.sessionStorage.getItem(reloadKey) === '1';
+            if (!alreadyReloaded) {
+              window.sessionStorage.setItem(reloadKey, '1');
+              window.location.replace(cleanedCallbackUrl);
+              return;
+            }
+          }
         } else {
           // Fallback: token exchange can succeed while getSession() is briefly null.
           // Check current user directly before treating as signed out.
@@ -209,6 +223,14 @@ export class AuthService {
             this.currentUser = null;
             this.notifySessionListeners(null);
           }
+        }
+
+        // Clear one-time reload marker once we're on a normal non-callback URL.
+        if (
+          typeof window !== 'undefined' &&
+          !new URLSearchParams(window.location.search).has('code')
+        ) {
+          window.sessionStorage.removeItem('__openpaint_auth_callback_reload_done');
         }
 
         this.initialized = true;
