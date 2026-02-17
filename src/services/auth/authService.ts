@@ -516,12 +516,13 @@ export class AuthService {
         );
       }
 
-      const { error } = await client.auth.signOut();
+      const { error } = await client.auth.signOut({ scope: 'global' });
       if (error) {
         return Result.err(this.mapAuthError(error));
       }
 
       this.currentUser = null;
+      this.notifySessionListeners(null);
       return Result.ok(true);
     } catch (error) {
       return Result.err(

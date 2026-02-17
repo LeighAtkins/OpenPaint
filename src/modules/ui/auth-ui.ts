@@ -20,7 +20,6 @@ const AUTH_STYLES = /* css */ `
   }
 
   .toolbar-wrap {
-    overflow: hidden;
     gap: 8px;
     justify-content: center !important;
   }
@@ -370,7 +369,12 @@ async function handleGoogleSignIn(): Promise<void> {
 }
 
 async function handleSignOut(): Promise<void> {
-  await authService.signOut();
+  const result = await authService.signOut();
+  if (!result.success) {
+    console.error('[Auth] Sign out failed:', result.error.message);
+  }
+  // Force UI update in case the onAuthStateChange event doesn't fire
+  updateAuthUI(null);
 }
 
 // ── UI state updates ─────────────────────────────────────────────────────
