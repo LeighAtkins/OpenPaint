@@ -342,12 +342,13 @@
 }
 
 .toolbar-wrap {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 0 var(--ob-sp-3);
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   height: 48px;
 }
 
