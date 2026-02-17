@@ -63,6 +63,7 @@ export class AuthService {
   private initialized = false;
   private initPromise: Promise<void> | null = null;
   private lastKnownSignedInAt = 0;
+  private callbackHydrationStartedAt = 0;
 
   private async sleep(ms: number): Promise<void> {
     await new Promise(resolve => setTimeout(resolve, ms));
@@ -144,6 +145,7 @@ export class AuthService {
           const code = params.get('code');
           if (code) {
             hadOAuthCode = true;
+            this.callbackHydrationStartedAt = Date.now();
             const { data: exchangeData, error: exchangeError } =
               await clientResult.data.auth.exchangeCodeForSession(code);
 
@@ -169,8 +171,8 @@ export class AuthService {
         // If we just exchanged a code but still don't see a user, retry briefly.
         let fallbackUser: User | null = null;
         if (!resolvedSession?.user && hadOAuthCode) {
-          for (let attempt = 0; attempt < 5; attempt += 1) {
-            await this.sleep(150 * (attempt + 1));
+          for (let attempt = 0; attempt < 15; attempt += 1) {
+            await this.sleep(300);
 
             const {
               data: { session: retrySession },
@@ -338,13 +340,20 @@ export class AuthService {
 
           case 'SIGNED_OUT':
             // Guard against transient SIGNED_OUT during callback/session hydration.
-            if (Date.now() - this.lastKnownSignedInAt < 10000 && this.client) {
-              const {
-                data: { user: maybeUser },
-              } = await this.client.auth.getUser();
-              if (maybeUser) {
-                await this.setCurrentUserFromSupabaseUser(maybeUser);
-                break;
+            if (
+              (Date.now() - this.lastKnownSignedInAt < 15000 ||
+                Date.now() - this.callbackHydrationStartedAt < 30000) &&
+              this.client
+            ) {
+              for (let attempt = 0; attempt < 10; attempt += 1) {
+                const {
+                  data: { user: maybeUser },
+                } = await this.client.auth.getUser();
+                if (maybeUser) {
+                  await this.setCurrentUserFromSupabaseUser(maybeUser);
+                  return;
+                }
+                await this.sleep(300);
               }
             }
             this.currentUser = null;

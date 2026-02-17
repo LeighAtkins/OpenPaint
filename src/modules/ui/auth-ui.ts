@@ -475,7 +475,7 @@ export function initAuthUI(): void {
   // Reconcile auth state after UI mount in case callback/session hydration
   // completed slightly before/after UI initialization.
   const reconcileAuthState = async () => {
-    for (let attempt = 0; attempt < 5; attempt += 1) {
+    for (let attempt = 0; attempt < 20; attempt += 1) {
       await authService.refreshCurrentUserFromClient();
       const user = authService.getCurrentUser();
       if (user) {
@@ -485,7 +485,7 @@ export function initAuthUI(): void {
       }
 
       await new Promise(resolve => {
-        setTimeout(resolve, 200 * (attempt + 1));
+        setTimeout(resolve, 500);
       });
     }
 
