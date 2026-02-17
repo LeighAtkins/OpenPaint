@@ -22,6 +22,7 @@ const AUTH_STYLES = /* css */ `
   .toolbar-wrap {
     overflow: hidden;
     gap: 8px;
+    justify-content: center !important;
   }
 
   /* ── Auth toolbar area ── */
