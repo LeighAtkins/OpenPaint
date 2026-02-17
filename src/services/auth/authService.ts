@@ -92,7 +92,7 @@ export class AuthService {
         return;
       }
 
-      // getSession() restores from localStorage and processes OAuth hash tokens
+      // getSession() restores from localStorage and may process OAuth callback state.
       const {
         data: { session },
         error,
@@ -102,9 +102,37 @@ export class AuthService {
         return;
       }
 
-      if (session?.user) {
-        await this.ensureProfile(session.user);
-        const userResult = await this.enrichUserWithProfile(session.user);
+      let resolvedSession: Session | null = session;
+
+      // Explicit OAuth PKCE callback fallback:
+      // If a code exists in URL but no session was restored, try exchanging manually.
+      if (!resolvedSession?.user && typeof window !== 'undefined') {
+        const params = new URLSearchParams(window.location.search);
+        const code = params.get('code');
+        if (code) {
+          const { data: exchangeData, error: exchangeError } =
+            await clientResult.data.auth.exchangeCodeForSession(code);
+
+          if (exchangeError) {
+            console.warn('[Auth] PKCE code exchange failed:', exchangeError.message);
+          } else {
+            resolvedSession = exchangeData.session;
+          }
+
+          // Cleanup OAuth params to avoid repeated processing on refresh.
+          params.delete('code');
+          params.delete('state');
+          params.delete('error');
+          params.delete('error_description');
+          const nextQuery = params.toString();
+          const nextUrl = `${window.location.pathname}${nextQuery ? `?${nextQuery}` : ''}${window.location.hash}`;
+          window.history.replaceState({}, document.title, nextUrl);
+        }
+      }
+
+      if (resolvedSession?.user) {
+        await this.ensureProfile(resolvedSession.user);
+        const userResult = await this.enrichUserWithProfile(resolvedSession.user);
         if (userResult.success) {
           this.currentUser = userResult.data;
         } else {
@@ -113,10 +141,10 @@ export class AuthService {
             userResult.error.message
           );
           this.currentUser = {
-            id: session.user.id,
-            email: session.user.email || '',
-            emailConfirmed: session.user.email_confirmed_at !== null,
-            createdAt: session.user.created_at,
+            id: resolvedSession.user.id,
+            email: resolvedSession.user.email || '',
+            emailConfirmed: resolvedSession.user.email_confirmed_at !== null,
+            createdAt: resolvedSession.user.created_at,
           };
         }
         this.notifySessionListeners(this.currentUser);
