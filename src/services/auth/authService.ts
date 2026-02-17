@@ -63,6 +63,10 @@ export class AuthService {
   private initialized = false;
   private initPromise: Promise<void> | null = null;
 
+  private async sleep(ms: number): Promise<void> {
+    await new Promise(resolve => setTimeout(resolve, ms));
+  }
+
   /**
    * Initialize the service with a Supabase client
    */
@@ -110,10 +114,12 @@ export class AuthService {
 
         // Explicit OAuth PKCE callback fallback:
         // If a code exists in URL but no session was restored, try exchanging manually.
+        let hadOAuthCode = false;
         if (!resolvedSession?.user && typeof window !== 'undefined') {
           const params = new URLSearchParams(window.location.search);
           const code = params.get('code');
           if (code) {
+            hadOAuthCode = true;
             const { data: exchangeData, error: exchangeError } =
               await clientResult.data.auth.exchangeCodeForSession(code);
 
@@ -134,7 +140,32 @@ export class AuthService {
           }
         }
 
-        const resolvedUser = resolvedSession?.user ?? null;
+        // OAuth callback can be eventually consistent across storage/session hydration.
+        // If we just exchanged a code but still don't see a user, retry briefly.
+        let fallbackUser: User | null = null;
+        if (!resolvedSession?.user && hadOAuthCode) {
+          for (let attempt = 0; attempt < 5; attempt += 1) {
+            await this.sleep(150 * (attempt + 1));
+
+            const {
+              data: { session: retrySession },
+            } = await clientResult.data.auth.getSession();
+            if (retrySession?.user) {
+              resolvedSession = retrySession;
+              break;
+            }
+
+            const {
+              data: { user: retryUser },
+            } = await clientResult.data.auth.getUser();
+            if (retryUser) {
+              fallbackUser = retryUser;
+              break;
+            }
+          }
+        }
+
+        const resolvedUser = resolvedSession?.user ?? fallbackUser ?? null;
         if (resolvedUser) {
           await this.ensureProfile(resolvedUser);
           const userResult = await this.enrichUserWithProfile(resolvedUser);
