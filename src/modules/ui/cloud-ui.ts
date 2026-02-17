@@ -303,72 +303,93 @@ async function loadProjectsList(search?: string): Promise<void> {
 }
 
 async function handleLoadProject(projectId: string): Promise<void> {
-  const projectManager = window.app?.projectManager;
+  const projectManager = (window as any).app?.projectManager;
   if (!projectManager) {
-    alert('Project manager not available');
+    console.error('[Cloud] Project manager not available');
     return;
   }
 
-  const loadBtn = document.querySelector(
-    `[data-project-id="${projectId}"].cloud-load-btn`
-  ) as HTMLButtonElement;
-  if (loadBtn) {
-    loadBtn.textContent = 'Loading...';
-    loadBtn.disabled = true;
-  }
-
-  const result = await cloudSaveService.loadProject(projectId);
-
-  if (!result.success) {
-    alert('Failed to load project: ' + result.error.message);
-    if (loadBtn) {
-      loadBtn.textContent = 'Load';
-      loadBtn.disabled = false;
+  try {
+    if (typeof (window as any).showStatusMessage === 'function') {
+      (window as any).showStatusMessage('Loading project from cloud...', 'info');
     }
-    return;
-  }
 
-  const projectData = result.data.data as Record<string, unknown>;
+    const result = await cloudSaveService.loadProject(projectId);
 
-  if (typeof (projectManager as any).loadProjectFromData === 'function') {
-    await (projectManager as any).loadProjectFromData(projectData);
-  } else {
-    alert('Cloud load not supported yet');
-    if (loadBtn) {
-      loadBtn.textContent = 'Load';
-      loadBtn.disabled = false;
+    if (!result.success) {
+      console.error('[Cloud] Load failed:', result.error);
+      if (typeof (window as any).showStatusMessage === 'function') {
+        (window as any).showStatusMessage('Failed to load: ' + result.error.message, 'error');
+      }
+      return;
     }
-    return;
-  }
 
-  cloudSaveService.setCurrentProjectId(projectId);
+    const projectData = result.data.data as Record<string, unknown>;
 
-  closeCloudModal();
+    if (typeof projectManager.loadProjectFromData === 'function') {
+      await projectManager.loadProjectFromData(projectData);
+    } else {
+      console.error('[Cloud] loadProjectFromData not available');
+      if (typeof (window as any).showStatusMessage === 'function') {
+        (window as any).showStatusMessage('Cloud load not supported in this version', 'error');
+      }
+      return;
+    }
 
-  if (typeof window.showStatusMessage === 'function') {
-    window.showStatusMessage('Project loaded from cloud', 'success');
+    cloudSaveService.setCurrentProjectId(projectId);
+    closeCloudModal();
+
+    if (typeof (window as any).showStatusMessage === 'function') {
+      (window as any).showStatusMessage('Project loaded from cloud', 'success');
+    }
+  } catch (error) {
+    console.error('[Cloud] Load error:', error);
+    if (typeof (window as any).showStatusMessage === 'function') {
+      (window as any).showStatusMessage(
+        'Failed to load: ' + (error instanceof Error ? error.message : 'Unknown error'),
+        'error'
+      );
+    }
   }
 }
 
 async function handleDeleteProject(projectId: string): Promise<void> {
-  const result = await cloudSaveService.deleteProject(projectId);
+  try {
+    const result = await cloudSaveService.deleteProject(projectId);
 
-  if (!result.success) {
-    alert('Failed to delete project: ' + result.error.message);
-    return;
+    if (!result.success) {
+      console.error('[Cloud] Delete failed:', result.error);
+      if (typeof (window as any).showStatusMessage === 'function') {
+        (window as any).showStatusMessage('Failed to delete: ' + result.error.message, 'error');
+      }
+      return;
+    }
+
+    await loadProjectsList();
+
+    if (typeof (window as any).showStatusMessage === 'function') {
+      (window as any).showStatusMessage('Project deleted', 'success');
+    }
+  } catch (error) {
+    console.error('[Cloud] Delete error:', error);
   }
+}
 
-  await loadProjectsList();
-
-  if (typeof window.showStatusMessage === 'function') {
-    window.showStatusMessage('Project deleted', 'success');
+function resetSaveBtn(): void {
+  const saveBtn = document.getElementById('authCloudSaveBtn') as HTMLButtonElement | null;
+  if (saveBtn) {
+    saveBtn.disabled = false;
+    saveBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg><span class="label-long">Cloud Save</span>`;
   }
 }
 
 async function handleCloudSave(): Promise<void> {
-  const projectManager = window.app?.projectManager;
+  const projectManager = (window as any).app?.projectManager;
   if (!projectManager) {
-    alert('Project manager not available');
+    console.error('[Cloud] Project manager not available');
+    if (typeof (window as any).showStatusMessage === 'function') {
+      (window as any).showStatusMessage('Project manager not available', 'error');
+    }
     return;
   }
 
@@ -382,8 +403,12 @@ async function handleCloudSave(): Promise<void> {
   }
 
   try {
+    console.log('[Cloud] Getting project data with embedded images...');
     const projectData = await projectManager.getProjectData({ embedImages: true });
+    console.log('[Cloud] Got project data, views:', Object.keys(projectData.views || {}).length);
+
     const currentId = cloudSaveService.getCurrentProjectId();
+    console.log('[Cloud] Saving to Supabase...', currentId ? `(updating ${currentId})` : '(new)');
 
     const result = await cloudSaveService.saveProject({
       name: projectName,
@@ -392,22 +417,29 @@ async function handleCloudSave(): Promise<void> {
     });
 
     if (!result.success) {
-      alert('Failed to save: ' + result.error.message);
+      console.error('[Cloud] Save failed:', result.error);
+      if (typeof (window as any).showStatusMessage === 'function') {
+        (window as any).showStatusMessage('Cloud save failed: ' + result.error.message, 'error');
+      }
       return;
     }
 
+    console.log('[Cloud] Save succeeded, id:', result.data.id);
     cloudSaveService.setCurrentProjectId(result.data.id);
 
-    if (typeof window.showStatusMessage === 'function') {
-      window.showStatusMessage('Project saved to cloud', 'success');
+    if (typeof (window as any).showStatusMessage === 'function') {
+      (window as any).showStatusMessage('Project saved to cloud', 'success');
     }
   } catch (error) {
-    alert('Failed to save: ' + (error instanceof Error ? error.message : 'Unknown error'));
-  } finally {
-    if (saveBtn) {
-      saveBtn.disabled = false;
-      saveBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg><span class="label-long">Cloud Save</span>`;
+    console.error('[Cloud] Save error:', error);
+    if (typeof (window as any).showStatusMessage === 'function') {
+      (window as any).showStatusMessage(
+        'Cloud save failed: ' + (error instanceof Error ? error.message : 'Unknown error'),
+        'error'
+      );
     }
+  } finally {
+    resetSaveBtn();
   }
 }
 
