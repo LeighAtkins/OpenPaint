@@ -440,11 +440,16 @@ async function handleCloudSave(): Promise<void> {
     const currentId = cloudSaveService.getCurrentProjectId();
     console.warn('[Cloud] Saving to Supabase...', currentId ? `(updating ${currentId})` : '(new)');
 
-    const result = await cloudSaveService.saveProject({
-      name: projectName,
-      projectData: projectData as Record<string, unknown>,
-      currentProjectId: currentId,
-    });
+    const result = await Promise.race([
+      cloudSaveService.saveProject({
+        name: projectName,
+        projectData: projectData as Record<string, unknown>,
+        currentProjectId: currentId,
+      }),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Cloud save timed out after 45s')), 45000)
+      ),
+    ]);
 
     if (!result.success) {
       console.error('[Cloud] Save failed:', result.error);
