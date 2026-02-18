@@ -280,11 +280,13 @@ async function loadProjectsList(search?: string): Promise<void> {
     actions.className = 'cloud-project-actions';
 
     const loadBtn = document.createElement('button');
+    loadBtn.type = 'button';
     loadBtn.className = 'cloud-load-btn';
     loadBtn.textContent = 'Load';
     loadBtn.addEventListener('click', () => void handleLoadProject(project.id));
 
     const deleteBtn = document.createElement('button');
+    deleteBtn.type = 'button';
     deleteBtn.className = 'cloud-delete-btn';
     deleteBtn.textContent = 'Delete';
     deleteBtn.addEventListener('click', () => {
@@ -505,6 +507,7 @@ function createCloudModal(): HTMLElement {
   card.className = 'cloud-modal-card';
 
   const closeBtn = document.createElement('button');
+  closeBtn.type = 'button';
   closeBtn.className = 'cloud-modal-close';
   closeBtn.innerHTML = '&times;';
   closeBtn.addEventListener('click', closeCloudModal);
@@ -560,6 +563,7 @@ function createCloudToolbarGroup(): HTMLElement {
   group.id = 'cloudToolbarGroup';
 
   const cloudSaveBtn = document.createElement('button');
+  cloudSaveBtn.type = 'button';
   cloudSaveBtn.className = 'tbtn cloud-save-btn';
   cloudSaveBtn.id = 'authCloudSaveBtn';
   cloudSaveBtn.title = 'Save to cloud';
@@ -569,6 +573,7 @@ function createCloudToolbarGroup(): HTMLElement {
   cloudSaveBtn.style.display = 'none';
 
   const myProjectsBtn = document.createElement('button');
+  myProjectsBtn.type = 'button';
   myProjectsBtn.className = 'tbtn cloud-projects-btn';
   myProjectsBtn.id = 'authMyProjectsBtn';
   myProjectsBtn.title = 'My Projects';
