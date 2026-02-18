@@ -1425,6 +1425,10 @@ export class ProjectManager {
               (r2Key.startsWith('http://') || r2Key.startsWith('https://'))
                 ? r2Key
                 : `r2://${r2Key}`;
+
+            if (entry.canvasJSON?.backgroundImage) {
+              entry.canvasJSON.backgroundImage.src = '';
+            }
           }
         } catch (err) {
           console.warn(`[Save] Could not upload image to R2 for ${viewId}:`, err);
@@ -1446,7 +1450,9 @@ export class ProjectManager {
 
       // Ensure backgroundImage src isn't blank when canvasJSON exists
       if (entry.canvasJSON?.backgroundImage && !entry.canvasJSON.backgroundImage.src) {
-        entry.canvasJSON.backgroundImage.src = entry.imageDataURL || entry.imageUrl || '';
+        const source = entry.imageDataURL || entry.imageUrl || '';
+        entry.canvasJSON.backgroundImage.src =
+          typeof source === 'string' && source.startsWith('r2://') ? '' : source;
       }
 
       if (metadataManager) {
