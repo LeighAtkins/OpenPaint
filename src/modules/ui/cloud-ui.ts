@@ -414,7 +414,7 @@ async function handleCloudSave(): Promise<void> {
   }
 
   try {
-    console.warn('[Cloud] Getting project data with embedded images...');
+    console.warn('[Cloud] Preparing project data for cloud save...');
     const useR2Storage =
       String(import.meta.env.VITE_STORAGE_PROVIDER || 'supabase').toLowerCase() === 'r2';
 
@@ -551,7 +551,6 @@ function createCloudModal(): HTMLElement {
 
   listContainer.appendChild(loadingEl);
   listContainer.appendChild(emptyEl);
-  listContainer.id = 'cloudProjectsList';
 
   card.appendChild(closeBtn);
   card.appendChild(heading);
