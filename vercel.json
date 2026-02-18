@@ -26,6 +26,21 @@
     },
     "api/measurement-guides/svg.js": {
       "includeFiles": "server/**"
+    },
+    "api/storage/r2/health.js": {
+      "includeFiles": "server/**"
+    },
+    "api/storage/r2/presign-upload.js": {
+      "includeFiles": "server/**"
+    },
+    "api/storage/r2/signed-url.js": {
+      "includeFiles": "server/**"
+    },
+    "api/storage/r2/delete.js": {
+      "includeFiles": "server/**"
+    },
+    "api/storage/r2/copy.js": {
+      "includeFiles": "server/**"
     }
   }
 }
