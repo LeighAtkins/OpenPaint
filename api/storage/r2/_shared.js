@@ -123,3 +123,40 @@ export async function handleCopy(req, res) {
     ...result,
   });
 }
+
+export async function handleObject(req, res) {
+  if (!ensureR2Configured(res)) return;
+
+  const key = String(req.query?.key || '').trim();
+  if (!key) {
+    return res.status(400).json({
+      success: false,
+      message: 'key query parameter is required',
+    });
+  }
+
+  const { signedUrl } = await createPresignedDownloadUrl({ key, expiresIn: 300 });
+  const upstream = await fetch(signedUrl);
+
+  if (!upstream.ok) {
+    return res.status(upstream.status).json({
+      success: false,
+      message: `Failed to fetch object from R2 (${upstream.status})`,
+    });
+  }
+
+  const contentType = upstream.headers.get('content-type') || 'application/octet-stream';
+  const cacheControl = upstream.headers.get('cache-control') || 'private, max-age=300';
+  const etag = upstream.headers.get('etag');
+  const lastModified = upstream.headers.get('last-modified');
+  const contentLength = upstream.headers.get('content-length');
+
+  res.setHeader('Content-Type', contentType);
+  res.setHeader('Cache-Control', cacheControl);
+  if (etag) res.setHeader('ETag', etag);
+  if (lastModified) res.setHeader('Last-Modified', lastModified);
+  if (contentLength) res.setHeader('Content-Length', contentLength);
+
+  const buffer = Buffer.from(await upstream.arrayBuffer());
+  return res.status(200).send(buffer);
+}
