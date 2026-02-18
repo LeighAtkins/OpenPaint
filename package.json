@@ -52,6 +52,8 @@
     "nuke": "rm -rf node_modules dist coverage .husky/_"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.992.0",
+    "@aws-sdk/s3-request-presigner": "^3.992.0",
     "@sparticuz/chromium": "^138.0.2",
     "@supabase/supabase-js": "^2.95.3",
     "@tailwindcss/postcss": "^4.1.17",

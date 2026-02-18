@@ -11,6 +11,13 @@ import { Result } from '@/utils/result';
 import { AppError, ErrorCode } from '@/types/app.types';
 import type { StorageObject, ProjectImageInsert } from '@/types/supabase.types';
 
+type StorageProvider = 'supabase' | 'r2';
+
+const STORAGE_PROVIDER: StorageProvider =
+  String(import.meta.env.VITE_STORAGE_PROVIDER || 'supabase').toLowerCase() === 'r2'
+    ? 'r2'
+    : 'supabase';
+
 // File upload configuration
 export interface UploadConfig {
   maxFileSizeMB: number;
@@ -96,6 +103,120 @@ export class StorageService {
       this.client = result.data;
     }
     return Result.ok(this.client);
+  }
+
+  private isR2Provider(): boolean {
+    return STORAGE_PROVIDER === 'r2';
+  }
+
+  private async postR2<T>(
+    endpoint: string,
+    payload: Record<string, unknown>
+  ): Promise<Result<T, AppError>> {
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const body = await response.json().catch(() => null);
+
+      if (!response.ok || !body?.success) {
+        return Result.err(
+          new AppError(
+            ErrorCode.STORAGE_ERROR,
+            body?.message || `R2 request failed (${response.status})`,
+            {
+              endpoint,
+              status: response.status,
+            }
+          )
+        );
+      }
+
+      return Result.ok(body as T);
+    } catch (error) {
+      return Result.err(
+        new AppError(
+          ErrorCode.STORAGE_ERROR,
+          `R2 request failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          { endpoint }
+        )
+      );
+    }
+  }
+
+  private async uploadFileToR2(
+    path: string,
+    file: File,
+    options?: {
+      cacheControl?: string;
+      contentType?: string;
+    }
+  ): Promise<Result<{ path: string; url: string; metadata: any }, AppError>> {
+    const presignResult = await this.postR2<{
+      success: true;
+      uploadUrl: string;
+      publicUrl?: string | null;
+      key: string;
+    }>('/api/storage/r2/presign-upload', {
+      key: path,
+      contentType: options?.contentType || file.type,
+      cacheControl: options?.cacheControl || '3600',
+      expiresIn: 300,
+    });
+
+    if (!presignResult.success) {
+      return Result.err(presignResult.error);
+    }
+
+    try {
+      const uploadHeaders: Record<string, string> = {
+        'Content-Type': options?.contentType || file.type,
+      };
+
+      if (options?.cacheControl) {
+        uploadHeaders['Cache-Control'] = options.cacheControl;
+      }
+
+      const uploadResponse = await fetch(presignResult.data.uploadUrl, {
+        method: 'PUT',
+        headers: uploadHeaders,
+        body: file,
+      });
+
+      if (!uploadResponse.ok) {
+        return Result.err(
+          new AppError(ErrorCode.STORAGE_ERROR, `R2 upload failed (${uploadResponse.status})`, {
+            path,
+          })
+        );
+      }
+
+      return Result.ok({
+        path: presignResult.data.key,
+        url: presignResult.data.publicUrl || '',
+        metadata: {
+          size: file.size,
+          mimeType: file.type,
+          lastModified: new Date().toISOString(),
+          originalName: file.name,
+          uploadedAt: new Date().toISOString(),
+          storageProvider: 'r2',
+        },
+      });
+    } catch (error) {
+      return Result.err(
+        new AppError(
+          ErrorCode.STORAGE_ERROR,
+          `R2 upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          { path }
+        )
+      );
+    }
   }
 
   /**
@@ -191,15 +312,22 @@ export class StorageService {
     }
   ): Promise<Result<{ path: string; url: string; metadata: any }, AppError>> {
     try {
-      const clientResult = await this.getClient();
-      if (!clientResult.success) {
-        return Result.err(clientResult.error);
-      }
-
       // Validate file
       const validationResult = await this.validateFile(file, config);
       if (!validationResult.success) {
         return Result.err(validationResult.error);
+      }
+
+      if (this.isR2Provider()) {
+        return await this.uploadFileToR2(path, file, {
+          cacheControl: options?.cacheControl || '3600',
+          contentType: options?.contentType || file.type,
+        });
+      }
+
+      const clientResult = await this.getClient();
+      if (!clientResult.success) {
+        return Result.err(clientResult.error);
       }
 
       const bucketName = STORAGE_BUCKETS[bucket];
@@ -313,19 +441,14 @@ export class StorageService {
         height: dimensions.data.height,
         metadata: {
           ...uploadResult.data.metadata,
-          storageBucket: STORAGE_BUCKETS.PROJECT_IMAGES,
-          publicUrl: uploadResult.data.url,
+          storageBucket: this.isR2Provider() ? 'r2' : STORAGE_BUCKETS.PROJECT_IMAGES,
+          ...(uploadResult.data.url ? { publicUrl: uploadResult.data.url } : {}),
         },
       };
 
       // Generate thumbnail if configured
       if (UPLOAD_CONFIGS.PROJECT_IMAGES.generateThumbnail) {
-        const thumbnailResult = await this.generateThumbnail(
-          userId,
-          projectId,
-          file,
-          uploadResult.data.url
-        );
+        const thumbnailResult = await this.generateThumbnail(userId, projectId, file);
 
         if (thumbnailResult.success) {
           projectImageData.metadata = {
@@ -398,7 +521,6 @@ export class StorageService {
     userId: string,
     projectId: string,
     originalFile: File,
-    originalUrl: string,
     maxSize: number = 300
   ): Promise<Result<{ path: string; url: string }, AppError>> {
     try {
@@ -417,10 +539,17 @@ export class StorageService {
 
       // Load original image
       const img = new Image();
+      const localUrl = URL.createObjectURL(originalFile);
       const imageLoadPromise = new Promise<void>((resolve, reject) => {
-        img.onload = () => resolve();
-        img.onerror = () => reject(new Error('Failed to load image'));
-        img.src = originalUrl;
+        img.onload = () => {
+          URL.revokeObjectURL(localUrl);
+          resolve();
+        };
+        img.onerror = () => {
+          URL.revokeObjectURL(localUrl);
+          reject(new Error('Failed to load image'));
+        };
+        img.src = localUrl;
       });
 
       await imageLoadPromise;
@@ -497,6 +626,17 @@ export class StorageService {
     path: string
   ): Promise<Result<boolean, AppError>> {
     try {
+      if (this.isR2Provider()) {
+        const deleteResult = await this.postR2<{ success: true; deleted: string[] }>(
+          '/api/storage/r2/delete',
+          { key: path }
+        );
+        if (!deleteResult.success) {
+          return Result.err(deleteResult.error);
+        }
+        return Result.ok(true);
+      }
+
       const clientResult = await this.getClient();
       if (!clientResult.success) {
         return Result.err(clientResult.error);
@@ -540,6 +680,17 @@ export class StorageService {
         return Result.ok([]);
       }
 
+      if (this.isR2Provider()) {
+        const deleteResult = await this.postR2<{ success: true; deleted: string[] }>(
+          '/api/storage/r2/delete',
+          { keys: paths }
+        );
+        if (!deleteResult.success) {
+          return Result.err(deleteResult.error);
+        }
+        return Result.ok(deleteResult.data.deleted || []);
+      }
+
       const clientResult = await this.getClient();
       if (!clientResult.success) {
         return Result.err(clientResult.error);
@@ -579,6 +730,23 @@ export class StorageService {
     path: string,
     expiresIn: number = 3600
   ): Promise<Result<string, AppError>> {
+    if (this.isR2Provider()) {
+      const signedResult = await this.postR2<{ success: true; signedUrl: string }>(
+        '/api/storage/r2/signed-url',
+        { key: path, expiresIn }
+      );
+
+      if (!signedResult.success) {
+        return Result.err(signedResult.error);
+      }
+
+      if (!signedResult.data.signedUrl) {
+        return Result.err(new AppError(ErrorCode.STORAGE_ERROR, 'No signed URL returned from R2'));
+      }
+
+      return Result.ok(signedResult.data.signedUrl);
+    }
+
     const bucketName = STORAGE_BUCKETS[bucket];
     return await getSignedStorageUrl(bucketName, path, expiresIn);
   }
@@ -596,6 +764,16 @@ export class StorageService {
     }
   ): Promise<Result<StorageObject[], AppError>> {
     try {
+      if (this.isR2Provider()) {
+        return Result.err(
+          new AppError(
+            ErrorCode.STORAGE_ERROR,
+            'listFiles is not supported for R2 in the browser service',
+            { bucket, path }
+          )
+        );
+      }
+
       const clientResult = await this.getClient();
       if (!clientResult.success) {
         return Result.err(clientResult.error);
@@ -650,6 +828,22 @@ export class StorageService {
     destinationPath: string
   ): Promise<Result<string, AppError>> {
     try {
+      if (this.isR2Provider()) {
+        const copyResult = await this.postR2<{
+          success: true;
+          destinationKey: string;
+        }>('/api/storage/r2/copy', {
+          sourceKey: sourcePath,
+          destinationKey: destinationPath,
+        });
+
+        if (!copyResult.success) {
+          return Result.err(copyResult.error);
+        }
+
+        return Result.ok(copyResult.data.destinationKey);
+      }
+
       const clientResult = await this.getClient();
       if (!clientResult.success) {
         return Result.err(clientResult.error);
