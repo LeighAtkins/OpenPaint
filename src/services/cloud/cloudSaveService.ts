@@ -1,4 +1,15 @@
 // Cloud Save Service - Thin Supabase wrapper for projects table
+//
+// Actual DB schema (projects table):
+//   id            uuid PK (auto-generated)
+//   project_name  text
+//   customer_name text
+//   sofa_model    text
+//   created_by    text   -- stores the auth user ID
+//   tags          text[]
+//   data          jsonb
+//   created_at    timestamptz
+//   updated_at    timestamptz
 import { getSupabaseClient, DATABASE_TABLES } from '@/config/supabase.config';
 import { Result } from '@/utils/result';
 import { AppError, ErrorCode } from '@/types/app.types';
@@ -25,6 +36,18 @@ export interface SaveProjectOptions {
   name: string;
   projectData: Record<string, unknown>;
   currentProjectId?: string | null;
+}
+
+/** Map a DB row (project_name, created_by) to our app shape (name, user_id) */
+function mapRow(row: any): any {
+  return {
+    id: row.id,
+    name: row.project_name,
+    user_id: row.created_by,
+    data: row.data,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+  };
 }
 
 class CloudSaveService {
@@ -62,7 +85,6 @@ class CloudSaveService {
     const { name, projectData, currentProjectId } = options;
 
     try {
-      // Estimate payload size
       const payloadSize = JSON.stringify(projectData).length;
       const payloadMB = (payloadSize / (1024 * 1024)).toFixed(1);
       console.log(`[CloudSave] Payload size: ${payloadMB} MB`);
@@ -93,23 +115,17 @@ class CloudSaveService {
         const { data, error } = await client
           .from(DATABASE_TABLES.PROJECTS)
           .update({
-            name,
+            project_name: name,
             data: projectData,
             updated_at: now,
           } as any)
           .eq('id', projectId)
-          .eq('user_id', userId)
-          .select('id, name, user_id, created_at, updated_at')
+          .eq('created_by', userId)
+          .select('id, project_name, created_by, created_at, updated_at')
           .single();
 
         if (error) {
-          console.error(
-            '[CloudSave] Update error:',
-            error.code,
-            error.message,
-            error.details,
-            error.hint
-          );
+          console.error('[CloudSave] Update error:', error.code, error.message, error.details);
           return Result.err(
             new AppError(
               ErrorCode.SUPABASE_QUERY_ERROR,
@@ -119,26 +135,20 @@ class CloudSaveService {
         }
 
         console.log('[CloudSave] Update succeeded');
-        return Result.ok({ ...data, data: {} } as CloudProject);
+        return Result.ok({ ...mapRow(data), data: {} } as CloudProject);
       } else {
         const { data, error } = await client
           .from(DATABASE_TABLES.PROJECTS)
           .insert({
-            name,
-            user_id: userId,
+            project_name: name,
+            created_by: userId,
             data: projectData,
           } as any)
-          .select('id, name, user_id, created_at, updated_at')
+          .select('id, project_name, created_by, created_at, updated_at')
           .single();
 
         if (error) {
-          console.error(
-            '[CloudSave] Insert error:',
-            error.code,
-            error.message,
-            error.details,
-            error.hint
-          );
+          console.error('[CloudSave] Insert error:', error.code, error.message, error.details);
           return Result.err(
             new AppError(ErrorCode.SUPABASE_QUERY_ERROR, `Failed to save project: ${error.message}`)
           );
@@ -148,7 +158,7 @@ class CloudSaveService {
           this.currentCloudProjectId = data.id;
         }
         console.log('[CloudSave] Insert succeeded, id:', data?.id);
-        return Result.ok({ ...data, data: {} } as CloudProject);
+        return Result.ok({ ...mapRow(data), data: {} } as CloudProject);
       }
     } catch (error) {
       console.error('[CloudSave] Exception:', error);
@@ -179,13 +189,13 @@ class CloudSaveService {
 
       let query = client
         .from(DATABASE_TABLES.PROJECTS)
-        .select('id, name, user_id, created_at, updated_at')
-        .eq('user_id', userId)
+        .select('id, project_name, created_by, created_at, updated_at')
+        .eq('created_by', userId)
         .order('updated_at', { ascending: false });
 
       if (search && search.trim()) {
         const searchTerm = search.trim().toLowerCase();
-        query = query.ilike('name', `%${searchTerm}%`);
+        query = query.ilike('project_name', `%${searchTerm}%`);
       }
 
       const { data, error } = await query;
@@ -196,7 +206,7 @@ class CloudSaveService {
         );
       }
 
-      return Result.ok((data || []) as CloudProjectSummary[]);
+      return Result.ok((data || []).map(mapRow) as CloudProjectSummary[]);
     } catch (error) {
       return Result.err(
         new AppError(
@@ -227,7 +237,7 @@ class CloudSaveService {
         .from(DATABASE_TABLES.PROJECTS)
         .select('*')
         .eq('id', projectId)
-        .eq('user_id', userId)
+        .eq('created_by', userId)
         .single();
 
       if (fetchError) {
@@ -244,7 +254,7 @@ class CloudSaveService {
       }
 
       this.currentCloudProjectId = projectId;
-      return Result.ok(project as unknown as CloudProject);
+      return Result.ok(mapRow(project) as CloudProject);
     } catch (error) {
       return Result.err(
         new AppError(
@@ -275,7 +285,7 @@ class CloudSaveService {
         .from(DATABASE_TABLES.PROJECTS)
         .delete()
         .eq('id', projectId)
-        .eq('user_id', userId);
+        .eq('created_by', userId);
 
       if (error) {
         return Result.err(
