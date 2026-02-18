@@ -41,6 +41,9 @@
     },
     "api/storage/r2/copy.js": {
       "includeFiles": "server/**"
+    },
+    "api/storage/r2/object.js": {
+      "includeFiles": "server/**"
     }
   }
 }

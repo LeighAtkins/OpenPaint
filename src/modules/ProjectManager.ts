@@ -1582,22 +1582,7 @@ export class ProjectManager {
     const objectKey = String(r2Path || '').replace(/^r2:\/\//, '');
     if (!objectKey) return null;
 
-    const signedResponse = await fetch('/api/storage/r2/signed-url', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ key: objectKey, expiresIn: 3600 }),
-    });
-
-    const signedBody = await signedResponse.json().catch(() => ({}));
-    if (!signedResponse.ok || !signedBody?.success || !signedBody?.signedUrl) {
-      throw new Error(
-        signedBody?.message || `Failed to resolve R2 image URL (${signedResponse.status})`
-      );
-    }
-
-    return signedBody.signedUrl;
+    return `/api/storage/r2/object?key=${encodeURIComponent(objectKey)}`;
   }
 
   revokeLoadedProjectObjectUrls() {
