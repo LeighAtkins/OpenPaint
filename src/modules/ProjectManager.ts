@@ -297,6 +297,33 @@ export class ProjectManager {
             if (typeof window.app.tagManager.clearAllTags === 'function') {
               window.app.tagManager.clearAllTags();
             }
+
+            // Correct active tab if canvas objects disagree with the saved activeTabId.
+            // This can happen when a PDF export created a duplicate tab state: canvas objects
+            // retain their original scope key, but the saved project may have a newer tab as
+            // active. Find the tab scope that has the most canvas objects and activate it.
+            if (typeof window.setActiveCaptureTab === 'function') {
+              const canvasObjs = this.canvasManager.fabricCanvas?.getObjects() || [];
+              const tabCounts: Record<string, number> = {};
+              canvasObjs.forEach(obj => {
+                const lbl =
+                  (obj as { strokeMetadata?: { imageLabel?: string }; imageLabel?: string })
+                    ?.strokeMetadata?.imageLabel || (obj as { imageLabel?: string })?.imageLabel;
+                if (lbl && typeof lbl === 'string' && lbl.includes('::tab:')) {
+                  const tid = lbl.split('::tab:')[1];
+                  tabCounts[tid] = (tabCounts[tid] || 0) + 1;
+                }
+              });
+              const topEntry = Object.entries(tabCounts).sort((a, b) => b[1] - a[1])[0];
+              if (topEntry) {
+                const dominantTabId = topEntry[0];
+                const curState = window.captureTabsByLabel?.[viewId];
+                if (curState && curState.activeTabId !== dominantTabId) {
+                  window.setActiveCaptureTab(viewId, dominantTabId, { skipSave: true });
+                }
+              }
+            }
+
             const activeScope = window.app.metadataManager.normalizeImageLabel?.(viewId) || viewId;
             const strokes = window.app.metadataManager.vectorStrokesByImage[activeScope] || {};
             const labelVisibility =
@@ -1248,6 +1275,9 @@ export class ProjectManager {
     return [
       'strokeMetadata',
       'arrowSettings',
+      'customPoints',
+      'isArrow',
+      'tagOffset',
       'isTag',
       'isTagText',
       'labelVisible',
@@ -1307,7 +1337,7 @@ export class ProjectManager {
   }
 
   async getProjectData(options = {}) {
-    const { embedImages = true } = options;
+    const { embedImages = true, uploadImagesToR2 = false } = options;
     if (window.captureTabsSyncActive) {
       window.captureTabsSyncActive(this.currentViewId);
     }
@@ -1380,15 +1410,27 @@ export class ProjectManager {
       };
 
       if (viewId === this.currentViewId && fabricCanvas) {
-        console.log(`[Save] Capturing live canvas for view ${viewId}`);
         entry.canvasJSON = fabricCanvas.toJSON(customProps);
       } else {
         entry.canvasJSON = view.canvasData || null;
       }
 
-      if (embedImages && view.image) {
+      if (uploadImagesToR2 && view.image) {
         try {
-          console.log(`[Save] Embedding image for view ${viewId}`);
+          const r2Key = await this.uploadViewImageToR2(viewId, view.image);
+          if (r2Key) {
+            entry.imageDataURL = null;
+            entry.imageUrl =
+              typeof r2Key === 'string' &&
+              (r2Key.startsWith('http://') || r2Key.startsWith('https://'))
+                ? r2Key
+                : `r2://${r2Key}`;
+          }
+        } catch (err) {
+          console.warn(`[Save] Could not upload image to R2 for ${viewId}:`, err);
+        }
+      } else if (embedImages && view.image) {
+        try {
           entry.imageDataURL = await this.fetchImageAsDataURL(view.image);
         } catch (err) {
           console.warn(`[Save] Could not capture image for ${viewId}:`, err);
@@ -1470,14 +1512,92 @@ export class ProjectManager {
   }
 
   async fetchImageAsDataURL(url) {
-    const response = await fetch(url);
-    const blob = await response.blob();
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result);
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
+    const TIMEOUT_MS = 10000;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+    try {
+      const response = await fetch(url, { signal: controller.signal });
+      const blob = await response.blob();
+      return await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  async uploadViewImageToR2(viewId, sourceUrl) {
+    if (!sourceUrl || typeof sourceUrl !== 'string') return null;
+    if (sourceUrl.startsWith('r2://')) return sourceUrl.slice(5);
+    if (sourceUrl.startsWith('http://') || sourceUrl.startsWith('https://')) return sourceUrl;
+
+    const fetchResponse = await fetch(sourceUrl);
+    if (!fetchResponse.ok) {
+      throw new Error(`Image fetch failed for ${viewId}: ${fetchResponse.status}`);
+    }
+
+    const blob = await fetchResponse.blob();
+    const ext = this.inferImageExtension(blob, sourceUrl);
+    const safeViewId = sanitizeFilenamePart(viewId, 'view');
+    const objectKey = `projects/views/${safeViewId}/${Date.now()}.${ext}`;
+
+    const presignResponse = await fetch('/api/storage/r2/presign-upload', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        key: objectKey,
+        contentType: blob.type || 'application/octet-stream',
+      }),
     });
+
+    const presignBody = await presignResponse.json().catch(() => ({}));
+    if (!presignResponse.ok || !presignBody?.success || !presignBody?.uploadUrl) {
+      throw new Error(
+        presignBody?.message || `Failed to create R2 upload URL (${presignResponse.status})`
+      );
+    }
+
+    const uploadResponse = await fetch(presignBody.uploadUrl, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': blob.type || 'application/octet-stream',
+        'Cache-Control': '3600',
+      },
+      body: blob,
+    });
+
+    if (!uploadResponse.ok) {
+      throw new Error(`R2 upload failed (${uploadResponse.status})`);
+    }
+
+    return objectKey;
+  }
+
+  async resolveR2ImageUrl(r2Path) {
+    const objectKey = String(r2Path || '').replace(/^r2:\/\//, '');
+    if (!objectKey) return null;
+
+    const signedResponse = await fetch('/api/storage/r2/signed-url', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ key: objectKey, expiresIn: 3600 }),
+    });
+
+    const signedBody = await signedResponse.json().catch(() => ({}));
+    if (!signedResponse.ok || !signedBody?.success || !signedBody?.signedUrl) {
+      throw new Error(
+        signedBody?.message || `Failed to resolve R2 image URL (${signedResponse.status})`
+      );
+    }
+
+    return signedBody.signedUrl;
   }
 
   revokeLoadedProjectObjectUrls() {
@@ -1591,6 +1711,10 @@ export class ProjectManager {
   async resolveViewImageUrl(viewData) {
     if (!viewData) return null;
     if (viewData.imageDataURL) return viewData.imageDataURL;
+
+    if (typeof viewData.imageUrl === 'string' && viewData.imageUrl.startsWith('r2://')) {
+      return await this.resolveR2ImageUrl(viewData.imageUrl);
+    }
 
     const archivePath = viewData.imageAssetPath || viewData.imageUrl;
     if (archivePath && typeof archivePath === 'string' && archivePath.startsWith('images/')) {

@@ -289,6 +289,14 @@ async function loadProjectsList(search?: string): Promise<void> {
     deleteBtn.textContent = 'Delete';
     deleteBtn.addEventListener('click', () => {
       if (confirm(`Delete "${project.name}"? This cannot be undone.`)) {
+        // Optimistically remove the card immediately so the user gets instant feedback
+        // and can't accidentally trigger multiple deletes.
+        card.remove();
+        const listEl = document.getElementById('cloudProjectsList');
+        const emptyEl = document.getElementById('cloudEmptyState');
+        if (listEl && emptyEl && listEl.children.length === 0) {
+          emptyEl.style.display = 'block';
+        }
         void handleDeleteProject(project.id);
       }
     });
@@ -362,16 +370,17 @@ async function handleDeleteProject(projectId: string): Promise<void> {
       if (typeof (window as any).showStatusMessage === 'function') {
         (window as any).showStatusMessage('Failed to delete: ' + result.error.message, 'error');
       }
+      // Card was already removed optimistically — reload list to restore it
+      await loadProjectsList();
       return;
     }
-
-    await loadProjectsList();
 
     if (typeof (window as any).showStatusMessage === 'function') {
       (window as any).showStatusMessage('Project deleted', 'success');
     }
   } catch (error) {
     console.error('[Cloud] Delete error:', error);
+    await loadProjectsList();
   }
 }
 
@@ -403,16 +412,35 @@ async function handleCloudSave(): Promise<void> {
   }
 
   try {
-    console.log('[Cloud] Getting project data with embedded images...');
-    const projectData = await projectManager.getProjectData({ embedImages: true });
-    console.log('[Cloud] Got project data, views:', Object.keys(projectData.views || {}).length);
+    console.warn('[Cloud] Getting project data with embedded images...');
+    const useR2Storage =
+      String(import.meta.env.VITE_STORAGE_PROVIDER || 'supabase').toLowerCase() === 'r2';
+
+    // Wrap getProjectData in a 60-second timeout to prevent infinite hangs
+    const projectData = await Promise.race([
+      projectManager.getProjectData({
+        embedImages: !useR2Storage,
+        uploadImagesToR2: useR2Storage,
+      }),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('getProjectData timed out after 60s')), 60000)
+      ),
+    ]);
+    const payloadSize = JSON.stringify(projectData).length;
+    console.warn(
+      '[Cloud] Got project data, views:',
+      Object.keys((projectData as any).views || {}).length,
+      'payload:',
+      (payloadSize / (1024 * 1024)).toFixed(1),
+      'MB'
+    );
 
     const currentId = cloudSaveService.getCurrentProjectId();
-    console.log('[Cloud] Saving to Supabase...', currentId ? `(updating ${currentId})` : '(new)');
+    console.warn('[Cloud] Saving to Supabase...', currentId ? `(updating ${currentId})` : '(new)');
 
     const result = await cloudSaveService.saveProject({
       name: projectName,
-      projectData,
+      projectData: projectData as Record<string, unknown>,
       currentProjectId: currentId,
     });
 
@@ -424,7 +452,7 @@ async function handleCloudSave(): Promise<void> {
       return;
     }
 
-    console.log('[Cloud] Save succeeded, id:', result.data.id);
+    console.warn('[Cloud] Save succeeded, id:', result.data.id);
     cloudSaveService.setCurrentProjectId(result.data.id);
 
     if (typeof (window as any).showStatusMessage === 'function') {
