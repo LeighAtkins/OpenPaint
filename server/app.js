@@ -3,6 +3,7 @@ import path from 'path';
 import fs from 'fs';
 import crypto from 'crypto';
 import { fileURLToPath } from 'url';
+import { registerR2Routes } from './r2-routes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -187,6 +188,7 @@ try {
 app.set('trust proxy', true);
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+registerR2Routes(app, '/storage/r2');
 
 // CORS
 app.use((req, res, next) => {

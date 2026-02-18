@@ -19,6 +19,7 @@ import {
 } from './server/db.js';
 import { spawn } from 'child_process';
 import { createClient } from '@supabase/supabase-js';
+import { registerR2Routes } from './server/r2-routes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -308,6 +309,8 @@ app.use('/uploads', express.static(uploadDir));
 // Parse JSON request bodies (increase limit for large projects)
 app.use(express.json({ limit: '200mb' }));
 app.use(express.urlencoded({ extended: true, limit: '200mb' }));
+
+registerR2Routes(app, '/api/storage/r2');
 
 // Route handlers
 app.get('/health', (req, res) => res.json({ ok: true, ts: Date.now() }));
