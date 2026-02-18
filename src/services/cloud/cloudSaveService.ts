@@ -1,4 +1,9 @@
-// Cloud Save Service - Thin Supabase wrapper for projects table
+// Cloud Save Service - Direct PostgREST wrapper for projects table
+//
+// Bypasses the Supabase JS client for data operations because
+// client.auth.getSession() deadlocks intermittently, which also
+// prevents the client from attaching auth headers to requests.
+// Auth tokens are read directly from localStorage instead.
 //
 // Actual DB schema (projects table):
 //   id            uuid PK (auto-generated)
@@ -10,10 +15,9 @@
 //   data          jsonb
 //   created_at    timestamptz
 //   updated_at    timestamptz
-import { getSupabaseClient, DATABASE_TABLES } from '@/config/supabase.config';
+import { SUPABASE_CONFIG } from '@/config/supabase.config';
 import { Result } from '@/utils/result';
 import { AppError, ErrorCode } from '@/types/app.types';
-import type { SupabaseClient } from '@supabase/supabase-js';
 
 export interface CloudProjectSummary {
   id: string;
@@ -40,6 +44,10 @@ export interface SaveProjectOptions {
 
 /** Map a DB row (project_name, created_by) to our app shape (name, user_id) */
 function mapRow(row: any): any {
+  if (!row || typeof row !== 'object') {
+    return null;
+  }
+
   return {
     id: row.id,
     name: row.project_name,
@@ -66,28 +74,84 @@ class CloudSaveService {
   }
 
   /**
-   * Get the current user ID from the cached session (no network call).
+   * Read the stored auth session from localStorage.
    */
-  private async getUserId(client: SupabaseClient<any>): Promise<string | null> {
-    const {
-      data: { session },
-    } = await client.auth.getSession();
-    return session?.user?.id ?? null;
+  private getStoredAuth(): { accessToken: string; userId: string } | null {
+    try {
+      const storageKey = Object.keys(localStorage).find(
+        k => k.startsWith('sb-') && k.endsWith('-auth-token')
+      );
+      if (!storageKey) return null;
+      const raw = localStorage.getItem(storageKey);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      const accessToken = parsed?.access_token;
+      const userId = parsed?.user?.id;
+      if (accessToken && userId) {
+        return { accessToken, userId };
+      }
+    } catch {
+      // ignore
+    }
+    return null;
+  }
+
+  /**
+   * Make a direct PostgREST request, bypassing the Supabase JS client.
+   */
+  private async postgrest(
+    path: string,
+    options: {
+      method: string;
+      body?: unknown;
+      headers?: Record<string, string>;
+      signal?: AbortSignal;
+    }
+  ): Promise<{ data: any; error: string | null; status: number }> {
+    const url = `${SUPABASE_CONFIG.url}/rest/v1${path}`;
+    const auth = this.getStoredAuth();
+    if (!auth) {
+      return { data: null, error: 'Not authenticated', status: 401 };
+    }
+
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      apikey: SUPABASE_CONFIG.anonKey,
+      Authorization: `Bearer ${auth.accessToken}`,
+      Prefer: 'return=representation',
+      ...options.headers,
+    };
+
+    const response = await fetch(url, {
+      method: options.method,
+      headers,
+      body: options.body ? JSON.stringify(options.body) : undefined,
+      signal: options.signal,
+    });
+
+    const text = await response.text();
+    let data: any = null;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      data = text;
+    }
+
+    if (!response.ok) {
+      const msg = typeof data === 'object' ? data?.message || data?.error || text : text;
+      return { data: null, error: `${response.status}: ${msg}`, status: response.status };
+    }
+
+    return { data, error: null, status: response.status };
   }
 
   async saveProject(options: SaveProjectOptions): Promise<Result<CloudProject, AppError>> {
-    const clientResult = getSupabaseClient();
-    if (!clientResult.success) {
-      return Result.err(clientResult.error);
-    }
-
-    const client = clientResult.data as unknown as SupabaseClient<any>;
     const { name, projectData, currentProjectId } = options;
 
     try {
       const payloadSize = JSON.stringify(projectData).length;
       const payloadMB = (payloadSize / (1024 * 1024)).toFixed(1);
-      console.log(`[CloudSave] Payload size: ${payloadMB} MB`);
+      console.warn(`[CloudSave] Payload size: ${payloadMB} MB`);
       if (payloadSize > 50 * 1024 * 1024) {
         return Result.err(
           new AppError(
@@ -97,112 +161,173 @@ class CloudSaveService {
         );
       }
 
-      const userId = await this.getUserId(client);
-      if (!userId) {
+      const auth = this.getStoredAuth();
+      if (!auth) {
         return Result.err(
           new AppError(ErrorCode.AUTH_ERROR, 'You must be signed in to save to the cloud')
         );
       }
+      const { userId } = auth;
 
-      const now = new Date().toISOString();
       const projectId = currentProjectId || this.currentCloudProjectId;
-
-      console.log(
-        `[CloudSave] Saving project "${name}" (${projectId ? 'update ' + projectId : 'new'})...`
+      console.warn(
+        `[CloudSave] Saving project "${name}" (${projectId ? 'update ' + projectId : 'new'}) userId=${userId}...`
       );
 
-      if (projectId) {
-        const { data, error } = await client
-          .from(DATABASE_TABLES.PROJECTS)
-          .update({
-            project_name: name,
-            data: projectData,
-            updated_at: now,
-          } as any)
-          .eq('id', projectId)
-          .eq('created_by', userId)
-          .select('id, project_name, created_by, created_at, updated_at')
-          .single();
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 30000);
 
-        if (error) {
-          console.error('[CloudSave] Update error:', error.code, error.message, error.details);
-          return Result.err(
-            new AppError(
-              ErrorCode.SUPABASE_QUERY_ERROR,
-              `Failed to update project: ${error.message}`
-            )
+      try {
+        if (projectId) {
+          console.warn('[CloudSave] Sending UPDATE...');
+          const { data, error, status } = await this.postgrest(
+            `/projects?id=eq.${projectId}&created_by=eq.${userId}&select=id,project_name,created_by,created_at,updated_at`,
+            {
+              method: 'PATCH',
+              body: {
+                project_name: name,
+                data: projectData,
+                updated_at: new Date().toISOString(),
+              },
+              signal: controller.signal,
+            }
           );
-        }
 
-        console.log('[CloudSave] Update succeeded');
-        return Result.ok({ ...mapRow(data), data: {} } as CloudProject);
-      } else {
-        const { data, error } = await client
-          .from(DATABASE_TABLES.PROJECTS)
-          .insert({
-            project_name: name,
-            created_by: userId,
-            data: projectData,
-          } as any)
-          .select('id, project_name, created_by, created_at, updated_at')
-          .single();
+          if (error) {
+            console.error('[CloudSave] Update error:', error);
+            return Result.err(
+              new AppError(ErrorCode.SUPABASE_QUERY_ERROR, `Failed to update project: ${error}`)
+            );
+          }
 
-        if (error) {
-          console.error('[CloudSave] Insert error:', error.code, error.message, error.details);
-          return Result.err(
-            new AppError(ErrorCode.SUPABASE_QUERY_ERROR, `Failed to save project: ${error.message}`)
+          const row = Array.isArray(data) ? data[0] : data;
+          if (!row) {
+            const { data: fallbackData, error: fallbackError } = await this.postgrest(
+              `/projects?id=eq.${projectId}&created_by=eq.${userId}&select=id,project_name,created_by,created_at,updated_at&limit=1`,
+              { method: 'GET', signal: controller.signal }
+            );
+
+            if (fallbackError) {
+              return Result.err(
+                new AppError(
+                  ErrorCode.SUPABASE_QUERY_ERROR,
+                  `Update returned no row and fallback fetch failed: ${fallbackError}`
+                )
+              );
+            }
+
+            const fallbackRow = Array.isArray(fallbackData) ? fallbackData[0] : fallbackData;
+            const mappedFallback = mapRow(fallbackRow);
+            if (!mappedFallback?.id) {
+              return Result.err(
+                new AppError(
+                  ErrorCode.SUPABASE_QUERY_ERROR,
+                  'Update succeeded but no project row was returned'
+                )
+              );
+            }
+
+            console.warn('[CloudSave] Update succeeded (fallback row fetch)');
+            return Result.ok({ ...mappedFallback, data: {} } as CloudProject);
+          }
+
+          console.warn('[CloudSave] Update succeeded');
+          const mapped = mapRow(row);
+          if (!mapped?.id) {
+            return Result.err(
+              new AppError(ErrorCode.SUPABASE_QUERY_ERROR, 'Update returned malformed project row')
+            );
+          }
+          return Result.ok({ ...mapped, data: {} } as CloudProject);
+        } else {
+          console.warn('[CloudSave] Sending INSERT...');
+          const { data, error } = await this.postgrest(
+            '/projects?select=id,project_name,created_by,created_at,updated_at',
+            {
+              method: 'POST',
+              body: {
+                project_name: name,
+                created_by: userId,
+                data: projectData,
+              },
+              signal: controller.signal,
+            }
           );
-        }
 
-        if (data?.id) {
-          this.currentCloudProjectId = data.id;
+          if (error) {
+            console.error('[CloudSave] Insert error:', error);
+            return Result.err(
+              new AppError(ErrorCode.SUPABASE_QUERY_ERROR, `Failed to save project: ${error}`)
+            );
+          }
+
+          const row = Array.isArray(data) ? data[0] : data;
+          let finalRow = row;
+
+          if (!finalRow) {
+            const safeName = encodeURIComponent(name);
+            const { data: fallbackData, error: fallbackError } = await this.postgrest(
+              `/projects?created_by=eq.${userId}&project_name=eq.${safeName}&select=id,project_name,created_by,created_at,updated_at&order=created_at.desc&limit=1`,
+              { method: 'GET', signal: controller.signal }
+            );
+
+            if (!fallbackError) {
+              finalRow = Array.isArray(fallbackData) ? fallbackData[0] : fallbackData;
+            }
+          }
+
+          const mapped = mapRow(finalRow);
+          if (!mapped?.id) {
+            return Result.err(
+              new AppError(
+                ErrorCode.SUPABASE_QUERY_ERROR,
+                'Insert succeeded but no project row was returned'
+              )
+            );
+          }
+
+          this.currentCloudProjectId = mapped.id;
+          console.warn('[CloudSave] Insert succeeded, id:', mapped.id);
+          return Result.ok({ ...mapped, data: {} } as CloudProject);
         }
-        console.log('[CloudSave] Insert succeeded, id:', data?.id);
-        return Result.ok({ ...mapRow(data), data: {} } as CloudProject);
+      } finally {
+        clearTimeout(timer);
       }
     } catch (error) {
+      const msg = error instanceof Error ? error.message : 'Unknown error';
+      if (msg.includes('aborted')) {
+        console.error('[CloudSave] Request timed out after 30s');
+        return Result.err(
+          new AppError(
+            ErrorCode.UNKNOWN_ERROR,
+            'Cloud save timed out. Try again or reduce project size.'
+          )
+        );
+      }
       console.error('[CloudSave] Exception:', error);
-      return Result.err(
-        new AppError(
-          ErrorCode.UNKNOWN_ERROR,
-          `Failed to save project: ${error instanceof Error ? error.message : 'Unknown error'}`
-        )
-      );
+      return Result.err(new AppError(ErrorCode.UNKNOWN_ERROR, `Failed to save project: ${msg}`));
     }
   }
 
   async listProjects(search?: string): Promise<Result<CloudProjectSummary[], AppError>> {
-    const clientResult = getSupabaseClient();
-    if (!clientResult.success) {
-      return Result.err(clientResult.error);
-    }
-
-    const client = clientResult.data as unknown as SupabaseClient<any>;
-
     try {
-      const userId = await this.getUserId(client);
-      if (!userId) {
+      const auth = this.getStoredAuth();
+      if (!auth) {
         return Result.err(
           new AppError(ErrorCode.AUTH_ERROR, 'You must be signed in to list projects')
         );
       }
 
-      let query = client
-        .from(DATABASE_TABLES.PROJECTS)
-        .select('id, project_name, created_by, created_at, updated_at')
-        .eq('created_by', userId)
-        .order('updated_at', { ascending: false });
-
+      let path = `/projects?created_by=eq.${auth.userId}&select=id,project_name,created_by,created_at,updated_at&order=updated_at.desc`;
       if (search && search.trim()) {
-        const searchTerm = search.trim().toLowerCase();
-        query = query.ilike('project_name', `%${searchTerm}%`);
+        path += `&project_name=ilike.*${encodeURIComponent(search.trim())}*`;
       }
 
-      const { data, error } = await query;
+      const { data, error } = await this.postgrest(path, { method: 'GET' });
 
       if (error) {
         return Result.err(
-          new AppError(ErrorCode.SUPABASE_QUERY_ERROR, `Failed to list projects: ${error.message}`)
+          new AppError(ErrorCode.SUPABASE_QUERY_ERROR, `Failed to list projects: ${error}`)
         );
       }
 
@@ -218,43 +343,32 @@ class CloudSaveService {
   }
 
   async loadProject(projectId: string): Promise<Result<CloudProject, AppError>> {
-    const clientResult = getSupabaseClient();
-    if (!clientResult.success) {
-      return Result.err(clientResult.error);
-    }
-
-    const client = clientResult.data as unknown as SupabaseClient<any>;
-
     try {
-      const userId = await this.getUserId(client);
-      if (!userId) {
+      const auth = this.getStoredAuth();
+      if (!auth) {
         return Result.err(
           new AppError(ErrorCode.AUTH_ERROR, 'You must be signed in to load projects')
         );
       }
 
-      const { data: project, error: fetchError } = await client
-        .from(DATABASE_TABLES.PROJECTS)
-        .select('*')
-        .eq('id', projectId)
-        .eq('created_by', userId)
-        .single();
+      const { data, error } = await this.postgrest(
+        `/projects?id=eq.${projectId}&created_by=eq.${auth.userId}`,
+        { method: 'GET' }
+      );
 
-      if (fetchError) {
+      if (error) {
         return Result.err(
-          new AppError(
-            ErrorCode.SUPABASE_QUERY_ERROR,
-            `Failed to load project: ${fetchError.message}`
-          )
+          new AppError(ErrorCode.SUPABASE_QUERY_ERROR, `Failed to load project: ${error}`)
         );
       }
 
-      if (!project) {
+      const row = Array.isArray(data) ? data[0] : data;
+      if (!row) {
         return Result.err(new AppError(ErrorCode.VALIDATION_ERROR, 'Project not found'));
       }
 
       this.currentCloudProjectId = projectId;
-      return Result.ok(mapRow(project) as CloudProject);
+      return Result.ok(mapRow(row) as CloudProject);
     } catch (error) {
       return Result.err(
         new AppError(
@@ -266,30 +380,22 @@ class CloudSaveService {
   }
 
   async deleteProject(projectId: string): Promise<Result<boolean, AppError>> {
-    const clientResult = getSupabaseClient();
-    if (!clientResult.success) {
-      return Result.err(clientResult.error);
-    }
-
-    const client = clientResult.data as unknown as SupabaseClient<any>;
-
     try {
-      const userId = await this.getUserId(client);
-      if (!userId) {
+      const auth = this.getStoredAuth();
+      if (!auth) {
         return Result.err(
           new AppError(ErrorCode.AUTH_ERROR, 'You must be signed in to delete projects')
         );
       }
 
-      const { error } = await client
-        .from(DATABASE_TABLES.PROJECTS)
-        .delete()
-        .eq('id', projectId)
-        .eq('created_by', userId);
+      const { error } = await this.postgrest(
+        `/projects?id=eq.${projectId}&created_by=eq.${auth.userId}`,
+        { method: 'DELETE' }
+      );
 
       if (error) {
         return Result.err(
-          new AppError(ErrorCode.SUPABASE_QUERY_ERROR, `Failed to delete project: ${error.message}`)
+          new AppError(ErrorCode.SUPABASE_QUERY_ERROR, `Failed to delete project: ${error}`)
         );
       }
 
