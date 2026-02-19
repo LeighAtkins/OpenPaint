@@ -24,6 +24,8 @@ export class ProjectManager {
     this.isLoadingProject = false;
     this.suspendSave = false;
     this.isSwitchingView = false;
+    this.isHydratingDeferredViews = false;
+    this.hydrationPinnedViewId = null;
     this.pendingSwitchViewId = null;
     this.loadedProjectObjectUrls = [];
     this.remoteImageObjectUrlCache = new Map();
@@ -96,6 +98,16 @@ export class ProjectManager {
 
   // Switch to a different view (image)
   async switchView(viewId, force = false) {
+    if (
+      this.isHydratingDeferredViews &&
+      this.hydrationPinnedViewId &&
+      viewId !== this.hydrationPinnedViewId
+    ) {
+      console.log(`[Load] Delaying switch to ${viewId} until deferred image hydration finishes`);
+      this.pendingSwitchViewId = viewId;
+      return;
+    }
+
     if (this.isSwitchingView) {
       this.pendingSwitchViewId = viewId;
       return;
@@ -359,8 +371,8 @@ export class ProjectManager {
             }
           }
 
-          // Restore per-image viewport (zoom/pan) if previously saved
-          if (view.viewport) {
+          // Restore per-image viewport (zoom/pan) only when tab-scoped viewport is unavailable
+          if (view.viewport && !window.captureTabsByLabel?.[viewId]) {
             this.canvasManager.setViewportState(view.viewport);
           }
           resolve();
@@ -372,8 +384,8 @@ export class ProjectManager {
         window.app.metadataManager.clearImageMetadata(viewId);
       }
 
-      // Restore per-image viewport (zoom/pan) if previously saved
-      if (view.viewport) {
+      // Restore per-image viewport (zoom/pan) only when tab-scoped viewport is unavailable
+      if (view.viewport && !window.captureTabsByLabel?.[viewId]) {
         this.canvasManager.setViewportState(view.viewport);
       }
 
@@ -2018,6 +2030,10 @@ export class ProjectManager {
       console.log('[Load] Loading views:', orderedViewIds);
       const targetView = projectData.currentViewId || orderedViewIds[0];
       const deferredImageRegistrations = [];
+      this.isHydratingDeferredViews = true;
+      this.hydrationPinnedViewId = targetView;
+      window.__deferredImageHydrationInProgress = true;
+      window.__projectLoadPinnedView = targetView;
 
       const registerImageForView = async (viewId, imageUrl) => {
         if (!imageUrl) return;
@@ -2124,42 +2140,41 @@ export class ProjectManager {
         setTimeout(() => syncGalleryToView(0), 100);
       }
 
-      // Register remaining view images after first paint to keep load responsive
-      const registerDeferredImages = index => {
-        if (index >= deferredImageRegistrations.length) return;
+      // Register remaining view images while keeping current view pinned.
+      for (let index = 0; index < deferredImageRegistrations.length; index += 1) {
         const item = deferredImageRegistrations[index];
-        const run = async () => {
-          try {
-            this.updateProjectLoadOverlay(
-              `Loading image ${index + 1}/${deferredImageRegistrations.length}...`
-            );
-            const imageUrl = await this.resolveViewImageUrl(item.viewData);
-            this.views[item.viewId].image = imageUrl;
-            await registerImageForView(item.viewId, imageUrl);
-          } catch (error) {
-            console.warn('[Load] Deferred image registration failed', item.viewId, error);
-          } finally {
-            setTimeout(() => registerDeferredImages(index + 1), 0);
-          }
-        };
-        void run();
-      };
-      if (deferredImageRegistrations.length > 0) {
-        setTimeout(() => registerDeferredImages(0), 0);
+        try {
+          this.updateProjectLoadOverlay(
+            `Loading image ${index + 1}/${deferredImageRegistrations.length}...`
+          );
+          const imageUrl = await this.resolveViewImageUrl(item.viewData);
+          this.views[item.viewId].image = imageUrl;
+          await registerImageForView(item.viewId, imageUrl);
+        } catch (error) {
+          console.warn('[Load] Deferred image registration failed', item.viewId, error);
+        }
       }
 
       this.showStatusMessage('Project loaded successfully', 'success');
       console.log('[Load] Project load complete');
 
-      // Re-enable scroll-select after load settles
-      setTimeout(() => {
-        window.__suppressScrollSelectUntil = 0;
-        window.__isLoadingProject = false;
-        window.__suspendSaveCurrentView = false;
-        this.isLoadingProject = false;
-        this.suspendSave = false;
-        this.hideProjectLoadOverlay();
-      }, 3500);
+      // Re-enable interactions once deferred hydration is complete.
+      window.__suppressScrollSelectUntil = 0;
+      window.__isLoadingProject = false;
+      window.__suspendSaveCurrentView = false;
+      this.isLoadingProject = false;
+      this.suspendSave = false;
+      this.isHydratingDeferredViews = false;
+      this.hydrationPinnedViewId = null;
+      window.__deferredImageHydrationInProgress = false;
+      window.__projectLoadPinnedView = null;
+      this.hideProjectLoadOverlay();
+
+      if (this.pendingSwitchViewId && this.pendingSwitchViewId !== this.currentViewId) {
+        const nextView = this.pendingSwitchViewId;
+        this.pendingSwitchViewId = null;
+        await this.switchView(nextView, true);
+      }
     } catch (error) {
       console.error('[Load] Failed to load project:', error);
       this.showStatusMessage('Failed to load project: ' + error.message, 'error');
@@ -2167,6 +2182,10 @@ export class ProjectManager {
       window.__suspendSaveCurrentView = false;
       this.isLoadingProject = false;
       this.suspendSave = false;
+      this.isHydratingDeferredViews = false;
+      this.hydrationPinnedViewId = null;
+      window.__deferredImageHydrationInProgress = false;
+      window.__projectLoadPinnedView = null;
       this.hideProjectLoadOverlay();
     }
   }
