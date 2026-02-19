@@ -2095,36 +2095,48 @@ export class ProjectManager {
         if (window.syncCaptureTabCanvasVisibility) {
           window.syncCaptureTabCanvasVisibility(targetView);
         }
-        // Force a background re-apply after switch to avoid "blank until click"
-        if (this.views[targetView]?.image) {
-          await this.setBackgroundImage(this.views[targetView].image);
-          this.canvasManager?.fabricCanvas?.requestRenderAll?.();
-        }
+
+        const initialCanvas = this.canvasManager?.fabricCanvas;
+        const initialBgSrc = initialCanvas?.backgroundImage?.src || null;
+        console.log('[Load] Initial target background after switch:', {
+          targetView,
+          hasBackground: Boolean(initialCanvas?.backgroundImage),
+          backgroundSrc: initialBgSrc,
+          viewport: this.canvasManager?.getViewportState?.(),
+        });
+
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
             if (this.canvasManager?.resize) {
               this.canvasManager.resize();
             }
+
             const current = this.views[targetView];
-            if (current?.image && this.currentViewId === targetView) {
-              console.log('[Load] Post-load refresh of background image:', targetView);
-              this.setBackgroundImage(current.image);
+            const canvas = this.canvasManager?.fabricCanvas;
+            const hasBg = Boolean(canvas?.backgroundImage);
+
+            if (!hasBg && current?.image && this.currentViewId === targetView) {
+              console.log('[Load] Background missing after resize, applying once:', targetView);
+              this.setBackgroundImage(current.image).then(() => {
+                this.canvasManager?.fabricCanvas?.requestRenderAll?.();
+              });
+            } else {
               this.canvasManager?.fabricCanvas?.requestRenderAll?.();
             }
           });
         });
+
         const lateRefresh = () => {
           const current = this.views[targetView];
           if (!current?.image || this.currentViewId !== targetView) return;
           const canvas = this.canvasManager?.fabricCanvas;
           const hasBg = !!canvas?.backgroundImage;
           if (!hasBg) {
-            console.log('[Load] Late refresh of background image:', targetView);
+            console.log('[Load] Late refresh (missing background) for target view:', targetView);
             this.setBackgroundImage(current.image);
           }
         };
-        setTimeout(lateRefresh, 250);
-        setTimeout(lateRefresh, 800);
+        setTimeout(lateRefresh, 450);
 
         // Align gallery selection/scroll to the current view without switching views
         const syncGalleryToView = attempt => {
