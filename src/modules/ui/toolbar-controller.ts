@@ -1245,29 +1245,35 @@ export function initToolbarController() {
       const state = ensureCaptureTabsForLabel(resolved);
       const activeTab = getActiveTab(resolved);
       if (!activeTab) return;
-      if (activeTab.type === 'master') {
-        setMasterViewActive(true);
-        const stored = activeTab.captureFrame;
+
+      const applyCenteredFrameAndViewport = (stored, borderColor) => {
         const rect = resolveCaptureFrameRect(stored);
         const centeredRect = buildCenteredRectFromSize(rect.width, rect.height);
-        const centerDeltaX =
+        let centerDeltaX =
           centeredRect.left + centeredRect.width / 2 - (rect.left + rect.width / 2);
-        const centerDeltaY =
+        let centerDeltaY =
           centeredRect.top + centeredRect.height / 2 - (rect.top + rect.height / 2);
+
+        if (Math.abs(centerDeltaX) < 1) centerDeltaX = 0;
+        if (Math.abs(centerDeltaY) < 1) centerDeltaY = 0;
+
         captureFrame.style.left = `${centeredRect.left}px`;
         captureFrame.style.top = `${centeredRect.top}px`;
         captureFrame.style.width = `${centeredRect.width}px`;
         captureFrame.style.height = `${centeredRect.height}px`;
+
         if (!activeTab.viewport) {
           activeTab.viewport = buildViewportRecord();
         }
-        if (activeTab.viewport) {
+
+        if (activeTab.viewport && (centerDeltaX !== 0 || centerDeltaY !== 0)) {
           activeTab.viewport = {
             ...activeTab.viewport,
             panX: (activeTab.viewport.panX || 0) + centerDeltaX,
             panY: (activeTab.viewport.panY || 0) + centerDeltaY,
           };
         }
+
         activeTab.captureFrame = {
           ...(stored || {}),
           ...centeredRect,
@@ -1278,49 +1284,23 @@ export function initToolbarController() {
           relativeWidth: centeredRect.width / Math.max(window.innerWidth, 1),
           relativeHeight: centeredRect.height / Math.max(window.innerHeight, 1),
         };
-        captureFrame.style.borderColor = '#0f172a';
+
+        captureFrame.style.borderColor = borderColor;
         if (activeTab.viewport) {
           applyViewportRecord(activeTab.viewport);
         }
+      };
+
+      if (activeTab.type === 'master') {
+        setMasterViewActive(true);
+        const stored = activeTab.captureFrame;
+        applyCenteredFrameAndViewport(stored, '#0f172a');
         renderMasterOverlay(resolved);
         return;
       }
       setMasterViewActive(false);
       const stored = activeTab.captureFrame;
-      const rect = resolveCaptureFrameRect(stored);
-      const centeredRect = buildCenteredRectFromSize(rect.width, rect.height);
-      const centerDeltaX =
-        centeredRect.left + centeredRect.width / 2 - (rect.left + rect.width / 2);
-      const centerDeltaY =
-        centeredRect.top + centeredRect.height / 2 - (rect.top + rect.height / 2);
-      captureFrame.style.left = `${centeredRect.left}px`;
-      captureFrame.style.top = `${centeredRect.top}px`;
-      captureFrame.style.width = `${centeredRect.width}px`;
-      captureFrame.style.height = `${centeredRect.height}px`;
-      if (!activeTab.viewport) {
-        activeTab.viewport = buildViewportRecord();
-      }
-      if (activeTab.viewport) {
-        activeTab.viewport = {
-          ...activeTab.viewport,
-          panX: (activeTab.viewport.panX || 0) + centerDeltaX,
-          panY: (activeTab.viewport.panY || 0) + centerDeltaY,
-        };
-      }
-      activeTab.captureFrame = {
-        ...(stored || {}),
-        ...centeredRect,
-        windowWidth: Math.max(window.innerWidth, 1),
-        windowHeight: Math.max(window.innerHeight, 1),
-        relativeLeft: centeredRect.left / Math.max(window.innerWidth, 1),
-        relativeTop: centeredRect.top / Math.max(window.innerHeight, 1),
-        relativeWidth: centeredRect.width / Math.max(window.innerWidth, 1),
-        relativeHeight: centeredRect.height / Math.max(window.innerHeight, 1),
-      };
-      captureFrame.style.borderColor = activeTab.color || '#22c55e';
-      if (activeTab.viewport) {
-        applyViewportRecord(activeTab.viewport);
-      }
+      applyCenteredFrameAndViewport(stored, activeTab.color || '#22c55e');
     }
     function getCanvasClientRect() {
       const canvasEl =

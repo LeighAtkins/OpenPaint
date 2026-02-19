@@ -2095,9 +2095,6 @@ export class ProjectManager {
         if (window.syncCaptureTabCanvasVisibility) {
           window.syncCaptureTabCanvasVisibility(targetView);
         }
-        if (window.applyCaptureFrameForLabel) {
-          window.applyCaptureFrameForLabel(targetView);
-        }
         // Force a background re-apply after switch to avoid "blank until click"
         if (this.views[targetView]?.image) {
           await this.setBackgroundImage(this.views[targetView].image);
