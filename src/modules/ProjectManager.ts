@@ -12,6 +12,9 @@ import {
 } from './sofa-metadata.js';
 import { FabricControls } from './utils/FabricControls.js';
 import { sanitizeFilenamePart } from './utils/naming-utils.js';
+import { normalizeCloudError } from './cloud/error-normalizer.js';
+import { CLOUD_COPY } from './cloud/messages.js';
+import { decideFinalSaveMessageKey, formatSaveOutcomeLines } from './cloud/result-factory.js';
 import JSZip from 'jszip';
 
 export class ProjectManager {
@@ -1182,6 +1185,31 @@ export class ProjectManager {
     }, 3000);
   }
 
+  renderSaveOutcome(outcome) {
+    const message = formatSaveOutcomeLines(outcome);
+    const type =
+      outcome.local.status !== 'success'
+        ? 'error'
+        : outcome.cloud.attempted && outcome.cloud.status === 'failed'
+          ? 'info'
+          : 'success';
+    this.showStatusMessage(message, type);
+  }
+
+  toNormalizedCloudError(cloudResult) {
+    if (cloudResult?.error?.userMessage) {
+      return cloudResult.error;
+    }
+
+    return normalizeCloudError({
+      statusCode: cloudResult?.statusCode,
+      code: cloudResult?.error?.code || cloudResult?.code,
+      message: cloudResult?.error?.message || cloudResult?.message || 'Cloud save failed',
+      name: cloudResult?.error?.name,
+      details: cloudResult,
+    });
+  }
+
   async convertBlobsToDataUrls(data) {
     if (!data) return data;
 
@@ -1422,37 +1450,104 @@ export class ProjectManager {
     const projectName = projectNameInput?.value?.trim() || 'OpenPaint Project';
     const safeProjectName = sanitizeFilenamePart(projectName, 'OpenPaint Project');
 
+    const outcome = {
+      local: { status: 'not_attempted' },
+      cloud: { attempted: false, status: 'not_attempted' },
+      finalMessageKey: 'save.combined.fail',
+      timestamp: new Date().toISOString(),
+    };
+
+    const startedAt = Date.now();
+
     try {
       console.log('[Save] Starting saveProject');
       if (!this.canvasManager?.fabricCanvas) {
-        this.showStatusMessage('Canvas not ready; cannot save.', 'error');
+        outcome.local = { status: 'failed', error: 'Canvas not ready; cannot save.' };
         console.error('[Save] fabricCanvas missing');
         return;
       }
 
+      const localStart = Date.now();
       const projectData = await this.getProjectData({ embedImages: false });
 
       await this.downloadProjectArchive(projectData, safeProjectName);
+      outcome.local = {
+        status: 'success',
+        fileName: `${safeProjectName}.opaint`,
+        durationMs: Date.now() - localStart,
+      };
 
       const authManager = window.app?.authManager;
       const cloudManager = window.app?.cloudProjectManager;
       const user = authManager?.getUser ? authManager.getUser() : null;
 
       if (user && cloudManager?.saveProject) {
-        const cloudProjectData = await this.getProjectData({ embedImages: true });
+        outcome.cloud.attempted = true;
+        const cloudStart = Date.now();
+        const cloudProjectData = await this.getProjectData({ embedImages: false });
         const result = await cloudManager.saveProject(cloudProjectData);
-        if (result?.error) {
-          console.error('[Save] Cloud save failed:', result.error);
-          this.showStatusMessage('Project saved locally. Cloud save failed.', 'error');
-          return;
+
+        if (result?.status === 'ok') {
+          outcome.cloud = {
+            attempted: true,
+            status: 'success',
+            projectId: result?.data?.projectId,
+            manifestVersion: result?.data?.manifestVersion,
+            syncedViewIds: result?.data?.syncedViewIds,
+            uploadedAssetHashes: result?.data?.uploadedAssetHashes,
+            durationMs: Date.now() - cloudStart,
+          };
+        } else {
+          const normalizedError = this.toNormalizedCloudError(result);
+          outcome.cloud = {
+            attempted: true,
+            status: 'failed',
+            durationMs: Date.now() - cloudStart,
+            error: normalizedError,
+          };
+          console.error('[Save] Cloud save failed:', normalizedError);
+          if (normalizedError?.requiresRelogin && authManager?.setSessionExpiredState) {
+            authManager.setSessionExpiredState(normalizedError.userMessage);
+          }
         }
-        this.showStatusMessage('Project saved locally and to cloud.', 'success');
       } else {
-        this.showStatusMessage('Project saved locally.', 'success');
+        outcome.cloud = {
+          attempted: false,
+          status: 'not_attempted',
+          error: user
+            ? undefined
+            : {
+                category: 'auth_invalid',
+                message: 'User not logged in',
+                userMessage: CLOUD_COPY.save.cloudSkippedLoggedOut,
+                retryable: false,
+                requiresRelogin: true,
+              },
+        };
       }
     } catch (error) {
       console.error('[Save] Failed to save project:', error);
-      this.showStatusMessage('Failed to save project: ' + error.message, 'error');
+      outcome.local = {
+        status: 'failed',
+        error: error?.message || 'Failed to save project',
+        durationMs: Date.now() - startedAt,
+      };
+      outcome.cloud = {
+        attempted: false,
+        status: 'not_attempted',
+      };
+    } finally {
+      outcome.finalMessageKey = decideFinalSaveMessageKey(outcome);
+      this.renderSaveOutcome(outcome);
+      console.log('[SaveOutcome]', {
+        localSaved: outcome.local.status === 'success',
+        cloudAttempted: outcome.cloud.attempted,
+        cloudSaved: outcome.cloud.status === 'success',
+        cloudErrorCategory: outcome.cloud.error?.category,
+        cloudStatusCode: outcome.cloud.error?.statusCode,
+        finalMessageKey: outcome.finalMessageKey,
+        durationMs: Date.now() - startedAt,
+      });
     }
   }
 
