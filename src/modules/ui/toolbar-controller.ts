@@ -1230,24 +1230,36 @@ export function initToolbarController() {
         setMasterViewActive(true);
         const stored = activeTab.captureFrame;
         const rect = resolveCaptureFrameRect(stored);
-        captureFrame.style.left = `${rect.left}px`;
-        captureFrame.style.top = `${rect.top}px`;
-        captureFrame.style.width = `${rect.width}px`;
-        captureFrame.style.height = `${rect.height}px`;
-        activeTab.captureFrame = {
-          ...(stored || {}),
-          ...rect,
-          windowWidth: Math.max(window.innerWidth, 1),
-          windowHeight: Math.max(window.innerHeight, 1),
-          relativeLeft: rect.left / Math.max(window.innerWidth, 1),
-          relativeTop: rect.top / Math.max(window.innerHeight, 1),
-          relativeWidth: rect.width / Math.max(window.innerWidth, 1),
-          relativeHeight: rect.height / Math.max(window.innerHeight, 1),
-        };
-        captureFrame.style.borderColor = '#0f172a';
+        const centeredRect = buildCenteredRectFromSize(rect.width, rect.height);
+        const centerDeltaX =
+          centeredRect.left + centeredRect.width / 2 - (rect.left + rect.width / 2);
+        const centerDeltaY =
+          centeredRect.top + centeredRect.height / 2 - (rect.top + rect.height / 2);
+        captureFrame.style.left = `${centeredRect.left}px`;
+        captureFrame.style.top = `${centeredRect.top}px`;
+        captureFrame.style.width = `${centeredRect.width}px`;
+        captureFrame.style.height = `${centeredRect.height}px`;
         if (!activeTab.viewport) {
           activeTab.viewport = buildViewportRecord();
         }
+        if (activeTab.viewport) {
+          activeTab.viewport = {
+            ...activeTab.viewport,
+            panX: (activeTab.viewport.panX || 0) + centerDeltaX,
+            panY: (activeTab.viewport.panY || 0) + centerDeltaY,
+          };
+        }
+        activeTab.captureFrame = {
+          ...(stored || {}),
+          ...centeredRect,
+          windowWidth: Math.max(window.innerWidth, 1),
+          windowHeight: Math.max(window.innerHeight, 1),
+          relativeLeft: centeredRect.left / Math.max(window.innerWidth, 1),
+          relativeTop: centeredRect.top / Math.max(window.innerHeight, 1),
+          relativeWidth: centeredRect.width / Math.max(window.innerWidth, 1),
+          relativeHeight: centeredRect.height / Math.max(window.innerHeight, 1),
+        };
+        captureFrame.style.borderColor = '#0f172a';
         if (activeTab.viewport) {
           applyViewportRecord(activeTab.viewport);
         }
@@ -1257,24 +1269,36 @@ export function initToolbarController() {
       setMasterViewActive(false);
       const stored = activeTab.captureFrame;
       const rect = resolveCaptureFrameRect(stored);
-      captureFrame.style.left = `${rect.left}px`;
-      captureFrame.style.top = `${rect.top}px`;
-      captureFrame.style.width = `${rect.width}px`;
-      captureFrame.style.height = `${rect.height}px`;
-      activeTab.captureFrame = {
-        ...(stored || {}),
-        ...rect,
-        windowWidth: Math.max(window.innerWidth, 1),
-        windowHeight: Math.max(window.innerHeight, 1),
-        relativeLeft: rect.left / Math.max(window.innerWidth, 1),
-        relativeTop: rect.top / Math.max(window.innerHeight, 1),
-        relativeWidth: rect.width / Math.max(window.innerWidth, 1),
-        relativeHeight: rect.height / Math.max(window.innerHeight, 1),
-      };
-      captureFrame.style.borderColor = activeTab.color || '#22c55e';
+      const centeredRect = buildCenteredRectFromSize(rect.width, rect.height);
+      const centerDeltaX =
+        centeredRect.left + centeredRect.width / 2 - (rect.left + rect.width / 2);
+      const centerDeltaY =
+        centeredRect.top + centeredRect.height / 2 - (rect.top + rect.height / 2);
+      captureFrame.style.left = `${centeredRect.left}px`;
+      captureFrame.style.top = `${centeredRect.top}px`;
+      captureFrame.style.width = `${centeredRect.width}px`;
+      captureFrame.style.height = `${centeredRect.height}px`;
       if (!activeTab.viewport) {
         activeTab.viewport = buildViewportRecord();
       }
+      if (activeTab.viewport) {
+        activeTab.viewport = {
+          ...activeTab.viewport,
+          panX: (activeTab.viewport.panX || 0) + centerDeltaX,
+          panY: (activeTab.viewport.panY || 0) + centerDeltaY,
+        };
+      }
+      activeTab.captureFrame = {
+        ...(stored || {}),
+        ...centeredRect,
+        windowWidth: Math.max(window.innerWidth, 1),
+        windowHeight: Math.max(window.innerHeight, 1),
+        relativeLeft: centeredRect.left / Math.max(window.innerWidth, 1),
+        relativeTop: centeredRect.top / Math.max(window.innerHeight, 1),
+        relativeWidth: centeredRect.width / Math.max(window.innerWidth, 1),
+        relativeHeight: centeredRect.height / Math.max(window.innerHeight, 1),
+      };
+      captureFrame.style.borderColor = activeTab.color || '#22c55e';
       if (activeTab.viewport) {
         applyViewportRecord(activeTab.viewport);
       }
@@ -3680,6 +3704,7 @@ export function initToolbarController() {
       const imageData = imageGalleryData[index];
       if (
         !window.__isLoadingProject &&
+        !window.__deferredImageHydrationInProgress &&
         imageData &&
         imageData.original &&
         imageData.original.label
@@ -5210,7 +5235,8 @@ export function initToolbarController() {
             label &&
             window.projectManager &&
             typeof window.projectManager.switchView === 'function' &&
-            !window.__isLoadingProject
+            !window.__isLoadingProject &&
+            !window.__deferredImageHydrationInProgress
           ) {
             setTimeout(() => {
               window.__suppressScrollSelectUntil = Date.now() + 1200;
