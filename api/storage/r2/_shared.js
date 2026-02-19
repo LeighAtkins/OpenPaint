@@ -146,7 +146,11 @@ export async function handleObject(req, res) {
   }
 
   const contentType = upstream.headers.get('content-type') || 'application/octet-stream';
-  const cacheControl = upstream.headers.get('cache-control') || 'private, max-age=300';
+  const upstreamCacheControl = upstream.headers.get('cache-control') || '';
+  const hasMaxAgeDirective = /max-age\s*=\s*\d+/i.test(upstreamCacheControl);
+  const cacheControl = hasMaxAgeDirective
+    ? upstreamCacheControl
+    : 'public, max-age=3600, stale-while-revalidate=60';
   const etag = upstream.headers.get('etag');
   const lastModified = upstream.headers.get('last-modified');
   const contentLength = upstream.headers.get('content-length');

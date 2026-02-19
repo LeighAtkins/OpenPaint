@@ -26,6 +26,8 @@ export class ProjectManager {
     this.isSwitchingView = false;
     this.pendingSwitchViewId = null;
     this.loadedProjectObjectUrls = [];
+    this.remoteImageObjectUrlCache = new Map();
+    this.projectLoadOverlayEl = null;
     this.activeArchiveZip = null;
     this.projectMetadata = createDefaultSofaMetadata();
     window.projectMetadata = this.getProjectMetadata();
@@ -1233,6 +1235,42 @@ export class ProjectManager {
     }, 3000);
   }
 
+  ensureProjectLoadOverlay() {
+    if (this.projectLoadOverlayEl && document.body.contains(this.projectLoadOverlayEl)) {
+      return this.projectLoadOverlayEl;
+    }
+    let overlay = document.getElementById('projectLoadOverlay');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'projectLoadOverlay';
+      overlay.style.cssText =
+        'position: fixed; inset: 0; z-index: 11999; background: rgba(15, 23, 42, 0.4); display: none; align-items: center; justify-content: center;';
+      overlay.innerHTML =
+        '<div style="background:#fff; border-radius:12px; padding:16px 18px; min-width:280px; box-shadow:0 12px 30px rgba(0,0,0,0.22); font-family: system-ui, -apple-system, sans-serif;"><div id="projectLoadOverlayTitle" style="font-weight:700; color:#0f172a; font-size:14px; margin-bottom:8px;">Loading Project</div><div id="projectLoadOverlayPhase" style="font-size:13px; color:#334155;">Preparing...</div></div>';
+      document.body.appendChild(overlay);
+    }
+    this.projectLoadOverlayEl = overlay;
+    return overlay;
+  }
+
+  showProjectLoadOverlay(phase = 'Preparing...') {
+    const overlay = this.ensureProjectLoadOverlay();
+    const phaseEl = overlay.querySelector('#projectLoadOverlayPhase');
+    if (phaseEl) phaseEl.textContent = phase;
+    overlay.style.display = 'flex';
+  }
+
+  updateProjectLoadOverlay(phase = 'Preparing...') {
+    const overlay = this.ensureProjectLoadOverlay();
+    const phaseEl = overlay.querySelector('#projectLoadOverlayPhase');
+    if (phaseEl) phaseEl.textContent = phase;
+  }
+
+  hideProjectLoadOverlay() {
+    if (!this.projectLoadOverlayEl) return;
+    this.projectLoadOverlayEl.style.display = 'none';
+  }
+
   renderSaveOutcome(outcome) {
     const message = formatSaveOutcomeLines(outcome);
     const type =
@@ -1682,7 +1720,7 @@ export class ProjectManager {
       method: 'PUT',
       headers: {
         'Content-Type': blob.type || 'application/octet-stream',
-        'Cache-Control': '3600',
+        'Cache-Control': 'public, max-age=31536000, immutable',
       },
       body: blob,
     });
@@ -1698,7 +1736,25 @@ export class ProjectManager {
     const objectKey = String(r2Path || '').replace(/^r2:\/\//, '');
     if (!objectKey) return null;
 
-    return `/api/storage/r2/object?key=${encodeURIComponent(objectKey)}`;
+    if (this.remoteImageObjectUrlCache.has(objectKey)) {
+      return this.remoteImageObjectUrlCache.get(objectKey);
+    }
+
+    const proxyUrl = `/api/storage/r2/object?key=${encodeURIComponent(objectKey)}`;
+    try {
+      const response = await fetch(proxyUrl, { cache: 'force-cache' });
+      if (!response.ok) {
+        return proxyUrl;
+      }
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      this.remoteImageObjectUrlCache.set(objectKey, objectUrl);
+      this.loadedProjectObjectUrls.push(objectUrl);
+      return objectUrl;
+    } catch (error) {
+      console.warn('[Load] Failed to blob-cache R2 image URL, using proxy URL directly', error);
+      return proxyUrl;
+    }
   }
 
   revokeLoadedProjectObjectUrls() {
@@ -1710,6 +1766,7 @@ export class ProjectManager {
       }
     });
     this.loadedProjectObjectUrls = [];
+    this.remoteImageObjectUrlCache.clear();
     this.activeArchiveZip = null;
   }
 
@@ -1842,6 +1899,7 @@ export class ProjectManager {
       console.log('[Load] Loading project from data:', projectData.projectName || projectData.name);
 
       this.showStatusMessage('Loading cloud project...', 'info');
+      this.showProjectLoadOverlay('Loading cloud project...');
       this.revokeLoadedProjectObjectUrls();
 
       await this._restoreFromProjectData(projectData);
@@ -1852,6 +1910,7 @@ export class ProjectManager {
       window.__suspendSaveCurrentView = false;
       this.isLoadingProject = false;
       this.suspendSave = false;
+      this.hideProjectLoadOverlay();
     }
   }
 
@@ -1860,6 +1919,7 @@ export class ProjectManager {
       console.log('[Load] Loading project file:', file.name);
 
       this.showStatusMessage('Reading project file', 'info');
+      this.showProjectLoadOverlay('Reading project file...');
       this.revokeLoadedProjectObjectUrls();
 
       if (!this.isArchiveProjectFile(file)) {
@@ -1877,6 +1937,7 @@ export class ProjectManager {
       window.__suspendSaveCurrentView = false;
       this.isLoadingProject = false;
       this.suspendSave = false;
+      this.hideProjectLoadOverlay();
     }
   }
 
@@ -1973,6 +2034,7 @@ export class ProjectManager {
       };
 
       for (const viewId of orderedViewIds) {
+        this.updateProjectLoadOverlay(`Restoring view ${viewId}...`);
         const viewData = projectData.views[viewId];
 
         this.views[viewId] = {
@@ -2068,6 +2130,9 @@ export class ProjectManager {
         const item = deferredImageRegistrations[index];
         const run = async () => {
           try {
+            this.updateProjectLoadOverlay(
+              `Loading image ${index + 1}/${deferredImageRegistrations.length}...`
+            );
             const imageUrl = await this.resolveViewImageUrl(item.viewData);
             this.views[item.viewId].image = imageUrl;
             await registerImageForView(item.viewId, imageUrl);
@@ -2093,6 +2158,7 @@ export class ProjectManager {
         window.__suspendSaveCurrentView = false;
         this.isLoadingProject = false;
         this.suspendSave = false;
+        this.hideProjectLoadOverlay();
       }, 3500);
     } catch (error) {
       console.error('[Load] Failed to load project:', error);
@@ -2101,6 +2167,7 @@ export class ProjectManager {
       window.__suspendSaveCurrentView = false;
       this.isLoadingProject = false;
       this.suspendSave = false;
+      this.hideProjectLoadOverlay();
     }
   }
 
