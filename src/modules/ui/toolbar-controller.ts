@@ -1138,6 +1138,8 @@ export function initToolbarController() {
       const winH = Math.max(window.innerHeight, 1);
       const targetAspect = 4 / 3;
       const preferredArea = getPreferredCaptureArea();
+      const minWidth = 100;
+      const minHeight = 80;
 
       let fallbackWidth = Math.round(preferredArea.width * 0.96);
       let fallbackHeight = Math.round(fallbackWidth / targetAspect);
@@ -1192,14 +1194,31 @@ export function initToolbarController() {
         )
       );
 
-      if (width / height > targetAspect) {
-        width = Math.round(height * targetAspect);
-      } else {
-        height = Math.round(width / targetAspect);
+      if (width < minWidth || height < minHeight) {
+        return fallback;
       }
 
-      if (width < 200 || height < 150) {
-        return fallback;
+      const fitScale = Math.min(
+        1,
+        preferredArea.width / Math.max(width, 1),
+        preferredArea.height / Math.max(height, 1)
+      );
+      width = Math.max(1, Math.round(width * fitScale));
+      height = Math.max(1, Math.round(height * fitScale));
+
+      const growScaleNeeded = Math.max(
+        minWidth / Math.max(width, 1),
+        minHeight / Math.max(height, 1),
+        1
+      );
+      if (growScaleNeeded > 1) {
+        const growScaleLimit = Math.min(
+          preferredArea.width / Math.max(width, 1),
+          preferredArea.height / Math.max(height, 1)
+        );
+        const growScale = Math.min(growScaleNeeded, growScaleLimit);
+        width = Math.max(1, Math.round(width * growScale));
+        height = Math.max(1, Math.round(height * growScale));
       }
 
       const leftRatio =
@@ -1415,8 +1434,35 @@ export function initToolbarController() {
     }
     function buildCenteredRectFromSize(width, height) {
       const preferredArea = getPreferredCaptureArea();
-      const nextWidth = Math.max(100, Math.min(width || 800, preferredArea.width));
-      const nextHeight = Math.max(80, Math.min(height || 600, preferredArea.height));
+      const minWidth = 100;
+      const minHeight = 80;
+      const sourceWidth = Math.max(1, Number(width) || 800);
+      const sourceHeight = Math.max(1, Number(height) || 600);
+
+      const fitScale = Math.min(
+        1,
+        preferredArea.width / sourceWidth,
+        preferredArea.height / sourceHeight
+      );
+
+      let nextWidth = Math.max(1, Math.round(sourceWidth * fitScale));
+      let nextHeight = Math.max(1, Math.round(sourceHeight * fitScale));
+
+      const growScaleNeeded = Math.max(
+        minWidth / Math.max(nextWidth, 1),
+        minHeight / Math.max(nextHeight, 1),
+        1
+      );
+      if (growScaleNeeded > 1) {
+        const growScaleLimit = Math.min(
+          preferredArea.width / Math.max(nextWidth, 1),
+          preferredArea.height / Math.max(nextHeight, 1)
+        );
+        const growScale = Math.min(growScaleNeeded, growScaleLimit);
+        nextWidth = Math.max(1, Math.round(nextWidth * growScale));
+        nextHeight = Math.max(1, Math.round(nextHeight * growScale));
+      }
+
       return {
         left: Math.max(
           preferredArea.left,
