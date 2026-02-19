@@ -2033,7 +2033,6 @@ export class ProjectManager {
       this.isHydratingDeferredViews = true;
       this.hydrationPinnedViewId = targetView;
       window.__deferredImageHydrationInProgress = true;
-      window.__projectLoadPinnedView = targetView;
 
       const registerImageForView = async (viewId, imageUrl) => {
         if (!imageUrl) return;
@@ -2096,15 +2095,6 @@ export class ProjectManager {
           window.syncCaptureTabCanvasVisibility(targetView);
         }
 
-        const initialCanvas = this.canvasManager?.fabricCanvas;
-        const initialBgSrc = initialCanvas?.backgroundImage?.src || null;
-        console.log('[Load] Initial target background after switch:', {
-          targetView,
-          hasBackground: Boolean(initialCanvas?.backgroundImage),
-          backgroundSrc: initialBgSrc,
-          viewport: this.canvasManager?.getViewportState?.(),
-        });
-
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
             if (this.canvasManager?.resize) {
@@ -2116,7 +2106,6 @@ export class ProjectManager {
             const hasBg = Boolean(canvas?.backgroundImage);
 
             if (!hasBg && current?.image && this.currentViewId === targetView) {
-              console.log('[Load] Background missing after resize, applying once:', targetView);
               this.setBackgroundImage(current.image).then(() => {
                 this.canvasManager?.fabricCanvas?.requestRenderAll?.();
               });
@@ -2132,7 +2121,6 @@ export class ProjectManager {
           const canvas = this.canvasManager?.fabricCanvas;
           const hasBg = !!canvas?.backgroundImage;
           if (!hasBg) {
-            console.log('[Load] Late refresh (missing background) for target view:', targetView);
             this.setBackgroundImage(current.image);
           }
         };
@@ -2176,7 +2164,6 @@ export class ProjectManager {
       this.isHydratingDeferredViews = false;
       this.hydrationPinnedViewId = null;
       window.__deferredImageHydrationInProgress = false;
-      window.__projectLoadPinnedView = null;
       this.hideProjectLoadOverlay();
 
       if (this.pendingSwitchViewId && this.pendingSwitchViewId !== this.currentViewId) {
@@ -2194,7 +2181,6 @@ export class ProjectManager {
       this.isHydratingDeferredViews = false;
       this.hydrationPinnedViewId = null;
       window.__deferredImageHydrationInProgress = false;
-      window.__projectLoadPinnedView = null;
       this.hideProjectLoadOverlay();
     }
   }
