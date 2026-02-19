@@ -213,6 +213,8 @@ const GOOGLE_LOGO_SVG = `<svg viewBox="0 0 24 24" class="auth-google-logo"><path
 let toolbarGroup: HTMLElement | null = null;
 let modalOverlay: HTMLElement | null = null;
 let unsubscribe: (() => void) | null = null;
+let delegatedSignOutHandler: ((event: Event) => void) | null = null;
+let signOutInProgress = false;
 
 // ── Toolbar button creation ──────────────────────────────────────────────
 
@@ -247,9 +249,13 @@ function createToolbarGroup(): HTMLElement {
   displayName.id = 'authDisplayName';
 
   const signOutBtn = document.createElement('button');
+  signOutBtn.type = 'button';
+  signOutBtn.id = 'authSignOutBtn';
   signOutBtn.className = 'auth-sign-out-btn';
   signOutBtn.textContent = 'Sign out';
-  signOutBtn.addEventListener('click', handleSignOut);
+  signOutBtn.addEventListener('click', () => {
+    void handleSignOut();
+  });
 
   userArea.appendChild(avatar);
   userArea.appendChild(displayName);
@@ -291,7 +297,9 @@ function createModal(): HTMLElement {
   googleBtn.className = 'auth-google-btn';
   googleBtn.id = 'authGoogleBtn';
   googleBtn.innerHTML = `${GOOGLE_LOGO_SVG} Continue with Google`;
-  googleBtn.addEventListener('click', handleGoogleSignIn);
+  googleBtn.addEventListener('click', () => {
+    void handleGoogleSignIn();
+  });
 
   const errorEl = document.createElement('div');
   errorEl.className = 'auth-error';
@@ -367,13 +375,49 @@ async function handleGoogleSignIn(): Promise<void> {
   }
 }
 
-async function handleSignOut(): Promise<void> {
-  const result = await authService.signOut();
-  if (!result.success) {
-    console.error('[Auth] Sign out failed:', result.error.message);
+async function handleSignOut(event?: Event): Promise<void> {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
   }
-  // Force UI update in case the onAuthStateChange event doesn't fire
-  updateAuthUI(null);
+
+  if (signOutInProgress) return;
+  signOutInProgress = true;
+
+  const signOutBtn = document.getElementById('authSignOutBtn') as HTMLButtonElement | null;
+  const originalLabel = signOutBtn?.textContent || 'Sign out';
+
+  if (signOutBtn) {
+    signOutBtn.disabled = true;
+    signOutBtn.textContent = 'Signing out...';
+  }
+
+  try {
+    const result = await authService.signOut();
+    if (!result.success) {
+      console.error('[Auth] Sign out failed:', result.error.message);
+      (window as any).showStatusMessage?.(
+        'Signed out locally. Remote session revoke failed.',
+        'info'
+      );
+    } else {
+      (window as any).showStatusMessage?.('Signed out', 'success');
+    }
+
+    // Force UI update in case the onAuthStateChange event doesn't fire
+    updateAuthUI(null);
+  } catch (error) {
+    console.error('[Auth] Unexpected sign out error:', error);
+    updateAuthUI(null);
+    (window as any).showStatusMessage?.('Signed out locally', 'info');
+  } finally {
+    signOutInProgress = false;
+    const liveSignOutBtn = document.getElementById('authSignOutBtn') as HTMLButtonElement | null;
+    if (liveSignOutBtn) {
+      liveSignOutBtn.disabled = false;
+      liveSignOutBtn.textContent = originalLabel;
+    }
+  }
 }
 
 // ── UI state updates ─────────────────────────────────────────────────────
@@ -427,6 +471,15 @@ export function initAuthUI(): void {
     tbRight.appendChild(toolbarGroup);
   }
 
+  delegatedSignOutHandler = event => {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    const signOutTarget = target.closest('.auth-sign-out-btn');
+    if (!signOutTarget) return;
+    void handleSignOut(event);
+  };
+  document.addEventListener('click', delegatedSignOutHandler, true);
+
   modalOverlay = createModal();
   document.body.appendChild(modalOverlay);
 
@@ -440,6 +493,10 @@ export function destroyAuthUI(): void {
   if (unsubscribe) {
     unsubscribe();
     unsubscribe = null;
+  }
+  if (delegatedSignOutHandler) {
+    document.removeEventListener('click', delegatedSignOutHandler, true);
+    delegatedSignOutHandler = null;
   }
   if (toolbarGroup) {
     toolbarGroup.remove();

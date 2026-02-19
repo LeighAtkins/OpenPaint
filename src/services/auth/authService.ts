@@ -257,43 +257,52 @@ export class AuthService {
    * Set up auth state change listener
    */
   private setupAuthListener(client: SupabaseClient<Database>): void {
-    client.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session | null) => {
-      try {
-        switch (event) {
-          case 'INITIAL_SESSION':
-          case 'SIGNED_IN':
-            if (session?.user) {
-              await this.setCurrentUser(session.user);
-            }
-            break;
-
-          case 'SIGNED_OUT':
-            this.currentUser = null;
-            this.notifySessionListeners(null);
-            break;
-
-          case 'TOKEN_REFRESHED':
-            break;
-
-          case 'USER_UPDATED':
-            if (session?.user) {
-              await this.setCurrentUser(session.user);
-            }
-            break;
-        }
-      } catch (error) {
-        console.error('[Auth] Auth state listener error:', error);
-        // Last resort: if we have a session user, set basic data
-        if (
-          (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') &&
-          session?.user &&
-          !this.currentUser
-        ) {
-          this.currentUser = this.buildBasicUser(session.user);
-          this.notifySessionListeners(this.currentUser);
-        }
-      }
+    client.auth.onAuthStateChange((event: AuthChangeEvent, session: Session | null) => {
+      // Keep callback synchronous; Supabase can deadlock if heavy async work
+      // is awaited directly in this listener.
+      void this.handleAuthStateChange(event, session);
     });
+  }
+
+  private async handleAuthStateChange(
+    event: AuthChangeEvent,
+    session: Session | null
+  ): Promise<void> {
+    try {
+      switch (event) {
+        case 'INITIAL_SESSION':
+        case 'SIGNED_IN':
+          if (session?.user) {
+            await this.setCurrentUser(session.user);
+          }
+          break;
+
+        case 'SIGNED_OUT':
+          this.currentUser = null;
+          this.notifySessionListeners(null);
+          break;
+
+        case 'TOKEN_REFRESHED':
+          break;
+
+        case 'USER_UPDATED':
+          if (session?.user) {
+            await this.setCurrentUser(session.user);
+          }
+          break;
+      }
+    } catch (error) {
+      console.error('[Auth] Auth state listener error:', error);
+      // Last resort: if we have a session user, set basic data
+      if (
+        (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') &&
+        session?.user &&
+        !this.currentUser
+      ) {
+        this.currentUser = this.buildBasicUser(session.user);
+        this.notifySessionListeners(this.currentUser);
+      }
+    }
   }
 
   /**
@@ -516,13 +525,21 @@ export class AuthService {
         );
       }
 
-      const { error } = await client.auth.signOut();
-      if (error) {
+      // Local scope sign-out clears browser session immediately and avoids
+      // network-dependent failures from blocking the UI.
+      const { error } = await client.auth.signOut({ scope: 'local' });
+      if (error && error.message !== 'Auth session missing!') {
         return Result.err(this.mapAuthError(error));
       }
 
       this.currentUser = null;
       this.notifySessionListeners(null);
+
+      // Best-effort global revoke; does not block local sign-out success.
+      void client.auth.signOut({ scope: 'global' }).catch(globalSignOutError => {
+        console.warn('[Auth] Global sign-out revoke failed:', globalSignOutError);
+      });
+
       return Result.ok(true);
     } catch (error) {
       return Result.err(
