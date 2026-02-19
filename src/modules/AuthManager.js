@@ -1,9 +1,12 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js';
+import { CLOUD_COPY } from './cloud/messages.js';
 
 export class AuthManager {
   constructor() {
     this.supabase = null;
     this.user = null;
+    this.sessionState = 'logged_out';
+    this.sessionMessage = CLOUD_COPY.auth.loggedOut;
     this.init();
   }
 
@@ -19,6 +22,11 @@ export class AuthManager {
       // Listen for auth changes
       this.supabase.auth.onAuthStateChange((event, session) => {
         this.user = session?.user || null;
+        if (this.user) {
+          this.setSessionState('logged_in', CLOUD_COPY.auth.loggedIn(this.user.email));
+        } else {
+          this.setSessionState('logged_out', CLOUD_COPY.auth.loggedOut);
+        }
         this.updateUI();
         console.log('[Auth] State change:', event, this.user?.email);
       });
@@ -26,6 +34,51 @@ export class AuthManager {
       this.setupUI();
     } else {
       console.warn('[Auth] Supabase credentials missing');
+    }
+  }
+
+  setSessionState(state, message) {
+    this.sessionState = state;
+    this.sessionMessage = message || this.sessionMessage;
+    this.renderAuthStatus();
+    window.dispatchEvent(
+      new CustomEvent('openpaint:auth-state', {
+        detail: {
+          state: this.sessionState,
+          message: this.sessionMessage,
+          user: this.user,
+        },
+      })
+    );
+  }
+
+  setSessionExpiredState(message = CLOUD_COPY.auth.expired) {
+    this.setSessionState('expired', message);
+  }
+
+  ensureAuthStatusElement() {
+    let el = document.getElementById('authStatusText');
+    if (!el) {
+      const userProfile = document.getElementById('userProfile');
+      if (!userProfile) return null;
+      el = document.createElement('div');
+      el.id = 'authStatusText';
+      el.style.cssText = 'font-size: 11px; line-height: 1.2; color: #4b5563; margin-top: 4px;';
+      userProfile.appendChild(el);
+    }
+    return el;
+  }
+
+  renderAuthStatus() {
+    const statusEl = this.ensureAuthStatusElement();
+    if (!statusEl) return;
+    statusEl.textContent = this.sessionMessage;
+    if (this.sessionState === 'expired') {
+      statusEl.style.color = '#dc2626';
+    } else if (this.sessionState === 'logged_in') {
+      statusEl.style.color = '#065f46';
+    } else {
+      statusEl.style.color = '#4b5563';
     }
   }
 
@@ -168,9 +221,11 @@ export class AuthManager {
         if (userName) userName.textContent = this.user.email.split('@')[0];
         // Optional: Set avatar if available
       }
+      this.setSessionState('logged_in', CLOUD_COPY.auth.loggedIn(this.user.email));
     } else {
       if (authButton) authButton.classList.remove('hidden');
       if (userProfile) userProfile.classList.add('hidden');
+      this.setSessionState('logged_out', CLOUD_COPY.auth.loggedOut);
     }
   }
 }

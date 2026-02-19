@@ -231,6 +231,7 @@ async function submitCwMeasureForm({ formId, payload, credentialsOverride = {} }
 // In-memory storage for shared projects (in production, use a database)
 const sharedProjects = new Map();
 const cloudProjects = new Map();
+const cloudProjectAssets = new Map();
 // In-memory storage for projects (used by /api/projects/* routes)
 const projects = new Map();
 
@@ -247,6 +248,148 @@ function getSupabaseAdmin() {
 
 function isSupabaseAdminConfigured() {
   return Boolean(SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY);
+}
+
+function getBearerToken(req) {
+  const authHeader = String(req.headers?.authorization || '');
+  if (!authHeader.toLowerCase().startsWith('bearer ')) return null;
+  return authHeader.slice(7).trim() || null;
+}
+
+async function getCloudAuthUser(req, operation = 'bootstrap') {
+  if (!isSupabaseAdminConfigured()) {
+    return { user: null };
+  }
+
+  const token = getBearerToken(req);
+  if (!token) {
+    return {
+      error: {
+        statusCode: 401,
+        body: makeCloudErrorResponse(
+          operation,
+          { code: 'auth_required', message: 'Authorization bearer token is required' },
+          401
+        ),
+      },
+    };
+  }
+
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase.auth.getUser(token);
+  if (error || !data?.user) {
+    return {
+      error: {
+        statusCode: 401,
+        body: makeCloudErrorResponse(
+          operation,
+          { code: error?.code || 'invalid_jwt', message: error?.message || 'Invalid auth token' },
+          401
+        ),
+      },
+    };
+  }
+
+  return { user: data.user };
+}
+
+function getCloudProjectOwnerId(record) {
+  return record?.data?._meta?.ownerId || null;
+}
+
+function canAccessCloudProject(record, userId) {
+  if (!isSupabaseAdminConfigured()) return true;
+  if (!userId) return false;
+  const ownerId = getCloudProjectOwnerId(record);
+  if (!ownerId) return true;
+  return ownerId === userId;
+}
+
+function createEmptyCloudSyncState() {
+  return {
+    manifest: {
+      manifestVersion: 1,
+      updatedAt: new Date().toISOString(),
+      viewOrder: [],
+      views: {},
+      metadata: {},
+    },
+    viewStates: {},
+    assets: {},
+  };
+}
+
+function ensureCloudSyncState(record) {
+  if (!record || typeof record !== 'object') return createEmptyCloudSyncState();
+  const data = record.data && typeof record.data === 'object' ? record.data : {};
+  const manifest = data.manifest && typeof data.manifest === 'object' ? data.manifest : {};
+  return {
+    manifest: {
+      manifestVersion: Number(manifest.manifestVersion) || 1,
+      updatedAt: manifest.updatedAt || new Date().toISOString(),
+      viewOrder: Array.isArray(manifest.viewOrder) ? manifest.viewOrder : [],
+      views: manifest.views && typeof manifest.views === 'object' ? manifest.views : {},
+      metadata: manifest.metadata && typeof manifest.metadata === 'object' ? manifest.metadata : {},
+    },
+    viewStates: data.viewStates && typeof data.viewStates === 'object' ? data.viewStates : {},
+    assets: data.assets && typeof data.assets === 'object' ? data.assets : {},
+  };
+}
+
+function makeCloudOperationResponse(operation, payload = {}) {
+  return {
+    status: 'ok',
+    operation,
+    requestId: crypto.randomBytes(8).toString('hex'),
+    timestamp: new Date().toISOString(),
+    data: payload,
+  };
+}
+
+function makeCloudErrorResponse(operation, error, statusCode = 500) {
+  return {
+    status: 'error',
+    operation,
+    statusCode,
+    requestId: crypto.randomBytes(8).toString('hex'),
+    timestamp: new Date().toISOString(),
+    error,
+  };
+}
+
+async function getCloudProjectRecord(projectId) {
+  if (isSupabaseAdminConfigured()) {
+    const supabase = getSupabaseAdmin();
+    const { data, error } = await supabase
+      .from('cloud_projects')
+      .select('*')
+      .eq('id', projectId)
+      .single();
+    if (error) return { error };
+    return { record: data };
+  }
+
+  return { record: cloudProjects.get(projectId) || null };
+}
+
+async function persistCloudProjectRecord(projectId, updatedRecord) {
+  if (isSupabaseAdminConfigured()) {
+    const supabase = getSupabaseAdmin();
+    const { error } = await supabase
+      .from('cloud_projects')
+      .update({
+        title: updatedRecord.title,
+        data: updatedRecord.data,
+        expires_at: updatedRecord.expires_at,
+        updated_at: updatedRecord.updated_at,
+      })
+      .eq('id', projectId);
+    if (error) return { error };
+    return { ok: true };
+  }
+
+  cloudProjects.set(projectId, updatedRecord);
+  return { ok: true };
 }
 
 // Ensure uploads directory exists
@@ -474,6 +617,12 @@ app.get('/api/cloudinary/config', (req, res) => {
 // Cloud project save/load via Supabase (anyone-with-link)
 app.post('/api/cloud-projects', async (req, res) => {
   try {
+    const authResult = await getCloudAuthUser(req, 'save');
+    if (authResult.error) {
+      return res.status(authResult.error.statusCode).json(authResult.error.body);
+    }
+
+    const authUserId = authResult.user?.id || null;
     const { projectData, title = null, expiresAt = null } = req.body || {};
     if (!projectData || typeof projectData !== 'object') {
       return res.status(400).json({ success: false, message: 'Project data is required' });
@@ -487,7 +636,13 @@ app.post('/api/cloud-projects', async (req, res) => {
     const record = {
       id: projectId,
       title,
-      data: projectData,
+      data: {
+        ...projectData,
+        _meta: {
+          ...(projectData._meta || {}),
+          ownerId: authUserId || projectData?._meta?.ownerId || null,
+        },
+      },
       edit_token: editToken,
       created_at: now,
       updated_at: now,
@@ -516,8 +671,71 @@ app.post('/api/cloud-projects', async (req, res) => {
   }
 });
 
+app.get('/api/cloud-projects/list/:userId', async (req, res) => {
+  try {
+    const authResult = await getCloudAuthUser(req, 'list');
+    if (authResult.error) {
+      return res.status(authResult.error.statusCode).json(authResult.error.body);
+    }
+
+    const { userId } = req.params;
+    if (!userId) {
+      return res.status(400).json({ success: false, message: 'userId is required' });
+    }
+
+    if (authResult.user?.id && authResult.user.id !== userId) {
+      return res
+        .status(403)
+        .json(
+          makeCloudErrorResponse('list', { code: 'forbidden', message: 'Not authorized' }, 403)
+        );
+    }
+
+    let rows = [];
+    if (isSupabaseAdminConfigured()) {
+      const supabase = getSupabaseAdmin();
+      const { data, error } = await supabase
+        .from('cloud_projects')
+        .select('id, title, updated_at, created_at, data')
+        .order('updated_at', { ascending: false })
+        .limit(200);
+      if (error) throw error;
+      rows = data || [];
+    } else {
+      rows = Array.from(cloudProjects.values());
+    }
+
+    const projects = rows
+      .filter(row => {
+        const ownerId = row?.data?._meta?.ownerId || null;
+        return ownerId === userId;
+      })
+      .map(row => ({
+        id: row.id,
+        name: row.title || row?.data?.manifest?.projectName || 'Untitled Project',
+        updated_at: row.updated_at || row.created_at || new Date().toISOString(),
+        created_at: row.created_at || row.updated_at || new Date().toISOString(),
+      }));
+
+    return res.json({ status: 'ok', operation: 'list', data: { projects } });
+  } catch (error) {
+    console.error('Error listing cloud projects:', error);
+    return res.status(500).json(
+      makeCloudErrorResponse('list', {
+        code: 'list_failed',
+        message: error?.message || 'Server error listing cloud projects',
+      })
+    );
+  }
+});
+
 app.get('/api/cloud-projects/:projectId', async (req, res) => {
   try {
+    const authResult = await getCloudAuthUser(req, 'load');
+    if (authResult.error) {
+      return res.status(authResult.error.statusCode).json(authResult.error.body);
+    }
+
     const { projectId } = req.params;
     let record = null;
 
@@ -536,6 +754,10 @@ app.get('/api/cloud-projects/:projectId', async (req, res) => {
 
     if (!record) {
       return res.status(404).json({ success: false, message: 'Project not found' });
+    }
+
+    if (!canAccessCloudProject(record, authResult.user?.id || null)) {
+      return res.status(403).json({ success: false, message: 'Not authorized' });
     }
 
     if (record.expires_at && new Date() > new Date(record.expires_at)) {
@@ -563,6 +785,11 @@ app.get('/api/cloud-projects/:projectId', async (req, res) => {
 
 app.patch('/api/cloud-projects/:projectId', async (req, res) => {
   try {
+    const authResult = await getCloudAuthUser(req, 'bootstrap');
+    if (authResult.error) {
+      return res.status(authResult.error.statusCode).json(authResult.error.body);
+    }
+
     const { projectId } = req.params;
     const { editToken, projectData, title = null, expiresAt = null } = req.body || {};
 
@@ -586,6 +813,9 @@ app.patch('/api/cloud-projects/:projectId', async (req, res) => {
 
     if (!record) {
       return res.status(404).json({ success: false, message: 'Project not found' });
+    }
+    if (!canAccessCloudProject(record, authResult.user?.id || null)) {
+      return res.status(403).json({ success: false, message: 'Not authorized' });
     }
     if (record.edit_token && record.edit_token !== editToken) {
       return res.status(403).json({ success: false, message: 'Invalid edit token' });
@@ -619,6 +849,557 @@ app.patch('/api/cloud-projects/:projectId', async (req, res) => {
   } catch (error) {
     console.error('Error updating cloud project:', error);
     return res.status(500).json({ success: false, message: 'Server error updating project' });
+  }
+});
+
+app.get('/api/cloud-projects/:projectId/bootstrap', async (req, res) => {
+  try {
+    const authResult = await getCloudAuthUser(req, 'assets_exists');
+    if (authResult.error) {
+      return res.status(authResult.error.statusCode).json(authResult.error.body);
+    }
+
+    const { projectId } = req.params;
+    const sinceVersion = Number(req.query.manifestVersion || 0) || 0;
+
+    const { record, error } = await getCloudProjectRecord(projectId);
+    if (error) {
+      return res
+        .status(404)
+        .json(
+          makeCloudErrorResponse('bootstrap', { code: error.code, message: error.message }, 404)
+        );
+    }
+    if (!record) {
+      return res
+        .status(404)
+        .json(
+          makeCloudErrorResponse(
+            'bootstrap',
+            { code: 'not_found', message: 'Project not found' },
+            404
+          )
+        );
+    }
+
+    if (!canAccessCloudProject(record, authResult.user?.id || null)) {
+      return res
+        .status(403)
+        .json(
+          makeCloudErrorResponse('bootstrap', { code: 'forbidden', message: 'Not authorized' }, 403)
+        );
+    }
+
+    const syncState = ensureCloudSyncState(record);
+    const manifestVersion = Number(syncState.manifest.manifestVersion) || 1;
+    const shouldSendViews = manifestVersion > sinceVersion;
+
+    return res.json(
+      makeCloudOperationResponse('bootstrap', {
+        projectId,
+        manifestVersion,
+        manifest: syncState.manifest,
+        viewStates: shouldSendViews ? syncState.viewStates : {},
+        requiredAssetHashes: Object.keys(syncState.assets || {}),
+      })
+    );
+  } catch (error) {
+    console.error('[Cloud Bootstrap] Error:', error);
+    return res.status(500).json(
+      makeCloudErrorResponse('bootstrap', {
+        code: 'bootstrap_failed',
+        message: error?.message || 'Failed to bootstrap cloud project',
+      })
+    );
+  }
+});
+
+app.post('/api/cloud-assets/exists', async (req, res) => {
+  try {
+    const authResult = await getCloudAuthUser(req, 'asset_upload');
+    if (authResult.error) {
+      return res.status(authResult.error.statusCode).json(authResult.error.body);
+    }
+
+    const { projectId, hashes } = req.body || {};
+    if (!projectId) {
+      return res
+        .status(400)
+        .json(
+          makeCloudErrorResponse(
+            'assets_exists',
+            { code: 'project_id_required', message: 'projectId is required' },
+            400
+          )
+        );
+    }
+
+    if (!Array.isArray(hashes)) {
+      return res
+        .status(400)
+        .json(
+          makeCloudErrorResponse(
+            'assets_exists',
+            { code: 'invalid_hashes', message: 'hashes must be an array' },
+            400
+          )
+        );
+    }
+
+    const { record, error } = await getCloudProjectRecord(projectId);
+    if (error || !record) {
+      return res
+        .status(404)
+        .json(
+          makeCloudErrorResponse(
+            'assets_exists',
+            { code: 'not_found', message: 'Project not found' },
+            404
+          )
+        );
+    }
+
+    if (!canAccessCloudProject(record, authResult.user?.id || null)) {
+      return res
+        .status(403)
+        .json(
+          makeCloudErrorResponse(
+            'assets_exists',
+            { code: 'forbidden', message: 'Not authorized' },
+            403
+          )
+        );
+    }
+
+    const syncState = ensureCloudSyncState(record);
+    const missing = hashes.filter(hash => !syncState.assets?.[hash]);
+    return res.json(
+      makeCloudOperationResponse('assets_exists', {
+        projectId,
+        missing,
+      })
+    );
+  } catch (error) {
+    console.error('[Cloud Assets Exists] Error:', error);
+    return res.status(500).json(
+      makeCloudErrorResponse('assets_exists', {
+        code: 'assets_exists_failed',
+        message: error?.message || 'Failed checking cloud assets',
+      })
+    );
+  }
+});
+
+app.put('/api/cloud-assets/:hash', async (req, res) => {
+  try {
+    const authResult = await getCloudAuthUser(req, 'asset_upload');
+    if (authResult.error) {
+      return res.status(authResult.error.statusCode).json(authResult.error.body);
+    }
+
+    const { hash } = req.params;
+    const {
+      projectId,
+      dataBase64,
+      contentType = 'application/octet-stream',
+      sizeBytes = null,
+    } = req.body || {};
+
+    if (!projectId || !hash) {
+      return res
+        .status(400)
+        .json(
+          makeCloudErrorResponse(
+            'asset_upload',
+            { code: 'invalid_input', message: 'projectId and hash are required' },
+            400
+          )
+        );
+    }
+
+    const { record, error } = await getCloudProjectRecord(projectId);
+    if (error || !record) {
+      return res
+        .status(404)
+        .json(
+          makeCloudErrorResponse(
+            'asset_upload',
+            { code: 'not_found', message: 'Project not found' },
+            404
+          )
+        );
+    }
+
+    if (!canAccessCloudProject(record, authResult.user?.id || null)) {
+      return res
+        .status(403)
+        .json(
+          makeCloudErrorResponse(
+            'asset_upload',
+            { code: 'forbidden', message: 'Not authorized' },
+            403
+          )
+        );
+    }
+
+    const syncState = ensureCloudSyncState(record);
+    if (syncState.assets?.[hash]) {
+      return res.json(
+        makeCloudOperationResponse('asset_upload', {
+          projectId,
+          hash,
+          alreadyExisted: true,
+        })
+      );
+    }
+
+    if (!dataBase64 || typeof dataBase64 !== 'string') {
+      return res
+        .status(400)
+        .json(
+          makeCloudErrorResponse(
+            'asset_upload',
+            { code: 'missing_data', message: 'dataBase64 is required' },
+            400
+          )
+        );
+    }
+
+    const now = new Date().toISOString();
+    syncState.assets[hash] = {
+      hash,
+      contentType,
+      sizeBytes: Number(sizeBytes) || null,
+      dataBase64,
+      createdAt: now,
+      updatedAt: now,
+    };
+    cloudProjectAssets.set(`${projectId}:${hash}`, syncState.assets[hash]);
+
+    const updatedRecord = {
+      ...record,
+      data: {
+        ...(record.data || {}),
+        ...syncState,
+      },
+      updated_at: now,
+    };
+
+    const persistResult = await persistCloudProjectRecord(projectId, updatedRecord);
+    if (persistResult.error) {
+      return res.status(500).json(
+        makeCloudErrorResponse('asset_upload', {
+          code: persistResult.error.code,
+          message: persistResult.error.message,
+        })
+      );
+    }
+
+    return res.json(
+      makeCloudOperationResponse('asset_upload', {
+        projectId,
+        hash,
+        alreadyExisted: false,
+      })
+    );
+  } catch (error) {
+    console.error('[Cloud Asset Upload] Error:', error);
+    return res.status(500).json(
+      makeCloudErrorResponse('asset_upload', {
+        code: 'asset_upload_failed',
+        message: error?.message || 'Failed uploading cloud asset',
+      })
+    );
+  }
+});
+
+app.get('/api/cloud-assets/:hash', async (req, res) => {
+  try {
+    const authResult = await getCloudAuthUser(req, 'view_patch');
+    if (authResult.error) {
+      return res.status(authResult.error.statusCode).json(authResult.error.body);
+    }
+
+    const { hash } = req.params;
+    const projectId = String(req.query.projectId || '');
+    if (!hash || !projectId) {
+      return res
+        .status(400)
+        .json(
+          makeCloudErrorResponse(
+            'asset_upload',
+            { code: 'invalid_input', message: 'projectId and hash are required' },
+            400
+          )
+        );
+    }
+
+    const { record, error } = await getCloudProjectRecord(projectId);
+    if (error || !record) {
+      return res
+        .status(404)
+        .json(
+          makeCloudErrorResponse(
+            'asset_upload',
+            { code: 'not_found', message: 'Project not found' },
+            404
+          )
+        );
+    }
+
+    if (!canAccessCloudProject(record, authResult.user?.id || null)) {
+      return res
+        .status(403)
+        .json(
+          makeCloudErrorResponse(
+            'asset_upload',
+            { code: 'forbidden', message: 'Not authorized' },
+            403
+          )
+        );
+    }
+
+    const syncState = ensureCloudSyncState(record);
+    const asset = syncState.assets?.[hash] || cloudProjectAssets.get(`${projectId}:${hash}`);
+    if (!asset) {
+      return res
+        .status(404)
+        .json(
+          makeCloudErrorResponse(
+            'asset_upload',
+            { code: 'not_found', message: 'Asset not found' },
+            404
+          )
+        );
+    }
+
+    return res.json(
+      makeCloudOperationResponse('asset_upload', {
+        projectId,
+        hash,
+        contentType: asset.contentType || 'application/octet-stream',
+        sizeBytes: asset.sizeBytes || null,
+        dataBase64: asset.dataBase64,
+      })
+    );
+  } catch (error) {
+    console.error('[Cloud Asset Get] Error:', error);
+    return res.status(500).json(
+      makeCloudErrorResponse('asset_upload', {
+        code: 'asset_get_failed',
+        message: error?.message || 'Failed retrieving cloud asset',
+      })
+    );
+  }
+});
+
+app.patch('/api/cloud-projects/:projectId/views/:viewId', async (req, res) => {
+  try {
+    const authResult = await getCloudAuthUser(req, 'manifest_patch');
+    if (authResult.error) {
+      return res.status(authResult.error.statusCode).json(authResult.error.body);
+    }
+
+    const { projectId, viewId } = req.params;
+    const { baseVersion = 0, viewState } = req.body || {};
+
+    if (!viewState || typeof viewState !== 'object') {
+      return res
+        .status(400)
+        .json(
+          makeCloudErrorResponse(
+            'view_patch',
+            { code: 'invalid_view_state', message: 'viewState object is required' },
+            400
+          )
+        );
+    }
+
+    const { record, error } = await getCloudProjectRecord(projectId);
+    if (error || !record) {
+      return res
+        .status(404)
+        .json(
+          makeCloudErrorResponse(
+            'view_patch',
+            { code: 'not_found', message: 'Project not found' },
+            404
+          )
+        );
+    }
+
+    if (!canAccessCloudProject(record, authResult.user?.id || null)) {
+      return res
+        .status(403)
+        .json(
+          makeCloudErrorResponse(
+            'view_patch',
+            { code: 'forbidden', message: 'Not authorized' },
+            403
+          )
+        );
+    }
+
+    const syncState = ensureCloudSyncState(record);
+    const currentViewVersion = Number(syncState.viewStates?.[viewId]?.version || 0);
+    if (Number(baseVersion) !== currentViewVersion) {
+      return res.status(409).json(
+        makeCloudErrorResponse(
+          'view_patch',
+          {
+            code: 'conflict',
+            message: `View version mismatch. expected=${currentViewVersion} received=${baseVersion}`,
+          },
+          409
+        )
+      );
+    }
+
+    const nextVersion = currentViewVersion + 1;
+    const now = new Date().toISOString();
+    syncState.viewStates[viewId] = {
+      version: nextVersion,
+      updatedAt: now,
+      state: viewState,
+    };
+
+    syncState.manifest.views = syncState.manifest.views || {};
+    syncState.manifest.views[viewId] = {
+      ...(syncState.manifest.views[viewId] || {}),
+      latestViewVersion: nextVersion,
+      updatedAt: now,
+    };
+
+    const updatedRecord = {
+      ...record,
+      data: {
+        ...(record.data || {}),
+        ...syncState,
+      },
+      updated_at: now,
+    };
+
+    const persistResult = await persistCloudProjectRecord(projectId, updatedRecord);
+    if (persistResult.error) {
+      return res.status(500).json(
+        makeCloudErrorResponse('view_patch', {
+          code: persistResult.error.code,
+          message: persistResult.error.message,
+        })
+      );
+    }
+
+    return res.json(
+      makeCloudOperationResponse('view_patch', {
+        projectId,
+        viewId,
+        viewVersion: nextVersion,
+      })
+    );
+  } catch (error) {
+    console.error('[Cloud View Patch] Error:', error);
+    return res.status(500).json(
+      makeCloudErrorResponse('view_patch', {
+        code: 'view_patch_failed',
+        message: error?.message || 'Failed updating view state',
+      })
+    );
+  }
+});
+
+app.patch('/api/cloud-projects/:projectId/manifest', async (req, res) => {
+  try {
+    const authResult = await getCloudAuthUser(req, 'load');
+    if (authResult.error) {
+      return res.status(authResult.error.statusCode).json(authResult.error.body);
+    }
+
+    const { projectId } = req.params;
+    const { baseManifestVersion = 0, patch = {} } = req.body || {};
+
+    const { record, error } = await getCloudProjectRecord(projectId);
+    if (error || !record) {
+      return res
+        .status(404)
+        .json(
+          makeCloudErrorResponse(
+            'manifest_patch',
+            { code: 'not_found', message: 'Project not found' },
+            404
+          )
+        );
+    }
+
+    if (!canAccessCloudProject(record, authResult.user?.id || null)) {
+      return res
+        .status(403)
+        .json(
+          makeCloudErrorResponse(
+            'manifest_patch',
+            { code: 'forbidden', message: 'Not authorized' },
+            403
+          )
+        );
+    }
+
+    const syncState = ensureCloudSyncState(record);
+    const currentVersion = Number(syncState.manifest?.manifestVersion || 1);
+    if (Number(baseManifestVersion) !== currentVersion) {
+      return res.status(409).json(
+        makeCloudErrorResponse(
+          'manifest_patch',
+          {
+            code: 'conflict',
+            message: `Manifest version mismatch. expected=${currentVersion} received=${baseManifestVersion}`,
+          },
+          409
+        )
+      );
+    }
+
+    const nextVersion = currentVersion + 1;
+    const now = new Date().toISOString();
+    syncState.manifest = {
+      ...syncState.manifest,
+      ...(patch && typeof patch === 'object' ? patch : {}),
+      manifestVersion: nextVersion,
+      updatedAt: now,
+    };
+
+    const updatedRecord = {
+      ...record,
+      data: {
+        ...(record.data || {}),
+        ...syncState,
+      },
+      updated_at: now,
+    };
+
+    const persistResult = await persistCloudProjectRecord(projectId, updatedRecord);
+    if (persistResult.error) {
+      return res.status(500).json(
+        makeCloudErrorResponse('manifest_patch', {
+          code: persistResult.error.code,
+          message: persistResult.error.message,
+        })
+      );
+    }
+
+    return res.json(
+      makeCloudOperationResponse('manifest_patch', {
+        projectId,
+        manifestVersion: nextVersion,
+        manifest: syncState.manifest,
+      })
+    );
+  } catch (error) {
+    console.error('[Cloud Manifest Patch] Error:', error);
+    return res.status(500).json(
+      makeCloudErrorResponse('manifest_patch', {
+        code: 'manifest_patch_failed',
+        message: error?.message || 'Failed updating manifest',
+      })
+    );
   }
 });
 
