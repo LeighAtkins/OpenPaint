@@ -328,12 +328,10 @@ export class CanvasSyncService {
     imageLabel: string,
     interval: number = 30000 // 30 seconds
   ): () => void {
-    const intervalId = setInterval(async () => {
-      try {
-        await this.pushCanvasChanges(projectId, imageLabel);
-      } catch (error) {
+    const intervalId = setInterval(() => {
+      void this.pushCanvasChanges(projectId, imageLabel).catch(error => {
         console.error('Auto-sync failed:', error);
-      }
+      });
     }, interval);
 
     // Return cleanup function

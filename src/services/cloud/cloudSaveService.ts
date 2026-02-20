@@ -180,7 +180,7 @@ class CloudSaveService {
       try {
         if (projectId) {
           console.warn('[CloudSave] Sending UPDATE...');
-          const { data, error, status } = await this.postgrest(
+          const { data, error } = await this.postgrest(
             `/projects?id=eq.${projectId}&created_by=eq.${userId}&select=id,project_name,created_by,created_at,updated_at`,
             {
               method: 'PATCH',

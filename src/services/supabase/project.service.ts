@@ -252,7 +252,7 @@ export class ProjectService extends SupabaseService {
         DATABASE_TABLES.PROJECTS,
         projectId,
         updateData,
-        currentVersion || project.version
+        currentVersion
       );
 
       return result;
@@ -389,7 +389,6 @@ export class ProjectService extends SupabaseService {
         filteredSummaries = filteredSummaries.filter(
           project =>
             project.name.toLowerCase().includes(searchLower) ||
-            (project.description && project.description.toLowerCase().includes(searchLower)) ||
             project.tags.some(tag => tag.toLowerCase().includes(searchLower))
         );
       }
@@ -604,14 +603,10 @@ export class ProjectService extends SupabaseService {
       };
 
       // Save to database
-      const updateResult = await this.update<ProjectRow>(
-        DATABASE_TABLES.PROJECTS,
-        projectId,
-        {
-          data: updatedData,
-          updated_at: new Date().toISOString(),
-        }
-      );
+      const updateResult = await this.update<ProjectRow>(DATABASE_TABLES.PROJECTS, projectId, {
+        data: updatedData,
+        updated_at: new Date().toISOString(),
+      });
 
       return updateResult;
     } catch (error) {

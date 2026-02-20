@@ -3,64 +3,64 @@
  * Validates and serializes stroke data in image-space coordinates
  */
 
-type ImagePoint = {
+interface ImagePoint {
   x: number;
   y: number;
-};
+}
 
-type ImageDimensions = {
+interface ImageDimensions {
   width: number;
   height: number;
-};
+}
 
-type ArrowSettings = {
+interface ArrowSettings {
   startArrow?: boolean;
   endArrow?: boolean;
   arrowSize?: number;
-};
+}
 
-type VectorStroke = {
+interface VectorStroke {
   points: ImagePoint[];
   type?: string;
   color?: string;
   width?: number;
   arrowSettings?: ArrowSettings;
-};
+}
 
-type SerializedArrowSettings = {
+interface SerializedArrowSettings {
   startArrow: boolean;
   endArrow: boolean;
   arrowSize: number;
-};
+}
 
-type SerializedStroke = {
+interface SerializedStroke {
   id: string;
   type: string;
   points: ImagePoint[];
   color: string;
   width: number;
   arrowSettings?: SerializedArrowSettings;
-};
+}
 
-type ValidationError = {
+interface ValidationError {
   type: string;
   [key: string]: unknown;
-};
+}
 
-type TransformParams = {
+interface TransformParams {
   scale: number;
   position: ImagePoint;
   dimensions: ImageDimensions;
   rotation: number;
-};
+}
 
-type TransformValidation = {
+interface TransformValidation {
   valid: boolean;
   params: TransformParams | null;
   error: string | null;
-};
+}
 
-type WorkerPayload = {
+interface WorkerPayload {
   image: {
     width: number;
     height: number;
@@ -73,16 +73,16 @@ type WorkerPayload = {
   strokes: SerializedStroke[];
   prompt: string;
   styleGuide: unknown | null;
-};
+}
 
-type WorkerPayloadOptions = {
+interface WorkerPayloadOptions {
   units?: {
     name: string;
     pxPerUnit: number;
   };
   prompt?: string;
   styleGuide?: unknown | null;
-};
+}
 
 declare global {
   interface Window {
@@ -121,7 +121,7 @@ export function validatePointsArray(
     return { valid: false, invalidIndices: [] };
   }
 
-  const invalidIndices = [];
+  const invalidIndices: number[] = [];
   for (let i = 0; i < points.length; i++) {
     if (!validateImageSpacePoint(points[i], imageDims)) {
       invalidIndices.push(i);

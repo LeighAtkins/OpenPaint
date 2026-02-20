@@ -17,7 +17,7 @@
     // Migration profile: keep type-checking enabled but relax strictness
     "strict": false,
     "noImplicitAny": false,
-    "strictNullChecks": false,
+    "strictNullChecks": true,
     "strictFunctionTypes": false,
     "strictBindCallApply": false,
     "strictPropertyInitialization": false,

@@ -352,6 +352,7 @@ export class ArrowManager {
 
   openOptionsMenuFromButton(button, menu) {
     if (!button || !menu) return;
+    if (document.getElementById('lineStylePopoverPanel')) return;
     const rect = button.getBoundingClientRect();
     menu.classList.remove('hidden');
     menu.style.position = 'fixed';
@@ -527,6 +528,27 @@ export class ArrowManager {
 
     if (ghostInputTop) {
       ghostInputTop.checked = Boolean(ghostBaseline);
+    }
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(
+        new CustomEvent('arrow-settings-updated', {
+          detail: {
+            startArrow: startActive,
+            endArrow: endActive,
+            arrowSize: size,
+            arrowStyle: styleForUi,
+            arrowSpread: spread,
+            ghostBaseline,
+            mixed: {
+              start: startMixed,
+              end: endMixed,
+              size: isMixedSize,
+              style: isMixedStyle,
+            },
+          },
+        })
+      );
     }
   }
 

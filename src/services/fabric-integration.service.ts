@@ -920,14 +920,14 @@ export class FabricIntegrationService {
    */
   private setupAutoSave(canvasInstance: CanvasInstance): void {
     const canvasId = canvasInstance.id;
-    const intervalId = window.setInterval(async () => {
+    const intervalId = window.setInterval(() => {
       const stateResult = canvasStateService.getCanvasState(
         canvasInstance.projectId,
         canvasInstance.imageLabel
       );
 
       if (stateResult.success && stateResult.data.isDirty) {
-        await this.saveCanvasToJSON(canvasInstance);
+        void this.saveCanvasToJSON(canvasInstance);
       }
     }, 30000); // Auto-save every 30 seconds
 

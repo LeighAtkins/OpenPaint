@@ -550,7 +550,7 @@ export class MeasurementsService extends SupabaseService {
       // Create export data
       const exportData: MeasurementExportData = {
         projectId,
-        projectName: project.name,
+        projectName: project.project_name,
         imageLabel: options.imageLabel || 'all',
         measurements: measurements.map(m => ({
           ...m,
@@ -567,7 +567,7 @@ export class MeasurementsService extends SupabaseService {
         case 'json':
           return Result.ok({
             data: exportData,
-            filename: `${project.name}_measurements_${Date.now()}.json`,
+            filename: `${project.project_name}_measurements_${Date.now()}.json`,
             mimeType: 'application/json',
           });
 
@@ -575,7 +575,7 @@ export class MeasurementsService extends SupabaseService {
           const csvData = this.convertToCSV(exportData);
           return Result.ok({
             data: csvData,
-            filename: `${project.name}_measurements_${Date.now()}.csv`,
+            filename: `${project.project_name}_measurements_${Date.now()}.csv`,
             mimeType: 'text/csv',
           });
         }
@@ -832,16 +832,10 @@ export class MeasurementsService extends SupabaseService {
         };
       }
 
-      const updateResult = await this.update(
-        DATABASE_TABLES.PROJECTS,
-        projectId,
-        {
-          data: updatedData,
-          updated_at: new Date().toISOString(),
-          version: project.version + 1,
-        },
-        project.version
-      );
+      const updateResult = await this.update(DATABASE_TABLES.PROJECTS, projectId, {
+        data: updatedData,
+        updated_at: new Date().toISOString(),
+      });
 
       return updateResult.success ? Result.ok(true) : Result.err(updateResult.error);
     } catch (error) {
@@ -876,16 +870,10 @@ export class MeasurementsService extends SupabaseService {
         },
       };
 
-      const updateResult = await this.update(
-        DATABASE_TABLES.PROJECTS,
-        projectId,
-        {
-          data: updatedData,
-          updated_at: new Date().toISOString(),
-          version: project.version + 1,
-        },
-        project.version
-      );
+      const updateResult = await this.update(DATABASE_TABLES.PROJECTS, projectId, {
+        data: updatedData,
+        updated_at: new Date().toISOString(),
+      });
 
       return updateResult.success ? Result.ok(true) : Result.err(updateResult.error);
     } catch (error) {
@@ -932,16 +920,10 @@ export class MeasurementsService extends SupabaseService {
         }
       }
 
-      const updateResult = await this.update(
-        DATABASE_TABLES.PROJECTS,
-        projectId,
-        {
-          data: updatedData,
-          updated_at: new Date().toISOString(),
-          version: project.version + 1,
-        },
-        project.version
-      );
+      const updateResult = await this.update(DATABASE_TABLES.PROJECTS, projectId, {
+        data: updatedData,
+        updated_at: new Date().toISOString(),
+      });
 
       return updateResult.success ? Result.ok(true) : Result.err(updateResult.error);
     } catch (error) {

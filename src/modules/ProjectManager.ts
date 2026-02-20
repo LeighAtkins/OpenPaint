@@ -1791,7 +1791,7 @@ export class ProjectManager {
     if (mime.includes('bmp')) return 'bmp';
     if (mime.includes('svg')) return 'svg';
 
-    const lower = String(fallbackName || '').toLowerCase();
+    const lower = (fallbackName || '').toLowerCase();
     const dotIndex = lower.lastIndexOf('.');
     if (dotIndex > -1 && dotIndex < lower.length - 1) {
       return lower.slice(dotIndex + 1);

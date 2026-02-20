@@ -554,15 +554,15 @@ export class StrokeMetadataManager {
       if (item.dataset.stroke === strokeLabel) {
         const measurementSpan = item.querySelector('.stroke-measurement');
         if (measurementSpan) {
-          // Ensure panel is visible ONLY if not minimized
+          // Ensure panel is visible and expanded when focusing from a tag click.
           const elementsBody = document.getElementById('elementsBody');
           const strokePanel = document.getElementById('strokePanel');
-          const isMinimized =
-            strokePanel &&
-            (strokePanel.classList.contains('minimized') ||
-              strokePanel.getAttribute('aria-expanded') === 'false');
+          if (strokePanel) {
+            strokePanel.classList.remove('minimized');
+            strokePanel.setAttribute('aria-expanded', 'true');
+          }
 
-          if (!isMinimized && elementsBody && elementsBody.classList.contains('hidden')) {
+          if (elementsBody && elementsBody.classList.contains('hidden')) {
             elementsBody.classList.remove('hidden');
             elementsBody.style.maxHeight = 'none';
           }

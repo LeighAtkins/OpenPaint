@@ -77,13 +77,12 @@ export class AuthService {
       profile: {
         id: user.id,
         email: user.email || '',
-        display_name: (meta['full_name'] as string) || user.email?.split('@')[0] || null,
-        avatar_url: (meta['avatar_url'] as string) || null,
+        display_name: (meta['full_name'] as string) || user.email?.split('@')[0] || undefined,
+        avatar_url: (meta['avatar_url'] as string) || undefined,
         preferences: DEFAULT_USER_PREFERENCES,
         created_at: user.created_at,
         updated_at: user.created_at,
-        last_login_at: null,
-        storage_used: 0,
+        last_login_at: undefined,
       } as UserProfileRow,
     };
   }
@@ -110,7 +109,7 @@ export class AuthService {
     }
 
     // Best-effort: ensure a profile row exists for future use
-    this.ensureProfile(user).catch(() => {});
+    this.ensureProfile(user).catch(() => undefined);
   }
 
   private getClientSync(): SupabaseClient<Database> | null {

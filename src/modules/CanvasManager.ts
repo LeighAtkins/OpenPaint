@@ -13,18 +13,26 @@ type FabricObject = any;
 type FabricIEvent = any;
 type ViewportTransform = [number, number, number, number, number, number];
 
-type Size = { width: number; height: number };
-type FrameState = { width: number; height: number; left: number; top: number };
-type CaptureFrameRatios = {
+interface Size {
+  width: number;
+  height: number;
+}
+interface FrameState {
+  width: number;
+  height: number;
+  left: number;
+  top: number;
+}
+interface CaptureFrameRatios {
   widthRatio: number;
   heightRatio: number;
   leftRatio: number;
   topRatio: number;
-};
-type ClipboardState = {
+}
+interface ClipboardState {
   objects: unknown[];
   timestamp: number;
-};
+}
 
 declare global {
   interface Window {
@@ -212,7 +220,7 @@ export class CanvasManager {
       }
     });
 
-    this.fabricCanvas.on('mouse:up', (opt: FabricIEvent) => {
+    this.fabricCanvas.on('mouse:up', (_opt: FabricIEvent) => {
       // Restore state if we changed it
       if (this.fabricCanvas._tempDrawingMode) {
         this.fabricCanvas.isDrawingMode = true;
@@ -479,7 +487,11 @@ export class CanvasManager {
       obj._cacheCanvas = null;
       obj._cacheContext = null;
       obj.setCoords();
-      canvas?.requestRenderAll?.() ?? canvas?.renderAll?.();
+      if (canvas?.requestRenderAll) {
+        canvas.requestRenderAll();
+      } else {
+        canvas?.renderAll?.();
+      }
     };
 
     const bakeCurveTransform = (opt: FabricIEvent) => {
@@ -895,7 +907,6 @@ export class CanvasManager {
 
     const captureLineTransformStart = (opt: FabricIEvent) => {
       const action = opt?.transform?.action;
-      const isScaleAction = action === 'scale' || action === 'scaleX' || action === 'scaleY';
 
       // Skip for drag and control point editing (modifyLine is the action for endpoint controls)
       if (action === 'drag' || action === 'modifyLine') {
@@ -1407,7 +1418,7 @@ export class CanvasManager {
         return;
       }
 
-      const key = String(e.key || '').toLowerCase();
+      const key = (e.key || '').toLowerCase();
       const isCopy = (e.ctrlKey || e.metaKey) && key === 'c';
       const isPaste = (e.ctrlKey || e.metaKey) && key === 'v';
 
@@ -1746,7 +1757,7 @@ export class CanvasManager {
         this.resizeOverlayCanvas.width,
         this.resizeOverlayCanvas.height
       );
-    } catch (_) {
+    } catch {
       // Ignore drawImage failures (e.g., tainted canvas)
     }
 
@@ -1848,8 +1859,6 @@ export class CanvasManager {
       return;
     }
 
-    const currentImageLabel = window.app?.projectManager?.currentViewId || 'default';
-
     // If no image label OR no background image, we're dealing with stroke-only canvas
     // We must check backgroundImage because sometimes we have a viewId but no image (e.g. cleared or template)
     const isStrokeOnlyCanvas =
@@ -1909,11 +1918,7 @@ export class CanvasManager {
     // or if this is the first real resize after layout settlement, update it.
     // This ensures centering logic uses the correct "base" size.
     if (this.originalCanvasSize) {
-      const isStrokeOnly = !this.fabricCanvas.backgroundImage;
       const currentWindowWidth = window.innerWidth;
-      const windowWidthDiff = Math.abs(
-        currentWindowWidth - (this.lastWindowWidth || currentWindowWidth)
-      );
 
       // If we are in stroke-only mode and the width changed significantly (e.g. > 50px),
       // AND the window width is relatively stable (meaning it's a layout shift, not a window resize),
@@ -1926,8 +1931,6 @@ export class CanvasManager {
     }
 
     // Get background image info if available
-    const bgImage = this.fabricCanvas.backgroundImage;
-
     // Show overlay before resize for smooth transition
     if (sizeChanged) {
       this.showResizeOverlay(targetWidth, targetHeight);
@@ -2522,8 +2525,7 @@ export class CanvasManager {
       'touchstart',
       (e: TouchEvent) => {
         // Update active touches
-        for (let i = 0; i < e.touches.length; i++) {
-          const touch = e.touches[i];
+        for (const touch of Array.from(e.touches)) {
           touchGestureState.activeTouches.set(touch.identifier, {
             x: touch.clientX,
             y: touch.clientY,
@@ -2649,8 +2651,7 @@ export class CanvasManager {
       'touchend',
       (e: TouchEvent) => {
         // Remove ended touches from active touches
-        for (let i = 0; i < e.changedTouches.length; i++) {
-          const touch = e.changedTouches[i];
+        for (const touch of Array.from(e.changedTouches)) {
           touchGestureState.activeTouches.delete(touch.identifier);
         }
 
@@ -2682,7 +2683,7 @@ export class CanvasManager {
 
     canvasElement.addEventListener(
       'touchcancel',
-      (e: TouchEvent) => {
+      (_e: TouchEvent) => {
         // Reset touch state on cancel
         touchGestureState.activeTouches.clear();
         touchGestureState.isTwoFingerPan = false;

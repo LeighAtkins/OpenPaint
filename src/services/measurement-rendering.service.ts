@@ -646,7 +646,7 @@ export class MeasurementRenderingService {
     );
 
     // Create handles
-    const handles = [];
+    const handles: any[] = [];
     if (options.showHandles) {
       const startHandle = new window.fabric.Circle({
         left: start.x,

@@ -269,7 +269,7 @@ function ensurePdfDebugSurface() {
   window.__pdfVectorDebugReady = true;
   if (typeof window.dumpPdfVectorDebug !== 'function') {
     window.dumpPdfVectorDebug = function (count = 12) {
-      const size = Number.isFinite(Number(count)) ? Math.max(1, Number(count)) : 12;
+      const size = Number.isFinite(count) ? Math.max(1, count) : 12;
       return (window.__pdfVectorDebugLog || []).slice(-size);
     };
   }
@@ -791,7 +791,7 @@ async function requestServerRenderedPdf(payload) {
 export function initPdfExport() {
   ensurePdfDebugSurface();
   logVectorDebugSnapshot('initPdfExport:ready', {
-    search: String(window.location?.search || ''),
+    search: window.location?.search || '',
   });
   // Export utilities for saving multiple images and PDF generation with pdf-lib
   window.saveAllImages = async function () {

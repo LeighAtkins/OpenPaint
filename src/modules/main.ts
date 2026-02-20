@@ -177,42 +177,46 @@ export class App {
       this.setupUI();
 
       // Touch event support for mobile devices
-      document.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        if (e.touches.length === 1) {
-          const touch = e.touches[0];
-          this.canvasManager.handleTouchStart(touch);
-        }
-      }, { passive: false });
+      document.addEventListener(
+        'touchstart',
+        e => {
+          e.preventDefault();
+          if (e.touches.length === 1) {
+            const touch = e.touches[0];
+            this.canvasManager.handleTouchStart(touch);
+          }
+        },
+        { passive: false }
+      );
 
-      document.addEventListener('touchmove', (e) => {
-        e.preventDefault();
-        if (e.touches.length === 1) {
-          const touch = e.touches[0];
-          this.canvasManager.handleTouchMove(touch);
-        }
-      }, { passive: false });
+      document.addEventListener(
+        'touchmove',
+        e => {
+          e.preventDefault();
+          if (e.touches.length === 1) {
+            const touch = e.touches[0];
+            this.canvasManager.handleTouchMove(touch);
+          }
+        },
+        { passive: false }
+      );
 
-      document.addEventListener('touchend', (e) => {
-        if (e.touches.length === 1) {
-          const touch = e.touches[0];
-          this.canvasManager.handleTouchEnd(touch);
-        }
-      }, { passive: false });
+      document.addEventListener(
+        'touchend',
+        e => {
+          if (e.touches.length === 1) {
+            const touch = e.touches[0];
+            this.canvasManager.handleTouchEnd(touch);
+          }
+        },
+        { passive: false }
+      );
 
       // Pinch-to-zoom for mobile
-      document.addEventListener('gesturestart', (e) => {
+      document.addEventListener('gesturestart', e => {
         if (e.touches.length === 2) {
-          // Calculate pinch distance
-          const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, 2);
-          const initialPinchDist = Math.hypot(e.touches[0].clientY - e.touches[1].clientY, 2);
-
-          document.addEventListener('gesturechange', (e) => {
+          document.addEventListener('gesturechange', e => {
             if (e.touches.length === 2) {
-              const currentDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, 2);
-              const currentPinchDist = Math.hypot(e.touches[0].clientY - e.touches[1].clientY, 2);
-              const scaleChange = currentDist / initialPinchDist;
-
               // Apply zoom centered on pinch point
               const centerX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
               const centerY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
@@ -458,25 +462,25 @@ export class App {
       let endX = width / 2;
       if (this.type === 'line') {
         if (typeof this.x1 === 'number' && typeof this.x2 === 'number') {
-          startX = Number(this.x1);
-          endX = Number(this.x2);
+          startX = this.x1;
+          endX = this.x2;
         } else if (typeof this.calcLinePoints === 'function') {
           const pts = this.calcLinePoints();
-          startX = Number(pts?.x1 ?? startX);
-          endX = Number(pts?.x2 ?? endX);
+          startX = pts?.x1 ?? startX;
+          endX = pts?.x2 ?? endX;
         }
       } else if (this.type === 'path' && Array.isArray(this.path) && this.path.length > 1) {
         const first = this.path[0];
         const last = this.path[this.path.length - 1];
         if (first?.[0] === 'M' && typeof first[1] === 'number') {
-          startX = Number(first[1]);
+          startX = first[1];
         }
         if (last?.[0] === 'L' && typeof last[1] === 'number') {
-          endX = Number(last[1]);
+          endX = last[1];
         } else if (last?.[0] === 'C' && typeof last[5] === 'number') {
-          endX = Number(last[5]);
+          endX = last[5];
         } else if (last?.[0] === 'Q' && typeof last[3] === 'number') {
-          endX = Number(last[3]);
+          endX = last[3];
         }
       }
 
@@ -667,11 +671,11 @@ export class App {
 
     if (target.type === 'path') {
       if (Array.isArray(target.customPoints) && target.customPoints.length >= 2) {
-        return target.customPoints.map((p: any) => ({ x: Number(p.x), y: Number(p.y) }));
+        return target.customPoints.map((p: any) => ({ x: p.x, y: p.y }));
       }
       const sampled = PathUtils.samplePathPoints(target, 80);
       if (sampled.length >= 2) {
-        return sampled.map(p => ({ x: Number(p.x), y: Number(p.y) }));
+        return sampled.map(p => ({ x: p.x, y: p.y }));
       }
     }
 
@@ -688,8 +692,8 @@ export class App {
     const start = util.transformPoint(new fabricLib.Point(-width / 2, 0), matrix);
     const end = util.transformPoint(new fabricLib.Point(width / 2, 0), matrix);
     return [
-      { x: Number(start.x), y: Number(start.y) },
-      { x: Number(end.x), y: Number(end.y) },
+      { x: start.x, y: start.y },
+      { x: end.x, y: end.y },
     ];
   }
 
@@ -698,7 +702,7 @@ export class App {
     ratio: number
   ): { x: number; y: number } | null {
     if (!Array.isArray(points) || points.length < 2) return null;
-    const r = Math.max(0, Math.min(1, Number(ratio)));
+    const r = Math.max(0, Math.min(1, ratio));
     const lengths: number[] = [];
     let total = 0;
     for (let i = 0; i < points.length - 1; i++) {
@@ -818,9 +822,9 @@ export class App {
   isPointerNearDashSplitHandle(pointer: { x: number; y: number }): boolean {
     const handle = this.dashSplitHandle;
     if (!handle || !handle.visible || !pointer) return false;
-    const dx = Number(pointer.x) - Number(handle.left || 0);
-    const dy = Number(pointer.y) - Number(handle.top || 0);
-    const radius = Number(handle.radius || 7) + 6;
+    const dx = pointer.x - (handle.left || 0);
+    const dy = pointer.y - (handle.top || 0);
+    const radius = (handle.radius || 7) + 6;
     return dx * dx + dy * dy <= radius * radius;
   }
 
@@ -1409,7 +1413,7 @@ export class App {
           updateDrawingToggleLabels('Curved Line');
         } else if (mode === 'privacy') {
           this.toolManager.selectTool('privacy');
-          updateDrawingToggleLabels('Privacy Erase');
+          updateDrawingToggleLabels('Eraser Tool');
         } else if (mode === 'select') {
           this.toolManager.selectTool('select');
           updateDrawingToggleLabels('Select');
@@ -1481,7 +1485,7 @@ export class App {
       } else if (currentTool === this.toolManager.tools.curve) {
         updateDrawingToggleLabels('Curved Line');
       } else if (currentTool === this.toolManager.tools.privacy) {
-        updateDrawingToggleLabels('Privacy Erase');
+        updateDrawingToggleLabels('Eraser Tool');
       } else if (currentTool === this.toolManager.tools.select) {
         updateDrawingToggleLabels('Select');
       }
@@ -1582,6 +1586,10 @@ export class App {
 
     // Line width/thickness control
     const brushSizeSelect = document.getElementById('brushSize') as HTMLInputElement | null;
+    const arrowStartBtn = document.getElementById('arrowStartBtn') as HTMLButtonElement | null;
+    const arrowEndBtn = document.getElementById('arrowEndBtn') as HTMLButtonElement | null;
+    const dottedBtn = document.getElementById('dottedBtn') as HTMLButtonElement | null;
+    let lineStyleScope: 'selection' | 'image' | 'project' = 'selection';
     const parseBrushWidth = (value: string): number => {
       const parsed = parseInt((value || '').replace(/[^\d]/g, ''), 10);
       if (!Number.isFinite(parsed)) return 1;
@@ -1589,9 +1597,95 @@ export class App {
     };
     const formatBrushWidth = (value: number): string => String(value);
     const resizableTools = new Set(['line', 'curve', 'arrow', 'pencil', 'shape', 'privacy']);
+    const getBaseLabel = (label: string | null | undefined): string =>
+      typeof label === 'string' ? label.split('::tab:')[0] || label : '';
+    const currentViewId = () => (window.app?.projectManager?.currentViewId as string) || '';
+    const currentBaseViewId = () => getBaseLabel(currentViewId());
+    const getScopeImageIds = (scope: 'selection' | 'image' | 'project'): string[] => {
+      const all = Object.keys(window.vectorStrokesByImage || {});
+      if (scope === 'project') return all;
+      if (scope === 'image') {
+        const base = currentBaseViewId();
+        return all.filter(id => getBaseLabel(id) === base);
+      }
+      return [];
+    };
+    const objectIsInScope = (
+      obj: { strokeMetadata?: { imageLabel?: string }; imageLabel?: string },
+      scope: 'selection' | 'image' | 'project'
+    ): boolean => {
+      if (scope === 'project') return true;
+      const objectLabel = obj?.strokeMetadata?.imageLabel || obj?.imageLabel || '';
+      return getBaseLabel(objectLabel) === currentBaseViewId();
+    };
+    const applyBrushWidthToScope = (width: number): void => {
+      if (lineStyleScope === 'selection') {
+        this.updateSelectedStrokes('strokeWidth', width);
+        this.updateSelectedTextAndShapes({ strokeWidth: width });
+        return;
+      }
 
-    const handleAltBrushWheel = (wheelEvent: WheelEvent): boolean => {
-      if (!wheelEvent.altKey) return false;
+      const canvas = this.canvasManager.fabricCanvas;
+      if (canvas?.forEachObject) {
+        canvas.forEachObject((obj: any) => {
+          if (!obj || obj.isTag || obj.isConnectorLine) return;
+          if (!objectIsInScope(obj, lineStyleScope)) return;
+          if (obj.type === 'line' || obj.type === 'path') {
+            obj.set('strokeWidth', width);
+            obj.dirty = true;
+          }
+        });
+        canvas.requestRenderAll();
+      }
+
+      const scopedImageIds = getScopeImageIds(lineStyleScope);
+      scopedImageIds.forEach(imageId => {
+        const strokes = window.vectorStrokesByImage?.[imageId] || {};
+        Object.values(strokes).forEach((stroke: any) => {
+          if (stroke && typeof stroke === 'object') {
+            stroke.width = width;
+          }
+        });
+      });
+
+      window.redrawCanvasWithVisibility?.();
+    };
+    const applyDashStyleToScope = (): void => {
+      if (lineStyleScope === 'selection') {
+        this.applyDashSettingsToSelection();
+        return;
+      }
+
+      const canvas = this.canvasManager.fabricCanvas;
+      if (canvas?.forEachObject) {
+        canvas.forEachObject((obj: any) => {
+          if (!obj || obj.isTag || obj.isConnectorLine) return;
+          if (!objectIsInScope(obj, lineStyleScope)) return;
+          this.applyDashSettingsToObject(obj, this.currentDashSettings);
+        });
+        canvas.requestRenderAll();
+      }
+
+      const scopedImageIds = getScopeImageIds(lineStyleScope);
+      scopedImageIds.forEach(imageId => {
+        const strokes = window.vectorStrokesByImage?.[imageId] || {};
+        Object.values(strokes).forEach((stroke: any) => {
+          if (!stroke || typeof stroke !== 'object') return;
+          const width = Number(stroke.width || brushSizeSelect?.value || 2) || 2;
+          stroke.dashSettings = {
+            ...this.currentDashSettings,
+            pattern: this.getDashPatternForStyle(this.currentDashSettings.style).map(segment =>
+              Math.max(1, Math.round(segment * Math.max(1, width / 2)))
+            ),
+          };
+        });
+      });
+
+      window.redrawCanvasWithVisibility?.();
+    };
+
+    const handleBrushSizeWheelShortcut = (wheelEvent: WheelEvent): boolean => {
+      if (!wheelEvent.ctrlKey && !wheelEvent.metaKey && !wheelEvent.altKey) return false;
 
       const activeTool = this.toolManager?.activeToolName;
       if (!activeTool || !resizableTools.has(activeTool)) {
@@ -1600,8 +1694,10 @@ export class App {
 
       const eventTarget = wheelEvent.target;
       const targetElement = eventTarget instanceof Element ? eventTarget : null;
-      const insideBrushInput = !!targetElement?.closest('#brushSize');
-      if (!insideBrushInput) {
+      const insideEditable = !!targetElement?.closest(
+        'input:not(#brushSize), textarea, select, [contenteditable="true"]'
+      );
+      if (insideEditable) {
         return false;
       }
 
@@ -1629,12 +1725,7 @@ export class App {
       const applyBrushWidth = (width: number) => {
         // Update tool settings for new strokes
         this.toolManager.updateSettings({ width });
-
-        // Update selected strokes if any are selected (handles both single and multi-selection)
-        this.updateSelectedStrokes('strokeWidth', width);
-
-        // Update selected shape elements only (text ignores brush size)
-        this.updateSelectedTextAndShapes({ strokeWidth: width });
+        applyBrushWidthToScope(width);
       };
 
       const handleBrushSizeInput = (e: Event) => {
@@ -1671,10 +1762,23 @@ export class App {
       brushSizeSelect.addEventListener(
         'wheel',
         e => {
-          handleAltBrushWheel(e as WheelEvent);
-          e.preventDefault();
+          if (handleBrushSizeWheelShortcut(e as WheelEvent)) {
+            e.preventDefault();
+          }
         },
         { passive: false }
+      );
+
+      window.addEventListener(
+        'wheel',
+        e => {
+          const wheelEvent = e as WheelEvent;
+          if (!handleBrushSizeWheelShortcut(wheelEvent)) {
+            return;
+          }
+          wheelEvent.preventDefault();
+        },
+        { passive: false, capture: true }
       );
 
       // Initialize to canonical displayed format
@@ -1683,7 +1787,6 @@ export class App {
 
     // Dash style controls (solid/dotted/partial split)
     const dashStyleSelect = document.getElementById('dashStyleSelect') as HTMLSelectElement | null;
-    const dottedBtn = document.getElementById('dottedBtn') as HTMLButtonElement | null;
     const dashControls = document.getElementById('dashControls');
     let dashSplitInput = document.getElementById('dashSplitInput') as HTMLInputElement | null;
 
@@ -1730,7 +1833,7 @@ export class App {
       const mixedEnabled = normalizedStyle === 'mixed';
       const pattern = this.getDashPatternForStyle(normalizedStyle);
       const splitRatio = Math.max(0, Math.min(1, Number(dashSplitInput?.value || 50) / 100));
-      const dashFirst = this.currentDashSettings.dashFirst !== false;
+      const dashFirst = this.currentDashSettings.dashFirst;
 
       this.currentDashSettings = {
         style: normalizedStyle,
@@ -1741,7 +1844,7 @@ export class App {
       };
 
       this.applyDashSettingsToTools(pattern);
-      this.applyDashSettingsToSelection();
+      applyDashStyleToScope();
 
       if (dashStyleSelect && dashStyleSelect.value !== normalizedStyle) {
         dashStyleSelect.value = normalizedStyle;
@@ -1805,6 +1908,290 @@ export class App {
       setLineStyleIcon(this.currentDashSettings.style);
     }
 
+    const setupLineStylePopover = () => {
+      if (!brushSizeSelect || !dottedBtn || !arrowStartBtn || !arrowEndBtn) {
+        return;
+      }
+      const tbLeft = document.getElementById('tbLeft');
+      if (!tbLeft) return;
+
+      if (!document.getElementById('lineStylePopoverStyles')) {
+        const style = document.createElement('style');
+        style.id = 'lineStylePopoverStyles';
+        style.textContent = `
+          #lineStylePopoverWrap { position: relative; display: inline-flex; }
+          #lineStylePopoverPanel { position: absolute; top: calc(100% + 8px); left: 0; width: 392px; max-width: calc(100vw - 24px); background: #fff; border: 1px solid #d1d5db; border-radius: 12px; box-shadow: 0 18px 40px rgba(2,6,23,0.2); padding: 12px; z-index: 10050; transform-origin: top left; transform: translateY(-6px) scale(0.98); opacity: 0; pointer-events: none; transition: opacity 160ms ease, transform 180ms ease; }
+          #lineStylePopoverPanel.open { transform: translateY(0) scale(1); opacity: 1; pointer-events: auto; }
+          .line-style-panel-grid { display: grid; gap: 10px; }
+          .line-style-row { display: grid; grid-template-columns: 80px 1fr; align-items: center; gap: 8px; }
+          .line-style-title { font-size: 11px; font-weight: 700; letter-spacing: 0.04em; color: #475569; text-transform: uppercase; }
+          .line-style-control { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+          .line-style-size-chip { font-size: 11px; color: #334155; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 999px; padding: 2px 8px; min-width: 42px; text-align: center; }
+          .line-style-scope button { border: 1px solid #cbd5e1; background: #f8fafc; color: #334155; border-radius: 999px; padding: 4px 10px; font-size: 11px; }
+          .line-style-scope button.active { background: #1d4ed8; color: #fff; border-color: #1d4ed8; }
+          #lineStylePreviewWrap { width: 100%; height: 58px; background: linear-gradient(180deg,#ffffff,#f8fafc); border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; }
+          #lineStylePreviewCanvas { width: 100%; height: 58px; display: block; }
+        `;
+        document.head.appendChild(style);
+      }
+
+      let wrap = document.getElementById('lineStylePopoverWrap');
+      if (!wrap) {
+        wrap = document.createElement('div');
+        wrap.id = 'lineStylePopoverWrap';
+
+        const toggle = document.createElement('button');
+        toggle.id = 'lineStylePopoverBtn';
+        toggle.className = 'tbtn';
+        toggle.type = 'button';
+        toggle.textContent = 'Line Style';
+        toggle.setAttribute('aria-haspopup', 'dialog');
+        toggle.setAttribute('aria-expanded', 'false');
+
+        const panel = document.createElement('div');
+        panel.id = 'lineStylePopoverPanel';
+        panel.setAttribute('role', 'dialog');
+        panel.setAttribute('aria-label', 'Line style controls');
+        panel.innerHTML = `
+          <div class="line-style-panel-grid">
+            <div class="line-style-row"><span class="line-style-title">Stroke</span><div id="lineStyleStrokeRow" class="line-style-control"></div></div>
+            <div class="line-style-row"><span class="line-style-title">Arrow</span><div id="lineStyleArrowStyleRow" class="line-style-control"></div></div>
+            <div class="line-style-row"><span class="line-style-title">Pattern</span><div id="lineStylePatternRow" class="line-style-control"></div></div>
+            <div class="line-style-row line-style-scope"><span class="line-style-title">Scope</span><div class="line-style-control"><button type="button" data-scope="selection" class="active">Selection</button><button type="button" data-scope="image">Image</button><button type="button" data-scope="project">Project</button></div></div>
+            <div id="lineStylePreviewWrap" aria-hidden="true"><canvas id="lineStylePreviewCanvas" width="300" height="58"></canvas></div>
+          </div>
+        `;
+
+        wrap.appendChild(toggle);
+        wrap.appendChild(panel);
+        tbLeft.appendChild(wrap);
+
+        toggle.addEventListener('click', e => {
+          e.preventDefault();
+          const open = !panel.classList.contains('open');
+          panel.classList.toggle('open', open);
+          toggle.setAttribute('aria-expanded', String(open));
+        });
+
+        document.addEventListener('click', e => {
+          if (!wrap || wrap.contains(e.target as Node)) return;
+          panel.classList.remove('open');
+          toggle.setAttribute('aria-expanded', 'false');
+        });
+      }
+
+      const panel = document.getElementById('lineStylePopoverPanel');
+      if (!panel) return;
+      const strokeRow = document.getElementById('lineStyleStrokeRow');
+      const arrowStyleRow = document.getElementById('lineStyleArrowStyleRow');
+      const patternRow = document.getElementById('lineStylePatternRow');
+      if (!strokeRow || !arrowStyleRow || !patternRow) return;
+
+      if (arrowStartBtn.parentElement !== tbLeft) {
+        tbLeft.insertBefore(arrowStartBtn, wrap);
+      }
+      if (arrowEndBtn.parentElement !== tbLeft) {
+        tbLeft.insertBefore(arrowEndBtn, wrap);
+      }
+
+      const arrowOptionsBtn = document.getElementById(
+        'arrowOptionsBtn'
+      ) as HTMLButtonElement | null;
+      const arrowOptionsMenu = document.getElementById('arrowOptionsMenu') as HTMLDivElement | null;
+      if (arrowOptionsBtn) {
+        arrowOptionsBtn.classList.add('hidden');
+        arrowOptionsBtn.setAttribute('aria-hidden', 'true');
+      }
+      if (arrowOptionsMenu) {
+        arrowOptionsMenu.classList.add('hidden');
+        arrowOptionsMenu.style.display = 'none';
+        arrowOptionsMenu.setAttribute('aria-hidden', 'true');
+      }
+
+      strokeRow.appendChild(brushSizeSelect);
+      patternRow.appendChild(dottedBtn);
+
+      const arrowStyleTop = document.getElementById('arrowStyleTop') as HTMLSelectElement | null;
+      const arrowSizeTop = document.getElementById('arrowSizeTop') as HTMLInputElement | null;
+
+      if (!arrowStyleRow.querySelector('#lineStyleArrowStyle')) {
+        const controls = document.createElement('div');
+        controls.className = 'line-style-control';
+        controls.innerHTML = `
+          <select id="lineStyleArrowStyle" class="tselect" style="height:30px;min-width:100px"><option value="triangular">Triangle</option><option value="open">Open</option><option value="hand-2">Hand</option><option value="dimension">Dimension</option></select>
+          <label style="display:inline-flex;align-items:center;gap:6px;font-size:11px;color:#475569">Size <input id="lineStyleArrowSize" type="range" min="5" max="50" value="15" style="width:88px" /></label>
+          <span id="lineStyleArrowSizeValue" class="line-style-size-chip">15</span>
+        `;
+        arrowStyleRow.appendChild(controls);
+      }
+
+      const lineStyleArrowStyle = document.getElementById(
+        'lineStyleArrowStyle'
+      ) as HTMLSelectElement | null;
+      const lineStyleArrowSize = document.getElementById(
+        'lineStyleArrowSize'
+      ) as HTMLInputElement | null;
+      const lineStyleArrowSizeValue = document.getElementById('lineStyleArrowSizeValue');
+
+      const syncArrowProxyFromSource = () => {
+        if (lineStyleArrowStyle && arrowStyleTop) lineStyleArrowStyle.value = arrowStyleTop.value;
+        if (lineStyleArrowSize && arrowSizeTop) lineStyleArrowSize.value = arrowSizeTop.value;
+        if (lineStyleArrowSizeValue && lineStyleArrowSize) {
+          lineStyleArrowSizeValue.textContent = lineStyleArrowSize.value;
+        }
+      };
+
+      const bindArrowProxy = () => {
+        if (lineStyleArrowStyle && arrowStyleTop) {
+          lineStyleArrowStyle.onchange = () => {
+            arrowStyleTop.value = lineStyleArrowStyle.value;
+            arrowStyleTop.dispatchEvent(new Event('change', { bubbles: true }));
+          };
+        }
+        if (lineStyleArrowSize && arrowSizeTop) {
+          lineStyleArrowSize.oninput = () => {
+            arrowSizeTop.value = lineStyleArrowSize.value;
+            arrowSizeTop.dispatchEvent(new Event('input', { bubbles: true }));
+            if (lineStyleArrowSizeValue) {
+              lineStyleArrowSizeValue.textContent = lineStyleArrowSize.value;
+            }
+          };
+        }
+      };
+      bindArrowProxy();
+      syncArrowProxyFromSource();
+
+      const dashSplitWrap = document.getElementById('dashSplitWrap');
+      if (dashSplitWrap && !patternRow.contains(dashSplitWrap)) {
+        patternRow.appendChild(dashSplitWrap);
+      }
+
+      const previewCanvasElement = document.getElementById(
+        'lineStylePreviewCanvas'
+      ) as HTMLCanvasElement | null;
+      let previewCanvas: any = null;
+      let previewLine: any = null;
+      let previewArrowState = {
+        startArrow: false,
+        endArrow: false,
+      };
+      const ensurePreviewCanvas = () => {
+        if (!previewCanvasElement || previewCanvas) return;
+        const fabricLib = (globalThis as any).fabric;
+        if (!fabricLib?.StaticCanvas || !fabricLib?.Line) return;
+        previewCanvas = new fabricLib.StaticCanvas(previewCanvasElement, {
+          selection: false,
+          renderOnAddRemove: false,
+        });
+        previewLine = new fabricLib.Line([30, 29, 270, 29], {
+          stroke: '#1f2937',
+          strokeWidth: 2,
+          strokeLineCap: 'round',
+          selectable: false,
+          evented: false,
+          objectCaching: false,
+        });
+        previewCanvas.add(previewLine);
+      };
+      const syncPreview = () => {
+        if (!brushSizeSelect) return;
+        ensurePreviewCanvas();
+        if (!previewCanvas || !previewLine) return;
+        const colorInput = document.getElementById('colorPicker') as HTMLInputElement | null;
+        const strokeColor = colorInput?.value || '#1f2937';
+        const uiArrowSettings = window.paintApp?.uiState?.arrowSettings;
+        const startArrow =
+          typeof uiArrowSettings?.startArrow === 'boolean'
+            ? uiArrowSettings.startArrow
+            : previewArrowState.startArrow;
+        const endArrow =
+          typeof uiArrowSettings?.endArrow === 'boolean'
+            ? uiArrowSettings.endArrow
+            : previewArrowState.endArrow;
+        const width = Math.max(1, parseBrushWidth(brushSizeSelect.value));
+        const arrowStyle = lineStyleArrowStyle?.value || arrowStyleTop?.value || 'hand-2';
+        const arrowSize = Number(lineStyleArrowSize?.value || arrowSizeTop?.value || '15') || 15;
+        const style = this.currentDashSettings.style || 'solid';
+        const pattern = this.getDashPatternForStyle(style);
+
+        previewLine.set({
+          x1: 30,
+          y1: 29,
+          x2: 270,
+          y2: 29,
+          stroke: strokeColor,
+          strokeWidth: Math.min(14, width),
+          opacity: 0.96,
+          strokeDashArray: pattern.length ? pattern : null,
+          arrowSettings: {
+            ...(previewLine.arrowSettings || {}),
+            startArrow,
+            endArrow,
+            arrowStyle,
+            arrowSize,
+          },
+        });
+
+        if (window.app?.arrowManager?.attachArrowRendering) {
+          window.app.arrowManager.attachArrowRendering(previewLine);
+        }
+        previewLine.dirty = true;
+        previewCanvas.requestRenderAll();
+      };
+
+      const handleArrowSettingsUpdated = (event: Event) => {
+        const customEvent = event as CustomEvent<{
+          startArrow?: boolean;
+          endArrow?: boolean;
+          arrowStyle?: string;
+          arrowSize?: number;
+        }>;
+        const detail = customEvent.detail || {};
+        if (typeof detail.startArrow === 'boolean')
+          previewArrowState.startArrow = detail.startArrow;
+        if (typeof detail.endArrow === 'boolean') previewArrowState.endArrow = detail.endArrow;
+        if (lineStyleArrowStyle && typeof detail.arrowStyle === 'string') {
+          lineStyleArrowStyle.value = detail.arrowStyle;
+        }
+        if (lineStyleArrowSize && typeof detail.arrowSize === 'number') {
+          lineStyleArrowSize.value = String(detail.arrowSize);
+          if (lineStyleArrowSizeValue) {
+            lineStyleArrowSizeValue.textContent = String(detail.arrowSize);
+          }
+        }
+        syncPreview();
+      };
+
+      panel.querySelectorAll<HTMLButtonElement>('[data-scope]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          lineStyleScope = btn.dataset.scope as 'selection' | 'image' | 'project';
+          panel
+            .querySelectorAll<HTMLButtonElement>('[data-scope]')
+            .forEach(node => node.classList.toggle('active', node === btn));
+        });
+      });
+
+      brushSizeSelect.addEventListener('input', syncPreview);
+      dottedBtn.addEventListener('click', () => setTimeout(syncPreview, 0));
+      arrowStartBtn.addEventListener('click', () => setTimeout(syncPreview, 0));
+      arrowEndBtn.addEventListener('click', () => setTimeout(syncPreview, 0));
+      lineStyleArrowStyle?.addEventListener('change', syncPreview);
+      lineStyleArrowSize?.addEventListener('input', syncPreview);
+      arrowStyleTop?.addEventListener('change', syncPreview);
+      arrowSizeTop?.addEventListener('input', syncPreview);
+      window.addEventListener(
+        'arrow-settings-updated',
+        handleArrowSettingsUpdated as EventListener
+      );
+      (document.getElementById('colorPicker') as HTMLInputElement | null)?.addEventListener(
+        'change',
+        syncPreview
+      );
+      syncPreview();
+    };
+
+    setupLineStylePopover();
+
     this.initDashSplitHandleSystem();
     this.updateDashSplitHandleForSelection();
 
@@ -1820,6 +2207,7 @@ export class App {
 
     // Setup keyboard shortcuts and help system
     this.setupKeyboardControls();
+    this.setupKeyboardShortcuts();
 
     // Create help hint
     this.createHelpHint();
@@ -2090,8 +2478,8 @@ export class App {
   }
 
   setupKeyboardShortcuts(): void {
-    // Tab key cycles through drawing modes: Straight Line -> Curved Line -> Shapes -> Select -> Straight Line
-    // Tab key cycles through drawing modes: Straight Line -> Curved Line -> Shapes -> Select -> Straight Line
+    // Tab key cycles through drawing modes:
+    // Straight Line -> Curved Line -> Eraser Tool -> Select -> Straight Line
     // Use capture phase to ensure we catch it before anything else
     window.addEventListener(
       'keydown',
@@ -2140,7 +2528,13 @@ export class App {
             this.updateToggleLabel(drawingModeToggle, 'Curved Line');
           }
         } else if (currentToolName === 'curve') {
-          // Curved Line -> Select
+          // Curved Line -> Eraser Tool
+          this.toolManager.selectTool('privacy');
+          if (drawingModeToggle) {
+            this.updateToggleLabel(drawingModeToggle, 'Eraser Tool');
+          }
+        } else if (currentToolName === 'privacy') {
+          // Eraser Tool -> Select
           this.toolManager.selectTool('select');
           if (drawingModeToggle) {
             this.updateToggleLabel(drawingModeToggle, 'Select');
@@ -2167,7 +2561,7 @@ export class App {
         shortSpan.textContent = 'Straight';
       } else if (text === 'Curved Line') {
         shortSpan.textContent = 'Curved';
-      } else if (text === 'Privacy Erase') {
+      } else if (text === 'Eraser Tool') {
         shortSpan.textContent = 'Erase';
       } else if (text === 'Shapes') {
         shortSpan.textContent = 'Shapes';
@@ -2356,7 +2750,7 @@ export class App {
             <div style="margin-bottom: 20px;">
                 <h3 style="color: #555; font-size: 16px; margin-bottom: 10px; font-weight: 600;">Drawing Tools</h3>
                 <div style="display: grid; grid-template-columns: auto 1fr; gap: 8px 16px; font-size: 14px;">
-                    <kbd>Tab</kbd><span>Cycle through drawing modes (Line → Curve → Shapes → Select)</span>
+                    <kbd>Tab</kbd><span>Cycle through drawing modes (Line → Curve → Eraser → Select)</span>
                 </div>
             </div>
             
