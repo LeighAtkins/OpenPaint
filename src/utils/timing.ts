@@ -57,17 +57,19 @@ export function createDebouncedAsync<T, Args extends unknown[]>(
       pendingResolve = resolve;
       pendingReject = reject;
 
-      timeoutId = setTimeout(async () => {
-        try {
-          const result = await fn(...args);
-          pendingResolve?.(result);
-        } catch (error) {
-          pendingReject?.(error);
-        } finally {
-          timeoutId = null;
-          pendingResolve = null;
-          pendingReject = null;
-        }
+      timeoutId = setTimeout(() => {
+        void (async () => {
+          try {
+            const result = await fn(...args);
+            pendingResolve?.(result);
+          } catch (error) {
+            pendingReject?.(error);
+          } finally {
+            timeoutId = null;
+            pendingResolve = null;
+            pendingReject = null;
+          }
+        })();
       }, delay);
     });
   };

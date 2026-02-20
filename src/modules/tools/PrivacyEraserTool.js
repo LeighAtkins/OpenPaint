@@ -17,7 +17,7 @@ export class PrivacyEraserTool extends BaseTool {
     this.canvas.isDrawingMode = true;
     this.canvas.freeDrawingBrush = new fabric.PencilBrush(this.canvas);
     this.canvas.freeDrawingBrush.width = this.brushWidth;
-    this.canvas.freeDrawingBrush.color = 'rgba(255,255,255,0.95)';
+    this.canvas.freeDrawingBrush.color = 'rgba(255,255,255,0.25)';
     this.updateCursorPreview(false);
 
     this.onPathCreated = this.onPathCreated.bind(this);
@@ -52,7 +52,7 @@ export class PrivacyEraserTool extends BaseTool {
 
     this.isDrawing = true;
     if (this.canvas?.freeDrawingBrush) {
-      this.canvas.freeDrawingBrush.color = 'rgba(255,255,255,0.25)';
+      this.canvas.freeDrawingBrush.color = 'rgba(255,255,255,0.95)';
     }
     this.updateCursorPreview(true);
     if (window.app?.historyManager) {
@@ -66,7 +66,7 @@ export class PrivacyEraserTool extends BaseTool {
     }
     this.isDrawing = false;
     if (this.canvas?.freeDrawingBrush) {
-      this.canvas.freeDrawingBrush.color = 'rgba(255,255,255,0.95)';
+      this.canvas.freeDrawingBrush.color = 'rgba(255,255,255,0.25)';
     }
     this.updateCursorPreview(false);
   }
@@ -113,8 +113,8 @@ export class PrivacyEraserTool extends BaseTool {
     const diameter = Math.max(6, Math.min(220, Math.round(this.brushWidth)));
     const radius = Math.round(diameter / 2);
     const arm = Math.max(4, Math.floor(radius * 0.2));
-    const fill = isActiveDraw ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.82)';
-    const stroke = isActiveDraw ? 'rgba(255,255,255,0.68)' : 'rgba(255,255,255,0.96)';
+    const fill = isActiveDraw ? 'rgba(255,255,255,0.82)' : 'rgba(255,255,255,0.18)';
+    const stroke = isActiveDraw ? 'rgba(255,255,255,0.96)' : 'rgba(255,255,255,0.68)';
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${diameter}" height="${diameter}"><circle cx="${radius}" cy="${radius}" r="${Math.max(1, radius - 1)}" fill="${fill}" stroke="${stroke}" stroke-width="2"/><line x1="${radius - arm}" y1="${radius}" x2="${radius + arm}" y2="${radius}" stroke="${stroke}" stroke-width="1.5"/><line x1="${radius}" y1="${radius - arm}" x2="${radius}" y2="${radius + arm}" stroke="${stroke}" stroke-width="1.5"/></svg>`;
     const encoded = `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
     this.canvas.freeDrawingCursor = `url("${encoded}") ${radius} ${radius}, crosshair`;

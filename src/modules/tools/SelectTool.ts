@@ -2,29 +2,29 @@
 // @ts-nocheck
 import { BaseTool } from './BaseTool.js';
 
-type FabricObjectLike = {
+interface FabricObjectLike {
   evented?: boolean;
   selectable?: boolean;
   strokeMetadata?: {
     imageLabel?: string;
   };
   imageLabel?: string;
-};
+}
 
-type CanvasLike = {
+interface CanvasLike {
   isDrawingMode: boolean;
   selection: boolean;
   defaultCursor: string;
   forEachObject: (callback: (obj: FabricObjectLike) => void) => void;
   renderAll: () => void;
-};
+}
 
-type CaptureTabState = {
+interface CaptureTabState {
   activeTabId?: string;
   masterTabId?: string;
   lastNonMasterId?: string;
   tabs?: Array<{ id: string; type?: string }>;
-};
+}
 
 declare global {
   interface Window {
@@ -40,10 +40,6 @@ declare global {
 
 export class SelectTool extends BaseTool {
   declare canvas: CanvasLike | null;
-
-  constructor(canvasManager: { fabricCanvas: CanvasLike | null }) {
-    super(canvasManager);
-  }
 
   activate(): void {
     super.activate();

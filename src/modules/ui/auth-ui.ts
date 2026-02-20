@@ -249,7 +249,9 @@ function createToolbarGroup(): HTMLElement {
   const signOutBtn = document.createElement('button');
   signOutBtn.className = 'auth-sign-out-btn';
   signOutBtn.textContent = 'Sign out';
-  signOutBtn.addEventListener('click', handleSignOut);
+  signOutBtn.addEventListener('click', () => {
+    void handleSignOut();
+  });
 
   userArea.appendChild(avatar);
   userArea.appendChild(displayName);
@@ -291,7 +293,9 @@ function createModal(): HTMLElement {
   googleBtn.className = 'auth-google-btn';
   googleBtn.id = 'authGoogleBtn';
   googleBtn.innerHTML = `${GOOGLE_LOGO_SVG} Continue with Google`;
-  googleBtn.addEventListener('click', handleGoogleSignIn);
+  googleBtn.addEventListener('click', () => {
+    void handleGoogleSignIn();
+  });
 
   const errorEl = document.createElement('div');
   errorEl.className = 'auth-error';

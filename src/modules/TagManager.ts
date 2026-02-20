@@ -363,38 +363,14 @@ export class TagManager {
     tagGroup.on('mouse:down', e => {
       // Only if not already editing the text
       if (!tagText.isEditing) {
-        // Check if multiple strokes are currently selected
-        const activeObjects = canvas.getActiveObjects();
-        const isMultipleSelected = activeObjects.length > 1;
-
-        // Check if this stroke is part of the current multi-selection
-        const isStrokeInSelection = strokeObject && activeObjects.includes(strokeObject);
-
         // Select the connected stroke
         if (strokeObject && canvas) {
-          // If multiple strokes are selected and this stroke is already selected,
-          // keep the multi-selection and show measurement input
-          // Otherwise, select just this stroke
-          if (!(isMultipleSelected && isStrokeInSelection)) {
-            canvas.setActiveObject(strokeObject);
-            canvas.requestRenderAll();
-          }
+          canvas.setActiveObject(strokeObject);
+          canvas.requestRenderAll();
         }
 
-        // Only show measurement input if:
-        // - Single stroke is selected, OR
-        // - Multiple strokes are selected AND this stroke is in the selection
-        // This prevents input from appearing when clicking a different tag
-        const shouldShowMeasurement = !isMultipleSelected || isStrokeInSelection;
-
-        if (
-          shouldShowMeasurement &&
-          this.metadataManager &&
-          this.metadataManager.focusMeasurementInput
-        ) {
+        if (this.metadataManager && this.metadataManager.focusMeasurementInput) {
           this.metadataManager.focusMeasurementInput(strokeLabel);
-        } else if (!shouldShowMeasurement) {
-          console.log('[TagManager] Clicked tag outside multi-selection - no measurement input');
         }
       }
     });

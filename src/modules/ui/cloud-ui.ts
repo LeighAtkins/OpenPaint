@@ -1,6 +1,6 @@
 // Cloud UI - Cloud Save button + My Projects modal
 import { authService, type AuthUser } from '@/services/auth/authService';
-import { cloudSaveService, type CloudProjectSummary } from '@/services/cloud/cloudSaveService';
+import { cloudSaveService } from '@/services/cloud/cloudSaveService';
 import { isAuthEnabled, isSupabaseConfigured } from '@/utils/env';
 
 const CLOUD_UI_STYLES = /* css */ `
@@ -416,7 +416,7 @@ async function handleCloudSave(): Promise<void> {
   try {
     console.warn('[Cloud] Preparing project data for cloud save...');
     const useR2Storage =
-      String(import.meta.env.VITE_STORAGE_PROVIDER || 'supabase').toLowerCase() === 'r2';
+      (import.meta.env.VITE_STORAGE_PROVIDER || 'supabase').toLowerCase() === 'r2';
 
     // Wrap getProjectData in a 60-second timeout to prevent infinite hangs
     const projectData = await Promise.race([
@@ -573,7 +573,9 @@ function createCloudToolbarGroup(): HTMLElement {
   cloudSaveBtn.title = 'Save to cloud';
   cloudSaveBtn.setAttribute('aria-label', 'Cloud save');
   cloudSaveBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg><span class="label-long">Cloud Save</span>`;
-  cloudSaveBtn.addEventListener('click', handleCloudSave);
+  cloudSaveBtn.addEventListener('click', () => {
+    void handleCloudSave();
+  });
   cloudSaveBtn.style.display = 'none';
 
   const myProjectsBtn = document.createElement('button');

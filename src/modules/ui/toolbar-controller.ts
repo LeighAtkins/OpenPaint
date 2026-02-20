@@ -18,7 +18,12 @@ export function initToolbarController() {
     const left = document.getElementById('tbLeft');
     const center = document.getElementById('tbCenter');
     const right = document.getElementById('tbRight');
-    const bottom = document.getElementById('canvasControlsContent') || center;
+    const bottom = document.getElementById('canvasControlsContent') || center || left;
+    const toolbarRoot = left || bottom;
+
+    if (!toolbarRoot || !bottom) {
+      return;
+    }
 
     // Helper functions
     const setUniform = el => {
@@ -31,6 +36,7 @@ export function initToolbarController() {
     };
 
     const reparent = (id, target, beforeSetup) => {
+      if (!target) return null;
       const el = document.getElementById(id);
       if (!el) return null;
       beforeSetup?.(el);
@@ -44,14 +50,14 @@ export function initToolbarController() {
     // Since toolbar is now pre-populated, we just need to ensure proper styling
     // and wire up any missing functionality
     const ensureUniformStyling = () => {
-      const buttons = left.querySelectorAll('button, input, select');
+      const buttons = toolbarRoot.querySelectorAll('button, input, select');
       buttons.forEach(setUniform);
     };
 
     ensureUniformStyling();
 
     // Color swatches are now pre-populated, just need to wire up functionality
-    const colorButtons = left.querySelectorAll('[data-color]');
+    const colorButtons = toolbarRoot.querySelectorAll('[data-color]');
     colorButtons.forEach(button => {
       if (!button.__boundColor) {
         button.__boundColor = true;
@@ -673,7 +679,7 @@ export function initToolbarController() {
     }, 150);
 
     // Global function to update drawing mode toggle labels
-    // Note: Freehand mode has been removed - cycle is now: Straight Line -> Curved Line -> Select
+    // Cycle is: Straight Line -> Curved Line -> Eraser Tool -> Select
     window.updateDrawingModeLabels = function (mode) {
       const toggle = document.getElementById('drawingModeToggle');
       if (!toggle) return;
@@ -685,6 +691,9 @@ export function initToolbarController() {
       if (mode === 'curved') {
         longText = 'Curved Line';
         shortText = 'Curved';
+      } else if (mode === 'privacy') {
+        longText = 'Eraser Tool';
+        shortText = 'Erase';
       } else if (mode === 'select') {
         longText = 'Select';
         shortText = 'Select';

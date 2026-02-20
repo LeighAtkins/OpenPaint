@@ -213,7 +213,7 @@ export class ProjectExportService extends SupabaseService {
       const project = projectResult.data;
 
       // Check access permissions
-      if (project.user_id !== currentUser.id) {
+      if (project.created_by !== currentUser.id) {
         return Result.err(
           new AppError(
             ErrorCode.AUTH_ERROR,
@@ -299,12 +299,12 @@ export class ProjectExportService extends SupabaseService {
 
       return Result.ok({
         format: 'json',
-        filename: `${project.name}_${Date.now()}.json`,
+        filename: `${project.project_name}_${Date.now()}.json`,
         size: blob.size,
         localBlob: blob,
         metadata: {
           projectId: project.id,
-          projectName: project.name,
+          projectName: project.project_name,
           exportedAt: new Date().toISOString(),
           exportedBy: currentUser.email,
           options,
@@ -373,12 +373,12 @@ export class ProjectExportService extends SupabaseService {
 
       return Result.ok({
         format: 'zip',
-        filename: `${project.name}_${Date.now()}.zip`,
+        filename: `${project.project_name}_${Date.now()}.zip`,
         size: blob.size,
         localBlob: blob,
         metadata: {
           projectId: project.id,
-          projectName: project.name,
+          projectName: project.project_name,
           exportedAt: new Date().toISOString(),
           exportedBy: currentUser.email,
           options,
@@ -438,7 +438,7 @@ export class ProjectExportService extends SupabaseService {
         localBlob: blob,
         metadata: {
           projectId: project.id,
-          projectName: project.name,
+          projectName: project.project_name,
           exportedAt: new Date().toISOString(),
           exportedBy: currentUser.email,
           options,
@@ -498,12 +498,12 @@ export class ProjectExportService extends SupabaseService {
 
       return Result.ok({
         format: 'pdf',
-        filename: `${project.name}_report_${Date.now()}.pdf`,
+        filename: `${project.project_name}_report_${Date.now()}.pdf`,
         size: blob.size,
         localBlob: blob,
         metadata: {
           projectId: project.id,
-          projectName: project.name,
+          projectName: project.project_name,
           exportedAt: new Date().toISOString(),
           exportedBy: currentUser.email,
           options,
@@ -761,14 +761,10 @@ export class ProjectExportService extends SupabaseService {
           },
         };
 
-        await this.update(
-          'projects',
-          projectId,
-          {
-            data: updatedData,
-            updated_at: new Date().toISOString(),
-          }
-        );
+        await this.update('projects', projectId, {
+          data: updatedData,
+          updated_at: new Date().toISOString(),
+        });
       }
     } catch (error) {
       // Log error but don't fail export

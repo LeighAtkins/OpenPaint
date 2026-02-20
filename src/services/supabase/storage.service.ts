@@ -14,9 +14,7 @@ import type { StorageObject, ProjectImageInsert } from '@/types/supabase.types';
 type StorageProvider = 'supabase' | 'r2';
 
 const STORAGE_PROVIDER: StorageProvider =
-  String(import.meta.env.VITE_STORAGE_PROVIDER || 'supabase').toLowerCase() === 'r2'
-    ? 'r2'
-    : 'supabase';
+  (import.meta.env.VITE_STORAGE_PROVIDER || 'supabase').toLowerCase() === 'r2' ? 'r2' : 'supabase';
 
 // File upload configuration
 export interface UploadConfig {

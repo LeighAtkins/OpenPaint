@@ -10,7 +10,12 @@
     const left = document.getElementById('tbLeft');
     const center = document.getElementById('tbCenter');
     const right = document.getElementById('tbRight');
-    const bottom = document.getElementById('canvasControlsContent') || center;
+    const bottom = document.getElementById('canvasControlsContent') || center || left;
+    const toolbarRoot = left || bottom;
+
+    if (!toolbarRoot || !bottom) {
+      return;
+    }
 
     // Helper functions
     const setUniform = el => {
@@ -23,6 +28,7 @@
     };
 
     const reparent = (id, target, beforeSetup) => {
+      if (!target) return null;
       const el = document.getElementById(id);
       if (!el) return null;
       beforeSetup?.(el);
@@ -36,14 +42,14 @@
     // Since toolbar is now pre-populated, we just need to ensure proper styling
     // and wire up any missing functionality
     const ensureUniformStyling = () => {
-      const buttons = left.querySelectorAll('button, input, select');
+      const buttons = toolbarRoot.querySelectorAll('button, input, select');
       buttons.forEach(setUniform);
     };
 
     ensureUniformStyling();
 
     // Color swatches are now pre-populated, just need to wire up functionality
-    const colorButtons = left.querySelectorAll('[data-color]');
+    const colorButtons = toolbarRoot.querySelectorAll('[data-color]');
     colorButtons.forEach(button => {
       if (!button.__boundColor) {
         button.__boundColor = true;

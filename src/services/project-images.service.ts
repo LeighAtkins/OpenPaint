@@ -720,16 +720,10 @@ export class ProjectImagesService extends SupabaseService {
           },
         };
 
-        await this.update(
-          DATABASE_TABLES.PROJECTS,
-          projectId,
-          {
-            data: updatedData,
-            updated_at: new Date().toISOString(),
-            version: ,
-          },
-          project.version
-        );
+        await this.update(DATABASE_TABLES.PROJECTS, projectId, {
+          data: updatedData,
+          updated_at: new Date().toISOString(),
+        });
       }
     } catch (error) {
       // Log error but don't fail the main operation
@@ -778,16 +772,10 @@ export class ProjectImagesService extends SupabaseService {
           },
         };
 
-        await this.update(
-          DATABASE_TABLES.PROJECTS,
-          projectId,
-          {
-            data: updatedData,
-            updated_at: new Date().toISOString(),
-            version: ,
-          },
-          project.version
-        );
+        await this.update(DATABASE_TABLES.PROJECTS, projectId, {
+          data: updatedData,
+          updated_at: new Date().toISOString(),
+        });
       }
     } catch (error) {
       // Log error but don't fail the main operation
@@ -826,16 +814,10 @@ export class ProjectImagesService extends SupabaseService {
           },
         };
 
-        await this.update(
-          DATABASE_TABLES.PROJECTS,
-          projectId,
-          {
-            data: updatedData,
-            updated_at: new Date().toISOString(),
-            version: ,
-          },
-          project.version
-        );
+        await this.update(DATABASE_TABLES.PROJECTS, projectId, {
+          data: updatedData,
+          updated_at: new Date().toISOString(),
+        });
       }
     } catch (error) {
       // Log error but don't fail the main operation
