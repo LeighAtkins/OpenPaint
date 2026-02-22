@@ -25,6 +25,7 @@ export class App {
   measurementSystem: DeferredManager | null;
   measurementDialog: DeferredManager | null;
   measurementExporter: DeferredManager | null;
+  measurementOverlayManager: DeferredManager | null;
   deferredInitStarted: boolean;
   deferredToolPreloadStarted: boolean;
   hasDrawnFirstStroke: boolean;
@@ -94,6 +95,7 @@ export class App {
     this.measurementSystem = null;
     this.measurementDialog = null;
     this.measurementExporter = null;
+    this.measurementOverlayManager = null;
 
     this.init();
   }
@@ -333,6 +335,7 @@ export class App {
         { MeasurementExporter },
         { ArrowManager },
         { setupDebugHelpers },
+        { MeasurementOverlayManager },
       ] = await Promise.all([
         import('./TagManager.js'),
         import('./MeasurementSystem.js'),
@@ -340,6 +343,7 @@ export class App {
         import('./MeasurementExporter.js'),
         import('./utils/ArrowManager.js'),
         import('./DebugHelpers.js'),
+        import('./measurement-mos/index'),
       ]);
 
       if (!this.tagManager) {
@@ -365,6 +369,14 @@ export class App {
           this.measurementSystem,
           this.projectManager
         );
+      }
+
+      if (!this.measurementOverlayManager) {
+        this.measurementOverlayManager = new MeasurementOverlayManager(
+          this.canvasManager,
+          this.historyManager
+        );
+        this.measurementOverlayManager.initUI(this.projectManager);
       }
 
       if (this.metadataManager?.updateStrokeVisibilityControls) {

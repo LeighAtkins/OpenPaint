@@ -203,6 +203,11 @@ export class ProjectManager {
       this.updateThumbnailRotation(viewId, view.rotation);
     }
 
+    // 3b. Unmount MOS overlays for the old view
+    if (window.app?.measurementOverlayManager) {
+      window.app.measurementOverlayManager.unmountView(this.currentViewId);
+    }
+
     // 4. Discard selection so control anchors don't persist across views, then clear
     this.canvasManager.fabricCanvas?.discardActiveObject();
     this.canvasManager.clear();
@@ -390,6 +395,11 @@ export class ProjectManager {
       }
 
       this.historyManager.saveState();
+    }
+
+    // Mount MOS overlays for the new view
+    if (window.app?.measurementOverlayManager) {
+      window.app.measurementOverlayManager.mountView(viewId);
     }
 
     this.isSwitchingView = false;
@@ -656,6 +666,9 @@ export class ProjectManager {
 
           console.log('[Image Debug] ✓ Background image set and rendered');
           console.log('[Image Debug] ===== BACKGROUND IMAGE SET COMPLETE =====\n');
+
+          // Notify MOS overlay system that image rect has changed
+          canvas.fire('mos:imageRect:changed');
 
           resolve();
         },
@@ -1568,6 +1581,11 @@ export class ProjectManager {
       projectData.views[viewId] = entry;
     }
 
+    // Serialize MOS overlays if manager exists
+    if (window.app?.measurementOverlayManager) {
+      projectData.mosOverlays = window.app.measurementOverlayManager.toJSON();
+    }
+
     return projectData;
   }
 
@@ -2149,6 +2167,16 @@ export class ProjectManager {
           await registerImageForView(item.viewId, imageUrl);
         } catch (error) {
           console.warn('[Load] Deferred image registration failed', item.viewId, error);
+        }
+      }
+
+      // Restore MOS overlays if present
+      if (projectData.mosOverlays && window.app?.measurementOverlayManager) {
+        try {
+          await window.app.measurementOverlayManager.fromJSON(projectData.mosOverlays);
+          console.log('[Load] MOS overlays restored');
+        } catch (mosErr) {
+          console.warn('[Load] Failed to restore MOS overlays:', mosErr);
         }
       }
 
