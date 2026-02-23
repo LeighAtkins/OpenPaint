@@ -134,6 +134,9 @@ export class StrokeMetadataManager {
   // Attach metadata to a Text object
   attachTextMetadata(obj, imageLabel) {
     if (!obj) return;
+    if (obj.isTagText || obj.isTagBackground || obj.isTagGroup || obj.parentTagObject) {
+      return;
+    }
     const scopedLabel = this.normalizeImageLabel(imageLabel);
 
     // Initialize storage for this image

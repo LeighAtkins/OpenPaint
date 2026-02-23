@@ -1,5 +1,5 @@
 const HOTKEY = 'Backslash';
-const VIEWS = ['Front', 'Back', 'Side'];
+const VIEWS = ['front', 'back', 'side'];
 const FLASH_DURATION_MS = 1200;
 const GUIDE_HINT_KEY = 'openpaint:guideFlashHintSeen:v1';
 const GUIDE_CACHE_KEY = '2026-02-11-1';
@@ -308,7 +308,8 @@ function showShortcutToast() {
 }
 
 function buildGuideUrl(code, view) {
-  return `/api/measurement-guides/svg?code=${encodeURIComponent(code)}&view=${encodeURIComponent(view)}&v=${encodeURIComponent(GUIDE_CACHE_KEY)}`;
+  const normalizedView = String(view || 'front').toLowerCase();
+  return `/api/measurement-guides/svg?code=${encodeURIComponent(code)}&view=${encodeURIComponent(normalizedView)}&v=${encodeURIComponent(GUIDE_CACHE_KEY)}`;
 }
 
 function attachGuideImageRecovery(root) {
@@ -320,7 +321,7 @@ function attachGuideImageRecovery(root) {
       if (img.dataset.retried === '1') return;
       img.dataset.retried = '1';
       const code = img.dataset.guideCode;
-      const view = img.dataset.guideView || 'Front';
+      const view = img.dataset.guideView || 'front';
       if (!code) return;
       img.src = `${buildGuideUrl(code, view)}&cb=${Date.now()}`;
     });
@@ -360,7 +361,7 @@ function ensureOverlay(slide, slideCount) {
     flashOverlay.className = 'guide-flash-overlay';
     document.body.appendChild(flashOverlay);
   }
-  const title = `${slide.code} · ${slide.view}`;
+  const title = `${slide.code} · ${String(slide.view).toUpperCase()}`;
   const hint = `${activeIndex + 1}/${slideCount} · \\ toggle · Shift+\\ next · Ctrl+\\ edit codes`;
   const url = buildGuideUrl(slide.code, slide.view);
   flashOverlay.innerHTML = `
@@ -605,12 +606,12 @@ function showGuideGallery() {
   const renderGallery = filteredCodes => {
     const items = filteredCodes
       .map(code => {
-        const url = buildGuideUrl(code, 'Front');
+        const url = buildGuideUrl(code, 'front');
         return `
         <div class="guide-gallery-item" data-code="${code}">
           <div class="guide-gallery-item-label">${code}</div>
           <div class="guide-gallery-item-body">
-            <img src="${url}" alt="${code} Front view" loading="lazy" data-guide-code="${code}" data-guide-view="Front" />
+            <img src="${url}" alt="${code} Front view" loading="lazy" data-guide-code="${code}" data-guide-view="front" />
           </div>
         </div>
       `;
@@ -638,12 +639,12 @@ function showGuideGallery() {
       if (grid) {
         grid.innerHTML = filtered
           .map(code => {
-            const url = buildGuideUrl(code, 'Front');
+            const url = buildGuideUrl(code, 'front');
             return `
             <div class="guide-gallery-item" data-code="${code}">
               <div class="guide-gallery-item-label">${code}</div>
               <div class="guide-gallery-item-body">
-                <img src="${url}" alt="${code} Front view" loading="lazy" data-guide-code="${code}" data-guide-view="Front" />
+                <img src="${url}" alt="${code} Front view" loading="lazy" data-guide-code="${code}" data-guide-view="front" />
               </div>
             </div>
           `;

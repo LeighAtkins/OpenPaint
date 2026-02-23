@@ -26,8 +26,6 @@ const MOS_RANGE = 1000;
 // Default stroke style matching svgMerge coral palette
 const DEFAULT_STROKE_COLOR = '#DF6868';
 const DEFAULT_STROKE_WIDTH = 1.5;
-const DEFAULT_FONT_SIZE = 14;
-const DEFAULT_FONT_FAMILY = 'Arial, sans-serif';
 
 // ---------------------------------------------------------------------------
 // Public API
@@ -155,6 +153,11 @@ function processElement(
   // Convert element geometry to MOS coordinates
   const mosElement = extractElementGeometry(el, tag, elId, kind, srcWidth, srcHeight);
   if (!mosElement) return;
+
+  const roleToken = extractRoleTokenFromId(elId);
+  if (roleToken) {
+    mosElement.roleToken = roleToken;
+  }
 
   // Create Fabric objects
   const fabricIds = createFabricObjectsForElement(mosElement, overlayId, imageRect, scale, canvas);
@@ -356,29 +359,7 @@ function createFabricObjectsForElement(
   }
 
   if (element.label) {
-    const lp = mosToCanvas({ x: element.label.cx, y: element.label.cy }, imageRect);
-
-    const text = new fabric.Text(element.label.text, {
-      left: lp.x,
-      top: lp.y,
-      fontSize: DEFAULT_FONT_SIZE * scale,
-      fontFamily: DEFAULT_FONT_FAMILY,
-      fill: strokeColor,
-      originX: 'center',
-      originY: 'center',
-      selectable: true,
-      evented: true,
-      hasControls: false,
-      hasBorders: true,
-      angle: element.label.rotation,
-      customData: { ...customData, kind: 'label' },
-    });
-
-    const textId = `${element.id}_label`;
-    text.__mosId = textId;
-    fabricIds.push(textId);
-
-    canvas.add(text);
+    // MOS labels are rendered as TagManager tags, not imported SVG text.
   }
 
   // For shape hints (polygons), create as non-editable visual
@@ -609,4 +590,19 @@ function getStyleProp(el: Element, prop: string): string | null {
   if (!style) return null;
   const match = new RegExp(`${prop}\\s*:\\s*([^;]+)`).exec(style);
   return match ? match[1].trim() : null;
+}
+
+function extractRoleTokenFromId(id: string): string | undefined {
+  const normalized = (id || '').replace(/^mos\d+_/, '').trim();
+  if (!/^[mbc][a-z0-9_-]+$/i.test(normalized)) return undefined;
+
+  const token = normalized
+    .slice(1)
+    .replace(/_(label|text)$/i, '')
+    .replace(/(?:CM|MM|IN)\d*$/i, '')
+    .replace(/[^a-z0-9-]/gi, '')
+    .toUpperCase();
+
+  if (!token || /^\d+$/.test(token)) return undefined;
+  return token;
 }

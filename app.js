@@ -1747,6 +1747,8 @@ app.post('/api/measurements/generate', async (req, res) => {
     const {
       projectId,
       viewId,
+      guideView,
+      imagePartLabel,
       imageR2Key,
       imageDataUrl,
       imageWidth,
@@ -1756,6 +1758,176 @@ app.post('/api/measurements/generate', async (req, res) => {
       thinkingLevel = 'low',
       templateId,
     } = req.body;
+
+    const resolveGuideView = ({
+      viewId: rawViewId,
+      guideView: rawGuideView,
+      imagePartLabel: rawLabel,
+    }) => {
+      const explicit = String(rawGuideView || '')
+        .trim()
+        .toLowerCase();
+      if (explicit === 'front' || explicit === 'back' || explicit === 'side') return explicit;
+
+      const hint = `${String(rawViewId || '')} ${String(rawLabel || '')}`.toLowerCase();
+      if (hint.includes('back') || hint.includes('rear')) return 'back';
+      if (
+        hint.includes('side') ||
+        hint.includes('left') ||
+        hint.includes('right') ||
+        hint.includes('arm')
+      ) {
+        return 'side';
+      }
+      return 'front';
+    };
+
+    const normalizeRoleToken = value =>
+      String(value || '')
+        .trim()
+        .replace(/[^a-z0-9-]/gi, '')
+        .toUpperCase();
+
+    const canonicalRoleToken = value => {
+      const token = normalizeRoleToken(value);
+      if (!token) return '';
+      const strippedUnits = token.replace(/(?:CM|MM|IN)\d*$/i, '');
+      return strippedUnits || token;
+    };
+
+    const parseGuideRolesFromSvg = svgText => {
+      if (!svgText || typeof svgText !== 'string') return [];
+      const out = new Set();
+
+      const idRegex = /\sid="([^"]+)"/gi;
+      let idMatch;
+      while ((idMatch = idRegex.exec(svgText)) !== null) {
+        const raw = String(idMatch[1] || '')
+          .replace(/^mos\d+_/, '')
+          .trim();
+        if (/^[mbc][a-z0-9_-]+$/i.test(raw)) {
+          const token = raw
+            .slice(1)
+            .replace(/_(label|text)$/i, '')
+            .replace(/[^a-z0-9-]/gi, '');
+          const canonical = canonicalRoleToken(token);
+          if (canonical && canonical.length <= 20 && !/^\d+$/.test(canonical)) out.add(canonical);
+        }
+      }
+
+      const textRegex = /<text[^>]*>([^<]+)<\/text>/gi;
+      let textMatch;
+      while ((textMatch = textRegex.exec(svgText)) !== null) {
+        const canonical = canonicalRoleToken(textMatch[1] || '');
+        if (canonical && canonical.length <= 20 && !/^\d+$/.test(canonical)) out.add(canonical);
+      }
+
+      return Array.from(out);
+    };
+
+    const autoRepairMosSvg = svgText => {
+      if (!svgText || typeof svgText !== 'string') return '';
+
+      let repaired = svgText;
+
+      repaired = repaired.replace(/<script[\s\S]*?<\/script>/gi, '');
+      repaired = repaired.replace(/\son\w+\s*=\s*"[^"]*"/gi, '');
+      repaired = repaired.replace(/\son\w+\s*=\s*'[^']*'/gi, '');
+      repaired = repaired.replace(/javascript\s*:/gi, '');
+
+      if (/<svg[\s>]/i.test(repaired)) {
+        if (/viewBox="[^"]*"/i.test(repaired)) {
+          repaired = repaired.replace(/viewBox="[^"]*"/i, 'viewBox="0 0 1000 1000"');
+        } else {
+          repaired = repaired.replace(/<svg\b/i, '<svg viewBox="0 0 1000 1000"');
+        }
+      }
+
+      repaired = repaired.replace(/(x1|y1|x2|y2|x|y|cx|cy)="([^"]+)"/gi, (_match, attr, raw) => {
+        const n = Number.parseFloat(String(raw));
+        if (!Number.isFinite(n)) return `${attr}="0"`;
+        const clamped = Math.max(0, Math.min(1000, n));
+        const normalized = Number(clamped.toFixed(2));
+        return `${attr}="${normalized}"`;
+      });
+
+      repaired = repaired.replace(/<line\b[^>]*>/gi, tag => {
+        const read = name => {
+          const m = tag.match(new RegExp(`${name}="([^\"]+)"`, 'i'));
+          return m ? Number.parseFloat(m[1]) : Number.NaN;
+        };
+        const x1 = read('x1');
+        const y1 = read('y1');
+        const x2 = read('x2');
+        const y2 = read('y2');
+        if (![x1, y1, x2, y2].every(Number.isFinite)) return tag;
+        if (Math.abs(x2 - x1) >= 0.1 || Math.abs(y2 - y1) >= 0.1) return tag;
+
+        const nudgedX2 = x2 >= 999.5 ? x2 - 1 : x2 + 1;
+        return tag.replace(/x2="([^"]+)"/i, `x2="${Number(nudgedX2.toFixed(2))}"`);
+      });
+
+      return repaired;
+    };
+
+    const formatHintList = (items, limit = 24) => {
+      if (!Array.isArray(items) || items.length === 0) return 'none';
+      const visible = items.slice(0, limit);
+      const suffix = items.length > limit ? ` (+${items.length - limit} more)` : '';
+      return `${visible.join(', ')}${suffix}`;
+    };
+
+    const buildTemplatePromptContext = svgText => {
+      if (!svgText || typeof svgText !== 'string') return '';
+
+      const groupIds = [];
+      const lineIds = [];
+      const textHints = [];
+
+      const groupRegex = /<g\b[^>]*\sid="([^"]+)"[^>]*>/gi;
+      let groupMatch;
+      while ((groupMatch = groupRegex.exec(svgText)) !== null && groupIds.length < 24) {
+        groupIds.push(groupMatch[1]);
+      }
+
+      const lineRegex = /<line\b[^>]*\sid="([^"]+)"[^>]*>/gi;
+      let lineMatch;
+      while ((lineMatch = lineRegex.exec(svgText)) !== null && lineIds.length < 40) {
+        lineIds.push(lineMatch[1]);
+      }
+
+      const textRegexWithId = /<text\b[^>]*\sid="([^"]+)"[^>]*>([^<]*)<\/text>/gi;
+      let textMatchWithId;
+      while ((textMatchWithId = textRegexWithId.exec(svgText)) !== null && textHints.length < 24) {
+        const rawValue = String(textMatchWithId[2] || '').trim();
+        const canonical = canonicalRoleToken(rawValue);
+        const safeRole = canonical || rawValue || '?';
+        textHints.push(`${textMatchWithId[1]}:${safeRole}`);
+      }
+
+      const viewBoxMatch = svgText.match(/viewBox="([^"]+)"/i);
+      const viewBox = viewBoxMatch?.[1] || '0 0 1000 1000';
+
+      return [
+        'TEMPLATE BLUEPRINT (compact):',
+        `- viewBox: ${viewBox}`,
+        `- group ids: ${formatHintList(groupIds)}`,
+        `- line ids: ${formatHintList(lineIds)}`,
+        `- text id/role hints: ${formatHintList(textHints)}`,
+      ].join('\n');
+    };
+
+    const traceId = crypto.randomUUID().slice(0, 8);
+    const logPrefix = `[MOS Generate ${traceId}]`;
+    const requestStartMs = Date.now();
+    const phaseDurations = {};
+    const markPhase = (phase, startMs) => {
+      phaseDurations[phase] = Date.now() - startMs;
+    };
+
+    console.log(
+      `${logPrefix} start template=${templateId || 'none'} view=${String(viewId || 'front')} guideView=${String(guideView || '')} imagePartLabel=${String(imagePartLabel || '')}`
+    );
 
     // --- Fetch reference template SVG from Cloudflare Worker (if templateId provided) ---
     const workerBase = (
@@ -1773,10 +1945,15 @@ app.post('/api/measurements/generate', async (req, res) => {
     ).trim();
 
     let referenceSvgText = null;
+    const resolvedGuideView = resolveGuideView({
+      viewId,
+      guideView,
+      imagePartLabel,
+    });
     if (templateId && workerBase) {
+      const templateFetchStartMs = Date.now();
       try {
-        const guideView = viewId || 'front';
-        const svgUrl = `${workerBase}/measurement-guides/svg?code=${encodeURIComponent(templateId)}&view=${encodeURIComponent(guideView)}`;
+        const svgUrl = `${workerBase}/measurement-guides/svg?code=${encodeURIComponent(templateId)}&view=${encodeURIComponent(resolvedGuideView)}`;
         const svgRes = await fetch(svgUrl, {
           method: 'GET',
           headers: {
@@ -1786,18 +1963,40 @@ app.post('/api/measurements/generate', async (req, res) => {
         });
         if (svgRes.ok) {
           referenceSvgText = await svgRes.text();
+          markPhase('templateFetchMs', templateFetchStartMs);
           console.log(
-            `[MOS Generate] Fetched reference SVG for templateId="${templateId}", view="${guideView}" (${referenceSvgText.length} bytes)`
+            `${logPrefix} fetched template view=${resolvedGuideView} bytes=${referenceSvgText.length} in ${phaseDurations.templateFetchMs}ms`
           );
         } else {
+          markPhase('templateFetchMs', templateFetchStartMs);
           console.warn(
-            `[MOS Generate] Reference SVG fetch failed (${svgRes.status}) for templateId="${templateId}"`
+            `${logPrefix} template fetch failed status=${svgRes.status} in ${phaseDurations.templateFetchMs}ms`
           );
         }
       } catch (refErr) {
-        console.warn('[MOS Generate] Failed to fetch reference SVG:', refErr.message);
+        markPhase('templateFetchMs', templateFetchStartMs);
+        console.warn(
+          `${logPrefix} template fetch error in ${phaseDurations.templateFetchMs}ms: ${refErr.message}`
+        );
       }
     }
+
+    const normalizedRequestedRoles = Array.from(
+      new Set(
+        (Array.isArray(requestedRoles) ? requestedRoles : [])
+          .map(role => canonicalRoleToken(role))
+          .filter(Boolean)
+      )
+    );
+
+    const templateRoles = parseGuideRolesFromSvg(referenceSvgText);
+    const effectiveRolesRaw = normalizedRequestedRoles.length
+      ? normalizedRequestedRoles
+      : templateRoles.length
+        ? templateRoles
+        : ['W', 'H'];
+    const effectiveRoles = effectiveRolesRaw.slice(0, 8);
+    const templatePromptContext = buildTemplatePromptContext(referenceSvgText);
 
     if (!imageR2Key && !imageDataUrl) {
       return res.status(400).json({
@@ -1817,6 +2016,7 @@ app.post('/api/measurements/generate', async (req, res) => {
     let imageBase64;
     let imageMimeType = 'image/jpeg';
 
+    const imagePrepStartMs = Date.now();
     if (imageDataUrl) {
       // Extract base64 from data URL
       const match = imageDataUrl.match(/^data:([^;]+);base64,(.+)$/);
@@ -1828,6 +2028,23 @@ app.post('/api/measurements/generate', async (req, res) => {
       }
       imageMimeType = match[1];
       imageBase64 = match[2];
+
+      try {
+        const sharp = (await import('sharp')).default;
+        const rawBuffer = Buffer.from(imageBase64, 'base64');
+        const maxEdge = process.env.VERCEL ? 768 : 1024;
+        const longestEdge = Math.max(Number(imageWidth) || 0, Number(imageHeight) || 0);
+        if (longestEdge > maxEdge || rawBuffer.length > 900000) {
+          const resized = await sharp(rawBuffer)
+            .resize(maxEdge, maxEdge, { fit: 'inside', withoutEnlargement: true })
+            .jpeg({ quality: process.env.VERCEL ? 78 : 85 })
+            .toBuffer();
+          imageBase64 = resized.toString('base64');
+          imageMimeType = 'image/jpeg';
+        }
+      } catch {
+        // Keep original data URL bytes when sharp is unavailable.
+      }
     } else if (imageR2Key) {
       // Fetch from R2 public URL
       const publicUrl = getR2PublicUrl(imageR2Key);
@@ -1863,28 +2080,31 @@ app.post('/api/measurements/generate', async (req, res) => {
         imageBase64 = buffer.toString('base64');
       }
     }
+    markPhase('imagePrepMs', imagePrepStartMs);
+
+    console.log(
+      `${logPrefix} roles=${effectiveRoles.join(',')} templateRoles=${templateRoles.length} imageMime=${imageMimeType} imageBytes=${Math.round((imageBase64?.length || 0) * 0.75)} imagePrep=${phaseDurations.imagePrepMs}ms`
+    );
 
     // --- Build Gemini prompt ---
-    const rolesStr = requestedRoles.join(', ');
+    const rolesStr = effectiveRoles.join(', ');
 
     let systemPrompt;
+    let fallbackPrompt;
     if (referenceSvgText) {
-      // Template-guided prompt: use the reference SVG as structural template
       systemPrompt = `You are a measurement overlay generator for product images.
 Your task is to analyse the provided image and generate an SVG measurement overlay
-by adapting the REFERENCE TEMPLATE SVG below to match the product in the photo.
+by adapting the provided TEMPLATE BLUEPRINT to match the product in the photo.
 
-REFERENCE TEMPLATE SVG:
-The following SVG is a reference template for this product type.
-You MUST use the same element IDs, grouping structure, and line types.
-Adapt the x1/y1/x2/y2 coordinates and text label positions to match where the product edges appear in the provided photo.
+The template was compressed for speed. Keep role labels and id naming style consistent.
+Do not invent unrelated measurements.
 
-${referenceSvgText}
+${templatePromptContext}
 
 RULES:
 1. The SVG MUST use viewBox="0 0 1000 1000" — coordinates are normalised to the image.
-2. Keep ALL element IDs, group (<g>) structure, class names, and measurement roles from the template.
-3. Only change coordinate attributes (x1, y1, x2, y2, x, y, cx, cy) and text positions to fit the product in the photo.
+2. Keep measurement roles aligned to these role tokens: ${rolesStr}
+3. Reuse template id naming where possible; if missing, create stable ids.
 4. Generate measurement lines for these roles: ${rolesStr}
 5. Units: ${units}
 6. All coordinates MUST be in range [0, 1000]. No negative values. No values > 1000.
@@ -1895,8 +2115,25 @@ Return ONLY a JSON object with this exact structure:
 {
   "svg": "<svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1000 1000\\">...</svg>"
 }`;
+      fallbackPrompt = `You are a measurement overlay generator for product images.
+Your task is to analyse the provided image and generate an SVG measurement overlay.
+
+ROLE TOKENS:
+${rolesStr}
+
+RULES:
+1. The SVG MUST use viewBox="0 0 1000 1000".
+2. Generate one <line> and one nearby <text> label for each role token.
+3. Units: ${units}
+4. All coordinates must be within [0, 1000].
+5. No zero-length lines.
+6. Keep ids simple and stable (for example: mROLE, bROLE, cROLE).
+
+Return ONLY a JSON object with this exact structure:
+{
+  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 1000 1000\">...</svg>"
+}`;
     } else {
-      // Generic prompt (no template available)
       systemPrompt = `You are a measurement overlay generator for product images.
 Your task is to analyse the provided image and generate an SVG measurement overlay.
 
@@ -1917,10 +2154,11 @@ Return ONLY a JSON object with this exact structure:
 {
   "svg": "<svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1000 1000\\">...</svg>"
 }`;
+      fallbackPrompt = systemPrompt;
     }
 
     // --- Validation repair loop (max 3 attempts) ---
-    const MAX_ATTEMPTS = 3;
+    const MAX_ATTEMPTS = process.env.VERCEL ? 2 : 3;
     let lastSvg = null;
     let lastErrors = null;
     let usage = null;
@@ -1928,10 +2166,10 @@ Return ONLY a JSON object with this exact structure:
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
       const parts = [];
 
-      if (attempt === 1) {
-        // First attempt: send image + prompt
+      if (attempt === 1 || !lastSvg || process.env.VERCEL) {
+        const promptText = attempt === 1 ? systemPrompt : fallbackPrompt;
         parts.push({
-          text: systemPrompt,
+          text: promptText,
         });
         parts.push({
           inlineData: {
@@ -1940,7 +2178,6 @@ Return ONLY a JSON object with this exact structure:
           },
         });
       } else {
-        // Repair attempt: send errors + previous SVG, no image
         parts.push({
           text: `The previous SVG had validation errors. Please fix them and return a corrected version.
 
@@ -1969,14 +2206,42 @@ Return ONLY a JSON object with: { "svg": "<corrected SVG>" }`,
         };
       }
 
-      const geminiResponse = await fetch(GEMINI_ENDPOINT, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-goog-api-key': GEMINI_API_KEY,
-        },
-        body: JSON.stringify(geminiBody),
-      });
+      const geminiRequestStartMs = Date.now();
+      const geminiAttemptMode =
+        attempt === 1 ? 'template' : !lastSvg || process.env.VERCEL ? 'fallback' : 'repair';
+      const geminiAbort = new AbortController();
+      const timeoutMs = process.env.VERCEL ? 24000 : 28000;
+      const geminiTimeout = setTimeout(() => geminiAbort.abort(), timeoutMs);
+      let geminiResponse;
+      try {
+        geminiResponse = await fetch(GEMINI_ENDPOINT, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-goog-api-key': GEMINI_API_KEY,
+          },
+          body: JSON.stringify(geminiBody),
+          signal: geminiAbort.signal,
+        });
+      } catch (fetchErr) {
+        markPhase(`geminiAttempt${attempt}Ms`, geminiRequestStartMs);
+        if (fetchErr?.name === 'AbortError') {
+          console.warn(
+            `${logPrefix} Gemini timeout attempt=${attempt} mode=${geminiAttemptMode} after ${phaseDurations[`geminiAttempt${attempt}Ms`]}ms`
+          );
+          lastSvg = '';
+          lastErrors = ['Gemini timeout'];
+          continue;
+        }
+        throw fetchErr;
+      } finally {
+        clearTimeout(geminiTimeout);
+      }
+
+      markPhase(`geminiAttempt${attempt}Ms`, geminiRequestStartMs);
+      console.log(
+        `${logPrefix} Gemini attempt=${attempt} status=${geminiResponse.status} mode=${geminiAttemptMode} in ${phaseDurations[`geminiAttempt${attempt}Ms`]}ms`
+      );
 
       if (!geminiResponse.ok) {
         const errText = await geminiResponse.text();
@@ -2047,7 +2312,23 @@ Return ONLY a JSON object with: { "svg": "<corrected SVG>" }`,
       lastSvg = svgText;
 
       // --- Validate the SVG ---
-      const errors = validateMosSvg(svgText);
+      let errors = validateMosSvg(svgText);
+
+      if (errors.length > 0) {
+        const repairedSvg = autoRepairMosSvg(svgText);
+        if (repairedSvg && repairedSvg !== svgText) {
+          const repairedErrors = validateMosSvg(repairedSvg);
+          if (repairedErrors.length === 0) {
+            svgText = repairedSvg;
+            lastSvg = svgText;
+            errors = [];
+            console.log(`${logPrefix} attempt=${attempt} autoRepair=applied`);
+          } else {
+            errors = repairedErrors;
+            lastSvg = repairedSvg;
+          }
+        }
+      }
 
       if (errors.length === 0) {
         // Valid! Store in R2 if configured
@@ -2092,7 +2373,7 @@ Return ONLY a JSON object with: { "svg": "<corrected SVG>" }`,
                 view_id: viewId || 'front',
                 svg_text: svgText,
                 r2_key: r2Key,
-                roles: requestedRoles,
+                roles: effectiveRoles,
                 units,
                 generated_by: GEMINI_MODEL,
                 attempt_count: attempt,
@@ -2108,7 +2389,9 @@ Return ONLY a JSON object with: { "svg": "<corrected SVG>" }`,
           }
         }
 
-        console.log(`[MOS Generate] Success on attempt ${attempt} for ${rolesStr}`);
+        console.log(`${logPrefix} success attempt=${attempt} roles=${rolesStr}`);
+        markPhase('totalMs', requestStartMs);
+        console.log(`${logPrefix} total=${phaseDurations.totalMs}ms`);
 
         return res.json({
           success: true,
@@ -2123,11 +2406,19 @@ Return ONLY a JSON object with: { "svg": "<corrected SVG>" }`,
 
       // Validation failed — prepare for retry
       lastErrors = errors;
-      console.log(`[MOS Generate] Attempt ${attempt} had ${errors.length} validation errors`);
+      console.log(`${logPrefix} attempt=${attempt} validationErrors=${errors.length}`);
     }
 
-    // All attempts exhausted
-    console.error(`[MOS Generate] Failed after ${MAX_ATTEMPTS} attempts`);
+    markPhase('totalMs', requestStartMs);
+    console.error(
+      `${logPrefix} failed after ${MAX_ATTEMPTS} attempts total=${phaseDurations.totalMs}ms`
+    );
+    if (!lastSvg && Array.isArray(lastErrors) && lastErrors.includes('Gemini timeout')) {
+      return res.status(504).json({
+        success: false,
+        error: 'Generation timed out while contacting Gemini. Try fewer roles or a smaller image.',
+      });
+    }
     return res.status(422).json({
       success: false,
       error: `SVG validation failed after ${MAX_ATTEMPTS} attempts`,

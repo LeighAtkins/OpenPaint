@@ -503,6 +503,11 @@ export class CurveTool extends BaseTool {
     this.isDrawing = false;
     this.canvas.selection = true; // Re-enable selection
 
+    // Keep newly-created curve anchors hidden until user explicitly re-selects the curve.
+    this.canvas.discardActiveObject();
+    curve.setCoords();
+    this.canvas.requestRenderAll();
+
     // Fire object:added event
     console.log('[CurveTool] Firing object:added event');
     this.canvas.fire('object:added', { target: curve });

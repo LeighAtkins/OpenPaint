@@ -19,18 +19,35 @@ export async function generateMosOverlay(
     body: JSON.stringify(request),
   });
 
-  const data = await response.json();
+  const rawText = await response.text();
+  const traceIdHeader = response.headers.get('x-mos-trace-id') || undefined;
+  let data: any = {};
+  try {
+    data = rawText ? JSON.parse(rawText) : {};
+  } catch {
+    data = { error: rawText || `Server returned ${response.status}` };
+  }
 
   if (!response.ok) {
     return {
       success: false,
+      traceId: data.traceId || traceIdHeader,
       error: data.error || `Server returned ${response.status}`,
       rawSvg: data.rawSvg,
       validationErrors: data.validationErrors,
+      attemptMode: data.attemptMode,
+      templateUsed: data.templateUsed,
+      resolvedGuideView: data.resolvedGuideView,
+      rolesApplied: data.rolesApplied,
+      missingRoles: data.missingRoles,
+      debug: data.debug,
     };
   }
 
-  return data as MosGenerateResponse;
+  return {
+    ...(data as MosGenerateResponse),
+    traceId: data.traceId || traceIdHeader,
+  };
 }
 
 /**

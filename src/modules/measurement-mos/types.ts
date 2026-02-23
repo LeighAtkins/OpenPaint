@@ -56,6 +56,8 @@ export interface MeasurementOverlayElement {
   /** Original element ID after prefix rewrite */
   opId: string;
   kind: MosElementKind;
+  /** Canonical role token, e.g. A1, C2 */
+  roleToken?: string;
   editMode: MosEditMode;
   endpoints: MosEndpoint[];
   label?: MosLabelData;
@@ -218,6 +220,8 @@ export const MOS_ALLOWED_ATTRIBUTES = new Set([
 export interface MosGenerateRequest {
   projectId?: string;
   viewId?: string;
+  guideView?: 'front' | 'back' | 'side';
+  imagePartLabel?: string;
   imageR2Key?: string;
   imageDataUrl?: string;
   imageWidth: number;
@@ -231,12 +235,34 @@ export interface MosGenerateRequest {
 
 export interface MosGenerateResponse {
   success: boolean;
+  traceId?: string;
   svg?: string;
   r2Key?: string;
   r2Url?: string;
   supabaseId?: string;
   attempt?: number;
   usage?: { promptTokenCount: number; totalTokenCount: number };
+  attemptMode?: 'template' | 'fallback' | 'repair';
+  templateUsed?: boolean;
+  resolvedGuideView?: 'front' | 'back' | 'side' | string;
+  rolesApplied?: string[];
+  missingRoles?: string[];
+  debug?: {
+    attemptMode?: string;
+    parsedOpsCount?: number;
+    fallbackOpsCount?: number;
+    semanticErrors?: string[];
+    stageAnswers?: {
+      imageSentToGemini?: boolean;
+      templateSvgFetched?: boolean;
+      modelReturnedSvgText?: boolean;
+      rolesMappedToVectors?: boolean;
+    };
+    trace?: {
+      traceId?: string;
+      [key: string]: unknown;
+    };
+  };
   error?: string;
   rawSvg?: string;
   validationErrors?: string[];
@@ -259,5 +285,6 @@ export interface MosFabricCustomData {
   overlayId: string;
   elementId: string;
   kind: MosElementKind;
+  roleToken?: string;
   endpointIndex?: number;
 }

@@ -183,6 +183,7 @@ export class ProjectManager {
     this.historyManager.clear();
 
     // 3. Switch context
+    const previousViewId = this.currentViewId;
     this.currentViewId = viewId;
     const view = this.views[viewId];
 
@@ -205,7 +206,7 @@ export class ProjectManager {
 
     // 3b. Unmount MOS overlays for the old view
     if (window.app?.measurementOverlayManager) {
-      window.app.measurementOverlayManager.unmountView(this.currentViewId);
+      window.app.measurementOverlayManager.unmountView(previousViewId);
     }
 
     // 4. Discard selection so control anchors don't persist across views, then clear
@@ -237,6 +238,9 @@ export class ProjectManager {
         sanitizedData.objects = sanitizedData.objects
           .map(obj => {
             if (!obj || typeof obj !== 'object') return obj;
+            if (obj.customData?.layerType === 'mos-overlay') {
+              return null;
+            }
             if (obj.strokeMetadata) {
               if (!obj.strokeMetadata.imageLabel) {
                 obj.strokeMetadata.imageLabel = viewId;
@@ -430,6 +434,17 @@ export class ProjectManager {
 
   saveCurrentViewState() {
     const json = this.canvasManager.toJSON();
+    if (json?.objects && Array.isArray(json.objects)) {
+      const liveObjects = this.canvasManager.fabricCanvas?.getObjects?.() || [];
+      if (liveObjects.length === json.objects.length) {
+        json.objects = json.objects.filter((_, index) => {
+          const liveObject = liveObjects[index];
+          return liveObject?.customData?.layerType !== 'mos-overlay';
+        });
+      } else {
+        json.objects = json.objects.filter(obj => obj?.customData?.layerType !== 'mos-overlay');
+      }
+    }
     if (this.views[this.currentViewId]) {
       this.views[this.currentViewId].canvasData = json;
       this.views[this.currentViewId].rotation = this.canvasManager.getRotationDegrees();

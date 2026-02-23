@@ -20,6 +20,7 @@ import type {
   MosFabricCustomData,
 } from './types';
 import { getImageRect, mosToCanvas } from './mos-transform';
+import { exportMosSvg } from './mos-exporter';
 
 export class MeasurementOverlayManager {
   private canvasManager: CanvasManager;
@@ -28,6 +29,7 @@ export class MeasurementOverlayManager {
   private _disposed = false;
   private _editControlsCleanup: (() => void) | null = null;
   private _uiCleanup: (() => void) | null = null;
+  private _overlayTagKeys = new Map<string, string[]>();
 
   constructor(canvasManager: CanvasManager, historyManager: HistoryManager) {
     this.canvasManager = canvasManager;
@@ -42,6 +44,7 @@ export class MeasurementOverlayManager {
 
     this._bindEvents();
     this._initEditControls();
+    this._pushDebug('manager:init', {});
     console.log('[MOS] MeasurementOverlayManager initialised');
   }
 
@@ -151,9 +154,19 @@ export class MeasurementOverlayManager {
       supabaseId: options?.supabaseId,
     });
 
+    this._pushDebug('import:svg', {
+      viewId,
+      overlayId: overlay.id,
+      sourceR2Key: options?.sourceR2Key || null,
+      supabaseId: options?.supabaseId || null,
+      elementCount: overlay.elements.size,
+    });
+
     this.store.byId.set(overlay.id, overlay);
     this.store.order.push(overlay.id);
     this.store.activeId = overlay.id;
+
+    this._syncOverlayTags(overlay.id);
 
     canvas.requestRenderAll();
     console.log(`[MOS] Imported overlay ${overlay.id} with ${overlay.elements.size} elements`);
@@ -198,6 +211,7 @@ export class MeasurementOverlayManager {
       canvas.requestRenderAll();
     }
 
+    this._clearOverlayTags(overlayId);
     this.store.byId.delete(overlayId);
     this.store.order = this.store.order.filter(id => id !== overlayId);
     if (this.store.activeId === overlayId) {
@@ -278,15 +292,23 @@ export class MeasurementOverlayManager {
   /**
    * Remove all Fabric objects for the current view (before switching away).
    */
-  unmountView(_viewId: string): void {
+  unmountView(viewId: string): void {
     const canvas = this.canvasManager.fabricCanvas;
     if (!canvas) return;
 
     const toRemove = canvas.getObjects().filter((obj: any) => {
       const cd = obj.customData as MosFabricCustomData | undefined;
-      return cd?.layerType === 'mos-overlay';
+      if (cd?.layerType !== 'mos-overlay') return false;
+      const overlay = this.store.byId.get(cd.overlayId);
+      return overlay?.viewId === viewId;
     });
     toRemove.forEach((obj: any) => canvas.remove(obj));
+    for (const overlay of this.store.byId.values()) {
+      if (overlay.viewId === viewId) {
+        this._clearOverlayTags(overlay.id);
+      }
+    }
+    canvas.requestRenderAll();
   }
 
   /**
@@ -298,11 +320,15 @@ export class MeasurementOverlayManager {
 
     const imageRect = getImageRect(canvas);
 
+    // Defensive cleanup to avoid duplicate overlay objects when mountView is called repeatedly.
+    this.unmountView(viewId);
+
     for (const overlay of this.store.byId.values()) {
       if (overlay.viewId !== viewId) continue;
 
       const { remountOverlayObjects } = await import('./mos-importer');
       remountOverlayObjects(overlay, imageRect, canvas);
+      this._syncOverlayTags(overlay.id);
     }
 
     canvas.requestRenderAll();
@@ -314,14 +340,22 @@ export class MeasurementOverlayManager {
 
   toJSON(): object {
     const overlays: object[] = [];
+    const canvas = this.canvasManager.fabricCanvas;
+    const imageRect = canvas
+      ? getImageRect(canvas)
+      : { left: 0, top: 0, width: 1000, height: 1000 };
+
     for (const id of this.store.order) {
       const overlay = this.store.byId.get(id);
       if (!overlay) continue;
+
+      // Always serialize current model geometry so edited positions persist across view/project reload.
+      const currentSvgText = exportMosSvg(overlay, imageRect);
       overlays.push({
         id: overlay.id,
         viewId: overlay.viewId,
         overlayIndex: overlay.overlayIndex,
-        svgText: overlay.svgText,
+        svgText: currentSvgText,
         sourceR2Key: overlay.sourceR2Key,
         supabaseId: overlay.supabaseId,
       });
@@ -336,12 +370,18 @@ export class MeasurementOverlayManager {
     if (!data || !Array.isArray(data.overlays)) return;
 
     this.store.nextOverlayIndex = data.nextOverlayIndex ?? 0;
+    const activeViewId = window.app?.projectManager?.currentViewId;
 
     for (const entry of data.overlays) {
       await this.importSvg(entry.svgText, entry.viewId, {
         sourceR2Key: entry.sourceR2Key,
         supabaseId: entry.supabaseId,
       });
+
+      // Keep only the active view mounted on canvas; other overlays stay in the store.
+      if (activeViewId && entry.viewId !== activeViewId) {
+        this.unmountView(entry.viewId);
+      }
     }
   }
 
@@ -450,6 +490,11 @@ export class MeasurementOverlayManager {
           sourceR2Key: row.r2_key ?? undefined,
           supabaseId: row.id,
         });
+
+        const activeViewId = window.app?.projectManager?.currentViewId;
+        if (activeViewId && row.view_id !== activeViewId) {
+          this.unmountView(row.view_id);
+        }
       }
 
       console.log(`[MOS] Loaded ${data.length} overlays from Supabase`);
@@ -471,8 +516,133 @@ export class MeasurementOverlayManager {
       canvas.off('mos:imageRect:changed');
     }
     this.store.byId.clear();
+    this._overlayTagKeys.clear();
     this.store.order = [];
     this.store.activeId = null;
     console.log('[MOS] MeasurementOverlayManager disposed');
+  }
+
+  private _syncOverlayTags(overlayId: string): void {
+    const overlay = this.store.byId.get(overlayId);
+    if (!overlay) return;
+
+    const tagManager = window.app?.tagManager;
+    const metadataManager = window.app?.metadataManager;
+    if (!tagManager) return;
+
+    this._clearOverlayTags(overlayId);
+
+    const canvas = this.canvasManager.fabricCanvas;
+    if (!canvas) return;
+
+    const createdKeys: string[] = [];
+    const createdRoles: string[] = [];
+
+    for (const element of overlay.elements.values()) {
+      if (element.kind !== 'measureLine') continue;
+
+      const roleToken = this._deriveRoleToken(element);
+      if (!roleToken) continue;
+
+      const lineObj = canvas.getObjects().find((o: any) => o.__mosId === `${element.id}_line`);
+      if (!lineObj) continue;
+
+      if (lineObj?.customData) {
+        lineObj.customData.roleToken = roleToken;
+      }
+
+      if (metadataManager?.attachMetadata) {
+        metadataManager.attachMetadata(lineObj, overlay.viewId, roleToken);
+      }
+
+      tagManager.createTag(roleToken, overlay.viewId, lineObj);
+      createdKeys.push(roleToken);
+      createdRoles.push(roleToken);
+    }
+
+    this._overlayTagKeys.set(overlayId, createdKeys);
+    if (metadataManager?.updateStrokeVisibilityControls) {
+      metadataManager.updateStrokeVisibilityControls();
+    }
+    this._pushDebug('tags:sync', {
+      overlayId,
+      viewId: overlay.viewId,
+      createdCount: createdKeys.length,
+      createdRoles,
+    });
+  }
+
+  private _clearOverlayTags(overlayId: string): void {
+    const overlay = this.store.byId.get(overlayId);
+    const tagManager = window.app?.tagManager;
+    const metadataManager = window.app?.metadataManager;
+    if (!tagManager || !overlay) return;
+
+    const keys = this._overlayTagKeys.get(overlayId) || [];
+    for (const strokeLabel of keys) {
+      tagManager.removeTag(strokeLabel, overlay.viewId);
+      if (metadataManager) {
+        if (metadataManager.vectorStrokesByImage?.[overlay.viewId]?.[strokeLabel]) {
+          delete metadataManager.vectorStrokesByImage[overlay.viewId][strokeLabel];
+        }
+        if (
+          metadataManager.strokeVisibilityByImage?.[overlay.viewId]?.[strokeLabel] !== undefined
+        ) {
+          delete metadataManager.strokeVisibilityByImage[overlay.viewId][strokeLabel];
+        }
+        if (metadataManager.strokeLabelVisibility?.[overlay.viewId]?.[strokeLabel] !== undefined) {
+          delete metadataManager.strokeLabelVisibility[overlay.viewId][strokeLabel];
+        }
+        if (metadataManager.strokeMeasurements?.[overlay.viewId]?.[strokeLabel] !== undefined) {
+          delete metadataManager.strokeMeasurements[overlay.viewId][strokeLabel];
+        }
+      }
+    }
+    this._overlayTagKeys.delete(overlayId);
+    if (metadataManager?.updateStrokeVisibilityControls) {
+      metadataManager.updateStrokeVisibilityControls();
+    }
+    this._pushDebug('tags:clear', {
+      overlayId,
+      viewId: overlay.viewId,
+      clearedCount: keys.length,
+      clearedRoles: keys,
+    });
+  }
+
+  private _debugEnabled(): boolean {
+    try {
+      return new URLSearchParams(window.location.search).has('debug');
+    } catch {
+      return false;
+    }
+  }
+
+  private _pushDebug(stage: string, payload: Record<string, unknown>): void {
+    if (!this._debugEnabled()) return;
+    const w = window as any;
+    if (!Array.isArray(w.__MOS_DEBUG_LOGS)) {
+      w.__MOS_DEBUG_LOGS = [];
+    }
+    const entry = {
+      ts: new Date().toISOString(),
+      stage,
+      ...payload,
+    };
+    w.__MOS_DEBUG_LOGS.push(entry);
+    w.__MOS_DEBUG_LAST = entry;
+  }
+
+  private _deriveRoleToken(element: MeasurementOverlayElement): string {
+    if (element.roleToken) return element.roleToken.toUpperCase();
+    const normalized = (element.opId || '').replace(/^mos\d+_/, '').trim();
+    if (!/^[mbc][a-z0-9_-]+$/i.test(normalized)) return '';
+    const token = normalized
+      .slice(1)
+      .replace(/_(label|text)$/i, '')
+      .replace(/(?:CM|MM|IN)\d*$/i, '')
+      .replace(/[^a-z0-9-]/gi, '')
+      .toUpperCase();
+    return token;
   }
 }

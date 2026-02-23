@@ -75,17 +75,7 @@ function exportElement(
       fragment += ` stroke="${escapeAttr(strokeColor)}" stroke-width="${round(strokeWidth)}"`;
       fragment += ' />';
 
-      // Add label if present
-      if (element.label) {
-        fragment += '\n' + exportLabel(element.label, id, strokeColor);
-      }
-
       return fragment;
-    }
-
-    case 'label': {
-      if (!element.label) return null;
-      return exportLabel(element.label, id, strokeColor);
     }
 
     case 'leader': {
@@ -117,22 +107,6 @@ function exportElement(
   }
 }
 
-function exportLabel(
-  label: { text: string; cx: number; cy: number; rotation: number },
-  parentId: string,
-  fill: string
-): string {
-  let fragment = `  <text id="${escapeAttr(parentId)}_label" class="mos-label"`;
-  fragment += ` x="${round(label.cx)}" y="${round(label.cy)}"`;
-  fragment += ` text-anchor="middle" dominant-baseline="central"`;
-  fragment += ` font-size="14" fill="${escapeAttr(fill)}"`;
-  if (label.rotation) {
-    fragment += ` transform="rotate(${round(label.rotation)} ${round(label.cx)} ${round(label.cy)})"`;
-  }
-  fragment += `>${escapeXml(label.text)}</text>`;
-  return fragment;
-}
-
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -160,13 +134,4 @@ function escapeAttr(s: string): string {
     .replace(/"/g, '&quot;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;');
-}
-
-function escapeXml(s: string): string {
-  return s
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;');
 }

@@ -63,14 +63,32 @@ export function initMosEditControls(
     dragStartSnapshot = null;
   };
 
+  // --- object:modified — commit endpoint/control edits that may skip drag snapshot path ---
+  const onModified = (e: any) => {
+    const obj = e?.target;
+    if (!obj) return;
+    const cd = obj.customData as MosFabricCustomData | undefined;
+    if (cd?.layerType !== 'mos-overlay') return;
+
+    const element = getOverlayElement(obj);
+    if (!element) return;
+
+    const imageRect = getImageRect(canvas);
+    updateElementFromFabric(element, canvas, imageRect);
+    element.dirty = true;
+    onElementModified(element);
+  };
+
   // --- Attach listeners ---
   canvas.on('object:moving', onMoving);
   canvas.on('mouse:up', onMouseUp);
+  canvas.on('object:modified', onModified);
 
   // Return cleanup function
   return () => {
     canvas.off('object:moving', onMoving);
     canvas.off('mouse:up', onMouseUp);
+    canvas.off('object:modified', onModified);
   };
 }
 
