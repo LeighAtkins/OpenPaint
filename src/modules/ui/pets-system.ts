@@ -1,4 +1,4 @@
-// Pets System — registers Ctrl+\ shortcut, auto-mounts equipped pet on login
+// Pets System — registers Ctrl+Shift+P shortcut, auto-mounts equipped pet on login
 
 import { isAuthEnabled } from '@/utils/env';
 import { authService } from '@/services/auth/authService';
@@ -9,7 +9,7 @@ import { togglePetsMenu } from './pets-menu';
 export function initPetsSystem(): void {
   if (!isAuthEnabled()) return;
 
-  // Register Ctrl+\ keyboard shortcut
+  // Register Ctrl+Shift+P keyboard shortcut
   document.addEventListener('keydown', (e: KeyboardEvent) => {
     // Don't interfere if typing in input fields
     const target = e.target as HTMLElement | null;
@@ -21,7 +21,9 @@ export function initPetsSystem(): void {
       return;
     }
 
-    if (e.ctrlKey && e.key === '\\') {
+    const key = (e.key || '').toLowerCase();
+    const isPetsShortcut = (e.ctrlKey || e.metaKey) && e.shiftKey && key === 'p';
+    if (isPetsShortcut && !e.repeat) {
       e.preventDefault();
       togglePetsMenu();
     }

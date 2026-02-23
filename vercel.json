@@ -2,9 +2,16 @@
   "installCommand": "npm install --ignore-scripts",
   "buildCommand": "npm run build:vercel",
   "outputDirectory": "dist",
+  "rewrites": [
+    { "source": "/wallet/:path*", "destination": "/api/[...all]" },
+    { "source": "/pets/:path*", "destination": "/api/[...all]" }
+  ],
   "functions": {
     "api/[...all].js": {
       "includeFiles": "server/**"
+    },
+    "api/integrations/cw/health.js": {
+      "includeFiles": "api/integrations/cw/**"
     },
     "api/integrations/cw/health.js": {
       "includeFiles": "api/integrations/cw/**"

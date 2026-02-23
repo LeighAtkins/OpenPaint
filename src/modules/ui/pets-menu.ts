@@ -1,4 +1,4 @@
-// Pets Menu — Ctrl+\ overlay for browsing, buying, equipping pixel pets
+// Pets Menu — Ctrl+Shift+P overlay for browsing, buying, equipping pixel pets
 // Follows the help menu overlay pattern (fixed, z-index 10000, backdrop, Escape)
 
 import { authService } from '@/services/auth/authService';

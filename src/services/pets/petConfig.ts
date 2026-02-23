@@ -46,7 +46,7 @@ export function buildPetConfig(petId: string): PetConfig | null {
     return {
       type: 'cat',
       frameSize: 50,
-      displaySize: 48,
+      displaySize: 96,
       animations: {
         idle: { path: `${dir}/Cat-${num}-Idle.png`, frameCount: 10 },
         walk: { path: `${dir}/Cat-${num}-Walk.png`, frameCount: 8 },
@@ -65,7 +65,7 @@ export function buildPetConfig(petId: string): PetConfig | null {
   return {
     type: 'dog',
     frameSize: 100,
-    displaySize: 48,
+    displaySize: 192,
     animations: {
       idle: { path: `${dir}/${idleFile}`, frameCount: 10 },
       walk: { path: `${dir}/${breed}-walk.png`, frameCount: 8 },

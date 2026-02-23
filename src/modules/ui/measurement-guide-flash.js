@@ -134,6 +134,7 @@ function ensureStyles() {
     .guide-flash-overlay.visible {
       opacity: 1;
       transform: translate(-50%, 0) scale(1);
+      pointer-events: all;
     }
     .guide-flash-head {
       display: flex;
@@ -379,7 +380,8 @@ function showShortcutToast() {
     document.body.appendChild(toast);
   }
 
-  toast.textContent = 'Hint: \\ toggles guide overlay. Ctrl+\\ edits guide codes.';
+  toast.textContent =
+    'Hint: \\ shows guides/gallery. Alt+\\ gallery. Ctrl+\\ add codes. Shift+\\ next.';
   requestAnimationFrame(() => toast.classList.add('visible'));
 
   if (hintToastTimer) {
@@ -480,7 +482,7 @@ function ensureOverlay(slide, slideCount) {
   const sourceViewId = pinnedSourceViewId || getCurrentViewId();
   const isLocked = pinnedLockToImage === true;
   const title = `${slide.code} · ${String(slide.view).toUpperCase()}`;
-  const hint = `${activeIndex + 1}/${slideCount} · \\ toggle · Ctrl+\\ edit codes`;
+  const hint = `${activeIndex + 1}/${slideCount} · \\ toggle · Alt+\\ gallery · Shift+\\ next`;
   const url = buildGuideUrl(slide.code, slide.view);
   flashOverlay.innerHTML = `
     <div class="guide-flash-head">
@@ -866,18 +868,14 @@ function onKeyDown(event) {
   event.preventDefault();
   event.stopPropagation();
 
-  // Ctrl+\ = Edit codes
-  if (event.ctrlKey && !event.repeat) {
-    const codes = promptForCodes();
-    if (!codes.length) return;
-    activeIndex = 0;
-    showGuideFlash({ holdMode: isGuidePinnedVisible });
-    showShortcutToast();
+  // Alt+\ = Open gallery browser (shows all SVGs)
+  if (event.altKey && !event.repeat) {
+    showGuideGallery();
     return;
   }
 
-  // Alt+\ = same as edit codes (compatibility alias)
-  if (event.altKey && !event.repeat) {
+  // Ctrl+\ = Edit codes (always prompt)
+  if (event.ctrlKey && !event.repeat) {
     const codes = promptForCodes();
     if (!codes.length) return;
     activeIndex = 0;
@@ -893,8 +891,17 @@ function onKeyDown(event) {
     return;
   }
 
-  // \ (no modifiers) = Toggle pinned visibility
+  // \ (no modifiers) = Toggle pinned visibility (only if codes exist)
   if (!event.repeat) {
+    const currentViewId = getCurrentViewId();
+    const context = resolveGuideContext(currentViewId);
+
+    if (!context.codes.length) {
+      // No codes set - show gallery instead
+      showGuideGallery();
+      return;
+    }
+
     if (isGuidePinnedVisible && flashOverlay?.classList.contains('visible')) {
       isGuidePinnedVisible = false;
       hideGuideFlash();
