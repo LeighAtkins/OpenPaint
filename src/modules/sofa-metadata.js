@@ -31,6 +31,8 @@ export function createDefaultSofaMetadata() {
     },
     measurementChecks: [],
     measurementConnections: [],
+    measurementGuideCodesByView: {},
+    measurementGuideLockByView: {},
     pieceGroups: [],
     imagePartLabels: {},
     photos: [],
@@ -63,6 +65,14 @@ export function normalizeSofaMetadata(input) {
   const measurementConnections = Array.isArray(source.measurementConnections)
     ? safeClone(source.measurementConnections, [])
     : [];
+  const measurementGuideCodesByView =
+    source.measurementGuideCodesByView && typeof source.measurementGuideCodesByView === 'object'
+      ? safeClone(source.measurementGuideCodesByView, {})
+      : {};
+  const measurementGuideLockByView =
+    source.measurementGuideLockByView && typeof source.measurementGuideLockByView === 'object'
+      ? safeClone(source.measurementGuideLockByView, {})
+      : {};
   const pieceGroups = Array.isArray(source.pieceGroups) ? safeClone(source.pieceGroups, []) : [];
   const photos = Array.isArray(source.photos) ? safeClone(source.photos, []) : [];
   const imagePartLabels =
@@ -93,6 +103,8 @@ export function normalizeSofaMetadata(input) {
     measurementGuideCodes,
     measurementChecks,
     measurementConnections,
+    measurementGuideCodesByView,
+    measurementGuideLockByView,
     pieceGroups,
     imagePartLabels,
     naming,

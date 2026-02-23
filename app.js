@@ -2091,6 +2091,234 @@ app.post('/api/measurements/generate', async (req, res) => {
         .replace(/[^a-z0-9-]/gi, '')
         .toUpperCase();
 
+    /** Walk from startIdx (just past the opening <g ...>) to find the matching </g>, handling nesting. */
+    const extractGroupBody = (svgText, startIdx) => {
+      let depth = 1;
+      let i = startIdx;
+      while (i < svgText.length && depth > 0) {
+        if (svgText.startsWith('<g', i) && /^<g[\s>]/.test(svgText.slice(i, i + 3))) depth++;
+        else if (svgText.startsWith('</g>', i)) depth--;
+        if (depth > 0) i++;
+        else break;
+      }
+      return svgText.slice(startIdx, i);
+    };
+
+    const roleTokenFromId = value => {
+      const id = String(value || '')
+        .replace(/^mos\d+_/, '')
+        .trim();
+      if (!/^[mbc][a-z0-9_-]+$/i.test(id)) return '';
+      const token = id
+        .slice(1)
+        .replace(/_(label|text)$/i, '')
+        .replace(/(?:CM|MM|IN)\d*$/i, '')
+        .replace(/[^a-z0-9-]/gi, '');
+      return canonicalRoleToken(token);
+    };
+
+    const ROLE_SEMANTICS = {
+      A1: 'top rail / back width',
+      A2: 'seat rail width',
+      A3: 'back height (seat to top rail)',
+      A4: 'lower frame width',
+      A5: 'additional front height',
+      B1: 'inner arm connector (left)',
+      B2: 'outer arm connector (right)',
+      C1: 'arm top width (right)',
+      C2: 'arm mid width (right)',
+      C3: 'arm height (right)',
+      C4: 'leg height (front right)',
+      C5: 'additional arm/cushion dimension',
+      D: 'overall width at base',
+      D1: 'depth dimension 1',
+      D2: 'depth dimension 2',
+      D3: 'depth dimension 3',
+      E1: 'arm curve / roll profile',
+      E2: 'arm curve secondary',
+      F1: 'back panel width 1',
+      F2: 'back panel width 2',
+      F3: 'back panel width 3',
+      F5: 'back panel width 5',
+      F6: 'back panel width 6',
+      G: 'back rail width',
+      G1: 'back cross-member 1',
+      G2: 'back cross-member 2',
+      H1: 'back frame height 1',
+      H2: 'back frame height 2',
+      H3: 'back frame height 3',
+      J1: 'back pillar height 1',
+      J2: 'back pillar height 2',
+      J3: 'back pillar height 3',
+      L1: 'leg span 1',
+      L2: 'leg span 2',
+      L3: 'leg span 3',
+      L4: 'leg span 4',
+      L5: 'leg span 5',
+      L7: 'leg span 7',
+      L8: 'leg span 8',
+      A6: 'side height 6',
+      A7: 'side height 7',
+      E3: 'arm curve 3',
+      E4: 'arm curve 4',
+      F: 'frame height (front)',
+      F4: 'frame height 4',
+      G3: 'seat depth 3',
+      G4: 'seat depth 4',
+      G5: 'seat depth 5',
+      G6: 'seat depth 6',
+      G7: 'seat depth 7',
+      G8: 'seat depth 8',
+      H4: 'arm height 4',
+      H5: 'arm height 5',
+      H6: 'arm height 6',
+      H7: 'arm height 7',
+      M1: 'module width 1',
+      M2: 'module width 2',
+      M3: 'module width 3',
+      M4: 'module width 4',
+      M5: 'module width 5',
+      M6: 'module width 6',
+      M7: 'module width 7',
+      W: 'width',
+      H: 'height',
+      W1: 'width (top)',
+      W2: 'width (bottom)',
+      T: 'thickness',
+      X: 'cushion inset',
+      Y: 'cushion length',
+    };
+
+    const extractGroupOpsFromSvg = (svgText, selectedRoles) => {
+      if (!svgText || typeof svgText !== 'string') return [];
+
+      const parsePathPoints = d => {
+        const values = (String(d || '').match(/-?\d*\.?\d+/g) || [])
+          .map(Number)
+          .filter(Number.isFinite);
+        const points = [];
+        for (let i = 0; i + 1 < values.length; i += 2) {
+          points.push({ x: values[i], y: values[i + 1] });
+        }
+        return points;
+      };
+
+      const parseViewBoxBounds = text => {
+        const vb = String(text).match(/viewBox="([^"]+)"/i)?.[1] || '';
+        const nums = vb
+          .trim()
+          .split(/[\s,]+/)
+          .map(Number)
+          .filter(n => Number.isFinite(n));
+        if (nums.length === 4 && nums[2] > 0 && nums[3] > 0) {
+          return { minX: nums[0], minY: nums[1], width: nums[2], height: nums[3] };
+        }
+        return null;
+      };
+
+      const openTagRegex = /<g\b[^>]*\bid="([^"]+)"[^>]*>/gi;
+      const rawOps = [];
+      let groupMatch;
+      while ((groupMatch = openTagRegex.exec(svgText)) !== null) {
+        const groupId = String(groupMatch[1] || '').trim();
+        const role = roleTokenFromId(groupId);
+        if (!role || !selectedRoles.includes(role)) continue;
+
+        const groupBody = extractGroupBody(svgText, groupMatch.index + groupMatch[0].length);
+
+        const lineMatch = groupBody.match(
+          /<line\b[^>]*\bx1="([^"]+)"[^>]*\by1="([^"]+)"[^>]*\bx2="([^"]+)"[^>]*\by2="([^"]+)"[^>]*>/i
+        );
+        if (lineMatch) {
+          const x1 = Number.parseFloat(lineMatch[1]);
+          const y1 = Number.parseFloat(lineMatch[2]);
+          const x2 = Number.parseFloat(lineMatch[3]);
+          const y2 = Number.parseFloat(lineMatch[4]);
+          if ([x1, y1, x2, y2].every(Number.isFinite)) {
+            rawOps.push({ id: groupId, role, x1, y1, x2, y2 });
+            continue;
+          }
+        }
+
+        const polylineMatch = groupBody.match(/<polyline\b[^>]*\bpoints="([^"]+)"[^>]*>/i);
+        if (polylineMatch) {
+          const pointsRaw = String(polylineMatch[1] || '').trim();
+          const points = pointsRaw
+            .split(/\s+/)
+            .map(pair => pair.split(',').map(Number))
+            .filter(
+              pair => pair.length === 2 && Number.isFinite(pair[0]) && Number.isFinite(pair[1])
+            );
+          if (points.length >= 2) {
+            const first = points[0];
+            const last = points[points.length - 1];
+            rawOps.push({
+              id: groupId,
+              role,
+              x1: first[0],
+              y1: first[1],
+              x2: last[0],
+              y2: last[1],
+            });
+            continue;
+          }
+        }
+
+        const pathMatch = groupBody.match(/<path\b[^>]*\bd="([^"]+)"[^>]*>/i);
+        if (pathMatch) {
+          const pts = parsePathPoints(pathMatch[1]);
+          if (pts.length >= 2) {
+            const first = pts[0];
+            const last = pts[pts.length - 1];
+            rawOps.push({
+              id: groupId,
+              role,
+              x1: first.x,
+              y1: first.y,
+              x2: last.x,
+              y2: last.y,
+            });
+            continue;
+          }
+        }
+      }
+
+      if (!rawOps.length) return [];
+
+      const boundsFromVb = parseViewBoxBounds(svgText);
+      const allX = rawOps.flatMap(op => [op.x1, op.x2]);
+      const allY = rawOps.flatMap(op => [op.y1, op.y2]);
+      const inferredMinX = Math.min(...allX);
+      const inferredMaxX = Math.max(...allX);
+      const inferredMinY = Math.min(...allY);
+      const inferredMaxY = Math.max(...allY);
+
+      const minX = boundsFromVb?.minX ?? inferredMinX;
+      const minY = boundsFromVb?.minY ?? inferredMinY;
+      const width = boundsFromVb?.width ?? Math.max(1, inferredMaxX - inferredMinX);
+      const height = boundsFromVb?.height ?? Math.max(1, inferredMaxY - inferredMinY);
+
+      const toMosX = x => Math.max(0, Math.min(1000, ((x - minX) / width) * 1000));
+      const toMosY = y => Math.max(0, Math.min(1000, ((y - minY) / height) * 1000));
+
+      return rawOps.map(op => ({
+        id: op.id,
+        role: op.role,
+        x1: toMosX(op.x1),
+        y1: toMosY(op.y1),
+        x2: toMosX(op.x2),
+        y2: toMosY(op.y2),
+      }));
+    };
+
+    const classifyOrientation = op => {
+      const dx = Math.abs(Number(op?.x2) - Number(op?.x1));
+      const dy = Math.abs(Number(op?.y2) - Number(op?.y1));
+      if (dx < 2) return 'vertical';
+      if (dy < 2) return 'horizontal';
+      return 'diagonal';
+    };
+
     const canonicalRoleToken = value => {
       const token = normalizeRoleToken(value);
       if (!token) return '';
@@ -2180,44 +2408,29 @@ app.post('/api/measurements/generate', async (req, res) => {
       return `${visible.join(', ')}${suffix}`;
     };
 
-    const buildTemplatePromptContext = svgText => {
-      if (!svgText || typeof svgText !== 'string') return '';
+    const describeRegion = (mx, my) => {
+      const col = mx < 333 ? 'left' : mx < 667 ? 'center' : 'right';
+      const row = my < 333 ? 'top' : my < 667 ? 'middle' : 'bottom';
+      return `${row}-${col}`;
+    };
 
-      const groupIds = [];
-      const lineIds = [];
-      const textHints = [];
+    const buildRichTemplateContext = (svgText, selectedRoles, geometryHints) => {
+      if (!svgText || typeof svgText !== 'string' || !selectedRoles?.length) return '';
 
-      const groupRegex = /<g\b[^>]*\sid="([^"]+)"[^>]*>/gi;
-      let groupMatch;
-      while ((groupMatch = groupRegex.exec(svgText)) !== null && groupIds.length < 24) {
-        groupIds.push(groupMatch[1]);
+      const templateOps = extractGroupOpsFromSvg(svgText, selectedRoles);
+      if (!templateOps.length) return '';
+
+      const lines = ['TEMPLATE ROLES:'];
+      for (const op of templateOps) {
+        const mx = Math.round((op.x1 + op.x2) / 2);
+        const my = Math.round((op.y1 + op.y2) / 2);
+        const region = describeRegion(mx, my);
+        const geoType = geometryHints?.get(op.role) || `${classifyOrientation(op)} line`;
+        const sem = ROLE_SEMANTICS[op.role] || '';
+        const semStr = sem ? ` \u2014 ${sem}` : '';
+        lines.push(`  ${op.role}: ${geoType}, ${region} region${semStr}`);
       }
-
-      const lineRegex = /<line\b[^>]*\sid="([^"]+)"[^>]*>/gi;
-      let lineMatch;
-      while ((lineMatch = lineRegex.exec(svgText)) !== null && lineIds.length < 40) {
-        lineIds.push(lineMatch[1]);
-      }
-
-      const textRegexWithId = /<text\b[^>]*\sid="([^"]+)"[^>]*>([^<]*)<\/text>/gi;
-      let textMatchWithId;
-      while ((textMatchWithId = textRegexWithId.exec(svgText)) !== null && textHints.length < 24) {
-        const rawValue = String(textMatchWithId[2] || '').trim();
-        const canonical = canonicalRoleToken(rawValue);
-        const safeRole = canonical || rawValue || '?';
-        textHints.push(`${textMatchWithId[1]}:${safeRole}`);
-      }
-
-      const viewBoxMatch = svgText.match(/viewBox="([^"]+)"/i);
-      const viewBox = viewBoxMatch?.[1] || '0 0 1000 1000';
-
-      return [
-        'TEMPLATE BLUEPRINT (compact):',
-        `- viewBox: ${viewBox}`,
-        `- group ids: ${formatHintList(groupIds)}`,
-        `- line ids: ${formatHintList(lineIds)}`,
-        `- text id/role hints: ${formatHintList(textHints)}`,
-      ].join('\n');
+      return lines.join('\n');
     };
 
     const traceId = crypto.randomUUID().slice(0, 8);
@@ -2298,8 +2511,8 @@ app.post('/api/measurements/generate', async (req, res) => {
       : templateRoles.length
         ? templateRoles
         : ['W', 'H'];
-    const effectiveRoles = effectiveRolesRaw.slice(0, 8);
-    const templatePromptContext = buildTemplatePromptContext(referenceSvgText);
+    const effectiveRoles = effectiveRolesRaw.slice(0, 16);
+    const richTemplateContext = buildRichTemplateContext(referenceSvgText, effectiveRoles);
 
     if (!imageR2Key && !imageDataUrl) {
       return res.status(400).json({
@@ -2396,23 +2609,23 @@ app.post('/api/measurements/generate', async (req, res) => {
     let fallbackPrompt;
     if (referenceSvgText) {
       systemPrompt = `You are a measurement overlay generator for product images.
-Your task is to analyse the provided image and generate an SVG measurement overlay
-by adapting the provided TEMPLATE BLUEPRINT to match the product in the photo.
+Your task is to analyse the provided image and generate an SVG measurement overlay.
 
-The template was compressed for speed. Keep role labels and id naming style consistent.
-Do not invent unrelated measurements.
+COORDINATE SPACE: 0\u20131000 on both axes (normalised to image dimensions).
 
-${templatePromptContext}
+${richTemplateContext}
 
 RULES:
-1. The SVG MUST use viewBox="0 0 1000 1000" — coordinates are normalised to the image.
-2. Keep measurement roles aligned to these role tokens: ${rolesStr}
-3. Reuse template id naming where possible; if missing, create stable ids.
-4. Generate measurement lines for these roles: ${rolesStr}
-5. Units: ${units}
-6. All coordinates MUST be in range [0, 1000]. No negative values. No values > 1000.
-7. Lines MUST NOT be zero-length (x1,y1 must differ from x2,y2).
-8. Place lines along the edges/dimensions of the main object in the image.
+1. The SVG MUST use viewBox="0 0 1000 1000".
+2. Generate measurement lines for these roles: ${rolesStr}
+3. Analyse the photo to find where each physical feature is located.
+4. Coordinates MUST match the actual feature position and angle in the photo — do NOT copy template coordinates.
+5. Use template data only as a guide for which roles to measure and their general meaning.
+6. Units: ${units}
+7. All coordinates MUST be in range [0, 1000]. No negative values. No values > 1000.
+8. Lines MUST NOT be zero-length (x1,y1 must differ from x2,y2).
+9. Diagonal and curved roles should follow the actual angle/curve of the feature in the photo.
+10. Do not add extra roles beyond those listed.
 
 Return ONLY a JSON object with this exact structure:
 {
@@ -2421,8 +2634,8 @@ Return ONLY a JSON object with this exact structure:
       fallbackPrompt = `You are a measurement overlay generator for product images.
 Your task is to analyse the provided image and generate an SVG measurement overlay.
 
-ROLE TOKENS:
-${rolesStr}
+COORDINATE SPACE: 0\u20131000 on both axes.
+Allowed roles: ${rolesStr}
 
 RULES:
 1. The SVG MUST use viewBox="0 0 1000 1000".
@@ -2430,7 +2643,7 @@ RULES:
 3. Units: ${units}
 4. All coordinates must be within [0, 1000].
 5. No zero-length lines.
-6. Keep ids simple and stable (for example: mROLE, bROLE, cROLE).
+6. Place each line where the corresponding physical feature appears in the photo.
 
 Return ONLY a JSON object with this exact structure:
 {
@@ -2513,7 +2726,7 @@ Return ONLY a JSON object with: { "svg": "<corrected SVG>" }`,
       const geminiAttemptMode =
         attempt === 1 ? 'template' : !lastSvg || process.env.VERCEL ? 'fallback' : 'repair';
       const geminiAbort = new AbortController();
-      const timeoutMs = process.env.VERCEL ? 24000 : 28000;
+      const timeoutMs = process.env.VERCEL ? 50000 : 55000;
       const geminiTimeout = setTimeout(() => geminiAbort.abort(), timeoutMs);
       let geminiResponse;
       try {

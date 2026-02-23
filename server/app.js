@@ -675,6 +675,100 @@ async function handleMosGenerate(req, res) {
       return Array.from(out);
     };
 
+    /** Walk from startIdx (just past the opening <g ...>) to find the matching </g>, handling nesting. */
+    const extractGroupBody = (svgText, startIdx) => {
+      let depth = 1;
+      let i = startIdx;
+      while (i < svgText.length && depth > 0) {
+        if (svgText.startsWith('<g', i) && /^<g[\s>]/.test(svgText.slice(i, i + 3))) depth++;
+        else if (svgText.startsWith('</g>', i)) depth--;
+        if (depth > 0) i++;
+        else break;
+      }
+      return svgText.slice(startIdx, i);
+    };
+
+    const ROLE_SEMANTICS = {
+      // Front view - A series (widths and heights along back/seat)
+      A1: 'top rail / back width',
+      A2: 'seat rail width',
+      A3: 'back height (seat to top rail)',
+      A4: 'lower frame width',
+      A5: 'additional front height',
+      // Front view - B series (arm connectors, typically diagonal)
+      B1: 'inner arm connector (left)',
+      B2: 'outer arm connector (right)',
+      // Front view - C series (arm/cushion heights)
+      C1: 'arm top width (right)',
+      C2: 'arm mid width (right)',
+      C3: 'arm height (right)',
+      C4: 'leg height (front right)',
+      C5: 'additional arm/cushion dimension',
+      // Front view - D series (overall dimensions)
+      D: 'overall width at base',
+      D1: 'depth dimension 1',
+      D2: 'depth dimension 2',
+      D3: 'depth dimension 3',
+      // Front view - E series (curves)
+      E1: 'arm curve / roll profile',
+      E2: 'arm curve secondary',
+      // Back view - F/G/H/J/L series
+      F1: 'back panel width 1',
+      F2: 'back panel width 2',
+      F3: 'back panel width 3',
+      F5: 'back panel width 5',
+      F6: 'back panel width 6',
+      G: 'back rail width',
+      G1: 'back cross-member 1',
+      G2: 'back cross-member 2',
+      H1: 'back frame height 1',
+      H2: 'back frame height 2',
+      H3: 'back frame height 3',
+      J1: 'back pillar height 1',
+      J2: 'back pillar height 2',
+      J3: 'back pillar height 3',
+      L1: 'leg span 1',
+      L2: 'leg span 2',
+      L3: 'leg span 3',
+      L4: 'leg span 4',
+      L5: 'leg span 5',
+      L7: 'leg span 7',
+      L8: 'leg span 8',
+      // Side view additions
+      A6: 'side height 6',
+      A7: 'side height 7',
+      E3: 'arm curve 3',
+      E4: 'arm curve 4',
+      F: 'frame height (front)',
+      F4: 'frame height 4',
+      G3: 'seat depth 3',
+      G4: 'seat depth 4',
+      G5: 'seat depth 5',
+      G6: 'seat depth 6',
+      G7: 'seat depth 7',
+      G8: 'seat depth 8',
+      H4: 'arm height 4',
+      H5: 'arm height 5',
+      H6: 'arm height 6',
+      H7: 'arm height 7',
+      // Modular sections
+      M1: 'module width 1',
+      M2: 'module width 2',
+      M3: 'module width 3',
+      M4: 'module width 4',
+      M5: 'module width 5',
+      M6: 'module width 6',
+      M7: 'module width 7',
+      // Simple products (cushions, ottomans)
+      W: 'width',
+      H: 'height',
+      W1: 'width (top)',
+      W2: 'width (bottom)',
+      T: 'thickness',
+      X: 'cushion inset',
+      Y: 'cushion length',
+    };
+
     const roleTokenFromId = value => {
       const id = String(value || '')
         .replace(/^mos\d+_/, '')
@@ -730,13 +824,13 @@ async function handleMosGenerate(req, res) {
       const hints = new Map();
       if (!svgText || typeof svgText !== 'string') return hints;
 
-      const groupRegex = /<g\b[^>]*\sid="([^"]+)"[^>]*>([\s\S]*?)<\/g>/gi;
+      const openTagRegex = /<g\b[^>]*\sid="([^"]+)"[^>]*>/gi;
       let groupMatch;
-      while ((groupMatch = groupRegex.exec(svgText)) !== null) {
+      while ((groupMatch = openTagRegex.exec(svgText)) !== null) {
         const groupId = String(groupMatch[1] || '').trim();
         const role = roleTokenFromId(groupId);
         if (!role || !selectedRoles.includes(role) || hints.has(role)) continue;
-        const body = String(groupMatch[2] || '');
+        const body = extractGroupBody(svgText, groupMatch.index + groupMatch[0].length);
 
         if (/<path\b/i.test(body)) {
           hints.set(role, 'curved path');
@@ -882,15 +976,15 @@ async function handleMosGenerate(req, res) {
         return null;
       };
 
-      const groupRegex = /<g\b[^>]*\bid="([^"]+)"[^>]*>([\s\S]*?)<\/g>/gi;
+      const openTagRegex = /<g\b[^>]*\bid="([^"]+)"[^>]*>/gi;
       const rawOps = [];
       let groupMatch;
-      while ((groupMatch = groupRegex.exec(svgText)) !== null) {
+      while ((groupMatch = openTagRegex.exec(svgText)) !== null) {
         const groupId = String(groupMatch[1] || '').trim();
         const role = roleTokenFromId(groupId);
         if (!role || !selectedRoles.includes(role)) continue;
 
-        const groupBody = String(groupMatch[2] || '');
+        const groupBody = extractGroupBody(svgText, groupMatch.index + groupMatch[0].length);
 
         const lineMatch = groupBody.match(
           /<line\b[^>]*\bx1="([^"]+)"[^>]*\by1="([^"]+)"[^>]*\bx2="([^"]+)"[^>]*\by2="([^"]+)"[^>]*>/i
@@ -1096,7 +1190,7 @@ async function handleMosGenerate(req, res) {
           const dx = c.mx - anchor.x;
           const dy = c.my - anchor.y;
           const dist = Math.hypot(dx, dy);
-          const orientationPenalty = c.orientation === anchor.orientation ? 0 : 220;
+          const orientationPenalty = c.orientation === anchor.orientation ? 0 : 80;
           const score = dist + orientationPenalty;
           if (score < bestScore) {
             bestScore = score;
@@ -1116,40 +1210,6 @@ async function handleMosGenerate(req, res) {
       }
 
       const finalOps = remappedOps.length > 0 ? remappedOps : validOps;
-
-      for (const op of finalOps) {
-        const anchor = anchors.get(op.role);
-        if (!anchor) continue;
-
-        const mx = (op.x1 + op.x2) / 2;
-        const my = (op.y1 + op.y2) / 2;
-        const baseLen = Math.max(32, Math.hypot(op.x2 - op.x1, op.y2 - op.y1));
-
-        let dx = op.x2 - op.x1;
-        let dy = op.y2 - op.y1;
-
-        if (anchor.orientation === 'horizontal') {
-          dx = baseLen;
-          dy = 0;
-        } else if (anchor.orientation === 'vertical') {
-          dx = 0;
-          dy = baseLen;
-        } else {
-          const avx = Number(anchor.vx) || 0;
-          const avy = Number(anchor.vy) || 0;
-          if (Math.abs(avx) > 0.01 || Math.abs(avy) > 0.01) {
-            dx = avx * baseLen;
-            dy = avy * baseLen;
-          }
-          if (Math.abs(dx) < 2) dx = dx >= 0 ? 18 : -18;
-          if (Math.abs(dy) < 2) dy = dy >= 0 ? 18 : -18;
-        }
-
-        op.x1 = Math.max(0, Math.min(1000, mx - dx / 2));
-        op.y1 = Math.max(0, Math.min(1000, my - dy / 2));
-        op.x2 = Math.max(0, Math.min(1000, mx + dx / 2));
-        op.y2 = Math.max(0, Math.min(1000, my + dy / 2));
-      }
 
       const appliedRoleSet = new Set();
       for (const op of finalOps) {
@@ -1224,44 +1284,29 @@ async function handleMosGenerate(req, res) {
       return `${visible.join(', ')}${suffix}`;
     };
 
-    const buildTemplatePromptContext = svgText => {
-      if (!svgText || typeof svgText !== 'string') return '';
+    const describeRegion = (mx, my) => {
+      const col = mx < 333 ? 'left' : mx < 667 ? 'center' : 'right';
+      const row = my < 333 ? 'top' : my < 667 ? 'middle' : 'bottom';
+      return `${row}-${col}`;
+    };
 
-      const groupIds = [];
-      const lineIds = [];
-      const textHints = [];
+    const buildRichTemplateContext = (svgText, selectedRoles, geometryHints) => {
+      if (!svgText || typeof svgText !== 'string' || !selectedRoles?.length) return '';
 
-      const groupRegex = /<g\b[^>]*\sid="([^"]+)"[^>]*>/gi;
-      let groupMatch;
-      while ((groupMatch = groupRegex.exec(svgText)) !== null && groupIds.length < 24) {
-        groupIds.push(groupMatch[1]);
+      const templateOps = extractGroupOpsFromSvg(svgText, selectedRoles);
+      if (!templateOps.length) return '';
+
+      const lines = ['TEMPLATE ROLES:'];
+      for (const op of templateOps) {
+        const mx = Math.round((op.x1 + op.x2) / 2);
+        const my = Math.round((op.y1 + op.y2) / 2);
+        const region = describeRegion(mx, my);
+        const geoType = geometryHints?.get(op.role) || `${classifyOrientation(op)} line`;
+        const sem = ROLE_SEMANTICS[op.role] || '';
+        const semStr = sem ? ` \u2014 ${sem}` : '';
+        lines.push(`  ${op.role}: ${geoType}, ${region} region${semStr}`);
       }
-
-      const lineRegex = /<line\b[^>]*\sid="([^"]+)"[^>]*>/gi;
-      let lineMatch;
-      while ((lineMatch = lineRegex.exec(svgText)) !== null && lineIds.length < 40) {
-        lineIds.push(lineMatch[1]);
-      }
-
-      const textRegexWithId = /<text\b[^>]*\sid="([^"]+)"[^>]*>([^<]*)<\/text>/gi;
-      let textMatchWithId;
-      while ((textMatchWithId = textRegexWithId.exec(svgText)) !== null && textHints.length < 24) {
-        const rawValue = String(textMatchWithId[2] || '').trim();
-        const canonical = canonicalRoleToken(rawValue);
-        const safeRole = canonical || rawValue || '?';
-        textHints.push(`${textMatchWithId[1]}:${safeRole}`);
-      }
-
-      const viewBoxMatch = svgText.match(/viewBox="([^"]+)"/i);
-      const viewBox = viewBoxMatch?.[1] || '0 0 1000 1000';
-
-      return [
-        'TEMPLATE BLUEPRINT (compact):',
-        `- viewBox: ${viewBox}`,
-        `- group ids: ${formatHintList(groupIds)}`,
-        `- line ids: ${formatHintList(lineIds)}`,
-        `- text id/role hints: ${formatHintList(textHints)}`,
-      ].join('\n');
+      return lines.join('\n');
     };
 
     const traceId = crypto.randomUUID().slice(0, 8);
@@ -1362,16 +1407,17 @@ async function handleMosGenerate(req, res) {
       : templateRoles.length
         ? templateRoles
         : ['W', 'H'];
-    const effectiveRoles = effectiveRolesRaw.slice(0, 8);
+    const effectiveRoles = effectiveRolesRaw.slice(0, 16);
     debugState.pipeline.selectedRoles = [...effectiveRoles];
     debugState.pipeline.templateRoles = [...templateRoles];
-    const templatePromptContext = buildTemplatePromptContext(referenceSvgText);
-    const templateRoleMap = parseTemplateRoleMap(referenceSvgText);
     const roleGeometryHints = parseRoleGeometryHints(referenceSvgText, effectiveRoles);
+    const richTemplateContext = buildRichTemplateContext(
+      referenceSvgText,
+      effectiveRoles,
+      roleGeometryHints
+    );
+    const templateRoleMap = parseTemplateRoleMap(referenceSvgText);
     const roleAnchors = buildRoleAnchorsFromTemplate(referenceSvgText, effectiveRoles);
-    const roleHintsText = effectiveRoles
-      .map(role => `${role}: ${roleGeometryHints.get(role) || 'line'}`)
-      .join(', ');
 
     if (!templateId || !referenceSvgText) {
       return res.status(422).json({
@@ -1474,19 +1520,19 @@ async function handleMosGenerate(req, res) {
       systemPrompt = `You are a measurement overlay generator for product images.
 Your task is to analyse the provided image and return measurement line geometry operations.
 
-IMPORTANT: Do not return SVG. Do not return numeric measurements. Do not output text labels.
-Use only existing template line ids.
+COORDINATE SPACE: 0\u20131000 on both axes (normalised to image dimensions).
 
-${templatePromptContext}
+${richTemplateContext}
 
 RULES:
-1. Allowed roles: ${rolesStr}
-2. Return one line op per requested role whenever possible.
-3. Each op MUST target an existing template line id.
-4. All coordinates MUST be in range [0, 1000].
-5. Lines MUST NOT be zero-length.
-6. Do not return extra roles.
-7. Preserve role geometry semantics from template: ${roleHintsText}
+1. Return one op per requested role. Allowed roles: ${rolesStr}
+2. Each op has {role, x1, y1, x2, y2} in [0, 1000].
+3. Analyse the photo to find where each physical feature is located.
+4. Coordinates MUST match the actual feature position and angle in the photo — do NOT copy template coordinates.
+5. Use template data only as a guide for which roles to measure and their general meaning.
+6. Diagonal and curved roles should follow the actual angle/curve of the feature in the photo.
+7. Lines MUST NOT be zero-length.
+8. Do not add extra roles beyond those listed.
 
 Return ONLY a JSON object with this exact structure:
 {
@@ -1497,16 +1543,14 @@ Return ONLY a JSON object with this exact structure:
       fallbackPrompt = `You are a measurement overlay generator for product images.
 Your task is to analyse the provided image and return measurement line geometry ops.
 
-ROLE TOKENS:
-${rolesStr}
+COORDINATE SPACE: 0\u20131000 on both axes.
+Allowed roles: ${rolesStr}
 
 RULES:
 1. Return JSON with key "ops" only.
-2. Use only existing line ids from the template blueprint.
-3. Do not include text labels or SVG.
-4. All coordinates must be within [0, 1000].
-5. No zero-length lines.
-6. Preserve role geometry semantics from template: ${roleHintsText}
+2. Each op has {role, x1, y1, x2, y2} in [0, 1000].
+3. No zero-length lines.
+4. Place each line where the corresponding physical feature appears in the photo.
 
 Return ONLY a JSON object with this exact structure:
 {
@@ -1591,7 +1635,7 @@ Return ONLY a JSON object with this exact structure:
         responseSnippet: '',
       };
       const geminiAbort = new AbortController();
-      const timeoutMs = process.env.VERCEL ? 24000 : 28000;
+      const timeoutMs = process.env.VERCEL ? 50000 : 55000;
       const geminiTimeout = setTimeout(() => geminiAbort.abort(), timeoutMs);
       let geminiResponse;
       try {

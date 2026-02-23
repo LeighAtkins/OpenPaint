@@ -10,9 +10,16 @@ let hideTimer = null;
 let activeIndex = 0;
 let hintToastTimer = null;
 let isGuidePinnedVisible = false;
+let pinnedSourceViewId = null;
+let pinnedLockToImage = false;
+let lastRenderedViewId = null;
 
 function getMetadata() {
   return window.app?.projectManager?.getProjectMetadata?.() || window.projectMetadata || {};
+}
+
+function getCurrentViewId() {
+  return String(window.app?.projectManager?.currentViewId || 'front').trim() || 'front';
 }
 
 function normalizeCode(value) {
@@ -47,6 +54,47 @@ function resolveGuideCodes() {
     metadata?.naming?.sofaTypeLabel ||
     '';
   return parseCodes(fallback);
+}
+
+function resolveGuideCodesByView(viewId) {
+  const metadata = getMetadata();
+  const byView =
+    metadata?.measurementGuideCodesByView &&
+    typeof metadata.measurementGuideCodesByView === 'object'
+      ? metadata.measurementGuideCodesByView
+      : {};
+  const fromView = Array.isArray(byView[viewId])
+    ? byView[viewId].map(code => normalizeCode(code)).filter(Boolean)
+    : [];
+  return fromView;
+}
+
+function isGuideLockedToView(viewId) {
+  const metadata = getMetadata();
+  const lockByView =
+    metadata?.measurementGuideLockByView && typeof metadata.measurementGuideLockByView === 'object'
+      ? metadata.measurementGuideLockByView
+      : {};
+  return lockByView[viewId] === true;
+}
+
+function resolveGuideContext(viewId = getCurrentViewId()) {
+  const scopedCodes = resolveGuideCodesByView(viewId);
+  if (scopedCodes.length) {
+    return {
+      viewId,
+      codes: scopedCodes,
+      lockToImage: isGuideLockedToView(viewId),
+      scoped: true,
+    };
+  }
+
+  return {
+    viewId,
+    codes: resolveGuideCodes(),
+    lockToImage: isGuideLockedToView(viewId),
+    scoped: false,
+  };
 }
 
 function isTypingContext(target) {
@@ -128,8 +176,46 @@ function ensureStyles() {
       justify-content: center;
       padding: 8px;
       background: rgba(255, 255, 255, 0.08);
+      position: relative;
     }
     .guide-flash-body img { width: 100%; height: 100%; max-height: min(78vh, 980px); object-fit: contain; }
+    .guide-flash-nav {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 34px;
+      height: 34px;
+      border-radius: 999px;
+      border: 1px solid rgba(226, 232, 240, 0.55);
+      background: rgba(15, 23, 42, 0.7);
+      color: #f8fafc;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      line-height: 1;
+      font-weight: 700;
+      cursor: pointer;
+      user-select: none;
+      transition: background 120ms ease, border-color 120ms ease;
+    }
+    .guide-flash-nav:hover {
+      background: rgba(15, 23, 42, 0.9);
+      border-color: rgba(248, 250, 252, 0.8);
+    }
+    .guide-flash-nav.prev { left: 10px; }
+    .guide-flash-nav.next { right: 10px; }
+    .guide-flash-lock {
+      margin-left: auto;
+      font-size: 11px;
+      color: #e2e8f0;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .guide-flash-lock input { cursor: pointer; }
     .guide-flash-empty { font-size: 11px; color: #94a3b8; text-align: center; }
     @media (max-width: 900px) {
       .guide-flash-grid { grid-template-columns: 1fr; }
@@ -293,8 +379,7 @@ function showShortcutToast() {
     document.body.appendChild(toast);
   }
 
-  toast.textContent =
-    'Hint: \\ toggles guide overlay. Shift+\\ cycles next. Ctrl+\\ edits guide codes.';
+  toast.textContent = 'Hint: \\ toggles guide overlay. Ctrl+\\ edits guide codes.';
   requestAnimationFrame(() => toast.classList.add('visible'));
 
   if (hintToastTimer) {
@@ -328,11 +413,31 @@ function attachGuideImageRecovery(root) {
   });
 }
 
-function saveGuideCodes(codes) {
+function saveGuideSettings({ viewId, codes, lockToImage }) {
   const manager = window.app?.projectManager;
+  const metadata = getMetadata();
+  const nextCodesByView = {
+    ...(metadata.measurementGuideCodesByView &&
+    typeof metadata.measurementGuideCodesByView === 'object'
+      ? metadata.measurementGuideCodesByView
+      : {}),
+  };
+  const nextLockByView = {
+    ...(metadata.measurementGuideLockByView &&
+    typeof metadata.measurementGuideLockByView === 'object'
+      ? metadata.measurementGuideLockByView
+      : {}),
+  };
+  if (viewId) {
+    nextCodesByView[viewId] = [...codes];
+    nextLockByView[viewId] = lockToImage === true;
+  }
+
   const payload = {
     measurementGuideCodes: codes,
     measurementGuideCode: codes[0] || '',
+    measurementGuideCodesByView: nextCodesByView,
+    measurementGuideLockByView: nextLockByView,
   };
   if (manager?.setProjectMetadata) {
     manager.setProjectMetadata(payload);
@@ -342,6 +447,17 @@ function saveGuideCodes(codes) {
     ...(window.projectMetadata || {}),
     ...payload,
   };
+}
+
+function saveGuideCodes(codes, viewId = getCurrentViewId()) {
+  saveGuideSettings({ viewId, codes, lockToImage: isGuideLockedToView(viewId) });
+}
+
+function setGuideLockForView(viewId, lockToImage) {
+  const context = resolveGuideContext(viewId);
+  const codes = context.codes || [];
+  if (!codes.length) return;
+  saveGuideSettings({ viewId, codes, lockToImage });
 }
 
 function resolveSlides(codes) {
@@ -361,19 +477,27 @@ function ensureOverlay(slide, slideCount) {
     flashOverlay.className = 'guide-flash-overlay';
     document.body.appendChild(flashOverlay);
   }
+  const sourceViewId = pinnedSourceViewId || getCurrentViewId();
+  const isLocked = pinnedLockToImage === true;
   const title = `${slide.code} · ${String(slide.view).toUpperCase()}`;
-  const hint = `${activeIndex + 1}/${slideCount} · \\ toggle · Shift+\\ next · Ctrl+\\ edit codes`;
+  const hint = `${activeIndex + 1}/${slideCount} · \\ toggle · Ctrl+\\ edit codes`;
   const url = buildGuideUrl(slide.code, slide.view);
   flashOverlay.innerHTML = `
     <div class="guide-flash-head">
       <div class="guide-flash-title">Measurement Guide Flash</div>
+      <label class="guide-flash-lock" title="Lock this guide selection to image ${sourceViewId}">
+        <input id="guideFlashLockToggle" type="checkbox" ${isLocked ? 'checked' : ''} />
+        Lock to image (${sourceViewId})
+      </label>
       <div class="guide-flash-sub">${hint}</div>
     </div>
     <div class="guide-flash-grid" style="grid-template-columns: 1fr;">
       <article class="guide-flash-card" style="min-height: min(78vh, 980px);">
         <div class="guide-flash-label">${title}</div>
         <div class="guide-flash-body">
+          <button type="button" class="guide-flash-nav prev" aria-label="Previous guide">&#8249;</button>
           <img src="${url}" alt="${slide.view} model for ${slide.code}" />
+          <button type="button" class="guide-flash-nav next" aria-label="Next guide">&#8250;</button>
         </div>
       </article>
     </div>
@@ -383,11 +507,37 @@ function ensureOverlay(slide, slideCount) {
     img.dataset.guideCode = slide.code;
     img.dataset.guideView = slide.view;
   }
+
+  const lockToggle = flashOverlay.querySelector('#guideFlashLockToggle');
+  lockToggle?.addEventListener('change', e => {
+    const checked = e.target?.checked === true;
+    pinnedLockToImage = checked;
+    if (sourceViewId) {
+      setGuideLockForView(sourceViewId, checked);
+    }
+  });
+
+  const prevBtn = flashOverlay.querySelector('.guide-flash-nav.prev');
+  prevBtn?.addEventListener('click', e => {
+    e.preventDefault();
+    e.stopPropagation();
+    showGuideFlash({ cycleDelta: -1, holdMode: isGuidePinnedVisible, preservePinnedContext: true });
+  });
+
+  const nextBtn = flashOverlay.querySelector('.guide-flash-nav.next');
+  nextBtn?.addEventListener('click', e => {
+    e.preventDefault();
+    e.stopPropagation();
+    showGuideFlash({ cycleDelta: 1, holdMode: isGuidePinnedVisible, preservePinnedContext: true });
+  });
+
   attachGuideImageRecovery(flashOverlay);
 }
 
 function promptForCodes() {
-  const existing = resolveGuideCodes();
+  const viewId = getCurrentViewId();
+  const existingContext = resolveGuideContext(viewId);
+  const existing = existingContext.codes;
   const input = window.prompt(
     'Enter guide code(s), separated by commas (e.g. CS3B-SSA-SB-R, CS4A-LH)',
     existing.join(', ')
@@ -397,28 +547,58 @@ function promptForCodes() {
   }
   const parsed = parseCodes(input);
   if (!parsed.length) return existing;
-  saveGuideCodes(parsed);
+  saveGuideCodes(parsed, viewId);
+  pinnedSourceViewId = viewId;
+  pinnedLockToImage = isGuideLockedToView(viewId);
   return parsed;
 }
 
-function showGuideFlash({ cycleNext = false, holdMode = false } = {}) {
-  let codes = resolveGuideCodes();
+function showGuideFlash({
+  cycleNext = false,
+  cycleDelta = 0,
+  holdMode = false,
+  preservePinnedContext = false,
+} = {}) {
+  const currentViewId = getCurrentViewId();
+
+  if (!preservePinnedContext) {
+    pinnedSourceViewId = currentViewId;
+    pinnedLockToImage = isGuideLockedToView(currentViewId);
+  }
+
+  let codes =
+    preservePinnedContext && pinnedSourceViewId
+      ? resolveGuideContext(pinnedSourceViewId).codes
+      : resolveGuideContext(currentViewId).codes;
+
   if (!codes.length) {
     codes = promptForCodes();
     if (!codes.length) return;
   }
 
+  if (!pinnedSourceViewId) {
+    pinnedSourceViewId = currentViewId;
+  }
+
+  if (pinnedLockToImage && currentViewId !== pinnedSourceViewId) {
+    hideGuideFlash();
+    isGuidePinnedVisible = false;
+    return;
+  }
+
   const slides = resolveSlides(codes);
   if (!slides.length) return;
 
-  if (cycleNext) {
-    activeIndex = (activeIndex + 1) % slides.length;
+  const delta = cycleDelta || (cycleNext ? 1 : 0);
+  if (delta !== 0) {
+    activeIndex = (activeIndex + delta + slides.length) % slides.length;
   } else if (activeIndex >= slides.length) {
     activeIndex = 0;
   }
 
   const slide = slides[activeIndex];
   ensureOverlay(slide, slides.length);
+  lastRenderedViewId = currentViewId;
 
   requestAnimationFrame(() => {
     flashOverlay?.classList.add('visible');
@@ -444,6 +624,7 @@ function hideGuideFlash() {
   }
   if (!flashOverlay) return;
   flashOverlay.classList.remove('visible');
+  lastRenderedViewId = null;
 }
 
 function showGuideGallery() {
@@ -695,9 +876,13 @@ function onKeyDown(event) {
     return;
   }
 
-  // Alt+\ = Open gallery browser
+  // Alt+\ = same as edit codes (compatibility alias)
   if (event.altKey && !event.repeat) {
-    showGuideGallery();
+    const codes = promptForCodes();
+    if (!codes.length) return;
+    activeIndex = 0;
+    showGuideFlash({ holdMode: isGuidePinnedVisible });
+    showShortcutToast();
     return;
   }
 
@@ -725,9 +910,25 @@ function onKeyUp(event) {
   if (event.code !== HOTKEY) return;
 }
 
+function syncGuideOverlayToActiveView() {
+  if (!isGuidePinnedVisible || !flashOverlay?.classList.contains('visible')) return;
+
+  const currentViewId = getCurrentViewId();
+  if (currentViewId === lastRenderedViewId) return;
+
+  if (pinnedLockToImage && pinnedSourceViewId && currentViewId !== pinnedSourceViewId) {
+    hideGuideFlash();
+    isGuidePinnedVisible = false;
+    return;
+  }
+
+  showGuideFlash({ holdMode: true, preservePinnedContext: !pinnedLockToImage });
+}
+
 export function initMeasurementGuideFlash() {
   window.addEventListener('keydown', onKeyDown, { passive: false });
   window.addEventListener('keyup', onKeyUp, { passive: false });
+  window.setInterval(syncGuideOverlayToActiveView, 200);
 
   // Close gallery on Escape
   window.addEventListener('keydown', e => {

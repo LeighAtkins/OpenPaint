@@ -20,7 +20,7 @@ const DEFAULT_ROLE_OPTIONS = [
 ];
 
 const guideRoleCache = new Map<string, { value: string; label: string }[]>();
-const MAX_SELECTED_ROLES = 8;
+const MAX_SELECTED_ROLES = 16;
 
 function mosDebugEnabled(): boolean {
   return new URLSearchParams(window.location.search).has('debug');
@@ -307,9 +307,7 @@ function createGenerateDialog(
 
       // Attach guide code from sofa metadata so the server can fetch a reference template SVG
       const sofaMeta = projectManager?.getProjectMetadata?.() || (window as any).projectMetadata;
-      const guideCodes = Array.isArray(sofaMeta?.measurementGuideCodes)
-        ? sofaMeta.measurementGuideCodes
-        : [];
+      const guideCodes = resolveGuideCodesForView(sofaMeta, request.viewId || 'front');
       if (guideCodes.length > 0) {
         request.templateId = guideCodes[0];
       }
@@ -501,12 +499,42 @@ function closeDialog(overlay: HTMLElement): void {
   overlay.setAttribute('aria-hidden', 'true');
 }
 
+function resolveGuideCodesForView(metadata: any, viewId: string): string[] {
+  const source = metadata || {};
+  const scoped =
+    source?.measurementGuideCodesByView && typeof source.measurementGuideCodesByView === 'object'
+      ? source.measurementGuideCodesByView
+      : {};
+  const scopedCodes = Array.isArray(scoped?.[viewId])
+    ? scoped[viewId]
+        .map((code: unknown) => (typeof code === 'string' ? code.trim().toUpperCase() : ''))
+        .filter(Boolean)
+    : [];
+  if (scopedCodes.length) {
+    return scopedCodes;
+  }
+
+  const globalCodes = Array.isArray(source?.measurementGuideCodes)
+    ? source.measurementGuideCodes
+        .map((code: unknown) => (typeof code === 'string' ? code.trim().toUpperCase() : ''))
+        .filter(Boolean)
+    : [];
+
+  if (globalCodes.length) {
+    return globalCodes;
+  }
+
+  const single = String(source?.measurementGuideCode || '')
+    .trim()
+    .toUpperCase();
+  return single ? [single] : [];
+}
+
 function resolveTemplateId(projectManager: any): string {
   const metadata = projectManager?.getProjectMetadata?.() || (window as any).projectMetadata || {};
-  const codes = Array.isArray(metadata?.measurementGuideCodes)
-    ? metadata.measurementGuideCodes
-    : [];
-  return String(codes[0] || metadata?.measurementGuideCode || '').trim();
+  const viewId = String(projectManager?.currentViewId || 'front');
+  const codes = resolveGuideCodesForView(metadata, viewId);
+  return (codes[0] || '').trim();
 }
 
 function resolveImagePartLabel(projectManager: any, viewId: string): string {
