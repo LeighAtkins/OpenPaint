@@ -2778,6 +2778,7 @@ export class App {
                 <h3 style="color: #555; font-size: 16px; margin-bottom: 10px; font-weight: 600;">General</h3>
                 <div style="display: grid; grid-template-columns: auto 1fr; gap: 8px 16px; font-size: 14px;">
                     <kbd>H</kbd><span>Show/hide this help menu</span>
+                    <kbd>Ctrl+\\</kbd><span>Open pixel pets menu</span>
                 </div>
             </div>
             

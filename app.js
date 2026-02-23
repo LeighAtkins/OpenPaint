@@ -915,6 +915,309 @@ app.get('/api/cloud-projects/:projectId/bootstrap', async (req, res) => {
   }
 });
 
+// ── Wallet & Pets System ─────────────────────────────────────────────────────
+
+const COINS_PER_SAVE = 10;
+const DAILY_COIN_CAP = 100;
+const EARN_COOLDOWN_MS = 5 * 60 * 1000; // 5 minutes
+
+const PET_CATALOG = [
+  { id: 'cat-1', name: 'Tabby Cat', type: 'cat', cost: 50 },
+  { id: 'cat-2', name: 'Tuxedo Cat', type: 'cat', cost: 50 },
+  { id: 'cat-3', name: 'Ginger Cat', type: 'cat', cost: 75 },
+  { id: 'cat-4', name: 'Siamese Cat', type: 'cat', cost: 75 },
+  { id: 'cat-5', name: 'Calico Cat', type: 'cat', cost: 100 },
+  { id: 'cat-6', name: 'Black Cat', type: 'cat', cost: 100 },
+  { id: 'dog-1', name: 'Golden Retriever', type: 'dog', cost: 50 },
+  { id: 'dog-2', name: 'Akita', type: 'dog', cost: 50 },
+  { id: 'dog-3', name: 'Great Dane', type: 'dog', cost: 75 },
+  { id: 'dog-4', name: 'Schnauzer', type: 'dog', cost: 75 },
+  { id: 'dog-5', name: 'Saint Bernard', type: 'dog', cost: 100 },
+  { id: 'dog-6', name: 'Siberian Husky', type: 'dog', cost: 100 },
+];
+
+// GET /api/wallet — returns balance, equipped pet, unlocked pets, catalog
+app.get('/api/wallet', async (req, res) => {
+  try {
+    const authResult = await getCloudAuthUser(req, 'wallet');
+    if (authResult.error) {
+      return res.status(authResult.error.statusCode).json(authResult.error.body);
+    }
+    const userId = authResult.user.id;
+    const supabase = getSupabaseAdmin();
+
+    // Auto-create wallet on first access
+    const { data: wallet } = await supabase
+      .from('wallets')
+      .select('balance, equipped_pet')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    let balance = 0;
+    let equippedPet = null;
+
+    if (wallet) {
+      balance = wallet.balance;
+      equippedPet = wallet.equipped_pet;
+    } else {
+      await supabase.from('wallets').insert({ user_id: userId, balance: 0 });
+    }
+
+    // Fetch unlocked pets
+    const { data: pets } = await supabase
+      .from('pet_inventory')
+      .select('pet_id')
+      .eq('user_id', userId);
+
+    return res.json({
+      success: true,
+      balance,
+      equippedPet,
+      unlockedPets: (pets || []).map(p => p.pet_id),
+      catalog: PET_CATALOG,
+    });
+  } catch (error) {
+    console.error('[Wallet] GET error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to load wallet' });
+  }
+});
+
+// POST /api/wallet/earn — earn coins on qualifying cloud save
+app.post('/api/wallet/earn', async (req, res) => {
+  try {
+    const authResult = await getCloudAuthUser(req, 'wallet_earn');
+    if (authResult.error) {
+      return res.status(authResult.error.statusCode).json(authResult.error.body);
+    }
+    const userId = authResult.user.id;
+    const { projectId, saveTimestamp, projectData } = req.body;
+
+    if (!projectId || !saveTimestamp) {
+      return res
+        .status(400)
+        .json({ success: false, message: 'projectId and saveTimestamp required' });
+    }
+
+    const supabase = getSupabaseAdmin();
+
+    // Auto-create wallet if needed
+    const { data: wallet } = await supabase
+      .from('wallets')
+      .select('balance')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (!wallet) {
+      await supabase.from('wallets').insert({ user_id: userId, balance: 0 });
+    }
+
+    // Validate qualifying save: >=1 image and >=3 strokes
+    if (projectData) {
+      const views = projectData.views || {};
+      const viewKeys = Object.keys(views);
+      const hasImage = viewKeys.some(k => {
+        const v = views[k];
+        return v && (v.image || v.backgroundImage || v.imageData);
+      });
+      const totalStrokes = viewKeys.reduce((sum, k) => {
+        const v = views[k];
+        const strokes = v?.vectorStrokes?.length || 0;
+        const lines = v?.lineStrokes?.length || 0;
+        return sum + strokes + lines;
+      }, 0);
+
+      if (!hasImage || totalStrokes < 3) {
+        return res.json({
+          success: true,
+          earned: 0,
+          balance: wallet?.balance || 0,
+          reason: 'not_qualifying',
+        });
+      }
+    }
+
+    // Cooldown check: 5 minutes between rewarded saves
+    const { data: lastTx } = await supabase
+      .from('coin_transactions')
+      .select('created_at')
+      .eq('user_id', userId)
+      .gt('amount', 0)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (lastTx) {
+      const elapsed = Date.now() - new Date(lastTx.created_at).getTime();
+      if (elapsed < EARN_COOLDOWN_MS) {
+        const currentBalance = wallet?.balance || 0;
+        return res.json({ success: true, earned: 0, balance: currentBalance, reason: 'cooldown' });
+      }
+    }
+
+    // Daily cap check: 100 coins/day
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const { data: todayTxs } = await supabase
+      .from('coin_transactions')
+      .select('amount')
+      .eq('user_id', userId)
+      .gt('amount', 0)
+      .gte('created_at', todayStart.toISOString());
+
+    const todayTotal = (todayTxs || []).reduce((s, t) => s + t.amount, 0);
+    if (todayTotal >= DAILY_COIN_CAP) {
+      const currentBalance = wallet?.balance || 0;
+      return res.json({ success: true, earned: 0, balance: currentBalance, reason: 'daily_cap' });
+    }
+
+    // Idempotency: userId:projectId:saveTimestamp
+    const idempotencyKey = `${userId}:${projectId}:${saveTimestamp}`;
+
+    // Insert transaction (will fail silently on duplicate idempotency key)
+    const { error: txError } = await supabase.from('coin_transactions').insert({
+      user_id: userId,
+      amount: COINS_PER_SAVE,
+      reason: 'cloud_save',
+      idempotency_key: idempotencyKey,
+    });
+
+    if (txError) {
+      // Duplicate idempotency key = already earned for this save
+      if (txError.code === '23505') {
+        const currentBalance = wallet?.balance || 0;
+        return res.json({
+          success: true,
+          earned: 0,
+          balance: currentBalance,
+          reason: 'already_earned',
+        });
+      }
+      throw txError;
+    }
+
+    // Increment balance atomically
+    await supabase.rpc('increment_wallet_balance', { p_user_id: userId, p_amount: COINS_PER_SAVE });
+
+    // Fetch updated balance
+    const { data: updated } = await supabase
+      .from('wallets')
+      .select('balance')
+      .eq('user_id', userId)
+      .single();
+
+    return res.json({ success: true, earned: COINS_PER_SAVE, balance: updated?.balance || 0 });
+  } catch (error) {
+    console.error('[Wallet] Earn error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to earn coins' });
+  }
+});
+
+// POST /api/wallet/spend — purchase a pet
+app.post('/api/wallet/spend', async (req, res) => {
+  try {
+    const authResult = await getCloudAuthUser(req, 'wallet_spend');
+    if (authResult.error) {
+      return res.status(authResult.error.statusCode).json(authResult.error.body);
+    }
+    const userId = authResult.user.id;
+    const { petId } = req.body;
+
+    if (!petId) {
+      return res.status(400).json({ success: false, message: 'petId is required' });
+    }
+
+    const catalogEntry = PET_CATALOG.find(p => p.id === petId);
+    if (!catalogEntry) {
+      return res.status(400).json({ success: false, message: 'Invalid petId' });
+    }
+
+    const supabase = getSupabaseAdmin();
+
+    // Check not already owned
+    const { data: existing } = await supabase
+      .from('pet_inventory')
+      .select('pet_id')
+      .eq('user_id', userId)
+      .eq('pet_id', petId)
+      .maybeSingle();
+
+    if (existing) {
+      return res.status(400).json({ success: false, message: 'Pet already owned' });
+    }
+
+    // Atomic deduction
+    const { data: deducted } = await supabase.rpc('decrement_wallet_balance', {
+      p_user_id: userId,
+      p_amount: catalogEntry.cost,
+    });
+
+    if (!deducted) {
+      return res.status(400).json({ success: false, message: 'Insufficient balance' });
+    }
+
+    // Record transaction
+    await supabase.from('coin_transactions').insert({
+      user_id: userId,
+      amount: -catalogEntry.cost,
+      reason: `purchase_pet:${petId}`,
+    });
+
+    // Add to inventory
+    await supabase.from('pet_inventory').insert({ user_id: userId, pet_id: petId });
+
+    // Fetch updated balance
+    const { data: wallet } = await supabase
+      .from('wallets')
+      .select('balance')
+      .eq('user_id', userId)
+      .single();
+
+    return res.json({ success: true, petId, balance: wallet?.balance || 0 });
+  } catch (error) {
+    console.error('[Wallet] Spend error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to purchase pet' });
+  }
+});
+
+// POST /api/pets/equip — equip or unequip a pet
+app.post('/api/pets/equip', async (req, res) => {
+  try {
+    const authResult = await getCloudAuthUser(req, 'pets_equip');
+    if (authResult.error) {
+      return res.status(authResult.error.statusCode).json(authResult.error.body);
+    }
+    const userId = authResult.user.id;
+    const { petId } = req.body; // null to unequip
+
+    const supabase = getSupabaseAdmin();
+
+    if (petId) {
+      // Validate ownership
+      const { data: owned } = await supabase
+        .from('pet_inventory')
+        .select('pet_id')
+        .eq('user_id', userId)
+        .eq('pet_id', petId)
+        .maybeSingle();
+
+      if (!owned) {
+        return res.status(400).json({ success: false, message: 'Pet not owned' });
+      }
+    }
+
+    // Update equipped pet
+    await supabase
+      .from('wallets')
+      .update({ equipped_pet: petId || null, updated_at: new Date().toISOString() })
+      .eq('user_id', userId);
+
+    return res.json({ success: true, equippedPet: petId || null });
+  } catch (error) {
+    console.error('[Pets] Equip error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to equip pet' });
+  }
+});
+
 app.post('/api/cloud-assets/exists', async (req, res) => {
   try {
     const authResult = await getCloudAuthUser(req, 'asset_upload');

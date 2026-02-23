@@ -462,6 +462,27 @@ async function handleCloudSave(): Promise<void> {
     console.warn('[Cloud] Save succeeded, id:', result.data.id);
     cloudSaveService.setCurrentProjectId(result.data.id);
 
+    // Earn coins on successful qualifying cloud save
+    if (isAuthEnabled()) {
+      import('@/services/wallet/walletService')
+        .then(({ walletService }) =>
+          import('./coin-animation').then(({ playCoinFlyAnimation }) =>
+            walletService
+              .earnCoins(
+                result.data.id,
+                result.data.updated_at || new Date().toISOString(),
+                projectData
+              )
+              .then(r => {
+                if (r.success && r.data.earned > 0) playCoinFlyAnimation();
+              })
+          )
+        )
+        .catch(() => {
+          /* non-critical */
+        });
+    }
+
     if (typeof (window as any).showStatusMessage === 'function') {
       (window as any).showStatusMessage('Project saved to cloud', 'success');
     }

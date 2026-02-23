@@ -185,6 +185,12 @@ async function bootstrap(): Promise<void> {
   // Initialize cloud UI (cloud save button + My Projects modal)
   initCloudUI();
 
+  // Initialize coins HUD + pixel pets system
+  const { initCoinsHud } = await import('./modules/ui/coins-hud');
+  const { initPetsSystem } = await import('./modules/ui/pets-system');
+  initCoinsHud();
+  initPetsSystem();
+
   // Initialize AI export (async, non-blocking)
   initAIExport().catch((error: unknown) => {
     console.warn('[AI Export] Non-critical init failure:', error);
