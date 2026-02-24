@@ -3,6 +3,8 @@ const VIEWS = ['front', 'back', 'side'];
 const FLASH_DURATION_MS = 1200;
 const GUIDE_HINT_KEY = 'openpaint:guideFlashHintSeen:v1';
 const GUIDE_CACHE_KEY = '2026-02-11-1';
+const GUIDE_WINDOW_PREFS_KEY = 'openpaint:guideWindowPrefs:v1';
+const FLASH_SIZE_ORDER = ['S', 'M', 'L', 'XL'];
 
 let flashOverlay = null;
 let galleryOverlay = null;
@@ -13,6 +15,108 @@ let isGuidePinnedVisible = false;
 let pinnedSourceViewId = null;
 let pinnedLockToImage = false;
 let lastRenderedViewId = null;
+let gallerySelectHandler = null;
+
+function getWindowPrefs() {
+  try {
+    const raw = localStorage.getItem(GUIDE_WINDOW_PREFS_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function setWindowPrefs(patch) {
+  const next = { ...getWindowPrefs(), ...patch };
+  try {
+    localStorage.setItem(GUIDE_WINDOW_PREFS_KEY, JSON.stringify(next));
+  } catch {
+    // no-op
+  }
+}
+
+function normalizeFlashSize(value) {
+  const raw = String(value || '').toUpperCase();
+  return FLASH_SIZE_ORDER.includes(raw) ? raw : 'L';
+}
+
+function getFlashSize() {
+  return normalizeFlashSize(getWindowPrefs().flashSize);
+}
+
+function setFlashSize(size, manual = true) {
+  setWindowPrefs({ flashSize: normalizeFlashSize(size), flashManualSize: manual === true });
+}
+
+function cycleFlashSize(delta) {
+  const current = getFlashSize();
+  const index = FLASH_SIZE_ORDER.indexOf(current);
+  const nextIndex = Math.max(0, Math.min(FLASH_SIZE_ORDER.length - 1, index + delta));
+  return FLASH_SIZE_ORDER[nextIndex];
+}
+
+function getFlashRect() {
+  const rect = getWindowPrefs().flashRect;
+  if (!rect || typeof rect !== 'object') return null;
+  const x = Number(rect.x);
+  const y = Number(rect.y);
+  const width = Number(rect.width);
+  const height = Number(rect.height);
+  if (![x, y, width, height].every(Number.isFinite)) return null;
+  return { x, y, width, height };
+}
+
+function setFlashRect(rect) {
+  if (!rect) {
+    const prefs = getWindowPrefs();
+    delete prefs.flashRect;
+    try {
+      localStorage.setItem(GUIDE_WINDOW_PREFS_KEY, JSON.stringify(prefs));
+    } catch {
+      // no-op
+    }
+    return;
+  }
+  setWindowPrefs({ flashRect: rect });
+}
+
+function clampFlashRect(rect) {
+  const minWidth = 360;
+  const minHeight = 260;
+  const maxWidth = Math.max(minWidth, window.innerWidth - 16);
+  const maxHeight = Math.max(minHeight, window.innerHeight - 16);
+  const width = Math.max(minWidth, Math.min(maxWidth, rect.width));
+  const height = Math.max(minHeight, Math.min(maxHeight, rect.height));
+  const x = Math.max(8, Math.min(window.innerWidth - width - 8, rect.x));
+  const y = Math.max(8, Math.min(window.innerHeight - height - 8, rect.y));
+  return { x, y, width, height };
+}
+
+function applyFlashWindowLayout(root) {
+  if (!root) return;
+  const size = getFlashSize();
+  const widthBySize = { S: 520, M: 760, L: 1020, XL: 1320 };
+  const width = Math.min(widthBySize[size] || 1020, window.innerWidth - 16);
+  root.dataset.size = size;
+  root.style.left = '50%';
+  root.style.top = '12px';
+  root.style.right = 'auto';
+  root.style.transform = 'translateX(-50%)';
+  root.style.width = `${width}px`;
+  root.style.height = '';
+
+  const stored = getFlashRect();
+  if (stored) {
+    const clamped = clampFlashRect(stored);
+    root.style.transform = 'none';
+    root.style.left = `${clamped.x}px`;
+    root.style.top = `${clamped.y}px`;
+    root.style.width = `${clamped.width}px`;
+    root.style.height = `${clamped.height}px`;
+  }
+}
 
 function getMetadata() {
   return window.app?.projectManager?.getProjectMetadata?.() || window.projectMetadata || {};
@@ -28,13 +132,11 @@ function getCurrentViewId() {
       return typed;
     }
 
-    const activeViewId = String(input.dataset.activeViewId || '')
-      .trim()
-      .toLowerCase();
+    const activeViewId = String(input.dataset.activeViewId || '').trim();
     if (activeViewId) return activeViewId;
   }
 
-  return String(window.app?.projectManager?.currentViewId || 'front').trim() || 'front';
+  return String(window.app?.projectManager?.currentViewId || '').trim() || 'front';
 }
 
 function normalizeCode(value) {
@@ -55,6 +157,97 @@ function parseCodes(value) {
   );
 }
 
+function toBaseViewId(viewId) {
+  const raw = String(viewId || '').trim();
+  if (!raw) return 'front';
+  if (raw.includes('::')) return raw.split('::')[0] || raw;
+  return raw;
+}
+
+function getViewCandidates(viewId) {
+  const base = toBaseViewId(viewId);
+  return Array.from(new Set([String(viewId || '').trim(), base].filter(Boolean)));
+}
+
+function getGuideBinding(viewId) {
+  const metadata = getMetadata();
+  const bindings =
+    metadata?.measurementGuideBindingsByScope &&
+    typeof metadata.measurementGuideBindingsByScope === 'object'
+      ? metadata.measurementGuideBindingsByScope
+      : {};
+  const candidates = getViewCandidates(viewId);
+  for (const candidate of candidates) {
+    const entry = bindings[candidate];
+    if (!entry || typeof entry !== 'object') continue;
+    const codes = Array.isArray(entry.codes)
+      ? entry.codes.map(code => normalizeCode(code)).filter(Boolean)
+      : [];
+    const activeCode = normalizeCode(entry.activeCode || codes[0] || '');
+    const locked = entry.locked === true;
+    if (codes.length || activeCode || locked) {
+      const scopeType = candidate === String(viewId || '').trim() ? 'frame' : 'view';
+      return { codes, activeCode, locked, scopeType, scopeId: candidate };
+    }
+  }
+
+  const projectBinding = bindings.__project__;
+  if (projectBinding && typeof projectBinding === 'object') {
+    const codes = Array.isArray(projectBinding.codes)
+      ? projectBinding.codes.map(code => normalizeCode(code)).filter(Boolean)
+      : [];
+    const activeCode = normalizeCode(projectBinding.activeCode || codes[0] || '');
+    const locked = projectBinding.locked === true;
+    if (codes.length || activeCode || locked) {
+      return {
+        codes,
+        activeCode,
+        locked,
+        scopeType: 'project',
+        scopeId: '__project__',
+      };
+    }
+  }
+
+  const defaults =
+    metadata?.measurementGuideProjectDefaults &&
+    typeof metadata.measurementGuideProjectDefaults === 'object'
+      ? metadata.measurementGuideProjectDefaults
+      : {};
+  const fallbackCodes = Array.isArray(defaults.codes)
+    ? defaults.codes.map(code => normalizeCode(code)).filter(Boolean)
+    : [];
+  const fallbackActive = normalizeCode(defaults.activeCode || fallbackCodes[0] || '');
+  if (fallbackCodes.length || fallbackActive) {
+    return {
+      codes: fallbackCodes,
+      activeCode: fallbackActive,
+      locked: false,
+      scopeType: 'default',
+      scopeId: '__default__',
+    };
+  }
+  return {
+    codes: [],
+    activeCode: '',
+    locked: false,
+    scopeType: 'default',
+    scopeId: '__default__',
+  };
+}
+
+function getBindingBreadcrumb(viewId = getCurrentViewId()) {
+  const binding = getGuideBinding(viewId);
+  if (binding.scopeType === 'project') return `Bound: Project${binding.locked ? ' (Locked)' : ''}`;
+  if (binding.scopeType === 'view') {
+    return `Bound: View ${toBaseViewId(viewId)}${binding.locked ? ' (Locked)' : ''}`;
+  }
+  if (binding.scopeType === 'frame') {
+    return `Bound: Frame ${binding.scopeId}${binding.locked ? ' (Locked)' : ''}`;
+  }
+  return 'Bound: Default';
+}
+
 function resolveGuideCodes() {
   const metadata = getMetadata();
   const fromArray = Array.isArray(metadata.measurementGuideCodes)
@@ -68,25 +261,35 @@ function resolveGuideCodes() {
 }
 
 function resolveGuideCodesByView(viewId) {
+  const binding = getGuideBinding(viewId);
+  if (binding.activeCode)
+    return [binding.activeCode, ...binding.codes.filter(c => c !== binding.activeCode)];
+  if (binding.codes.length) return binding.codes;
+
   const metadata = getMetadata();
   const byView =
     metadata?.measurementGuideCodesByView &&
     typeof metadata.measurementGuideCodesByView === 'object'
       ? metadata.measurementGuideCodesByView
       : {};
-  const fromView = Array.isArray(byView[viewId])
-    ? byView[viewId].map(code => normalizeCode(code)).filter(Boolean)
-    : [];
+  const candidates = getViewCandidates(viewId);
+  const fromView = candidates
+    .flatMap(candidate =>
+      Array.isArray(byView[candidate]) ? byView[candidate].map(code => normalizeCode(code)) : []
+    )
+    .filter(Boolean);
   return fromView;
 }
 
 function isGuideLockedToView(viewId) {
+  const binding = getGuideBinding(viewId);
+  if (binding.locked) return true;
   const metadata = getMetadata();
   const lockByView =
     metadata?.measurementGuideLockByView && typeof metadata.measurementGuideLockByView === 'object'
       ? metadata.measurementGuideLockByView
       : {};
-  return lockByView[viewId] === true;
+  return getViewCandidates(viewId).some(candidate => lockByView[candidate] === true);
 }
 
 function resolveGuideContext(viewId = getCurrentViewId()) {
@@ -129,7 +332,7 @@ function ensureStyles() {
       position: fixed;
       left: 50%;
       top: 10px;
-      width: min(1500px, calc(100vw - 24px));
+      width: min(1020px, calc(100vw - 24px));
       z-index: 13300;
       background: rgba(15, 23, 42, 0.28);
       border: 1px solid rgba(148, 163, 184, 0.4);
@@ -139,8 +342,9 @@ function ensureStyles() {
       color: #f8fafc;
       transform: translate(-50%, -6px) scale(0.98);
       opacity: 0;
-      transition: opacity 120ms ease, transform 120ms ease;
+      transition: opacity 120ms ease, transform 120ms ease, left 140ms ease, top 140ms ease, width 160ms ease, height 160ms ease;
       pointer-events: none;
+      overflow: hidden;
     }
     .guide-flash-overlay.visible {
       opacity: 1;
@@ -150,10 +354,11 @@ function ensureStyles() {
     .guide-flash-head {
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      justify-content: flex-start;
       gap: 10px;
       padding: 10px 12px 8px;
       border-bottom: 1px solid rgba(148, 163, 184, 0.3);
+      cursor: move;
     }
     .guide-flash-title { font-size: 13px; font-weight: 700; letter-spacing: .02em; color: #f8fafc; }
     .guide-flash-sub { font-size: 11px; color: #cbd5e1; }
@@ -176,6 +381,25 @@ function ensureStyles() {
       background: rgba(15, 23, 42, 0.92);
       border-color: rgba(248, 250, 252, 0.9);
     }
+    .guide-flash-controls {
+      margin-left: auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .guide-flash-ctl {
+      border: 1px solid rgba(226, 232, 240, 0.5);
+      background: rgba(15, 23, 42, 0.72);
+      color: #f8fafc;
+      font-size: 10px;
+      border-radius: 6px;
+      min-width: 20px;
+      height: 20px;
+      line-height: 1;
+      font-weight: 700;
+      cursor: pointer;
+      padding: 0 5px;
+    }
     .guide-flash-grid {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -190,6 +414,7 @@ function ensureStyles() {
       min-height: 220px;
       display: flex;
       flex-direction: column;
+      min-height: min(62vh, 760px);
     }
     .guide-flash-label {
       font-size: 11px;
@@ -208,6 +433,7 @@ function ensureStyles() {
       padding: 8px;
       background: rgba(255, 255, 255, 0.08);
       position: relative;
+      min-height: 220px;
     }
     .guide-flash-body img { width: 100%; height: 100%; max-height: min(78vh, 980px); object-fit: contain; }
     .guide-flash-nav {
@@ -248,6 +474,24 @@ function ensureStyles() {
     }
     .guide-flash-lock input { cursor: pointer; }
     .guide-flash-empty { font-size: 11px; color: #94a3b8; text-align: center; }
+    .guide-flash-resize {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      width: 18px;
+      height: 18px;
+      cursor: nwse-resize;
+    }
+    .guide-flash-resize::before {
+      content: '';
+      position: absolute;
+      right: 4px;
+      bottom: 4px;
+      width: 8px;
+      height: 8px;
+      border-right: 2px solid rgba(186, 230, 253, 0.85);
+      border-bottom: 2px solid rgba(186, 230, 253, 0.85);
+    }
     @media (max-width: 900px) {
       .guide-flash-grid { grid-template-columns: 1fr; }
       .guide-flash-card { min-height: 140px; }
@@ -445,9 +689,21 @@ function attachGuideImageRecovery(root) {
   });
 }
 
-function saveGuideSettings({ viewId, codes, lockToImage }) {
+function resolveScopeId(viewId, bindingTarget = 'frame') {
+  if (bindingTarget === 'project') return '__project__';
+  if (bindingTarget === 'view') return toBaseViewId(viewId);
+  return String(viewId || '').trim() || 'front';
+}
+
+function saveGuideSettings({ viewId, codes, lockToImage, bindingTarget = 'frame' }) {
   const manager = window.app?.projectManager;
   const metadata = getMetadata();
+  const normalizedCodes = Array.from(
+    new Set((codes || []).map(code => normalizeCode(code)).filter(Boolean))
+  );
+  const scopeId = resolveScopeId(viewId, bindingTarget);
+  const fallbackView = String(viewId || '').trim() || 'front';
+  const fallbackBaseView = toBaseViewId(fallbackView);
   const nextCodesByView = {
     ...(metadata.measurementGuideCodesByView &&
     typeof metadata.measurementGuideCodesByView === 'object'
@@ -460,16 +716,60 @@ function saveGuideSettings({ viewId, codes, lockToImage }) {
       ? metadata.measurementGuideLockByView
       : {}),
   };
-  if (viewId) {
-    nextCodesByView[viewId] = [...codes];
-    nextLockByView[viewId] = lockToImage === true;
+  if (bindingTarget === 'view') {
+    nextCodesByView[fallbackBaseView] = [...normalizedCodes];
+    nextLockByView[fallbackBaseView] = lockToImage === true;
+  } else if (bindingTarget === 'frame') {
+    nextCodesByView[fallbackView] = [...normalizedCodes];
+    nextLockByView[fallbackView] = lockToImage === true;
   }
 
+  const nextLibraryCodes = Array.from(
+    new Set([
+      ...(Array.isArray(metadata.measurementGuideLibraryCodes)
+        ? metadata.measurementGuideLibraryCodes.map(code => normalizeCode(code)).filter(Boolean)
+        : []),
+      ...normalizedCodes,
+    ])
+  );
+
+  const nextBindingsByScope = {
+    ...(metadata.measurementGuideBindingsByScope &&
+    typeof metadata.measurementGuideBindingsByScope === 'object'
+      ? metadata.measurementGuideBindingsByScope
+      : {}),
+  };
+  if (scopeId) {
+    nextBindingsByScope[scopeId] = {
+      codes: [...normalizedCodes],
+      activeCode: normalizedCodes[0] || '',
+      locked: lockToImage === true,
+      tagModeHint: 'auto',
+    };
+  }
+
+  const existingDefaults =
+    metadata.measurementGuideProjectDefaults &&
+    typeof metadata.measurementGuideProjectDefaults === 'object'
+      ? metadata.measurementGuideProjectDefaults
+      : {};
+  const defaultCodes = normalizedCodes.length
+    ? [...normalizedCodes]
+    : Array.isArray(existingDefaults.codes)
+      ? existingDefaults.codes.map(code => normalizeCode(code)).filter(Boolean)
+      : [];
+
   const payload = {
-    measurementGuideCodes: codes,
-    measurementGuideCode: codes[0] || '',
+    measurementGuideCodes: normalizedCodes,
+    measurementGuideCode: normalizedCodes[0] || '',
     measurementGuideCodesByView: nextCodesByView,
     measurementGuideLockByView: nextLockByView,
+    measurementGuideLibraryCodes: nextLibraryCodes,
+    measurementGuideBindingsByScope: nextBindingsByScope,
+    measurementGuideProjectDefaults: {
+      codes: defaultCodes,
+      activeCode: defaultCodes[0] || '',
+    },
   };
   if (manager?.setProjectMetadata) {
     manager.setProjectMetadata(payload);
@@ -494,10 +794,9 @@ function setGuideLockForView(viewId, lockToImage) {
 
 function resolveSlides(codes, lockedView = null) {
   const slides = [];
-  const scopedLockedView = ['front', 'back', 'side'].includes(
-    String(lockedView || '').toLowerCase()
-  )
-    ? String(lockedView).toLowerCase()
+  const normalizedLocked = toBaseViewId(String(lockedView || '')).toLowerCase();
+  const scopedLockedView = ['front', 'back', 'side'].includes(normalizedLocked)
+    ? normalizedLocked
     : null;
   codes.forEach(code => {
     if (scopedLockedView) {
@@ -522,6 +821,7 @@ function ensureOverlay(slide, slideCount) {
   const isLocked = pinnedLockToImage === true;
   const title = `${slide.code} · ${String(slide.view).toUpperCase()}`;
   const hint = `${activeIndex + 1}/${slideCount} · \\ toggle · Alt+\\ gallery · Shift+\\ next`;
+  const bindingText = getBindingBreadcrumb(sourceViewId);
   const url = buildGuideUrl(slide.code, slide.view);
   flashOverlay.innerHTML = `
     <div class="guide-flash-head">
@@ -530,11 +830,18 @@ function ensureOverlay(slide, slideCount) {
         <input id="guideFlashLockToggle" type="checkbox" ${isLocked ? 'checked' : ''} />
         Lock to image (${sourceViewId})
       </label>
-      <div class="guide-flash-sub">${hint}</div>
+      <div class="guide-flash-sub">${bindingText} · ${hint}</div>
+      <div class="guide-flash-controls">
+        <button type="button" class="guide-flash-ctl" data-flash-size-dec aria-label="Smaller guide">-</button>
+        <button type="button" class="guide-flash-ctl" data-flash-size-med aria-label="Medium guide">M</button>
+        <button type="button" class="guide-flash-ctl" data-flash-size-inc aria-label="Larger guide">+</button>
+        <button type="button" class="guide-flash-ctl" data-flash-size-fit aria-label="Fit guide">Fit</button>
+        <button type="button" class="guide-flash-ctl" data-flash-bind aria-label="Guide binding">Bind</button>
+      </div>
       <button type="button" class="guide-flash-close" aria-label="Close guide flash">×</button>
     </div>
     <div class="guide-flash-grid" style="grid-template-columns: 1fr;">
-      <article class="guide-flash-card" style="min-height: min(78vh, 980px);">
+      <article class="guide-flash-card">
         <div class="guide-flash-label">${title}</div>
         <div class="guide-flash-body">
           <button type="button" class="guide-flash-nav prev" aria-label="Previous guide">&#8249;</button>
@@ -543,6 +850,7 @@ function ensureOverlay(slide, slideCount) {
         </div>
       </article>
     </div>
+    <div class="guide-flash-resize" aria-hidden="true"></div>
   `;
   const img = flashOverlay.querySelector('img');
   if (img) {
@@ -582,6 +890,104 @@ function ensureOverlay(slide, slideCount) {
   });
 
   attachGuideImageRecovery(flashOverlay);
+  bindFlashWindowControls(flashOverlay);
+  applyFlashWindowLayout(flashOverlay);
+}
+
+function bindFlashWindowControls(root) {
+  if (!root) return;
+
+  const dec = root.querySelector('[data-flash-size-dec]');
+  const med = root.querySelector('[data-flash-size-med]');
+  const inc = root.querySelector('[data-flash-size-inc]');
+  const fit = root.querySelector('[data-flash-size-fit]');
+  const bind = root.querySelector('[data-flash-bind]');
+  const head = root.querySelector('.guide-flash-head');
+  const resize = root.querySelector('.guide-flash-resize');
+
+  dec?.addEventListener('click', e => {
+    e.preventDefault();
+    setFlashSize(cycleFlashSize(-1), true);
+    applyFlashWindowLayout(root);
+  });
+  med?.addEventListener('click', e => {
+    e.preventDefault();
+    setFlashSize('M', true);
+    applyFlashWindowLayout(root);
+  });
+  inc?.addEventListener('click', e => {
+    e.preventDefault();
+    setFlashSize(cycleFlashSize(1), true);
+    applyFlashWindowLayout(root);
+  });
+  fit?.addEventListener('click', e => {
+    e.preventDefault();
+    setFlashRect(null);
+    applyFlashWindowLayout(root);
+  });
+  bind?.addEventListener('click', e => {
+    e.preventDefault();
+    openGuideBindingPanel({ viewId: pinnedSourceViewId || getCurrentViewId(), source: 'flash' });
+  });
+
+  head?.addEventListener('pointerdown', event => {
+    const target = event.target;
+    if (target?.closest('.guide-flash-controls')) return;
+    if (target?.closest('.guide-flash-close')) return;
+    if (target?.closest('.guide-flash-lock')) return;
+    event.preventDefault();
+    const startRect = root.getBoundingClientRect();
+    const startX = event.clientX;
+    const startY = event.clientY;
+    const move = moveEvent => {
+      const nextRect = clampFlashRect({
+        x: startRect.left + (moveEvent.clientX - startX),
+        y: startRect.top + (moveEvent.clientY - startY),
+        width: startRect.width,
+        height: startRect.height,
+      });
+      setFlashRect(nextRect);
+      root.style.transform = 'none';
+      root.style.left = `${nextRect.x}px`;
+      root.style.top = `${nextRect.y}px`;
+      root.style.width = `${nextRect.width}px`;
+      root.style.height = `${nextRect.height}px`;
+    };
+    const up = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  });
+
+  resize?.addEventListener('pointerdown', event => {
+    event.preventDefault();
+    event.stopPropagation();
+    const startRect = root.getBoundingClientRect();
+    const startX = event.clientX;
+    const startY = event.clientY;
+    const move = moveEvent => {
+      const nextRect = clampFlashRect({
+        x: startRect.left,
+        y: startRect.top,
+        width: startRect.width + (moveEvent.clientX - startX),
+        height: startRect.height + (moveEvent.clientY - startY),
+      });
+      setFlashRect(nextRect);
+      root.style.transform = 'none';
+      root.style.left = `${nextRect.x}px`;
+      root.style.top = `${nextRect.y}px`;
+      root.style.width = `${nextRect.width}px`;
+      root.style.height = `${nextRect.height}px`;
+    };
+    const up = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  });
 }
 
 function promptForCodes() {
@@ -601,6 +1007,94 @@ function promptForCodes() {
   pinnedSourceViewId = viewId;
   pinnedLockToImage = isGuideLockedToView(viewId);
   return parsed;
+}
+
+function openGuideBindingPanel({ viewId = getCurrentViewId(), source = 'flash' } = {}) {
+  const metadata = getMetadata();
+  const binding = getGuideBinding(viewId);
+  const existingCodes =
+    binding.codes.length > 0
+      ? binding.codes
+      : Array.isArray(metadata.measurementGuideCodes)
+        ? metadata.measurementGuideCodes.map(code => normalizeCode(code)).filter(Boolean)
+        : [];
+  const initialTarget =
+    binding.scopeType === 'project' ? 'project' : binding.scopeType === 'view' ? 'view' : 'frame';
+
+  const overlay = document.createElement('div');
+  overlay.style.cssText =
+    'position:fixed;inset:0;background:rgba(15,23,42,.52);z-index:13450;display:flex;align-items:center;justify-content:center;padding:20px;';
+  overlay.innerHTML = `
+    <section style="width:min(560px,100%);background:#fff;border-radius:12px;padding:16px;box-shadow:0 18px 44px rgba(2,6,23,.25);">
+      <h3 style="margin:0;font-size:18px;color:#0f172a;">Guide Binding</h3>
+      <p style="margin:4px 0 12px;font-size:12px;color:#475569;">Set where this guide mapping applies: project, view, or frame.</p>
+      <label style="display:block;font-size:12px;color:#334155;font-weight:600;">Scope
+        <select id="guideBindingTarget" style="margin-top:4px;width:100%;border:1px solid #cbd5e1;border-radius:8px;padding:8px;">
+          <option value="project" ${initialTarget === 'project' ? 'selected' : ''}>Project (all images)</option>
+          <option value="view" ${initialTarget === 'view' ? 'selected' : ''}>View (${toBaseViewId(viewId)})</option>
+          <option value="frame" ${initialTarget === 'frame' ? 'selected' : ''}>Frame (${viewId})</option>
+        </select>
+      </label>
+      <label style="display:block;margin-top:10px;font-size:12px;color:#334155;font-weight:600;">Guide code(s)
+        <input id="guideBindingCodes" type="text" value="${existingCodes.join(', ')}" placeholder="e.g. CC-BK-BE, CS3B-SSA-SB-R" style="margin-top:4px;width:100%;border:1px solid #cbd5e1;border-radius:8px;padding:8px;" />
+      </label>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:10px;">
+        <label style="font-size:12px;color:#334155;display:flex;align-items:center;gap:6px;">
+          <input id="guideBindingLock" type="checkbox" ${binding.locked ? 'checked' : ''} /> Locked
+        </label>
+        <button id="guideBindingBrowse" type="button" style="border:1px solid #cbd5e1;background:#fff;color:#334155;border-radius:8px;padding:7px 10px;font-size:12px;font-weight:600;">Browse Gallery</button>
+      </div>
+      <p style="margin:10px 0 0;font-size:11px;color:#64748b;">${getBindingBreadcrumb(viewId)} · Source: ${source}</p>
+      <div style="margin-top:14px;display:flex;justify-content:flex-end;gap:8px;">
+        <button id="guideBindingCancel" type="button" style="border:1px solid #cbd5e1;background:#fff;color:#334155;border-radius:8px;padding:8px 11px;font-size:12px;">Cancel</button>
+        <button id="guideBindingSave" type="button" style="border:0;background:#1d4ed8;color:#fff;border-radius:8px;padding:8px 11px;font-size:12px;font-weight:700;">Save Binding</button>
+      </div>
+    </section>
+  `;
+
+  const close = () => overlay.remove();
+  overlay.addEventListener('click', event => {
+    if (event.target === overlay) close();
+  });
+
+  const codesInput = overlay.querySelector('#guideBindingCodes');
+  const targetSelect = overlay.querySelector('#guideBindingTarget');
+  const lockInput = overlay.querySelector('#guideBindingLock');
+
+  overlay.querySelector('#guideBindingBrowse')?.addEventListener('click', () => {
+    showGuideGallery();
+    gallerySelectHandler = ({ code }) => {
+      const nextCodes = parseCodes(`${codesInput?.value || ''}, ${code}`);
+      if (codesInput) {
+        codesInput.value = nextCodes.join(', ');
+      }
+    };
+  });
+
+  overlay.querySelector('#guideBindingCancel')?.addEventListener('click', close);
+  overlay.querySelector('#guideBindingSave')?.addEventListener('click', () => {
+    const target = String(targetSelect?.value || 'frame');
+    const codes = parseCodes(codesInput?.value || '');
+    if (!codes.length) {
+      if (typeof window.showStatusMessage === 'function') {
+        window.showStatusMessage('Please enter at least one guide code', 'warning');
+      }
+      return;
+    }
+    saveGuideSettings({
+      viewId,
+      codes,
+      lockToImage: lockInput?.checked === true,
+      bindingTarget: target,
+    });
+    close();
+    if (isGuidePinnedVisible && flashOverlay?.classList.contains('visible')) {
+      showGuideFlash({ holdMode: true, preservePinnedContext: false });
+    }
+    window.dispatchEvent(new Event('openpaint:guide-binding-changed'));
+  });
+
+  document.body.appendChild(overlay);
 }
 
 function showGuideFlash({
@@ -892,6 +1386,9 @@ function showGuideGallery() {
         const code = item.getAttribute('data-code');
         if (code) {
           saveGuideCodes([code]);
+          if (typeof gallerySelectHandler === 'function') {
+            gallerySelectHandler({ code, viewId: getCurrentViewId() });
+          }
           hideGuideGallery();
           showGuideFlash();
         }
@@ -907,6 +1404,7 @@ function showGuideGallery() {
 function hideGuideGallery() {
   if (!galleryOverlay) return;
   galleryOverlay.classList.remove('visible');
+  gallerySelectHandler = null;
 }
 
 function onKeyDown(event) {
@@ -985,6 +1483,34 @@ export function initMeasurementGuideFlash() {
   window.addEventListener('keyup', onKeyUp, { passive: false });
   window.setInterval(syncGuideOverlayToActiveView, 200);
 
+  window.addEventListener('resize', () => {
+    if (flashOverlay?.classList.contains('visible')) {
+      const rect = getFlashRect();
+      if (rect) {
+        setFlashRect(clampFlashRect(rect));
+      }
+      applyFlashWindowLayout(flashOverlay);
+    }
+  });
+
+  window.addEventListener('keydown', event => {
+    if (!flashOverlay?.classList.contains('visible')) return;
+    if (isTypingContext(event.target)) return;
+    if (event.key === '[') {
+      event.preventDefault();
+      setFlashSize(cycleFlashSize(-1), true);
+      applyFlashWindowLayout(flashOverlay);
+    } else if (event.key === ']') {
+      event.preventDefault();
+      setFlashSize(cycleFlashSize(1), true);
+      applyFlashWindowLayout(flashOverlay);
+    } else if (event.key === '0') {
+      event.preventDefault();
+      setFlashRect(null);
+      applyFlashWindowLayout(flashOverlay);
+    }
+  });
+
   // Close gallery on Escape
   window.addEventListener('keydown', e => {
     if (e.key === 'Escape' && galleryOverlay?.classList.contains('visible')) {
@@ -996,4 +1522,17 @@ export function initMeasurementGuideFlash() {
       hideGuideFlash();
     }
   });
+
+  window.openMeasurementGuideGallery = options => {
+    gallerySelectHandler = options?.onSelect || null;
+    showGuideGallery();
+  };
+  window.openGuideBindingPanel = options => {
+    openGuideBindingPanel(options || {});
+  };
+}
+
+export function openMeasurementGuideGallery(options = {}) {
+  gallerySelectHandler = options?.onSelect || null;
+  showGuideGallery();
 }

@@ -3,6 +3,7 @@ import { authService, type AuthUser } from '@/services/auth/authService';
 import { cloudSaveService } from '@/services/cloud/cloudSaveService';
 import { isAuthEnabled, isSupabaseConfigured } from '@/utils/env';
 import { getNoRewardMessage, showRewardAchievement } from './reward-achievement';
+import { ensureCloudSaveDetails } from './project-naming.js';
 
 const CLOUD_UI_STYLES = /* css */ `
   .cloud-toolbar-group {
@@ -408,6 +409,17 @@ async function handleCloudSave(): Promise<void> {
 
   const projectNameInput = document.getElementById('projectName') as HTMLInputElement | null;
   const projectName = projectNameInput?.value?.trim() || 'Untitled Project';
+
+  const canProceed = await ensureCloudSaveDetails();
+  if (!canProceed) {
+    if (typeof (window as any).showStatusMessage === 'function') {
+      (window as any).showStatusMessage(
+        'Cloud save cancelled: missing required project details',
+        'warning'
+      );
+    }
+    return;
+  }
 
   const saveBtn = document.getElementById('authCloudSaveBtn') as HTMLButtonElement | null;
   if (saveBtn) {

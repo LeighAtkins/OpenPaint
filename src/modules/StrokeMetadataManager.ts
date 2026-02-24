@@ -400,7 +400,8 @@ export class StrokeMetadataManager {
       oneTimeGuideTags[baseImageLabel] ||
       oneTimeGuideTags[currentScope] ||
       oneTimeGuideTags[currentBaseScope];
-    if (seededGuideTag && this.isValidTag(seededGuideTag, resolvedMode)) {
+    const seededLetterOnly = /^[A-Z]$/.test(seededGuideTag || '');
+    if (seededGuideTag && (this.isValidTag(seededGuideTag, resolvedMode) || seededLetterOnly)) {
       delete oneTimeGuideTags[imageLabel];
       delete oneTimeGuideTags[baseImageLabel];
       delete oneTimeGuideTags[currentScope];
@@ -548,8 +549,15 @@ export class StrokeMetadataManager {
       window.manualTagByImage[imageLabel] = nextTag;
       console.log(`[Tag] Manual tag sequence: ${usedTag} → ${nextTag}`);
     } else {
+      if (/^[A-Z]$/.test(usedTag)) {
+        const nextTag = this.incrementTag(usedTag);
+        window.labelsByImage[imageLabel] = nextTag;
+        window.manualTagByImage[imageLabel] = nextTag;
+      }
       // Clear labelsByImage so the system calculates the next tag automatically
-      delete window.labelsByImage[imageLabel];
+      if (!/^[A-Z]$/.test(usedTag)) {
+        delete window.labelsByImage[imageLabel];
+      }
       console.log(`[Tag] Auto tag used: ${usedTag}, clearing override`);
     }
 
@@ -577,6 +585,11 @@ export class StrokeMetadataManager {
       return String.fromCharCode(letter.charCodeAt(0) + 1);
     } else {
       // Letters+numbers mode: A1 -> A2 ... A9 -> B1
+      if (/^[A-Z]$/.test(tag)) {
+        const letter = tag[0];
+        if (letter === 'Z') return 'A';
+        return String.fromCharCode(letter.charCodeAt(0) + 1);
+      }
       const match = tag.match(/^([A-Z])(\d+)$/);
       if (!match) return 'A1';
 

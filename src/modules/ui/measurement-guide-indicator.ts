@@ -4,6 +4,10 @@ const STYLE_ID = 'measurementGuideIndicatorStyles';
 const GUIDE_CACHE_BUSTER = '2026-02-11-1';
 const MAX_CHIPS = 7;
 const GUIDE_TOGGLE_KEY = 'openpaint:measurementGuideIndicator:visible';
+const GUIDE_WINDOW_PREFS_KEY = 'openpaint:guideWindowPrefs:v1';
+const INDICATOR_SIZE_ORDER = ['S', 'M', 'L', 'XL'] as const;
+
+type IndicatorSize = (typeof INDICATOR_SIZE_ORDER)[number];
 
 interface RoleCacheEntry {
   roles: string[];
@@ -14,6 +18,95 @@ interface RoleCacheEntry {
 const guideRoleCache = new Map<string, Promise<RoleCacheEntry>>();
 let refreshTimer: number | null = null;
 let lastRenderKey = '';
+
+function getWindowPrefs(): any {
+  try {
+    const raw = localStorage.getItem(GUIDE_WINDOW_PREFS_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function setWindowPrefs(patch: Record<string, unknown>): void {
+  const current = getWindowPrefs();
+  const next = { ...current, ...patch };
+  try {
+    localStorage.setItem(GUIDE_WINDOW_PREFS_KEY, JSON.stringify(next));
+  } catch {
+    // no-op
+  }
+}
+
+function normalizeSize(value: unknown): IndicatorSize {
+  const raw = String(value || '').toUpperCase();
+  if (raw === 'S' || raw === 'M' || raw === 'L' || raw === 'XL') return raw;
+  return 'M';
+}
+
+function getStoredIndicatorSize(): IndicatorSize {
+  const prefs = getWindowPrefs();
+  return normalizeSize(prefs.indicatorSize);
+}
+
+function getIndicatorLayoutUnlocked(): boolean {
+  const prefs = getWindowPrefs();
+  return prefs.indicatorLayoutUnlocked === true;
+}
+
+function setIndicatorLayoutUnlocked(unlocked: boolean): void {
+  setWindowPrefs({ indicatorLayoutUnlocked: unlocked });
+}
+
+function setIndicatorSize(size: IndicatorSize, manual = true): void {
+  setWindowPrefs({ indicatorSize: size, indicatorManualSize: manual === true });
+}
+
+function resolveIndicatorSize(activeTool: string): IndicatorSize {
+  const prefs = getWindowPrefs();
+  if (prefs.indicatorManualSize === true) {
+    return normalizeSize(prefs.indicatorSize);
+  }
+  if (DRAW_MEASUREMENT_TOOLS.has(activeTool)) return 'M';
+  return 'S';
+}
+
+function cycleIndicatorSize(delta: number): IndicatorSize {
+  const current = getStoredIndicatorSize();
+  const index = INDICATOR_SIZE_ORDER.indexOf(current);
+  const nextIndex = Math.max(0, Math.min(INDICATOR_SIZE_ORDER.length - 1, index + delta));
+  return INDICATOR_SIZE_ORDER[nextIndex];
+}
+
+function getIndicatorRect(): { x: number; y: number; width: number; height: number } | null {
+  const prefs = getWindowPrefs();
+  const rect = prefs.indicatorRect;
+  if (!rect || typeof rect !== 'object') return null;
+  const x = Number((rect as any).x);
+  const y = Number((rect as any).y);
+  const width = Number((rect as any).width);
+  const height = Number((rect as any).height);
+  if (![x, y, width, height].every(Number.isFinite)) return null;
+  return { x, y, width, height };
+}
+
+function setIndicatorRect(
+  rect: { x: number; y: number; width: number; height: number } | null
+): void {
+  if (!rect) {
+    const prefs = getWindowPrefs();
+    delete prefs.indicatorRect;
+    try {
+      localStorage.setItem(GUIDE_WINDOW_PREFS_KEY, JSON.stringify(prefs));
+    } catch {
+      // no-op
+    }
+    return;
+  }
+  setWindowPrefs({ indicatorRect: rect });
+}
 
 function toText(value: unknown): string {
   if (typeof value === 'string') return value;
@@ -53,11 +146,11 @@ function getCurrentViewId(): string {
     if (typed === 'front' || typed === 'back' || typed === 'side') {
       return typed;
     }
-    const activeViewId = (input.dataset.activeViewId || '').trim().toLowerCase();
+    const activeViewId = (input.dataset.activeViewId || '').trim();
     if (activeViewId) return activeViewId;
   }
-  const currentView = String((window as any).app?.projectManager?.currentViewId || 'front');
-  return toBaseViewId(currentView);
+  const currentView = String((window as any).app?.projectManager?.currentViewId || '').trim();
+  return currentView || 'front';
 }
 
 function isGuideOverlayVisible(): boolean {
@@ -93,7 +186,8 @@ function ensureHeaderToggle(): void {
   const button = document.createElement('button');
   button.id = 'measurementGuideToggle';
   button.type = 'button';
-  button.className = 'text-slate-500 hover:text-slate-700 rounded-lg p-1 transition-colors';
+  button.className =
+    'text-slate-400 hover:text-slate-600 rounded-md px-1.5 py-0.5 text-[11px] leading-none font-medium transition-colors';
   const enabled = isIndicatorEnabled();
   button.title = enabled ? 'Hide measurement guide' : 'Show measurement guide';
   button.setAttribute('aria-label', button.title);
@@ -135,7 +229,91 @@ function getViewCandidates(viewId: string): string[] {
   return Array.from(new Set([viewId.trim(), base].filter(Boolean)));
 }
 
+function getGuideBinding(viewId: string): {
+  codes: string[];
+  activeCode: string;
+  locked: boolean;
+  scopeId: string;
+  scopeType: 'frame' | 'view' | 'project' | 'default';
+} {
+  const metadata = getMetadata();
+  const scopeBindings =
+    metadata?.measurementGuideBindingsByScope &&
+    typeof metadata.measurementGuideBindingsByScope === 'object'
+      ? metadata.measurementGuideBindingsByScope
+      : {};
+  const candidates = getViewCandidates(viewId);
+
+  for (const candidate of candidates) {
+    const binding = scopeBindings[candidate];
+    if (!binding || typeof binding !== 'object') continue;
+    const codes = Array.isArray(binding.codes)
+      ? binding.codes.map((c: unknown) => normalizeCode(c)).filter(Boolean)
+      : [];
+    const activeCode = normalizeCode((binding as any).activeCode || codes[0] || '');
+    const locked = (binding as any).locked === true;
+    if (codes.length || activeCode || locked) {
+      const base = toBaseViewId(viewId);
+      const scopeType = candidate === viewId ? 'frame' : candidate === base ? 'view' : 'frame';
+      return { codes, activeCode, locked, scopeId: candidate, scopeType };
+    }
+  }
+
+  const projectBinding = scopeBindings.__project__;
+  if (projectBinding && typeof projectBinding === 'object') {
+    const codes = Array.isArray(projectBinding.codes)
+      ? projectBinding.codes.map((c: unknown) => normalizeCode(c)).filter(Boolean)
+      : [];
+    const activeCode = normalizeCode((projectBinding as any).activeCode || codes[0] || '');
+    const locked = (projectBinding as any).locked === true;
+    if (codes.length || activeCode || locked) {
+      return {
+        codes,
+        activeCode,
+        locked,
+        scopeId: '__project__',
+        scopeType: 'project',
+      };
+    }
+  }
+
+  const defaults =
+    metadata?.measurementGuideProjectDefaults &&
+    typeof metadata.measurementGuideProjectDefaults === 'object'
+      ? metadata.measurementGuideProjectDefaults
+      : {};
+  const defaultCodes = Array.isArray(defaults.codes)
+    ? defaults.codes.map((c: unknown) => normalizeCode(c)).filter(Boolean)
+    : [];
+  const defaultActive = normalizeCode(defaults.activeCode || defaultCodes[0] || '');
+  if (defaultCodes.length || defaultActive) {
+    return {
+      codes: defaultCodes,
+      activeCode: defaultActive,
+      locked: false,
+      scopeId: '__default__',
+      scopeType: 'default',
+    };
+  }
+
+  return { codes: [], activeCode: '', locked: false, scopeId: '__default__', scopeType: 'default' };
+}
+
+function getBindingBreadcrumb(viewId: string): string {
+  const binding = getGuideBinding(viewId);
+  if (binding.scopeType === 'project') return `Bound: Project${binding.locked ? ' (Locked)' : ''}`;
+  if (binding.scopeType === 'view') {
+    return `Bound: View ${toBaseViewId(viewId)}${binding.locked ? ' (Locked)' : ''}`;
+  }
+  if (binding.scopeType === 'frame') {
+    return `Bound: Frame ${binding.scopeId}${binding.locked ? ' (Locked)' : ''}`;
+  }
+  return 'Bound: Default';
+}
+
 function isGuideLockedToView(viewId: string): boolean {
+  const binding = getGuideBinding(viewId);
+  if (binding.locked) return true;
   const metadata = getMetadata();
   const lockByView =
     metadata?.measurementGuideLockByView && typeof metadata.measurementGuideLockByView === 'object'
@@ -146,6 +324,10 @@ function isGuideLockedToView(viewId: string): boolean {
 }
 
 function resolveGuideCode(viewId: string): string {
+  const binding = getGuideBinding(viewId);
+  if (binding.activeCode) return binding.activeCode;
+  if (binding.codes.length) return binding.codes[0];
+
   const metadata = getMetadata();
   const byView =
     metadata?.measurementGuideCodesByView &&
@@ -312,7 +494,7 @@ async function getGuideRoles(
     );
   }
   const cached = await guideRoleCache.get(key);
-  const roles = (cached?.roles || []).filter(role => /^[A-Z]\d+$/.test(role));
+  const roles = (cached?.roles || []).filter(role => /^[A-Z](?:\d+)?$/.test(role));
   return { roles, ok: cached?.ok === true };
 }
 
@@ -326,7 +508,7 @@ function ensureStyles(): void {
       top: 12px;
       right: 12px;
       z-index: 13340;
-      width: min(220px, calc(100vw - 24px));
+      width: min(320px, calc(100vw - 24px));
       border-radius: 12px;
       border: 1px solid rgba(148, 163, 184, 0.5);
       background: rgba(15, 23, 42, 0.85);
@@ -334,6 +516,10 @@ function ensureStyles(): void {
       overflow: hidden;
       backdrop-filter: blur(6px);
       pointer-events: auto;
+      transition: width 160ms ease, height 160ms ease, left 140ms ease, top 140ms ease;
+    }
+    .measurement-guide-indicator.is-unlocked .measurement-guide-indicator-head {
+      cursor: move;
     }
     .measurement-guide-indicator-head {
       display: flex;
@@ -348,10 +534,46 @@ function ensureStyles(): void {
       text-transform: uppercase;
       font-weight: 700;
     }
+    .measurement-guide-indicator-meta {
+      margin: 0;
+      padding: 0 9px 6px;
+      font-size: 10px;
+      color: #cbd5e1;
+      letter-spacing: 0.01em;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+    }
     .measurement-guide-indicator-head strong {
       font-size: 12px;
       letter-spacing: 0.02em;
       color: #f8fafc;
+    }
+    .measurement-guide-indicator-controls {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-left: auto;
+    }
+    .measurement-guide-indicator-ctl {
+      border: 1px solid rgba(148, 163, 184, 0.55);
+      background: rgba(15, 23, 42, 0.62);
+      color: #cbd5e1;
+      border-radius: 6px;
+      min-width: 20px;
+      height: 20px;
+      font-size: 10px;
+      line-height: 1;
+      font-weight: 700;
+      padding: 0 5px;
+      cursor: pointer;
+    }
+    .measurement-guide-indicator-ctl:hover {
+      color: #f8fafc;
+      border-color: rgba(186, 230, 253, 0.75);
+    }
+    .measurement-guide-indicator-ctl[aria-pressed="true"] {
+      color: #082f49;
+      background: #7dd3fc;
+      border-color: #bae6fd;
     }
     .measurement-guide-indicator-hero {
       position: relative;
@@ -398,6 +620,30 @@ function ensureStyles(): void {
       border-color: #bae6fd;
       box-shadow: 0 0 0 2px rgba(125, 211, 252, 0.3);
     }
+    .measurement-guide-indicator-resize {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      width: 16px;
+      height: 16px;
+      cursor: nwse-resize;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .measurement-guide-indicator-resize::before {
+      content: '';
+      position: absolute;
+      right: 3px;
+      bottom: 3px;
+      width: 8px;
+      height: 8px;
+      border-right: 2px solid rgba(186, 230, 253, 0.8);
+      border-bottom: 2px solid rgba(186, 230, 253, 0.8);
+    }
+    .measurement-guide-indicator.is-unlocked .measurement-guide-indicator-resize {
+      opacity: 1;
+      pointer-events: auto;
+    }
   `;
   document.head.appendChild(style);
 }
@@ -418,6 +664,20 @@ function getActiveToolName(): string {
 }
 
 function positionIndicator(root: HTMLElement): void {
+  if (getIndicatorLayoutUnlocked()) {
+    const rect = getIndicatorRect();
+    if (rect) {
+      root.style.left = `${Math.round(rect.x)}px`;
+      root.style.top = `${Math.round(rect.y)}px`;
+      root.style.right = 'auto';
+      root.style.width = `${Math.round(rect.width)}px`;
+      root.style.height = `${Math.round(rect.height)}px`;
+      return;
+    }
+  }
+
+  root.style.left = 'auto';
+  root.style.height = '';
   let right = 12;
   const imagePanel = document.getElementById('imagePanel');
   if (imagePanel) {
@@ -435,6 +695,159 @@ function positionIndicator(root: HTMLElement): void {
   }
   root.style.right = `${Math.round(right)}px`;
   root.style.top = '12px';
+}
+
+function clampIndicatorRect(rect: { x: number; y: number; width: number; height: number }): {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+} {
+  const minWidth = 220;
+  const minHeight = 170;
+  const maxWidth = Math.max(minWidth, window.innerWidth - 16);
+  const maxHeight = Math.max(minHeight, window.innerHeight - 16);
+  const width = Math.max(minWidth, Math.min(maxWidth, rect.width));
+  const height = Math.max(minHeight, Math.min(maxHeight, rect.height));
+  const x = Math.max(8, Math.min(window.innerWidth - width - 8, rect.x));
+  const y = Math.max(8, Math.min(window.innerHeight - height - 8, rect.y));
+  return { x, y, width, height };
+}
+
+function applyIndicatorPreset(root: HTMLElement, size: IndicatorSize): void {
+  const widthBySize: Record<IndicatorSize, number> = { S: 240, M: 320, L: 420, XL: 560 };
+  const heroBySize: Record<IndicatorSize, number> = { S: 92, M: 130, L: 180, XL: 240 };
+  const width = widthBySize[size];
+  root.dataset.size = size;
+  root.style.width = `${Math.min(width, window.innerWidth - 16)}px`;
+  const hero = root.querySelector('.measurement-guide-indicator-hero') as HTMLElement | null;
+  if (hero) hero.style.height = `${heroBySize[size]}px`;
+}
+
+function bindIndicatorWindowControls(root: HTMLElement): void {
+  const unlocked = getIndicatorLayoutUnlocked();
+  root.classList.toggle('is-unlocked', unlocked);
+
+  const header = root.querySelector('.measurement-guide-indicator-head') as HTMLElement | null;
+  const resizeHandle = root.querySelector(
+    '.measurement-guide-indicator-resize'
+  ) as HTMLElement | null;
+  const dec = root.querySelector('[data-guide-size-dec]') as HTMLButtonElement | null;
+  const med = root.querySelector('[data-guide-size-med]') as HTMLButtonElement | null;
+  const inc = root.querySelector('[data-guide-size-inc]') as HTMLButtonElement | null;
+  const fit = root.querySelector('[data-guide-size-fit]') as HTMLButtonElement | null;
+  const unlock = root.querySelector('[data-guide-layout-unlock]') as HTMLButtonElement | null;
+  const bind = root.querySelector('[data-guide-bind]') as HTMLButtonElement | null;
+
+  const updateUnlockUi = () => {
+    const nextUnlocked = getIndicatorLayoutUnlocked();
+    root.classList.toggle('is-unlocked', nextUnlocked);
+    if (unlock) unlock.setAttribute('aria-pressed', nextUnlocked ? 'true' : 'false');
+  };
+
+  dec?.addEventListener('click', e => {
+    e.preventDefault();
+    const next = cycleIndicatorSize(-1);
+    setIndicatorSize(next, true);
+    scheduleRender();
+  });
+  med?.addEventListener('click', e => {
+    e.preventDefault();
+    setIndicatorSize('M', true);
+    scheduleRender();
+  });
+  inc?.addEventListener('click', e => {
+    e.preventDefault();
+    const next = cycleIndicatorSize(1);
+    setIndicatorSize(next, true);
+    scheduleRender();
+  });
+  fit?.addEventListener('click', e => {
+    e.preventDefault();
+    setIndicatorRect(null);
+    setIndicatorLayoutUnlocked(false);
+    updateUnlockUi();
+    scheduleRender();
+  });
+  unlock?.addEventListener('click', e => {
+    e.preventDefault();
+    const next = !getIndicatorLayoutUnlocked();
+    setIndicatorLayoutUnlocked(next);
+    if (next && !getIndicatorRect()) {
+      const rect = root.getBoundingClientRect();
+      setIndicatorRect(
+        clampIndicatorRect({ x: rect.left, y: rect.top, width: rect.width, height: rect.height })
+      );
+    }
+    updateUnlockUi();
+    scheduleRender();
+  });
+  bind?.addEventListener('click', e => {
+    e.preventDefault();
+    const viewId = getCurrentViewId();
+    if (typeof (window as any).openGuideBindingPanel === 'function') {
+      (window as any).openGuideBindingPanel({ viewId, source: 'indicator' });
+    }
+  });
+
+  header?.addEventListener('pointerdown', event => {
+    if (!getIndicatorLayoutUnlocked()) return;
+    const target = event.target as HTMLElement | null;
+    if (target?.closest('.measurement-guide-indicator-controls')) return;
+    event.preventDefault();
+    const startRect = root.getBoundingClientRect();
+    const startX = event.clientX;
+    const startY = event.clientY;
+    const move = (moveEvent: PointerEvent) => {
+      const nextRect = clampIndicatorRect({
+        x: startRect.left + (moveEvent.clientX - startX),
+        y: startRect.top + (moveEvent.clientY - startY),
+        width: startRect.width,
+        height: startRect.height,
+      });
+      setIndicatorRect(nextRect);
+      root.style.left = `${nextRect.x}px`;
+      root.style.top = `${nextRect.y}px`;
+      root.style.width = `${nextRect.width}px`;
+      root.style.height = `${nextRect.height}px`;
+      root.style.right = 'auto';
+    };
+    const up = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  });
+
+  resizeHandle?.addEventListener('pointerdown', event => {
+    if (!getIndicatorLayoutUnlocked()) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const startRect = root.getBoundingClientRect();
+    const startX = event.clientX;
+    const startY = event.clientY;
+    const move = (moveEvent: PointerEvent) => {
+      const nextRect = clampIndicatorRect({
+        x: startRect.left,
+        y: startRect.top,
+        width: startRect.width + (moveEvent.clientX - startX),
+        height: startRect.height + (moveEvent.clientY - startY),
+      });
+      setIndicatorRect(nextRect);
+      root.style.width = `${nextRect.width}px`;
+      root.style.height = `${nextRect.height}px`;
+      root.style.left = `${nextRect.x}px`;
+      root.style.top = `${nextRect.y}px`;
+      root.style.right = 'auto';
+    };
+    const up = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  });
 }
 
 function applyGuideOneTimeSeed(viewId: string, tag: string): void {
@@ -529,7 +942,7 @@ async function renderIndicator(): Promise<void> {
   const seeded = normalizeLabel(guideSeeds[scoped] || guideSeeds[toBaseViewId(viewId)] || '');
 
   let activeRole =
-    (seeded && (roles.includes(seeded) || /^[A-Z]\d+$/.test(seeded)) ? seeded : '') ||
+    (seeded && (roles.includes(seeded) || /^[A-Z](?:\d+)?$/.test(seeded)) ? seeded : '') ||
     roles.find(role => !used.has(normalizeLabel(role))) ||
     '';
   if (!activeRole) {
@@ -548,8 +961,12 @@ async function renderIndicator(): Promise<void> {
     })
     .join('');
 
-  const renderKey = `${viewId}|${code}|${activeRole}|${chips.join(',')}`;
+  const activeSize = resolveIndicatorSize(activeTool);
+  const unlocked = getIndicatorLayoutUnlocked();
+  const breadcrumb = getBindingBreadcrumb(viewId);
+  const renderKey = `${viewId}|${code}|${activeRole}|${chips.join(',')}|${activeSize}|${unlocked ? 'u' : 'l'}|${breadcrumb}`;
   if (renderKey === lastRenderKey) {
+    applyIndicatorPreset(root, activeSize);
     positionIndicator(root);
     applyGuideOneTimeSeed(viewId, activeRole);
     root.style.display = 'block';
@@ -561,12 +978,23 @@ async function renderIndicator(): Promise<void> {
     <div class="measurement-guide-indicator-head">
       <span>Guide</span>
       <strong>${activeRole}</strong>
+      <div class="measurement-guide-indicator-controls">
+        <button type="button" class="measurement-guide-indicator-ctl" data-guide-size-dec aria-label="Smaller guide">-</button>
+        <button type="button" class="measurement-guide-indicator-ctl" data-guide-size-med aria-label="Medium guide">M</button>
+        <button type="button" class="measurement-guide-indicator-ctl" data-guide-size-inc aria-label="Larger guide">+</button>
+        <button type="button" class="measurement-guide-indicator-ctl" data-guide-size-fit aria-label="Fit guide">Fit</button>
+        <button type="button" class="measurement-guide-indicator-ctl" data-guide-bind aria-label="Guide binding">Bind</button>
+        <button type="button" class="measurement-guide-indicator-ctl" data-guide-layout-unlock aria-pressed="${unlocked ? 'true' : 'false'}" aria-label="Unlock guide layout">UL</button>
+      </div>
     </div>
+    <p class="measurement-guide-indicator-meta">${getBindingBreadcrumb(viewId)}</p>
     <div class="measurement-guide-indicator-hero">
       <img src="${buildGuideUrl(code, viewId)}" alt="Measurement guide ${code}" />
     </div>
     <div class="measurement-guide-indicator-track">${chipHtml}</div>
+    <div class="measurement-guide-indicator-resize" aria-hidden="true"></div>
   `;
+  applyIndicatorPreset(root, activeSize);
   positionIndicator(root);
   applyGuideOneTimeSeed(viewId, activeRole);
   root.querySelectorAll('[data-guide-role]').forEach(node => {
@@ -579,6 +1007,7 @@ async function renderIndicator(): Promise<void> {
       scheduleRender();
     });
   });
+  bindIndicatorWindowControls(root);
   root.style.display = 'block';
 }
 
@@ -593,6 +1022,34 @@ export function initMeasurementGuideIndicator(): void {
   window.addEventListener('toolchange', scheduleRender);
   window.addEventListener('openpaint:stroke-created', scheduleRender as EventListener);
   window.addEventListener('resize', scheduleRender);
+  window.addEventListener('keydown', event => {
+    const root = document.getElementById(INDICATOR_ID);
+    if (!(root instanceof HTMLElement) || root.style.display === 'none') return;
+    const target = event.target as HTMLElement | null;
+    if (
+      target &&
+      (target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.tagName === 'SELECT' ||
+        target.isContentEditable)
+    ) {
+      return;
+    }
+    if (event.key === '[') {
+      event.preventDefault();
+      setIndicatorSize(cycleIndicatorSize(-1), true);
+      scheduleRender();
+    } else if (event.key === ']') {
+      event.preventDefault();
+      setIndicatorSize(cycleIndicatorSize(1), true);
+      scheduleRender();
+    } else if (event.key === '0') {
+      event.preventDefault();
+      setIndicatorRect(null);
+      setIndicatorLayoutUnlocked(false);
+      scheduleRender();
+    }
+  });
 
   if (refreshTimer !== null) {
     window.clearInterval(refreshTimer);

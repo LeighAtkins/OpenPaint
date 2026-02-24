@@ -52,6 +52,33 @@ export function initScrollSelectSystem() {
   const SCROLL_SELECT_STORAGE_KEY = 'scrollSelectEnabled';
   const SCROLL_SWITCH_DEBOUNCE_MS = 70;
 
+  function ensureGuideBadgeStyles() {
+    if (document.getElementById('miniStepperGuideBadgeStyles')) return;
+    const style = document.createElement('style');
+    style.id = 'miniStepperGuideBadgeStyles';
+    style.textContent = `
+      #mini-stepper .step[data-guide-state="linked"]::after,
+      #mini-stepper .step[data-guide-state="locked"]::after {
+        content: '';
+        position: absolute;
+        right: -1px;
+        top: -1px;
+        width: 9px;
+        height: 9px;
+        border-radius: 999px;
+        border: 1px solid rgba(255,255,255,0.9);
+        box-shadow: 0 0 0 1px rgba(15,23,42,0.18);
+      }
+      #mini-stepper .step[data-guide-state="linked"]::after {
+        background: #38bdf8;
+      }
+      #mini-stepper .step[data-guide-state="locked"]::after {
+        background: #f59e0b;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
   function loadScrollSelectState() {
     try {
       const stored = localStorage.getItem(SCROLL_SELECT_STORAGE_KEY);
@@ -301,6 +328,7 @@ export function initScrollSelectSystem() {
           btn.removeAttribute('aria-current');
         }
       });
+      applyMiniStepperGuideBadges(stepButtons as Array<HTMLButtonElement>);
 
       const panelCollapsed = isImagePanelCollapsed();
       positionStepperIndicator(activeButton, { animate: panelCollapsed ? false : animate });
@@ -917,6 +945,88 @@ export function initScrollSelectSystem() {
       navContainer.style.zIndex = '5000';
     }
 
+    function getMiniStepperGuideState(label: string): {
+      state: 'none' | 'linked' | 'locked';
+      code: string;
+    } {
+      const metadata =
+        window.app?.projectManager?.getProjectMetadata?.() || window.projectMetadata || {};
+      const bindings =
+        metadata?.measurementGuideBindingsByScope &&
+        typeof metadata.measurementGuideBindingsByScope === 'object'
+          ? metadata.measurementGuideBindingsByScope
+          : {};
+      const base = String(label || '').split('::')[0] || String(label || '');
+
+      const frameBinding = bindings[label];
+      if (frameBinding && typeof frameBinding === 'object') {
+        const code = String(frameBinding.activeCode || frameBinding.codes?.[0] || '').trim();
+        if (code) {
+          return {
+            state: frameBinding.locked === true ? 'locked' : 'linked',
+            code,
+          };
+        }
+      }
+
+      const viewBinding = bindings[base];
+      if (viewBinding && typeof viewBinding === 'object') {
+        const code = String(viewBinding.activeCode || viewBinding.codes?.[0] || '').trim();
+        if (code) {
+          return {
+            state: viewBinding.locked === true ? 'locked' : 'linked',
+            code,
+          };
+        }
+      }
+
+      const projectBinding = bindings.__project__;
+      if (projectBinding && typeof projectBinding === 'object') {
+        const code = String(projectBinding.activeCode || projectBinding.codes?.[0] || '').trim();
+        if (code) {
+          return {
+            state: projectBinding.locked === true ? 'locked' : 'linked',
+            code,
+          };
+        }
+      }
+
+      const byViewCodes =
+        metadata?.measurementGuideCodesByView?.[label] ||
+        metadata?.measurementGuideCodesByView?.[base];
+      const legacyCode = Array.isArray(byViewCodes)
+        ? String(byViewCodes[0] || '').trim()
+        : String(metadata?.measurementGuideCode || '').trim();
+      const legacyLocked =
+        metadata?.measurementGuideLockByView?.[label] === true ||
+        metadata?.measurementGuideLockByView?.[base] === true;
+      if (legacyCode) {
+        return { state: legacyLocked ? 'locked' : 'linked', code: legacyCode };
+      }
+
+      return { state: 'none', code: '' };
+    }
+
+    function applyMiniStepperGuideBadges(stepButtons: Array<HTMLButtonElement>) {
+      ensureGuideBadgeStyles();
+      stepButtons.forEach(btn => {
+        const label = btn.dataset.target || '';
+        const stateInfo = getMiniStepperGuideState(label);
+        if (stateInfo.state === 'none') {
+          delete btn.dataset.guideState;
+          return;
+        }
+        btn.dataset.guideState = stateInfo.state;
+        const baseLabel = btn.getAttribute('aria-label') || `Go to ${label}`;
+        const suffix =
+          stateInfo.state === 'locked'
+            ? `Guide locked (${stateInfo.code})`
+            : `Guide linked (${stateInfo.code})`;
+        btn.setAttribute('aria-label', `${baseLabel}. ${suffix}. Right-click to edit binding.`);
+        btn.title = `${label} - ${suffix} - Right-click to edit binding`;
+      });
+    }
+
     function updatePills() {
       const stepper = document.getElementById('mini-stepper');
 
@@ -1018,7 +1128,7 @@ export function initScrollSelectSystem() {
                           <li class="snap-center">
                               <button
                                   type="button"
-                                  class="step w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-200 bg-white text-slate-600 border border-slate-300 hover:scale-105 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-slate-500"
+                                  class="step relative w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-200 bg-white text-slate-600 border border-slate-300 hover:scale-105 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-slate-500"
                                   aria-label="Go to ${label}"
                                   data-target="${label}"
                                   data-index="${idx}">
@@ -1037,6 +1147,7 @@ export function initScrollSelectSystem() {
       stepButtons.forEach(btn => {
         btn.classList.add(...cfg.inactiveClasses.split(' '));
       });
+      applyMiniStepperGuideBadges(stepButtons as Array<HTMLButtonElement>);
 
       // Update active state immediately after creating pills
       setTimeout(() => updateActivePill({ animate: false }), 100);
@@ -1099,6 +1210,15 @@ export function initScrollSelectSystem() {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
             btn.click();
+          }
+        });
+
+        btn.addEventListener('contextmenu', event => {
+          event.preventDefault();
+          const label = btn.dataset.target || '';
+          if (!label) return;
+          if (typeof window.openGuideBindingPanel === 'function') {
+            window.openGuideBindingPanel({ viewId: label, source: 'mini-stepper' });
           }
         });
       });
@@ -1221,6 +1341,7 @@ export function initScrollSelectSystem() {
     ensureImageListObserver();
 
     function initialize() {
+      ensureGuideBadgeStyles();
       positionNavigationContainer();
 
       // Initial update
@@ -1229,6 +1350,15 @@ export function initScrollSelectSystem() {
 
       // Update active pill immediately
       updateActivePill({ animate: false });
+
+      window.addEventListener('openpaint:guide-binding-changed', () => {
+        const currentButtons = Array.from(
+          document.querySelectorAll('#mini-stepper button[data-target]')
+        ) as Array<HTMLButtonElement>;
+        if (currentButtons.length > 0) {
+          applyMiniStepperGuideBadges(currentButtons);
+        }
+      });
 
       // Set up mutation-driven updates to handle dynamically added images
       let ticking = false;

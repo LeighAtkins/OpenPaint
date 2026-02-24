@@ -22,17 +22,24 @@ export function createDefaultSofaMetadata() {
     customSofaType: '',
     measurementGuideCode: '',
     measurementGuideCodes: [],
+    measurementGuideLibraryCodes: [],
     naming: {
       customerName: '',
       sofaTypeLabel: '',
       jobDate: '',
       extraLabel: '',
       autoProjectTitle: '',
+      firstSavedAt: '',
     },
     measurementChecks: [],
     measurementConnections: [],
     measurementGuideCodesByView: {},
     measurementGuideLockByView: {},
+    measurementGuideBindingsByScope: {},
+    measurementGuideProjectDefaults: {
+      codes: [],
+      activeCode: '',
+    },
     tagColorTheme: null,
     pieceGroups: [],
     imagePartLabels: {},
@@ -59,6 +66,11 @@ export function normalizeSofaMetadata(input) {
     : measurementGuideCode
       ? [measurementGuideCode.toUpperCase()]
       : [];
+  const measurementGuideLibraryCodes = Array.isArray(source.measurementGuideLibraryCodes)
+    ? source.measurementGuideLibraryCodes
+        .map(code => (typeof code === 'string' ? code.trim().toUpperCase() : ''))
+        .filter(Boolean)
+    : measurementGuideCodes;
 
   const measurementChecks = Array.isArray(source.measurementChecks)
     ? safeClone(source.measurementChecks, [])
@@ -74,6 +86,27 @@ export function normalizeSofaMetadata(input) {
     source.measurementGuideLockByView && typeof source.measurementGuideLockByView === 'object'
       ? safeClone(source.measurementGuideLockByView, {})
       : {};
+  const measurementGuideBindingsByScope =
+    source.measurementGuideBindingsByScope &&
+    typeof source.measurementGuideBindingsByScope === 'object'
+      ? safeClone(source.measurementGuideBindingsByScope, {})
+      : {};
+  const projectDefaultsSource =
+    source.measurementGuideProjectDefaults &&
+    typeof source.measurementGuideProjectDefaults === 'object'
+      ? source.measurementGuideProjectDefaults
+      : {};
+  const measurementGuideProjectDefaults = {
+    codes: Array.isArray(projectDefaultsSource.codes)
+      ? projectDefaultsSource.codes
+          .map(code => (typeof code === 'string' ? code.trim().toUpperCase() : ''))
+          .filter(Boolean)
+      : measurementGuideCodes,
+    activeCode:
+      typeof projectDefaultsSource.activeCode === 'string'
+        ? projectDefaultsSource.activeCode.trim().toUpperCase()
+        : measurementGuideCodes[0] || '',
+  };
   const tagColorTheme =
     source.tagColorTheme && typeof source.tagColorTheme === 'object'
       ? {
@@ -105,6 +138,8 @@ export function normalizeSofaMetadata(input) {
             typeof source.naming.autoProjectTitle === 'string'
               ? source.naming.autoProjectTitle
               : '',
+          firstSavedAt:
+            typeof source.naming.firstSavedAt === 'string' ? source.naming.firstSavedAt : '',
         }
       : defaults.naming;
 
@@ -114,10 +149,13 @@ export function normalizeSofaMetadata(input) {
     customSofaType,
     measurementGuideCode,
     measurementGuideCodes,
+    measurementGuideLibraryCodes,
     measurementChecks,
     measurementConnections,
     measurementGuideCodesByView,
     measurementGuideLockByView,
+    measurementGuideBindingsByScope,
+    measurementGuideProjectDefaults,
     tagColorTheme,
     pieceGroups,
     imagePartLabels,
