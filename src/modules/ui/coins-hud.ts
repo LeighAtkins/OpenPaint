@@ -20,7 +20,8 @@ function createCoinIcon(): HTMLCanvasElement {
   img.onload = () => {
     const ctx = canvas.getContext('2d');
     if (ctx) {
-      // First frame of 4-frame strip (64x16 → first 16x16)
+      ctx.imageSmoothingEnabled = false;
+      ctx.clearRect(0, 0, 16, 16);
       ctx.drawImage(img, 0, 0, 16, 16, 0, 0, 16, 16);
     }
   };

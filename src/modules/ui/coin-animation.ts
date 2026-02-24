@@ -20,7 +20,7 @@ export function playCoinFlyAnimation(): void {
     transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   `;
 
-  // Render first frame of coin sprite
+  // Render coin sprite
   const canvas = document.createElement('canvas');
   canvas.width = 32;
   canvas.height = 32;
@@ -32,6 +32,7 @@ export function playCoinFlyAnimation(): void {
     const ctx = canvas.getContext('2d');
     if (ctx) {
       ctx.imageSmoothingEnabled = false;
+      ctx.clearRect(0, 0, 32, 32);
       ctx.drawImage(img, 0, 0, 16, 16, 0, 0, 32, 32);
     }
   };

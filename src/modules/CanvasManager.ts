@@ -2260,6 +2260,13 @@ export class CanvasManager {
     };
 
     this.fabricCanvas.on('mouse:wheel', (opt: FabricIEvent) => {
+      if (opt?.e?.altKey === true) {
+        if (!opt?.e?.__brushSizeHandled) {
+          opt.e.preventDefault();
+          opt.e.stopPropagation();
+        }
+        return;
+      }
       if (opt?.e?.__brushSizeHandled) {
         return;
       }

@@ -18,9 +18,111 @@ const PET_CATALOG = [
   { id: 'dog-6', name: 'Siberian Husky', type: 'dog', cost: 100 },
 ];
 
-const COINS_PER_SAVE = 10;
+const COINS_PER_REWARD = 5;
 const DAILY_COIN_CAP = 100;
 const EARN_COOLDOWN_MS = 5 * 60 * 1000;
+
+const MIN_DRAWN_MARKS_FOR_REWARD = 1;
+const MIN_NEW_MARKS_FOR_REWARD = 2;
+
+function countArray(value) {
+  return Array.isArray(value) ? value.length : 0;
+}
+
+function countMetadataBucketEntries(bucket) {
+  if (!bucket || typeof bucket !== 'object') return 0;
+  let total = 0;
+  for (const key of Object.keys(bucket)) {
+    total += countArray(bucket[key]);
+  }
+  return total;
+}
+
+function countCanvasDrawObjects(canvasJSON) {
+  const objects = Array.isArray(canvasJSON?.objects) ? canvasJSON.objects : [];
+  let total = 0;
+  for (const obj of objects) {
+    const type = String(obj?.type || '').toLowerCase();
+    if (!type) continue;
+    if (type === 'image') continue;
+    total += 1;
+  }
+  return total;
+}
+
+function getSaveQualification(projectData) {
+  if (!projectData || typeof projectData !== 'object') {
+    return { qualifying: true, hasImage: true, drawnMarks: MIN_DRAWN_MARKS_FOR_REWARD };
+  }
+
+  const views = projectData.views || {};
+  const viewKeys = Object.keys(views);
+
+  const hasImage = viewKeys.some(k => {
+    const v = views[k];
+    return Boolean(
+      v &&
+      (v.image ||
+        v.backgroundImage ||
+        v.imageData ||
+        v.imageUrl ||
+        v.imageDataURL ||
+        v.canvasJSON?.backgroundImage?.src)
+    );
+  });
+
+  const drawnMarks = viewKeys.reduce((sum, k) => {
+    const v = views[k] || {};
+    const legacyStrokes = countArray(v.vectorStrokes) + countArray(v.lineStrokes);
+    const metadataStrokes = countMetadataBucketEntries(v.metadata?.vectorStrokesByImage);
+    const metadataLines =
+      countMetadataBucketEntries(v.metadata?.lineStrokesByImage) +
+      countMetadataBucketEntries(v.metadata?.strokeSequenceByImage);
+    const canvasObjects = countCanvasDrawObjects(v.canvasJSON);
+    return sum + legacyStrokes + metadataStrokes + metadataLines + canvasObjects;
+  }, 0);
+
+  return {
+    qualifying: hasImage && drawnMarks >= MIN_DRAWN_MARKS_FOR_REWARD,
+    hasImage,
+    drawnMarks,
+  };
+}
+
+function parseRewardIdempotencyKey(idempotencyKey) {
+  const raw = String(idempotencyKey || '');
+  if (!raw) return null;
+
+  const pipe = raw.split('|');
+  if (pipe.length >= 6 && pipe[0] === 'reward') {
+    const rewardType = pipe[1];
+    const projectId = pipe[3] || '';
+    const drawnMarks = Number(pipe[5]);
+    return {
+      rewardType,
+      projectId,
+      drawnMarks: Number.isFinite(drawnMarks) ? drawnMarks : null,
+    };
+  }
+
+  const legacy = raw.split(':');
+  if (legacy.length >= 3) {
+    return {
+      rewardType: 'cloud_save',
+      projectId: legacy[1] || '',
+      drawnMarks: null,
+    };
+  }
+
+  return null;
+}
+
+function buildRewardIdempotencyKey(userId, rewardType, projectId, saveTimestamp, drawnMarks) {
+  const safeProjectId = String(projectId || 'unknown');
+  const safeTimestamp = String(saveTimestamp || new Date().toISOString());
+  const marks = Number.isFinite(Number(drawnMarks)) ? String(Number(drawnMarks)) : '0';
+  return `reward|${rewardType}|${userId}|${safeProjectId}|${safeTimestamp}|${marks}`;
+}
 
 function getSupabaseAdmin() {
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) return null;
@@ -121,13 +223,15 @@ export default async function handler(req, res) {
 
   // POST /api/wallet/earn - earn coins
   if (req.method === 'POST' && isEarn) {
-    const { projectId, saveTimestamp, projectData } = req.body || {};
+    const { projectId, saveTimestamp, projectData, rewardType = 'cloud_save' } = req.body || {};
 
     if (!projectId || !saveTimestamp) {
       return res
         .status(400)
         .json({ success: false, message: 'projectId and saveTimestamp required' });
     }
+
+    const effectiveRewardType = rewardType === 'pdf_export' ? 'pdf_export' : 'cloud_save';
 
     const { data: wallet } = await supabase
       .from('wallets')
@@ -139,25 +243,21 @@ export default async function handler(req, res) {
       await supabase.from('wallets').insert({ user_id: userId, balance: 0 });
     }
 
-    // Validate qualifying save
-    if (projectData) {
-      const views = projectData.views || {};
-      const viewKeys = Object.keys(views);
-      const hasImage = viewKeys.some(k => {
-        const v = views[k];
-        return v && (v.image || v.backgroundImage || v.imageData);
-      });
-      const totalStrokes = viewKeys.reduce((sum, k) => {
-        const v = views[k];
-        return sum + (v?.vectorStrokes?.length || 0) + (v?.lineStrokes?.length || 0);
-      }, 0);
-
-      if (!hasImage || totalStrokes < 3) {
+    let qualification = { qualifying: true, hasImage: true, drawnMarks: 0 };
+    if (effectiveRewardType === 'cloud_save') {
+      qualification = getSaveQualification(projectData);
+      if (!qualification.qualifying) {
         return res.json({
           success: true,
           earned: 0,
           balance: wallet?.balance || 0,
           reason: 'not_qualifying',
+          rewardType: effectiveRewardType,
+          debug: {
+            hasImage: qualification.hasImage,
+            drawnMarks: qualification.drawnMarks,
+            minDrawnMarks: MIN_DRAWN_MARKS_FOR_REWARD,
+          },
         });
       }
     }
@@ -167,6 +267,7 @@ export default async function handler(req, res) {
       .from('coin_transactions')
       .select('created_at')
       .eq('user_id', userId)
+      .eq('reason', effectiveRewardType)
       .gt('amount', 0)
       .order('created_at', { ascending: false })
       .limit(1)
@@ -179,8 +280,48 @@ export default async function handler(req, res) {
           success: true,
           earned: 0,
           balance: wallet?.balance || 0,
-          reason: 'cooldown',
+          reason: effectiveRewardType === 'pdf_export' ? 'pdf_cooldown' : 'cooldown',
+          rewardType: effectiveRewardType,
         });
+      }
+    }
+
+    if (effectiveRewardType === 'cloud_save') {
+      const { data: recentProjectTxs } = await supabase
+        .from('coin_transactions')
+        .select('idempotency_key')
+        .eq('user_id', userId)
+        .eq('reason', 'cloud_save')
+        .gt('amount', 0)
+        .order('created_at', { ascending: false })
+        .limit(200);
+
+      let previousMarks = null;
+      for (const tx of recentProjectTxs || []) {
+        const parsed = parseRewardIdempotencyKey(tx?.idempotency_key);
+        if (parsed?.projectId === projectId) {
+          previousMarks = parsed.drawnMarks;
+          break;
+        }
+      }
+
+      if (Number.isFinite(previousMarks)) {
+        const addedMarks = qualification.drawnMarks - previousMarks;
+        if (addedMarks < MIN_NEW_MARKS_FOR_REWARD) {
+          return res.json({
+            success: true,
+            earned: 0,
+            balance: wallet?.balance || 0,
+            reason: 'insufficient_new_marks',
+            rewardType: effectiveRewardType,
+            debug: {
+              drawnMarks: qualification.drawnMarks,
+              previousDrawnMarks: previousMarks,
+              addedMarks,
+              minAddedMarks: MIN_NEW_MARKS_FOR_REWARD,
+            },
+          });
+        }
       }
     }
 
@@ -205,11 +346,17 @@ export default async function handler(req, res) {
     }
 
     // Idempotency
-    const idempotencyKey = `${userId}:${projectId}:${saveTimestamp}`;
+    const idempotencyKey = buildRewardIdempotencyKey(
+      userId,
+      effectiveRewardType,
+      projectId,
+      saveTimestamp,
+      qualification.drawnMarks
+    );
     const { error: txError } = await supabase.from('coin_transactions').insert({
       user_id: userId,
-      amount: COINS_PER_SAVE,
-      reason: 'cloud_save',
+      amount: COINS_PER_REWARD,
+      reason: effectiveRewardType,
       idempotency_key: idempotencyKey,
     });
 
@@ -220,12 +367,16 @@ export default async function handler(req, res) {
           earned: 0,
           balance: wallet?.balance || 0,
           reason: 'already_earned',
+          rewardType: effectiveRewardType,
         });
       }
       throw txError;
     }
 
-    await supabase.rpc('increment_wallet_balance', { p_user_id: userId, p_amount: COINS_PER_SAVE });
+    await supabase.rpc('increment_wallet_balance', {
+      p_user_id: userId,
+      p_amount: COINS_PER_REWARD,
+    });
 
     const { data: updated } = await supabase
       .from('wallets')
@@ -233,7 +384,12 @@ export default async function handler(req, res) {
       .eq('user_id', userId)
       .single();
 
-    return res.json({ success: true, earned: COINS_PER_SAVE, balance: updated?.balance || 0 });
+    return res.json({
+      success: true,
+      earned: COINS_PER_REWARD,
+      balance: updated?.balance || 0,
+      rewardType: effectiveRewardType,
+    });
   }
 
   // POST /api/wallet/spend - purchase pet

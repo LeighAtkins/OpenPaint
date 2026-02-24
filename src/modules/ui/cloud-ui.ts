@@ -2,6 +2,7 @@
 import { authService, type AuthUser } from '@/services/auth/authService';
 import { cloudSaveService } from '@/services/cloud/cloudSaveService';
 import { isAuthEnabled, isSupabaseConfigured } from '@/utils/env';
+import { getNoRewardMessage, showRewardAchievement } from './reward-achievement';
 
 const CLOUD_UI_STYLES = /* css */ `
   .cloud-toolbar-group {
@@ -205,6 +206,7 @@ const CLOUD_UI_STYLES = /* css */ `
     font-size: 13px;
     margin-bottom: 16px;
   }
+
 `;
 
 let cloudModalOverlay: HTMLElement | null = null;
@@ -464,23 +466,25 @@ async function handleCloudSave(): Promise<void> {
 
     // Earn coins on successful qualifying cloud save
     if (isAuthEnabled()) {
-      import('@/services/wallet/walletService')
-        .then(({ walletService }) =>
-          import('./coin-animation').then(({ playCoinFlyAnimation }) =>
-            walletService
-              .earnCoins(
-                result.data.id,
-                result.data.updated_at || new Date().toISOString(),
-                projectData
-              )
-              .then(r => {
-                if (r.success && r.data.earned > 0) playCoinFlyAnimation();
-              })
-          )
-        )
-        .catch(() => {
-          /* non-critical */
-        });
+      try {
+        const [{ walletService }, { playCoinFlyAnimation }] = await Promise.all([
+          import('@/services/wallet/walletService'),
+          import('./coin-animation'),
+        ]);
+        const earnResult = await walletService.earnCoins(
+          result.data.id,
+          result.data.updated_at || new Date().toISOString(),
+          projectData
+        );
+        if (earnResult.success && earnResult.data.earned > 0) {
+          playCoinFlyAnimation();
+          showRewardAchievement(`Save completed. ${earnResult.data.earned} gems awarded.`);
+        } else {
+          showRewardAchievement(getNoRewardMessage(earnResult.data.reason));
+        }
+      } catch {
+        showRewardAchievement('Save completed. Gems status unavailable right now.');
+      }
     }
 
     if (typeof (window as any).showStatusMessage === 'function') {

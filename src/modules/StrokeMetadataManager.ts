@@ -127,6 +127,17 @@ export class StrokeMetadataManager {
 
     // Set flag to auto-focus measurement input for this new stroke
     this._shouldAutoFocus = true;
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(
+        new CustomEvent('openpaint:stroke-created', {
+          detail: {
+            imageLabel: scopedLabel,
+            strokeLabel,
+          },
+        })
+      );
+    }
     // Set flag to auto-focus measurement input for this new stroke
     this._shouldAutoFocus = true;
   }
@@ -368,12 +379,50 @@ export class StrokeMetadataManager {
   // Generate next label (A1, A2, B1, etc.) - integrates with tag prediction system
   getNextLabel(imageLabel, mode) {
     imageLabel = this.normalizeImageLabel(imageLabel);
+    const baseImageLabel =
+      typeof imageLabel === 'string' ? imageLabel.split('::tab:')[0] || imageLabel : imageLabel;
     const resolvedMode =
       mode === 'letters' || mode === 'letters+numbers'
         ? mode
         : window.tagMode === 'letters' || window.tagMode === 'letters+numbers'
           ? window.tagMode
           : 'letters+numbers';
+
+    const oneTimeGuideTags = window.guideOneTimeTagByImage || {};
+    const currentScope =
+      typeof window.currentImageLabel === 'string' ? window.currentImageLabel : baseImageLabel;
+    const currentBaseScope =
+      typeof currentScope === 'string'
+        ? currentScope.split('::tab:')[0] || currentScope
+        : baseImageLabel;
+    const seededGuideTag =
+      oneTimeGuideTags[imageLabel] ||
+      oneTimeGuideTags[baseImageLabel] ||
+      oneTimeGuideTags[currentScope] ||
+      oneTimeGuideTags[currentBaseScope];
+    if (seededGuideTag && this.isValidTag(seededGuideTag, resolvedMode)) {
+      delete oneTimeGuideTags[imageLabel];
+      delete oneTimeGuideTags[baseImageLabel];
+      delete oneTimeGuideTags[currentScope];
+      delete oneTimeGuideTags[currentBaseScope];
+      window.guideOneTimeTagByImage = oneTimeGuideTags;
+
+      window.labelsByImage = window.labelsByImage || {};
+      delete window.labelsByImage[imageLabel];
+      delete window.labelsByImage[baseImageLabel];
+      delete window.labelsByImage[currentScope];
+      delete window.labelsByImage[currentBaseScope];
+
+      window.manualTagByImage = window.manualTagByImage || {};
+      delete window.manualTagByImage[imageLabel];
+      delete window.manualTagByImage[baseImageLabel];
+      delete window.manualTagByImage[currentScope];
+      delete window.manualTagByImage[currentBaseScope];
+
+      this.updateTagPredictionAfterUse(imageLabel, seededGuideTag);
+      return seededGuideTag;
+    }
+
     // First, try to use the tag prediction system from index.html
     if (window.calculateNextTag) {
       try {

@@ -33,6 +33,7 @@ export function createDefaultSofaMetadata() {
     measurementConnections: [],
     measurementGuideCodesByView: {},
     measurementGuideLockByView: {},
+    tagColorTheme: null,
     pieceGroups: [],
     imagePartLabels: {},
     photos: [],
@@ -73,6 +74,18 @@ export function normalizeSofaMetadata(input) {
     source.measurementGuideLockByView && typeof source.measurementGuideLockByView === 'object'
       ? safeClone(source.measurementGuideLockByView, {})
       : {};
+  const tagColorTheme =
+    source.tagColorTheme && typeof source.tagColorTheme === 'object'
+      ? {
+          background:
+            typeof source.tagColorTheme.background === 'string'
+              ? source.tagColorTheme.background
+              : null,
+          border:
+            typeof source.tagColorTheme.border === 'string' ? source.tagColorTheme.border : null,
+          text: typeof source.tagColorTheme.text === 'string' ? source.tagColorTheme.text : null,
+        }
+      : null;
   const pieceGroups = Array.isArray(source.pieceGroups) ? safeClone(source.pieceGroups, []) : [];
   const photos = Array.isArray(source.photos) ? safeClone(source.photos, []) : [];
   const imagePartLabels =
@@ -105,6 +118,7 @@ export function normalizeSofaMetadata(input) {
     measurementConnections,
     measurementGuideCodesByView,
     measurementGuideLockByView,
+    tagColorTheme,
     pieceGroups,
     imagePartLabels,
     naming,

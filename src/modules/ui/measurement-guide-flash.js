@@ -19,6 +19,21 @@ function getMetadata() {
 }
 
 function getCurrentViewId() {
+  const input = document.getElementById('currentImageNameBox');
+  if (input instanceof HTMLInputElement) {
+    const typed = String(input.value || '')
+      .trim()
+      .toLowerCase();
+    if (typed === 'front' || typed === 'back' || typed === 'side') {
+      return typed;
+    }
+
+    const activeViewId = String(input.dataset.activeViewId || '')
+      .trim()
+      .toLowerCase();
+    if (activeViewId) return activeViewId;
+  }
+
   return String(window.app?.projectManager?.currentViewId || 'front').trim() || 'front';
 }
 
@@ -48,11 +63,7 @@ function resolveGuideCodes() {
   if (fromArray.length) {
     return fromArray;
   }
-  const fallback =
-    metadata.measurementGuideCode ||
-    metadata.customSofaType ||
-    metadata?.naming?.sofaTypeLabel ||
-    '';
+  const fallback = metadata.measurementGuideCode || '';
   return parseCodes(fallback);
 }
 
@@ -146,6 +157,25 @@ function ensureStyles() {
     }
     .guide-flash-title { font-size: 13px; font-weight: 700; letter-spacing: .02em; color: #f8fafc; }
     .guide-flash-sub { font-size: 11px; color: #cbd5e1; }
+    .guide-flash-close {
+      width: 26px;
+      height: 26px;
+      border-radius: 999px;
+      border: 1px solid rgba(226, 232, 240, 0.5);
+      background: rgba(15, 23, 42, 0.72);
+      color: #f8fafc;
+      font-size: 16px;
+      line-height: 1;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-left: 6px;
+    }
+    .guide-flash-close:hover {
+      background: rgba(15, 23, 42, 0.92);
+      border-color: rgba(248, 250, 252, 0.9);
+    }
     .guide-flash-grid {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -462,9 +492,18 @@ function setGuideLockForView(viewId, lockToImage) {
   saveGuideSettings({ viewId, codes, lockToImage });
 }
 
-function resolveSlides(codes) {
+function resolveSlides(codes, lockedView = null) {
   const slides = [];
+  const scopedLockedView = ['front', 'back', 'side'].includes(
+    String(lockedView || '').toLowerCase()
+  )
+    ? String(lockedView).toLowerCase()
+    : null;
   codes.forEach(code => {
+    if (scopedLockedView) {
+      slides.push({ code, view: scopedLockedView });
+      return;
+    }
     VIEWS.forEach(view => {
       slides.push({ code, view });
     });
@@ -492,6 +531,7 @@ function ensureOverlay(slide, slideCount) {
         Lock to image (${sourceViewId})
       </label>
       <div class="guide-flash-sub">${hint}</div>
+      <button type="button" class="guide-flash-close" aria-label="Close guide flash">×</button>
     </div>
     <div class="guide-flash-grid" style="grid-template-columns: 1fr;">
       <article class="guide-flash-card" style="min-height: min(78vh, 980px);">
@@ -531,6 +571,14 @@ function ensureOverlay(slide, slideCount) {
     e.preventDefault();
     e.stopPropagation();
     showGuideFlash({ cycleDelta: 1, holdMode: isGuidePinnedVisible, preservePinnedContext: true });
+  });
+
+  const closeBtn = flashOverlay.querySelector('.guide-flash-close');
+  closeBtn?.addEventListener('click', e => {
+    e.preventDefault();
+    e.stopPropagation();
+    isGuidePinnedVisible = false;
+    hideGuideFlash();
   });
 
   attachGuideImageRecovery(flashOverlay);
@@ -588,7 +636,7 @@ function showGuideFlash({
     return;
   }
 
-  const slides = resolveSlides(codes);
+  const slides = resolveSlides(codes, pinnedLockToImage ? pinnedSourceViewId : null);
   if (!slides.length) return;
 
   const delta = cycleDelta || (cycleNext ? 1 : 0);
@@ -941,6 +989,11 @@ export function initMeasurementGuideFlash() {
   window.addEventListener('keydown', e => {
     if (e.key === 'Escape' && galleryOverlay?.classList.contains('visible')) {
       hideGuideGallery();
+      return;
+    }
+    if (e.key === 'Escape' && flashOverlay?.classList.contains('visible')) {
+      isGuidePinnedVisible = false;
+      hideGuideFlash();
     }
   });
 }

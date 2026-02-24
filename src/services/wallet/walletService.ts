@@ -20,6 +20,7 @@ export interface EarnResult {
   earned: number;
   balance: number;
   reason?: string;
+  rewardType?: 'cloud_save' | 'pdf_export';
 }
 
 type WalletListener = (state: WalletState) => void;
@@ -105,12 +106,13 @@ class WalletService {
   async earnCoins(
     projectId: string,
     saveTimestamp: string,
-    projectData?: unknown
+    projectData?: unknown,
+    rewardType: 'cloud_save' | 'pdf_export' = 'cloud_save'
   ): Promise<{ success: boolean; data: EarnResult }> {
     try {
       const { data } = await this.apiFetch<EarnResult>('/api/wallet/earn', {
         method: 'POST',
-        body: { projectId, saveTimestamp, projectData },
+        body: { projectId, saveTimestamp, projectData, rewardType },
       });
       this.state.balance = data.balance ?? this.state.balance;
       this.notify();

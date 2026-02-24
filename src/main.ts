@@ -91,6 +91,7 @@ import { initToolbarController } from './modules/ui/toolbar-controller.js';
 import { initScrollSelectSystem } from './modules/ui/scroll-select-init.js';
 import { initSofaTypePicker } from './modules/ui/sofa-type-picker.js';
 import { initMeasurementGuideFlash } from './modules/ui/measurement-guide-flash.js';
+import { initMeasurementGuideIndicator } from './modules/ui/measurement-guide-indicator';
 import { initProjectNaming } from './modules/ui/project-naming.js';
 import { initMeasurementRelations } from './modules/ui/measurement-relations.js';
 import { initStatusMessageHandler } from './modules/ui/status-message-handler';
@@ -170,6 +171,7 @@ async function bootstrap(): Promise<void> {
 
   // Quick boss-key style SVG guide flash (hold backtick)
   initMeasurementGuideFlash();
+  initMeasurementGuideIndicator();
 
   // Initialize naming controls and image part labeling
   initProjectNaming();

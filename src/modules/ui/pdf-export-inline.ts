@@ -5,6 +5,30 @@
 // Extracted from index.html inline scripts
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 import { buildImageExportFilename, sanitizeFilenamePart } from '../utils/naming-utils.js';
+import { cloudSaveService } from '@/services/cloud/cloudSaveService';
+import { walletService } from '@/services/wallet/walletService';
+import { getNoRewardMessage, showRewardAchievement } from './reward-achievement';
+
+async function rewardPdfExport(projectName) {
+  try {
+    const cloudProjectId = cloudSaveService.getCurrentProjectId();
+    const fallbackId = `pdf:${sanitizeFilenamePart(projectName, 'OpenPaint Project')}`;
+    const reward = await walletService.earnCoins(
+      cloudProjectId || fallbackId,
+      new Date().toISOString(),
+      undefined,
+      'pdf_export'
+    );
+    if (!reward.success) return;
+    if (reward.data.earned > 0) {
+      showRewardAchievement(`PDF exported. ${reward.data.earned} gems awarded.`);
+    } else {
+      showRewardAchievement(getNoRewardMessage(reward.data.reason));
+    }
+  } catch {
+    // non-critical
+  }
+}
 
 function toBaseViewId(scopeOrViewId) {
   const raw = String(scopeOrViewId || '');
@@ -1146,6 +1170,7 @@ export function initPdfExport() {
     a.download = `${sanitizeFilenamePart(projectName, 'OpenPaint Project')}.pdf`;
     a.click();
     URL.revokeObjectURL(url);
+    await rewardPdfExport(projectName);
     progressBar.style.width = '100%';
     progressText.textContent = 'Done';
   }
@@ -2220,6 +2245,7 @@ export function initPdfExport() {
     a.download = `${sanitizeFilenamePart(projectName, 'OpenPaint Project')}.pdf`;
     a.click();
     URL.revokeObjectURL(url);
+    await rewardPdfExport(projectName);
     console.log('[PDF] Generated with editable form fields using pdf-lib');
   }
 }

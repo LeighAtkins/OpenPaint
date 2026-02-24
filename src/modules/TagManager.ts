@@ -17,6 +17,9 @@ export class TagManager {
     this.tagBackgroundStyle = 'solid'; // 'solid', 'no-fill', 'clear-black', 'clear-color', 'clear-white'
     this.strokeColor = '#3b82f6'; // Default stroke color for clear-color style
     this.connectorColor = '#ffffff';
+    this.customTagColors = null;
+
+    this.syncCustomTagColorsFromMetadata();
 
     // Initialize showMeasurements to visible by default; sync checkbox state if present
     const showMeasurementsCheckbox = document.getElementById('toggleShowMeasurements');
@@ -152,6 +155,57 @@ export class TagManager {
     }
   }
 
+  getTagPalette(strokeLabel, orientation = 'horizontal') {
+    if (!this.customTagColors) {
+      this.syncCustomTagColorsFromMetadata();
+    }
+    if (this.customTagColors) {
+      return {
+        bg: this.customTagColors.background,
+        stroke: this.customTagColors.border,
+        text: this.customTagColors.text,
+      };
+    }
+
+    const letter =
+      String(strokeLabel || '')
+        .trim()
+        .toUpperCase()
+        .charAt(0) || 'A';
+    const letterIndex = Math.max(0, letter.charCodeAt(0) - 65);
+    const baseHue = (letterIndex * 37) % 360;
+    const hue = orientation === 'vertical' ? (baseHue + 28) % 360 : baseHue;
+    return {
+      bg: `hsl(${hue} 88% 88%)`,
+      stroke: `hsl(${hue} 64% 42%)`,
+      text: `hsl(${hue} 62% 24%)`,
+    };
+  }
+
+  getStrokeOrientation(strokeObject) {
+    if (!strokeObject) return 'horizontal';
+
+    if (
+      typeof strokeObject.x1 === 'number' &&
+      typeof strokeObject.x2 === 'number' &&
+      typeof strokeObject.y1 === 'number' &&
+      typeof strokeObject.y2 === 'number'
+    ) {
+      const dx = Math.abs(strokeObject.x2 - strokeObject.x1);
+      const dy = Math.abs(strokeObject.y2 - strokeObject.y1);
+      return dy > dx ? 'vertical' : 'horizontal';
+    }
+
+    if (typeof strokeObject.getBoundingRect === 'function') {
+      const bounds = strokeObject.getBoundingRect();
+      if (bounds && typeof bounds.width === 'number' && typeof bounds.height === 'number') {
+        return bounds.height > bounds.width ? 'vertical' : 'horizontal';
+      }
+    }
+
+    return 'horizontal';
+  }
+
   // Create a draggable, resizable tag object
   createTag(strokeLabel, imageLabel, strokeObject) {
     imageLabel = this.normalizeImageLabel(imageLabel);
@@ -235,10 +289,12 @@ export class TagManager {
     const radius = this.tagShape === 'circle' ? height / 2 : 2; // Full rounding for circle, minimal for square
 
     // Determine background style properties
-    let bgFill = '#ffffff';
-    let bgStroke = '#000000';
+    const orientation = this.getStrokeOrientation(strokeObject);
+    const palette = this.getTagPalette(strokeLabel, orientation);
+    let bgFill = palette.bg;
+    let bgStroke = palette.stroke;
     let bgStrokeWidth = 1;
-    let textFill = '#000000';
+    let textFill = palette.text;
 
     if (this.tagBackgroundStyle === 'no-fill') {
       bgFill = 'transparent';
@@ -994,5 +1050,63 @@ export class TagManager {
     if (!allowed.includes(normalized)) return;
     this.connectorColor = normalized;
     this.refreshAllConnectors();
+  }
+
+  normalizeThemeColor(value) {
+    const raw = String(value || '')
+      .trim()
+      .toLowerCase();
+    return /^#[0-9a-f]{6}$/.test(raw) ? raw : null;
+  }
+
+  syncCustomTagColorsFromMetadata() {
+    const metadata =
+      window.app?.projectManager?.getProjectMetadata?.() || window.projectMetadata || {};
+    const theme = metadata?.tagColorTheme;
+    if (!theme || typeof theme !== 'object') {
+      this.customTagColors = null;
+      return;
+    }
+
+    const background = this.normalizeThemeColor(theme.background);
+    const border = this.normalizeThemeColor(theme.border);
+    const text = this.normalizeThemeColor(theme.text);
+    if (!background || !border || !text) {
+      this.customTagColors = null;
+      return;
+    }
+
+    this.customTagColors = { background, border, text };
+  }
+
+  persistCustomTagColorsToMetadata(theme) {
+    const payload = theme || null;
+    if (window.app?.projectManager?.setProjectMetadata) {
+      window.app.projectManager.setProjectMetadata({ tagColorTheme: payload });
+      return;
+    }
+    window.projectMetadata = {
+      ...(window.projectMetadata || {}),
+      tagColorTheme: payload,
+    };
+  }
+
+  setTagCustomColors(colors) {
+    if (!colors || typeof colors !== 'object') return;
+    const background = this.normalizeThemeColor(colors.background);
+    const border = this.normalizeThemeColor(colors.border);
+    const text = this.normalizeThemeColor(colors.text);
+    if (!background || !border || !text) return;
+
+    this.customTagColors = { background, border, text };
+    this.persistCustomTagColorsToMetadata(this.customTagColors);
+    this.tagBackgroundStyle = 'solid';
+    this.updateAllTags();
+  }
+
+  clearTagCustomColors() {
+    this.customTagColors = null;
+    this.persistCustomTagColorsToMetadata(null);
+    this.updateAllTags();
   }
 }

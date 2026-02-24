@@ -348,6 +348,127 @@ export function initToolbarController() {
       console.warn('[TagBackground] Button element not found');
     }
 
+    const tagColorEditorBtn = document.getElementById(
+      'tagColorEditorBtn'
+    ) as HTMLButtonElement | null;
+    if (tagColorEditorBtn && !document.getElementById('tagColorPopoverStyles')) {
+      const popStyle = document.createElement('style');
+      popStyle.id = 'tagColorPopoverStyles';
+      popStyle.textContent = `
+        #tagColorPopover {
+          position: absolute;
+          z-index: 10120;
+          width: 236px;
+          background: #ffffff;
+          border: 1px solid #cbd5e1;
+          border-radius: 10px;
+          box-shadow: 0 12px 28px rgba(2, 6, 23, 0.2);
+          padding: 10px;
+          display: none;
+        }
+        #tagColorPopover.open { display: block; }
+        .tag-color-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+        .tag-color-row:last-child { margin-bottom: 0; }
+        .tag-color-label { font-size: 11px; color: #475569; font-weight: 600; }
+        .tag-color-input { width: 42px; height: 28px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0; background: #fff; }
+        .tag-color-actions { display: flex; gap: 6px; margin-top: 8px; }
+        .tag-color-actions button { flex: 1; font-size: 11px; border: 1px solid #cbd5e1; border-radius: 7px; background: #fff; padding: 6px 8px; }
+        .tag-color-actions button:hover { background: #f8fafc; }
+      `;
+      document.head.appendChild(popStyle);
+    }
+
+    if (tagColorEditorBtn) {
+      let popover = document.getElementById('tagColorPopover') as HTMLDivElement | null;
+      if (!popover) {
+        popover = document.createElement('div');
+        popover.id = 'tagColorPopover';
+        popover.innerHTML = `
+          <div class="tag-color-row"><span class="tag-color-label">Background</span><input id="tagBgColorInput" class="tag-color-input" type="color" value="#ffffff" /></div>
+          <div class="tag-color-row"><span class="tag-color-label">Border</span><input id="tagBorderColorInput" class="tag-color-input" type="color" value="#000000" /></div>
+          <div class="tag-color-row"><span class="tag-color-label">Text</span><input id="tagTextColorInput" class="tag-color-input" type="color" value="#000000" /></div>
+          <div class="tag-color-actions">
+            <button type="button" id="tagColorApplyBtn">Apply</button>
+            <button type="button" id="tagColorAutoBtn">Auto</button>
+          </div>
+        `;
+        document.body.appendChild(popover);
+      }
+
+      const bgInput = document.getElementById('tagBgColorInput') as HTMLInputElement | null;
+      const borderInput = document.getElementById('tagBorderColorInput') as HTMLInputElement | null;
+      const textInput = document.getElementById('tagTextColorInput') as HTMLInputElement | null;
+      const applyBtn = document.getElementById('tagColorApplyBtn') as HTMLButtonElement | null;
+      const autoBtn = document.getElementById('tagColorAutoBtn') as HTMLButtonElement | null;
+
+      const syncFromManager = () => {
+        const manager = window.app?.tagManager;
+        const colors = manager?.customTagColors;
+        if (!bgInput || !borderInput || !textInput) return;
+        if (colors) {
+          bgInput.value = colors.background;
+          borderInput.value = colors.border;
+          textInput.value = colors.text;
+          tagColorEditorBtn.textContent = 'Colors*';
+        } else {
+          bgInput.value = '#ffffff';
+          borderInput.value = '#000000';
+          textInput.value = '#000000';
+          tagColorEditorBtn.textContent = 'Colors';
+        }
+      };
+
+      const closePopover = () => {
+        popover?.classList.remove('open');
+      };
+
+      const positionPopover = () => {
+        if (!popover) return;
+        const rect = tagColorEditorBtn.getBoundingClientRect();
+        popover.style.left = `${Math.round(rect.left)}px`;
+        popover.style.top = `${Math.round(rect.bottom + 6)}px`;
+      };
+
+      tagColorEditorBtn.addEventListener('click', e => {
+        e.preventDefault();
+        syncFromManager();
+        positionPopover();
+        popover?.classList.toggle('open');
+      });
+
+      applyBtn?.addEventListener('click', () => {
+        if (!bgInput || !borderInput || !textInput || !window.app?.tagManager) return;
+        window.app.tagManager.setTagCustomColors({
+          background: bgInput.value,
+          border: borderInput.value,
+          text: textInput.value,
+        });
+        syncFromManager();
+        closePopover();
+      });
+
+      autoBtn?.addEventListener('click', () => {
+        if (!window.app?.tagManager) return;
+        window.app.tagManager.clearTagCustomColors();
+        syncFromManager();
+        closePopover();
+      });
+
+      document.addEventListener('click', event => {
+        const target = event.target as Node | null;
+        if (!target || !popover) return;
+        if (target === tagColorEditorBtn || tagColorEditorBtn.contains(target)) return;
+        if (popover.contains(target)) return;
+        closePopover();
+      });
+
+      window.addEventListener('resize', () => {
+        if (popover?.classList.contains('open')) positionPopover();
+      });
+
+      setTimeout(syncFromManager, 500);
+    }
+
     const connectorToneBtn = document.getElementById('connectorToneBtn');
     const connectorPalette = [
       { label: 'White', value: '#ffffff' },
