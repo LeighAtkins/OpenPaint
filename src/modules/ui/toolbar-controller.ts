@@ -892,6 +892,7 @@ export function initToolbarController() {
     const tabBar = document.getElementById('captureTabBar');
     const tabList = document.getElementById('captureTabList');
     const tabAddButton = document.getElementById('captureTabAdd');
+    let tabGuideButton = document.getElementById('captureTabGuideStatus');
     const masterOverlay = document.getElementById('captureTabMasterOverlay');
     const masterTargetBadge = document.getElementById('captureMasterTargetBadge');
 
@@ -942,6 +943,65 @@ export function initToolbarController() {
         resolvedState?.tabs?.find(tab => tab.type !== 'master')?.id ||
         null
       );
+    }
+
+    function ensureTabGuideButton() {
+      if (!tabBar) return null;
+      if (tabGuideButton && tabGuideButton.parentElement) return tabGuideButton;
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.id = 'captureTabGuideStatus';
+      button.className = 'capture-tab-guide-status';
+      button.textContent = 'Unbound';
+      button.addEventListener('click', () => {
+        const activeLabel = getActiveLabel();
+        const state =
+          typeof window.getGuideSplitStateForView === 'function'
+            ? window.getGuideSplitStateForView(activeLabel)
+            : null;
+        if (!state?.bound) {
+          if (typeof window.openMeasurementGuideGallery === 'function') {
+            window.openMeasurementGuideGallery({ source: 'capture-tab', mode: 'bind' });
+          } else if (typeof window.openGuideBindingPanel === 'function') {
+            window.openGuideBindingPanel({ viewId: activeLabel, source: 'capture-tab' });
+          }
+          return;
+        }
+        if (typeof window.toggleGuideSplitEnabled === 'function') {
+          window.toggleGuideSplitEnabled();
+        }
+      });
+      if (tabAddButton?.parentElement === tabBar) {
+        tabBar.insertBefore(button, tabAddButton);
+      } else {
+        tabBar.appendChild(button);
+      }
+      tabGuideButton = button;
+      return button;
+    }
+
+    function renderGuideSplitControl(label) {
+      const button = ensureTabGuideButton();
+      if (!button) return;
+      const resolved = toBaseLabel(label || getActiveLabel());
+      const splitState =
+        typeof window.getGuideSplitStateForView === 'function'
+          ? window.getGuideSplitStateForView(resolved)
+          : null;
+      button.classList.remove('unbound', 'bound', 'active');
+      if (!splitState?.bound) {
+        button.textContent = 'Unbound';
+        button.title = 'No guide bound. Click to open binding menu.';
+        button.classList.add('unbound');
+        return;
+      }
+      const isActive = splitState.enabled === true;
+      button.textContent = isActive ? 'Split On' : 'Split Screen';
+      button.title = isActive
+        ? 'Split screen enabled. Click to hide split.'
+        : 'Bound guide ready. Click to show split screen.';
+      button.classList.add('bound');
+      if (isActive) button.classList.add('active');
     }
     function syncCanvasVisibilityForActiveTab(label) {
       const resolved = label || getActiveLabel();
@@ -1664,6 +1724,7 @@ export function initToolbarController() {
         });
         tabList.appendChild(button);
       });
+      renderGuideSplitControl(label);
     }
     function renderMasterOverlay(label) {
       if (!masterOverlay) return;
@@ -1811,6 +1872,16 @@ export function initToolbarController() {
             syncCanvasVisibilityForActiveTab(label);
             window.app?.metadataManager?.updateStrokeVisibilityControls?.();
             renderMasterOverlay(label);
+          });
+          selector.addEventListener('dblclick', dblClickEvent => {
+            dblClickEvent.preventDefault();
+            dblClickEvent.stopPropagation();
+            const nextName = window.prompt('Rename frame', tab.name || 'Frame');
+            if (typeof nextName === 'string' && nextName.trim()) {
+              tab.name = nextName.trim();
+              renderTabBar(label);
+              renderMasterOverlay(label);
+            }
           });
           masterOverlay.appendChild(selector);
         });
@@ -2063,6 +2134,13 @@ export function initToolbarController() {
           window.applyCaptureFrameForLabel(activeLabel);
         }
       });
+    });
+
+    window.addEventListener('openpaint:guide-binding-changed', () => {
+      renderGuideSplitControl(getActiveLabel());
+    });
+    window.addEventListener('openpaint:guide-split-changed', () => {
+      renderGuideSplitControl(getActiveLabel());
     });
 
     // Mobile toolbar expand/collapse functionality

@@ -33,6 +33,33 @@ function getSetCookieArray(headers) {
   return single ? [single] : [];
 }
 
+function extractCsrfFromHtml(html) {
+  const source = String(html || '');
+  if (!source) return '';
+
+  const inputMatch = source.match(/name=["']csrfmiddlewaretoken["'][^>]*value=["']([^"']+)["']/i);
+  if (inputMatch?.[1]) return String(inputMatch[1]).trim();
+
+  const reverseInputMatch = source.match(
+    /value=["']([^"']+)["'][^>]*name=["']csrfmiddlewaretoken["']/i
+  );
+  if (reverseInputMatch?.[1]) return String(reverseInputMatch[1]).trim();
+
+  return '';
+}
+
+function isRedirectStatus(status) {
+  return status === 301 || status === 302 || status === 303 || status === 307 || status === 308;
+}
+
+function resolveUrl(base, location) {
+  try {
+    return new URL(String(location || ''), String(base || '')).toString();
+  } catch {
+    return '';
+  }
+}
+
 export async function readJsonBody(req) {
   if (req.body && typeof req.body === 'object') return req.body;
   const chunks = [];
@@ -71,21 +98,63 @@ export async function createCwSession(override = {}) {
 
   const loginUrl = `${creds.baseUrl.replace(/\/+$/, '')}/dashboard/login/`;
   const cookieJar = {};
+  const redirectChain = [];
 
-  const loginPage = await fetch(loginUrl, {
+  const baseGetHeaders = {
+    accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+    'user-agent': 'OpenPaint-CW-Vercel/1.0',
+  };
+
+  let loginPageUrl = loginUrl;
+  let loginPage = await fetch(loginPageUrl, {
     method: 'GET',
     redirect: 'manual',
-    headers: {
-      accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-      'user-agent': 'OpenPaint-CW-Vercel/1.0',
-    },
+    headers: baseGetHeaders,
   });
 
   mergeCookieJar(cookieJar, parseSetCookie(getSetCookieArray(loginPage.headers)));
-  const csrfToken = cookieJar.csrftoken;
+  let loginPageHtml = await loginPage.text().catch(() => '');
+
+  for (let hop = 0; hop < 5 && isRedirectStatus(loginPage.status); hop += 1) {
+    const location = String(loginPage.headers.get('location') || '').trim();
+    if (!location) break;
+
+    const nextUrl = resolveUrl(loginPageUrl, location);
+    if (!nextUrl) break;
+
+    redirectChain.push({ from: loginPageUrl, status: loginPage.status, to: nextUrl });
+    loginPageUrl = nextUrl;
+
+    loginPage = await fetch(loginPageUrl, {
+      method: 'GET',
+      redirect: 'manual',
+      headers: {
+        ...baseGetHeaders,
+        cookie: buildCookieHeader(cookieJar),
+        referer: redirectChain[redirectChain.length - 1].from,
+      },
+    });
+
+    mergeCookieJar(cookieJar, parseSetCookie(getSetCookieArray(loginPage.headers)));
+    loginPageHtml = await loginPage.text().catch(() => '');
+  }
+
+  const csrfToken = cookieJar.csrftoken || extractCsrfFromHtml(loginPageHtml);
+  if (!cookieJar.csrftoken && csrfToken) {
+    cookieJar.csrftoken = csrfToken;
+  }
   if (!csrfToken) {
     const err = new Error('Failed to fetch CSRF token from CW login page');
     err.code = 'CW_CSRF_MISSING';
+    err.details = {
+      loginUrl,
+      finalLoginUrl: loginPageUrl,
+      status: loginPage.status,
+      location: loginPage.headers.get('location') || '',
+      redirectChain,
+      hasCookieCsrfToken: Boolean(cookieJar.csrftoken),
+      bodySnippet: loginPageHtml.slice(0, 500),
+    };
     throw err;
   }
 
@@ -95,7 +164,12 @@ export async function createCwSession(override = {}) {
   form.set('password', creds.password);
   form.set('next', '');
 
-  const loginRes = await fetch(loginUrl, {
+  const nextPath = new URL(loginPageUrl).searchParams.get('nextPath');
+  if (nextPath) {
+    form.set('nextPath', nextPath);
+  }
+
+  const loginRes = await fetch(loginPageUrl, {
     method: 'POST',
     redirect: 'manual',
     headers: {
@@ -103,14 +177,14 @@ export async function createCwSession(override = {}) {
       'content-type': 'application/x-www-form-urlencoded',
       cookie: buildCookieHeader(cookieJar),
       origin: creds.baseUrl,
-      referer: loginUrl,
+      referer: loginPageUrl,
       'user-agent': 'OpenPaint-CW-Vercel/1.0',
     },
     body: form.toString(),
   });
 
   mergeCookieJar(cookieJar, parseSetCookie(getSetCookieArray(loginRes.headers)));
-  const isRedirect = loginRes.status === 301 || loginRes.status === 302;
+  const isRedirect = isRedirectStatus(loginRes.status);
   const hasSessionId = Boolean(cookieJar.sessionid);
 
   if (!isRedirect || !hasSessionId) {

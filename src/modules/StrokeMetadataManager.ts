@@ -1187,9 +1187,23 @@ export class StrokeMetadataManager {
         `[Auto-Focus DEBUG] Stroke: ${strokeLabel}, isNewest: ${isNewestStroke}, shouldAutoFocus: ${this._shouldAutoFocus}`
       );
 
-      // Auto-focus logic removed to allow immediate deletion via keyboard
       if (isNewestStroke && this._shouldAutoFocus) {
         this._shouldAutoFocus = false;
+
+        const activeEl = document.activeElement as HTMLElement | null;
+        const isEditingAnotherField =
+          !!activeEl &&
+          activeEl !== document.body &&
+          activeEl !== measurementSpan &&
+          (activeEl.tagName === 'INPUT' ||
+            activeEl.tagName === 'TEXTAREA' ||
+            activeEl.isContentEditable);
+
+        if (!isEditingAnotherField) {
+          setTimeout(() => {
+            this.focusMeasurementInput(strokeLabel);
+          }, 0);
+        }
       }
 
       // Review toggle button (★)

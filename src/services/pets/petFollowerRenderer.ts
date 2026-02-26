@@ -6,6 +6,7 @@ import { buildPetConfig, type PetConfig } from './petConfig';
 type AnimState = 'idle' | 'walk' | 'run' | 'sleep';
 type BehaviorMode = 'follow' | 'roam' | 'sleep' | 'idle';
 type SpecialAction = 'none' | 'zoomies' | 'inspect' | 'wake-stretch';
+type ToyState = 'none' | 'dragging' | 'dropped' | 'carrying';
 
 const ROAM_MIN_MARGIN = 24;
 const ROAM_REACHED_DISTANCE = 8;
@@ -41,6 +42,13 @@ class PetFollowerRenderer {
   private inspectAnchorX = 0;
   private inspectAnchorY = 0;
   private wasSleepingLastTick = false;
+  private toyState: ToyState = 'none';
+  private toyX = 0;
+  private toyY = 0;
+  private toyHomeX = 0;
+  private toyHomeY = 0;
+  private toyRadius = 10;
+  private toyReturnCallback: (() => void) | null = null;
   private pointerX = 0;
   private pointerY = 0;
   private cursorOnScreen = true;
@@ -57,9 +65,12 @@ class PetFollowerRenderer {
     this.cursorOnScreen = true;
     this.pointerX = e.clientX;
     this.pointerY = e.clientY;
-    this.targetX = e.clientX - 30;
-    this.targetY = e.clientY + 10;
     this.lastPointerMoveTime = now;
+    // Don't override target during toy interaction — updateToyBehavior handles it
+    if (this.toyState === 'none') {
+      this.targetX = e.clientX - 30;
+      this.targetY = e.clientY + 10;
+    }
   };
 
   private handleMouseOut = (e: MouseEvent) => {
@@ -172,6 +183,7 @@ class PetFollowerRenderer {
     window.addEventListener('focus', this.handleWindowFocus);
 
     this.mounted = true;
+    (window as any).__petFollowerRenderer = this;
     this.cursorOnScreen = true;
     this.lastPointerMoveTime = performance.now();
     this.tick(performance.now());
@@ -197,10 +209,51 @@ class PetFollowerRenderer {
     this.sleepSpriteKeys = [];
     this.frame = 0;
     this.frameTick = 0;
+    this.toyState = 'none';
+    this.toyReturnCallback = null;
+    if ((window as any).__petFollowerRenderer === this) {
+      (window as any).__petFollowerRenderer = null;
+    }
   }
 
   isMounted(): boolean {
     return this.mounted;
+  }
+
+  isToyActive(): boolean {
+    return this.toyState !== 'none';
+  }
+
+  startToyDrag(x: number, y: number, homeX: number, homeY: number, onReturn?: () => void): void {
+    if (!this.mounted || !this.config) return;
+    this.toyHomeX = homeX;
+    this.toyHomeY = homeY;
+    this.toyX = x;
+    this.toyY = y;
+    this.toyState = 'dragging';
+    this.toyReturnCallback = typeof onReturn === 'function' ? onReturn : null;
+    this.clearSpecialAction();
+    this.roamPauseUntil = 0;
+    this.roamSleepUntil = 0;
+  }
+
+  moveToyDrag(x: number, y: number): void {
+    if (this.toyState !== 'dragging') return;
+    const clamped = this.clampToViewport(x, y);
+    this.toyX = clamped.x;
+    this.toyY = clamped.y;
+  }
+
+  endToyDrag(): void {
+    if (this.toyState !== 'dragging') return;
+    this.toyState = 'dropped';
+  }
+
+  cancelToyDrag(): void {
+    this.toyState = 'none';
+    const callback = this.toyReturnCallback;
+    this.toyReturnCallback = null;
+    callback?.();
   }
 
   private loadSprite(key: string, path: string): Promise<void> {
@@ -224,6 +277,9 @@ class PetFollowerRenderer {
     if (document.hidden) return;
 
     this.behaviorMode = this.getBehaviorMode(now);
+    if (this.toyState !== 'none') {
+      this.behaviorMode = 'follow';
+    }
 
     const isSleepingNow = this.behaviorMode === 'sleep';
     if (this.wasSleepingLastTick && !isSleepingNow && this.cursorOnScreen) {
@@ -241,7 +297,9 @@ class PetFollowerRenderer {
       this.clearSpecialAction();
     }
 
-    if (this.behaviorMode === 'follow') {
+    if (this.toyState !== 'none') {
+      this.updateToyBehavior();
+    } else if (this.behaviorMode === 'follow') {
       this.targetX = this.pointerX - 30;
       this.targetY = this.pointerY + 10;
       this.roamPauseUntil = 0;
@@ -315,7 +373,7 @@ class PetFollowerRenderer {
   };
 
   private render(): void {
-    if (!this.ctx || !this.canvas || !this.config) return;
+    if (!this.ctx || !this.canvas || !this.config || !this.overlay) return;
 
     const spriteKey = this.getCurrentSpriteKey();
     const sprite = this.sprites[spriteKey];
@@ -349,6 +407,30 @@ class PetFollowerRenderer {
     // Position canvas
     this.canvas.style.left = `${this.petX}px`;
     this.canvas.style.top = `${this.petY}px`;
+
+    this.renderToy();
+  }
+
+  private renderToy(): void {
+    if (!this.overlay) return;
+    const toyId = 'petFollowerToyBall';
+    let toyEl = this.overlay.querySelector(`#${toyId}`) as HTMLDivElement | null;
+
+    if (this.toyState === 'none') {
+      toyEl?.remove();
+      return;
+    }
+
+    if (!toyEl) {
+      toyEl = document.createElement('div');
+      toyEl.id = toyId;
+      toyEl.style.cssText =
+        'position:absolute;width:20px;height:20px;border-radius:50%;background:#ef4444;border:2px solid #b91c1c;box-shadow:0 2px 6px rgba(127,29,29,0.45);pointer-events:none;transform:translate(-50%,-50%);';
+      this.overlay.appendChild(toyEl);
+    }
+
+    toyEl.style.left = `${this.toyX}px`;
+    toyEl.style.top = `${this.toyY}px`;
   }
 
   private getCurrentSpriteKey(): string {
@@ -495,6 +577,54 @@ class PetFollowerRenderer {
 
     this.targetX = this.roamTargetX;
     this.targetY = this.roamTargetY;
+  }
+
+  private updateToyBehavior(): void {
+    if (!this.config || this.toyState === 'none') return;
+
+    const petCenterX = this.petX + this.config.displaySize * 0.5;
+    const petCenterY = this.petY + this.config.displaySize * 0.6;
+    const toToyX = this.toyX - petCenterX;
+    const toToyY = this.toyY - petCenterY;
+    const toyDistance = Math.sqrt(toToyX * toToyX + toToyY * toToyY);
+
+    if (this.toyState === 'dragging') {
+      this.targetX = this.toyX - this.config.displaySize * 0.35;
+      this.targetY = this.toyY - this.config.displaySize * 0.35;
+      return;
+    }
+
+    if (this.toyState === 'dropped') {
+      this.targetX = this.toyX - this.config.displaySize * 0.35;
+      this.targetY = this.toyY - this.config.displaySize * 0.35;
+      if (toyDistance <= this.toyRadius + 14) {
+        this.toyState = 'carrying';
+      }
+      return;
+    }
+
+    if (this.toyState === 'carrying') {
+      const carryX =
+        this.petX +
+        (this.facingLeft ? this.config.displaySize * 0.28 : this.config.displaySize * 0.72);
+      const carryY = this.petY + this.config.displaySize * 0.62;
+      this.toyX = carryX;
+      this.toyY = carryY;
+      this.targetX = this.toyHomeX - this.config.displaySize * 0.35;
+      this.targetY = this.toyHomeY - this.config.displaySize * 0.35;
+
+      const homeDx = this.toyHomeX - petCenterX;
+      const homeDy = this.toyHomeY - petCenterY;
+      const homeDist = Math.sqrt(homeDx * homeDx + homeDy * homeDy);
+      if (homeDist <= this.toyRadius + 18) {
+        this.toyX = this.toyHomeX;
+        this.toyY = this.toyHomeY;
+        this.toyState = 'none';
+        const callback = this.toyReturnCallback;
+        this.toyReturnCallback = null;
+        callback?.();
+      }
+    }
   }
 
   private pickRoamTarget(): void {

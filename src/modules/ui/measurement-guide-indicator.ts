@@ -976,23 +976,14 @@ async function renderIndicator(): Promise<void> {
 
   root.innerHTML = `
     <div class="measurement-guide-indicator-head">
-      <span>Guide</span>
+      <span>Mini Guide</span>
       <strong>${activeRole}</strong>
       <div class="measurement-guide-indicator-controls">
-        <button type="button" class="measurement-guide-indicator-ctl" data-guide-size-dec aria-label="Smaller guide">-</button>
-        <button type="button" class="measurement-guide-indicator-ctl" data-guide-size-med aria-label="Medium guide">M</button>
-        <button type="button" class="measurement-guide-indicator-ctl" data-guide-size-inc aria-label="Larger guide">+</button>
-        <button type="button" class="measurement-guide-indicator-ctl" data-guide-size-fit aria-label="Fit guide">Fit</button>
         <button type="button" class="measurement-guide-indicator-ctl" data-guide-bind aria-label="Guide binding">Bind</button>
-        <button type="button" class="measurement-guide-indicator-ctl" data-guide-layout-unlock aria-pressed="${unlocked ? 'true' : 'false'}" aria-label="Unlock guide layout">UL</button>
       </div>
     </div>
     <p class="measurement-guide-indicator-meta">${getBindingBreadcrumb(viewId)}</p>
-    <div class="measurement-guide-indicator-hero">
-      <img src="${buildGuideUrl(code, viewId)}" alt="Measurement guide ${code}" />
-    </div>
     <div class="measurement-guide-indicator-track">${chipHtml}</div>
-    <div class="measurement-guide-indicator-resize" aria-hidden="true"></div>
   `;
   applyIndicatorPreset(root, activeSize);
   positionIndicator(root);

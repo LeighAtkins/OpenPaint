@@ -42,6 +42,8 @@ export function createDefaultSofaMetadata() {
     },
     measurementGuideModelSelections: [],
     measurementGuideModelLinksByImage: {},
+    measurementGuideModelLinksByScope: {},
+    tagSize: 20,
     tagColorTheme: null,
     pieceGroups: [],
     imagePartLabels: {},
@@ -144,6 +146,27 @@ export function normalizeSofaMetadata(input) {
             .filter(([imageId, selectionId]) => imageId && selectionId)
         )
       : {};
+  const measurementGuideModelLinksByScope =
+    source.measurementGuideModelLinksByScope &&
+    typeof source.measurementGuideModelLinksByScope === 'object'
+      ? Object.fromEntries(
+          Object.entries(source.measurementGuideModelLinksByScope)
+            .map(([scopeId, selectionId]) => [
+              String(scopeId || '').trim(),
+              String(selectionId || '').trim(),
+            ])
+            .filter(([scopeId, selectionId]) => scopeId && selectionId)
+        )
+      : Object.fromEntries(
+          Object.entries(measurementGuideModelLinksByImage).map(([imageId, selectionId]) => [
+            imageId,
+            selectionId,
+          ])
+        );
+  const tagSizeRaw = Number(source.tagSize);
+  const tagSize = Number.isFinite(tagSizeRaw)
+    ? Math.max(8, Math.min(72, Math.round(tagSizeRaw)))
+    : 20;
   const tagColorTheme =
     source.tagColorTheme && typeof source.tagColorTheme === 'object'
       ? {
@@ -195,6 +218,8 @@ export function normalizeSofaMetadata(input) {
     measurementGuideProjectDefaults,
     measurementGuideModelSelections,
     measurementGuideModelLinksByImage,
+    measurementGuideModelLinksByScope,
+    tagSize,
     tagColorTheme,
     pieceGroups,
     imagePartLabels,

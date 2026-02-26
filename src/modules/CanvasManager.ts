@@ -165,6 +165,42 @@ export class CanvasManager {
       }
     });
 
+    const focusMeasurementForSelection = (evt: FabricIEvent) => {
+      const selected = Array.isArray(evt?.selected)
+        ? evt.selected
+        : evt?.target && evt.target.type !== 'activeSelection'
+          ? [evt.target]
+          : [];
+      if (!selected || selected.length !== 1) return;
+
+      const target = selected[0];
+      if (!target || target.type === 'activeSelection') return;
+
+      const strokeLabel =
+        target?.strokeMetadata?.strokeLabel ||
+        target?.strokeLabel ||
+        target?.connectedStroke?.strokeMetadata?.strokeLabel ||
+        target?.connectedStroke?.strokeLabel;
+      if (!strokeLabel) return;
+
+      const activeEl = document.activeElement as HTMLElement | null;
+      const isEditing =
+        !!activeEl &&
+        activeEl !== document.body &&
+        (activeEl.tagName === 'INPUT' ||
+          activeEl.tagName === 'TEXTAREA' ||
+          activeEl.isContentEditable);
+      if (isEditing) return;
+
+      const metadataManager = window.app?.metadataManager;
+      if (metadataManager?.focusMeasurementInput) {
+        metadataManager.focusMeasurementInput(strokeLabel);
+      }
+    };
+
+    this.fabricCanvas.on('selection:created', focusMeasurementForSelection);
+    this.fabricCanvas.on('selection:updated', focusMeasurementForSelection);
+
     const objectPrototype = fabric?.Object?.prototype;
     if (objectPrototype && !objectPrototype.__openpaintSafeDrawControlsPatched) {
       const originalDrawControls = objectPrototype.drawControls;
@@ -1688,9 +1724,12 @@ export class CanvasManager {
    * Now simplified to use the flex layout container dimensions directly
    */
   calculateAvailableSize(): Size {
-    // With the new flex layout, canvas is inside #main-canvas-wrapper
-    // Just measure that container's dimensions
-    const canvasContainer = document.getElementById('main-canvas-wrapper');
+    // With split guide mode enabled, prefer the live pane host width.
+    const splitLiveContainer = document.getElementById('guideSplitLivePane');
+    const canvasContainer =
+      splitLiveContainer && splitLiveContainer.offsetParent !== null
+        ? splitLiveContainer
+        : document.getElementById('main-canvas-wrapper');
 
     if (canvasContainer) {
       // Use clientWidth/clientHeight to get the inner dimension (excluding borders)

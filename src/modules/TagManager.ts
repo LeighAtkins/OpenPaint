@@ -18,8 +18,11 @@ export class TagManager {
     this.strokeColor = '#3b82f6'; // Default stroke color for clear-color style
     this.connectorColor = '#ffffff';
     this.customTagColors = null;
+    this.tagSizeMin = 8;
+    this.tagSizeMax = 72;
 
     this.syncCustomTagColorsFromMetadata();
+    this.syncTagSizeFromMetadata();
 
     // Initialize showMeasurements to visible by default; sync checkbox state if present
     const showMeasurementsCheckbox = document.getElementById('toggleShowMeasurements');
@@ -103,13 +106,13 @@ export class TagManager {
     const decreaseBtn = document.getElementById('decreaseAllTagSize');
     if (increaseBtn) {
       increaseBtn.addEventListener('click', () => {
-        this.tagSize = Math.min(this.tagSize + 2, 40);
+        this.tagSize = this.normalizeTagSize(this.tagSize + 2);
         this.updateTagSize();
       });
     }
     if (decreaseBtn) {
       decreaseBtn.addEventListener('click', () => {
-        this.tagSize = Math.max(this.tagSize - 2, 10);
+        this.tagSize = this.normalizeTagSize(this.tagSize - 2);
         this.updateTagSize();
       });
     }
@@ -208,6 +211,7 @@ export class TagManager {
 
   // Create a draggable, resizable tag object
   createTag(strokeLabel, imageLabel, strokeObject) {
+    this.syncTagSizeFromMetadata();
     imageLabel = this.normalizeImageLabel(imageLabel);
     // Ensure canvas is available
     const canvas = this.canvas;
@@ -900,7 +904,37 @@ export class TagManager {
       currentTagSizeEl.textContent = this.tagSize;
     }
 
+    this.persistTagSizeToMetadata(this.tagSize);
+
     canvas.renderAll();
+  }
+
+  normalizeTagSize(value) {
+    const num = Number(value);
+    if (!Number.isFinite(num)) return 20;
+    return Math.max(this.tagSizeMin, Math.min(this.tagSizeMax, Math.round(num)));
+  }
+
+  syncTagSizeFromMetadata() {
+    const metadata =
+      window.app?.projectManager?.getProjectMetadata?.() || window.projectMetadata || {};
+    this.tagSize = this.normalizeTagSize(metadata?.tagSize ?? this.tagSize);
+    const currentTagSizeEl = document.getElementById('currentTagSize');
+    if (currentTagSizeEl) {
+      currentTagSizeEl.textContent = this.tagSize;
+    }
+  }
+
+  persistTagSizeToMetadata(size) {
+    const normalized = this.normalizeTagSize(size);
+    if (window.app?.projectManager?.setProjectMetadata) {
+      window.app.projectManager.setProjectMetadata({ tagSize: normalized });
+      return;
+    }
+    window.projectMetadata = {
+      ...(window.projectMetadata || {}),
+      tagSize: normalized,
+    };
   }
 
   // Set the background style for all tags
