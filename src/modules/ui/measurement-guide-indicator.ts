@@ -41,7 +41,7 @@ function setWindowPrefs(patch: Record<string, unknown>): void {
 }
 
 function normalizeSize(value: unknown): IndicatorSize {
-  const raw = String(value || '').toUpperCase();
+  const raw = typeof value === 'string' ? value.toUpperCase() : '';
   if (raw === 'S' || raw === 'M' || raw === 'L' || raw === 'XL') return raw;
   return 'M';
 }
@@ -61,7 +61,7 @@ function setIndicatorLayoutUnlocked(unlocked: boolean): void {
 }
 
 function setIndicatorSize(size: IndicatorSize, manual = true): void {
-  setWindowPrefs({ indicatorSize: size, indicatorManualSize: manual === true });
+  setWindowPrefs({ indicatorSize: size, indicatorManualSize: manual });
 }
 
 function resolveIndicatorSize(activeTool: string): IndicatorSize {

@@ -40,6 +40,8 @@ export function createDefaultSofaMetadata() {
       codes: [],
       activeCode: '',
     },
+    measurementGuideModelSelections: [],
+    measurementGuideModelLinksByImage: {},
     tagColorTheme: null,
     pieceGroups: [],
     imagePartLabels: {},
@@ -107,6 +109,41 @@ export function normalizeSofaMetadata(input) {
         ? projectDefaultsSource.activeCode.trim().toUpperCase()
         : measurementGuideCodes[0] || '',
   };
+  const measurementGuideModelSelections = Array.isArray(source.measurementGuideModelSelections)
+    ? source.measurementGuideModelSelections
+        .map(item => {
+          const value = item && typeof item === 'object' ? item : {};
+          const code = typeof value.code === 'string' ? value.code.trim().toUpperCase() : '';
+          const variantRaw =
+            typeof value.variant === 'string' ? value.variant.trim().toLowerCase() : 'front';
+          const variant =
+            variantRaw === 'front' || variantRaw === 'back' || variantRaw === 'side'
+              ? variantRaw
+              : 'front';
+          if (!code) return null;
+          return {
+            id:
+              typeof value.id === 'string' && value.id.trim()
+                ? value.id.trim()
+                : `${code}::${variant}`,
+            code,
+            variant,
+          };
+        })
+        .filter(Boolean)
+    : [];
+  const measurementGuideModelLinksByImage =
+    source.measurementGuideModelLinksByImage &&
+    typeof source.measurementGuideModelLinksByImage === 'object'
+      ? Object.fromEntries(
+          Object.entries(source.measurementGuideModelLinksByImage)
+            .map(([imageId, selectionId]) => [
+              String(imageId || '').trim(),
+              String(selectionId || '').trim(),
+            ])
+            .filter(([imageId, selectionId]) => imageId && selectionId)
+        )
+      : {};
   const tagColorTheme =
     source.tagColorTheme && typeof source.tagColorTheme === 'object'
       ? {
@@ -156,6 +193,8 @@ export function normalizeSofaMetadata(input) {
     measurementGuideLockByView,
     measurementGuideBindingsByScope,
     measurementGuideProjectDefaults,
+    measurementGuideModelSelections,
+    measurementGuideModelLinksByImage,
     tagColorTheme,
     pieceGroups,
     imagePartLabels,

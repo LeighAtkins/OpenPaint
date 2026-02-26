@@ -1425,7 +1425,12 @@ export class ProjectManager {
 
       // Recursively sanitize nested objects
       for (const key in sanitized) {
-        if (typeof sanitized[key] === 'object') {
+        if (typeof sanitized[key] === 'string' && sanitized[key].startsWith('blob:')) {
+          // Blob URLs are session-local and cannot be reliably restored across project loads.
+          // Clear them to avoid "Not allowed to load local resource" errors.
+          sanitized[key] = '';
+          sanitizedCount++;
+        } else if (typeof sanitized[key] === 'object') {
           sanitized[key] = sanitizeObject(sanitized[key]);
         }
       }
@@ -1914,6 +1919,20 @@ export class ProjectManager {
   async resolveViewImageUrl(viewData) {
     if (!viewData) return null;
     if (viewData.imageDataURL) return viewData.imageDataURL;
+
+    const legacyBackgroundSrc =
+      viewData?.canvasJSON?.backgroundImage &&
+      typeof viewData.canvasJSON.backgroundImage.src === 'string'
+        ? viewData.canvasJSON.backgroundImage.src
+        : '';
+    if (legacyBackgroundSrc && !legacyBackgroundSrc.startsWith('blob:')) {
+      return legacyBackgroundSrc;
+    }
+
+    if (typeof viewData.imageUrl === 'string' && viewData.imageUrl.startsWith('blob:')) {
+      console.warn('[Load] Ignoring legacy blob image URL from saved project');
+      return null;
+    }
 
     if (typeof viewData.imageUrl === 'string' && viewData.imageUrl.startsWith('r2://')) {
       return await this.resolveR2ImageUrl(viewData.imageUrl);

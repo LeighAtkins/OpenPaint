@@ -956,7 +956,7 @@ export function initScrollSelectSystem() {
         typeof metadata.measurementGuideBindingsByScope === 'object'
           ? metadata.measurementGuideBindingsByScope
           : {};
-      const base = String(label || '').split('::')[0] || String(label || '');
+      const base = label.split('::')[0] || label;
 
       const frameBinding = bindings[label];
       if (frameBinding && typeof frameBinding === 'object') {

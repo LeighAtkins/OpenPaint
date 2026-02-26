@@ -51,6 +51,61 @@ export default {
 		}
 
 		// 0) Protected measurement guide SVG from private R2 bucket
+		if (req.method === 'GET' && url.pathname === '/measurement-guides/codes') {
+			if (!env.MEASUREMENT_GUIDES) {
+				return json(env, origin, { error: 'measurement_guides_bucket_missing' }, 500);
+			}
+
+			const prefix = 'measurement-guides/';
+			const codes = new Set<string>();
+			const viewsByCode = new Map<string, Set<string>>();
+			let cursor: string | undefined;
+
+			do {
+				const page = await env.MEASUREMENT_GUIDES.list({
+					prefix,
+					cursor,
+					limit: 1000,
+				});
+
+				for (const obj of page.objects || []) {
+					const key = String(obj.key || '');
+					if (!key.startsWith(prefix) || !key.toLowerCase().endsWith('.svg')) continue;
+
+					const base = key.slice(prefix.length);
+					const noExt = base.replace(/\.svg$/i, '');
+					const viewMatch = noExt.match(/^(front|back|side)_(.+)$/i);
+					const inferredView = viewMatch?.[1]?.toLowerCase() || 'front';
+					const withoutViewPrefix = viewMatch?.[2] || noExt;
+					const code = withoutViewPrefix.trim().toUpperCase();
+					if (!code) continue;
+					codes.add(code);
+
+					if (!viewsByCode.has(code)) {
+						viewsByCode.set(code, new Set<string>());
+					}
+					viewsByCode.get(code)?.add(inferredView);
+				}
+
+				cursor = page.truncated ? page.cursor : undefined;
+			} while (cursor);
+
+			const viewsByCodeObj: Record<string, string[]> = {};
+			for (const code of codes) {
+				const views = Array.from(viewsByCode.get(code) || new Set(['front']))
+					.filter((view) => view === 'front' || view === 'back' || view === 'side')
+					.sort((a, b) => ['front', 'back', 'side'].indexOf(a) - ['front', 'back', 'side'].indexOf(b));
+				viewsByCodeObj[code] = views.length ? views : ['front'];
+			}
+
+			return json(env, origin, {
+				success: true,
+				count: codes.size,
+				codes: Array.from(codes).sort((a, b) => a.localeCompare(b)),
+				viewsByCode: viewsByCodeObj,
+			});
+		}
+
 		if (req.method === 'GET' && url.pathname === '/measurement-guides/svg') {
 			const code = String(url.searchParams.get('code') || '')
 				.trim()
