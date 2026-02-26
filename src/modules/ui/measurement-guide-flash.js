@@ -270,7 +270,14 @@ function getGuideBinding(viewId) {
     const locked = entry.locked === true;
     if (codes.length || activeCode || locked) {
       const scopeType = candidate === String(viewId || '').trim() ? 'frame' : 'view';
-      return { codes, activeCode, locked, scopeType, scopeId: candidate };
+      return {
+        codes,
+        activeCode,
+        activeVariant: entry.activeVariant || 'front',
+        locked,
+        scopeType,
+        scopeId: candidate,
+      };
     }
   }
 
@@ -285,6 +292,7 @@ function getGuideBinding(viewId) {
       return {
         codes,
         activeCode,
+        activeVariant: projectBinding.activeVariant || 'front',
         locked,
         scopeType: 'project',
         scopeId: '__project__',
@@ -305,6 +313,7 @@ function getGuideBinding(viewId) {
     return {
       codes: fallbackCodes,
       activeCode: fallbackActive,
+      activeVariant: defaults.activeVariant || 'front',
       locked: false,
       scopeType: 'default',
       scopeId: '__default__',
@@ -313,6 +322,7 @@ function getGuideBinding(viewId) {
   return {
     codes: [],
     activeCode: '',
+    activeVariant: 'front',
     locked: false,
     scopeType: 'default',
     scopeId: '__default__',
@@ -2008,7 +2018,13 @@ function resolveScopeId(viewId, bindingTarget = 'frame') {
   return frameScopeId || String(viewId || '').trim() || 'front';
 }
 
-function saveGuideSettings({ viewId, codes, lockToImage, bindingTarget = 'frame' }) {
+function saveGuideSettings({
+  viewId,
+  codes,
+  lockToImage,
+  bindingTarget = 'frame',
+  variant = 'front',
+}) {
   const manager = window.app?.projectManager;
   const metadata = getMetadata();
   const normalizedCodes = Array.from(
@@ -2057,6 +2073,7 @@ function saveGuideSettings({ viewId, codes, lockToImage, bindingTarget = 'frame'
     nextBindingsByScope[scopeId] = {
       codes: [...normalizedCodes],
       activeCode: normalizedCodes[0] || '',
+      activeVariant: String(variant || 'front').toLowerCase(),
       locked: lockToImage === true,
       tagModeHint: 'auto',
     };
@@ -2095,8 +2112,8 @@ function saveGuideSettings({ viewId, codes, lockToImage, bindingTarget = 'frame'
   };
 }
 
-function saveGuideCodes(codes, viewId = getCurrentViewId()) {
-  saveGuideSettings({ viewId, codes, lockToImage: isGuideLockedToView(viewId) });
+function saveGuideCodes(codes, viewId = getCurrentViewId(), variant = 'front') {
+  saveGuideSettings({ viewId, codes, lockToImage: isGuideLockedToView(viewId), variant });
 }
 
 function setGuideLockForView(viewId, lockToImage) {
@@ -2106,17 +2123,9 @@ function setGuideLockForView(viewId, lockToImage) {
   saveGuideSettings({ viewId, codes, lockToImage });
 }
 
-function resolveSlides(codes, lockedView = null) {
+function resolveSlides(codes) {
   const slides = [];
-  const normalizedLocked = toBaseViewId(String(lockedView || '')).toLowerCase();
-  const scopedLockedView = ['front', 'back', 'side'].includes(normalizedLocked)
-    ? normalizedLocked
-    : null;
   codes.forEach(code => {
-    if (scopedLockedView) {
-      slides.push({ code, view: scopedLockedView });
-      return;
-    }
     VIEWS.forEach(view => {
       slides.push({ code, view });
     });
@@ -2220,18 +2229,6 @@ function ensureOverlay(slide, slideCount) {
     guideImageEl.src = url;
     guideImageEl.dataset.guideCode = slide.code;
     guideImageEl.dataset.guideView = slide.view;
-    fetchGuideRasterUrl(slide.code, slide.view)
-      .then(rasterUrl => {
-        if (
-          guideImageEl.dataset.guideCode === slide.code &&
-          guideImageEl.dataset.guideView === slide.view
-        ) {
-          guideImageEl.src = rasterUrl;
-        }
-      })
-      .catch(() => {
-        // Keep SVG URL fallback
-      });
   }
 
   const projectImages = getProjectImageRows();
@@ -2586,7 +2583,7 @@ function showGuideFlash({
     return;
   }
 
-  const slides = resolveSlides(codes, pinnedLockToImage ? pinnedSourceViewId : null);
+  const slides = resolveSlides(codes);
   if (!slides.length) return;
   flashSlides = slides;
   flashSourceViewId = pinnedSourceViewId || currentViewId;
@@ -2600,10 +2597,22 @@ function showGuideFlash({
 
   if (delta === 0) {
     const binding = resolveModelBindingForView(bindingViewId);
-    const preferredCode = normalizeCode(binding?.selection?.code || '');
-    const preferredView = String(binding?.selection?.variant || '')
+    let preferredCode = normalizeCode(binding?.selection?.code || '');
+    let preferredView = String(binding?.selection?.variant || '')
       .trim()
       .toLowerCase();
+
+    // Fallback: read activeVariant from guide binding if model link lookup missed
+    if (!preferredCode || !preferredView) {
+      const guideBinding = getGuideBinding(bindingViewId);
+      preferredCode = preferredCode || normalizeCode(guideBinding.activeCode || '');
+      preferredView =
+        preferredView ||
+        String(guideBinding.activeVariant || '')
+          .trim()
+          .toLowerCase();
+    }
+
     if (preferredCode && preferredView) {
       const preferredIndex = slides.findIndex(
         item =>
@@ -3089,7 +3098,7 @@ function showGuideGallery(options = {}) {
         ? resolveScopeIdForImage(normalizedTarget) || normalizedTarget
         : normalizedTarget;
     linkSelectionToScope(selection.id, targetScopeId);
-    saveGuideCodes([code], targetViewId);
+    saveGuideCodes([code], targetViewId, variant);
     tagGuideOnView(targetViewId, code, variant);
     setStatusMessage(
       `Bound ${code} to ${scopeMode === 'frame' ? `frame ${targetScopeId}` : `image ${normalizedTarget}`}.`,

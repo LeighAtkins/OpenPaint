@@ -589,15 +589,15 @@ class PetFollowerRenderer {
     const toyDistance = Math.sqrt(toToyX * toToyX + toToyY * toToyY);
 
     if (this.toyState === 'dragging') {
-      this.targetX = this.toyX - this.config.displaySize * 0.35;
-      this.targetY = this.toyY - this.config.displaySize * 0.35;
+      this.targetX = this.toyX - this.config.displaySize * 0.5;
+      this.targetY = this.toyY - this.config.displaySize * 0.6;
       return;
     }
 
     if (this.toyState === 'dropped') {
-      this.targetX = this.toyX - this.config.displaySize * 0.35;
-      this.targetY = this.toyY - this.config.displaySize * 0.35;
-      if (toyDistance <= this.toyRadius + 14) {
+      this.targetX = this.toyX - this.config.displaySize * 0.5;
+      this.targetY = this.toyY - this.config.displaySize * 0.6;
+      if (toyDistance <= this.toyRadius + this.config.displaySize * 0.15) {
         this.toyState = 'carrying';
       }
       return;
@@ -610,13 +610,13 @@ class PetFollowerRenderer {
       const carryY = this.petY + this.config.displaySize * 0.62;
       this.toyX = carryX;
       this.toyY = carryY;
-      this.targetX = this.toyHomeX - this.config.displaySize * 0.35;
-      this.targetY = this.toyHomeY - this.config.displaySize * 0.35;
+      this.targetX = this.toyHomeX - this.config.displaySize * 0.5;
+      this.targetY = this.toyHomeY - this.config.displaySize * 0.6;
 
       const homeDx = this.toyHomeX - petCenterX;
       const homeDy = this.toyHomeY - petCenterY;
       const homeDist = Math.sqrt(homeDx * homeDx + homeDy * homeDy);
-      if (homeDist <= this.toyRadius + 18) {
+      if (homeDist <= this.toyRadius + this.config.displaySize * 0.15) {
         this.toyX = this.toyHomeX;
         this.toyY = this.toyHomeY;
         this.toyState = 'none';
