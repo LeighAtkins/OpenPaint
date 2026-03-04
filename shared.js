@@ -31,6 +31,93 @@ class SharedProjectViewer {
     return pathParts[pathParts.length - 1];
   }
 
+  toBaseLabel(label) {
+    return typeof label === 'string' ? label.split('::tab:')[0] : label;
+  }
+
+  resolveDataLabel(mapLike, preferredLabel) {
+    if (!mapLike || typeof mapLike !== 'object') return preferredLabel;
+    const keys = Object.keys(mapLike);
+    if (!keys.length) return preferredLabel;
+    if (preferredLabel && keys.includes(preferredLabel)) return preferredLabel;
+
+    const preferredBase = this.toBaseLabel(preferredLabel);
+    if (preferredBase) {
+      const baseMatch = keys.find(key => this.toBaseLabel(key) === preferredBase);
+      if (baseMatch) return baseMatch;
+    }
+
+    return preferredLabel || keys[0];
+  }
+
+  getMapValueForLabel(mapLike, preferredLabel, fallbackValue) {
+    const resolvedLabel = this.resolveDataLabel(mapLike, preferredLabel);
+    if (
+      !mapLike ||
+      typeof mapLike !== 'object' ||
+      !resolvedLabel ||
+      !Object.prototype.hasOwnProperty.call(mapLike, resolvedLabel)
+    ) {
+      return fallbackValue;
+    }
+    return mapLike[resolvedLabel];
+  }
+
+  normalizeInitialLabel(imageLabels) {
+    const list = Array.isArray(imageLabels) ? imageLabels : [];
+    if (!list.length) return null;
+
+    const desired = this.projectData?.currentImageLabel;
+    if (desired && list.includes(desired)) {
+      return desired;
+    }
+
+    const desiredBase = this.toBaseLabel(desired);
+    if (desiredBase) {
+      const baseMatch = list.find(label => this.toBaseLabel(label) === desiredBase);
+      if (baseMatch) {
+        return baseMatch;
+      }
+    }
+
+    return list[0];
+  }
+
+  remapPositionForCanvas(position, imageLabel) {
+    const sourceCanvas =
+      this.projectData?.sourceCanvasByImage?.[imageLabel] || this.projectData?.sourceCanvas || null;
+
+    const x = Number(position?.x);
+    const y = Number(position?.y);
+    const safePosition = {
+      x: Number.isFinite(x) ? x : 0,
+      y: Number.isFinite(y) ? y : 0,
+    };
+
+    if (!sourceCanvas) {
+      return safePosition;
+    }
+
+    const sourceWidth = Number(sourceCanvas.width);
+    const sourceHeight = Number(sourceCanvas.height);
+    if (
+      !Number.isFinite(sourceWidth) ||
+      !Number.isFinite(sourceHeight) ||
+      sourceWidth <= 0 ||
+      sourceHeight <= 0
+    ) {
+      return safePosition;
+    }
+
+    const ratioX = this.canvas.width / sourceWidth;
+    const ratioY = this.canvas.height / sourceHeight;
+
+    return {
+      x: safePosition.x * ratioX,
+      y: safePosition.y * ratioY,
+    };
+  }
+
   async init() {
     console.log('Loading shared project:', this.shareId);
 
@@ -195,9 +282,14 @@ class SharedProjectViewer {
 
     // Set current index/label if not set - only set once to avoid cycling
     if (this.currentLabel === null) {
-      this.currentIndex = 0;
-      this.currentLabel = this.projectData.currentImageLabel || imageLabels[0];
+      this.currentLabel = this.normalizeInitialLabel(imageLabels);
+      this.currentIndex = Math.max(0, imageLabels.indexOf(this.currentLabel));
       console.log('Set initial image label:', this.currentLabel);
+    }
+
+    if (!imageLabels.includes(this.currentLabel)) {
+      this.currentLabel = imageLabels[0];
+      this.currentIndex = 0;
     }
 
     const currentLabel = this.currentLabel;
@@ -207,8 +299,15 @@ class SharedProjectViewer {
       nameEl.textContent = this.projectData.customImageNames?.[currentLabel] || currentLabel;
 
     // Get scale and position from project data (using saved project structure)
-    let scale = this.projectData.imageScales?.[currentLabel];
-    let position = this.projectData.imagePositions?.[currentLabel] || { x: 0, y: 0 };
+    const scaleLabel = this.resolveDataLabel(this.projectData.imageScales, currentLabel);
+    const positionLabel = this.resolveDataLabel(this.projectData.imagePositions, currentLabel);
+    const imageAssetLabel = this.resolveDataLabel(this.projectData.originalImages, currentLabel);
+
+    let scale = this.getMapValueForLabel(this.projectData.imageScales, scaleLabel, 1.0);
+    let position = this.getMapValueForLabel(this.projectData.imagePositions, positionLabel, {
+      x: 0,
+      y: 0,
+    });
 
     // Safety: clamp/normalize absurd or missing values
     if (!Number.isFinite(scale) || scale <= 0) scale = 1.0;
@@ -224,15 +323,16 @@ class SharedProjectViewer {
       console.log('Resetting extreme Y position from', position.y, 'to 0');
       position.y = 0;
     }
+    position = this.remapPositionForCanvas(position, positionLabel || currentLabel);
     console.log('Final position after sanitization:', position);
 
     // Load and display the image if available
     if (
       currentLabel &&
       this.projectData.originalImages &&
-      this.projectData.originalImages[currentLabel]
+      this.projectData.originalImages[imageAssetLabel]
     ) {
-      this.loadAndDisplayImage(currentLabel, scale, position);
+      this.loadAndDisplayImage(imageAssetLabel, scale, position, currentLabel);
     } else {
       // No image; still draw strokes with proper scale and position
       // Use the same logic as main paint.js for blank canvas
@@ -294,7 +394,7 @@ class SharedProjectViewer {
     this.showProject(true);
   }
 
-  async loadAndDisplayImage(imageLabel, scale, position) {
+  async loadAndDisplayImage(imageLabel, scale, position, displayLabel = imageLabel) {
     try {
       const imageUrl = this.projectData.originalImages[imageLabel];
       if (!imageUrl) return;
@@ -345,7 +445,7 @@ class SharedProjectViewer {
         this.ctx.drawImage(img, imageX, imageY, img.width * scale, img.height * scale);
 
         // Redraw strokes on top of image using the same coordinate system
-        this.drawStrokes(imageLabel, scale, imageX, imageY);
+        this.drawStrokes(displayLabel, scale, imageX, imageY);
       };
 
       if (cached && cached.complete && cached.naturalWidth > 0) {
@@ -363,7 +463,7 @@ class SharedProjectViewer {
           this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
           this.ctx.fillStyle = 'white';
           this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-          this.drawStrokes(imageLabel, scale, position);
+          this.drawStrokes(displayLabel, scale, position);
         };
         img.src = imageUrl;
       } else {
@@ -373,7 +473,7 @@ class SharedProjectViewer {
         this.ctx.fillStyle = 'white';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         this.drawStrokes(
-          imageLabel,
+          displayLabel,
           scale,
           (this.canvas.width -
             (this.projectData.originalImageDimensions?.[imageLabel]?.width || 0) * scale) /
@@ -387,15 +487,18 @@ class SharedProjectViewer {
       }
     } catch (error) {
       console.error('Error loading image:', error);
-      this.drawStrokes(imageLabel, scale, position);
+      this.drawStrokes(displayLabel, scale, position);
     }
   }
 
   drawStrokes(imageLabel, imageScale = 1, imageX = 0, imageY = 0) {
     // Use the correct data structure from saved project data
-    const strokes = this.projectData.strokes?.[imageLabel] || {};
-    const strokeVisibility = this.projectData.strokeVisibility?.[imageLabel] || {};
-    const strokeLabels = this.projectData.strokeSequence?.[imageLabel] || [];
+    const strokeDataLabel = this.resolveDataLabel(this.projectData.strokes, imageLabel);
+    const strokes = this.projectData.strokes?.[strokeDataLabel] || {};
+    const strokeVisibility =
+      this.getMapValueForLabel(this.projectData.strokeVisibility, strokeDataLabel, {}) || {};
+    const strokeLabels =
+      this.getMapValueForLabel(this.projectData.strokeSequence, strokeDataLabel, []) || [];
 
     // Draw each visible stroke
     strokeLabels.forEach(strokeLabel => {
@@ -404,11 +507,11 @@ class SharedProjectViewer {
       const strokeData = strokes[strokeLabel];
       if (!strokeData) return;
 
-      this.drawSingleStroke(strokeData, strokeLabel, imageScale, imageX, imageY);
+      this.drawSingleStroke(strokeData, strokeLabel, imageScale, imageX, imageY, strokeDataLabel);
     });
   }
 
-  drawSingleStroke(strokeData, strokeLabel, scale = 1, offsetX = 0, offsetY = 0) {
+  drawSingleStroke(strokeData, strokeLabel, scale = 1, offsetX = 0, offsetY = 0, strokeDataLabel) {
     if (!strokeData.points || strokeData.points.length === 0) return;
 
     this.ctx.save();
@@ -456,7 +559,7 @@ class SharedProjectViewer {
     this.ctx.stroke();
 
     // Draw label if available
-    this.drawStrokeLabel(strokeData, strokeLabel, scale, offsetX, offsetY);
+    this.drawStrokeLabel(strokeData, strokeLabel, scale, offsetX, offsetY, strokeDataLabel);
 
     this.ctx.restore();
   }
@@ -480,11 +583,13 @@ class SharedProjectViewer {
     this.ctx.restore();
   }
 
-  drawStrokeLabel(strokeData, strokeLabel, scale, offsetX, offsetY) {
+  drawStrokeLabel(strokeData, strokeLabel, scale, offsetX, offsetY, strokeDataLabel) {
     if (!strokeData.points || strokeData.points.length === 0) return;
 
     // Respect label visibility if provided
-    const labelVisible = this.projectData.strokeLabelVisibility?.[this.currentLabel]?.[strokeLabel];
+    const labelVisibilityMap =
+      this.getMapValueForLabel(this.projectData.strokeLabelVisibility, strokeDataLabel, {}) || {};
+    const labelVisible = labelVisibilityMap?.[strokeLabel];
     if (labelVisible === false) return;
 
     // Anchor similar to editor
@@ -505,9 +610,9 @@ class SharedProjectViewer {
 
     // Apply custom offset (image space → canvas space using scale)
     // Use the same logic as main paint.js for label positioning
-    const customOffset = this.projectData.customLabelPositions?.[this.currentLabel]?.[
-      strokeLabel
-    ] || { x: 0, y: 0 };
+    const labelOffsetsByStroke =
+      this.getMapValueForLabel(this.projectData.customLabelPositions, strokeDataLabel, {}) || {};
+    const customOffset = labelOffsetsByStroke?.[strokeLabel] || { x: 0, y: 0 };
 
     // Use custom offset (calculatedLabelOffsets might not be saved in project data)
     const finalOffset = customOffset;
@@ -520,8 +625,11 @@ class SharedProjectViewer {
     // Compose label text (just tag inside circle)
     const labelText = strokeLabel;
     // Optional measurement text shown alongside
-    const rawMeasurement =
-      this.projectData.strokeMeasurements?.[this.currentLabel]?.[strokeLabel]?.value;
+    const rawMeasurement = this.getMapValueForLabel(
+      this.projectData.strokeMeasurements,
+      strokeDataLabel,
+      {}
+    )?.[strokeLabel]?.value;
     const measurementText =
       this.showMeasurements && rawMeasurement ? this.formatMeasurement(rawMeasurement) : null;
 
@@ -662,7 +770,8 @@ class SharedProjectViewer {
     const result = [];
     const label = this.currentLabel;
     if (!label || !this.projectData.strokeSequence) return result;
-    const strokeLabels = this.projectData.strokeSequence[label] || [];
+    const strokeDataLabel = this.resolveDataLabel(this.projectData.strokeSequence, label);
+    const strokeLabels = this.projectData.strokeSequence[strokeDataLabel] || [];
     strokeLabels.forEach(strokeLabel => result.push({ label: strokeLabel, imageLabel: label }));
     return result;
   }
@@ -825,5 +934,6 @@ class SharedProjectViewer {
 
 // Initialize the shared project viewer when the page loads
 document.addEventListener('DOMContentLoaded', () => {
-  new SharedProjectViewer();
+  const viewer = new SharedProjectViewer();
+  window.__sharedProjectViewer = viewer;
 });

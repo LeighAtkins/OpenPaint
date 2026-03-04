@@ -608,6 +608,20 @@ export class StrokeMetadataManager {
 
   // Focus the measurement input for a specific stroke (called when clicking tags)
   // Focus the measurement input for a specific stroke (called when clicking tags)
+  safeSelectNodeContents(node) {
+    if (!node || !node.isConnected) return;
+    try {
+      const range = document.createRange();
+      range.selectNodeContents(node);
+      const sel = window.getSelection();
+      if (!sel) return;
+      sel.removeAllRanges();
+      sel.addRange(range);
+    } catch {
+      // Ignore selection failures when DOM changed mid-frame.
+    }
+  }
+
   focusMeasurementInput(strokeLabel) {
     // Find the measurement span for this stroke
     const strokesList = document.getElementById('strokesList');
@@ -637,16 +651,10 @@ export class StrokeMetadataManager {
 
           // Enable editing
           setTimeout(() => {
-            const originalValue = measurementSpan.textContent;
+            if (!measurementSpan.isConnected) return;
             measurementSpan.contentEditable = 'true';
             measurementSpan.focus();
-
-            // Select all text
-            const range = document.createRange();
-            range.selectNodeContents(measurementSpan);
-            const sel = window.getSelection();
-            sel.removeAllRanges();
-            sel.addRange(range);
+            this.safeSelectNodeContents(measurementSpan);
           }, 100);
         }
         break;
@@ -654,14 +662,83 @@ export class StrokeMetadataManager {
     }
   }
 
+  isStrokePanelOpen() {
+    const strokePanel = document.getElementById('strokePanel');
+    const elementsBody = document.getElementById('elementsBody');
+
+    const panelMinimized =
+      strokePanel &&
+      (strokePanel.classList.contains('minimized') ||
+        strokePanel.getAttribute('aria-expanded') === 'false');
+    const bodyHidden =
+      elementsBody &&
+      (elementsBody.classList.contains('hidden') ||
+        window.getComputedStyle(elementsBody).display === 'none');
+
+    return !panelMinimized && !bodyHidden;
+  }
+
+  ensureStrokePanelRefreshObserver() {
+    if (this._strokePanelRefreshObserver) {
+      return;
+    }
+
+    const strokePanel = document.getElementById('strokePanel');
+    const elementsBody = document.getElementById('elementsBody');
+    if (!strokePanel && !elementsBody) {
+      return;
+    }
+
+    const onPanelStateMaybeChanged = () => {
+      if (!this._pendingStrokeControlsRefresh) return;
+      if (!this.isStrokePanelOpen()) return;
+      this._pendingStrokeControlsRefresh = false;
+      this.updateStrokeVisibilityControls();
+    };
+
+    this._strokePanelRefreshObserver = new MutationObserver(onPanelStateMaybeChanged);
+    if (strokePanel) {
+      this._strokePanelRefreshObserver.observe(strokePanel, {
+        attributes: true,
+        attributeFilter: ['class', 'aria-expanded', 'style'],
+      });
+    }
+    if (elementsBody) {
+      this._strokePanelRefreshObserver.observe(elementsBody, {
+        attributes: true,
+        attributeFilter: ['class', 'style'],
+      });
+    }
+  }
+
   // Update the stroke visibility controls panel
   updateStrokeVisibilityControls() {
-    console.log('[StrokeMetadata] updateStrokeVisibilityControls called');
+    const now = performance.now();
+    const lastRunAt = Number(this._lastStrokeControlsUpdateAt || 0);
+    if (lastRunAt > 0 && now - lastRunAt < 40) {
+      if (this._pendingStrokeControlsRefreshTimer) {
+        clearTimeout(this._pendingStrokeControlsRefreshTimer);
+      }
+      this._pendingStrokeControlsRefreshTimer = setTimeout(() => {
+        this._pendingStrokeControlsRefreshTimer = null;
+        this.updateStrokeVisibilityControls();
+      }, 40);
+      return;
+    }
+    this._lastStrokeControlsUpdateAt = now;
+
     const controlsContainer = document.getElementById('strokeVisibilityControls');
     if (!controlsContainer) {
       console.warn('[StrokeMetadata] strokeVisibilityControls container not found!');
       return;
     }
+
+    if (!this.isStrokePanelOpen()) {
+      this._pendingStrokeControlsRefresh = true;
+      this.ensureStrokePanelRefreshObserver();
+      return;
+    }
+    this._pendingStrokeControlsRefresh = false;
 
     // Set flag to prevent infinite loop with MutationObserver
     this.isUpdatingControls = true;
@@ -697,11 +774,6 @@ export class StrokeMetadataManager {
       window.app?.projectManager?.currentViewId || 'front'
     );
     const strokes = this.vectorStrokesByImage[currentViewId] || {};
-    console.log(
-      `[StrokeMetadata] vectorStrokesByImage[${currentViewId}]:`,
-      Object.keys(strokes),
-      strokes
-    );
 
     // Create strokesList container if it doesn't exist
     let strokesList = controlsContainer.querySelector('#strokesList');
@@ -1045,11 +1117,7 @@ export class StrokeMetadataManager {
         originalStrokeName = strokeName.textContent?.trim() || strokeLabel;
         strokeName.contentEditable = 'true';
         strokeName.focus();
-        const range = document.createRange();
-        range.selectNodeContents(strokeName);
-        const sel = window.getSelection();
-        sel.removeAllRanges();
-        sel.addRange(range);
+        this.safeSelectNodeContents(strokeName);
       });
 
       strokeName.addEventListener('keydown', e => {
@@ -1135,13 +1203,7 @@ export class StrokeMetadataManager {
 
         measurementSpan.contentEditable = 'true';
         measurementSpan.focus();
-
-        // Select all text
-        const range = document.createRange();
-        range.selectNodeContents(measurementSpan);
-        const sel = window.getSelection();
-        sel.removeAllRanges();
-        sel.addRange(range);
+        this.safeSelectNodeContents(measurementSpan);
       });
 
       measurementSpan.addEventListener('blur', () => {
@@ -1182,10 +1244,6 @@ export class StrokeMetadataManager {
       // We'll check if this is the last stroke in the list
       const allStrokes = Object.keys(strokes);
       const isNewestStroke = allStrokes[allStrokes.length - 1] === strokeLabel;
-
-      console.log(
-        `[Auto-Focus DEBUG] Stroke: ${strokeLabel}, isNewest: ${isNewestStroke}, shouldAutoFocus: ${this._shouldAutoFocus}`
-      );
 
       if (isNewestStroke && this._shouldAutoFocus) {
         this._shouldAutoFocus = false;

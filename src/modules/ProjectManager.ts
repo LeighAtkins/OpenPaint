@@ -40,6 +40,9 @@ export class ProjectManager {
       front: {
         id: 'front',
         image: null,
+        imageAssetHash: null,
+        imageContentType: null,
+        imageSourceFingerprint: null,
         canvasData: null,
         metadata: null,
         rotation: 0,
@@ -49,6 +52,9 @@ export class ProjectManager {
       side: {
         id: 'side',
         image: null,
+        imageAssetHash: null,
+        imageContentType: null,
+        imageSourceFingerprint: null,
         canvasData: null,
         metadata: null,
         rotation: 0,
@@ -58,6 +64,9 @@ export class ProjectManager {
       back: {
         id: 'back',
         image: null,
+        imageAssetHash: null,
+        imageContentType: null,
+        imageSourceFingerprint: null,
         canvasData: null,
         metadata: null,
         rotation: 0,
@@ -67,6 +76,9 @@ export class ProjectManager {
       cushion: {
         id: 'cushion',
         image: null,
+        imageAssetHash: null,
+        imageContentType: null,
+        imageSourceFingerprint: null,
         canvasData: null,
         metadata: null,
         rotation: 0,
@@ -153,6 +165,12 @@ export class ProjectManager {
         window.renderCaptureTabUI(viewId);
       }
 
+      const liveRotation = this.canvasManager?.getRotationDegrees?.();
+      if (typeof liveRotation === 'number') {
+        view.rotation = liveRotation;
+        this.updateThumbnailRotation(viewId, liveRotation);
+      }
+
       this.isSwitchingView = false;
       if (this.pendingSwitchViewId) {
         const nextView = this.pendingSwitchViewId;
@@ -196,6 +214,10 @@ export class ProjectManager {
     // Update next tag display to start from A1 (or A) for the new image
     if (window.updateNextTagDisplay) {
       window.updateNextTagDisplay();
+    }
+
+    if (window.app?.tagManager?.syncTagSizeFromMetadata) {
+      window.app.tagManager.syncTagSizeFromMetadata(viewId);
     }
 
     // Apply rotation for the new view
@@ -406,6 +428,12 @@ export class ProjectManager {
       window.app.measurementOverlayManager.mountView(viewId);
     }
 
+    const liveRotation = this.canvasManager?.getRotationDegrees?.();
+    if (typeof liveRotation === 'number' && this.views[viewId]) {
+      this.views[viewId].rotation = liveRotation;
+      this.updateThumbnailRotation(viewId, liveRotation);
+    }
+
     this.isSwitchingView = false;
     if (this.pendingSwitchViewId) {
       const nextView = this.pendingSwitchViewId;
@@ -425,8 +453,14 @@ export class ProjectManager {
       const img = container.querySelector('img');
       const domSrc = img?.getAttribute('src') || container.dataset?.originalImageUrl;
       if (domSrc && this.views?.[viewId] && this.views[viewId].image !== domSrc) {
+        this.views[viewId].imageAssetHash = null;
+        this.views[viewId].imageContentType = null;
+        this.views[viewId].imageSourceFingerprint = null;
         this.views[viewId].image = domSrc;
       }
+
+      const knownRotation = Number(this.views?.[viewId]?.rotation);
+      this.updateThumbnailRotation(viewId, Number.isFinite(knownRotation) ? knownRotation : 0);
     } catch (err) {
       console.warn('[ProjectManager] Failed to sync view image from DOM:', err);
     }
@@ -549,6 +583,9 @@ export class ProjectManager {
       this.views[viewId] = {
         id: viewId,
         image: null,
+        imageAssetHash: null,
+        imageContentType: null,
+        imageSourceFingerprint: null,
         canvasData: null,
         metadata: null,
         rotation: 0,
@@ -557,12 +594,25 @@ export class ProjectManager {
       };
     }
 
+    const previousImage = this.views[viewId].image;
+    if (previousImage !== imageUrl) {
+      this.views[viewId].imageAssetHash = null;
+      this.views[viewId].imageContentType = null;
+      this.views[viewId].imageSourceFingerprint = null;
+    }
     this.views[viewId].image = imageUrl;
 
     // Only refresh background if explicitly requested and this is the current view
     // This prevents flicker during batch uploads
     if (refreshBackground && this.currentViewId === viewId) {
       await this.setBackgroundImage(imageUrl);
+      const liveRotation = this.canvasManager?.getRotationDegrees?.();
+      if (typeof liveRotation === 'number') {
+        this.views[viewId].rotation = liveRotation;
+        this.updateThumbnailRotation(viewId, liveRotation);
+      }
+    } else if (typeof this.views[viewId]?.rotation === 'number') {
+      this.updateThumbnailRotation(viewId, this.views[viewId].rotation);
     }
   }
 
@@ -702,6 +752,10 @@ export class ProjectManager {
     const nextRotation = this.canvasManager.rotateCanvasObjects(deltaDegrees);
     view.rotation = nextRotation;
     this.updateThumbnailRotation(this.currentViewId, nextRotation);
+    if (typeof window.captureTabsSyncActive === 'function') {
+      window.__captureTabsAllowRotationWrite = true;
+      window.captureTabsSyncActive(this.currentViewId, { syncRotation: true });
+    }
   }
 
   updateThumbnailRotation(viewId, rotationDegrees) {
@@ -912,6 +966,19 @@ export class ProjectManager {
       }
 
       // Collect project data for sharing
+      const sourceCanvas = (() => {
+        const fabricCanvas = window.app?.canvasManager?.fabricCanvas;
+        if (!fabricCanvas) {
+          return null;
+        }
+        const width = Number(fabricCanvas.width);
+        const height = Number(fabricCanvas.height);
+        if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
+          return null;
+        }
+        return { width, height };
+      })();
+
       const projectData = {
         currentImageLabel,
         imageLabels,
@@ -925,6 +992,7 @@ export class ProjectManager {
         strokeLabelVisibility: window.strokeLabelVisibility || {},
         imageScales: window.paintApp?.state?.imageScaleByLabel || {},
         imagePositions: window.paintApp?.state?.imagePositionByLabel || {},
+        sourceCanvas,
         customImageNames: window.customImageNames || {},
       };
 
@@ -1081,6 +1149,19 @@ export class ProjectManager {
         });
       }
 
+      const sourceCanvas = (() => {
+        const fabricCanvas = window.app?.canvasManager?.fabricCanvas;
+        if (!fabricCanvas) {
+          return null;
+        }
+        const width = Number(fabricCanvas.width);
+        const height = Number(fabricCanvas.height);
+        if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
+          return null;
+        }
+        return { width, height };
+      })();
+
       const projectData = {
         currentImageLabel: window.paintApp?.state?.currentImageLabel,
         imageLabels: window.paintApp?.state?.imageLabels || [],
@@ -1094,6 +1175,7 @@ export class ProjectManager {
         strokeLabelVisibility: window.strokeLabelVisibility || {},
         imageScales: window.paintApp?.state?.imageScaleByLabel || {},
         imagePositions: window.paintApp?.state?.imagePositionByLabel || {},
+        sourceCanvas,
         customImageNames: window.customImageNames || {},
       };
 
@@ -1508,14 +1590,32 @@ export class ProjectManager {
     }
 
     const isBlobUrl = url => typeof url === 'string' && url.startsWith('blob:');
+    const runWithConcurrency = async (items, limit, worker) => {
+      const queue = Array.isArray(items) ? items.slice() : [];
+      if (!queue.length) return;
+      const concurrency = Math.max(1, Number(limit) || 1);
+      const workers = new Array(Math.min(concurrency, queue.length)).fill(null).map(async () => {
+        while (queue.length > 0) {
+          const next = queue.shift();
+          await worker(next);
+        }
+      });
+      await Promise.all(workers);
+    };
 
-    for (const viewId of viewIds) {
+    const viewEntries = {};
+    const persistConcurrency = uploadImagesToR2 ? 3 : 1;
+
+    await runWithConcurrency(viewIds, persistConcurrency, async viewId => {
       const view = this.views[viewId] || {};
       const entry = {
         canvasJSON: null,
         imageDataURL: null,
         imageUrl: view.image || null,
         imageAssetPath: null,
+        imageAssetHash: view.imageAssetHash || null,
+        imageContentType: view.imageContentType || null,
+        imageSourceFingerprint: view.imageSourceFingerprint || null,
         metadata: {},
         tabs: null,
       };
@@ -1536,6 +1636,9 @@ export class ProjectManager {
               (r2Key.startsWith('http://') || r2Key.startsWith('https://'))
                 ? r2Key
                 : `r2://${r2Key}`;
+            entry.imageAssetHash = null;
+            entry.imageContentType = null;
+            entry.imageSourceFingerprint = null;
 
             if (entry.canvasJSON?.backgroundImage) {
               entry.canvasJSON.backgroundImage.src = '';
@@ -1598,7 +1701,11 @@ export class ProjectManager {
         entry.viewport = deepClone(view.viewport);
       }
 
-      projectData.views[viewId] = entry;
+      viewEntries[viewId] = entry;
+    });
+
+    for (const viewId of viewIds) {
+      projectData.views[viewId] = viewEntries[viewId] || {};
     }
 
     // Serialize MOS overlays if manager exists
@@ -1622,6 +1729,7 @@ export class ProjectManager {
     };
 
     const startedAt = Date.now();
+    let cloudPromise = null;
 
     try {
       console.log('[Save] Starting saveProject');
@@ -1631,8 +1739,19 @@ export class ProjectManager {
         return;
       }
 
-      const localStart = Date.now();
       const projectData = await this.getProjectData({ embedImages: false });
+
+      const authManager = window.app?.authManager;
+      const cloudManager = window.app?.cloudProjectManager;
+      const user = authManager?.getUser ? authManager.getUser() : null;
+      const localStart = Date.now();
+      let cloudStart = 0;
+
+      if (user && cloudManager?.saveProject) {
+        outcome.cloud.attempted = true;
+        cloudStart = Date.now();
+        cloudPromise = cloudManager.saveProject(projectData);
+      }
 
       await this.downloadProjectArchive(projectData, safeProjectName);
       outcome.local = {
@@ -1641,15 +1760,8 @@ export class ProjectManager {
         durationMs: Date.now() - localStart,
       };
 
-      const authManager = window.app?.authManager;
-      const cloudManager = window.app?.cloudProjectManager;
-      const user = authManager?.getUser ? authManager.getUser() : null;
-
-      if (user && cloudManager?.saveProject) {
-        outcome.cloud.attempted = true;
-        const cloudStart = Date.now();
-        const cloudProjectData = await this.getProjectData({ embedImages: false });
-        const result = await cloudManager.saveProject(cloudProjectData);
+      if (cloudPromise) {
+        const result = await cloudPromise;
 
         if (result?.status === 'ok') {
           outcome.cloud = {
@@ -1658,6 +1770,7 @@ export class ProjectManager {
             projectId: result?.data?.projectId,
             manifestVersion: result?.data?.manifestVersion,
             syncedViewIds: result?.data?.syncedViewIds,
+            skippedViewIds: result?.data?.skippedViewIds,
             uploadedAssetHashes: result?.data?.uploadedAssetHashes,
             durationMs: Date.now() - cloudStart,
           };
@@ -1696,10 +1809,41 @@ export class ProjectManager {
         error: error?.message || 'Failed to save project',
         durationMs: Date.now() - startedAt,
       };
-      outcome.cloud = {
-        attempted: false,
-        status: 'not_attempted',
-      };
+      if (cloudPromise) {
+        try {
+          const cloudResult = await cloudPromise;
+          if (cloudResult?.status === 'ok') {
+            outcome.cloud = {
+              attempted: true,
+              status: 'success',
+              projectId: cloudResult?.data?.projectId,
+              manifestVersion: cloudResult?.data?.manifestVersion,
+              syncedViewIds: cloudResult?.data?.syncedViewIds,
+              skippedViewIds: cloudResult?.data?.skippedViewIds,
+              uploadedAssetHashes: cloudResult?.data?.uploadedAssetHashes,
+              durationMs: Date.now() - startedAt,
+            };
+          } else {
+            outcome.cloud = {
+              attempted: true,
+              status: 'failed',
+              durationMs: Date.now() - startedAt,
+              error: this.toNormalizedCloudError(cloudResult),
+            };
+          }
+        } catch {
+          outcome.cloud = {
+            attempted: true,
+            status: 'failed',
+            durationMs: Date.now() - startedAt,
+          };
+        }
+      } else {
+        outcome.cloud = {
+          attempted: false,
+          status: 'not_attempted',
+        };
+      }
     } finally {
       outcome.finalMessageKey = decideFinalSaveMessageKey(outcome);
       this.renderSaveOutcome(outcome);
@@ -1938,6 +2082,19 @@ export class ProjectManager {
       return await this.resolveR2ImageUrl(viewData.imageUrl);
     }
 
+    if (typeof viewData.imageUrl === 'string' && viewData.imageUrl.startsWith('cloud-asset://')) {
+      const hash = String(viewData.imageUrl).replace('cloud-asset://', '').trim();
+      const cloudManager = window.app?.cloudProjectManager;
+      if (hash && typeof cloudManager?.resolveCloudAssetToObjectUrl === 'function') {
+        const objectUrl = await cloudManager.resolveCloudAssetToObjectUrl(hash);
+        if (objectUrl && !this.loadedProjectObjectUrls.includes(objectUrl)) {
+          this.loadedProjectObjectUrls.push(objectUrl);
+        }
+        return objectUrl || null;
+      }
+      return null;
+    }
+
     const archivePath = viewData.imageAssetPath || viewData.imageUrl;
     if (archivePath && typeof archivePath === 'string' && archivePath.startsWith('images/')) {
       return await this.resolveArchiveImageUrl(archivePath);
@@ -2014,7 +2171,7 @@ export class ProjectManager {
       this.suspendSave = true;
 
       // Prevent scroll-select auto-switching during load without toggling UI state
-      window.__suppressScrollSelectUntil = Date.now() + 3000;
+      window.__suppressScrollSelectUntil = Date.now() + 300000;
 
       if (!projectData.version || !projectData.version.startsWith('2.0')) {
         this.showStatusMessage(
@@ -2107,6 +2264,9 @@ export class ProjectManager {
         this.views[viewId] = {
           id: viewId,
           image: null,
+          imageAssetHash: viewData.imageAssetHash || null,
+          imageContentType: viewData.imageContentType || null,
+          imageSourceFingerprint: viewData.imageSourceFingerprint || null,
           canvasData: viewData.canvasJSON,
           metadata: viewData.metadata || {},
           tabs: viewData.tabs || null,
@@ -2189,20 +2349,28 @@ export class ProjectManager {
         setTimeout(() => syncGalleryToView(0), 100);
       }
 
-      // Register remaining view images while keeping current view pinned.
-      for (let index = 0; index < deferredImageRegistrations.length; index += 1) {
-        const item = deferredImageRegistrations[index];
+      const hydrateDeferredImages = async () => {
         try {
-          this.updateProjectLoadOverlay(
-            `Loading image ${index + 1}/${deferredImageRegistrations.length}...`
-          );
-          const imageUrl = await this.resolveViewImageUrl(item.viewData);
-          this.views[item.viewId].image = imageUrl;
-          await registerImageForView(item.viewId, imageUrl);
-        } catch (error) {
-          console.warn('[Load] Deferred image registration failed', item.viewId, error);
+          for (const item of deferredImageRegistrations) {
+            try {
+              const imageUrl = await this.resolveViewImageUrl(item.viewData);
+              this.views[item.viewId].image = imageUrl;
+              await registerImageForView(item.viewId, imageUrl);
+            } catch (error) {
+              console.warn('[Load] Deferred image registration failed', item.viewId, error);
+            }
+            await new Promise(resolve => setTimeout(resolve, 0));
+          }
+        } finally {
+          window.__deferredImageHydrationInProgress = false;
+          window.__suppressScrollSelectUntil = 0;
+          if (this.pendingSwitchViewId && this.pendingSwitchViewId !== this.currentViewId) {
+            const nextView = this.pendingSwitchViewId;
+            this.pendingSwitchViewId = null;
+            await this.switchView(nextView, true);
+          }
         }
-      }
+      };
 
       // Restore MOS overlays if present
       if (projectData.mosOverlays && window.app?.measurementOverlayManager) {
@@ -2218,20 +2386,27 @@ export class ProjectManager {
       console.log('[Load] Project load complete');
 
       // Re-enable interactions once deferred hydration is complete.
-      window.__suppressScrollSelectUntil = 0;
       window.__isLoadingProject = false;
       window.__suspendSaveCurrentView = false;
       this.isLoadingProject = false;
       this.suspendSave = false;
       this.isHydratingDeferredViews = false;
       this.hydrationPinnedViewId = null;
-      window.__deferredImageHydrationInProgress = false;
       this.hideProjectLoadOverlay();
 
+      if (deferredImageRegistrations.length > 0) {
+        void hydrateDeferredImages();
+      } else {
+        window.__deferredImageHydrationInProgress = false;
+        window.__suppressScrollSelectUntil = 0;
+      }
+
       if (this.pendingSwitchViewId && this.pendingSwitchViewId !== this.currentViewId) {
-        const nextView = this.pendingSwitchViewId;
-        this.pendingSwitchViewId = null;
-        await this.switchView(nextView, true);
+        if (!window.__deferredImageHydrationInProgress) {
+          const nextView = this.pendingSwitchViewId;
+          this.pendingSwitchViewId = null;
+          await this.switchView(nextView, true);
+        }
       }
     } catch (error) {
       console.error('[Load] Failed to load project:', error);
@@ -2243,6 +2418,7 @@ export class ProjectManager {
       this.isHydratingDeferredViews = false;
       this.hydrationPinnedViewId = null;
       window.__deferredImageHydrationInProgress = false;
+      window.__suppressScrollSelectUntil = 0;
       this.hideProjectLoadOverlay();
     }
   }

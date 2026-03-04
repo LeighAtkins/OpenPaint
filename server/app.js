@@ -93,6 +93,14 @@ const WORKER_API_KEY = (
 
 const app = express();
 
+function getPublicOrigin(req) {
+  const forwardedProto = String(req.get('x-forwarded-proto') || '')
+    .split(',')[0]
+    .trim();
+  const protocol = forwardedProto || req.protocol || 'https';
+  return `${protocol}://${req.get('host')}`;
+}
+
 function parseSetCookie(setCookieHeaders = []) {
   const jar = {};
   setCookieHeaders.forEach(value => {
@@ -457,6 +465,185 @@ app.post('/projects/:projectId/share', (req, res) => {
     res.status(500).json({ success: false, message: 'Failed to share project' });
   }
 });
+
+// Share project API (supports both /api/* and stripped /* paths)
+const createShareProjectHandler = async (req, res) => {
+  try {
+    const { projectData, title = null, shareOptions = {} } = req.body || {};
+
+    if (!projectData || typeof projectData !== 'object') {
+      return res.status(400).json({ success: false, message: 'Project data is required' });
+    }
+
+    const shareId = crypto.randomBytes(12).toString('hex');
+    const editToken = crypto.randomBytes(16).toString('hex');
+    const createdAt = new Date().toISOString();
+    const expiresAt = shareOptions.expiresAt
+      ? new Date(shareOptions.expiresAt).toISOString()
+      : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+
+    const shareRecord = {
+      id: shareId,
+      editToken,
+      projectData,
+      createdAt,
+      expiresAt,
+      isPublic: shareOptions.isPublic || false,
+      allowEditing: shareOptions.allowEditing || false,
+      measurements: shareOptions.measurements || {},
+    };
+
+    sharedProjects.set(shareId, shareRecord);
+
+    return res.json({
+      success: true,
+      shareId,
+      editToken,
+      shareUrl: `${getPublicOrigin(req)}/shared/${shareId}`,
+      expiresAt,
+      title,
+    });
+  } catch (error) {
+    console.error('Error creating share link:', error);
+    return res.status(500).json({ success: false, message: 'Server error creating share link' });
+  }
+};
+
+const getSharedProjectHandler = async (req, res) => {
+  try {
+    const { shareId } = req.params;
+    const shareRecord = sharedProjects.get(shareId);
+
+    if (!shareRecord) {
+      return res.status(404).json({ success: false, message: 'Shared project not found' });
+    }
+
+    if (shareRecord.expiresAt && new Date() > new Date(shareRecord.expiresAt)) {
+      sharedProjects.delete(shareId);
+      return res.status(410).json({ success: false, message: 'Shared project has expired' });
+    }
+
+    return res.json({
+      success: true,
+      projectData: shareRecord.projectData,
+      shareInfo: {
+        id: shareRecord.id,
+        createdAt: shareRecord.createdAt,
+        expiresAt: shareRecord.expiresAt,
+        allowEditing: shareRecord.allowEditing,
+        measurements: shareRecord.measurements,
+      },
+    });
+  } catch (error) {
+    console.error('Error retrieving shared project:', error);
+    return res
+      .status(500)
+      .json({ success: false, message: 'Server error retrieving shared project' });
+  }
+};
+
+const submitSharedMeasurementsHandler = async (req, res) => {
+  try {
+    const { shareId } = req.params;
+    const { measurements, customerInfo = {} } = req.body || {};
+
+    if (!measurements || typeof measurements !== 'object') {
+      return res.status(400).json({ success: false, message: 'Valid measurements are required' });
+    }
+
+    const shareRecord = sharedProjects.get(shareId);
+    if (!shareRecord) {
+      return res.status(404).json({ success: false, message: 'Shared project not found' });
+    }
+
+    if (shareRecord.expiresAt && new Date() > new Date(shareRecord.expiresAt)) {
+      return res.status(410).json({ success: false, message: 'Shared project has expired' });
+    }
+
+    const submissionId = crypto.randomBytes(8).toString('hex');
+    const submission = {
+      id: submissionId,
+      measurements,
+      customerInfo,
+      submittedAt: new Date().toISOString(),
+      shareId,
+    };
+
+    if (!Array.isArray(shareRecord.submissions)) {
+      shareRecord.submissions = [];
+    }
+    shareRecord.submissions.push(submission);
+
+    return res.json({
+      success: true,
+      submissionId,
+      message: 'Measurements submitted successfully',
+    });
+  } catch (error) {
+    console.error('Error submitting measurements:', error);
+    return res
+      .status(500)
+      .json({ success: false, message: 'Server error submitting measurements' });
+  }
+};
+
+const updateSharedProjectHandler = async (req, res) => {
+  try {
+    const { shareId } = req.params;
+    const { editToken, projectData, title = null, shareOptions = {} } = req.body || {};
+    const shareRecord = sharedProjects.get(shareId);
+
+    if (!shareRecord) {
+      return res.status(404).json({ success: false, message: 'Shared project not found' });
+    }
+
+    if (!editToken) {
+      return res.status(400).json({ success: false, message: 'editToken is required' });
+    }
+
+    if (shareRecord.editToken && shareRecord.editToken !== editToken) {
+      return res.status(403).json({ success: false, message: 'Invalid edit token' });
+    }
+
+    if (projectData && typeof projectData === 'object') {
+      shareRecord.projectData = projectData;
+    }
+    if (title) {
+      shareRecord.title = title;
+    }
+    if (shareOptions && typeof shareOptions === 'object') {
+      shareRecord.measurements = shareOptions.measurements || shareRecord.measurements || {};
+      shareRecord.allowEditing =
+        typeof shareOptions.allowEditing === 'boolean'
+          ? shareOptions.allowEditing
+          : shareRecord.allowEditing;
+      if (shareOptions.expiresAt) {
+        shareRecord.expiresAt = new Date(shareOptions.expiresAt).toISOString();
+      }
+    }
+
+    return res.json({
+      success: true,
+      shareId,
+      shareUrl: `${getPublicOrigin(req)}/shared/${shareId}`,
+      expiresAt: shareRecord.expiresAt,
+    });
+  } catch (error) {
+    console.error('Error updating shared project:', error);
+    return res
+      .status(500)
+      .json({ success: false, message: 'Server error updating shared project' });
+  }
+};
+
+app.post('/api/share-project', createShareProjectHandler);
+app.post('/share-project', createShareProjectHandler);
+app.get('/api/shared/:shareId', getSharedProjectHandler);
+app.get('/shared/:shareId', getSharedProjectHandler);
+app.post('/api/shared/:shareId/measurements', submitSharedMeasurementsHandler);
+app.post('/shared/:shareId/measurements', submitSharedMeasurementsHandler);
+app.patch('/api/shared/:shareId', updateSharedProjectHandler);
+app.patch('/shared/:shareId', updateSharedProjectHandler);
 
 // Get shared project
 app.get('/share/:shareId', (req, res) => {

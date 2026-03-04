@@ -81,6 +81,89 @@ function enforceScopedTabContext(viewId, scopedLabel) {
   return { enforced: true, scopedTabId };
 }
 
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, Math.max(0, Number(ms) || 0)));
+}
+
+async function waitForCanvasRenderStability(canvas, options = {}) {
+  if (!canvas) return;
+  const visiblePasses = Math.max(1, Number(options.visiblePasses) || 2);
+  const hiddenPasses = Math.max(visiblePasses, Number(options.hiddenPasses) || 5);
+  const timeoutVisibleMs = Math.max(40, Number(options.timeoutVisibleMs) || 120);
+  const timeoutHiddenMs = Math.max(timeoutVisibleMs, Number(options.timeoutHiddenMs) || 800);
+
+  const runPass = async hiddenMode => {
+    canvas.requestRenderAll?.();
+    await new Promise(resolve => {
+      let done = false;
+      const finish = () => {
+        if (done) return;
+        done = true;
+        resolve();
+      };
+
+      const timeoutMs = hiddenMode ? timeoutHiddenMs : timeoutVisibleMs;
+      setTimeout(finish, timeoutMs);
+
+      if (!hiddenMode && typeof requestAnimationFrame === 'function') {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(finish);
+        });
+      }
+    });
+  };
+
+  const hiddenMode = document.visibilityState !== 'visible';
+  const passes = hiddenMode ? hiddenPasses : visiblePasses;
+  for (let i = 0; i < passes; i++) {
+    await runPass(hiddenMode);
+  }
+
+  if (document.visibilityState !== 'visible') {
+    await sleep(160);
+  }
+}
+
+async function settleCaptureContext(viewId, tabId) {
+  const canvas = window.app?.canvasManager?.fabricCanvas;
+  if (!canvas) return;
+
+  const scopedLabel =
+    tabId && typeof window.getCaptureTabScopeForTab === 'function'
+      ? window.getCaptureTabScopeForTab(viewId, tabId)
+      : viewId;
+
+  if (typeof window.syncCaptureTabCanvasVisibility === 'function') {
+    try {
+      window.syncCaptureTabCanvasVisibility(viewId);
+    } catch (error) {
+      logVectorDebugSnapshot('settleCaptureContext:sync-visibility-error', {
+        viewId,
+        tabId: tabId || null,
+        error: String(error?.message || error),
+      });
+    }
+  }
+
+  if (typeof window.app?.metadataManager?.updateStrokeVisibilityControls === 'function') {
+    try {
+      window.app.metadataManager.updateStrokeVisibilityControls();
+    } catch (error) {
+      logVectorDebugSnapshot('settleCaptureContext:update-controls-error', {
+        viewId,
+        tabId: tabId || null,
+        error: String(error?.message || error),
+      });
+    }
+  }
+
+  if (scopedLabel) {
+    window.currentImageLabel = scopedLabel;
+  }
+
+  await waitForCanvasRenderStability(canvas);
+}
+
 function getScopedMeasurements(scopeKey, options = {}) {
   const includeBase = options.includeBase === true;
   const allMeasurements = window.app?.metadataManager?.strokeMeasurements || {};
@@ -703,8 +786,7 @@ async function withTemporaryCaptureTarget(viewId, tabId, callback) {
         });
       }
     }
-    window.app?.canvasManager?.fabricCanvas?.requestRenderAll?.();
-    await new Promise(resolve => setTimeout(resolve, 250));
+    await settleCaptureContext(viewId, tabId);
     logVectorDebugSnapshot('withTemporaryCaptureTarget:after-switch', {
       targetViewId: viewId,
       targetTabId: tabId || null,
@@ -754,7 +836,7 @@ async function withTemporaryCaptureTarget(viewId, tabId, callback) {
         canvas.setViewportTransform(previousViewportTransform);
       }
       safelyDiscardActiveObject(canvas);
-      window.app?.canvasManager?.fabricCanvas?.requestRenderAll?.();
+      await waitForCanvasRenderStability(window.app?.canvasManager?.fabricCanvas);
       logVectorDebugSnapshot('withTemporaryCaptureTarget:after-restore', {
         restoredViewId: restoreTargetViewId,
         restoredTabId: restoreTabId,
@@ -869,6 +951,104 @@ export function initPdfExport() {
       await new Promise(resolve => setTimeout(resolve, 200));
     }
     alert(`Saved ${viewIds.length} images!`);
+  };
+
+  const withHiddenTagArtifacts = async (canvas, callback) => {
+    const tagArtifacts = (canvas?.getObjects?.() || []).filter(
+      obj => obj?.isTag || obj?.isConnectorLine
+    );
+    if (!tagArtifacts.length) {
+      return callback();
+    }
+
+    const previousVisibility = new Map();
+    tagArtifacts.forEach(obj => {
+      previousVisibility.set(obj, obj.visible !== false);
+      obj.set('visible', false);
+    });
+    canvas.requestRenderAll();
+
+    try {
+      return await callback();
+    } finally {
+      tagArtifacts.forEach(obj => {
+        const previous = previousVisibility.get(obj);
+        obj.set('visible', previous !== false);
+      });
+      canvas.requestRenderAll();
+    }
+  };
+
+  window.saveAllImagesNoTags = async function (format = 'png') {
+    const normalizedFormat = String(format || 'png').toLowerCase() === 'jpg' ? 'jpg' : 'png';
+    const mimeType = normalizedFormat === 'jpg' ? 'image/jpeg' : 'image/png';
+    const extension = normalizedFormat === 'jpg' ? 'jpg' : 'png';
+    const projectName = document.getElementById('projectName')?.value || 'OpenPaint';
+    const metadata =
+      window.app?.projectManager?.getProjectMetadata?.() || window.projectMetadata || {};
+    const partLabels = metadata.imagePartLabels || {};
+    const views = window.app?.projectManager?.views || {};
+    const viewIds = Object.keys(views).filter(id => views[id].image);
+
+    if (viewIds.length === 0) {
+      alert('No images to save. Please upload images first.');
+      return;
+    }
+
+    console.log(
+      `[Export] Saving ${viewIds.length} images without tags as ${extension.toUpperCase()}`
+    );
+
+    for (let i = 0; i < viewIds.length; i++) {
+      const viewId = viewIds[i];
+      await window.app.projectManager.switchView(viewId);
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      const canvas = window.app.canvasManager.fabricCanvas;
+      const captureFrame = document.getElementById('captureFrame');
+      if (!canvas || !captureFrame) {
+        console.warn(`[Export] Skipping ${viewId}`);
+        continue;
+      }
+
+      await withHiddenTagArtifacts(canvas, async () => {
+        const frameRect = captureFrame.getBoundingClientRect();
+        const canvasEl = canvas.lowerCanvasEl;
+        const scaleX = canvasEl.width / canvasEl.offsetWidth;
+        const scaleY = canvasEl.height / canvasEl.offsetHeight;
+        const canvasRect = canvasEl.getBoundingClientRect();
+        const left = (frameRect.left - canvasRect.left) * scaleX;
+        const top = (frameRect.top - canvasRect.top) * scaleY;
+        const width = frameRect.width * scaleX;
+        const height = frameRect.height * scaleY;
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = width;
+        tempCanvas.height = height;
+        const ctx = tempCanvas.getContext('2d');
+        ctx.drawImage(canvasEl, left, top, width, height, 0, 0, width, height);
+
+        await new Promise(resolve => {
+          tempCanvas.toBlob(
+            blob => {
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              const imageLabel = partLabels[viewId] || '';
+              a.download = `${buildImageExportFilename(projectName, imageLabel, i)}-no-tags.${extension}`;
+              a.click();
+              URL.revokeObjectURL(url);
+              resolve();
+            },
+            mimeType,
+            normalizedFormat === 'jpg' ? 0.92 : undefined
+          );
+        });
+      });
+
+      await new Promise(resolve => setTimeout(resolve, 200));
+    }
+
+    alert(`Saved ${viewIds.length} no-tags images (${extension.toUpperCase()})!`);
   };
 
   window.showPDFExportDialog = async function (projectName) {

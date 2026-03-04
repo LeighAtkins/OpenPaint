@@ -234,6 +234,14 @@ class ImageRegistry {
     if (filename) {
       container.setAttribute('title', filename);
     }
+
+    const knownRotation = Number(this.projectManager?.views?.[viewId]?.rotation);
+    if (this.projectManager?.updateThumbnailRotation) {
+      this.projectManager.updateThumbnailRotation(
+        viewId,
+        Number.isFinite(knownRotation) ? knownRotation : 0
+      );
+    }
   }
 
   _buildGalleryData(viewId, imageUrl, filename, options) {

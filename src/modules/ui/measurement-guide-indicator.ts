@@ -351,6 +351,33 @@ function buildGuideUrl(code: string, viewId: string): string {
   return `/api/measurement-guides/svg?code=${encodeURIComponent(code)}&view=${encodeURIComponent(view)}&v=${encodeURIComponent(GUIDE_CACHE_BUSTER)}`;
 }
 
+function resolveActiveGuideSelection(viewId: string): {
+  code: string;
+  variant: 'front' | 'back' | 'side';
+  bound: boolean;
+} {
+  const externalResolver = (window as any).resolveActiveGuideForView;
+  if (typeof externalResolver === 'function') {
+    const resolved = externalResolver(viewId) || {};
+    const code = normalizeCode((resolved as any).code || '');
+    if (code) {
+      const variant = normalizeView(String((resolved as any).variant || 'front'));
+      return {
+        code,
+        variant,
+        bound: (resolved as any).bound === true,
+      };
+    }
+  }
+
+  const code = resolveGuideCode(viewId);
+  return {
+    code,
+    variant: normalizeView(viewId),
+    bound: false,
+  };
+}
+
 function incrementLabel(label: string): string {
   const match = /^([A-Z])(\d+)$/.exec(normalizeLabel(label));
   if (!match) return 'A1';
@@ -477,14 +504,14 @@ function parseGuideRoles(svgText: string): string[] {
 
 async function getGuideRoles(
   code: string,
-  viewId: string
+  guideView: 'front' | 'back' | 'side'
 ): Promise<{ roles: string[]; ok: boolean }> {
-  const key = `${code}::${normalizeView(viewId)}`;
+  const key = `${code}::${normalizeView(guideView)}`;
   if (!guideRoleCache.has(key)) {
     guideRoleCache.set(
       key,
       (async () => {
-        const response = await fetch(buildGuideUrl(code, viewId), { method: 'GET' });
+        const response = await fetch(buildGuideUrl(code, guideView), { method: 'GET' });
         if (!response.ok) {
           return { roles: [], fetchedAt: Date.now(), ok: false };
         }
@@ -919,18 +946,14 @@ async function renderIndicator(): Promise<void> {
     return;
   }
 
-  if (!isGuideLockedToView(viewId)) {
-    hideIndicator();
-    return;
-  }
-
-  const code = resolveGuideCode(viewId);
+  const activeGuide = resolveActiveGuideSelection(viewId);
+  const code = activeGuide.code;
   if (!code) {
     hideIndicator();
     return;
   }
 
-  const { roles, ok: guideOk } = await getGuideRoles(code, viewId);
+  const { roles, ok: guideOk } = await getGuideRoles(code, activeGuide.variant);
   if (!guideOk) {
     hideIndicator();
     return;
@@ -960,11 +983,12 @@ async function renderIndicator(): Promise<void> {
       return `<button type="button" class="measurement-guide-indicator-chip${activeClass}" data-guide-role="${label}">${label}</button>`;
     })
     .join('');
+  const heroUrl = buildGuideUrl(code, activeGuide.variant);
 
   const activeSize = resolveIndicatorSize(activeTool);
   const unlocked = getIndicatorLayoutUnlocked();
   const breadcrumb = getBindingBreadcrumb(viewId);
-  const renderKey = `${viewId}|${code}|${activeRole}|${chips.join(',')}|${activeSize}|${unlocked ? 'u' : 'l'}|${breadcrumb}`;
+  const renderKey = `${viewId}|${code}|${activeGuide.variant}|${activeRole}|${chips.join(',')}|${activeSize}|${unlocked ? 'u' : 'l'}|${breadcrumb}`;
   if (renderKey === lastRenderKey) {
     applyIndicatorPreset(root, activeSize);
     positionIndicator(root);
@@ -983,6 +1007,9 @@ async function renderIndicator(): Promise<void> {
       </div>
     </div>
     <p class="measurement-guide-indicator-meta">${getBindingBreadcrumb(viewId)}</p>
+    <div class="measurement-guide-indicator-hero">
+      <img src="${heroUrl}" alt="${code} ${activeGuide.variant.toUpperCase()}" />
+    </div>
     <div class="measurement-guide-indicator-track">${chipHtml}</div>
   `;
   applyIndicatorPreset(root, activeSize);
@@ -1046,6 +1073,7 @@ export function initMeasurementGuideIndicator(): void {
     window.clearInterval(refreshTimer);
   }
   refreshTimer = window.setInterval(() => {
+    if (document.hidden) return;
     scheduleRender();
-  }, 1500);
+  }, 3000);
 }

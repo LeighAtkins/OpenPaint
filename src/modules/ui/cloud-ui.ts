@@ -407,8 +407,7 @@ async function handleCloudSave(): Promise<void> {
     return;
   }
 
-  const projectNameInput = document.getElementById('projectName') as HTMLInputElement | null;
-  const projectName = projectNameInput?.value?.trim() || 'Untitled Project';
+  const DEFAULT_PROJECT_NAME = 'OpenPaint Project';
 
   const canProceed = await ensureCloudSaveDetails();
   if (!canProceed) {
@@ -443,11 +442,24 @@ async function handleCloudSave(): Promise<void> {
       ),
     ]);
     const payloadSize = JSON.stringify(projectData).length;
+    const projectNameInput = document.getElementById('projectName') as HTMLInputElement | null;
+    const projectNameFromInput = projectNameInput?.value?.trim() || '';
+    const projectNameFromData =
+      String((projectData as Record<string, unknown>)?.projectName || '').trim() ||
+      String((projectData as Record<string, unknown>)?.name || '').trim() ||
+      '';
+    const projectName = projectNameFromInput || projectNameFromData || DEFAULT_PROJECT_NAME;
+    if (projectNameInput && projectNameInput.value.trim() !== projectName) {
+      projectNameInput.value = projectName;
+    }
+
     console.warn(
       '[Cloud] Got project data, views:',
       Object.keys((projectData as any).views || {}).length,
       'payload:',
       (payloadSize / (1024 * 1024)).toFixed(1),
+      'name:',
+      projectName,
       'MB'
     );
 

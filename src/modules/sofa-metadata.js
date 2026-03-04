@@ -44,6 +44,7 @@ export function createDefaultSofaMetadata() {
     measurementGuideModelLinksByImage: {},
     measurementGuideModelLinksByScope: {},
     tagSize: 20,
+    tagSizeByView: {},
     tagColorTheme: null,
     pieceGroups: [],
     imagePartLabels: {},
@@ -167,6 +168,19 @@ export function normalizeSofaMetadata(input) {
   const tagSize = Number.isFinite(tagSizeRaw)
     ? Math.max(8, Math.min(72, Math.round(tagSizeRaw)))
     : 20;
+  const tagSizeByView =
+    source.tagSizeByView && typeof source.tagSizeByView === 'object'
+      ? Object.fromEntries(
+          Object.entries(source.tagSizeByView)
+            .map(([viewId, size]) => {
+              const normalizedViewId = String(viewId || '').trim();
+              const parsedSize = Number(size);
+              if (!normalizedViewId || !Number.isFinite(parsedSize)) return null;
+              return [normalizedViewId, Math.max(8, Math.min(72, Math.round(parsedSize)))];
+            })
+            .filter(Boolean)
+        )
+      : {};
   const tagColorTheme =
     source.tagColorTheme && typeof source.tagColorTheme === 'object'
       ? {
@@ -220,6 +234,7 @@ export function normalizeSofaMetadata(input) {
     measurementGuideModelLinksByImage,
     measurementGuideModelLinksByScope,
     tagSize,
+    tagSizeByView,
     tagColorTheme,
     pieceGroups,
     imagePartLabels,

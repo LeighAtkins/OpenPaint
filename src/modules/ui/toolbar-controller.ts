@@ -1010,6 +1010,23 @@ export function initToolbarController() {
       const canvas = window.app?.canvasManager?.fabricCanvas;
       if (!canvas || !state || !activeTab) return;
 
+      const getObjectScopeLabel = obj => obj?.strokeMetadata?.imageLabel || obj?.imageLabel || null;
+      const getObjectStrokeLabel = obj =>
+        obj?.strokeLabel ||
+        obj?.strokeMetadata?.label ||
+        obj?.connectedStroke?.strokeMetadata?.label ||
+        null;
+      const isStrokeVisibleInScope = (scopeLabel, strokeLabel) => {
+        if (!scopeLabel || !strokeLabel) return true;
+        const scoped = window.app?.metadataManager?.strokeVisibilityByImage?.[scopeLabel] || {};
+        return scoped?.[strokeLabel] !== false;
+      };
+      const isLabelVisibleInScope = (scopeLabel, strokeLabel) => {
+        if (!scopeLabel || !strokeLabel) return true;
+        const scoped = window.app?.metadataManager?.strokeLabelVisibility?.[scopeLabel] || {};
+        return scoped?.[strokeLabel] !== false;
+      };
+
       // Discard selection before toggling visibility so control anchors don't persist
       canvas.discardActiveObject();
 
@@ -1045,27 +1062,36 @@ export function initToolbarController() {
       const masterAllowsLegacy = primaryTab && masterDrawTargetId === primaryTab.id;
 
       canvas.getObjects().forEach(obj => {
-        const objectLabel = obj?.strokeMetadata?.imageLabel || obj?.imageLabel;
+        const objectLabel = getObjectScopeLabel(obj);
         if (!objectLabel || !isLabelInViewScope(objectLabel, resolved)) return;
+        const strokeLabel = getObjectStrokeLabel(obj);
+        const strokeVisible = isStrokeVisibleInScope(objectLabel, strokeLabel);
+        const labelVisible = isLabelVisibleInScope(objectLabel, strokeLabel);
+        const gatedVisible =
+          strokeVisible && (obj?.isTag || obj?.isConnectorLine ? labelVisible : true);
+
         if (activeTab.type === 'master') {
-          obj.visible = true;
+          obj.visible = gatedVisible;
           const inTargetScope = objectLabel.includes('::tab:')
             ? objectLabel === masterTargetScope
             : masterAllowsLegacy;
-          obj.evented = inTargetScope;
-          obj.selectable = inTargetScope;
+          obj.evented = inTargetScope && gatedVisible;
+          obj.selectable = inTargetScope && gatedVisible;
           return;
         }
         if (objectLabel.includes('::tab:')) {
-          obj.visible = objectLabel === activeScope;
+          obj.visible = objectLabel === activeScope && gatedVisible;
           obj.evented = obj.visible;
           obj.selectable = obj.visible;
           return;
         }
-        obj.visible = showLegacyBase;
+        obj.visible = showLegacyBase && gatedVisible;
         obj.evented = obj.visible;
         obj.selectable = obj.visible;
       });
+      if (window.app?.tagManager?.refreshAllConnectors) {
+        window.app.tagManager.refreshAllConnectors(getActiveScopedLabel(resolved));
+      }
       canvas.requestRenderAll();
     }
 
@@ -1094,19 +1120,64 @@ export function initToolbarController() {
       const viewport = canvasManager?.getViewportState
         ? canvasManager.getViewportState()
         : { zoom: 1, panX: 0, panY: 0 };
-      const rotation = canvasManager?.getRotationDegrees ? canvasManager.getRotationDegrees() : 0;
+      const liveRotation = canvasManager?.getRotationDegrees
+        ? canvasManager.getRotationDegrees()
+        : 0;
       return {
         zoom: typeof viewport.zoom === 'number' ? viewport.zoom : 1,
         panX: typeof viewport.panX === 'number' ? viewport.panX : 0,
         panY: typeof viewport.panY === 'number' ? viewport.panY : 0,
-        rotation: typeof rotation === 'number' ? rotation : 0,
+        rotation: typeof liveRotation === 'number' ? liveRotation : 0,
+      };
+    }
+    function normalizeViewportRecord(viewport) {
+      if (!viewport || typeof viewport !== 'object') {
+        return {
+          zoom: 1,
+          panX: 0,
+          panY: 0,
+          rotation: 0,
+        };
+      }
+
+      const zoom = Number(viewport.zoom);
+      const panX = Number(viewport.panX);
+      const panY = Number(viewport.panY);
+      const rotation = Number(viewport.rotation);
+
+      return {
+        zoom: Number.isFinite(zoom) && zoom > 0 ? zoom : 1,
+        panX: Number.isFinite(panX) ? panX : 0,
+        panY: Number.isFinite(panY) ? panY : 0,
+        rotation: Number.isFinite(rotation) ? rotation : 0,
       };
     }
     function applyViewportRecord(record) {
       if (!record) return;
       const canvasManager = window.app?.canvasManager;
-      if (canvasManager?.setRotationDegrees && typeof record.rotation === 'number') {
-        canvasManager.setRotationDegrees(record.rotation);
+      const projectManager = window.projectManager || window.app?.projectManager;
+      const activeViewId = projectManager?.currentViewId || null;
+      const viewRotation = Number(projectManager?.views?.[activeViewId]?.rotation);
+      const recordRotation = Number(record?.rotation);
+      const targetRotation = Number.isFinite(recordRotation)
+        ? recordRotation
+        : Number.isFinite(viewRotation)
+          ? viewRotation
+          : 0;
+
+      if (canvasManager?.setRotationDegrees) {
+        canvasManager.setRotationDegrees(targetRotation);
+      }
+
+      if (activeViewId && projectManager?.views?.[activeViewId]) {
+        projectManager.views[activeViewId].rotation = targetRotation;
+        if (typeof projectManager.updateThumbnailRotation === 'function') {
+          projectManager.updateThumbnailRotation(activeViewId, targetRotation);
+        }
+      }
+
+      if (typeof record === 'object') {
+        record.rotation = targetRotation;
       }
       if (canvasManager?.setViewportState) {
         canvasManager.setViewportState({
@@ -1178,7 +1249,7 @@ export function initToolbarController() {
           type,
           color,
           captureFrame: tab.captureFrame || null,
-          viewport: tab.viewport || null,
+          viewport: normalizeViewportRecord(tab.viewport),
           linkedTarget: tab.linkedTarget || null,
         });
       });
@@ -1192,7 +1263,7 @@ export function initToolbarController() {
           name: 'Master',
           type: 'master',
           captureFrame: getCaptureFrameRectPixels(),
-          viewport: buildViewportRecord(),
+          viewport: normalizeViewportRecord(buildViewportRecord()),
         });
         hasMaster = true;
       }
@@ -1260,13 +1331,21 @@ export function initToolbarController() {
         document.body.classList.remove('master-view-active');
       }
     }
-    function saveActiveTabState(label) {
+    function saveActiveTabState(label, options = {}) {
       if (!label) return;
       const state = ensureCaptureTabsForLabel(label);
       const activeTab = state.tabs.find(tab => tab.id === state.activeTabId);
       if (!activeTab || activeTab.type === 'master') return;
       activeTab.captureFrame = getCaptureFrameRectPixels();
-      activeTab.viewport = buildViewportRecord();
+      const viewport = buildViewportRecord();
+      const previousRotation = Number(activeTab.viewport?.rotation);
+      const shouldSyncRotation =
+        options?.syncRotation === true || !Number.isFinite(previousRotation);
+      activeTab.viewport = {
+        ...(activeTab.viewport || {}),
+        ...viewport,
+        rotation: shouldSyncRotation ? viewport.rotation : previousRotation,
+      };
       state.lastNonMasterId = activeTab.id;
     }
     function saveCurrentCaptureFrameForLabel(label) {
@@ -2024,8 +2103,10 @@ export function initToolbarController() {
       canvas.__captureTabViewportTracking = true;
       let raf = null;
       let lastSyncAt = 0;
-      const minSyncGapMs = 120;
-      const sync = () => {
+      const minSyncGapMs = 180;
+      const shouldRenderMasterOverlay = () =>
+        !!masterOverlay && document.body.classList.contains('master-view-active');
+      const sync = (renderOverlay = false) => {
         const label = getActiveLabel();
         const state = ensureCaptureTabsForLabel(label);
         const activeTab = getActiveTab(label);
@@ -2038,33 +2119,60 @@ export function initToolbarController() {
         if (activeTab.type === 'master') {
           const masterTab = state.tabs.find(tab => tab.type === 'master') || activeTab;
           const previousMaster = masterTab.viewport || {};
+          const previousMasterRotation = Number(previousMaster.rotation);
+          const shouldSyncMasterRotation =
+            window.__captureTabsAllowRotationWrite === true ||
+            !Number.isFinite(previousMasterRotation);
+          const nextMasterViewport = {
+            ...previousMaster,
+            ...viewport,
+            rotation: shouldSyncMasterRotation ? viewport.rotation : previousMasterRotation,
+          };
           if (
-            previousMaster.zoom === viewport.zoom &&
-            previousMaster.panX === viewport.panX &&
-            previousMaster.panY === viewport.panY &&
-            previousMaster.rotation === viewport.rotation
+            previousMaster.zoom === nextMasterViewport.zoom &&
+            previousMaster.panX === nextMasterViewport.panX &&
+            previousMaster.panY === nextMasterViewport.panY &&
+            previousMaster.rotation === nextMasterViewport.rotation
           ) {
             return;
           }
-          masterTab.viewport = viewport;
-          renderMasterOverlay(label);
+          masterTab.viewport = nextMasterViewport;
+          if (window.__captureTabsAllowRotationWrite === true) {
+            window.__captureTabsAllowRotationWrite = false;
+          }
+          if (renderOverlay || shouldRenderMasterOverlay()) {
+            renderMasterOverlay(label);
+          }
           return;
         }
 
         const previous = activeTab.viewport || {};
+        const previousRotation = Number(previous.rotation);
+        const shouldSyncRotation =
+          window.__captureTabsAllowRotationWrite === true || !Number.isFinite(previousRotation);
+        const nextViewport = {
+          ...previous,
+          ...viewport,
+          rotation: shouldSyncRotation ? viewport.rotation : previousRotation,
+        };
         if (
-          previous.zoom === viewport.zoom &&
-          previous.panX === viewport.panX &&
-          previous.panY === viewport.panY &&
-          previous.rotation === viewport.rotation
+          previous.zoom === nextViewport.zoom &&
+          previous.panX === nextViewport.panX &&
+          previous.panY === nextViewport.panY &&
+          previous.rotation === nextViewport.rotation
         ) {
           return;
         }
-        activeTab.viewport = viewport;
+        activeTab.viewport = nextViewport;
+        if (window.__captureTabsAllowRotationWrite === true) {
+          window.__captureTabsAllowRotationWrite = false;
+        }
         state.lastNonMasterId = activeTab.id;
-        renderMasterOverlay(label);
+        if (renderOverlay || shouldRenderMasterOverlay()) {
+          renderMasterOverlay(label);
+        }
       };
-      const scheduleSync = (force = false) => {
+      const scheduleSync = ({ force = false, renderOverlay = false } = {}) => {
         const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
         if (!force && now - lastSyncAt < minSyncGapMs) {
           return;
@@ -2073,12 +2181,27 @@ export function initToolbarController() {
         raf = requestAnimationFrame(() => {
           raf = null;
           lastSyncAt = typeof performance !== 'undefined' ? performance.now() : Date.now();
-          sync();
+          sync(renderOverlay);
         });
       };
-      canvas.on('mouse:wheel', () => scheduleSync(true));
-      canvas.on('mouse:move', () => scheduleSync(false));
-      canvas.on('mouse:up', () => scheduleSync(true));
+      canvas.on('mouse:wheel', () =>
+        scheduleSync({
+          force: true,
+          renderOverlay: shouldRenderMasterOverlay(),
+        })
+      );
+      canvas.on('mouse:move', () =>
+        scheduleSync({
+          force: false,
+          renderOverlay: false,
+        })
+      );
+      canvas.on('mouse:up', () =>
+        scheduleSync({
+          force: true,
+          renderOverlay: shouldRenderMasterOverlay(),
+        })
+      );
       return true;
     }
     const tryInstallViewportTracking = (attempt = 0) => {
@@ -2103,9 +2226,9 @@ export function initToolbarController() {
       renderTabBar(resolved);
       renderMasterOverlay(resolved);
     };
-    window.captureTabsSyncActive = label => {
+    window.captureTabsSyncActive = (label, options = {}) => {
       const resolved = toBaseLabel(label || getActiveLabel());
-      saveActiveTabState(resolved);
+      saveActiveTabState(resolved, options);
     };
     window.setCaptureTabsForLabel = (label, data) => {
       const resolved = toBaseLabel(label);
@@ -2297,8 +2420,9 @@ export function initToolbarController() {
           toolbarWrap.classList.remove('tapped');
           // Remove inline style to allow animation
           toolbarWrap.style.removeProperty('box-shadow');
-          void toolbarWrap.offsetWidth; // Force reflow
-          toolbarWrap.classList.add('tapped');
+          requestAnimationFrame(() => {
+            toolbarWrap.classList.add('tapped');
+          });
 
           // Remove tapped class after animation and clear inline style
           setTimeout(() => {
@@ -2366,8 +2490,6 @@ export function initToolbarController() {
               if (!toolbarWrap.classList.contains('no-glow')) {
                 toolbarWrap.removeAttribute('data-scrollable');
               }
-              // Force reflow to ensure CSS applies
-              void toolbarWrap.offsetWidth;
             }
             checkIfExpandable();
           }, 150);
@@ -2416,23 +2538,41 @@ export function initToolbarController() {
 
     // Select/Deselect All Strokes functionality
     if (selectAllStrokesBtn) {
-      let allSelected = false; // Start with deselect all (false)
+      const getStrokeVisibilityCheckboxes = () =>
+        Array.from(document.querySelectorAll('#strokeVisibilityControls input[type="checkbox"]'));
+      const refreshSelectAllButtonState = () => {
+        const checkboxes = getStrokeVisibilityCheckboxes();
+        const allSelected = checkboxes.length > 0 && checkboxes.every(checkbox => checkbox.checked);
+        selectAllStrokesBtn.textContent = allSelected ? 'Deselect All' : 'Select All';
+        selectAllStrokesBtn.title = allSelected ? 'Deselect all elements' : 'Select all elements';
+      };
+
       selectAllStrokesBtn.addEventListener('click', () => {
-        const checkboxes = document.querySelectorAll(
-          '#strokeVisibilityControls input[type="checkbox"]'
-        );
-        allSelected = !allSelected;
+        const checkboxes = getStrokeVisibilityCheckboxes();
+        const allSelected = checkboxes.length > 0 && checkboxes.every(checkbox => checkbox.checked);
+        const nextState = !allSelected;
 
         checkboxes.forEach(checkbox => {
-          if (checkbox.checked !== allSelected) {
+          if (checkbox.checked !== nextState) {
             checkbox.click(); // Use click to trigger the existing event handlers
           }
         });
 
-        // Update button text
-        selectAllStrokesBtn.textContent = allSelected ? 'Deselect All' : 'Select All';
-        selectAllStrokesBtn.title = allSelected ? 'Deselect all elements' : 'Select all elements';
+        refreshSelectAllButtonState();
       });
+
+      const strokeVisibilityControls = document.getElementById('strokeVisibilityControls');
+      if (strokeVisibilityControls && !strokeVisibilityControls.__selectAllStateObserver) {
+        const observer = new MutationObserver(() => refreshSelectAllButtonState());
+        observer.observe(strokeVisibilityControls, {
+          childList: true,
+          subtree: true,
+          attributes: true,
+        });
+        strokeVisibilityControls.__selectAllStateObserver = observer;
+      }
+
+      refreshSelectAllButtonState();
     }
 
     // Show All Measurements functionality
@@ -2951,13 +3091,20 @@ export function initToolbarController() {
     let originalTagValue = '';
 
     nextTagEl?.addEventListener('focus', e => {
-      originalTagValue = e.target.textContent.trim();
+      const target = e.target as HTMLElement | null;
+      originalTagValue = target?.textContent?.trim?.() || '';
+      if (!target?.isConnected) return;
       // Select all text for easy replacement
-      const range = document.createRange();
-      range.selectNodeContents(e.target);
-      const sel = window.getSelection();
-      sel.removeAllRanges();
-      sel.addRange(range);
+      try {
+        const range = document.createRange();
+        range.selectNodeContents(target);
+        const sel = window.getSelection();
+        if (!sel) return;
+        sel.removeAllRanges();
+        sel.addRange(range);
+      } catch {
+        // Ignore selection errors when DOM updates mid-focus.
+      }
     });
 
     // Handle Enter key to commit changes
@@ -5326,6 +5473,14 @@ export function initToolbarController() {
       imageList.appendChild(container);
       console.log(`[COMPAT] Manually added legacy container for "${label}"`);
 
+      const knownRotation = Number(window.projectManager?.views?.[label]?.rotation);
+      if (window.projectManager?.updateThumbnailRotation) {
+        window.projectManager.updateThumbnailRotation(
+          label,
+          Number.isFinite(knownRotation) ? knownRotation : 0
+        );
+      }
+
       if (typeof window.ensureImageListObserver === 'function') {
         window.ensureImageListObserver();
       } else {
@@ -5422,6 +5577,14 @@ export function initToolbarController() {
         ) {
           window.projectManager.views[label].image = imageUrl;
         }
+
+        if (window.projectManager?.updateThumbnailRotation) {
+          const knownRotation = Number(window.projectManager?.views?.[label]?.rotation);
+          window.projectManager.updateThumbnailRotation(
+            label,
+            Number.isFinite(knownRotation) ? knownRotation : 0
+          );
+        }
       }
 
       // Add to new gallery (avoid duplicates if UploadManager already did)
@@ -5457,7 +5620,8 @@ export function initToolbarController() {
             label &&
             window.projectManager &&
             window.projectManager.currentViewId === label &&
-            typeof window.projectManager.setBackgroundImage === 'function'
+            typeof window.projectManager.setBackgroundImage === 'function' &&
+            !window.__deferredImageHydrationInProgress
           ) {
             requestAnimationFrame(() => {
               window.projectManager.setBackgroundImage(imageUrl);
@@ -5848,6 +6012,14 @@ export function initToolbarController() {
 
                 imageListAfter.appendChild(container);
                 console.log(`[HOOK] Manually added container to imageList for label "${label}"`);
+
+                const knownRotation = Number(window.projectManager?.views?.[label]?.rotation);
+                if (window.projectManager?.updateThumbnailRotation) {
+                  window.projectManager.updateThumbnailRotation(
+                    label,
+                    Number.isFinite(knownRotation) ? knownRotation : 0
+                  );
+                }
 
                 if (typeof window.ensureImageListObserver === 'function') {
                   window.ensureImageListObserver();

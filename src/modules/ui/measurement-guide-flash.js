@@ -135,6 +135,14 @@ function applyFlashWindowLayout(root) {
     root.style.width = `${clamped.width}px`;
     root.style.height = `${clamped.height}px`;
   }
+
+  const projectImageEl = root.querySelector('#guideFlashProjectImage');
+  if (projectImageEl) {
+    const sourceViewId = String(projectImageEl.dataset.previewViewId || '').trim();
+    requestAnimationFrame(() => {
+      applyImagePreviewViewport(projectImageEl, sourceViewId || getCurrentViewId());
+    });
+  }
 }
 
 function getMetadata() {
@@ -530,6 +538,7 @@ function ensureStyles() {
       background: rgba(255, 255, 255, 0.08);
       position: relative;
       min-height: 220px;
+      overflow: hidden;
     }
     .guide-flash-pane-body img {
       width: 100%;
@@ -932,6 +941,7 @@ function ensureStyles() {
       display: grid;
       place-items: center;
       padding: 10px;
+      overflow: hidden;
     }
     .guide-gallery-bind-preview-pane img {
       width: 100%;
@@ -1912,11 +1922,6 @@ function linkSelectionToScope(selectionId, scopeId) {
   if (!normalizedSelectionId || !normalizedScopeId) return;
 
   const linksByScope = { ...state.linksByScope };
-  Object.keys(linksByScope).forEach(key => {
-    if (linksByScope[key] === normalizedSelectionId || key === normalizedScopeId) {
-      delete linksByScope[key];
-    }
-  });
   linksByScope[normalizedScopeId] = normalizedSelectionId;
   state.linksByScope = linksByScope;
   state.linksByImage = Object.fromEntries(
@@ -2133,6 +2138,68 @@ function resolveSlides(codes) {
   return slides;
 }
 
+function normalizeGuideVariant(value, fallback = 'front') {
+  const normalized = String(value || '')
+    .trim()
+    .toLowerCase();
+  return VIEWS.includes(normalized) ? normalized : fallback;
+}
+
+function resolveActiveGuideForView(viewId = getCurrentViewId()) {
+  const modelBinding = resolveModelBindingForView(viewId);
+  const boundCode = normalizeCode(modelBinding?.selection?.code || '');
+  const boundVariant = normalizeGuideVariant(modelBinding?.selection?.variant, 'front');
+  if (boundCode) {
+    return {
+      code: boundCode,
+      variant: boundVariant,
+      bound: true,
+      selectionId: modelBinding.selectionId || '',
+      scopeType: modelBinding.scopeType || 'none',
+      scopeId: modelBinding.scopeId || '',
+    };
+  }
+
+  const guideBinding = getGuideBinding(viewId);
+  const fallbackCode = normalizeCode(guideBinding.activeCode || guideBinding.codes[0] || '');
+  const fallbackVariant = normalizeGuideVariant(guideBinding.activeVariant, 'front');
+  return {
+    code: fallbackCode,
+    variant: fallbackVariant,
+    bound: false,
+    selectionId: '',
+    scopeType: guideBinding.scopeType || 'default',
+    scopeId: guideBinding.scopeId || '',
+  };
+}
+
+function resolveFlashSlidesForImage(viewId = getCurrentViewId()) {
+  const activeGuide = resolveActiveGuideForView(viewId);
+  if (!activeGuide.code) {
+    const context = resolveGuideContext(viewId);
+    const fallbackCode = normalizeCode(context.codes[0] || '');
+    if (!fallbackCode) {
+      return {
+        slides: [],
+        preferredIndex: 0,
+        activeGuide,
+      };
+    }
+    activeGuide.code = fallbackCode;
+  }
+
+  const slides = VIEWS.map(view => ({ code: activeGuide.code, view }));
+  const preferredIndex = Math.max(
+    0,
+    slides.findIndex(item => item.view === normalizeGuideVariant(activeGuide.variant, 'front'))
+  );
+  return {
+    slides,
+    preferredIndex,
+    activeGuide,
+  };
+}
+
 function ensureOverlay(slide, slideCount) {
   ensureStyles();
   if (!flashOverlay) {
@@ -2198,7 +2265,8 @@ function ensureOverlay(slide, slideCount) {
   const sourceViewId = pinnedSourceViewId || getCurrentViewId();
   const isLocked = pinnedLockToImage === true;
   const hint = `${activeIndex + 1}/${slideCount} · \\ toggle · Alt+\\ gallery · Shift+\\ next`;
-  const bindingText = getBindingBreadcrumb(sourceViewId);
+  const bindingTargetViewId = flashComparisonImageId || sourceViewId;
+  const bindingText = getBindingBreadcrumb(bindingTargetViewId);
 
   const lockText = flashOverlay.querySelector('#guideFlashLockText');
   if (lockText) {
@@ -2244,6 +2312,11 @@ function ensureOverlay(slide, slideCount) {
   const projectImageEl = flashOverlay.querySelector('#guideFlashProjectImage');
   if (projectImageEl) {
     projectImageEl.src = activeImage?.imageUrl || '';
+    const previewViewId = activeImage?.id || sourceViewId;
+    projectImageEl.dataset.previewViewId = previewViewId;
+    requestAnimationFrame(() => {
+      applyImagePreviewViewport(projectImageEl, previewViewId);
+    });
   }
 
   const imageStrip = flashOverlay.querySelector('#guideFlashImageStrip');
@@ -2309,7 +2382,10 @@ function bindFlashWindowControls(root) {
   });
   bind?.addEventListener('click', e => {
     e.preventDefault();
-    openGuideBindingPanel({ viewId: pinnedSourceViewId || getCurrentViewId(), source: 'flash' });
+    openGuideBindingPanel({
+      viewId: flashComparisonImageId || pinnedSourceViewId || getCurrentViewId(),
+      source: 'flash',
+    });
   });
   close?.addEventListener('click', e => {
     e.preventDefault();
@@ -2320,8 +2396,9 @@ function bindFlashWindowControls(root) {
   lockToggle?.addEventListener('change', e => {
     const checked = e.target?.checked === true;
     pinnedLockToImage = checked;
-    if (flashSourceViewId) {
-      setGuideLockForView(flashSourceViewId, checked);
+    const targetViewId = flashComparisonImageId || flashSourceViewId;
+    if (targetViewId) {
+      setGuideLockForView(targetViewId, checked);
     }
   });
   prev?.addEventListener('click', e => {
@@ -2344,6 +2421,11 @@ function bindFlashWindowControls(root) {
       const imageId = String(imageBtn.getAttribute('data-flash-image-id') || '').trim();
       if (imageId) {
         flashComparisonImageId = imageId;
+        const next = resolveFlashSlidesForImage(imageId);
+        if (next.slides.length) {
+          flashSlides = next.slides;
+          activeIndex = next.preferredIndex;
+        }
         ensureOverlay(flashSlides[activeIndex], flashSlides.length || 1);
         requestAnimationFrame(() => {
           if (strip) {
@@ -2563,16 +2645,6 @@ function showGuideFlash({
     pinnedLockToImage = isGuideLockedToView(currentViewId);
   }
 
-  let codes =
-    preservePinnedContext && pinnedSourceViewId
-      ? resolveGuideContext(pinnedSourceViewId).codes
-      : resolveGuideContext(currentViewId).codes;
-
-  if (!codes.length) {
-    codes = promptForCodes();
-    if (!codes.length) return;
-  }
-
   if (!pinnedSourceViewId) {
     pinnedSourceViewId = currentViewId;
   }
@@ -2583,7 +2655,25 @@ function showGuideFlash({
     return;
   }
 
-  const slides = resolveSlides(codes);
+  if (!preservePinnedContext) {
+    flashComparisonImageId = currentViewId;
+  }
+
+  const targetImageId = flashComparisonImageId || bindingViewId;
+  const resolved = resolveFlashSlidesForImage(targetImageId);
+  let slides = resolved.slides;
+
+  if (!slides.length) {
+    const codes = resolveGuideContext(currentViewId).codes;
+    if (!codes.length) {
+      const promptedCodes = promptForCodes();
+      if (!promptedCodes.length) return;
+      slides = resolveSlides([promptedCodes[0]]);
+    } else {
+      slides = resolveSlides([codes[0]]);
+    }
+  }
+
   if (!slides.length) return;
   flashSlides = slides;
   flashSourceViewId = pinnedSourceViewId || currentViewId;
@@ -2596,34 +2686,10 @@ function showGuideFlash({
   }
 
   if (delta === 0) {
-    const binding = resolveModelBindingForView(bindingViewId);
-    let preferredCode = normalizeCode(binding?.selection?.code || '');
-    let preferredView = String(binding?.selection?.variant || '')
-      .trim()
-      .toLowerCase();
-
-    // Fallback: read activeVariant from guide binding if model link lookup missed
-    if (!preferredCode || !preferredView) {
-      const guideBinding = getGuideBinding(bindingViewId);
-      preferredCode = preferredCode || normalizeCode(guideBinding.activeCode || '');
-      preferredView =
-        preferredView ||
-        String(guideBinding.activeVariant || '')
-          .trim()
-          .toLowerCase();
-    }
-
-    if (preferredCode && preferredView) {
-      const preferredIndex = slides.findIndex(
-        item =>
-          normalizeCode(item.code) === preferredCode &&
-          String(item.view || '')
-            .trim()
-            .toLowerCase() === preferredView
-      );
-      if (preferredIndex >= 0) {
-        activeIndex = preferredIndex;
-      }
+    const preferredView = normalizeGuideVariant(resolved.activeGuide?.variant, 'front');
+    const preferredIndex = slides.findIndex(item => item.view === preferredView);
+    if (preferredIndex >= 0) {
+      activeIndex = preferredIndex;
     }
   }
 
@@ -2677,6 +2743,73 @@ function getProjectImageRows() {
         imageUrl: entry?.image || '',
       };
     });
+}
+
+function getViewportForImagePreview(viewId) {
+  const baseViewId = toBaseViewId(viewId);
+  if (!baseViewId) return null;
+
+  const tabsState =
+    window.captureTabsByLabel && typeof window.captureTabsByLabel === 'object'
+      ? window.captureTabsByLabel[baseViewId]
+      : null;
+  if (tabsState && typeof tabsState === 'object') {
+    const activeTabId = getActiveTabIdForView(baseViewId);
+    if (activeTabId && Array.isArray(tabsState.tabs)) {
+      const activeTab = tabsState.tabs.find(tab => String(tab?.id || '').trim() === activeTabId);
+      if (activeTab?.viewport && typeof activeTab.viewport === 'object') {
+        return activeTab.viewport;
+      }
+    }
+  }
+
+  const manager = window.app?.projectManager || window.projectManager;
+  const viewEntry =
+    manager?.views && typeof manager.views === 'object' ? manager.views[baseViewId] : null;
+  if (viewEntry?.viewport && typeof viewEntry.viewport === 'object') {
+    return viewEntry.viewport;
+  }
+
+  if ((manager?.currentViewId || '') === baseViewId) {
+    const canvasViewport = window.app?.canvasManager?.getViewportState?.();
+    if (canvasViewport && typeof canvasViewport === 'object') {
+      return canvasViewport;
+    }
+  }
+
+  return null;
+}
+
+function applyImagePreviewViewport(imgEl, viewId) {
+  if (!imgEl) return;
+  const viewport = getViewportForImagePreview(viewId);
+  const zoom = Number(viewport?.zoom);
+  const panX = Number(viewport?.panX);
+  const panY = Number(viewport?.panY);
+  const rotation = Number(viewport?.rotation);
+  const hasViewport = Number.isFinite(zoom) && zoom > 0;
+
+  if (!hasViewport) {
+    imgEl.style.transformOrigin = '';
+    imgEl.style.transform = '';
+    return;
+  }
+
+  const canvas = window.app?.canvasManager?.fabricCanvas;
+  const canvasWidth = Number(canvas?.width) || 0;
+  const canvasHeight = Number(canvas?.height) || 0;
+  const paneRect = imgEl.parentElement?.getBoundingClientRect?.();
+  const paneWidth = Number(paneRect?.width) || 0;
+  const paneHeight = Number(paneRect?.height) || 0;
+
+  const scaleX = canvasWidth > 0 && paneWidth > 0 ? paneWidth / canvasWidth : 1;
+  const scaleY = canvasHeight > 0 && paneHeight > 0 ? paneHeight / canvasHeight : 1;
+  const mappedPanX = Number.isFinite(panX) ? panX * scaleX : 0;
+  const mappedPanY = Number.isFinite(panY) ? panY * scaleY : 0;
+  const mappedRotation = Number.isFinite(rotation) ? rotation : 0;
+
+  imgEl.style.transformOrigin = 'center center';
+  imgEl.style.transform = `translate(${mappedPanX}px, ${mappedPanY}px) scale(${zoom}) rotate(${mappedRotation}deg)`;
 }
 
 function getGuideSplitStateForView(viewId = getCurrentViewId()) {
@@ -3523,6 +3656,12 @@ function showGuideGallery(options = {}) {
         imagePane.innerHTML = image
           ? `<img id="guideGalleryBindPreviewImageEl" src="${image.imageUrl}" alt="${image.displayName}" />`
           : '<span id="guideGalleryBindPreviewImageEmpty" style="font-size:12px;color:#64748b;">Select an image</span>';
+        if (image) {
+          const previewEl = imagePane.querySelector('#guideGalleryBindPreviewImageEl');
+          requestAnimationFrame(() => {
+            applyImagePreviewViewport(previewEl, image.id);
+          });
+        }
       }
       if (imageMeta) {
         imageMeta.textContent = image ? image.displayName : 'No image selected';
@@ -4163,7 +4302,7 @@ function syncGuideOverlayToActiveView() {
     return;
   }
 
-  showGuideFlash({ holdMode: true, preservePinnedContext: !pinnedLockToImage });
+  showGuideFlash({ holdMode: true, preservePinnedContext: false });
 }
 
 export function initMeasurementGuideFlash() {
@@ -4172,8 +4311,8 @@ export function initMeasurementGuideFlash() {
 
   window.addEventListener('keydown', onKeyDown, { passive: false });
   window.addEventListener('keyup', onKeyUp, { passive: false });
-  window.setInterval(syncGuideOverlayToActiveView, 200);
-  window.setInterval(syncGuideSplitToActiveView, 220);
+  window.setInterval(syncGuideOverlayToActiveView, 700);
+  window.setInterval(syncGuideSplitToActiveView, 900);
 
   window.addEventListener('openpaint:guide-binding-changed', () => {
     if (guideSplitEnabled) {
@@ -4228,6 +4367,8 @@ export function initMeasurementGuideFlash() {
   window.openGuideBindingPanel = options => {
     openGuideBindingPanel(options || {});
   };
+  window.resolveGuideModelBindingForView = viewId => resolveModelBindingForView(viewId);
+  window.resolveActiveGuideForView = viewId => resolveActiveGuideForView(viewId);
   window.getGuideSplitStateForView = viewId =>
     getGuideSplitStateForView(viewId || getCurrentViewId());
   window.setGuideSplitEnabled = enabled => {

@@ -28,6 +28,14 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const port = process.env.PORT || 3000;
 
+function getPublicOrigin(req) {
+  const forwardedProto = String(req.get('x-forwarded-proto') || '')
+    .split(',')[0]
+    .trim();
+  const protocol = forwardedProto || req.protocol || 'https';
+  return `${protocol}://${req.get('host')}`;
+}
+
 // AI Worker configuration with startup logging
 const AI_WORKER_URL = (process.env.AI_WORKER_URL || 'http://localhost:8787')
   .replace(/^\s*-\s*/, '') // strip accidental "- "
@@ -662,7 +670,7 @@ app.post('/api/cloud-projects', async (req, res) => {
       success: true,
       projectId,
       editToken,
-      shareUrl: `${req.protocol}://${req.get('host')}/open/${projectId}`,
+      shareUrl: `${getPublicOrigin(req)}/open/${projectId}`,
       createdAt: now,
       expiresAt: expiry,
     });
@@ -1994,7 +2002,7 @@ app.post('/api/share-project', async (req, res) => {
       success: true,
       shareId,
       editToken,
-      shareUrl: `${req.protocol}://${req.get('host')}/shared/${shareId}`,
+      shareUrl: `${getPublicOrigin(req)}/shared/${shareId}`,
       expiresAt: shareRecord.expiresAt,
     });
   } catch (error) {
@@ -3201,7 +3209,11 @@ app.get('/open/:projectId', (req, res) => {
  * Serve the production team view page
  */
 app.get('/production/:shareId', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public/production.html'));
+  const productionPath = path.join(__dirname, 'public/production.html');
+  if (fs.existsSync(productionPath)) {
+    return res.sendFile(productionPath);
+  }
+  return res.sendFile(path.join(__dirname, 'shared.html'));
 });
 
 /**

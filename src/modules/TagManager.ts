@@ -209,14 +209,26 @@ export class TagManager {
     return 'horizontal';
   }
 
+  isRenderableStrokeObject(strokeObject) {
+    return Boolean(strokeObject && typeof strokeObject.getBoundingRect === 'function');
+  }
+
   // Create a draggable, resizable tag object
   createTag(strokeLabel, imageLabel, strokeObject) {
-    this.syncTagSizeFromMetadata();
     imageLabel = this.normalizeImageLabel(imageLabel);
+    this.syncTagSizeFromMetadata(imageLabel);
     // Ensure canvas is available
     const canvas = this.canvas;
     if (!canvas) {
       console.warn('TagManager: Canvas not available, cannot create tag');
+      return null;
+    }
+
+    if (!this.isRenderableStrokeObject(strokeObject)) {
+      console.warn('[TagManager] Skipping tag creation for non-renderable stroke object', {
+        strokeLabel,
+        imageLabel,
+      });
       return null;
     }
 
@@ -371,6 +383,8 @@ export class TagManager {
       strokeObject.tagOffset = { x: initialOffset.x, y: initialOffset.y };
     }
 
+    const scopedImageLabel = this.normalizeImageLabel(imageLabel);
+
     // Update connector line when tag moves
     tagGroup.on('moving', () => {
       // Update offset based on new position
@@ -392,7 +406,7 @@ export class TagManager {
         };
       }
 
-      this.updateConnector(strokeLabel);
+      this.updateConnector(strokeLabel, scopedImageLabel);
     });
 
     tagGroup.on('modified', () => {
@@ -405,16 +419,16 @@ export class TagManager {
     // Update connector when connected stroke moves
     if (strokeObject) {
       strokeObject.on('moving', () => {
-        this.updateConnector(strokeLabel);
+        this.updateConnector(strokeLabel, scopedImageLabel);
       });
       strokeObject.on('modified', () => {
-        this.updateConnector(strokeLabel);
+        this.updateConnector(strokeLabel, scopedImageLabel);
       });
       strokeObject.on('scaling', () => {
-        this.updateConnector(strokeLabel);
+        this.updateConnector(strokeLabel, scopedImageLabel);
       });
       strokeObject.on('rotating', () => {
-        this.updateConnector(strokeLabel);
+        this.updateConnector(strokeLabel, scopedImageLabel);
       });
     }
 
@@ -831,7 +845,7 @@ export class TagManager {
 
     Object.entries(strokes).forEach(([strokeLabel, strokeObj]) => {
       const found = this.getTagObject(strokeLabel, currentViewId);
-      if (found) {
+      if (found && this.isRenderableStrokeObject(strokeObj)) {
         // Recreate tag with new settings
         this.createTag(strokeLabel, currentViewId, strokeObj);
       }
@@ -857,7 +871,7 @@ export class TagManager {
 
     Object.entries(strokes).forEach(([strokeLabel, strokeObj]) => {
       const found = this.getTagObject(strokeLabel, currentViewId);
-      if (found) {
+      if (found && this.isRenderableStrokeObject(strokeObj)) {
         const tagObj = found.tagObj;
         // Update both text and background size
         const textObj = tagObj
@@ -904,7 +918,7 @@ export class TagManager {
       currentTagSizeEl.textContent = this.tagSize;
     }
 
-    this.persistTagSizeToMetadata(this.tagSize);
+    this.persistTagSizeToMetadata(this.tagSize, currentViewId);
 
     canvas.renderAll();
   }
@@ -915,25 +929,62 @@ export class TagManager {
     return Math.max(this.tagSizeMin, Math.min(this.tagSizeMax, Math.round(num)));
   }
 
-  syncTagSizeFromMetadata() {
+  getTagSizeScopeKey(imageLabel) {
+    const currentViewId = window.app?.projectManager?.currentViewId || 'front';
+    const normalized = this.normalizeImageLabel(imageLabel || currentViewId || 'front');
+    if (typeof normalized === 'string' && normalized.includes('::')) {
+      return normalized.split('::')[0] || normalized;
+    }
+    return normalized || 'front';
+  }
+
+  getTagSizeFromMetadata(imageLabel) {
     const metadata =
       window.app?.projectManager?.getProjectMetadata?.() || window.projectMetadata || {};
-    this.tagSize = this.normalizeTagSize(metadata?.tagSize ?? this.tagSize);
+    const scopedKey = this.getTagSizeScopeKey(imageLabel);
+    const scopedMap =
+      metadata?.tagSizeByView && typeof metadata.tagSizeByView === 'object'
+        ? metadata.tagSizeByView
+        : {};
+    const scopedSize = scopedMap?.[scopedKey];
+    if (Number.isFinite(Number(scopedSize))) {
+      return this.normalizeTagSize(scopedSize);
+    }
+    return this.normalizeTagSize(metadata?.tagSize ?? this.tagSize);
+  }
+
+  syncTagSizeFromMetadata(imageLabel) {
+    this.tagSize = this.getTagSizeFromMetadata(imageLabel);
     const currentTagSizeEl = document.getElementById('currentTagSize');
     if (currentTagSizeEl) {
       currentTagSizeEl.textContent = this.tagSize;
     }
   }
 
-  persistTagSizeToMetadata(size) {
+  persistTagSizeToMetadata(size, imageLabel) {
     const normalized = this.normalizeTagSize(size);
+    const scopedKey = this.getTagSizeScopeKey(imageLabel);
+    const metadata =
+      window.app?.projectManager?.getProjectMetadata?.() || window.projectMetadata || {};
+    const scopedMap =
+      metadata?.tagSizeByView && typeof metadata.tagSizeByView === 'object'
+        ? { ...metadata.tagSizeByView }
+        : {};
+    if (scopedKey) {
+      scopedMap[scopedKey] = normalized;
+    }
+
     if (window.app?.projectManager?.setProjectMetadata) {
-      window.app.projectManager.setProjectMetadata({ tagSize: normalized });
+      window.app.projectManager.setProjectMetadata({
+        tagSize: normalized,
+        tagSizeByView: scopedMap,
+      });
       return;
     }
     window.projectMetadata = {
       ...(window.projectMetadata || {}),
       tagSize: normalized,
+      tagSizeByView: scopedMap,
     };
   }
 
@@ -948,7 +999,7 @@ export class TagManager {
 
     Object.entries(strokes).forEach(([strokeLabel, strokeObj]) => {
       const found = this.getTagObject(strokeLabel, currentViewId);
-      if (found) {
+      if (found && this.isRenderableStrokeObject(strokeObj)) {
         // Recreate tag with new background style
         this.createTag(strokeLabel, currentViewId, strokeObj);
       }
@@ -968,7 +1019,7 @@ export class TagManager {
 
       Object.entries(strokes).forEach(([strokeLabel, strokeObj]) => {
         const found = this.getTagObject(strokeLabel, currentViewId);
-        if (found) {
+        if (found && this.isRenderableStrokeObject(strokeObj)) {
           this.createTag(strokeLabel, currentViewId, strokeObj);
         }
       });
@@ -1025,7 +1076,7 @@ export class TagManager {
     // Recreate tag for each stroke
     strokeLabels.forEach(strokeLabel => {
       const strokeObject = strokes[strokeLabel];
-      if (strokeObject) {
+      if (this.isRenderableStrokeObject(strokeObject)) {
         // Check if label should be visible
         const isLabelVisible =
           this.metadataManager.strokeLabelVisibility[imageLabel]?.[strokeLabel] !== false;
