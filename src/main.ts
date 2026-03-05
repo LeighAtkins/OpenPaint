@@ -101,6 +101,7 @@ import { isAuthEnabled, isSupabaseConfigured } from '@/utils/env';
 import { authService } from '@/services/auth/authService';
 import { initAuthUI } from './modules/ui/auth-ui';
 import { initCloudUI } from './modules/ui/cloud-ui';
+import { initCwImportUI } from './modules/ui/cw-import-ui';
 
 // ── 5. Standalone UI modules ─────────────────────────────────────────────────
 import './modules/ui/toolbar-init.js';
@@ -186,6 +187,9 @@ async function bootstrap(): Promise<void> {
 
   // Initialize cloud UI (cloud save button + My Projects modal)
   initCloudUI();
+
+  // Initialize CW/PID product measurement import modal
+  initCwImportUI();
 
   // Initialize coins HUD + pixel pets system
   const { initCoinsHud } = await import('./modules/ui/coins-hud');

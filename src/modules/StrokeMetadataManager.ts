@@ -1184,6 +1184,29 @@ export class StrokeMetadataManager {
       measurementSpan.contentEditable = 'false';
       measurementSpan.style.cursor = 'pointer';
 
+      const isMeasurementLocked = () => {
+        try {
+          if (typeof window.isCwMeasurementLocked === 'function') {
+            return window.isCwMeasurementLocked(currentViewId, strokeLabel);
+          }
+          return window.cwMeasurementLocksByImage?.[currentViewId]?.[strokeLabel] === true;
+        } catch {
+          return false;
+        }
+      };
+
+      const syncMeasurementLockState = () => {
+        const locked = isMeasurementLocked();
+        measurementSpan.dataset.locked = locked ? 'true' : 'false';
+        measurementSpan.style.opacity = locked ? '0.72' : '1';
+        measurementSpan.style.cursor = locked ? 'not-allowed' : 'pointer';
+        if (locked) {
+          measurementSpan.title = 'Locked by CW import. Unlock before editing.';
+        } else {
+          measurementSpan.title = 'Click to edit measurement';
+        }
+      };
+
       const measurementString = this.getMeasurementString(currentViewId, strokeLabel);
 
       if (measurementString) {
@@ -1197,6 +1220,16 @@ export class StrokeMetadataManager {
       let originalMeasurement = '';
       measurementSpan.addEventListener('click', () => {
         if (measurementSpan.contentEditable === 'true') return; // Already editing
+        if (isMeasurementLocked()) {
+          if (window.app?.projectManager?.showStatusMessage) {
+            window.app.projectManager.showStatusMessage(
+              `Measurement ${strokeLabel} is locked (CW import).`,
+              'info'
+            );
+          }
+          syncMeasurementLockState();
+          return;
+        }
 
         originalMeasurement = measurementSpan.textContent;
         measurementSpan.classList.remove('empty-measurement');
@@ -1207,6 +1240,12 @@ export class StrokeMetadataManager {
       });
 
       measurementSpan.addEventListener('blur', () => {
+        if (isMeasurementLocked()) {
+          measurementSpan.contentEditable = 'false';
+          measurementSpan.textContent = originalMeasurement;
+          syncMeasurementLockState();
+          return;
+        }
         measurementSpan.contentEditable = 'false';
         const newValue = measurementSpan.textContent.trim();
 
@@ -1239,6 +1278,8 @@ export class StrokeMetadataManager {
           measurementSpan.blur();
         }
       });
+
+      syncMeasurementLockState();
 
       // Auto-focus this measurement field if it's the newest stroke (just added)
       // We'll check if this is the last stroke in the list

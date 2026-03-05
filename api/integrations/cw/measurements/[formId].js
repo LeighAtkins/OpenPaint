@@ -1,9 +1,2054 @@
 import {
   analyzeMeasureFormPayload,
   buildMeasureSavePayloadFromTable,
+  createCwSession,
+  cwGraphqlRequest,
+  fetchOrderImagesByFormId,
   fetchCwMeasurementsTable,
+  mapOrderImagesToMeasurementItems,
   readJsonBody,
 } from '../_shared.js';
+
+const mtTokenCache = new Map();
+const FALLBACK_STYLE_CODES = [
+  'BKPT_SP',
+  'CNRP_PC',
+  'CNRP_PM',
+  'CNRP_SP',
+  'ELAS_SP',
+  'LSKT_PC',
+  'LSKT_PM',
+  'LSKT_SI',
+  'LSKT_SP',
+  'LSKT_WR',
+  'MLTP_PC',
+  'MLTP_PM',
+  'MLTP_SP',
+  'PC',
+  'PM',
+  'SDPT_SP',
+  'SHRT_PC',
+  'SHRT_PM',
+  'SHRT_SP',
+  'SHRT_WR',
+  'SI',
+  'SP',
+  'VELC_PC',
+  'VELC_PM',
+  'VELC_SI',
+  'VELC_SP',
+  'VELC_WR',
+  'VELC_WR_NARM',
+  'VELC_WR_YARM',
+  'WR',
+];
+const MAX_QC_ATTEMPTS = 80;
+
+function decodeJwtExp(token) {
+  try {
+    const payload = String(token || '').split('.')[1];
+    if (!payload) return null;
+    const json = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
+    return Number.isFinite(Number(json?.exp)) ? Number(json.exp) : null;
+  } catch {
+    return null;
+  }
+}
+
+function getCachedMtToken(cacheKey) {
+  const cached = mtTokenCache.get(cacheKey);
+  if (!cached) return null;
+  if (Date.now() >= cached.expiresAtMs) {
+    mtTokenCache.delete(cacheKey);
+    return null;
+  }
+  return cached;
+}
+
+function setCachedMtToken(cacheKey, token, refreshToken = null) {
+  const exp = decodeJwtExp(token);
+  const safetyMs = 60 * 1000;
+  const expiresAtMs = exp ? exp * 1000 - safetyMs : Date.now() + 10 * 60 * 1000;
+  mtTokenCache.set(cacheKey, {
+    token,
+    refreshToken,
+    expiresAtMs,
+  });
+}
+
+function buildCookieHeader(jar) {
+  return Object.entries(jar || {})
+    .map(([name, value]) => `${name}=${value}`)
+    .join('; ');
+}
+
+function toAbsoluteUrl(baseUrl, maybeRelative) {
+  try {
+    return new URL(String(maybeRelative || ''), String(baseUrl || '')).toString();
+  } catch {
+    return '';
+  }
+}
+
+function normalizeText(value) {
+  return String(value || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
+function tokenize(value) {
+  return normalizeText(value)
+    .split(' ')
+    .map(token => token.trim())
+    .filter(token => token.length >= 2);
+}
+
+function normalizeSearchText(source) {
+  let text = String(source || '');
+  if (!text) return '';
+  text = text
+    .replace(/\\\//g, '/')
+    .replace(/\u002F/gi, '/')
+    .replace(/\u003A/gi, ':')
+    .replace(/\u0026/gi, '&')
+    .replace(/\u002C/gi, ',')
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'");
+  try {
+    text = decodeURIComponent(text);
+  } catch {
+    // Keep original text when mixed encodings are present.
+  }
+  return text;
+}
+
+function extractProductMeasurementLinks(sourceText, baseUrl) {
+  const text = String(sourceText || '');
+  if (!text) return [];
+  const links = new Set();
+  const re =
+    /(?:https?:\/\/[^"'\s<]+)?\/product-measurements\/[A-Za-z0-9+/=_-]+\/[A-Za-z0-9,_.\-]+/g;
+  let match;
+  while ((match = re.exec(text)) !== null) {
+    const value = String(match[0] || '').trim();
+    if (!value) continue;
+    const absolute = value.startsWith('http') ? value : toAbsoluteUrl(baseUrl, value);
+    if (absolute) links.add(absolute);
+  }
+  return Array.from(links);
+}
+
+function scoreCandidate(url, searchTerm) {
+  const path = (() => {
+    try {
+      return new URL(url).pathname;
+    } catch {
+      return String(url || '');
+    }
+  })();
+  const haystack = normalizeText(path);
+  const tokens = tokenize(searchTerm);
+  const termNorm = normalizeText(searchTerm);
+
+  let score = 0;
+  if (termNorm && haystack.includes(termNorm)) score += 80;
+  tokens.forEach(token => {
+    if (haystack.includes(token)) score += 12;
+  });
+
+  const lastSegment = path.split('/').pop() || '';
+  const slugPart = normalizeText(lastSegment.replace(/,/g, ' '));
+  if (termNorm && slugPart.includes(termNorm)) score += 40;
+  tokens.forEach(token => {
+    if (slugPart.includes(token)) score += 10;
+  });
+
+  return score;
+}
+
+function collectSearchUrls(baseUrl, searchTerm) {
+  const q = encodeURIComponent(String(searchTerm || '').trim());
+  const base = String(baseUrl || '').replace(/\/+$/, '');
+  return [
+    `${base}/dashboard/products/?q=${q}`,
+    `${base}/dashboard/products/?search=${q}`,
+    `${base}/dashboard/products/?keyword=${q}`,
+    `${base}/dashboard/products/`,
+    `${base}/dashboard/`,
+  ];
+}
+
+function extractImageUrls(node, out = new Set()) {
+  if (!node) return out;
+  if (typeof node === 'string') {
+    const value = node.trim();
+    if (/^https?:\/\//i.test(value) && /\.(?:png|jpe?g|webp|gif|bmp|svg)(?:\?|$)/i.test(value)) {
+      out.add(value);
+    }
+    return out;
+  }
+  if (Array.isArray(node)) {
+    node.forEach(item => extractImageUrls(item, out));
+    return out;
+  }
+  if (typeof node === 'object') {
+    Object.entries(node).forEach(([key, value]) => {
+      const k = key.toLowerCase();
+      if (typeof value === 'string' && (k.includes('image') || k.endsWith('url'))) {
+        const maybeUrl = value.trim();
+        if (/^https?:\/\//i.test(maybeUrl)) {
+          out.add(maybeUrl);
+        }
+      }
+      extractImageUrls(value, out);
+    });
+  }
+  return out;
+}
+
+function extractMeasurementCandidates(node, path = '', out = []) {
+  if (!node) return out;
+  if (Array.isArray(node)) {
+    node.forEach((item, idx) => extractMeasurementCandidates(item, `${path}[${idx}]`, out));
+    return out;
+  }
+  if (typeof node !== 'object') return out;
+
+  Object.entries(node).forEach(([key, value]) => {
+    const currentPath = path ? `${path}.${key}` : key;
+    const lower = key.toLowerCase();
+    if (
+      lower.includes('measurement') ||
+      lower.includes('field_data') ||
+      lower.includes('dimensions') ||
+      lower === 'size'
+    ) {
+      out.push({ key: currentPath, value });
+    }
+    extractMeasurementCandidates(value, currentPath, out);
+  });
+  return out;
+}
+
+function scoreFromHaystack(haystackText, termNorm, termTokens) {
+  const haystack = normalizeText(haystackText);
+  if (!haystack) return 0;
+  let score = 0;
+  if (termNorm && haystack.includes(termNorm)) score += 100;
+  termTokens.forEach(token => {
+    if (haystack.includes(token)) score += 15;
+  });
+  return score;
+}
+
+async function cwGetWithSession(session, url, referer) {
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      accept: 'application/json, text/plain, text/html, */*',
+      cookie: buildCookieHeader(session.cookieJar),
+      origin: session.baseUrl,
+      referer: referer || `${session.baseUrl.replace(/\/+$/, '')}/dashboard/`,
+      'x-requested-with': 'XMLHttpRequest',
+      'user-agent': 'OpenPaint-CW-Vercel/1.0',
+    },
+  });
+
+  const rawText = await response.text().catch(() => '');
+  let body = null;
+  try {
+    body = rawText ? JSON.parse(rawText) : null;
+  } catch {
+    body = null;
+  }
+
+  return {
+    ok: response.ok,
+    status: response.status,
+    url,
+    contentType: response.headers.get('content-type') || '',
+    rawText,
+    body,
+  };
+}
+
+async function cwGetImageWithSession(session, url, referer) {
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      accept: 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8',
+      cookie: buildCookieHeader(session.cookieJar),
+      origin: session.baseUrl,
+      referer: referer || `${session.baseUrl.replace(/\/+$/, '')}/dashboard/`,
+      'x-requested-with': 'XMLHttpRequest',
+      'user-agent': 'OpenPaint-CW-Vercel/1.0',
+    },
+  });
+
+  const contentType = String(response.headers.get('content-type') || '').toLowerCase();
+  const okContentType = contentType.startsWith('image/');
+  const bytes = await response.arrayBuffer().catch(() => new ArrayBuffer(0));
+  const byteLength = bytes.byteLength || 0;
+
+  return {
+    ok: response.ok && okContentType && byteLength > 0,
+    status: response.status,
+    url,
+    contentType,
+    bytes,
+    byteLength,
+  };
+}
+
+function decodeHtmlEntitiesForUrl(value) {
+  return String(value || '')
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .trim();
+}
+
+function encodePathSegments(pathname) {
+  return String(pathname || '')
+    .split('/')
+    .map(part => encodeURIComponent(part))
+    .join('/');
+}
+
+function expandImageCandidateVariants(candidates = []) {
+  const out = new Set();
+  candidates.forEach(raw => {
+    const clean = decodeHtmlEntitiesForUrl(raw);
+    if (!clean) return;
+    out.add(clean);
+
+    let parsed;
+    try {
+      parsed = new URL(clean);
+    } catch {
+      return;
+    }
+
+    const pathname = String(parsed.pathname || '');
+    if (!pathname) return;
+    const normalizedPath = pathname.replace(/\)\)_/g, ')_');
+    const encodedPath = encodePathSegments(normalizedPath);
+    const pathVariants = new Set([pathname, normalizedPath, encodedPath]);
+
+    pathVariants.forEach(pathVariant => {
+      const clone = new URL(parsed.toString());
+      clone.pathname = pathVariant;
+      out.add(clone.toString());
+    });
+  });
+  return Array.from(out);
+}
+
+async function fetchMtProductQcMeasurements({
+  session,
+  mtApiBaseUrl,
+  productReference,
+  style,
+  styleCode,
+  bucketName,
+  mtAccessToken,
+}) {
+  const baseUrl = String(mtApiBaseUrl || session.baseUrl || '').replace(/\/+$/, '');
+  const targetUrl = `${baseUrl}/mtApi/product-qc-measurements/`;
+  const params = new URLSearchParams();
+  params.set('product_reference', String(productReference || ''));
+  if (style) params.set('style', String(style));
+  if (styleCode) params.set('style_code', String(styleCode));
+  if (bucketName) params.set('bucket_name', String(bucketName));
+
+  const headers = {
+    accept: 'application/json, text/plain, */*',
+    cookie: buildCookieHeader(session.cookieJar),
+    origin: baseUrl,
+    referer: `${baseUrl}/dashboard/`,
+    'x-csrftoken': session.csrfToken,
+    'x-requested-with': 'XMLHttpRequest',
+    'user-agent': 'OpenPaint-CW-Vercel/1.0',
+  };
+  if (mtAccessToken) {
+    headers.Authorization = `Bearer ${mtAccessToken}`;
+  }
+
+  const response = await fetch(`${targetUrl}?${params.toString()}`, {
+    method: 'GET',
+    headers,
+  });
+
+  const rawText = await response.text().catch(() => '');
+  let body = null;
+  try {
+    body = rawText ? JSON.parse(rawText) : null;
+  } catch {
+    body = null;
+  }
+
+  return {
+    ok: response.ok,
+    status: response.status,
+    targetUrl,
+    params: Object.fromEntries(params.entries()),
+    body,
+    rawText,
+  };
+}
+
+async function fetchJsonOrText(url, options = {}) {
+  const extraHeaders = options && typeof options === 'object' ? options.headers || {} : {};
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      accept: 'application/json, text/plain, text/html, */*',
+      'user-agent': 'OpenPaint-CW-Vercel/1.0',
+      ...extraHeaders,
+    },
+  });
+
+  const rawText = await response.text().catch(() => '');
+  let body = null;
+  try {
+    body = rawText ? JSON.parse(rawText) : null;
+  } catch {
+    body = null;
+  }
+
+  return {
+    ok: response.ok,
+    status: response.status,
+    contentType: response.headers.get('content-type') || '',
+    body,
+    rawText,
+  };
+}
+
+function candidateScoreForImageUrl(url) {
+  const value = String(url || '');
+  if (!value) return -1000;
+  let score = 0;
+  if (/storage\.googleapis\.com\/pid-storage/i.test(value)) score += 40;
+  if (/\bSignature=/i.test(value) && /\bGoogleAccessId=/i.test(value)) score += 200;
+  if (/\bExpires=/i.test(value)) score += 40;
+  if (/storage\.cloud\.google\.com/i.test(value)) score -= 100;
+  if (/cw-pid-qylyewlgca-uc\.a\.run\.app\/slipcover_details_images/i.test(value)) score -= 30;
+  if (/cw40\.comfort-works\.com\/(media|uploads)\//i.test(value)) score -= 20;
+  if (/\.(png|jpe?g|webp)(\?|$)/i.test(value)) score += 10;
+  return score;
+}
+
+function rankImageCandidates(candidates = []) {
+  return Array.from(new Set(candidates))
+    .map(url => ({ url, score: candidateScoreForImageUrl(url) }))
+    .sort((a, b) => b.score - a.score)
+    .map(item => item.url);
+}
+
+async function postCwGraphqlWithSession(session, payload, authorization = '') {
+  const baseUrl = String(session.baseUrl || '').replace(/\/+$/, '');
+  const headers = {
+    accept: '*/*',
+    'content-type': 'application/json',
+    cookie: buildCookieHeader(session.cookieJar),
+    origin: baseUrl,
+    referer: `${baseUrl}/dashboard/`,
+    'x-csrftoken': session.csrfToken,
+    'x-requested-with': 'XMLHttpRequest',
+    'user-agent': 'OpenPaint-CW-Vercel/1.0',
+  };
+  if (authorization) {
+    headers.authorization = authorization;
+  }
+
+  const response = await fetch(`${baseUrl}/api/`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(payload),
+  });
+
+  const rawText = await response.text().catch(() => '');
+  let body = null;
+  try {
+    body = rawText ? JSON.parse(rawText) : null;
+  } catch {
+    body = rawText;
+  }
+
+  const gqlErrors = Array.isArray(body?.errors) ? body.errors : [];
+  return {
+    ok: response.ok && gqlErrors.length === 0,
+    status: response.status,
+    body,
+  };
+}
+
+async function fetchMtAccessTokenViaCwGraphql({
+  override,
+  username,
+  password,
+  forceRefresh = false,
+}) {
+  const identity = String(username || override?.username || process.env.CW_USERNAME || '').trim();
+  const secret = String(password || override?.password || process.env.CW_PASSWORD || '').trim();
+  if (!identity || !secret) return null;
+
+  const session = await createCwSession({
+    baseUrl: override?.baseUrl,
+    username: identity,
+    password: secret,
+  });
+  const cacheKey = `${String(session.baseUrl || '').replace(/\/+$/, '')}|${identity.toLowerCase()}`;
+  const cached = forceRefresh ? null : getCachedMtToken(cacheKey);
+  if (cached?.token) {
+    return {
+      ok: true,
+      status: 200,
+      accessToken: cached.token,
+      refreshToken: cached.refreshToken || null,
+      source: 'cache',
+      attempts: [{ source: 'cache', ok: true }],
+      body: null,
+    };
+  }
+
+  const emailCandidates = [];
+  if (identity.includes('@')) {
+    emailCandidates.push(identity);
+  }
+  if (override?.email && String(override.email).includes('@')) {
+    emailCandidates.push(String(override.email).trim());
+  }
+  if (!emailCandidates.length) {
+    emailCandidates.push(identity);
+  }
+
+  const attempts = [];
+  const tokenAuthMutation = `mutation getToken($email: String!, $password: String!) {
+  tokenAuth(input: { email: $email, password: $password }) {
+    token
+  }
+}`;
+  const staffMtTokenQuery = `query staffMtToken {
+  staffMtToken {
+    accessToken
+    refreshToken
+  }
+}`;
+
+  for (const email of emailCandidates) {
+    const tokenAuth = await postCwGraphqlWithSession(session, {
+      operationName: 'getToken',
+      query: tokenAuthMutation,
+      variables: { email, password: secret },
+    });
+
+    const cwJwt = String(tokenAuth?.body?.data?.tokenAuth?.token || '').trim();
+    attempts.push({
+      step: 'tokenAuth',
+      email,
+      ok: tokenAuth.ok,
+      status: tokenAuth.status,
+      hasToken: Boolean(cwJwt),
+    });
+    if (!cwJwt) continue;
+
+    const mtTokenResult = await postCwGraphqlWithSession(
+      session,
+      {
+        operationName: 'staffMtToken',
+        query: staffMtTokenQuery,
+        variables: {},
+      },
+      `JWT ${cwJwt}`
+    );
+
+    const accessToken = String(mtTokenResult?.body?.data?.staffMtToken?.accessToken || '').trim();
+    const refreshToken = String(mtTokenResult?.body?.data?.staffMtToken?.refreshToken || '').trim();
+    attempts.push({
+      step: 'staffMtToken',
+      email,
+      ok: mtTokenResult.ok,
+      status: mtTokenResult.status,
+      hasAccessToken: Boolean(accessToken),
+      hasRefreshToken: Boolean(refreshToken),
+    });
+
+    if (accessToken) {
+      setCachedMtToken(cacheKey, accessToken, refreshToken || null);
+      return {
+        ok: true,
+        status: 200,
+        accessToken,
+        refreshToken: refreshToken || null,
+        source: 'cw-graphql',
+        attempts,
+        body: mtTokenResult.body,
+      };
+    }
+  }
+
+  return {
+    ok: false,
+    status: 401,
+    accessToken: null,
+    refreshToken: null,
+    source: 'cw-graphql',
+    attempts,
+    body: null,
+  };
+}
+
+async function fetchMtAccessToken({ mtApiBaseUrl, username, password }) {
+  const baseUrl = String(mtApiBaseUrl || '').replace(/\/+$/, '');
+  const identity = String(username || process.env.CW_USERNAME || '').trim();
+  const secret = String(password || process.env.CW_PASSWORD || '').trim();
+  if (!baseUrl || !identity || !secret) return null;
+
+  const payloads = [
+    { username: identity, password: secret },
+    { username: identity, email: identity, password: secret },
+    { username: identity, username_or_email: identity, password: secret },
+    { email: identity, password: secret },
+    { username_or_email: identity, password: secret },
+  ];
+
+  if (identity.includes('@')) {
+    const localPart = identity.split('@')[0].trim();
+    if (localPart) {
+      payloads.unshift({ username: localPart, password: secret });
+      payloads.push({ username: localPart, username_or_email: identity, password: secret });
+    }
+  }
+
+  let lastAttempt = null;
+  const attempts = [];
+  for (const payload of payloads) {
+    const response = await fetch(`${baseUrl}/mtApi/token/`, {
+      method: 'POST',
+      headers: {
+        accept: 'application/json, text/plain, */*',
+        'content-type': 'application/json',
+        'user-agent': 'OpenPaint-CW-Vercel/1.0',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const rawText = await response.text().catch(() => '');
+    let body = null;
+    try {
+      body = rawText ? JSON.parse(rawText) : null;
+    } catch {
+      body = null;
+    }
+
+    const accessToken =
+      body && typeof body === 'object'
+        ? String(body.access || body.token || body.mtAccessToken || body.access_token || '').trim()
+        : '';
+
+    lastAttempt = {
+      ok: response.ok && Boolean(accessToken),
+      status: response.status,
+      accessToken: accessToken || null,
+      body,
+      payloadKeys: Object.keys(payload),
+    };
+    attempts.push({
+      status: lastAttempt.status,
+      ok: lastAttempt.ok,
+      payloadKeys: lastAttempt.payloadKeys,
+      body: lastAttempt.body,
+    });
+
+    if (lastAttempt.ok) {
+      lastAttempt.attempts = attempts;
+      return lastAttempt;
+    }
+  }
+
+  if (lastAttempt) {
+    lastAttempt.attempts = attempts;
+  }
+  return lastAttempt;
+}
+
+function collectStrings(node, out = []) {
+  if (node === null || node === undefined) return out;
+  if (typeof node === 'string') {
+    out.push(node);
+    return out;
+  }
+  if (Array.isArray(node)) {
+    node.forEach(item => collectStrings(item, out));
+    return out;
+  }
+  if (typeof node === 'object') {
+    Object.values(node).forEach(value => collectStrings(value, out));
+  }
+  return out;
+}
+
+function extractMeasurementPathSuffixes(source, productId) {
+  const allText = normalizeSearchText(Array.isArray(source) ? source.join('\n') : source);
+  const escapedId = String(productId || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const suffixes = new Set();
+  const re = new RegExp(`/product-measurements/${escapedId}/([^"'\\s<]+)`, 'g');
+  let match;
+  while ((match = re.exec(allText)) !== null) {
+    const suffix = String(match[1] || '').trim();
+    if (suffix) suffixes.add(suffix);
+  }
+  return Array.from(suffixes);
+}
+
+function extractSuffixesByReference(source, reference) {
+  const allText = normalizeSearchText(Array.isArray(source) ? source.join('\n') : source);
+  const ref = String(reference || '').trim();
+  if (!ref) return [];
+  const escapedRef = ref.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const suffixes = new Set();
+
+  const tripleRe = new RegExp(`${escapedRef},[A-Za-z0-9_\-]+,[A-Za-z0-9_\-]+`, 'g');
+  let triple;
+  while ((triple = tripleRe.exec(allText)) !== null) {
+    const suffix = String(triple[0] || '').trim();
+    if (suffix) suffixes.add(suffix);
+  }
+
+  const pairRe = new RegExp(`${escapedRef},[A-Za-z0-9_\-]+`, 'g');
+  let pair;
+  while ((pair = pairRe.exec(allText)) !== null) {
+    const suffix = String(pair[0] || '').trim();
+    if (suffix) suffixes.add(suffix);
+  }
+
+  return Array.from(suffixes);
+}
+
+function extractSuffixesByReferencePrefix(source, reference) {
+  const allText = normalizeSearchText(Array.isArray(source) ? source.join('\n') : source);
+  const ref = String(reference || '').trim();
+  if (!ref) return [];
+  const escapedRef = ref.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const suffixes = new Set();
+  const re = new RegExp(
+    `${escapedRef}(?:__[A-Za-z0-9_-]+)?,[A-Za-z0-9_-]+(?:,[A-Za-z0-9_-]+)?`,
+    'g'
+  );
+  let match;
+  while ((match = re.exec(allText)) !== null) {
+    const suffix = String(match[0] || '').trim();
+    if (suffix) suffixes.add(suffix);
+  }
+  return Array.from(suffixes);
+}
+
+function extractReferenceVariants(source, baseReference) {
+  const allText = normalizeSearchText(Array.isArray(source) ? source.join('\n') : source);
+  const base = String(baseReference || '').trim();
+  const variants = new Set();
+  if (base) variants.add(base);
+  if (!base) return Array.from(variants);
+  const escapedBase = base.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const re = new RegExp(`${escapedBase}__[A-Za-z0-9_-]+`, 'g');
+  let match;
+  while ((match = re.exec(allText)) !== null) {
+    const ref = String(match[0] || '').trim();
+    if (ref) variants.add(ref);
+  }
+  return Array.from(variants);
+}
+
+function extractTupleSuffixesFromPayload(payload, baseReference) {
+  const text = normalizeSearchText(
+    [
+      ...collectStrings(payload, []),
+      (() => {
+        try {
+          return JSON.stringify(payload || {});
+        } catch {
+          return '';
+        }
+      })(),
+    ].join('\n')
+  );
+  if (!text) return [];
+
+  const ref = String(baseReference || '').trim();
+  if (!ref) return [];
+  const escapedRef = ref.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const tuples = new Set();
+
+  const tupleRe = new RegExp(
+    `${escapedRef}(?:__[A-Za-z0-9_-]+)?,[A-Za-z0-9_-]+,[A-Za-z0-9_-]+`,
+    'g'
+  );
+  let match;
+  while ((match = tupleRe.exec(text)) !== null) {
+    const suffix = String(match[0] || '').trim();
+    if (suffix) tuples.add(suffix);
+  }
+
+  return Array.from(tuples);
+}
+
+function stripHtmlTags(value) {
+  return decodeHtmlEntities(String(value || '').replace(/<[^>]+>/g, ' '))
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function extractTupleRowsFromHtml(rawHtml, baseReference = '') {
+  const html = String(rawHtml || '');
+  if (!html) return [];
+  const rows = [];
+  const rowRe = /<tr\b[^>]*>([\s\S]*?)<\/tr>/gi;
+  let rowMatch;
+  while ((rowMatch = rowRe.exec(html)) !== null) {
+    const rowHtml = String(rowMatch[1] || '');
+    const cells = [];
+    const tdRe = /<td\b[^>]*>([\s\S]*?)<\/td>/gi;
+    let tdMatch;
+    while ((tdMatch = tdRe.exec(rowHtml)) !== null) {
+      cells.push(stripHtmlTags(tdMatch[1]));
+    }
+    if (cells.length < 5) continue;
+    const productReference = String(cells[2] || '').trim();
+    const style = String(cells[3] || '').trim();
+    const styleCode = String(cells[4] || '').trim();
+    if (!productReference || !style || !styleCode) continue;
+    if (baseReference && !productReference.startsWith(baseReference)) continue;
+    rows.push({
+      productReference,
+      style,
+      styleCode,
+      label: String(cells[1] || '').trim(),
+    });
+  }
+  const dedup = new Map();
+  rows.forEach(row => {
+    const key = `${String(row.productReference || '').toLowerCase()}|${String(row.style || '').toLowerCase()}|${String(row.styleCode || '').toLowerCase()}`;
+    if (!dedup.has(key)) dedup.set(key, row);
+  });
+  return Array.from(dedup.values());
+}
+
+function extractImageUrlsFromText(rawText, out = new Set()) {
+  const source = String(rawText || '');
+  const normalized = decodeHtmlEntities(source)
+    .replace(/\\\//g, '/')
+    .replace(/\u002F/gi, '/')
+    .replace(/\u003A/gi, ':')
+    .replace(/\u0026/gi, '&');
+
+  const directMatches =
+    normalized.match(/https?:\/\/[^"'\s>]+\.(?:png|jpe?g|webp|gif|bmp|svg)(?:\?[^"'\s>]*)?/gi) ||
+    [];
+  directMatches.forEach(url => out.add(sanitizeExtractedUrl(url)));
+
+  const encodedMatches =
+    normalized.match(/https%3A%2F%2F[^"'\s>]+(?:png|jpe?g|webp|gif|bmp|svg)(?:%3F[^"'\s>]*)?/gi) ||
+    [];
+  encodedMatches.forEach(value => {
+    try {
+      out.add(sanitizeExtractedUrl(decodeURIComponent(value)));
+    } catch {
+      // ignore malformed encoded URL
+    }
+  });
+
+  // Some payloads place url(...) wrappers with signed query params.
+  const cssUrlMatches =
+    normalized.match(/url\(([^)]+\.(?:png|jpe?g|webp|gif|bmp|svg)(?:\?[^)]*)?)\)/gi) || [];
+  cssUrlMatches.forEach(chunk => {
+    const raw = String(chunk)
+      .replace(/^url\(/i, '')
+      .replace(/\)$/i, '');
+    out.add(sanitizeExtractedUrl(raw));
+  });
+
+  return out;
+}
+
+function decodeHtmlEntities(input) {
+  return String(input || '')
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function sanitizeExtractedUrl(value) {
+  if (!value) return '';
+  let url = decodeHtmlEntities(value);
+  url = url.replace(/["')\];]+$/g, '');
+  return url;
+}
+
+function parseRenderedMeasurementsHtml(htmlText) {
+  const html = String(htmlText || '');
+  if (!html) return null;
+
+  const sections = [];
+  const panelStartRegex =
+    /<div\s+aria-expanded="(?:true|false)"\s+class="v-expansion-panel[^>]*">/gi;
+  const panelStarts = [];
+  let panelStartMatch;
+  while ((panelStartMatch = panelStartRegex.exec(html)) !== null) {
+    panelStarts.push(panelStartMatch.index);
+  }
+
+  if (!panelStarts.length) {
+    return null;
+  }
+
+  for (let idx = 0; idx < panelStarts.length; idx += 1) {
+    const start = panelStarts[idx];
+    const end = idx + 1 < panelStarts.length ? panelStarts[idx + 1] : html.length;
+    const block = html.slice(start, end);
+
+    const nameMatch = block.match(/<span[^>]*class="[^"]*text-4[^"]*"[^>]*>([\s\S]*?)<\/span>/i);
+    const sectionName = decodeHtmlEntities(nameMatch?.[1] || '');
+    if (!sectionName) continue;
+
+    const pieceMatch = block.match(/type="number"\s+value="([^"]+)"/i);
+    const skirtMatch = block.match(/Skirt Length:[\s\S]*?type="text"\s+value="([^"]+)"/i);
+
+    const imageUrls = [];
+    const imgRegex =
+      /https?:\/\/storage\.googleapis\.com\/[^\s"')]+\.(?:png|jpe?g|webp)(?:\?[^\s"')]+)?/gi;
+    let imgMatch;
+    while ((imgMatch = imgRegex.exec(block)) !== null) {
+      const cleaned = sanitizeExtractedUrl(imgMatch[0]);
+      if (cleaned) imageUrls.push(cleaned);
+    }
+
+    const measurements = [];
+    const rowRegex =
+      /<tr[^>]*>[\s\S]*?<td[^>]*class="text-left"[^>]*>([\s\S]*?)<\/td>[\s\S]*?<td[^>]*class="text-center"[^>]*>([\s\S]*?)<\/td>[\s\S]*?<td[^>]*class="text-center"[^>]*>([\s\S]*?)<\/td>[\s\S]*?<td[^>]*class="text-center"[^>]*>([\s\S]*?)<\/td>/gi;
+    let row;
+    while ((row = rowRegex.exec(block)) !== null) {
+      const label = decodeHtmlEntities(row[1]);
+      const value = decodeHtmlEntities(row[2]);
+      const toleranceMin = decodeHtmlEntities(row[3]);
+      const toleranceMax = decodeHtmlEntities(row[4]);
+      if (!label) continue;
+      measurements.push({ label, value, toleranceMin, toleranceMax });
+    }
+
+    if (!imageUrls.length && !measurements.length) continue;
+    sections.push({
+      sectionName,
+      pieces: decodeHtmlEntities(pieceMatch?.[1] || ''),
+      skirtLength: decodeHtmlEntities(skirtMatch?.[1] || ''),
+      imageUrls: Array.from(new Set(imageUrls)),
+      measurements,
+    });
+  }
+
+  if (!sections.length) return null;
+  return {
+    sectionCount: sections.length,
+    totalImageCount: sections.reduce((acc, section) => acc + section.imageUrls.length, 0),
+    totalMeasurementCount: sections.reduce((acc, section) => acc + section.measurements.length, 0),
+    flatMeasurements: sections.flatMap(section =>
+      section.measurements.map(row => ({
+        sectionName: section.sectionName,
+        pieces: section.pieces,
+        skirtLength: section.skirtLength,
+        ...row,
+      }))
+    ),
+    sections,
+  };
+}
+
+function scoreProductNode(node, searchTerm) {
+  const termNorm = normalizeText(searchTerm);
+  const termTokens = tokenize(searchTerm);
+  const translationNames = (node?.translations?.edges || [])
+    .map(edge => String(edge?.node?.name || '').trim())
+    .filter(Boolean)
+    .join(' ');
+  const haystack = `${String(node?.reference || '')} ${translationNames}`;
+  return scoreFromHaystack(haystack, termNorm, termTokens);
+}
+
+async function handleProductSearch({ req, res, body, startedAt }) {
+  const searchTerm = String(body?.search || body?.query || '').trim();
+  const providedFormId = String(body?.formId || req.query?.formId || '').trim();
+  if (!searchTerm) {
+    return res.status(400).json({
+      success: false,
+      code: 'CW_SEARCH_REQUIRED',
+      message: 'search is required',
+    });
+  }
+
+  const renderedHtmlExtraction = parseRenderedMeasurementsHtml(body?.renderedHtml || '');
+
+  const override = {
+    baseUrl: req.query?.baseUrl || body?.baseUrl,
+    username: req.query?.username || body?.username || body?.email,
+    password: req.query?.password || body?.password,
+  };
+  const mtUsername = String(
+    body?.mtUsername || body?.mtUser || body?.mtEmail || override.username || ''
+  ).trim();
+  const mtPassword = String(body?.mtPassword || override.password || '').trim();
+
+  const pidBaseUrl = String(
+    body?.pidBaseUrl || process.env.CW_PID_BASE_URL || 'https://cw-pid-qylyewlgca-uc.a.run.app'
+  )
+    .trim()
+    .replace(/\/+$/, '');
+
+  const isLikelyReference = /^[A-Z0-9][A-Z0-9-_]{3,}$/i.test(searchTerm);
+  const providedStyle = String(body?.style || '').trim();
+  const providedStyleCode = String(body?.styleCode || body?.style_code || '').trim();
+  const providedProductReference = String(
+    body?.productReference || body?.product_reference || ''
+  ).trim();
+  const providedMtAccessToken = String(body?.mtAccessToken || '').trim();
+  let autoTokenResult = null;
+  if (!providedMtAccessToken) {
+    autoTokenResult = await fetchMtAccessTokenViaCwGraphql({
+      override,
+      username: mtUsername,
+      password: mtPassword,
+    });
+    if (!autoTokenResult?.ok) {
+      const legacyToken = await fetchMtAccessToken({
+        mtApiBaseUrl: pidBaseUrl,
+        username: mtUsername,
+        password: mtPassword,
+      });
+      autoTokenResult = {
+        ok: Boolean(legacyToken?.ok),
+        status: legacyToken?.status || autoTokenResult?.status || 401,
+        accessToken: legacyToken?.accessToken || null,
+        body: legacyToken?.body || autoTokenResult?.body || null,
+        source: legacyToken?.ok ? 'mt-token-endpoint' : 'cw-graphql+mt-token-endpoint',
+        attempts: [
+          ...(autoTokenResult?.attempts || []),
+          ...(legacyToken?.attempts || []).map(item => ({
+            ...item,
+            step: item.step || 'mtApiToken',
+          })),
+        ],
+      };
+    }
+  }
+  const mtAccessToken = providedMtAccessToken || autoTokenResult?.accessToken || '';
+  const providedBucketName = String(
+    body?.bucketName ||
+      process.env.CW_PID_STORAGE_BUCKET ||
+      process.env.PID_STORAGE ||
+      'pid-storage'
+  ).trim();
+  const gqlProductListQuery = `query ProductList($first: Int, $after: String = "", $before: String = "", $last: Int, $reference: String, $id: ID, $translations__name: String, $lang: String = "en", $sortBy: [String] = ["id"]) {
+  products(first: $first, after: $after, before: $before, last: $last, reference_Icontains: $reference, id: $id, translations_Name_Icontains: $translations__name, translations_Lang: $lang, sort: $sortBy) {
+    edges {
+      node {
+        id
+        reference
+        status
+        translations {
+          edges {
+            node {
+              name
+              slug
+              lang
+            }
+          }
+        }
+      }
+    }
+    totalCount
+  }
+}`;
+
+  const productList = await cwGraphqlRequest({
+    override,
+    operationName: 'ProductList',
+    query: gqlProductListQuery,
+    variables: {
+      after: '',
+      before: '',
+      lang: 'en',
+      sortBy: ['id'],
+      minimal: true,
+      first: 10,
+      reference: isLikelyReference ? searchTerm : '',
+      translations__name: searchTerm,
+    },
+  });
+
+  const productEdges = Array.isArray(productList?.body?.data?.products?.edges)
+    ? productList.body.data.products.edges
+    : [];
+  const productNodes = productEdges.map(edge => edge?.node).filter(Boolean);
+  const rankedProducts = productNodes
+    .map(node => ({ node, score: scoreProductNode(node, searchTerm) }))
+    .sort((a, b) => b.score - a.score);
+
+  if (rankedProducts.length > 0) {
+    const session = await createCwSession(override);
+    const selectedNode = rankedProducts[0].node;
+    const productId = String(selectedNode?.id || '').trim();
+    const productReference = String(selectedNode?.reference || '').trim();
+    const dashboardEditUrl = `${String(override.baseUrl || 'https://cw40.comfort-works.com').replace(/\/+$/, '')}/dashboard/#/products/edit/${encodeURIComponent(productId)}`;
+    const productMeasurementsInfoUrl = `${pidBaseUrl}/product-measurements/${encodeURIComponent(productId)}`;
+
+    const authHeaders = mtAccessToken ? { authorization: `Bearer ${mtAccessToken}` } : {};
+    let infoResult = await fetchJsonOrText(productMeasurementsInfoUrl, { headers: authHeaders });
+    const sessionInfo = await cwGetWithSession(
+      session,
+      productMeasurementsInfoUrl,
+      `${String(session.baseUrl || '').replace(/\/+$/, '')}/dashboard/`
+    );
+    if ((sessionInfo?.rawText || '').length > (infoResult?.rawText || '').length) {
+      infoResult = {
+        ok: sessionInfo.ok,
+        status: sessionInfo.status,
+        contentType: sessionInfo.contentType,
+        body: sessionInfo.body,
+        rawText: sessionInfo.rawText,
+      };
+    }
+
+    const textPool = collectStrings(infoResult.body, []);
+    textPool.push(infoResult.rawText || '');
+    const tupleRowsFromInfo = extractTupleRowsFromHtml(infoResult.rawText, productReference);
+    const pathSuffixes = new Set([
+      ...extractMeasurementPathSuffixes(textPool, productId),
+      ...extractSuffixesByReference(textPool, productReference),
+      ...extractSuffixesByReferencePrefix(textPool, productReference),
+    ]);
+    tupleRowsFromInfo.forEach(row => {
+      pathSuffixes.add(`${row.productReference},${row.style},${row.styleCode}`);
+    });
+
+    const referenceCandidates = new Set(
+      extractReferenceVariants(textPool, providedProductReference || productReference)
+    );
+    tupleRowsFromInfo.forEach(row => {
+      referenceCandidates.add(String(row.productReference || '').trim());
+    });
+
+    // Query sibling references (e.g. IK-KN-4__DF / IK-KN-4__SV / IK-KN-4__LV)
+    // so QC lookup can try the correct scoped product_reference.
+    const siblingSearchTerms = Array.from(
+      new Set(
+        [
+          productReference,
+          `${productReference}__`,
+          String(productReference || '').replace(/-[^-]+$/, ''),
+          ...((Array.isArray(selectedNode?.translations?.edges)
+            ? selectedNode.translations.edges
+                .map(edge => String(edge?.node?.name || '').trim())
+                .filter(Boolean)
+            : []) || []),
+        ]
+          .map(value => String(value || '').trim())
+          .filter(Boolean)
+      )
+    );
+    const siblingEdges = [];
+    for (const refTerm of siblingSearchTerms) {
+      const siblingRefs = await cwGraphqlRequest({
+        override,
+        operationName: 'ProductList',
+        query: gqlProductListQuery,
+        variables: {
+          after: '',
+          before: '',
+          lang: 'en',
+          sortBy: ['id'],
+          minimal: true,
+          first: 300,
+          reference: refTerm,
+          translations__name: refTerm.includes(' ') ? refTerm : '',
+        },
+      });
+      const edges = Array.isArray(siblingRefs?.body?.data?.products?.edges)
+        ? siblingRefs.body.data.products.edges
+        : [];
+      edges.forEach(edge => siblingEdges.push(edge));
+    }
+    siblingEdges.forEach(edge => {
+      const ref = String(edge?.node?.reference || '').trim();
+      if (!ref) return;
+      if (ref === productReference || ref.startsWith(`${productReference}__`)) {
+        referenceCandidates.add(ref);
+      }
+    });
+
+    Array.from(pathSuffixes).forEach(suffix => {
+      const first = String(suffix || '')
+        .split(',')
+        .map(part => part.trim())
+        .filter(Boolean)[0];
+      if (first) referenceCandidates.add(first);
+    });
+
+    const tupleSuffixes = Array.from(pathSuffixes).filter(suffix => {
+      const parts = String(suffix || '')
+        .split(',')
+        .map(part => part.trim())
+        .filter(Boolean);
+      return parts.length >= 3;
+    });
+    const tupleSource = tupleRowsFromInfo.length
+      ? 'pid-table-html'
+      : tupleSuffixes.length
+        ? 'suffix-scan'
+        : 'none';
+
+    const fullMeasurementUrls = Array.from(pathSuffixes).map(
+      suffix => `${pidBaseUrl}/product-measurements/${encodeURIComponent(productId)}/${suffix}`
+    );
+
+    if (fullMeasurementUrls.length === 0 && productReference) {
+      fullMeasurementUrls.push(
+        `${pidBaseUrl}/product-measurements/${encodeURIComponent(productId)}/${productReference}`
+      );
+    }
+
+    const detailResults = [];
+    const detailAuthHeaders = mtAccessToken ? { authorization: `Bearer ${mtAccessToken}` } : {};
+    for (const url of fullMeasurementUrls.slice(0, 8)) {
+      let detail = await fetchJsonOrText(url, { headers: detailAuthHeaders });
+      if (!detail.body) {
+        const sessionDetail = await cwGetWithSession(
+          session,
+          url,
+          `${String(session.baseUrl || '').replace(/\/+$/, '')}/dashboard/`
+        );
+        if ((sessionDetail?.rawText || '').length > (detail?.rawText || '').length) {
+          detail = {
+            ok: sessionDetail.ok,
+            status: sessionDetail.status,
+            contentType: sessionDetail.contentType,
+            body: sessionDetail.body,
+            rawText: sessionDetail.rawText,
+          };
+        }
+      }
+      const detailImages = new Set();
+      if (detail.body && typeof detail.body === 'object') {
+        extractImageUrls(detail.body, detailImages);
+      }
+      extractImageUrlsFromText(detail.rawText, detailImages);
+      const detailMeasurementCandidates = detail.body
+        ? extractMeasurementCandidates(detail.body, '', [])
+        : [];
+
+      detailResults.push({
+        url,
+        ok: detail.ok,
+        status: detail.status,
+        contentType: detail.contentType,
+        imageCount: detailImages.size,
+        measurementCandidateCount: detailMeasurementCandidates.length,
+        images: Array.from(detailImages),
+        measurementCandidates: detailMeasurementCandidates.slice(0, 40),
+        upstreamBody: detail.body,
+        upstreamSnippet: detail.body ? null : detail.rawText.slice(0, 5000),
+      });
+    }
+
+    const aggregateImages = new Set();
+    detailResults.forEach(item => {
+      (item.images || []).forEach(url => aggregateImages.add(url));
+    });
+
+    const styleCandidates = new Set();
+    const styleCodeCandidates = new Set();
+    const discoveredStylePairs = new Set();
+    tupleRowsFromInfo.forEach(row => {
+      discoveredStylePairs.add(
+        `${String(row.style || '')
+          .trim()
+          .toLowerCase()}|${String(row.styleCode || '')
+          .trim()
+          .toLowerCase()}`
+      );
+    });
+    if (providedStyle) styleCandidates.add(providedStyle);
+    if (providedStyleCode) styleCodeCandidates.add(providedStyleCode);
+    Array.from(pathSuffixes).forEach(suffix => {
+      const parts = String(suffix || '')
+        .split(',')
+        .map(part => part.trim())
+        .filter(Boolean);
+      const style = parts.length >= 2 ? parts[1] : '';
+      const styleCode = parts.length >= 3 ? parts[2] : '';
+      if (style) styleCandidates.add(style);
+      if (styleCode) styleCodeCandidates.add(styleCode);
+      if (style || styleCode) {
+        discoveredStylePairs.add(
+          `${String(style || '')
+            .trim()
+            .toLowerCase()}|${String(styleCode || '')
+            .trim()
+            .toLowerCase()}`
+        );
+      }
+    });
+    if (!styleCandidates.size) {
+      styleCandidates.add('Original');
+      styleCandidates.add('Signature');
+    }
+    if (!styleCodeCandidates.size) {
+      styleCodeCandidates.add('');
+      styleCodeCandidates.add('SHRT_SP');
+      styleCodeCandidates.add('CNRP_SP');
+      styleCodeCandidates.add('SDPT_SP');
+      styleCodeCandidates.add('VELC_SP');
+      styleCodeCandidates.add('SP');
+    }
+
+    const pairCandidates = [];
+    const seenPairs = new Set();
+    const pushPair = (styleRaw, styleCodeRaw) => {
+      const style = String(styleRaw || '').trim();
+      const styleCode = String(styleCodeRaw || '').trim();
+      const key = `${style.toLowerCase()}|${styleCode.toLowerCase()}`;
+      if (seenPairs.has(key)) return;
+      seenPairs.add(key);
+      pairCandidates.push({ style, styleCode });
+    };
+
+    if (providedStyle || providedStyleCode) {
+      pushPair(providedStyle, providedStyleCode);
+    }
+    discoveredStylePairs.forEach(pair => {
+      const [style = '', styleCode = ''] = String(pair || '').split('|');
+      pushPair(style, styleCode);
+    });
+
+    const hasScopedReferences = Array.from(referenceCandidates).some(ref =>
+      String(ref).includes('__')
+    );
+
+    // If product pages do not expose scoped references clearly, synthesize the
+    // common variant refs used in CW product matrices so tuple attempts can
+    // still target valid MT records (e.g. IK-KN-4__DF/__SV/__LV).
+    if (!hasScopedReferences && productReference) {
+      ['DF', 'SV', 'LV'].forEach(code => {
+        referenceCandidates.add(`${productReference}__${code}`);
+      });
+    }
+    if (!pairCandidates.length) {
+      if (Array.from(referenceCandidates).some(ref => String(ref).includes('__'))) {
+        // Prefer the common scoped pairing used by many IK variants.
+        pushPair('Signature', 'SDPT_SP');
+        pushPair('Original', 'VELC_SP');
+        pushPair('Minimalist', 'LSKT_SI');
+      } else {
+        pushPair('Signature', 'CNRP_SP');
+        pushPair('Original', 'SHRT_SP');
+        pushPair('Signature', 'SDPT_SP');
+        pushPair('Original', 'VELC_SP');
+        pushPair('Minimalist', 'LSKT_SI');
+        pushPair('Original', 'SP');
+        pushPair('Signature', 'SP');
+        pushPair('Original', '');
+        pushPair('Signature', '');
+      }
+    }
+
+    const qcMeasurementAttempts = [];
+    const qcMeasurementsByStyle = [];
+    let activeMtToken = mtAccessToken;
+    let attemptCount = 0;
+    const orderedReferenceCandidates = Array.from(referenceCandidates);
+    orderedReferenceCandidates.sort((a, b) => {
+      const aScoped = String(a).includes('__') ? 0 : 1;
+      const bScoped = String(b).includes('__') ? 0 : 1;
+      if (aScoped !== bScoped) return aScoped - bScoped;
+      return String(a).localeCompare(String(b));
+    });
+    if (!orderedReferenceCandidates.length && productReference) {
+      orderedReferenceCandidates.push(productReference);
+    }
+    if (providedProductReference && orderedReferenceCandidates.includes(providedProductReference)) {
+      orderedReferenceCandidates.splice(
+        orderedReferenceCandidates.indexOf(providedProductReference),
+        1
+      );
+      orderedReferenceCandidates.unshift(providedProductReference);
+    }
+
+    const tuplePlan = [];
+    const tupleSeen = new Set();
+    const pushTuplePlan = (productReferenceCandidate, styleCandidate, styleCodeCandidate) => {
+      const ref = String(productReferenceCandidate || '').trim();
+      const style = String(styleCandidate || '').trim();
+      const styleCode = String(styleCodeCandidate || '').trim();
+      if (!ref || !style || !styleCode) return;
+      const key = `${ref.toLowerCase()}|${style.toLowerCase()}|${styleCode.toLowerCase()}`;
+      if (tupleSeen.has(key)) return;
+      tupleSeen.add(key);
+      tuplePlan.push({ productReference: ref, style, styleCode });
+    };
+
+    tupleSuffixes.forEach(suffix => {
+      const parts = String(suffix || '')
+        .split(',')
+        .map(part => part.trim())
+        .filter(Boolean);
+      if (parts.length < 3) return;
+      pushTuplePlan(parts[0], parts[1], parts[2]);
+    });
+
+    // If no explicit tuple suffixes were discovered, synthesize tuple attempts
+    // from discovered sibling references + style pairs.
+    if (!tuplePlan.length) {
+      const scopedRefs = orderedReferenceCandidates.filter(ref => String(ref).includes('__'));
+      scopedRefs.forEach(ref => {
+        pairCandidates.forEach(pair => {
+          pushTuplePlan(ref, pair.style, pair.styleCode);
+        });
+      });
+    }
+
+    let attemptPlan = tuplePlan.length
+      ? tuplePlan
+      : orderedReferenceCandidates.flatMap(productReferenceCandidate =>
+          pairCandidates.map(pair => ({
+            productReference: productReferenceCandidate,
+            style: pair.style,
+            styleCode: pair.styleCode,
+          }))
+        );
+    const attemptPlanMode = tuplePlan.length ? 'tuple-only' : 'fallback';
+
+    const attemptPlanSeen = new Set(
+      attemptPlan.map(
+        item =>
+          `${String(item.productReference || '').toLowerCase()}|${String(item.style || '').toLowerCase()}|${String(item.styleCode || '').toLowerCase()}`
+      )
+    );
+    const enqueueTupleSuffix = suffix => {
+      const parts = String(suffix || '')
+        .split(',')
+        .map(part => part.trim())
+        .filter(Boolean);
+      if (parts.length < 3) return;
+      const candidate = {
+        productReference: parts[0],
+        style: parts[1],
+        styleCode: parts[2],
+      };
+      const key = `${String(candidate.productReference || '').toLowerCase()}|${String(candidate.style || '').toLowerCase()}|${String(candidate.styleCode || '').toLowerCase()}`;
+      if (attemptPlanSeen.has(key)) return;
+      attemptPlanSeen.add(key);
+      attemptPlan.push(candidate);
+    };
+
+    for (let planIndex = 0; planIndex < attemptPlan.length; planIndex += 1) {
+      const entry = attemptPlan[planIndex];
+      const productReferenceCandidate = String(entry.productReference || '').trim();
+      const styleCandidate = String(entry.style || '').trim();
+      const styleCodeCandidate = String(entry.styleCode || '').trim();
+      if (attemptCount >= MAX_QC_ATTEMPTS) break;
+      attemptCount += 1;
+
+      let attempt = await fetchMtProductQcMeasurements({
+        session,
+        mtApiBaseUrl: pidBaseUrl,
+        productReference: productReferenceCandidate,
+        style: styleCandidate,
+        styleCode: styleCodeCandidate,
+        bucketName: providedBucketName,
+        mtAccessToken: activeMtToken,
+      });
+
+      if (attempt.status === 401 && !providedMtAccessToken) {
+        const refreshedToken = await fetchMtAccessTokenViaCwGraphql({
+          override,
+          username: mtUsername,
+          password: mtPassword,
+          forceRefresh: true,
+        });
+        if (refreshedToken?.ok && refreshedToken?.accessToken) {
+          activeMtToken = refreshedToken.accessToken;
+          attempt = await fetchMtProductQcMeasurements({
+            session,
+            mtApiBaseUrl: pidBaseUrl,
+            productReference: productReferenceCandidate,
+            style: styleCandidate,
+            styleCode: styleCodeCandidate,
+            bucketName: providedBucketName,
+            mtAccessToken: activeMtToken,
+          });
+        }
+      }
+      const bodyStatus = Number(attempt?.body?.status);
+      const looksOk =
+        attempt.ok && (Number.isFinite(bodyStatus) ? bodyStatus >= 200 && bodyStatus < 300 : true);
+
+      qcMeasurementAttempts.push({
+        productReference: productReferenceCandidate,
+        style: styleCandidate,
+        styleCode: styleCodeCandidate || null,
+        status: attempt.status,
+        ok: attempt.ok,
+        bodyStatus: Number.isFinite(bodyStatus) ? bodyStatus : null,
+        targetUrl: attempt.targetUrl,
+        params: attempt.params,
+        hasContent: Boolean(attempt?.body?.content),
+        contentKeys:
+          attempt?.body?.content && typeof attempt.body.content === 'object'
+            ? Object.keys(attempt.body.content)
+            : [],
+        message:
+          typeof attempt?.body?.message === 'string'
+            ? attempt.body.message.slice(0, 240)
+            : typeof attempt?.body?.error === 'string'
+              ? attempt.body.error.slice(0, 240)
+              : null,
+        bodyPreview: (() => {
+          try {
+            return JSON.stringify(attempt?.body || {}).slice(0, 240);
+          } catch {
+            return null;
+          }
+        })(),
+      });
+
+      if (!looksOk && Number(bodyStatus) === 400) {
+        const discoveredTuples = extractTupleSuffixesFromPayload(attempt?.body, productReference);
+        discoveredTuples.forEach(enqueueTupleSuffix);
+      }
+
+      if (looksOk && attempt?.body?.content) {
+        const actualStyle = String(
+          attempt?.body?.content?.style_name || styleCandidate || ''
+        ).trim();
+        const actualStyleCode = String(
+          attempt?.body?.content?.style_code || styleCodeCandidate || ''
+        ).trim();
+        const entry = {
+          productReference: productReferenceCandidate,
+          style: actualStyle,
+          styleCode: actualStyleCode || null,
+          data: attempt.body.content,
+          raw: attempt.body,
+        };
+        const key = `${String(entry.productReference || '').toLowerCase()}|${String(entry.style || '').toLowerCase()}|${String(entry.styleCode || '').toLowerCase()}`;
+        if (
+          !qcMeasurementsByStyle.some(
+            item =>
+              `${String(item.productReference || '').toLowerCase()}|${String(item.style || '').toLowerCase()}|${String(item.styleCode || '').toLowerCase()}` ===
+              key
+          )
+        ) {
+          qcMeasurementsByStyle.push(entry);
+        }
+      }
+    }
+
+    let qcMeasurement = null;
+    if (providedStyle || providedStyleCode) {
+      qcMeasurement =
+        qcMeasurementsByStyle.find(item => {
+          const referenceOk = providedProductReference
+            ? String(item.productReference || '').toLowerCase() ===
+              providedProductReference.toLowerCase()
+            : true;
+          const styleOk = providedStyle
+            ? String(item.style || '').toLowerCase() === providedStyle.toLowerCase()
+            : true;
+          const codeOk = providedStyleCode
+            ? String(item.styleCode || '').toLowerCase() === providedStyleCode.toLowerCase()
+            : true;
+          return referenceOk && styleOk && codeOk;
+        }) || null;
+    }
+    if (!qcMeasurement) {
+      qcMeasurement =
+        qcMeasurementsByStyle.find(
+          item => String(item.styleCode || '').toUpperCase() === 'CNRP_SP'
+        ) ||
+        qcMeasurementsByStyle[0] ||
+        null;
+    }
+    const styleOptionMap = new Map();
+    qcMeasurementsByStyle.forEach(item => {
+      const optionReference = String(item.productReference || '').trim();
+      const style = String(item.style || '').trim();
+      const styleCode = String(item.styleCode || '').trim();
+      const key = `${optionReference.toLowerCase()}|${style.toLowerCase()}|${styleCode.toLowerCase()}`;
+      styleOptionMap.set(key, {
+        productReference: optionReference,
+        style,
+        styleCode,
+        label: `${optionReference || productReference} - ${style || 'Style'}${styleCode ? ` (${styleCode})` : ''}`,
+      });
+    });
+    discoveredStylePairs.forEach(key => {
+      const [style = '', styleCode = ''] = String(key).split('|');
+      orderedReferenceCandidates.forEach(reference => {
+        const mapKey = `${String(reference || '').toLowerCase()}|${String(style || '').toLowerCase()}|${String(styleCode || '').toLowerCase()}`;
+        if (styleOptionMap.has(mapKey)) return;
+        styleOptionMap.set(mapKey, {
+          productReference: reference,
+          style,
+          styleCode,
+          label: `${reference || 'Reference'} - ${style || 'Style'}${styleCode ? ` (${styleCode})` : ''}`,
+        });
+      });
+    });
+    const styleOptions = Array.from(styleOptionMap.values());
+
+    const existingDetailUrls = new Set(detailResults.map(item => String(item.url || '').trim()));
+    const extraDetailUrls = new Set();
+    styleOptions.forEach(option => {
+      const reference = String(option?.productReference || '').trim() || productReference;
+      const style = String(option?.style || '').trim();
+      const styleCode = String(option?.styleCode || '').trim();
+      if (!style && !styleCode) return;
+      const suffixParts = [reference];
+      if (style) suffixParts.push(style);
+      if (styleCode) suffixParts.push(styleCode);
+      const suffix = suffixParts.join(',');
+      if (!suffix) return;
+      extraDetailUrls.add(
+        `${pidBaseUrl}/product-measurements/${encodeURIComponent(productId)}/${suffix}`
+      );
+    });
+
+    for (const url of Array.from(extraDetailUrls)) {
+      if (existingDetailUrls.has(url)) continue;
+
+      const detailAuthHeaders = activeMtToken ? { authorization: `Bearer ${activeMtToken}` } : {};
+      let detail = await fetchJsonOrText(url, { headers: detailAuthHeaders });
+      let detailImages = new Set();
+      if (detail.body && typeof detail.body === 'object') {
+        extractImageUrls(detail.body, detailImages);
+      }
+      extractImageUrlsFromText(detail.rawText, detailImages);
+
+      // Try CW-session fetch if plain fetch produced no image URLs.
+      if (!detailImages.size) {
+        const sessionDetail = await cwGetWithSession(
+          session,
+          url,
+          `${String(session.baseUrl || '').replace(/\/+$/, '')}/dashboard/`
+        );
+        if (sessionDetail?.body && typeof sessionDetail.body === 'object') {
+          extractImageUrls(sessionDetail.body, detailImages);
+        }
+        extractImageUrlsFromText(sessionDetail?.rawText || '', detailImages);
+
+        // Keep the richer content for diagnostics when available.
+        if ((sessionDetail?.rawText || '').length > (detail?.rawText || '').length) {
+          detail = {
+            ok: sessionDetail.ok,
+            status: sessionDetail.status,
+            contentType: sessionDetail.contentType,
+            body: sessionDetail.body,
+            rawText: sessionDetail.rawText,
+          };
+        }
+      }
+
+      const detailMeasurementCandidates = detail.body
+        ? extractMeasurementCandidates(detail.body, '', [])
+        : [];
+
+      const detailEntry = {
+        url,
+        ok: detail.ok,
+        status: detail.status,
+        contentType: detail.contentType,
+        imageCount: detailImages.size,
+        measurementCandidateCount: detailMeasurementCandidates.length,
+        images: Array.from(detailImages),
+        measurementCandidates: detailMeasurementCandidates.slice(0, 40),
+        upstreamBody: detail.body,
+        upstreamSnippet: detail.body ? null : detail.rawText.slice(0, 5000),
+      };
+      detailResults.push(detailEntry);
+      detailEntry.images.forEach(imgUrl => aggregateImages.add(imgUrl));
+    }
+
+    let formMeasurements = null;
+    if (providedFormId) {
+      try {
+        const measurements = await fetchCwMeasurementsTable({
+          formId: providedFormId,
+          override,
+          lang: String(body?.lang || req.query?.lang || 'en').trim() || 'en',
+        });
+        const sourceProducts = Array.isArray(measurements.content?.products_list)
+          ? measurements.content.products_list
+          : Array.isArray(measurements.content?.products)
+            ? measurements.content.products
+            : [];
+
+        const termNorm = normalizeText(searchTerm);
+        const termTokens = tokenize(searchTerm);
+        const rankedFormProducts = sourceProducts
+          .map(product => {
+            const reference = String(product?.reference || '').trim();
+            const label = String(product?.label || product?.name || '').trim();
+            if (productReference) {
+              const exactRef = reference.toLowerCase() === productReference.toLowerCase();
+              const scopedRef = reference
+                .toLowerCase()
+                .startsWith(`${productReference.toLowerCase()}__`);
+              if (!exactRef && !scopedRef) {
+                return null;
+              }
+            }
+            const payloadText = JSON.stringify(product || {});
+            let score = scoreFromHaystack(
+              `${reference} ${label} ${payloadText}`,
+              termNorm,
+              termTokens
+            );
+            if (reference && reference === productReference) score += 200;
+            if (!score) return null;
+            return {
+              score,
+              reference,
+              label,
+              measurementData: product?.measurement_data || null,
+              product,
+            };
+          })
+          .filter(Boolean)
+          .sort((a, b) => b.score - a.score);
+
+        if (rankedFormProducts.length > 0) {
+          formMeasurements = {
+            formId: providedFormId,
+            matchedProduct: rankedFormProducts[0],
+            alternatives: rankedFormProducts.slice(1, 5),
+          };
+        }
+      } catch (error) {
+        formMeasurements = {
+          formId: providedFormId,
+          error: String(error?.message || error),
+        };
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      code: 'CW_PRODUCT_MEASUREMENTS_LOOKUP_OK',
+      mode: 'graphql-product-list',
+      search: searchTerm,
+      product: {
+        id: productId,
+        reference: productReference,
+        status: selectedNode?.status || null,
+        translations: (selectedNode?.translations?.edges || [])
+          .map(edge => edge?.node)
+          .filter(Boolean),
+      },
+      urls: {
+        dashboardEditUrl,
+        productMeasurementsInfoUrl,
+        measurementUrls: fullMeasurementUrls,
+      },
+      summary: {
+        productMatchCount: rankedProducts.length,
+        measurementUrlCount: fullMeasurementUrls.length,
+        discoveredSuffixCount: pathSuffixes.size,
+        discoveredTupleCount: tupleSuffixes.length,
+        tupleSource,
+        attemptPlanMode,
+        fetchedMeasurementDetailCount: detailResults.length,
+        imageCount: aggregateImages.size,
+        referenceCandidateCount: orderedReferenceCandidates.length,
+        scopedReferenceCount: orderedReferenceCandidates.filter(ref => String(ref).includes('__'))
+          .length,
+        qcMeasurementsFound: Boolean(qcMeasurement),
+        formMeasurementsFound: Boolean(formMeasurements?.matchedProduct),
+        renderedHtmlParsed: Boolean(renderedHtmlExtraction),
+      },
+      images: Array.from(aggregateImages),
+      qcMeasurements: qcMeasurement,
+      qcMeasurementsByStyle,
+      styleOptions,
+      referenceCandidates: orderedReferenceCandidates,
+      tupleSource,
+      attemptPlanMode,
+      selectedTuples: tuplePlan,
+      formMeasurements,
+      renderedHtmlExtraction,
+      mtAuth: {
+        usedProvidedToken: Boolean(providedMtAccessToken),
+        tokenFetchOk: Boolean(autoTokenResult?.ok),
+        tokenFetchStatus: autoTokenResult?.status || null,
+        tokenFetchSource: autoTokenResult?.source || null,
+        tokenFetchPayloadKeys: autoTokenResult?.payloadKeys || null,
+        tokenFetchBody: autoTokenResult?.body || null,
+        tokenFetchAttempts: autoTokenResult?.attempts || null,
+        mtUsernameUsed: mtUsername || null,
+      },
+      qcMeasurementAttempts,
+      measurementDetails: detailResults,
+      candidates: rankedProducts.map(item => ({
+        id: item.node?.id || null,
+        reference: item.node?.reference || null,
+        score: item.score,
+      })),
+      upstream: {
+        graphqlStatus: productList.status,
+        graphqlOk: productList.ok,
+        pidInfoStatus: infoResult.status,
+        pidInfoOk: infoResult.ok,
+      },
+      upstreamBody: {
+        graphql: productList.body,
+        pidInfo: infoResult.body,
+      },
+      upstreamSnippet: infoResult.body ? null : infoResult.rawText.slice(0, 5000),
+      durationMs: Date.now() - startedAt,
+    });
+  }
+
+  const session = await createCwSession(override);
+  const baseUrl = String(session.baseUrl || '').replace(/\/+$/, '');
+
+  const directMeasurementUrl =
+    searchTerm.includes('/product-measurements/') || searchTerm.startsWith('http')
+      ? toAbsoluteUrl(baseUrl, searchTerm)
+      : '';
+
+  let selectedUrl = directMeasurementUrl;
+  const candidates = [];
+  const crawl = [];
+
+  if (!selectedUrl) {
+    const searchUrls = collectSearchUrls(baseUrl, searchTerm);
+    for (const url of searchUrls) {
+      const page = await cwGetWithSession(session, url);
+      crawl.push({ url, status: page.status, ok: page.ok });
+      if (!page.rawText) continue;
+
+      const links = extractProductMeasurementLinks(page.rawText, baseUrl);
+      links.forEach(link => {
+        const score = scoreCandidate(link, searchTerm);
+        candidates.push({ url: link, score, sourceUrl: url });
+      });
+    }
+
+    const unique = new Map();
+    candidates.forEach(item => {
+      const prev = unique.get(item.url);
+      if (!prev || item.score > prev.score) {
+        unique.set(item.url, item);
+      }
+    });
+
+    const ranked = Array.from(unique.values()).sort((a, b) => b.score - a.score);
+    if (ranked.length > 0) {
+      selectedUrl = ranked[0].url;
+    }
+
+    candidates.length = 0;
+    ranked.forEach(item => candidates.push(item));
+  }
+
+  if (!selectedUrl && providedFormId) {
+    const measurements = await fetchCwMeasurementsTable({ formId: providedFormId, override });
+    const orderImages = await fetchOrderImagesByFormId({ formId: providedFormId, override });
+    const mapped = mapOrderImagesToMeasurementItems(measurements.content, orderImages.lines);
+
+    const sourceProducts = Array.isArray(measurements.content?.products_list)
+      ? measurements.content.products_list
+      : Array.isArray(measurements.content?.products)
+        ? measurements.content.products
+        : [];
+
+    const termNorm = normalizeText(searchTerm);
+    const termTokens = tokenize(searchTerm);
+    const lineById = new Map(
+      (Array.isArray(orderImages.lines) ? orderImages.lines : []).map(line => [
+        String(line.lineId),
+        line,
+      ])
+    );
+    const lineIdToReference = new Map(
+      Object.entries(mapped.lineMappingByItemCode || {})
+        .filter(([, value]) => value && value.lineId)
+        .map(([reference, value]) => [String(value.lineId), reference])
+    );
+
+    const productMatches = sourceProducts
+      .map(product => {
+        const reference = String(product?.reference || '').trim();
+        const label = String(product?.label || product?.name || '').trim();
+        const payloadText = JSON.stringify(product || {});
+        const score = scoreFromHaystack(
+          `${reference} ${label} ${payloadText}`,
+          termNorm,
+          termTokens
+        );
+        if (!score) return null;
+        const mappedLine = mapped.lineMappingByItemCode?.[reference] || null;
+        const line = mappedLine?.lineId ? lineById.get(String(mappedLine.lineId)) : null;
+        return {
+          source: 'product',
+          score,
+          reference,
+          label,
+          measurementData: product?.measurement_data || null,
+          images: mapped.byItemCode?.[reference] || [],
+          lineMapping: mappedLine,
+          lineProductName: line?.productName || null,
+        };
+      })
+      .filter(Boolean);
+
+    const lineMatches = (Array.isArray(orderImages.lines) ? orderImages.lines : [])
+      .map(line => {
+        const lineId = String(line?.lineId || '').trim();
+        const lineName = String(line?.productName || '').trim();
+        const score = scoreFromHaystack(`${lineName} ${lineId}`, termNorm, termTokens);
+        if (!score) return null;
+        const reference = lineIdToReference.get(lineId) || '';
+        const fallbackProduct =
+          !reference && sourceProducts.length === 1
+            ? sourceProducts[0]
+            : sourceProducts.find(product => String(product?.reference || '').trim() === reference);
+        return {
+          source: 'order-line',
+          score,
+          reference: reference || String(fallbackProduct?.reference || '').trim(),
+          label: String(fallbackProduct?.label || fallbackProduct?.name || lineName || '').trim(),
+          measurementData: fallbackProduct?.measurement_data || null,
+          images: reference ? mapped.byItemCode?.[reference] || [] : line?.images || [],
+          lineMapping: { lineId, productName: lineName },
+          lineProductName: lineName || null,
+        };
+      })
+      .filter(Boolean);
+
+    const uniqueByKey = new Map();
+    [...productMatches, ...lineMatches].forEach(item => {
+      const key = `${item.reference || ''}|${item.lineMapping?.lineId || ''}|${item.source}`;
+      const previous = uniqueByKey.get(key);
+      if (!previous || item.score > previous.score) {
+        uniqueByKey.set(key, item);
+      }
+    });
+
+    const matches = Array.from(uniqueByKey.values()).sort((a, b) => b.score - a.score);
+
+    if (matches.length > 0) {
+      return res.status(200).json({
+        success: true,
+        code: 'CW_PRODUCT_MEASUREMENTS_LOOKUP_OK',
+        mode: 'form-measurements-fallback',
+        search: searchTerm,
+        formId: providedFormId,
+        summary: {
+          matchCount: matches.length,
+          topReference: matches[0]?.reference || null,
+          topLabel: matches[0]?.label || null,
+          topSource: matches[0]?.source || null,
+        },
+        matches,
+        candidates,
+        crawl,
+        durationMs: Date.now() - startedAt,
+      });
+    }
+
+    return res.status(404).json({
+      success: false,
+      code: 'CW_PRODUCT_MEASUREMENT_NOT_FOUND',
+      message: 'No product measurement URL matched the provided search term',
+      search: searchTerm,
+      formId: providedFormId || null,
+      crawl,
+      candidates,
+      fallbackSummary: {
+        productsCount: sourceProducts.length,
+        orderLinesCount: Array.isArray(orderImages.lines) ? orderImages.lines.length : 0,
+        productReferences: sourceProducts
+          .map(product => String(product?.reference || '').trim())
+          .filter(Boolean),
+        productLabels: sourceProducts
+          .map(product => String(product?.label || product?.name || '').trim())
+          .filter(Boolean),
+        orderLineNames: (Array.isArray(orderImages.lines) ? orderImages.lines : [])
+          .map(line => String(line?.productName || '').trim())
+          .filter(Boolean),
+      },
+      durationMs: Date.now() - startedAt,
+    });
+  }
+
+  if (!selectedUrl) {
+    return res.status(404).json({
+      success: false,
+      code: 'CW_PRODUCT_MEASUREMENT_NOT_FOUND',
+      message: 'No product measurement URL matched the provided search term',
+      search: searchTerm,
+      formId: providedFormId || null,
+      crawl,
+      candidates,
+      durationMs: Date.now() - startedAt,
+    });
+  }
+
+  const detail = await cwGetWithSession(session, selectedUrl, `${baseUrl}/dashboard/products/`);
+  const imageUrls = new Set();
+  const htmlImageMatches =
+    detail.rawText.match(
+      /https?:\/\/[^"'\s>]+\.(?:png|jpe?g|webp|gif|bmp|svg)(?:\?[^"'\s>]*)?/gi
+    ) || [];
+  htmlImageMatches.forEach(url => imageUrls.add(url));
+  if (detail.body && typeof detail.body === 'object') {
+    extractImageUrls(detail.body, imageUrls);
+  }
+
+  const measurementCandidates = detail.body
+    ? extractMeasurementCandidates(detail.body, '', [])
+    : [];
+
+  return res.status(detail.ok ? 200 : 502).json({
+    success: detail.ok,
+    code: detail.ok ? 'CW_PRODUCT_MEASUREMENTS_LOOKUP_OK' : 'CW_PRODUCT_MEASUREMENTS_LOOKUP_FAILED',
+    search: searchTerm,
+    selectedUrl,
+    candidates,
+    crawl,
+    upstreamStatus: detail.status,
+    contentType: detail.contentType,
+    session: {
+      loginStatus: session.loginStatus,
+      loginLocation: session.loginLocation,
+      hasSessionId: Boolean(session.cookieJar?.sessionid),
+    },
+    summary: {
+      imageCount: imageUrls.size,
+      measurementCandidateCount: measurementCandidates.length,
+    },
+    images: Array.from(imageUrls),
+    measurementCandidates: measurementCandidates.slice(0, 60),
+    upstreamBody: detail.body,
+    upstreamSnippet: detail.body ? null : detail.rawText.slice(0, 5000),
+    durationMs: Date.now() - startedAt,
+  });
+}
 
 export default async function handler(req, res) {
   const startedAt = Date.now();
@@ -23,6 +2068,72 @@ export default async function handler(req, res) {
 
   try {
     const body = req.method === 'POST' ? await readJsonBody(req) : {};
+
+    if (formId === 'image-proxy') {
+      if (req.method !== 'POST') {
+        return res.status(405).json({ success: false, message: 'Method not allowed' });
+      }
+
+      const candidates = Array.isArray(body?.candidates)
+        ? body.candidates.map(value => String(value || '').trim()).filter(Boolean)
+        : [];
+      if (!candidates.length) {
+        return res.status(400).json({ success: false, message: 'candidates are required' });
+      }
+
+      const override = {
+        baseUrl: req.query?.baseUrl || body?.baseUrl,
+        username: req.query?.username || body?.username || body?.email,
+        password: req.query?.password || body?.password,
+      };
+
+      const session = await createCwSession(override);
+      const attempts = [];
+      const uniqueCandidates = rankImageCandidates(expandImageCandidateVariants(candidates)).slice(
+        0,
+        60
+      );
+      for (const candidate of uniqueCandidates) {
+        const attempt = await cwGetImageWithSession(
+          session,
+          candidate,
+          `${String(session.baseUrl || '').replace(/\/+$/, '')}/dashboard/`
+        );
+        attempts.push({
+          url: candidate,
+          status: attempt.status,
+          ok: attempt.ok,
+          contentType: attempt.contentType,
+          byteLength: attempt.byteLength,
+        });
+
+        if (attempt.ok) {
+          const buffer = Buffer.from(attempt.bytes);
+          const mime = attempt.contentType || 'image/png';
+          const dataUrl = `data:${mime};base64,${buffer.toString('base64')}`;
+          return res.status(200).json({
+            success: true,
+            url: dataUrl,
+            sourceUrl: candidate,
+            contentType: mime,
+            byteLength: buffer.byteLength,
+            attempts,
+          });
+        }
+      }
+
+      return res.status(404).json({
+        success: false,
+        code: 'CW_IMAGE_PROXY_NOT_FOUND',
+        message: 'No candidate image URL could be fetched',
+        attempts,
+      });
+    }
+
+    if (formId === 'search') {
+      return await handleProductSearch({ req, res, body, startedAt });
+    }
+
     const lang = String(req.query?.lang || body?.lang || 'en').trim() || 'en';
     const override = {
       baseUrl: req.query?.baseUrl || body?.baseUrl,
@@ -61,10 +2172,17 @@ export default async function handler(req, res) {
       upstreamBody: result.body,
     });
   } catch (error) {
+    const isProductSearch = formId === 'search';
     return res.status(500).json({
       success: false,
-      code: error?.code || 'CW_MEASUREMENTS_FETCH_ERROR',
-      message: error?.message || 'Failed to fetch CW measurements',
+      code:
+        error?.code ||
+        (isProductSearch ? 'CW_PRODUCT_SEARCH_ERROR' : 'CW_MEASUREMENTS_FETCH_ERROR'),
+      message:
+        error?.message ||
+        (isProductSearch
+          ? 'Failed to search CW product measurements'
+          : 'Failed to fetch CW measurements'),
       details: error?.details || null,
       formId,
       durationMs: Date.now() - startedAt,

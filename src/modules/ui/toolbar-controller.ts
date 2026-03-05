@@ -2548,15 +2548,41 @@ export function initToolbarController() {
       };
 
       selectAllStrokesBtn.addEventListener('click', () => {
-        const checkboxes = getStrokeVisibilityCheckboxes();
-        const allSelected = checkboxes.length > 0 && checkboxes.every(checkbox => checkbox.checked);
-        const nextState = !allSelected;
+        const metadataManager = window.app?.metadataManager;
+        const currentViewId = window.app?.projectManager?.currentViewId || 'front';
+        const scopedLabel = metadataManager?.normalizeImageLabel
+          ? metadataManager.normalizeImageLabel(currentViewId)
+          : currentViewId;
+        const strokes = metadataManager?.vectorStrokesByImage?.[scopedLabel] || {};
+        const strokeLabels = Object.keys(strokes || {});
 
-        checkboxes.forEach(checkbox => {
-          if (checkbox.checked !== nextState) {
-            checkbox.click(); // Use click to trigger the existing event handlers
-          }
-        });
+        if (metadataManager && strokeLabels.length > 0) {
+          const allSelected = strokeLabels.every(
+            strokeLabel =>
+              metadataManager.strokeVisibilityByImage?.[scopedLabel]?.[strokeLabel] !== false
+          );
+          const nextState = !allSelected;
+
+          strokeLabels.forEach(strokeLabel => {
+            metadataManager.setStrokeVisibility(scopedLabel, strokeLabel, nextState);
+            if (window.app?.tagManager?.updateTagVisibility) {
+              window.app.tagManager.updateTagVisibility(strokeLabel, scopedLabel, nextState);
+            }
+          });
+
+          metadataManager.updateStrokeVisibilityControls?.();
+          window.app?.canvasManager?.fabricCanvas?.requestRenderAll?.();
+        } else {
+          const checkboxes = getStrokeVisibilityCheckboxes();
+          const allSelected =
+            checkboxes.length > 0 && checkboxes.every(checkbox => checkbox.checked);
+          const nextState = !allSelected;
+          checkboxes.forEach(checkbox => {
+            if (checkbox.checked !== nextState) {
+              checkbox.click();
+            }
+          });
+        }
 
         refreshSelectAllButtonState();
       });

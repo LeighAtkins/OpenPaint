@@ -248,6 +248,36 @@
         display: block;
       }
 
+      .img-debug {
+        margin-top: 12px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: #0a1124;
+        padding: 10px;
+      }
+
+      .img-debug h3 {
+        margin: 0 0 8px;
+        font-size: 13px;
+        color: #c9d8f4;
+      }
+
+      .img-preview {
+        margin-top: 8px;
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .img-preview img {
+        width: 100%;
+        height: 120px;
+        object-fit: cover;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: #091022;
+      }
+
       @media (max-width: 900px) {
         .grid {
           grid-template-columns: 1fr;
@@ -271,6 +301,13 @@
               <label for="formId">Form ID</label>
               <input id="formId" value="322906" />
             </div>
+            <div class="full">
+              <label for="productSearchTerm">Product Search (name or code)</label>
+              <input
+                id="productSearchTerm"
+                placeholder="PB Comfort Roll Arm Sofa Slipcover or PB-CRA-83__BE"
+              />
+            </div>
             <div>
               <label for="username">CW Username</label>
               <input
@@ -282,6 +319,47 @@
             <div>
               <label for="password">CW Password</label>
               <input id="password" type="password" autocomplete="off" placeholder="Password" />
+            </div>
+            <div class="full" style="display: flex; justify-content: flex-end">
+              <button id="toggleAdvancedBtn" class="ghost" type="button">Show Advanced</button>
+            </div>
+            <div id="advancedFields" class="full" style="display: none">
+              <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 14px">
+                <div>
+                  <label for="mtUsername">PID Username (optional)</label>
+                  <input
+                    id="mtUsername"
+                    autocomplete="off"
+                    placeholder="If different from CW username"
+                  />
+                </div>
+                <div>
+                  <label for="mtPassword">PID Password (optional)</label>
+                  <input
+                    id="mtPassword"
+                    type="password"
+                    autocomplete="off"
+                    placeholder="If different from CW password"
+                  />
+                </div>
+                <div style="grid-column: 1 / -1">
+                  <label for="mtAccessToken">PID Access Token (optional)</label>
+                  <input
+                    id="mtAccessToken"
+                    autocomplete="off"
+                    placeholder="Paste mtAccessToken here to skip PID token login"
+                  />
+                </div>
+                <div style="grid-column: 1 / -1">
+                  <label for="renderedHtml"
+                    >Optional rendered PID HTML snippet (fallback extraction)</label
+                  >
+                  <textarea
+                    id="renderedHtml"
+                    placeholder="Paste expanded measurement panel HTML only if automatic retrieval fails"
+                  ></textarea>
+                </div>
+              </div>
             </div>
             <div class="full" style="display: flex; align-items: center; gap: 8px">
               <input id="autoConfirm" type="checkbox" checked style="width: auto" />
@@ -311,6 +389,9 @@
             <button id="btnHealth" class="ghost" type="button">Check Relay Health</button>
             <button id="btnFetchExisting" class="ghost" type="button">Fetch Existing</button>
             <button id="btnFetchImages" class="ghost" type="button">Fetch Images</button>
+            <button id="btnProductSearch" class="ghost" type="button">
+              Search Product Measurements
+            </button>
             <button id="btnLoadTemplate" class="ghost" type="button">
               Load Form Save Template
             </button>
@@ -328,6 +409,17 @@
             </ul>
           </div>
           <pre id="imagesResult">No fetched images yet.</pre>
+          <pre id="productSearchResult">No product search run yet.</pre>
+          <div id="imageDebug" class="img-debug">
+            <h3>Image URL Debug</h3>
+            <div class="row">
+              <button id="btnResolveImageViaProxy" class="ghost" type="button">
+                Resolve Working Image URL via Proxy
+              </button>
+            </div>
+            <pre id="imageProbeResult">No image debug yet.</pre>
+            <div class="img-preview" id="imagePreviewGrid"></div>
+          </div>
           <div id="imageGallery" class="gallery">
             <h3>Image Slots (select slot to replace)</h3>
             <div class="gallery-grid" id="imageGalleryGrid"></div>
@@ -371,6 +463,7 @@
       const btnFetchImages = document.getElementById('btnFetchImages');
       const btnLoadTemplate = document.getElementById('btnLoadTemplate');
       const btnLoadMeasureTemplate = document.getElementById('btnLoadMeasureTemplate');
+      const btnProductSearch = document.getElementById('btnProductSearch');
       const btnSubmit = document.getElementById('btnSubmit');
       const btnUploadImage = document.getElementById('btnUploadImage');
       const btnDeleteImage = document.getElementById('btnDeleteImage');
@@ -384,6 +477,13 @@
       const uploadOrderlineIdEl = document.getElementById('uploadOrderlineId');
       const uploadFileEl = document.getElementById('uploadFile');
       const imageGalleryGridEl = document.getElementById('imageGalleryGrid');
+      const productSearchResultEl = document.getElementById('productSearchResult');
+      const productSearchTermEl = document.getElementById('productSearchTerm');
+      const toggleAdvancedBtn = document.getElementById('toggleAdvancedBtn');
+      const advancedFieldsEl = document.getElementById('advancedFields');
+      const btnResolveImageViaProxy = document.getElementById('btnResolveImageViaProxy');
+      const imageProbeResultEl = document.getElementById('imageProbeResult');
+      const imagePreviewGridEl = document.getElementById('imagePreviewGrid');
 
       const formSaveTemplate = {
         form_data: {
@@ -427,6 +527,215 @@
       };
       let lastFetchedTemplate = null;
       let lastImageFetchData = null;
+      let lastProductSearchData = null;
+
+      function isImagePathLike(value) {
+        const text = String(value || '').trim();
+        if (!text) return false;
+        return /\.(png|jpe?g|webp|gif|bmp|svg)(\?|$)/i.test(text);
+      }
+
+      function normalizeImagePath(path) {
+        const raw = String(path || '').trim();
+        if (!raw) return '';
+        return raw.replace(/^\/+/, '').replace(/\)\)_/g, ')_').replace(/\s+/g, '');
+      }
+
+      function encodePathPreservingSlashes(path) {
+        return String(path || '')
+          .split('/')
+          .map(part => encodeURIComponent(part))
+          .join('/');
+      }
+
+      function extractAbsoluteImageUrlsFromString(value) {
+        const text = String(value || '')
+          .replace(/&amp;/g, '&')
+          .replace(/&quot;/g, '"')
+          .replace(/&#39;/g, "'")
+          .replace(/\\\//g, '/')
+          .replace(/\u002F/gi, '/')
+          .replace(/\u003A/gi, ':')
+          .replace(/\u0026/gi, '&');
+
+        const direct =
+          text.match(/https?:\/\/[^"'\s)]+\.(?:png|jpe?g|webp|gif|bmp|svg)(?:\?[^"'\s)]*)?/gi) ||
+          [];
+        const encoded =
+          text.match(/https%3A%2F%2F[^"'\s)]+(?:png|jpe?g|webp|gif|bmp|svg)(?:%3F[^"'\s)]*)?/gi) ||
+          [];
+        const decoded = encoded
+          .map(item => {
+            try {
+              return decodeURIComponent(item);
+            } catch {
+              return '';
+            }
+          })
+          .filter(Boolean);
+        const cssWrapped =
+          text.match(/url\(([^)]+\.(?:png|jpe?g|webp|gif|bmp|svg)(?:\?[^)]*)?)\)/gi) || [];
+        const cssUrls = cssWrapped.map(chunk =>
+          String(chunk)
+            .replace(/^url\(/i, '')
+            .replace(/\)$/i, '')
+            .replace(/^['"]|['"]$/g, '')
+        );
+
+        return Array.from(
+          new Set([...direct, ...decoded, ...cssUrls].map(item => item.trim()).filter(Boolean))
+        );
+      }
+
+      function buildPathCandidates(pathOrUrl, baseUrl) {
+        const input = String(pathOrUrl || '').trim();
+        if (!input) return [];
+        if (/^https?:\/\//i.test(input)) return [input];
+        const normalized = normalizeImagePath(input);
+        if (!normalized.includes('/')) return [];
+        const encoded = encodePathPreservingSlashes(normalized);
+        const base = String(baseUrl || '').replace(/\/+$/, '');
+        const variants = [normalized, encoded];
+        const out = new Set();
+        variants.forEach(v => {
+          out.add(`${base}/${v}`);
+          out.add(`${base}/media/${v}`);
+          out.add(`${base}/uploads/${v}`);
+          out.add(`https://storage.googleapis.com/pid-storage/${v}`);
+          out.add(`https://storage.cloud.google.com/pid-storage/${v}`);
+          out.add(`https://cw-pid-qylyewlgca-uc.a.run.app/${v}`);
+        });
+        return Array.from(out);
+      }
+
+      function isSignedImageUrl(url) {
+        const value = String(url || '');
+        return (
+          /[?&]Signature=/i.test(value) &&
+          (/[?&]GoogleAccessId=/i.test(value) || /[?&]X-Goog-Algorithm=/i.test(value))
+        );
+      }
+
+      function isKnownBadCandidate(url) {
+        const value = String(url || '');
+        if (/storage\.cloud\.google\.com/i.test(value)) return true;
+        if (/cw-pid-qylyewlgca-uc\.a\.run\.app\/slipcover_details_images/i.test(value)) return true;
+        return false;
+      }
+
+      function preferWorkingCandidates(candidates) {
+        const unique = Array.from(new Set((candidates || []).filter(Boolean)));
+        const signed = unique.filter(isSignedImageUrl);
+        const pool = signed.length ? signed : unique.filter(url => !isKnownBadCandidate(url));
+
+        const grouped = new Map();
+        pool.forEach(url => {
+          const clean = String(url).split('?')[0];
+          const parts = clean.split('/').filter(Boolean);
+          const key = parts.slice(-2).join('/') || clean;
+          if (!grouped.has(key)) grouped.set(key, []);
+          grouped.get(key).push(url);
+        });
+
+        const selected = [];
+        grouped.forEach(list => {
+          const best =
+            list.find(isSignedImageUrl) ||
+            list.find(url => /storage\.googleapis\.com\/pid-storage/i.test(url)) ||
+            list[0];
+          if (best) selected.push(best);
+        });
+        return selected;
+      }
+
+      function collectImageCandidatesFromObject(node, baseUrl, out = new Set()) {
+        if (!node) return out;
+        if (typeof node === 'string') {
+          extractAbsoluteImageUrlsFromString(node).forEach(url => out.add(url));
+          if (isImagePathLike(node)) {
+            buildPathCandidates(node, baseUrl).forEach(url => out.add(url));
+          }
+          return out;
+        }
+        if (Array.isArray(node)) {
+          node.forEach(item => collectImageCandidatesFromObject(item, baseUrl, out));
+          return out;
+        }
+        if (typeof node !== 'object') return out;
+
+        Object.entries(node).forEach(([key, value]) => {
+          const keyNorm = String(key || '').toLowerCase();
+          if (typeof value === 'string') {
+            extractAbsoluteImageUrlsFromString(value).forEach(url => out.add(url));
+            if (
+              isImagePathLike(value) &&
+              (keyNorm.includes('image') || keyNorm.includes('file_path'))
+            ) {
+              buildPathCandidates(value, baseUrl).forEach(url => out.add(url));
+            }
+          }
+          collectImageCandidatesFromObject(value, baseUrl, out);
+        });
+        return out;
+      }
+
+      function renderImagePreview(urls) {
+        imagePreviewGridEl.innerHTML = (urls || [])
+          .slice(0, 8)
+          .map(url => `<img src="${url}" alt="debug-image" />`)
+          .join('');
+      }
+
+      async function resolveImageViaProxy() {
+        if (!lastProductSearchData) {
+          setStatus('Run product search first.', false);
+          return;
+        }
+        const baseUrl = document.getElementById('baseUrl').value.trim();
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value;
+        const candidates = preferWorkingCandidates(
+          Array.from(collectImageCandidatesFromObject(lastProductSearchData, baseUrl, new Set()))
+        );
+        if (!candidates.length) {
+          imageProbeResultEl.textContent = pretty({
+            message: 'No image candidates found in response.',
+          });
+          return;
+        }
+
+        btnResolveImageViaProxy.disabled = true;
+        imageProbeResultEl.textContent = 'Resolving image via proxy...';
+        try {
+          const res = await fetch('/api/integrations/cw/measurements/image-proxy', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              baseUrl,
+              username,
+              password,
+              candidates: candidates.slice(0, 50),
+            }),
+          });
+          const data = await res.json();
+          const previewUrls = [];
+          if (data && data.url) previewUrls.push(data.url);
+          previewUrls.push(...candidates.slice(0, 3));
+          renderImagePreview(previewUrls);
+          imageProbeResultEl.textContent = pretty({
+            status: res.status,
+            candidateCount: candidates.length,
+            bestSourceUrl: data?.sourceUrl || null,
+            success: Boolean(data?.success),
+            attempts: data?.attempts || [],
+            topCandidates: candidates.slice(0, 20),
+          });
+        } catch (error) {
+          imageProbeResultEl.textContent = pretty({ error: error.message });
+        } finally {
+          btnResolveImageViaProxy.disabled = false;
+        }
+      }
 
       function renderImageGallery() {
         if (!lastImageFetchData || !lastImageFetchData.imagesByItemCode) {
@@ -470,6 +779,12 @@
         statusEl.classList.remove('ok', 'bad');
         if (ok === true) statusEl.classList.add('ok');
         if (ok === false) statusEl.classList.add('bad');
+      }
+
+      function toggleAdvancedFields() {
+        const isHidden = advancedFieldsEl.style.display === 'none';
+        advancedFieldsEl.style.display = isHidden ? 'block' : 'none';
+        toggleAdvancedBtn.textContent = isHidden ? 'Hide Advanced' : 'Show Advanced';
       }
 
       function pretty(value) {
@@ -660,6 +975,67 @@
           setStatus('Fetch images request failed.', false);
           imagesResultEl.textContent = pretty({ error: error.message });
           renderImageGallery();
+        }
+      }
+
+      async function searchProductMeasurements() {
+        const baseUrl = document.getElementById('baseUrl').value.trim();
+        const formId = document.getElementById('formId').value.trim();
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value;
+        const mtUsername = document.getElementById('mtUsername').value.trim();
+        const mtPassword = document.getElementById('mtPassword').value;
+        const mtAccessToken = document.getElementById('mtAccessToken').value.trim();
+        const renderedHtml = document.getElementById('renderedHtml').value;
+        const search = document.getElementById('productSearchTerm').value.trim();
+
+        if (!search) {
+          setStatus('Enter a product search term.', false);
+          return;
+        }
+
+        btnProductSearch.disabled = true;
+        setStatus('Searching CW product measurements...', null);
+        productSearchResultEl.textContent = 'Loading...';
+
+        try {
+          const res = await fetch('/api/integrations/cw/measurements/search', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              baseUrl,
+              formId,
+              username,
+              password,
+              mtUsername,
+              mtPassword,
+              mtAccessToken,
+              renderedHtml,
+              search,
+            }),
+          });
+          const data = await res.json();
+          lastProductSearchData = data;
+          setStatus(
+            res.ok
+              ? 'Product measurements search completed.'
+              : 'Product measurements search failed.',
+            res.ok
+          );
+          productSearchResultEl.textContent = pretty({ status: res.status, data });
+          const quickCandidates = preferWorkingCandidates(
+            Array.from(collectImageCandidatesFromObject(data, baseUrl, new Set()))
+          );
+          imageProbeResultEl.textContent = pretty({
+            quickCandidateCount: quickCandidates.length,
+            topCandidates: quickCandidates.slice(0, 20),
+          });
+          renderImagePreview(quickCandidates.slice(0, 8));
+        } catch (error) {
+          setStatus('Product search request failed.', false);
+          productSearchResultEl.textContent = pretty({ error: error.message });
+        } finally {
+          btnProductSearch.disabled = false;
         }
       }
 
@@ -916,6 +1292,15 @@
       btnHealth.addEventListener('click', checkHealth);
       btnFetchExisting.addEventListener('click', fetchExistingMeasurements);
       btnFetchImages.addEventListener('click', fetchImages);
+      btnProductSearch.addEventListener('click', searchProductMeasurements);
+      btnResolveImageViaProxy.addEventListener('click', resolveImageViaProxy);
+      toggleAdvancedBtn.addEventListener('click', toggleAdvancedFields);
+      productSearchTermEl.addEventListener('keydown', event => {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          searchProductMeasurements();
+        }
+      });
       btnUploadImage.addEventListener('click', uploadImage);
       btnDeleteImage.addEventListener('click', deleteImage);
       uploadItemCodeEl.addEventListener('input', renderImageGallery);
