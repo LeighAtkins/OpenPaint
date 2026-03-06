@@ -44,6 +44,106 @@ function parseStyleKey(styleKey: string): {
 
 const MODAL_ID = 'cwImportModalOverlay';
 const STYLE_ID = 'cwImportStyles';
+const CW_UI_STATE_KEY = 'openpaint:cw-import-ui:v1';
+const STAGED_PROBE_BATCH_SIZES = [50, 250] as const;
+const STAGED_PROBE_NON_JSON_STOP_COUNT = 10;
+const STAGED_PROBE_FAILURE_RATE_STOP = 0.8;
+const PROBE_REQUEST_DELAY_MS = 120;
+const PROBE_DEFAULT_CONCURRENCY = 6;
+const PROBE_MIN_CONCURRENCY = 2;
+const PROBE_MAX_CONCURRENCY = 8;
+const PROBE_TURBO_DEFAULT_CONCURRENCY = 10;
+const PROBE_TURBO_MIN_CONCURRENCY = 4;
+const PROBE_TURBO_MAX_CONCURRENCY = 12;
+
+type CwUiPersistedState = {
+  baseUrl?: string;
+  formId?: string;
+  username?: string;
+  password?: string;
+  searchTerm?: string;
+  probeTerms?: string;
+  probeTermsPath?: string;
+  probeEnabled?: boolean;
+  lastProbeReport?: Record<string, unknown> | null;
+};
+
+function readPersistedCwUiState(): CwUiPersistedState {
+  try {
+    const raw = window.localStorage.getItem(CW_UI_STATE_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object') return {};
+    return parsed;
+  } catch {
+    return {};
+  }
+}
+
+function writePersistedCwUiState(state: CwUiPersistedState): void {
+  try {
+    window.localStorage.setItem(CW_UI_STATE_KEY, JSON.stringify(state));
+  } catch {
+    // Ignore persistence failures (private mode/quota/storage disabled).
+  }
+}
+
+function isCwProbePreviewEnabled(): boolean {
+  if (typeof window === 'undefined') return false;
+  const host = String(window.location.hostname || '').toLowerCase();
+  const params = new URLSearchParams(window.location.search || '');
+  if (params.get('cwProbe') === '1') return true;
+  if (host === 'localhost' || host === '127.0.0.1') return true;
+  if (host === 'sofapaint.vercel.app') return false;
+  if (host.endsWith('.vercel.app')) return true;
+  return false;
+}
+
+function parseProbeTermsFromExportHtml(html: string): {
+  terms: string[];
+  totalRows: number;
+  referenceColumnIndex: number;
+} {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(String(html || ''), 'text/html');
+  const table = doc.querySelector('table.waffle') || doc.querySelector('table');
+  if (!table) {
+    return { terms: [], totalRows: 0, referenceColumnIndex: -1 };
+  }
+
+  const rows = Array.from(table.querySelectorAll('tr'));
+  if (rows.length < 2) {
+    return { terms: [], totalRows: 0, referenceColumnIndex: -1 };
+  }
+
+  const rowCells = rows.map(row =>
+    Array.from(row.querySelectorAll('th,td')).map(cell =>
+      String(cell.textContent || '')
+        .replace(/\s+/g, ' ')
+        .trim()
+    )
+  );
+
+  const header = rowCells[1] || [];
+  const referenceColumnIndex = header.findIndex(col => col.toUpperCase() === 'REFERENCE');
+  const dataRows = rowCells.slice(2);
+  const terms: string[] = [];
+  const seen = new Set<string>();
+
+  dataRows.forEach(row => {
+    if (referenceColumnIndex < 0) return;
+    const value = String(row[referenceColumnIndex] || '').trim();
+    if (!value || seen.has(value)) return;
+    seen.add(value);
+    terms.push(value);
+  });
+
+  return {
+    terms,
+    totalRows: dataRows.length,
+    referenceColumnIndex,
+  };
+}
 
 function ensureStyles(): void {
   if (document.getElementById(STYLE_ID)) return;
@@ -65,6 +165,9 @@ function ensureStyles(): void {
     .cw-btn-primary { border-color: #0f172a; background: #0f172a; color: #fff; }
     .cw-note { margin-top: 8px; font-size: 12px; color: #64748b; }
     .cw-result-meta { margin-top: 12px; font-size: 12px; color: #334155; }
+    .cw-probe-panel { margin-top: 12px; border: 1px solid #cbd5e1; border-radius: 10px; padding: 10px; background: #f8fafc; }
+    .cw-probe-summary { margin: 6px 0 0; font-size: 12px; color: #334155; }
+    .cw-probe-pre { margin-top: 8px; border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px; background: #fff; max-height: 220px; overflow: auto; font-size: 11px; line-height: 1.35; white-space: pre-wrap; word-break: break-word; }
     .cw-images { margin-top: 10px; display: grid; gap: 8px; grid-template-columns: repeat(8, minmax(0, 1fr)); }
     .cw-images img { width: 100%; height: 64px; object-fit: cover; border-radius: 8px; border: 1px solid #e2e8f0; }
     .cw-measure-wrap { margin-top: 12px; border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; }
@@ -212,6 +315,9 @@ function isKnownBadImageCandidate(url: string): boolean {
   const value = String(url || '');
   if (/storage\.cloud\.google\.com/i.test(value)) return true;
   if (/cw-pid-qylyewlgca-uc\.a\.run\.app\/slipcover_details_images/i.test(value)) return true;
+  if (/cw-pid-qylyewlgca-uc\.a\.run\.app\/media\/slipcover_details_images/i.test(value))
+    return true;
+  if (/cw40\.comfort-works\.com\/slipcover_details_images/i.test(value)) return true;
   return false;
 }
 
@@ -221,7 +327,10 @@ function filterPreferredImageCandidates(urls: string[]): string[] {
   if (signed.length) {
     return signed;
   }
-  return unique.filter(url => !isKnownBadImageCandidate(url));
+  const preferred = unique.filter(url => !isKnownBadImageCandidate(url));
+  if (preferred.length) return preferred;
+  // Keep known-bad candidates as last-resort fallbacks so image-proxy can still try.
+  return unique;
 }
 
 function isLikelyImagePath(value: string): boolean {
@@ -482,8 +591,18 @@ function imageKeyFromUrl(url: string): string {
   const clean = String(url || '')
     .split('?')[0]
     .split('#')[0];
-  const parts = clean.split('/').filter(Boolean);
-  return parts.slice(-2).join('/') || clean;
+  const parts = clean
+    .split('/')
+    .filter(Boolean)
+    .map(part => {
+      try {
+        return decodeURIComponent(part);
+      } catch {
+        return part;
+      }
+    })
+    .map(part => part.replace(/\)\)_/g, ')_'));
+  return (parts.slice(-2).join('/') || clean).toLowerCase();
 }
 
 function probeImage(url: string, timeoutMs = 4500): Promise<boolean> {
@@ -602,6 +721,25 @@ function extractRowsFromQcNode(node: any, contextSectionName: string, out: Impor
     });
   }
 
+  const dimensionFieldMap: Array<{ key: string; label: string }> = [
+    { key: 'width', label: 'Width' },
+    { key: 'depth', label: 'Depth' },
+    { key: 'height', label: 'Height' },
+    { key: 'toWidth', label: 'To Width' },
+    { key: 'toDepth', label: 'To Depth' },
+    { key: 'toHeight', label: 'To Height' },
+  ];
+  dimensionFieldMap.forEach(({ key, label }) => {
+    const normalizedValue = toPrimitiveMeasurementValue(node?.[key]);
+    if (!normalizedValue) return;
+    out.push({
+      id: `qc-dim-${key}-${out.length + 1}`,
+      sourceLabel: label,
+      value: normalizedValue,
+      sectionName: sectionFromNode || 'Frame Cover',
+    });
+  });
+
   const sourceLabel = normalizeValueText(node?.label || node?.name || node?.code);
   const value = toPrimitiveMeasurementValue(
     node?.value || node?.measurement || node?.actual || node?.result
@@ -645,6 +783,24 @@ function nextUniqueViewId(baseId: string): string {
 
 function extractRows(payload: any): ImportedRow[] {
   const rows: ImportedRow[] = [];
+  const pushMeasurementEntry = (
+    sourceLabelRaw: unknown,
+    valueRaw: unknown,
+    sectionNameRaw: unknown,
+    idPrefix: string
+  ) => {
+    const sourceLabel = normalizeValueText(sourceLabelRaw);
+    const value = toPrimitiveMeasurementValue(valueRaw);
+    const sectionName = normalizeSectionName(normalizeValueText(sectionNameRaw));
+    if (!isLikelyMeasurementLabel(sourceLabel) || !value) return;
+    rows.push({
+      id: `${idPrefix}-${rows.length + 1}`,
+      sourceLabel,
+      value,
+      sectionName: sectionName || 'Frame Cover',
+    });
+  };
+
   const fromHtml = payload?.renderedHtmlExtraction?.flatMeasurements;
   if (Array.isArray(fromHtml) && fromHtml.length) {
     fromHtml.forEach((row: any, idx: number) => {
@@ -696,6 +852,43 @@ function extractRows(payload: any): ImportedRow[] {
   if (content && typeof content === 'object') {
     extractRowsFromQcNode(content, '', rows);
   }
+
+  const detailRows = Array.isArray(payload?.measurementDetails) ? payload.measurementDetails : [];
+  detailRows.forEach((detail: any, detailIndex: number) => {
+    const detailCandidates = Array.isArray(detail?.measurementCandidates)
+      ? detail.measurementCandidates
+      : [];
+    detailCandidates.forEach((candidate: any, candidateIndex: number) => {
+      const sectionName =
+        normalizeSectionName(normalizeValueText(candidate?.sectionName || '')) ||
+        normalizeSectionName(sectionFromImageName(String(detail?.url || ''))) ||
+        'Frame Cover';
+      const key = normalizeValueText(candidate?.key || candidate?.path || candidate?.label || '');
+      const valueNode = candidate?.value;
+
+      if (valueNode && typeof valueNode === 'object' && !Array.isArray(valueNode)) {
+        Object.entries(valueNode as Record<string, unknown>).forEach(([subKey, subVal]) => {
+          pushMeasurementEntry(
+            subKey,
+            subVal,
+            sectionName,
+            `detail-${detailIndex}-${candidateIndex}`
+          );
+        });
+      } else {
+        pushMeasurementEntry(
+          key || `Detail ${candidateIndex + 1}`,
+          valueNode,
+          sectionName,
+          `detail-${detailIndex}-${candidateIndex}`
+        );
+      }
+    });
+
+    if (detail?.upstreamBody && typeof detail.upstreamBody === 'object') {
+      extractRowsFromQcNode(detail.upstreamBody, '', rows);
+    }
+  });
 
   const dedup = new Map<string, ImportedRow>();
   rows.forEach(row => {
@@ -851,6 +1044,37 @@ function createModal(): HTMLElement {
     </div>
     <div class="cw-note">Guide mode: click Draw Next for a measurement, then draw one line. OpenPaint auto-applies that value to the new stroke.</div>
     <div class="cw-result-meta" id="cwResultMeta">No search yet.</div>
+    <div class="cw-probe-panel" id="cwProbePanel" style="display:none;">
+      <div class="cw-row" style="margin-top:0;">
+        <label style="margin:0;"><input type="checkbox" id="cwProbeEnabled" /> Enable probe diagnostics</label>
+        <button type="button" class="cw-btn" id="cwRunProbeBtn">Run Probe</button>
+        <button type="button" class="cw-btn" id="cwRunBulkProbeBtn">Run Bulk Probe</button>
+        <button type="button" class="cw-btn" id="cwRunStagedProbeBtn">Run Staged Probe</button>
+        <button type="button" class="cw-btn" id="cwRunTurboStagedProbeBtn">Run Turbo Staged Probe</button>
+        <button type="button" class="cw-btn" id="cwCopyProbeBtn">Copy Probe Report</button>
+      </div>
+      <div class="cw-grid" style="margin-top:8px; grid-template-columns: 1fr;">
+        <div>
+          <label for="cwProbeTermsFile">Export HTML file (recommended)</label>
+          <div class="cw-row" style="margin-top:0;">
+            <input id="cwProbeTermsFile" type="file" accept=".html,.htm,text/html" />
+          </div>
+        </div>
+        <div>
+          <label for="cwProbeTermsPath">Server file path (local/dev only)</label>
+          <div class="cw-row" style="margin-top:0;">
+            <input id="cwProbeTermsPath" value="/mnt/c/Users/Leigh Atkins/Downloads/4.0 products export/4.0 products export.html" />
+            <button type="button" class="cw-btn" id="cwLoadProbeTermsBtn">Load Terms From Export</button>
+          </div>
+        </div>
+        <div>
+          <label for="cwProbeTerms">Probe search terms (one per line)</label>
+          <textarea id="cwProbeTerms" class="cw-rendered-html" placeholder="IK-KN-4&#10;IK-KN-4__SV&#10;IK-KN-4__LV&#10;PB&#10;MG"></textarea>
+        </div>
+      </div>
+      <div class="cw-probe-summary" id="cwProbeSummary">Probe disabled.</div>
+      <pre class="cw-probe-pre" id="cwProbeOutput"></pre>
+    </div>
     <div class="cw-images" id="cwResultImages"></div>
     <div class="cw-measure-wrap">
       <div class="cw-measure-head"><div>Source Label</div><div>Section</div><div>Value</div><div>Map to Stroke Label</div><div>Actions</div></div>
@@ -859,6 +1083,12 @@ function createModal(): HTMLElement {
   `;
 
   const searchBtn = body.querySelector('#cwSearchBtn') as HTMLButtonElement;
+  const baseUrlEl = body.querySelector('#cwBaseUrl') as HTMLInputElement;
+  const formIdEl = body.querySelector('#cwFormId') as HTMLInputElement;
+  const usernameEl = body.querySelector('#cwUsername') as HTMLInputElement;
+  const passwordEl = body.querySelector('#cwPassword') as HTMLInputElement;
+  const searchTermEl = body.querySelector('#cwSearchTerm') as HTMLInputElement;
+  const renderedHtmlEl = body.querySelector('#cwRenderedHtml') as HTMLTextAreaElement;
   const importExactBtn = body.querySelector('#cwImportExactBtn') as HTMLButtonElement;
   const importPhotosBtn = body.querySelector('#cwImportPhotosBtn') as HTMLButtonElement;
   const variantFilterEl = body.querySelector('#cwVariantFilter') as HTMLSelectElement;
@@ -867,6 +1097,64 @@ function createModal(): HTMLElement {
   const resultMeta = body.querySelector('#cwResultMeta') as HTMLDivElement;
   const imagesWrap = body.querySelector('#cwResultImages') as HTMLDivElement;
   const lockedEl = body.querySelector('#cwImportLocked') as HTMLInputElement;
+  const probePanel = body.querySelector('#cwProbePanel') as HTMLDivElement;
+  const probeEnabledEl = body.querySelector('#cwProbeEnabled') as HTMLInputElement;
+  const runProbeBtn = body.querySelector('#cwRunProbeBtn') as HTMLButtonElement;
+  const runBulkProbeBtn = body.querySelector('#cwRunBulkProbeBtn') as HTMLButtonElement;
+  const runStagedProbeBtn = body.querySelector('#cwRunStagedProbeBtn') as HTMLButtonElement;
+  const runTurboStagedProbeBtn = body.querySelector(
+    '#cwRunTurboStagedProbeBtn'
+  ) as HTMLButtonElement;
+  const copyProbeBtn = body.querySelector('#cwCopyProbeBtn') as HTMLButtonElement;
+  const loadProbeTermsBtn = body.querySelector('#cwLoadProbeTermsBtn') as HTMLButtonElement;
+  const probeTermsFileEl = body.querySelector('#cwProbeTermsFile') as HTMLInputElement;
+  const probeTermsPathEl = body.querySelector('#cwProbeTermsPath') as HTMLInputElement;
+  const probeTermsEl = body.querySelector('#cwProbeTerms') as HTMLTextAreaElement;
+  const probeSummary = body.querySelector('#cwProbeSummary') as HTMLDivElement;
+  const probeOutput = body.querySelector('#cwProbeOutput') as HTMLPreElement;
+  const probeModeAvailable = isCwProbePreviewEnabled();
+  let lastProbeReport: Record<string, unknown> | null = null;
+
+  const persistUiState = () => {
+    writePersistedCwUiState({
+      baseUrl: String(baseUrlEl?.value || '').trim(),
+      formId: String(formIdEl?.value || '').trim(),
+      username: String(usernameEl?.value || '').trim(),
+      password: String(passwordEl?.value || ''),
+      searchTerm: String(searchTermEl?.value || '').trim(),
+      probeTerms: String(probeTermsEl?.value || ''),
+      probeTermsPath: String(probeTermsPathEl?.value || '').trim(),
+      probeEnabled: Boolean(probeEnabledEl?.checked),
+      lastProbeReport,
+    });
+  };
+
+  const persisted = readPersistedCwUiState();
+  if (persisted.baseUrl && baseUrlEl) baseUrlEl.value = persisted.baseUrl;
+  if (persisted.formId && formIdEl) formIdEl.value = persisted.formId;
+  if (persisted.username && usernameEl) usernameEl.value = persisted.username;
+  if (persisted.password && passwordEl) passwordEl.value = persisted.password;
+  if (persisted.searchTerm && searchTermEl) searchTermEl.value = persisted.searchTerm;
+  if (persisted.probeTerms && probeTermsEl) probeTermsEl.value = persisted.probeTerms;
+  if (persisted.probeTermsPath && probeTermsPathEl)
+    probeTermsPathEl.value = persisted.probeTermsPath;
+  if (typeof persisted.probeEnabled === 'boolean' && probeEnabledEl) {
+    probeEnabledEl.checked = persisted.probeEnabled;
+  }
+  if (persisted.lastProbeReport && typeof persisted.lastProbeReport === 'object') {
+    lastProbeReport = persisted.lastProbeReport;
+  }
+
+  [baseUrlEl, formIdEl, usernameEl, passwordEl, searchTermEl, probeTermsPathEl].forEach(el => {
+    el?.addEventListener('input', persistUiState);
+    el?.addEventListener('change', persistUiState);
+  });
+  probeTermsEl?.addEventListener('input', persistUiState);
+  probeTermsEl?.addEventListener('change', persistUiState);
+
+  if (probePanel) {
+    probePanel.style.display = probeModeAvailable ? 'block' : 'none';
+  }
 
   let state: SearchState = {
     rows: [],
@@ -879,6 +1167,100 @@ function createModal(): HTMLElement {
     productName: '',
     activeSection: '',
     armedRowId: '',
+  };
+
+  const renderProbeReport = () => {
+    if (!probeModeAvailable) return;
+    if (!probeEnabledEl?.checked) {
+      probeSummary.textContent = 'Probe disabled.';
+      probeOutput.textContent = '';
+      return;
+    }
+    if (!lastProbeReport) {
+      probeSummary.textContent = 'Probe enabled. Run a search or click Run Probe.';
+      probeOutput.textContent = '';
+      return;
+    }
+    const mode = typeof lastProbeReport.mode === 'string' ? lastProbeReport.mode.trim() : '';
+    const totalTerms = Number(lastProbeReport.totalTerms || 0);
+    const completedTerms = Number(lastProbeReport.completedTerms || totalTerms || 0);
+    const transportSuccessCount = Number(
+      lastProbeReport.transportSuccessCount || lastProbeReport.successCount || 0
+    );
+    const measurementHitCount = Number(lastProbeReport.measurementHitCount || 0);
+    const averageDurationMs = Number(lastProbeReport.averageDurationMs || 0);
+    if (mode && totalTerms > 0) {
+      const transportRate = completedTerms > 0 ? (transportSuccessCount / completedTerms) * 100 : 0;
+      const measurementHitRate =
+        completedTerms > 0 ? (measurementHitCount / completedTerms) * 100 : 0;
+      probeSummary.textContent = `${mode}: ${completedTerms}/${totalTerms} terms, transport ${transportSuccessCount} (${transportRate.toFixed(1)}%), QC hits ${measurementHitCount} (${measurementHitRate.toFixed(1)}%), avg ${averageDurationMs || 0}ms.`;
+    } else {
+      const candidateCount = Array.isArray(lastProbeReport.referenceCandidates)
+        ? lastProbeReport.referenceCandidates.length
+        : 0;
+      const attemptCount = Array.isArray(lastProbeReport.qcMeasurementAttempts)
+        ? lastProbeReport.qcMeasurementAttempts.length
+        : 0;
+      probeSummary.textContent = `Probe ready: ${candidateCount} reference candidates, ${attemptCount} QC attempts.`;
+    }
+    probeOutput.textContent = JSON.stringify(lastProbeReport, null, 2);
+  };
+
+  const requestSearchPayload = async (
+    searchTerm: string,
+    activeStyleKeyOverride = '',
+    options: { probeMode?: 'turbo' | 'default' } = {}
+  ): Promise<{
+    response: Response;
+    data: any;
+    rawText: string;
+    contentType: string;
+    jsonParseError: string | null;
+  }> => {
+    const baseUrl = String(baseUrlEl?.value || '').trim();
+    const formId = String(formIdEl?.value || '').trim();
+    const username = String(usernameEl?.value || '').trim();
+    const password = String(passwordEl?.value || '');
+    const renderedHtml = String(renderedHtmlEl?.value || '');
+    const activeStyleKey = String(activeStyleKeyOverride || variantFilterEl.value || '').trim();
+    const activeStyle = parseStyleKey(activeStyleKey);
+
+    const response = await fetch('/api/integrations/cw/measurements/search', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        baseUrl,
+        formId,
+        username,
+        password,
+        search: searchTerm,
+        renderedHtml,
+        productReference: activeStyle.productReference,
+        style: activeStyle.style,
+        styleCode: activeStyle.styleCode,
+        probeMode: options.probeMode === 'turbo' ? 'turbo' : 'default',
+      }),
+    });
+    const rawText = await response.text().catch(() => '');
+    const contentType = String(response.headers.get('content-type') || '');
+    let data: any = null;
+    let jsonParseError: string | null = null;
+    try {
+      data = rawText ? JSON.parse(rawText) : null;
+    } catch (error) {
+      jsonParseError = error instanceof Error ? error.message : 'Invalid JSON response';
+      data = {
+        success: false,
+        code: 'CW_SEARCH_NON_JSON_RESPONSE',
+        message: 'Search endpoint returned a non-JSON response',
+        details: {
+          status: response.status,
+          contentType,
+          bodySnippet: rawText.slice(0, 260),
+        },
+      };
+    }
+    return { response, data, rawText, contentType, jsonParseError };
   };
 
   const visibleRows = () => {
@@ -1031,8 +1413,18 @@ function createModal(): HTMLElement {
     const groups = visibleImageGroups().slice(0, 16);
 
     groups.forEach(group => {
-      const direct = group.find(url => state.imageUrls.includes(url)) || group[0] || '';
-      if (!direct) return;
+      const direct = group.find(url => state.imageUrls.includes(url)) || '';
+      if (!direct) {
+        void (async () => {
+          const dataUrl = await fetchProxyImageDataUrl(group, baseUrl, username, password);
+          if (!dataUrl) return;
+          const img = document.createElement('img');
+          img.src = dataUrl;
+          img.alt = 'cw-product';
+          imagesWrap.appendChild(img);
+        })();
+        return;
+      }
       const img = document.createElement('img');
       img.src = direct;
       img.alt = 'cw-product';
@@ -1053,41 +1445,242 @@ function createModal(): HTMLElement {
     resultMeta.style.color = kind === 'ok' ? '#166534' : kind === 'bad' ? '#b91c1c' : '#334155';
   };
 
+  const setProbeButtonsDisabled = (disabled: boolean) => {
+    searchBtn.disabled = disabled;
+    if (runProbeBtn) runProbeBtn.disabled = disabled;
+    if (runBulkProbeBtn) runBulkProbeBtn.disabled = disabled;
+    if (runStagedProbeBtn) runStagedProbeBtn.disabled = disabled;
+    if (runTurboStagedProbeBtn) runTurboStagedProbeBtn.disabled = disabled;
+  };
+
+  const getProbeTerms = (): string[] => {
+    const seeded = String(probeTermsEl?.value || '')
+      .split(/\r?\n|,|;/)
+      .map(item => item.trim())
+      .filter(Boolean);
+    const fallbackSearch = String(searchTermEl?.value || '').trim();
+    return Array.from(new Set(seeded.length ? seeded : fallbackSearch ? [fallbackSearch] : []));
+  };
+
+  const delay = (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms));
+
+  const runProbeTerms = async (
+    terms: string[],
+    statusPrefix: string,
+    options: {
+      initialConcurrency?: number;
+      adaptiveConcurrency?: boolean;
+      minConcurrency?: number;
+      maxConcurrency?: number;
+      probeMode?: 'turbo' | 'default';
+    } = {}
+  ): Promise<{
+    entries: Array<Record<string, unknown>>;
+    successCount: number;
+    transportSuccessCount: number;
+    measurementHitCount: number;
+    measurementMissCount: number;
+    nonJsonCount: number;
+    averageDurationMs: number;
+    finalConcurrency: number;
+  }> => {
+    const minConcurrency = Math.max(1, Number(options.minConcurrency || PROBE_MIN_CONCURRENCY));
+    const maxConcurrency = Math.max(
+      minConcurrency,
+      Number(options.maxConcurrency || PROBE_MAX_CONCURRENCY)
+    );
+    let concurrency = Math.min(
+      maxConcurrency,
+      Math.max(minConcurrency, Number(options.initialConcurrency || PROBE_DEFAULT_CONCURRENCY))
+    );
+    const adaptiveConcurrency = options.adaptiveConcurrency !== false;
+
+    const reportEntries: Array<Record<string, unknown>> = new Array(terms.length);
+    let transportSuccessCount = 0;
+    let measurementHitCount = 0;
+    let nonJsonCount = 0;
+    let completed = 0;
+    let cursor = 0;
+    let durationSampleCount = 0;
+    let durationMsTotal = 0;
+
+    const runOne = async (term: string, index: number) => {
+      try {
+        const { response, data, rawText, contentType, jsonParseError } = await requestSearchPayload(
+          term,
+          '',
+          { probeMode: options.probeMode || 'default' }
+        );
+        const origins = Array.isArray(data?.referenceCandidateOrigins)
+          ? data.referenceCandidateOrigins
+          : [];
+        const syntheticCount = origins.filter(
+          (item: any) =>
+            Array.isArray(item?.origins) && item.origins.includes('syntheticScopedFallback')
+        ).length;
+        const durationMs = Number(data?.durationMs);
+        const qcMeasurementsFound = Boolean(data?.summary?.qcMeasurementsFound);
+        return {
+          index,
+          entry: {
+            term,
+            ok: response.ok,
+            status: response.status,
+            contentType,
+            nonJsonResponse: Boolean(jsonParseError),
+            rawBodySnippet: rawText.slice(0, 260),
+            code: data?.code || null,
+            message: data?.message || null,
+            probeModeRequested: data?.probeModeRequested || options.probeMode || null,
+            probeModeApplied: data?.probeModeApplied || data?.probeMode || null,
+            responseProfile: data?.responseProfile || null,
+            compactDiagnostics: data?.responseCompactDiagnostics || null,
+            selectedProductReference: data?.product?.reference || null,
+            durationMs: Number.isFinite(durationMs) ? durationMs : null,
+            candidateCount: Array.isArray(data?.referenceCandidates)
+              ? data.referenceCandidates.length
+              : 0,
+            syntheticScopedCandidateCount: syntheticCount,
+            qcAttemptCount: Array.isArray(data?.qcMeasurementAttempts)
+              ? data.qcMeasurementAttempts.length
+              : 0,
+            qcMeasurementsFound,
+            qcAttemptedCount: Number(data?.summary?.qcAttemptedCount || 0),
+            qcDeadReferenceCount: Number(data?.summary?.qcDeadReferenceCount || 0),
+            qcSkippedAttemptCount: Number(data?.summary?.qcSkippedAttemptCount || 0),
+            qcSkippedAttemptsByReason: data?.summary?.qcSkippedAttemptsByReason || null,
+            referenceCandidates: data?.referenceCandidates || [],
+            referenceCandidateOrigins: origins,
+            selectedTuples: data?.selectedTuples || [],
+            attemptPlanMode: data?.attemptPlanMode || null,
+            tupleSource: data?.tupleSource || null,
+          },
+        };
+      } catch (error) {
+        return {
+          index,
+          entry: {
+            term,
+            ok: false,
+            error: error instanceof Error ? error.message : String(error),
+          },
+        };
+      }
+    };
+
+    while (cursor < terms.length) {
+      const batchStart = cursor;
+      const batchTerms = terms.slice(batchStart, Math.min(terms.length, batchStart + concurrency));
+      cursor += batchTerms.length;
+
+      setStatus(
+        `${statusPrefix} ${completed + 1}-${completed + batchTerms.length}/${terms.length} (x${concurrency})`
+      );
+
+      const batchResults = await Promise.all(
+        batchTerms.map((term, offset) => runOne(term, batchStart + offset))
+      );
+
+      let batchNonJsonCount = 0;
+      let batchFailureCount = 0;
+      batchResults.forEach(result => {
+        reportEntries[result.index] = result.entry;
+        if (result.entry?.ok) {
+          transportSuccessCount += 1;
+          if (result.entry?.qcMeasurementsFound) {
+            measurementHitCount += 1;
+          }
+        } else {
+          batchFailureCount += 1;
+        }
+        const entryDuration = Number(result.entry?.durationMs);
+        if (Number.isFinite(entryDuration) && entryDuration >= 0) {
+          durationSampleCount += 1;
+          durationMsTotal += entryDuration;
+        }
+        if (result.entry?.nonJsonResponse) {
+          nonJsonCount += 1;
+          batchNonJsonCount += 1;
+        }
+      });
+
+      completed += batchTerms.length;
+      setStatus(`${statusPrefix} ${completed}/${terms.length} complete (x${concurrency})`);
+
+      if (adaptiveConcurrency && batchTerms.length > 0) {
+        const batchFailureRate = batchFailureCount / batchTerms.length;
+        if (batchNonJsonCount >= 2 || batchFailureRate >= 0.75) {
+          concurrency = Math.max(minConcurrency, concurrency - 1);
+        } else if (batchNonJsonCount === 0 && batchFailureRate <= 0.25) {
+          concurrency = Math.min(maxConcurrency, concurrency + 1);
+        }
+      }
+
+      if (PROBE_REQUEST_DELAY_MS > 0 && cursor < terms.length) {
+        await delay(PROBE_REQUEST_DELAY_MS);
+      }
+    }
+
+    return {
+      entries: reportEntries.filter(Boolean),
+      successCount: transportSuccessCount,
+      transportSuccessCount,
+      measurementHitCount,
+      measurementMissCount: transportSuccessCount - measurementHitCount,
+      nonJsonCount,
+      averageDurationMs:
+        durationSampleCount > 0 ? Math.round(durationMsTotal / durationSampleCount) : 0,
+      finalConcurrency: concurrency,
+    };
+  };
+
   const runSearch = async () => {
-    const baseUrl = (body.querySelector('#cwBaseUrl') as HTMLInputElement).value.trim();
-    const formId = (body.querySelector('#cwFormId') as HTMLInputElement).value.trim();
-    const username = (body.querySelector('#cwUsername') as HTMLInputElement).value.trim();
-    const password = (body.querySelector('#cwPassword') as HTMLInputElement).value;
-    const search = (body.querySelector('#cwSearchTerm') as HTMLInputElement).value.trim();
-    const renderedHtml = (body.querySelector('#cwRenderedHtml') as HTMLTextAreaElement).value;
+    const baseUrl = String(baseUrlEl?.value || '').trim();
+    const search = String(searchTermEl?.value || '').trim();
     const activeStyleKey = String(variantFilterEl.value || state.activeVariantUrl || '').trim();
-    const activeStyle = parseStyleKey(activeStyleKey);
 
     if (!search) {
       setStatus('Enter a product search term.', 'bad');
       return;
     }
 
-    searchBtn.disabled = true;
+    setProbeButtonsDisabled(true);
     setStatus('Searching CW product measurements...');
 
     try {
-      const response = await fetch('/api/integrations/cw/measurements/search', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          baseUrl,
-          formId,
-          username,
-          password,
-          search,
-          renderedHtml,
-          productReference: activeStyle.productReference,
-          style: activeStyle.style,
-          styleCode: activeStyle.styleCode,
-        }),
-      });
-      const data = await response.json();
+      const { response, data, rawText, contentType, jsonParseError } = await requestSearchPayload(
+        search,
+        activeStyleKey
+      );
+      const probeReport = {
+        at: new Date().toISOString(),
+        search,
+        ok: response.ok,
+        status: response.status,
+        contentType,
+        nonJsonResponse: Boolean(jsonParseError),
+        rawBodySnippet: rawText.slice(0, 260),
+        code: data?.code || null,
+        message: data?.message || null,
+        probeModeRequested: data?.probeModeRequested || null,
+        probeModeApplied: data?.probeModeApplied || data?.probeMode || null,
+        responseProfile: data?.responseProfile || null,
+        compactDiagnostics: data?.responseCompactDiagnostics || null,
+        product: data?.product || null,
+        summary: data?.summary || null,
+        referenceCandidates: data?.referenceCandidates || [],
+        referenceCandidateOrigins: data?.referenceCandidateOrigins || [],
+        styleOptions: data?.styleOptions || [],
+        selectedTuples: data?.selectedTuples || [],
+        attemptPlanMode: data?.attemptPlanMode || null,
+        tupleSource: data?.tupleSource || null,
+        qcMeasurementAttempts: data?.qcMeasurementAttempts || [],
+      } as Record<string, unknown>;
+      if (probeModeAvailable && probeEnabledEl?.checked) {
+        lastProbeReport = probeReport;
+        persistUiState();
+        renderProbeReport();
+      }
       const variantOptions = buildVariantOptions(data);
       const preferredOption =
         variantOptions.find(item => /signature|cnrp_sp/i.test(item.label)) || variantOptions[0];
@@ -1141,18 +1734,514 @@ function createModal(): HTMLElement {
         response.ok ? 'ok' : 'bad'
       );
     } catch (error) {
+      if (probeModeAvailable && probeEnabledEl?.checked) {
+        lastProbeReport = {
+          at: new Date().toISOString(),
+          error: error instanceof Error ? error.message : String(error),
+        };
+        persistUiState();
+        renderProbeReport();
+      }
       setStatus(
         `Search request failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
         'bad'
       );
     } finally {
-      searchBtn.disabled = false;
+      setProbeButtonsDisabled(false);
     }
   };
 
   searchBtn.addEventListener('click', () => {
     void runSearch();
   });
+
+  if (probeEnabledEl) {
+    probeEnabledEl.addEventListener('change', () => {
+      persistUiState();
+      renderProbeReport();
+    });
+  }
+
+  if (runProbeBtn) {
+    runProbeBtn.addEventListener('click', () => {
+      if (!probeModeAvailable) return;
+      if (!probeEnabledEl?.checked) {
+        probeEnabledEl.checked = true;
+        persistUiState();
+      }
+      void runSearch();
+    });
+  }
+
+  if (runBulkProbeBtn) {
+    runBulkProbeBtn.addEventListener('click', async () => {
+      if (!probeModeAvailable) return;
+      if (!probeEnabledEl?.checked) {
+        probeEnabledEl.checked = true;
+        persistUiState();
+      }
+
+      const terms = getProbeTerms();
+
+      if (!terms.length) {
+        setStatus('Add probe terms (one per line) or set Product search first.', 'bad');
+        return;
+      }
+
+      setProbeButtonsDisabled(true);
+      setStatus(`Running bulk probe for ${terms.length} term(s)...`);
+
+      try {
+        const stage = await runProbeTerms(terms, 'Bulk probe', {
+          initialConcurrency: PROBE_DEFAULT_CONCURRENCY,
+          adaptiveConcurrency: true,
+          minConcurrency: PROBE_MIN_CONCURRENCY,
+          maxConcurrency: PROBE_MAX_CONCURRENCY,
+          probeMode: 'default',
+        });
+
+        lastProbeReport = {
+          at: new Date().toISOString(),
+          mode: 'bulk-probe',
+          totalTerms: terms.length,
+          successCount: stage.transportSuccessCount,
+          transportSuccessCount: stage.transportSuccessCount,
+          measurementHitCount: stage.measurementHitCount,
+          measurementMissCount: stage.measurementMissCount,
+          failureCount: terms.length - stage.transportSuccessCount,
+          nonJsonCount: stage.nonJsonCount,
+          averageDurationMs: stage.averageDurationMs,
+          finalConcurrency: stage.finalConcurrency,
+          terms,
+          entries: stage.entries,
+        };
+        persistUiState();
+        renderProbeReport();
+        setStatus(
+          `Bulk probe complete: transport ${stage.transportSuccessCount}/${terms.length}, QC hits ${stage.measurementHitCount}/${terms.length}, avg ${stage.averageDurationMs}ms.`,
+          stage.measurementHitCount > 0 ? 'ok' : stage.transportSuccessCount > 0 ? 'info' : 'bad'
+        );
+      } finally {
+        setProbeButtonsDisabled(false);
+      }
+    });
+  }
+
+  if (runStagedProbeBtn) {
+    runStagedProbeBtn.addEventListener('click', async () => {
+      if (!probeModeAvailable) return;
+      if (!probeEnabledEl?.checked) {
+        probeEnabledEl.checked = true;
+        persistUiState();
+      }
+
+      const terms = getProbeTerms();
+      if (!terms.length) {
+        setStatus('Add probe terms (one per line) or set Product search first.', 'bad');
+        return;
+      }
+
+      const stagePlan = [
+        { name: 'pilot', size: STAGED_PROBE_BATCH_SIZES[0] },
+        { name: 'medium', size: STAGED_PROBE_BATCH_SIZES[1] },
+      ];
+
+      setProbeButtonsDisabled(true);
+      setStatus(`Running staged probe for ${terms.length} term(s)...`);
+
+      const allEntries: Array<Record<string, unknown>> = [];
+      const stageReports: Array<Record<string, unknown>> = [];
+      let totalTransportSuccess = 0;
+      let totalMeasurementHits = 0;
+      let totalNonJson = 0;
+      let totalDurationMs = 0;
+      let totalDurationSamples = 0;
+      let cursor = 0;
+      let halted = false;
+      let haltReason = '';
+
+      try {
+        for (let stageIndex = 0; stageIndex < stagePlan.length + 1; stageIndex += 1) {
+          const stageName = stageIndex < stagePlan.length ? stagePlan[stageIndex].name : 'full';
+          const stageSize =
+            stageIndex < stagePlan.length
+              ? Math.min(stagePlan[stageIndex].size, Math.max(terms.length - cursor, 0))
+              : Math.max(terms.length - cursor, 0);
+          if (stageSize <= 0) continue;
+
+          const stageTerms = terms.slice(cursor, cursor + stageSize);
+          const stage = await runProbeTerms(stageTerms, `Stage ${stageIndex + 1} (${stageName})`, {
+            initialConcurrency: PROBE_DEFAULT_CONCURRENCY,
+            adaptiveConcurrency: true,
+            minConcurrency: PROBE_MIN_CONCURRENCY,
+            maxConcurrency: PROBE_MAX_CONCURRENCY,
+            probeMode: 'default',
+          });
+
+          const failureCount = stageTerms.length - stage.transportSuccessCount;
+          const failureRate = stageTerms.length ? failureCount / stageTerms.length : 0;
+          const measurementHitRate = stageTerms.length
+            ? stage.measurementHitCount / stageTerms.length
+            : 0;
+          const transportSuccessRate = stageTerms.length
+            ? stage.transportSuccessCount / stageTerms.length
+            : 0;
+
+          allEntries.push(...stage.entries);
+          stageReports.push({
+            stageIndex: stageIndex + 1,
+            stage: stageName,
+            startOffset: cursor,
+            termCount: stageTerms.length,
+            successCount: stage.transportSuccessCount,
+            transportSuccessCount: stage.transportSuccessCount,
+            failureCount,
+            transportSuccessRate,
+            measurementHitCount: stage.measurementHitCount,
+            measurementMissCount: stage.measurementMissCount,
+            measurementHitRate,
+            nonJsonCount: stage.nonJsonCount,
+            averageDurationMs: stage.averageDurationMs,
+            failureRate,
+            finalConcurrency: stage.finalConcurrency,
+          });
+          totalTransportSuccess += stage.transportSuccessCount;
+          totalMeasurementHits += stage.measurementHitCount;
+          totalNonJson += stage.nonJsonCount;
+          if (stage.averageDurationMs > 0) {
+            totalDurationMs += stage.averageDurationMs * stageTerms.length;
+            totalDurationSamples += stageTerms.length;
+          }
+          cursor += stageTerms.length;
+
+          lastProbeReport = {
+            at: new Date().toISOString(),
+            mode: 'staged-bulk-probe',
+            totalTerms: terms.length,
+            completedTerms: cursor,
+            successCount: totalTransportSuccess,
+            transportSuccessCount: totalTransportSuccess,
+            measurementHitCount: totalMeasurementHits,
+            measurementMissCount: totalTransportSuccess - totalMeasurementHits,
+            failureCount: cursor - totalTransportSuccess,
+            nonJsonCount: totalNonJson,
+            averageDurationMs:
+              totalDurationSamples > 0 ? Math.round(totalDurationMs / totalDurationSamples) : 0,
+            halted,
+            haltReason: haltReason || null,
+            stages: stageReports,
+            entries: allEntries,
+          };
+          persistUiState();
+          renderProbeReport();
+
+          if (stage.nonJsonCount >= STAGED_PROBE_NON_JSON_STOP_COUNT) {
+            halted = true;
+            haltReason = `Stopped after stage ${stageIndex + 1}: ${stage.nonJsonCount} non-JSON responses.`;
+            break;
+          }
+          if (failureRate > STAGED_PROBE_FAILURE_RATE_STOP) {
+            halted = true;
+            haltReason = `Stopped after stage ${stageIndex + 1}: failure rate ${(failureRate * 100).toFixed(1)}%.`;
+            break;
+          }
+          if (cursor < terms.length) {
+            await delay(350);
+          }
+        }
+
+        lastProbeReport = {
+          at: new Date().toISOString(),
+          mode: 'staged-bulk-probe',
+          totalTerms: terms.length,
+          completedTerms: cursor,
+          successCount: totalTransportSuccess,
+          transportSuccessCount: totalTransportSuccess,
+          measurementHitCount: totalMeasurementHits,
+          measurementMissCount: totalTransportSuccess - totalMeasurementHits,
+          failureCount: cursor - totalTransportSuccess,
+          nonJsonCount: totalNonJson,
+          averageDurationMs:
+            totalDurationSamples > 0 ? Math.round(totalDurationMs / totalDurationSamples) : 0,
+          halted,
+          haltReason: haltReason || null,
+          stages: stageReports,
+          entries: allEntries,
+        };
+        persistUiState();
+        renderProbeReport();
+
+        if (halted) {
+          setStatus(
+            `Staged probe halted at ${cursor}/${terms.length}. ${haltReason}`,
+            cursor > 0 ? 'info' : 'bad'
+          );
+        } else {
+          const averageDurationMs =
+            totalDurationSamples > 0 ? Math.round(totalDurationMs / totalDurationSamples) : 0;
+          setStatus(
+            `Staged probe complete: transport ${totalTransportSuccess}/${terms.length}, QC hits ${totalMeasurementHits}/${terms.length}, avg ${averageDurationMs}ms.`,
+            totalMeasurementHits > 0 ? 'ok' : totalTransportSuccess > 0 ? 'info' : 'bad'
+          );
+        }
+      } finally {
+        setProbeButtonsDisabled(false);
+      }
+    });
+  }
+
+  if (runTurboStagedProbeBtn) {
+    runTurboStagedProbeBtn.addEventListener('click', async () => {
+      if (!probeModeAvailable) return;
+      if (!probeEnabledEl?.checked) {
+        probeEnabledEl.checked = true;
+        persistUiState();
+      }
+
+      const terms = getProbeTerms();
+      if (!terms.length) {
+        setStatus('Add probe terms (one per line) or set Product search first.', 'bad');
+        return;
+      }
+
+      const stagePlan = [
+        { name: 'pilot', size: STAGED_PROBE_BATCH_SIZES[0] },
+        { name: 'medium', size: STAGED_PROBE_BATCH_SIZES[1] },
+      ];
+
+      setProbeButtonsDisabled(true);
+      setStatus(`Running turbo staged probe for ${terms.length} term(s)...`);
+
+      const allEntries: Array<Record<string, unknown>> = [];
+      const stageReports: Array<Record<string, unknown>> = [];
+      let totalTransportSuccess = 0;
+      let totalMeasurementHits = 0;
+      let totalNonJson = 0;
+      let totalDurationMs = 0;
+      let totalDurationSamples = 0;
+      let cursor = 0;
+      let halted = false;
+      let haltReason = '';
+
+      try {
+        for (let stageIndex = 0; stageIndex < stagePlan.length + 1; stageIndex += 1) {
+          const stageName = stageIndex < stagePlan.length ? stagePlan[stageIndex].name : 'full';
+          const stageSize =
+            stageIndex < stagePlan.length
+              ? Math.min(stagePlan[stageIndex].size, Math.max(terms.length - cursor, 0))
+              : Math.max(terms.length - cursor, 0);
+          if (stageSize <= 0) continue;
+
+          const stageTerms = terms.slice(cursor, cursor + stageSize);
+          const stage = await runProbeTerms(
+            stageTerms,
+            `Turbo Stage ${stageIndex + 1} (${stageName})`,
+            {
+              initialConcurrency: PROBE_TURBO_DEFAULT_CONCURRENCY,
+              adaptiveConcurrency: true,
+              minConcurrency: PROBE_TURBO_MIN_CONCURRENCY,
+              maxConcurrency: PROBE_TURBO_MAX_CONCURRENCY,
+              probeMode: 'turbo',
+            }
+          );
+
+          const failureCount = stageTerms.length - stage.transportSuccessCount;
+          const failureRate = stageTerms.length ? failureCount / stageTerms.length : 0;
+          const measurementHitRate = stageTerms.length
+            ? stage.measurementHitCount / stageTerms.length
+            : 0;
+          const transportSuccessRate = stageTerms.length
+            ? stage.transportSuccessCount / stageTerms.length
+            : 0;
+
+          allEntries.push(...stage.entries);
+          stageReports.push({
+            stageIndex: stageIndex + 1,
+            stage: stageName,
+            startOffset: cursor,
+            termCount: stageTerms.length,
+            successCount: stage.transportSuccessCount,
+            transportSuccessCount: stage.transportSuccessCount,
+            failureCount,
+            transportSuccessRate,
+            measurementHitCount: stage.measurementHitCount,
+            measurementMissCount: stage.measurementMissCount,
+            measurementHitRate,
+            nonJsonCount: stage.nonJsonCount,
+            averageDurationMs: stage.averageDurationMs,
+            failureRate,
+            finalConcurrency: stage.finalConcurrency,
+          });
+          totalTransportSuccess += stage.transportSuccessCount;
+          totalMeasurementHits += stage.measurementHitCount;
+          totalNonJson += stage.nonJsonCount;
+          if (stage.averageDurationMs > 0) {
+            totalDurationMs += stage.averageDurationMs * stageTerms.length;
+            totalDurationSamples += stageTerms.length;
+          }
+          cursor += stageTerms.length;
+
+          lastProbeReport = {
+            at: new Date().toISOString(),
+            mode: 'turbo-staged-bulk-probe',
+            totalTerms: terms.length,
+            completedTerms: cursor,
+            successCount: totalTransportSuccess,
+            transportSuccessCount: totalTransportSuccess,
+            measurementHitCount: totalMeasurementHits,
+            measurementMissCount: totalTransportSuccess - totalMeasurementHits,
+            failureCount: cursor - totalTransportSuccess,
+            nonJsonCount: totalNonJson,
+            averageDurationMs:
+              totalDurationSamples > 0 ? Math.round(totalDurationMs / totalDurationSamples) : 0,
+            halted,
+            haltReason: haltReason || null,
+            stages: stageReports,
+            entries: allEntries,
+          };
+          persistUiState();
+          renderProbeReport();
+
+          if (stage.nonJsonCount >= STAGED_PROBE_NON_JSON_STOP_COUNT) {
+            halted = true;
+            haltReason = `Stopped after turbo stage ${stageIndex + 1}: ${stage.nonJsonCount} non-JSON responses.`;
+            break;
+          }
+          if (failureRate > STAGED_PROBE_FAILURE_RATE_STOP) {
+            halted = true;
+            haltReason = `Stopped after turbo stage ${stageIndex + 1}: failure rate ${(failureRate * 100).toFixed(1)}%.`;
+            break;
+          }
+          if (cursor < terms.length) {
+            await delay(180);
+          }
+        }
+
+        lastProbeReport = {
+          at: new Date().toISOString(),
+          mode: 'turbo-staged-bulk-probe',
+          totalTerms: terms.length,
+          completedTerms: cursor,
+          successCount: totalTransportSuccess,
+          transportSuccessCount: totalTransportSuccess,
+          measurementHitCount: totalMeasurementHits,
+          measurementMissCount: totalTransportSuccess - totalMeasurementHits,
+          failureCount: cursor - totalTransportSuccess,
+          nonJsonCount: totalNonJson,
+          averageDurationMs:
+            totalDurationSamples > 0 ? Math.round(totalDurationMs / totalDurationSamples) : 0,
+          halted,
+          haltReason: haltReason || null,
+          stages: stageReports,
+          entries: allEntries,
+        };
+        persistUiState();
+        renderProbeReport();
+
+        if (halted) {
+          setStatus(
+            `Turbo staged probe halted at ${cursor}/${terms.length}. ${haltReason}`,
+            cursor > 0 ? 'info' : 'bad'
+          );
+        } else {
+          const averageDurationMs =
+            totalDurationSamples > 0 ? Math.round(totalDurationMs / totalDurationSamples) : 0;
+          setStatus(
+            `Turbo staged probe complete: transport ${totalTransportSuccess}/${terms.length}, QC hits ${totalMeasurementHits}/${terms.length}, avg ${averageDurationMs}ms.`,
+            totalMeasurementHits > 0 ? 'ok' : totalTransportSuccess > 0 ? 'info' : 'bad'
+          );
+        }
+      } finally {
+        setProbeButtonsDisabled(false);
+      }
+    });
+  }
+
+  if (copyProbeBtn) {
+    copyProbeBtn.addEventListener('click', async () => {
+      if (!lastProbeReport) {
+        setStatus('No probe report to copy yet.', 'bad');
+        return;
+      }
+      const text = JSON.stringify(lastProbeReport, null, 2);
+      try {
+        await navigator.clipboard.writeText(text);
+        setStatus('Probe report copied to clipboard.', 'ok');
+      } catch {
+        probeOutput.textContent = text;
+        setStatus('Clipboard write failed; probe report is shown in panel.', 'bad');
+      }
+    });
+  }
+
+  if (loadProbeTermsBtn) {
+    loadProbeTermsBtn.addEventListener('click', async () => {
+      const selectedFile = probeTermsFileEl?.files?.[0] || null;
+      const filePath = String(probeTermsPathEl?.value || '').trim();
+      if (!selectedFile && !filePath) {
+        setStatus('Choose an export HTML file or provide a server file path.', 'bad');
+        return;
+      }
+      loadProbeTermsBtn.disabled = true;
+      setStatus('Loading probe terms from export file...');
+      try {
+        if (selectedFile) {
+          const html = await selectedFile.text();
+          const parsed = parseProbeTermsFromExportHtml(html);
+          probeTermsEl.value = parsed.terms.join('\n');
+          if (!String(searchTermEl?.value || '').trim() && parsed.terms[0]) {
+            searchTermEl.value = parsed.terms[0];
+          }
+          persistUiState();
+          setStatus(
+            `Loaded ${parsed.terms.length} terms from ${selectedFile.name} (${parsed.totalRows} rows scanned).`,
+            'ok'
+          );
+          return;
+        }
+
+        const response = await fetch('/api/integrations/cw/measurements/probe-terms', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ filePath }),
+        });
+        const text = await response.text();
+        let data: any = null;
+        try {
+          data = text ? JSON.parse(text) : null;
+        } catch {
+          setStatus(
+            'Failed to load terms from server path. Use file upload above on hosted environments.',
+            'bad'
+          );
+          return;
+        }
+        if (!response.ok || !data?.success) {
+          setStatus(
+            `Failed to load terms: ${String(data?.message || data?.code || response.status)}`,
+            'bad'
+          );
+          return;
+        }
+        const terms = Array.isArray(data?.terms)
+          ? data.terms.map((item: unknown) => String(item || '').trim()).filter(Boolean)
+          : [];
+        probeTermsEl.value = terms.join('\n');
+        if (!String(searchTermEl?.value || '').trim() && terms[0]) {
+          searchTermEl.value = terms[0];
+        }
+        persistUiState();
+        setStatus(`Loaded ${terms.length} terms from server file path.`, 'ok');
+      } catch (error) {
+        setStatus(
+          `Failed to load terms: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          'bad'
+        );
+      } finally {
+        loadProbeTermsBtn.disabled = false;
+      }
+    });
+  }
 
   variantFilterEl.addEventListener('change', () => {
     state.activeVariantUrl = String(variantFilterEl.value || '').trim();
@@ -1210,9 +2299,9 @@ function createModal(): HTMLElement {
     importPhotosBtn.disabled = true;
     let imported = 0;
     try {
-      const baseUrl = (body.querySelector('#cwBaseUrl') as HTMLInputElement).value.trim();
-      const username = (body.querySelector('#cwUsername') as HTMLInputElement).value.trim();
-      const password = (body.querySelector('#cwPassword') as HTMLInputElement).value;
+      const baseUrl = String(baseUrlEl?.value || '').trim();
+      const username = String(usernameEl?.value || '').trim();
+      const password = String(passwordEl?.value || '');
 
       for (const section of selectedSections) {
         const groups = (state.sectionImageGroups[section] || []).slice(0, 1);
@@ -1306,6 +2395,8 @@ function createModal(): HTMLElement {
   const close = () => {
     overlay.style.display = 'none';
   };
+
+  renderProbeReport();
 
   closeBtn.addEventListener('click', close);
   overlay.addEventListener('click', event => {

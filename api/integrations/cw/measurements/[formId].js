@@ -1,3 +1,4 @@
+import fs from 'fs/promises';
 import {
   analyzeMeasureFormPayload,
   buildMeasureSavePayloadFromTable,
@@ -43,6 +44,249 @@ const FALLBACK_STYLE_CODES = [
   'WR',
 ];
 const MAX_QC_ATTEMPTS = 80;
+const MAX_PROBE_TERMS_FILE_BYTES = 25 * 1024 * 1024;
+const SEARCH_TURBO_PROFILE = 'compact-v1';
+const SEARCH_DEFAULT_PROFILE = 'full-v1';
+const SEARCH_TURBO_LIMITS = {
+  candidates: 8,
+  referenceCandidates: 20,
+  referenceCandidateOrigins: 20,
+  qcMeasurementAttempts: 12,
+  selectedTuples: 12,
+  styleOptions: 16,
+  images: 12,
+  qcMeasurementsByStyle: 4,
+  graphqlDiscoveryAttempts: 6,
+};
+const TURBO_MAX_ATTEMPTS_PER_REFERENCE = 2;
+const TURBO_MAX_ATTEMPTS_PER_SCOPED_REFERENCE = 1;
+const TURBO_MAX_QC_ATTEMPTS = 12;
+const TURBO_QC_SUCCESS_TARGET = 1;
+const TURBO_FASTPATH_STYLE_PAIRS = [
+  { style: 'Original', styleCode: 'SHRT_SP' },
+  { style: 'Signature', styleCode: 'CNRP_SP' },
+  { style: 'Original', styleCode: 'SP' },
+  { style: 'Signature', styleCode: 'SP' },
+];
+const SHOULD_LOG_PROBE_MODE = String(process.env.CW_PROBE_MODE_DEBUG || '').trim() === '1';
+const DEFAULT_FETCH_TIMEOUT_MS =
+  Number.parseInt(process.env.CW_FETCH_TIMEOUT_MS || '', 10) || 12000;
+const MANUAL_REFERENCE_HINT_NONE_TERMS = new Set(['IK-MD-3']);
+const MANUAL_REFERENCE_HINTS = new Map([
+  ['MD2', ['MD2__L', 'MD2__R']],
+  ['MD1', ['MD1__L', 'MD1__R']],
+  ['HY2', ['HY2__34cm', 'HY2__43cm']],
+  ['HY3', ['HY3__34cm', 'HY3__43cm']],
+  ['PG2', ['PG2']],
+  ['CS1', ['CS1']],
+  ['IK-KA-1', ['IK-KA-1']],
+  ['IK-KA-2', ['IK-KA-2']],
+  ['IK-KA-3', ['IK-KA-3']],
+  ['IK-KN-4', ['IK-KN-4__SV', 'IK-KN-4__LV']],
+  ['IK-SM-3', ['IK-SM-3']],
+  ['IK-ME-2', ['IK-ME-2']],
+  ['IK-ME-5M', ['IK-ME-5M__L', 'IK-ME-5M__R']],
+  ['IK-ME-6', ['IK-ME-6']],
+  ['IK-MA-25B', ['IK-MA-25B__L', 'IK-MA-25B__R']],
+  ['MJ-SLM-1', ['MJ-SLM-1__MJ-CC', 'MJ-SLM-1__CW-CC']],
+]);
+
+function normalizeManualReferenceHintKey(value) {
+  return String(value || '')
+    .trim()
+    .toUpperCase();
+}
+
+function stripScopedReferenceSuffix(value) {
+  return String(value || '')
+    .trim()
+    .replace(/__[A-Za-z0-9._-]+$/i, '');
+}
+
+function getManualReferenceHints(searchTerm) {
+  const key = normalizeManualReferenceHintKey(searchTerm);
+  const raw = MANUAL_REFERENCE_HINTS.get(key);
+  if (!Array.isArray(raw) || !raw.length) return [];
+  return Array.from(new Set(raw.map(item => String(item || '').trim()).filter(Boolean)));
+}
+
+function isManualReferenceHintNoneTerm(searchTerm) {
+  const key = normalizeManualReferenceHintKey(searchTerm);
+  if (!key) return false;
+  return MANUAL_REFERENCE_HINT_NONE_TERMS.has(key);
+}
+
+function normalizeProbeMode(body = {}, query = {}) {
+  const requestedProbeMode = String(body?.probeMode || body?.mode || query?.probeMode || '')
+    .trim()
+    .toLowerCase();
+  const fastFlag = body?.fast === true || String(query?.fast || '').trim() === '1';
+  const isTurboProbe = requestedProbeMode === 'turbo' || fastFlag;
+  return {
+    requestedProbeMode,
+    isTurboProbe,
+  };
+}
+
+function buildSearchResponse(payload, options = {}) {
+  const isTurboProbe = Boolean(options?.isTurboProbe);
+  const requestedProbeMode = String(options?.requestedProbeMode || '')
+    .trim()
+    .toLowerCase();
+  const response = payload && typeof payload === 'object' ? { ...payload } : {};
+
+  if (!isTurboProbe) {
+    return {
+      ...response,
+      probeMode: 'default',
+      probeModeRequested: requestedProbeMode || 'default',
+      probeModeApplied: 'default',
+      responseProfile: SEARCH_DEFAULT_PROFILE,
+      responseCompactDiagnostics: {
+        compact: false,
+      },
+    };
+  }
+
+  const trimmedFields = [];
+  const trimArrayField = (fieldName, limit) => {
+    if (!Array.isArray(response[fieldName])) return;
+    if (response[fieldName].length <= limit) return;
+    response[fieldName] = response[fieldName].slice(0, limit);
+    trimmedFields.push(fieldName);
+  };
+
+  trimArrayField('candidates', SEARCH_TURBO_LIMITS.candidates);
+  trimArrayField('referenceCandidates', SEARCH_TURBO_LIMITS.referenceCandidates);
+  trimArrayField('referenceCandidateOrigins', SEARCH_TURBO_LIMITS.referenceCandidateOrigins);
+  trimArrayField('qcMeasurementAttempts', SEARCH_TURBO_LIMITS.qcMeasurementAttempts);
+  trimArrayField('selectedTuples', SEARCH_TURBO_LIMITS.selectedTuples);
+  trimArrayField('styleOptions', SEARCH_TURBO_LIMITS.styleOptions);
+  trimArrayField('images', SEARCH_TURBO_LIMITS.images);
+  trimArrayField('qcMeasurementsByStyle', SEARCH_TURBO_LIMITS.qcMeasurementsByStyle);
+
+  if (response.discovery && typeof response.discovery === 'object') {
+    const attempts = response.discovery.graphqlDiscoveryAttempts;
+    if (Array.isArray(attempts) && attempts.length > SEARCH_TURBO_LIMITS.graphqlDiscoveryAttempts) {
+      response.discovery = {
+        ...response.discovery,
+        graphqlDiscoveryAttempts: attempts.slice(0, SEARCH_TURBO_LIMITS.graphqlDiscoveryAttempts),
+      };
+      trimmedFields.push('discovery.graphqlDiscoveryAttempts');
+    }
+  }
+
+  if (response.upstream && typeof response.upstream === 'object') {
+    const attempts = response.upstream.graphqlDiscoveryAttempts;
+    if (Array.isArray(attempts) && attempts.length > SEARCH_TURBO_LIMITS.graphqlDiscoveryAttempts) {
+      response.upstream = {
+        ...response.upstream,
+        graphqlDiscoveryAttempts: attempts.slice(0, SEARCH_TURBO_LIMITS.graphqlDiscoveryAttempts),
+      };
+      trimmedFields.push('upstream.graphqlDiscoveryAttempts');
+    }
+  }
+
+  if (response.urls && typeof response.urls === 'object') {
+    const measurementUrls = response.urls.measurementUrls;
+    if (Array.isArray(measurementUrls) && measurementUrls.length > 1) {
+      response.urls = {
+        ...response.urls,
+        measurementUrls: measurementUrls.slice(0, 1),
+      };
+      trimmedFields.push('urls.measurementUrls');
+    }
+  }
+
+  if (response.mtAuth && typeof response.mtAuth === 'object') {
+    response.mtAuth = {
+      ...response.mtAuth,
+      tokenFetchBody: null,
+      tokenFetchAttempts: null,
+    };
+    trimmedFields.push('mtAuth.tokenFetchBody');
+    trimmedFields.push('mtAuth.tokenFetchAttempts');
+  }
+
+  if (Array.isArray(response.measurementDetails) && response.measurementDetails.length > 0) {
+    trimmedFields.push('measurementDetails');
+  }
+  if (response.upstreamBody) {
+    trimmedFields.push('upstreamBody');
+  }
+  if (response.upstreamSnippet) {
+    trimmedFields.push('upstreamSnippet');
+  }
+  if (response.formMeasurements) {
+    trimmedFields.push('formMeasurements');
+  }
+  if (response.renderedHtmlExtraction) {
+    trimmedFields.push('renderedHtmlExtraction');
+  }
+
+  response.measurementDetails = [];
+  response.upstreamBody = null;
+  response.upstreamSnippet = null;
+  response.formMeasurements = null;
+  response.renderedHtmlExtraction = null;
+
+  return {
+    ...response,
+    probeMode: 'turbo',
+    probeModeRequested: requestedProbeMode || 'turbo',
+    probeModeApplied: 'turbo',
+    responseProfile: SEARCH_TURBO_PROFILE,
+    responseCompactDiagnostics: {
+      compact: true,
+      trimmedFields,
+      limits: SEARCH_TURBO_LIMITS,
+    },
+  };
+}
+
+function isDefinitiveMtMissingProduct(attempt) {
+  const bodyStatus = Number(attempt?.body?.status);
+  if (bodyStatus !== 400) return false;
+  const content = String(attempt?.body?.content || '').toLowerCase();
+  const message = String(attempt?.body?.message || attempt?.body?.error || '').toLowerCase();
+  return (
+    content.includes('product does not exist in mt database') ||
+    message.includes('product does not exist in mt database')
+  );
+}
+
+function createFetchTimeoutError(url, timeoutMs, label = '') {
+  const err = new Error(`Upstream request timed out after ${timeoutMs}ms`);
+  err.code = 'CW_UPSTREAM_TIMEOUT';
+  err.details = {
+    url,
+    timeoutMs,
+    label: String(label || ''),
+  };
+  return err;
+}
+
+async function fetchWithTimeout(url, options = {}, config = {}) {
+  const timeoutMs = Number.isFinite(Number(config.timeoutMs))
+    ? Math.max(1000, Number(config.timeoutMs))
+    : DEFAULT_FETCH_TIMEOUT_MS;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(url, {
+      ...(options || {}),
+      signal: controller.signal,
+    });
+    return response;
+  } catch (error) {
+    if (error?.name === 'AbortError') {
+      throw createFetchTimeoutError(url, timeoutMs, config.label);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 function decodeJwtExp(token) {
   try {
@@ -124,6 +368,65 @@ function normalizeSearchText(source) {
   return text;
 }
 
+function decodeHtmlEntities(value) {
+  return String(value || '')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>');
+}
+
+function stripHtml(value) {
+  return decodeHtmlEntities(String(value || '').replace(/<[^>]*>/g, ' '))
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function parseProbeTermsFromExportHtml(html) {
+  const rowMatches = html.match(/<tr[^>]*>[\s\S]*?<\/tr>/gi) || [];
+  const rows = rowMatches.map(rowHtml => {
+    const cellMatches = rowHtml.match(/<t[dh][^>]*>[\s\S]*?<\/t[dh]>/gi) || [];
+    return cellMatches.map(cellHtml => {
+      const inner = cellHtml.replace(/^<t[dh][^>]*>/i, '').replace(/<\/t[dh]>$/i, '');
+      return stripHtml(inner);
+    });
+  });
+
+  if (rows.length < 2) {
+    return {
+      terms: [],
+      totalRows: 0,
+      referenceColumnIndex: -1,
+    };
+  }
+
+  const header = rows[1] || [];
+  const referenceColumnIndex = header.findIndex(
+    col =>
+      String(col || '')
+        .trim()
+        .toUpperCase() === 'REFERENCE'
+  );
+  const dataRows = rows.slice(2);
+  const terms = [];
+  const seen = new Set();
+
+  dataRows.forEach(row => {
+    const value = referenceColumnIndex >= 0 ? String(row[referenceColumnIndex] || '').trim() : '';
+    if (!value || seen.has(value)) return;
+    seen.add(value);
+    terms.push(value);
+  });
+
+  return {
+    terms,
+    totalRows: dataRows.length,
+    referenceColumnIndex,
+  };
+}
+
 function extractProductMeasurementLinks(sourceText, baseUrl) {
   const text = String(sourceText || '');
   if (!text) return [];
@@ -172,12 +475,53 @@ function collectSearchUrls(baseUrl, searchTerm) {
   const q = encodeURIComponent(String(searchTerm || '').trim());
   const base = String(baseUrl || '').replace(/\/+$/, '');
   return [
+    `${base}/dashboard/#/products?search=${q}`,
+    `${base}/dashboard/#/products?q=${q}`,
     `${base}/dashboard/products/?q=${q}`,
     `${base}/dashboard/products/?search=${q}`,
     `${base}/dashboard/products/?keyword=${q}`,
+    `${base}/dashboard/products/list/?q=${q}`,
+    `${base}/dashboard/products/list/?search=${q}`,
+    `${base}/dashboard/products/search/?q=${q}`,
+    `${base}/dashboard/products/search/?search=${q}`,
     `${base}/dashboard/products/`,
+    `${base}/dashboard/#/products`,
     `${base}/dashboard/`,
   ];
+}
+
+function decodeCwRelayProductId(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return '';
+  if (/^\d+$/.test(raw)) return raw;
+  try {
+    const decoded = Buffer.from(raw, 'base64').toString('utf8');
+    const match = decoded.match(/^Product:(\d+)$/i);
+    if (match?.[1]) return match[1];
+  } catch {
+    // Keep fallback when id is not relay-encoded.
+  }
+  return raw;
+}
+
+function buildSearchTermVariants(searchTerm) {
+  const raw = String(searchTerm || '').trim();
+  if (!raw) return [];
+  const variants = new Set();
+  variants.add(raw);
+  variants.add(raw.toUpperCase());
+  variants.add(raw.toLowerCase());
+
+  const noScope = raw.replace(/__[A-Za-z0-9_-]+$/, '');
+  if (noScope) variants.add(noScope);
+
+  const lastDashTrimmed = raw.includes('-') ? raw.replace(/-[^-]+$/, '') : '';
+  if (lastDashTrimmed) variants.add(lastDashTrimmed);
+
+  const normalizedWordy = raw.replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim();
+  if (normalizedWordy) variants.add(normalizedWordy);
+
+  return Array.from(variants).filter(Boolean);
 }
 
 function extractImageUrls(node, out = new Set()) {
@@ -244,17 +588,21 @@ function scoreFromHaystack(haystackText, termNorm, termTokens) {
 }
 
 async function cwGetWithSession(session, url, referer) {
-  const response = await fetch(url, {
-    method: 'GET',
-    headers: {
-      accept: 'application/json, text/plain, text/html, */*',
-      cookie: buildCookieHeader(session.cookieJar),
-      origin: session.baseUrl,
-      referer: referer || `${session.baseUrl.replace(/\/+$/, '')}/dashboard/`,
-      'x-requested-with': 'XMLHttpRequest',
-      'user-agent': 'OpenPaint-CW-Vercel/1.0',
+  const response = await fetchWithTimeout(
+    url,
+    {
+      method: 'GET',
+      headers: {
+        accept: 'application/json, text/plain, text/html, */*',
+        cookie: buildCookieHeader(session.cookieJar),
+        origin: session.baseUrl,
+        referer: referer || `${session.baseUrl.replace(/\/+$/, '')}/dashboard/`,
+        'x-requested-with': 'XMLHttpRequest',
+        'user-agent': 'OpenPaint-CW-Vercel/1.0',
+      },
     },
-  });
+    { label: 'cwGetWithSession' }
+  );
 
   const rawText = await response.text().catch(() => '');
   let body = null;
@@ -275,17 +623,21 @@ async function cwGetWithSession(session, url, referer) {
 }
 
 async function cwGetImageWithSession(session, url, referer) {
-  const response = await fetch(url, {
-    method: 'GET',
-    headers: {
-      accept: 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8',
-      cookie: buildCookieHeader(session.cookieJar),
-      origin: session.baseUrl,
-      referer: referer || `${session.baseUrl.replace(/\/+$/, '')}/dashboard/`,
-      'x-requested-with': 'XMLHttpRequest',
-      'user-agent': 'OpenPaint-CW-Vercel/1.0',
+  const response = await fetchWithTimeout(
+    url,
+    {
+      method: 'GET',
+      headers: {
+        accept: 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8',
+        cookie: buildCookieHeader(session.cookieJar),
+        origin: session.baseUrl,
+        referer: referer || `${session.baseUrl.replace(/\/+$/, '')}/dashboard/`,
+        'x-requested-with': 'XMLHttpRequest',
+        'user-agent': 'OpenPaint-CW-Vercel/1.0',
+      },
     },
-  });
+    { label: 'cwGetImageWithSession' }
+  );
 
   const contentType = String(response.headers.get('content-type') || '').toLowerCase();
   const okContentType = contentType.startsWith('image/');
@@ -376,10 +728,14 @@ async function fetchMtProductQcMeasurements({
     headers.Authorization = `Bearer ${mtAccessToken}`;
   }
 
-  const response = await fetch(`${targetUrl}?${params.toString()}`, {
-    method: 'GET',
-    headers,
-  });
+  const response = await fetchWithTimeout(
+    `${targetUrl}?${params.toString()}`,
+    {
+      method: 'GET',
+      headers,
+    },
+    { label: 'fetchMtProductQcMeasurements' }
+  );
 
   const rawText = await response.text().catch(() => '');
   let body = null;
@@ -401,14 +757,22 @@ async function fetchMtProductQcMeasurements({
 
 async function fetchJsonOrText(url, options = {}) {
   const extraHeaders = options && typeof options === 'object' ? options.headers || {} : {};
-  const response = await fetch(url, {
-    method: 'GET',
-    headers: {
-      accept: 'application/json, text/plain, text/html, */*',
-      'user-agent': 'OpenPaint-CW-Vercel/1.0',
-      ...extraHeaders,
+  const timeoutMs =
+    options && typeof options === 'object' && Number.isFinite(Number(options.timeoutMs))
+      ? Number(options.timeoutMs)
+      : undefined;
+  const response = await fetchWithTimeout(
+    url,
+    {
+      method: 'GET',
+      headers: {
+        accept: 'application/json, text/plain, text/html, */*',
+        'user-agent': 'OpenPaint-CW-Vercel/1.0',
+        ...extraHeaders,
+      },
     },
-  });
+    { timeoutMs, label: 'fetchJsonOrText' }
+  );
 
   const rawText = await response.text().catch(() => '');
   let body = null;
@@ -464,11 +828,15 @@ async function postCwGraphqlWithSession(session, payload, authorization = '') {
     headers.authorization = authorization;
   }
 
-  const response = await fetch(`${baseUrl}/api/`, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify(payload),
-  });
+  const response = await fetchWithTimeout(
+    `${baseUrl}/api/`,
+    {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(payload),
+    },
+    { label: 'postCwGraphqlWithSession' }
+  );
 
   const rawText = await response.text().catch(() => '');
   let body = null;
@@ -627,15 +995,19 @@ async function fetchMtAccessToken({ mtApiBaseUrl, username, password }) {
   let lastAttempt = null;
   const attempts = [];
   for (const payload of payloads) {
-    const response = await fetch(`${baseUrl}/mtApi/token/`, {
-      method: 'POST',
-      headers: {
-        accept: 'application/json, text/plain, */*',
-        'content-type': 'application/json',
-        'user-agent': 'OpenPaint-CW-Vercel/1.0',
+    const response = await fetchWithTimeout(
+      `${baseUrl}/mtApi/token/`,
+      {
+        method: 'POST',
+        headers: {
+          accept: 'application/json, text/plain, */*',
+          'content-type': 'application/json',
+          'user-agent': 'OpenPaint-CW-Vercel/1.0',
+        },
+        body: JSON.stringify(payload),
       },
-      body: JSON.stringify(payload),
-    });
+      { label: 'fetchMtAccessToken' }
+    );
 
     const rawText = await response.text().catch(() => '');
     let body = null;
@@ -874,17 +1246,6 @@ function extractImageUrlsFromText(rawText, out = new Set()) {
   return out;
 }
 
-function decodeHtmlEntities(input) {
-  return String(input || '')
-    .replace(/&amp;/g, '&')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
 function sanitizeExtractedUrl(value) {
   if (!value) return '';
   let url = decodeHtmlEntities(value);
@@ -983,13 +1344,78 @@ function scoreProductNode(node, searchTerm) {
 
 async function handleProductSearch({ req, res, body, startedAt }) {
   const searchTerm = String(body?.search || body?.query || '').trim();
+  const manualHintReferences = getManualReferenceHints(searchTerm);
+  const manualHintReferenceBases = Array.from(
+    new Set(manualHintReferences.map(stripScopedReferenceSuffix).filter(Boolean))
+  );
+  const manualHintNoneTerm = isManualReferenceHintNoneTerm(searchTerm);
+  const manualHintDiagnostics = {
+    term: searchTerm || null,
+    termKey: normalizeManualReferenceHintKey(searchTerm) || null,
+    noneTerm: manualHintNoneTerm,
+    references: manualHintReferences,
+    referenceBases: manualHintReferenceBases,
+    applied: manualHintNoneTerm || manualHintReferences.length > 0,
+  };
+  const probeModeState = normalizeProbeMode(body, req.query || {});
+  const isTurboProbe = probeModeState.isTurboProbe;
   const providedFormId = String(body?.formId || req.query?.formId || '').trim();
+  const stageTimings = {
+    tokenMs: null,
+    graphqlMs: null,
+    sessionMs: null,
+    pidInfoMs: null,
+    qcMs: null,
+    turboFastPathMs: null,
+  };
+  const buildTimings = () => ({
+    ...stageTimings,
+    totalMs: Date.now() - startedAt,
+  });
+
+  if (SHOULD_LOG_PROBE_MODE) {
+    console.log('[CW Search] probe mode', {
+      requested: probeModeState.requestedProbeMode || null,
+      applied: isTurboProbe ? 'turbo' : 'default',
+      bodyProbeMode: body?.probeMode || body?.mode || null,
+      queryProbeMode: req.query?.probeMode || null,
+      queryFast: req.query?.fast || null,
+      bodyFast: body?.fast === true,
+      formId: providedFormId || null,
+      search: searchTerm,
+    });
+  }
+
   if (!searchTerm) {
     return res.status(400).json({
       success: false,
       code: 'CW_SEARCH_REQUIRED',
       message: 'search is required',
     });
+  }
+
+  if (manualHintNoneTerm) {
+    const payload = {
+      success: false,
+      code: 'CW_PRODUCT_MEASUREMENT_NOT_FOUND',
+      message: 'No valid product measurement reference is known for this term',
+      search: searchTerm,
+      formId: providedFormId || null,
+      summary: {
+        manualHintApplied: true,
+        manualHintNoneTerm: true,
+        manualHintReferenceCount: manualHintReferences.length,
+      },
+      manualReferenceHints: manualHintDiagnostics,
+      timings: buildTimings(),
+      durationMs: Date.now() - startedAt,
+    };
+    return res.status(404).json(
+      buildSearchResponse(payload, {
+        isTurboProbe,
+        requestedProbeMode: probeModeState.requestedProbeMode,
+      })
+    );
   }
 
   const renderedHtmlExtraction = parseRenderedMeasurementsHtml(body?.renderedHtml || '');
@@ -1010,7 +1436,6 @@ async function handleProductSearch({ req, res, body, startedAt }) {
     .trim()
     .replace(/\/+$/, '');
 
-  const isLikelyReference = /^[A-Z0-9][A-Z0-9-_]{3,}$/i.test(searchTerm);
   const providedStyle = String(body?.style || '').trim();
   const providedStyleCode = String(body?.styleCode || body?.style_code || '').trim();
   const providedProductReference = String(
@@ -1019,6 +1444,7 @@ async function handleProductSearch({ req, res, body, startedAt }) {
   const providedMtAccessToken = String(body?.mtAccessToken || '').trim();
   let autoTokenResult = null;
   if (!providedMtAccessToken) {
+    const tokenStartedAt = Date.now();
     autoTokenResult = await fetchMtAccessTokenViaCwGraphql({
       override,
       username: mtUsername,
@@ -1045,6 +1471,7 @@ async function handleProductSearch({ req, res, body, startedAt }) {
         ],
       };
     }
+    stageTimings.tokenMs = Date.now() - tokenStartedAt;
   }
   const mtAccessToken = providedMtAccessToken || autoTokenResult?.accessToken || '';
   const providedBucketName = String(
@@ -1075,39 +1502,392 @@ async function handleProductSearch({ req, res, body, startedAt }) {
   }
 }`;
 
-  const productList = await cwGraphqlRequest({
-    override,
-    operationName: 'ProductList',
-    query: gqlProductListQuery,
-    variables: {
-      after: '',
-      before: '',
-      lang: 'en',
-      sortBy: ['id'],
-      minimal: true,
-      first: 10,
-      reference: isLikelyReference ? searchTerm : '',
-      translations__name: searchTerm,
-    },
-  });
+  const graphqlDiscoveryAttempts = [];
+  const graphqlStartedAt = Date.now();
+  const fullTermVariants = Array.from(
+    new Set([
+      ...buildSearchTermVariants(searchTerm),
+      ...manualHintReferences,
+      ...manualHintReferenceBases,
+      ...manualHintReferenceBases.map(value => value.toUpperCase()),
+      ...manualHintReferenceBases.map(value => value.toLowerCase()),
+    ])
+  );
+  const termVariants = isTurboProbe
+    ? Array.from(
+        new Set(
+          [
+            searchTerm,
+            searchTerm.toUpperCase(),
+            searchTerm.toLowerCase(),
+            ...manualHintReferences,
+            ...manualHintReferenceBases,
+          ].filter(Boolean)
+        )
+      )
+    : fullTermVariants;
+  const productNodesByKey = new Map();
+  let productListPrimary = null;
 
-  const productEdges = Array.isArray(productList?.body?.data?.products?.edges)
-    ? productList.body.data.products.edges
-    : [];
-  const productNodes = productEdges.map(edge => edge?.node).filter(Boolean);
+  for (const termVariant of termVariants) {
+    const variantLooksLikeReference = /^[A-Z0-9][A-Z0-9-_]{3,}$/i.test(termVariant);
+    const queryPlans = isTurboProbe
+      ? [
+          {
+            strategy: 'graphql-reference-only',
+            reference: variantLooksLikeReference ? termVariant : '',
+            translations__name: '',
+            first: 20,
+          },
+          {
+            strategy: 'graphql-name-only',
+            reference: '',
+            translations__name: termVariant,
+            first: 20,
+          },
+        ]
+      : [
+          {
+            strategy: 'graphql-reference+name',
+            reference: variantLooksLikeReference ? termVariant : '',
+            translations__name: termVariant,
+            first: 30,
+          },
+          {
+            strategy: 'graphql-name-only',
+            reference: '',
+            translations__name: termVariant,
+            first: 40,
+          },
+          {
+            strategy: 'graphql-reference-only',
+            reference: variantLooksLikeReference ? termVariant : '',
+            translations__name: '',
+            first: 40,
+          },
+        ];
+
+    for (const plan of queryPlans) {
+      if (!plan.reference && !plan.translations__name) continue;
+      const result = await cwGraphqlRequest({
+        override,
+        operationName: 'ProductList',
+        query: gqlProductListQuery,
+        variables: {
+          after: '',
+          before: '',
+          lang: 'en',
+          sortBy: ['id'],
+          minimal: true,
+          first: plan.first,
+          reference: plan.reference,
+          translations__name: plan.translations__name,
+        },
+      });
+      if (!productListPrimary) productListPrimary = result;
+      const edges = Array.isArray(result?.body?.data?.products?.edges)
+        ? result.body.data.products.edges
+        : [];
+      const nodes = edges.map(edge => edge?.node).filter(Boolean);
+
+      graphqlDiscoveryAttempts.push({
+        strategy: plan.strategy,
+        termVariant,
+        reference: plan.reference,
+        translations__name: plan.translations__name,
+        first: plan.first,
+        status: result?.status || null,
+        ok: Boolean(result?.ok),
+        nodeCount: nodes.length,
+        totalCount: Number(result?.body?.data?.products?.totalCount || 0),
+      });
+
+      nodes.forEach(node => {
+        const key = String(node?.id || node?.reference || '').trim();
+        if (!key) return;
+        if (!productNodesByKey.has(key)) {
+          productNodesByKey.set(key, node);
+        }
+      });
+
+      if (isTurboProbe && nodes.length > 0 && plan.strategy === 'graphql-reference-only') {
+        break;
+      }
+    }
+
+    if (isTurboProbe && productNodesByKey.size > 0) {
+      break;
+    }
+  }
+
+  const productNodes = Array.from(productNodesByKey.values());
+  stageTimings.graphqlMs = Date.now() - graphqlStartedAt;
   const rankedProducts = productNodes
     .map(node => ({ node, score: scoreProductNode(node, searchTerm) }))
     .sort((a, b) => b.score - a.score);
 
   if (rankedProducts.length > 0) {
+    const sessionStartedAt = Date.now();
     const session = await createCwSession(override);
+    stageTimings.sessionMs = Date.now() - sessionStartedAt;
     const selectedNode = rankedProducts[0].node;
     const productId = String(selectedNode?.id || '').trim();
+    const measurementProductId = decodeCwRelayProductId(productId);
     const productReference = String(selectedNode?.reference || '').trim();
     const dashboardEditUrl = `${String(override.baseUrl || 'https://cw40.comfort-works.com').replace(/\/+$/, '')}/dashboard/#/products/edit/${encodeURIComponent(productId)}`;
-    const productMeasurementsInfoUrl = `${pidBaseUrl}/product-measurements/${encodeURIComponent(productId)}`;
+    const productMeasurementsInfoUrl = `${pidBaseUrl}/product-measurements/${encodeURIComponent(measurementProductId)}`;
+
+    if (isTurboProbe && productReference) {
+      const turboFastPathStartedAt = Date.now();
+      const fastReferenceCandidates = Array.from(
+        new Set(
+          [
+            providedProductReference,
+            ...manualHintReferences,
+            ...manualHintReferenceBases,
+            productReference,
+          ]
+            .map(value => String(value || '').trim())
+            .filter(Boolean)
+        )
+      );
+
+      const fastStylePairs = [];
+      const fastPairSeen = new Set();
+      const pushFastPair = (styleRaw, styleCodeRaw) => {
+        const style = String(styleRaw || '').trim();
+        const styleCode = String(styleCodeRaw || '').trim();
+        if (!style && !styleCode) return;
+        const key = `${style.toLowerCase()}|${styleCode.toLowerCase()}`;
+        if (fastPairSeen.has(key)) return;
+        fastPairSeen.add(key);
+        fastStylePairs.push({ style, styleCode });
+      };
+
+      if (providedStyle || providedStyleCode) {
+        pushFastPair(providedStyle, providedStyleCode);
+      }
+      TURBO_FASTPATH_STYLE_PAIRS.forEach(pair => pushFastPair(pair.style, pair.styleCode));
+
+      const fastAttempts = [];
+      const fastMeasurements = [];
+      const fastDeadReferences = new Set();
+      let activeMtToken = mtAccessToken;
+      const fastQcStartedAt = Date.now();
+
+      outerFastPath: for (const referenceCandidate of fastReferenceCandidates) {
+        if (fastDeadReferences.has(referenceCandidate)) continue;
+        for (const pair of fastStylePairs) {
+          let attempt = await fetchMtProductQcMeasurements({
+            session,
+            mtApiBaseUrl: pidBaseUrl,
+            productReference: referenceCandidate,
+            style: pair.style,
+            styleCode: pair.styleCode,
+            bucketName: providedBucketName,
+            mtAccessToken: activeMtToken,
+          });
+
+          if (attempt.status === 401 && !providedMtAccessToken) {
+            const refreshedToken = await fetchMtAccessTokenViaCwGraphql({
+              override,
+              username: mtUsername,
+              password: mtPassword,
+              forceRefresh: true,
+            });
+            if (refreshedToken?.ok && refreshedToken?.accessToken) {
+              activeMtToken = refreshedToken.accessToken;
+              attempt = await fetchMtProductQcMeasurements({
+                session,
+                mtApiBaseUrl: pidBaseUrl,
+                productReference: referenceCandidate,
+                style: pair.style,
+                styleCode: pair.styleCode,
+                bucketName: providedBucketName,
+                mtAccessToken: activeMtToken,
+              });
+            }
+          }
+
+          const bodyStatus = Number(attempt?.body?.status);
+          const looksOk =
+            attempt.ok &&
+            (Number.isFinite(bodyStatus) ? bodyStatus >= 200 && bodyStatus < 300 : true);
+
+          fastAttempts.push({
+            productReference: referenceCandidate,
+            style: pair.style,
+            styleCode: pair.styleCode || null,
+            status: attempt.status,
+            ok: attempt.ok,
+            bodyStatus: Number.isFinite(bodyStatus) ? bodyStatus : null,
+            targetUrl: attempt.targetUrl,
+            params: attempt.params,
+            hasContent: Boolean(attempt?.body?.content),
+            contentKeys:
+              attempt?.body?.content && typeof attempt.body.content === 'object'
+                ? Object.keys(attempt.body.content)
+                : [],
+            message:
+              typeof attempt?.body?.message === 'string'
+                ? attempt.body.message.slice(0, 240)
+                : typeof attempt?.body?.error === 'string'
+                  ? attempt.body.error.slice(0, 240)
+                  : null,
+          });
+
+          if (isDefinitiveMtMissingProduct(attempt)) {
+            fastDeadReferences.add(referenceCandidate);
+            break;
+          }
+
+          if (looksOk && attempt?.body?.content) {
+            const actualStyle = String(
+              attempt?.body?.content?.style_name || pair.style || ''
+            ).trim();
+            const actualStyleCode = String(
+              attempt?.body?.content?.style_code || pair.styleCode || ''
+            ).trim();
+            fastMeasurements.push({
+              productReference: referenceCandidate,
+              style: actualStyle,
+              styleCode: actualStyleCode || null,
+              data: {
+                product_reference: attempt?.body?.content?.product_reference || referenceCandidate,
+                style_name: actualStyle,
+                style_code: actualStyleCode || null,
+              },
+              raw: null,
+            });
+            break outerFastPath;
+          }
+        }
+      }
+      stageTimings.qcMs = Date.now() - fastQcStartedAt;
+      stageTimings.turboFastPathMs = Date.now() - turboFastPathStartedAt;
+
+      if (fastMeasurements.length > 0) {
+        const fastStyleOptions = fastMeasurements.map(item => ({
+          productReference: item.productReference,
+          style: item.style,
+          styleCode: item.styleCode || '',
+          label: `${item.productReference || productReference} - ${item.style || 'Style'}${item.styleCode ? ` (${item.styleCode})` : ''}`,
+        }));
+        const payload = {
+          success: true,
+          code: 'CW_PRODUCT_MEASUREMENTS_LOOKUP_OK',
+          mode: 'graphql-product-list',
+          search: searchTerm,
+          discovery: {
+            graphqlDiscoveryAttempts: graphqlDiscoveryAttempts.slice(0, 6),
+          },
+          product: {
+            id: productId,
+            measurementId: measurementProductId,
+            reference: productReference,
+            status: selectedNode?.status || null,
+            translations: [],
+          },
+          urls: {
+            dashboardEditUrl,
+            productMeasurementsInfoUrl,
+            measurementUrls: [
+              `${pidBaseUrl}/product-measurements/${encodeURIComponent(measurementProductId)}/${productReference}`,
+            ],
+          },
+          summary: {
+            productMatchCount: rankedProducts.length,
+            measurementUrlCount: 1,
+            discoveredSuffixCount: 0,
+            discoveredTupleCount: 0,
+            tupleSource: 'none',
+            attemptPlanMode: 'turbo-fast-path',
+            fetchedMeasurementDetailCount: 0,
+            imageCount: 0,
+            referenceCandidateCount: fastReferenceCandidates.length,
+            scopedReferenceCount: fastReferenceCandidates.filter(ref => String(ref).includes('__'))
+              .length,
+            qcAttemptedCount: fastAttempts.length,
+            qcDeadReferenceCount: fastDeadReferences.size,
+            qcSkippedAttemptCount: 0,
+            qcSkippedAttemptsByReason: {
+              deadReference: 0,
+              turboRefLimit: 0,
+              turboScopedRefLimit: 0,
+              syntheticScopedAfterBase: 0,
+              turboSyntheticScopedWithoutTuple: 0,
+            },
+            qcMeasurementsFound: true,
+            formMeasurementsFound: false,
+            renderedHtmlParsed: Boolean(renderedHtmlExtraction),
+            manualHintApplied: manualHintDiagnostics.applied,
+            manualHintNoneTerm: manualHintDiagnostics.noneTerm,
+            manualHintReferenceCount: manualHintReferences.length,
+          },
+          manualReferenceHints: manualHintDiagnostics,
+          timings: buildTimings(),
+          images: [],
+          qcMeasurements: fastMeasurements[0],
+          qcMeasurementsByStyle: fastMeasurements,
+          styleOptions: fastStyleOptions,
+          referenceCandidates: fastReferenceCandidates,
+          referenceCandidateOrigins: fastReferenceCandidates.map(ref => ({
+            reference: ref,
+            origins: [
+              manualHintReferences.includes(ref)
+                ? 'manualReferenceHint'
+                : manualHintReferenceBases.includes(ref)
+                  ? 'manualReferenceHintBase'
+                  : ref === providedProductReference
+                    ? 'providedProductReference'
+                    : 'graphql-product-reference',
+            ],
+          })),
+          tupleSource: 'none',
+          attemptPlanMode: 'turbo-fast-path',
+          selectedTuples: [],
+          formMeasurements: null,
+          renderedHtmlExtraction,
+          mtAuth: {
+            usedProvidedToken: Boolean(providedMtAccessToken),
+            tokenFetchOk: Boolean(autoTokenResult?.ok),
+            tokenFetchStatus: autoTokenResult?.status || null,
+            tokenFetchSource: autoTokenResult?.source || null,
+            tokenFetchPayloadKeys: autoTokenResult?.payloadKeys || null,
+            tokenFetchBody: autoTokenResult?.body || null,
+            tokenFetchAttempts: autoTokenResult?.attempts || null,
+            mtUsernameUsed: mtUsername || null,
+          },
+          qcMeasurementAttempts: fastAttempts,
+          measurementDetails: [],
+          candidates: rankedProducts.slice(0, 8).map(item => ({
+            id: item.node?.id || null,
+            reference: item.node?.reference || null,
+            score: item.score,
+          })),
+          upstream: {
+            graphqlStatus: productListPrimary?.status || null,
+            graphqlOk: Boolean(productListPrimary?.ok),
+            graphqlDiscoveryAttempts: graphqlDiscoveryAttempts.slice(0, 6),
+            pidInfoStatus: null,
+            pidInfoOk: null,
+          },
+          upstreamBody: null,
+          upstreamSnippet: null,
+          durationMs: Date.now() - startedAt,
+        };
+
+        return res.status(200).json(
+          buildSearchResponse(payload, {
+            isTurboProbe,
+            requestedProbeMode: probeModeState.requestedProbeMode,
+          })
+        );
+      }
+    }
 
     const authHeaders = mtAccessToken ? { authorization: `Bearer ${mtAccessToken}` } : {};
+    const pidInfoStartedAt = Date.now();
     let infoResult = await fetchJsonOrText(productMeasurementsInfoUrl, { headers: authHeaders });
     const sessionInfo = await cwGetWithSession(
       session,
@@ -1123,11 +1903,13 @@ async function handleProductSearch({ req, res, body, startedAt }) {
         rawText: sessionInfo.rawText,
       };
     }
+    stageTimings.pidInfoMs = Date.now() - pidInfoStartedAt;
 
     const textPool = collectStrings(infoResult.body, []);
     textPool.push(infoResult.rawText || '');
     const tupleRowsFromInfo = extractTupleRowsFromHtml(infoResult.rawText, productReference);
     const pathSuffixes = new Set([
+      ...extractMeasurementPathSuffixes(textPool, measurementProductId),
       ...extractMeasurementPathSuffixes(textPool, productId),
       ...extractSuffixesByReference(textPool, productReference),
       ...extractSuffixesByReferencePrefix(textPool, productReference),
@@ -1136,31 +1918,60 @@ async function handleProductSearch({ req, res, body, startedAt }) {
       pathSuffixes.add(`${row.productReference},${row.style},${row.styleCode}`);
     });
 
-    const referenceCandidates = new Set(
-      extractReferenceVariants(textPool, providedProductReference || productReference)
+    const referenceCandidates = new Set();
+    const referenceCandidateOrigins = new Map();
+    const addReferenceCandidate = (value, origin) => {
+      const ref = String(value || '').trim();
+      if (!ref) return;
+      referenceCandidates.add(ref);
+      if (!origin) return;
+      if (!referenceCandidateOrigins.has(ref)) {
+        referenceCandidateOrigins.set(ref, new Set());
+      }
+      referenceCandidateOrigins.get(ref).add(origin);
+    };
+
+    manualHintReferences.forEach(ref => {
+      addReferenceCandidate(ref, 'manualReferenceHint');
+    });
+    manualHintReferenceBases.forEach(ref => {
+      addReferenceCandidate(ref, 'manualReferenceHintBase');
+    });
+
+    extractReferenceVariants(textPool, providedProductReference || productReference).forEach(
+      ref => {
+        addReferenceCandidate(ref, 'extractReferenceVariants');
+      }
     );
+    if (providedProductReference) {
+      addReferenceCandidate(providedProductReference, 'providedProductReference');
+    }
     tupleRowsFromInfo.forEach(row => {
-      referenceCandidates.add(String(row.productReference || '').trim());
+      addReferenceCandidate(row.productReference, 'tupleRowsFromInfo');
     });
 
     // Query sibling references (e.g. IK-KN-4__DF / IK-KN-4__SV / IK-KN-4__LV)
     // so QC lookup can try the correct scoped product_reference.
-    const siblingSearchTerms = Array.from(
-      new Set(
-        [
-          productReference,
-          `${productReference}__`,
-          String(productReference || '').replace(/-[^-]+$/, ''),
-          ...((Array.isArray(selectedNode?.translations?.edges)
-            ? selectedNode.translations.edges
-                .map(edge => String(edge?.node?.name || '').trim())
-                .filter(Boolean)
-            : []) || []),
-        ]
-          .map(value => String(value || '').trim())
-          .filter(Boolean)
-      )
-    );
+    const siblingSearchTerms = isTurboProbe
+      ? []
+      : Array.from(
+          new Set(
+            [
+              productReference,
+              `${productReference}__`,
+              String(productReference || '').replace(/-[^-]+$/, ''),
+              ...manualHintReferences,
+              ...manualHintReferenceBases,
+              ...((Array.isArray(selectedNode?.translations?.edges)
+                ? selectedNode.translations.edges
+                    .map(edge => String(edge?.node?.name || '').trim())
+                    .filter(Boolean)
+                : []) || []),
+            ]
+              .map(value => String(value || '').trim())
+              .filter(Boolean)
+          )
+        );
     const siblingEdges = [];
     for (const refTerm of siblingSearchTerms) {
       const siblingRefs = await cwGraphqlRequest({
@@ -1187,7 +1998,7 @@ async function handleProductSearch({ req, res, body, startedAt }) {
       const ref = String(edge?.node?.reference || '').trim();
       if (!ref) return;
       if (ref === productReference || ref.startsWith(`${productReference}__`)) {
-        referenceCandidates.add(ref);
+        addReferenceCandidate(ref, 'siblingGraphql');
       }
     });
 
@@ -1196,7 +2007,7 @@ async function handleProductSearch({ req, res, body, startedAt }) {
         .split(',')
         .map(part => part.trim())
         .filter(Boolean)[0];
-      if (first) referenceCandidates.add(first);
+      if (first) addReferenceCandidate(first, 'pathSuffixes');
     });
 
     const tupleSuffixes = Array.from(pathSuffixes).filter(suffix => {
@@ -1213,18 +2024,20 @@ async function handleProductSearch({ req, res, body, startedAt }) {
         : 'none';
 
     const fullMeasurementUrls = Array.from(pathSuffixes).map(
-      suffix => `${pidBaseUrl}/product-measurements/${encodeURIComponent(productId)}/${suffix}`
+      suffix =>
+        `${pidBaseUrl}/product-measurements/${encodeURIComponent(measurementProductId)}/${suffix}`
     );
 
     if (fullMeasurementUrls.length === 0 && productReference) {
       fullMeasurementUrls.push(
-        `${pidBaseUrl}/product-measurements/${encodeURIComponent(productId)}/${productReference}`
+        `${pidBaseUrl}/product-measurements/${encodeURIComponent(measurementProductId)}/${productReference}`
       );
     }
 
     const detailResults = [];
     const detailAuthHeaders = mtAccessToken ? { authorization: `Bearer ${mtAccessToken}` } : {};
-    for (const url of fullMeasurementUrls.slice(0, 8)) {
+    const detailFetchLimit = isTurboProbe ? 0 : 8;
+    for (const url of fullMeasurementUrls.slice(0, detailFetchLimit)) {
       let detail = await fetchJsonOrText(url, { headers: detailAuthHeaders });
       if (!detail.body) {
         const sessionDetail = await cwGetWithSession(
@@ -1342,23 +2155,28 @@ async function handleProductSearch({ req, res, body, startedAt }) {
     // If product pages do not expose scoped references clearly, synthesize the
     // common variant refs used in CW product matrices so tuple attempts can
     // still target valid MT records (e.g. IK-KN-4__DF/__SV/__LV).
-    if (!hasScopedReferences && productReference) {
+    if (!hasScopedReferences && productReference && !isTurboProbe) {
       ['DF', 'SV', 'LV'].forEach(code => {
-        referenceCandidates.add(`${productReference}__${code}`);
+        addReferenceCandidate(`${productReference}__${code}`, 'syntheticScopedFallback');
       });
     }
     if (!pairCandidates.length) {
-      if (Array.from(referenceCandidates).some(ref => String(ref).includes('__'))) {
-        // Prefer the common scoped pairing used by many IK variants.
-        pushPair('Signature', 'SDPT_SP');
-        pushPair('Original', 'VELC_SP');
-        pushPair('Minimalist', 'LSKT_SI');
+      if (isTurboProbe) {
+        pushPair('Original', 'SHRT_SP');
+        pushPair('Signature', 'CNRP_SP');
+        pushPair('Original', 'SP');
+        pushPair('Signature', 'SP');
       } else {
+        // Default matrix prioritizes common base-reference styles first.
+        // Scoped references are still attempted later when needed.
         pushPair('Signature', 'CNRP_SP');
         pushPair('Original', 'SHRT_SP');
         pushPair('Signature', 'SDPT_SP');
         pushPair('Original', 'VELC_SP');
+        pushPair('Original', 'MLTP_PM');
         pushPair('Minimalist', 'LSKT_SI');
+        pushPair('Urban', '');
+        pushPair('Urban', 'SP');
         pushPair('Original', 'SP');
         pushPair('Signature', 'SP');
         pushPair('Original', '');
@@ -1370,11 +2188,39 @@ async function handleProductSearch({ req, res, body, startedAt }) {
     const qcMeasurementsByStyle = [];
     let activeMtToken = mtAccessToken;
     let attemptCount = 0;
+    const deadReferences = new Set();
+    const referenceAttemptCounts = new Map();
+    const qcSkipDiagnostics = {
+      deadReference: 0,
+      turboRefLimit: 0,
+      turboScopedRefLimit: 0,
+      syntheticScopedAfterBase: 0,
+      turboSyntheticScopedWithoutTuple: 0,
+    };
+
+    const syntheticOnlyScopedRefs = new Set(
+      Array.from(referenceCandidates).filter(ref => {
+        const value = String(ref || '').trim();
+        if (!value.includes('__')) return false;
+        const origins = Array.from(referenceCandidateOrigins.get(value) || []);
+        if (!origins.length) return false;
+        return origins.every(origin => origin === 'syntheticScopedFallback');
+      })
+    );
+
     const orderedReferenceCandidates = Array.from(referenceCandidates);
     orderedReferenceCandidates.sort((a, b) => {
-      const aScoped = String(a).includes('__') ? 0 : 1;
-      const bScoped = String(b).includes('__') ? 0 : 1;
-      if (aScoped !== bScoped) return aScoped - bScoped;
+      const rankRef = ref => {
+        const value = String(ref || '').trim();
+        const scoped = value.includes('__');
+        if (productReference && value.toLowerCase() === productReference.toLowerCase()) return 0;
+        if (!scoped) return 1;
+        if (syntheticOnlyScopedRefs.has(value)) return 3;
+        return 2;
+      };
+      const aRank = rankRef(a);
+      const bRank = rankRef(b);
+      if (aRank !== bRank) return aRank - bRank;
       return String(a).localeCompare(String(b));
     });
     if (!orderedReferenceCandidates.length && productReference) {
@@ -1388,17 +2234,17 @@ async function handleProductSearch({ req, res, body, startedAt }) {
       orderedReferenceCandidates.unshift(providedProductReference);
     }
 
-    const tuplePlan = [];
-    const tupleSeen = new Set();
+    const explicitTuplePlan = [];
+    const explicitTupleSeen = new Set();
     const pushTuplePlan = (productReferenceCandidate, styleCandidate, styleCodeCandidate) => {
       const ref = String(productReferenceCandidate || '').trim();
       const style = String(styleCandidate || '').trim();
       const styleCode = String(styleCodeCandidate || '').trim();
       if (!ref || !style || !styleCode) return;
       const key = `${ref.toLowerCase()}|${style.toLowerCase()}|${styleCode.toLowerCase()}`;
-      if (tupleSeen.has(key)) return;
-      tupleSeen.add(key);
-      tuplePlan.push({ productReference: ref, style, styleCode });
+      if (explicitTupleSeen.has(key)) return;
+      explicitTupleSeen.add(key);
+      explicitTuplePlan.push({ productReference: ref, style, styleCode });
     };
 
     tupleSuffixes.forEach(suffix => {
@@ -1410,27 +2256,18 @@ async function handleProductSearch({ req, res, body, startedAt }) {
       pushTuplePlan(parts[0], parts[1], parts[2]);
     });
 
-    // If no explicit tuple suffixes were discovered, synthesize tuple attempts
-    // from discovered sibling references + style pairs.
-    if (!tuplePlan.length) {
-      const scopedRefs = orderedReferenceCandidates.filter(ref => String(ref).includes('__'));
-      scopedRefs.forEach(ref => {
-        pairCandidates.forEach(pair => {
-          pushTuplePlan(ref, pair.style, pair.styleCode);
-        });
-      });
-    }
+    // Build a broad fallback matrix as a second stage so base references are still
+    // tested even when tuple-derived (or synthetic scoped) references exist.
+    const fallbackPlan = orderedReferenceCandidates.flatMap(productReferenceCandidate =>
+      pairCandidates.map(pair => ({
+        productReference: productReferenceCandidate,
+        style: pair.style,
+        styleCode: pair.styleCode,
+      }))
+    );
 
-    let attemptPlan = tuplePlan.length
-      ? tuplePlan
-      : orderedReferenceCandidates.flatMap(productReferenceCandidate =>
-          pairCandidates.map(pair => ({
-            productReference: productReferenceCandidate,
-            style: pair.style,
-            styleCode: pair.styleCode,
-          }))
-        );
-    const attemptPlanMode = tuplePlan.length ? 'tuple-only' : 'fallback';
+    let attemptPlan = [...explicitTuplePlan, ...fallbackPlan];
+    const attemptPlanMode = explicitTuplePlan.length ? 'tuple-plus-fallback' : 'fallback';
 
     const attemptPlanSeen = new Set(
       attemptPlan.map(
@@ -1455,13 +2292,65 @@ async function handleProductSearch({ req, res, body, startedAt }) {
       attemptPlan.push(candidate);
     };
 
+    const explicitTupleRefs = new Set(
+      explicitTuplePlan.map(item =>
+        String(item?.productReference || '')
+          .trim()
+          .toLowerCase()
+      )
+    );
+    let successfulBaseReference = false;
+    let successfulQcCount = 0;
+
+    const maxQcAttempts = isTurboProbe ? TURBO_MAX_QC_ATTEMPTS : MAX_QC_ATTEMPTS;
+    const qcStartedAt = Date.now();
     for (let planIndex = 0; planIndex < attemptPlan.length; planIndex += 1) {
       const entry = attemptPlan[planIndex];
       const productReferenceCandidate = String(entry.productReference || '').trim();
       const styleCandidate = String(entry.style || '').trim();
       const styleCodeCandidate = String(entry.styleCode || '').trim();
-      if (attemptCount >= MAX_QC_ATTEMPTS) break;
+
+      const isScopedRef = productReferenceCandidate.includes('__');
+      const isSyntheticScoped = syntheticOnlyScopedRefs.has(productReferenceCandidate);
+      const hasExplicitTuple = explicitTupleRefs.has(productReferenceCandidate.toLowerCase());
+
+      if (deadReferences.has(productReferenceCandidate)) {
+        qcSkipDiagnostics.deadReference += 1;
+        continue;
+      }
+
+      if (isTurboProbe) {
+        const refAttempts = Number(referenceAttemptCounts.get(productReferenceCandidate) || 0);
+        const scopedLimit =
+          isScopedRef && !hasExplicitTuple
+            ? TURBO_MAX_ATTEMPTS_PER_SCOPED_REFERENCE
+            : TURBO_MAX_ATTEMPTS_PER_REFERENCE;
+        if (isScopedRef && !hasExplicitTuple && refAttempts >= scopedLimit) {
+          qcSkipDiagnostics.turboScopedRefLimit += 1;
+          continue;
+        }
+        if (refAttempts >= TURBO_MAX_ATTEMPTS_PER_REFERENCE) {
+          qcSkipDiagnostics.turboRefLimit += 1;
+          continue;
+        }
+      }
+
+      if (isTurboProbe && isScopedRef && isSyntheticScoped && !hasExplicitTuple) {
+        qcSkipDiagnostics.turboSyntheticScopedWithoutTuple += 1;
+        continue;
+      }
+
+      if (successfulBaseReference && isScopedRef && isSyntheticScoped && !hasExplicitTuple) {
+        qcSkipDiagnostics.syntheticScopedAfterBase += 1;
+        continue;
+      }
+
+      if (attemptCount >= maxQcAttempts) break;
       attemptCount += 1;
+      referenceAttemptCounts.set(
+        productReferenceCandidate,
+        Number(referenceAttemptCounts.get(productReferenceCandidate) || 0) + 1
+      );
 
       let attempt = await fetchMtProductQcMeasurements({
         session,
@@ -1531,7 +2420,14 @@ async function handleProductSearch({ req, res, body, startedAt }) {
         discoveredTuples.forEach(enqueueTupleSuffix);
       }
 
+      if (isDefinitiveMtMissingProduct(attempt)) {
+        deadReferences.add(productReferenceCandidate);
+      }
+
       if (looksOk && attempt?.body?.content) {
+        if (!isScopedRef) {
+          successfulBaseReference = true;
+        }
         const actualStyle = String(
           attempt?.body?.content?.style_name || styleCandidate || ''
         ).trim();
@@ -1542,8 +2438,15 @@ async function handleProductSearch({ req, res, body, startedAt }) {
           productReference: productReferenceCandidate,
           style: actualStyle,
           styleCode: actualStyleCode || null,
-          data: attempt.body.content,
-          raw: attempt.body,
+          data: isTurboProbe
+            ? {
+                product_reference:
+                  attempt?.body?.content?.product_reference || productReferenceCandidate,
+                style_name: actualStyle,
+                style_code: actualStyleCode || null,
+              }
+            : attempt.body.content,
+          raw: isTurboProbe ? null : attempt.body,
         };
         const key = `${String(entry.productReference || '').toLowerCase()}|${String(entry.style || '').toLowerCase()}|${String(entry.styleCode || '').toLowerCase()}`;
         if (
@@ -1554,9 +2457,14 @@ async function handleProductSearch({ req, res, body, startedAt }) {
           )
         ) {
           qcMeasurementsByStyle.push(entry);
+          successfulQcCount += 1;
+          if (isTurboProbe && successfulQcCount >= TURBO_QC_SUCCESS_TARGET) {
+            break;
+          }
         }
       }
     }
+    stageTimings.qcMs = Date.now() - qcStartedAt;
 
     let qcMeasurement = null;
     if (providedStyle || providedStyleCode) {
@@ -1624,11 +2532,11 @@ async function handleProductSearch({ req, res, body, startedAt }) {
       const suffix = suffixParts.join(',');
       if (!suffix) return;
       extraDetailUrls.add(
-        `${pidBaseUrl}/product-measurements/${encodeURIComponent(productId)}/${suffix}`
+        `${pidBaseUrl}/product-measurements/${encodeURIComponent(measurementProductId)}/${suffix}`
       );
     });
 
-    for (const url of Array.from(extraDetailUrls)) {
+    for (const url of isTurboProbe ? [] : Array.from(extraDetailUrls)) {
       if (existingDetailUrls.has(url)) continue;
 
       const detailAuthHeaders = activeMtToken ? { authorization: `Bearer ${activeMtToken}` } : {};
@@ -1684,7 +2592,7 @@ async function handleProductSearch({ req, res, body, startedAt }) {
     }
 
     let formMeasurements = null;
-    if (providedFormId) {
+    if (providedFormId && !isTurboProbe) {
       try {
         const measurements = await fetchCwMeasurementsTable({
           formId: providedFormId,
@@ -1746,23 +2654,29 @@ async function handleProductSearch({ req, res, body, startedAt }) {
       }
     }
 
-    return res.status(200).json({
+    const payload = {
       success: true,
       code: 'CW_PRODUCT_MEASUREMENTS_LOOKUP_OK',
       mode: 'graphql-product-list',
       search: searchTerm,
+      discovery: {
+        graphqlDiscoveryAttempts: isTurboProbe
+          ? graphqlDiscoveryAttempts.slice(0, 6)
+          : graphqlDiscoveryAttempts,
+      },
       product: {
         id: productId,
+        measurementId: measurementProductId,
         reference: productReference,
         status: selectedNode?.status || null,
-        translations: (selectedNode?.translations?.edges || [])
-          .map(edge => edge?.node)
-          .filter(Boolean),
+        translations: isTurboProbe
+          ? []
+          : (selectedNode?.translations?.edges || []).map(edge => edge?.node).filter(Boolean),
       },
       urls: {
         dashboardEditUrl,
         productMeasurementsInfoUrl,
-        measurementUrls: fullMeasurementUrls,
+        measurementUrls: isTurboProbe ? fullMeasurementUrls.slice(0, 1) : fullMeasurementUrls,
       },
       summary: {
         productMatchCount: rankedProducts.length,
@@ -1776,18 +2690,34 @@ async function handleProductSearch({ req, res, body, startedAt }) {
         referenceCandidateCount: orderedReferenceCandidates.length,
         scopedReferenceCount: orderedReferenceCandidates.filter(ref => String(ref).includes('__'))
           .length,
+        qcAttemptedCount: qcMeasurementAttempts.length,
+        qcDeadReferenceCount: deadReferences.size,
+        qcSkippedAttemptCount: Object.values(qcSkipDiagnostics).reduce(
+          (acc, value) => acc + value,
+          0
+        ),
+        qcSkippedAttemptsByReason: qcSkipDiagnostics,
         qcMeasurementsFound: Boolean(qcMeasurement),
         formMeasurementsFound: Boolean(formMeasurements?.matchedProduct),
         renderedHtmlParsed: Boolean(renderedHtmlExtraction),
+        manualHintApplied: manualHintDiagnostics.applied,
+        manualHintNoneTerm: manualHintDiagnostics.noneTerm,
+        manualHintReferenceCount: manualHintReferences.length,
       },
+      manualReferenceHints: manualHintDiagnostics,
+      timings: buildTimings(),
       images: Array.from(aggregateImages),
       qcMeasurements: qcMeasurement,
       qcMeasurementsByStyle,
       styleOptions,
       referenceCandidates: orderedReferenceCandidates,
+      referenceCandidateOrigins: orderedReferenceCandidates.map(ref => ({
+        reference: ref,
+        origins: Array.from(referenceCandidateOrigins.get(ref) || []),
+      })),
       tupleSource,
       attemptPlanMode,
-      selectedTuples: tuplePlan,
+      selectedTuples: explicitTuplePlan,
       formMeasurements,
       renderedHtmlExtraction,
       mtAuth: {
@@ -1801,25 +2731,69 @@ async function handleProductSearch({ req, res, body, startedAt }) {
         mtUsernameUsed: mtUsername || null,
       },
       qcMeasurementAttempts,
-      measurementDetails: detailResults,
-      candidates: rankedProducts.map(item => ({
+      measurementDetails: isTurboProbe ? [] : detailResults,
+      candidates: rankedProducts.slice(0, isTurboProbe ? 8 : rankedProducts.length).map(item => ({
         id: item.node?.id || null,
         reference: item.node?.reference || null,
         score: item.score,
       })),
       upstream: {
-        graphqlStatus: productList.status,
-        graphqlOk: productList.ok,
+        graphqlStatus: productListPrimary?.status || null,
+        graphqlOk: Boolean(productListPrimary?.ok),
+        graphqlDiscoveryAttempts: isTurboProbe
+          ? graphqlDiscoveryAttempts.slice(0, 6)
+          : graphqlDiscoveryAttempts,
         pidInfoStatus: infoResult.status,
         pidInfoOk: infoResult.ok,
       },
-      upstreamBody: {
-        graphql: productList.body,
-        pidInfo: infoResult.body,
-      },
-      upstreamSnippet: infoResult.body ? null : infoResult.rawText.slice(0, 5000),
+      upstreamBody: isTurboProbe
+        ? null
+        : {
+            graphql: productListPrimary?.body || null,
+            pidInfo: infoResult.body,
+          },
+      upstreamSnippet: isTurboProbe
+        ? null
+        : infoResult.body
+          ? null
+          : infoResult.rawText.slice(0, 5000),
       durationMs: Date.now() - startedAt,
-    });
+    };
+
+    return res.status(200).json(
+      buildSearchResponse(payload, {
+        isTurboProbe,
+        requestedProbeMode: probeModeState.requestedProbeMode,
+      })
+    );
+  }
+
+  if (isTurboProbe) {
+    const payload = {
+      success: false,
+      code: 'CW_PRODUCT_MEASUREMENT_NOT_FOUND',
+      message: 'No product measurement URL matched the provided search term',
+      search: searchTerm,
+      formId: providedFormId || null,
+      discovery: {
+        graphqlDiscoveryAttempts: graphqlDiscoveryAttempts.slice(0, 6),
+        dashboardCrawlAttempts: 0,
+      },
+      turboOptimization: {
+        skippedDashboardCrawl: true,
+      },
+      manualReferenceHints: manualHintDiagnostics,
+      timings: buildTimings(),
+      crawl: [],
+      candidates: [],
+      durationMs: Date.now() - startedAt,
+    };
+    return res.status(404).json(
+      buildSearchResponse(payload, {
+        isTurboProbe,
+        requestedProbeMode: probeModeState.requestedProbeMode,
+      })
+    );
   }
 
   const session = await createCwSession(override);
@@ -1838,7 +2812,13 @@ async function handleProductSearch({ req, res, body, startedAt }) {
     const searchUrls = collectSearchUrls(baseUrl, searchTerm);
     for (const url of searchUrls) {
       const page = await cwGetWithSession(session, url);
-      crawl.push({ url, status: page.status, ok: page.ok });
+      crawl.push({
+        strategy: 'dashboard-crawl',
+        url,
+        status: page.status,
+        ok: page.ok,
+        contentType: page.contentType || '',
+      });
       if (!page.rawText) continue;
 
       const links = extractProductMeasurementLinks(page.rawText, baseUrl);
@@ -1952,7 +2932,7 @@ async function handleProductSearch({ req, res, body, startedAt }) {
     const matches = Array.from(uniqueByKey.values()).sort((a, b) => b.score - a.score);
 
     if (matches.length > 0) {
-      return res.status(200).json({
+      const payload = {
         success: true,
         code: 'CW_PRODUCT_MEASUREMENTS_LOOKUP_OK',
         mode: 'form-measurements-fallback',
@@ -1963,20 +2943,35 @@ async function handleProductSearch({ req, res, body, startedAt }) {
           topReference: matches[0]?.reference || null,
           topLabel: matches[0]?.label || null,
           topSource: matches[0]?.source || null,
+          manualHintApplied: manualHintDiagnostics.applied,
+          manualHintNoneTerm: manualHintDiagnostics.noneTerm,
+          manualHintReferenceCount: manualHintReferences.length,
         },
+        manualReferenceHints: manualHintDiagnostics,
+        timings: buildTimings(),
         matches,
         candidates,
         crawl,
         durationMs: Date.now() - startedAt,
-      });
+      };
+      return res.status(200).json(
+        buildSearchResponse(payload, {
+          isTurboProbe,
+          requestedProbeMode: probeModeState.requestedProbeMode,
+        })
+      );
     }
 
-    return res.status(404).json({
+    const payload = {
       success: false,
       code: 'CW_PRODUCT_MEASUREMENT_NOT_FOUND',
       message: 'No product measurement URL matched the provided search term',
       search: searchTerm,
       formId: providedFormId || null,
+      discovery: {
+        graphqlDiscoveryAttempts,
+        dashboardCrawlAttempts: crawl.length,
+      },
       crawl,
       candidates,
       fallbackSummary: {
@@ -1992,21 +2987,41 @@ async function handleProductSearch({ req, res, body, startedAt }) {
           .map(line => String(line?.productName || '').trim())
           .filter(Boolean),
       },
+      manualReferenceHints: manualHintDiagnostics,
+      timings: buildTimings(),
       durationMs: Date.now() - startedAt,
-    });
+    };
+    return res.status(404).json(
+      buildSearchResponse(payload, {
+        isTurboProbe,
+        requestedProbeMode: probeModeState.requestedProbeMode,
+      })
+    );
   }
 
   if (!selectedUrl) {
-    return res.status(404).json({
+    const payload = {
       success: false,
       code: 'CW_PRODUCT_MEASUREMENT_NOT_FOUND',
       message: 'No product measurement URL matched the provided search term',
       search: searchTerm,
       formId: providedFormId || null,
+      discovery: {
+        graphqlDiscoveryAttempts,
+        dashboardCrawlAttempts: crawl.length,
+      },
+      manualReferenceHints: manualHintDiagnostics,
+      timings: buildTimings(),
       crawl,
       candidates,
       durationMs: Date.now() - startedAt,
-    });
+    };
+    return res.status(404).json(
+      buildSearchResponse(payload, {
+        isTurboProbe,
+        requestedProbeMode: probeModeState.requestedProbeMode,
+      })
+    );
   }
 
   const detail = await cwGetWithSession(session, selectedUrl, `${baseUrl}/dashboard/products/`);
@@ -2024,11 +3039,15 @@ async function handleProductSearch({ req, res, body, startedAt }) {
     ? extractMeasurementCandidates(detail.body, '', [])
     : [];
 
-  return res.status(detail.ok ? 200 : 502).json({
+  const payload = {
     success: detail.ok,
     code: detail.ok ? 'CW_PRODUCT_MEASUREMENTS_LOOKUP_OK' : 'CW_PRODUCT_MEASUREMENTS_LOOKUP_FAILED',
     search: searchTerm,
     selectedUrl,
+    discovery: {
+      graphqlDiscoveryAttempts,
+      dashboardCrawlAttempts: crawl.length,
+    },
     candidates,
     crawl,
     upstreamStatus: detail.status,
@@ -2041,13 +3060,24 @@ async function handleProductSearch({ req, res, body, startedAt }) {
     summary: {
       imageCount: imageUrls.size,
       measurementCandidateCount: measurementCandidates.length,
+      manualHintApplied: manualHintDiagnostics.applied,
+      manualHintNoneTerm: manualHintDiagnostics.noneTerm,
+      manualHintReferenceCount: manualHintReferences.length,
     },
+    manualReferenceHints: manualHintDiagnostics,
+    timings: buildTimings(),
     images: Array.from(imageUrls),
     measurementCandidates: measurementCandidates.slice(0, 60),
     upstreamBody: detail.body,
     upstreamSnippet: detail.body ? null : detail.rawText.slice(0, 5000),
     durationMs: Date.now() - startedAt,
-  });
+  };
+  return res.status(detail.ok ? 200 : 502).json(
+    buildSearchResponse(payload, {
+      isTurboProbe,
+      requestedProbeMode: probeModeState.requestedProbeMode,
+    })
+  );
 }
 
 export default async function handler(req, res) {
@@ -2068,6 +3098,41 @@ export default async function handler(req, res) {
 
   try {
     const body = req.method === 'POST' ? await readJsonBody(req) : {};
+
+    if (formId === 'probe-terms') {
+      if (req.method !== 'POST') {
+        return res.status(405).json({ success: false, message: 'Method not allowed' });
+      }
+      const filePath = String(body?.filePath || '').trim();
+      if (!filePath) {
+        return res.status(400).json({ success: false, message: 'filePath is required' });
+      }
+      if (filePath.includes('\u0000')) {
+        return res.status(400).json({ success: false, message: 'Invalid filePath' });
+      }
+      if (!/\.html?$/i.test(filePath)) {
+        return res.status(400).json({ success: false, message: 'Expected an .html export file' });
+      }
+
+      const stat = await fs.stat(filePath);
+      if (!stat.isFile()) {
+        return res.status(400).json({ success: false, message: 'Path is not a file' });
+      }
+      if (stat.size > MAX_PROBE_TERMS_FILE_BYTES) {
+        return res.status(400).json({ success: false, message: 'File is too large' });
+      }
+
+      const html = await fs.readFile(filePath, 'utf8');
+      const parsed = parseProbeTermsFromExportHtml(html);
+      return res.status(200).json({
+        success: true,
+        filePath,
+        count: parsed.terms.length,
+        totalRows: parsed.totalRows,
+        referenceColumnIndex: parsed.referenceColumnIndex,
+        terms: parsed.terms,
+      });
+    }
 
     if (formId === 'image-proxy') {
       if (req.method !== 'POST') {
