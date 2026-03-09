@@ -292,22 +292,30 @@ export function initToolbarController() {
 
     // Elements panel single-button shape toggle wiring
     const labelShapeToggleBtn = document.getElementById('labelShapeToggleBtn');
-    const applyShape = val => {
-      if (window.paintApp?.state) window.paintApp.state.labelShape = val;
-      if (window.redrawCanvasWithVisibility) window.redrawCanvasWithVisibility();
-    };
     if (labelShapeToggleBtn) {
       const syncShapeBtn = () => {
-        const shape = window.paintApp?.state?.labelShape || 'square';
+        const shape = window.app?.tagManager?.tagShape || 'square';
         const isSquare = shape !== 'circle';
         labelShapeToggleBtn.textContent = isSquare ? '■' : '●';
         labelShapeToggleBtn.setAttribute('aria-pressed', String(isSquare));
       };
-      labelShapeToggleBtn.addEventListener('click', () => {
-        const shape = window.paintApp?.state?.labelShape || 'square';
-        applyShape(shape === 'circle' ? 'square' : 'circle');
-        syncShapeBtn();
-      });
+      if (labelShapeToggleBtn.dataset.shapeToggleBound !== 'true') {
+        labelShapeToggleBtn.dataset.shapeToggleBound = 'true';
+        labelShapeToggleBtn.style.transition = 'transform 0.12s ease';
+        labelShapeToggleBtn.addEventListener('click', () => {
+          const currentViewId = window.app?.projectManager?.currentViewId;
+          const shape = window.app?.tagManager?.tagShape || 'square';
+          window.app?.tagManager?.setTagShape(
+            shape === 'circle' ? 'square' : 'circle',
+            currentViewId
+          );
+          labelShapeToggleBtn.style.transform = 'scale(0.94)';
+          setTimeout(() => {
+            labelShapeToggleBtn.style.transform = 'scale(1)';
+          }, 120);
+          syncShapeBtn();
+        });
+      }
       syncShapeBtn();
     }
 
@@ -629,7 +637,7 @@ export function initToolbarController() {
     }
 
     const tagColorPresets = [
-      { name: 'Default', bg: '#ffffff', border: '#cccccc', text: '#000000' },
+      { name: 'Default', bg: '#ffffff', border: '#000000', text: '#000000' },
       { name: 'Blue', bg: '#dbeafe', border: '#3b82f6', text: '#1e40af' },
       { name: 'Green', bg: '#dcfce7', border: '#22c55e', text: '#166534' },
       { name: 'Amber', bg: '#fef3c7', border: '#f59e0b', text: '#92400e' },

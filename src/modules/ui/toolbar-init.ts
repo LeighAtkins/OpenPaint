@@ -397,37 +397,30 @@
 
     // Elements panel single-button shape toggle wiring
     const labelShapeToggleBtn = document.getElementById('labelShapeToggleBtn');
-    const applyShape = val => {
-      if (window.paintApp?.state) window.paintApp.state.labelShape = val;
-      if (window.redrawCanvasWithVisibility) window.redrawCanvasWithVisibility();
-    };
     if (labelShapeToggleBtn) {
-      // Add transition styles for smooth morphing animation
-      labelShapeToggleBtn.style.transition =
-        'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.15s ease-out';
-
       const syncShapeBtn = () => {
-        const shape = window.paintApp?.state?.labelShape || 'square';
+        const shape = window.app?.tagManager?.tagShape || 'square';
         const isSquare = shape !== 'circle';
         labelShapeToggleBtn.textContent = isSquare ? '■' : '●';
         labelShapeToggleBtn.setAttribute('aria-pressed', String(isSquare));
       };
-      labelShapeToggleBtn.addEventListener('click', () => {
-        // Animate button with morphing effect: scale down (fade), swap icon, scale up (reveal)
-        labelShapeToggleBtn.style.opacity = '0.3';
-        labelShapeToggleBtn.style.transform = 'scale(0.7)';
-
-        setTimeout(() => {
-          // Swap icon at midpoint of animation
-          const shape = window.paintApp?.state?.labelShape || 'square';
-          applyShape(shape === 'circle' ? 'square' : 'circle');
+      if (labelShapeToggleBtn.dataset.shapeToggleBound !== 'true') {
+        labelShapeToggleBtn.dataset.shapeToggleBound = 'true';
+        labelShapeToggleBtn.style.transition = 'transform 0.12s ease';
+        labelShapeToggleBtn.addEventListener('click', () => {
+          const currentViewId = window.app?.projectManager?.currentViewId;
+          const shape = window.app?.tagManager?.tagShape || 'square';
+          window.app?.tagManager?.setTagShape(
+            shape === 'circle' ? 'square' : 'circle',
+            currentViewId
+          );
+          labelShapeToggleBtn.style.transform = 'scale(0.94)';
+          setTimeout(() => {
+            labelShapeToggleBtn.style.transform = 'scale(1)';
+          }, 120);
           syncShapeBtn();
-
-          // Immediately start scaling back up
-          labelShapeToggleBtn.style.opacity = '1';
-          labelShapeToggleBtn.style.transform = 'scale(1)';
-        }, 150); // Mid-animation swap
-      });
+        });
+      }
       syncShapeBtn();
     }
 

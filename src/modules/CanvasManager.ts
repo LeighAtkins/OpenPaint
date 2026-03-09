@@ -619,7 +619,7 @@ export class CanvasManager {
         const objects = obj.getObjects();
         objects.forEach(o => {
           if (o?.type === 'path' && Array.isArray(o.customPoints) && o.__curveTransformActive) {
-            scheduleBakeAfterFinalize(o);
+            bakeCurveTransform({ target: o, forceUngroup: true });
           }
         });
         return;
@@ -716,6 +716,9 @@ export class CanvasManager {
         obj.setCoords();
         if (Array.isArray(obj.customPoints)) {
           FabricControls.createCurveControls(obj);
+        }
+        if (typeof obj.__mosUpdateCurveDecorators === 'function') {
+          obj.__mosUpdateCurveDecorators();
         }
         delete obj.__curveTransformActive;
         delete obj.__curveTransformAction;
@@ -863,6 +866,9 @@ export class CanvasManager {
 
       if (Array.isArray(obj.customPoints)) {
         FabricControls.createCurveControls(obj);
+      }
+      if (typeof obj.__mosUpdateCurveDecorators === 'function') {
+        obj.__mosUpdateCurveDecorators();
       }
 
       const canvas = obj.canvas;
@@ -1187,18 +1193,8 @@ export class CanvasManager {
         objects.forEach(o => {
           if (o?.type === 'path' && Array.isArray(o.customPoints)) {
             if (!o.__curveTransformActive || o.__curveBakedThisGesture) return;
-            const action = o.__curveTransformAction;
-            const isRotateOrSkew =
-              action === 'rotate' || action === 'skew' || action === 'skewX' || action === 'skewY';
             if (o.group && o.group.type === 'activeSelection') {
-              if (isRotateOrSkew) {
-                bakeCurveTransform({ target: o, forceUngroup: true });
-              } else {
-                console.log(
-                  '[CURVE SCALE] mouse:up - scheduling bake after finalize (still in activeSelection)'
-                );
-                scheduleBakeAfterFinalize(o);
-              }
+              bakeCurveTransform({ target: o, forceUngroup: true });
             } else {
               bakeCurveTransform({ target: o });
             }
@@ -1210,21 +1206,8 @@ export class CanvasManager {
 
       const obj = this.__activeCurveTransformTarget || activeTarget;
       if (obj?.__curveTransformActive && !obj.__curveBakedThisGesture) {
-        // CRITICAL: If curve is inside activeSelection, use scheduleBakeAfterFinalize
-        // to wait until the curve is ungrouped. Otherwise canonicalize runs with
-        // the curve still in selection context, causing position mismatch.
         if (obj.group && obj.group.type === 'activeSelection') {
-          const action = obj.__curveTransformAction;
-          const isRotateOrSkew =
-            action === 'rotate' || action === 'skew' || action === 'skewX' || action === 'skewY';
-          if (isRotateOrSkew) {
-            bakeCurveTransform({ target: obj, forceUngroup: true });
-          } else {
-            console.log(
-              '[CURVE SCALE] mouse:up - scheduling bake after finalize (still in activeSelection)'
-            );
-            scheduleBakeAfterFinalize(obj);
-          }
+          bakeCurveTransform({ target: obj, forceUngroup: true });
         } else {
           bakeCurveTransform({ target: obj });
         }
@@ -1632,6 +1615,12 @@ export class CanvasManager {
       const label = obj.strokeMetadata?.strokeLabel || obj.strokeMetadata?.label;
       if (label) {
         data._originalStrokeLabel = label;
+
+        const sourceImageLabel = obj.strokeMetadata?.imageLabel || window.currentImageLabel;
+        const tagTheme = window.app?.tagManager?.getTagThemeOverride?.(label, sourceImageLabel);
+        if (tagTheme) {
+          data._copiedTagTheme = tagTheme;
+        }
       }
       return data;
     });
@@ -1672,6 +1661,9 @@ export class CanvasManager {
         if (payload[idx]?._originalStrokeLabel) {
           obj._originalStrokeLabel = payload[idx]._originalStrokeLabel;
         }
+        if (payload[idx]?._copiedTagTheme) {
+          obj._copiedTagTheme = payload[idx]._copiedTagTheme;
+        }
 
         // Re-initialize text dimensions after deserialization so text renders visually
         if (
@@ -1682,12 +1674,56 @@ export class CanvasManager {
           obj.dirty = true;
         }
 
-        obj.set({
-          left: (obj.left || 0) + offset,
-          top: (obj.top || 0) + offset,
-        });
+        const isCurvePath = obj.type === 'path' && Array.isArray((obj as any).customPoints);
+        if (isCurvePath) {
+          obj.set({ objectCaching: false });
+          // Move curve anchors in world-space first; the path geometry is rebuilt from these points.
+          // If we only offset left/top, the visual path shifts but customPoints stay behind.
+          obj.customPoints.forEach((point: { x: number; y: number }) => {
+            point.x += offset;
+            point.y += offset;
+          });
+          FabricControls.canonicalizeCurveFromWorldPoints(obj, null, obj.angle || 0);
+        }
+
+        const hasOriginalLabel = Boolean(payload[idx]?._originalStrokeLabel);
+        const rawMeta = obj.strokeMetadata || {};
+        const isBareTriangleArtifact =
+          obj.type === 'triangle' &&
+          !hasOriginalLabel &&
+          !rawMeta?.strokeLabel &&
+          !rawMeta?.label &&
+          rawMeta?.type !== 'shape' &&
+          (obj as any)?.customData?.layerType !== 'mos-overlay';
+        if (isBareTriangleArtifact) {
+          return;
+        }
+
+        const mosId = String((obj as any).__mosId || '');
+        const isMosCurveArrowDecorator =
+          (obj as any)?.customData?.layerType === 'mos-overlay' &&
+          obj.type === 'triangle' &&
+          (mosId.includes('_curve_start_arrow') || mosId.includes('_curve_end_arrow'));
+        if (isMosCurveArrowDecorator) {
+          obj.set({
+            selectable: false,
+            evented: false,
+            excludeFromExport: true,
+          });
+        }
+
+        if (!isCurvePath) {
+          obj.set({
+            left: (obj.left || 0) + offset,
+            top: (obj.top || 0) + offset,
+          });
+        }
         if (typeof obj.setCoords === 'function') {
           obj.setCoords();
+        }
+        if (obj.type === 'path' && typeof obj.getCenterPoint === 'function') {
+          const center = obj.getCenterPoint();
+          obj.__lastCenter = { x: center.x, y: center.y };
         }
         this.fabricCanvas.add(obj);
         this.attachMetadataForPaste(obj, imageLabel);
@@ -1718,6 +1754,30 @@ export class CanvasManager {
     if (!metadataManager || !obj) return;
 
     const meta = obj.strokeMetadata || {};
+    const originalLabel = obj._originalStrokeLabel || meta.strokeLabel || meta.label;
+
+    // Keep MOS curve arrowhead decorators as unlabeled visual primitives.
+    // If we auto-label these triangles during paste, they steal tags (e.g. C3/C4).
+    const mosId = String((obj as any).__mosId || '');
+    const isMosCurveArrowDecorator =
+      (obj as any)?.customData?.layerType === 'mos-overlay' &&
+      obj.type === 'triangle' &&
+      !originalLabel &&
+      (mosId.includes('_curve_start_arrow') || mosId.includes('_curve_end_arrow'));
+    if (isMosCurveArrowDecorator) {
+      return;
+    }
+
+    // Guardrail: unlabeled bare triangles are usually leaked arrowhead artifacts
+    // from historical copies. Keep them visual-only and never assign stroke labels.
+    const isBareTriangleArtifact =
+      obj.type === 'triangle' &&
+      !originalLabel &&
+      meta?.type !== 'shape' &&
+      (obj as any)?.customData?.layerType !== 'mos-overlay';
+    if (isBareTriangleArtifact) {
+      return;
+    }
 
     if (meta.type === 'text' || obj.type === 'i-text' || obj.type === 'text') {
       metadataManager.attachTextMetadata(obj, imageLabel);
@@ -1735,7 +1795,6 @@ export class CanvasManager {
     }
 
     // Smart tag deduplication: preserve original label when no conflict, suffix when duplicate
-    const originalLabel = obj._originalStrokeLabel || meta.strokeLabel || meta.label;
     let strokeLabel: string;
     if (originalLabel) {
       // Use the scoped label (same normalization as attachMetadata) for conflict check
@@ -1766,14 +1825,120 @@ export class CanvasManager {
     if (obj.type === 'line') {
       FabricControls.createLineControls(obj);
     } else if (obj.type === 'path' && meta.type !== 'shape') {
+      obj.set({ objectCaching: false });
       FabricControls.createCurveControls(obj);
+      this.ensureCurveDecoratorsForPath(obj);
     } else if (obj.type === 'group' && (obj.isArrow || meta.isArrow)) {
       FabricControls.createArrowControls(obj);
+    }
+
+    if (obj._copiedTagTheme && window.app?.tagManager?.setTagTheme) {
+      window.app.tagManager.setTagTheme(strokeLabel, imageLabel, obj._copiedTagTheme);
+      delete obj._copiedTagTheme;
     }
 
     if (obj.arrowSettings && window.app?.arrowManager) {
       window.app.arrowManager.attachArrowRendering(obj);
       obj.dirty = true;
+    }
+  }
+
+  private ensureCurveDecoratorsForPath(pathObj: FabricObject): void {
+    if (!pathObj || pathObj.type !== 'path' || !Array.isArray(pathObj.customPoints)) return;
+    if (pathObj.customPoints.length < 2) return;
+
+    const canvas = pathObj.canvas || this.fabricCanvas;
+    if (!canvas) return;
+
+    const strokeColor = pathObj.stroke || '#000000';
+    const strokeWidth = Number(pathObj.strokeWidth) || 3;
+    const arrowSize = 12;
+
+    const makeArrow = () =>
+      new fabric.Triangle({
+        width: arrowSize,
+        height: arrowSize,
+        fill: strokeColor,
+        stroke: strokeColor,
+        strokeWidth: Math.max(1, strokeWidth * 0.4),
+        originX: 'center',
+        originY: 'center',
+        selectable: false,
+        evented: false,
+        objectCaching: false,
+        excludeFromExport: true,
+      });
+
+    let startArrow = pathObj.__curveStartArrowObj;
+    let endArrow = pathObj.__curveEndArrowObj;
+
+    if (!startArrow || !canvas.contains(startArrow)) {
+      startArrow = makeArrow();
+      pathObj.__curveStartArrowObj = startArrow;
+      canvas.add(startArrow);
+    }
+    if (!endArrow || !canvas.contains(endArrow)) {
+      endArrow = makeArrow();
+      pathObj.__curveEndArrowObj = endArrow;
+      canvas.add(endArrow);
+    }
+
+    const updateDecorators = () => {
+      if (!Array.isArray(pathObj.customPoints) || pathObj.customPoints.length < 2) return;
+
+      const points = pathObj.customPoints;
+      const pStart = points[0];
+      const pStartNext = points[1];
+      const pEndPrev = points[points.length - 2];
+      const pEnd = points[points.length - 1];
+
+      const startAngle =
+        (Math.atan2(pStartNext.y - pStart.y, pStartNext.x - pStart.x) * 180) / Math.PI;
+      const endAngle = (Math.atan2(pEnd.y - pEndPrev.y, pEnd.x - pEndPrev.x) * 180) / Math.PI;
+
+      startArrow.set({
+        left: pStart.x,
+        top: pStart.y,
+        angle: startAngle - 90,
+        fill: pathObj.stroke || strokeColor,
+        stroke: pathObj.stroke || strokeColor,
+        selectable: false,
+        evented: false,
+        excludeFromExport: true,
+      });
+      endArrow.set({
+        left: pEnd.x,
+        top: pEnd.y,
+        angle: endAngle + 90,
+        fill: pathObj.stroke || strokeColor,
+        stroke: pathObj.stroke || strokeColor,
+        selectable: false,
+        evented: false,
+        excludeFromExport: true,
+      });
+      startArrow.setCoords?.();
+      endArrow.setCoords?.();
+      canvas.requestRenderAll?.();
+    };
+
+    pathObj.__mosUpdateCurveDecorators = updateDecorators;
+    updateDecorators();
+
+    if (!pathObj.__curveDecoratorHandlersAttached) {
+      pathObj.__curveDecoratorHandlersAttached = true;
+      pathObj.on('moving', updateDecorators);
+      pathObj.on('modified', updateDecorators);
+      pathObj.on('scaling', updateDecorators);
+      pathObj.on('rotating', updateDecorators);
+      pathObj.on('changed', updateDecorators);
+      pathObj.on('removed', () => {
+        if (pathObj.__curveStartArrowObj && canvas.contains(pathObj.__curveStartArrowObj)) {
+          canvas.remove(pathObj.__curveStartArrowObj);
+        }
+        if (pathObj.__curveEndArrowObj && canvas.contains(pathObj.__curveEndArrowObj)) {
+          canvas.remove(pathObj.__curveEndArrowObj);
+        }
+      });
     }
   }
 
@@ -2430,6 +2595,88 @@ export class CanvasManager {
       }
     };
 
+    const updateCurveDecoratorsForScaling = (scalingObj: FabricObject) => {
+      if (!scalingObj) return;
+
+      const getDisplayCurvePoints = (obj: FabricObject) => {
+        if (!Array.isArray(obj?.customPoints) || obj.customPoints.length < 2) return null;
+
+        if (
+          obj.__curveTransformActive &&
+          obj.__curveOrigMatrix &&
+          Array.isArray(obj.__curveOrigPoints) &&
+          obj.__curveOrigPoints.length >= 2
+        ) {
+          try {
+            const before = obj.__curveOrigMatrix;
+            const after = obj.calcTransformMatrix();
+            const delta = fabric.util.multiplyTransformMatrices(
+              after,
+              fabric.util.invertTransform(before)
+            );
+            return obj.__curveOrigPoints.map((p: { x: number; y: number }) => {
+              const transformed = fabric.util.transformPoint(new fabric.Point(p.x, p.y), delta);
+              return { x: transformed.x, y: transformed.y };
+            });
+          } catch {
+            return obj.customPoints;
+          }
+        }
+
+        return obj.customPoints;
+      };
+
+      const updateForStroke = (obj: FabricObject) => {
+        if (obj?.type === 'path' && typeof obj.__mosUpdateCurveDecorators === 'function') {
+          const displayPoints = getDisplayCurvePoints(obj);
+          const startArrow = obj.__curveStartArrowObj;
+          const endArrow = obj.__curveEndArrowObj;
+
+          if (Array.isArray(displayPoints) && displayPoints.length >= 2 && startArrow && endArrow) {
+            const pStart = displayPoints[0];
+            const pStartNext = displayPoints[1];
+            const pEndPrev = displayPoints[displayPoints.length - 2];
+            const pEnd = displayPoints[displayPoints.length - 1];
+            const startAngle =
+              (Math.atan2(pStartNext.y - pStart.y, pStartNext.x - pStart.x) * 180) / Math.PI;
+            const endAngle = (Math.atan2(pEnd.y - pEndPrev.y, pEnd.x - pEndPrev.x) * 180) / Math.PI;
+
+            startArrow.set({
+              left: pStart.x,
+              top: pStart.y,
+              angle: startAngle - 90,
+              visible: true,
+            });
+            endArrow.set({ left: pEnd.x, top: pEnd.y, angle: endAngle + 90, visible: true });
+            startArrow.setCoords?.();
+            endArrow.setCoords?.();
+          } else {
+            obj.__mosUpdateCurveDecorators();
+          }
+        }
+      };
+
+      if (scalingObj.type === 'activeSelection') {
+        scalingObj.getObjects().forEach(updateForStroke);
+      } else {
+        updateForStroke(scalingObj);
+      }
+    };
+
+    const restoreCurveDecorators = (targetObj: FabricObject) => {
+      if (!targetObj) return;
+      const restoreForStroke = (obj: FabricObject) => {
+        if (obj?.type !== 'path' || typeof obj.__mosUpdateCurveDecorators !== 'function') return;
+        obj.__mosUpdateCurveDecorators();
+      };
+
+      if (targetObj.type === 'activeSelection') {
+        targetObj.getObjects?.().forEach((child: FabricObject) => restoreForStroke(child));
+      } else {
+        restoreForStroke(targetObj);
+      }
+    };
+
     // Update tag connectors while scaling for smoother feedback.
     this.fabricCanvas.on('object:scaling', (e: FabricIEvent) => {
       const scalingObj = e.target;
@@ -2437,12 +2684,14 @@ export class CanvasManager {
       this.__tagScaleActive = true;
       this.__tagScaleTarget = scalingObj;
       updateTagConnectorsForScaling(scalingObj);
+      updateCurveDecoratorsForScaling(scalingObj);
     });
 
     // Keep connectors in sync on each render tick while scaling.
     this.fabricCanvas.on('after:render', () => {
       if (!this.__tagScaleActive || !this.__tagScaleTarget) return;
       updateTagConnectorsForScaling(this.__tagScaleTarget);
+      updateCurveDecoratorsForScaling(this.__tagScaleTarget);
     });
 
     const clearScaleTracking = () => {
@@ -2452,6 +2701,48 @@ export class CanvasManager {
 
     this.fabricCanvas.on('object:scaled', clearScaleTracking);
     this.fabricCanvas.on('mouse:up', clearScaleTracking);
+
+    // Ensure curve decorators are snapped to final geometry after transform commits.
+    this.fabricCanvas.on('object:modified', (e: FabricIEvent) => {
+      const obj = e?.target;
+      if (!obj) return;
+      const action = e?.transform?.action;
+      const isNonDragTransform =
+        action === 'scale' ||
+        action === 'scaleX' ||
+        action === 'scaleY' ||
+        action === 'rotate' ||
+        action === 'skew' ||
+        action === 'skewX' ||
+        action === 'skewY';
+      const recanonicalizeCurve = (curveObj: FabricObject) => {
+        if (
+          !curveObj ||
+          curveObj.type !== 'path' ||
+          !Array.isArray(curveObj.customPoints) ||
+          curveObj.customPoints.length < 2 ||
+          curveObj.isEditingControlPoint
+        ) {
+          return;
+        }
+        if (!isNonDragTransform) {
+          return;
+        }
+
+        // Final post-transform canonicalization keeps visual path, anchors, and decorators aligned
+        // immediately after mouse-up (without needing a deselect/click-away step).
+        FabricControls.canonicalizeCurveFromWorldPoints(curveObj, null, curveObj.angle || 0);
+        FabricControls.createCurveControls(curveObj);
+      };
+
+      if (obj.type === 'path') {
+        recanonicalizeCurve(obj);
+      } else if (obj.type === 'activeSelection') {
+        obj.getObjects?.().forEach((child: FabricObject) => recanonicalizeCurve(child));
+      }
+
+      restoreCurveDecorators(obj);
+    });
 
     // Touch gesture helpers
     const getTwoFingerCenter = (touches: TouchList) => {

@@ -11,13 +11,13 @@ export class TagManager {
     this.canvasManager = canvasManager;
     this.metadataManager = metadataManager;
     this.tagObjects = new Map(); // Map<viewId::strokeLabel, fabricObject>
-    this.tagSize = 20; // Default tag font size
+    this.tagSize = 34; // Default tag font size
     this.tagShape = 'square'; // 'square' or 'circle'
     this.tagMode = 'letters+numbers'; // 'letters' or 'letters+numbers'
     this.tagBackgroundStyle = 'solid'; // 'solid', 'no-fill', 'clear-black', 'clear-color', 'clear-white'
     this.strokeColor = '#3b82f6'; // Default stroke color for clear-color style
     this.connectorColor = '#ffffff';
-    this.connectorMatchesLine = false;
+    this.connectorMatchesLine = true;
     this.customTagColors = null;
     this.tagStyleConfig = this.createDefaultTagStyleConfig();
     this.selectedStyleTagKeys = new Set();
@@ -121,14 +121,24 @@ export class TagManager {
       });
     }
 
-    // Listen for tag shape changes
-    const shapeToggle = document.getElementById('labelShapeToggleBtn');
-    if (shapeToggle) {
-      shapeToggle.addEventListener('click', () => {
-        this.tagShape = this.tagShape === 'square' ? 'circle' : 'square';
-        this.updateAllTags();
-      });
-    }
+    // Tag shape toggle is wired from toolbar UI modules.
+    // Keep TagManager free of direct DOM listeners to avoid duplicate toggles.
+  }
+
+  getViewScopes(viewId) {
+    const base = this.normalizeImageLabel(
+      viewId || window.app?.projectManager?.currentViewId || 'front'
+    );
+    const keys = Object.keys(this.metadataManager?.vectorStrokesByImage || {});
+    const scopes = keys.filter(key => key === base || String(key).startsWith(`${base}::tab:`));
+    return scopes.length ? scopes : [base];
+  }
+
+  setTagShape(shape, imageLabel) {
+    const next = shape === 'circle' ? 'circle' : 'square';
+    if (this.tagShape === next) return;
+    this.tagShape = next;
+    this.updateAllTags(imageLabel);
   }
 
   // Get next tag from prediction system
@@ -186,7 +196,7 @@ export class TagManager {
   getDefaultTagTheme() {
     return {
       background: '#ffffff',
-      border: '#cccccc',
+      border: '#000000',
       text: '#000000',
     };
   }
@@ -646,20 +656,16 @@ export class TagManager {
     let width = textWidth + padding * 2;
     const height = textHeight + padding * 2;
 
-    // Square mode: min width = height so short labels (A, B) become circles
-    // Use full rounding when width equals height (circle), slight rounding when wider (pill)
+    // Square mode keeps a rounded-rectangle profile.
+    // Circle mode uses full rounding.
     if (this.tagShape === 'square') {
       width = Math.max(width, height);
     }
 
     let radius;
     if (this.tagShape === 'circle') {
-      radius = height / 2; // Capsule shape
-    } else if (width <= height * 1.15) {
-      // Nearly square or square - use full rounding to make a circle
-      radius = Math.min(width, height) / 2;
+      radius = height / 2;
     } else {
-      // Wider than tall - use slight rounding for a pill shape
       radius = 4;
     }
 
@@ -668,7 +674,7 @@ export class TagManager {
     const palette = this.getTagPalette(strokeLabel, orientation, imageLabel);
     let bgFill = palette.bg;
     let bgStroke = palette.stroke;
-    let bgStrokeWidth = 1;
+    let bgStrokeWidth = 2;
     let textFill = palette.text;
 
     if (this.tagBackgroundStyle === 'no-fill') {
@@ -679,17 +685,17 @@ export class TagManager {
     } else if (this.tagBackgroundStyle === 'clear-black') {
       bgFill = 'transparent';
       bgStroke = '#000000';
-      bgStrokeWidth = 1;
+      bgStrokeWidth = 2;
       textFill = '#000000';
     } else if (this.tagBackgroundStyle === 'clear-color') {
       bgFill = 'transparent';
       bgStroke = this.strokeColor || '#3b82f6';
-      bgStrokeWidth = 1;
+      bgStrokeWidth = 2;
       textFill = this.strokeColor || '#3b82f6';
     } else if (this.tagBackgroundStyle === 'clear-white') {
       bgFill = 'transparent';
       bgStroke = '#ffffff';
-      bgStrokeWidth = 1;
+      bgStrokeWidth = 2;
       textFill = '#ffffff';
     }
     // 'solid' style uses defaults
@@ -850,7 +856,108 @@ export class TagManager {
 
   // Get the closest point on the actual stroke geometry to a given point
   getClosestStrokeEndpoint(strokeObj, targetPoint) {
-    return PathUtils.getClosestStrokeEndpoint(strokeObj, targetPoint);
+    const isFinitePoint = point => point && Number.isFinite(point.x) && Number.isFinite(point.y);
+    const projectPointToSegment = (p, a, b) => {
+      if (!isFinitePoint(p) || !isFinitePoint(a) || !isFinitePoint(b)) return null;
+      const abx = b.x - a.x;
+      const aby = b.y - a.y;
+      const ab2 = abx * abx + aby * aby;
+      if (ab2 <= 0) return { x: a.x, y: a.y };
+      const apx = p.x - a.x;
+      const apy = p.y - a.y;
+      let t = (apx * abx + apy * aby) / ab2;
+      t = Math.max(0, Math.min(1, t));
+      return {
+        x: a.x + abx * t,
+        y: a.y + aby * t,
+      };
+    };
+
+    // Arrow groups from MOS import can yield double-transformed points in generic helpers.
+    // Resolve from child-line geometry first, with a dual-matrix sanity check.
+    if (
+      strokeObj?.type === 'group' &&
+      strokeObj?.isArrow &&
+      typeof strokeObj.getObjects === 'function'
+    ) {
+      const lineObj = strokeObj.getObjects().find(obj => obj?.type === 'line');
+      if (lineObj && typeof lineObj.calcLinePoints === 'function' && fabric?.util?.transformPoint) {
+        try {
+          const pts = lineObj.calcLinePoints();
+          const lineMatrix = lineObj.calcTransformMatrix();
+          const groupMatrix = strokeObj.calcTransformMatrix?.();
+
+          // Candidate A: line local -> line matrix
+          const a1 = fabric.util.transformPoint({ x: pts.x1, y: pts.y1 }, lineMatrix);
+          const a2 = fabric.util.transformPoint({ x: pts.x2, y: pts.y2 }, lineMatrix);
+
+          // Candidate B: line local -> line matrix -> group matrix
+          const b1 = groupMatrix ? fabric.util.transformPoint(a1, groupMatrix) : null;
+          const b2 = groupMatrix ? fabric.util.transformPoint(a2, groupMatrix) : null;
+
+          const pickClosestProjection = (p1, p2) => {
+            if (!isFinitePoint(p1) || !isFinitePoint(p2)) return null;
+            return projectPointToSegment(targetPoint, p1, p2);
+          };
+
+          const nearA = pickClosestProjection(a1, a2);
+          const nearB = pickClosestProjection(b1, b2);
+
+          if (nearA && nearB) {
+            const dA = this.calculateDistance(targetPoint, nearA);
+            const dB = this.calculateDistance(targetPoint, nearB);
+            return dA <= dB ? nearA : nearB;
+          }
+          if (nearA) return nearA;
+          if (nearB) return nearB;
+        } catch {
+          // continue to generic path below
+        }
+      }
+    }
+
+    try {
+      const point = PathUtils.getClosestStrokeEndpoint(strokeObj, targetPoint);
+      if (isFinitePoint(point)) {
+        return point;
+      }
+    } catch {
+      // Fall through to robust local fallbacks below.
+    }
+
+    // Fallback for arrow groups: derive endpoint from child line geometry.
+    if (strokeObj?.type === 'group' && typeof strokeObj.getObjects === 'function') {
+      const lineObj = strokeObj.getObjects().find(obj => obj?.type === 'line');
+      if (lineObj && typeof lineObj.calcLinePoints === 'function' && fabric?.util?.transformPoint) {
+        try {
+          const pts = lineObj.calcLinePoints();
+          const lineMatrix = lineObj.calcTransformMatrix();
+          const groupMatrix = strokeObj.calcTransformMatrix();
+          const p1Local = fabric.util.transformPoint({ x: pts.x1, y: pts.y1 }, lineMatrix);
+          const p2Local = fabric.util.transformPoint({ x: pts.x2, y: pts.y2 }, lineMatrix);
+          const p1 = fabric.util.transformPoint(p1Local, groupMatrix);
+          const p2 = fabric.util.transformPoint(p2Local, groupMatrix);
+          if (isFinitePoint(p1) && isFinitePoint(p2)) {
+            const d1 = this.calculateDistance(targetPoint, p1);
+            const d2 = this.calculateDistance(targetPoint, p2);
+            return d1 <= d2 ? p1 : p2;
+          }
+        } catch {
+          // continue to center fallback
+        }
+      }
+    }
+
+    const center =
+      typeof strokeObj?.getCenterPoint === 'function' ? strokeObj.getCenterPoint() : null;
+    if (isFinitePoint(center)) {
+      return center;
+    }
+
+    return {
+      x: Number.isFinite(targetPoint?.x) ? targetPoint.x : 0,
+      y: Number.isFinite(targetPoint?.y) ? targetPoint.y : 0,
+    };
   }
 
   // Find closest point on a line to target point
@@ -915,6 +1022,8 @@ export class TagManager {
 
   getConnectorStrokeColor(strokeObj) {
     if (this.connectorMatchesLine) {
+      const derivedLineColor = this.getStrokeColorFromObject(strokeObj);
+      if (derivedLineColor) return derivedLineColor;
       return (
         String(
           strokeObj?.stroke || strokeObj?.fill || this.strokeColor || this.connectorColor
@@ -924,13 +1033,46 @@ export class TagManager {
     return String(this.connectorColor || '#ffffff').trim() || '#ffffff';
   }
 
+  getStrokeColorFromObject(strokeObj) {
+    if (!strokeObj) return null;
+
+    if (strokeObj.type === 'group' && typeof strokeObj.getObjects === 'function') {
+      const children = strokeObj.getObjects() || [];
+      const lineChild = children.find(child => child?.type === 'line' && child?.stroke);
+      if (lineChild?.stroke) {
+        const value = String(lineChild.stroke).trim();
+        if (value) return value;
+      }
+
+      const anyStrokeChild = children.find(child => child?.stroke);
+      if (anyStrokeChild?.stroke) {
+        const value = String(anyStrokeChild.stroke).trim();
+        if (value) return value;
+      }
+    }
+
+    const fromSelf = String(strokeObj.stroke || strokeObj.fill || '').trim();
+    if (fromSelf) return fromSelf;
+
+    return null;
+  }
+
   // Create a manipulatable connector line
   createConnectorObject(x1, y1, x2, y2, tagObj, strokeObj, strokeLabel) {
+    const strokeWidth = 2;
+    const snap = (value: number) => Math.round(Number(value) || 0);
     return new fabric.Line([x1, y1, x2, y2], {
+      x1: snap(x1),
+      y1: snap(y1),
+      x2: snap(x2),
+      y2: snap(y2),
       stroke: this.getConnectorStrokeColor(strokeObj),
-      strokeWidth: 1,
+      strokeWidth,
       strokeDashArray: [6, 4],
-      opacity: 0.8,
+      opacity: 1,
+      objectCaching: false,
+      strokeLineCap: 'butt',
+      strokeUniform: true,
       selectable: false,
       evented: false,
       hasControls: false,
@@ -982,7 +1124,23 @@ export class TagManager {
     if (!found) return;
     const tagObj = found.tagObj;
     const displayLabel = tagObj.strokeLabel || strokeLabel;
-    const connectedStrokeObj = tagObj.connectedStroke;
+    let connectedStrokeObj = tagObj.connectedStroke;
+
+    // Rebind to the live stroke object if the current reference is stale/off-canvas.
+    const isLiveStroke =
+      connectedStrokeObj &&
+      (typeof canvas.contains !== 'function' || canvas.contains(connectedStrokeObj));
+    if (!isLiveStroke && this.metadataManager) {
+      const scopedImageLabel =
+        tagObj.imageLabel || this.normalizeImageLabel(imageLabel || tagObj.imageLabel);
+      const candidate =
+        this.metadataManager.vectorStrokesByImage?.[scopedImageLabel]?.[displayLabel];
+      if (candidate) {
+        connectedStrokeObj = candidate;
+        tagObj.connectedStroke = candidate;
+      }
+    }
+
     if (!connectedStrokeObj) return;
 
     // Reposition tag to maintain its offset from the stroke
@@ -1196,8 +1354,6 @@ export class TagManager {
       let radius;
       if (this.tagShape === 'circle') {
         radius = height / 2;
-      } else if (width <= height * 1.15) {
-        radius = Math.min(width, height) / 2;
       } else {
         radius = 4;
       }
@@ -1236,18 +1392,20 @@ export class TagManager {
   }
 
   // Update all tags (e.g., when tag mode or shape changes)
-  updateAllTags() {
+  updateAllTags(imageLabel) {
     const currentViewId = this.normalizeImageLabel(
-      window.app?.projectManager?.currentViewId || 'front'
+      imageLabel || window.app?.projectManager?.currentViewId || 'front'
     );
-    const strokes = this.metadataManager.vectorStrokesByImage[currentViewId] || {};
 
-    Object.entries(strokes).forEach(([strokeLabel, strokeObj]) => {
-      const found = this.getTagObject(strokeLabel, currentViewId);
-      if (found && this.isRenderableStrokeObject(strokeObj)) {
-        // Recreate tag with new settings
-        this.createTag(strokeLabel, currentViewId, strokeObj);
-      }
+    this.getViewScopes(currentViewId).forEach(scope => {
+      const strokes = this.metadataManager.vectorStrokesByImage[scope] || {};
+      Object.entries(strokes).forEach(([strokeLabel, strokeObj]) => {
+        const found = this.getTagObject(strokeLabel, scope);
+        if (found && this.isRenderableStrokeObject(strokeObj)) {
+          // Recreate tag with new settings
+          this.createTag(strokeLabel, scope, strokeObj);
+        }
+      });
     });
   }
 
@@ -1297,8 +1455,6 @@ export class TagManager {
             let radius;
             if (this.tagShape === 'circle') {
               radius = height / 2;
-            } else if (width <= height * 1.15) {
-              radius = Math.min(width, height) / 2;
             } else {
               radius = 4;
             }
