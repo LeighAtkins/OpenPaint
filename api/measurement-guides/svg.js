@@ -12,6 +12,13 @@ function normalizeView(value) {
   return '';
 }
 
+function normalizeHideBoxes(value) {
+  const v = String(value || '')
+    .trim()
+    .toLowerCase();
+  return v === '1' || v === 'true' || v === 'yes';
+}
+
 function getWorkerBaseUrl() {
   return (
     process.env.MEASUREMENT_GUIDE_WORKER_URL ||
@@ -45,6 +52,7 @@ export default async function handler(req, res) {
 
   const code = normalizeCode(req.query?.code);
   const view = normalizeView(req.query?.view);
+  const hideBoxes = normalizeHideBoxes(req.query?.hideBoxes);
   if (!code || !view) {
     return res.status(400).json({ success: false, message: 'Invalid code or view' });
   }
@@ -65,8 +73,9 @@ export default async function handler(req, res) {
 
   try {
     for (const candidateView of candidateViews) {
+      const hideBoxesParam = hideBoxes ? '&hideBoxes=1' : '';
       const svgResponse = await fetch(
-        `${workerBase}/measurement-guides/svg?code=${encodeURIComponent(code)}&view=${encodeURIComponent(candidateView)}`,
+        `${workerBase}/measurement-guides/svg?code=${encodeURIComponent(code)}&view=${encodeURIComponent(candidateView)}${hideBoxesParam}`,
         {
           method: 'GET',
           headers,
@@ -88,6 +97,7 @@ export default async function handler(req, res) {
       res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
       res.setHeader('x-guide-view-requested', view);
       res.setHeader('x-guide-view-resolved', candidateView);
+      res.setHeader('x-guide-hide-boxes', hideBoxes ? '1' : '0');
       return res.status(200).send(body);
     }
 
