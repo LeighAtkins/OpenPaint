@@ -62,6 +62,8 @@ export interface MeasurementOverlayElement {
   endpoints: MosEndpoint[];
   label?: MosLabelData;
   style?: MosStyle;
+  /** Optional sampled curve points in MOS coordinates (for path-based measurements) */
+  curvePoints?: MosPoint[];
   /** IDs of all Fabric objects created for this element */
   fabricObjectIds: string[];
   dirty: boolean;
@@ -146,7 +148,7 @@ export const MOS_ALLOWED_ATTRIBUTES = new Set([
   // Structural
   'id',
   'class',
-  'viewBox',
+  'viewbox',
   'xmlns',
   'xmlns:xlink',
   // Geometry — line
@@ -198,10 +200,10 @@ export const MOS_ALLOWED_ATTRIBUTES = new Set([
   'marker-start',
   'marker-mid',
   'marker-end',
-  'markerWidth',
-  'markerHeight',
-  'refX',
-  'refY',
+  'markerwidth',
+  'markerheight',
+  'refx',
+  'refy',
   'orient',
   'markerUnits',
   // Clip/use
@@ -231,6 +233,8 @@ export interface MosGenerateRequest {
   units: 'cm' | 'mm' | 'in';
   mediaResolution?: 'HIGH' | 'MEDIUM' | 'LOW';
   thinkingLevel?: 'low' | 'medium' | 'high';
+  strategy?: 'auto' | 'gemini' | 'sam';
+  anchorHints?: Record<string, Array<{ x: number; y: number }>>;
 }
 
 export interface MosGenerateResponse {
@@ -242,7 +246,7 @@ export interface MosGenerateResponse {
   supabaseId?: string;
   attempt?: number;
   usage?: { promptTokenCount: number; totalTokenCount: number };
-  attemptMode?: 'template' | 'fallback' | 'repair';
+  attemptMode?: 'template' | 'fallback' | 'repair' | 'sam';
   templateUsed?: boolean;
   resolvedGuideView?: 'front' | 'back' | 'side' | string;
   rolesApplied?: string[];
