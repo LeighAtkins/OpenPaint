@@ -1448,6 +1448,10 @@ function buildGuideUrl(code, view) {
   return `/api/measurement-guides/svg?code=${encodeURIComponent(code)}&view=${encodeURIComponent(normalizedView)}&v=${encodeURIComponent(GUIDE_CACHE_KEY)}`;
 }
 
+function buildGuidePreviewUrl(code, view) {
+  return `${buildGuideUrl(code, view)}&hideBoxes=1`;
+}
+
 async function fetchAvailableGuideCodes(fallbackCodes = []) {
   if (Array.isArray(guideCodeListCache) && guideCodeListCache.length) {
     return {
@@ -1538,7 +1542,7 @@ function attachGuideImageRecovery(root) {
       const code = img.dataset.guideCode;
       const view = img.dataset.guideView || 'front';
       if (!code) return;
-      img.src = `${buildGuideUrl(code, view)}&cb=${Date.now()}`;
+      img.src = `${buildGuidePreviewUrl(code, view)}&cb=${Date.now()}`;
     });
   });
 }
@@ -2365,7 +2369,7 @@ function ensureOverlay(slide, slideCount) {
 
   const guideImageEl = flashOverlay.querySelector('#guideFlashGuideImage');
   if (guideImageEl) {
-    const url = buildGuideUrl(slide.code, slide.view);
+    const url = buildGuidePreviewUrl(slide.code, slide.view);
     guideImageEl.src = url;
     guideImageEl.dataset.guideCode = slide.code;
     guideImageEl.dataset.guideView = slide.view;
@@ -2408,7 +2412,7 @@ function ensureOverlay(slide, slideCount) {
     modelStrip.innerHTML = flashSlides
       .map((item, index) => {
         const label = `${item.code} · ${String(item.view).toUpperCase()}`;
-        return `<button type="button" class="guide-flash-strip-item ${index === activeIndex ? 'active' : ''}" data-flash-slide-index="${index}"><img src="${buildGuideUrl(item.code, item.view)}" alt="${label}" /><span>${label}</span></button>`;
+        return `<button type="button" class="guide-flash-strip-item ${index === activeIndex ? 'active' : ''}" data-flash-slide-index="${index}"><img src="${buildGuidePreviewUrl(item.code, item.view)}" alt="${label}" /><span>${label}</span></button>`;
       })
       .join('');
   }
@@ -3023,7 +3027,7 @@ function renderGuideSplitPane() {
       <span class="guide-split-guide-sub">${scopeLabel} · ${imageLabel}</span>
     </header>
     <div class="guide-split-guide-body">
-      <img src="${buildGuideUrl(model.code, model.variant)}" alt="${model.code} ${model.variant}" />
+      <img src="${buildGuidePreviewUrl(model.code, model.variant)}" alt="${model.code} ${model.variant}" />
     </div>
   `;
 }
@@ -3383,7 +3387,7 @@ function showGuideGallery(options = {}) {
               </span>
             </div>
             <div class="guide-gallery-item-body">
-              <img src="${buildGuideUrl(code, activeView)}" alt="${code} ${activeView} view" loading="lazy" data-guide-code="${code}" data-guide-view="${activeView}" />
+              <img src="${buildGuidePreviewUrl(code, activeView)}" alt="${code} ${activeView} view" loading="lazy" data-guide-code="${code}" data-guide-view="${activeView}" />
             </div>
           </div>
         `;
@@ -3462,7 +3466,7 @@ function showGuideGallery(options = {}) {
             <button type="button" class="guide-gallery-link-btn unlink" data-link-action="unlink-preview" ${bindPreviewImage ? '' : 'disabled'}>Unlink</button>
           </div>
           <div>
-            <div class="guide-gallery-bind-preview-pane">${bindPreviewSelection ? `<img id="guideGalleryBindPreviewModelEl" src="${buildGuideUrl(bindPreviewSelection.code, bindPreviewSelection.variant)}" alt="${bindPreviewSelection.code} ${bindPreviewSelection.variant}" />` : '<span id="guideGalleryBindPreviewModelEmpty" style="font-size:12px;color:#64748b;">Select one model</span>'}</div>
+            <div class="guide-gallery-bind-preview-pane">${bindPreviewSelection ? `<img id="guideGalleryBindPreviewModelEl" src="${buildGuidePreviewUrl(bindPreviewSelection.code, bindPreviewSelection.variant)}" alt="${bindPreviewSelection.code} ${bindPreviewSelection.variant}" />` : '<span id="guideGalleryBindPreviewModelEmpty" style="font-size:12px;color:#64748b;">Select one model</span>'}</div>
             <div id="guideGalleryBindPreviewModelMeta" class="guide-gallery-bind-preview-meta">${bindPreviewSelection ? `${bindPreviewSelection.code} · ${bindPreviewSelection.variant.toUpperCase()}` : 'No model selected'}</div>
             <div style="margin-top:6px;display:flex;align-items:center;gap:6px;">
               <label style="font-size:11px;font-weight:700;color:#334155;">View</label>
@@ -3502,7 +3506,7 @@ function showGuideGallery(options = {}) {
               selectedModelCodes
                 .map(
                   code =>
-                    `<button type="button" class="guide-gallery-bind-strip-item ${code === bindPreviewModelCode ? 'active' : ''}" data-bind-preview-selection="${code}"><img src="${buildGuideUrl(code, bindVariantByCode[code] || 'front')}" alt="${code} ${bindVariantByCode[code] || 'front'}" /><span>${code} · ${(bindVariantByCode[code] || 'front').toUpperCase()}</span></button>`
+                    `<button type="button" class="guide-gallery-bind-strip-item ${code === bindPreviewModelCode ? 'active' : ''}" data-bind-preview-selection="${code}"><img src="${buildGuidePreviewUrl(code, bindVariantByCode[code] || 'front')}" alt="${code} ${bindVariantByCode[code] || 'front'}" /><span>${code} · ${(bindVariantByCode[code] || 'front').toUpperCase()}</span></button>`
                 )
                 .join('') ||
               '<div style="font-size:11px;color:#64748b;">No model selected yet.</div>'
@@ -3741,7 +3745,7 @@ function showGuideGallery(options = {}) {
 
       if (modelPane) {
         modelPane.innerHTML = selection
-          ? `<img id="guideGalleryBindPreviewModelEl" src="${buildGuideUrl(selection.code, selection.variant)}" alt="${selection.code} ${selection.variant}" />`
+          ? `<img id="guideGalleryBindPreviewModelEl" src="${buildGuidePreviewUrl(selection.code, selection.variant)}" alt="${selection.code} ${selection.variant}" />`
           : '<span id="guideGalleryBindPreviewModelEmpty" style="font-size:12px;color:#64748b;">Select one model</span>';
       }
       if (modelMeta) {
