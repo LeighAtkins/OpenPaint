@@ -114,6 +114,11 @@ export default {
 				.trim()
 				.toLowerCase();
 			const view = viewRaw === 'front' || viewRaw === 'back' || viewRaw === 'side' ? viewRaw : '';
+			const hideBoxes = ['1', 'true', 'yes'].includes(
+				String(url.searchParams.get('hideBoxes') || '')
+					.trim()
+					.toLowerCase(),
+			);
 
 			if (!code || !view) {
 				return json(env, origin, { error: 'invalid_code_or_view' }, 400);
@@ -139,9 +144,11 @@ export default {
 			// Read SVG content and transform it
 			let svgText = await object.text();
 
-			// Hide measurement box groups (ids starting with "b") without mutating SVG structure.
-			// Removing nested <g> elements with regex can corrupt markup and break browser rendering.
-			svgText = svgText.replace(/(<svg[^>]*>)/, '$1\n<style>g[id^="b"]{display:none!important;}</style>');
+			if (hideBoxes) {
+				// Optional compatibility mode: hide measurement box groups (ids starting with "b").
+				// Kept behind a query flag so vector import can use untouched source SVG.
+				svgText = svgText.replace(/(<svg[^>]*>)/, '$1\n<style>g[id^="b"]{display:none!important;}</style>');
+			}
 
 			// Add white background rectangle as first child of SVG
 			// Insert after opening <svg> tag

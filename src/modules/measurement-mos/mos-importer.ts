@@ -17,6 +17,7 @@ import type {
   ImageRect,
 } from './types';
 import { mosToCanvas, mosScaleFactor } from './mos-transform';
+import { FabricControls } from '../utils/FabricControls.js';
 
 declare const fabric: any;
 
@@ -26,6 +27,7 @@ const MOS_RANGE = 1000;
 // Default stroke style matching svgMerge coral palette
 const DEFAULT_STROKE_COLOR = '#DF6868';
 const DEFAULT_STROKE_WIDTH = 1.5;
+const CURVE_CONTROL_POINTS_MAX = 8;
 
 // ---------------------------------------------------------------------------
 // Public API
@@ -56,6 +58,8 @@ export function importMosSvg(
 
   // Determine source viewBox for coordinate mapping
   const vb = parseViewBox(svgRoot);
+  const srcMinX = vb?.x ?? 0;
+  const srcMinY = vb?.y ?? 0;
   const srcWidth = vb?.width ?? MOS_RANGE;
   const srcHeight = vb?.height ?? MOS_RANGE;
 
@@ -69,6 +73,8 @@ export function importMosSvg(
       child,
       overlayId,
       prefix,
+      srcMinX,
+      srcMinY,
       srcWidth,
       srcHeight,
       imageRect,
@@ -117,28 +123,47 @@ function processElement(
   el: Element,
   overlayId: string,
   prefix: string,
+  srcMinX: number,
+  srcMinY: number,
   srcWidth: number,
   srcHeight: number,
   imageRect: ImageRect,
   scale: number,
   canvas: any,
-  elements: Map<string, MeasurementOverlayElement>
+  elements: Map<string, MeasurementOverlayElement>,
+  inheritedMeasureRoleToken?: string,
+  inheritedLabelRoleToken?: string
 ): void {
   const tag = el.tagName.toLowerCase();
 
   // Recurse into groups
   if (tag === 'g') {
+    const groupId = el.getAttribute('id') || '';
+    const groupRoleToken = extractRoleTokenFromId(groupId);
+    const isMeasurementGroup = isMeasurementGroupId(groupId);
+    const nextInheritedMeasureRoleToken = isMeasurementGroup
+      ? groupRoleToken || inheritedMeasureRoleToken
+      : inheritedMeasureRoleToken;
+    const isLabelGroup = isLabelGroupId(groupId);
+    const nextInheritedLabelRoleToken = isLabelGroup
+      ? groupRoleToken || inheritedLabelRoleToken
+      : inheritedLabelRoleToken;
+
     for (const child of Array.from(el.children)) {
       processElement(
         child,
         overlayId,
         prefix,
+        srcMinX,
+        srcMinY,
         srcWidth,
         srcHeight,
         imageRect,
         scale,
         canvas,
-        elements
+        elements,
+        nextInheritedMeasureRoleToken,
+        nextInheritedLabelRoleToken
       );
     }
     return;
@@ -148,15 +173,42 @@ function processElement(
   if (tag === 'defs' || tag === 'style' || tag === 'clippath' || tag === 'marker') return;
 
   const elId = el.getAttribute('id') || `${prefix}auto_${elements.size}`;
-  const kind = classifyElement(el, elId);
+  let kind = classifyElement(el, elId);
+  if (tag === 'path' && inheritedMeasureRoleToken) {
+    kind = 'measureLine';
+  }
 
   // Convert element geometry to MOS coordinates
-  const mosElement = extractElementGeometry(el, tag, elId, kind, srcWidth, srcHeight);
+  const mosElement = extractElementGeometry(
+    el,
+    tag,
+    elId,
+    kind,
+    srcMinX,
+    srcMinY,
+    srcWidth,
+    srcHeight
+  );
   if (!mosElement) return;
 
   const roleToken = extractRoleTokenFromId(elId);
   if (roleToken) {
     mosElement.roleToken = roleToken;
+  } else if (inheritedMeasureRoleToken && elementHasLineGeometry(mosElement)) {
+    mosElement.roleToken = inheritedMeasureRoleToken;
+  } else if (inheritedLabelRoleToken && mosElement.kind === 'label') {
+    mosElement.roleToken = inheritedLabelRoleToken;
+  }
+
+  // Only keep vectorized line geometry when it maps to a semantic measurement role.
+  // This avoids importing furniture outline strokes and auxiliary non-role lines as vectors.
+  if (mosElement.kind === 'measureLine' && !mosElement.roleToken) {
+    return;
+  }
+
+  // Arrowhead polygons from source SVG are replaced by generated line-end arrowheads.
+  if (mosElement.kind === 'shapeHint') {
+    return;
   }
 
   // Create Fabric objects
@@ -164,6 +216,10 @@ function processElement(
   mosElement.fabricObjectIds = fabricIds;
 
   elements.set(mosElement.id, mosElement);
+}
+
+function elementHasLineGeometry(element: MeasurementOverlayElement): boolean {
+  return element.kind === 'measureLine' && element.endpoints.length === 2;
 }
 
 // ---------------------------------------------------------------------------
@@ -182,6 +238,7 @@ function classifyElement(el: Element, id: string): MosElementKind {
 
   // Fallback classification by element type
   if (tag === 'text' || tag === 'tspan') return 'label';
+  if (tag === 'rect' || tag === 'circle' || tag === 'ellipse') return 'label';
   if (tag === 'line' || tag === 'polyline') return 'measureLine';
   if (tag === 'polygon') return 'shapeHint';
   if (tag === 'path') return 'leader';
@@ -198,11 +255,15 @@ function extractElementGeometry(
   tag: string,
   elId: string,
   kind: MosElementKind,
+  srcMinX: number,
+  srcMinY: number,
   srcWidth: number,
   srcHeight: number
 ): MeasurementOverlayElement | null {
-  const toMosX = (v: number) => (v / srcWidth) * MOS_RANGE;
-  const toMosY = (v: number) => (v / srcHeight) * MOS_RANGE;
+  const safeWidth = srcWidth || MOS_RANGE;
+  const safeHeight = srcHeight || MOS_RANGE;
+  const toMosX = (v: number) => ((v - srcMinX) / safeWidth) * MOS_RANGE;
+  const toMosY = (v: number) => ((v - srcMinY) / safeHeight) * MOS_RANGE;
 
   const endpoints: MosEndpoint[] = [];
   let label: MosLabelData | undefined;
@@ -233,11 +294,10 @@ function extractElementGeometry(
 
     case 'polygon': {
       const pts = parsePoints(el.getAttribute('points') || '');
-      if (pts.length >= 2) {
-        // Use centroid as single reference point
-        const cx = pts.reduce((s, p) => s + p.x, 0) / pts.length;
-        const cy = pts.reduce((s, p) => s + p.y, 0) / pts.length;
-        endpoints.push({ point: { x: toMosX(cx), y: toMosY(cy) } });
+      if (pts.length >= 3) {
+        for (const pt of pts) {
+          endpoints.push({ point: { x: toMosX(pt.x), y: toMosY(pt.y) } });
+        }
       }
       break;
     }
@@ -277,11 +337,23 @@ function extractElementGeometry(
     }
 
     case 'path': {
-      // For paths, extract first move-to and approximate endpoint
       const d = el.getAttribute('d') || '';
-      const firstPoint = extractPathStartPoint(d);
-      if (firstPoint) {
-        endpoints.push({ point: { x: toMosX(firstPoint.x), y: toMosY(firstPoint.y) } });
+      const points = extractPathPoints(d);
+      if (points.length >= 2) {
+        endpoints.push(
+          { point: { x: toMosX(points[0].x), y: toMosY(points[0].y) } },
+          {
+            point: {
+              x: toMosX(points[points.length - 1].x),
+              y: toMosY(points[points.length - 1].y),
+            },
+          }
+        );
+      } else {
+        const firstPoint = extractPathStartPoint(d);
+        if (firstPoint) {
+          endpoints.push({ point: { x: toMosX(firstPoint.x), y: toMosY(firstPoint.y) } });
+        }
       }
       break;
     }
@@ -295,7 +367,7 @@ function extractElementGeometry(
   // Read inline style for stroke info
   const style = extractStyle(el);
 
-  return {
+  const baseElement = {
     id: elId,
     opId: elId,
     kind,
@@ -306,6 +378,16 @@ function extractElementGeometry(
     fabricObjectIds: [],
     dirty: false,
   };
+
+  if (tag === 'path' && kind === 'measureLine') {
+    const d = el.getAttribute('d') || '';
+    const points = extractPathPoints(d);
+    if (points.length >= 2) {
+      baseElement.curvePoints = points.map(point => ({ x: toMosX(point.x), y: toMosY(point.y) }));
+    }
+  }
+
+  return baseElement;
 }
 
 // ---------------------------------------------------------------------------
@@ -328,90 +410,177 @@ function createFabricObjectsForElement(
   };
 
   const strokeColor = element.style?.strokeColor || DEFAULT_STROKE_COLOR;
-  const strokeWidth = (element.style?.strokeWidth || DEFAULT_STROKE_WIDTH) * scale;
+  const measurementStrokeWidth = 4;
 
   if (element.kind === 'measureLine' && element.endpoints.length === 2) {
+    if (Array.isArray(element.curvePoints) && element.curvePoints.length >= 2) {
+      const curveWorldPoints = element.curvePoints.map(point => mosToCanvas(point, imageRect));
+      const pathData = buildSmoothPathFromPoints(curveWorldPoints);
+      const pathObj = new fabric.Path(pathData, {
+        fill: '',
+        stroke: strokeColor,
+        strokeWidth: measurementStrokeWidth,
+        selectable: true,
+        evented: true,
+        hasControls: true,
+        hasBorders: false,
+        objectCaching: false,
+        customData: { ...customData, endpointIndex: undefined },
+      });
+
+      pathObj.customPoints = curveWorldPoints.map(point => ({ x: point.x, y: point.y }));
+      FabricControls.createCurveControls(pathObj);
+
+      const lineId = `${element.id}_line`;
+      const startArrowId = `${element.id}_curve_start_arrow`;
+      const endArrowId = `${element.id}_curve_end_arrow`;
+
+      const arrowSize = 12;
+      const startArrow = new fabric.Triangle({
+        width: arrowSize,
+        height: arrowSize,
+        fill: strokeColor,
+        stroke: strokeColor,
+        strokeWidth: Math.max(1, measurementStrokeWidth * 0.4),
+        originX: 'center',
+        originY: 'center',
+        selectable: false,
+        evented: false,
+        objectCaching: false,
+        customData: { ...customData },
+      });
+      const endArrow = new fabric.Triangle({
+        width: arrowSize,
+        height: arrowSize,
+        fill: strokeColor,
+        stroke: strokeColor,
+        strokeWidth: Math.max(1, measurementStrokeWidth * 0.4),
+        originX: 'center',
+        originY: 'center',
+        selectable: false,
+        evented: false,
+        objectCaching: false,
+        customData: { ...customData },
+      });
+
+      startArrow.__mosId = startArrowId;
+      endArrow.__mosId = endArrowId;
+
+      pathObj.__mosId = lineId;
+      pathObj.strokeMetadata = {
+        ...(pathObj.strokeMetadata || {}),
+        strokeLabel: element.roleToken || '',
+      };
+
+      const updateCurveArrows = () => {
+        updateCurveArrowheadsFromCustomPoints(pathObj, startArrow, endArrow);
+      };
+      pathObj.__mosUpdateCurveDecorators = updateCurveArrows;
+
+      element.endpoints[0].fabricObjectId = lineId;
+      element.endpoints[1].fabricObjectId = lineId;
+      fabricIds.push(lineId, startArrowId, endArrowId);
+
+      canvas.add(pathObj);
+      canvas.add(startArrow);
+      canvas.add(endArrow);
+      updateCurveArrows();
+
+      pathObj.on('moving', updateCurveArrows);
+      pathObj.on('modified', updateCurveArrows);
+      pathObj.on('scaling', updateCurveArrows);
+      pathObj.on('rotating', updateCurveArrows);
+      pathObj.on('changed', updateCurveArrows);
+      return fabricIds;
+    }
+
     const p1 = mosToCanvas(element.endpoints[0].point, imageRect);
     const p2 = mosToCanvas(element.endpoints[1].point, imageRect);
+    const selectable = true;
 
     const line = new fabric.Line([p1.x, p1.y, p2.x, p2.y], {
       stroke: strokeColor,
-      strokeWidth: strokeWidth,
-      selectable: true,
-      evented: true,
-      hasControls: true,
+      strokeWidth: measurementStrokeWidth,
+      selectable: false,
+      evented: false,
+      hasControls: false,
       hasBorders: false,
       originX: 'center',
       originY: 'center',
+      opacity: 1,
       customData: { ...customData, endpointIndex: undefined },
     });
 
     const lineId = `${element.id}_line`;
-    line.__mosId = lineId;
+    const arrowSize = 12;
+    const head = new fabric.Triangle({
+      width: arrowSize,
+      height: arrowSize,
+      fill: strokeColor,
+      stroke: strokeColor,
+      strokeWidth: Math.max(1, measurementStrokeWidth * 0.4),
+      originX: 'center',
+      originY: 'center',
+      selectable: false,
+      evented: false,
+      objectCaching: false,
+      customData: { ...customData },
+    });
+    const angle = (Math.atan2(p2.y - p1.y, p2.x - p1.x) * 180) / Math.PI + 90;
+    head.set({ left: p2.x, top: p2.y, angle });
+
+    const tailHead = new fabric.Triangle({
+      width: arrowSize,
+      height: arrowSize,
+      fill: strokeColor,
+      stroke: strokeColor,
+      strokeWidth: Math.max(1, measurementStrokeWidth * 0.4),
+      originX: 'center',
+      originY: 'center',
+      selectable: false,
+      evented: false,
+      objectCaching: false,
+      customData: { ...customData },
+    });
+    tailHead.set({ left: p1.x, top: p1.y, angle: angle - 180 });
+
+    const group = new fabric.Group([line, head, tailHead], {
+      originX: 'center',
+      originY: 'center',
+      selectable,
+      evented: selectable,
+      hasControls: selectable,
+      hasBorders: false,
+      lockRotation: false,
+      customData: { ...customData, endpointIndex: undefined },
+    });
+
+    if (selectable) {
+      FabricControls.createArrowControls(group);
+    }
+
+    group.isArrow = true;
+    group.__mosId = lineId;
     element.endpoints[0].fabricObjectId = lineId;
     element.endpoints[1].fabricObjectId = lineId;
     fabricIds.push(lineId);
 
-    // Apply endpoint controls (reuse existing FabricControls pattern)
-    applyMosLineControls(line);
-
-    canvas.add(line);
+    // Apply endpoint controls for primary measurement lines only.
+    canvas.add(group);
   }
 
   if (element.label) {
     // MOS labels are rendered as TagManager tags, not imported SVG text.
   }
 
-  // For shape hints (polygons), create as non-editable visual
-  if (element.kind === 'shapeHint' && element.endpoints.length >= 1) {
-    const cp = mosToCanvas(element.endpoints[0].point, imageRect);
+  // shapeHint polygons are intentionally skipped (arrowheads come from arrow groups).
 
-    const marker = new fabric.Circle({
-      left: cp.x,
-      top: cp.y,
-      radius: 4 * scale,
-      fill: strokeColor,
-      opacity: 0.5,
-      originX: 'center',
-      originY: 'center',
-      selectable: false,
-      evented: false,
-      customData: { ...customData },
-    });
-
-    const markerId = `${element.id}_marker`;
-    marker.__mosId = markerId;
-    fabricIds.push(markerId);
-
-    canvas.add(marker);
-  }
-
-  // For leaders/paths, create as Fabric path
-  if (element.kind === 'leader' && element.endpoints.length >= 1) {
-    const cp = mosToCanvas(element.endpoints[0].point, imageRect);
-
-    const dot = new fabric.Circle({
-      left: cp.x,
-      top: cp.y,
-      radius: 3 * scale,
-      fill: strokeColor,
-      originX: 'center',
-      originY: 'center',
-      selectable: true,
-      evented: true,
-      hasControls: false,
-      customData: { ...customData },
-    });
-
-    const dotId = `${element.id}_leader`;
-    dot.__mosId = dotId;
-    fabricIds.push(dotId);
-
-    canvas.add(dot);
-  }
+  // Skip leader/path placeholders; they appear as unrelated dots in overlay imports.
 
   return fabricIds;
 }
+
+// Arrowhead positioning handled by grouped arrow geometry + FabricControls.
 
 // ---------------------------------------------------------------------------
 // Line controls (mirrors FabricControls.createLineControls pattern)
@@ -573,6 +742,182 @@ function extractPathStartPoint(d: string): { x: number; y: number } | null {
   return { x: parseFloat(match[1]), y: parseFloat(match[2]) };
 }
 
+function extractPathPoints(d: string): { x: number; y: number }[] {
+  if (!d || typeof document === 'undefined') return [];
+  try {
+    const svgNs = 'http://www.w3.org/2000/svg';
+    const path = document.createElementNS(svgNs, 'path');
+    path.setAttribute('d', d);
+    const total = path.getTotalLength?.();
+    if (!Number.isFinite(total) || total <= 0) {
+      const start = extractPathStartPoint(d);
+      return start ? [start] : [];
+    }
+    const sampleCount = Math.max(10, Math.min(36, Math.ceil(total / 24)));
+    const points: { x: number; y: number }[] = [];
+    for (let i = 0; i <= sampleCount; i++) {
+      const len = (total * i) / sampleCount;
+      const pt = path.getPointAtLength(len);
+      points.push({ x: pt.x, y: pt.y });
+    }
+    return downsamplePointsForCurveControls(points, CURVE_CONTROL_POINTS_MAX);
+  } catch {
+    const start = extractPathStartPoint(d);
+    return start ? [start] : [];
+  }
+}
+
+function downsamplePointsForCurveControls(
+  points: Array<{ x: number; y: number }>,
+  maxPoints: number
+): Array<{ x: number; y: number }> {
+  if (!Array.isArray(points) || points.length <= maxPoints) return points;
+  if (maxPoints < 2) return points.slice(0, 2);
+
+  // Use RDP simplification so anchor placement follows curve shape,
+  // then fit to the requested maximum point budget.
+  const epsilonBase = estimateCurveEpsilon(points);
+  let simplified = points.slice();
+  let epsilon = epsilonBase;
+
+  for (let i = 0; i < 10; i++) {
+    const candidate = simplifyRdp(points, epsilon);
+    if (candidate.length <= maxPoints) {
+      simplified = candidate;
+      break;
+    }
+    epsilon *= 1.6;
+    simplified = candidate;
+  }
+
+  if (simplified.length > maxPoints) {
+    const result: Array<{ x: number; y: number }> = [];
+    const lastIndex = simplified.length - 1;
+    for (let i = 0; i < maxPoints; i++) {
+      const idx = Math.round((i * lastIndex) / (maxPoints - 1));
+      result.push(simplified[idx]);
+    }
+    return result;
+  }
+
+  return simplified;
+}
+
+function estimateCurveEpsilon(points: Array<{ x: number; y: number }>): number {
+  if (!Array.isArray(points) || points.length < 2) return 2;
+  let minX = points[0].x;
+  let maxX = points[0].x;
+  let minY = points[0].y;
+  let maxY = points[0].y;
+  for (const p of points) {
+    if (p.x < minX) minX = p.x;
+    if (p.x > maxX) maxX = p.x;
+    if (p.y < minY) minY = p.y;
+    if (p.y > maxY) maxY = p.y;
+  }
+  const diag = Math.hypot(maxX - minX, maxY - minY);
+  return Math.max(2, diag * 0.01);
+}
+
+function simplifyRdp(
+  points: Array<{ x: number; y: number }>,
+  epsilon: number
+): Array<{ x: number; y: number }> {
+  if (points.length < 3) return points.slice();
+
+  const first = points[0];
+  const last = points[points.length - 1];
+  let index = -1;
+  let dmax = -1;
+
+  for (let i = 1; i < points.length - 1; i++) {
+    const d = perpendicularDistance(points[i], first, last);
+    if (d > dmax) {
+      index = i;
+      dmax = d;
+    }
+  }
+
+  if (dmax > epsilon && index > 0) {
+    const left = simplifyRdp(points.slice(0, index + 1), epsilon);
+    const right = simplifyRdp(points.slice(index), epsilon);
+    return left.slice(0, -1).concat(right);
+  }
+
+  return [first, last];
+}
+
+function perpendicularDistance(
+  point: { x: number; y: number },
+  start: { x: number; y: number },
+  end: { x: number; y: number }
+): number {
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+  const len2 = dx * dx + dy * dy;
+  if (len2 === 0) return Math.hypot(point.x - start.x, point.y - start.y);
+
+  const t = ((point.x - start.x) * dx + (point.y - start.y) * dy) / len2;
+  const projX = start.x + t * dx;
+  const projY = start.y + t * dy;
+  return Math.hypot(point.x - projX, point.y - projY);
+}
+
+function buildSmoothPathFromPoints(points: Array<{ x: number; y: number }>): string {
+  if (!Array.isArray(points) || points.length < 2) return '';
+  if (points.length === 2) {
+    return `M ${points[0].x} ${points[0].y} L ${points[1].x} ${points[1].y}`;
+  }
+
+  let path = `M ${points[0].x} ${points[0].y}`;
+  const tension = 0.5;
+  for (let i = 0; i < points.length - 1; i++) {
+    const p0 = points[i === 0 ? 0 : i - 1];
+    const p1 = points[i];
+    const p2 = points[i + 1];
+    const p3 = points[i + 2 >= points.length ? points.length - 1 : i + 2];
+
+    const cp1x = p1.x + ((p2.x - p0.x) * tension) / 3;
+    const cp1y = p1.y + ((p2.y - p0.y) * tension) / 3;
+    const cp2x = p2.x - ((p3.x - p1.x) * tension) / 3;
+    const cp2y = p2.y - ((p3.y - p1.y) * tension) / 3;
+
+    path += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2.x} ${p2.y}`;
+  }
+  return path;
+}
+
+function updateCurveArrowheadsFromCustomPoints(pathObj: any, startArrow: any, endArrow: any): void {
+  if (!pathObj || !startArrow || !endArrow) return;
+  const points = (pathObj.customPoints || []).filter(
+    (p: any) => Number.isFinite(p?.x) && Number.isFinite(p?.y)
+  );
+  if (points.length < 2) return;
+
+  const pStart = points[0];
+  const pStartNext = points[1];
+  const pEndPrev = points[points.length - 2];
+  const pEnd = points[points.length - 1];
+
+  const startAngle = (Math.atan2(pStartNext.y - pStart.y, pStartNext.x - pStart.x) * 180) / Math.PI;
+  const endAngle = (Math.atan2(pEnd.y - pEndPrev.y, pEnd.x - pEndPrev.x) * 180) / Math.PI;
+
+  // Match straight-line arrow orientation convention.
+  startArrow.set({
+    left: pStart.x,
+    top: pStart.y,
+    angle: startAngle - 90,
+  });
+  endArrow.set({
+    left: pEnd.x,
+    top: pEnd.y,
+    angle: endAngle + 90,
+  });
+  startArrow.setCoords?.();
+  endArrow.setCoords?.();
+  pathObj.canvas?.requestRenderAll?.();
+}
+
 function extractStyle(el: Element): { strokeColor?: string; strokeWidth?: number } | undefined {
   const stroke = el.getAttribute('stroke') || getStyleProp(el, 'stroke');
   const sw = el.getAttribute('stroke-width') || getStyleProp(el, 'stroke-width');
@@ -594,7 +939,7 @@ function getStyleProp(el: Element, prop: string): string | null {
 
 function extractRoleTokenFromId(id: string): string | undefined {
   const normalized = (id || '').replace(/^mos\d+_/, '').trim();
-  if (!/^[mbc][a-z0-9_-]+$/i.test(normalized)) return undefined;
+  if (!isMeasurementOpId(normalized)) return undefined;
 
   const token = normalized
     .slice(1)
@@ -605,4 +950,26 @@ function extractRoleTokenFromId(id: string): string | undefined {
 
   if (!token || /^\d+$/.test(token)) return undefined;
   return token;
+}
+
+function isMeasurementOpId(normalizedId: string): boolean {
+  const value = String(normalizedId || '').trim();
+  if (!value) return false;
+  return /^[mbc][a-z0-9-]+(?:cm|mm|in)\d*(?:_(?:label|text))?$/i.test(value);
+}
+
+function isMeasurementGroupId(id: string): boolean {
+  const normalized = String(id || '')
+    .replace(/^mos\d+_/, '')
+    .trim();
+  if (!normalized) return false;
+  return /^m[a-z0-9-]+(?:cm|mm|in)\d*(?:_(?:label|text))?$/i.test(normalized);
+}
+
+function isLabelGroupId(id: string): boolean {
+  const normalized = String(id || '')
+    .replace(/^mos\d+_/, '')
+    .trim();
+  if (!normalized) return false;
+  return /^[bc][a-z0-9-]+(?:cm|mm|in)\d*(?:_(?:label|text))?$/i.test(normalized);
 }
