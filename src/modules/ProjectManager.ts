@@ -238,16 +238,16 @@ export class ProjectManager {
     if (window.ensureCaptureTabsForLabel) {
       window.ensureCaptureTabsForLabel(viewId);
     }
-    if (window.applyCaptureFrameForLabel) {
-      window.applyCaptureFrameForLabel(viewId);
-    }
     if (window.renderCaptureTabUI) {
       window.renderCaptureTabUI(viewId);
+    }
+    if (window.applyCaptureFrameForLabel) {
+      window.applyCaptureFrameForLabel(viewId);
     }
 
     // 5. Load background image if exists
     if (view.image) {
-      await this.setBackgroundImage(view.image);
+      await this.setBackgroundImage(view.image, view.fitMode || 'fit-canvas');
     }
 
     // 6. Restore canvas objects (strokes/text)
@@ -278,10 +278,12 @@ export class ProjectManager {
           .filter(Boolean);
       }
 
-      // If we have a saved image data URL, replace the blob URL in backgroundImage
+      // Background images are restored separately via setBackgroundImage().
+      // Keeping Fabric's serialized background image here causes duplicate async loads
+      // and can race with the manual restore path during cloud project hydration.
       if (sanitizedData.backgroundImage && view.image) {
-        sanitizedData.backgroundImage.src = view.image;
-        console.log(`[Load] Replaced background image URL for ${viewId}`);
+        delete sanitizedData.backgroundImage;
+        console.log(`[Load] Removed serialized background image for ${viewId}`);
       }
 
       await new Promise(resolve => {
@@ -398,7 +400,7 @@ export class ProjectManager {
             const currentBgSrc = canvas?.backgroundImage?.src;
             if (!currentBgSrc || currentBgSrc !== view.image) {
               console.log('[Load] Reapplying background image after JSON load:', viewId);
-              await this.setBackgroundImage(view.image);
+              await this.setBackgroundImage(view.image, view.fitMode || 'fit-canvas');
             }
           }
 
@@ -421,6 +423,10 @@ export class ProjectManager {
       }
 
       this.historyManager.saveState();
+    }
+
+    if (window.applyCaptureFrameForLabel) {
+      window.applyCaptureFrameForLabel(viewId);
     }
 
     // Mount MOS overlays for the new view
@@ -1532,7 +1538,7 @@ export class ProjectManager {
   async getProjectData(options = {}) {
     const { embedImages = true, uploadImagesToR2 = false } = options;
     if (window.captureTabsSyncActive) {
-      window.captureTabsSyncActive(this.currentViewId);
+      window.captureTabsSyncActive(this.currentViewId, { syncRotation: true });
     }
     this.saveCurrentViewState();
 
@@ -1616,6 +1622,8 @@ export class ProjectManager {
         imageAssetHash: view.imageAssetHash || null,
         imageContentType: view.imageContentType || null,
         imageSourceFingerprint: view.imageSourceFingerprint || null,
+        rotation: 0,
+        fitMode: typeof view.fitMode === 'string' ? view.fitMode : 'fit-canvas',
         metadata: {},
         tabs: null,
       };
@@ -1693,6 +1701,13 @@ export class ProjectManager {
       }
 
       entry.tabs = deepClone(window.captureTabsByLabel?.[viewId] || view.tabs);
+
+      if (viewId === this.currentViewId) {
+        const liveRotation = this.canvasManager?.getRotationDegrees?.();
+        entry.rotation = Number.isFinite(liveRotation) ? liveRotation : Number(view.rotation) || 0;
+      } else {
+        entry.rotation = Number(view.rotation) || 0;
+      }
 
       // Persist per-image viewport (zoom/pan) so framing is restored on load
       if (viewId === this.currentViewId) {
@@ -1926,8 +1941,31 @@ export class ProjectManager {
     return objectKey;
   }
 
+  extractR2ObjectKeyFromUrl(sourceUrl) {
+    const raw = String(sourceUrl || '').trim();
+    if (!raw) return null;
+    if (raw.startsWith('r2://')) {
+      return raw.slice(5) || null;
+    }
+
+    try {
+      const parsed = new URL(
+        raw,
+        typeof window !== 'undefined' ? window.location.origin : 'http://localhost'
+      );
+      const pathname = parsed.pathname || '';
+      if (!pathname.includes('/api/storage/r2/object')) {
+        return null;
+      }
+      const key = parsed.searchParams.get('key');
+      return key ? key.trim() : null;
+    } catch {
+      return null;
+    }
+  }
+
   async resolveR2ImageUrl(r2Path) {
-    const objectKey = String(r2Path || '').replace(/^r2:\/\//, '');
+    const objectKey = this.extractR2ObjectKeyFromUrl(r2Path);
     if (!objectKey) return null;
 
     if (this.remoteImageObjectUrlCache.has(objectKey)) {
@@ -1938,7 +1976,20 @@ export class ProjectManager {
     try {
       const response = await fetch(proxyUrl, { cache: 'force-cache' });
       if (!response.ok) {
-        return proxyUrl;
+        console.warn('[Load] Failed to fetch R2 image proxy', {
+          objectKey,
+          status: response.status,
+        });
+        return null;
+      }
+      const contentType = String(response.headers.get('content-type') || '').toLowerCase();
+      const isImageResponse = contentType.startsWith('image/') || contentType.includes('svg');
+      if (!isImageResponse) {
+        console.warn('[Load] R2 proxy returned non-image content', {
+          objectKey,
+          contentType: contentType || 'unknown',
+        });
+        return null;
       }
       const blob = await response.blob();
       const objectUrl = URL.createObjectURL(blob);
@@ -1946,8 +1997,8 @@ export class ProjectManager {
       this.loadedProjectObjectUrls.push(objectUrl);
       return objectUrl;
     } catch (error) {
-      console.warn('[Load] Failed to blob-cache R2 image URL, using proxy URL directly', error);
-      return proxyUrl;
+      console.warn('[Load] Failed to blob-cache R2 image URL', error);
+      return null;
     }
   }
 
@@ -2069,6 +2120,10 @@ export class ProjectManager {
       typeof viewData.canvasJSON.backgroundImage.src === 'string'
         ? viewData.canvasJSON.backgroundImage.src
         : '';
+    const legacyR2Key = this.extractR2ObjectKeyFromUrl(legacyBackgroundSrc);
+    if (legacyR2Key) {
+      return await this.resolveR2ImageUrl(`r2://${legacyR2Key}`);
+    }
     if (legacyBackgroundSrc && !legacyBackgroundSrc.startsWith('blob:')) {
       return legacyBackgroundSrc;
     }
@@ -2078,8 +2133,9 @@ export class ProjectManager {
       return null;
     }
 
-    if (typeof viewData.imageUrl === 'string' && viewData.imageUrl.startsWith('r2://')) {
-      return await this.resolveR2ImageUrl(viewData.imageUrl);
+    const imageUrlR2Key = this.extractR2ObjectKeyFromUrl(viewData.imageUrl);
+    if (imageUrlR2Key) {
+      return await this.resolveR2ImageUrl(`r2://${imageUrlR2Key}`);
     }
 
     if (typeof viewData.imageUrl === 'string' && viewData.imageUrl.startsWith('cloud-asset://')) {
@@ -2169,6 +2225,7 @@ export class ProjectManager {
       window.__suspendSaveCurrentView = true;
       this.isLoadingProject = true;
       this.suspendSave = true;
+      this.pendingSwitchViewId = null;
 
       // Prevent scroll-select auto-switching during load without toggling UI state
       window.__suppressScrollSelectUntil = Date.now() + 300000;
@@ -2195,6 +2252,8 @@ export class ProjectManager {
 
       this.projectMetadata = normalizeSofaMetadata(projectData.metadata);
       window.projectMetadata = this.getProjectMetadata();
+      window.app?.tagManager?.syncTagStyleConfigFromMetadata?.();
+      window.app?.tagManager?.syncTagSizeFromMetadata?.();
 
       // Clear existing views and recreate from saved data
       this.views = {};
@@ -2238,6 +2297,32 @@ export class ProjectManager {
 
       console.log('[Load] Loading views:', orderedViewIds);
       const targetView = projectData.currentViewId || orderedViewIds[0];
+      const debugFirstViewState = stage => {
+        if (!targetView || this.currentViewId !== targetView) return;
+        const tabs = window.captureTabsByLabel?.[targetView] || null;
+        const activeTab = tabs?.tabs?.find?.(tab => tab.id === tabs.activeTabId) || null;
+        const viewport = this.canvasManager?.getViewportState?.() || null;
+        const frame = activeTab?.captureFrame || null;
+        const worldRect = frame?.worldRect || null;
+        const bg = this.canvasManager?.fabricCanvas?.backgroundImage;
+        console.log('[Load][FirstView]', {
+          stage,
+          targetView,
+          activeTabId: tabs?.activeTabId || null,
+          zoom: viewport?.zoom,
+          panX: viewport?.panX,
+          panY: viewport?.panY,
+          frameLeft: frame?.left,
+          frameTop: frame?.top,
+          frameWidth: frame?.width,
+          frameHeight: frame?.height,
+          worldLeft: worldRect?.left,
+          worldTop: worldRect?.top,
+          worldWidth: worldRect?.width,
+          worldHeight: worldRect?.height,
+          hasBackgroundImage: Boolean(bg),
+        });
+      };
       const deferredImageRegistrations = [];
       this.isHydratingDeferredViews = true;
       this.hydrationPinnedViewId = targetView;
@@ -2267,6 +2352,8 @@ export class ProjectManager {
           imageAssetHash: viewData.imageAssetHash || null,
           imageContentType: viewData.imageContentType || null,
           imageSourceFingerprint: viewData.imageSourceFingerprint || null,
+          rotation: Number(viewData.rotation) || 0,
+          fitMode: typeof viewData.fitMode === 'string' ? viewData.fitMode : 'fit-canvas',
           canvasData: viewData.canvasJSON,
           metadata: viewData.metadata || {},
           tabs: viewData.tabs || null,
@@ -2277,16 +2364,7 @@ export class ProjectManager {
           viewData.imageDataURL || viewData.imageAssetPath || viewData.imageUrl
         );
         if (hasImageReference) {
-          if (viewId === targetView) {
-            const imageUrl = await this.resolveViewImageUrl(viewData);
-            this.views[viewId].image = imageUrl;
-            if (imageUrl) {
-              console.log(`[Load] Restored image for view ${viewId}`);
-            }
-            await registerImageForView(viewId, imageUrl);
-          } else {
-            deferredImageRegistrations.push({ viewId, viewData });
-          }
+          deferredImageRegistrations.push({ viewId, viewData });
         }
       }
 
@@ -2296,10 +2374,22 @@ export class ProjectManager {
         });
       }
 
+      for (const item of deferredImageRegistrations) {
+        const imageUrl = await this.resolveViewImageUrl(item.viewData);
+        this.views[item.viewId].image = imageUrl;
+        if (imageUrl) {
+          console.log(`[Load] Restored image for view ${item.viewId}`);
+        }
+        await registerImageForView(item.viewId, imageUrl);
+      }
+
+      deferredImageRegistrations.length = 0;
+
       // Switch to the saved current view or first view
       if (targetView && this.views[targetView]) {
         console.log(`[Load] Switching to view: ${targetView}`);
         await this.switchView(targetView, true);
+        debugFirstViewState('after-switchView');
         if (window.renderCaptureTabUI) {
           window.renderCaptureTabUI(targetView);
         }
@@ -2308,22 +2398,23 @@ export class ProjectManager {
         }
 
         requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
+          requestAnimationFrame(async () => {
             if (this.canvasManager?.resize) {
               this.canvasManager.resize();
             }
-
             const current = this.views[targetView];
             const canvas = this.canvasManager?.fabricCanvas;
             const hasBg = Boolean(canvas?.backgroundImage);
 
             if (!hasBg && current?.image && this.currentViewId === targetView) {
-              this.setBackgroundImage(current.image).then(() => {
-                this.canvasManager?.fabricCanvas?.requestRenderAll?.();
-              });
-            } else {
-              this.canvasManager?.fabricCanvas?.requestRenderAll?.();
+              await this.setBackgroundImage(current.image, current.fitMode || 'fit-canvas');
             }
+
+            if (window.applyCaptureFrameForLabel) {
+              window.applyCaptureFrameForLabel(targetView);
+            }
+            this.canvasManager?.fabricCanvas?.requestRenderAll?.();
+            debugFirstViewState('after-stabilize-pass');
           });
         });
 
@@ -2333,7 +2424,12 @@ export class ProjectManager {
           const canvas = this.canvasManager?.fabricCanvas;
           const hasBg = !!canvas?.backgroundImage;
           if (!hasBg) {
-            this.setBackgroundImage(current.image);
+            this.setBackgroundImage(current.image, current.fitMode || 'fit-canvas').then(() => {
+              if (window.applyCaptureFrameForLabel) {
+                window.applyCaptureFrameForLabel(targetView);
+              }
+              debugFirstViewState('late-refresh');
+            });
           }
         };
         setTimeout(lateRefresh, 450);

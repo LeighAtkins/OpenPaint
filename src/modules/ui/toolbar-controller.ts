@@ -358,64 +358,616 @@ export function initToolbarController() {
         #tagColorPopover {
           position: absolute;
           z-index: 10120;
-          width: 236px;
-          background: #ffffff;
-          border: 1px solid #cbd5e1;
-          border-radius: 10px;
-          box-shadow: 0 12px 28px rgba(2, 6, 23, 0.2);
-          padding: 10px;
+          width: min(344px, calc(100vw - 24px));
+          max-height: min(520px, calc(100vh - 24px));
+          overflow-y: auto;
+          overscroll-behavior: contain;
+          background:
+            radial-gradient(circle at top left, rgba(219, 234, 254, 0.85), transparent 34%),
+            linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+          border: 1px solid rgba(148, 163, 184, 0.45);
+          border-radius: 18px;
+          box-shadow: 0 20px 44px rgba(15, 23, 42, 0.18);
+          padding: 14px;
           display: none;
         }
         #tagColorPopover.open { display: block; }
-        .tag-color-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
-        .tag-color-row:last-child { margin-bottom: 0; }
-        .tag-color-label { font-size: 11px; color: #475569; font-weight: 600; }
-        .tag-color-input { width: 42px; height: 28px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0; background: #fff; }
-        .tag-color-actions { display: flex; gap: 6px; margin-top: 8px; }
-        .tag-color-actions button { flex: 1; font-size: 11px; border: 1px solid #cbd5e1; border-radius: 7px; background: #fff; padding: 6px 8px; }
-        .tag-color-actions button:hover { background: #f8fafc; }
+        .tag-popover-head {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 10px;
+          margin-bottom: 10px;
+        }
+        .tag-popover-head-main {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          min-width: 0;
+        }
+        .tag-popover-title {
+          font-size: 13px;
+          font-weight: 700;
+          color: #0f172a;
+          letter-spacing: 0.01em;
+        }
+        .tag-popover-close {
+          width: 28px;
+          height: 28px;
+          border-radius: 999px;
+          border: 1px solid rgba(203, 213, 225, 0.95);
+          background: rgba(255, 255, 255, 0.82);
+          color: #64748b;
+          cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 16px;
+          line-height: 1;
+          flex-shrink: 0;
+          transition: background 0.16s ease, color 0.16s ease, border-color 0.16s ease;
+        }
+        .tag-popover-close:hover {
+          background: #ffffff;
+          border-color: #94a3b8;
+          color: #0f172a;
+        }
+        .tag-popover-copy {
+          display: none;
+        }
+        .tag-style-preview {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          min-width: 108px;
+          justify-content: center;
+          padding: 6px 10px;
+          border-radius: 12px;
+          border: 1px solid rgba(148, 163, 184, 0.35);
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
+        }
+        .tag-style-preview-chip {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          min-width: 30px;
+          padding: 4px 9px;
+          border-radius: 999px;
+          border: 2px solid #cccccc;
+          background: #ffffff;
+          color: #000000;
+          font-size: 11px;
+          font-weight: 800;
+          letter-spacing: 0.02em;
+        }
+        .tag-style-preview-meta {
+          font-size: 10px;
+          font-weight: 700;
+          color: #475569;
+          text-transform: uppercase;
+          letter-spacing: 0.06em;
+          line-height: 1.2;
+        }
+        .tag-style-preview-hint {
+          margin-top: 2px;
+          font-size: 10px;
+          line-height: 1.25;
+          color: #b45309;
+          max-width: 150px;
+        }
+        .tag-panel {
+          border: 1px solid rgba(226, 232, 240, 0.95);
+          border-radius: 16px;
+          padding: 10px;
+          background: rgba(255, 255, 255, 0.84);
+          backdrop-filter: blur(6px);
+        }
+        .tag-panel + .tag-panel {
+          margin-top: 10px;
+        }
+        .tag-preset-label {
+          font-size: 10px;
+          color: #64748b;
+          font-weight: 700;
+          margin-bottom: 8px;
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+        }
+        .tag-style-targets {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 6px;
+        }
+        .tag-style-target {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          border: 1px solid rgba(203, 213, 225, 0.95);
+          background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+          border-radius: 12px;
+          min-height: 42px;
+          padding: 7px 8px;
+          cursor: pointer;
+          transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+          text-align: center;
+        }
+        .tag-style-target:hover {
+          transform: translateY(-1px);
+          border-color: #93c5fd;
+          box-shadow: 0 8px 16px rgba(59, 130, 246, 0.12);
+        }
+        .tag-style-target.active {
+          border-color: #2563eb;
+          box-shadow: 0 0 0 2px rgba(191, 219, 254, 0.9);
+        }
+        .tag-style-target-sample {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          min-width: 28px;
+          padding: 4px 7px;
+          border-radius: 999px;
+          border: 1px solid rgba(148, 163, 184, 0.35);
+          background: #eff6ff;
+          color: #1d4ed8;
+          font-size: 10px;
+          font-weight: 800;
+          line-height: 1;
+          flex-shrink: 0;
+        }
+        .tag-style-target-name {
+          display: none;
+        }
+        .tag-style-target-help {
+          display: none;
+        }
+        .tag-preset-grid {
+          display: grid;
+          grid-template-columns: repeat(6, minmax(0, 1fr));
+          gap: 6px;
+        }
+        .tag-preset-swatch {
+          width: 100%;
+          aspect-ratio: 1;
+          min-height: 30px;
+          border-radius: 10px;
+          border: 1.5px solid #e2e8f0;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 10px;
+          font-weight: 800;
+          transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+          box-shadow: inset 0 -8px 18px rgba(255, 255, 255, 0.18);
+        }
+        .tag-preset-swatch:hover {
+          transform: translateY(-1px) scale(1.03);
+          border-color: #94a3b8;
+          box-shadow: 0 8px 14px rgba(148, 163, 184, 0.16);
+        }
+        .tag-preset-swatch.active {
+          border-color: #2563eb;
+          border-width: 2px;
+          box-shadow: 0 0 0 1px rgba(191, 219, 254, 0.9);
+        }
+        .tag-line-list {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 6px;
+          max-height: 108px;
+          overflow-y: auto;
+          padding-right: 2px;
+          overscroll-behavior: contain;
+          align-content: flex-start;
+        }
+        .tag-line-list::-webkit-scrollbar {
+          width: 8px;
+        }
+        .tag-line-list::-webkit-scrollbar-thumb {
+          background: rgba(148, 163, 184, 0.42);
+          border-radius: 999px;
+        }
+        .tag-line-item {
+          width: auto;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 4px;
+          border: 1px solid rgba(203, 213, 225, 1);
+          background: #ffffff;
+          border-radius: 999px;
+          min-height: 24px;
+          padding: 3px 8px;
+          cursor: pointer;
+          font-size: 10px;
+          font-weight: 700;
+          color: #0f172a;
+          transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+        }
+        .tag-line-item:hover {
+          transform: translateY(-1px);
+          border-color: #94a3b8;
+          box-shadow: 0 8px 14px rgba(148, 163, 184, 0.12);
+        }
+        .tag-line-item.active {
+          border-color: #f59e0b;
+          background: linear-gradient(180deg, #fffbeb 0%, #fef3c7 100%);
+          box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.24);
+        }
+        .tag-line-item-label {
+          min-width: 0;
+          line-height: 1.1;
+        }
+        .tag-line-item-state {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          min-width: 14px;
+          height: 14px;
+          padding: 0;
+          border-radius: 999px;
+          font-size: 10px;
+          line-height: 1;
+          background: transparent;
+          color: #94a3b8;
+          border: none;
+          flex-shrink: 0;
+        }
+        .tag-line-item.active .tag-line-item-state {
+          color: #b45309;
+        }
+        .tag-line-empty {
+          font-size: 10px;
+          line-height: 1.4;
+          color: #64748b;
+          padding: 2px 0;
+        }
       `;
       document.head.appendChild(popStyle);
     }
 
+    const tagColorPresets = [
+      { name: 'Default', bg: '#ffffff', border: '#cccccc', text: '#000000' },
+      { name: 'Blue', bg: '#dbeafe', border: '#3b82f6', text: '#1e40af' },
+      { name: 'Green', bg: '#dcfce7', border: '#22c55e', text: '#166534' },
+      { name: 'Amber', bg: '#fef3c7', border: '#f59e0b', text: '#92400e' },
+      { name: 'Red', bg: '#fee2e2', border: '#ef4444', text: '#991b1b' },
+      { name: 'Purple', bg: '#f3e8ff', border: '#a855f7', text: '#6b21a8' },
+      { name: 'Cyan', bg: '#cffafe', border: '#06b6d4', text: '#155e75' },
+      { name: 'Pink', bg: '#fce7f3', border: '#ec4899', text: '#9d174d' },
+      { name: 'Slate', bg: '#f1f5f9', border: '#64748b', text: '#1e293b' },
+      { name: 'Emerald', bg: '#d1fae5', border: '#10b981', text: '#065f46' },
+      { name: 'Orange', bg: '#ffedd5', border: '#f97316', text: '#9a3412' },
+      { name: 'Indigo', bg: '#e0e7ff', border: '#6366f1', text: '#3730a3' },
+    ];
+    const tagStyleTargets = [
+      {
+        key: 'lettersOnly',
+        label: 'Letters',
+        sample: 'A',
+        help: 'Use for A, B, C tags.',
+      },
+      {
+        key: 'lettersNumbers',
+        label: 'Letter + Number',
+        sample: 'A1',
+        help: 'Use for A1, B2, C3 tags.',
+      },
+      {
+        key: 'selected',
+        label: 'Selected',
+        sample: 'Sel',
+        help: 'Apply a preset to the selected tags.',
+      },
+    ];
+
     if (tagColorEditorBtn) {
+      const escapePopoverText = value =>
+        String(value ?? '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      const extractStrokeLabelFromObject = obj =>
+        obj?.strokeLabel ||
+        obj?.strokeMetadata?.strokeLabel ||
+        obj?.strokeMetadata?.label ||
+        obj?.customData?.strokeLabel ||
+        obj?.customData?.label ||
+        obj?.connectedStroke?.strokeMetadata?.strokeLabel ||
+        obj?.connectedStroke?.strokeMetadata?.label ||
+        obj?.connectedStroke?.strokeLabel ||
+        obj?.connectedStroke?.customData?.strokeLabel ||
+        obj?.connectedStroke?.customData?.label ||
+        null;
+      let currentTagStyleTarget = 'lettersOnly';
       let popover = document.getElementById('tagColorPopover') as HTMLDivElement | null;
       if (!popover) {
         popover = document.createElement('div');
         popover.id = 'tagColorPopover';
+
+        const targetButtonsHtml = tagStyleTargets
+          .map(
+            target => `
+              <button type="button" class="tag-style-target" data-style-target="${target.key}" title="${target.help}">
+                <span class="tag-style-target-sample">${target.sample}</span>
+                <div class="tag-style-target-name">${target.label}</div>
+                <div class="tag-style-target-help">${target.help}</div>
+              </button>
+            `
+          )
+          .join('');
+        const swatchesHtml = tagColorPresets
+          .map(
+            (p, i) =>
+              `<div class="tag-preset-swatch" data-preset-idx="${i}" style="background:${p.bg};color:${p.text};border-color:${p.border}" title="${p.name}">A</div>`
+          )
+          .join('');
         popover.innerHTML = `
-          <div class="tag-color-row"><span class="tag-color-label">Background</span><input id="tagBgColorInput" class="tag-color-input" type="color" value="#ffffff" /></div>
-          <div class="tag-color-row"><span class="tag-color-label">Border</span><input id="tagBorderColorInput" class="tag-color-input" type="color" value="#000000" /></div>
-          <div class="tag-color-row"><span class="tag-color-label">Text</span><input id="tagTextColorInput" class="tag-color-input" type="color" value="#000000" /></div>
-          <div class="tag-color-actions">
-            <button type="button" id="tagColorApplyBtn">Apply</button>
-            <button type="button" id="tagColorAutoBtn">Auto</button>
+          <div class="tag-popover-head">
+            <div class="tag-popover-head-main">
+              <div class="tag-popover-title">Tag Styles</div>
+              <button type="button" class="tag-popover-close" aria-label="Close tag styles" data-tag-popover-close>&times;</button>
+            </div>
+            <div class="tag-style-preview">
+              <div id="tagStylePreviewChip" class="tag-style-preview-chip">A</div>
+              <div>
+                <div id="tagStylePreviewMeta" class="tag-style-preview-meta">Letters</div>
+                <div id="tagStylePreviewHint" class="tag-style-preview-hint"></div>
+              </div>
+            </div>
+          </div>
+          <div class="tag-panel">
+            <div class="tag-preset-label">Style Group</div>
+            <div class="tag-style-targets">${targetButtonsHtml}</div>
+          </div>
+          <div class="tag-panel">
+            <div class="tag-preset-label">Preset</div>
+            <div class="tag-preset-grid">${swatchesHtml}</div>
+          </div>
+          <div class="tag-panel">
+            <div class="tag-preset-label">Lines</div>
+            <div id="tagLineList" class="tag-line-list"></div>
+            <div id="tagLineEmpty" class="tag-line-empty">No lines yet for this image.</div>
           </div>
         `;
         document.body.appendChild(popover);
       }
 
-      const bgInput = document.getElementById('tagBgColorInput') as HTMLInputElement | null;
-      const borderInput = document.getElementById('tagBorderColorInput') as HTMLInputElement | null;
-      const textInput = document.getElementById('tagTextColorInput') as HTMLInputElement | null;
-      const applyBtn = document.getElementById('tagColorApplyBtn') as HTMLButtonElement | null;
-      const autoBtn = document.getElementById('tagColorAutoBtn') as HTMLButtonElement | null;
+      const previewChip = popover.querySelector('#tagStylePreviewChip') as HTMLDivElement | null;
+      const previewMeta = popover.querySelector('#tagStylePreviewMeta') as HTMLDivElement | null;
+      const previewHint = popover.querySelector('#tagStylePreviewHint') as HTMLDivElement | null;
+      const previewToggle = popover.querySelector('.tag-style-preview') as HTMLDivElement | null;
+      const lineList = popover.querySelector('#tagLineList') as HTMLDivElement | null;
+      const lineEmpty = popover.querySelector('#tagLineEmpty') as HTMLDivElement | null;
 
-      const syncFromManager = () => {
+      const getTargetMeta = () =>
+        (() => {
+          const baseTarget =
+            tagStyleTargets.find(target => target.key === currentTagStyleTarget) ||
+            tagStyleTargets[0];
+
+          if (baseTarget.key !== 'selected') {
+            return baseTarget;
+          }
+
+          const selectedLabels = getSelectedLineLabels();
+          if (selectedLabels.length === 1) {
+            return {
+              ...baseTarget,
+              label: 'Selected',
+              sample: selectedLabels[0],
+              help: `Apply a preset to ${selectedLabels[0]}.`,
+            };
+          }
+
+          if (selectedLabels.length > 1) {
+            return {
+              ...baseTarget,
+              label: 'Selected',
+              sample: `${selectedLabels.length}`,
+              help: `Apply a preset to ${selectedLabels.length} selected tags.`,
+            };
+          }
+
+          return baseTarget;
+        })();
+
+      const getPresetTheme = preset => ({
+        background: preset.bg,
+        border: preset.border,
+        text: preset.text,
+      });
+
+      const findPresetIndex = theme =>
+        tagColorPresets.findIndex(
+          preset =>
+            preset.bg === theme?.background &&
+            preset.border === theme?.border &&
+            preset.text === theme?.text
+        );
+
+      const getSelectedResolvedTheme = () => {
         const manager = window.app?.tagManager;
-        const colors = manager?.customTagColors;
-        if (!bgInput || !borderInput || !textInput) return;
-        if (colors) {
-          bgInput.value = colors.background;
-          borderInput.value = colors.border;
-          textInput.value = colors.text;
-          tagColorEditorBtn.textContent = 'Colors*';
-        } else {
-          bgInput.value = '#ffffff';
-          borderInput.value = '#000000';
-          textInput.value = '#000000';
-          tagColorEditorBtn.textContent = 'Colors';
+        const scopedViewId = getCurrentScopedViewId();
+        const selectedLabels = getSelectedLineLabels();
+        if (!selectedLabels.length || !manager) {
+          return null;
         }
+
+        const themes = selectedLabels
+          .map(label => {
+            const overrideTheme = manager.getTagThemeOverride?.(label, scopedViewId);
+            return overrideTheme || null;
+          })
+          .filter(Boolean);
+
+        if (!themes.length) {
+          return null;
+        }
+
+        const firstTheme = themes[0];
+        const allMatch = themes.every(
+          theme =>
+            theme?.background === firstTheme?.background &&
+            theme?.border === firstTheme?.border &&
+            theme?.text === firstTheme?.text
+        );
+
+        return allMatch ? firstTheme : null;
+      };
+
+      const getCurrentTheme = () => {
+        const manager = window.app?.tagManager;
+        if (currentTagStyleTarget === 'selected') {
+          return getSelectedResolvedTheme();
+        }
+        if (manager?.getTagStyleTheme) {
+          return manager.getTagStyleTheme(currentTagStyleTarget);
+        }
+        return getPresetTheme(tagColorPresets[0]);
+      };
+
+      const getCurrentScopedViewId = () => {
+        const activeViewId = window.app?.projectManager?.currentViewId || 'front';
+        const metadataManager = window.app?.metadataManager;
+        return metadataManager?.normalizeImageLabel
+          ? metadataManager.normalizeImageLabel(activeViewId)
+          : activeViewId;
+      };
+
+      const getSelectedLineLabels = () => {
+        const scopedViewId = getCurrentScopedViewId();
+        return window.app?.tagManager?.getSelectedStyleTargetLabels?.(scopedViewId) || [];
+      };
+
+      const getAvailableLineLabels = () => {
+        const scopedViewId = getCurrentScopedViewId();
+        const strokes = window.app?.metadataManager?.vectorStrokesByImage?.[scopedViewId] || {};
+        return Object.keys(strokes).sort((left, right) =>
+          String(left).localeCompare(String(right), undefined, {
+            numeric: true,
+            sensitivity: 'base',
+          })
+        );
+      };
+
+      const getCanvasSelectedLabels = () => {
+        const canvas = window.app?.canvasManager?.fabricCanvas;
+        const activeObject = canvas?.getActiveObject?.();
+        if (!activeObject) return [];
+
+        const objects =
+          activeObject.type === 'activeSelection'
+            ? activeObject.getObjects?.() || []
+            : [activeObject];
+        const labels = new Set<string>();
+
+        objects.forEach(obj => {
+          const strokeLabel = extractStrokeLabelFromObject(obj);
+          if (strokeLabel) {
+            labels.add(String(strokeLabel));
+          }
+        });
+
+        return Array.from(labels).sort((left, right) =>
+          left.localeCompare(right, undefined, {
+            numeric: true,
+            sensitivity: 'base',
+          })
+        );
+      };
+
+      const syncLineList = () => {
+        const manager = window.app?.tagManager;
+        const scopedViewId = getCurrentScopedViewId();
+        const labels = getAvailableLineLabels();
+
+        if (!lineList || !lineEmpty) return;
+
+        if (!labels.length) {
+          lineList.innerHTML = '';
+          lineEmpty.style.display = 'block';
+          return;
+        }
+
+        lineEmpty.style.display = 'none';
+        lineList.innerHTML = labels
+          .map(label => {
+            const isSelectedTarget = Boolean(manager?.isSelectedStyleTarget?.(label, scopedViewId));
+            const hasSelectedOverride = Boolean(
+              manager?.hasTagThemeOverride?.(label, scopedViewId)
+            );
+            const stateGlyph = hasSelectedOverride ? '*' : isSelectedTarget ? 'x' : '+';
+            const title = `${isSelectedTarget ? 'Deselect' : 'Select'} ${escapePopoverText(label)} for custom color`;
+            return `
+              <button
+                type="button"
+                class="tag-line-item${isSelectedTarget ? ' active' : ''}"
+                data-line-label="${escapePopoverText(label)}"
+                title="${title}"
+              >
+                <span class="tag-line-item-label">${escapePopoverText(label)}</span>
+                <span class="tag-line-item-state">${stateGlyph}</span>
+              </button>
+            `;
+          })
+          .join('');
+      };
+
+      const syncActivePreset = () => {
+        const manager = window.app?.tagManager;
+        const targetMeta = getTargetMeta();
+        const currentTheme = getCurrentTheme();
+        const previewTheme =
+          currentTheme || manager?.getDefaultTagTheme?.() || getPresetTheme(tagColorPresets[0]);
+        const activePresetIndex = currentTheme ? findPresetIndex(currentTheme) : -1;
+        const selectedCount = getSelectedLineLabels().length;
+
+        popover?.querySelectorAll<HTMLElement>('[data-style-target]').forEach(button => {
+          button.classList.toggle('active', button.dataset.styleTarget === currentTagStyleTarget);
+        });
+
+        popover?.querySelectorAll<HTMLElement>('.tag-preset-swatch').forEach((el, i) => {
+          const preset = tagColorPresets[i];
+          if (!preset) return;
+          el.textContent = 'A1';
+          el.classList.toggle('active', i === activePresetIndex);
+        });
+
+        if (previewChip) {
+          previewChip.textContent = targetMeta.sample;
+          previewChip.style.background = previewTheme.background;
+          previewChip.style.borderColor = previewTheme.border;
+          previewChip.style.color = previewTheme.text;
+        }
+        if (previewMeta) {
+          previewMeta.textContent = targetMeta.label;
+        }
+        if (previewHint) {
+          if (selectedCount > 0 && currentTagStyleTarget === 'selected') {
+            previewHint.textContent = 'Selected tags override A / A1 presets.';
+          } else if (selectedCount > 0) {
+            previewHint.textContent = `${selectedCount} selected tag${selectedCount === 1 ? '' : 's'} override this preset.`;
+          } else {
+            previewHint.textContent = '';
+          }
+        }
+        if (previewToggle) {
+          const isBulkToggle = currentTagStyleTarget === 'selected';
+          previewToggle.style.cursor = isBulkToggle ? 'pointer' : 'default';
+          previewToggle.title = isBulkToggle
+            ? selectedCount
+              ? 'Clear selected tags'
+              : 'Select all tags'
+            : targetMeta.help;
+        }
+
+        tagColorEditorBtn.textContent = manager?.hasCustomTagStyles?.() ? 'Styles*' : 'Styles';
+        syncLineList();
       };
 
       const closePopover = () => {
@@ -425,60 +977,212 @@ export function initToolbarController() {
       const positionPopover = () => {
         if (!popover) return;
         const rect = tagColorEditorBtn.getBoundingClientRect();
-        popover.style.left = `${Math.round(rect.left)}px`;
-        popover.style.top = `${Math.round(rect.bottom + 6)}px`;
+        const viewportPadding = 12;
+        const preferredGap = 6;
+
+        const wasOpen = popover.classList.contains('open');
+        if (!wasOpen) {
+          popover.classList.add('open');
+          popover.style.visibility = 'hidden';
+        }
+
+        const popoverRect = popover.getBoundingClientRect();
+        const popoverWidth = Math.min(
+          popoverRect.width || 344,
+          window.innerWidth - viewportPadding * 2
+        );
+        const popoverHeight = Math.min(
+          popoverRect.height || 0,
+          window.innerHeight - viewportPadding * 2
+        );
+
+        let left = rect.left;
+        let top;
+
+        const strokePanel = document.getElementById('strokePanel');
+        const panelRect =
+          strokePanel && !strokePanel.classList.contains('minimized')
+            ? strokePanel.getBoundingClientRect()
+            : null;
+        const panelFitsRight =
+          panelRect &&
+          panelRect.right + preferredGap + popoverWidth <= window.innerWidth - viewportPadding;
+
+        if (panelFitsRight) {
+          left = panelRect.right + preferredGap;
+          top = panelRect.top;
+        } else {
+          if (left + popoverWidth > window.innerWidth - viewportPadding) {
+            left = window.innerWidth - viewportPadding - popoverWidth;
+          }
+          const spaceBelow = window.innerHeight - rect.bottom - viewportPadding;
+          const spaceAbove = rect.top - viewportPadding;
+          const shouldOpenAbove =
+            spaceBelow < Math.min(popoverHeight, 280) && spaceAbove > spaceBelow;
+
+          top = shouldOpenAbove
+            ? rect.top - popoverHeight - preferredGap
+            : rect.bottom + preferredGap;
+        }
+        left = Math.max(viewportPadding, left);
+
+        top = Math.max(
+          viewportPadding,
+          Math.min(top, window.innerHeight - viewportPadding - popoverHeight)
+        );
+
+        popover.style.left = `${Math.round(left)}px`;
+        popover.style.top = `${Math.round(top)}px`;
+
+        if (!wasOpen) {
+          popover.classList.remove('open');
+          popover.style.visibility = '';
+        }
       };
 
       tagColorEditorBtn.addEventListener('click', e => {
         e.preventDefault();
-        syncFromManager();
+        syncActivePreset();
         positionPopover();
         popover?.classList.toggle('open');
       });
 
-      applyBtn?.addEventListener('click', () => {
-        if (!bgInput || !borderInput || !textInput || !window.app?.tagManager) return;
-        window.app.tagManager.setTagCustomColors({
-          background: bgInput.value,
-          border: borderInput.value,
-          text: textInput.value,
+      previewToggle?.addEventListener('click', event => {
+        if (currentTagStyleTarget !== 'selected' || !window.app?.tagManager) {
+          return;
+        }
+        event.preventDefault();
+        event.stopPropagation();
+
+        const scopedViewId = getCurrentScopedViewId();
+        const nextLabels = getSelectedLineLabels().length ? [] : getAvailableLineLabels();
+        window.app.tagManager.replaceSelectedStyleTargets?.(nextLabels, scopedViewId, {
+          syncCanvas: true,
         });
-        syncFromManager();
-        closePopover();
+        syncActivePreset();
       });
 
-      autoBtn?.addEventListener('click', () => {
-        if (!window.app?.tagManager) return;
-        window.app.tagManager.clearTagCustomColors();
-        syncFromManager();
-        closePopover();
-      });
+      popover?.addEventListener('click', e => {
+        const closeButton = (e.target as HTMLElement)?.closest?.(
+          '[data-tag-popover-close]'
+        ) as HTMLElement | null;
+        if (closeButton) {
+          closePopover();
+          return;
+        }
 
-      document.addEventListener('click', event => {
-        const target = event.target as Node | null;
-        if (!target || !popover) return;
-        if (target === tagColorEditorBtn || tagColorEditorBtn.contains(target)) return;
-        if (popover.contains(target)) return;
-        closePopover();
+        const targetButton = (e.target as HTMLElement)?.closest?.(
+          '[data-style-target]'
+        ) as HTMLElement | null;
+        if (targetButton) {
+          currentTagStyleTarget = targetButton.dataset.styleTarget || 'lettersOnly';
+          syncActivePreset();
+          return;
+        }
+
+        const lineButton = (e.target as HTMLElement)?.closest?.(
+          '[data-line-label]'
+        ) as HTMLElement | null;
+        if (lineButton && window.app?.tagManager) {
+          const lineLabel = lineButton.dataset.lineLabel || '';
+          const scopedViewId = getCurrentScopedViewId();
+          window.app.tagManager.toggleSelectedStyleTarget?.(lineLabel, scopedViewId, {
+            syncCanvas: true,
+          });
+          syncActivePreset();
+          return;
+        }
+
+        const swatch = (e.target as HTMLElement)?.closest?.(
+          '[data-preset-idx]'
+        ) as HTMLElement | null;
+        if (!swatch || !window.app?.tagManager) return;
+        const idx = parseInt(swatch.dataset.presetIdx || '0', 10);
+        const preset = tagColorPresets[idx];
+        if (!preset) return;
+
+        if (currentTagStyleTarget === 'selected') {
+          const scopedViewId = getCurrentScopedViewId();
+          if (!getSelectedLineLabels().length) {
+            return;
+          }
+
+          const theme =
+            idx === 0
+              ? null
+              : {
+                  background: preset.bg,
+                  border: preset.border,
+                  text: preset.text,
+                };
+          window.app.tagManager.setTagThemeForStyleTargets?.(scopedViewId, theme);
+        } else if (idx === 0) {
+          window.app.tagManager.clearTagStyleTheme?.(currentTagStyleTarget);
+        } else {
+          window.app.tagManager.setTagStyleTheme?.(currentTagStyleTarget, {
+            background: preset.bg,
+            border: preset.border,
+            text: preset.text,
+          });
+        }
+        syncActivePreset();
       });
 
       window.addEventListener('resize', () => {
         if (popover?.classList.contains('open')) positionPopover();
       });
 
-      setTimeout(syncFromManager, 500);
+      const bindSelectionListeners = () => {
+        const canvas = window.app?.canvasManager?.fabricCanvas;
+        if (!canvas || popover?.dataset.selectionListenersBound) return;
+
+        const syncFromCanvasSelection = () => {
+          if (window.app?.tagManager?.isSyncingSelectedStyleTargetsToCanvas) return;
+          const scopedViewId = getCurrentScopedViewId();
+          const selectedLabels = getCanvasSelectedLabels();
+          window.app?.tagManager?.replaceSelectedStyleTargets?.(selectedLabels, scopedViewId, {
+            syncCanvas: false,
+          });
+          syncActivePreset();
+        };
+
+        canvas.on('selection:created', syncFromCanvasSelection);
+        canvas.on('selection:updated', syncFromCanvasSelection);
+        canvas.on('selection:cleared', syncFromCanvasSelection);
+        if (popover) {
+          popover.dataset.selectionListenersBound = 'true';
+        }
+      };
+
+      bindSelectionListeners();
+
+      window.addEventListener('openpaint:tag-style-state-changed', event => {
+        const nextViewId = event?.detail?.imageLabel;
+        if (!nextViewId || nextViewId === getCurrentScopedViewId()) {
+          syncActivePreset();
+        }
+      });
+
+      setTimeout(syncActivePreset, 500);
     }
 
     const connectorToneBtn = document.getElementById('connectorToneBtn');
+    const CONNECTOR_SAME_AS_LINE = '__same_as_line__';
     const connectorPalette = [
       { label: 'White', value: '#ffffff' },
       { label: 'Gray', value: '#9ca3af' },
       { label: 'Black', value: '#000000' },
+      { label: 'Same as Line', value: CONNECTOR_SAME_AS_LINE },
     ];
 
     const syncConnectorToneBtn = () => {
       if (!connectorToneBtn) return;
-      const current = String(window.app?.tagManager?.connectorColor || '#ffffff').toLowerCase();
+      const tagManager = window.app?.tagManager;
+      if (tagManager?.connectorMatchesLine) {
+        connectorToneBtn.textContent = 'Connector: Same as Line';
+        return;
+      }
+      const current = String(tagManager?.connectorColor || '#ffffff').toLowerCase();
       const idx = connectorPalette.findIndex(item => item.value === current);
       const active = idx >= 0 ? connectorPalette[idx] : connectorPalette[0];
       connectorToneBtn.textContent = `Connector: ${active.label}`;
@@ -488,11 +1192,28 @@ export function initToolbarController() {
       connectorToneBtn.addEventListener('click', () => {
         const tagManager = window.app?.tagManager;
         if (!tagManager) return;
-        const current = String(tagManager.connectorColor || '#ffffff').toLowerCase();
-        const idx = connectorPalette.findIndex(item => item.value === current);
+
+        // Find current position in palette
+        let idx;
+        if (tagManager.connectorMatchesLine) {
+          idx = connectorPalette.findIndex(item => item.value === CONNECTOR_SAME_AS_LINE);
+        } else {
+          const current = String(tagManager.connectorColor || '#ffffff').toLowerCase();
+          idx = connectorPalette.findIndex(item => item.value === current);
+        }
+
         const next =
           connectorPalette[(idx + 1 + connectorPalette.length) % connectorPalette.length];
-        tagManager.setConnectorColor(next.value);
+
+        if (next.value === CONNECTOR_SAME_AS_LINE) {
+          // Set connector to match the stroke color
+          tagManager.connectorMatchesLine = true;
+          const strokeColor = tagManager.strokeColor || '#3b82f6';
+          tagManager.setConnectorColor(strokeColor);
+        } else {
+          tagManager.connectorMatchesLine = false;
+          tagManager.setConnectorColor(next.value);
+        }
         syncConnectorToneBtn();
       });
       setTimeout(syncConnectorToneBtn, 600);
@@ -1115,6 +1836,75 @@ export function initToolbarController() {
       const rect = captureFrame.getBoundingClientRect();
       return buildCaptureFrameRecord(rect);
     }
+    function getLiveCaptureFrameRectForViewport() {
+      const rect = captureFrame.getBoundingClientRect();
+      return {
+        left: Number(rect.left) || 0,
+        top: Number(rect.top) || 0,
+        width: Number(rect.width) || 0,
+        height: Number(rect.height) || 0,
+      };
+    }
+    function normalizeWorldRect(worldRect) {
+      if (!worldRect || typeof worldRect !== 'object') return null;
+      const left = Number(worldRect.left);
+      const top = Number(worldRect.top);
+      const width = Number(worldRect.width);
+      const height = Number(worldRect.height);
+      if (!Number.isFinite(left) || !Number.isFinite(top)) return null;
+      if (!Number.isFinite(width) || !Number.isFinite(height)) return null;
+      if (width <= 0 || height <= 0) return null;
+      return {
+        left,
+        top,
+        width,
+        height,
+      };
+    }
+    function fitViewportToWorldRect(worldRect, viewport, targetRect) {
+      const normalizedWorldRect = normalizeWorldRect(worldRect);
+      if (!normalizedWorldRect || !viewport || !targetRect) {
+        return viewport || null;
+      }
+      const nextViewport = {
+        ...(viewport || {}),
+      };
+      const mappedBefore = mapWorldRectToViewport(normalizedWorldRect, nextViewport);
+      if (!mappedBefore || mappedBefore.width <= 0 || mappedBefore.height <= 0) {
+        return nextViewport;
+      }
+      const fitScale = Math.min(
+        targetRect.width / Math.max(1, mappedBefore.width),
+        targetRect.height / Math.max(1, mappedBefore.height)
+      );
+      nextViewport.zoom = Math.max(0.01, (nextViewport.zoom || 1) * fitScale);
+      const mappedAfter = mapWorldRectToViewport(normalizedWorldRect, nextViewport);
+      if (!mappedAfter) {
+        return nextViewport;
+      }
+      const targetCx = targetRect.left + targetRect.width / 2;
+      const targetCy = targetRect.top + targetRect.height / 2;
+      const mappedCx = mappedAfter.left + mappedAfter.width / 2;
+      const mappedCy = mappedAfter.top + mappedAfter.height / 2;
+      nextViewport.panX = (nextViewport.panX || 0) + (targetCx - mappedCx);
+      nextViewport.panY = (nextViewport.panY || 0) + (targetCy - mappedCy);
+      return nextViewport;
+    }
+    function updateTabWorldRectFromLiveFrame(tab, viewportOverride = null) {
+      if (!tab) return;
+      const viewport = viewportOverride || tab.viewport;
+      if (!viewport) return;
+      const liveRect = getLiveCaptureFrameRectForViewport();
+      if (!(liveRect.width > 0 && liveRect.height > 0)) return;
+      const worldRect = normalizeWorldRect(computeWorldRectFromViewportRect(liveRect, viewport));
+      if (!worldRect) return;
+      const existing =
+        tab.captureFrame && typeof tab.captureFrame === 'object' ? tab.captureFrame : {};
+      tab.captureFrame = {
+        ...existing,
+        worldRect,
+      };
+    }
     function buildViewportRecord() {
       const canvasManager = window.app?.canvasManager;
       const viewport = canvasManager?.getViewportState
@@ -1336,15 +2126,30 @@ export function initToolbarController() {
       const state = ensureCaptureTabsForLabel(label);
       const activeTab = state.tabs.find(tab => tab.id === state.activeTabId);
       if (!activeTab || activeTab.type === 'master') return;
-      activeTab.captureFrame = getCaptureFrameRectPixels();
+      const frameRecord = getCaptureFrameRectPixels();
       const viewport = buildViewportRecord();
       const previousRotation = Number(activeTab.viewport?.rotation);
       const shouldSyncRotation =
         options?.syncRotation === true || !Number.isFinite(previousRotation);
-      activeTab.viewport = {
+      const nextViewport = {
         ...(activeTab.viewport || {}),
         ...viewport,
         rotation: shouldSyncRotation ? viewport.rotation : previousRotation,
+      };
+      activeTab.viewport = nextViewport;
+      const worldRect = computeWorldRectFromViewportRect(
+        {
+          left: frameRecord.left,
+          top: frameRecord.top,
+          width: frameRecord.width,
+          height: frameRecord.height,
+        },
+        nextViewport
+      );
+      activeTab.captureFrame = {
+        ...frameRecord,
+        worldRect:
+          normalizeWorldRect(worldRect) || normalizeWorldRect(activeTab.captureFrame?.worldRect),
       };
       state.lastNonMasterId = activeTab.id;
     }
@@ -1518,6 +2323,7 @@ export function initToolbarController() {
       const applyCenteredFrameAndViewport = (stored, borderColor) => {
         const rect = resolveCaptureFrameRect(stored);
         const centeredRect = buildCenteredRectFromSize(rect.width, rect.height);
+        const storedWorldRect = normalizeWorldRect(stored?.worldRect);
         let centerDeltaX =
           centeredRect.left + centeredRect.width / 2 - (rect.left + rect.width / 2);
         let centerDeltaY =
@@ -1535,7 +2341,15 @@ export function initToolbarController() {
           activeTab.viewport = buildViewportRecord();
         }
 
-        if (activeTab.viewport && (centerDeltaX !== 0 || centerDeltaY !== 0)) {
+        if (activeTab.viewport && storedWorldRect) {
+          activeTab.viewport = fitViewportToWorldRect(
+            storedWorldRect,
+            activeTab.viewport,
+            centeredRect
+          );
+          centerDeltaX = 0;
+          centerDeltaY = 0;
+        } else if (activeTab.viewport && (centerDeltaX !== 0 || centerDeltaY !== 0)) {
           activeTab.viewport = {
             ...activeTab.viewport,
             panX: (activeTab.viewport.panX || 0) + centerDeltaX,
@@ -1543,9 +2357,14 @@ export function initToolbarController() {
           };
         }
 
+        const derivedWorldRect = normalizeWorldRect(
+          computeWorldRectFromViewportRect(centeredRect, activeTab.viewport)
+        );
+
         activeTab.captureFrame = {
           ...(stored || {}),
           ...centeredRect,
+          worldRect: storedWorldRect || derivedWorldRect,
           windowWidth: Math.max(window.innerWidth, 1),
           windowHeight: Math.max(window.innerHeight, 1),
           relativeLeft: centeredRect.left / Math.max(window.innerWidth, 1),
@@ -1752,7 +2571,10 @@ export function initToolbarController() {
       nextViewport.panX = (nextViewport.panX || 0) + (targetCx - mappedCx);
       nextViewport.panY = (nextViewport.panY || 0) + (targetCy - mappedCy);
       tab.viewport = nextViewport;
-      tab.captureFrame = buildCaptureFrameRecord(centeredRect);
+      tab.captureFrame = {
+        ...buildCaptureFrameRecord(centeredRect),
+        worldRect: normalizeWorldRect(worldRect),
+      };
       if (state.activeTabId === tab.id) {
         applyCaptureFrameForLabel(label);
       } else {
@@ -2107,6 +2929,13 @@ export function initToolbarController() {
       const shouldRenderMasterOverlay = () =>
         !!masterOverlay && document.body.classList.contains('master-view-active');
       const sync = (renderOverlay = false) => {
+        if (
+          window.__isLoadingProject ||
+          window.__deferredImageHydrationInProgress ||
+          window.__suspendSaveCurrentView
+        ) {
+          return;
+        }
         const label = getActiveLabel();
         const state = ensureCaptureTabsForLabel(label);
         const activeTab = getActiveTab(label);
@@ -2137,6 +2966,7 @@ export function initToolbarController() {
             return;
           }
           masterTab.viewport = nextMasterViewport;
+          updateTabWorldRectFromLiveFrame(masterTab, nextMasterViewport);
           if (window.__captureTabsAllowRotationWrite === true) {
             window.__captureTabsAllowRotationWrite = false;
           }
@@ -2164,6 +2994,7 @@ export function initToolbarController() {
           return;
         }
         activeTab.viewport = nextViewport;
+        updateTabWorldRectFromLiveFrame(activeTab, nextViewport);
         if (window.__captureTabsAllowRotationWrite === true) {
           window.__captureTabsAllowRotationWrite = false;
         }
@@ -2252,6 +3083,9 @@ export function initToolbarController() {
       if (captureFrameResizeRaf !== null) return;
       captureFrameResizeRaf = requestAnimationFrame(() => {
         captureFrameResizeRaf = null;
+        if (window.__isLoadingProject || window.__deferredImageHydrationInProgress) {
+          return;
+        }
         const activeLabel = getActiveLabel();
         if (typeof window.applyCaptureFrameForLabel === 'function') {
           window.applyCaptureFrameForLabel(activeLabel);
@@ -3991,7 +4825,12 @@ export function initToolbarController() {
       // Update gallery data
       imageGalleryData[index] = normalizedData;
       updateGalleryControls();
-      if (!window.__initialGallerySyncDone && imageGalleryData.length === 1) {
+      if (
+        !window.__initialGallerySyncDone &&
+        imageGalleryData.length === 1 &&
+        !window.__isLoadingProject &&
+        !window.__deferredImageHydrationInProgress
+      ) {
         window.__initialGallerySyncDone = true;
         navigateToImage(0);
         console.log('[Gallery] Auto-selected first image');
@@ -4089,7 +4928,12 @@ export function initToolbarController() {
 
     // Expose a lightweight compat hook for module-based uploads
     window.addImageToGalleryCompat = function addImageToGalleryCompat(imageData) {
-      const index = imageGalleryData.length;
+      const label = imageData?.original?.label || imageData?.label || imageData?.name || '';
+      const existingIndex = imageGalleryData.findIndex(item => {
+        const existingLabel = item?.original?.label || item?.label || item?.name || '';
+        return Boolean(label) && existingLabel === label;
+      });
+      const index = existingIndex >= 0 ? existingIndex : imageGalleryData.length;
       addImageToGallery(imageData, index);
     };
 
@@ -5523,7 +6367,7 @@ export function initToolbarController() {
       setTimeout(() => {
         const allContainers = Array.from(imageList.querySelectorAll('.image-container'));
         const isFirst = allContainers.length === 1 && allContainers[0] === container;
-        if (isFirst) {
+        if (isFirst && !window.__isLoadingProject && !window.__deferredImageHydrationInProgress) {
           console.log(`[COMPAT] First image "${label}" added, centering and switching to it`);
           window.__suppressScrollSelectUntil = Date.now() + 1200;
           window.__imageListProgrammaticScrollUntil = Date.now() + 1000;
@@ -5618,11 +6462,12 @@ export function initToolbarController() {
         const alreadyExists = imageGalleryData.some(
           img =>
             img &&
-            img.src === imageUrl &&
             (img.original?.label === label ||
-              img.name === filename ||
-              img.name === label ||
-              img.original?.filename === filename)
+              img.label === label ||
+              (img.src === imageUrl &&
+                (img.name === filename ||
+                  img.name === label ||
+                  img.original?.filename === filename)))
         );
 
         if (!alreadyExists) {
@@ -5647,6 +6492,7 @@ export function initToolbarController() {
             window.projectManager &&
             window.projectManager.currentViewId === label &&
             typeof window.projectManager.setBackgroundImage === 'function' &&
+            !window.__isLoadingProject &&
             !window.__deferredImageHydrationInProgress
           ) {
             requestAnimationFrame(() => {
@@ -6077,7 +6923,11 @@ export function initToolbarController() {
                   );
                   const isFirst = allContainers.length === 1 && allContainers[0] === container;
 
-                  if (isFirst) {
+                  if (
+                    isFirst &&
+                    !window.__isLoadingProject &&
+                    !window.__deferredImageHydrationInProgress
+                  ) {
                     console.log(
                       `[HOOK] First image "${label}" added, centering and switching to it`
                     );
@@ -6134,7 +6984,11 @@ export function initToolbarController() {
 
           // Add to our new gallery
           if (imageUrl) {
-            const index = imageGalleryData.length;
+            const existingIndex = imageGalleryData.findIndex(item => {
+              const existingLabel = item?.original?.label || item?.label || item?.name;
+              return (label && existingLabel === label) || item?.src === imageUrl;
+            });
+            const index = existingIndex >= 0 ? existingIndex : imageGalleryData.length;
             const imageData = {
               src: imageUrl,
               url: imageUrl,
@@ -6144,7 +6998,12 @@ export function initToolbarController() {
             };
 
             addImageToGallery(imageData, index);
-            console.log('[HOOK] Added to new gallery at index', index);
+            console.log(
+              existingIndex >= 0
+                ? '[HOOK] Updated existing gallery image at index'
+                : '[HOOK] Added to new gallery at index',
+              index
+            );
 
             // Register with Fabric.js ProjectManager to set background image
             if (window.app && window.app.projectManager) {
@@ -6191,6 +7050,11 @@ export function initToolbarController() {
 
     // Function to sync existing legacy images to new gallery
     function syncLegacyImagesToGallery() {
+      if (window.__isLoadingProject || window.__deferredImageHydrationInProgress) {
+        console.log('[SYNC] Skipping legacy gallery sync during project load');
+        return;
+      }
+
       const imageList = document.getElementById('imageList');
       if (!imageList) {
         console.log('[SYNC] ERROR: No imageList element found');
@@ -6217,7 +7081,10 @@ export function initToolbarController() {
           };
 
           // Check if this image is already in the gallery
-          const existingIndex = imageGalleryData.findIndex(item => item.src === img.src);
+          const existingIndex = imageGalleryData.findIndex(item => {
+            const existingLabel = item?.original?.label || item?.label || item?.name;
+            return (label && existingLabel === label) || item?.src === img.src;
+          });
 
           if (existingIndex === -1) {
             addImageToGallery(imageData, imageGalleryData.length);
@@ -6328,7 +7195,7 @@ export function initToolbarController() {
       }
 
       // Ensure we always start with the first image
-      if (imageList) {
+      if (imageList && !window.__isLoadingProject && !window.__deferredImageHydrationInProgress) {
         const firstContainer = imageList.querySelector('.image-container');
         if (firstContainer) {
           const firstLabel = firstContainer.dataset.label;
@@ -6370,6 +7237,7 @@ export function initToolbarController() {
     let lastLegacyCount = 0;
     const syncLegacyListIfChanged = () => {
       if (document.hidden) return;
+      if (window.__isLoadingProject || window.__deferredImageHydrationInProgress) return;
 
       const imageListEl = document.getElementById('imageList');
       const currentLegacyCount = imageListEl ? imageListEl.children.length : 0;

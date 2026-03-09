@@ -622,7 +622,24 @@ export class StrokeMetadataManager {
     }
   }
 
-  focusMeasurementInput(strokeLabel) {
+  focusMeasurementInput(strokeLabel, options = {}) {
+    const requireCanvasSingleSelection = options?.requireCanvasSingleSelection === true;
+    const getActiveStrokeLabel = target =>
+      target?.strokeMetadata?.strokeLabel ||
+      target?.strokeLabel ||
+      target?.connectedStroke?.strokeMetadata?.strokeLabel ||
+      target?.connectedStroke?.strokeLabel ||
+      null;
+
+    const isExpectedCanvasSelection = () => {
+      if (!requireCanvasSingleSelection) return true;
+
+      const activeObjects = window.app?.canvasManager?.fabricCanvas?.getActiveObjects?.() || [];
+      if (activeObjects.length !== 1) return false;
+
+      return getActiveStrokeLabel(activeObjects[0]) === strokeLabel;
+    };
+
     // Find the measurement span for this stroke
     const strokesList = document.getElementById('strokesList');
     if (!strokesList) return;
@@ -646,12 +663,25 @@ export class StrokeMetadataManager {
             elementsBody.style.maxHeight = 'none';
           }
 
-          // Scroll to the stroke item
-          item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          const scrollContainer = document.getElementById('strokeVisibilityControls');
+          if (scrollContainer) {
+            const itemTop = item.offsetTop;
+            const itemBottom = itemTop + item.offsetHeight;
+            const visibleTop = scrollContainer.scrollTop;
+            const visibleBottom = visibleTop + scrollContainer.clientHeight;
+            const scrollPadding = 8;
+
+            if (itemTop < visibleTop + scrollPadding) {
+              scrollContainer.scrollTop = Math.max(0, itemTop - scrollPadding);
+            } else if (itemBottom > visibleBottom - scrollPadding) {
+              scrollContainer.scrollTop = itemBottom - scrollContainer.clientHeight + scrollPadding;
+            }
+          }
 
           // Enable editing
           setTimeout(() => {
             if (!measurementSpan.isConnected) return;
+            if (!isExpectedCanvasSelection()) return;
             measurementSpan.contentEditable = 'true';
             measurementSpan.focus();
             this.safeSelectNodeContents(measurementSpan);
@@ -779,19 +809,13 @@ export class StrokeMetadataManager {
     let strokesList = controlsContainer.querySelector('#strokesList');
     if (!strokesList) {
       controlsContainer.innerHTML =
-        '<div id="strokesList" class="px-3 pt-2 pb-2 flex-grow flex flex-col justify-center" style="padding-bottom: 70px !important;"></div>';
+        '<div id="strokesList" class="px-3 pt-2 pb-2" style="padding-bottom: 70px !important;"></div>';
       strokesList = controlsContainer.querySelector('#strokesList');
     } else {
       // Ensure classes are present even if element exists
-      strokesList.classList.add(
-        'px-3',
-        'pt-2',
-        'pb-2',
-        'flex-grow',
-        'flex',
-        'flex-col',
-        'justify-center'
-      );
+      strokesList.classList.remove('justify-center', 'flex-grow');
+      strokesList.classList.remove('justify-start', 'flex', 'flex-col');
+      strokesList.classList.add('px-3', 'pt-2', 'pb-2');
       strokesList.style.minHeight = ''; // Remove inline style if present
       strokesList.style.setProperty('padding-bottom', '70px', 'important');
       strokesList.innerHTML = '';
@@ -1101,6 +1125,19 @@ export class StrokeMetadataManager {
       const labelContainer = document.createElement('div');
       labelContainer.className = 'stroke-label-container';
 
+      const syncCustomColorTargetState = (forcedSelected?: boolean) => {
+        const isSelected =
+          typeof forcedSelected === 'boolean'
+            ? forcedSelected
+            : Boolean(window.app?.tagManager?.isSelectedStyleTarget?.(strokeLabel, currentViewId));
+        strokeItem.dataset.selected = isSelected ? 'true' : 'false';
+        labelContainer.style.background = isSelected ? 'rgba(219, 234, 254, 0.9)' : '';
+        labelContainer.style.boxShadow = isSelected
+          ? 'inset 0 0 0 1px rgba(59, 130, 246, 0.35)'
+          : '';
+        labelContainer.style.borderRadius = '6px';
+      };
+
       // Stroke name
       const strokeName = document.createElement('span');
       strokeName.className = 'stroke-name';
@@ -1305,20 +1342,6 @@ export class StrokeMetadataManager {
         }
       }
 
-      // Review toggle button (★)
-      const reviewBtn = document.createElement('button');
-      reviewBtn.type = 'button';
-      reviewBtn.className = 'stroke-review-toggle-btn';
-      reviewBtn.title = 'Mark for review';
-      reviewBtn.setAttribute('aria-label', `Mark stroke ${strokeLabel} for review`);
-      reviewBtn.style.fontSize = '14px';
-      reviewBtn.style.padding = '2px 6px';
-      reviewBtn.style.borderRadius = '3px';
-      reviewBtn.style.border = 'none';
-      reviewBtn.style.cursor = 'pointer';
-      reviewBtn.style.transition = '0.2s';
-      reviewBtn.textContent = '★';
-
       // Delete button (×)
       const deleteBtn = document.createElement('button');
       deleteBtn.type = 'button';
@@ -1349,11 +1372,9 @@ export class StrokeMetadataManager {
       labelContainer.appendChild(strokeName);
       labelContainer.appendChild(labelToggleBtn);
       labelContainer.appendChild(measurementSpan);
-      labelContainer.appendChild(reviewBtn);
-      labelContainer.appendChild(deleteBtn); // Append delete button here
 
       strokeItem.appendChild(labelContainer);
-      // Removed appending deleteBtn to strokeItem
+      strokeItem.appendChild(deleteBtn);
 
       deleteBtn.addEventListener('click', () => {
         // Delete stroke from canvas
@@ -1394,7 +1415,30 @@ export class StrokeMetadataManager {
         }
       });
 
-      strokeItem.appendChild(deleteBtn);
+      strokeItem.addEventListener('click', event => {
+        const target = event.target;
+        if (!(target instanceof HTMLElement)) return;
+        if (
+          target.closest('input') ||
+          target.closest('button') ||
+          target.closest('.stroke-measurement') ||
+          target.closest('.stroke-name')
+        ) {
+          return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        const nextSelected = window.app?.tagManager?.toggleSelectedStyleTarget?.(
+          strokeLabel,
+          currentViewId,
+          { syncCanvas: true }
+        );
+        syncCustomColorTargetState(typeof nextSelected === 'boolean' ? nextSelected : undefined);
+      });
+
+      syncCustomColorTargetState();
       strokesList.appendChild(strokeItem);
     });
 

@@ -117,6 +117,13 @@ export function initScrollSelectSystem() {
   }
 
   function isScrollSelectEnabled(): boolean {
+    if (
+      (window.__suppressScrollSelectUntil && Date.now() < window.__suppressScrollSelectUntil) ||
+      window.__isLoadingProject ||
+      window.__deferredImageHydrationInProgress
+    ) {
+      return false;
+    }
     return window.scrollToSelectEnabled !== false;
   }
 

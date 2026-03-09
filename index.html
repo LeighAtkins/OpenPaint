@@ -721,10 +721,10 @@
       #drawingModeToggle {
         padding: 8px 16px;
         background: var(--ob-bg-surface);
-        color: var(--ob-signal);
+        color: var(--ob-text-primary);
         font-weight: var(--ob-weight-semibold);
         border-radius: var(--ob-radius-button);
-        border: var(--ob-border-width) solid var(--ob-signal);
+        border: var(--ob-border-width) solid var(--ob-border-color);
       }
 
       .shape-toggle {
@@ -819,6 +819,12 @@
       }
 
       #shapeModeWrapper.shape-active > #shapeModeToggle {
+        border-color: var(--ob-signal);
+        color: var(--ob-signal);
+        background: var(--ob-signal-soft);
+      }
+
+      #drawingModeWrapper.shape-active > #drawingModeToggle {
         border-color: var(--ob-signal);
         color: var(--ob-signal);
         background: var(--ob-signal-soft);
@@ -1735,6 +1741,7 @@
 
       #elementsBody {
         flex: 1 1 auto;
+        min-height: 0 !important;
         overflow: hidden;
         display: flex;
         flex-direction: column;
@@ -1749,10 +1756,12 @@
       }
 
       #strokeVisibilityControls {
-        flex: 1 1 auto;
+        flex: 1 1 0 !important;
         min-height: 0;
+        display: block !important;
         /* allows flex child to shrink for scrolling in Firefox */
         overflow-y: auto !important;
+        overflow-x: hidden !important;
         /* Remove transition that causes flickering */
         transition: none !important;
       }
@@ -1777,11 +1786,14 @@
         transform: translateZ(0);
       }
 
+      .stroke-visibility-item > input,
+      .stroke-visibility-item > .delete-image-btn {
+        flex: 0 0 auto !important;
+      }
+
       /* Ensure the strokes list flows vertically and doesn't overlap */
       #strokesList {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
+        display: block !important;
       }
 
       .stroke-actions-panel {
@@ -1820,6 +1832,7 @@
         align-items: center !important;
         gap: 6px !important;
         flex: 1 !important;
+        min-width: 0 !important;
       }
 
       .stroke-name {
@@ -1860,6 +1873,8 @@
         text-align: center !important;
         min-height: 20px !important;
         vertical-align: middle !important;
+        margin-left: auto !important;
+        flex-shrink: 0 !important;
       }
 
       .stroke-measurement.empty-measurement {
@@ -3434,12 +3449,12 @@
         </div>
         <div
           id="strokeVisibilityControls"
-          class="flex-1 overflow-y-auto overflow-x-hidden flex flex-col min-h-0"
+          class="flex-1 overflow-y-auto overflow-x-hidden min-h-0"
           style="box-sizing: border-box; position: relative; z-index: 100"
         >
           <div
             id="strokesList"
-            class="px-3 pt-2 pb-2 flex-grow flex flex-col justify-center"
+            class="px-3 pt-2 pb-2"
             style="padding-bottom: 70px !important"
           ></div>
         </div>

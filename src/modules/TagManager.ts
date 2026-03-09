@@ -17,11 +17,15 @@ export class TagManager {
     this.tagBackgroundStyle = 'solid'; // 'solid', 'no-fill', 'clear-black', 'clear-color', 'clear-white'
     this.strokeColor = '#3b82f6'; // Default stroke color for clear-color style
     this.connectorColor = '#ffffff';
+    this.connectorMatchesLine = false;
     this.customTagColors = null;
+    this.tagStyleConfig = this.createDefaultTagStyleConfig();
+    this.selectedStyleTagKeys = new Set();
+    this.isSyncingSelectedStyleTargetsToCanvas = false;
     this.tagSizeMin = 8;
     this.tagSizeMax = 72;
 
-    this.syncCustomTagColorsFromMetadata();
+    this.syncTagStyleConfigFromMetadata();
     this.syncTagSizeFromMetadata();
 
     // Initialize showMeasurements to visible by default; sync checkbox state if present
@@ -158,30 +162,371 @@ export class TagManager {
     }
   }
 
-  getTagPalette(strokeLabel, orientation = 'horizontal') {
-    if (!this.customTagColors) {
-      this.syncCustomTagColorsFromMetadata();
-    }
-    if (this.customTagColors) {
-      return {
-        bg: this.customTagColors.background,
-        stroke: this.customTagColors.border,
-        text: this.customTagColors.text,
+  createDefaultTagStyleConfig() {
+    return {
+      presets: {
+        lettersOnly: null,
+        lettersNumbers: null,
+        highlight: null,
+      },
+      perTagThemes: {},
+      highlightedTagKeys: new Set(),
+    };
+  }
+
+  cloneTagTheme(theme) {
+    if (!theme) return null;
+    return {
+      background: theme.background,
+      border: theme.border,
+      text: theme.text,
+    };
+  }
+
+  getDefaultTagTheme() {
+    return {
+      background: '#ffffff',
+      border: '#cccccc',
+      text: '#000000',
+    };
+  }
+
+  getDefaultHighlightTheme() {
+    return {
+      background: '#fef3c7',
+      border: '#f59e0b',
+      text: '#92400e',
+    };
+  }
+
+  normalizeTagTheme(theme) {
+    if (!theme || typeof theme !== 'object') return null;
+    const background = this.normalizeThemeColor(theme.background);
+    const border = this.normalizeThemeColor(theme.border);
+    const text = this.normalizeThemeColor(theme.text);
+    if (!background || !border || !text) return null;
+    return { background, border, text };
+  }
+
+  normalizeTagStyleTarget(target) {
+    return ['lettersOnly', 'lettersNumbers', 'highlight'].includes(target)
+      ? target
+      : 'lettersNumbers';
+  }
+
+  normalizeTagStyleConfig(config) {
+    const source = config && typeof config === 'object' ? config : {};
+    const presets = source.presets && typeof source.presets === 'object' ? source.presets : {};
+    const highlightedTagKeys = Array.isArray(source.highlightedTagKeys)
+      ? source.highlightedTagKeys.map(value => String(value || '').trim()).filter(Boolean)
+      : source.highlightedTagKeys instanceof Set
+        ? Array.from(source.highlightedTagKeys)
+            .map(value => String(value || '').trim())
+            .filter(Boolean)
+        : [];
+
+    return {
+      presets: {
+        lettersOnly: this.normalizeTagTheme(presets.lettersOnly),
+        lettersNumbers: this.normalizeTagTheme(presets.lettersNumbers),
+        highlight: this.normalizeTagTheme(presets.highlight),
+      },
+      perTagThemes: Object.entries(
+        source.perTagThemes && typeof source.perTagThemes === 'object' ? source.perTagThemes : {}
+      ).reduce((acc, [key, value]) => {
+        const normalizedKey = String(key || '').trim();
+        const normalizedTheme = this.normalizeTagTheme(value);
+        if (normalizedKey && normalizedTheme) {
+          acc[normalizedKey] = normalizedTheme;
+        }
+        return acc;
+      }, {}),
+      highlightedTagKeys: new Set(highlightedTagKeys),
+    };
+  }
+
+  serializeTagStyleConfig() {
+    const config = this.tagStyleConfig || this.createDefaultTagStyleConfig();
+    return {
+      presets: {
+        lettersOnly: this.cloneTagTheme(config.presets?.lettersOnly),
+        lettersNumbers: this.cloneTagTheme(config.presets?.lettersNumbers),
+        highlight: this.cloneTagTheme(config.presets?.highlight),
+      },
+      perTagThemes: Object.keys(config.perTagThemes || {})
+        .sort()
+        .reduce((acc, key) => {
+          const theme = this.cloneTagTheme(config.perTagThemes?.[key]);
+          if (theme) {
+            acc[key] = theme;
+          }
+          return acc;
+        }, {}),
+      highlightedTagKeys: Array.from(config.highlightedTagKeys || []).sort(),
+    };
+  }
+
+  syncTagStyleConfigFromMetadata() {
+    const metadata =
+      window.app?.projectManager?.getProjectMetadata?.() || window.projectMetadata || {};
+    const nextConfig =
+      metadata?.tagStyleConfig && typeof metadata.tagStyleConfig === 'object'
+        ? this.normalizeTagStyleConfig(metadata.tagStyleConfig)
+        : null;
+    const legacyTheme = this.normalizeTagTheme(metadata?.tagColorTheme);
+
+    if (nextConfig) {
+      this.tagStyleConfig = nextConfig;
+    } else if (legacyTheme) {
+      this.tagStyleConfig = {
+        presets: {
+          lettersOnly: this.cloneTagTheme(legacyTheme),
+          lettersNumbers: this.cloneTagTheme(legacyTheme),
+          highlight: null,
+        },
+        perTagThemes: {},
+        highlightedTagKeys: new Set(),
       };
+    } else {
+      this.tagStyleConfig = this.createDefaultTagStyleConfig();
     }
 
-    const letter =
+    this.customTagColors =
+      this.cloneTagTheme(this.tagStyleConfig.presets.lettersNumbers) ||
+      this.cloneTagTheme(this.tagStyleConfig.presets.lettersOnly);
+  }
+
+  persistTagStyleConfigToMetadata() {
+    const payload = this.serializeTagStyleConfig();
+    if (window.app?.projectManager?.setProjectMetadata) {
+      window.app.projectManager.setProjectMetadata({ tagStyleConfig: payload });
+      return;
+    }
+    window.projectMetadata = {
+      ...(window.projectMetadata || {}),
+      tagStyleConfig: payload,
+    };
+  }
+
+  hasCustomTagStyles() {
+    const config = this.tagStyleConfig || this.createDefaultTagStyleConfig();
+    return Boolean(
+      config.presets?.lettersOnly ||
+      config.presets?.lettersNumbers ||
+      config.presets?.highlight ||
+      Object.keys(config.perTagThemes || {}).length ||
+      config.highlightedTagKeys?.size
+    );
+  }
+
+  getTagStyleConfigSnapshot() {
+    return this.serializeTagStyleConfig();
+  }
+
+  isLettersOnlyTag(strokeLabel) {
+    return /^[A-Z]$/.test(
       String(strokeLabel || '')
         .trim()
         .toUpperCase()
-        .charAt(0) || 'A';
-    const letterIndex = Math.max(0, letter.charCodeAt(0) - 65);
-    const baseHue = (letterIndex * 37) % 360;
-    const hue = orientation === 'vertical' ? (baseHue + 28) % 360 : baseHue;
+    );
+  }
+
+  isLettersNumbersTag(strokeLabel) {
+    return /^[A-Z]\d+$/.test(
+      String(strokeLabel || '')
+        .trim()
+        .toUpperCase()
+    );
+  }
+
+  isTagHighlighted(strokeLabel, imageLabel) {
+    const tagKey = this.getTagKey(strokeLabel, imageLabel);
+    return Boolean(this.tagStyleConfig?.highlightedTagKeys?.has(tagKey));
+  }
+
+  getTagThemeOverride(strokeLabel, imageLabel) {
+    const tagKey = this.getTagKey(strokeLabel, imageLabel);
+    const override = this.tagStyleConfig?.perTagThemes?.[tagKey];
+    return override ? this.cloneTagTheme(override) : null;
+  }
+
+  hasTagThemeOverride(strokeLabel, imageLabel) {
+    return Boolean(this.getTagThemeOverride(strokeLabel, imageLabel));
+  }
+
+  emitTagStyleStateChanged(imageLabel) {
+    const viewId = this.normalizeImageLabel(imageLabel);
+    if (typeof this.metadataManager?.updateStrokeVisibilityControls === 'function') {
+      this.metadataManager.updateStrokeVisibilityControls();
+    }
+    if (typeof window?.dispatchEvent === 'function' && typeof window.CustomEvent === 'function') {
+      window.dispatchEvent(
+        new window.CustomEvent('openpaint:tag-style-state-changed', {
+          detail: { imageLabel: viewId },
+        })
+      );
+    }
+  }
+
+  getSelectedStyleTargetLabels(imageLabel) {
+    const viewId = this.normalizeImageLabel(imageLabel);
+    return Array.from(this.selectedStyleTagKeys || [])
+      .filter(key => key.startsWith(`${viewId}::`))
+      .map(key => key.slice(`${viewId}::`.length))
+      .sort((left, right) =>
+        String(left).localeCompare(String(right), undefined, {
+          numeric: true,
+          sensitivity: 'base',
+        })
+      );
+  }
+
+  getSelectedStyleTargetKeys(imageLabel) {
+    const viewId = this.normalizeImageLabel(imageLabel);
+    return Array.from(this.selectedStyleTagKeys || [])
+      .filter(key => key.startsWith(`${viewId}::`))
+      .sort((left, right) =>
+        String(left).localeCompare(String(right), undefined, {
+          numeric: true,
+          sensitivity: 'base',
+        })
+      );
+  }
+
+  isSelectedStyleTarget(strokeLabel, imageLabel) {
+    const tagKey = this.getTagKey(strokeLabel, imageLabel);
+    return this.selectedStyleTagKeys.has(tagKey);
+  }
+
+  setSelectedStyleTarget(strokeLabel, imageLabel, selected = true, options = {}) {
+    const normalizedLabel = String(strokeLabel || '').trim();
+    if (!normalizedLabel) return false;
+    const viewId = this.normalizeImageLabel(imageLabel);
+    const tagKey = this.getTagKey(normalizedLabel, viewId);
+    if (selected) {
+      this.selectedStyleTagKeys.add(tagKey);
+    } else {
+      this.selectedStyleTagKeys.delete(tagKey);
+    }
+    if (options.syncCanvas === true) {
+      this.syncSelectedStyleTargetsToCanvas(viewId);
+    }
+    if (options.emitChange !== false) {
+      this.emitTagStyleStateChanged(viewId);
+    }
+    return selected;
+  }
+
+  toggleSelectedStyleTarget(strokeLabel, imageLabel, options = {}) {
+    const nextSelected = !this.isSelectedStyleTarget(strokeLabel, imageLabel);
+    this.setSelectedStyleTarget(strokeLabel, imageLabel, nextSelected, options);
+    return nextSelected;
+  }
+
+  replaceSelectedStyleTargets(strokeLabels, imageLabel, options = {}) {
+    const viewId = this.normalizeImageLabel(imageLabel);
+    Array.from(this.selectedStyleTagKeys || []).forEach(key => {
+      if (key.startsWith(`${viewId}::`)) {
+        this.selectedStyleTagKeys.delete(key);
+      }
+    });
+
+    (Array.isArray(strokeLabels) ? strokeLabels : []).forEach(strokeLabel => {
+      this.setSelectedStyleTarget(strokeLabel, viewId, true, {
+        syncCanvas: false,
+        emitChange: false,
+      });
+    });
+
+    const labels = this.getSelectedStyleTargetLabels(viewId);
+    if (options.syncCanvas === true) {
+      this.syncSelectedStyleTargetsToCanvas(viewId);
+    }
+    if (options.emitChange !== false) {
+      this.emitTagStyleStateChanged(viewId);
+    }
+    return labels;
+  }
+
+  syncSelectedStyleTargetsToCanvas(imageLabel) {
+    const canvas = this.canvas;
+    const viewId = this.normalizeImageLabel(imageLabel);
+    if (!canvas || !viewId || this.isSyncingSelectedStyleTargetsToCanvas) return [];
+
+    const labels = this.getSelectedStyleTargetLabels(viewId);
+    const strokesByImage = this.metadataManager?.vectorStrokesByImage?.[viewId] || {};
+    const targetObjects = labels
+      .map(label => strokesByImage?.[label])
+      .filter(obj => obj && obj.canvas === canvas && obj.visible !== false);
+
+    this.isSyncingSelectedStyleTargetsToCanvas = true;
+    window.__openpaintSuppressMeasurementFocus = true;
+    try {
+      canvas.discardActiveObject();
+
+      if (targetObjects.length === 1) {
+        canvas.setActiveObject(targetObjects[0]);
+      } else if (targetObjects.length > 1 && typeof fabric?.ActiveSelection === 'function') {
+        const selection = new fabric.ActiveSelection(targetObjects, { canvas });
+        canvas.setActiveObject(selection);
+      }
+
+      canvas.requestRenderAll();
+    } finally {
+      this.isSyncingSelectedStyleTargetsToCanvas = false;
+      window.setTimeout(() => {
+        window.__openpaintSuppressMeasurementFocus = false;
+      }, 0);
+    }
+    return labels;
+  }
+
+  getTagStyleTheme(target) {
+    const normalizedTarget = this.normalizeTagStyleTarget(target);
+    const preset = this.tagStyleConfig?.presets?.[normalizedTarget];
+    if (preset) {
+      return this.cloneTagTheme(preset);
+    }
+    return normalizedTarget === 'highlight'
+      ? this.getDefaultHighlightTheme()
+      : this.getDefaultTagTheme();
+  }
+
+  getTagPalette(strokeLabel, orientation = 'horizontal', imageLabel) {
+    if (!this.tagStyleConfig) {
+      this.syncTagStyleConfigFromMetadata();
+    }
+
+    const overrideTheme = this.getTagThemeOverride(strokeLabel, imageLabel);
+    if (overrideTheme) {
+      return {
+        bg: overrideTheme.background,
+        stroke: overrideTheme.border,
+        text: overrideTheme.text,
+      };
+    }
+
+    if (this.isTagHighlighted(strokeLabel, imageLabel)) {
+      const highlightTheme = this.getTagStyleTheme('highlight');
+      return {
+        bg: highlightTheme.background,
+        stroke: highlightTheme.border,
+        text: highlightTheme.text,
+      };
+    }
+
+    let target = null;
+    if (this.isLettersOnlyTag(strokeLabel)) {
+      target = 'lettersOnly';
+    } else if (this.isLettersNumbersTag(strokeLabel)) {
+      target = 'lettersNumbers';
+    }
+
+    const theme = target ? this.getTagStyleTheme(target) : this.getDefaultTagTheme();
     return {
-      bg: `hsl(${hue} 88% 88%)`,
-      stroke: `hsl(${hue} 64% 42%)`,
-      text: `hsl(${hue} 62% 24%)`,
+      bg: theme.background,
+      stroke: theme.border,
+      text: theme.text,
     };
   }
 
@@ -232,8 +577,8 @@ export class TagManager {
       return null;
     }
 
-    // Remove existing tag if any
-    this.removeTag(strokeLabel, imageLabel);
+    // Remove existing tag if any, but keep style state when rebuilding the tag.
+    this.removeTag(strokeLabel, imageLabel, { preserveStyleState: true });
 
     // Get tag position (near stroke center)
     const bounds = strokeObject.getBoundingRect();
@@ -298,15 +643,29 @@ export class TagManager {
     const textHeight = tagText.height || this.tagSize;
 
     let background;
-    // Both square and circle modes use a rounded rectangle (capsule shape)
-    // Circle mode just has more rounding
-    const width = textWidth + padding * 2;
+    let width = textWidth + padding * 2;
     const height = textHeight + padding * 2;
-    const radius = this.tagShape === 'circle' ? height / 2 : 2; // Full rounding for circle, minimal for square
+
+    // Square mode: min width = height so short labels (A, B) become circles
+    // Use full rounding when width equals height (circle), slight rounding when wider (pill)
+    if (this.tagShape === 'square') {
+      width = Math.max(width, height);
+    }
+
+    let radius;
+    if (this.tagShape === 'circle') {
+      radius = height / 2; // Capsule shape
+    } else if (width <= height * 1.15) {
+      // Nearly square or square - use full rounding to make a circle
+      radius = Math.min(width, height) / 2;
+    } else {
+      // Wider than tall - use slight rounding for a pill shape
+      radius = 4;
+    }
 
     // Determine background style properties
     const orientation = this.getStrokeOrientation(strokeObject);
-    const palette = this.getTagPalette(strokeLabel, orientation);
+    const palette = this.getTagPalette(strokeLabel, orientation, imageLabel);
     let bgFill = palette.bg;
     let bgStroke = palette.stroke;
     let bgStrokeWidth = 1;
@@ -554,10 +913,21 @@ export class TagManager {
     return PathUtils.calculateDistance(p1, p2);
   }
 
+  getConnectorStrokeColor(strokeObj) {
+    if (this.connectorMatchesLine) {
+      return (
+        String(
+          strokeObj?.stroke || strokeObj?.fill || this.strokeColor || this.connectorColor
+        ).trim() || '#3b82f6'
+      );
+    }
+    return String(this.connectorColor || '#ffffff').trim() || '#ffffff';
+  }
+
   // Create a manipulatable connector line
   createConnectorObject(x1, y1, x2, y2, tagObj, strokeObj, strokeLabel) {
     return new fabric.Line([x1, y1, x2, y2], {
-      stroke: this.connectorColor,
+      stroke: this.getConnectorStrokeColor(strokeObj),
       strokeWidth: 1,
       strokeDashArray: [6, 4],
       opacity: 0.8,
@@ -717,7 +1087,7 @@ export class TagManager {
   }
 
   // Remove a tag
-  removeTag(strokeLabel, imageLabel) {
+  removeTag(strokeLabel, imageLabel, options = {}) {
     const canvas = this.canvas;
     if (!canvas) return;
 
@@ -733,6 +1103,16 @@ export class TagManager {
     // Remove tag
     canvas.remove(tagObj);
     this.tagObjects.delete(key);
+    if (!options.preserveStyleState) {
+      if (this.tagStyleConfig?.perTagThemes?.[key]) {
+        delete this.tagStyleConfig.perTagThemes[key];
+        this.persistTagStyleConfigToMetadata();
+      }
+      if (this.tagStyleConfig?.highlightedTagKeys?.has(key)) {
+        this.tagStyleConfig.highlightedTagKeys.delete(key);
+        this.persistTagStyleConfigToMetadata();
+      }
+    }
   }
 
   // Clear all tags (useful when switching views with shared labels like A1)
@@ -752,6 +1132,16 @@ export class TagManager {
 
     this.tagObjects.delete(key);
     this.tagObjects.set(newKey, tagObj);
+
+    if (this.tagStyleConfig?.highlightedTagKeys?.has(key)) {
+      this.tagStyleConfig.highlightedTagKeys.delete(key);
+      this.tagStyleConfig.highlightedTagKeys.add(newKey);
+    }
+    if (this.tagStyleConfig?.perTagThemes?.[key]) {
+      this.tagStyleConfig.perTagThemes[newKey] = this.tagStyleConfig.perTagThemes[key];
+      delete this.tagStyleConfig.perTagThemes[key];
+    }
+    this.persistTagStyleConfigToMetadata();
 
     this.updateTagText(newLabel, resolvedImageLabel);
     return true;
@@ -799,9 +1189,18 @@ export class TagManager {
       const padding = 4;
       const textWidth = textObj.width || 30;
       const textHeight = textObj.height || this.tagSize;
-      const width = textWidth + padding * 2;
+      let width = textWidth + padding * 2;
       const height = textHeight + padding * 2;
-      const radius = this.tagShape === 'circle' ? height / 2 : 2; // Full rounding for circle, minimal for square
+      if (this.tagShape === 'square') width = Math.max(width, height);
+
+      let radius;
+      if (this.tagShape === 'circle') {
+        radius = height / 2;
+      } else if (width <= height * 1.15) {
+        radius = Math.min(width, height) / 2;
+      } else {
+        radius = 4;
+      }
 
       bgObj.set({
         width: width,
@@ -891,9 +1290,18 @@ export class TagManager {
               textObj.text.length * (this.tagSize * 0.6)
             );
             const textHeight = textObj.height || this.tagSize;
-            const width = textWidth + padding * 2;
+            let width = textWidth + padding * 2;
             const height = textHeight + padding * 2;
-            const radius = this.tagShape === 'circle' ? height / 2 : 2; // Full rounding for circle, minimal for square
+            if (this.tagShape === 'square') width = Math.max(width, height);
+
+            let radius;
+            if (this.tagShape === 'circle') {
+              radius = height / 2;
+            } else if (width <= height * 1.15) {
+              radius = Math.min(width, height) / 2;
+            } else {
+              radius = 4;
+            }
 
             // Update background dimensions
             bgObj.set({
@@ -1009,6 +1417,11 @@ export class TagManager {
   // Set the stroke color for clear-color style
   setStrokeColor(color) {
     this.strokeColor = color;
+
+    if (this.connectorMatchesLine) {
+      this.connectorColor = String(color || this.connectorColor || '#3b82f6').trim() || '#3b82f6';
+      this.refreshAllConnectors();
+    }
 
     // If using clear-color style, update all tags
     if (this.tagBackgroundStyle === 'clear-color') {
@@ -1130,10 +1543,7 @@ export class TagManager {
 
   setConnectorColor(color) {
     if (!color) return;
-    const allowed = ['#ffffff', '#9ca3af', '#000000'];
-    const normalized = String(color).toLowerCase();
-    if (!allowed.includes(normalized)) return;
-    this.connectorColor = normalized;
+    this.connectorColor = String(color).trim().toLowerCase();
     this.refreshAllConnectors();
   }
 
@@ -1145,23 +1555,7 @@ export class TagManager {
   }
 
   syncCustomTagColorsFromMetadata() {
-    const metadata =
-      window.app?.projectManager?.getProjectMetadata?.() || window.projectMetadata || {};
-    const theme = metadata?.tagColorTheme;
-    if (!theme || typeof theme !== 'object') {
-      this.customTagColors = null;
-      return;
-    }
-
-    const background = this.normalizeThemeColor(theme.background);
-    const border = this.normalizeThemeColor(theme.border);
-    const text = this.normalizeThemeColor(theme.text);
-    if (!background || !border || !text) {
-      this.customTagColors = null;
-      return;
-    }
-
-    this.customTagColors = { background, border, text };
+    this.syncTagStyleConfigFromMetadata();
   }
 
   persistCustomTagColorsToMetadata(theme) {
@@ -1176,22 +1570,234 @@ export class TagManager {
     };
   }
 
-  setTagCustomColors(colors) {
-    if (!colors || typeof colors !== 'object') return;
-    const background = this.normalizeThemeColor(colors.background);
-    const border = this.normalizeThemeColor(colors.border);
-    const text = this.normalizeThemeColor(colors.text);
-    if (!background || !border || !text) return;
+  refreshAllTagStyles() {
+    const tags = Array.from(this.tagObjects.values());
+    tags.forEach(tagObj => {
+      if (!tagObj?.strokeLabel || !tagObj?.connectedStroke) return;
+      this.createTag(tagObj.strokeLabel, tagObj.imageLabel, tagObj.connectedStroke);
+    });
+    this.canvas?.requestRenderAll();
+  }
 
-    this.customTagColors = { background, border, text };
-    this.persistCustomTagColorsToMetadata(this.customTagColors);
+  refreshTagStylesForKeys(keys) {
+    const uniqueKeys = Array.from(new Set(Array.isArray(keys) ? keys : []));
+    uniqueKeys.forEach(key => {
+      const tagObj = this.tagObjects.get(key);
+      if (!tagObj?.strokeLabel || !tagObj?.connectedStroke) return;
+      this.createTag(tagObj.strokeLabel, tagObj.imageLabel, tagObj.connectedStroke);
+    });
+    this.canvas?.requestRenderAll();
+  }
+
+  setTagStyleTheme(target, colors) {
+    const normalizedTarget = this.normalizeTagStyleTarget(target);
+    const normalizedTheme = this.normalizeTagTheme(colors);
+    if (!normalizedTheme) return;
+
+    if (!this.tagStyleConfig) {
+      this.tagStyleConfig = this.createDefaultTagStyleConfig();
+    }
+
+    this.tagStyleConfig.presets[normalizedTarget] = normalizedTheme;
+    this.customTagColors =
+      this.cloneTagTheme(this.tagStyleConfig.presets.lettersNumbers) ||
+      this.cloneTagTheme(this.tagStyleConfig.presets.lettersOnly);
+    this.persistTagStyleConfigToMetadata();
     this.tagBackgroundStyle = 'solid';
-    this.updateAllTags();
+    this.refreshAllTagStyles();
+  }
+
+  clearTagStyleTheme(target) {
+    const normalizedTarget = this.normalizeTagStyleTarget(target);
+    if (!this.tagStyleConfig) {
+      this.tagStyleConfig = this.createDefaultTagStyleConfig();
+    }
+
+    this.tagStyleConfig.presets[normalizedTarget] = null;
+    this.customTagColors =
+      this.cloneTagTheme(this.tagStyleConfig.presets.lettersNumbers) ||
+      this.cloneTagTheme(this.tagStyleConfig.presets.lettersOnly);
+    this.persistTagStyleConfigToMetadata();
+    this.refreshAllTagStyles();
+  }
+
+  getSelectedTagKeys() {
+    const canvas = this.canvas;
+    if (!canvas) return [];
+
+    const activeObject = canvas.getActiveObject();
+    if (!activeObject) return [];
+
+    const selected =
+      activeObject.type === 'activeSelection' ? activeObject.getObjects?.() || [] : [activeObject];
+    const keys = new Set();
+
+    selected.forEach(obj => {
+      if (!obj) return;
+
+      const strokeLabel =
+        obj.strokeLabel ||
+        obj.strokeMetadata?.strokeLabel ||
+        obj.strokeMetadata?.label ||
+        obj.customData?.strokeLabel ||
+        obj.customData?.label ||
+        obj.connectedStroke?.strokeMetadata?.strokeLabel ||
+        obj.connectedStroke?.strokeMetadata?.label ||
+        obj.connectedStroke?.strokeLabel ||
+        obj.connectedStroke?.customData?.strokeLabel ||
+        obj.connectedStroke?.customData?.label;
+      const imageLabel =
+        obj.imageLabel ||
+        obj.strokeMetadata?.imageLabel ||
+        obj.customData?.imageLabel ||
+        obj.connectedStroke?.strokeMetadata?.imageLabel ||
+        obj.connectedStroke?.imageLabel ||
+        obj.connectedStroke?.customData?.imageLabel;
+
+      if (!strokeLabel) return;
+      keys.add(this.getTagKey(strokeLabel, imageLabel));
+    });
+
+    return Array.from(keys);
+  }
+
+  setHighlightForSelectedTags(highlighted = true) {
+    const selectedKeys = this.getSelectedTagKeys();
+    if (!selectedKeys.length) return 0;
+
+    if (!this.tagStyleConfig) {
+      this.tagStyleConfig = this.createDefaultTagStyleConfig();
+    }
+
+    if (highlighted && !this.tagStyleConfig.presets.highlight) {
+      this.tagStyleConfig.presets.highlight = this.getDefaultHighlightTheme();
+    }
+
+    selectedKeys.forEach(key => {
+      if (highlighted) {
+        this.tagStyleConfig.highlightedTagKeys.add(key);
+      } else {
+        this.tagStyleConfig.highlightedTagKeys.delete(key);
+      }
+    });
+
+    this.persistTagStyleConfigToMetadata();
+    this.refreshTagStylesForKeys(selectedKeys);
+    return selectedKeys.length;
+  }
+
+  setTagTheme(strokeLabel, imageLabel, colors) {
+    const normalizedLabel = String(strokeLabel || '').trim();
+    if (!normalizedLabel) return false;
+
+    if (!this.tagStyleConfig) {
+      this.tagStyleConfig = this.createDefaultTagStyleConfig();
+    }
+
+    const tagKey = this.getTagKey(normalizedLabel, imageLabel);
+    const normalizedTheme = this.normalizeTagTheme(colors);
+
+    if (normalizedTheme) {
+      this.tagStyleConfig.perTagThemes[tagKey] = normalizedTheme;
+    } else if (this.tagStyleConfig.perTagThemes?.[tagKey]) {
+      delete this.tagStyleConfig.perTagThemes[tagKey];
+    }
+
+    this.persistTagStyleConfigToMetadata();
+    this.refreshTagStylesForKeys([tagKey]);
+    this.emitTagStyleStateChanged(imageLabel);
+    return true;
+  }
+
+  setTagThemeForStyleTargets(imageLabel, colors) {
+    const viewId = this.normalizeImageLabel(imageLabel);
+    const selectedKeys = this.getSelectedStyleTargetKeys(viewId);
+    if (!selectedKeys.length) return 0;
+
+    if (!this.tagStyleConfig) {
+      this.tagStyleConfig = this.createDefaultTagStyleConfig();
+    }
+
+    const normalizedTheme = this.normalizeTagTheme(colors);
+    selectedKeys.forEach(key => {
+      if (normalizedTheme) {
+        this.tagStyleConfig.perTagThemes[key] = normalizedTheme;
+      } else {
+        delete this.tagStyleConfig.perTagThemes[key];
+      }
+    });
+
+    this.persistTagStyleConfigToMetadata();
+    this.refreshTagStylesForKeys(selectedKeys);
+    this.emitTagStyleStateChanged(viewId);
+    return selectedKeys.length;
+  }
+
+  setTagThemeForSelectedTags(colors) {
+    const selectedKeys = this.getSelectedTagKeys();
+    if (!selectedKeys.length) return 0;
+
+    if (!this.tagStyleConfig) {
+      this.tagStyleConfig = this.createDefaultTagStyleConfig();
+    }
+
+    const normalizedTheme = this.normalizeTagTheme(colors);
+    selectedKeys.forEach(key => {
+      if (normalizedTheme) {
+        this.tagStyleConfig.perTagThemes[key] = normalizedTheme;
+      } else {
+        delete this.tagStyleConfig.perTagThemes[key];
+      }
+    });
+
+    this.persistTagStyleConfigToMetadata();
+    this.refreshTagStylesForKeys(selectedKeys);
+    return selectedKeys.length;
+  }
+
+  setTagHighlighted(strokeLabel, imageLabel, highlighted = true) {
+    const normalizedLabel = String(strokeLabel || '').trim();
+    if (!normalizedLabel) return false;
+
+    if (!this.tagStyleConfig) {
+      this.tagStyleConfig = this.createDefaultTagStyleConfig();
+    }
+
+    if (highlighted && !this.tagStyleConfig.presets.highlight) {
+      this.tagStyleConfig.presets.highlight = this.getDefaultHighlightTheme();
+    }
+
+    const tagKey = this.getTagKey(normalizedLabel, imageLabel);
+    if (highlighted) {
+      this.tagStyleConfig.highlightedTagKeys.add(tagKey);
+    } else {
+      this.tagStyleConfig.highlightedTagKeys.delete(tagKey);
+    }
+
+    this.persistTagStyleConfigToMetadata();
+    this.refreshTagStylesForKeys([tagKey]);
+    return highlighted;
+  }
+
+  toggleTagHighlight(strokeLabel, imageLabel) {
+    const nextHighlighted = !this.isTagHighlighted(strokeLabel, imageLabel);
+    this.setTagHighlighted(strokeLabel, imageLabel, nextHighlighted);
+    return nextHighlighted;
+  }
+
+  setTagCustomColors(colors) {
+    const normalizedTheme = this.normalizeTagTheme(colors);
+    if (!normalizedTheme) return;
+
+    this.setTagStyleTheme('lettersOnly', normalizedTheme);
+    this.setTagStyleTheme('lettersNumbers', normalizedTheme);
+    this.persistCustomTagColorsToMetadata(normalizedTheme);
   }
 
   clearTagCustomColors() {
     this.customTagColors = null;
     this.persistCustomTagColorsToMetadata(null);
-    this.updateAllTags();
+    this.clearTagStyleTheme('lettersOnly');
+    this.clearTagStyleTheme('lettersNumbers');
   }
 }

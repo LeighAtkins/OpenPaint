@@ -41,6 +41,7 @@ declare global {
     currentImageLabel?: string;
     getCaptureTabScopedLabel?: (label: string) => string;
     updateNextTagDisplay?: () => void;
+    __openpaintSuppressMeasurementFocus?: boolean;
   }
 }
 
@@ -165,23 +166,54 @@ export class CanvasManager {
       }
     });
 
+    let focusMeasurementForSelectionTimer: ReturnType<typeof setTimeout> | null = null;
+    let focusMeasurementForSelectionToken = 0;
+
+    const clearMeasurementSelectionFocus = () => {
+      focusMeasurementForSelectionToken += 1;
+      if (focusMeasurementForSelectionTimer) {
+        clearTimeout(focusMeasurementForSelectionTimer);
+        focusMeasurementForSelectionTimer = null;
+      }
+    };
+
     const focusMeasurementForSelection = (evt: FabricIEvent) => {
+      if (window.__openpaintSuppressMeasurementFocus) {
+        clearMeasurementSelectionFocus();
+        return;
+      }
+
+      const sourceEvent = evt?.e as MouseEvent | PointerEvent | KeyboardEvent | undefined;
+      if (sourceEvent?.shiftKey || sourceEvent?.ctrlKey || sourceEvent?.metaKey) {
+        clearMeasurementSelectionFocus();
+        return;
+      }
+
       const selected = Array.isArray(evt?.selected)
         ? evt.selected
         : evt?.target && evt.target.type !== 'activeSelection'
           ? [evt.target]
           : [];
-      if (!selected || selected.length !== 1) return;
+      if (!selected || selected.length !== 1) {
+        clearMeasurementSelectionFocus();
+        return;
+      }
 
       const target = selected[0];
-      if (!target || target.type === 'activeSelection') return;
+      if (!target || target.type === 'activeSelection') {
+        clearMeasurementSelectionFocus();
+        return;
+      }
 
       const strokeLabel =
         target?.strokeMetadata?.strokeLabel ||
         target?.strokeLabel ||
         target?.connectedStroke?.strokeMetadata?.strokeLabel ||
         target?.connectedStroke?.strokeLabel;
-      if (!strokeLabel) return;
+      if (!strokeLabel) {
+        clearMeasurementSelectionFocus();
+        return;
+      }
 
       const activeEl = document.activeElement as HTMLElement | null;
       const isEditing =
@@ -190,16 +222,42 @@ export class CanvasManager {
         (activeEl.tagName === 'INPUT' ||
           activeEl.tagName === 'TEXTAREA' ||
           activeEl.isContentEditable);
-      if (isEditing) return;
+      if (isEditing) {
+        clearMeasurementSelectionFocus();
+        return;
+      }
 
       const metadataManager = window.app?.metadataManager;
-      if (metadataManager?.focusMeasurementInput) {
-        metadataManager.focusMeasurementInput(strokeLabel);
-      }
+      clearMeasurementSelectionFocus();
+      const focusToken = focusMeasurementForSelectionToken;
+
+      focusMeasurementForSelectionTimer = setTimeout(() => {
+        focusMeasurementForSelectionTimer = null;
+        if (focusToken !== focusMeasurementForSelectionToken) return;
+        if (window.__openpaintSuppressMeasurementFocus) return;
+
+        const activeObjects = this.fabricCanvas?.getActiveObjects?.() || [];
+        if (activeObjects.length !== 1) return;
+
+        const [activeTarget] = activeObjects;
+        const activeStrokeLabel =
+          activeTarget?.strokeMetadata?.strokeLabel ||
+          activeTarget?.strokeLabel ||
+          activeTarget?.connectedStroke?.strokeMetadata?.strokeLabel ||
+          activeTarget?.connectedStroke?.strokeLabel;
+        if (!activeStrokeLabel || activeStrokeLabel !== strokeLabel) return;
+
+        if (metadataManager?.focusMeasurementInput) {
+          metadataManager.focusMeasurementInput(strokeLabel, {
+            requireCanvasSingleSelection: true,
+          });
+        }
+      }, 0);
     };
 
     this.fabricCanvas.on('selection:created', focusMeasurementForSelection);
     this.fabricCanvas.on('selection:updated', focusMeasurementForSelection);
+    this.fabricCanvas.on('selection:cleared', clearMeasurementSelectionFocus);
 
     const objectPrototype = fabric?.Object?.prototype;
     if (objectPrototype && !objectPrototype.__openpaintSafeDrawControlsPatched) {
@@ -2009,200 +2067,51 @@ export class CanvasManager {
       originalCanvasEl.style.height = `${targetHeight}px`;
     }
 
-    // Store old size for stroke scaling calculations BEFORE updating
-    const oldCanvasWidth = this.lastCanvasSize.width;
-    const oldCanvasHeight = this.lastCanvasSize.height;
+    // Store old size before updating
+    const oldCanvasWidth = this.lastCanvasSize.width || targetWidth;
+    const oldCanvasHeight = this.lastCanvasSize.height || targetHeight;
+
+    let centerWorldPoint = null;
+    if (oldCanvasWidth > 0 && oldCanvasHeight > 0) {
+      try {
+        const inverse = fabric.util.invertTransform(oldVpt);
+        centerWorldPoint = fabric.util.transformPoint(
+          new fabric.Point(oldCanvasWidth / 2, oldCanvasHeight / 2),
+          inverse
+        );
+      } catch (error) {
+        console.warn('[CanvasManager] Failed to preserve center point during resize', error);
+      }
+    }
 
     // Update last known size
     this.lastCanvasSize = { width: targetWidth, height: targetHeight };
 
-    // UNIFIED RESIZING LOGIC:
-    // We now use the zoom-based resizing (floating layout) for BOTH empty canvas and images.
-    // This ensures consistent behavior where the content (image or strokes) stays centered
-    // and scales to fit the window, preserving the "floating paper" effect.
-
     if (sizeChanged) {
-      // Apply simple proportional scaling / zoom logic
       console.log(
         `[CanvasManager] Canvas resize: ${oldCanvasWidth}x${oldCanvasHeight} -> ${targetWidth}x${targetHeight}`
       );
 
-      // Scale from original positions to prevent accumulation
-      if (oldCanvasWidth > 0 && oldCanvasHeight > 0) {
-        // Initialize original canvas size and object states if not set
-        if (this.originalCanvasSize.width === 0) {
-          this.originalCanvasSize = { width: oldCanvasWidth, height: oldCanvasHeight };
+      const safeZoom = Number.isFinite(oldZoom) && oldZoom > 0 ? oldZoom : this.zoomLevel || 1;
+      this.zoomLevel = safeZoom;
 
-          this.fabricCanvas.getObjects().forEach(obj => {
-            if (!this.originalObjectStates.has(obj)) {
-              this.originalObjectStates.set(obj, {
-                left: obj.left,
-                top: obj.top,
-                scaleX: obj.scaleX || 1,
-                scaleY: obj.scaleY || 1,
-                strokeWidth: obj.strokeWidth || 1,
-              });
-            }
-          });
-        }
+      if (centerWorldPoint) {
+        const angleRadians = this.rotateViewport ? (this.rotationDegrees * Math.PI) / 180 : 0;
+        const cos = Math.cos(angleRadians);
+        const sin = Math.sin(angleRadians);
+        const rotationCenter = this.getRotationCenter();
+        const base = [safeZoom * cos, safeZoom * sin, -safeZoom * sin, safeZoom * cos, 0, 0];
+        const translateToOrigin = [1, 0, 0, 1, -rotationCenter.x, -rotationCenter.y];
+        const translateBack = [1, 0, 0, 1, rotationCenter.x, rotationCenter.y];
+        let transform = fabric.util.multiplyTransformMatrices(base, translateToOrigin);
+        transform = fabric.util.multiplyTransformMatrices(translateBack, transform);
 
-        // Calculate scale factors from ORIGINAL canvas size
-        const scaleX = targetWidth / this.originalCanvasSize.width;
-        const scaleY = targetHeight / this.originalCanvasSize.height;
-
-        // Guard against NaN values from invalid dimensions during window drag
-        if (
-          Number.isNaN(scaleX) ||
-          Number.isNaN(scaleY) ||
-          !isFinite(scaleX) ||
-          !isFinite(scaleY)
-        ) {
-          console.warn(
-            `[CanvasManager] Invalid scale factors: ${scaleX}, ${scaleY} - aborting resize`
-          );
-          this.updateCaptureFrameOnResize(targetWidth, targetHeight);
-          this.isResizing = false;
-          return;
-        }
-
-        // ZOOM-BASED RESIZING: Use Fabric's zoom instead of scaling objects
-        // Calculate zoom to fit the original canvas size into the new window size
-        let zoom = Math.min(scaleX, scaleY);
-
-        // RESPONSIVE FIX: If we have enough space to show the original canvas at 100% (zoom >= 1),
-        // we should EXPAND the "original" canvas size to fill the new space.
-        // This prevents "grey bars" when the window grows larger than the initial load size.
-        // We only shrink (zoom < 1) if the window is smaller than the content.
-        if (zoom >= 1) {
-          console.log(
-            `[CanvasManager] Expanding originalCanvasSize to fill available space (Zoom >= 1)`
-          );
-          this.originalCanvasSize = { width: targetWidth, height: targetHeight };
-          zoom = 1;
-
-          // RECENTERING FIX: When expanding, we want the frame to stay centered in the new larger space.
-          // We update the base state's position mathematically (smoothly) to match the new center.
-          if (this.baseFrameState) {
-            this.baseFrameState.left = (targetWidth - this.baseFrameState.width) / 2;
-            this.baseFrameState.top = (targetHeight - this.baseFrameState.height) / 2;
-          }
-          // this.baseFrameState = null;
-        }
-
-        console.log(
-          `[CanvasManager] Applying zoom-based resize: zoom=${zoom.toFixed(3)} (canvas: ${targetWidth}x${targetHeight})`
-        );
-
-        // ITERATIVE FRAME SCALING:
-        // Calculate virtual frame size based on OLD zoom, then apply NEW zoom
-        // This preserves manual frame resizing while keeping it in sync with zoom
-        const captureFrame = document.getElementById('captureFrame');
-        if (captureFrame) {
-          // Use the oldZoom captured at the start of the function
-
-          // Use getComputedStyle to handle 'calc' values in initial HTML
-          const computedStyle = window.getComputedStyle(captureFrame);
-          const currentFrameWidth =
-            parseFloat(captureFrame.style.width) || parseFloat(computedStyle.width) || 800;
-          const currentFrameHeight =
-            parseFloat(captureFrame.style.height) || parseFloat(computedStyle.height) || 600;
-          const currentFrameLeft =
-            parseFloat(captureFrame.style.left) || parseFloat(computedStyle.left) || 0;
-          const currentFrameTop =
-            parseFloat(captureFrame.style.top) || parseFloat(computedStyle.top) || 0;
-
-          // Use the oldVpt captured at the start of the function
-          const oldPanX = oldVpt[4];
-          const oldPanY = oldVpt[5];
-
-          // Initialize base state if missing (first run or after reload)
-          let shouldUpdateBaseState = !this.baseFrameState;
-
-          let virtualWidth, virtualHeight, virtualLeft, virtualTop;
-
-          if (shouldUpdateBaseState) {
-            // Calculate from DOM only on first run
-            virtualWidth = currentFrameWidth / oldZoom;
-            virtualHeight = currentFrameHeight / oldZoom;
-            virtualLeft = (currentFrameLeft - oldPanX) / oldZoom;
-            virtualTop = (currentFrameTop - oldPanY) / oldZoom;
-
-            // CRITICAL FIX: In stroke-only mode, ignore the current DOM position (which might be off-center due to layout shifts)
-            // and FORCE the base state to be centered in the original canvas.
-            const isStrokeOnly = !this.fabricCanvas.backgroundImage;
-
-            if (isStrokeOnly && this.originalCanvasSize && this.originalCanvasSize.width > 0) {
-              console.log('[CanvasManager] Enforcing centered baseFrameState for stroke-only mode');
-              // Use standard 800x600 if DOM values seem weird (e.g. too small)
-              if (virtualWidth < 100) virtualWidth = 800;
-              if (virtualHeight < 100) virtualHeight = 600;
-
-              virtualLeft = (this.originalCanvasSize.width - virtualWidth) / 2;
-              virtualTop = (this.originalCanvasSize.height - virtualHeight) / 2;
-            }
-
-            this.baseFrameState = {
-              width: virtualWidth,
-              height: virtualHeight,
-              left: virtualLeft,
-              top: virtualTop,
-            };
-            console.log('[CanvasManager] Initialized baseFrameState:', this.baseFrameState);
-          } else {
-            // Use stored base state to prevent drift - Single Source of Truth
-            // We ignore the current DOM state because it might be polluted by layout shifts or transitions
-            virtualWidth = this.baseFrameState.width;
-            virtualHeight = this.baseFrameState.height;
-            virtualLeft = this.baseFrameState.left;
-            virtualTop = this.baseFrameState.top;
-          }
-
-          // Calculate new centering offsets (will be applied to viewport)
-          const scaledOriginalWidth = this.originalCanvasSize.width * zoom;
-          const scaledOriginalHeight = this.originalCanvasSize.height * zoom;
-
-          // Standard centering relative to the container
-          const centerOffsetX = (targetWidth - scaledOriginalWidth) / 2;
-          const centerOffsetY = (targetHeight - scaledOriginalHeight) / 2;
-
-          // Apply new zoom and offset to frame
-          const newFrameWidth = virtualWidth * zoom;
-          const newFrameHeight = virtualHeight * zoom;
-          const newFrameLeft = virtualLeft * zoom + centerOffsetX;
-          const newFrameTop = virtualTop * zoom + centerOffsetY;
-
-          captureFrame.style.width = `${newFrameWidth}px`;
-          captureFrame.style.height = `${newFrameHeight}px`;
-          captureFrame.style.left = `${newFrameLeft}px`;
-          captureFrame.style.top = `${newFrameTop}px`;
-
-          console.log(
-            `[CanvasManager] Scaled frame: ${currentFrameWidth.toFixed(0)}->${newFrameWidth.toFixed(0)} (zoom: ${oldZoom.toFixed(2)}->${zoom.toFixed(2)})`
-          );
-        }
-
-        // Calculate centering offsets to keep content centered
-        const scaledOriginalWidth = this.originalCanvasSize.width * zoom;
-        const scaledOriginalHeight = this.originalCanvasSize.height * zoom;
-
-        // Standard centering relative to the container
-        const centerOffsetX = (targetWidth - scaledOriginalWidth) / 2;
-        const centerOffsetY = (targetHeight - scaledOriginalHeight) / 2;
-
-        console.log(
-          `[CanvasManager] Centering: Target=${targetWidth}x${targetHeight}, Scaled=${scaledOriginalWidth.toFixed(1)}x${scaledOriginalHeight.toFixed(1)}, Offset=${centerOffsetX.toFixed(1)},${centerOffsetY.toFixed(1)}, Zoom=${zoom.toFixed(3)}`
-        );
-
-        // Apply zoom and centering while preserving rotation
-        this.zoomLevel = zoom;
-        this.panX = centerOffsetX;
-        this.panY = centerOffsetY;
-        this.applyViewportTransform();
+        const mappedCenter = fabric.util.transformPoint(centerWorldPoint, transform);
+        this.panX = targetWidth / 2 - mappedCenter.x;
+        this.panY = targetHeight / 2 - mappedCenter.y;
       }
 
-      // We do NOT call updateCaptureFrameOnResize here because the zoom logic above
-      // already updated the frame style to match the zoom.
-      // Calling it would overwrite the correct frame with the default "85% of window" frame.
+      this.applyViewportTransform();
     }
 
     // Redraw canvas
