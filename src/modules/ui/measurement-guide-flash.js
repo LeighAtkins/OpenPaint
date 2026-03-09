@@ -23,10 +23,11 @@ let flashSlides = [];
 let flashComparisonImageId = '';
 const guideRoleTokenCache = new Map();
 const guideRasterCache = new Map();
+const guideSvgCache = new Map();
 let guideCodeListCache = null;
 let guideViewsByCodeCache = null;
 let guideCodeListPromise = null;
-const GUIDE_RASTER_CACHE_VERSION = 'v2';
+const GUIDE_RASTER_CACHE_VERSION = 'v3';
 const GUIDE_RASTER_MIN_EDGE = 2200;
 const GUIDE_RASTER_MAX_EDGE = 4096;
 const GUIDE_SPLIT_ENABLED_PREF_KEY = 'guideSplitEnabled';
@@ -1622,6 +1623,22 @@ async function fetchGuideRoleTokens(code, view) {
   return tokens;
 }
 
+async function fetchGuideSvgText(code, view) {
+  const key = `${code}::${view}`;
+  if (guideSvgCache.has(key)) {
+    return guideSvgCache.get(key);
+  }
+
+  const response = await fetch(buildGuideUrl(code, view), { method: 'GET' });
+  if (!response.ok) {
+    throw new Error(`Failed to fetch guide SVG (${response.status})`);
+  }
+
+  const svgText = await response.text();
+  guideSvgCache.set(key, svgText);
+  return svgText;
+}
+
 function parseSvgNumericAttr(raw) {
   const source = String(raw || '').trim();
   if (!source) return 0;
@@ -1652,8 +1669,10 @@ function prepareSvgForRaster(svgText) {
   let width = parseSvgNumericAttr(root.getAttribute('width'));
   let height = parseSvgNumericAttr(root.getAttribute('height'));
 
-  if (!width && vbWidth) width = vbWidth;
-  if (!height && vbHeight) height = vbHeight;
+  // Prefer viewBox dimensions when present so rasterized guide geometry matches
+  // MOS vector import coordinates (which are normalized from viewBox space).
+  if (vbWidth) width = vbWidth;
+  if (vbHeight) height = vbHeight;
 
   if (!width) width = 1600;
   if (!height) height = 900;
@@ -1661,6 +1680,18 @@ function prepareSvgForRaster(svgText) {
   if (!vbWidth || !vbHeight) {
     root.setAttribute('viewBox', `0 0 ${width} ${height}`);
   }
+
+  // Hide original guide measurement + label groups in the raster image so imported
+  // Fabric vectors/tags are the single visible source of truth.
+  const allGroups = Array.from(root.querySelectorAll('g[id]'));
+  allGroups.forEach(group => {
+    const rawId = String(group.getAttribute('id') || '').trim();
+    if (!rawId) return;
+    const normalizedId = rawId.replace(/^mos\d+_/, '').trim();
+    if (/^[mbc][a-z0-9-]+(?:cm|mm|in)\d*(?:_(?:label|text))?$/i.test(normalizedId)) {
+      group.setAttribute('display', 'none');
+    }
+  });
 
   root.setAttribute('width', String(width));
   root.setAttribute('height', String(height));
@@ -1715,12 +1746,7 @@ async function fetchGuideRasterUrl(code, view) {
     return guideRasterCache.get(key);
   }
 
-  const response = await fetch(buildGuideUrl(code, view), { method: 'GET' });
-  if (!response.ok) {
-    throw new Error(`Failed to fetch guide SVG (${response.status})`);
-  }
-
-  const rawSvg = await response.text();
+  const rawSvg = await fetchGuideSvgText(code, view);
   const prepared = prepareSvgForRaster(rawSvg);
   const svgBlob = new Blob([prepared.svgText], {
     type: 'image/svg+xml;charset=utf-8',
@@ -1991,8 +2017,18 @@ async function addGuideAsNewImage(code, view, options = {}) {
     throw new Error('Project manager not ready to add images');
   }
 
+  const shouldImportGuideSvg = options.includeGuideSvgOverlay !== false;
   const imageUrl = await fetchGuideRasterUrl(code, view);
   const label = createGuideViewId(`${code}-${view}`);
+
+  let guideSvgText = '';
+  if (shouldImportGuideSvg) {
+    try {
+      guideSvgText = await fetchGuideSvgText(code, view);
+    } catch (error) {
+      console.warn('[Guide] Failed to fetch source SVG for overlay import:', error);
+    }
+  }
 
   // Always ensure ProjectManager has a concrete view/image first.
   await manager.addImage(label, imageUrl, { refreshBackground: false });
@@ -2003,6 +2039,42 @@ async function addGuideAsNewImage(code, view, options = {}) {
 
   if (options.switchToNew === true && typeof manager.switchView === 'function') {
     await manager.switchView(label, true);
+  }
+
+  let measurementOverlayManager = window.app?.measurementOverlayManager || null;
+  if (!measurementOverlayManager?.importSvg && window.app?.initDeferredManagers) {
+    try {
+      await window.app.initDeferredManagers();
+      measurementOverlayManager = window.app?.measurementOverlayManager || null;
+    } catch (error) {
+      console.warn('[Guide] Deferred manager init failed before SVG overlay import:', error);
+    }
+  }
+
+  if (guideSvgText && measurementOverlayManager?.importSvg) {
+    const activeBeforeImport = String(manager.currentViewId || getCurrentViewId() || '').trim();
+    const shouldReturnToPrevious = options.switchToNew !== true;
+    try {
+      if (typeof manager.switchView === 'function' && activeBeforeImport !== label) {
+        await manager.switchView(label, true);
+      }
+      await measurementOverlayManager.importSvg(guideSvgText, label);
+    } catch (error) {
+      console.warn('[Guide] Failed to import guide SVG overlay:', error);
+    } finally {
+      if (
+        shouldReturnToPrevious &&
+        typeof manager.switchView === 'function' &&
+        activeBeforeImport &&
+        activeBeforeImport !== label
+      ) {
+        try {
+          await manager.switchView(activeBeforeImport, true);
+        } catch {
+          // no-op
+        }
+      }
+    }
   }
 
   saveGuideCodes([code], label);
