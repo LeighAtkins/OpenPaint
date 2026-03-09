@@ -474,17 +474,7 @@ export class ProjectManager {
 
   saveCurrentViewState() {
     const json = this.canvasManager.toJSON();
-    if (json?.objects && Array.isArray(json.objects)) {
-      const liveObjects = this.canvasManager.fabricCanvas?.getObjects?.() || [];
-      if (liveObjects.length === json.objects.length) {
-        json.objects = json.objects.filter((_, index) => {
-          const liveObject = liveObjects[index];
-          return liveObject?.customData?.layerType !== 'mos-overlay';
-        });
-      } else {
-        json.objects = json.objects.filter(obj => obj?.customData?.layerType !== 'mos-overlay');
-      }
-    }
+    this.stripMosOverlayObjects(json);
     if (this.views[this.currentViewId]) {
       this.views[this.currentViewId].canvasData = json;
       this.views[this.currentViewId].rotation = this.canvasManager.getRotationDegrees();
@@ -528,6 +518,13 @@ export class ProjectManager {
       }
     });
     return scoped;
+  }
+
+  stripMosOverlayObjects(canvasJson) {
+    if (!canvasJson?.objects || !Array.isArray(canvasJson.objects)) return;
+    canvasJson.objects = canvasJson.objects.filter(
+      obj => obj?.customData?.layerType !== 'mos-overlay'
+    );
   }
 
   // Serialize measurements for a view (deep copy)
@@ -667,6 +664,16 @@ export class ProjectManager {
 
           const imgWidth = img.width;
           const imgHeight = img.height;
+
+          if (!imgWidth || !imgHeight) {
+            console.warn(
+              '[Image Debug] Failed to load image dimensions; skipping background update',
+              {
+                url,
+              }
+            );
+            return resolve();
+          }
 
           console.log(
             `[Image Debug] Frame: ${frameWidth}x${frameHeight} at (${frameLeft},${frameTop})\n` +
@@ -1633,6 +1640,7 @@ export class ProjectManager {
       } else {
         entry.canvasJSON = view.canvasData || null;
       }
+      this.stripMosOverlayObjects(entry.canvasJSON);
 
       if (uploadImagesToR2 && view.image) {
         try {
@@ -1974,7 +1982,7 @@ export class ProjectManager {
 
     const proxyUrl = `/api/storage/r2/object?key=${encodeURIComponent(objectKey)}`;
     try {
-      const response = await fetch(proxyUrl, { cache: 'force-cache' });
+      const response = await fetch(proxyUrl, { cache: 'no-store' });
       if (!response.ok) {
         console.warn('[Load] Failed to fetch R2 image proxy', {
           objectKey,

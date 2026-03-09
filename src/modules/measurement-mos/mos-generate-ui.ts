@@ -11,13 +11,24 @@ import { generateMosOverlay, captureBackgroundImageDataUrl } from './mos-generat
 import type { MeasurementOverlayManager } from './MeasurementOverlayManager';
 
 const DEFAULT_ROLE_OPTIONS = [
+  { value: 'A1', label: 'A1' },
+  { value: 'A2', label: 'A2' },
+  { value: 'A3', label: 'A3' },
+  { value: 'A4', label: 'A4' },
+  { value: 'B1', label: 'B1' },
+  { value: 'B2', label: 'B2' },
+  { value: 'C1', label: 'C1' },
+  { value: 'C2', label: 'C2' },
+  { value: 'C3', label: 'C3' },
+  { value: 'C4', label: 'C4' },
+  { value: 'D', label: 'D' },
+  { value: 'E1', label: 'E1' },
+  { value: 'E2', label: 'E2' },
   { value: 'W', label: 'W' },
   { value: 'H', label: 'H' },
-  { value: 'D1', label: 'D1' },
-  { value: 'D2', label: 'D2' },
-  { value: 'SH', label: 'SH' },
-  { value: 'SD', label: 'SD' },
 ];
+
+const SUPPORTED_ROLE_SET = new Set(DEFAULT_ROLE_OPTIONS.map(option => option.value));
 
 const guideRoleCache = new Map<string, { value: string; label: string }[]>();
 const MAX_SELECTED_ROLES = 16;
@@ -143,17 +154,6 @@ function createGenerateDialog(
       </div>
     </div>
 
-    <div style="margin-bottom: 16px;">
-      <label for="mosUnits" style="display: block; margin-bottom: 6px; color: #3E4752; font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;">
-        Units
-      </label>
-      <select id="mosUnits" style="padding: 10px 14px; border: 1px solid #E7EAEE; border-radius: 12px; font-size: 14px; background: #fff; outline: none;">
-        <option value="cm" selected>Centimeters</option>
-        <option value="mm">Millimeters</option>
-        <option value="in">Inches</option>
-      </select>
-    </div>
-
     <div id="mosGenerateStatus" style="margin-bottom: 16px; display: none;">
       <div id="mosGenerateSpinner" style="display: flex; align-items: center; gap: 8px; color: #3E4752; font-size: 13px;">
         <svg width="16" height="16" viewBox="0 0 16 16" style="animation: mos-spin 1s linear infinite;">
@@ -213,13 +213,21 @@ function createGenerateDialog(
     throw new Error('[MOS] Missing roles container in generate dialog');
   }
 
-  renderRoleOptions(rolesContainer, DEFAULT_ROLE_OPTIONS, new Set(['W', 'H']));
+  renderRoleOptions(
+    rolesContainer,
+    DEFAULT_ROLE_OPTIONS,
+    new Set(DEFAULT_ROLE_OPTIONS.map(option => option.value))
+  );
 
   const refreshRolesFromGuide = async () => {
     try {
       const templateId = resolveTemplateId(projectManager);
       if (!templateId) {
-        renderRoleOptions(rolesContainer, DEFAULT_ROLE_OPTIONS, new Set(['W', 'H']));
+        renderRoleOptions(
+          rolesContainer,
+          DEFAULT_ROLE_OPTIONS,
+          new Set(DEFAULT_ROLE_OPTIONS.map(option => option.value))
+        );
         return;
       }
 
@@ -227,19 +235,38 @@ function createGenerateDialog(
       const imagePartLabel = resolveImagePartLabel(projectManager, viewId);
       const guideView = inferGuideView(viewId, imagePartLabel);
       const options = await fetchGuideRoleOptions(templateId, guideView);
+      const supportedOptions = options.filter(option => SUPPORTED_ROLE_SET.has(option.value));
 
-      if (options.length > 0) {
+      if (supportedOptions.length > 0) {
+        const mergedByValue = new Map<string, { value: string; label: string }>();
+        DEFAULT_ROLE_OPTIONS.forEach(option => {
+          mergedByValue.set(option.value, option);
+        });
+        supportedOptions.forEach(option => {
+          if (!mergedByValue.has(option.value)) {
+            mergedByValue.set(option.value, option);
+          }
+        });
+        const mergedOptions = Array.from(mergedByValue.values());
         renderRoleOptions(
           rolesContainer,
-          options,
-          new Set(options.slice(0, MAX_SELECTED_ROLES).map(opt => opt.value))
+          mergedOptions,
+          new Set(mergedOptions.slice(0, MAX_SELECTED_ROLES).map(opt => opt.value))
         );
       } else {
-        renderRoleOptions(rolesContainer, DEFAULT_ROLE_OPTIONS, new Set(['W', 'H']));
+        renderRoleOptions(
+          rolesContainer,
+          DEFAULT_ROLE_OPTIONS,
+          new Set(DEFAULT_ROLE_OPTIONS.map(option => option.value))
+        );
       }
     } catch (error) {
       console.warn('[MOS] Failed to load guide role options:', error);
-      renderRoleOptions(rolesContainer, DEFAULT_ROLE_OPTIONS, new Set(['W', 'H']));
+      renderRoleOptions(
+        rolesContainer,
+        DEFAULT_ROLE_OPTIONS,
+        new Set(DEFAULT_ROLE_OPTIONS.map(option => option.value))
+      );
     }
   };
 
@@ -260,7 +287,6 @@ function createGenerateDialog(
     );
     const selectedRoles = Array.from(roleCheckboxes).map((cb: HTMLInputElement) => cb.value);
     const roles = selectedRoles.slice(0, MAX_SELECTED_ROLES);
-    const units = dialog.querySelector('#mosUnits')!.value as 'cm' | 'mm' | 'in';
 
     if (roles.length === 0) {
       errorDiv.textContent = 'Select at least one measurement role.';
@@ -297,7 +323,7 @@ function createGenerateDialog(
         imageWidth,
         imageHeight,
         requestedRoles: roles,
-        units,
+        units: 'cm',
       };
 
       const imagePartLabel = resolveImagePartLabel(projectManager, request.viewId || 'front');
@@ -420,9 +446,7 @@ function createGenerateDialog(
     }
   });
 
-  const destroy = () => {
-    // Cleanup if needed
-  };
+  const destroy = () => {};
 
   return { overlay, destroy };
 }
