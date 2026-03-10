@@ -2903,26 +2903,52 @@
                 <option value="cm">cm</option>
               </select>
             </div>
+            <div id="inchDisplayToggleWrap" class="hidden flex items-center gap-3">
+              <label
+                for="inchDisplayToggleBtn"
+                class="text-sm font-semibold text-slate-700 w-14"
+                >Inches:</label
+              >
+              <button
+                id="inchDisplayToggleBtn"
+                type="button"
+                class="px-3 py-2.5 border border-gray-300 rounded-xl text-sm bg-white flex-1 text-left focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 shadow-sm"
+              >
+                decimals
+              </button>
+            </div>
 
             <!-- Hidden inputs for functionality -->
             <div id="measurementInput" class="hidden">
               <div id="inchInputs" class="flex items-center gap-2">
                 <input
-                  type="number"
-                  id="inchWhole"
-                  min="0"
+                  type="text"
+                  id="inchValue"
                   value="0"
-                  class="w-16 px-2 py-1 border border-gray-300 rounded text-sm"
+                  placeholder="70 5/16"
+                  class="w-28 px-2 py-1 border border-gray-300 rounded text-sm"
                 />
-                <select id="inchFraction" class="px-2 py-1 border border-gray-300 rounded text-sm">
+                <input type="hidden" id="inchWhole" value="0" />
+                <select
+                  id="inchFraction"
+                  class="hidden px-2 py-1 border border-gray-300 rounded text-sm"
+                >
                   <option value="0">0</option>
+                  <option value="0.0625">1/16</option>
                   <option value="0.125">1/8</option>
+                  <option value="0.1875">3/16</option>
                   <option value="0.25">1/4</option>
+                  <option value="0.3125">5/16</option>
                   <option value="0.375">3/8</option>
+                  <option value="0.4375">7/16</option>
                   <option value="0.5">1/2</option>
+                  <option value="0.5625">9/16</option>
                   <option value="0.625">5/8</option>
+                  <option value="0.6875">11/16</option>
                   <option value="0.75">3/4</option>
+                  <option value="0.8125">13/16</option>
                   <option value="0.875">7/8</option>
+                  <option value="0.9375">15/16</option>
                 </select>
               </div>
               <div id="cmInputs" class="hidden">

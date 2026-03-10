@@ -1465,8 +1465,8 @@ export class StrokeMetadataManager {
   }
   // Helper to find closest 1/8th fraction
   findClosestFraction(fraction) {
-    const eighths = Math.round(fraction * 8);
-    return eighths / 8;
+    const sixteenths = Math.round(Number(fraction || 0) * 16);
+    return sixteenths / 16;
   }
 
   // Parse and save measurement string
@@ -1553,16 +1553,25 @@ export class StrokeMetadataManager {
         }
       }
 
-      // Fallback: if no explicit unit marker, try to parse as plain number based on current unit
+      // Fallback: use measurement system parser so mixed fractions like "70 5/16" work
       if (totalInches === null && !explicitUnitMatched) {
-        const plainNumber = parseFloat(newString);
-        if (!isNaN(plainNumber)) {
-          const currentUnit = window.app?.currentUnit || 'inch';
-          if (currentUnit === 'inch') {
-            totalInches = plainNumber;
-          } else {
-            totalCm = plainNumber;
-            totalInches = totalCm / 2.54;
+        const currentUnit = window.app?.currentUnit || 'inch';
+        const parsedViaSystem = window.app?.measurementSystem?.parseMeasurementInput?.(
+          newString,
+          currentUnit === 'inch' ? 'inches' : 'cm'
+        );
+        if (parsedViaSystem && Number.isFinite(parsedViaSystem.totalInches)) {
+          totalInches = parsedViaSystem.totalInches;
+          totalCm = parsedViaSystem.cm;
+        } else {
+          const plainNumber = parseFloat(newString);
+          if (!isNaN(plainNumber)) {
+            if (currentUnit === 'inch') {
+              totalInches = plainNumber;
+            } else {
+              totalCm = plainNumber;
+              totalInches = totalCm / 2.54;
+            }
           }
         }
       }
@@ -1573,7 +1582,7 @@ export class StrokeMetadataManager {
       }
 
       const inchWhole = Math.floor(totalInches);
-      const inchFraction = parseFloat((totalInches - inchWhole).toFixed(2));
+      const inchFraction = this.findClosestFraction(totalInches - inchWhole);
       const finalCm = totalInches * 2.54;
 
       if (!this.strokeMeasurements[imageLabel]) {
@@ -1744,19 +1753,37 @@ export class StrokeMetadataManager {
       if (fraction > 0) {
         const rounded = this.findClosestFraction(fraction);
         const fractionMap = {
+          0.0625: '1/16',
           0.125: '1/8',
+          0.1875: '3/16',
           0.25: '1/4',
+          0.3125: '5/16',
           0.375: '3/8',
+          0.4375: '7/16',
           0.5: '1/2',
+          0.5625: '9/16',
           0.625: '5/8',
+          0.6875: '11/16',
           0.75: '3/4',
+          0.8125: '13/16',
           0.875: '7/8',
+          0.9375: '15/16',
         };
         if (fractionMap[rounded]) {
           fractionStr = ' ' + fractionMap[rounded];
         }
       }
 
+      const displayMode = window.app?.currentInchDisplayMode || 'decimal';
+      if (displayMode === 'decimal') {
+        const total = Number((whole + fraction).toFixed(4));
+        const normalized = total.toFixed(4).replace(/\.?0+$/, '');
+        return `${normalized}"`;
+      }
+
+      if (whole === 0) {
+        return `${fractionStr.trim()}"`;
+      }
       return `${whole}${fractionStr}"`;
     } else {
       const cm = measurement.cm || 0;

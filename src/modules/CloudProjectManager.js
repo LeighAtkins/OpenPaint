@@ -9,6 +9,10 @@ export class CloudProjectManager {
     this.supabase = app.authManager.supabase;
     this.cloudStatusEl = null;
     this.syncOverlayEl = null;
+    this.syncAbortController = null;
+    this.syncCancelRequested = false;
+    this.activeSyncToken = 0;
+    this.syncHideTimer = null;
     this.currentProjectId = null;
     this.manifestVersion = 0;
     this.viewVersions = {};
@@ -140,7 +144,8 @@ export class CloudProjectManager {
 
     const assetResult = await this.apiRequest(
       'asset_upload',
-      `/api/cloud-assets/${encodeURIComponent(hash)}?projectId=${encodeURIComponent(projectId)}`
+      `/api/cloud-assets/${encodeURIComponent(hash)}?projectId=${encodeURIComponent(projectId)}`,
+      { signal: this.getActiveSyncSignal() }
     );
     if (assetResult.status === 'error') {
       throw new Error(
@@ -168,12 +173,14 @@ export class CloudProjectManager {
     return objectUrl;
   }
 
-  async runWithConcurrency(items, limit, worker) {
+  async runWithConcurrency(items, limit, worker, options = {}) {
     const queue = Array.isArray(items) ? items.slice() : [];
     if (!queue.length) return;
     const concurrency = Math.max(1, Number(limit) || 1);
+    const token = options?.syncToken || this.activeSyncToken;
     const workers = new Array(Math.min(concurrency, queue.length)).fill(null).map(async () => {
       while (queue.length > 0) {
+        this.throwIfSyncCanceled(token);
         const next = queue.shift();
         await worker(next);
       }
@@ -181,15 +188,34 @@ export class CloudProjectManager {
     await Promise.all(workers);
   }
 
-  blobToBase64(blob) {
+  blobToBase64(blob, signal) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
+      const handleAbort = () => {
+        try {
+          reader.abort();
+        } catch {
+          // no-op
+        }
+        reject(new DOMException('Cloud sync canceled.', 'AbortError'));
+      };
       reader.onloadend = () => {
+        if (signal) signal.removeEventListener('abort', handleAbort);
         const str = String(reader.result || '');
         const comma = str.indexOf(',');
         resolve(comma >= 0 ? str.slice(comma + 1) : str);
       };
-      reader.onerror = reject;
+      reader.onerror = error => {
+        if (signal) signal.removeEventListener('abort', handleAbort);
+        reject(error);
+      };
+      if (signal) {
+        if (signal.aborted) {
+          handleAbort();
+          return;
+        }
+        signal.addEventListener('abort', handleAbort, { once: true });
+      }
       reader.readAsDataURL(blob);
     });
   }
@@ -246,11 +272,75 @@ export class CloudProjectManager {
       overlay.style.cssText =
         'position: fixed; inset: 0; z-index: 12000; background: rgba(15, 23, 42, 0.45); backdrop-filter: blur(2px); display: none; align-items: center; justify-content: center;';
       overlay.innerHTML =
-        '<div style="background:#ffffff; border-radius:12px; padding:18px 20px; min-width:320px; max-width:420px; box-shadow:0 10px 30px rgba(0,0,0,0.25); font-family: system-ui, -apple-system, sans-serif;"><div id="cloudSyncOverlayTitle" style="font-size:14px; font-weight:700; color:#0f172a; margin-bottom:8px;">Cloud Sync</div><div id="cloudSyncOverlayPhase" style="font-size:13px; color:#334155; margin-bottom:8px;">Starting...</div><div style="height:8px; background:#e2e8f0; border-radius:999px; overflow:hidden;"><div id="cloudSyncOverlayBar" style="height:100%; width:0%; background:#2563eb; transition:width 120ms ease;"></div></div><div id="cloudSyncOverlayDetail" style="font-size:12px; color:#64748b; margin-top:8px;">Preparing...</div></div>';
+        '<div style="background:#ffffff; border-radius:12px; padding:18px 20px; min-width:320px; max-width:420px; box-shadow:0 10px 30px rgba(0,0,0,0.25); font-family: system-ui, -apple-system, sans-serif;"><div id="cloudSyncOverlayTitle" style="font-size:14px; font-weight:700; color:#0f172a; margin-bottom:8px;">Cloud Sync</div><div id="cloudSyncOverlayPhase" style="font-size:13px; color:#334155; margin-bottom:8px;">Starting...</div><div style="height:8px; background:#e2e8f0; border-radius:999px; overflow:hidden;"><div id="cloudSyncOverlayBar" style="height:100%; width:0%; background:#2563eb; transition:width 120ms ease;"></div></div><div id="cloudSyncOverlayDetail" style="font-size:12px; color:#64748b; margin-top:8px;">Preparing...</div><div style="display:flex; justify-content:flex-end; margin-top:14px;"><button id="cloudSyncOverlayCancel" type="button" style="border:1px solid #cbd5e1; background:#fff; color:#0f172a; border-radius:10px; padding:8px 12px; font-size:12px; font-weight:600; cursor:pointer;">Cancel</button></div></div>';
       document.body.appendChild(overlay);
+    }
+    const cancelBtn = overlay.querySelector('#cloudSyncOverlayCancel');
+    if (cancelBtn && !cancelBtn.dataset.bound) {
+      cancelBtn.dataset.bound = 'true';
+      cancelBtn.addEventListener('click', () => this.cancelActiveSync());
     }
     this.syncOverlayEl = overlay;
     return overlay;
+  }
+
+  beginSyncSession(title, phase) {
+    this.activeSyncToken += 1;
+    this.syncCancelRequested = false;
+    this.syncAbortController = new AbortController();
+    if (this.syncHideTimer) {
+      clearTimeout(this.syncHideTimer);
+      this.syncHideTimer = null;
+    }
+    this.showSyncOverlay(title, phase);
+    return this.activeSyncToken;
+  }
+
+  getActiveSyncSignal(token = this.activeSyncToken) {
+    if (!token || token !== this.activeSyncToken) return undefined;
+    return this.syncAbortController?.signal;
+  }
+
+  isSyncCanceled(token = this.activeSyncToken) {
+    return !token || token !== this.activeSyncToken || this.syncCancelRequested;
+  }
+
+  throwIfSyncCanceled(token = this.activeSyncToken) {
+    if (!this.isSyncCanceled(token)) return;
+    throw new DOMException('Cloud sync canceled.', 'AbortError');
+  }
+
+  cancelActiveSync() {
+    if (!this.syncAbortController || this.syncCancelRequested) return;
+    this.syncCancelRequested = true;
+    try {
+      this.syncAbortController.abort();
+    } catch {
+      // no-op
+    }
+    const overlay = this.ensureSyncOverlay();
+    const phaseEl = overlay.querySelector('#cloudSyncOverlayPhase');
+    const detailEl = overlay.querySelector('#cloudSyncOverlayDetail');
+    const cancelBtn = overlay.querySelector('#cloudSyncOverlayCancel');
+    if (phaseEl) phaseEl.textContent = 'Canceling cloud sync...';
+    if (detailEl) detailEl.textContent = 'Stopping network activity';
+    if (cancelBtn) {
+      cancelBtn.textContent = 'Canceling...';
+      cancelBtn.disabled = true;
+      cancelBtn.style.cursor = 'default';
+      cancelBtn.style.opacity = '0.65';
+    }
+  }
+
+  finishSyncSession(token) {
+    if (!token || token !== this.activeSyncToken) return;
+    this.syncAbortController = null;
+    this.syncCancelRequested = false;
+    this.syncHideTimer = setTimeout(() => {
+      if (token !== this.activeSyncToken) return;
+      this.hideSyncOverlay();
+      this.syncHideTimer = null;
+    }, 250);
   }
 
   showSyncOverlay(title, phase) {
@@ -259,10 +349,17 @@ export class CloudProjectManager {
     const phaseEl = overlay.querySelector('#cloudSyncOverlayPhase');
     const detailEl = overlay.querySelector('#cloudSyncOverlayDetail');
     const barEl = overlay.querySelector('#cloudSyncOverlayBar');
+    const cancelBtn = overlay.querySelector('#cloudSyncOverlayCancel');
     if (titleEl) titleEl.textContent = title || 'Cloud Sync';
     if (phaseEl) phaseEl.textContent = phase || 'Working...';
     if (detailEl) detailEl.textContent = 'Starting...';
     if (barEl) barEl.style.width = '0%';
+    if (cancelBtn) {
+      cancelBtn.textContent = 'Cancel';
+      cancelBtn.disabled = false;
+      cancelBtn.style.cursor = 'pointer';
+      cancelBtn.style.opacity = '1';
+    }
     overlay.style.display = 'flex';
   }
 
@@ -342,6 +439,7 @@ export class CloudProjectManager {
         method: options.method || 'GET',
         headers,
         body: options.body ? JSON.stringify(options.body) : undefined,
+        signal: options.signal || this.getActiveSyncSignal(),
       });
 
       let payload = null;
@@ -383,6 +481,16 @@ export class CloudProjectManager {
 
       return makeCloudSuccess(operation, payload || {}, { statusCode: response.status });
     } catch (error) {
+      if (error?.name === 'AbortError') {
+        return makeCloudFailure(
+          operation,
+          normalizeCloudError({
+            code: 'aborted',
+            message: 'Cloud sync canceled.',
+            name: error?.name,
+          })
+        );
+      }
       return makeCloudFailure(
         operation,
         normalizeCloudError({
@@ -607,18 +715,20 @@ export class CloudProjectManager {
   }
 
   async saveProject(projectData) {
-    this.showSyncOverlay('Cloud Save', 'Preparing project sync...');
+    const syncToken = this.beginSyncSession('Cloud Save', 'Preparing project sync...');
+    const syncSignal = this.getActiveSyncSignal(syncToken);
     const telemetry = this.createTelemetry('save');
     let telemetryEmitted = false;
     const sessionResult = await this.ensureActiveSession('save');
     if (sessionResult.status === 'error') {
       this.emitTelemetry(telemetry, { status: 'error', reason: 'session' });
       telemetryEmitted = true;
-      this.hideSyncOverlay();
+      this.finishSyncSession(syncToken);
       return sessionResult;
     }
 
     try {
+      this.throwIfSyncCanceled(syncToken);
       const user = sessionResult.data.user;
       let projectId = this.getActiveProjectId();
 
@@ -626,6 +736,7 @@ export class CloudProjectManager {
         this.updateSyncOverlay('Creating cloud project...', 'Creating record');
         const createResult = await this.apiRequest('save', '/api/cloud-projects', {
           method: 'POST',
+          signal: syncSignal,
           body: {
             userId: user.id,
             title: projectData?.projectName || projectData?.name || 'Untitled Project',
@@ -661,7 +772,8 @@ export class CloudProjectManager {
       this.updateSyncOverlay('Loading cloud manifest...', 'Reading current versions');
       const bootstrapResult = await this.apiRequest(
         'bootstrap',
-        `/api/cloud-projects/${projectId}/bootstrap`
+        `/api/cloud-projects/${projectId}/bootstrap`,
+        { signal: syncSignal }
       );
       if (bootstrapResult.status === 'error')
         return makeCloudFailure('save', bootstrapResult.error);
@@ -726,8 +838,9 @@ export class CloudProjectManager {
           continue;
         }
 
+        this.throwIfSyncCanceled(syncToken);
         try {
-          const response = await fetch(liveUrl);
+          const response = await fetch(liveUrl, { signal: syncSignal });
           const blob = await response.blob();
           const hash = await this.hashBlob(blob);
           const contentType = blob.type || cachedContentType || 'application/octet-stream';
@@ -747,6 +860,9 @@ export class CloudProjectManager {
             liveView.imageSourceFingerprint = sourceFingerprint;
           }
         } catch (error) {
+          if (error?.name === 'AbortError') {
+            throw error;
+          }
           console.warn('[Cloud Save] Failed to hash image for view', viewId, error);
         }
       }
@@ -768,6 +884,7 @@ export class CloudProjectManager {
         );
         const existsResult = await this.apiRequest('assets_exists', '/api/cloud-assets/exists', {
           method: 'POST',
+          signal: syncSignal,
           body: {
             projectId,
             hashes: allHashes,
@@ -792,10 +909,13 @@ export class CloudProjectManager {
           : null;
         if (!fallbackUrl) continue;
         try {
-          const response = await fetch(fallbackUrl);
+          const response = await fetch(fallbackUrl, { signal: syncSignal });
           const blob = await response.blob();
           assetBlobByHash.set(hash, blob);
         } catch (error) {
+          if (error?.name === 'AbortError') {
+            throw error;
+          }
           console.warn('[Cloud Save] Missing asset hash could not be materialized', hash, error);
         }
       }
@@ -803,6 +923,7 @@ export class CloudProjectManager {
       let completedUploads = 0;
       try {
         await this.runWithConcurrency(missingHashes, 3, async hash => {
+          this.throwIfSyncCanceled(syncToken);
           const blob = assetBlobByHash.get(hash);
           if (!blob) {
             completedUploads += 1;
@@ -814,12 +935,13 @@ export class CloudProjectManager {
             );
             return;
           }
-          const dataBase64 = await this.blobToBase64(blob);
+          const dataBase64 = await this.blobToBase64(blob, syncSignal);
           const uploadResult = await this.apiRequest(
             'asset_upload',
             `/api/cloud-assets/${encodeURIComponent(hash)}`,
             {
               method: 'PUT',
+              signal: syncSignal,
               body: {
                 projectId,
                 dataBase64,
@@ -846,7 +968,7 @@ export class CloudProjectManager {
             completedUploads,
             missingHashes.length
           );
-        });
+        }, { syncToken });
       } catch (uploadError) {
         return makeCloudFailure(
           'save',
@@ -860,6 +982,7 @@ export class CloudProjectManager {
       const skippedViewIds = [];
       this.updateSyncOverlay('Syncing view states...', 'Views', 0, viewIds.length || 1);
       for (let viewIndex = 0; viewIndex < viewIds.length; viewIndex += 1) {
+        this.throwIfSyncCanceled(syncToken);
         const viewId = viewIds[viewIndex];
         const originalViewState = projectData.views?.[viewId] || {};
         const info = viewAssetInfo?.[viewId] || {};
@@ -975,9 +1098,12 @@ export class CloudProjectManager {
       });
     } finally {
       if (!telemetryEmitted) {
-        this.emitTelemetry(telemetry, { status: 'error', reason: 'save_failed' });
+        this.emitTelemetry(telemetry, {
+          status: this.isSyncCanceled(syncToken) ? 'canceled' : 'error',
+          reason: this.isSyncCanceled(syncToken) ? 'save_canceled' : 'save_failed',
+        });
       }
-      setTimeout(() => this.hideSyncOverlay(), 250);
+      this.finishSyncSession(syncToken);
     }
   }
 
@@ -1008,14 +1134,15 @@ export class CloudProjectManager {
   }
 
   async loadProject(projectId) {
-    this.showSyncOverlay('Cloud Load', 'Loading cloud project...');
+    const syncToken = this.beginSyncSession('Cloud Load', 'Loading cloud project...');
+    const syncSignal = this.getActiveSyncSignal(syncToken);
     const telemetry = this.createTelemetry('load');
     let telemetryEmitted = false;
     const targetProjectId = projectId || this.getActiveProjectId();
     if (!targetProjectId) {
       this.emitTelemetry(telemetry, { status: 'error', reason: 'missing_project' });
       telemetryEmitted = true;
-      this.hideSyncOverlay();
+      this.finishSyncSession(syncToken);
       return makeCloudFailure(
         'load',
         normalizeCloudError({
@@ -1028,10 +1155,12 @@ export class CloudProjectManager {
     }
 
     try {
+      this.throwIfSyncCanceled(syncToken);
       this.setStoredProjectId(targetProjectId);
       const bootstrapResult = await this.apiRequest(
         'bootstrap',
-        `/api/cloud-projects/${targetProjectId}/bootstrap`
+        `/api/cloud-projects/${targetProjectId}/bootstrap`,
+        { signal: syncSignal }
       );
       if (bootstrapResult.status === 'error')
         return makeCloudFailure('load', bootstrapResult.error);
@@ -1064,6 +1193,7 @@ export class CloudProjectManager {
       const targetViewId = manifest.currentViewId || viewOrder[0] || 'front';
 
       for (let viewIndex = 0; viewIndex < viewOrder.length; viewIndex += 1) {
+        this.throwIfSyncCanceled(syncToken);
         const viewId = viewOrder[viewIndex];
         const stateWrapper = viewStates?.[viewId];
         const state = stateWrapper?.state || {};
@@ -1104,6 +1234,9 @@ export class CloudProjectManager {
                 telemetry.downloadedBytes += Number(blob.size || 0);
               }
             } catch (error) {
+              if (error?.name === 'AbortError') {
+                throw error;
+              }
               console.warn('[Cloud Load] Failed eager load for target view asset', viewId, error);
               entry.imageUrl = `cloud-asset://${assetHash}`;
             }
@@ -1157,9 +1290,12 @@ export class CloudProjectManager {
       });
     } finally {
       if (!telemetryEmitted) {
-        this.emitTelemetry(telemetry, { status: 'error', reason: 'load_failed' });
+        this.emitTelemetry(telemetry, {
+          status: this.isSyncCanceled(syncToken) ? 'canceled' : 'error',
+          reason: this.isSyncCanceled(syncToken) ? 'load_canceled' : 'load_failed',
+        });
       }
-      setTimeout(() => this.hideSyncOverlay(), 250);
+      this.finishSyncSession(syncToken);
     }
   }
 
@@ -1212,8 +1348,13 @@ export class CloudProjectManager {
         this.setCloudStatus('syncing');
         const result = await this.saveProject(projectData);
         if (result.status === 'error') {
-          this.setCloudStatus('error', result.error.userMessage);
-          alert(result.error.userMessage);
+          const isCanceled =
+            result?.error?.code === 'aborted' ||
+            /cloud sync canceled/i.test(String(result?.error?.userMessage || ''));
+          this.setCloudStatus(isCanceled ? 'ready' : 'error', result.error.userMessage);
+          if (!isCanceled) {
+            alert(result.error.userMessage);
+          }
         } else {
           this.setCloudStatus('ready');
           alert(CLOUD_COPY.save.cloudSuccess);

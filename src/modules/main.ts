@@ -359,6 +359,9 @@ export class App {
         this.measurementSystem = new MeasurementSystem(this.metadataManager);
       }
       this.measurementSystem.setUnit(this.currentUnit === 'inch' ? 'inches' : 'cm');
+      if (this.measurementSystem.setInchDisplayMode) {
+        this.measurementSystem.setInchDisplayMode(this.currentInchDisplayMode || 'decimal');
+      }
 
       if (!this.measurementDialog) {
         this.measurementDialog = new MeasurementDialog(this.measurementSystem);
@@ -2420,9 +2423,30 @@ export class App {
       (el): el is HTMLElement => el instanceof HTMLElement
     );
     const unitSelector = document.getElementById('unitSelector') as HTMLSelectElement | null;
+    const inchDisplayToggleWrap = document.getElementById('inchDisplayToggleWrap');
+    const inchDisplayToggle = document.getElementById('inchDisplayToggleBtn') as
+      | HTMLButtonElement
+      | null;
 
     // Initialize currentUnit state
     this.currentUnit = 'inch';
+    this.currentInchDisplayMode = 'decimal';
+
+    const applyInchDisplayMode = (mode: 'decimal' | 'fraction'): void => {
+      this.currentInchDisplayMode = mode;
+
+      if (inchDisplayToggle) {
+        inchDisplayToggle.textContent = mode === 'decimal' ? 'decimals' : 'fractions';
+      }
+
+      if (this.measurementSystem?.setInchDisplayMode) {
+        this.measurementSystem.setInchDisplayMode(mode);
+      }
+
+      if (this.metadataManager) {
+        this.metadataManager.refreshAllMeasurements();
+      }
+    };
 
     const applyUnit = (unit: 'inch' | 'cm'): void => {
       this.currentUnit = unit;
@@ -2438,6 +2462,13 @@ export class App {
 
       if (this.measurementSystem) {
         this.measurementSystem.setUnit(unitLabel);
+        if (this.measurementSystem.setInchDisplayMode) {
+          this.measurementSystem.setInchDisplayMode(this.currentInchDisplayMode);
+        }
+      }
+
+      if (inchDisplayToggleWrap) {
+        inchDisplayToggleWrap.classList.toggle('hidden', unit !== 'inch');
       }
 
       if (this.metadataManager) {
@@ -2451,6 +2482,7 @@ export class App {
       unitSelector.value = 'inch';
     }
     applyUnit('inch');
+    applyInchDisplayMode('decimal');
 
     unitToggles.forEach(toggle => {
       toggle.addEventListener('click', () => {
@@ -2462,6 +2494,14 @@ export class App {
     if (unitSelector) {
       unitSelector.addEventListener('change', () => {
         applyUnit(unitSelector.value as 'inch' | 'cm');
+      });
+    }
+
+    if (inchDisplayToggle) {
+      inchDisplayToggle.addEventListener('click', () => {
+        applyInchDisplayMode(
+          this.currentInchDisplayMode === 'decimal' ? 'fraction' : 'decimal'
+        );
       });
     }
 

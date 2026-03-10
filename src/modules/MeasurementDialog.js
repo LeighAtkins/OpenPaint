@@ -63,20 +63,8 @@ export class MeasurementDialog {
             </div>
 
             <div style="margin-bottom: 20px;">
-                <label for="dialogInchWhole" style="display: block; margin-bottom: 8px; color: #3E4752; font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;">Inches</label>
-                <div style="display: flex; gap: 10px; align-items: center;">
-                    <input type="number" id="dialogInchWhole" min="0" value="0" inputmode="numeric" aria-label="Whole inches" style="width: 90px; padding: 12px 14px; border: 1px solid #E7EAEE; border-radius: 12px; font-size: 16px; font-family: 'JetBrains Mono', monospace; outline: none; transition: border-color 0.15s, box-shadow 0.15s;" onfocus="this.style.borderColor='#2D6BFF';this.style.boxShadow='0 0 0 2px rgba(45,107,255,0.35)'" onblur="this.style.borderColor='#E7EAEE';this.style.boxShadow='none'">
-                    <select id="dialogInchFraction" aria-label="Inch fraction" style="padding: 12px 14px; border: 1px solid #E7EAEE; border-radius: 12px; font-size: 16px; font-family: 'JetBrains Mono', monospace; background: #fff; outline: none; transition: border-color 0.15s, box-shadow 0.15s;" onfocus="this.style.borderColor='#2D6BFF';this.style.boxShadow='0 0 0 2px rgba(45,107,255,0.35)'" onblur="this.style.borderColor='#E7EAEE';this.style.boxShadow='none'">
-                        <option value="0">0</option>
-                        <option value="0.125">1/8</option>
-                        <option value="0.25">1/4</option>
-                        <option value="0.375">3/8</option>
-                        <option value="0.5">1/2</option>
-                        <option value="0.625">5/8</option>
-                        <option value="0.75">3/4</option>
-                        <option value="0.875">7/8</option>
-                    </select>
-                </div>
+                <label for="dialogInchValue" style="display: block; margin-bottom: 8px; color: #3E4752; font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;">Inches</label>
+                <input type="text" id="dialogInchValue" value="0" inputmode="text" aria-label="Inches" placeholder='70 5/16 or 70.3125' style="width: 220px; padding: 12px 14px; border: 1px solid #E7EAEE; border-radius: 12px; font-size: 16px; font-family: 'JetBrains Mono', monospace; outline: none; transition: border-color 0.15s, box-shadow 0.15s;" onfocus="this.style.borderColor='#2D6BFF';this.style.boxShadow='0 0 0 2px rgba(45,107,255,0.35)'" onblur="this.style.borderColor='#E7EAEE';this.style.boxShadow='none'">
             </div>
 
             <div style="margin-bottom: 28px;">
@@ -121,30 +109,29 @@ export class MeasurementDialog {
   setupEventListeners() {
     if (!this.dialogElement) return;
 
-    const inchWholeInput = this.dialogElement.querySelector('#dialogInchWhole');
-    const inchFractionSelect = this.dialogElement.querySelector('#dialogInchFraction');
+    const inchValueInput = this.dialogElement.querySelector('#dialogInchValue');
     const cmValueInput = this.dialogElement.querySelector('#dialogCmValue');
     const saveButton = this.dialogElement.querySelector('#dialogSave');
     const cancelButton = this.dialogElement.querySelector('#dialogCancel');
 
     // Inch to CM conversion
     const updateCmFromInch = () => {
-      const inchWhole = parseInt(inchWholeInput.value, 10) || 0;
-      const inchFraction = parseFloat(inchFractionSelect.value) || 0;
-      const cm = this.measurementSystem.convertToCm(inchWhole, inchFraction);
-      cmValueInput.value = cm.toFixed(1);
+      const parsed = this.measurementSystem.parseMeasurementInput(inchValueInput.value, 'inches');
+      if (!parsed) return;
+      cmValueInput.value = parsed.cm.toFixed(1);
     };
 
     // CM to Inch conversion
     const updateInchFromCm = () => {
       const cm = parseFloat(cmValueInput.value) || 0;
       const result = this.measurementSystem.convertFromCm(cm);
-      inchWholeInput.value = result.inchWhole;
-      inchFractionSelect.value = result.inchFraction;
+      inchValueInput.value = this.measurementSystem.formatInchInputValue(
+        result.inchWhole,
+        result.inchFraction
+      );
     };
 
-    inchWholeInput.addEventListener('input', updateCmFromInch);
-    inchFractionSelect.addEventListener('change', updateCmFromInch);
+    inchValueInput.addEventListener('input', updateCmFromInch);
     cmValueInput.addEventListener('input', updateInchFromCm);
 
     // Save button
@@ -181,17 +168,17 @@ export class MeasurementDialog {
 
     // Load existing measurement if available
     const measurement = this.measurementSystem.getMeasurement(imageLabel, strokeLabel);
-    const inchWholeInput = this.dialogElement.querySelector('#dialogInchWhole');
-    const inchFractionSelect = this.dialogElement.querySelector('#dialogInchFraction');
+    const inchValueInput = this.dialogElement.querySelector('#dialogInchValue');
     const cmValueInput = this.dialogElement.querySelector('#dialogCmValue');
 
     if (measurement) {
-      inchWholeInput.value = measurement.inchWhole;
-      inchFractionSelect.value = measurement.inchFraction;
+      inchValueInput.value = this.measurementSystem.formatInchInputValue(
+        measurement.inchWhole,
+        measurement.inchFraction
+      );
       cmValueInput.value = measurement.cm.toFixed(1);
     } else {
-      inchWholeInput.value = 0;
-      inchFractionSelect.value = 0;
+      inchValueInput.value = '0';
       cmValueInput.value = '0.0';
     }
 
@@ -200,7 +187,7 @@ export class MeasurementDialog {
     this.dialogElement.style.display = 'flex';
 
     // Focus first input
-    setTimeout(() => inchWholeInput.focus(), 100);
+    setTimeout(() => inchValueInput.focus(), 100);
   }
 
   close() {
@@ -258,18 +245,21 @@ export class MeasurementDialog {
   }
 
   saveMeasurement() {
-    const inchWholeInput = this.dialogElement.querySelector('#dialogInchWhole');
-    const inchFractionSelect = this.dialogElement.querySelector('#dialogInchFraction');
-
-    const inchWhole = parseInt(inchWholeInput.value, 10) || 0;
-    const inchFraction = parseFloat(inchFractionSelect.value) || 0;
+    const inchValueInput = this.dialogElement.querySelector('#dialogInchValue');
+    const parsed =
+      this.measurementSystem.parseMeasurementInput(inchValueInput.value, 'inches') || null;
+    if (!parsed) {
+      inchValueInput.focus();
+      inchValueInput.select();
+      return;
+    }
 
     // Save measurement
     this.measurementSystem.setMeasurement(
       this.currentImageLabel,
       this.currentStrokeLabel,
-      inchWhole,
-      inchFraction
+      parsed.inchWhole,
+      parsed.inchFraction
     );
 
     // Update UI if metadataManager has updateStrokeVisibilityControls
