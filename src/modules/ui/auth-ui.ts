@@ -442,14 +442,16 @@ function updateAuthUI(user: AuthUser | null): void {
     }
 
     if (avatar) {
-      const avatarUrl = user.profile?.avatar_url;
-      if (avatarUrl) {
-        avatar.src = avatarUrl;
+      const fallbackDataUrl = buildInitialAvatarDataUrl(firstName || fullName || user.email || '?');
+      const avatarUrl = String(user.profile?.avatar_url || '').trim();
+      avatar.referrerPolicy = 'no-referrer';
+      avatar.onerror = () => {
+        avatar.onerror = null;
+        avatar.src = fallbackDataUrl;
         avatar.style.display = 'block';
-      } else {
-        avatar.src = buildInitialAvatarDataUrl(firstName || fullName || user.email || '?');
-        avatar.style.display = 'block';
-      }
+      };
+      avatar.src = avatarUrl || fallbackDataUrl;
+      avatar.style.display = 'block';
     }
 
     closeModal();

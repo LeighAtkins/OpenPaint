@@ -65,7 +65,11 @@ class WalletService {
       throw new Error('Not authenticated');
     }
 
-    const resp = await fetch(path, {
+    // In local Vite dev, keep /api so the dev proxy forwards to Express.
+    // In deployed environments, non-/api paths can be rewritten by Vercel.
+    const fetchPath = import.meta.env.DEV ? path : path.replace('/api', '');
+
+    const resp = await fetch(fetchPath, {
       method: options?.method || 'GET',
       headers: {
         'Content-Type': 'application/json',

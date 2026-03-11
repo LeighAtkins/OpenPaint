@@ -88,6 +88,13 @@ export class AuthService {
    */
   private buildBasicUser(user: User): AuthUser {
     const meta = user.user_metadata || {};
+    const avatarFromMetadata =
+      (meta['avatar_url'] as string) || (meta['picture'] as string) || undefined;
+    const displayNameFromMetadata =
+      (meta['full_name'] as string) ||
+      (meta['name'] as string) ||
+      user.email?.split('@')[0] ||
+      undefined;
     return {
       id: user.id,
       email: user.email || '',
@@ -98,8 +105,8 @@ export class AuthService {
       profile: {
         id: user.id,
         email: user.email || '',
-        display_name: (meta['full_name'] as string) || user.email?.split('@')[0] || undefined,
-        avatar_url: (meta['avatar_url'] as string) || undefined,
+        display_name: displayNameFromMetadata,
+        avatar_url: avatarFromMetadata,
         preferences: DEFAULT_USER_PREFERENCES,
         created_at: user.created_at,
         updated_at: user.created_at,
@@ -260,8 +267,10 @@ export class AuthService {
         id: user.id,
         email: user.email || '',
         display_name:
-          (meta['full_name'] as string) || (user.email ? user.email.split('@')[0] : undefined),
-        avatar_url: meta['avatar_url'] as string | undefined,
+          (meta['full_name'] as string) ||
+          (meta['name'] as string) ||
+          (user.email ? user.email.split('@')[0] : undefined),
+        avatar_url: (meta['avatar_url'] as string) || (meta['picture'] as string) || undefined,
         preferences: DEFAULT_USER_PREFERENCES,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),

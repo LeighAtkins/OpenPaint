@@ -126,6 +126,13 @@ class ImageRegistry {
         return;
       }
 
+      // TS compat shim can safely handle registration even when the legacy
+      // paint.js hook is not present.
+      if (window.addImageToSidebar && window.addImageToSidebar.__isCompat) {
+        this._markReady('compat');
+        return;
+      }
+
       const elapsed = Date.now() - startedAt;
       if (elapsed > DEFAULT_READY_TIMEOUT_MS) {
         console.error('[ImageRegistry] Ready timeout: gallery hook not detected.');

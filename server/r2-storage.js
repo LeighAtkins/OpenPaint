@@ -8,13 +8,18 @@ import {
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
-const R2_ACCOUNT_ID = (process.env.R2_ACCOUNT_ID || '').trim();
-const R2_ACCESS_KEY_ID = (process.env.R2_ACCESS_KEY_ID || '').trim();
-const R2_SECRET_ACCESS_KEY = (process.env.R2_SECRET_ACCESS_KEY || '').trim();
-const R2_BUCKET = (process.env.R2_BUCKET || '').trim();
-const R2_PUBLIC_BASE_URL = (process.env.R2_PUBLIC_BASE_URL || '').trim();
-
 let r2Client = null;
+let r2ClientFingerprint = '';
+
+function getR2Env() {
+  return {
+    accountId: (process.env.R2_ACCOUNT_ID || '').trim(),
+    accessKeyId: (process.env.R2_ACCESS_KEY_ID || '').trim(),
+    secretAccessKey: (process.env.R2_SECRET_ACCESS_KEY || '').trim(),
+    bucket: (process.env.R2_BUCKET || '').trim(),
+    publicBaseUrl: (process.env.R2_PUBLIC_BASE_URL || '').trim(),
+  };
+}
 
 function normalizeKey(rawKey) {
   const key = String(rawKey || '')
@@ -30,44 +35,54 @@ function normalizeKey(rawKey) {
 }
 
 export function isR2Configured() {
-  return Boolean(R2_ACCOUNT_ID && R2_ACCESS_KEY_ID && R2_SECRET_ACCESS_KEY && R2_BUCKET);
+  const env = getR2Env();
+  return Boolean(env.accountId && env.accessKeyId && env.secretAccessKey && env.bucket);
 }
 
 export function getR2ConfigStatus() {
+  const env = getR2Env();
   return {
     configured: isR2Configured(),
-    hasAccountId: Boolean(R2_ACCOUNT_ID),
-    hasAccessKeyId: Boolean(R2_ACCESS_KEY_ID),
-    hasSecretAccessKey: Boolean(R2_SECRET_ACCESS_KEY),
-    hasBucket: Boolean(R2_BUCKET),
-    hasPublicBaseUrl: Boolean(R2_PUBLIC_BASE_URL),
+    hasAccountId: Boolean(env.accountId),
+    hasAccessKeyId: Boolean(env.accessKeyId),
+    hasSecretAccessKey: Boolean(env.secretAccessKey),
+    hasBucket: Boolean(env.bucket),
+    hasPublicBaseUrl: Boolean(env.publicBaseUrl),
   };
 }
 
 function getR2Client() {
-  if (!isR2Configured()) {
+  const env = getR2Env();
+  const isConfigured = Boolean(
+    env.accountId && env.accessKeyId && env.secretAccessKey && env.bucket
+  );
+  if (!isConfigured) {
     throw new Error('R2 is not configured');
   }
 
-  if (!r2Client) {
+  const fingerprint = `${env.accountId}:${env.accessKeyId}:${env.bucket}`;
+
+  if (!r2Client || r2ClientFingerprint !== fingerprint) {
     r2Client = new S3Client({
       region: 'auto',
-      endpoint: `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+      endpoint: `https://${env.accountId}.r2.cloudflarestorage.com`,
       credentials: {
-        accessKeyId: R2_ACCESS_KEY_ID,
-        secretAccessKey: R2_SECRET_ACCESS_KEY,
+        accessKeyId: env.accessKeyId,
+        secretAccessKey: env.secretAccessKey,
       },
     });
+    r2ClientFingerprint = fingerprint;
   }
 
   return r2Client;
 }
 
 export function getR2PublicUrl(objectKey) {
-  if (!R2_PUBLIC_BASE_URL) {
+  const env = getR2Env();
+  if (!env.publicBaseUrl) {
     return null;
   }
-  const base = R2_PUBLIC_BASE_URL.replace(/\/+$/, '');
+  const base = env.publicBaseUrl.replace(/\/+$/, '');
   const key = normalizeKey(objectKey);
   return `${base}/${key}`;
 }
@@ -78,11 +93,12 @@ export async function createPresignedUploadUrl({
   cacheControl,
   expiresIn = 300,
 }) {
+  const env = getR2Env();
   const client = getR2Client();
   const objectKey = normalizeKey(key);
 
   const command = new PutObjectCommand({
-    Bucket: R2_BUCKET,
+    Bucket: env.bucket,
     Key: objectKey,
     ContentType: contentType || 'application/octet-stream',
     ...(cacheControl ? { CacheControl: cacheControl } : {}),
@@ -100,11 +116,12 @@ export async function createPresignedUploadUrl({
 }
 
 export async function createPresignedDownloadUrl({ key, expiresIn = 3600 }) {
+  const env = getR2Env();
   const client = getR2Client();
   const objectKey = normalizeKey(key);
 
   const command = new GetObjectCommand({
-    Bucket: R2_BUCKET,
+    Bucket: env.bucket,
     Key: objectKey,
   });
 
@@ -120,6 +137,7 @@ export async function createPresignedDownloadUrl({ key, expiresIn = 3600 }) {
 }
 
 export async function deleteR2Objects(keys) {
+  const env = getR2Env();
   const client = getR2Client();
   const normalizedKeys = Array.isArray(keys)
     ? keys.map(normalizeKey)
@@ -133,7 +151,7 @@ export async function deleteR2Objects(keys) {
     const key = normalizedKeys[0];
     await client.send(
       new DeleteObjectCommand({
-        Bucket: R2_BUCKET,
+        Bucket: env.bucket,
         Key: key,
       })
     );
@@ -142,7 +160,7 @@ export async function deleteR2Objects(keys) {
 
   await client.send(
     new DeleteObjectsCommand({
-      Bucket: R2_BUCKET,
+      Bucket: env.bucket,
       Delete: {
         Objects: normalizedKeys.map(key => ({ Key: key })),
       },
@@ -153,15 +171,16 @@ export async function deleteR2Objects(keys) {
 }
 
 export async function copyR2Object({ sourceKey, destinationKey }) {
+  const env = getR2Env();
   const client = getR2Client();
   const from = normalizeKey(sourceKey);
   const to = normalizeKey(destinationKey);
 
   await client.send(
     new CopyObjectCommand({
-      Bucket: R2_BUCKET,
+      Bucket: env.bucket,
       Key: to,
-      CopySource: `${R2_BUCKET}/${from}`,
+      CopySource: `${env.bucket}/${from}`,
     })
   );
 

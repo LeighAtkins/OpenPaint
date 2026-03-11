@@ -7,6 +7,7 @@ import dotenv from 'dotenv';
 if (process.env.NODE_ENV === 'production') {
   dotenv.config({ path: '.env' });
 } else {
+  dotenv.config({ path: '.env.development.local', override: false });
   dotenv.config({ path: '.env.local', override: false });
   dotenv.config({ path: '.env.development', override: false });
   dotenv.config({ path: '.env', override: false });
@@ -28,6 +29,7 @@ import measurementGuideCodesHandler from './api/measurement-guides/codes.js';
 import measurementGuideSvgHandler from './api/measurement-guides/svg.js';
 import { spawn } from 'child_process';
 import { createClient } from '@supabase/supabase-js';
+import { generateSamOverlay } from './server/mos/sam-overlay.js';
 const { registerR2Routes } = await import('./server/r2-routes.js');
 const { isR2Configured, createPresignedUploadUrl, getR2PublicUrl } =
   await import('./server/r2-storage.js');
@@ -57,16 +59,8 @@ const CLOUDINARY_CLOUD_NAME = (process.env.CLOUDINARY_CLOUD_NAME || '').trim();
 const CLOUDINARY_UPLOAD_PRESET = (process.env.CLOUDINARY_UPLOAD_PRESET || '').trim();
 const CLOUDINARY_UPLOAD_FOLDER = (process.env.CLOUDINARY_UPLOAD_FOLDER || '').trim();
 
-// Cloudflare Images configuration
-const CF_ACCOUNT_ID = (process.env.CF_ACCOUNT_ID || '').trim();
-const CF_IMAGES_API_TOKEN = (process.env.CF_IMAGES_API_TOKEN || '').trim();
-const CF_ACCOUNT_HASH = (process.env.CF_ACCOUNT_HASH || '').trim();
-
 console.log('[AI Relay] Using AI_WORKER_URL:', JSON.stringify(AI_WORKER_URL));
 console.log('[AI Relay] Has KEY:', AI_WORKER_KEY ? 'yes' : 'no');
-console.log('[Cloudflare Images] Account ID:', CF_ACCOUNT_ID ? 'configured' : 'missing');
-console.log('[Cloudflare Images] API Token:', CF_IMAGES_API_TOKEN ? 'configured' : 'missing');
-console.log('[Cloudflare Images] Account Hash:', CF_ACCOUNT_HASH ? 'configured' : 'missing');
 
 // Supabase client configuration (public env fallback)
 const SUPABASE_CLIENT_URL = process.env.VITE_SUPABASE_URL || '';
@@ -473,9 +467,30 @@ app.use(express.json({ limit: '200mb' }));
 app.use(express.urlencoded({ extended: true, limit: '200mb' }));
 
 registerR2Routes(app, '/api/storage/r2');
+app.all('/api/measurement-guides/codes', (req, res) => measurementGuideCodesHandler(req, res));
+app.all('/api/measurement-guides/svg', (req, res) => measurementGuideSvgHandler(req, res));
 
 // Route handlers
 app.get('/health', (req, res) => res.json({ ok: true, ts: Date.now() }));
+
+app.put('/arm-annotation/annotations.json', (req, res) => {
+  const fs = require('fs');
+  const path = require('path');
+  const filePath = path.join(__dirname, 'public/arm_annotation_dataset/annotations.json');
+  fs.writeFileSync(filePath, JSON.stringify(req.body, null, 2));
+  res.json({ ok: true });
+});
+
+app.get('/arm-annotation/annotations.json', (req, res) => {
+  const fs = require('fs');
+  const path = require('path');
+  const filePath = path.join(__dirname, 'public/arm_annotation_dataset/annotations.json');
+  if (fs.existsSync(filePath)) {
+    res.sendFile(filePath);
+  } else {
+    res.json({});
+  }
+});
 
 app.get('/version', (req, res) => {
   res.json({ commit: process.env.VERCEL_GIT_COMMIT_SHA || null, ts: Date.now() });
@@ -2222,6 +2237,9 @@ app.get('/api/shared/:shareId/measurements', async (req, res) => {
 const GEMINI_API_KEY = (process.env.GEMINI_API_KEY || '').trim();
 const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.0-flash';
 const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+const DEFAULT_MOS_GENERATE_STRATEGY = (process.env.MOS_GENERATE_STRATEGY || 'auto')
+  .trim()
+  .toLowerCase();
 
 /**
  * POST /api/measurements/generate
@@ -2234,13 +2252,6 @@ const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models
  */
 app.post('/api/measurements/generate', async (req, res) => {
   try {
-    if (!GEMINI_API_KEY) {
-      return res.status(503).json({
-        success: false,
-        error: 'Gemini API key not configured. Set GEMINI_API_KEY env var.',
-      });
-    }
-
     const {
       projectId,
       viewId,
@@ -2254,7 +2265,62 @@ app.post('/api/measurements/generate', async (req, res) => {
       units = 'cm',
       thinkingLevel = 'low',
       templateId,
+      strategy,
+      anchorHints,
     } = req.body;
+
+    const selectedStrategy = String(strategy || DEFAULT_MOS_GENERATE_STRATEGY || 'auto')
+      .trim()
+      .toLowerCase();
+
+    if (selectedStrategy === 'sam' || selectedStrategy === 'auto') {
+      const samResult = await generateSamOverlay({
+        projectId,
+        viewId,
+        guideView,
+        imagePartLabel,
+        imageR2Key,
+        imageDataUrl,
+        imageWidth,
+        imageHeight,
+        requestedRoles,
+        units,
+        templateId,
+        anchorHints,
+      });
+
+      if (samResult.success) {
+        return res.json({
+          success: true,
+          svg: samResult.svg,
+          attempt: 1,
+          attemptMode: 'sam',
+          rolesApplied: samResult.rolesApplied || [],
+          missingRoles: samResult.missingRoles || [],
+          debug: samResult.debug || { strategy: 'sam' },
+        });
+      }
+
+      if (selectedStrategy === 'sam') {
+        return res.status(422).json({
+          success: false,
+          error: samResult.error || 'SAM overlay generation failed',
+          attemptMode: 'sam',
+          rolesApplied: samResult.rolesApplied || [],
+          missingRoles: samResult.missingRoles || [],
+          debug: samResult.debug || { strategy: 'sam' },
+        });
+      }
+
+      console.warn('[MOS Generate] SAM strategy failed, falling back to Gemini:', samResult.error);
+    }
+
+    if (!GEMINI_API_KEY) {
+      return res.status(503).json({
+        success: false,
+        error: 'Gemini API key not configured. Set GEMINI_API_KEY env var.',
+      });
+    }
 
     const resolveGuideView = ({
       viewId: rawViewId,
@@ -3278,66 +3344,6 @@ app.post('/api/remove-background', async (req, res) => {
 });
 
 /**
- * API endpoint for Cloudflare Images direct upload
- * Proxies to CF Worker to get upload URL
- */
-app.post('/api/images/direct-upload', async (req, res) => {
-  try {
-    const base = process.env.CF_WORKER_URL || AI_WORKER_URL || '';
-    if (!base) {
-      return res.status(500).set('content-type', 'application/json; charset=utf-8').json({
-        ok: false,
-        error: 'missing-CF_WORKER_URL',
-        message: 'Set CF_WORKER_URL to your Worker base URL',
-      });
-    }
-    const url = `${base.replace(/\/$/, '')}/images/direct-upload`;
-    const headers = {};
-    if (req.headers['x-api-key']) headers['x-api-key'] = String(req.headers['x-api-key']);
-
-    let upstream;
-    try {
-      upstream = await fetch(url, { method: 'POST', headers });
-    } catch (e) {
-      return res
-        .status(502)
-        .set('content-type', 'application/json; charset=utf-8')
-        .json({ ok: false, error: 'fetch-exception', message: e.message });
-    }
-
-    const text = await upstream.text().catch(() => '<no body>');
-    if (!upstream.ok) {
-      return res
-        .status(502)
-        .set('content-type', 'application/json; charset=utf-8')
-        .json({
-          ok: false,
-          error: 'upstream-failed',
-          status: upstream.status,
-          body: text.slice(0, 500),
-        });
-    }
-
-    try {
-      return res
-        .status(200)
-        .set('content-type', 'application/json; charset=utf-8')
-        .json(JSON.parse(text));
-    } catch {
-      return res
-        .status(200)
-        .set('content-type', upstream.headers.get('content-type') || 'application/json')
-        .send(text);
-    }
-  } catch (err) {
-    return res
-      .status(500)
-      .set('content-type', 'application/json; charset=utf-8')
-      .json({ ok: false, error: 'proxy-exception', message: String(err) });
-  }
-});
-
-/**
  * Update an existing shared project (requires editToken)
  */
 app.patch('/api/shared/:shareId', async (req, res) => {
@@ -3560,90 +3566,6 @@ app.post('/ai/analyze-and-dimension', async (req, res) => {
   } catch (e) {
     console.error('[AI Relay] /analyze-and-dimension failed:', e);
     return res.status(502).json({ error: 'Relay fetch failed', detail: String(e) });
-  }
-});
-
-/**
- * Cloudflare Images Storage Presign Endpoint
- * Generates presigned upload URLs for AI image processing
- */
-app.post('/api/storage/presign', async (req, res) => {
-  try {
-    // Validate Cloudflare Images configuration
-    if (!CF_ACCOUNT_ID || !CF_IMAGES_API_TOKEN) {
-      return res.status(500).json({
-        success: false,
-        message: 'Cloudflare Images not configured. Missing CF_ACCOUNT_ID or CF_IMAGES_API_TOKEN.',
-      });
-    }
-
-    // Generate unique image key
-    const timestamp = Date.now();
-    const uuid = crypto.randomUUID();
-    const imageKey = `ai-uploads/${timestamp}-${uuid}`;
-
-    // Call Cloudflare Images Direct Creator Upload API
-    const endpoint = `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/images/v2/direct_upload`;
-
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${CF_IMAGES_API_TOKEN}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        requireSignedURLs: false,
-        metadata: {
-          key: imageKey,
-          purpose: 'ai-furniture-dimensioning',
-        },
-      }),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(
-        '[Cloudflare Images] Upload URL generation failed:',
-        response.status,
-        errorText
-      );
-      return res.status(502).json({
-        success: false,
-        message: 'Failed to generate upload URL',
-        detail: errorText,
-      });
-    }
-
-    const data = await response.json();
-
-    if (!data.success) {
-      console.error('[Cloudflare Images] API error:', data.errors);
-      return res.status(502).json({
-        success: false,
-        message: 'Cloudflare Images API error',
-        errors: data.errors,
-      });
-    }
-
-    const { uploadURL, id: imageId } = data.result;
-    const deliveryUrl = `https://imagedelivery.net/${CF_ACCOUNT_HASH}/${imageId}/public`;
-
-    console.log(`[Cloudflare Images] Generated presign for key: ${imageKey}, imageId: ${imageId}`);
-
-    return res.json({
-      success: true,
-      key: imageKey,
-      uploadUrl: uploadURL,
-      imageId: imageId,
-      deliveryUrl: deliveryUrl,
-    });
-  } catch (error) {
-    console.error('Error generating presigned upload URL:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Server error generating upload URL',
-      detail: error.message,
-    });
   }
 });
 
