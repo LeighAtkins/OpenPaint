@@ -65,10 +65,7 @@ class WalletService {
       throw new Error('Not authenticated');
     }
 
-    // Use non-/api paths for Vercel rewrites
-    const fetchPath = path.replace('/api', '');
-
-    const resp = await fetch(fetchPath, {
+    const resp = await fetch(path, {
       method: options?.method || 'GET',
       headers: {
         'Content-Type': 'application/json',

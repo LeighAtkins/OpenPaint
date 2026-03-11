@@ -100,10 +100,8 @@ class ImageRegistry {
     }
 
     const galleryHasView = this._galleryHasView(viewId);
-    const allowDirectGalleryAdd =
-      !hasAddImageToSidebar || (this.readyReason === 'timeout' && !galleryHasView);
 
-    if (allowDirectGalleryAdd) {
+    if (!hasAddImageToSidebar && !galleryHasView) {
       this._ensureGalleryEntry(viewId, imageUrl, filename, normalizedOptions);
     } else if (isUpdate && galleryHasView) {
       this._updateGalleryEntry(viewId, imageUrl, filename, normalizedOptions);

@@ -127,70 +127,73 @@ export function initToolbarController() {
     };
     syncFromState();
 
-    arrowStartBtn.addEventListener('click', () => {
-      try {
-        const as = window.paintApp.uiState.arrowSettings;
-        as.startArrow = !as.startArrow;
-        // Apply to stroke in edit mode if any
-        const edited = window.selectedStrokeInEditMode;
-        const img = window.currentImageLabel;
-        if (edited && img && window.vectorStrokesByImage?.[img]?.[edited]) {
-          const v = window.vectorStrokesByImage[img][edited];
-          v.arrowSettings = v.arrowSettings || {
-            arrowSize: as.arrowSize,
-            arrowStyle: as.arrowStyle,
-            startArrow: false,
-            endArrow: false,
-          };
-          v.arrowSettings.startArrow = as.startArrow;
-          // Ensure curved lines switch type appropriately
-          if (typeof window.updateStrokeTypeBasedOnArrows === 'function') {
-            window.updateStrokeTypeBasedOnArrows(v);
-          } else {
-            const hasArrows = !!(v.arrowSettings.startArrow || v.arrowSettings.endArrow);
-            if (v.type === 'curved' && hasArrows) v.type = 'curved-arrow';
-            if (v.type === 'curved-arrow' && !hasArrows) v.type = 'curved';
-          }
-          window.saveState?.(true, false, false);
-          window.redrawCanvasWithVisibility?.();
+    const bindArrowStateToggle = (button, side) => {
+      if (!button) return;
+
+      let clickTimer = null;
+      const cancelPendingToggle = () => {
+        if (clickTimer !== null) {
+          clearTimeout(clickTimer);
+          clickTimer = null;
         }
-        syncFromState();
-      } catch {
-        /* optional UI sync */
-      }
-    });
-    arrowEndBtn.addEventListener('click', () => {
-      try {
-        const as = window.paintApp.uiState.arrowSettings;
-        as.endArrow = !as.endArrow;
-        // Apply to stroke in edit mode if any
-        const edited = window.selectedStrokeInEditMode;
-        const img = window.currentImageLabel;
-        if (edited && img && window.vectorStrokesByImage?.[img]?.[edited]) {
-          const v = window.vectorStrokesByImage[img][edited];
-          v.arrowSettings = v.arrowSettings || {
-            arrowSize: as.arrowSize,
-            arrowStyle: as.arrowStyle,
-            startArrow: false,
-            endArrow: false,
-          };
-          v.arrowSettings.endArrow = as.endArrow;
-          // Ensure curved lines switch type appropriately
-          if (typeof window.updateStrokeTypeBasedOnArrows === 'function') {
-            window.updateStrokeTypeBasedOnArrows(v);
+      };
+
+      const applyToggle = () => {
+        try {
+          const as = window.paintApp.uiState.arrowSettings;
+          const nextValue = !(side === 'start' ? as.startArrow : as.endArrow);
+          if (side === 'start') {
+            as.startArrow = nextValue;
           } else {
-            const hasArrows = !!(v.arrowSettings.startArrow || v.arrowSettings.endArrow);
-            if (v.type === 'curved' && hasArrows) v.type = 'curved-arrow';
-            if (v.type === 'curved-arrow' && !hasArrows) v.type = 'curved';
+            as.endArrow = nextValue;
           }
-          window.saveState?.(true, false, false);
-          window.redrawCanvasWithVisibility?.();
+
+          const edited = window.selectedStrokeInEditMode;
+          const img = window.currentImageLabel;
+          if (edited && img && window.vectorStrokesByImage?.[img]?.[edited]) {
+            const v = window.vectorStrokesByImage[img][edited];
+            v.arrowSettings = v.arrowSettings || {
+              arrowSize: as.arrowSize,
+              arrowStyle: as.arrowStyle,
+              startArrow: false,
+              endArrow: false,
+            };
+            if (side === 'start') {
+              v.arrowSettings.startArrow = as.startArrow;
+            } else {
+              v.arrowSettings.endArrow = as.endArrow;
+            }
+            if (typeof window.updateStrokeTypeBasedOnArrows === 'function') {
+              window.updateStrokeTypeBasedOnArrows(v);
+            } else {
+              const hasArrows = !!(v.arrowSettings.startArrow || v.arrowSettings.endArrow);
+              if (v.type === 'curved' && hasArrows) v.type = 'curved-arrow';
+              if (v.type === 'curved-arrow' && !hasArrows) v.type = 'curved';
+            }
+            window.saveState?.(true, false, false);
+            window.redrawCanvasWithVisibility?.();
+          }
+          syncFromState();
+        } catch {
+          /* optional UI sync */
         }
-        syncFromState();
-      } catch {
-        /* optional UI sync */
-      }
-    });
+      };
+
+      button.addEventListener('click', () => {
+        cancelPendingToggle();
+        clickTimer = setTimeout(() => {
+          clickTimer = null;
+          applyToggle();
+        }, 220);
+      });
+
+      button.addEventListener('dblclick', () => {
+        cancelPendingToggle();
+      });
+    };
+
+    bindArrowStateToggle(arrowStartBtn, 'start');
+    bindArrowStateToggle(arrowEndBtn, 'end');
     dottedBtn.addEventListener('click', () => {
       try {
         const ds = window.paintApp.uiState.dashSettings;
@@ -1742,7 +1745,9 @@ export function initToolbarController() {
       const getObjectScopeLabel = obj => obj?.strokeMetadata?.imageLabel || obj?.imageLabel || null;
       const getObjectStrokeLabel = obj =>
         obj?.strokeLabel ||
+        obj?.strokeMetadata?.strokeLabel ||
         obj?.strokeMetadata?.label ||
+        obj?.connectedStroke?.strokeMetadata?.strokeLabel ||
         obj?.connectedStroke?.strokeMetadata?.label ||
         null;
       const isStrokeVisibleInScope = (scopeLabel, strokeLabel) => {
@@ -1928,6 +1933,20 @@ export function initToolbarController() {
         rotation: typeof liveRotation === 'number' ? liveRotation : 0,
       };
     }
+    function resolveViewportRotation(viewport, label = null) {
+      const resolvedLabel =
+        (typeof toBaseLabel === 'function' ? toBaseLabel(label || getActiveLabel()) : label) || '';
+      const projectManager = window.projectManager || window.app?.projectManager;
+      const viewRotation = Number(projectManager?.views?.[resolvedLabel]?.rotation);
+      const recordRotation = Number(viewport?.rotation);
+      if (Number.isFinite(viewRotation)) {
+        return viewRotation;
+      }
+      if (Number.isFinite(recordRotation)) {
+        return recordRotation;
+      }
+      return 0;
+    }
     function normalizeViewportRecord(viewport) {
       if (!viewport || typeof viewport !== 'object') {
         return {
@@ -1955,13 +1974,7 @@ export function initToolbarController() {
       const canvasManager = window.app?.canvasManager;
       const projectManager = window.projectManager || window.app?.projectManager;
       const activeViewId = projectManager?.currentViewId || null;
-      const viewRotation = Number(projectManager?.views?.[activeViewId]?.rotation);
-      const recordRotation = Number(record?.rotation);
-      const targetRotation = Number.isFinite(recordRotation)
-        ? recordRotation
-        : Number.isFinite(viewRotation)
-          ? viewRotation
-          : 0;
+      const targetRotation = resolveViewportRotation(record, activeViewId);
 
       if (canvasManager?.setRotationDegrees) {
         canvasManager.setRotationDegrees(targetRotation);
@@ -2410,7 +2423,7 @@ export function initToolbarController() {
       const zoom = typeof viewport?.zoom === 'number' && viewport.zoom > 0 ? viewport.zoom : 1;
       const panX = typeof viewport?.panX === 'number' ? viewport.panX : 0;
       const panY = typeof viewport?.panY === 'number' ? viewport.panY : 0;
-      const rotation = typeof viewport?.rotation === 'number' ? viewport.rotation : 0;
+      const rotation = resolveViewportRotation(viewport);
       const angleRadians = (rotation * Math.PI) / 180;
       const cos = Math.cos(angleRadians);
       const sin = Math.sin(angleRadians);

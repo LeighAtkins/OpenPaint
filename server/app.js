@@ -1,11 +1,22 @@
+import dotenv from 'dotenv';
 import express from 'express';
 import path from 'path';
 import fs from 'fs';
 import crypto from 'crypto';
 import { fileURLToPath } from 'url';
-import { registerR2Routes } from './r2-routes.js';
 import { createClient } from '@supabase/supabase-js';
-import { isR2Configured, createPresignedUploadUrl, getR2PublicUrl } from './r2-storage.js';
+
+if (process.env.NODE_ENV === 'production') {
+  dotenv.config({ path: '.env' });
+} else {
+  dotenv.config({ path: '.env.local', override: false });
+  dotenv.config({ path: '.env.development', override: false });
+  dotenv.config({ path: '.env', override: false });
+}
+
+const { registerR2Routes } = await import('./r2-routes.js');
+const { isR2Configured, createPresignedUploadUrl, getR2PublicUrl } =
+  await import('./r2-storage.js');
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -2308,7 +2319,7 @@ const PET_CATALOG = [
 ];
 
 // GET /wallet — returns balance, equipped pet, unlocked pets, catalog
-app.get('/wallet', async (req, res) => {
+const handleWalletGet = async (req, res) => {
   try {
     const authResult = await getCloudAuthUser(req, 'wallet');
     if (authResult.error) {
@@ -2349,10 +2360,12 @@ app.get('/wallet', async (req, res) => {
     console.error('[Wallet] GET error:', error);
     return res.status(500).json({ success: false, message: 'Failed to load wallet' });
   }
-});
+};
+app.get('/wallet', handleWalletGet);
+app.get('/api/wallet', handleWalletGet);
 
 // POST /wallet/earn — earn coins on qualifying cloud save
-app.post('/wallet/earn', async (req, res) => {
+const handleWalletEarn = async (req, res) => {
   try {
     const authResult = await getCloudAuthUser(req, 'wallet_earn');
     if (authResult.error) {
@@ -2529,10 +2542,12 @@ app.post('/wallet/earn', async (req, res) => {
     console.error('[Wallet] Earn error:', error);
     return res.status(500).json({ success: false, message: 'Failed to earn coins' });
   }
-});
+};
+app.post('/wallet/earn', handleWalletEarn);
+app.post('/api/wallet/earn', handleWalletEarn);
 
 // POST /wallet/spend — purchase a pet
-app.post('/wallet/spend', async (req, res) => {
+const handleWalletSpend = async (req, res) => {
   try {
     const authResult = await getCloudAuthUser(req, 'wallet_spend');
     if (authResult.error) {
@@ -2591,10 +2606,12 @@ app.post('/wallet/spend', async (req, res) => {
     console.error('[Wallet] Spend error:', error);
     return res.status(500).json({ success: false, message: 'Failed to purchase pet' });
   }
-});
+};
+app.post('/wallet/spend', handleWalletSpend);
+app.post('/api/wallet/spend', handleWalletSpend);
 
 // POST /pets/equip — equip or unequip a pet
-app.post('/pets/equip', async (req, res) => {
+const handlePetEquip = async (req, res) => {
   try {
     const authResult = await getCloudAuthUser(req, 'pets_equip');
     if (authResult.error) {
@@ -2628,7 +2645,9 @@ app.post('/pets/equip', async (req, res) => {
     console.error('[Pets] Equip error:', error);
     return res.status(500).json({ success: false, message: 'Failed to equip pet' });
   }
-});
+};
+app.post('/pets/equip', handlePetEquip);
+app.post('/api/pets/equip', handlePetEquip);
 
 // Test endpoint to verify API is working
 app.get('/api/test', (req, res) => {
@@ -2636,9 +2655,11 @@ app.get('/api/test', (req, res) => {
 });
 
 // Simple wallet test that doesn't require auth
-app.get('/wallet-test', (req, res) => {
+const handleWalletTest = (req, res) => {
   res.json({ ok: true, wallet: 'working' });
-});
+};
+app.get('/wallet-test', handleWalletTest);
+app.get('/api/wallet-test', handleWalletTest);
 
 // Error handler
 app.use((err, req, res, next) => {

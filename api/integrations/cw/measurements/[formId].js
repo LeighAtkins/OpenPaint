@@ -103,6 +103,53 @@ function stripScopedReferenceSuffix(value) {
     .replace(/__[A-Za-z0-9._-]+$/i, '');
 }
 
+function parseSearchReferenceTuple(searchTerm) {
+  const raw = String(searchTerm || '').trim();
+  if (!raw || !raw.includes(',')) {
+    return {
+      productReference: '',
+      style: '',
+      styleCode: '',
+    };
+  }
+  const [productReference = '', style = '', styleCode = ''] = raw
+    .split(',')
+    .map(part => String(part || '').trim());
+  return {
+    productReference,
+    style,
+    styleCode,
+  };
+}
+
+function isPbReferenceFamily(reference) {
+  const base = stripScopedReferenceSuffix(reference);
+  return /^PB/i.test(String(base || '').trim());
+}
+
+function buildPbReferenceFamily(reference) {
+  const base = stripScopedReferenceSuffix(reference);
+  if (!isPbReferenceFamily(base)) return [];
+  return Array.from(
+    new Set([`${base}__PB`, `${base}__MG`].map(value => String(value || '').trim()).filter(Boolean))
+  );
+}
+
+function isWeReferenceFamily(reference) {
+  const base = stripScopedReferenceSuffix(reference);
+  return /^WE/i.test(String(base || '').trim());
+}
+
+function buildWeReferenceFamily(reference) {
+  const base = stripScopedReferenceSuffix(reference);
+  if (!isWeReferenceFamily(base)) return [];
+  return Array.from(
+    new Set(
+      [`${base}__STD`, `${base}__EXD`].map(value => String(value || '').trim()).filter(Boolean)
+    )
+  );
+}
+
 function getManualReferenceHints(searchTerm) {
   const key = normalizeManualReferenceHintKey(searchTerm);
   const raw = MANUAL_REFERENCE_HINTS.get(key);
@@ -507,19 +554,51 @@ function decodeCwRelayProductId(value) {
 function buildSearchTermVariants(searchTerm) {
   const raw = String(searchTerm || '').trim();
   if (!raw) return [];
+  const tuple = parseSearchReferenceTuple(raw);
   const variants = new Set();
   variants.add(raw);
   variants.add(raw.toUpperCase());
   variants.add(raw.toLowerCase());
 
+  const tupleReference = String(tuple.productReference || '').trim();
+  if (tupleReference) {
+    variants.add(tupleReference);
+    variants.add(tupleReference.toUpperCase());
+    variants.add(tupleReference.toLowerCase());
+    const tupleReferenceBase = stripScopedReferenceSuffix(tupleReference);
+    if (tupleReferenceBase) variants.add(tupleReferenceBase);
+    buildPbReferenceFamily(tupleReference).forEach(ref => {
+      variants.add(ref);
+      variants.add(ref.toUpperCase());
+      variants.add(ref.toLowerCase());
+    });
+    buildWeReferenceFamily(tupleReference).forEach(ref => {
+      variants.add(ref);
+      variants.add(ref.toUpperCase());
+      variants.add(ref.toLowerCase());
+    });
+  }
+
   const noScope = raw.replace(/__[A-Za-z0-9_-]+$/, '');
   if (noScope) variants.add(noScope);
+
+  const noTupleScope = tupleReference ? stripScopedReferenceSuffix(tupleReference) : '';
+  if (noTupleScope) variants.add(noTupleScope);
 
   const lastDashTrimmed = raw.includes('-') ? raw.replace(/-[^-]+$/, '') : '';
   if (lastDashTrimmed) variants.add(lastDashTrimmed);
 
+  const tupleLastDashTrimmed =
+    tupleReference && tupleReference.includes('-') ? tupleReference.replace(/-[^-]+$/, '') : '';
+  if (tupleLastDashTrimmed) variants.add(tupleLastDashTrimmed);
+
   const normalizedWordy = raw.replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim();
   if (normalizedWordy) variants.add(normalizedWordy);
+
+  const tupleWordy = tupleReference
+    ? tupleReference.replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim()
+    : '';
+  if (tupleWordy) variants.add(tupleWordy);
 
   return Array.from(variants).filter(Boolean);
 }
@@ -1344,6 +1423,7 @@ function scoreProductNode(node, searchTerm) {
 
 async function handleProductSearch({ req, res, body, startedAt }) {
   const searchTerm = String(body?.search || body?.query || '').trim();
+  const inferredSearchTuple = parseSearchReferenceTuple(searchTerm);
   const manualHintReferences = getManualReferenceHints(searchTerm);
   const manualHintReferenceBases = Array.from(
     new Set(manualHintReferences.map(stripScopedReferenceSuffix).filter(Boolean))
@@ -1436,10 +1516,12 @@ async function handleProductSearch({ req, res, body, startedAt }) {
     .trim()
     .replace(/\/+$/, '');
 
-  const providedStyle = String(body?.style || '').trim();
-  const providedStyleCode = String(body?.styleCode || body?.style_code || '').trim();
+  const providedStyle = String(body?.style || inferredSearchTuple.style || '').trim();
+  const providedStyleCode = String(
+    body?.styleCode || body?.style_code || inferredSearchTuple.styleCode || ''
+  ).trim();
   const providedProductReference = String(
-    body?.productReference || body?.product_reference || ''
+    body?.productReference || body?.product_reference || inferredSearchTuple.productReference || ''
   ).trim();
   const providedMtAccessToken = String(body?.mtAccessToken || '').trim();
   let autoTokenResult = null;
@@ -1946,6 +2028,12 @@ async function handleProductSearch({ req, res, body, startedAt }) {
     if (providedProductReference) {
       addReferenceCandidate(providedProductReference, 'providedProductReference');
     }
+    buildPbReferenceFamily(providedProductReference || productReference).forEach(ref => {
+      addReferenceCandidate(ref, 'syntheticPbScopedFallback');
+    });
+    buildWeReferenceFamily(providedProductReference || productReference).forEach(ref => {
+      addReferenceCandidate(ref, 'syntheticWeScopedFallback');
+    });
     tupleRowsFromInfo.forEach(row => {
       addReferenceCandidate(row.productReference, 'tupleRowsFromInfo');
     });
@@ -2147,6 +2235,13 @@ async function handleProductSearch({ req, res, body, startedAt }) {
       const [style = '', styleCode = ''] = String(pair || '').split('|');
       pushPair(style, styleCode);
     });
+    if (isPbReferenceFamily(providedProductReference || productReference)) {
+      pushPair('Classic', 'CNRP_PM');
+      pushPair('Minimalist', 'LSKT_SP');
+    }
+    if (isWeReferenceFamily(providedProductReference || productReference)) {
+      pushPair('Original', 'VELC_SP');
+    }
 
     const hasScopedReferences = Array.from(referenceCandidates).some(ref =>
       String(ref).includes('__')

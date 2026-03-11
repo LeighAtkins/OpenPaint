@@ -632,15 +632,9 @@
         } else {
           console.error('[QuickSave] Save all images not loaded yet');
         }
-      } else if (action === 'multiple-no-tags-png') {
+      } else if (action === 'multiple-no-tags') {
         if (typeof window.saveAllImagesNoTags === 'function') {
-          window.saveAllImagesNoTags('png');
-        } else {
-          console.error('[QuickSave] Save all images no-tags exporter not loaded yet');
-        }
-      } else if (action === 'multiple-no-tags-jpg') {
-        if (typeof window.saveAllImagesNoTags === 'function') {
-          window.saveAllImagesNoTags('jpg');
+          window.saveAllImagesNoTags();
         } else {
           console.error('[QuickSave] Save all images no-tags exporter not loaded yet');
         }

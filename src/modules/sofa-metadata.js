@@ -15,6 +15,53 @@ function safeClone(value, fallback = null) {
   }
 }
 
+function normalizeTagTheme(theme) {
+  if (!theme || typeof theme !== 'object') return null;
+  const background = typeof theme.background === 'string' ? theme.background : null;
+  const border = typeof theme.border === 'string' ? theme.border : null;
+  const text = typeof theme.text === 'string' ? theme.text : null;
+  return background && border && text ? { background, border, text } : null;
+}
+
+function createDefaultTagStyleConfig() {
+  return {
+    presets: {
+      lettersOnly: null,
+      lettersNumbers: null,
+      highlight: null,
+    },
+    perTagThemes: {},
+    highlightedTagKeys: [],
+  };
+}
+
+function normalizeTagStyleConfig(input) {
+  const source = input && typeof input === 'object' ? input : {};
+  const presetsSource = source.presets && typeof source.presets === 'object' ? source.presets : {};
+  const highlightedTagKeys = Array.isArray(source.highlightedTagKeys)
+    ? source.highlightedTagKeys.map(value => String(value || '').trim()).filter(Boolean)
+    : [];
+
+  return {
+    presets: {
+      lettersOnly: normalizeTagTheme(presetsSource.lettersOnly),
+      lettersNumbers: normalizeTagTheme(presetsSource.lettersNumbers),
+      highlight: normalizeTagTheme(presetsSource.highlight),
+    },
+    perTagThemes: Object.entries(
+      source.perTagThemes && typeof source.perTagThemes === 'object' ? source.perTagThemes : {}
+    ).reduce((acc, [key, value]) => {
+      const normalizedKey = String(key || '').trim();
+      const normalizedTheme = normalizeTagTheme(value);
+      if (normalizedKey && normalizedTheme) {
+        acc[normalizedKey] = normalizedTheme;
+      }
+      return acc;
+    }, {}),
+    highlightedTagKeys,
+  };
+}
+
 export function createDefaultSofaMetadata() {
   return {
     version: 1,
@@ -46,6 +93,7 @@ export function createDefaultSofaMetadata() {
     tagSize: 20,
     tagSizeByView: {},
     tagColorTheme: null,
+    tagStyleConfig: createDefaultTagStyleConfig(),
     pieceGroups: [],
     imagePartLabels: {},
     photos: [],
@@ -183,16 +231,22 @@ export function normalizeSofaMetadata(input) {
       : {};
   const tagColorTheme =
     source.tagColorTheme && typeof source.tagColorTheme === 'object'
-      ? {
-          background:
-            typeof source.tagColorTheme.background === 'string'
-              ? source.tagColorTheme.background
-              : null,
-          border:
-            typeof source.tagColorTheme.border === 'string' ? source.tagColorTheme.border : null,
-          text: typeof source.tagColorTheme.text === 'string' ? source.tagColorTheme.text : null,
-        }
+      ? normalizeTagTheme(source.tagColorTheme)
       : null;
+  const tagStyleConfig =
+    source.tagStyleConfig && typeof source.tagStyleConfig === 'object'
+      ? normalizeTagStyleConfig(source.tagStyleConfig)
+      : tagColorTheme
+        ? {
+            presets: {
+              lettersOnly: safeClone(tagColorTheme, null),
+              lettersNumbers: safeClone(tagColorTheme, null),
+              highlight: null,
+            },
+            perTagThemes: {},
+            highlightedTagKeys: [],
+          }
+        : safeClone(defaults.tagStyleConfig, createDefaultTagStyleConfig());
   const pieceGroups = Array.isArray(source.pieceGroups) ? safeClone(source.pieceGroups, []) : [];
   const photos = Array.isArray(source.photos) ? safeClone(source.photos, []) : [];
   const imagePartLabels =
@@ -236,6 +290,7 @@ export function normalizeSofaMetadata(input) {
     tagSize,
     tagSizeByView,
     tagColorTheme,
+    tagStyleConfig,
     pieceGroups,
     imagePartLabels,
     naming,

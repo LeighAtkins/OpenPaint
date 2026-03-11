@@ -749,6 +749,17 @@ export class TagManager {
     }
 
     const scopedImageLabel = this.normalizeImageLabel(imageLabel);
+    const scopedStrokeVisibility =
+      this.metadataManager?.strokeVisibilityByImage?.[scopedImageLabel] || {};
+    const scopedLabelVisibility =
+      this.metadataManager?.strokeLabelVisibility?.[scopedImageLabel] || {};
+    const tagVisible =
+      scopedStrokeVisibility[strokeLabel] !== false && scopedLabelVisibility[strokeLabel] !== false;
+    tagGroup.set({
+      visible: tagVisible,
+      evented: tagVisible,
+      selectable: tagVisible,
+    });
 
     // Update connector line when tag moves
     tagGroup.on('moving', () => {
@@ -1240,6 +1251,19 @@ export class TagManager {
       }
     }
 
+    const connectorVisible =
+      tagObj.visible !== false &&
+      connectedStrokeObj.visible !== false &&
+      connectedStrokeObj?.strokeMetadata?.visible !== false &&
+      connectedStrokeObj?.strokeMetadata?.labelVisible !== false;
+    if (connector) {
+      connector.set({
+        visible: connectorVisible,
+        evented: connectorVisible,
+        selectable: connectorVisible,
+      });
+    }
+
     // Request render (debounced by Fabric)
     canvas.requestRenderAll();
   }
@@ -1275,8 +1299,19 @@ export class TagManager {
 
   // Clear all tags (useful when switching views with shared labels like A1)
   clearAllTags() {
-    const keys = Array.from(this.tagObjects.keys());
-    keys.forEach(key => this.removeTag(key));
+    const canvas = this.canvas;
+    if (!canvas) return;
+
+    for (const tagObj of this.tagObjects.values()) {
+      if (!tagObj) continue;
+      if (tagObj.connectorLine) {
+        canvas.remove(tagObj.connectorLine);
+      }
+      canvas.remove(tagObj);
+    }
+
+    this.tagObjects.clear();
+    canvas.requestRenderAll();
   }
 
   renameTagLabel(oldLabel, newLabel, imageLabel) {
@@ -1322,7 +1357,9 @@ export class TagManager {
     }
 
     // Get the updated measurement
-    const measurementString = this.metadataManager.getMeasurementString(imageLabel, strokeLabel);
+    const measurementString = this.metadataManager.getMeasurementString(imageLabel, strokeLabel, {
+      context: 'tag',
+    });
 
     // Only show measurement if showMeasurements is true and measurement exists
     let fullText;
@@ -1678,14 +1715,37 @@ export class TagManager {
 
   // Update tags when stroke visibility changes
   updateTagVisibility(strokeLabel, imageLabel, visible) {
-    const found = this.getTagObject(strokeLabel, imageLabel);
-    if (!found) return;
-    const tagObj = found.tagObj;
-    tagObj.set('visible', visible);
-    if (tagObj.connectorLine) {
-      tagObj.connectorLine.set('visible', visible);
+    imageLabel = this.normalizeImageLabel(imageLabel);
+    const strokeVisible =
+      this.metadataManager?.strokeVisibilityByImage?.[imageLabel]?.[strokeLabel] !== false;
+    const labelVisible =
+      this.metadataManager?.strokeLabelVisibility?.[imageLabel]?.[strokeLabel] !== false;
+    const effectiveVisible = visible !== false && strokeVisible && labelVisible;
+
+    let found = this.getTagObject(strokeLabel, imageLabel);
+    if (!found && effectiveVisible) {
+      const strokeObj = this.metadataManager?.vectorStrokesByImage?.[imageLabel]?.[strokeLabel];
+      if (this.isRenderableStrokeObject(strokeObj)) {
+        this.createTag(strokeLabel, imageLabel, strokeObj);
+        found = this.getTagObject(strokeLabel, imageLabel);
+      }
     }
-    this.canvas.renderAll();
+    if (!found) return;
+
+    const tagObj = found.tagObj;
+    tagObj.set({
+      visible: effectiveVisible,
+      evented: effectiveVisible,
+      selectable: effectiveVisible,
+    });
+    if (tagObj.connectorLine) {
+      tagObj.connectorLine.set({
+        visible: effectiveVisible,
+        evented: effectiveVisible,
+        selectable: effectiveVisible,
+      });
+    }
+    this.canvas?.requestRenderAll();
   }
 
   refreshAllConnectors(imageLabel) {

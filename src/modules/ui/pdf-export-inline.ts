@@ -30,6 +30,38 @@ async function rewardPdfExport(projectName) {
   }
 }
 
+async function rewardImageExport(projectName) {
+  try {
+    const projectManager = window.app?.projectManager;
+    if (!projectManager?.getProjectData) return;
+
+    const projectData = await Promise.race([
+      projectManager.getProjectData({ embedImages: false }),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Image reward project snapshot timed out')), 15000)
+      ),
+    ]);
+
+    const cloudProjectId = cloudSaveService.getCurrentProjectId();
+    const fallbackId = `image:${sanitizeFilenamePart(projectName, 'OpenPaint Project')}`;
+    const reward = await walletService.earnCoins(
+      cloudProjectId || fallbackId,
+      new Date().toISOString(),
+      projectData,
+      'cloud_save'
+    );
+
+    if (!reward.success) return;
+    if (reward.data.earned > 0) {
+      showRewardAchievement(`Images saved. ${reward.data.earned} gems awarded.`);
+    } else {
+      showRewardAchievement(getNoRewardMessage(reward.data.reason));
+    }
+  } catch {
+    // non-critical
+  }
+}
+
 function toBaseViewId(scopeOrViewId) {
   const raw = String(scopeOrViewId || '');
   return raw.split('::tab:')[0] || raw;
@@ -83,6 +115,33 @@ function enforceScopedTabContext(viewId, scopedLabel) {
 
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, Math.max(0, Number(ms) || 0)));
+}
+
+function formatExportMeasurement(measurement, unit) {
+  if (!measurement) return '';
+
+  if (unit === 'inch') {
+    const whole = Number(measurement.inchWhole || 0);
+    const fraction = Number(measurement.inchFraction || 0);
+    if (whole === 0 && fraction === 0) return '';
+
+    const inchFormatter =
+      window.app?.measurementSystem?.formatInchValue ||
+      window.app?.measurementSystem?.formatMeasurement;
+    if (typeof inchFormatter === 'function') {
+      return inchFormatter.call(window.app.measurementSystem, whole, fraction);
+    }
+
+    const total = Number((whole + fraction).toFixed(4));
+    return `${total.toFixed(4).replace(/\.?0+$/, '')}"`;
+  }
+
+  const cm = Number(measurement.cm || 0);
+  if (cm <= 0) return '';
+  const cmFormatter = window.app?.measurementSystem?.formatCentimeterValue;
+  return typeof cmFormatter === 'function'
+    ? cmFormatter.call(window.app.measurementSystem, cm, { decimalPlaces: 1 })
+    : `${cm.toFixed(1).replace(/\.?0+$/, '')} cm`;
 }
 
 async function waitForCanvasRenderStability(canvas, options = {}) {
@@ -912,6 +971,7 @@ export function initPdfExport() {
       return;
     }
     console.log(`[Export] Saving ${viewIds.length} images`);
+    let savedCount = 0;
     for (let i = 0; i < viewIds.length; i++) {
       const viewId = viewIds[i];
       await window.app.projectManager.switchView(viewId);
@@ -938,6 +998,10 @@ export function initPdfExport() {
       ctx.drawImage(canvasEl, left, top, width, height, 0, 0, width, height);
       await new Promise(resolve => {
         tempCanvas.toBlob(blob => {
+          if (!blob) {
+            resolve();
+            return;
+          }
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
           a.href = url;
@@ -945,44 +1009,48 @@ export function initPdfExport() {
           a.download = `${buildImageExportFilename(projectName, imageLabel, i)}.png`;
           a.click();
           URL.revokeObjectURL(url);
+          savedCount += 1;
           resolve();
         });
       });
       await new Promise(resolve => setTimeout(resolve, 200));
     }
+    if (savedCount > 0) {
+      await rewardImageExport(projectName);
+    }
     alert(`Saved ${viewIds.length} images!`);
   };
 
-  const withHiddenTagArtifacts = async (canvas, callback) => {
-    const tagArtifacts = (canvas?.getObjects?.() || []).filter(
-      obj => obj?.isTag || obj?.isConnectorLine
-    );
-    if (!tagArtifacts.length) {
+  const withHiddenCanvasObjects = async (canvas, callback) => {
+    const overlayObjects = canvas?.getObjects?.() || [];
+    if (!overlayObjects.length) {
       return callback();
     }
 
     const previousVisibility = new Map();
-    tagArtifacts.forEach(obj => {
+    overlayObjects.forEach(obj => {
       previousVisibility.set(obj, obj.visible !== false);
       obj.set('visible', false);
     });
     canvas.requestRenderAll();
+    await waitForCanvasRenderStability(canvas);
 
     try {
       return await callback();
     } finally {
-      tagArtifacts.forEach(obj => {
+      overlayObjects.forEach(obj => {
         const previous = previousVisibility.get(obj);
         obj.set('visible', previous !== false);
       });
       canvas.requestRenderAll();
+      await waitForCanvasRenderStability(canvas);
     }
   };
 
-  window.saveAllImagesNoTags = async function (format = 'png') {
-    const normalizedFormat = String(format || 'png').toLowerCase() === 'jpg' ? 'jpg' : 'png';
-    const mimeType = normalizedFormat === 'jpg' ? 'image/jpeg' : 'image/png';
-    const extension = normalizedFormat === 'jpg' ? 'jpg' : 'png';
+  window.saveAllImagesNoTags = async function (format = 'jpg') {
+    const normalizedFormat = 'jpg';
+    const mimeType = 'image/jpeg';
+    const extension = 'jpg';
     const projectName = document.getElementById('projectName')?.value || 'OpenPaint';
     const metadata =
       window.app?.projectManager?.getProjectMetadata?.() || window.projectMetadata || {};
@@ -998,6 +1066,7 @@ export function initPdfExport() {
     console.log(
       `[Export] Saving ${viewIds.length} images without tags as ${extension.toUpperCase()}`
     );
+    let savedCount = 0;
 
     for (let i = 0; i < viewIds.length; i++) {
       const viewId = viewIds[i];
@@ -1011,7 +1080,7 @@ export function initPdfExport() {
         continue;
       }
 
-      await withHiddenTagArtifacts(canvas, async () => {
+      await withHiddenCanvasObjects(canvas, async () => {
         const frameRect = captureFrame.getBoundingClientRect();
         const canvasEl = canvas.lowerCanvasEl;
         const scaleX = canvasEl.width / canvasEl.offsetWidth;
@@ -1030,6 +1099,10 @@ export function initPdfExport() {
         await new Promise(resolve => {
           tempCanvas.toBlob(
             blob => {
+              if (!blob) {
+                resolve();
+                return;
+              }
               const url = URL.createObjectURL(blob);
               const a = document.createElement('a');
               a.href = url;
@@ -1037,15 +1110,20 @@ export function initPdfExport() {
               a.download = `${buildImageExportFilename(projectName, imageLabel, i)}-no-tags.${extension}`;
               a.click();
               URL.revokeObjectURL(url);
+              savedCount += 1;
               resolve();
             },
             mimeType,
-            normalizedFormat === 'jpg' ? 0.92 : undefined
+            0.92
           );
         });
       });
 
       await new Promise(resolve => setTimeout(resolve, 200));
+    }
+
+    if (savedCount > 0) {
+      await rewardImageExport(projectName);
     }
 
     alert(`Saved ${viewIds.length} no-tags images (${extension.toUpperCase()})!`);
@@ -1188,17 +1266,7 @@ export function initPdfExport() {
       ).sort((a, b) => a.localeCompare(b));
       return strokes.map(strokeLabel => {
         const m = measurements[strokeLabel] || {};
-        let value = '';
-        if (currentUnit === 'inch') {
-          const whole = m.inchWhole || 0;
-          const frac = m.inchFraction || 0;
-          value =
-            whole > 0 || frac > 0
-              ? `${whole > 0 ? whole + '"' : ''}${frac > 0 ? ' ' + frac.toFixed(2) + '"' : ''}`.trim()
-              : '';
-        } else {
-          value = m.cm ? `${m.cm.toFixed(1)} cm` : '';
-        }
+        const value = formatExportMeasurement(m, currentUnit);
         return {
           label: strokeLabel,
           value,
@@ -1764,17 +1832,7 @@ export function initPdfExport() {
           if (y < layout.contentBottom + rowH) return; // don't overflow into footer
 
           const m = measurements[strokeLabel] || {};
-          let measurement = '';
-          if (currentUnit === 'inch') {
-            const whole = m.inchWhole || 0;
-            const frac = m.inchFraction || 0;
-            measurement =
-              whole > 0 || frac > 0
-                ? `${whole > 0 ? whole + '"' : ''}${frac > 0 ? ' ' + frac.toFixed(2) + '"' : ''}`.trim()
-                : '';
-          } else {
-            measurement = m.cm ? `${m.cm.toFixed(1)} cm` : '';
-          }
+          const measurement = formatExportMeasurement(m, currentUnit);
 
           // Alternating row background
           if (idx % 2 === 0) {
@@ -1974,17 +2032,7 @@ export function initPdfExport() {
           const rows = [];
           strokes.forEach((strokeLabel, idx) => {
             const m = measurements[strokeLabel] || {};
-            let measurementValue = '';
-            if (currentUnit === 'inch') {
-              const whole = m.inchWhole || 0;
-              const frac = m.inchFraction || 0;
-              measurementValue =
-                whole > 0 || frac > 0
-                  ? `${whole > 0 ? whole + '"' : ''}${frac > 0 ? ' ' + frac.toFixed(2) + '"' : ''}`.trim()
-                  : '';
-            } else {
-              measurementValue = m.cm ? `${m.cm.toFixed(1)} cm` : '';
-            }
+            const measurementValue = formatExportMeasurement(m, currentUnit);
             rows.push({
               strokeLabel,
               measurementValue,

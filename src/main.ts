@@ -107,7 +107,6 @@ import { initCwImportUI } from './modules/ui/cw-import-ui';
 import './modules/ui/toolbar-init.js';
 import './modules/ui/smart-labels.js';
 import './modules/ui/panel-management.js';
-import './modules/ui/capture-frame.js';
 import './modules/ui/image-gallery.js';
 import './modules/utils/transform';
 import './modules/utils/geometry';

@@ -113,6 +113,32 @@ export class FabricControls {
     }
   }
 
+  static bindControlVisibility(object) {
+    if (!object?.on) return;
+
+    if (object.__fabricControlsOnSelected) {
+      object.off('selected', object.__fabricControlsOnSelected);
+    }
+    if (object.__fabricControlsOnDeselected) {
+      object.off('deselected', object.__fabricControlsOnDeselected);
+    }
+
+    object.__fabricControlsOnSelected = () => {
+      object.set('hasControls', true);
+      object.setCoords();
+      object.canvas?.requestRenderAll?.();
+    };
+
+    object.__fabricControlsOnDeselected = () => {
+      object.set('hasControls', false);
+      object.setCoords();
+      object.canvas?.requestRenderAll?.();
+    };
+
+    object.on('selected', object.__fabricControlsOnSelected);
+    object.on('deselected', object.__fabricControlsOnDeselected);
+  }
+
   /**
    * Canonicalizes a curve path from its world-space customPoints.
    * This rebuilds the path geometry, sets proper pathOffset, and positions the object correctly.
@@ -278,7 +304,7 @@ export class FabricControls {
     // Hide standard controls
     line.set({
       hasBorders: false,
-      hasControls: true,
+      hasControls: false,
       cornerSize: 10,
       transparentCorners: false,
       cornerColor: '#ffffff',
@@ -286,6 +312,9 @@ export class FabricControls {
       lockScalingX: true,
       lockScalingY: true,
       lockRotation: true,
+      perPixelTargetFind: true,
+      padding: 8,
+      objectCaching: false,
     });
 
     // Define the position handler for the starting point (x1, y1)
@@ -437,6 +466,8 @@ export class FabricControls {
         render: renderCircleControl,
       }),
     };
+
+    FabricControls.bindControlVisibility(line);
   }
 
   /**
@@ -469,7 +500,7 @@ export class FabricControls {
     // Hide standard controls but enable custom ones
     path.set({
       hasBorders: false,
-      hasControls: true,
+      hasControls: false,
       cornerSize: 12, // Increased from 8 to make controls easier to grab
       transparentCorners: false,
       cornerColor: '#ffffff',
@@ -477,9 +508,13 @@ export class FabricControls {
       lockScalingX: true,
       lockScalingY: true,
       lockRotation: true,
+      perPixelTargetFind: true,
+      padding: 8,
+      objectCaching: false,
     });
 
     path.controls = {};
+    FabricControls.bindControlVisibility(path);
 
     const getCurveAnchorWorldPoint = (fabricObject, pointIndex) => {
       const currentPoint = fabricObject.customPoints?.[pointIndex];

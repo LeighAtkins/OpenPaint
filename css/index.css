@@ -260,9 +260,10 @@
 }
 
 /* Drawing mode toggle styling */
-#drawingModeToggle.straight-mode {
+/* Removed - now handled by shape-active class in index.html */
+/* #drawingModeToggle.straight-mode {
     background-color: var(--ob-signal-soft);
-}
+} */
 #drawingModeToggle.straight-mode::before {
     border-radius: 0;
 }

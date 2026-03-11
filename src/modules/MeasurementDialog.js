@@ -10,6 +10,7 @@ export class MeasurementDialog {
     this.isOpen = false;
     this.previouslyFocusedElement = null;
     this.boundDocumentKeydown = e => this.handleDocumentKeydown(e);
+    this.boundInchDisplayModeChange = () => this.syncDisplayedInchValue();
 
     this.createDialog();
     this.setupEventListeners();
@@ -104,6 +105,47 @@ export class MeasurementDialog {
     document.body.appendChild(overlay);
 
     this.dialogElement = overlay;
+    this.updateInchInputPresentation();
+  }
+
+  updateInchInputPresentation() {
+    if (!this.dialogElement) return;
+    const inchValueInput = this.dialogElement.querySelector('#dialogInchValue');
+    if (!inchValueInput) return;
+    const displayMode = this.measurementSystem.getInchDisplayMode?.() || 'decimal';
+    inchValueInput.placeholder = displayMode === 'fraction' ? '70 5/16' : '70.3125';
+  }
+
+  syncDisplayedInchValue() {
+    if (!this.dialogElement) return;
+
+    const inchValueInput = this.dialogElement.querySelector('#dialogInchValue');
+    const cmValueInput = this.dialogElement.querySelector('#dialogCmValue');
+    if (!inchValueInput || !cmValueInput) return;
+
+    this.updateInchInputPresentation();
+
+    const parsedFromInches = this.measurementSystem.parseMeasurementInput(
+      inchValueInput.value,
+      'inches'
+    );
+
+    if (parsedFromInches) {
+      inchValueInput.value = this.measurementSystem.formatInchInputValue(
+        parsedFromInches.inchWhole,
+        parsedFromInches.inchFraction
+      );
+      return;
+    }
+
+    const cm = parseFloat(cmValueInput.value);
+    if (!Number.isFinite(cm) || cm < 0) return;
+
+    const result = this.measurementSystem.convertFromCm(cm);
+    inchValueInput.value = this.measurementSystem.formatInchInputValue(
+      result.inchWhole,
+      result.inchFraction
+    );
   }
 
   setupEventListeners() {
@@ -118,7 +160,10 @@ export class MeasurementDialog {
     const updateCmFromInch = () => {
       const parsed = this.measurementSystem.parseMeasurementInput(inchValueInput.value, 'inches');
       if (!parsed) return;
-      cmValueInput.value = parsed.cm.toFixed(1);
+      cmValueInput.value = this.measurementSystem.formatCentimeterValue(parsed.cm, {
+        includeUnit: false,
+        decimalPlaces: 1,
+      });
     };
 
     // CM to Inch conversion
@@ -153,6 +198,7 @@ export class MeasurementDialog {
 
     // Keyboard support
     document.addEventListener('keydown', this.boundDocumentKeydown);
+    window.addEventListener('openpaint:inch-display-mode-change', this.boundInchDisplayModeChange);
   }
 
   open(imageLabel, strokeLabel) {
@@ -176,11 +222,16 @@ export class MeasurementDialog {
         measurement.inchWhole,
         measurement.inchFraction
       );
-      cmValueInput.value = measurement.cm.toFixed(1);
+      cmValueInput.value = this.measurementSystem.formatCentimeterValue(measurement.cm, {
+        includeUnit: false,
+        decimalPlaces: 1,
+      });
     } else {
       inchValueInput.value = '0';
       cmValueInput.value = '0.0';
     }
+
+    this.syncDisplayedInchValue();
 
     // Show dialog
     this.dialogElement.setAttribute('aria-hidden', 'false');
@@ -246,8 +297,28 @@ export class MeasurementDialog {
 
   saveMeasurement() {
     const inchValueInput = this.dialogElement.querySelector('#dialogInchValue');
-    const parsed =
-      this.measurementSystem.parseMeasurementInput(inchValueInput.value, 'inches') || null;
+    const cmValueInput = this.dialogElement.querySelector('#dialogCmValue');
+    const activeUnit = this.measurementSystem.getUnit?.() || 'inches';
+    let parsed = null;
+    let exactCm = null;
+
+    if (activeUnit === 'cm' && cmValueInput) {
+      const cm = parseFloat(cmValueInput.value);
+      if (Number.isFinite(cm) && cm >= 0) {
+        const converted = this.measurementSystem.convertFromCm(cm);
+        parsed = {
+          ...converted,
+          cm,
+        };
+        exactCm = cm;
+      }
+    }
+
+    if (!parsed) {
+      parsed = this.measurementSystem.parseMeasurementInput(inchValueInput.value, 'inches') || null;
+      exactCm = parsed?.cm ?? null;
+    }
+
     if (!parsed) {
       inchValueInput.focus();
       inchValueInput.select();
@@ -259,7 +330,8 @@ export class MeasurementDialog {
       this.currentImageLabel,
       this.currentStrokeLabel,
       parsed.inchWhole,
-      parsed.inchFraction
+      parsed.inchFraction,
+      exactCm !== null ? { cmValue: exactCm } : {}
     );
 
     // Update UI if metadataManager has updateStrokeVisibilityControls

@@ -8,8 +8,8 @@ export class ArrowManager {
 
     // Default settings for next line
     this.defaultSettings = {
-      startArrow: false,
-      endArrow: false,
+      startArrow: true,
+      endArrow: true,
       arrowSize: 10,
       arrowStyle: 'hand-2',
       arrowSpread: 1,
@@ -40,48 +40,46 @@ export class ArrowManager {
     const styleSelectTop = document.getElementById('arrowStyleTop');
     const spreadInputTop = document.getElementById('arrowSpreadTop');
     const ghostInputTop = document.getElementById('arrowGhostTop');
+    const bindArrowToggleButton = (button, side) => {
+      if (!button) return;
 
-    if (startBtn) {
-      startBtn.addEventListener(
+      let clickTimer = null;
+      const cancelPendingToggle = () => {
+        if (clickTimer !== null) {
+          clearTimeout(clickTimer);
+          clickTimer = null;
+        }
+      };
+
+      button.addEventListener(
         'click',
         e => {
+          e.preventDefault();
           e.stopImmediatePropagation();
-          this.toggleArrow('start');
+          cancelPendingToggle();
+          clickTimer = setTimeout(() => {
+            clickTimer = null;
+            this.toggleArrow(side);
+          }, 220);
         },
         true
       );
-      startBtn.addEventListener('contextmenu', e => {
+      button.addEventListener('contextmenu', e => {
         e.preventDefault();
         e.stopPropagation();
-        this.openOptionsMenuFromButton(startBtn, optionsMenu);
+        cancelPendingToggle();
+        this.openOptionsMenuFromButton(button, optionsMenu);
       });
-      startBtn.addEventListener('dblclick', e => {
+      button.addEventListener('dblclick', e => {
         e.preventDefault();
         e.stopPropagation();
-        this.openOptionsMenuFromButton(startBtn, optionsMenu);
+        cancelPendingToggle();
+        this.openOptionsMenuFromButton(button, optionsMenu);
       });
-    }
+    };
 
-    if (endBtn) {
-      endBtn.addEventListener(
-        'click',
-        e => {
-          e.stopImmediatePropagation();
-          this.toggleArrow('end');
-        },
-        true
-      );
-      endBtn.addEventListener('contextmenu', e => {
-        e.preventDefault();
-        e.stopPropagation();
-        this.openOptionsMenuFromButton(endBtn, optionsMenu);
-      });
-      endBtn.addEventListener('dblclick', e => {
-        e.preventDefault();
-        e.stopPropagation();
-        this.openOptionsMenuFromButton(endBtn, optionsMenu);
-      });
-    }
+    bindArrowToggleButton(startBtn, 'start');
+    bindArrowToggleButton(endBtn, 'end');
 
     if (optionsBtn && optionsMenu) {
       optionsBtn.classList.add('hidden');

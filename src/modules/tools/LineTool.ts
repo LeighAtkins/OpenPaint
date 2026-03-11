@@ -404,7 +404,9 @@ export class LineTool extends BaseTool {
     this.line.set({
       selectable: true,
       evented: true,
-      perPixelTargetFind: false,
+      perPixelTargetFind: true,
+      padding: 8,
+      objectCaching: false,
     });
 
     // Add custom controls

@@ -11,6 +11,8 @@ const CLOUD_UI_STYLES = /* css */ `
     align-items: center;
     gap: 6px;
     margin-left: 8px;
+    flex: 0 0 auto;
+    flex-wrap: nowrap;
   }
 
   .cloud-save-btn {
@@ -214,6 +216,16 @@ let cloudModalOverlay: HTMLElement | null = null;
 let cloudToolbarGroup: HTMLElement | null = null;
 let unsubscribe: (() => void) | null = null;
 let searchTimeout: ReturnType<typeof setTimeout> | null = null;
+let cloudProjectsCache: Array<{ id: string; name: string; updated_at: string }> = [];
+
+function refreshToolbarLayout(): void {
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      (window as Window & { calculateToolbarMode?: () => void }).calculateToolbarMode?.();
+      window.dispatchEvent(new Event('resize'));
+    });
+  });
+}
 
 function showCloudFeatures(show: boolean): void {
   if (!cloudToolbarGroup) return;
@@ -223,6 +235,8 @@ function showCloudFeatures(show: boolean): void {
   btns.forEach(btn => {
     btn.style.display = show ? 'inline-flex' : 'none';
   });
+  cloudToolbarGroup.style.display = show ? 'flex' : 'none';
+  refreshToolbarLayout();
 }
 
 function formatDate(dateStr: string): string {
@@ -234,34 +248,75 @@ function formatDate(dateStr: string): string {
   });
 }
 
-async function loadProjectsList(search?: string): Promise<void> {
+function clearRenderedProjectCards(listEl: HTMLElement): void {
+  listEl
+    .querySelectorAll('.cloud-project-card, .cloud-error')
+    .forEach(node => node.parentElement?.removeChild(node));
+}
+
+function filterProjectsBySearch(
+  projects: Array<{ id: string; name: string; updated_at: string }>,
+  search?: string
+): Array<{ id: string; name: string; updated_at: string }> {
+  const query = String(search || '')
+    .trim()
+    .toLowerCase();
+  if (!query) return projects.slice();
+
+  return projects.filter(project =>
+    String(project.name || '')
+      .toLowerCase()
+      .includes(query)
+  );
+}
+
+async function loadProjectsList(
+  search?: string,
+  options: { forceRefresh?: boolean } = {}
+): Promise<void> {
   const listEl = document.getElementById('cloudProjectsList');
   const loadingEl = document.getElementById('cloudLoadingState');
   const emptyEl = document.getElementById('cloudEmptyState');
 
   if (!listEl || !loadingEl || !emptyEl) return;
 
+  const shouldRefresh = options.forceRefresh === true || cloudProjectsCache.length === 0;
+
   loadingEl.style.display = 'block';
-  listEl.innerHTML = '';
+  clearRenderedProjectCards(listEl);
   emptyEl.style.display = 'none';
 
-  const result = await cloudSaveService.listProjects(search);
+  let projects = cloudProjectsCache;
+  if (shouldRefresh) {
+    const result = await cloudSaveService.listProjects();
 
-  loadingEl.style.display = 'none';
+    loadingEl.style.display = 'none';
 
-  if (!result.success) {
-    listEl.innerHTML = `<div class="cloud-error">Failed to load projects: ${result.error.message}</div>`;
-    return;
+    if (!result.success) {
+      listEl.insertAdjacentHTML(
+        'beforeend',
+        `<div class="cloud-error">Failed to load projects: ${result.error.message}</div>`
+      );
+      return;
+    }
+
+    cloudProjectsCache = result.data;
+    projects = cloudProjectsCache;
+  } else {
+    loadingEl.style.display = 'none';
   }
 
-  const projects = result.data;
+  const filteredProjects = filterProjectsBySearch(projects, search);
 
-  if (projects.length === 0) {
+  if (filteredProjects.length === 0) {
     emptyEl.style.display = 'block';
+    emptyEl.textContent = String(search || '').trim()
+      ? 'No projects match your search.'
+      : 'No projects found. Save a project to get started!';
     return;
   }
 
-  for (const project of projects) {
+  for (const project of filteredProjects) {
     const card = document.createElement('div');
     card.className = 'cloud-project-card';
 
@@ -376,16 +431,18 @@ async function handleDeleteProject(projectId: string): Promise<void> {
         (window as any).showStatusMessage('Failed to delete: ' + result.error.message, 'error');
       }
       // Card was already removed optimistically — reload list to restore it
-      await loadProjectsList();
+      await loadProjectsList(undefined, { forceRefresh: true });
       return;
     }
+
+    cloudProjectsCache = cloudProjectsCache.filter(project => project.id !== projectId);
 
     if (typeof (window as any).showStatusMessage === 'function') {
       (window as any).showStatusMessage('Project deleted', 'success');
     }
   } catch (error) {
     console.error('[Cloud] Delete error:', error);
-    await loadProjectsList();
+    await loadProjectsList(undefined, { forceRefresh: true });
   }
 }
 
@@ -539,7 +596,7 @@ function openCloudModal(): void {
     searchInput.value = '';
   }
 
-  loadProjectsList();
+  void loadProjectsList('', { forceRefresh: true });
 }
 
 function closeCloudModal(): void {
@@ -655,10 +712,16 @@ export function initCloudUI(): void {
   style.textContent = CLOUD_UI_STYLES;
   document.head.appendChild(style);
 
+  const tbRight = document.getElementById('tbRight');
   const authToolbarGroup = document.getElementById('authToolbarGroup');
-  if (authToolbarGroup) {
+  if (tbRight) {
     cloudToolbarGroup = createCloudToolbarGroup();
-    authToolbarGroup.appendChild(cloudToolbarGroup);
+    cloudToolbarGroup.style.display = 'none';
+    if (authToolbarGroup?.nextSibling) {
+      tbRight.insertBefore(cloudToolbarGroup, authToolbarGroup.nextSibling);
+    } else {
+      tbRight.appendChild(cloudToolbarGroup);
+    }
   }
 
   cloudModalOverlay = createCloudModal();

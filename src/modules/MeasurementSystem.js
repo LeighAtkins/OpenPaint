@@ -5,22 +5,8 @@ export class MeasurementSystem {
   // Constants
   static INCHES_TO_CM = 2.54;
   static FRACTION_VALUES = [
-    0,
-    0.0625,
-    0.125,
-    0.1875,
-    0.25,
-    0.3125,
-    0.375,
-    0.4375,
-    0.5,
-    0.5625,
-    0.625,
-    0.6875,
-    0.75,
-    0.8125,
-    0.875,
-    0.9375,
+    0, 0.0625, 0.125, 0.1875, 0.25, 0.3125, 0.375, 0.4375, 0.5, 0.5625, 0.625, 0.6875, 0.75, 0.8125,
+    0.875, 0.9375,
   ];
   static FRACTION_DISPLAY = {
     0: '0',
@@ -101,26 +87,54 @@ export class MeasurementSystem {
     return `${whole} ${fractionLabel}${suffix}`;
   }
 
-  formatDecimalInches(totalInches, includeUnit = true) {
+  formatDecimalInches(totalInches, includeUnit = true, decimalPlaces = 2) {
     const numericValue = Number(totalInches || 0);
+    const safeDecimalPlaces = Math.max(0, Number(decimalPlaces) || 0);
     const normalized = Number.isFinite(numericValue)
-      ? numericValue.toFixed(4).replace(/\.?0+$/, '')
+      ? numericValue.toFixed(safeDecimalPlaces).replace(/\.?0+$/, '')
       : '0';
     return includeUnit ? `${normalized}"` : normalized;
+  }
+
+  formatInchValue(inchWhole, inchFraction, options = {}) {
+    const includeUnit = options.includeUnit !== false;
+    const mode =
+      options.mode === 'fraction' || options.mode === 'decimal'
+        ? options.mode
+        : this.currentInchDisplayMode;
+    const parts = this.toMeasurementParts(inchWhole, inchFraction);
+
+    if (mode === 'fraction') {
+      return this.formatFractionString(parts.inchWhole, parts.inchFraction, includeUnit);
+    }
+
+    return this.formatDecimalInches(parts.totalInches, includeUnit, options.decimalPlaces);
+  }
+
+  formatCentimeterValue(cmValue, options = {}) {
+    const includeUnit = options.includeUnit !== false;
+    const decimalPlaces = Math.max(0, Number(options.decimalPlaces) || 0);
+    const trimTrailingZeros = options.trimTrailingZeros !== false;
+    const numericValue = Number(cmValue || 0);
+    const formatted = Number.isFinite(numericValue) ? numericValue.toFixed(decimalPlaces) : '0';
+    const normalized = trimTrailingZeros ? formatted.replace(/\.?0+$/, '') : formatted;
+    return includeUnit ? `${normalized} cm` : normalized;
   }
 
   // Format measurement for display
   formatMeasurement(inchWhole, inchFraction, options = {}) {
     const includeUnit = options.includeUnit !== false;
     if (this.currentUnit === 'inches') {
-      const parts = this.toMeasurementParts(inchWhole, inchFraction);
-      if (this.currentInchDisplayMode === 'fraction') {
-        return this.formatFractionString(parts.inchWhole, parts.inchFraction, includeUnit);
-      }
-      return this.formatDecimalInches(parts.totalInches, includeUnit);
+      return this.formatInchValue(inchWhole, inchFraction, { includeUnit });
     } else {
-      const cm = this.convertToCm(inchWhole, inchFraction);
-      return includeUnit ? `${cm.toFixed(1)} cm` : cm.toFixed(1);
+      const cm =
+        typeof options.cmValue === 'number' && Number.isFinite(options.cmValue)
+          ? options.cmValue
+          : this.convertToCm(inchWhole, inchFraction);
+      return this.formatCentimeterValue(cm, {
+        includeUnit,
+        decimalPlaces: options.decimalPlaces ?? 1,
+      });
     }
   }
 
@@ -162,6 +176,8 @@ export class MeasurementSystem {
 
     let totalInches = null;
     const normalizedUnit = unit === 'inch' ? 'inches' : unit;
+    const hasExplicitInchMarker = /(?:"|in|inch|inches)\s*$/i.test(raw);
+    const hasFractionToken = /\d+\s*\/\s*\d+/.test(raw);
 
     const cmMatch = raw.match(/^\s*([\d.]+)\s*(cm|centimeter|centimeters)\s*$/i);
     if (cmMatch?.[1]) {
@@ -175,7 +191,10 @@ export class MeasurementSystem {
       const inchMatch = raw.match(
         /^\s*(?:(\d+)\s+)?(\d+\s*\/\s*\d+|\d+(?:\.\d+)?)\s*(?:"|in|inch|inches)?\s*$/i
       );
-      if (inchMatch) {
+      const shouldTreatAsInches =
+        Boolean(inchMatch) &&
+        (normalizedUnit !== 'cm' || hasExplicitInchMarker || hasFractionToken);
+      if (shouldTreatAsInches && inchMatch) {
         const whole = parseInt(inchMatch[1] || '0', 10) || 0;
         const fractionToken = String(inchMatch[2] || '').replace(/\s+/g, '');
         let fraction = 0;
@@ -227,7 +246,7 @@ export class MeasurementSystem {
   }
 
   formatInchInputValue(inchWhole, inchFraction) {
-    return this.formatFractionString(inchWhole, inchFraction, false);
+    return this.formatInchValue(inchWhole, inchFraction, { includeUnit: false });
   }
 
   // Get formatted measurement string for a stroke
@@ -237,16 +256,21 @@ export class MeasurementSystem {
       return '';
     }
 
-    return this.formatMeasurement(measurement.inchWhole, measurement.inchFraction);
+    return this.formatMeasurement(measurement.inchWhole, measurement.inchFraction, {
+      cmValue: measurement.cm,
+    });
   }
 
   // Set measurement for a stroke
-  setMeasurement(imageLabel, strokeLabel, inchWhole, inchFraction) {
+  setMeasurement(imageLabel, strokeLabel, inchWhole, inchFraction, options = {}) {
     const { inchWhole: whole, inchFraction: fraction } = this.toMeasurementParts(
       inchWhole,
       inchFraction
     );
-    const cm = this.convertToCm(whole, fraction);
+    const cm =
+      typeof options.cmValue === 'number' && Number.isFinite(options.cmValue)
+        ? options.cmValue
+        : this.convertToCm(whole, fraction);
     const measurement = {
       inchWhole: whole,
       inchFraction: fraction,
@@ -281,7 +305,9 @@ export class MeasurementSystem {
 
     for (const [strokeLabel, measurement] of Object.entries(measurements)) {
       if (this.validateMeasurement(measurement)) {
-        const formatted = this.formatMeasurement(measurement.inchWhole, measurement.inchFraction);
+        const formatted = this.formatMeasurement(measurement.inchWhole, measurement.inchFraction, {
+          cmValue: measurement.cm,
+        });
         result.push({
           label: strokeLabel,
           measurement: formatted,

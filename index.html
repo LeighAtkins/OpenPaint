@@ -3448,6 +3448,14 @@
               inches
             </button>
             <button
+              id="inchDisplayToggleBtnSecondary"
+              class="hidden px-2 py-1 text-xs bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+              title="Display inches as decimals"
+              aria-pressed="false"
+            >
+              dec
+            </button>
+            <button
               id="labelShapeToggleBtn"
               class="px-2 py-1 text-xs bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
               title="Toggle tag shape"
@@ -3853,14 +3861,8 @@
               Save Multiple
             </button>
             <button
-              class="block w-full text-left px-3 py-2 text-xs hover:bg-slate-50 transition-colors"
-              data-action="multiple-no-tags-png"
-            >
-              Save Multiple No Tags (PNG)
-            </button>
-            <button
+              data-action="multiple-no-tags"
               class="block w-full text-left px-3 py-2 text-xs hover:bg-slate-50 rounded-b-xl transition-colors"
-              data-action="multiple-no-tags-jpg"
             >
               Save Multiple No Tags (JPG)
             </button>

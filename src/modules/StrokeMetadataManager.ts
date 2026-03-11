@@ -1474,6 +1474,12 @@ export class StrokeMetadataManager {
   parseAndSaveMeasurement(imageLabel, strokeLabel, newString) {
     imageLabel = this.normalizeImageLabel(imageLabel);
     let successfullyParsedAndSaved = false;
+    const activeUnitValue =
+      (document.getElementById('unitSelector') as HTMLSelectElement | null)?.value ||
+      window.app?.currentUnit ||
+      window.app?.measurementSystem?.getUnit?.() ||
+      'inch';
+    const currentUnit = String(activeUnitValue).toLowerCase().startsWith('cm') ? 'cm' : 'inch';
 
     if (!newString && newString !== '0') {
       // Allow "0" to clear/reset measurement
@@ -1555,7 +1561,6 @@ export class StrokeMetadataManager {
 
       // Fallback: use measurement system parser so mixed fractions like "70 5/16" work
       if (totalInches === null && !explicitUnitMatched) {
-        const currentUnit = window.app?.currentUnit || 'inch';
         const parsedViaSystem = window.app?.measurementSystem?.parseMeasurementInput?.(
           newString,
           currentUnit === 'inch' ? 'inches' : 'cm'
@@ -1733,12 +1738,20 @@ export class StrokeMetadataManager {
   }
 
   // Get formatted measurement string
-  getMeasurementString(imageLabel, strokeLabel) {
+  getMeasurementString(imageLabel, strokeLabel, options = {}) {
     imageLabel = this.normalizeImageLabel(imageLabel);
     const measurement = this.getMeasurement(imageLabel, strokeLabel);
     if (!measurement) return '';
 
-    const unit = window.app?.currentUnit || 'inch';
+    const activeUnitValue =
+      (document.getElementById('unitSelector') as HTMLSelectElement | null)?.value ||
+      window.app?.currentUnit ||
+      window.app?.measurementSystem?.getUnit?.() ||
+      'inch';
+    const unit = String(activeUnitValue).toLowerCase().startsWith('cm') ? 'cm' : 'inch';
+    const measurementSystem = window.app?.measurementSystem;
+    const context = options.context === 'tag' ? 'tag' : 'elements';
+    const cmDecimals = context === 'elements' ? 2 : 1;
 
     if (unit === 'inch') {
       const whole = measurement.inchWhole || 0;
@@ -1749,42 +1762,14 @@ export class StrokeMetadataManager {
         return '';
       }
 
-      let fractionStr = '';
-      if (fraction > 0) {
-        const rounded = this.findClosestFraction(fraction);
-        const fractionMap = {
-          0.0625: '1/16',
-          0.125: '1/8',
-          0.1875: '3/16',
-          0.25: '1/4',
-          0.3125: '5/16',
-          0.375: '3/8',
-          0.4375: '7/16',
-          0.5: '1/2',
-          0.5625: '9/16',
-          0.625: '5/8',
-          0.6875: '11/16',
-          0.75: '3/4',
-          0.8125: '13/16',
-          0.875: '7/8',
-          0.9375: '15/16',
-        };
-        if (fractionMap[rounded]) {
-          fractionStr = ' ' + fractionMap[rounded];
-        }
+      if (measurementSystem?.formatInchValue) {
+        return measurementSystem.formatInchValue(whole, fraction, {
+          decimalPlaces: 2,
+        });
       }
 
-      const displayMode = window.app?.currentInchDisplayMode || 'decimal';
-      if (displayMode === 'decimal') {
-        const total = Number((whole + fraction).toFixed(4));
-        const normalized = total.toFixed(4).replace(/\.?0+$/, '');
-        return `${normalized}"`;
-      }
-
-      if (whole === 0) {
-        return `${fractionStr.trim()}"`;
-      }
-      return `${whole}${fractionStr}"`;
+      const total = Number((whole + fraction).toFixed(2));
+      return `${total.toFixed(2).replace(/\.?0+$/, '')}"`;
     } else {
       const cm = measurement.cm || 0;
 
@@ -1793,7 +1778,10 @@ export class StrokeMetadataManager {
         return '';
       }
 
-      return `${cm.toFixed(1)} cm`;
+      const formattedCm = window.app?.measurementSystem?.formatCentimeterValue?.(cm, {
+        decimalPlaces: cmDecimals,
+      });
+      return formattedCm || `${cm.toFixed(cmDecimals).replace(/\.?0+$/, '')} cm`;
     }
   }
 }

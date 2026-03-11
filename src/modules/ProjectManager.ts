@@ -46,6 +46,7 @@ export class ProjectManager {
         canvasData: null,
         metadata: null,
         rotation: 0,
+        backgroundRotation: 0,
         tabs: null,
         viewport: null,
       },
@@ -58,6 +59,7 @@ export class ProjectManager {
         canvasData: null,
         metadata: null,
         rotation: 0,
+        backgroundRotation: 0,
         tabs: null,
         viewport: null,
       },
@@ -70,6 +72,7 @@ export class ProjectManager {
         canvasData: null,
         metadata: null,
         rotation: 0,
+        backgroundRotation: 0,
         tabs: null,
         viewport: null,
       },
@@ -82,6 +85,7 @@ export class ProjectManager {
         canvasData: null,
         metadata: null,
         rotation: 0,
+        backgroundRotation: 0,
         tabs: null,
         viewport: null,
       },
@@ -131,8 +135,16 @@ export class ProjectManager {
       return;
     }
 
-    // If the sidebar DOM has a newer image for this view, prefer it
-    this.syncViewImageFromDom(viewId);
+    // During project hydration the archive data is authoritative. Avoid pulling stale sidebar
+    // DOM state back into the freshly restored view map before the load completes.
+    if (
+      !this.isLoadingProject &&
+      !window.__isLoadingProject &&
+      !this.isHydratingDeferredViews &&
+      !window.__deferredImageHydrationInProgress
+    ) {
+      this.syncViewImageFromDom(viewId);
+    }
 
     // If already on this view, don't clear everything (unless forced)
     if (this.currentViewId === viewId && !force) {
@@ -164,6 +176,7 @@ export class ProjectManager {
       if (window.renderCaptureTabUI) {
         window.renderCaptureTabUI(viewId);
       }
+      this.syncLegacyImageListSelection(viewId);
 
       const liveRotation = this.canvasManager?.getRotationDegrees?.();
       if (typeof liveRotation === 'number') {
@@ -348,10 +361,9 @@ export class ProjectManager {
               window.app.tagManager.clearAllTags();
             }
 
-            // Correct active tab if canvas objects disagree with the saved activeTabId.
-            // This can happen when a PDF export created a duplicate tab state: canvas objects
-            // retain their original scope key, but the saved project may have a newer tab as
-            // active. Find the tab scope that has the most canvas objects and activate it.
+            // Only fall back to the dominant object scope when the saved active tab is missing
+            // or points at master. Real projects can intentionally keep a different active frame
+            // than the one containing most drawn objects.
             if (typeof window.setActiveCaptureTab === 'function') {
               const canvasObjs = this.canvasManager.fabricCanvas?.getObjects() || [];
               const tabCounts: Record<string, number> = {};
@@ -368,7 +380,14 @@ export class ProjectManager {
               if (topEntry) {
                 const dominantTabId = topEntry[0];
                 const curState = window.captureTabsByLabel?.[viewId];
-                if (curState && curState.activeTabId !== dominantTabId) {
+                const activeTabId = String(curState?.activeTabId || '').trim();
+                const activeTab = curState?.tabs?.find?.(tab => tab.id === activeTabId) || null;
+                const shouldRepairActiveTab =
+                  !!curState &&
+                  (!activeTab ||
+                    activeTab.type === 'master' ||
+                    !curState.tabs?.some?.(tab => tab.id === activeTabId));
+                if (shouldRepairActiveTab && activeTabId !== dominantTabId) {
                   window.setActiveCaptureTab(viewId, dominantTabId, { skipSave: true });
                 }
               }
@@ -404,10 +423,6 @@ export class ProjectManager {
             }
           }
 
-          // Restore per-image viewport (zoom/pan) only when tab-scoped viewport is unavailable
-          if (view.viewport && !window.captureTabsByLabel?.[viewId]) {
-            this.canvasManager.setViewportState(view.viewport);
-          }
           resolve();
         });
       });
@@ -417,22 +432,17 @@ export class ProjectManager {
         window.app.metadataManager.clearImageMetadata(viewId);
       }
 
-      // Restore per-image viewport (zoom/pan) only when tab-scoped viewport is unavailable
-      if (view.viewport && !window.captureTabsByLabel?.[viewId]) {
-        this.canvasManager.setViewportState(view.viewport);
-      }
-
       this.historyManager.saveState();
     }
 
-    if (window.applyCaptureFrameForLabel) {
-      window.applyCaptureFrameForLabel(viewId);
-    }
+    this.restoreViewportForView(viewId);
 
     // Mount MOS overlays for the new view
     if (window.app?.measurementOverlayManager) {
       window.app.measurementOverlayManager.mountView(viewId);
     }
+
+    this.syncLegacyImageListSelection(viewId);
 
     const liveRotation = this.canvasManager?.getRotationDegrees?.();
     if (typeof liveRotation === 'number' && this.views[viewId]) {
@@ -472,12 +482,60 @@ export class ProjectManager {
     }
   }
 
+  restoreViewportForView(viewId) {
+    if (!viewId) return;
+
+    if (
+      window.captureTabsByLabel?.[viewId] &&
+      typeof window.applyCaptureFrameForLabel === 'function'
+    ) {
+      window.applyCaptureFrameForLabel(viewId);
+      return;
+    }
+
+    const view = this.views?.[viewId];
+    if (view?.viewport) {
+      this.canvasManager.setViewportState(view.viewport);
+    }
+  }
+
+  syncLegacyImageListSelection(viewId, options = {}) {
+    const imageList = document.getElementById('imageList');
+    if (!imageList || !viewId) return;
+
+    const containers = Array.from(imageList.querySelectorAll('.image-container'));
+    let activeContainer = null;
+
+    containers.forEach(container => {
+      const isActive = container.dataset?.label === viewId;
+      container.classList.toggle('active', isActive);
+      container.classList.toggle('bg-slate-50', isActive);
+      container.classList.toggle('ring-1', isActive);
+      container.classList.toggle('ring-slate-200', isActive);
+      container.setAttribute('aria-selected', isActive ? 'true' : 'false');
+      if (isActive) {
+        activeContainer = container;
+      }
+    });
+
+    if (activeContainer && options.scroll !== false) {
+      window.__imageListProgrammaticScrollUntil = Date.now() + 1000;
+      activeContainer.scrollIntoView({
+        behavior: options.smooth === true ? 'smooth' : 'auto',
+        block: 'center',
+        inline: 'nearest',
+      });
+    }
+  }
+
   saveCurrentViewState() {
     const json = this.canvasManager.toJSON();
     this.stripMosOverlayObjects(json);
     if (this.views[this.currentViewId]) {
       this.views[this.currentViewId].canvasData = json;
       this.views[this.currentViewId].rotation = this.canvasManager.getRotationDegrees();
+      this.views[this.currentViewId].backgroundRotation =
+        this.canvasManager.getBackgroundImageRotationDegrees();
       this.views[this.currentViewId].viewport = this.canvasManager.getViewportState();
       if (window.captureTabsByLabel?.[this.currentViewId]) {
         try {
@@ -577,6 +635,233 @@ export class ProjectManager {
     });
   }
 
+  getLegacyViewIdsFromFlatShape(flatProjectData = {}): string[] {
+    const candidateIds = new Set();
+    const addId = value => {
+      const trimmed = String(value || '').trim();
+      if (!trimmed) return;
+      candidateIds.add(trimmed.split('::tab:')[0]);
+    };
+
+    const addKeys = map => {
+      Object.keys(map || {}).forEach(addId);
+    };
+
+    (flatProjectData.imageLabels || []).forEach(addId);
+    addId(flatProjectData.currentImageLabel);
+    addKeys(flatProjectData.originalImages);
+    addKeys(flatProjectData.strokes);
+    addKeys(flatProjectData.strokeVisibility);
+    addKeys(flatProjectData.strokeSequence);
+    addKeys(flatProjectData.strokeMeasurements);
+    addKeys(flatProjectData.strokeLabelVisibility);
+    addKeys(flatProjectData.customImageNames);
+
+    return Array.from(candidateIds);
+  }
+
+  collectScopedBucketsFromFlatShape(sourceMap, viewId): Record<string, any> {
+    const scoped = {};
+    Object.entries(sourceMap || {}).forEach(([key, value]) => {
+      if (key === viewId || key.startsWith(`${viewId}::tab:`)) {
+        scoped[key] = JSON.parse(JSON.stringify(value || {}));
+      }
+    });
+    return scoped;
+  }
+
+  buildCanvasJSONFromLegacyStrokes(flatProjectData, viewId): any {
+    const scopedStrokeBuckets = this.collectScopedBucketsFromFlatShape(
+      flatProjectData?.strokes,
+      viewId
+    );
+    const scopedSequences = this.collectScopedBucketsFromFlatShape(
+      flatProjectData?.strokeSequence,
+      viewId
+    );
+    const objects = [];
+    const customProps = this.getCanvasCustomProps();
+    const cloneStroke = strokeObj => {
+      if (!strokeObj || typeof strokeObj !== 'object') return null;
+      if (typeof strokeObj.toObject === 'function') {
+        try {
+          return strokeObj.toObject(customProps);
+        } catch (error) {
+          console.warn('[Save] Failed to serialize legacy runtime stroke via toObject', error);
+        }
+      }
+      try {
+        return JSON.parse(JSON.stringify(strokeObj));
+      } catch (error) {
+        console.warn('[Save] Failed to clone legacy stroke object', error);
+        return null;
+      }
+    };
+
+    Object.entries(scopedStrokeBuckets).forEach(([scopeKey, strokeMap]) => {
+      const orderedLabels = Array.isArray(scopedSequences?.[scopeKey])
+        ? scopedSequences[scopeKey]
+        : [];
+      const appended = new Set();
+
+      orderedLabels.forEach(strokeLabel => {
+        const strokeObj = strokeMap?.[strokeLabel];
+        if (!strokeObj || typeof strokeObj !== 'object') return;
+        const clone = cloneStroke(strokeObj);
+        if (!clone) return;
+        clone.strokeMetadata = clone.strokeMetadata || {};
+        clone.strokeMetadata.strokeLabel =
+          clone.strokeMetadata.strokeLabel || String(strokeLabel || '').trim();
+        clone.strokeMetadata.imageLabel = clone.strokeMetadata.imageLabel || scopeKey;
+        if (!clone.imageLabel) {
+          clone.imageLabel = scopeKey;
+        }
+        objects.push(clone);
+        appended.add(strokeLabel);
+      });
+
+      Object.entries(strokeMap || {}).forEach(([strokeLabel, strokeObj]) => {
+        if (appended.has(strokeLabel)) return;
+        if (!strokeObj || typeof strokeObj !== 'object') return;
+        if (strokeObj._placeholder) return;
+        const clone = cloneStroke(strokeObj);
+        if (!clone) return;
+        clone.strokeMetadata = clone.strokeMetadata || {};
+        clone.strokeMetadata.strokeLabel =
+          clone.strokeMetadata.strokeLabel || String(strokeLabel || '').trim();
+        clone.strokeMetadata.imageLabel = clone.strokeMetadata.imageLabel || scopeKey;
+        if (!clone.imageLabel) {
+          clone.imageLabel = scopeKey;
+        }
+        objects.push(clone);
+      });
+    });
+
+    if (!objects.length) return null;
+
+    return {
+      version: '5.3.0',
+      objects,
+      background: '',
+      backgroundImage: null,
+    };
+  }
+
+  buildLegacyViewEntry(flatProjectData, viewId): any {
+    const rawImageUrl = flatProjectData?.originalImages?.[viewId] || null;
+    return {
+      canvasJSON: this.buildCanvasJSONFromLegacyStrokes(flatProjectData, viewId),
+      imageDataURL:
+        typeof rawImageUrl === 'string' && rawImageUrl.startsWith('data:') ? rawImageUrl : null,
+      imageUrl: rawImageUrl,
+      imageAssetPath: null,
+      imageAssetHash: null,
+      imageContentType: null,
+      imageSourceFingerprint: null,
+      rotation: 0,
+      backgroundRotation: 0,
+      fitMode: 'fit-canvas',
+      metadata: {
+        vectorStrokesByImage: this.collectScopedBucketsFromFlatShape(
+          flatProjectData?.strokes,
+          viewId
+        ),
+        strokeVisibilityByImage: this.collectScopedBucketsFromFlatShape(
+          flatProjectData?.strokeVisibility,
+          viewId
+        ),
+        strokeLabelVisibility: this.collectScopedBucketsFromFlatShape(
+          flatProjectData?.strokeLabelVisibility,
+          viewId
+        ),
+        strokeMeasurements: this.collectScopedBucketsFromFlatShape(
+          flatProjectData?.strokeMeasurements,
+          viewId
+        ),
+      },
+      tabs: null,
+      viewport: null,
+    };
+  }
+
+  isLegacyFlatProjectData(projectData = {}): boolean {
+    if (!projectData || typeof projectData !== 'object') return false;
+    if (projectData.views && Object.keys(projectData.views).length) return false;
+    return Boolean(
+      Array.isArray(projectData.imageLabels) ||
+      projectData.currentImageLabel ||
+      Object.keys(projectData.originalImages || {}).length ||
+      Object.keys(projectData.strokes || {}).length ||
+      Object.keys(projectData.strokeMeasurements || {}).length
+    );
+  }
+
+  upgradeLegacyProjectData(projectData = {}): any {
+    const projectName = projectData.projectName || projectData.name || 'OpenPaint Project';
+    const viewIds = this.getLegacyViewIdsFromFlatShape(projectData);
+    const viewOrder = Array.isArray(projectData.imageLabels)
+      ? projectData.imageLabels.filter(id => viewIds.includes(id))
+      : [];
+    const remaining = viewIds.filter(id => !viewOrder.includes(id));
+    const ordered = viewOrder.concat(remaining);
+    const currentViewId =
+      (projectData.currentImageLabel && ordered.includes(projectData.currentImageLabel)
+        ? projectData.currentImageLabel
+        : null) ||
+      ordered[0] ||
+      'front';
+
+    const upgraded = {
+      version: '2.0-fabric',
+      projectName,
+      name: projectName,
+      createdAt: projectData.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      currentViewId,
+      metadata: normalizeSofaMetadata(projectData.metadata),
+      viewOrder: ordered,
+      views: {},
+    };
+
+    ordered.forEach(viewId => {
+      upgraded.views[viewId] = this.buildLegacyViewEntry(projectData, viewId);
+    });
+
+    if (projectData.mosOverlays) {
+      upgraded.mosOverlays = JSON.parse(JSON.stringify(projectData.mosOverlays));
+    }
+
+    return upgraded;
+  }
+
+  buildLegacyRuntimeSnapshot(): any {
+    return {
+      currentImageLabel: this.currentViewId || window.paintApp?.state?.currentImageLabel || null,
+      imageLabels:
+        (Array.isArray(window.orderedImageLabels) && window.orderedImageLabels.length
+          ? window.orderedImageLabels.slice()
+          : window.paintApp?.state?.imageLabels || []) || [],
+      originalImages: window.originalImages || {},
+      strokes: window.vectorStrokesByImage || {},
+      strokeVisibility: window.strokeVisibilityByImage || {},
+      strokeSequence: window.lineStrokesByImage || {},
+      strokeMeasurements: window.strokeMeasurements || {},
+      strokeLabelVisibility: window.strokeLabelVisibility || {},
+      customImageNames: window.customImageNames || {},
+      metadata: this.getProjectMetadata(),
+    };
+  }
+
+  mergeScopedBuckets(...sources): Record<string, any> {
+    const merged = {};
+    sources.forEach(source => {
+      Object.entries(source || {}).forEach(([key, value]) => {
+        merged[key] = JSON.parse(JSON.stringify(value || {}));
+      });
+    });
+    return merged;
+  }
+
   // Add or update an image for a view
   async addImage(viewId, imageUrl, options = {}) {
     const { refreshBackground = true } = options;
@@ -592,6 +877,7 @@ export class ProjectManager {
         canvasData: null,
         metadata: null,
         rotation: 0,
+        backgroundRotation: 0,
         tabs: null,
         viewport: null,
       };
@@ -681,6 +967,8 @@ export class ProjectManager {
           );
 
           let scale = 1;
+          const backgroundRotation =
+            Number(this.views?.[this.currentViewId]?.backgroundRotation) || 0;
 
           // Center based on frame center
           let left = frameLeft + frameWidth / 2;
@@ -721,6 +1009,7 @@ export class ProjectManager {
             top: top,
             scaleX: scale,
             scaleY: scale,
+            angle: ((backgroundRotation % 360) + 360) % 360,
             selectable: false,
             evented: false,
           });
@@ -762,6 +1051,21 @@ export class ProjectManager {
   rotateCurrentView(deltaDegrees) {
     const view = this.views[this.currentViewId];
     if (!view) return;
+    const isMasterUnlocked =
+      document.body.classList.contains('master-view-active') &&
+      document.body.classList.contains('capture-unlocked');
+    if (isMasterUnlocked) {
+      const nextBackgroundRotation = this.canvasManager.rotateBackgroundImageBy(deltaDegrees);
+      view.backgroundRotation = nextBackgroundRotation;
+      this.updateThumbnailRotation(
+        this.currentViewId,
+        Number.isFinite(view.rotation) ? view.rotation : this.canvasManager.getRotationDegrees()
+      );
+      if (typeof window.captureTabsSyncActive === 'function') {
+        window.captureTabsSyncActive(this.currentViewId, { syncRotation: false });
+      }
+      return;
+    }
     const nextRotation = this.canvasManager.rotateCanvasObjects(deltaDegrees);
     view.rotation = nextRotation;
     this.updateThumbnailRotation(this.currentViewId, nextRotation);
@@ -772,7 +1076,11 @@ export class ProjectManager {
   }
 
   updateThumbnailRotation(viewId, rotationDegrees) {
-    const normalized = ((rotationDegrees % 360) + 360) % 360;
+    const baseRotation = Number.isFinite(Number(rotationDegrees))
+      ? Number(rotationDegrees)
+      : Number(this.views?.[viewId]?.rotation) || 0;
+    const backgroundRotation = Number(this.views?.[viewId]?.backgroundRotation) || 0;
+    const normalized = (((baseRotation + backgroundRotation) % 360) + 360) % 360;
     const needsScale = normalized === 90 || normalized === 270;
     const scale = needsScale ? 0.9 : 1;
     const targets = document.querySelectorAll('.image-thumbnail, .image-container');
@@ -1579,7 +1887,11 @@ export class ProjectManager {
       views: {},
     };
 
-    const viewIds = Object.keys(this.views || {});
+    const legacyRuntimeData = this.buildLegacyRuntimeSnapshot();
+    const legacyRuntimeViewIds = this.getLegacyViewIdsFromFlatShape(legacyRuntimeData);
+    const viewIds = Array.from(
+      new Set([...Object.keys(this.views || {}), ...legacyRuntimeViewIds])
+    );
     console.log('[Save] Views to persist:', viewIds);
 
     // Capture view order to preserve gallery order on load
@@ -1621,15 +1933,17 @@ export class ProjectManager {
 
     await runWithConcurrency(viewIds, persistConcurrency, async viewId => {
       const view = this.views[viewId] || {};
+      const legacyEntry = this.buildLegacyViewEntry(legacyRuntimeData, viewId);
       const entry = {
         canvasJSON: null,
         imageDataURL: null,
-        imageUrl: view.image || null,
+        imageUrl: view.image || legacyEntry.imageUrl || null,
         imageAssetPath: null,
         imageAssetHash: view.imageAssetHash || null,
         imageContentType: view.imageContentType || null,
         imageSourceFingerprint: view.imageSourceFingerprint || null,
         rotation: 0,
+        backgroundRotation: 0,
         fitMode: typeof view.fitMode === 'string' ? view.fitMode : 'fit-canvas',
         metadata: {},
         tabs: null,
@@ -1638,7 +1952,7 @@ export class ProjectManager {
       if (viewId === this.currentViewId && fabricCanvas) {
         entry.canvasJSON = fabricCanvas.toJSON(customProps);
       } else {
-        entry.canvasJSON = view.canvasData || null;
+        entry.canvasJSON = view.canvasData || legacyEntry.canvasJSON || null;
       }
       this.stripMosOverlayObjects(entry.canvasJSON);
 
@@ -1685,36 +1999,61 @@ export class ProjectManager {
           typeof source === 'string' && source.startsWith('r2://') ? '' : source;
       }
 
-      if (metadataManager) {
-        entry.metadata = {
-          vectorStrokesByImage: this.collectScopedMetadataBuckets(
-            metadataManager.vectorStrokesByImage,
-            viewId
-          ),
-          strokeVisibilityByImage: this.collectScopedMetadataBuckets(
-            metadataManager.strokeVisibilityByImage,
-            viewId
-          ),
-          strokeLabelVisibility: this.collectScopedMetadataBuckets(
-            metadataManager.strokeLabelVisibility,
-            viewId
-          ),
-          strokeMeasurements: this.collectScopedMetadataBuckets(
-            metadataManager.strokeMeasurements,
-            viewId
-          ),
-        };
-      } else if (view.metadata) {
-        entry.metadata = deepClone(view.metadata);
-      }
+      const liveMetadata = metadataManager
+        ? {
+            vectorStrokesByImage: this.collectScopedMetadataBuckets(
+              metadataManager.vectorStrokesByImage,
+              viewId
+            ),
+            strokeVisibilityByImage: this.collectScopedMetadataBuckets(
+              metadataManager.strokeVisibilityByImage,
+              viewId
+            ),
+            strokeLabelVisibility: this.collectScopedMetadataBuckets(
+              metadataManager.strokeLabelVisibility,
+              viewId
+            ),
+            strokeMeasurements: this.collectScopedMetadataBuckets(
+              metadataManager.strokeMeasurements,
+              viewId
+            ),
+          }
+        : null;
+      entry.metadata = {
+        vectorStrokesByImage: this.mergeScopedBuckets(
+          legacyEntry.metadata?.vectorStrokesByImage,
+          view.metadata?.vectorStrokesByImage,
+          liveMetadata?.vectorStrokesByImage
+        ),
+        strokeVisibilityByImage: this.mergeScopedBuckets(
+          legacyEntry.metadata?.strokeVisibilityByImage,
+          view.metadata?.strokeVisibilityByImage,
+          liveMetadata?.strokeVisibilityByImage
+        ),
+        strokeLabelVisibility: this.mergeScopedBuckets(
+          legacyEntry.metadata?.strokeLabelVisibility,
+          view.metadata?.strokeLabelVisibility,
+          liveMetadata?.strokeLabelVisibility
+        ),
+        strokeMeasurements: this.mergeScopedBuckets(
+          legacyEntry.metadata?.strokeMeasurements,
+          view.metadata?.strokeMeasurements,
+          liveMetadata?.strokeMeasurements
+        ),
+      };
 
-      entry.tabs = deepClone(window.captureTabsByLabel?.[viewId] || view.tabs);
+      entry.tabs = deepClone(window.captureTabsByLabel?.[viewId] || view.tabs || legacyEntry.tabs);
 
       if (viewId === this.currentViewId) {
         const liveRotation = this.canvasManager?.getRotationDegrees?.();
         entry.rotation = Number.isFinite(liveRotation) ? liveRotation : Number(view.rotation) || 0;
+        const liveBackgroundRotation = this.canvasManager?.getBackgroundImageRotationDegrees?.();
+        entry.backgroundRotation = Number.isFinite(liveBackgroundRotation)
+          ? liveBackgroundRotation
+          : Number(view.backgroundRotation) || 0;
       } else {
         entry.rotation = Number(view.rotation) || 0;
+        entry.backgroundRotation = Number(view.backgroundRotation) || 0;
       }
 
       // Persist per-image viewport (zoom/pan) so framing is restored on load
@@ -2099,7 +2438,10 @@ export class ProjectManager {
     }
 
     const manifestText = await manifestFile.async('string');
-    const projectData = JSON.parse(manifestText);
+    const parsed = JSON.parse(manifestText);
+    const projectData = this.isLegacyFlatProjectData(parsed)
+      ? this.upgradeLegacyProjectData(parsed)
+      : parsed;
     this.activeArchiveZip = zip;
 
     return projectData;
@@ -2123,6 +2465,12 @@ export class ProjectManager {
     if (!viewData) return null;
     if (viewData.imageDataURL) return viewData.imageDataURL;
 
+    const cloudManager = window.app?.cloudProjectManager;
+    const cloudProjectId =
+      typeof cloudManager?.getActiveProjectId === 'function'
+        ? cloudManager.getActiveProjectId()
+        : undefined;
+
     const legacyBackgroundSrc =
       viewData?.canvasJSON?.backgroundImage &&
       typeof viewData.canvasJSON.backgroundImage.src === 'string'
@@ -2137,8 +2485,20 @@ export class ProjectManager {
     }
 
     if (typeof viewData.imageUrl === 'string' && viewData.imageUrl.startsWith('blob:')) {
-      console.warn('[Load] Ignoring legacy blob image URL from saved project');
-      return null;
+      if (
+        viewData.imageAssetHash &&
+        typeof cloudManager?.resolveCloudAssetToObjectUrl === 'function'
+      ) {
+        const objectUrl = await cloudManager.resolveCloudAssetToObjectUrl(
+          viewData.imageAssetHash,
+          cloudProjectId
+        );
+        if (objectUrl && !this.loadedProjectObjectUrls.includes(objectUrl)) {
+          this.loadedProjectObjectUrls.push(objectUrl);
+        }
+        return objectUrl || viewData.imageUrl;
+      }
+      return viewData.imageUrl;
     }
 
     const imageUrlR2Key = this.extractR2ObjectKeyFromUrl(viewData.imageUrl);
@@ -2148,15 +2508,28 @@ export class ProjectManager {
 
     if (typeof viewData.imageUrl === 'string' && viewData.imageUrl.startsWith('cloud-asset://')) {
       const hash = String(viewData.imageUrl).replace('cloud-asset://', '').trim();
-      const cloudManager = window.app?.cloudProjectManager;
       if (hash && typeof cloudManager?.resolveCloudAssetToObjectUrl === 'function') {
-        const objectUrl = await cloudManager.resolveCloudAssetToObjectUrl(hash);
+        const objectUrl = await cloudManager.resolveCloudAssetToObjectUrl(hash, cloudProjectId);
         if (objectUrl && !this.loadedProjectObjectUrls.includes(objectUrl)) {
           this.loadedProjectObjectUrls.push(objectUrl);
         }
         return objectUrl || null;
       }
       return null;
+    }
+
+    if (
+      viewData.imageAssetHash &&
+      typeof cloudManager?.resolveCloudAssetToObjectUrl === 'function'
+    ) {
+      const objectUrl = await cloudManager.resolveCloudAssetToObjectUrl(
+        viewData.imageAssetHash,
+        cloudProjectId
+      );
+      if (objectUrl && !this.loadedProjectObjectUrls.includes(objectUrl)) {
+        this.loadedProjectObjectUrls.push(objectUrl);
+      }
+      if (objectUrl) return objectUrl;
     }
 
     const archivePath = viewData.imageAssetPath || viewData.imageUrl;
@@ -2181,13 +2554,19 @@ export class ProjectManager {
 
   async loadProjectFromData(projectData) {
     try {
-      console.log('[Load] Loading project from data:', projectData.projectName || projectData.name);
+      const normalizedProjectData = this.isLegacyFlatProjectData(projectData)
+        ? this.upgradeLegacyProjectData(projectData)
+        : projectData;
+      console.log(
+        '[Load] Loading project from data:',
+        normalizedProjectData.projectName || normalizedProjectData.name
+      );
 
       this.showStatusMessage('Loading cloud project...', 'info');
       this.showProjectLoadOverlay('Loading cloud project...');
       this.revokeLoadedProjectObjectUrls();
 
-      await this._restoreFromProjectData(projectData);
+      await this._restoreFromProjectData(normalizedProjectData);
     } catch (error) {
       console.error('[Load] Failed to load project from data:', error);
       this.showStatusMessage('Failed to load project: ' + error.message, 'error');
@@ -2272,6 +2651,14 @@ export class ProjectManager {
         console.log('[Load] Cleared image gallery');
       }
 
+      const legacyImageList = document.getElementById('imageList');
+      if (legacyImageList) {
+        legacyImageList.innerHTML = '';
+        console.log('[Load] Cleared legacy image list');
+      }
+      window.orderedImageLabels = [];
+      window.__initialGallerySyncDone = false;
+
       const useRegistry =
         typeof imageRegistry?.isEnabled === 'function' && imageRegistry.isEnabled();
       if (useRegistry) {
@@ -2304,7 +2691,7 @@ export class ProjectManager {
       }
 
       console.log('[Load] Loading views:', orderedViewIds);
-      const targetView = projectData.currentViewId || orderedViewIds[0];
+      const targetView = projectData.currentViewId || orderedViewIds[0] || null;
       const debugFirstViewState = stage => {
         if (!targetView || this.currentViewId !== targetView) return;
         const tabs = window.captureTabsByLabel?.[targetView] || null;
@@ -2361,6 +2748,7 @@ export class ProjectManager {
           imageContentType: viewData.imageContentType || null,
           imageSourceFingerprint: viewData.imageSourceFingerprint || null,
           rotation: Number(viewData.rotation) || 0,
+          backgroundRotation: Number(viewData.backgroundRotation) || 0,
           fitMode: typeof viewData.fitMode === 'string' ? viewData.fitMode : 'fit-canvas',
           canvasData: viewData.canvasJSON,
           metadata: viewData.metadata || {},
@@ -2451,6 +2839,7 @@ export class ProjectManager {
           }
         };
         setTimeout(() => syncGalleryToView(0), 100);
+        setTimeout(() => this.syncLegacyImageListSelection(targetView, { scroll: true }), 120);
       }
 
       const hydrateDeferredImages = async () => {

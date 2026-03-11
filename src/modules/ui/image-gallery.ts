@@ -308,7 +308,12 @@
     } catch (e) {
       console.warn('[Gallery] Failed to update orderedImageLabels after add:', e);
     }
-    if (!window.__initialGallerySyncDone && imageGalleryData.length === 1) {
+    if (
+      !window.__initialGallerySyncDone &&
+      imageGalleryData.length === 1 &&
+      !window.__isLoadingProject &&
+      !window.__deferredImageHydrationInProgress
+    ) {
       window.__initialGallerySyncDone = true;
       navigateToImage(0);
       console.log('[Gallery] Auto-selected first image');
@@ -747,6 +752,7 @@
     if (imageDots) imageDots.innerHTML = '';
 
     imageGalleryData = [];
+    window.orderedImageLabels = [];
     currentImageIndex = 0;
     updateGalleryControls();
   }
@@ -774,7 +780,12 @@
   // Legacy compatibility
   window.addImageToGallery = addImageToGallery;
   window.addImageToGalleryCompat = function addImageToGalleryCompat(imageData) {
-    const index = imageGalleryData.length;
+    const label = imageData?.original?.label || imageData?.label || imageData?.name || '';
+    const existingIndex = imageGalleryData.findIndex(item => {
+      const existingLabel = item?.original?.label || item?.label || item?.name || '';
+      return Boolean(label) && existingLabel === label;
+    });
+    const index = existingIndex >= 0 ? existingIndex : imageGalleryData.length;
     addImageToGallery(imageData, index);
   };
 

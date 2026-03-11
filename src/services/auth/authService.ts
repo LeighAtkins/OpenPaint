@@ -61,6 +61,27 @@ export class AuthService {
   private currentUser: AuthUser | null = null;
   private sessionListeners: Array<(user: AuthUser | null) => void> = [];
   private initialized = false;
+  private suppressSessionRestoreUntil = 0;
+  private signOutInFlight = false;
+
+  private clearPersistedSession(): void {
+    if (typeof window === 'undefined') return;
+    try {
+      const storageTargets = [window.localStorage, window.sessionStorage].filter(Boolean);
+      storageTargets.forEach(storage => {
+        const keysToRemove = Object.keys(storage).filter(
+          key =>
+            key.startsWith('sb-') ||
+            key.includes('supabase.auth') ||
+            key.includes('auth-token') ||
+            key.includes('code-verifier')
+        );
+        keysToRemove.forEach(key => storage.removeItem(key));
+      });
+    } catch (error) {
+      console.warn('[Auth] Failed to clear persisted session:', error);
+    }
+  }
 
   /**
    * Build a basic AuthUser from a Supabase User (no profile query needed)
@@ -255,42 +276,65 @@ export class AuthService {
   /**
    * Set up auth state change listener
    */
+  private async handleAuthStateChange(
+    event: AuthChangeEvent,
+    session: Session | null
+  ): Promise<void> {
+    const shouldSuppressRestore =
+      this.signOutInFlight &&
+      Date.now() < this.suppressSessionRestoreUntil &&
+      event !== 'SIGNED_OUT';
+
+    if (shouldSuppressRestore) {
+      return;
+    }
+
+    try {
+      switch (event) {
+        case 'INITIAL_SESSION':
+        case 'SIGNED_IN':
+          if (session?.user) {
+            await this.setCurrentUser(session.user);
+          }
+          break;
+
+        case 'SIGNED_OUT':
+          this.currentUser = null;
+          this.signOutInFlight = false;
+          this.suppressSessionRestoreUntil = 0;
+          this.notifySessionListeners(null);
+          break;
+
+        case 'TOKEN_REFRESHED':
+          break;
+
+        case 'USER_UPDATED':
+          if (session?.user) {
+            await this.setCurrentUser(session.user);
+          }
+          break;
+      }
+    } catch (error) {
+      console.error('[Auth] Auth state listener error:', error);
+      // Last resort: if we have a session user, set basic data
+      if (
+        !shouldSuppressRestore &&
+        (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') &&
+        session?.user &&
+        !this.currentUser
+      ) {
+        this.currentUser = this.buildBasicUser(session.user);
+        this.notifySessionListeners(this.currentUser);
+      }
+    }
+  }
+
   private setupAuthListener(client: SupabaseClient<Database>): void {
-    client.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session | null) => {
+    client.auth.onAuthStateChange((event: AuthChangeEvent, session: Session | null) => {
       try {
-        switch (event) {
-          case 'INITIAL_SESSION':
-          case 'SIGNED_IN':
-            if (session?.user) {
-              await this.setCurrentUser(session.user);
-            }
-            break;
-
-          case 'SIGNED_OUT':
-            this.currentUser = null;
-            this.notifySessionListeners(null);
-            break;
-
-          case 'TOKEN_REFRESHED':
-            break;
-
-          case 'USER_UPDATED':
-            if (session?.user) {
-              await this.setCurrentUser(session.user);
-            }
-            break;
-        }
+        void this.handleAuthStateChange(event, session);
       } catch (error) {
         console.error('[Auth] Auth state listener error:', error);
-        // Last resort: if we have a session user, set basic data
-        if (
-          (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') &&
-          session?.user &&
-          !this.currentUser
-        ) {
-          this.currentUser = this.buildBasicUser(session.user);
-          this.notifySessionListeners(this.currentUser);
-        }
       }
     });
   }
@@ -507,30 +551,49 @@ export class AuthService {
    * Sign out the current user
    */
   async signOut(): Promise<Result<boolean, AppError>> {
+    if (this.signOutInFlight) {
+      return Result.ok(true);
+    }
+
+    this.signOutInFlight = true;
+    this.suppressSessionRestoreUntil = Date.now() + 5000;
+
+    let signOutError: AppError | null = null;
     try {
       const client = this.getClientSync();
       if (!client) {
-        return Result.err(
-          new AppError(ErrorCode.SUPABASE_NOT_CONFIGURED, 'Supabase client not available')
+        signOutError = new AppError(
+          ErrorCode.SUPABASE_NOT_CONFIGURED,
+          'Supabase client not available'
         );
+      } else {
+        await client.auth.stopAutoRefresh().catch(error => {
+          console.warn('[Auth] Failed to stop auto-refresh during sign-out:', error);
+        });
+        const { error } = await client.auth.signOut({ scope: 'local' });
+        if (error) {
+          signOutError = this.mapAuthError(error);
+        }
       }
-
-      const { error } = await client.auth.signOut();
-      if (error) {
-        return Result.err(this.mapAuthError(error));
-      }
-
-      this.currentUser = null;
-      this.notifySessionListeners(null);
-      return Result.ok(true);
     } catch (error) {
-      return Result.err(
-        new AppError(
-          ErrorCode.AUTH_ERROR,
-          `Sign out failed: ${error instanceof Error ? error.message : 'Unknown error'}`
-        )
+      signOutError = new AppError(
+        ErrorCode.AUTH_ERROR,
+        `Sign out failed: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
     }
+
+    this.clearPersistedSession();
+    if (typeof window !== 'undefined') {
+      window.setTimeout(() => this.clearPersistedSession(), 150);
+    }
+    this.currentUser = null;
+    this.notifySessionListeners(null);
+
+    if (signOutError) {
+      console.warn('[Auth] Proceeding with local sign-out despite Supabase error:', signOutError);
+    }
+
+    return Result.ok(true);
   }
 
   /**

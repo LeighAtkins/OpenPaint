@@ -1,3 +1,5 @@
+import { parseSvgMeasurements, createCoordinateTransformer } from './svg-measurement-parser.js';
+
 const HOTKEY = 'Backslash';
 const VIEWS = ['front', 'back', 'side'];
 const FLASH_DURATION_MS = 1200;
@@ -2015,6 +2017,200 @@ async function applyGuideAsBackground(code, view) {
   setStatusMessage(`Loaded ${code} ${String(view).toUpperCase()} as background.`, 'success');
 }
 
+/**
+ * Import measurement lines from SVG guide and convert to OpenPaint vectors
+ * @param {string} code - Guide code
+ * @param {string} view - View (front/back/side)
+ * @param {string} imageLabel - Target image label
+ * @returns {Promise<Object>} Import result
+ */
+async function importSvgMeasurements(code, view, imageLabel) {
+  try {
+    console.log(`[SVG Import] Starting import for ${code}-${view} to image ${imageLabel}`);
+
+    // Check if we're currently viewing the target image
+    const currentView = window.app?.projectManager?.currentViewId;
+    console.log(`[SVG Import] Current view: ${currentView}, target: ${imageLabel}`);
+    // TEMPORARILY DISABLED: View check to test import
+    // if (currentView !== imageLabel) {
+    //   console.log(`[SVG Import] Skipping - not viewing target image`);
+    //   return { success: true, imported: 0, skipped: true };
+    // }
+
+    // Fetch raw SVG
+    console.log(`[SVG Import] Fetching SVG from ${buildGuideUrl(code, view)}`);
+    const response = await fetch(buildGuideUrl(code, view), { method: 'GET' });
+    if (!response.ok) {
+      console.warn(`[SVG Import] Failed to fetch SVG: ${response.status}`);
+      return { success: false, imported: 0 };
+    }
+
+    const svgText = await response.text();
+    console.log(`[SVG Import] Fetched SVG, length: ${svgText.length}`);
+
+    const parsed = parseSvgMeasurements(svgText);
+    console.log(
+      `[SVG Import] Parsed ${parsed.totalMeasurements} measurements:`,
+      parsed.measurements.map(m => m.label)
+    );
+
+    if (!parsed || !parsed.measurements || parsed.measurements.length === 0) {
+      console.log('No measurements found in SVG');
+      return { success: true, imported: 0 };
+    }
+
+    // Get canvas and image dimensions for coordinate transformation
+    const canvas = window.app?.canvasManager?.fabricCanvas;
+    console.log(`[SVG Import] Canvas available:`, !!canvas);
+    if (!canvas) {
+      console.warn('[SVG Import] Canvas not available for measurement import');
+      return { success: false, imported: 0 };
+    }
+
+    const bgImage = canvas.backgroundImage;
+    console.log(
+      `[SVG Import] Background image:`,
+      bgImage ? `${bgImage.width}x${bgImage.height}` : 'null'
+    );
+    if (!bgImage) {
+      console.warn('[SVG Import] Background image not loaded yet for measurement import');
+      return { success: false, imported: 0 };
+    }
+
+    const canvasSize = {
+      width: bgImage.width || canvas.width,
+      height: bgImage.height || canvas.height,
+    };
+
+    // Create coordinate transformer (pass bgImage for precise alignment)
+    const transform = createCoordinateTransformer(parsed.dimensions, canvasSize, bgImage);
+
+    // Import each measurement as a line stroke
+    const imported = [];
+    const metadataManager = window.app?.metadataManager;
+
+    for (const measurement of parsed.measurements) {
+      for (const line of measurement.lines) {
+        // Transform coordinates from SVG space to canvas space
+        const start = transform(line.x1, line.y1);
+        const end = transform(line.x2, line.y2);
+
+        // Create Fabric.js line object
+        const fabricLine = new fabric.Line([start.x, start.y, end.x, end.y], {
+          stroke: '#ef4444', // Red color for guide measurements
+          strokeWidth: 2,
+          strokeDashArray: null,
+          selectable: true,
+          evented: true,
+          originX: 'center',
+          originY: 'center',
+        });
+
+        // Add arrow settings (triangular arrows on both ends)
+        fabricLine.arrowSettings = {
+          startArrow: true,
+          endArrow: true,
+          arrowSize: 15,
+          arrowStyle: 'triangular',
+          arrowSpread: 1,
+          ghostBaseline: true,
+        };
+
+        // Disable object caching for proper arrow rendering
+        fabricLine.objectCaching = false;
+
+        // Apply arrow rendering - patches the _render method to draw arrows
+        if (window.app?.arrowManager) {
+          window.app.arrowManager.attachArrowRendering(fabricLine);
+          window.app.arrowManager.syncArrowMetadata(fabricLine);
+        }
+
+        // Add custom metadata
+        fabricLine.customData = {
+          type: 'line',
+          imageLabel,
+          strokeLabel: measurement.label,
+          source: 'guide-import',
+          guideCode: code,
+          guideView: view,
+        };
+
+        // Add to canvas
+        canvas.add(fabricLine);
+
+        // Register in metadata manager (handles all metadata setup internally)
+        if (metadataManager) {
+          metadataManager.attachMetadata(fabricLine, imageLabel, measurement.label);
+        }
+
+        // Create tag using TagManager with connector color matching the line
+        if (window.app?.tagManager) {
+          setTimeout(() => {
+            const tagManager = window.app.tagManager;
+
+            // Set connector to match the line color and use square tags
+            tagManager.connectorColor = fabricLine.stroke || '#ef4444';
+            tagManager.connectorMatchesLine = true;
+            tagManager.tagShape = 'square';
+
+            // Also update paintApp state so button syncs correctly
+            if (window.paintApp?.state) {
+              window.paintApp.state.labelShape = 'square';
+            }
+
+            // Create the tag with these settings
+            tagManager.createTagForStroke(measurement.label, imageLabel, fabricLine);
+          }, 50);
+        }
+
+        imported.push({
+          label: measurement.label,
+          line: fabricLine,
+        });
+
+        console.log(`Imported measurement ${measurement.label} from guide ${code}`);
+      }
+    }
+
+    // Render canvas
+    canvas.renderAll();
+
+    // Update UI buttons to reflect import settings
+    setTimeout(() => {
+      // Sync connector tone button
+      const connectorToneBtn = document.getElementById('connectorToneBtn');
+      if (connectorToneBtn) {
+        connectorToneBtn.textContent = 'Connector: Same as Line';
+      }
+
+      // Sync label shape button
+      const labelShapeBtn = document.getElementById('labelShapeToggleBtn');
+      if (labelShapeBtn) {
+        labelShapeBtn.textContent = '■';
+        labelShapeBtn.setAttribute('aria-pressed', 'true');
+      }
+    }, 300);
+
+    // Trigger any necessary updates
+    if (typeof window.updateUI === 'function') {
+      window.updateUI();
+    }
+
+    return {
+      success: true,
+      imported: imported.length,
+      measurements: imported,
+    };
+  } catch (error) {
+    console.error('Failed to import SVG measurements:', error);
+    return {
+      success: false,
+      imported: 0,
+      error: error.message,
+    };
+  }
+}
+
 async function addGuideAsNewImage(code, view, options = {}) {
   const manager = window.app?.projectManager || window.projectManager;
   if (!manager || typeof manager.addImage !== 'function') {
@@ -2080,12 +2276,51 @@ async function addGuideAsNewImage(code, view, options = {}) {
       }
     }
   }
-
   saveGuideCodes([code], label);
   tagGuideOnView(label, code, view);
   const selection = upsertModelSelection(code, view);
   if (selection) {
     linkSelectionToImage(selection.id, label);
+  }
+
+  // Switch view if requested
+  if (options.switchToNew === true && typeof manager.switchView === 'function') {
+    await manager.switchView(label, true);
+  }
+
+  // Import SVG measurements as vector strokes
+  // Wait a moment for background image to fully load and render
+  if (options.importMeasurements !== false) {
+    console.log(`[addGuideAsNewImage] Scheduling measurement import for ${code}-${view}`);
+    // Use a Promise to allow proper async handling
+    const importPromise = new Promise(resolve => {
+      setTimeout(async () => {
+        try {
+          console.log(`[addGuideAsNewImage] Executing measurement import after delay`);
+          const importResult = await importSvgMeasurements(code, view, label);
+          console.log(`[addGuideAsNewImage] Import result:`, importResult);
+          if (importResult.success && importResult.imported > 0) {
+            console.log(
+              `Successfully imported ${importResult.imported} measurements from guide ${code}`
+            );
+            if (typeof setStatusMessage === 'function') {
+              setStatusMessage(`Added guide with ${importResult.imported} measurements`, 'success');
+            }
+          } else if (!importResult.success) {
+            console.warn(`[addGuideAsNewImage] Import failed:`, importResult.error);
+          }
+          resolve(importResult);
+        } catch (error) {
+          console.error('[addGuideAsNewImage] Exception during import:', error);
+          resolve({ success: false, error: error.message });
+        }
+      }, 1500); // Give background time to render (increased for debugging)
+    });
+
+    // Don't await - let it run in background so UI isn't blocked
+    importPromise.catch(err => console.error('Measurement import error:', err));
+  } else {
+    console.log(`[addGuideAsNewImage] Measurement import disabled by options`);
   }
 
   return label;

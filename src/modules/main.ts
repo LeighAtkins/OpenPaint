@@ -34,6 +34,7 @@ export class App {
   firstStrokeCommitMarked: boolean;
   firstStrokeCommitInProgress: boolean;
   currentUnit: 'inch' | 'cm';
+  currentInchDisplayMode: 'decimal' | 'fraction';
   captureFrameScale: number;
   currentDashSettings: {
     style: string;
@@ -72,6 +73,7 @@ export class App {
     this.firstStrokeCommitMarked = false;
     this.firstStrokeCommitInProgress = false;
     this.currentUnit = 'inch';
+    this.currentInchDisplayMode = 'decimal';
     this.captureFrameScale = 1.0;
     this.currentDashSettings = {
       style: 'solid',
@@ -1254,8 +1256,26 @@ export class App {
       toggle.addEventListener('click', (e: MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
+
         const wrapper = toggle.closest('.shape-toggle');
-        if (wrapper) wrapper.classList.toggle('shape-open');
+        const shapeIcon = toggle.querySelector('.shape-icon');
+        const clickedOnIcon = shapeIcon && e.target === shapeIcon;
+
+        // If clicking the dropdown icon, toggle the menu
+        if (clickedOnIcon) {
+          if (wrapper) wrapper.classList.toggle('shape-open');
+        } else {
+          // Clicking the button itself: select line tool and close menu
+          this.toolManager.selectTool('line');
+          updateDrawingToggleLabels('Straight Line');
+          if (wrapper) wrapper.classList.remove('shape-open');
+
+          // Mark the straight line option as active in the dropdown
+          drawingModeOptions.forEach(item => {
+            const mode = item.getAttribute('data-drawing-mode');
+            item.classList.toggle('active', mode === 'straight' || !mode);
+          });
+        }
       });
     });
 
@@ -1554,6 +1574,7 @@ export class App {
         if (!target) return;
         // Update tool settings for new strokes
         this.toolManager.updateSettings({ color: target.value });
+        this.tagManager?.setStrokeColor?.(target.value);
 
         if (this.toolManager?.tools?.shape) {
           this.toolManager.tools.shape.setFillStyle('no-fill');
@@ -1578,6 +1599,7 @@ export class App {
 
         // Update tool settings for new strokes
         this.toolManager.updateSettings({ color: color });
+        this.tagManager?.setStrokeColor?.(color);
         if (colorPicker) {
           colorPicker.value = color;
           colorPicker.dispatchEvent(new Event('change'));
@@ -2087,8 +2109,8 @@ export class App {
       let previewCanvas: any = null;
       let previewLine: any = null;
       let previewArrowState = {
-        startArrow: false,
-        endArrow: false,
+        startArrow: true,
+        endArrow: true,
       };
       const ensurePreviewCanvas = () => {
         if (!previewCanvasElement || previewCanvas) return;
@@ -2424,24 +2446,81 @@ export class App {
     );
     const unitSelector = document.getElementById('unitSelector') as HTMLSelectElement | null;
     const inchDisplayToggleWrap = document.getElementById('inchDisplayToggleWrap');
-    const inchDisplayToggle = document.getElementById('inchDisplayToggleBtn') as
-      | HTMLButtonElement
-      | null;
+    const inchDisplayToggle = document.getElementById(
+      'inchDisplayToggleBtn'
+    ) as HTMLButtonElement | null;
+    const inchDisplayToggleSecondary = document.getElementById(
+      'inchDisplayToggleBtnSecondary'
+    ) as HTMLButtonElement | null;
+    const inchDisplayToggles = [inchDisplayToggle, inchDisplayToggleSecondary].filter(
+      (el): el is HTMLButtonElement => el instanceof HTMLButtonElement
+    );
+    const syncInchInputs = (): void => {
+      const syncInput = (inchInputId: string, cmInputId?: string): void => {
+        const inchInput = document.getElementById(inchInputId) as HTMLInputElement | null;
+        const cmInput = cmInputId
+          ? ((document.getElementById(cmInputId) as HTMLInputElement | null) ?? null)
+          : null;
 
-    // Initialize currentUnit state
-    this.currentUnit = 'inch';
-    this.currentInchDisplayMode = 'decimal';
+        if (!inchInput) return;
+
+        const parsedFromInches = this.measurementSystem?.parseMeasurementInput?.(
+          inchInput.value,
+          'inches'
+        );
+        if (parsedFromInches) {
+          inchInput.value = this.measurementSystem.formatInchInputValue(
+            parsedFromInches.inchWhole,
+            parsedFromInches.inchFraction
+          );
+          return;
+        }
+
+        const cm = parseFloat(cmInput?.value || '');
+        if (!Number.isFinite(cm) || cm < 0 || !this.measurementSystem?.convertFromCm) return;
+
+        const result = this.measurementSystem.convertFromCm(cm);
+        inchInput.value = this.measurementSystem.formatInchInputValue(
+          result.inchWhole,
+          result.inchFraction
+        );
+      };
+
+      syncInput('inchValue', 'cmValue');
+      syncInput('dialogInchValue', 'dialogCmValue');
+    };
 
     const applyInchDisplayMode = (mode: 'decimal' | 'fraction'): void => {
       this.currentInchDisplayMode = mode;
 
-      if (inchDisplayToggle) {
-        inchDisplayToggle.textContent = mode === 'decimal' ? 'decimals' : 'fractions';
-      }
+      inchDisplayToggles.forEach(toggle => {
+        const isSecondary = toggle === inchDisplayToggleSecondary;
+        toggle.textContent =
+          mode === 'decimal'
+            ? isSecondary
+              ? 'dec'
+              : 'decimals'
+            : isSecondary
+              ? 'frac'
+              : 'fractions';
+        toggle.setAttribute(
+          'aria-label',
+          `Switch inches display to ${mode === 'decimal' ? 'fractions' : 'decimals'}`
+        );
+        toggle.setAttribute('title', `Display inches as ${mode}`);
+        toggle.setAttribute('aria-pressed', String(mode === 'fraction'));
+      });
 
       if (this.measurementSystem?.setInchDisplayMode) {
         this.measurementSystem.setInchDisplayMode(mode);
       }
+
+      syncInchInputs();
+      window.dispatchEvent(
+        new CustomEvent('openpaint:inch-display-mode-change', {
+          detail: { mode },
+        })
+      );
 
       if (this.metadataManager) {
         this.metadataManager.refreshAllMeasurements();
@@ -2470,6 +2549,9 @@ export class App {
       if (inchDisplayToggleWrap) {
         inchDisplayToggleWrap.classList.toggle('hidden', unit !== 'inch');
       }
+      if (inchDisplayToggleSecondary) {
+        inchDisplayToggleSecondary.classList.toggle('hidden', unit !== 'inch');
+      }
 
       if (this.metadataManager) {
         this.metadataManager.refreshAllMeasurements();
@@ -2497,13 +2579,11 @@ export class App {
       });
     }
 
-    if (inchDisplayToggle) {
-      inchDisplayToggle.addEventListener('click', () => {
-        applyInchDisplayMode(
-          this.currentInchDisplayMode === 'decimal' ? 'fraction' : 'decimal'
-        );
+    inchDisplayToggles.forEach(toggle => {
+      toggle.addEventListener('click', () => {
+        applyInchDisplayMode(this.currentInchDisplayMode === 'decimal' ? 'fraction' : 'decimal');
       });
-    }
+    });
 
     // Setup Show Measurements toggle
     const showMeasurementsCheckbox = document.getElementById(

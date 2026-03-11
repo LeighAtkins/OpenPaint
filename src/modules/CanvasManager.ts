@@ -2989,6 +2989,30 @@ export class CanvasManager {
     return this.rotationDegrees;
   }
 
+  setBackgroundImageRotationDegrees(degrees: number): void {
+    if (!this.fabricCanvas?.backgroundImage) return;
+    const normalized = ((Number(degrees) % 360) + 360) % 360;
+    this.fabricCanvas.backgroundImage.set({
+      angle: normalized,
+      originX: 'center',
+      originY: 'center',
+    });
+    this.fabricCanvas.backgroundImage.setCoords?.();
+    this.fabricCanvas.requestRenderAll();
+  }
+
+  rotateBackgroundImageBy(deltaDegrees: number): number {
+    const current = this.getBackgroundImageRotationDegrees();
+    const next = (((current + Number(deltaDegrees || 0)) % 360) + 360) % 360;
+    this.setBackgroundImageRotationDegrees(next);
+    return next;
+  }
+
+  getBackgroundImageRotationDegrees(): number {
+    const angle = Number(this.fabricCanvas?.backgroundImage?.angle);
+    return Number.isFinite(angle) ? ((angle % 360) + 360) % 360 : 0;
+  }
+
   setViewportState({
     zoom,
     panX,

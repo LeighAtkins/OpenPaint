@@ -4,7 +4,13 @@
  */
 
 import dotenv from 'dotenv';
-dotenv.config({ path: process.env.NODE_ENV === 'production' ? '.env' : '.env.development' });
+if (process.env.NODE_ENV === 'production') {
+  dotenv.config({ path: '.env' });
+} else {
+  dotenv.config({ path: '.env.local', override: false });
+  dotenv.config({ path: '.env.development', override: false });
+  dotenv.config({ path: '.env', override: false });
+}
 import express from 'express';
 import path from 'path';
 import multer from 'multer';
@@ -17,10 +23,14 @@ import {
   createOrUpdateProject,
   getProjectBySlug,
 } from './server/db.js';
+import cwMeasurementsHandler from './api/integrations/cw/measurements/[formId].js';
+import measurementGuideCodesHandler from './api/measurement-guides/codes.js';
+import measurementGuideSvgHandler from './api/measurement-guides/svg.js';
 import { spawn } from 'child_process';
 import { createClient } from '@supabase/supabase-js';
-import { registerR2Routes } from './server/r2-routes.js';
-import { isR2Configured, createPresignedUploadUrl, getR2PublicUrl } from './server/r2-storage.js';
+const { registerR2Routes } = await import('./server/r2-routes.js');
+const { isR2Configured, createPresignedUploadUrl, getR2PublicUrl } =
+  await import('./server/r2-storage.js');
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -1956,6 +1966,24 @@ app.get('/api/integrations/cw/health', (req, res) => {
     hasEnvUsername: Boolean((process.env.CW_USERNAME || '').trim()),
     hasEnvPassword: Boolean((process.env.CW_PASSWORD || '').trim()),
   });
+});
+
+// Local dev parity route for the Vercel-style CW measurements handler.
+app.all('/api/integrations/cw/measurements/:formId', async (req, res) => {
+  req.query = {
+    ...(req.query || {}),
+    formId: String(req.params?.formId || '').trim(),
+  };
+  return cwMeasurementsHandler(req, res);
+});
+
+// Measurement Guides API routes
+app.get('/api/measurement-guides/codes', async (req, res) => {
+  return measurementGuideCodesHandler(req, res);
+});
+
+app.get('/api/measurement-guides/svg', async (req, res) => {
+  return measurementGuideSvgHandler(req, res);
 });
 
 // ============== END PROJECT CRUD API ROUTES ==============

@@ -60,6 +60,42 @@ function resolveUrl(base, location) {
   }
 }
 
+const DEFAULT_FETCH_TIMEOUT_MS =
+  Number.parseInt(process.env.CW_FETCH_TIMEOUT_MS || '', 10) || 12000;
+
+function createFetchTimeoutError(url, timeoutMs, label = '') {
+  const err = new Error(`Upstream request timed out after ${timeoutMs}ms`);
+  err.code = 'CW_UPSTREAM_TIMEOUT';
+  err.details = {
+    url,
+    timeoutMs,
+    label: String(label || ''),
+  };
+  return err;
+}
+
+async function fetchWithTimeout(url, options = {}, config = {}) {
+  const timeoutMs = Number.isFinite(Number(config.timeoutMs))
+    ? Math.max(1000, Number(config.timeoutMs))
+    : DEFAULT_FETCH_TIMEOUT_MS;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(url, {
+      ...(options || {}),
+      signal: controller.signal,
+    });
+    return response;
+  } catch (error) {
+    if (error?.name === 'AbortError') {
+      throw createFetchTimeoutError(url, timeoutMs, config.label);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export async function readJsonBody(req) {
   if (req.body && typeof req.body === 'object') return req.body;
   const chunks = [];
@@ -106,11 +142,15 @@ export async function createCwSession(override = {}) {
   };
 
   let loginPageUrl = loginUrl;
-  let loginPage = await fetch(loginPageUrl, {
-    method: 'GET',
-    redirect: 'manual',
-    headers: baseGetHeaders,
-  });
+  let loginPage = await fetchWithTimeout(
+    loginPageUrl,
+    {
+      method: 'GET',
+      redirect: 'manual',
+      headers: baseGetHeaders,
+    },
+    { label: 'createCwSession.loginPage' }
+  );
 
   mergeCookieJar(cookieJar, parseSetCookie(getSetCookieArray(loginPage.headers)));
   let loginPageHtml = await loginPage.text().catch(() => '');
@@ -125,15 +165,19 @@ export async function createCwSession(override = {}) {
     redirectChain.push({ from: loginPageUrl, status: loginPage.status, to: nextUrl });
     loginPageUrl = nextUrl;
 
-    loginPage = await fetch(loginPageUrl, {
-      method: 'GET',
-      redirect: 'manual',
-      headers: {
-        ...baseGetHeaders,
-        cookie: buildCookieHeader(cookieJar),
-        referer: redirectChain[redirectChain.length - 1].from,
+    loginPage = await fetchWithTimeout(
+      loginPageUrl,
+      {
+        method: 'GET',
+        redirect: 'manual',
+        headers: {
+          ...baseGetHeaders,
+          cookie: buildCookieHeader(cookieJar),
+          referer: redirectChain[redirectChain.length - 1].from,
+        },
       },
-    });
+      { label: 'createCwSession.loginRedirect' }
+    );
 
     mergeCookieJar(cookieJar, parseSetCookie(getSetCookieArray(loginPage.headers)));
     loginPageHtml = await loginPage.text().catch(() => '');
@@ -169,19 +213,23 @@ export async function createCwSession(override = {}) {
     form.set('nextPath', nextPath);
   }
 
-  const loginRes = await fetch(loginPageUrl, {
-    method: 'POST',
-    redirect: 'manual',
-    headers: {
-      accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-      'content-type': 'application/x-www-form-urlencoded',
-      cookie: buildCookieHeader(cookieJar),
-      origin: creds.baseUrl,
-      referer: loginPageUrl,
-      'user-agent': 'OpenPaint-CW-Vercel/1.0',
+  const loginRes = await fetchWithTimeout(
+    loginPageUrl,
+    {
+      method: 'POST',
+      redirect: 'manual',
+      headers: {
+        accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'content-type': 'application/x-www-form-urlencoded',
+        cookie: buildCookieHeader(cookieJar),
+        origin: creds.baseUrl,
+        referer: loginPageUrl,
+        'user-agent': 'OpenPaint-CW-Vercel/1.0',
+      },
+      body: form.toString(),
     },
-    body: form.toString(),
-  });
+    { label: 'createCwSession.loginSubmit' }
+  );
 
   mergeCookieJar(cookieJar, parseSetCookie(getSetCookieArray(loginRes.headers)));
   const isRedirect = isRedirectStatus(loginRes.status);
@@ -217,20 +265,24 @@ export async function cwGraphqlRequest({ override = {}, operationName, query, va
   const session = await createCwSession(override);
   const targetUrl = `${session.baseUrl.replace(/\/+$/, '')}/api/`;
   const payload = { operationName, query, variables };
-  const response = await fetch(targetUrl, {
-    method: 'POST',
-    headers: {
-      accept: '*/*',
-      'content-type': 'application/json',
-      cookie: buildCookieHeader(session.cookieJar),
-      origin: session.baseUrl,
-      referer: `${session.baseUrl.replace(/\/+$/, '')}/dashboard/`,
-      'x-csrftoken': session.csrfToken,
-      'x-requested-with': 'XMLHttpRequest',
-      'user-agent': 'OpenPaint-CW-Vercel/1.0',
+  const response = await fetchWithTimeout(
+    targetUrl,
+    {
+      method: 'POST',
+      headers: {
+        accept: '*/*',
+        'content-type': 'application/json',
+        cookie: buildCookieHeader(session.cookieJar),
+        origin: session.baseUrl,
+        referer: `${session.baseUrl.replace(/\/+$/, '')}/dashboard/`,
+        'x-csrftoken': session.csrfToken,
+        'x-requested-with': 'XMLHttpRequest',
+        'user-agent': 'OpenPaint-CW-Vercel/1.0',
+      },
+      body: JSON.stringify(payload),
     },
-    body: JSON.stringify(payload),
-  });
+    { label: 'cwGraphqlRequest' }
+  );
 
   const rawText = await response.text().catch(() => '');
   let body = null;
@@ -451,19 +503,23 @@ export async function uploadOrderImage({
   form.append('photo_type', String(photoType || 'sofa_photos'));
   form.append('account_type', String(accountType || 'customer'));
 
-  const response = await fetch(targetUrl, {
-    method: 'POST',
-    headers: {
-      accept: '*/*',
-      cookie: buildCookieHeader(session.cookieJar),
-      origin: session.baseUrl,
-      referer: `${session.baseUrl.replace(/\/+$/, '')}/dashboard/`,
-      'x-csrftoken': session.csrfToken,
-      'x-requested-with': 'XMLHttpRequest',
-      'user-agent': 'OpenPaint-CW-Vercel/1.0',
+  const response = await fetchWithTimeout(
+    targetUrl,
+    {
+      method: 'POST',
+      headers: {
+        accept: '*/*',
+        cookie: buildCookieHeader(session.cookieJar),
+        origin: session.baseUrl,
+        referer: `${session.baseUrl.replace(/\/+$/, '')}/dashboard/`,
+        'x-csrftoken': session.csrfToken,
+        'x-requested-with': 'XMLHttpRequest',
+        'user-agent': 'OpenPaint-CW-Vercel/1.0',
+      },
+      body: form,
     },
-    body: form,
-  });
+    { label: 'uploadOrderImage' }
+  );
 
   const rawText = await response.text().catch(() => '');
   let body = null;
@@ -521,19 +577,23 @@ export async function deleteOrderImage({
 
   const attempts = [];
   for (const targetUrl of candidateUrls) {
-    const response = await fetch(targetUrl, {
-      method: 'POST',
-      headers: {
-        accept: '*/*',
-        cookie: buildCookieHeader(session.cookieJar),
-        origin: session.baseUrl,
-        referer: `${session.baseUrl.replace(/\/+$/, '')}/dashboard/`,
-        'x-csrftoken': session.csrfToken,
-        'x-requested-with': 'XMLHttpRequest',
-        'user-agent': 'OpenPaint-CW-Vercel/1.0',
+    const response = await fetchWithTimeout(
+      targetUrl,
+      {
+        method: 'POST',
+        headers: {
+          accept: '*/*',
+          cookie: buildCookieHeader(session.cookieJar),
+          origin: session.baseUrl,
+          referer: `${session.baseUrl.replace(/\/+$/, '')}/dashboard/`,
+          'x-csrftoken': session.csrfToken,
+          'x-requested-with': 'XMLHttpRequest',
+          'user-agent': 'OpenPaint-CW-Vercel/1.0',
+        },
+        body: buildForm(),
       },
-      body: buildForm(),
-    });
+      { label: 'deleteOrderImage' }
+    );
 
     const rawText = await response.text().catch(() => '');
     let body = null;
@@ -633,11 +693,15 @@ export async function submitCwMeasureForm({ formId, payload = {}, override = {} 
   };
   if (contentType) headers['content-type'] = contentType;
 
-  const upstreamRes = await fetch(targetUrl, {
-    method: 'POST',
-    headers,
-    body: requestBody,
-  });
+  const upstreamRes = await fetchWithTimeout(
+    targetUrl,
+    {
+      method: 'POST',
+      headers,
+      body: requestBody,
+    },
+    { label: 'submitCwMeasureForm' }
+  );
 
   const rawText = await upstreamRes.text().catch(() => '');
   let parsedBody = null;
@@ -877,17 +941,21 @@ export async function fetchCwMeasurementsTable({ formId, lang = 'en', override =
   const session = await createCwSession(override);
   const targetUrl = `${session.baseUrl.replace(/\/+$/, '')}/order-management/measure-tool/form/${encodeURIComponent(formId)}/${encodeURIComponent(lang)}/get`;
 
-  const res = await fetch(targetUrl, {
-    method: 'GET',
-    headers: {
-      accept: 'application/json, text/plain, */*',
-      cookie: buildCookieHeader(session.cookieJar),
-      origin: session.baseUrl,
-      referer: `${session.baseUrl.replace(/\/+$/, '')}/dashboard/`,
-      'x-requested-with': 'XMLHttpRequest',
-      'user-agent': 'OpenPaint-CW-Vercel/1.0',
+  const res = await fetchWithTimeout(
+    targetUrl,
+    {
+      method: 'GET',
+      headers: {
+        accept: 'application/json, text/plain, */*',
+        cookie: buildCookieHeader(session.cookieJar),
+        origin: session.baseUrl,
+        referer: `${session.baseUrl.replace(/\/+$/, '')}/dashboard/`,
+        'x-requested-with': 'XMLHttpRequest',
+        'user-agent': 'OpenPaint-CW-Vercel/1.0',
+      },
     },
-  });
+    { label: 'fetchCwMeasurementsTable' }
+  );
 
   const rawText = await res.text().catch(() => '');
   let body = null;

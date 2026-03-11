@@ -3,6 +3,33 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-nocheck
 
+function formatExportMeasurement(measurement, unit) {
+  if (!measurement) return '';
+
+  if (unit === 'inch') {
+    const whole = Number(measurement.inchWhole || 0);
+    const fraction = Number(measurement.inchFraction || 0);
+    if (whole === 0 && fraction === 0) return '';
+
+    const inchFormatter =
+      window.app?.measurementSystem?.formatInchValue ||
+      window.app?.measurementSystem?.formatMeasurement;
+    if (typeof inchFormatter === 'function') {
+      return inchFormatter.call(window.app.measurementSystem, whole, fraction);
+    }
+
+    const total = Number((whole + fraction).toFixed(4));
+    return `${total.toFixed(4).replace(/\.?0+$/, '')}"`;
+  }
+
+  const cm = Number(measurement.cm || 0);
+  if (cm <= 0) return '';
+  const cmFormatter = window.app?.measurementSystem?.formatCentimeterValue;
+  return typeof cmFormatter === 'function'
+    ? cmFormatter.call(window.app.measurementSystem, cm, { decimalPlaces: 1 })
+    : `${cm.toFixed(1).replace(/\.?0+$/, '')} cm`;
+}
+
 // Save all images as individual PNG files
 window.saveAllImages = async function () {
   const projectName = document.getElementById('projectName')?.value || 'OpenPaint';
@@ -291,18 +318,7 @@ async function generatePDFWithPDFLib(projectName, viewIds, quality, pageSize, in
 
         strokes.forEach((strokeLabel, idx) => {
           const m = measurements[strokeLabel];
-          let measurement = '';
-
-          if (currentUnit === 'inch') {
-            const whole = m.inchWhole || 0;
-            const frac = m.inchFraction || 0;
-            measurement =
-              whole > 0 || frac > 0
-                ? `${whole > 0 ? whole + '"' : ''}${frac > 0 ? ' ' + frac.toFixed(2) + '"' : ''}`.trim()
-                : '';
-          } else {
-            measurement = m.cm ? `${m.cm.toFixed(1)} cm` : '';
-          }
+          const measurement = formatExportMeasurement(m, currentUnit);
 
           const x = 50 + col * colWidth;
 
