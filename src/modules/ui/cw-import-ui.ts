@@ -23,6 +23,8 @@ type SearchState = {
   productName: string;
   activeSection: string;
   armedRowId: string;
+  selectedImageKeys: string[];
+  rowTargetLabels: Record<string, string>;
 };
 
 function makeStyleKey(productReference: string, style: string, styleCode: string): string {
@@ -168,8 +170,21 @@ function ensureStyles(): void {
     .cw-probe-panel { margin-top: 12px; border: 1px solid #cbd5e1; border-radius: 10px; padding: 10px; background: #f8fafc; }
     .cw-probe-summary { margin: 6px 0 0; font-size: 12px; color: #334155; }
     .cw-probe-pre { margin-top: 8px; border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px; background: #fff; max-height: 220px; overflow: auto; font-size: 11px; line-height: 1.35; white-space: pre-wrap; word-break: break-word; }
-    .cw-images { margin-top: 10px; display: grid; gap: 8px; grid-template-columns: repeat(8, minmax(0, 1fr)); }
-    .cw-images img { width: 100%; height: 64px; object-fit: cover; border-radius: 8px; border: 1px solid #e2e8f0; }
+    .cw-images { margin-top: 10px; display: grid; gap: 8px; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .cw-image-card { position: relative; border: 1px solid #cbd5e1; border-radius: 10px; overflow: hidden; background: linear-gradient(180deg, #fff, #f8fafc); box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06); cursor: pointer; transition: border-color 120ms ease, box-shadow 120ms ease, transform 120ms ease; }
+    .cw-image-card:hover { transform: translateY(-1px); border-color: #94a3b8; box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12); }
+    .cw-image-card.is-selected { border-color: #0f172a; box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.08), 0 12px 24px rgba(15, 23, 42, 0.12); }
+    .cw-image-card.is-skipped { opacity: 0.72; }
+    .cw-image-card img { display: block; width: 100%; height: 96px; object-fit: cover; border-bottom: 1px solid #e2e8f0; }
+    .cw-image-meta { display: flex; flex-direction: column; gap: 4px; padding: 8px; }
+    .cw-image-section { font-size: 11px; font-weight: 700; color: #0f172a; }
+    .cw-image-name { font-size: 11px; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .cw-image-toggle { position: absolute; top: 8px; right: 8px; display: inline-flex; align-items: center; gap: 6px; padding: 4px 7px; border-radius: 999px; background: rgba(255, 255, 255, 0.94); color: #0f172a; font-size: 11px; font-weight: 700; box-shadow: 0 6px 16px rgba(15, 23, 42, 0.16); pointer-events: auto; }
+    .cw-image-toggle.is-selected { background: rgba(15, 23, 42, 0.94); color: #fff; }
+    .cw-image-toggle.is-skipped { background: rgba(148, 163, 184, 0.92); color: #fff; }
+    .cw-image-toggle-input { width: 14px !important; height: 14px; margin: 0; accent-color: #0f172a; cursor: pointer; }
+    .cw-image-toggle-text { line-height: 1; }
+    .cw-image-actions { display: inline-flex; gap: 6px; align-items: center; }
     .cw-measure-wrap { margin-top: 12px; border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; }
     .cw-measure-head { display: grid; grid-template-columns: 120px 140px 1fr 180px 180px; gap: 8px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; padding: 8px; font-size: 11px; font-weight: 600; color: #475569; }
     .cw-measure-row { display: grid; grid-template-columns: 120px 140px 1fr 180px 180px; gap: 8px; align-items: center; padding: 8px; border-bottom: 1px solid #f1f5f9; font-size: 12px; }
@@ -182,7 +197,7 @@ function ensureStyles(): void {
     @media (max-width: 900px) {
       .cw-grid { grid-template-columns: 1fr; }
       .cw-measure-head, .cw-measure-row { grid-template-columns: 1fr; }
-      .cw-images { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .cw-images { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
   `;
   document.head.appendChild(style);
@@ -205,11 +220,78 @@ function getStrokeLabels(scopeLabel: string): string[] {
   return Object.keys(strokes).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
 }
 
+function fileStemFromUrl(url: string): string {
+  const raw = String(url || '')
+    .split('?')[0]
+    .split('#')[0]
+    .split('/')
+    .filter(Boolean)
+    .pop();
+  return String(raw || 'photo').trim() || 'photo';
+}
+
 function setMeasurementLock(scopeLabel: string, strokeLabel: string, locked: boolean): void {
   const w = window as any;
   if (!w.cwMeasurementLocksByImage) w.cwMeasurementLocksByImage = {};
   if (!w.cwMeasurementLocksByImage[scopeLabel]) w.cwMeasurementLocksByImage[scopeLabel] = {};
   w.cwMeasurementLocksByImage[scopeLabel][strokeLabel] = locked;
+}
+
+function normalizeGuideLabel(value: string): string {
+  return String(value || '')
+    .trim()
+    .toUpperCase()
+    .replace(/\s+/g, '');
+}
+
+function buildCwScopeCandidates(scopeLabel: string): string[] {
+  const metadata = (window as any).app?.metadataManager;
+  const normalized =
+    typeof metadata?.normalizeImageLabel === 'function'
+      ? String(metadata.normalizeImageLabel(scopeLabel) || scopeLabel).trim()
+      : String(scopeLabel || '').trim();
+  const base = normalized.split('::tab:')[0] || normalized;
+  return Array.from(new Set([String(scopeLabel || '').trim(), normalized, base].filter(Boolean)));
+}
+
+function getCwImportedMeasurementEntry(scopeLabel: string, strokeLabel: string): any {
+  const w = window as any;
+  const store =
+    w.cwImportedMeasurementsByImage && typeof w.cwImportedMeasurementsByImage === 'object'
+      ? w.cwImportedMeasurementsByImage
+      : {};
+  const normalizedLabel = normalizeGuideLabel(strokeLabel);
+  if (!normalizedLabel) return null;
+  for (const candidate of buildCwScopeCandidates(scopeLabel)) {
+    const scopedStore = store[candidate];
+    if (!scopedStore || typeof scopedStore !== 'object') continue;
+    const direct = scopedStore[normalizedLabel];
+    if (direct && typeof direct === 'object') return direct;
+  }
+  return null;
+}
+
+function markCwImportedMeasurementApplied(
+  scopeLabel: string,
+  strokeLabel: string,
+  payload: any
+): void {
+  const w = window as any;
+  if (!w.cwImportedMeasurementsByImage) w.cwImportedMeasurementsByImage = {};
+  const normalizedLabel = normalizeGuideLabel(strokeLabel);
+  if (!normalizedLabel) return;
+  const nextPayload = {
+    ...(payload && typeof payload === 'object' ? payload : {}),
+    pending: false,
+    autoApplyOnDraw: false,
+    updatedAt: new Date().toISOString(),
+  };
+  buildCwScopeCandidates(scopeLabel).forEach(candidate => {
+    if (!w.cwImportedMeasurementsByImage[candidate]) {
+      w.cwImportedMeasurementsByImage[candidate] = {};
+    }
+    w.cwImportedMeasurementsByImage[candidate][normalizedLabel] = nextPayload;
+  });
 }
 
 function normalizeValueText(value: unknown): string {
@@ -226,6 +308,52 @@ function normalizeSectionName(value: string): string {
   if (token.includes('seat') || token.includes('stcc')) return 'Seat Cushion Cover';
   if (token.includes('back') || token.includes('bkcc')) return 'Back Cushion Cover';
   return raw;
+}
+
+function classifyMeasurementSection(sourceLabel: string, sectionName: string): string {
+  const normalizedSource = normalizeValueText(sourceLabel);
+  const sourceToken = normalizedSource.toLowerCase();
+  const normalizedSection = normalizeSectionName(sectionName);
+
+  if (/^backrest\b/i.test(normalizedSource)) return 'Frame Cover';
+  if (/^back (height|width)/i.test(normalizedSource)) return 'Frame Cover';
+
+  return normalizedSection || normalizeSectionName(normalizedSource) || 'Frame Cover';
+}
+
+function guessMosLabel(sourceLabel: string, sectionName: string): string {
+  const normalizedSource = normalizeValueText(sourceLabel).toLowerCase();
+  const normalizedSection = normalizeSectionName(sectionName);
+
+  if (normalizedSource.startsWith('backrest')) {
+    if (normalizedSource.includes('(top)')) return 'A1';
+    if (normalizedSource.includes('(middle)')) return 'A2';
+    if (normalizedSource.includes('(bottom)')) return 'A3';
+    return 'A1';
+  }
+
+  if (normalizedSource === 'front panel width') return 'A4';
+  if (normalizedSource === 'front panel depth') return 'C4';
+  if (normalizedSource === 'front panel height') return 'C4';
+  if (normalizedSource === 'front arm height') return 'C1';
+  if (normalizedSource === 'front arm width (top)') return 'C2';
+  if (normalizedSource === 'front arm width (bottom)') return 'C3';
+  if (normalizedSource === 'side width (top)') return 'G1';
+  if (normalizedSource === 'side width (bottom)') return 'G2';
+  if (normalizedSource === 'back height') return 'J1';
+  if (normalizedSource === 'back width (top)') return 'L1';
+  if (normalizedSource === 'back width (middle)') return 'L2';
+  if (normalizedSource === 'back width (bottom)') return 'L3';
+
+  if (normalizedSection === 'Seat Cushion Cover' || normalizedSection === 'Back Cushion Cover') {
+    if (normalizedSource === 'width (top)') return 'A';
+    if (normalizedSource === 'width (bottom)') return 'B';
+    if (normalizedSource === 'height (middle)') return 'C';
+    if (normalizedSource === 'height (right)') return 'D';
+    if (normalizedSource === 'thickness') return 'E';
+  }
+
+  return '';
 }
 
 function decodeHtmlEntitiesLite(value: string): string {
@@ -1040,9 +1168,13 @@ function createModal(): HTMLElement {
       <button type="button" class="cw-btn" id="cwImportPhotosBtn">Import Photos to Project</button>
       <select id="cwVariantFilter" class="cw-section-select"><option value="">Auto Style</option></select>
       <select id="cwSectionFilter" class="cw-section-select"><option value="">All Sections</option></select>
+      <span class="cw-image-actions">
+        <button type="button" class="cw-btn" id="cwSelectVisibleImagesBtn">Select Visible</button>
+        <button type="button" class="cw-btn" id="cwClearVisibleImagesBtn">Clear Visible</button>
+      </span>
       <label><input type="checkbox" id="cwImportLocked" checked /> Locked by default</label>
     </div>
-    <div class="cw-note">Guide mode: click Draw Next for a measurement, then draw one line. OpenPaint auto-applies that value to the new stroke.</div>
+      <div class="cw-note">Guide mode: click Draw Next for a measurement, then draw the next measurement stroke. OpenPaint auto-applies that value to the new stroke.</div>
     <div class="cw-result-meta" id="cwResultMeta">No search yet.</div>
     <div class="cw-probe-panel" id="cwProbePanel" style="display:none;">
       <div class="cw-row" style="margin-top:0;">
@@ -1093,6 +1225,10 @@ function createModal(): HTMLElement {
   const importPhotosBtn = body.querySelector('#cwImportPhotosBtn') as HTMLButtonElement;
   const variantFilterEl = body.querySelector('#cwVariantFilter') as HTMLSelectElement;
   const sectionFilterEl = body.querySelector('#cwSectionFilter') as HTMLSelectElement;
+  const selectVisibleImagesBtn = body.querySelector(
+    '#cwSelectVisibleImagesBtn'
+  ) as HTMLButtonElement;
+  const clearVisibleImagesBtn = body.querySelector('#cwClearVisibleImagesBtn') as HTMLButtonElement;
   const rowsContainer = body.querySelector('#cwRows') as HTMLDivElement;
   const resultMeta = body.querySelector('#cwResultMeta') as HTMLDivElement;
   const imagesWrap = body.querySelector('#cwResultImages') as HTMLDivElement;
@@ -1167,6 +1303,8 @@ function createModal(): HTMLElement {
     productName: '',
     activeSection: '',
     armedRowId: '',
+    selectedImageKeys: [],
+    rowTargetLabels: {},
   };
 
   const renderProbeReport = () => {
@@ -1298,25 +1436,80 @@ function createModal(): HTMLElement {
     });
   };
 
-  const visibleImageGroups = (): string[][] => {
-    if (state.activeSection && state.sectionImageGroups[state.activeSection]) {
-      return state.sectionImageGroups[state.activeSection] || [];
-    }
-    if (state.activeSection) {
-      return [];
-    }
-    const merged: string[][] = [];
-    Object.values(state.sectionImageGroups || {}).forEach(groups => {
-      (groups || []).forEach(group => merged.push(group));
+  const allImageEntries = (): Array<{ section: string; key: string; candidates: string[] }> => {
+    const entries: Array<{ section: string; key: string; candidates: string[] }> = [];
+    const addEntry = (section: string, candidates: string[]) => {
+      if (!Array.isArray(candidates) || !candidates.length) return;
+      entries.push({
+        section,
+        key: imageKeyFromUrl(candidates[0] || ''),
+        candidates,
+      });
+    };
+
+    Object.entries(state.sectionImageGroups || {}).forEach(([section, groups]) => {
+      (groups || []).forEach(group => addEntry(section, group));
     });
-    if (merged.length) return merged;
-    return state.imageCandidateGroups;
+
+    if (entries.length) return entries;
+
+    (state.imageCandidateGroups || []).forEach(group => {
+      addEntry(normalizeSectionName(sectionFromImageName(group[0] || '')) || 'General', group);
+    });
+
+    return entries;
+  };
+
+  const visibleImageEntries = (): Array<{ section: string; key: string; candidates: string[] }> => {
+    const entries = allImageEntries();
+    if (!state.activeSection) return entries;
+    return entries.filter(entry => entry.section === state.activeSection);
+  };
+
+  const selectedImageEntries = (): Array<{ section: string; key: string; candidates: string[] }> =>
+    allImageEntries().filter(entry => state.selectedImageKeys.includes(entry.key));
+
+  const setVisibleImageSelection = (selected: boolean) => {
+    const visibleKeys = visibleImageEntries()
+      .map(entry => entry.key)
+      .filter(Boolean);
+    const selectedSet = new Set(state.selectedImageKeys);
+    visibleKeys.forEach(key => {
+      if (selected) {
+        selectedSet.add(key);
+      } else {
+        selectedSet.delete(key);
+      }
+    });
+    state.selectedImageKeys = Array.from(selectedSet);
+    imagesWrap.querySelectorAll<HTMLElement>('.cw-image-card').forEach(card => {
+      const key = String(card.dataset.imageKey || '');
+      const toggle = card.querySelector<HTMLElement>('.cw-image-toggle');
+      const toggleInput = card.querySelector<HTMLInputElement>('.cw-image-toggle-input');
+      if (!key || !toggle || !visibleKeys.includes(key)) return;
+      updateImageCardState(card, toggle, toggleInput, selectedSet.has(key));
+    });
+  };
+
+  const updateImageCardState = (
+    card: HTMLElement,
+    toggle: HTMLElement,
+    toggleInput: HTMLInputElement | null,
+    selected: boolean
+  ) => {
+    card.classList.toggle('is-selected', selected);
+    card.classList.toggle('is-skipped', !selected);
+    toggle.classList.toggle('is-selected', selected);
+    toggle.classList.toggle('is-skipped', !selected);
+    if (toggleInput) {
+      toggleInput.checked = selected;
+      toggleInput.setAttribute('aria-checked', selected ? 'true' : 'false');
+    }
   };
 
   const renderRows = () => {
     rowsContainer.innerHTML = '';
     const scopeLabel = getCurrentScopeLabel();
-    const strokeLabels = getStrokeLabels(scopeLabel);
     const filteredRows = visibleRows();
 
     if (!filteredRows.length) {
@@ -1347,19 +1540,14 @@ function createModal(): HTMLElement {
       valueEl.textContent = row.value;
 
       const selectWrap = document.createElement('div');
-      const select = document.createElement('select');
-      select.className = 'cw-measure-input';
-      const emptyOpt = document.createElement('option');
-      emptyOpt.value = '';
-      emptyOpt.textContent = '-- pick stroke label --';
-      select.appendChild(emptyOpt);
-
-      strokeLabels.forEach(label => {
-        const opt = document.createElement('option');
-        opt.value = label;
-        opt.textContent = label;
-        if (label === row.sourceLabel) opt.selected = true;
-        select.appendChild(opt);
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'cw-measure-input';
+      const guessedLabel = guessMosLabel(row.sourceLabel, row.sectionName || '');
+      input.placeholder = guessedLabel ? `Suggested: ${guessedLabel}` : 'MOS label (A1, A2, A3...)';
+      input.value = state.rowTargetLabels[row.id] || guessedLabel;
+      input.addEventListener('input', () => {
+        state.rowTargetLabels[row.id] = String(input.value || '').trim();
       });
 
       const actionWrap = document.createElement('div');
@@ -1370,9 +1558,9 @@ function createModal(): HTMLElement {
       const applyBtn = document.createElement('button');
       applyBtn.type = 'button';
       applyBtn.className = 'cw-btn';
-      applyBtn.textContent = 'Apply';
+      applyBtn.textContent = 'Assign Now';
       applyBtn.addEventListener('click', () => {
-        const targetLabel = String(select.value || '').trim();
+        const targetLabel = resolveRowTargetLabel(row, String(input.value || '').trim());
         if (!targetLabel) return;
         applyMeasurement(scopeLabel, targetLabel, row.value, row.sourceLabel, lockedEl.checked);
       });
@@ -1386,13 +1574,13 @@ function createModal(): HTMLElement {
         renderRows();
         if (state.armedRowId) {
           setStatus(
-            `Armed ${row.sourceLabel}. Draw one line in ${scopeLabel}; value ${row.value} will apply automatically.`,
+            `Armed ${row.sourceLabel}. Draw the next measurement in ${scopeLabel}; value ${row.value} will apply automatically.`,
             'info'
           );
         }
       });
 
-      selectWrap.appendChild(select);
+      selectWrap.appendChild(input);
       actionWrap.appendChild(applyBtn);
       actionWrap.appendChild(drawBtn);
 
@@ -1405,15 +1593,151 @@ function createModal(): HTMLElement {
     });
   };
 
+  const seedImportedGuideForView = (
+    scopeLabel: string,
+    sectionName: string,
+    rows: ImportedRow[],
+    lockByDefault: boolean
+  ): number => {
+    const w = window as any;
+    if (!w.cwImportedMeasurementsByImage) w.cwImportedMeasurementsByImage = {};
+    if (!w.cwGuideRolesByImage) w.cwGuideRolesByImage = {};
+
+    const scopeKeys = buildCwScopeCandidates(scopeLabel);
+    const roles: string[] = [];
+    const seenRoles = new Set<string>();
+    const now = new Date().toISOString();
+
+    rows.forEach(row => {
+      const guessed = guessMosLabel(row.sourceLabel, row.sectionName || sectionName || '');
+      const configured = String(state.rowTargetLabels[row.id] || '').trim();
+      const targetLabel = normalizeGuideLabel(configured || guessed || row.sourceLabel);
+      const value = String(row.value || '').trim();
+      if (!targetLabel || !/^[A-Z](?:\d+)?$/.test(targetLabel) || !value) return;
+
+      if (!seenRoles.has(targetLabel)) {
+        seenRoles.add(targetLabel);
+        roles.push(targetLabel);
+      }
+
+      scopeKeys.forEach(key => {
+        if (!w.cwImportedMeasurementsByImage[key]) {
+          w.cwImportedMeasurementsByImage[key] = {};
+        }
+        w.cwImportedMeasurementsByImage[key][targetLabel] = {
+          source: 'cw',
+          sourceLabel: row.sourceLabel,
+          value,
+          locked: lockByDefault,
+          pending: true,
+          autoApplyOnDraw: true,
+          sectionName: normalizeSectionName(row.sectionName || sectionName || ''),
+          updatedAt: now,
+        };
+      });
+    });
+
+    scopeKeys.forEach(key => {
+      w.cwGuideRolesByImage[key] = [...roles];
+    });
+
+    return roles.length;
+  };
+
+  const enableGuideWorkflowDefaults = async (viewId: string): Promise<void> => {
+    const unitSelector = document.getElementById('unitSelector') as HTMLSelectElement | null;
+    if (unitSelector) {
+      unitSelector.value = 'cm';
+      unitSelector.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
+    if (typeof (window as any).setMeasurementGuideIndicatorVisible === 'function') {
+      (window as any).setMeasurementGuideIndicatorVisible(true);
+    } else {
+      try {
+        window.localStorage.setItem('openpaint:measurementGuideIndicator:visible', '1');
+      } catch {
+        // Ignore storage failures.
+      }
+    }
+
+    const projectManager = (window as any).app?.projectManager;
+    if (viewId && typeof projectManager?.switchView === 'function') {
+      await projectManager.switchView(viewId, true);
+    }
+
+    window.dispatchEvent(new Event('resize'));
+  };
+
   const renderImages = () => {
     imagesWrap.innerHTML = '';
     const baseUrl = (body.querySelector('#cwBaseUrl') as HTMLInputElement).value.trim();
     const username = (body.querySelector('#cwUsername') as HTMLInputElement).value.trim();
     const password = (body.querySelector('#cwPassword') as HTMLInputElement).value;
-    const groups = visibleImageGroups().slice(0, 16);
+    const entries = visibleImageEntries().slice(0, 16);
 
-    groups.forEach(group => {
+    entries.forEach(entry => {
+      const group = entry.candidates;
       const direct = group.find(url => state.imageUrls.includes(url)) || '';
+      const isSelected = state.selectedImageKeys.includes(entry.key);
+      const card = document.createElement('div');
+      card.className = 'cw-image-card';
+      card.tabIndex = 0;
+      card.setAttribute('role', 'button');
+
+      const toggle = document.createElement('label');
+      toggle.className = 'cw-image-toggle';
+      const toggleInput = document.createElement('input');
+      toggleInput.type = 'checkbox';
+      toggleInput.className = 'cw-image-toggle-input';
+      toggleInput.setAttribute('aria-label', `Import ${fileStemFromUrl(group[0] || '')}`);
+      const toggleText = document.createElement('span');
+      toggleText.className = 'cw-image-toggle-text';
+      toggleText.textContent = 'Import';
+      toggle.appendChild(toggleInput);
+      toggle.appendChild(toggleText);
+      updateImageCardState(card, toggle, toggleInput, isSelected);
+      card.dataset.imageKey = entry.key;
+
+      const setSelectedState = (nextSelected: boolean) => {
+        const selectedKeys = new Set(state.selectedImageKeys);
+        if (!nextSelected) {
+          selectedKeys.delete(entry.key);
+        } else {
+          selectedKeys.add(entry.key);
+        }
+        state.selectedImageKeys = Array.from(selectedKeys);
+        updateImageCardState(card, toggle, toggleInput, nextSelected);
+      };
+
+      card.addEventListener('click', event => {
+        const target = event.target as HTMLElement | null;
+        if (target?.closest('.cw-image-toggle')) return;
+        setSelectedState(!toggleInput.checked);
+      });
+      card.addEventListener('keydown', event => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        setSelectedState(!toggleInput.checked);
+      });
+      toggle.addEventListener('click', event => {
+        event.stopPropagation();
+      });
+      toggleInput.addEventListener('change', () => {
+        setSelectedState(toggleInput.checked);
+      });
+
+      const meta = document.createElement('div');
+      meta.className = 'cw-image-meta';
+      const sectionEl = document.createElement('div');
+      sectionEl.className = 'cw-image-section';
+      sectionEl.textContent = entry.section || 'General';
+      const nameEl = document.createElement('div');
+      nameEl.className = 'cw-image-name';
+      nameEl.textContent = fileStemFromUrl(group[0] || '');
+      meta.appendChild(sectionEl);
+      meta.appendChild(nameEl);
+
       if (!direct) {
         void (async () => {
           const dataUrl = await fetchProxyImageDataUrl(group, baseUrl, username, password);
@@ -1421,7 +1745,10 @@ function createModal(): HTMLElement {
           const img = document.createElement('img');
           img.src = dataUrl;
           img.alt = 'cw-product';
-          imagesWrap.appendChild(img);
+          card.appendChild(img);
+          card.appendChild(toggle);
+          card.appendChild(meta);
+          imagesWrap.appendChild(card);
         })();
         return;
       }
@@ -1436,7 +1763,10 @@ function createModal(): HTMLElement {
           }
         })();
       });
-      imagesWrap.appendChild(img);
+      card.appendChild(img);
+      card.appendChild(toggle);
+      card.appendChild(meta);
+      imagesWrap.appendChild(card);
     });
   };
 
@@ -1695,7 +2025,10 @@ function createModal(): HTMLElement {
 
       const rows = extractRows(payloadForRows).map(row => ({
         ...row,
-        sectionName: normalizeSectionName(row.sectionName || row.sourceLabel),
+        sectionName: classifyMeasurementSection(
+          row.sourceLabel,
+          row.sectionName || row.sourceLabel
+        ),
       }));
       const imageCandidates = extractImageUrls(payloadForRows, baseUrl);
       const imageCandidateGroups = groupImageCandidates(imageCandidates);
@@ -1704,10 +2037,13 @@ function createModal(): HTMLElement {
         imageCandidateGroups
       );
       const imageUrls = await resolveWorkingImageUrls(imageCandidates);
-      const firstSection =
-        Object.keys(sectionImageGroups)[0] ||
-        rows.map(row => row.sectionName || '').find(Boolean) ||
-        '';
+      const allImageKeys = (
+        Object.values(sectionImageGroups).flat().length
+          ? Object.values(sectionImageGroups).flat()
+          : imageCandidateGroups
+      )
+        .map(group => imageKeyFromUrl(group[0] || ''))
+        .filter(Boolean);
       state = {
         rows,
         imageUrls,
@@ -1719,8 +2055,10 @@ function createModal(): HTMLElement {
         productName: String(
           data?.product?.translations?.[0]?.name || data?.product?.translations?.[0]?.slug || ''
         ),
-        activeSection: normalizeSectionName(firstSection),
+        activeSection: '',
         armedRowId: '',
+        selectedImageKeys: Array.from(new Set(allImageKeys)),
+        rowTargetLabels: {},
       };
 
       renderVariantFilter();
@@ -1729,7 +2067,7 @@ function createModal(): HTMLElement {
       renderRows();
       setStatus(
         response.ok
-          ? `Loaded ${rows.length} measurements across ${Math.max(Object.keys(sectionImageGroups).length, 1)} sections and ${imageUrls.length}/${imageCandidates.length} reachable photos for ${state.productReference || 'product'}${state.productName ? ` (${state.productName})` : ''}.`
+          ? `Loaded ${rows.length} measurements across ${Math.max(Object.keys(sectionImageGroups).length, 1)} sections and ${imageUrls.length}/${imageCandidates.length} reachable photos for ${state.productReference || 'product'}${state.productName ? ` (${state.productName})` : ''}. Click photos to include or skip them before importing.`
           : `Search failed: ${String(data?.message || data?.code || response.status)}`,
         response.ok ? 'ok' : 'bad'
       );
@@ -2254,6 +2592,16 @@ function createModal(): HTMLElement {
     renderRows();
   });
 
+  selectVisibleImagesBtn?.addEventListener('click', () => {
+    setVisibleImageSelection(true);
+    setStatus('Selected all visible photos for import.', 'info');
+  });
+
+  clearVisibleImagesBtn?.addEventListener('click', () => {
+    setVisibleImageSelection(false);
+    setStatus('Cleared visible photo selections.', 'info');
+  });
+
   importExactBtn.addEventListener('click', () => {
     const scopeLabel = getCurrentScopeLabel();
     const strokeSet = new Set(getStrokeLabels(scopeLabel));
@@ -2281,11 +2629,9 @@ function createModal(): HTMLElement {
   });
 
   importPhotosBtn.addEventListener('click', async () => {
-    const selectedSections = state.activeSection
-      ? [state.activeSection]
-      : Object.keys(state.sectionImageGroups || {});
-    if (!selectedSections.length) {
-      setStatus('No section images available from the last search.', 'bad');
+    const selectedEntries = selectedImageEntries();
+    if (!selectedEntries.length) {
+      setStatus('Select at least one photo to import.', 'bad');
       return;
     }
 
@@ -2298,15 +2644,16 @@ function createModal(): HTMLElement {
 
     importPhotosBtn.disabled = true;
     let imported = 0;
+    let seededViews = 0;
+    let firstImportedViewId = '';
     try {
       const baseUrl = String(baseUrlEl?.value || '').trim();
       const username = String(usernameEl?.value || '').trim();
       const password = String(passwordEl?.value || '');
 
-      for (const section of selectedSections) {
-        const groups = (state.sectionImageGroups[section] || []).slice(0, 1);
-        if (!groups.length) continue;
-        const group = groups[0];
+      for (const entry of selectedEntries) {
+        const section = entry.section;
+        const group = entry.candidates;
 
         // Always prefer proxied data URL for canvas import to avoid cross-origin
         // Fabric.js loading failures on remote hosts without CORS headers.
@@ -2321,7 +2668,8 @@ function createModal(): HTMLElement {
         if (!resolvedUrl) continue;
 
         const sectionSlug = slugify(section) || 'section';
-        const seed = `${state.productReference || 'cw'}-${sectionSlug}`;
+        const imageSlug = slugify(makeViewIdFromUrl(group[0] || '')) || 'photo';
+        const seed = `${state.productReference || 'cw'}-${sectionSlug}-${imageSlug}`;
         const viewId = nextUniqueViewId(seed);
         const fileName = `${viewId}.jpg`;
 
@@ -2333,15 +2681,36 @@ function createModal(): HTMLElement {
             (window as any).addImageToSidebar(resolvedUrl, viewId, fileName);
           }
         }
+        if (!firstImportedViewId) {
+          firstImportedViewId = viewId;
+        }
+        const sectionRows = state.rows.filter(
+          row =>
+            normalizeSectionName(String(row.sectionName || '').trim()) ===
+            normalizeSectionName(section)
+        );
+        const seededCount = seedImportedGuideForView(
+          viewId,
+          section,
+          sectionRows,
+          lockedEl.checked
+        );
+        if (seededCount > 0) {
+          seededViews += 1;
+        }
         imported += 1;
       }
 
       if (imported === 0) {
-        setStatus('Could not resolve any importable photos for selected section(s).', 'bad');
+        setStatus('Could not resolve any importable photos for the selected images.', 'bad');
         return;
       }
 
-      setStatus(`Imported ${imported} section photos into project views.`, 'ok');
+      await enableGuideWorkflowDefaults(firstImportedViewId);
+      setStatus(
+        `Imported ${imported} selected photo${imported === 1 ? '' : 's'} into project views, seeded ${seededViews} guide${seededViews === 1 ? '' : 's'}, and switched units to cm.`,
+        'ok'
+      );
     } catch (error) {
       setStatus(
         `Photo import partially completed (${imported}): ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -2356,40 +2725,69 @@ function createModal(): HTMLElement {
     const detail = (event as CustomEvent)?.detail || {};
     const strokeLabel = String(detail?.strokeLabel || '').trim();
     const imageLabel = String(detail?.imageLabel || '').trim();
-    if (!strokeLabel || !imageLabel || !state.armedRowId) return;
+    if (!strokeLabel || !imageLabel) return;
 
-    const row = state.rows.find(item => item.id === state.armedRowId);
-    if (!row) {
+    if (state.armedRowId) {
+      const row = state.rows.find(item => item.id === state.armedRowId);
+      if (!row) {
+        state.armedRowId = '';
+        renderRows();
+        return;
+      }
+
+      const metadata = (window as any).app?.metadataManager;
+      let targetLabel = strokeLabel;
+      const configuredLabel = String(state.rowTargetLabels[row.id] || '').trim();
+      const desiredLabel = resolveRowTargetLabel(row, configuredLabel, strokeLabel);
+      if (metadata?.renameStrokeLabel && desiredLabel && desiredLabel !== strokeLabel) {
+        const rename = metadata.renameStrokeLabel(imageLabel, strokeLabel, desiredLabel);
+        if (rename?.ok && rename?.label) {
+          targetLabel = rename.label;
+        }
+      }
+
+      const ok = applyMeasurement(
+        imageLabel,
+        targetLabel,
+        row.value,
+        row.sourceLabel,
+        lockedEl.checked
+      );
       state.armedRowId = '';
       renderRows();
+      setStatus(
+        ok
+          ? `Applied ${row.sourceLabel} (${row.value}) to ${targetLabel}.`
+          : `Failed to apply ${row.sourceLabel} to ${targetLabel}.`,
+        ok ? 'ok' : 'bad'
+      );
       return;
     }
 
-    const metadata = (window as any).app?.metadataManager;
-    let targetLabel = strokeLabel;
-    const desiredLabel = normalizeValueText(row.sourceLabel).toUpperCase();
-    if (metadata?.renameStrokeLabel && desiredLabel) {
-      const rename = metadata.renameStrokeLabel(imageLabel, strokeLabel, desiredLabel);
-      if (rename?.ok && rename?.label) {
-        targetLabel = rename.label;
-      }
+    const seeded = getCwImportedMeasurementEntry(imageLabel, strokeLabel);
+    if (!seeded || seeded.autoApplyOnDraw !== true || seeded.pending === false) {
+      return;
     }
 
     const ok = applyMeasurement(
       imageLabel,
-      targetLabel,
-      row.value,
-      row.sourceLabel,
-      lockedEl.checked
+      strokeLabel,
+      String(seeded.value || ''),
+      String(seeded.sourceLabel || strokeLabel),
+      seeded.locked === true
     );
-    state.armedRowId = '';
-    renderRows();
-    setStatus(
-      ok
-        ? `Applied ${row.sourceLabel} (${row.value}) to ${targetLabel}.`
-        : `Failed to apply ${row.sourceLabel} to ${targetLabel}.`,
-      ok ? 'ok' : 'bad'
-    );
+    if (ok) {
+      markCwImportedMeasurementApplied(imageLabel, strokeLabel, seeded);
+      setStatus(
+        `Applied CW guide value ${seeded.value} to ${normalizeGuideLabel(strokeLabel)}.`,
+        'ok'
+      );
+    } else {
+      setStatus(
+        `Failed to auto-apply CW guide value for ${normalizeGuideLabel(strokeLabel)}.`,
+        'bad'
+      );
+    }
   });
 
   const close = () => {
@@ -2423,7 +2821,34 @@ function applyMeasurement(
     ? metadata.normalizeImageLabel(scopeLabel)
     : scopeLabel;
 
-  const parsed = metadata.parseAndSaveMeasurement?.(normalizedScope, strokeLabel, value);
+  const measurementSystem = (window as any).app?.measurementSystem;
+  const exactCmValue = parseImportedCentimeterValue(value);
+  const explicitCmInput =
+    exactCmValue !== null ? `${exactCmValue} cm` : `${String(value || '').trim()} cm`;
+
+  let parsed = false;
+  if (measurementSystem?.parseMeasurementInput && measurementSystem?.setMeasurement) {
+    const measurement = measurementSystem.parseMeasurementInput(explicitCmInput, 'cm');
+    if (measurement) {
+      measurementSystem.setMeasurement(
+        normalizedScope,
+        strokeLabel,
+        measurement.inchWhole,
+        measurement.inchFraction,
+        {
+          cmValue: exactCmValue ?? measurement.cm,
+        }
+      );
+      parsed = true;
+    }
+  }
+
+  if (!parsed) {
+    parsed = Boolean(
+      metadata.parseAndSaveMeasurement?.(normalizedScope, strokeLabel, explicitCmInput)
+    );
+  }
+
   if (!parsed) {
     (window as any).app?.projectManager?.showStatusMessage?.(
       `Could not parse measurement value \"${value}\" for ${strokeLabel}`,
@@ -2456,6 +2881,29 @@ function openModal(): void {
   const modal = document.getElementById(MODAL_ID);
   if (!modal) return;
   modal.style.display = 'flex';
+}
+
+function parseImportedCentimeterValue(value: string): number | null {
+  const normalized = String(value || '')
+    .trim()
+    .replace(/,/g, '');
+  if (!normalized) return null;
+  const parsed = Number.parseFloat(normalized);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
+}
+
+function resolveRowTargetLabel(
+  row: ImportedRow | undefined,
+  configuredLabel: string,
+  fallbackLabel = ''
+): string {
+  const explicit = normalizeGuideLabel(configuredLabel);
+  if (explicit) return explicit;
+  if (row) {
+    const guessed = normalizeGuideLabel(guessMosLabel(row.sourceLabel, row.sectionName || ''));
+    if (guessed) return guessed;
+  }
+  return normalizeGuideLabel(fallbackLabel);
 }
 
 function attachToolbarButton(): void {

@@ -176,6 +176,14 @@ function setIndicatorEnabled(enabled: boolean): void {
   }
 }
 
+function syncHeaderToggleUi(enabled: boolean): void {
+  const button = document.getElementById('measurementGuideToggle') as HTMLButtonElement | null;
+  if (!button) return;
+  button.title = enabled ? 'Hide measurement guide' : 'Show measurement guide';
+  button.setAttribute('aria-label', button.title);
+  button.textContent = enabled ? 'Guide On' : 'Guide Off';
+}
+
 function ensureHeaderToggle(): void {
   const header = document.getElementById('imagePanelHeader');
   if (!header) return;
@@ -196,13 +204,12 @@ function ensureHeaderToggle(): void {
   button.addEventListener('click', () => {
     const next = !isIndicatorEnabled();
     setIndicatorEnabled(next);
-    button.textContent = next ? 'Guide On' : 'Guide Off';
-    button.title = next ? 'Hide measurement guide' : 'Show measurement guide';
-    button.setAttribute('aria-label', button.title);
+    syncHeaderToggleUi(next);
     scheduleRender();
   });
 
   controls.prepend(button);
+  syncHeaderToggleUi(enabled);
 }
 
 function resolveScopedImageLabel(viewId: string): string {
@@ -435,6 +442,47 @@ function getUsedStrokeLabels(viewId: string): Set<string> {
   }
 
   return used;
+}
+
+function getCwGuideRoles(viewId: string): string[] {
+  const w = window as any;
+  const roleMap =
+    w.cwGuideRolesByImage && typeof w.cwGuideRolesByImage === 'object' ? w.cwGuideRolesByImage : {};
+  const measurementMap =
+    w.cwImportedMeasurementsByImage && typeof w.cwImportedMeasurementsByImage === 'object'
+      ? w.cwImportedMeasurementsByImage
+      : {};
+  const scoped = resolveScopedImageLabel(viewId);
+  const base = toBaseViewId(viewId);
+  const candidates = Array.from(
+    new Set([String(viewId || '').trim(), scoped, base].filter(Boolean))
+  );
+
+  for (const candidate of candidates) {
+    const direct = Array.isArray(roleMap[candidate]) ? roleMap[candidate] : [];
+    const normalizedDirect = direct.map(label => normalizeLabel(label)).filter(Boolean);
+    if (normalizedDirect.length) {
+      return Array.from(new Set(normalizedDirect));
+    }
+  }
+
+  const collected = new Set<string>();
+  candidates.forEach(candidate => {
+    const entries =
+      measurementMap[candidate] && typeof measurementMap[candidate] === 'object'
+        ? measurementMap[candidate]
+        : {};
+    Object.keys(entries).forEach(label => {
+      const normalized = normalizeLabel(label);
+      if (/^[A-Z](?:\d+)?$/.test(normalized)) {
+        collected.add(normalized);
+      }
+    });
+  });
+
+  return Array.from(collected).sort((a, b) =>
+    a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' })
+  );
 }
 
 function normalizeRoleToken(value: string): string {
@@ -935,6 +983,30 @@ function buildRoleChips(roles: string[], activeRole: string): string[] {
   return sliced.length ? sliced : roles.slice(0, MAX_CHIPS);
 }
 
+function findNextUnusedRole(roles: string[], used: Set<string>, startRole: string): string {
+  if (!roles.length) return '';
+  const startIndex = Math.max(
+    0,
+    roles.findIndex(role => normalizeLabel(role) === normalizeLabel(startRole))
+  );
+
+  for (let index = startIndex; index < roles.length; index += 1) {
+    const candidate = normalizeLabel(roles[index]);
+    if (candidate && !used.has(candidate)) {
+      return candidate;
+    }
+  }
+
+  for (let index = 0; index < startIndex; index += 1) {
+    const candidate = normalizeLabel(roles[index]);
+    if (candidate && !used.has(candidate)) {
+      return candidate;
+    }
+  }
+
+  return '';
+}
+
 async function renderIndicator(): Promise<void> {
   const root = ensureRoot();
   ensureHeaderToggle();
@@ -948,13 +1020,17 @@ async function renderIndicator(): Promise<void> {
 
   const activeGuide = resolveActiveGuideSelection(viewId);
   const code = activeGuide.code;
-  if (!code) {
+  const cwRoles = code ? [] : getCwGuideRoles(viewId);
+  const usingCwGuide = !code && cwRoles.length > 0;
+  if (!code && !usingCwGuide) {
     hideIndicator();
     return;
   }
 
-  const { roles, ok: guideOk } = await getGuideRoles(code, activeGuide.variant);
-  if (!guideOk) {
+  const { roles, ok: guideOk } = code
+    ? await getGuideRoles(code, activeGuide.variant)
+    : { roles: cwRoles, ok: true };
+  if (!guideOk || !roles.length) {
     hideIndicator();
     return;
   }
@@ -964,10 +1040,17 @@ async function renderIndicator(): Promise<void> {
   const guideSeeds = (window as any).guideOneTimeTagByImage || {};
   const seeded = normalizeLabel(guideSeeds[scoped] || guideSeeds[toBaseViewId(viewId)] || '');
 
-  let activeRole =
-    (seeded && (roles.includes(seeded) || /^[A-Z](?:\d+)?$/.test(seeded)) ? seeded : '') ||
-    roles.find(role => !used.has(normalizeLabel(role))) ||
-    '';
+  let activeRole = '';
+  const seededRole =
+    seeded && (roles.includes(seeded) || /^[A-Z](?:\d+)?$/.test(seeded)) ? seeded : '';
+  if (seededRole) {
+    activeRole = used.has(normalizeLabel(seededRole))
+      ? findNextUnusedRole(roles, used, seededRole)
+      : seededRole;
+  }
+  if (!activeRole) {
+    activeRole = roles.find(role => !used.has(normalizeLabel(role))) || '';
+  }
   if (!activeRole) {
     activeRole = getFallbackNextLabel(viewId);
   }
@@ -983,12 +1066,12 @@ async function renderIndicator(): Promise<void> {
       return `<button type="button" class="measurement-guide-indicator-chip${activeClass}" data-guide-role="${label}">${label}</button>`;
     })
     .join('');
-  const heroUrl = buildGuideUrl(code, activeGuide.variant);
+  const heroUrl = code ? buildGuideUrl(code, activeGuide.variant) : '';
 
   const activeSize = resolveIndicatorSize(activeTool);
   const unlocked = getIndicatorLayoutUnlocked();
-  const breadcrumb = getBindingBreadcrumb(viewId);
-  const renderKey = `${viewId}|${code}|${activeGuide.variant}|${activeRole}|${chips.join(',')}|${activeSize}|${unlocked ? 'u' : 'l'}|${breadcrumb}`;
+  const breadcrumb = usingCwGuide ? 'Bound: CW Import' : getBindingBreadcrumb(viewId);
+  const renderKey = `${viewId}|${code || 'cw'}|${activeGuide.variant}|${activeRole}|${chips.join(',')}|${activeSize}|${unlocked ? 'u' : 'l'}|${breadcrumb}`;
   if (renderKey === lastRenderKey) {
     applyIndicatorPreset(root, activeSize);
     positionIndicator(root);
@@ -1006,9 +1089,16 @@ async function renderIndicator(): Promise<void> {
         <button type="button" class="measurement-guide-indicator-ctl" data-guide-bind aria-label="Guide binding">Bind</button>
       </div>
     </div>
-    <p class="measurement-guide-indicator-meta">${getBindingBreadcrumb(viewId)}</p>
+    <p class="measurement-guide-indicator-meta">${breadcrumb}</p>
     <div class="measurement-guide-indicator-hero">
-      <img src="${heroUrl}" alt="${code} ${activeGuide.variant.toUpperCase()}" />
+      ${
+        usingCwGuide
+          ? `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:#e2e8f0;text-align:center;padding:12px;">
+               <strong style="font-size:13px;letter-spacing:0.02em;">CW Import</strong>
+               <span style="font-size:11px;color:#cbd5e1;">${toBaseViewId(viewId)}</span>
+             </div>`
+          : `<img src="${heroUrl}" alt="${code} ${activeGuide.variant.toUpperCase()}" />`
+      }
     </div>
     <div class="measurement-guide-indicator-track">${chipHtml}</div>
   `;
@@ -1036,6 +1126,13 @@ function scheduleRender(): void {
 export function initMeasurementGuideIndicator(): void {
   ensureStyles();
   scheduleRender();
+
+  (window as any).setMeasurementGuideIndicatorVisible = (enabled: boolean) => {
+    setIndicatorEnabled(enabled === true);
+    syncHeaderToggleUi(enabled === true);
+    scheduleRender();
+    return enabled === true;
+  };
 
   window.addEventListener('toolchange', scheduleRender);
   window.addEventListener('openpaint:stroke-created', scheduleRender as EventListener);
