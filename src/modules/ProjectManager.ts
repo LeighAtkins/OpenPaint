@@ -112,6 +112,188 @@ export class ProjectManager {
     return this.setProjectMetadata({ sofaType, customSofaType });
   }
 
+  setCanvasManager(canvasManager, historyManager = null) {
+    if (canvasManager) {
+      this.canvasManager = canvasManager;
+    }
+    if (historyManager) {
+      this.historyManager = historyManager;
+    }
+  }
+
+  syncUiForView(viewId) {
+    window.currentImageLabel =
+      (typeof window.getCaptureTabScopedLabel === 'function' &&
+        window.getCaptureTabScopedLabel(viewId)) ||
+      viewId;
+
+    if (window.updateNextTagDisplay) {
+      window.updateNextTagDisplay();
+    }
+    if (window.ensureCaptureTabsForLabel) {
+      window.ensureCaptureTabsForLabel(viewId);
+    }
+    if (window.renderCaptureTabUI) {
+      window.renderCaptureTabUI(viewId);
+    }
+    if (window.applyCaptureFrameForLabel) {
+      window.applyCaptureFrameForLabel(viewId);
+    }
+    this.syncLegacyImageListSelection(viewId);
+  }
+
+  async setBackgroundImageOnCanvasManager(
+    url,
+    canvasManager,
+    fitMode = 'fit-canvas',
+    viewId = this.currentViewId
+  ) {
+    if (!canvasManager) return;
+    const previousCanvasManager = this.canvasManager;
+    const previousViewId = this.currentViewId;
+    this.canvasManager = canvasManager;
+    this.currentViewId = viewId;
+    try {
+      await this.setBackgroundImage(url, fitMode);
+    } finally {
+      this.canvasManager = previousCanvasManager;
+      this.currentViewId = previousViewId;
+    }
+  }
+
+  restoreViewportForViewOnCanvasManager(viewId, canvasManager) {
+    if (!viewId || !canvasManager) return;
+    const previousCanvasManager = this.canvasManager;
+    this.canvasManager = canvasManager;
+    try {
+      this.restoreViewportForView(viewId);
+    } finally {
+      this.canvasManager = previousCanvasManager;
+    }
+  }
+
+  async loadViewIntoCanvasManager(viewId, canvasManager, options = {}) {
+    if (!viewId || !canvasManager?.fabricCanvas || !this.views?.[viewId]) {
+      return;
+    }
+
+    const interactive = options?.interactive === true;
+    const previousViewId = this.currentViewId;
+    const view = this.views[viewId];
+
+    canvasManager.fabricCanvas.discardActiveObject?.();
+    canvasManager.clear();
+
+    if (typeof view.rotation === 'number') {
+      canvasManager.setRotationDegrees(view.rotation);
+      this.updateThumbnailRotation(viewId, view.rotation);
+    }
+
+    if (view.image) {
+      await this.setBackgroundImageOnCanvasManager(
+        view.image,
+        canvasManager,
+        view.fitMode || 'fit-canvas',
+        viewId
+      );
+    }
+
+    if (view.canvasData) {
+      let sanitizedData = this.sanitizeCanvasJSON(view.canvasData);
+      if (sanitizedData?.backgroundImage && view.image) {
+        sanitizedData = { ...sanitizedData };
+        delete sanitizedData.backgroundImage;
+      }
+
+      await new Promise(resolve => {
+        canvasManager.loadFromJSON(sanitizedData, () => resolve());
+      });
+    }
+
+    if (view.image) {
+      const currentBgSrc = canvasManager?.fabricCanvas?.backgroundImage?.src;
+      if (!currentBgSrc || currentBgSrc !== view.image) {
+        await this.setBackgroundImageOnCanvasManager(
+          view.image,
+          canvasManager,
+          view.fitMode || 'fit-canvas',
+          viewId
+        );
+      }
+    }
+
+    this.restoreViewportForViewOnCanvasManager(viewId, canvasManager);
+
+    if (!interactive) {
+      canvasManager.fabricCanvas?.requestRenderAll?.();
+      return;
+    }
+
+    if (window.app?.measurementOverlayManager?.unmountView && previousViewId) {
+      window.app.measurementOverlayManager.unmountView(previousViewId);
+    }
+
+    this.currentViewId = viewId;
+    this.syncUiForView(viewId);
+
+    if (view.metadata && window.app?.metadataManager) {
+      const scopedVectors = view.metadata.vectorStrokesByImage || {};
+      const scopedVisibility = view.metadata.strokeVisibilityByImage || {};
+      const scopedLabelVisibility = view.metadata.strokeLabelVisibility || {};
+
+      Object.entries(scopedVectors).forEach(([key, value]) => {
+        window.app.metadataManager.vectorStrokesByImage[key] = value || {};
+      });
+      Object.entries(scopedVisibility).forEach(([key, value]) => {
+        window.app.metadataManager.strokeVisibilityByImage[key] = value || {};
+      });
+      Object.entries(scopedLabelVisibility).forEach(([key, value]) => {
+        window.app.metadataManager.strokeLabelVisibility[key] = value || {};
+      });
+      this.deserializeMeasurements(viewId, view.metadata.strokeMeasurements || {});
+    } else if (window.app?.metadataManager) {
+      window.app.metadataManager.clearImageMetadata(viewId);
+    }
+
+    if (window.app?.metadataManager) {
+      window.app.metadataManager.rebuildMetadataFromCanvas(viewId, canvasManager.fabricCanvas);
+    }
+
+    if (window.app?.tagManager && window.app?.metadataManager) {
+      window.app.tagManager.clearAllTags?.();
+      const activeScope = window.app.metadataManager.normalizeImageLabel?.(viewId) || viewId;
+      const strokes = window.app.metadataManager.vectorStrokesByImage[activeScope] || {};
+      const labelVisibility = window.app.metadataManager.strokeLabelVisibility[activeScope] || {};
+      Object.entries(strokes).forEach(([strokeLabel, strokeObj]) => {
+        if (labelVisibility[strokeLabel] !== false) {
+          window.app.tagManager.createTag(strokeLabel, activeScope, strokeObj);
+        }
+      });
+      if (typeof window.syncCaptureTabCanvasVisibility === 'function') {
+        window.syncCaptureTabCanvasVisibility(viewId);
+      }
+    }
+
+    this.historyManager?.clear?.();
+    this.historyManager?.saveState?.();
+
+    if (window.app?.measurementOverlayManager?.mountView) {
+      window.app.measurementOverlayManager.mountView(viewId);
+    }
+
+    const liveRotation = canvasManager?.getRotationDegrees?.();
+    if (typeof liveRotation === 'number' && this.views[viewId]) {
+      this.views[viewId].rotation = liveRotation;
+      this.updateThumbnailRotation(viewId, liveRotation);
+    }
+
+    window.dispatchEvent(
+      new CustomEvent('openpaint:view-switched', {
+        detail: { viewId, previousViewId, source: 'load-view-into-canvas' },
+      })
+    );
+  }
+
   // Switch to a different view (image)
   async switchView(viewId, force = false) {
     if (
@@ -177,12 +359,21 @@ export class ProjectManager {
         window.renderCaptureTabUI(viewId);
       }
       this.syncLegacyImageListSelection(viewId);
+      if (window.imageGallery?.syncToLabel) {
+        window.imageGallery.syncToLabel(viewId, { scroll: true, smooth: false });
+      }
 
       const liveRotation = this.canvasManager?.getRotationDegrees?.();
       if (typeof liveRotation === 'number') {
         view.rotation = liveRotation;
         this.updateThumbnailRotation(viewId, liveRotation);
       }
+
+      window.dispatchEvent(
+        new CustomEvent('openpaint:view-switched', {
+          detail: { viewId, previousViewId: viewId, source: 'switch-view-refresh' },
+        })
+      );
 
       this.isSwitchingView = false;
       if (this.pendingSwitchViewId) {
@@ -443,12 +634,21 @@ export class ProjectManager {
     }
 
     this.syncLegacyImageListSelection(viewId);
+    if (window.imageGallery?.syncToLabel) {
+      window.imageGallery.syncToLabel(viewId, { scroll: true, smooth: false });
+    }
 
     const liveRotation = this.canvasManager?.getRotationDegrees?.();
     if (typeof liveRotation === 'number' && this.views[viewId]) {
       this.views[viewId].rotation = liveRotation;
       this.updateThumbnailRotation(viewId, liveRotation);
     }
+
+    window.dispatchEvent(
+      new CustomEvent('openpaint:view-switched', {
+        detail: { viewId, previousViewId, source: 'switch-view' },
+      })
+    );
 
     this.isSwitchingView = false;
     if (this.pendingSwitchViewId) {
@@ -532,12 +732,17 @@ export class ProjectManager {
     const json = this.canvasManager.toJSON();
     this.stripMosOverlayObjects(json);
     if (this.views[this.currentViewId]) {
+      const isGuideSplitActive =
+        document.getElementById('main-canvas-wrapper')?.classList.contains('guide-split-active') ===
+        true;
       this.views[this.currentViewId].canvasData = json;
       this.views[this.currentViewId].rotation = this.canvasManager.getRotationDegrees();
       this.views[this.currentViewId].backgroundRotation =
         this.canvasManager.getBackgroundImageRotationDegrees();
-      this.views[this.currentViewId].viewport = this.canvasManager.getViewportState();
-      if (window.captureTabsByLabel?.[this.currentViewId]) {
+      if (!isGuideSplitActive) {
+        this.views[this.currentViewId].viewport = this.canvasManager.getViewportState();
+      }
+      if (!isGuideSplitActive && window.captureTabsByLabel?.[this.currentViewId]) {
         try {
           this.views[this.currentViewId].tabs = JSON.parse(
             JSON.stringify(window.captureTabsByLabel[this.currentViewId])
@@ -710,8 +915,7 @@ export class ProjectManager {
         const clone = cloneStroke(strokeObj);
         if (!clone) return;
         clone.strokeMetadata = clone.strokeMetadata || {};
-        clone.strokeMetadata.strokeLabel =
-          clone.strokeMetadata.strokeLabel || String(strokeLabel || '').trim();
+        clone.strokeMetadata.strokeLabel = clone.strokeMetadata.strokeLabel || strokeLabel.trim();
         clone.strokeMetadata.imageLabel = clone.strokeMetadata.imageLabel || scopeKey;
         if (!clone.imageLabel) {
           clone.imageLabel = scopeKey;
@@ -727,8 +931,7 @@ export class ProjectManager {
         const clone = cloneStroke(strokeObj);
         if (!clone) return;
         clone.strokeMetadata = clone.strokeMetadata || {};
-        clone.strokeMetadata.strokeLabel =
-          clone.strokeMetadata.strokeLabel || String(strokeLabel || '').trim();
+        clone.strokeMetadata.strokeLabel = clone.strokeMetadata.strokeLabel || strokeLabel.trim();
         clone.strokeMetadata.imageLabel = clone.strokeMetadata.imageLabel || scopeKey;
         if (!clone.imageLabel) {
           clone.imageLabel = scopeKey;
@@ -920,24 +1123,16 @@ export class ProjectManager {
             return resolve();
           }
 
-          // Get capture frame dimensions
-          const captureFrame = document.getElementById('captureFrame');
-          let frameWidth, frameHeight, frameLeft, frameTop;
-
-          if (captureFrame) {
-            const rect = captureFrame.getBoundingClientRect();
-            frameWidth = rect.width;
-            frameHeight = rect.height;
-            const canvasRect = canvas.getElement().getBoundingClientRect();
-            frameLeft = rect.left - canvasRect.left;
-            frameTop = rect.top - canvasRect.top;
-          } else {
-            // Fallback to canvas dimensions if no frame
-            frameWidth = canvas.width;
-            frameHeight = canvas.height;
-            frameLeft = 0;
-            frameTop = 0;
-          }
+          const placementFrame = this.canvasManager.getBackgroundPlacementFrame?.() || {
+            width: canvas.width,
+            height: canvas.height,
+            left: 0,
+            top: 0,
+          };
+          let frameWidth = placementFrame.width;
+          let frameHeight = placementFrame.height;
+          let frameLeft = placementFrame.left;
+          let frameTop = placementFrame.top;
 
           // If frame is not laid out yet, fallback to canvas dimensions
           if (!frameWidth || !frameHeight) {
@@ -1013,6 +1208,7 @@ export class ProjectManager {
             selectable: false,
             evented: false,
           });
+          img.openpaintFitMode = fitMode;
 
           console.log(
             `[Image Debug] Applied settings:\n` +
@@ -2091,7 +2287,7 @@ export class ProjectManager {
     };
 
     const startedAt = Date.now();
-    let cloudPromise = null;
+    let cloudPromise: Promise<any> | null = null;
 
     try {
       console.log('[Save] Starting saveProject');
@@ -2329,7 +2525,7 @@ export class ProjectManager {
         });
         return null;
       }
-      const contentType = String(response.headers.get('content-type') || '').toLowerCase();
+      const contentType = (response.headers.get('content-type') || '').toLowerCase();
       const isImageResponse = contentType.startsWith('image/') || contentType.includes('svg');
       if (!isImageResponse) {
         console.warn('[Load] R2 proxy returned non-image content', {

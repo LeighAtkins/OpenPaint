@@ -859,7 +859,7 @@ export function initToolbarController() {
         const scopedViewId = getCurrentScopedViewId();
         const strokes = window.app?.metadataManager?.vectorStrokesByImage?.[scopedViewId] || {};
         return Object.keys(strokes).sort((left, right) =>
-          String(left).localeCompare(String(right), undefined, {
+          left.localeCompare(right, undefined, {
             numeric: true,
             sensitivity: 'base',
           })
@@ -1852,10 +1852,10 @@ export function initToolbarController() {
     function getLiveCaptureFrameRectForViewport() {
       const rect = captureFrame.getBoundingClientRect();
       return {
-        left: Number(rect.left) || 0,
-        top: Number(rect.top) || 0,
-        width: Number(rect.width) || 0,
-        height: Number(rect.height) || 0,
+        left: rect.left || 0,
+        top: rect.top || 0,
+        width: rect.width || 0,
+        height: rect.height || 0,
       };
     }
     function normalizeWorldRect(worldRect) {
@@ -1969,6 +1969,10 @@ export function initToolbarController() {
         rotation: Number.isFinite(rotation) ? rotation : 0,
       };
     }
+    function suspendCaptureTabViewportTracking(durationMs = 320) {
+      window.__captureTabsSuspendViewportTrackingUntil =
+        Date.now() + (Number.isFinite(durationMs) ? Math.max(0, durationMs) : 320);
+    }
     function applyViewportRecord(record) {
       if (!record) return;
       const canvasManager = window.app?.canvasManager;
@@ -1997,6 +2001,67 @@ export function initToolbarController() {
           panY: record.panY,
         });
       }
+    }
+    function writeCaptureFrameFromViewportRect(rect, borderColor = null) {
+      if (!rect) return null;
+      const overlayRect = getCaptureOverlayRect();
+      captureFrame.style.left = `${Math.round(rect.left - overlayRect.left)}px`;
+      captureFrame.style.top = `${Math.round(rect.top - overlayRect.top)}px`;
+      captureFrame.style.width = `${Math.round(rect.width)}px`;
+      captureFrame.style.height = `${Math.round(rect.height)}px`;
+      if (typeof borderColor === 'string' && borderColor) {
+        captureFrame.style.borderColor = borderColor;
+      }
+      return {
+        left: Math.round(rect.left - overlayRect.left),
+        top: Math.round(rect.top - overlayRect.top),
+        width: Math.round(rect.width),
+        height: Math.round(rect.height),
+      };
+    }
+    function replayCaptureFrameForLabelFromWorldRect(label, options = {}) {
+      const resolved = label || getActiveLabel();
+      const activeTab = getActiveTab(resolved);
+      const sourceTab = options?.sourceTab || activeTab;
+      const sourceCaptureFrame = sourceTab?.captureFrame || activeTab?.captureFrame || null;
+      const worldRect = normalizeWorldRect(
+        options?.worldRect || sourceCaptureFrame?.worldRect
+      );
+      if (!activeTab || !worldRect) return false;
+
+      const borderColor =
+        activeTab.type === 'master' ? '#0f172a' : activeTab.color || '#22c55e';
+      const viewportSource =
+        options?.viewport ||
+        sourceTab?.viewport ||
+        activeTab.viewport ||
+        buildViewportRecord();
+      let nextViewport = normalizeViewportRecord(viewportSource);
+      const targetRect =
+        options?.targetRect ||
+        (!options?.skipFit && sourceCaptureFrame ? resolveCaptureFrameRect(sourceCaptureFrame) : null);
+
+      if (targetRect && !options?.skipFit) {
+        nextViewport = fitViewportToWorldRect(worldRect, nextViewport, targetRect);
+      }
+
+      if (options?.applyViewport !== false) {
+        suspendCaptureTabViewportTracking(
+          Number.isFinite(options?.suspendMs) ? options.suspendMs : 700
+        );
+        applyViewportRecord(nextViewport);
+      }
+
+      const mappedRect = mapWorldRectToViewport(worldRect, nextViewport);
+      if (!mappedRect) return false;
+
+      writeCaptureFrameFromViewportRect(mappedRect, borderColor);
+      setMasterViewActive(activeTab.type === 'master');
+      syncCanvasVisibilityForActiveTab(resolved);
+      if (options?.renderOverlay !== false) {
+        renderMasterOverlay(resolved);
+      }
+      return true;
     }
     function createTabId() {
       captureTabIdCounter += 1;
@@ -2144,6 +2209,7 @@ export function initToolbarController() {
     }
     function saveActiveTabState(label, options = {}) {
       if (!label) return;
+      if (isGuideSplitWorkspaceActive()) return;
       const state = ensureCaptureTabsForLabel(label);
       const activeTab = state.tabs.find(tab => tab.id === state.activeTabId);
       if (!activeTab || activeTab.type === 'master') return;
@@ -2335,68 +2401,190 @@ export function initToolbarController() {
         height: Math.min(height, winH),
       };
     }
+    function isGuideSplitWorkspaceActive() {
+      return (
+        document.getElementById('main-canvas-wrapper')?.classList.contains('guide-split-active') ===
+        true
+      );
+    }
+    function getCaptureOverlayRect() {
+      const overlayRect = captureOverlay?.getBoundingClientRect?.();
+      if (overlayRect?.width && overlayRect?.height) {
+        return overlayRect;
+      }
+      return {
+        left: 0,
+        top: 0,
+        right: window.innerWidth,
+        bottom: window.innerHeight,
+        width: window.innerWidth,
+        height: window.innerHeight,
+      };
+    }
+    function buildSplitCaptureFrameRect(stored) {
+      const overlayRect = getCaptureOverlayRect();
+      const targetAspect = 4 / 3;
+      const inset = 16;
+      const availableWidth = Math.max(1, Math.round(overlayRect.width - inset * 2));
+      const availableHeight = Math.max(1, Math.round(overlayRect.height - inset * 2));
+      const fallbackWidth = Math.max(200, Math.min(800, availableWidth));
+      const fallbackHeight = Math.max(150, Math.round(fallbackWidth / targetAspect));
+
+      let width = Math.max(1, Number(stored?.width) || fallbackWidth);
+      let height = Math.max(1, Number(stored?.height) || fallbackHeight);
+      const fitScale = Math.min(1, availableWidth / width, availableHeight / height);
+      width = Math.max(1, Math.round(width * fitScale));
+      height = Math.max(1, Math.round(height * fitScale));
+
+      return {
+        left: Math.max(0, Math.round((overlayRect.width - width) / 2)),
+        top: Math.max(0, Math.round((overlayRect.height - height) / 2)),
+        width,
+        height,
+      };
+    }
     function applyCaptureFrameForLabel(label) {
       const resolved = label || getActiveLabel();
       const state = ensureCaptureTabsForLabel(resolved);
       const activeTab = getActiveTab(resolved);
       if (!activeTab) return;
 
+      if (isGuideSplitWorkspaceActive()) {
+        const splitSnapshot =
+          window.__guideSplitRestoreSnapshot &&
+          toBaseLabel(window.__guideSplitRestoreSnapshot.viewId) === toBaseLabel(resolved)
+            ? window.__guideSplitRestoreSnapshot
+            : null;
+        const snapshotTabs = Array.isArray(splitSnapshot?.tabs?.tabs)
+          ? splitSnapshot.tabs.tabs
+          : Array.isArray(splitSnapshot?.tabs)
+            ? splitSnapshot.tabs
+            : [];
+        const snapshotActiveTabId =
+          splitSnapshot?.tabs?.activeTabId ||
+          splitSnapshot?.tabs?.lastNonMasterId ||
+          activeTab.id;
+        const snapshotTab =
+          snapshotTabs.find(tab => tab?.id === activeTab.id) ||
+          snapshotTabs.find(tab => tab?.id === snapshotActiveTabId) ||
+          null;
+        const splitSourceTab = snapshotTab || activeTab;
+        const stored = splitSourceTab?.captureFrame || activeTab.captureFrame;
+        const splitRect = buildSplitCaptureFrameRect(stored);
+        const overlayRect = getCaptureOverlayRect();
+        const splitTargetRect = {
+          left: overlayRect.left + splitRect.left,
+          top: overlayRect.top + splitRect.top,
+          width: splitRect.width,
+          height: splitRect.height,
+        };
+        let tempViewport = normalizeViewportRecord(
+          splitSourceTab?.viewport || splitSnapshot?.viewport || buildViewportRecord()
+        );
+        const storedWorldRect = normalizeWorldRect(stored?.worldRect);
+        const splitImageWorldRect = normalizeWorldRect(splitSnapshot?.imageWorldRect);
+        const targetWorldRect = storedWorldRect || splitImageWorldRect;
+
+        if (splitTargetRect.width > 0 && splitTargetRect.height > 0) {
+          if (targetWorldRect) {
+            tempViewport = fitViewportToWorldRect(targetWorldRect, tempViewport, splitTargetRect);
+          } else if (stored) {
+            const rect = resolveCaptureFrameRect(stored);
+            const centerDeltaX =
+              splitTargetRect.left +
+              splitTargetRect.width / 2 -
+              (rect.left + rect.width / 2);
+            const centerDeltaY =
+              splitTargetRect.top +
+              splitTargetRect.height / 2 -
+              (rect.top + rect.height / 2);
+            tempViewport = {
+              ...tempViewport,
+              panX: (tempViewport.panX || 0) + centerDeltaX,
+              panY: (tempViewport.panY || 0) + centerDeltaY,
+            };
+          }
+          suspendCaptureTabViewportTracking();
+          applyViewportRecord(tempViewport);
+        }
+
+        if (targetWorldRect) {
+          const mappedRect = mapWorldRectToViewport(targetWorldRect, tempViewport);
+          if (mappedRect) {
+            writeCaptureFrameFromViewportRect(
+              mappedRect,
+              activeTab.type === 'master' ? '#0f172a' : activeTab.color || '#22c55e'
+            );
+          }
+        } else {
+          captureFrame.style.left = `${Math.round(splitRect.left)}px`;
+          captureFrame.style.top = `${Math.round(splitRect.top)}px`;
+          captureFrame.style.width = `${Math.round(splitRect.width)}px`;
+          captureFrame.style.height = `${Math.round(splitRect.height)}px`;
+          captureFrame.style.borderColor =
+            activeTab.type === 'master' ? '#0f172a' : activeTab.color || '#22c55e';
+        }
+        setMasterViewActive(activeTab.type === 'master');
+        syncCanvasVisibilityForActiveTab(resolved);
+        renderMasterOverlay(resolved);
+        return;
+      }
+
       const applyCenteredFrameAndViewport = (stored, borderColor) => {
         const rect = resolveCaptureFrameRect(stored);
-        const centeredRect = buildCenteredRectFromSize(rect.width, rect.height);
         const storedWorldRect = normalizeWorldRect(stored?.worldRect);
+        const baseViewport = normalizeViewportRecord(activeTab.viewport || buildViewportRecord());
+        let nextViewport = baseViewport;
         let centerDeltaX =
-          centeredRect.left + centeredRect.width / 2 - (rect.left + rect.width / 2);
+          rect.left + rect.width / 2 - (rect.left + rect.width / 2);
         let centerDeltaY =
-          centeredRect.top + centeredRect.height / 2 - (rect.top + rect.height / 2);
+          rect.top + rect.height / 2 - (rect.top + rect.height / 2);
 
         if (Math.abs(centerDeltaX) < 1) centerDeltaX = 0;
         if (Math.abs(centerDeltaY) < 1) centerDeltaY = 0;
 
-        captureFrame.style.left = `${centeredRect.left}px`;
-        captureFrame.style.top = `${centeredRect.top}px`;
-        captureFrame.style.width = `${centeredRect.width}px`;
-        captureFrame.style.height = `${centeredRect.height}px`;
-
-        if (!activeTab.viewport) {
-          activeTab.viewport = buildViewportRecord();
-        }
-
-        if (activeTab.viewport && storedWorldRect) {
-          activeTab.viewport = fitViewportToWorldRect(
-            storedWorldRect,
-            activeTab.viewport,
-            centeredRect
-          );
-          centerDeltaX = 0;
-          centerDeltaY = 0;
-        } else if (activeTab.viewport && (centerDeltaX !== 0 || centerDeltaY !== 0)) {
-          activeTab.viewport = {
-            ...activeTab.viewport,
-            panX: (activeTab.viewport.panX || 0) + centerDeltaX,
-            panY: (activeTab.viewport.panY || 0) + centerDeltaY,
+        if (storedWorldRect) {
+          const replayed = replayCaptureFrameForLabelFromWorldRect(resolved, {
+            sourceTab: activeTab,
+            worldRect: storedWorldRect,
+            viewport: baseViewport,
+            targetRect: rect,
+            renderOverlay: false,
+          });
+          if (replayed) {
+            return;
+          }
+        } else if (centerDeltaX !== 0 || centerDeltaY !== 0) {
+          nextViewport = {
+            ...baseViewport,
+            panX: (baseViewport.panX || 0) + centerDeltaX,
+            panY: (baseViewport.panY || 0) + centerDeltaY,
           };
         }
 
         const derivedWorldRect = normalizeWorldRect(
-          computeWorldRectFromViewportRect(centeredRect, activeTab.viewport)
+          computeWorldRectFromViewportRect(rect, nextViewport)
         );
 
-        activeTab.captureFrame = {
-          ...(stored || {}),
-          ...centeredRect,
-          worldRect: storedWorldRect || derivedWorldRect,
-          windowWidth: Math.max(window.innerWidth, 1),
-          windowHeight: Math.max(window.innerHeight, 1),
-          relativeLeft: centeredRect.left / Math.max(window.innerWidth, 1),
-          relativeTop: centeredRect.top / Math.max(window.innerHeight, 1),
-          relativeWidth: centeredRect.width / Math.max(window.innerWidth, 1),
-          relativeHeight: centeredRect.height / Math.max(window.innerHeight, 1),
-        };
+        captureFrame.style.left = `${rect.left}px`;
+        captureFrame.style.top = `${rect.top}px`;
+        captureFrame.style.width = `${rect.width}px`;
+        captureFrame.style.height = `${rect.height}px`;
+
+        if (!activeTab.viewport) {
+          activeTab.viewport = nextViewport;
+        }
+        if (!stored?.worldRect && derivedWorldRect) {
+          activeTab.captureFrame = {
+            ...(stored || {}),
+            worldRect: derivedWorldRect,
+          };
+        }
 
         captureFrame.style.borderColor = borderColor;
-        if (activeTab.viewport) {
-          applyViewportRecord(activeTab.viewport);
+        if (nextViewport) {
+          suspendCaptureTabViewportTracking();
+          applyViewportRecord(nextViewport);
         }
       };
 
@@ -2410,6 +2598,53 @@ export function initToolbarController() {
       setMasterViewActive(false);
       const stored = activeTab.captureFrame;
       applyCenteredFrameAndViewport(stored, activeTab.color || '#22c55e');
+    }
+    function restoreCaptureFrameForLabelExact(label) {
+      const resolved = label || getActiveLabel();
+      const activeTab = getActiveTab(resolved);
+      if (!activeTab) return false;
+
+      const stored = activeTab.captureFrame || null;
+      const hasExactRect =
+        Number.isFinite(Number(stored?.left)) &&
+        Number.isFinite(Number(stored?.top)) &&
+        Number.isFinite(Number(stored?.width)) &&
+        Number.isFinite(Number(stored?.height));
+
+      if (!hasExactRect) {
+        applyCaptureFrameForLabel(resolved);
+        return true;
+      }
+
+      const exactRect = {
+        left: Math.round(Number(stored.left)),
+        top: Math.round(Number(stored.top)),
+        width: Math.round(Number(stored.width)),
+        height: Math.round(Number(stored.height)),
+      };
+      const exactViewport = normalizeViewportRecord(activeTab.viewport || buildViewportRecord());
+
+      captureFrame.style.left = `${exactRect.left}px`;
+      captureFrame.style.top = `${exactRect.top}px`;
+      captureFrame.style.width = `${exactRect.width}px`;
+      captureFrame.style.height = `${exactRect.height}px`;
+      captureFrame.style.borderColor =
+        activeTab.type === 'master' ? '#0f172a' : activeTab.color || '#22c55e';
+
+      suspendCaptureTabViewportTracking(900);
+      applyViewportRecord(exactViewport);
+      setMasterViewActive(activeTab.type === 'master');
+      syncCanvasVisibilityForActiveTab(resolved);
+      renderMasterOverlay(resolved);
+      return true;
+    }
+    function syncCaptureFrameToActiveTabWorldRect(label) {
+      const resolved = label || getActiveLabel();
+      replayCaptureFrameForLabelFromWorldRect(resolved, {
+        viewport: buildViewportRecord(),
+        skipFit: true,
+        applyViewport: false,
+      });
     }
     function getCanvasClientRect() {
       const canvasEl =
@@ -2650,9 +2885,14 @@ export function initToolbarController() {
     }
     function renderMasterOverlay(label) {
       if (!masterOverlay) return;
+      if (isGuideSplitWorkspaceActive()) {
+        masterOverlay.innerHTML = '';
+        return;
+      }
       const state = ensureCaptureTabsForLabel(label);
       const currentViewport = buildViewportRecord();
       const highlightedTab = getHighlightedFrameTab(state, label);
+      const overlayRect = getCaptureOverlayRect();
       masterOverlay.innerHTML = '';
       state.tabs
         .filter(tab => tab.type !== 'master')
@@ -2660,6 +2900,12 @@ export function initToolbarController() {
           const worldRect = computeWorldRectForTab(tab);
           const rect = mapWorldRectToViewport(worldRect, currentViewport);
           if (!rect) return;
+          const localRect = {
+            left: rect.left - overlayRect.left,
+            top: rect.top - overlayRect.top,
+            width: rect.width,
+            height: rect.height,
+          };
           const frame = document.createElement('button');
           frame.type = 'button';
           frame.className = 'capture-tab-frame';
@@ -2676,10 +2922,10 @@ export function initToolbarController() {
           }
           const accent = tab.color || '#22c55e';
           frame.dataset.tabId = tab.id;
-          frame.style.left = `${rect.left}px`;
-          frame.style.top = `${rect.top}px`;
-          frame.style.width = `${rect.width}px`;
-          frame.style.height = `${rect.height}px`;
+          frame.style.left = `${localRect.left}px`;
+          frame.style.top = `${localRect.top}px`;
+          frame.style.width = `${localRect.width}px`;
+          frame.style.height = `${localRect.height}px`;
           frame.style.borderColor = `${accent}f2`;
           frame.style.background = tab.id === highlightedTab?.id ? `${accent}12` : `${accent}08`;
           if (isLockedMaster) {
@@ -2728,13 +2974,15 @@ export function initToolbarController() {
                 nextRect.top = centerY - nextRect.height / 2;
               }
 
-              const maxLeft = Math.max(0, window.innerWidth - nextRect.width);
-              const maxTop = Math.max(0, window.innerHeight - nextRect.height);
-              nextRect.left = Math.min(maxLeft, Math.max(0, nextRect.left));
-              nextRect.top = Math.min(maxTop, Math.max(0, nextRect.top));
+              const minLeft = overlayRect.left;
+              const minTop = overlayRect.top;
+              const maxLeft = Math.max(minLeft, overlayRect.right - nextRect.width);
+              const maxTop = Math.max(minTop, overlayRect.bottom - nextRect.height);
+              nextRect.left = Math.min(maxLeft, Math.max(minLeft, nextRect.left));
+              nextRect.top = Math.min(maxTop, Math.max(minTop, nextRect.top));
 
-              frame.style.left = `${nextRect.left}px`;
-              frame.style.top = `${nextRect.top}px`;
+              frame.style.left = `${nextRect.left - overlayRect.left}px`;
+              frame.style.top = `${nextRect.top - overlayRect.top}px`;
               frame.style.width = `${nextRect.width}px`;
               frame.style.height = `${nextRect.height}px`;
               moved = true;
@@ -2782,8 +3030,8 @@ export function initToolbarController() {
           selector.textContent = tab.name || 'Frame';
           selector.setAttribute('aria-label', `Select frame ${tab.name || 'Frame'}`);
           selector.style.position = 'absolute';
-          selector.style.left = `${rect.left + 8}px`;
-          selector.style.top = `${rect.top + 8}px`;
+          selector.style.left = `${localRect.left + 8}px`;
+          selector.style.top = `${localRect.top + 8}px`;
           selector.style.zIndex = '4';
           selector.addEventListener('click', clickEvent => {
             clickEvent.preventDefault();
@@ -2957,6 +3205,15 @@ export function initToolbarController() {
         ) {
           return;
         }
+        if (
+          Number(window.__captureTabsSuspendViewportTrackingUntil || 0) >
+          Date.now()
+        ) {
+          return;
+        }
+        if (isGuideSplitWorkspaceActive()) {
+          return;
+        }
         const label = getActiveLabel();
         const state = ensureCaptureTabsForLabel(label);
         const activeTab = getActiveTab(label);
@@ -3098,6 +3355,12 @@ export function initToolbarController() {
     window.currentImageLabel = getActiveScopedLabel(initialLabel);
     applyCaptureFrameForLabel(initialLabel);
     syncCanvasVisibilityForActiveTab(initialLabel);
+    window.syncCaptureFrameToActiveTabWorldRect = label =>
+      syncCaptureFrameToActiveTabWorldRect(label);
+    window.restoreCaptureFrameForLabelExact = label =>
+      restoreCaptureFrameForLabelExact(label);
+    window.replayCaptureFrameForLabelFromWorldRect = (label, options = {}) =>
+      replayCaptureFrameForLabelFromWorldRect(label, options);
 
     let captureFrameResizeRaf = null;
     window.addEventListener('resize', () => {
@@ -3108,6 +3371,17 @@ export function initToolbarController() {
           return;
         }
         const activeLabel = getActiveLabel();
+        if (isGuideSplitWorkspaceActive()) {
+          return;
+        }
+        if (
+          typeof window.replayCaptureFrameForLabelFromWorldRect === 'function' &&
+          window.replayCaptureFrameForLabelFromWorldRect(activeLabel, {
+            renderOverlay: true,
+          })
+        ) {
+          return;
+        }
         if (typeof window.applyCaptureFrameForLabel === 'function') {
           window.applyCaptureFrameForLabel(activeLabel);
         }
@@ -4845,6 +5119,7 @@ export function initToolbarController() {
 
       // Update gallery data
       imageGalleryData[index] = normalizedData;
+      syncImageGalleryDataRef();
       updateGalleryControls();
       if (
         !window.__initialGallerySyncDone &&
@@ -4945,6 +5220,53 @@ export function initToolbarController() {
           imagePanel.style.transform = '';
         }
       }
+    }
+
+    function syncImageGalleryDataRef() {
+      window.imageGalleryData = imageGalleryData;
+    }
+
+    function syncToLabel(label, options = {}) {
+      if (!label) return false;
+      const imageGallery = document.getElementById('imageGallery');
+      if (!imageGallery) return false;
+
+      const index = imageGalleryData.findIndex(
+        item => item?.original?.label === label || item?.label === label
+      );
+      if (index < 0) return false;
+
+      window.__suppressScrollSelectUntil = Date.now() + 1200;
+      window.__imageListProgrammaticScrollUntil = Date.now() + 1200;
+
+      updateActiveImage(index);
+
+      if (options.scroll) {
+        const targetThumbnail = imageGallery.querySelector(`[data-image-index="${index}"]`);
+        if (targetThumbnail) {
+          targetThumbnail.scrollIntoView({
+            behavior: options.smooth === true ? 'smooth' : 'auto',
+            block: 'nearest',
+            inline: 'center',
+          });
+        }
+      }
+
+      return true;
+    }
+
+    function installImageGalleryGlobals() {
+      syncImageGalleryDataRef();
+      window.imageGallery = {
+        initialize: initializeImageGallery,
+        addImage: addImageToGallery,
+        navigateToImage: navigateToImage,
+        clearGallery: clearImageGallery,
+        syncToLabel: syncToLabel,
+        getData: () => imageGalleryData,
+        getCurrentIndex: () => currentImageIndex,
+      };
+      window.addImageToGallery = addImageToGallery;
     }
 
     // Expose a lightweight compat hook for module-based uploads
@@ -6283,11 +6605,13 @@ export function initToolbarController() {
 
       imageGalleryData = [];
       currentImageIndex = 0;
+      syncImageGalleryDataRef();
       updateGalleryControls();
     }
 
     // Initialize gallery on page load
     initializeImageGallery();
+    installImageGalleryGlobals();
 
     // Reveal UI once initialization is complete
     document.documentElement.classList.remove('app-loading');
@@ -7130,6 +7454,7 @@ export function initToolbarController() {
       imageGalleryData = imageGalleryData.filter(
         item => !item.name?.includes('Demo Image') && !item.name?.includes('Blank Canvas')
       );
+      syncImageGalleryDataRef();
 
       // Manually update the gallery UI instead of calling undefined function
       const gallery = document.getElementById('imageGallery');

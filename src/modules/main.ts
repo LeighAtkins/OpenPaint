@@ -15,6 +15,8 @@ type DeferredManager = any;
 
 export class App {
   canvasManager: CanvasManager;
+  primaryCanvasManager: CanvasManager;
+  compareCanvasManager: CanvasManager | null;
   historyManager: HistoryManager;
   toolManager: ToolManager;
   metadataManager: StrokeMetadataManager;
@@ -53,9 +55,12 @@ export class App {
     hovering: boolean;
     savedCursor: string | null;
   };
+  activeCanvasPane: 'left' | 'right';
 
   constructor() {
     this.canvasManager = new CanvasManager('canvas');
+    this.primaryCanvasManager = this.canvasManager;
+    this.compareCanvasManager = null;
     this.historyManager = new HistoryManager(this.canvasManager);
     this.toolManager = new ToolManager(this.canvasManager);
     this.metadataManager = new StrokeMetadataManager();
@@ -88,6 +93,7 @@ export class App {
       hovering: false,
       savedCursor: null,
     };
+    this.activeCanvasPane = 'left';
 
     if (typeof performance !== 'undefined' && performance.mark) {
       performance.mark('app-init-start');
@@ -100,6 +106,39 @@ export class App {
     this.measurementOverlayManager = null;
 
     this.init();
+  }
+
+  registerCompareCanvasManager(canvasManager: CanvasManager | null): void {
+    this.compareCanvasManager = canvasManager || null;
+  }
+
+  async rebindActiveCanvasManager(
+    canvasManager: CanvasManager,
+    pane: 'left' | 'right' = 'left'
+  ): Promise<void> {
+    if (!canvasManager) return;
+    const activeToolName = this.toolManager?.activeToolName;
+
+    if (this.canvasManager !== canvasManager) {
+      this.canvasManager = canvasManager;
+      this.toolManager?.setCanvasManager?.(canvasManager);
+      this.historyManager?.setCanvasManager?.(canvasManager);
+      this.projectManager?.setCanvasManager?.(canvasManager, this.historyManager);
+      if (this.arrowManager) {
+        this.arrowManager.canvasManager = canvasManager;
+        this.arrowManager.canvas = canvasManager.fabricCanvas;
+      }
+      if (this.measurementOverlayManager) {
+        this.measurementOverlayManager.canvasManager = canvasManager;
+        this.measurementOverlayManager.historyManager = this.historyManager;
+      }
+    }
+
+    this.activeCanvasPane = pane;
+
+    if (activeToolName) {
+      await this.toolManager.selectTool(activeToolName);
+    }
   }
 
   init(): void {
@@ -1957,7 +1996,7 @@ export class App {
         style.id = 'lineStylePopoverStyles';
         style.textContent = `
           #lineStylePopoverWrap { position: relative; display: inline-flex; }
-          #lineStylePopoverPanel { position: absolute; top: calc(100% + 8px); left: 0; width: 392px; max-width: calc(100vw - 24px); background: #fff; border: 1px solid #d1d5db; border-radius: 12px; box-shadow: 0 18px 40px rgba(2,6,23,0.2); padding: 12px; z-index: 10050; transform-origin: top left; transform: translateY(-6px) scale(0.98); opacity: 0; pointer-events: none; transition: opacity 160ms ease, transform 180ms ease; }
+          #lineStylePopoverPanel { position: absolute; top: calc(100% + 8px); left: 0; width: 392px; max-width: calc(100vw - 24px); background: #fff; border: 1px solid #d1d5db; border-radius: 12px; box-shadow: 0 18px 40px rgba(2,6,23,0.2); padding: 12px; z-index: 10150; transform-origin: top left; transform: translateY(-6px) scale(0.98); opacity: 0; pointer-events: none; transition: opacity 160ms ease, transform 180ms ease; }
           #lineStylePopoverPanel.open { transform: translateY(0) scale(1); opacity: 1; pointer-events: auto; }
           .line-style-panel-grid { display: grid; gap: 10px; }
           .line-style-row { display: grid; grid-template-columns: 80px 1fr; align-items: center; gap: 8px; }

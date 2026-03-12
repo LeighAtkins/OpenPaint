@@ -181,7 +181,17 @@ function syncHeaderToggleUi(enabled: boolean): void {
   if (!button) return;
   button.title = enabled ? 'Hide measurement guide' : 'Show measurement guide';
   button.setAttribute('aria-label', button.title);
-  button.textContent = enabled ? 'Guide On' : 'Guide Off';
+  button.dataset.state = enabled ? 'on' : 'off';
+  button.innerHTML = `
+    <span class="measurement-guide-toggle-glow" aria-hidden="true"></span>
+    <span class="measurement-guide-toggle-core" aria-hidden="true">
+      <svg viewBox="0 0 16 16" aria-hidden="true" class="measurement-guide-toggle-icon">
+        <path d="M2.5 3.5h11v9h-11z" fill="none" stroke="currentColor" stroke-width="1.25" rx="1" />
+        <path d="M5 3.5v3M7 3.5v2M9 3.5v3M11 3.5v2" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" />
+        <path d="M4 10.5h6.5" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" />
+      </svg>
+    </span>
+  `;
 }
 
 function ensureHeaderToggle(): void {
@@ -189,26 +199,46 @@ function ensureHeaderToggle(): void {
   if (!header) return;
   const controls = header.querySelector('.flex.items-center.gap-2');
   if (!controls) return;
-  if (document.getElementById('measurementGuideToggle')) return;
+  const collapseButton = document.getElementById('toggleImagePanel') as HTMLButtonElement | null;
+  let button = document.getElementById('measurementGuideToggle') as HTMLButtonElement | null;
 
-  const button = document.createElement('button');
-  button.id = 'measurementGuideToggle';
-  button.type = 'button';
-  button.className =
-    'text-slate-400 hover:text-slate-600 rounded-md px-1.5 py-0.5 text-[11px] leading-none font-medium transition-colors';
+  if (!button) {
+    button = document.createElement('button');
+    button.id = 'measurementGuideToggle';
+    button.type = 'button';
+    button.className = 'measurement-guide-toggle-btn';
+    button.addEventListener('click', () => {
+      const next = !isIndicatorEnabled();
+      setIndicatorEnabled(next);
+      syncHeaderToggleUi(next);
+      scheduleRender();
+    });
+  }
+
+  if (collapseButton) {
+    let stack = document.getElementById('measurementGuideToggleStack') as HTMLDivElement | null;
+    if (!stack) {
+      stack = document.createElement('div');
+      stack.id = 'measurementGuideToggleStack';
+      stack.className = 'measurement-guide-toggle-stack';
+    }
+
+    if (stack.parentElement !== controls) {
+      controls.insertBefore(stack, collapseButton);
+    }
+    if (collapseButton.parentElement !== stack) {
+      stack.appendChild(collapseButton);
+    }
+    if (button.parentElement !== stack) {
+      stack.appendChild(button);
+    }
+  } else if (button.parentElement !== controls) {
+    controls.appendChild(button);
+  }
+
   const enabled = isIndicatorEnabled();
   button.title = enabled ? 'Hide measurement guide' : 'Show measurement guide';
   button.setAttribute('aria-label', button.title);
-  button.textContent = enabled ? 'Guide On' : 'Guide Off';
-
-  button.addEventListener('click', () => {
-    const next = !isIndicatorEnabled();
-    setIndicatorEnabled(next);
-    syncHeaderToggleUi(next);
-    scheduleRender();
-  });
-
-  controls.prepend(button);
   syncHeaderToggleUi(enabled);
 }
 
@@ -454,9 +484,7 @@ function getCwGuideRoles(viewId: string): string[] {
       : {};
   const scoped = resolveScopedImageLabel(viewId);
   const base = toBaseViewId(viewId);
-  const candidates = Array.from(
-    new Set([String(viewId || '').trim(), scoped, base].filter(Boolean))
-  );
+  const candidates = Array.from(new Set([(viewId || '').trim(), scoped, base].filter(Boolean)));
 
   for (const candidate of candidates) {
     const direct = Array.isArray(roleMap[candidate]) ? roleMap[candidate] : [];
@@ -718,6 +746,138 @@ function ensureStyles(): void {
     .measurement-guide-indicator.is-unlocked .measurement-guide-indicator-resize {
       opacity: 1;
       pointer-events: auto;
+    }
+    .measurement-guide-toggle-btn {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      padding: 0;
+      border-radius: 8px;
+      border: 1px solid rgba(148, 163, 184, 0.28);
+      background:
+        radial-gradient(circle at 30% 28%, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0) 44%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(241, 245, 249, 0.9));
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.9),
+        0 1px 2px rgba(15, 23, 42, 0.08),
+        0 6px 14px rgba(148, 163, 184, 0.18);
+      color: #64748b;
+      transition:
+        transform 160ms ease,
+        color 160ms ease,
+        border-color 160ms ease,
+        box-shadow 160ms ease,
+        background 160ms ease;
+      overflow: hidden;
+      flex: 0 0 auto;
+    }
+    .measurement-guide-toggle-stack {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      flex: 0 0 auto;
+    }
+    .measurement-guide-toggle-stack #toggleImagePanel {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      padding: 0;
+      color: #64748b;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.72);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.82),
+        0 1px 2px rgba(15, 23, 42, 0.06);
+      transition:
+        color 160ms ease,
+        border-color 160ms ease,
+        background 160ms ease,
+        box-shadow 160ms ease,
+        transform 160ms ease;
+    }
+    .measurement-guide-toggle-stack #toggleImagePanel:hover {
+      transform: translateY(-1px);
+      color: #0f766e;
+      border-color: rgba(45, 212, 191, 0.32);
+      background: rgba(255, 255, 255, 0.88);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.92),
+        0 4px 10px rgba(45, 212, 191, 0.12);
+    }
+    .measurement-guide-toggle-btn:hover {
+      transform: translateY(-1px);
+      color: #0f766e;
+      border-color: rgba(45, 212, 191, 0.42);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.96),
+        0 2px 4px rgba(15, 23, 42, 0.08),
+        0 8px 18px rgba(45, 212, 191, 0.18);
+    }
+    .measurement-guide-toggle-btn:focus-visible {
+      outline: none;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.96),
+        0 0 0 2px rgba(255, 255, 255, 0.92),
+        0 0 0 4px rgba(45, 212, 191, 0.32),
+        0 8px 18px rgba(45, 212, 191, 0.18);
+    }
+    .measurement-guide-toggle-btn[data-state="on"] {
+      color: #0f766e;
+      border-color: rgba(45, 212, 191, 0.45);
+      background:
+        radial-gradient(circle at 30% 28%, rgba(255, 255, 255, 0.98), rgba(255, 255, 255, 0) 42%),
+        linear-gradient(180deg, rgba(240, 253, 250, 0.98), rgba(204, 251, 241, 0.92));
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.98),
+        0 1px 2px rgba(15, 23, 42, 0.06),
+        0 8px 18px rgba(45, 212, 191, 0.2);
+    }
+    .measurement-guide-toggle-btn[data-state="on"] .measurement-guide-toggle-glow {
+      opacity: 1;
+      transform: scale(1);
+    }
+    .measurement-guide-toggle-glow {
+      position: absolute;
+      inset: 4px;
+      border-radius: 6px;
+      background: radial-gradient(circle, rgba(45, 212, 191, 0.18), rgba(45, 212, 191, 0) 70%);
+      opacity: 0;
+      transform: scale(0.8);
+      transition: opacity 160ms ease, transform 160ms ease;
+      pointer-events: none;
+    }
+    .measurement-guide-toggle-core {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 16px;
+      height: 16px;
+      border-radius: 5px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(226, 232, 240, 0.55));
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.8),
+        0 1px 2px rgba(15, 23, 42, 0.08);
+    }
+    .measurement-guide-toggle-btn[data-state="on"] .measurement-guide-toggle-core {
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(204, 251, 241, 0.78));
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.92),
+        0 1px 2px rgba(13, 148, 136, 0.16);
+    }
+    .measurement-guide-toggle-icon {
+      width: 12px;
+      height: 12px;
+      display: block;
+      filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.55));
     }
   `;
   document.head.appendChild(style);
@@ -1128,10 +1288,10 @@ export function initMeasurementGuideIndicator(): void {
   scheduleRender();
 
   (window as any).setMeasurementGuideIndicatorVisible = (enabled: boolean) => {
-    setIndicatorEnabled(enabled === true);
-    syncHeaderToggleUi(enabled === true);
+    setIndicatorEnabled(enabled);
+    syncHeaderToggleUi(enabled);
     scheduleRender();
-    return enabled === true;
+    return enabled;
   };
 
   window.addEventListener('toolchange', scheduleRender);

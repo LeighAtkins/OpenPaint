@@ -1,4 +1,7 @@
 import { parseSvgMeasurements, createCoordinateTransformer } from './svg-measurement-parser.js';
+import { CanvasManager } from '../CanvasManager';
+import { TagManager } from '../TagManager';
+import { IMAGE_PANEL_STATES, setImagePanelState } from './panel-state.js';
 
 const HOTKEY = 'Backslash';
 const VIEWS = ['front', 'back', 'side'];
@@ -33,11 +36,34 @@ const GUIDE_RASTER_CACHE_VERSION = 'v3';
 const GUIDE_RASTER_MIN_EDGE = 2200;
 const GUIDE_RASTER_MAX_EDGE = 4096;
 const GUIDE_SPLIT_ENABLED_PREF_KEY = 'guideSplitEnabled';
+const GUIDE_SPLIT_TEMP_PREFIX = '__guide__:';
 
 let guideSplitEnabled = getWindowPrefs()?.[GUIDE_SPLIT_ENABLED_PREF_KEY] === true;
 let guideSplitLastSyncKey = '';
 let guideSplitOriginalParent = null;
 let guideSplitOriginalNextSibling = null;
+let guideSplitCaptureOverlayOriginalParent = null;
+let guideSplitCaptureOverlayOriginalNextSibling = null;
+let guideSplitCompareCanvasManager = null;
+let guideSplitCompareTagManager = null;
+let guideSplitActiveTempScopeId = '';
+let guideSplitSyncingWorkspace = false;
+let guideSplitSuppressViewSwitchSync = 0;
+let guideSplitRestoreSnapshot = null;
+let guideSplitPanelSnapshot = null;
+let guideSplitLayoutSyncRaf = null;
+let guideSplitLayoutSyncTimeout = null;
+let guideSplitFrameSyncRaf = null;
+let guideSplitFrameSyncToken = 0;
+let guideSplitFrameGhost = null;
+const guideSplitPendingGuideViews = new Map();
+const guideCompareWorkspaceState = {
+  open: guideSplitEnabled,
+  leftViewId: '',
+  rightViewId: '',
+  activePane: 'left',
+  rightSourceKind: 'bound-guide',
+};
 
 function getWindowPrefs() {
   try {
@@ -57,6 +83,292 @@ function setWindowPrefs(patch) {
   } catch {
     // no-op
   }
+}
+
+function cloneGuideSplitValue(value) {
+  if (value === null || value === undefined) return null;
+  try {
+    return JSON.parse(JSON.stringify(value));
+  } catch (error) {
+    console.warn('[GuideSplit] Failed to clone split restore state', error);
+    return null;
+  }
+}
+
+function captureGuideSplitPanelSnapshot() {
+  const strokePanel = document.getElementById('strokePanel');
+  const imagePanel = document.getElementById('imagePanel');
+  const elementsBody = document.getElementById('elementsBody');
+  const imagePanelContent = document.getElementById('imagePanelContent');
+
+  guideSplitPanelSnapshot = {
+    strokeCollapsed:
+      strokePanel?.classList.contains('collapsed') ||
+      strokePanel?.getAttribute('aria-expanded') === 'false',
+    imageCollapsed:
+      imagePanel?.classList.contains('collapsed') ||
+      imagePanel?.getAttribute('aria-expanded') === 'false',
+    elementsBodyDisplay: elementsBody?.style.display || '',
+    imagePanelContentDisplay: imagePanelContent?.style.display || '',
+  };
+}
+
+function applyGuideSplitCollapsedPanels() {
+  const strokePanel = document.getElementById('strokePanel');
+  const imagePanel = document.getElementById('imagePanel');
+  const elementsBody = document.getElementById('elementsBody');
+  const imagePanelContent = document.getElementById('imagePanelContent');
+  const strokeToggleIcon = document.querySelector('#toggleStrokePanel svg');
+  const imageToggleIcon = document.querySelector('#toggleImagePanel svg');
+
+  if (!guideSplitPanelSnapshot) {
+    captureGuideSplitPanelSnapshot();
+  }
+
+  if (strokePanel) {
+    strokePanel.classList.add('collapsed');
+    strokePanel.setAttribute('aria-expanded', 'false');
+    strokePanel.style.setProperty('display', 'flex', 'important');
+    strokePanel.style.setProperty('visibility', 'visible', 'important');
+    strokePanel.style.setProperty('opacity', '1', 'important');
+    strokePanel.style.removeProperty('pointer-events');
+  }
+  if (imagePanel) {
+    imagePanel.classList.add('collapsed');
+    imagePanel.setAttribute('aria-expanded', 'false');
+    imagePanel.style.setProperty('display', 'flex', 'important');
+    imagePanel.style.setProperty('visibility', 'visible', 'important');
+    imagePanel.style.setProperty('opacity', '1', 'important');
+    imagePanel.style.removeProperty('pointer-events');
+    setImagePanelState(IMAGE_PANEL_STATES.collapsed);
+  }
+  if (elementsBody) {
+    elementsBody.classList.add('hidden');
+    elementsBody.style.setProperty('display', 'none', 'important');
+  }
+  if (imagePanelContent) {
+    imagePanelContent.classList.add('hidden');
+    imagePanelContent.style.setProperty('display', 'none', 'important');
+  }
+  if (strokeToggleIcon instanceof HTMLElement) {
+    strokeToggleIcon.style.transform = 'rotate(180deg)';
+  }
+  if (imageToggleIcon instanceof HTMLElement) {
+    imageToggleIcon.style.transform = 'rotate(180deg)';
+  }
+}
+
+function restoreGuideSplitPanelSnapshot() {
+  const snapshot = guideSplitPanelSnapshot;
+  const strokePanel = document.getElementById('strokePanel');
+  const imagePanel = document.getElementById('imagePanel');
+  const elementsBody = document.getElementById('elementsBody');
+  const imagePanelContent = document.getElementById('imagePanelContent');
+  const strokeToggleIcon = document.querySelector('#toggleStrokePanel svg');
+  const imageToggleIcon = document.querySelector('#toggleImagePanel svg');
+
+  if (strokePanel) {
+    strokePanel.classList.toggle('collapsed', snapshot?.strokeCollapsed === true);
+    strokePanel.setAttribute('aria-expanded', snapshot?.strokeCollapsed === true ? 'false' : 'true');
+  }
+  if (imagePanel) {
+    imagePanel.classList.toggle('collapsed', snapshot?.imageCollapsed === true);
+    imagePanel.setAttribute('aria-expanded', snapshot?.imageCollapsed === true ? 'false' : 'true');
+    setImagePanelState(
+      snapshot?.imageCollapsed === true
+        ? IMAGE_PANEL_STATES.collapsed
+        : IMAGE_PANEL_STATES.expanded
+    );
+  }
+  if (elementsBody) {
+    if (snapshot?.strokeCollapsed === true) {
+      elementsBody.classList.add('hidden');
+      elementsBody.style.setProperty('display', 'none', 'important');
+    } else {
+      elementsBody.classList.remove('hidden');
+      elementsBody.style.removeProperty('display');
+    }
+  }
+  if (imagePanelContent) {
+    if (snapshot?.imageCollapsed === true) {
+      imagePanelContent.classList.add('hidden');
+      imagePanelContent.style.setProperty('display', 'none', 'important');
+    } else {
+      imagePanelContent.classList.remove('hidden');
+      imagePanelContent.style.removeProperty('display');
+    }
+  }
+  if (strokeToggleIcon instanceof HTMLElement) {
+    strokeToggleIcon.style.transform = snapshot?.strokeCollapsed === true ? 'rotate(180deg)' : '';
+  }
+  if (imageToggleIcon instanceof HTMLElement) {
+    imageToggleIcon.style.transform = snapshot?.imageCollapsed === true ? 'rotate(180deg)' : '';
+  }
+
+  guideSplitPanelSnapshot = null;
+}
+
+function runGuideSplitLayoutSync() {
+  if (!guideSplitEnabled) return;
+  const primaryCanvasManager = getPrimaryCanvasManager();
+  const frameEl = document.getElementById('captureFrame');
+  const syncToken = guideSplitFrameSyncToken + 1;
+  guideSplitFrameSyncToken = syncToken;
+  if (frameEl) {
+    frameEl.style.visibility = 'hidden';
+  }
+  primaryCanvasManager?.resize?.();
+  if (typeof window.applyCaptureFrameForLabel === 'function') {
+    window.applyCaptureFrameForLabel(getCurrentViewId());
+  }
+  guideSplitCompareCanvasManager?.resize?.();
+  if (guideSplitFrameSyncRaf !== null) {
+    cancelAnimationFrame(guideSplitFrameSyncRaf);
+    guideSplitFrameSyncRaf = null;
+  }
+  guideSplitFrameSyncRaf = requestAnimationFrame(() => {
+    guideSplitFrameSyncRaf = requestAnimationFrame(() => {
+      guideSplitFrameSyncRaf = null;
+      if (!guideSplitEnabled || syncToken !== guideSplitFrameSyncToken) return;
+      if (typeof window.syncCaptureFrameToActiveTabWorldRect === 'function') {
+        window.syncCaptureFrameToActiveTabWorldRect(getCurrentViewId());
+      }
+      syncGuideSplitFrameGhost();
+      if (frameEl) {
+        frameEl.style.visibility = 'hidden';
+      }
+    });
+  });
+}
+
+function scheduleGuideSplitFrameSync() {
+  if (guideSplitFrameSyncRaf !== null) {
+    cancelAnimationFrame(guideSplitFrameSyncRaf);
+    guideSplitFrameSyncRaf = null;
+  }
+  guideSplitFrameSyncRaf = requestAnimationFrame(() => {
+    guideSplitFrameSyncRaf = requestAnimationFrame(() => {
+      guideSplitFrameSyncRaf = null;
+      if (!guideSplitEnabled) return;
+      if (typeof window.syncCaptureFrameToActiveTabWorldRect === 'function') {
+        window.syncCaptureFrameToActiveTabWorldRect(getCurrentViewId());
+      }
+      syncGuideSplitFrameGhost();
+      const frameEl = document.getElementById('captureFrame');
+      if (frameEl) {
+        frameEl.style.visibility = 'hidden';
+      }
+    });
+  });
+}
+
+function scheduleGuideSplitLayoutSync({ settle = false } = {}) {
+  if (guideSplitLayoutSyncRaf !== null) {
+    cancelAnimationFrame(guideSplitLayoutSyncRaf);
+    guideSplitLayoutSyncRaf = null;
+  }
+  if (guideSplitLayoutSyncTimeout !== null) {
+    clearTimeout(guideSplitLayoutSyncTimeout);
+    guideSplitLayoutSyncTimeout = null;
+  }
+
+  guideSplitLayoutSyncRaf = requestAnimationFrame(() => {
+    guideSplitLayoutSyncRaf = null;
+    runGuideSplitLayoutSync();
+
+    if (!settle) return;
+
+    guideSplitLayoutSyncTimeout = window.setTimeout(() => {
+      guideSplitLayoutSyncTimeout = null;
+      requestAnimationFrame(() => {
+        runGuideSplitLayoutSync();
+      });
+    }, 120);
+  });
+}
+
+function getGuideSplitImageWorldRect() {
+  const canvasManager = getPrimaryCanvasManager();
+  const bgImage = canvasManager?.fabricCanvas?.backgroundImage;
+  if (!bgImage || typeof bgImage.getCenterPoint !== 'function') {
+    return null;
+  }
+
+  const center = bgImage.getCenterPoint();
+  const width =
+    typeof bgImage.getScaledWidth === 'function'
+      ? bgImage.getScaledWidth()
+      : Number(bgImage.width || 0) * Number(bgImage.scaleX || 1);
+  const height =
+    typeof bgImage.getScaledHeight === 'function'
+      ? bgImage.getScaledHeight()
+      : Number(bgImage.height || 0) * Number(bgImage.scaleY || 1);
+
+  if (
+    !Number.isFinite(center?.x) ||
+    !Number.isFinite(center?.y) ||
+    !Number.isFinite(width) ||
+    !Number.isFinite(height) ||
+    width <= 0 ||
+    height <= 0
+  ) {
+    return null;
+  }
+
+  return {
+    left: center.x - width / 2,
+    top: center.y - height / 2,
+    width,
+    height,
+  };
+}
+
+function captureGuideSplitRestoreSnapshot(viewId) {
+  const normalizedViewId = toBaseViewId(viewId || getCurrentViewId());
+  if (!normalizedViewId) {
+    guideSplitRestoreSnapshot = null;
+    window.__guideSplitRestoreSnapshot = null;
+    return;
+  }
+
+  const manager = window.app?.projectManager || window.projectManager;
+  const liveViewport = getPrimaryCanvasManager()?.getViewportState?.() || null;
+  guideSplitRestoreSnapshot = {
+    viewId: normalizedViewId,
+    tabs: cloneGuideSplitValue(window.captureTabsByLabel?.[normalizedViewId] || null),
+    viewport:
+      cloneGuideSplitValue(manager?.views?.[normalizedViewId]?.viewport) ||
+      cloneGuideSplitValue(liveViewport),
+    imageWorldRect: cloneGuideSplitValue(getGuideSplitImageWorldRect()),
+  };
+  window.__guideSplitRestoreSnapshot = cloneGuideSplitValue(guideSplitRestoreSnapshot);
+}
+
+function restoreGuideSplitSnapshot(viewId) {
+  const normalizedViewId = toBaseViewId(viewId || getCurrentViewId());
+  if (!normalizedViewId || guideSplitRestoreSnapshot?.viewId !== normalizedViewId) {
+    guideSplitRestoreSnapshot = null;
+    window.__guideSplitRestoreSnapshot = null;
+    return null;
+  }
+
+  const snapshot = cloneGuideSplitValue(guideSplitRestoreSnapshot);
+
+  if (
+    guideSplitRestoreSnapshot.tabs &&
+    typeof window.setCaptureTabsForLabel === 'function'
+  ) {
+    window.setCaptureTabsForLabel(normalizedViewId, guideSplitRestoreSnapshot.tabs);
+  }
+
+  const primaryCanvasManager = getPrimaryCanvasManager();
+  if (guideSplitRestoreSnapshot.viewport && primaryCanvasManager?.setViewportState) {
+    primaryCanvasManager.setViewportState(guideSplitRestoreSnapshot.viewport);
+  }
+
+  guideSplitRestoreSnapshot = null;
+  window.__guideSplitRestoreSnapshot = null;
+  return snapshot;
 }
 
 function normalizeFlashSize(value) {
@@ -1172,43 +1484,98 @@ function ensureStyles() {
     }
 
     #main-canvas-wrapper.guide-split-active {
-      display: grid !important;
-      grid-template-columns: minmax(0, 1fr) minmax(320px, 36%);
-      grid-template-rows: minmax(0, 1fr);
-      gap: 0;
+      display: block !important;
       padding: 0;
       background: #fff;
-      align-items: stretch;
     }
-    .guide-split-live-pane {
+    .guide-split-root {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      grid-template-rows: minmax(0, 1fr);
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+    }
+    .guide-split-pane {
       position: relative;
       min-width: 0;
       min-height: 0;
       height: 100%;
       overflow: hidden;
       background: #ffffff;
+    }
+    .guide-split-live-pane {
       border: 0;
     }
+    .guide-split-live-pane #captureOverlay {
+      position: absolute !important;
+      inset: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      z-index: 35 !important;
+    }
+    .guide-split-frame-ghost {
+      position: absolute;
+      display: none;
+      pointer-events: none;
+      border: 2px solid #22c55e;
+      background: transparent;
+      box-shadow: 0 0 0 2000px rgba(255, 255, 255, 1);
+      z-index: 36;
+    }
     .guide-split-guide-pane {
-      position: relative;
-      height: 100%;
       border-left: 1px solid #cbd5e1;
-      background: #ffffff;
       display: grid;
       grid-template-rows: auto 1fr;
       min-height: 0;
       overflow: hidden;
+      background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    }
+    .guide-split-pane.is-active {
+      box-shadow: inset 0 0 0 2px rgba(37, 99, 235, 0.18);
+    }
+    .guide-split-pane-meta {
+      position: absolute;
+      left: 10px;
+      top: 12px;
+      z-index: 25;
+      pointer-events: none;
+    }
+    .guide-split-pane-chip {
+      display: inline-grid;
+      gap: 2px;
+      padding: 8px 10px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.94);
+      border: 1px solid rgba(148, 163, 184, 0.38);
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.1);
+      color: #0f172a;
+      font-size: 11px;
+      line-height: 1.2;
+      max-width: min(280px, calc(100% - 24px));
+    }
+    .guide-split-pane-chip strong {
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .guide-split-pane-chip span {
+      color: #475569;
+      font-weight: 600;
+    }
+    .guide-split-pane-chip.active {
+      border-color: rgba(37, 99, 235, 0.5);
+      box-shadow: 0 10px 24px rgba(37, 99, 235, 0.16);
     }
     .guide-split-guide-head {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 8px;
-      padding: 7px 10px;
+      padding: 9px 12px;
       border-bottom: 1px solid #e2e8f0;
-      background: #f8fafc;
+      background: rgba(248, 250, 252, 0.96);
       font-size: 11px;
-      font-weight: 700;
+      font-weight: 800;
       color: #0f172a;
       text-transform: uppercase;
       letter-spacing: 0.04em;
@@ -1220,30 +1587,98 @@ function ensureStyles() {
       text-transform: none;
       letter-spacing: normal;
     }
+    .guide-split-guide-actions {
+      display: inline-flex;
+      align-items: center;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+      gap: 6px;
+      max-width: 100%;
+    }
+    .guide-split-guide-actions button {
+      border: 1px solid #cbd5e1;
+      border-radius: 7px;
+      background: #fff;
+      color: #334155;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 8px;
+      cursor: pointer;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .guide-split-guide-actions button:hover {
+      border-color: #94a3b8;
+      background: #f8fafc;
+    }
+    .guide-split-picker-label {
+      display: grid;
+      gap: 3px;
+      min-width: 132px;
+      color: #475569;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .guide-split-picker-label select {
+      min-width: 132px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      background: #fff;
+      color: #0f172a;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 8px;
+    }
     .guide-split-guide-body {
       position: relative;
+      min-height: 0;
+      padding: 8px;
+      overflow: hidden;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      align-content: stretch;
+      justify-items: center;
+      gap: 8px;
+    }
+    .guide-split-guide-body.is-empty {
       display: grid;
       place-items: center;
-      background: #f8fafc;
-      min-height: 0;
-      pointer-events: none;
-      padding: 8px;
     }
-    .guide-split-guide-body img {
+    .guide-split-pane-canvas-host {
+      position: relative;
+      min-width: 0;
+      min-height: 0;
       width: 100%;
       height: 100%;
-      object-fit: contain;
+      overflow: hidden;
+      background: #fff;
+    }
+    .guide-split-compare-host {
       border-radius: 8px;
       border: 1px solid #dbeafe;
-      background: #fff;
+      justify-self: center;
+      align-self: center;
+      max-width: 100%;
+      max-height: 100%;
+    }
+    body.guide-split-workspace-active #strokePanelIcon,
+    body.guide-split-workspace-active #imagePanelIcon {
+      display: none !important;
+      visibility: hidden !important;
+      pointer-events: none !important;
     }
     .guide-split-guide-empty {
       text-align: center;
       display: grid;
-      gap: 6px;
+      gap: 8px;
       color: #64748b;
       font-size: 12px;
-      pointer-events: auto;
+      align-items: center;
+      justify-items: center;
+      max-width: 320px;
+      margin: auto;
     }
     .guide-split-guide-empty button {
       border: 1px solid #cbd5e1;
@@ -1654,7 +2089,9 @@ function parseSvgNumericAttr(raw) {
   return Number.isFinite(num) ? num : 0;
 }
 
-function prepareSvgForRaster(svgText) {
+function prepareSvgForRaster(svgText, options = {}) {
+  const hideGuideMeasurements = options.hideGuideMeasurements !== false;
+  const hideGuideMeasurementValues = options.hideGuideMeasurementValues === true;
   const parser = new DOMParser();
   const doc = parser.parseFromString(svgText, 'image/svg+xml');
   const root = doc.querySelector('svg');
@@ -1687,17 +2124,31 @@ function prepareSvgForRaster(svgText) {
     root.setAttribute('viewBox', `0 0 ${width} ${height}`);
   }
 
-  // Hide original guide measurement + label groups in the raster image so imported
-  // Fabric vectors/tags are the single visible source of truth.
-  const allGroups = Array.from(root.querySelectorAll('g[id]'));
-  allGroups.forEach(group => {
-    const rawId = String(group.getAttribute('id') || '').trim();
-    if (!rawId) return;
-    const normalizedId = rawId.replace(/^mos\d+_/, '').trim();
-    if (/^[mbc][a-z0-9-]+(?:cm|mm|in)\d*(?:_(?:label|text))?$/i.test(normalizedId)) {
-      group.setAttribute('display', 'none');
-    }
-  });
+  if (hideGuideMeasurements) {
+    // Hide original guide measurement + label groups in the raster image so imported
+    // Fabric vectors/tags are the single visible source of truth.
+    const allGroups = Array.from(root.querySelectorAll('g[id]'));
+    allGroups.forEach(group => {
+      const rawId = String(group.getAttribute('id') || '').trim();
+      if (!rawId) return;
+      const normalizedId = rawId.replace(/^mos\d+_/, '').trim();
+      if (/^[mbc][a-z0-9-]+(?:cm|mm|in)\d*(?:_(?:label|text))?$/i.test(normalizedId)) {
+        group.setAttribute('display', 'none');
+      }
+    });
+  } else if (hideGuideMeasurementValues) {
+    // Keep the designed vector lines/role labels but drop the placeholder measurement
+    // value boxes (the b* groups that still contain 0000.00 text).
+    const allGroups = Array.from(root.querySelectorAll('g[id]'));
+    allGroups.forEach(group => {
+      const rawId = String(group.getAttribute('id') || '').trim();
+      if (!rawId) return;
+      const normalizedId = rawId.replace(/^mos\d+_/, '').trim();
+      if (/^b[a-z0-9-]+(?:cm|mm|in)\d*(?:_(?:label|text))?$/i.test(normalizedId)) {
+        group.setAttribute('display', 'none');
+      }
+    });
+  }
 
   root.setAttribute('width', String(width));
   root.setAttribute('height', String(height));
@@ -1746,14 +2197,19 @@ function computeRasterSize(width, height) {
   };
 }
 
-async function fetchGuideRasterUrl(code, view) {
-  const key = `${GUIDE_RASTER_CACHE_VERSION}::${code}::${view}`;
+async function fetchGuideRasterUrl(code, view, options = {}) {
+  const hideGuideMeasurements = options.hideGuideMeasurements !== false;
+  const hideGuideMeasurementValues = options.hideGuideMeasurementValues === true;
+  const key = `${GUIDE_RASTER_CACHE_VERSION}::${code}::${view}::measurements:${hideGuideMeasurements ? 'hidden' : 'shown'}::values:${hideGuideMeasurementValues ? 'hidden' : 'shown'}`;
   if (guideRasterCache.has(key)) {
     return guideRasterCache.get(key);
   }
 
   const rawSvg = await fetchGuideSvgText(code, view);
-  const prepared = prepareSvgForRaster(rawSvg);
+  const prepared = prepareSvgForRaster(rawSvg, {
+    hideGuideMeasurements,
+    hideGuideMeasurementValues,
+  });
   const svgBlob = new Blob([prepared.svgText], {
     type: 'image/svg+xml;charset=utf-8',
   });
@@ -1804,6 +2260,22 @@ function setStatusMessage(message, kind = 'info') {
   } else {
     console.log(`[Guide] ${message}`);
   }
+}
+
+async function waitForGuideImportReady(viewId, timeoutMs = 2200) {
+  const manager = window.app?.projectManager || window.projectManager;
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const currentViewId = String(manager?.currentViewId || '').trim();
+    const canvas = window.app?.canvasManager?.fabricCanvas;
+    const bgImage = canvas?.backgroundImage || null;
+    if (currentViewId === viewId && canvas && bgImage) {
+      return true;
+    }
+    // eslint-disable-next-line no-await-in-loop
+    await new Promise(resolve => setTimeout(resolve, 80));
+  }
+  return false;
 }
 
 function tagGuideOnView(viewId, code, view) {
@@ -2024,7 +2496,7 @@ async function applyGuideAsBackground(code, view) {
  * @param {string} imageLabel - Target image label
  * @returns {Promise<Object>} Import result
  */
-async function importSvgMeasurements(code, view, imageLabel) {
+async function importSvgMeasurements(code, view, imageLabel, options = {}) {
   try {
     console.log(`[SVG Import] Starting import for ${code}-${view} to image ${imageLabel}`);
 
@@ -2039,13 +2511,20 @@ async function importSvgMeasurements(code, view, imageLabel) {
 
     // Fetch raw SVG
     console.log(`[SVG Import] Fetching SVG from ${buildGuideUrl(code, view)}`);
-    const response = await fetch(buildGuideUrl(code, view), { method: 'GET' });
-    if (!response.ok) {
-      console.warn(`[SVG Import] Failed to fetch SVG: ${response.status}`);
+    const svgText =
+      typeof options.svgText === 'string' && options.svgText.trim()
+        ? options.svgText
+        : await (async () => {
+            const response = await fetch(buildGuideUrl(code, view), { method: 'GET' });
+            if (!response.ok) {
+              console.warn(`[SVG Import] Failed to fetch SVG: ${response.status}`);
+              return '';
+            }
+            return response.text();
+          })();
+    if (!svgText) {
       return { success: false, imported: 0 };
     }
-
-    const svgText = await response.text();
     console.log(`[SVG Import] Fetched SVG, length: ${svgText.length}`);
 
     const parsed = parseSvgMeasurements(svgText);
@@ -2060,7 +2539,7 @@ async function importSvgMeasurements(code, view, imageLabel) {
     }
 
     // Get canvas and image dimensions for coordinate transformation
-    const canvas = window.app?.canvasManager?.fabricCanvas;
+    const canvas = options.canvasManager?.fabricCanvas || window.app?.canvasManager?.fabricCanvas;
     console.log(`[SVG Import] Canvas available:`, !!canvas);
     if (!canvas) {
       console.warn('[SVG Import] Canvas not available for measurement import');
@@ -2087,7 +2566,8 @@ async function importSvgMeasurements(code, view, imageLabel) {
 
     // Import each measurement as a line stroke
     const imported = [];
-    const metadataManager = window.app?.metadataManager;
+    const metadataManager = options.metadataManager || window.app?.metadataManager;
+    const tagManager = options.tagManager || window.app?.tagManager || null;
 
     for (const measurement of parsed.measurements) {
       for (const line of measurement.lines) {
@@ -2144,17 +2624,15 @@ async function importSvgMeasurements(code, view, imageLabel) {
         }
 
         // Create tag using TagManager with connector color matching the line
-        if (window.app?.tagManager) {
+        if (tagManager) {
           setTimeout(() => {
-            const tagManager = window.app.tagManager;
-
             // Set connector to match the line color and use square tags
             tagManager.connectorColor = fabricLine.stroke || '#ef4444';
             tagManager.connectorMatchesLine = true;
             tagManager.tagShape = 'square';
 
             // Also update paintApp state so button syncs correctly
-            if (window.paintApp?.state) {
+            if (options.syncUi !== false && window.paintApp?.state) {
               window.paintApp.state.labelShape = 'square';
             }
 
@@ -2176,7 +2654,8 @@ async function importSvgMeasurements(code, view, imageLabel) {
     canvas.renderAll();
 
     // Update UI buttons to reflect import settings
-    setTimeout(() => {
+    if (options.syncUi !== false) {
+      setTimeout(() => {
       // Sync connector tone button
       const connectorToneBtn = document.getElementById('connectorToneBtn');
       if (connectorToneBtn) {
@@ -2189,10 +2668,11 @@ async function importSvgMeasurements(code, view, imageLabel) {
         labelShapeBtn.textContent = '■';
         labelShapeBtn.setAttribute('aria-pressed', 'true');
       }
-    }, 300);
+      }, 300);
+    }
 
     // Trigger any necessary updates
-    if (typeof window.updateUI === 'function') {
+    if (options.syncUi !== false && typeof window.updateUI === 'function') {
       window.updateUI();
     }
 
@@ -2288,37 +2768,37 @@ async function addGuideAsNewImage(code, view, options = {}) {
     await manager.switchView(label, true);
   }
 
-  // Import SVG measurements as vector strokes
-  // Wait a moment for background image to fully load and render
   if (options.importMeasurements !== false) {
-    console.log(`[addGuideAsNewImage] Scheduling measurement import for ${code}-${view}`);
-    // Use a Promise to allow proper async handling
-    const importPromise = new Promise(resolve => {
-      setTimeout(async () => {
+    const activeBeforeImport = String(manager.currentViewId || getCurrentViewId() || '').trim();
+    const shouldReturnToPrevious = options.switchToNew !== true;
+    try {
+      if (typeof manager.switchView === 'function' && activeBeforeImport !== label) {
+        await manager.switchView(label, true);
+      }
+      await waitForGuideImportReady(label);
+      const importResult = await importSvgMeasurements(code, view, label);
+      console.log(`[addGuideAsNewImage] Import result:`, importResult);
+      if (options.skipStatusMessage !== true && importResult.success && importResult.imported > 0) {
+        setStatusMessage(`Added guide with ${importResult.imported} measurements`, 'success');
+      } else if (options.skipStatusMessage !== true && !importResult.success) {
+        console.warn(`[addGuideAsNewImage] Import failed:`, importResult.error);
+      }
+    } catch (error) {
+      console.error('[addGuideAsNewImage] Exception during import:', error);
+    } finally {
+      if (
+        shouldReturnToPrevious &&
+        typeof manager.switchView === 'function' &&
+        activeBeforeImport &&
+        activeBeforeImport !== label
+      ) {
         try {
-          console.log(`[addGuideAsNewImage] Executing measurement import after delay`);
-          const importResult = await importSvgMeasurements(code, view, label);
-          console.log(`[addGuideAsNewImage] Import result:`, importResult);
-          if (importResult.success && importResult.imported > 0) {
-            console.log(
-              `Successfully imported ${importResult.imported} measurements from guide ${code}`
-            );
-            if (typeof setStatusMessage === 'function') {
-              setStatusMessage(`Added guide with ${importResult.imported} measurements`, 'success');
-            }
-          } else if (!importResult.success) {
-            console.warn(`[addGuideAsNewImage] Import failed:`, importResult.error);
-          }
-          resolve(importResult);
-        } catch (error) {
-          console.error('[addGuideAsNewImage] Exception during import:', error);
-          resolve({ success: false, error: error.message });
+          await manager.switchView(activeBeforeImport, true);
+        } catch {
+          // no-op
         }
-      }, 1500); // Give background time to render (increased for debugging)
-    });
-
-    // Don't await - let it run in background so UI isn't blocked
-    importPromise.catch(err => console.error('Measurement import error:', err));
+      }
+    }
   } else {
     console.log(`[addGuideAsNewImage] Measurement import disabled by options`);
   }
@@ -2530,6 +3010,7 @@ function ensureOverlay(slide, slideCount) {
           <button type="button" class="guide-flash-ctl" data-flash-size-med aria-label="Medium guide">M</button>
           <button type="button" class="guide-flash-ctl" data-flash-size-inc aria-label="Larger guide">+</button>
           <button type="button" class="guide-flash-ctl" data-flash-size-fit aria-label="Fit guide">Fit</button>
+          <button type="button" class="guide-flash-ctl" data-flash-edit aria-label="Open split guide editor">Edit</button>
           <button type="button" class="guide-flash-ctl" data-flash-bind aria-label="Guide binding">Bind</button>
         </div>
         <button type="button" class="guide-flash-close" aria-label="Close guide flash">×</button>
@@ -2575,7 +3056,7 @@ function ensureOverlay(slide, slideCount) {
 
   const sourceViewId = pinnedSourceViewId || getCurrentViewId();
   const isLocked = pinnedLockToImage === true;
-  const hint = `${activeIndex + 1}/${slideCount} · \\ toggle · Alt+\\ gallery · Shift+\\ next`;
+  const hint = `${activeIndex + 1}/${slideCount} · \\ split · Alt+\\ gallery · Shift+\\ next guide`;
   const bindingTargetViewId = flashComparisonImageId || sourceViewId;
   const bindingText = getBindingBreadcrumb(bindingTargetViewId);
 
@@ -2663,6 +3144,7 @@ function bindFlashWindowControls(root) {
   const med = root.querySelector('[data-flash-size-med]');
   const inc = root.querySelector('[data-flash-size-inc]');
   const fit = root.querySelector('[data-flash-size-fit]');
+  const edit = root.querySelector('[data-flash-edit]');
   const bind = root.querySelector('[data-flash-bind]');
   const close = root.querySelector('.guide-flash-close');
   const lockToggle = root.querySelector('#guideFlashLockToggle');
@@ -2690,6 +3172,13 @@ function bindFlashWindowControls(root) {
     e.preventDefault();
     setFlashRect(null);
     applyFlashWindowLayout(root);
+  });
+  edit?.addEventListener('click', e => {
+    e.preventDefault();
+    setGuideSplitEnabled(true);
+    syncGuideSplitToActiveView();
+    hideGuideFlash();
+    isGuidePinnedVisible = false;
   });
   bind?.addEventListener('click', e => {
     e.preventDefault();
@@ -3128,6 +3617,10 @@ function getGuideSplitStateForView(viewId = getCurrentViewId()) {
   return {
     enabled: guideSplitEnabled,
     viewId: toBaseViewId(viewId),
+    leftViewId: toBaseViewId(guideCompareWorkspaceState.leftViewId || getCurrentViewId()),
+    rightViewId: toBaseViewId(guideCompareWorkspaceState.rightViewId || ''),
+    activePane: guideCompareWorkspaceState.activePane,
+    rightSourceKind: guideCompareWorkspaceState.rightSourceKind,
     frameScopeId: binding.frameScopeId,
     imageScopeId: binding.imageScopeId,
     scopeType: binding.scopeType,
@@ -3145,13 +3638,20 @@ function ensureGuideSplitShell() {
   if (!root) {
     root = document.createElement('div');
     root.id = 'guideSplitRoot';
-    root.style.cssText = 'display:contents;';
-    const live = document.createElement('div');
+    root.className = 'guide-split-root';
+    const live = document.createElement('section');
     live.id = 'guideSplitLivePane';
-    live.className = 'guide-split-live-pane';
+    live.className = 'guide-split-live-pane guide-split-pane';
+    live.setAttribute('data-pane', 'left');
+    live.tabIndex = 0;
+    live.innerHTML = `
+      <div id="guideSplitLiveCanvasHost" class="guide-split-pane-canvas-host"></div>
+    `;
     const guide = document.createElement('section');
     guide.id = 'guideSplitGuidePane';
-    guide.className = 'guide-split-guide-pane';
+    guide.className = 'guide-split-guide-pane guide-split-pane';
+    guide.setAttribute('data-pane', 'right');
+    guide.tabIndex = 0;
     root.appendChild(live);
     root.appendChild(guide);
     wrapper.appendChild(root);
@@ -3159,25 +3659,514 @@ function ensureGuideSplitShell() {
   return root;
 }
 
-function getCanvasWrapperElement() {
-  return window.app?.canvasManager?.fabricCanvas?.wrapperEl || null;
+function getPrimaryCanvasManager() {
+  return window.app?.primaryCanvasManager || window.app?.canvasManager || null;
+}
+
+function getCanvasWrapperElement(canvasManager = getPrimaryCanvasManager()) {
+  return canvasManager?.fabricCanvas?.wrapperEl || null;
+}
+
+function relocateCaptureOverlayIntoSplitPane() {
+  const overlay = document.getElementById('captureOverlay');
+  const livePane = document.getElementById('guideSplitLivePane');
+  if (!overlay || !livePane) return;
+
+  if (!guideSplitCaptureOverlayOriginalParent) {
+    guideSplitCaptureOverlayOriginalParent = overlay.parentElement;
+    guideSplitCaptureOverlayOriginalNextSibling = overlay.nextSibling;
+  }
+
+  if (overlay.parentElement !== livePane) {
+    livePane.appendChild(overlay);
+  }
+  overlay.style.position = 'absolute';
+  overlay.style.inset = '0';
+  overlay.style.width = '100%';
+  overlay.style.height = '100%';
+}
+
+function restoreCaptureOverlayFromSplitPane() {
+  const overlay = document.getElementById('captureOverlay');
+  if (!overlay || !guideSplitCaptureOverlayOriginalParent) return;
+
+  if (guideSplitCaptureOverlayOriginalNextSibling) {
+    guideSplitCaptureOverlayOriginalParent.insertBefore(
+      overlay,
+      guideSplitCaptureOverlayOriginalNextSibling
+    );
+  } else {
+    guideSplitCaptureOverlayOriginalParent.appendChild(overlay);
+  }
+
+  overlay.style.position = '';
+  overlay.style.inset = '';
+  overlay.style.width = '';
+  overlay.style.height = '';
+}
+
+function ensureGuideSplitFrameGhost() {
+  const overlay = document.getElementById('captureOverlay');
+  if (!overlay) return null;
+  if (guideSplitFrameGhost && guideSplitFrameGhost.isConnected) {
+    return guideSplitFrameGhost;
+  }
+  let ghost = overlay.querySelector('#guideSplitFrameGhost');
+  if (!ghost) {
+    ghost = document.createElement('div');
+    ghost.id = 'guideSplitFrameGhost';
+    ghost.className = 'guide-split-frame-ghost';
+    overlay.appendChild(ghost);
+  }
+  guideSplitFrameGhost = ghost;
+  return guideSplitFrameGhost;
+}
+
+function syncGuideSplitFrameGhost() {
+  const ghost = ensureGuideSplitFrameGhost();
+  const frame = document.getElementById('captureFrame');
+  const overlay = document.getElementById('captureOverlay');
+  if (!ghost || !frame || !overlay) return;
+  const frameRect = frame.getBoundingClientRect();
+  const overlayRect = overlay.getBoundingClientRect();
+  ghost.style.left = `${Math.round(frameRect.left - overlayRect.left)}px`;
+  ghost.style.top = `${Math.round(frameRect.top - overlayRect.top)}px`;
+  ghost.style.width = `${Math.round(frameRect.width)}px`;
+  ghost.style.height = `${Math.round(frameRect.height)}px`;
+  ghost.style.borderColor = frame.style.borderColor || '#22c55e';
+  ghost.style.display = 'block';
+}
+
+function removeGuideSplitFrameGhost() {
+  if (guideSplitFrameGhost?.parentElement) {
+    guideSplitFrameGhost.parentElement.removeChild(guideSplitFrameGhost);
+  }
+  guideSplitFrameGhost = null;
+}
+
+function refreshGuideSplitInteractionGuards() {
+  const primaryCanvasManager = getPrimaryCanvasManager();
+  primaryCanvasManager?.setInteractionGuard?.(() => true);
+  guideSplitCompareCanvasManager?.setInteractionGuard?.(() => true);
+}
+
+function findExistingGuideImageViewId(code, variant) {
+  const manager = window.app?.projectManager || window.projectManager;
+  const meta = manager?.getProjectMetadata?.() || {};
+  const labels =
+    meta?.measurementGuideLabelsByImage && typeof meta.measurementGuideLabelsByImage === 'object'
+      ? meta.measurementGuideLabelsByImage
+      : {};
+  const target = `${normalizeCode(code)} ${String(variant || 'front').toUpperCase()}`;
+  return (
+    Object.entries(labels).find(([viewId, label]) => {
+      if (!manager?.views?.[viewId]?.image) return false;
+      return String(label || '').trim().toUpperCase() === target.toUpperCase();
+    })?.[0] || ''
+  );
+}
+
+async function ensureGuideImageViewForSelection(selection) {
+  if (!selection?.code) return '';
+  const normalizedCode = normalizeCode(selection.code);
+  const normalizedVariant = String(selection.variant || 'front').toLowerCase();
+  const cacheKey = `${normalizedCode}::${normalizedVariant}`;
+  const existingViewId = findExistingGuideImageViewId(normalizedCode, normalizedVariant);
+  if (existingViewId) return existingViewId;
+
+  const pending = guideSplitPendingGuideViews.get(cacheKey);
+  if (pending) {
+    return pending;
+  }
+
+  const createPromise = (async () => {
+    guideSplitSuppressViewSwitchSync += 1;
+    try {
+      const viewId = await addGuideAsNewImage(normalizedCode, normalizedVariant, {
+        switchToNew: false,
+        includeGuideSvgOverlay: false,
+        importMeasurements: false,
+      });
+      return viewId || findExistingGuideImageViewId(normalizedCode, normalizedVariant) || '';
+    } finally {
+      guideSplitSuppressViewSwitchSync = Math.max(0, guideSplitSuppressViewSwitchSync - 1);
+      guideSplitPendingGuideViews.delete(cacheKey);
+    }
+  })();
+
+  guideSplitPendingGuideViews.set(cacheKey, createPromise);
+  return createPromise;
+}
+
+function getGuideSplitImageOptions() {
+  const leftViewId = toBaseViewId(guideCompareWorkspaceState.leftViewId || getCurrentViewId());
+  const rows = getProjectImageRows();
+  return rows
+    .filter(row => row.id !== leftViewId)
+    .map(row => ({
+      id: row.id,
+      displayName: row.displayName,
+    }));
+}
+
+function getGuideSplitActiveViewIdForPane(pane) {
+  if (pane === 'right') {
+    return toBaseViewId(guideCompareWorkspaceState.rightViewId || '');
+  }
+  return toBaseViewId(guideCompareWorkspaceState.leftViewId || getCurrentViewId());
+}
+
+function buildGuideSplitTempViewId(selection) {
+  const code = normalizeCode(selection?.code || '');
+  const variant = String(selection?.variant || 'front')
+    .trim()
+    .toLowerCase();
+  if (!code) return '';
+  return `${GUIDE_SPLIT_TEMP_PREFIX}${code}:${variant}`;
+}
+
+function isGuideSplitTempViewId(viewId) {
+  return String(viewId || '').startsWith(GUIDE_SPLIT_TEMP_PREFIX);
+}
+
+function parseGuideSplitTempViewId(viewId) {
+  const raw = String(viewId || '').trim();
+  if (!raw.startsWith(GUIDE_SPLIT_TEMP_PREFIX)) return null;
+  const payload = raw.slice(GUIDE_SPLIT_TEMP_PREFIX.length);
+  const [code = '', variant = 'front'] = payload.split(':');
+  const normalizedCode = normalizeCode(code);
+  if (!normalizedCode) return null;
+  return {
+    code: normalizedCode,
+    variant: String(variant || 'front').trim().toLowerCase() || 'front',
+  };
+}
+
+function createGuideSplitCompareTagManager(compareCanvasManager) {
+  const metadataManager = window.app?.metadataManager || null;
+  if (!compareCanvasManager || !metadataManager) return null;
+  const tagManager = new TagManager(compareCanvasManager, metadataManager);
+  const primaryTagManager = window.app?.tagManager || null;
+  if (primaryTagManager) {
+    tagManager.showMeasurements = primaryTagManager.showMeasurements !== false;
+    tagManager.tagSize = primaryTagManager.tagSize || tagManager.tagSize;
+    tagManager.tagShape = primaryTagManager.tagShape || tagManager.tagShape;
+    tagManager.tagBackgroundStyle =
+      primaryTagManager.tagBackgroundStyle || tagManager.tagBackgroundStyle;
+    tagManager.connectorColor = primaryTagManager.connectorColor || tagManager.connectorColor;
+    tagManager.connectorMatchesLine =
+      primaryTagManager.connectorMatchesLine !== false;
+    tagManager.strokeColor = primaryTagManager.strokeColor || tagManager.strokeColor;
+  }
+  return tagManager;
+}
+
+function clearGuideSplitTempScope(scopeId) {
+  const targetScopeId = String(scopeId || '').trim();
+  if (!targetScopeId) return;
+
+  if (guideSplitCompareTagManager?.clearTagsForImage) {
+    try {
+      guideSplitCompareTagManager.clearTagsForImage(targetScopeId);
+    } catch (error) {
+      console.warn('[GuideSplit] Failed to clear compare tags', error);
+    }
+  }
+
+  const metadataManager = window.app?.metadataManager || null;
+  const maps = [
+    metadataManager?.vectorStrokesByImage,
+    metadataManager?.strokeVisibilityByImage,
+    metadataManager?.strokeLabelVisibility,
+    metadataManager?.strokeMeasurements,
+    window.lineStrokesByImage,
+    window.customLabelPositions,
+    window.calculatedLabelOffsets,
+    window.customLabelRotationStamps,
+    window.textElementsByImage,
+  ];
+  maps.forEach(map => {
+    if (map && typeof map === 'object') {
+      delete map[targetScopeId];
+    }
+  });
+
+  if (guideSplitActiveTempScopeId === targetScopeId) {
+    guideSplitActiveTempScopeId = '';
+  }
+}
+
+function seedGuideSplitMeasurementsFromLeft(tempScopeId) {
+  const targetScopeId = String(tempScopeId || '').trim();
+  const metadataManager = window.app?.metadataManager || null;
+  if (!targetScopeId || !metadataManager) return;
+
+  const leftScopeId = resolveScopedImageLabel(
+    guideCompareWorkspaceState.leftViewId || getCurrentViewId()
+  );
+  const leftMeasurements = metadataManager.strokeMeasurements?.[leftScopeId] || {};
+  const leftStrokeVisibility = metadataManager.strokeVisibilityByImage?.[leftScopeId] || {};
+  const leftLabelVisibility = metadataManager.strokeLabelVisibility?.[leftScopeId] || {};
+  const rightVectors = metadataManager.vectorStrokesByImage?.[targetScopeId] || {};
+
+  metadataManager.strokeMeasurements[targetScopeId] =
+    metadataManager.strokeMeasurements[targetScopeId] || {};
+  metadataManager.strokeVisibilityByImage[targetScopeId] =
+    metadataManager.strokeVisibilityByImage[targetScopeId] || {};
+  metadataManager.strokeLabelVisibility[targetScopeId] =
+    metadataManager.strokeLabelVisibility[targetScopeId] || {};
+
+  const pendingLabels = [];
+  Object.entries(rightVectors).forEach(([strokeLabel, strokeObj]) => {
+    if (leftMeasurements[strokeLabel] !== undefined) {
+      metadataManager.strokeMeasurements[targetScopeId][strokeLabel] = cloneGuideSplitValue(
+        leftMeasurements[strokeLabel]
+      );
+    }
+
+    if (Object.prototype.hasOwnProperty.call(leftStrokeVisibility, strokeLabel)) {
+      metadataManager.strokeVisibilityByImage[targetScopeId][strokeLabel] =
+        leftStrokeVisibility[strokeLabel] !== false;
+    }
+    if (Object.prototype.hasOwnProperty.call(leftLabelVisibility, strokeLabel)) {
+      metadataManager.strokeLabelVisibility[targetScopeId][strokeLabel] =
+        leftLabelVisibility[strokeLabel] !== false;
+    }
+
+    const strokeVisible =
+      metadataManager.strokeVisibilityByImage[targetScopeId][strokeLabel] !== false;
+    const labelVisible =
+      metadataManager.strokeLabelVisibility[targetScopeId][strokeLabel] !== false;
+    const effectiveVisible = strokeVisible && labelVisible;
+
+    strokeObj?.set?.({
+      visible: strokeVisible,
+      evented: strokeVisible,
+      selectable: strokeVisible,
+    });
+    strokeObj?.setCoords?.();
+    pendingLabels.push({ strokeLabel, effectiveVisible });
+  });
+
+  window.setTimeout(() => {
+    pendingLabels.forEach(({ strokeLabel, effectiveVisible }) => {
+      if (guideSplitCompareTagManager?.updateTagText) {
+        guideSplitCompareTagManager.updateTagText(strokeLabel, targetScopeId);
+      }
+      if (guideSplitCompareTagManager?.updateTagVisibility) {
+        guideSplitCompareTagManager.updateTagVisibility(
+          strokeLabel,
+          targetScopeId,
+          effectiveVisible
+        );
+      }
+    });
+    guideSplitCompareCanvasManager?.fabricCanvas?.requestRenderAll?.();
+  }, 90);
+}
+
+async function loadGuideIntoCompareCanvas(selection, compareCanvasManager) {
+  if (!selection?.code || !compareCanvasManager) return false;
+
+  const normalizedCode = normalizeCode(selection.code);
+  const normalizedVariant = String(selection.variant || 'front').trim().toLowerCase() || 'front';
+  const tempScopeId = buildGuideSplitTempViewId({
+    code: normalizedCode,
+    variant: normalizedVariant,
+  });
+  const imageUrl = await fetchGuideRasterUrl(normalizedCode, normalizedVariant);
+  const guideSvgText = await fetchGuideSvgText(normalizedCode, normalizedVariant);
+
+  compareCanvasManager.fabricCanvas?.discardActiveObject?.();
+  clearGuideSplitTempScope(guideSplitActiveTempScopeId);
+  compareCanvasManager.clear();
+  compareCanvasManager.setViewportState?.({ zoom: 1, panX: 0, panY: 0 });
+
+  const manager = window.app?.projectManager || window.projectManager;
+  if (!manager?.setBackgroundImageOnCanvasManager) {
+    return false;
+  }
+
+  await manager.setBackgroundImageOnCanvasManager(
+    imageUrl,
+    compareCanvasManager,
+    'fit-canvas',
+    tempScopeId || '__guide__'
+  );
+  guideSplitCompareTagManager = createGuideSplitCompareTagManager(compareCanvasManager);
+  await importSvgMeasurements(normalizedCode, normalizedVariant, tempScopeId, {
+    canvasManager: compareCanvasManager,
+    metadataManager: window.app?.metadataManager || null,
+    tagManager: guideSplitCompareTagManager,
+    svgText: guideSvgText,
+    skipStatusMessage: true,
+    syncUi: false,
+  });
+  seedGuideSplitMeasurementsFromLeft(tempScopeId);
+  compareCanvasManager.fabricCanvas.selection = true;
+  compareCanvasManager.fabricCanvas.skipTargetFind = false;
+  if (compareCanvasManager.fabricCanvas.upperCanvasEl) {
+    compareCanvasManager.fabricCanvas.upperCanvasEl.style.cursor = '';
+    compareCanvasManager.fabricCanvas.upperCanvasEl.style.pointerEvents = '';
+  }
+  compareCanvasManager.fabricCanvas.defaultCursor = 'default';
+  compareCanvasManager.fabricCanvas.hoverCursor = 'move';
+  compareCanvasManager.fabricCanvas.requestRenderAll?.();
+  guideSplitActiveTempScopeId = tempScopeId;
+  return true;
+}
+
+function ensureGuideSplitCompareCanvasManager() {
+  const host = document.getElementById('guideSplitCompareCanvasHost');
+  if (!host) return null;
+
+  if (guideSplitCompareCanvasManager?.fabricCanvas?.wrapperEl) {
+    if (guideSplitCompareCanvasManager.fabricCanvas.wrapperEl.parentElement !== host) {
+      host.innerHTML = '';
+      host.appendChild(guideSplitCompareCanvasManager.fabricCanvas.wrapperEl);
+      guideSplitCompareCanvasManager.resizeObserver?.disconnect?.();
+      guideSplitCompareCanvasManager.setupResizeObserver?.();
+    }
+    guideSplitCompareCanvasManager.resize?.();
+    window.app?.registerCompareCanvasManager?.(guideSplitCompareCanvasManager);
+    return guideSplitCompareCanvasManager;
+  }
+
+  if (!host.querySelector('#guideSplitCompareCanvas')) {
+    host.innerHTML = '<canvas id="guideSplitCompareCanvas"></canvas>';
+  }
+
+  guideSplitCompareCanvasManager = new CanvasManager('guideSplitCompareCanvas', {
+    containerId: 'guideSplitCompareCanvasHost',
+    enableFloatingLayout: false,
+    paneId: 'guide-split-right',
+    interactionGuard: () => true,
+  });
+  guideSplitCompareCanvasManager.init();
+  if (guideSplitCompareCanvasManager.fabricCanvas) {
+    guideSplitCompareCanvasManager.fabricCanvas.selection = true;
+    guideSplitCompareCanvasManager.fabricCanvas.skipTargetFind = false;
+    guideSplitCompareCanvasManager.fabricCanvas.defaultCursor = 'default';
+    guideSplitCompareCanvasManager.fabricCanvas.hoverCursor = 'move';
+    if (guideSplitCompareCanvasManager.fabricCanvas.upperCanvasEl) {
+      guideSplitCompareCanvasManager.fabricCanvas.upperCanvasEl.style.cursor = '';
+      guideSplitCompareCanvasManager.fabricCanvas.upperCanvasEl.style.pointerEvents = '';
+    }
+  }
+  guideSplitCompareCanvasManager.resize?.();
+  window.app?.registerCompareCanvasManager?.(guideSplitCompareCanvasManager);
+  return guideSplitCompareCanvasManager;
+}
+
+async function setGuideSplitRightView(viewId, sourceKind = 'project-image') {
+  if (sourceKind !== 'bound-guide') {
+    clearGuideSplitTempScope(guideSplitActiveTempScopeId);
+    guideSplitCompareCanvasManager?.clear?.();
+    guideCompareWorkspaceState.rightViewId = '';
+    guideCompareWorkspaceState.rightSourceKind = 'bound-guide';
+    renderGuideSplitPane();
+    return;
+  }
+
+  guideCompareWorkspaceState.rightViewId = toBaseViewId(viewId || '');
+  guideCompareWorkspaceState.rightSourceKind = sourceKind;
+  renderGuideSplitPane();
+
+  if (!guideCompareWorkspaceState.rightViewId) {
+    clearGuideSplitTempScope(guideSplitActiveTempScopeId);
+    guideSplitCompareCanvasManager?.clear?.();
+    return;
+  }
+
+  const manager = window.app?.projectManager || window.projectManager;
+  const compareCanvasManager = ensureGuideSplitCompareCanvasManager();
+  if (!manager || !compareCanvasManager) return;
+
+  if (
+    sourceKind === 'bound-guide' &&
+    isGuideSplitTempViewId(guideCompareWorkspaceState.rightViewId)
+  ) {
+    const parsedGuide = parseGuideSplitTempViewId(guideCompareWorkspaceState.rightViewId);
+    if (parsedGuide) {
+      await loadGuideIntoCompareCanvas(parsedGuide, compareCanvasManager);
+    }
+  } else {
+    await manager.loadViewIntoCanvasManager(
+      guideCompareWorkspaceState.rightViewId,
+      compareCanvasManager,
+      {
+        interactive: false,
+      }
+    );
+  }
+  compareCanvasManager.fabricCanvas?.discardActiveObject?.();
+  compareCanvasManager.fabricCanvas?.requestRenderAll?.();
+
+  renderGuideSplitPane();
+}
+
+async function ensureGuideSplitDefaultRightView() {
+  const leftViewId = toBaseViewId(guideCompareWorkspaceState.leftViewId || getCurrentViewId());
+  const currentRightViewId = toBaseViewId(guideCompareWorkspaceState.rightViewId || '');
+  const currentRightSourceKind = guideCompareWorkspaceState.rightSourceKind;
+  if (!leftViewId) {
+    guideCompareWorkspaceState.rightViewId = '';
+    renderGuideSplitPane();
+    return '';
+  }
+
+  const binding = resolveModelBindingForView(leftViewId);
+  if (binding?.selection?.code) {
+    const guideViewId = buildGuideSplitTempViewId(binding.selection);
+    if (guideViewId) {
+      if (
+        currentRightSourceKind === 'bound-guide' &&
+        currentRightViewId === guideViewId
+      ) {
+        renderGuideSplitPane();
+        return guideViewId;
+      }
+      await setGuideSplitRightView(guideViewId, 'bound-guide');
+      return guideViewId;
+    }
+  }
+
+  guideCompareWorkspaceState.rightViewId = '';
+  guideCompareWorkspaceState.rightSourceKind = 'bound-guide';
+  renderGuideSplitPane();
+  return '';
 }
 
 function setGuideSplitEnabled(enabled) {
   const next = enabled === true;
   guideSplitEnabled = next;
+  guideCompareWorkspaceState.open = next;
+  if (next && !guideCompareWorkspaceState.leftViewId) {
+    guideCompareWorkspaceState.leftViewId = toBaseViewId(getCurrentViewId());
+  }
+  if (next) {
+    if (typeof window.saveCurrentCaptureFrameForLabel === 'function') {
+      window.saveCurrentCaptureFrameForLabel(
+        guideCompareWorkspaceState.leftViewId || getCurrentViewId()
+      );
+    }
+    captureGuideSplitRestoreSnapshot(guideCompareWorkspaceState.leftViewId || getCurrentViewId());
+  }
+  guideCompareWorkspaceState.activePane = 'left';
   setWindowPrefs({ [GUIDE_SPLIT_ENABLED_PREF_KEY]: guideSplitEnabled });
   guideSplitLastSyncKey = ''; // force re-render
-  applyGuideSplitLayout();
+  void applyGuideSplitLayout();
   window.dispatchEvent(new Event('openpaint:guide-split-changed'));
 }
 
-function applyGuideSplitLayout() {
+async function applyGuideSplitLayout() {
   const wrapper = document.getElementById('main-canvas-wrapper');
-  const canvasWrapper = getCanvasWrapperElement();
+  const primaryCanvasManager = getPrimaryCanvasManager();
+  const canvasWrapper = getCanvasWrapperElement(primaryCanvasManager);
   if (!wrapper || !canvasWrapper) {
     if (guideSplitEnabled) {
       guideSplitEnabled = false;
+      guideCompareWorkspaceState.open = false;
       setWindowPrefs({ [GUIDE_SPLIT_ENABLED_PREF_KEY]: false });
       window.dispatchEvent(new Event('openpaint:guide-split-changed'));
     }
@@ -3185,38 +4174,97 @@ function applyGuideSplitLayout() {
   }
 
   if (!guideSplitOriginalParent) {
-    guideSplitOriginalParent = canvasWrapper.parentElement;
-    guideSplitOriginalNextSibling = canvasWrapper.nextSibling;
+    guideSplitOriginalParent = wrapper;
+    guideSplitOriginalNextSibling = null;
   }
 
   if (guideSplitEnabled) {
+    captureGuideSplitPanelSnapshot();
     const splitRoot = ensureGuideSplitShell();
     if (!splitRoot) return;
-    const livePane = splitRoot.querySelector('#guideSplitLivePane');
-    if (livePane && canvasWrapper.parentElement !== livePane) {
-      livePane.appendChild(canvasWrapper);
+    const frameEl = document.getElementById('captureFrame');
+    const liveCanvasHost = splitRoot.querySelector('#guideSplitLiveCanvasHost');
+    if (liveCanvasHost) {
+      Array.from(wrapper.childNodes)
+        .filter(node => node !== splitRoot)
+        .forEach(node => {
+          liveCanvasHost.appendChild(node);
+        });
     }
     wrapper.classList.add('guide-split-active');
+    document.body.classList.add('guide-split-workspace-active');
+    applyGuideSplitCollapsedPanels();
+    relocateCaptureOverlayIntoSplitPane();
+    ensureGuideSplitFrameGhost();
+    if (guideSplitFrameGhost) {
+      guideSplitFrameGhost.style.display = 'none';
+    }
+    if (frameEl) {
+      frameEl.style.visibility = 'hidden';
+    }
+    refreshGuideSplitInteractionGuards();
+    if (primaryCanvasManager?.enforceFloatingLayout) {
+      primaryCanvasManager.enforceFloatingLayout();
+    }
+    primaryCanvasManager?.resize?.();
+    await ensureGuideSplitDefaultRightView();
     renderGuideSplitPane();
+    guideSplitCompareCanvasManager?.resize?.();
+    scheduleGuideSplitFrameSync();
   } else {
     const splitRoot = wrapper.querySelector('#guideSplitRoot');
-    if (guideSplitOriginalParent && canvasWrapper.parentElement !== guideSplitOriginalParent) {
-      if (
-        guideSplitOriginalNextSibling &&
-        guideSplitOriginalNextSibling.parentNode === guideSplitOriginalParent
-      ) {
-        guideSplitOriginalParent.insertBefore(canvasWrapper, guideSplitOriginalNextSibling);
-      } else {
-        guideSplitOriginalParent.appendChild(canvasWrapper);
+    const liveCanvasHost = splitRoot?.querySelector('#guideSplitLiveCanvasHost');
+    const stayViewId = toBaseViewId(getCurrentViewId());
+    clearGuideSplitTempScope(guideSplitActiveTempScopeId);
+    guideSplitCompareCanvasManager?.clear?.();
+    if (guideSplitSyncingWorkspace !== true && stayViewId && primaryCanvasManager) {
+      const manager = window.app?.projectManager || window.projectManager;
+      if (manager?.saveCurrentViewState) {
+        manager.saveCurrentViewState();
       }
+      guideCompareWorkspaceState.leftViewId = stayViewId;
     }
+    guideSplitSyncingWorkspace = true;
+    if (liveCanvasHost) {
+      Array.from(liveCanvasHost.childNodes).forEach(node => {
+        wrapper.insertBefore(node, splitRoot);
+      });
+    }
+    restoreCaptureOverlayFromSplitPane();
+    removeGuideSplitFrameGhost();
     if (splitRoot) splitRoot.remove();
     wrapper.classList.remove('guide-split-active');
+    document.body.classList.remove('guide-split-workspace-active');
+    restoreGuideSplitPanelSnapshot();
     guideSplitLastSyncKey = '';
-  }
-
-  if (window.app?.canvasManager?.resize) {
-    window.app.canvasManager.resize();
+    refreshGuideSplitInteractionGuards();
+    requestAnimationFrame(() => {
+      const restoreViewId = stayViewId || getCurrentViewId();
+      restoreGuideSplitSnapshot(restoreViewId);
+      if (typeof window.getCaptureTabScopedLabel === 'function') {
+        window.currentImageLabel =
+          window.getCaptureTabScopedLabel(restoreViewId) || restoreViewId;
+      }
+      primaryCanvasManager?.resize?.();
+      if (typeof window.restoreCaptureFrameForLabelExact === 'function') {
+        window.restoreCaptureFrameForLabelExact(restoreViewId);
+      } else if (typeof window.applyCaptureFrameForLabel === 'function') {
+        window.applyCaptureFrameForLabel(restoreViewId);
+      }
+      requestAnimationFrame(() => {
+        if (typeof window.restoreCaptureFrameForLabelExact === 'function') {
+          window.restoreCaptureFrameForLabelExact(restoreViewId);
+        }
+        if (typeof window.syncCaptureTabCanvasVisibility === 'function') {
+          window.syncCaptureTabCanvasVisibility(restoreViewId);
+        }
+        const frameEl = document.getElementById('captureFrame');
+        if (frameEl) {
+          frameEl.style.visibility = '';
+        }
+        guideSplitSyncingWorkspace = false;
+      });
+    });
   }
 }
 
@@ -3224,63 +4272,134 @@ function renderGuideSplitPane() {
   if (!guideSplitEnabled) return;
   const wrapper = document.getElementById('main-canvas-wrapper');
   const pane = wrapper?.querySelector('#guideSplitGuidePane');
+  const livePane = wrapper?.querySelector('#guideSplitLivePane');
   if (!pane) return;
-  const viewId = getCurrentViewId();
-  const binding = resolveModelBindingForView(viewId);
-  const stateKey = `${toBaseViewId(viewId)}::${binding.frameScopeId || '-'}::${binding.selectionId || '-'}::${guideSplitEnabled ? 1 : 0}`;
+
+  const leftViewId = toBaseViewId(guideCompareWorkspaceState.leftViewId || getCurrentViewId());
+  const rightViewId = toBaseViewId(guideCompareWorkspaceState.rightViewId || '');
+  const binding = resolveModelBindingForView(leftViewId);
+  const stateKey = `${leftViewId}::${rightViewId || '-'}::${guideCompareWorkspaceState.activePane}::${guideCompareWorkspaceState.rightSourceKind}`;
   if (stateKey === guideSplitLastSyncKey) return;
   guideSplitLastSyncKey = stateKey;
 
   const imageRows = getProjectImageRows();
-  const currentImage = imageRows.find(image => image.id === toBaseViewId(viewId));
-  const imageLabel = currentImage?.displayName || toBaseViewId(viewId);
+  const rightLabel =
+    guideCompareWorkspaceState.rightSourceKind === 'bound-guide' && binding?.selection?.code
+      ? `${binding.selection.code} ${String(binding.selection.variant || 'front').toUpperCase()}`
+      : 'Bound Guide';
 
-  if (!binding.selection) {
+  if (!rightViewId) {
     pane.innerHTML = `
       <header class="guide-split-guide-head">
-        <span>Guide · Unbound</span>
-        <span class="guide-split-guide-sub">${imageLabel}</span>
+        <span>Compare Pane</span>
+        <span class="guide-split-guide-actions">
+          <button type="button" data-guide-split-action="bound-guide">Bound Guide</button>
+          <button type="button" data-guide-split-action="gallery">Gallery</button>
+          <button type="button" data-guide-split-action="close">Close</button>
+        </span>
       </header>
-      <div class="guide-split-guide-body">
+      <div class="guide-split-guide-body is-empty">
         <div class="guide-split-guide-empty">
-          <strong>No SVG bound for this ${binding.frameScopeId ? 'frame' : 'image'}.</strong>
-          <button type="button" data-guide-split-action="bind">Open Binding</button>
+          <strong>No bound guide is loaded.</strong>
+          <button type="button" data-guide-split-action="bound-guide">
+            Load Bound Guide
+          </button>
         </div>
       </div>
     `;
-    pane.querySelector('[data-guide-split-action="bind"]')?.addEventListener('click', () => {
-      showGuideGallery({ mode: 'bind', source: 'split-pane' });
-    });
-    return;
+  } else {
+    const rightSourceLabel =
+      guideCompareWorkspaceState.rightSourceKind === 'bound-guide'
+        ? binding?.selection?.code
+          ? `Bound guide · ${binding.selection.code} ${String(binding.selection.variant || 'front').toUpperCase()}`
+          : 'Bound guide'
+        : 'Project image';
+    pane.innerHTML = `
+      <header class="guide-split-guide-head">
+        <span>${rightLabel}</span>
+        <span class="guide-split-guide-actions">
+          <span class="guide-split-picker-label">
+            <span>${rightSourceLabel}</span>
+          </span>
+          <button type="button" data-guide-split-action="bound-guide">Bound Guide</button>
+          <button type="button" data-guide-split-action="gallery">Gallery</button>
+          <button type="button" data-guide-split-action="close">Close</button>
+        </span>
+      </header>
+      <div class="guide-split-guide-body">
+        <div class="guide-split-pane-chip">
+          <strong>${rightLabel}</strong>
+          <span>Reference / compare pane</span>
+        </div>
+        <div id="guideSplitCompareCanvasHost" class="guide-split-pane-canvas-host guide-split-compare-host"></div>
+      </div>
+    `;
+    ensureGuideSplitCompareCanvasManager();
   }
 
-  const model = binding.selection;
-  const scopeLabel = binding.scopeType === 'frame' ? 'Frame override' : 'Image default';
-  pane.innerHTML = `
-    <header class="guide-split-guide-head">
-      <span>Guide · ${model.code} ${String(model.variant || 'front').toUpperCase()}</span>
-      <span class="guide-split-guide-sub">${scopeLabel} · ${imageLabel}</span>
-    </header>
-    <div class="guide-split-guide-body">
-      <img src="${buildGuidePreviewUrl(model.code, model.variant)}" alt="${model.code} ${model.variant}" />
-    </div>
-  `;
+  livePane?.classList.toggle('is-active', guideCompareWorkspaceState.activePane !== 'right');
+  pane.classList.toggle('is-active', guideCompareWorkspaceState.activePane === 'right');
+
+  if (livePane) {
+    livePane.onpointerdown = () => {
+      guideCompareWorkspaceState.activePane = 'left';
+      livePane.classList.add('is-active');
+      pane.classList.remove('is-active');
+    };
+  }
+  pane.onpointerdown = () => {
+    guideCompareWorkspaceState.activePane = 'right';
+    pane.classList.add('is-active');
+    livePane?.classList.remove('is-active');
+  };
+
+  pane.querySelector('[data-guide-split-action="close"]')?.addEventListener('click', () => {
+    setGuideSplitEnabled(false);
+  });
+  pane.querySelector('[data-guide-split-action="gallery"]')?.addEventListener('click', () => {
+    showGuideGallery({ source: 'split-pane', mode: 'select' });
+  });
+  pane.querySelectorAll('[data-guide-split-action="bound-guide"]').forEach(button => {
+    button.addEventListener('click', () => {
+      void ensureGuideSplitDefaultRightView();
+    });
+  });
 }
 
-function syncGuideSplitToActiveView() {
-  if (!guideSplitEnabled) return;
+async function syncGuideSplitToActiveView() {
+  if (!guideSplitEnabled || guideSplitSyncingWorkspace || guideSplitSuppressViewSwitchSync > 0) {
+    return;
+  }
   const wrapper = document.getElementById('main-canvas-wrapper');
   if (wrapper && !wrapper.classList.contains('guide-split-active')) {
     guideSplitLastSyncKey = '';
-    applyGuideSplitLayout();
+    await applyGuideSplitLayout();
     return;
   }
   if (wrapper && !wrapper.querySelector('#guideSplitGuidePane')) {
     guideSplitLastSyncKey = '';
-    applyGuideSplitLayout();
+    await applyGuideSplitLayout();
     return;
   }
+
+  if (guideCompareWorkspaceState.activePane === 'left') {
+    const nextLeftViewId = toBaseViewId(getCurrentViewId());
+    const leftChanged = guideCompareWorkspaceState.leftViewId !== nextLeftViewId;
+    guideCompareWorkspaceState.leftViewId = nextLeftViewId;
+    if (leftChanged) {
+      captureGuideSplitRestoreSnapshot(nextLeftViewId);
+    }
+    if (
+      guideCompareWorkspaceState.rightViewId === guideCompareWorkspaceState.leftViewId ||
+      !guideCompareWorkspaceState.rightViewId ||
+      (guideCompareWorkspaceState.rightSourceKind === 'bound-guide' && leftChanged)
+    ) {
+      await ensureGuideSplitDefaultRightView();
+    }
+  }
+
   renderGuideSplitPane();
+  scheduleGuideSplitLayoutSync({ settle: false });
 }
 
 function availableViewsForCode(code, viewsByCode) {
@@ -4558,42 +5677,32 @@ function onKeyDown(event) {
     return;
   }
 
-  // Ctrl+\ = Edit codes (always prompt)
-  if (event.ctrlKey && !event.repeat) {
-    const codes = promptForCodes();
-    if (!codes.length) return;
-    activeIndex = 0;
-    showGuideFlash({ holdMode: isGuidePinnedVisible });
-    showShortcutToast();
-    return;
-  }
-
-  // Shift+\ = Cycle to next guide (timed auto-hide)
+  // Shift+\ = Cycle bound guide in the right pane when split is open
   if (event.shiftKey && !event.repeat) {
-    showGuideFlash({ cycleNext: true, holdMode: isGuidePinnedVisible });
-    showShortcutToast();
+    if (!guideSplitEnabled) {
+      setGuideSplitEnabled(true);
+      return;
+    }
+    const currentViewId = toBaseViewId(guideCompareWorkspaceState.leftViewId || getCurrentViewId());
+    const slides = resolveFlashSlidesForImage(currentViewId);
+    if (!slides.length) {
+      void ensureGuideSplitDefaultRightView();
+      return;
+    }
+    activeIndex = (activeIndex + 1) % slides.length;
+    const nextSlide = slides[activeIndex];
+    const tempViewId = buildGuideSplitTempViewId({
+      code: nextSlide.code,
+      variant: nextSlide.view,
+    });
+    if (!tempViewId) return;
+    void setGuideSplitRightView(tempViewId, 'bound-guide');
     return;
   }
 
-  // \ (no modifiers) = Toggle pinned visibility (only if codes exist)
+  // \ (no modifiers) = Toggle split workspace
   if (!event.repeat) {
-    const currentViewId = getCurrentViewId();
-    const context = resolveGuideContext(currentViewId);
-
-    if (!context.codes.length) {
-      // No codes set - show gallery instead
-      showGuideGallery();
-      return;
-    }
-
-    if (isGuidePinnedVisible && flashOverlay?.classList.contains('visible')) {
-      isGuidePinnedVisible = false;
-      hideGuideFlash();
-      return;
-    }
-    isGuidePinnedVisible = true;
-    showGuideFlash({ holdMode: true });
-    showShortcutToast();
+    setGuideSplitEnabled(!guideSplitEnabled);
   }
 }
 
@@ -4618,15 +5727,38 @@ function syncGuideOverlayToActiveView() {
 
 export function initMeasurementGuideFlash() {
   ensureStyles();
-  applyGuideSplitLayout();
+  guideCompareWorkspaceState.leftViewId = toBaseViewId(getCurrentViewId());
+  refreshGuideSplitInteractionGuards();
+  void applyGuideSplitLayout();
 
   window.addEventListener('keydown', onKeyDown, { passive: false });
   window.addEventListener('keyup', onKeyUp, { passive: false });
   window.setInterval(syncGuideOverlayToActiveView, 700);
-  window.setInterval(syncGuideSplitToActiveView, 900);
+  window.setInterval(() => {
+    void syncGuideSplitToActiveView();
+  }, 900);
 
   window.addEventListener('openpaint:guide-binding-changed', () => {
     if (guideSplitEnabled) {
+      if (guideCompareWorkspaceState.rightSourceKind === 'bound-guide') {
+        void ensureGuideSplitDefaultRightView();
+      } else {
+        renderGuideSplitPane();
+      }
+    }
+  });
+
+  window.addEventListener('openpaint:view-switched', event => {
+    if (!guideSplitEnabled || guideSplitSyncingWorkspace || guideSplitSuppressViewSwitchSync > 0) {
+      return;
+    }
+    const nextViewId = toBaseViewId(event?.detail?.viewId || '');
+    if (!nextViewId) return;
+
+    guideCompareWorkspaceState.leftViewId = nextViewId;
+    if (guideCompareWorkspaceState.rightSourceKind === 'bound-guide') {
+      void ensureGuideSplitDefaultRightView();
+    } else {
       renderGuideSplitPane();
     }
   });
@@ -4638,6 +5770,15 @@ export function initMeasurementGuideFlash() {
         setFlashRect(clampFlashRect(rect));
       }
       applyFlashWindowLayout(flashOverlay);
+    }
+    if (guideSplitEnabled) {
+      scheduleGuideSplitLayoutSync({ settle: true });
+    }
+  });
+
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && guideSplitEnabled) {
+      scheduleGuideSplitLayoutSync({ settle: true });
     }
   });
 
@@ -4665,6 +5806,10 @@ export function initMeasurementGuideFlash() {
       hideGuideGallery();
       return;
     }
+    if (e.key === 'Escape' && guideSplitEnabled) {
+      setGuideSplitEnabled(false);
+      return;
+    }
     if (e.key === 'Escape' && flashOverlay?.classList.contains('visible')) {
       isGuidePinnedVisible = false;
       hideGuideFlash();
@@ -4690,6 +5835,7 @@ export function initMeasurementGuideFlash() {
     setGuideSplitEnabled(!guideSplitEnabled);
     return guideSplitEnabled;
   };
+  window.getGuideCompareWorkspaceState = () => ({ ...guideCompareWorkspaceState });
   window.dispatchEvent(new Event('openpaint:guide-split-changed'));
 }
 
