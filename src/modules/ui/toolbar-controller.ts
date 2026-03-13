@@ -4,6 +4,16 @@
 // @ts-nocheck
 // Extracted from index.html inline scripts
 
+import {
+  buildViewportTransform as buildSharedViewportTransform,
+  computeWorldRectFromViewportRect as computeSharedWorldRectFromViewportRect,
+  fitViewportToWorldRect as fitSharedViewportToWorldRect,
+  getFabricObjectWorldRect,
+  mapWorldRectToViewport as mapSharedWorldRectToViewport,
+  normalizeViewportRecord as normalizeSharedViewportRecord,
+  normalizeWorldRect as normalizeSharedWorldRect,
+} from '../utils/viewportRestore.ts';
+
 export function initToolbarController() {
   const runWhenDomReady = callback => {
     if (document.readyState === 'loading') {
@@ -1859,49 +1869,10 @@ export function initToolbarController() {
       };
     }
     function normalizeWorldRect(worldRect) {
-      if (!worldRect || typeof worldRect !== 'object') return null;
-      const left = Number(worldRect.left);
-      const top = Number(worldRect.top);
-      const width = Number(worldRect.width);
-      const height = Number(worldRect.height);
-      if (!Number.isFinite(left) || !Number.isFinite(top)) return null;
-      if (!Number.isFinite(width) || !Number.isFinite(height)) return null;
-      if (width <= 0 || height <= 0) return null;
-      return {
-        left,
-        top,
-        width,
-        height,
-      };
+      return normalizeSharedWorldRect(worldRect);
     }
     function fitViewportToWorldRect(worldRect, viewport, targetRect) {
-      const normalizedWorldRect = normalizeWorldRect(worldRect);
-      if (!normalizedWorldRect || !viewport || !targetRect) {
-        return viewport || null;
-      }
-      const nextViewport = {
-        ...(viewport || {}),
-      };
-      const mappedBefore = mapWorldRectToViewport(normalizedWorldRect, nextViewport);
-      if (!mappedBefore || mappedBefore.width <= 0 || mappedBefore.height <= 0) {
-        return nextViewport;
-      }
-      const fitScale = Math.min(
-        targetRect.width / Math.max(1, mappedBefore.width),
-        targetRect.height / Math.max(1, mappedBefore.height)
-      );
-      nextViewport.zoom = Math.max(0.01, (nextViewport.zoom || 1) * fitScale);
-      const mappedAfter = mapWorldRectToViewport(normalizedWorldRect, nextViewport);
-      if (!mappedAfter) {
-        return nextViewport;
-      }
-      const targetCx = targetRect.left + targetRect.width / 2;
-      const targetCy = targetRect.top + targetRect.height / 2;
-      const mappedCx = mappedAfter.left + mappedAfter.width / 2;
-      const mappedCy = mappedAfter.top + mappedAfter.height / 2;
-      nextViewport.panX = (nextViewport.panX || 0) + (targetCx - mappedCx);
-      nextViewport.panY = (nextViewport.panY || 0) + (targetCy - mappedCy);
-      return nextViewport;
+      return fitSharedViewportToWorldRect(worldRect, viewport, targetRect, getViewportGeometry());
     }
     function updateTabWorldRectFromLiveFrame(tab, viewportOverride = null) {
       if (!tab) return;
@@ -1948,26 +1919,7 @@ export function initToolbarController() {
       return 0;
     }
     function normalizeViewportRecord(viewport) {
-      if (!viewport || typeof viewport !== 'object') {
-        return {
-          zoom: 1,
-          panX: 0,
-          panY: 0,
-          rotation: 0,
-        };
-      }
-
-      const zoom = Number(viewport.zoom);
-      const panX = Number(viewport.panX);
-      const panY = Number(viewport.panY);
-      const rotation = Number(viewport.rotation);
-
-      return {
-        zoom: Number.isFinite(zoom) && zoom > 0 ? zoom : 1,
-        panX: Number.isFinite(panX) ? panX : 0,
-        panY: Number.isFinite(panY) ? panY : 0,
-        rotation: Number.isFinite(rotation) ? rotation : 0,
-      };
+      return normalizeSharedViewportRecord(viewport);
     }
     function suspendCaptureTabViewportTracking(durationMs = 320) {
       window.__captureTabsSuspendViewportTrackingUntil =
@@ -2024,26 +1976,32 @@ export function initToolbarController() {
       const activeTab = getActiveTab(resolved);
       const sourceTab = options?.sourceTab || activeTab;
       const sourceCaptureFrame = sourceTab?.captureFrame || activeTab?.captureFrame || null;
-      const worldRect = normalizeWorldRect(
-        options?.worldRect || sourceCaptureFrame?.worldRect
-      );
+      const worldRect = normalizeWorldRect(options?.worldRect || sourceCaptureFrame?.worldRect);
       if (!activeTab || !worldRect) return false;
 
-      const borderColor =
-        activeTab.type === 'master' ? '#0f172a' : activeTab.color || '#22c55e';
+      const borderColor = activeTab.type === 'master' ? '#0f172a' : activeTab.color || '#22c55e';
       const viewportSource =
-        options?.viewport ||
-        sourceTab?.viewport ||
-        activeTab.viewport ||
-        buildViewportRecord();
+        options?.viewport || sourceTab?.viewport || activeTab.viewport || buildViewportRecord();
       let nextViewport = normalizeViewportRecord(viewportSource);
       const targetRect =
         options?.targetRect ||
-        (!options?.skipFit && sourceCaptureFrame ? resolveCaptureFrameRect(sourceCaptureFrame) : null);
+        (!options?.skipFit && sourceCaptureFrame
+          ? resolveCaptureFrameRect(sourceCaptureFrame)
+          : null);
 
       if (targetRect && !options?.skipFit) {
         nextViewport = fitViewportToWorldRect(worldRect, nextViewport, targetRect);
       }
+
+      console.log('[Restore Debug] replayCaptureFrameForLabelFromWorldRect', {
+        label: resolved,
+        activeTabId: activeTab?.id || null,
+        sourceTabId: sourceTab?.id || null,
+        worldRect,
+        targetRect,
+        viewportBefore: viewportSource,
+        viewportAfter: nextViewport,
+      });
 
       if (options?.applyViewport !== false) {
         suspendCaptureTabViewportTracking(
@@ -2054,6 +2012,12 @@ export function initToolbarController() {
 
       const mappedRect = mapWorldRectToViewport(worldRect, nextViewport);
       if (!mappedRect) return false;
+
+      console.log('[Restore Debug] replayCaptureFrameForLabelFromWorldRect:mapped', {
+        label: resolved,
+        activeTabId: activeTab?.id || null,
+        mappedRect,
+      });
 
       writeCaptureFrameFromViewportRect(mappedRect, borderColor);
       setMasterViewActive(activeTab.type === 'master');
@@ -2449,6 +2413,15 @@ export function initToolbarController() {
       const activeTab = getActiveTab(resolved);
       if (!activeTab) return;
 
+      console.log('[Restore Debug] applyCaptureFrameForLabel:start', {
+        label: resolved,
+        activeTabId: activeTab.id || null,
+        activeTabType: activeTab.type || null,
+        hasStoredWorldRect: Boolean(activeTab?.captureFrame?.worldRect),
+        hasStoredViewport: Boolean(activeTab?.viewport),
+        viewRestoreWorldRect: resolveViewRestoreWorldRect(resolved),
+      });
+
       if (isGuideSplitWorkspaceActive()) {
         const splitSnapshot =
           window.__guideSplitRestoreSnapshot &&
@@ -2461,9 +2434,7 @@ export function initToolbarController() {
             ? splitSnapshot.tabs
             : [];
         const snapshotActiveTabId =
-          splitSnapshot?.tabs?.activeTabId ||
-          splitSnapshot?.tabs?.lastNonMasterId ||
-          activeTab.id;
+          splitSnapshot?.tabs?.activeTabId || splitSnapshot?.tabs?.lastNonMasterId || activeTab.id;
         const snapshotTab =
           snapshotTabs.find(tab => tab?.id === activeTab.id) ||
           snapshotTabs.find(tab => tab?.id === snapshotActiveTabId) ||
@@ -2491,13 +2462,9 @@ export function initToolbarController() {
           } else if (stored) {
             const rect = resolveCaptureFrameRect(stored);
             const centerDeltaX =
-              splitTargetRect.left +
-              splitTargetRect.width / 2 -
-              (rect.left + rect.width / 2);
+              splitTargetRect.left + splitTargetRect.width / 2 - (rect.left + rect.width / 2);
             const centerDeltaY =
-              splitTargetRect.top +
-              splitTargetRect.height / 2 -
-              (rect.top + rect.height / 2);
+              splitTargetRect.top + splitTargetRect.height / 2 - (rect.top + rect.height / 2);
             tempViewport = {
               ...tempViewport,
               panX: (tempViewport.panX || 0) + centerDeltaX,
@@ -2533,25 +2500,40 @@ export function initToolbarController() {
       const applyCenteredFrameAndViewport = (stored, borderColor) => {
         const rect = resolveCaptureFrameRect(stored);
         const storedWorldRect = normalizeWorldRect(stored?.worldRect);
+        const fallbackWorldRect = storedWorldRect ? null : resolveViewRestoreWorldRect(resolved);
+        const targetWorldRect = storedWorldRect || fallbackWorldRect;
         const baseViewport = normalizeViewportRecord(activeTab.viewport || buildViewportRecord());
         let nextViewport = baseViewport;
-        let centerDeltaX =
-          rect.left + rect.width / 2 - (rect.left + rect.width / 2);
-        let centerDeltaY =
-          rect.top + rect.height / 2 - (rect.top + rect.height / 2);
+        let centerDeltaX = rect.left + rect.width / 2 - (rect.left + rect.width / 2);
+        let centerDeltaY = rect.top + rect.height / 2 - (rect.top + rect.height / 2);
 
         if (Math.abs(centerDeltaX) < 1) centerDeltaX = 0;
         if (Math.abs(centerDeltaY) < 1) centerDeltaY = 0;
 
-        if (storedWorldRect) {
+        console.log('[Restore Debug] applyCaptureFrameForLabel:target', {
+          label: resolved,
+          activeTabId: activeTab.id || null,
+          rect,
+          storedWorldRect,
+          fallbackWorldRect,
+          baseViewport,
+        });
+
+        if (targetWorldRect) {
           const replayed = replayCaptureFrameForLabelFromWorldRect(resolved, {
             sourceTab: activeTab,
-            worldRect: storedWorldRect,
+            worldRect: targetWorldRect,
             viewport: baseViewport,
             targetRect: rect,
             renderOverlay: false,
           });
           if (replayed) {
+            if (!storedWorldRect && targetWorldRect) {
+              activeTab.captureFrame = {
+                ...(stored || {}),
+                worldRect: targetWorldRect,
+              };
+            }
             return;
           }
         } else if (centerDeltaX !== 0 || centerDeltaY !== 0) {
@@ -2653,27 +2635,47 @@ export function initToolbarController() {
         null;
       return canvasEl?.getBoundingClientRect?.() || { left: 0, top: 0 };
     }
-    function buildViewportTransform(viewport) {
+    function getCurrentBackgroundWorldRect() {
+      const backgroundImage = window.app?.canvasManager?.fabricCanvas?.backgroundImage || null;
+      return normalizeWorldRect(getFabricObjectWorldRect(backgroundImage));
+    }
+    function resolveViewRestoreWorldRect(label) {
+      const resolved = label || getActiveLabel();
+      const projectManager = window.projectManager || window.app?.projectManager;
+      if (projectManager?.resolveRestoreWorldRectForView) {
+        const resolvedWorldRect = normalizeWorldRect(
+          projectManager.resolveRestoreWorldRectForView(resolved)
+        );
+        if (resolvedWorldRect) {
+          return resolvedWorldRect;
+        }
+      }
+      const storedWorldRect = normalizeWorldRect(
+        projectManager?.views?.[resolved]?.restoreWorldRect
+      );
+      if (storedWorldRect) {
+        return storedWorldRect;
+      }
+      return getCurrentBackgroundWorldRect();
+    }
+    function getViewportGeometry(viewport = null) {
       const canvasManager = window.app?.canvasManager;
-      const zoom = typeof viewport?.zoom === 'number' && viewport.zoom > 0 ? viewport.zoom : 1;
-      const panX = typeof viewport?.panX === 'number' ? viewport.panX : 0;
-      const panY = typeof viewport?.panY === 'number' ? viewport.panY : 0;
-      const rotation = resolveViewportRotation(viewport);
-      const angleRadians = (rotation * Math.PI) / 180;
-      const cos = Math.cos(angleRadians);
-      const sin = Math.sin(angleRadians);
-      const center = canvasManager?.getRotationCenter?.() || {
-        x: window.innerWidth / 2,
-        y: window.innerHeight / 2,
+      return {
+        canvasRect: getCanvasClientRect(),
+        center: canvasManager?.getRotationCenter?.() || {
+          x: window.innerWidth / 2,
+          y: window.innerHeight / 2,
+        },
       };
-      const base = [zoom * cos, zoom * sin, -zoom * sin, zoom * cos, 0, 0];
-      const translateToOrigin = [1, 0, 0, 1, -center.x, -center.y];
-      const translateBack = [1, 0, 0, 1, center.x, center.y];
-      let transform = fabric.util.multiplyTransformMatrices(base, translateToOrigin);
-      transform = fabric.util.multiplyTransformMatrices(translateBack, transform);
-      transform[4] += panX;
-      transform[5] += panY;
-      return transform;
+    }
+    function buildViewportTransform(viewport) {
+      return buildSharedViewportTransform(
+        {
+          ...(viewport || {}),
+          rotation: resolveViewportRotation(viewport),
+        },
+        getViewportGeometry(viewport).center
+      );
     }
     function computeWorldRectForTab(tab) {
       if (!tab?.captureFrame || !tab?.viewport) return null;
@@ -2705,53 +2707,25 @@ export function initToolbarController() {
     }
     function mapWorldRectToViewport(worldRect, viewport) {
       if (!worldRect || !viewport) return null;
-      const canvasRect = getCanvasClientRect();
-      const matrix = buildViewportTransform(viewport);
-      const corners = [
-        new fabric.Point(worldRect.left, worldRect.top),
-        new fabric.Point(worldRect.left + worldRect.width, worldRect.top),
-        new fabric.Point(worldRect.left, worldRect.top + worldRect.height),
-        new fabric.Point(worldRect.left + worldRect.width, worldRect.top + worldRect.height),
-      ].map(point => fabric.util.transformPoint(point, matrix));
-      const xs = corners.map(point => point.x + canvasRect.left);
-      const ys = corners.map(point => point.y + canvasRect.top);
-      const minX = Math.min(...xs);
-      const minY = Math.min(...ys);
-      const maxX = Math.max(...xs);
-      const maxY = Math.max(...ys);
-      return {
-        left: minX,
-        top: minY,
-        width: maxX - minX,
-        height: maxY - minY,
-      };
+      return mapSharedWorldRectToViewport(
+        worldRect,
+        {
+          ...(viewport || {}),
+          rotation: resolveViewportRotation(viewport),
+        },
+        getViewportGeometry(viewport)
+      );
     }
     function computeWorldRectFromViewportRect(rect, viewport) {
       if (!rect || !viewport) return null;
-      const canvasRect = getCanvasClientRect();
-      const matrix = buildViewportTransform(viewport);
-      const inverse = fabric.util.invertTransform(matrix);
-      const corners = [
-        new fabric.Point(rect.left - canvasRect.left, rect.top - canvasRect.top),
-        new fabric.Point(rect.left + rect.width - canvasRect.left, rect.top - canvasRect.top),
-        new fabric.Point(rect.left - canvasRect.left, rect.top + rect.height - canvasRect.top),
-        new fabric.Point(
-          rect.left + rect.width - canvasRect.left,
-          rect.top + rect.height - canvasRect.top
-        ),
-      ].map(point => fabric.util.transformPoint(point, inverse));
-      const xs = corners.map(point => point.x);
-      const ys = corners.map(point => point.y);
-      const minX = Math.min(...xs);
-      const minY = Math.min(...ys);
-      const maxX = Math.max(...xs);
-      const maxY = Math.max(...ys);
-      return {
-        left: minX,
-        top: minY,
-        width: maxX - minX,
-        height: maxY - minY,
-      };
+      return computeSharedWorldRectFromViewportRect(
+        rect,
+        {
+          ...(viewport || {}),
+          rotation: resolveViewportRotation(viewport),
+        },
+        getViewportGeometry(viewport)
+      );
     }
     function isCaptureFrameUnlocked() {
       return document.body.classList.contains('capture-unlocked');
@@ -3205,10 +3179,7 @@ export function initToolbarController() {
         ) {
           return;
         }
-        if (
-          Number(window.__captureTabsSuspendViewportTrackingUntil || 0) >
-          Date.now()
-        ) {
+        if (Number(window.__captureTabsSuspendViewportTrackingUntil || 0) > Date.now()) {
           return;
         }
         if (isGuideSplitWorkspaceActive()) {
@@ -3357,8 +3328,7 @@ export function initToolbarController() {
     syncCanvasVisibilityForActiveTab(initialLabel);
     window.syncCaptureFrameToActiveTabWorldRect = label =>
       syncCaptureFrameToActiveTabWorldRect(label);
-    window.restoreCaptureFrameForLabelExact = label =>
-      restoreCaptureFrameForLabelExact(label);
+    window.restoreCaptureFrameForLabelExact = label => restoreCaptureFrameForLabelExact(label);
     window.replayCaptureFrameForLabelFromWorldRect = (label, options = {}) =>
       replayCaptureFrameForLabelFromWorldRect(label, options);
 
@@ -5134,20 +5104,20 @@ export function initToolbarController() {
 
       // Trigger mini-stepper update if function exists
       // This ensures the bottom navigation shows all images
-      if (typeof updatePills === 'function') {
+      if (typeof window.updatePills === 'function') {
         setTimeout(() => {
           try {
-            updatePills();
+            window.updatePills();
             console.log('[Gallery] Updated mini-stepper pills');
           } catch (e) {
             console.warn('[Gallery] Error updating pills:', e);
           }
         }, 100);
       }
-      if (typeof updateActivePill === 'function') {
+      if (typeof window.updateActivePill === 'function') {
         setTimeout(() => {
           try {
-            updateActivePill();
+            window.updateActivePill();
             console.log('[Gallery] Updated active pill');
           } catch (e) {
             console.warn('[Gallery] Error updating active pill:', e);
@@ -6665,8 +6635,8 @@ export function initToolbarController() {
           if (window.projectManager && typeof window.projectManager.deleteImage === 'function') {
             window.projectManager.deleteImage(label);
           }
-          if (typeof updatePills === 'function') updatePills();
-          if (typeof updateActivePill === 'function') updateActivePill();
+          if (typeof window.updatePills === 'function') window.updatePills();
+          if (typeof window.updateActivePill === 'function') window.updateActivePill();
           if (typeof updateImageListPadding === 'function') updateImageListPadding();
         }
       });
@@ -6721,8 +6691,8 @@ export function initToolbarController() {
             window.projectManager.switchView(label);
           }
         }
-        if (typeof updatePills === 'function') updatePills();
-        if (typeof updateActivePill === 'function') updateActivePill();
+        if (typeof window.updatePills === 'function') window.updatePills();
+        if (typeof window.updateActivePill === 'function') window.updateActivePill();
       }, 100);
 
       return true;
@@ -7201,8 +7171,8 @@ export function initToolbarController() {
                     }
 
                     // Update pills
-                    if (typeof updatePills === 'function') updatePills();
-                    if (typeof updateActivePill === 'function') updateActivePill();
+                    if (typeof window.updatePills === 'function') window.updatePills();
+                    if (typeof window.updateActivePill === 'function') window.updateActivePill();
                     if (typeof updateImageListPadding === 'function') updateImageListPadding();
                   }
                 });
@@ -7295,11 +7265,11 @@ export function initToolbarController() {
                   }
 
                   // Trigger mini-stepper update after adding to sidebar
-                  if (typeof updatePills === 'function') {
-                    updatePills();
+                  if (typeof window.updatePills === 'function') {
+                    window.updatePills();
                   }
-                  if (typeof updateActivePill === 'function') {
-                    updateActivePill();
+                  if (typeof window.updateActivePill === 'function') {
+                    window.updateActivePill();
                   }
                 }, 100);
               } else if (containerForLabel) {
@@ -7307,11 +7277,11 @@ export function initToolbarController() {
 
                 // Update pills only, don't switch views for existing containers
                 setTimeout(() => {
-                  if (typeof updatePills === 'function') {
-                    updatePills();
+                  if (typeof window.updatePills === 'function') {
+                    window.updatePills();
                   }
-                  if (typeof updateActivePill === 'function') {
-                    updateActivePill();
+                  if (typeof window.updateActivePill === 'function') {
+                    window.updateActivePill();
                   }
                 }, 100);
 
@@ -7563,11 +7533,11 @@ export function initToolbarController() {
               }
 
               // Update pills
-              if (typeof updatePills === 'function') {
-                updatePills();
+              if (typeof window.updatePills === 'function') {
+                window.updatePills();
               }
-              if (typeof updateActivePill === 'function') {
-                updateActivePill();
+              if (typeof window.updateActivePill === 'function') {
+                window.updateActivePill();
               }
             }, 300);
           }
@@ -7596,11 +7566,11 @@ export function initToolbarController() {
       }
 
       syncLegacyImagesToGallery();
-      if (typeof updatePills === 'function') {
+      if (typeof window.updatePills === 'function') {
         setTimeout(() => {
-          updatePills();
-          if (typeof updateActivePill === 'function') {
-            updateActivePill();
+          window.updatePills();
+          if (typeof window.updateActivePill === 'function') {
+            window.updateActivePill();
           }
         }, 100);
 

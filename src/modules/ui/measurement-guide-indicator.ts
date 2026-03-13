@@ -1,3 +1,5 @@
+import { resolveScopedImageLabel } from './scoped-image-label.js';
+
 const DRAW_MEASUREMENT_TOOLS = new Set(['line', 'curve']);
 const INDICATOR_ID = 'measurementGuideIndicator';
 const STYLE_ID = 'measurementGuideIndicatorStyles';
@@ -242,15 +244,14 @@ function ensureHeaderToggle(): void {
   syncHeaderToggleUi(enabled);
 }
 
-function resolveScopedImageLabel(viewId: string): string {
-  const metadataManager = (window as any).app?.metadataManager;
-  if (typeof metadataManager?.normalizeImageLabel === 'function') {
-    return String(metadataManager.normalizeImageLabel(viewId) || viewId);
-  }
-  if (typeof (window as any).getCaptureTabScopedLabel === 'function') {
-    return String((window as any).getCaptureTabScopedLabel(viewId) || viewId);
-  }
-  return viewId;
+function getCwScopedViewKey(viewId: string): string {
+  return (resolveScopedImageLabel(viewId) || viewId).trim();
+}
+
+function getLegacyCwScopeCandidates(viewId: string): string[] {
+  const scoped = getCwScopedViewKey(viewId);
+  const base = toBaseViewId(viewId);
+  return Array.from(new Set([(viewId || '').trim(), scoped, base].filter(Boolean)));
 }
 
 function getMetadata(): any {
@@ -474,7 +475,11 @@ function getUsedStrokeLabels(viewId: string): Set<string> {
   return used;
 }
 
-function getCwGuideRoles(viewId: string): string[] {
+function getCwGuideScopeInfo(viewId: string): {
+  roles: string[];
+  strictScope: boolean;
+  scopeKey: string;
+} {
   const w = window as any;
   const roleMap =
     w.cwGuideRolesByImage && typeof w.cwGuideRolesByImage === 'object' ? w.cwGuideRolesByImage : {};
@@ -482,15 +487,49 @@ function getCwGuideRoles(viewId: string): string[] {
     w.cwImportedMeasurementsByImage && typeof w.cwImportedMeasurementsByImage === 'object'
       ? w.cwImportedMeasurementsByImage
       : {};
-  const scoped = resolveScopedImageLabel(viewId);
-  const base = toBaseViewId(viewId);
-  const candidates = Array.from(new Set([(viewId || '').trim(), scoped, base].filter(Boolean)));
+  const scoped = getCwScopedViewKey(viewId);
+  const exactRoles = Array.isArray(roleMap[scoped]) ? roleMap[scoped] : [];
+  const normalizedExactRoles = exactRoles.map(label => normalizeLabel(label)).filter(Boolean);
+  if (normalizedExactRoles.length) {
+    return {
+      roles: Array.from(new Set(normalizedExactRoles)),
+      strictScope: true,
+      scopeKey: scoped,
+    };
+  }
+
+  const exactMeasurements =
+    measurementMap[scoped] && typeof measurementMap[scoped] === 'object'
+      ? measurementMap[scoped]
+      : null;
+  if (exactMeasurements) {
+    const exactCollected = new Set<string>();
+    Object.keys(exactMeasurements).forEach(label => {
+      const normalized = normalizeLabel(label);
+      if (/^[A-Z](?:\d+)?$/.test(normalized)) {
+        exactCollected.add(normalized);
+      }
+    });
+    return {
+      roles: Array.from(exactCollected).sort((a, b) =>
+        a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' })
+      ),
+      strictScope: true,
+      scopeKey: scoped,
+    };
+  }
+
+  const candidates = getLegacyCwScopeCandidates(viewId);
 
   for (const candidate of candidates) {
     const direct = Array.isArray(roleMap[candidate]) ? roleMap[candidate] : [];
     const normalizedDirect = direct.map(label => normalizeLabel(label)).filter(Boolean);
     if (normalizedDirect.length) {
-      return Array.from(new Set(normalizedDirect));
+      return {
+        roles: Array.from(new Set(normalizedDirect)),
+        strictScope: false,
+        scopeKey: candidate,
+      };
     }
   }
 
@@ -508,9 +547,13 @@ function getCwGuideRoles(viewId: string): string[] {
     });
   });
 
-  return Array.from(collected).sort((a, b) =>
-    a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' })
-  );
+  return {
+    roles: Array.from(collected).sort((a, b) =>
+      a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' })
+    ),
+    strictScope: false,
+    scopeKey: scoped,
+  };
 }
 
 function normalizeRoleToken(value: string): string {
@@ -1085,33 +1128,37 @@ function bindIndicatorWindowControls(root: HTMLElement): void {
   });
 }
 
-function applyGuideOneTimeSeed(viewId: string, tag: string): void {
+function applyGuideOneTimeSeed(
+  viewId: string,
+  tag: string,
+  options: { strictScope?: boolean } = {}
+): void {
   const baseView = toBaseViewId(viewId);
-  const scoped = resolveScopedImageLabel(viewId);
+  const scoped = getCwScopedViewKey(viewId);
   const activeView = toBaseViewId(
     String((window as any).app?.projectManager?.currentViewId || '') || baseView
   );
-  const activeScoped = resolveScopedImageLabel(activeView);
+  const activeScoped = getCwScopedViewKey(activeView);
   const normalizedTag = normalizeLabel(tag);
   if (!normalizedTag) return;
+  const keys = options.strictScope
+    ? Array.from(new Set([scoped].filter(Boolean)))
+    : Array.from(new Set([baseView, scoped, activeView, activeScoped].filter(Boolean)));
 
   (window as any).guideOneTimeTagByImage = (window as any).guideOneTimeTagByImage || {};
-  (window as any).guideOneTimeTagByImage[baseView] = normalizedTag;
-  (window as any).guideOneTimeTagByImage[scoped] = normalizedTag;
-  (window as any).guideOneTimeTagByImage[activeView] = normalizedTag;
-  (window as any).guideOneTimeTagByImage[activeScoped] = normalizedTag;
+  keys.forEach(key => {
+    (window as any).guideOneTimeTagByImage[key] = normalizedTag;
+  });
 
   (window as any).labelsByImage = (window as any).labelsByImage || {};
-  (window as any).labelsByImage[baseView] = normalizedTag;
-  (window as any).labelsByImage[scoped] = normalizedTag;
-  (window as any).labelsByImage[activeView] = normalizedTag;
-  (window as any).labelsByImage[activeScoped] = normalizedTag;
+  keys.forEach(key => {
+    (window as any).labelsByImage[key] = normalizedTag;
+  });
 
   (window as any).manualTagByImage = (window as any).manualTagByImage || {};
-  delete (window as any).manualTagByImage[baseView];
-  delete (window as any).manualTagByImage[scoped];
-  delete (window as any).manualTagByImage[activeView];
-  delete (window as any).manualTagByImage[activeScoped];
+  keys.forEach(key => {
+    delete (window as any).manualTagByImage[key];
+  });
 
   (window as any).currentImageLabel = scoped;
 
@@ -1180,8 +1227,10 @@ async function renderIndicator(): Promise<void> {
 
   const activeGuide = resolveActiveGuideSelection(viewId);
   const code = activeGuide.code;
-  const cwRoles = code ? [] : getCwGuideRoles(viewId);
-  const usingCwGuide = !code && cwRoles.length > 0;
+  const cwGuide = code
+    ? { roles: [], strictScope: false, scopeKey: getCwScopedViewKey(viewId) }
+    : getCwGuideScopeInfo(viewId);
+  const usingCwGuide = !code && cwGuide.roles.length > 0;
   if (!code && !usingCwGuide) {
     hideIndicator();
     return;
@@ -1189,16 +1238,20 @@ async function renderIndicator(): Promise<void> {
 
   const { roles, ok: guideOk } = code
     ? await getGuideRoles(code, activeGuide.variant)
-    : { roles: cwRoles, ok: true };
+    : { roles: cwGuide.roles, ok: true };
   if (!guideOk || !roles.length) {
     hideIndicator();
     return;
   }
   const used = getUsedStrokeLabels(viewId);
 
-  const scoped = resolveScopedImageLabel(viewId);
+  const scoped = getCwScopedViewKey(viewId);
   const guideSeeds = (window as any).guideOneTimeTagByImage || {};
-  const seeded = normalizeLabel(guideSeeds[scoped] || guideSeeds[toBaseViewId(viewId)] || '');
+  const seeded = normalizeLabel(
+    usingCwGuide && cwGuide.strictScope
+      ? guideSeeds[cwGuide.scopeKey] || ''
+      : guideSeeds[scoped] || guideSeeds[toBaseViewId(viewId)] || ''
+  );
 
   let activeRole = '';
   const seededRole =
@@ -1235,7 +1288,9 @@ async function renderIndicator(): Promise<void> {
   if (renderKey === lastRenderKey) {
     applyIndicatorPreset(root, activeSize);
     positionIndicator(root);
-    applyGuideOneTimeSeed(viewId, activeRole);
+    applyGuideOneTimeSeed(viewId, activeRole, {
+      strictScope: usingCwGuide && cwGuide.strictScope,
+    });
     root.style.display = 'block';
     return;
   }
@@ -1264,14 +1319,18 @@ async function renderIndicator(): Promise<void> {
   `;
   applyIndicatorPreset(root, activeSize);
   positionIndicator(root);
-  applyGuideOneTimeSeed(viewId, activeRole);
+  applyGuideOneTimeSeed(viewId, activeRole, {
+    strictScope: usingCwGuide && cwGuide.strictScope,
+  });
   root.querySelectorAll('[data-guide-role]').forEach(node => {
     node.addEventListener('click', event => {
       event.preventDefault();
       event.stopPropagation();
       const role = (event.currentTarget as HTMLElement | null)?.dataset.guideRole || '';
       if (!role) return;
-      applyGuideOneTimeSeed(viewId, role);
+      applyGuideOneTimeSeed(viewId, role, {
+        strictScope: usingCwGuide && cwGuide.strictScope,
+      });
       scheduleRender();
     });
   });

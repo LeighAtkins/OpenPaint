@@ -2,6 +2,7 @@ import { parseSvgMeasurements, createCoordinateTransformer } from './svg-measure
 import { CanvasManager } from '../CanvasManager';
 import { TagManager } from '../TagManager';
 import { IMAGE_PANEL_STATES, setImagePanelState } from './panel-state.js';
+import { resolveScopedImageLabel } from './scoped-image-label.js';
 
 const HOTKEY = 'Backslash';
 const VIEWS = ['front', 'back', 'side'];
@@ -169,15 +170,16 @@ function restoreGuideSplitPanelSnapshot() {
 
   if (strokePanel) {
     strokePanel.classList.toggle('collapsed', snapshot?.strokeCollapsed === true);
-    strokePanel.setAttribute('aria-expanded', snapshot?.strokeCollapsed === true ? 'false' : 'true');
+    strokePanel.setAttribute(
+      'aria-expanded',
+      snapshot?.strokeCollapsed === true ? 'false' : 'true'
+    );
   }
   if (imagePanel) {
     imagePanel.classList.toggle('collapsed', snapshot?.imageCollapsed === true);
     imagePanel.setAttribute('aria-expanded', snapshot?.imageCollapsed === true ? 'false' : 'true');
     setImagePanelState(
-      snapshot?.imageCollapsed === true
-        ? IMAGE_PANEL_STATES.collapsed
-        : IMAGE_PANEL_STATES.expanded
+      snapshot?.imageCollapsed === true ? IMAGE_PANEL_STATES.collapsed : IMAGE_PANEL_STATES.expanded
     );
   }
   if (elementsBody) {
@@ -354,10 +356,7 @@ function restoreGuideSplitSnapshot(viewId) {
 
   const snapshot = cloneGuideSplitValue(guideSplitRestoreSnapshot);
 
-  if (
-    guideSplitRestoreSnapshot.tabs &&
-    typeof window.setCaptureTabsForLabel === 'function'
-  ) {
+  if (guideSplitRestoreSnapshot.tabs && typeof window.setCaptureTabsForLabel === 'function') {
     window.setCaptureTabsForLabel(normalizedViewId, guideSplitRestoreSnapshot.tabs);
   }
 
@@ -2656,18 +2655,18 @@ async function importSvgMeasurements(code, view, imageLabel, options = {}) {
     // Update UI buttons to reflect import settings
     if (options.syncUi !== false) {
       setTimeout(() => {
-      // Sync connector tone button
-      const connectorToneBtn = document.getElementById('connectorToneBtn');
-      if (connectorToneBtn) {
-        connectorToneBtn.textContent = 'Connector: Same as Line';
-      }
+        // Sync connector tone button
+        const connectorToneBtn = document.getElementById('connectorToneBtn');
+        if (connectorToneBtn) {
+          connectorToneBtn.textContent = 'Connector: Same as Line';
+        }
 
-      // Sync label shape button
-      const labelShapeBtn = document.getElementById('labelShapeToggleBtn');
-      if (labelShapeBtn) {
-        labelShapeBtn.textContent = '■';
-        labelShapeBtn.setAttribute('aria-pressed', 'true');
-      }
+        // Sync label shape button
+        const labelShapeBtn = document.getElementById('labelShapeToggleBtn');
+        if (labelShapeBtn) {
+          labelShapeBtn.textContent = '■';
+          labelShapeBtn.setAttribute('aria-pressed', 'true');
+        }
       }, 300);
     }
 
@@ -3761,7 +3760,11 @@ function findExistingGuideImageViewId(code, variant) {
   return (
     Object.entries(labels).find(([viewId, label]) => {
       if (!manager?.views?.[viewId]?.image) return false;
-      return String(label || '').trim().toUpperCase() === target.toUpperCase();
+      return (
+        String(label || '')
+          .trim()
+          .toUpperCase() === target.toUpperCase()
+      );
     })?.[0] || ''
   );
 }
@@ -3838,7 +3841,10 @@ function parseGuideSplitTempViewId(viewId) {
   if (!normalizedCode) return null;
   return {
     code: normalizedCode,
-    variant: String(variant || 'front').trim().toLowerCase() || 'front',
+    variant:
+      String(variant || 'front')
+        .trim()
+        .toLowerCase() || 'front',
   };
 }
 
@@ -3854,8 +3860,7 @@ function createGuideSplitCompareTagManager(compareCanvasManager) {
     tagManager.tagBackgroundStyle =
       primaryTagManager.tagBackgroundStyle || tagManager.tagBackgroundStyle;
     tagManager.connectorColor = primaryTagManager.connectorColor || tagManager.connectorColor;
-    tagManager.connectorMatchesLine =
-      primaryTagManager.connectorMatchesLine !== false;
+    tagManager.connectorMatchesLine = primaryTagManager.connectorMatchesLine !== false;
     tagManager.strokeColor = primaryTagManager.strokeColor || tagManager.strokeColor;
   }
   return tagManager;
@@ -3901,9 +3906,9 @@ function seedGuideSplitMeasurementsFromLeft(tempScopeId) {
   const metadataManager = window.app?.metadataManager || null;
   if (!targetScopeId || !metadataManager) return;
 
-  const leftScopeId = resolveScopedImageLabel(
-    guideCompareWorkspaceState.leftViewId || getCurrentViewId()
-  );
+  const leftScopeId =
+    resolveScopedImageLabel(guideCompareWorkspaceState.leftViewId || getCurrentViewId()) ||
+    String(guideCompareWorkspaceState.leftViewId || getCurrentViewId() || '').trim();
   const leftMeasurements = metadataManager.strokeMeasurements?.[leftScopeId] || {};
   const leftStrokeVisibility = metadataManager.strokeVisibilityByImage?.[leftScopeId] || {};
   const leftLabelVisibility = metadataManager.strokeLabelVisibility?.[leftScopeId] || {};
@@ -3969,7 +3974,10 @@ async function loadGuideIntoCompareCanvas(selection, compareCanvasManager) {
   if (!selection?.code || !compareCanvasManager) return false;
 
   const normalizedCode = normalizeCode(selection.code);
-  const normalizedVariant = String(selection.variant || 'front').trim().toLowerCase() || 'front';
+  const normalizedVariant =
+    String(selection.variant || 'front')
+      .trim()
+      .toLowerCase() || 'front';
   const tempScopeId = buildGuideSplitTempViewId({
     code: normalizedCode,
     variant: normalizedVariant,
@@ -4119,10 +4127,7 @@ async function ensureGuideSplitDefaultRightView() {
   if (binding?.selection?.code) {
     const guideViewId = buildGuideSplitTempViewId(binding.selection);
     if (guideViewId) {
-      if (
-        currentRightSourceKind === 'bound-guide' &&
-        currentRightViewId === guideViewId
-      ) {
+      if (currentRightSourceKind === 'bound-guide' && currentRightViewId === guideViewId) {
         renderGuideSplitPane();
         return guideViewId;
       }
@@ -4242,8 +4247,7 @@ async function applyGuideSplitLayout() {
       const restoreViewId = stayViewId || getCurrentViewId();
       restoreGuideSplitSnapshot(restoreViewId);
       if (typeof window.getCaptureTabScopedLabel === 'function') {
-        window.currentImageLabel =
-          window.getCaptureTabScopedLabel(restoreViewId) || restoreViewId;
+        window.currentImageLabel = window.getCaptureTabScopedLabel(restoreViewId) || restoreViewId;
       }
       primaryCanvasManager?.resize?.();
       if (typeof window.restoreCaptureFrameForLabelExact === 'function') {

@@ -7,22 +7,86 @@ type ImportedRow = {
   skirtLength?: string;
 };
 
-type SearchState = {
+type VariantOption = {
+  productReference: string;
+  style: string;
+  styleCode: string;
+  label: string;
+};
+
+type VersionOption = {
+  code: string;
+  label: string;
+  scopedReference?: string;
+  isDefault?: boolean;
+};
+
+type SearchResultItem = {
+  id: string | null;
+  productReference: string;
+  productName: string;
+  status: string | null;
+  translations: Array<{ name?: string; slug?: string; lang?: string }>;
+  configParsed: boolean;
+  versionOptions: VersionOption[];
+  styleOptions: VariantOption[];
+  derivedScopedReferences: string[];
+  selected: boolean;
+  selectedVersionCode: string;
+  selectedStyleKey: string;
+};
+
+type BasketItem = {
+  selectionKey: string;
+  search: string;
+  productReference: string;
+  productName: string;
+  versionCode: string;
+  versionLabel: string;
+  scopedReference: string;
+  style: string;
+  styleCode: string;
+  label: string;
+};
+
+type LoadedMeasurementItem = {
+  selectionKey: string;
+  basketItem: BasketItem;
+  productReference: string;
+  productName: string;
   rows: ImportedRow[];
   imageUrls: string[];
   imageCandidateGroups: string[][];
   sectionImageGroups: Record<string, string[][]>;
-  variantOptions: Array<{
-    productReference: string;
-    style: string;
-    styleCode: string;
-    label: string;
-  }>;
-  activeVariantUrl: string;
+  rawData: any;
+  loadMessage: string;
+  success: boolean;
+};
+
+type VisibleImportedRow = ImportedRow & {
+  rowKey: string;
+  itemKey: string;
+  itemLabel: string;
   productReference: string;
-  productName: string;
+};
+
+type VisibleImageEntry = {
+  itemKey: string;
+  itemLabel: string;
+  productReference: string;
+  section: string;
+  key: string;
+  selectionImageKey: string;
+  candidates: string[];
+};
+
+type SearchState = {
+  searchResults: SearchResultItem[];
+  basket: BasketItem[];
+  loadedItems: LoadedMeasurementItem[];
+  activeItemKey: string;
   activeSection: string;
-  armedRowId: string;
+  armedRowKey: string;
   selectedImageKeys: string[];
   rowTargetLabels: Record<string, string>;
 };
@@ -42,6 +106,51 @@ function parseStyleKey(styleKey: string): {
     style: String(style || '').trim(),
     styleCode: String(styleCode || '').trim(),
   };
+}
+
+function makeSelectionKey(
+  productReference: string,
+  versionCode: string,
+  style: string,
+  styleCode: string
+): string {
+  return [
+    String(productReference || '').trim(),
+    String(versionCode || '').trim(),
+    String(style || '').trim(),
+    String(styleCode || '').trim(),
+  ].join('|');
+}
+
+function getScopedReference(productReference: string, versionCode: string): string {
+  const base = String(productReference || '').trim();
+  const code = String(versionCode || '')
+    .trim()
+    .toUpperCase();
+  if (!base) return '';
+  if (!code || code === 'DF') return base;
+  return `${base}__${code}`;
+}
+
+function buildBasketLabel(item: {
+  productReference: string;
+  productName?: string;
+  versionLabel?: string;
+  style?: string;
+  styleCode?: string;
+}): string {
+  const segments = [
+    String(item?.productReference || '').trim(),
+    String(item?.productName || '').trim(),
+    String(item?.versionLabel || '').trim(),
+    String(item?.style || '').trim(),
+  ].filter(Boolean);
+  const styleCode = String(item?.styleCode || '').trim();
+  return `${segments.join(' / ')}${styleCode ? ` (${styleCode})` : ''}` || 'CW Item';
+}
+
+function makeRowStorageKey(itemKey: string, rowId: string): string {
+  return `${String(itemKey || '').trim()}::${String(rowId || '').trim()}`;
 }
 
 const MODAL_ID = 'cwImportModalOverlay';
@@ -167,6 +276,30 @@ function ensureStyles(): void {
     .cw-btn-primary { border-color: #0f172a; background: #0f172a; color: #fff; }
     .cw-note { margin-top: 8px; font-size: 12px; color: #64748b; }
     .cw-result-meta { margin-top: 12px; font-size: 12px; color: #334155; }
+    .cw-discovery-grid { margin-top: 12px; display: grid; gap: 10px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .cw-result-card, .cw-basket-card { position: relative; border: 1px solid #d7dee8; border-radius: 14px; padding: 12px; background:
+      radial-gradient(circle at top right, rgba(15, 23, 42, 0.06), transparent 35%),
+      linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+      box-shadow: 0 14px 28px rgba(15, 23, 42, 0.08); }
+    .cw-result-card.is-selected { border-color: #0f172a; box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.08), 0 18px 32px rgba(15, 23, 42, 0.12); }
+    .cw-result-top { display: flex; gap: 10px; align-items: flex-start; justify-content: space-between; }
+    .cw-result-check { margin-top: 2px; width: 16px !important; height: 16px; accent-color: #0f172a; }
+    .cw-result-title { margin: 0; font-size: 13px; font-weight: 700; color: #0f172a; }
+    .cw-result-subtitle { margin: 4px 0 0; font-size: 11px; color: #64748b; }
+    .cw-result-pill { display: inline-flex; align-items: center; gap: 4px; border-radius: 999px; padding: 3px 8px; font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; background: #e2e8f0; color: #334155; }
+    .cw-result-pill.is-ok { background: #dcfce7; color: #166534; }
+    .cw-result-controls { margin-top: 10px; display: grid; gap: 8px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .cw-select { width: 100%; border: 1px solid #cbd5e1; border-radius: 8px; padding: 7px 9px; font-size: 12px; background: #fff; }
+    .cw-section-label { margin-top: 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 11px; font-weight: 700; color: #334155; letter-spacing: 0.05em; text-transform: uppercase; }
+    .cw-basket-wrap { margin-top: 10px; display: grid; gap: 8px; }
+    .cw-basket-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .cw-basket-copy { min-width: 0; }
+    .cw-basket-title { margin: 0; font-size: 12px; font-weight: 700; color: #0f172a; }
+    .cw-basket-meta { margin: 3px 0 0; font-size: 11px; color: #64748b; }
+    .cw-loaded-summary { margin-top: 10px; display: grid; gap: 8px; }
+    .cw-loaded-item { border: 1px solid #dbe4ee; border-radius: 12px; padding: 10px 12px; background: linear-gradient(180deg, rgba(248, 250, 252, 0.92), rgba(255, 255, 255, 0.98)); }
+    .cw-loaded-item strong { color: #0f172a; }
+    .cw-loaded-item small { color: #64748b; }
     .cw-probe-panel { margin-top: 12px; border: 1px solid #cbd5e1; border-radius: 10px; padding: 10px; background: #f8fafc; }
     .cw-probe-summary { margin: 6px 0 0; font-size: 12px; color: #334155; }
     .cw-probe-pre { margin-top: 8px; border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px; background: #fff; max-height: 220px; overflow: auto; font-size: 11px; line-height: 1.35; white-space: pre-wrap; word-break: break-word; }
@@ -179,6 +312,7 @@ function ensureStyles(): void {
     .cw-image-meta { display: flex; flex-direction: column; gap: 4px; padding: 8px; }
     .cw-image-section { font-size: 11px; font-weight: 700; color: #0f172a; }
     .cw-image-name { font-size: 11px; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .cw-image-item { font-size: 10px; color: #475569; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; }
     .cw-image-toggle { position: absolute; top: 8px; right: 8px; display: inline-flex; align-items: center; gap: 6px; padding: 4px 7px; border-radius: 999px; background: rgba(255, 255, 255, 0.94); color: #0f172a; font-size: 11px; font-weight: 700; box-shadow: 0 6px 16px rgba(15, 23, 42, 0.16); pointer-events: auto; }
     .cw-image-toggle.is-selected { background: rgba(15, 23, 42, 0.94); color: #fff; }
     .cw-image-toggle.is-skipped { background: rgba(148, 163, 184, 0.92); color: #fff; }
@@ -186,16 +320,19 @@ function ensureStyles(): void {
     .cw-image-toggle-text { line-height: 1; }
     .cw-image-actions { display: inline-flex; gap: 6px; align-items: center; }
     .cw-measure-wrap { margin-top: 12px; border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; }
-    .cw-measure-head { display: grid; grid-template-columns: 120px 140px 1fr 180px 180px; gap: 8px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; padding: 8px; font-size: 11px; font-weight: 600; color: #475569; }
-    .cw-measure-row { display: grid; grid-template-columns: 120px 140px 1fr 180px 180px; gap: 8px; align-items: center; padding: 8px; border-bottom: 1px solid #f1f5f9; font-size: 12px; }
+    .cw-measure-head { display: grid; grid-template-columns: 160px 120px 1fr 180px 180px; gap: 8px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; padding: 8px; font-size: 11px; font-weight: 600; color: #475569; }
+    .cw-measure-row { display: grid; grid-template-columns: 160px 120px 1fr 180px 180px; gap: 8px; align-items: center; padding: 8px; border-bottom: 1px solid #f1f5f9; font-size: 12px; }
     .cw-measure-row:last-child { border-bottom: none; }
     .cw-measure-row.armed { background: #eff6ff; }
+    .cw-measure-group { padding: 10px 8px; background: linear-gradient(180deg, #ffffff, #f8fafc); border-bottom: 1px solid #e2e8f0; font-size: 11px; font-weight: 700; color: #0f172a; letter-spacing: 0.03em; text-transform: uppercase; }
     .cw-measure-val { color: #0f172a; font-weight: 600; }
     .cw-measure-input { width: 100%; border: 1px solid #cbd5e1; border-radius: 6px; padding: 6px 8px; font-size: 12px; }
     .cw-section-select { width: 220px; border: 1px solid #cbd5e1; border-radius: 8px; padding: 6px 8px; font-size: 12px; }
     .cw-rendered-html { width: 100%; border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px 10px; min-height: 92px; resize: vertical; font-size: 12px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
     @media (max-width: 900px) {
       .cw-grid { grid-template-columns: 1fr; }
+      .cw-discovery-grid { grid-template-columns: 1fr; }
+      .cw-result-controls { grid-template-columns: 1fr; }
       .cw-measure-head, .cw-measure-row { grid-template-columns: 1fr; }
       .cw-images { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
@@ -244,14 +381,17 @@ function normalizeGuideLabel(value: string): string {
     .replace(/\s+/g, '');
 }
 
-function buildCwScopeCandidates(scopeLabel: string): string[] {
+function getCanonicalCwScopeKey(scopeLabel: string): string {
   const metadata = (window as any).app?.metadataManager;
-  const normalized =
-    typeof metadata?.normalizeImageLabel === 'function'
-      ? String(metadata.normalizeImageLabel(scopeLabel) || scopeLabel).trim()
-      : String(scopeLabel || '').trim();
-  const base = normalized.split('::tab:')[0] || normalized;
-  return Array.from(new Set([String(scopeLabel || '').trim(), normalized, base].filter(Boolean)));
+  return typeof metadata?.normalizeImageLabel === 'function'
+    ? String(metadata.normalizeImageLabel(scopeLabel) || scopeLabel).trim()
+    : String(scopeLabel || '').trim();
+}
+
+function buildLegacyCwScopeCandidates(scopeLabel: string): string[] {
+  const canonical = getCanonicalCwScopeKey(scopeLabel);
+  const base = canonical.split('::tab:')[0] || canonical;
+  return Array.from(new Set([String(scopeLabel || '').trim(), canonical, base].filter(Boolean)));
 }
 
 function getCwImportedMeasurementEntry(scopeLabel: string, strokeLabel: string): any {
@@ -262,11 +402,28 @@ function getCwImportedMeasurementEntry(scopeLabel: string, strokeLabel: string):
       : {};
   const normalizedLabel = normalizeGuideLabel(strokeLabel);
   if (!normalizedLabel) return null;
-  for (const candidate of buildCwScopeCandidates(scopeLabel)) {
+  const canonicalKey = getCanonicalCwScopeKey(scopeLabel);
+  const exactStore = store[canonicalKey];
+  if (exactStore && typeof exactStore === 'object') {
+    const direct = exactStore[normalizedLabel];
+    if (direct && typeof direct === 'object') {
+      return {
+        ...direct,
+        bindingScopeKey: String(direct.bindingScopeKey || canonicalKey).trim() || canonicalKey,
+      };
+    }
+    return null;
+  }
+  for (const candidate of buildLegacyCwScopeCandidates(scopeLabel)) {
     const scopedStore = store[candidate];
     if (!scopedStore || typeof scopedStore !== 'object') continue;
     const direct = scopedStore[normalizedLabel];
-    if (direct && typeof direct === 'object') return direct;
+    if (direct && typeof direct === 'object') {
+      return {
+        ...direct,
+        bindingScopeKey: String(direct.bindingScopeKey || candidate).trim() || candidate,
+      };
+    }
   }
   return null;
 }
@@ -280,18 +437,19 @@ function markCwImportedMeasurementApplied(
   if (!w.cwImportedMeasurementsByImage) w.cwImportedMeasurementsByImage = {};
   const normalizedLabel = normalizeGuideLabel(strokeLabel);
   if (!normalizedLabel) return;
+  const canonicalKey = getCanonicalCwScopeKey(scopeLabel);
+  const bindingScopeKey = String(payload?.bindingScopeKey || canonicalKey).trim() || canonicalKey;
   const nextPayload = {
     ...(payload && typeof payload === 'object' ? payload : {}),
+    bindingScopeKey,
     pending: false,
     autoApplyOnDraw: false,
     updatedAt: new Date().toISOString(),
   };
-  buildCwScopeCandidates(scopeLabel).forEach(candidate => {
-    if (!w.cwImportedMeasurementsByImage[candidate]) {
-      w.cwImportedMeasurementsByImage[candidate] = {};
-    }
-    w.cwImportedMeasurementsByImage[candidate][normalizedLabel] = nextPayload;
-  });
+  if (!w.cwImportedMeasurementsByImage[bindingScopeKey]) {
+    w.cwImportedMeasurementsByImage[bindingScopeKey] = {};
+  }
+  w.cwImportedMeasurementsByImage[bindingScopeKey][normalizedLabel] = nextPayload;
 }
 
 function normalizeValueText(value: unknown): string {
@@ -344,6 +502,10 @@ function guessMosLabel(sourceLabel: string, sectionName: string): string {
   if (normalizedSource === 'back width (top)') return 'L1';
   if (normalizedSource === 'back width (middle)') return 'L2';
   if (normalizedSource === 'back width (bottom)') return 'L3';
+  if (normalizedSource === 'front arm width') return 'C1';
+  if (normalizedSource === 'side width') return 'H1';
+  if (normalizedSource === 'side height') return 'G1';
+  if (normalizedSource === 'back width') return 'L1';
 
   if (normalizedSection === 'Seat Cushion Cover' || normalizedSection === 'Back Cushion Cover') {
     if (normalizedSource === 'width (top)') return 'A';
@@ -733,53 +895,6 @@ function imageKeyFromUrl(url: string): string {
   return (parts.slice(-2).join('/') || clean).toLowerCase();
 }
 
-function probeImage(url: string, timeoutMs = 4500): Promise<boolean> {
-  return new Promise(resolve => {
-    const img = new Image();
-    let settled = false;
-    const done = (ok: boolean) => {
-      if (settled) return;
-      settled = true;
-      resolve(ok);
-    };
-    const timer = setTimeout(() => done(false), timeoutMs);
-    img.onload = () => {
-      clearTimeout(timer);
-      done(true);
-    };
-    img.onerror = () => {
-      clearTimeout(timer);
-      done(false);
-    };
-    img.referrerPolicy = 'no-referrer';
-    img.src = url;
-  });
-}
-
-async function resolveWorkingImageUrls(candidates: string[]): Promise<string[]> {
-  const grouped = new Map<string, string[]>();
-  candidates.forEach(url => {
-    const key = imageKeyFromUrl(url);
-    if (!grouped.has(key)) grouped.set(key, []);
-    grouped.get(key)!.push(url);
-  });
-
-  const resolved: string[] = [];
-  for (const urls of grouped.values()) {
-    let selected = '';
-    for (const url of urls) {
-      // eslint-disable-next-line no-await-in-loop
-      const ok = await probeImage(url);
-      if (ok) {
-        selected = url;
-        break;
-      }
-    }
-    if (selected) resolved.push(selected);
-  }
-  return resolved;
-}
-
 function groupImageCandidates(candidates: string[]): string[][] {
   const grouped = new Map<string, string[]>();
   candidates.forEach(url => {
@@ -1026,96 +1141,6 @@ function extractRows(payload: any): ImportedRow[] {
   return Array.from(dedup.values());
 }
 
-function buildVariantOptions(
-  data: any
-): Array<{ productReference: string; style: string; styleCode: string; label: string }> {
-  const fallbackReference = String(data?.product?.reference || '').trim();
-  const dedupe = new Map<
-    string,
-    { productReference: string; style: string; styleCode: string; label: string }
-  >();
-  const pushOption = (
-    productReferenceRaw: string,
-    styleRaw: string,
-    styleCodeRaw: string,
-    labelRaw = ''
-  ) => {
-    const productReference = String(productReferenceRaw || fallbackReference || '').trim();
-    const style = String(styleRaw || '').trim();
-    const styleCode = String(styleCodeRaw || '').trim();
-    if (!productReference && !style && !styleCode) return;
-    const key = makeStyleKey(
-      productReference.toLowerCase(),
-      style.toLowerCase(),
-      styleCode.toLowerCase()
-    );
-    if (dedupe.has(key)) return;
-    const label =
-      String(labelRaw || '').trim() ||
-      `${productReference || 'Reference'} - ${style || 'Style'}${styleCode ? ` (${styleCode})` : ''}`;
-    dedupe.set(key, { productReference, style, styleCode, label });
-  };
-
-  const styleOptions = Array.isArray(data?.styleOptions) ? data.styleOptions : [];
-  styleOptions.forEach((item: any) => {
-    pushOption(
-      item?.productReference || item?.product_reference || fallbackReference,
-      item?.style,
-      item?.styleCode || item?.style_code,
-      item?.label
-    );
-  });
-
-  const fallbackQc = Array.isArray(data?.qcMeasurementsByStyle) ? data.qcMeasurementsByStyle : [];
-  fallbackQc.forEach((item: any) => {
-    pushOption(
-      item?.productReference || fallbackReference,
-      item?.style,
-      item?.styleCode,
-      item?.label
-    );
-  });
-
-  // Common paired CW styles: keep dropdown useful even when upstream only
-  // returns one side in metadata.
-  const current = Array.from(dedupe.values());
-  if (current.length === 1) {
-    const only = current[0];
-    const styleNorm = only.style.toLowerCase();
-    const codeNorm = only.styleCode.toUpperCase();
-    if (styleNorm === 'signature' && codeNorm === 'CNRP_SP') {
-      pushOption(only.productReference || fallbackReference, 'Original', 'SHRT_SP');
-    } else if (styleNorm === 'original' && codeNorm === 'SHRT_SP') {
-      pushOption(only.productReference || fallbackReference, 'Signature', 'CNRP_SP');
-    }
-  }
-
-  return Array.from(dedupe.values());
-}
-
-function buildPayloadForVariant(data: any, activeVariantUrl: string): any {
-  if (!activeVariantUrl) return data;
-  const stylePool = Array.isArray(data?.qcMeasurementsByStyle) ? data.qcMeasurementsByStyle : [];
-  const { productReference, style, styleCode } = parseStyleKey(activeVariantUrl);
-  const matchedQc =
-    stylePool.find((item: any) => {
-      const sameReference =
-        !productReference ||
-        String(item?.productReference || '').toLowerCase() === productReference.toLowerCase();
-      const sameStyle = !style || String(item?.style || '').toLowerCase() === style.toLowerCase();
-      const sameCode =
-        !styleCode || String(item?.styleCode || '').toLowerCase() === styleCode.toLowerCase();
-      return sameReference && sameStyle && sameCode;
-    }) || null;
-
-  const details = Array.isArray(data?.measurementDetails) ? data.measurementDetails : [];
-  return {
-    ...data,
-    measurementDetails: details,
-    qcMeasurements: matchedQc || data?.qcMeasurements || null,
-  };
-}
-
 function createModal(): HTMLElement {
   const overlay = document.createElement('div');
   overlay.className = 'cw-import-overlay';
@@ -1164,9 +1189,11 @@ function createModal(): HTMLElement {
     </div>
     <div class="cw-row">
       <button type="button" class="cw-btn cw-btn-primary" id="cwSearchBtn">Search</button>
+      <button type="button" class="cw-btn" id="cwAddSelectedBtn">Add Selected</button>
+      <button type="button" class="cw-btn" id="cwLoadSelectedBtn">Load Selected</button>
       <button type="button" class="cw-btn" id="cwImportExactBtn">Import Matching Labels</button>
       <button type="button" class="cw-btn" id="cwImportPhotosBtn">Import Photos to Project</button>
-      <select id="cwVariantFilter" class="cw-section-select"><option value="">Auto Style</option></select>
+      <select id="cwItemFilter" class="cw-section-select"><option value="">All Items</option></select>
       <select id="cwSectionFilter" class="cw-section-select"><option value="">All Sections</option></select>
       <span class="cw-image-actions">
         <button type="button" class="cw-btn" id="cwSelectVisibleImagesBtn">Select Visible</button>
@@ -1174,8 +1201,23 @@ function createModal(): HTMLElement {
       </span>
       <label><input type="checkbox" id="cwImportLocked" checked /> Locked by default</label>
     </div>
-      <div class="cw-note">Guide mode: click Draw Next for a measurement, then draw the next measurement stroke. OpenPaint auto-applies that value to the new stroke.</div>
+    <div class="cw-note">Search finds candidate items, Add Selected builds a basket, and Load Selected fetches only the checked item/style combinations. Guide mode still works: click Draw Next, then draw the next measurement stroke.</div>
     <div class="cw-result-meta" id="cwResultMeta">No search yet.</div>
+    <div class="cw-section-label">
+      <span>Search Results</span>
+      <span id="cwResultsMeta">Run a search to discover items and options.</span>
+    </div>
+    <div class="cw-discovery-grid" id="cwSearchResults"></div>
+    <div class="cw-section-label">
+      <span>Basket</span>
+      <span id="cwBasketMeta">No selected items yet.</span>
+    </div>
+    <div class="cw-basket-wrap" id="cwBasket"></div>
+    <div class="cw-section-label">
+      <span>Loaded Items</span>
+      <span id="cwLoadedMeta">No measurements loaded yet.</span>
+    </div>
+    <div class="cw-loaded-summary" id="cwLoadedItems"></div>
     <div class="cw-probe-panel" id="cwProbePanel" style="display:none;">
       <div class="cw-row" style="margin-top:0;">
         <label style="margin:0;"><input type="checkbox" id="cwProbeEnabled" /> Enable probe diagnostics</label>
@@ -1209,12 +1251,14 @@ function createModal(): HTMLElement {
     </div>
     <div class="cw-images" id="cwResultImages"></div>
     <div class="cw-measure-wrap">
-      <div class="cw-measure-head"><div>Source Label</div><div>Section</div><div>Value</div><div>Map to Stroke Label</div><div>Actions</div></div>
+      <div class="cw-measure-head"><div>Item / Source Label</div><div>Section</div><div>Value</div><div>Map to Stroke Label</div><div>Actions</div></div>
       <div id="cwRows"></div>
     </div>
   `;
 
   const searchBtn = body.querySelector('#cwSearchBtn') as HTMLButtonElement;
+  const addSelectedBtn = body.querySelector('#cwAddSelectedBtn') as HTMLButtonElement;
+  const loadSelectedBtn = body.querySelector('#cwLoadSelectedBtn') as HTMLButtonElement;
   const baseUrlEl = body.querySelector('#cwBaseUrl') as HTMLInputElement;
   const formIdEl = body.querySelector('#cwFormId') as HTMLInputElement;
   const usernameEl = body.querySelector('#cwUsername') as HTMLInputElement;
@@ -1223,12 +1267,18 @@ function createModal(): HTMLElement {
   const renderedHtmlEl = body.querySelector('#cwRenderedHtml') as HTMLTextAreaElement;
   const importExactBtn = body.querySelector('#cwImportExactBtn') as HTMLButtonElement;
   const importPhotosBtn = body.querySelector('#cwImportPhotosBtn') as HTMLButtonElement;
-  const variantFilterEl = body.querySelector('#cwVariantFilter') as HTMLSelectElement;
+  const itemFilterEl = body.querySelector('#cwItemFilter') as HTMLSelectElement;
   const sectionFilterEl = body.querySelector('#cwSectionFilter') as HTMLSelectElement;
   const selectVisibleImagesBtn = body.querySelector(
     '#cwSelectVisibleImagesBtn'
   ) as HTMLButtonElement;
   const clearVisibleImagesBtn = body.querySelector('#cwClearVisibleImagesBtn') as HTMLButtonElement;
+  const searchResultsWrap = body.querySelector('#cwSearchResults') as HTMLDivElement;
+  const basketWrap = body.querySelector('#cwBasket') as HTMLDivElement;
+  const loadedItemsWrap = body.querySelector('#cwLoadedItems') as HTMLDivElement;
+  const resultsMeta = body.querySelector('#cwResultsMeta') as HTMLSpanElement;
+  const basketMeta = body.querySelector('#cwBasketMeta') as HTMLSpanElement;
+  const loadedMeta = body.querySelector('#cwLoadedMeta') as HTMLSpanElement;
   const rowsContainer = body.querySelector('#cwRows') as HTMLDivElement;
   const resultMeta = body.querySelector('#cwResultMeta') as HTMLDivElement;
   const imagesWrap = body.querySelector('#cwResultImages') as HTMLDivElement;
@@ -1293,16 +1343,12 @@ function createModal(): HTMLElement {
   }
 
   let state: SearchState = {
-    rows: [],
-    imageUrls: [],
-    imageCandidateGroups: [],
-    sectionImageGroups: {},
-    variantOptions: [],
-    activeVariantUrl: '',
-    productReference: '',
-    productName: '',
+    searchResults: [],
+    basket: [],
+    loadedItems: [],
+    activeItemKey: '',
     activeSection: '',
-    armedRowId: '',
+    armedRowKey: '',
     selectedImageKeys: [],
     rowTargetLabels: {},
   };
@@ -1347,7 +1393,11 @@ function createModal(): HTMLElement {
   const requestSearchPayload = async (
     searchTerm: string,
     activeStyleKeyOverride = '',
-    options: { probeMode?: 'turbo' | 'default' } = {}
+    options: {
+      probeMode?: 'turbo' | 'default';
+      phase?: 'discover' | 'load-selected';
+      selectedItems?: BasketItem[];
+    } = {}
   ): Promise<{
     response: Response;
     data: any;
@@ -1360,7 +1410,7 @@ function createModal(): HTMLElement {
     const username = String(usernameEl?.value || '').trim();
     const password = String(passwordEl?.value || '');
     const renderedHtml = String(renderedHtmlEl?.value || '');
-    const activeStyleKey = String(activeStyleKeyOverride || variantFilterEl.value || '').trim();
+    const activeStyleKey = String(activeStyleKeyOverride || '').trim();
     const activeStyle = parseStyleKey(activeStyleKey);
 
     const response = await fetch('/api/integrations/cw/measurements/search', {
@@ -1376,6 +1426,20 @@ function createModal(): HTMLElement {
         productReference: activeStyle.productReference,
         style: activeStyle.style,
         styleCode: activeStyle.styleCode,
+        phase: options.phase || undefined,
+        selectedItems: Array.isArray(options.selectedItems)
+          ? options.selectedItems.map(item => ({
+              selectionKey: item.selectionKey,
+              search: item.search,
+              productReference: item.productReference,
+              productName: item.productName,
+              scopedReference: item.scopedReference,
+              versionCode: item.versionCode,
+              versionLabel: item.versionLabel,
+              style: item.style,
+              styleCode: item.styleCode,
+            }))
+          : undefined,
         probeMode: options.probeMode === 'turbo' ? 'turbo' : 'default',
       }),
     });
@@ -1401,16 +1465,114 @@ function createModal(): HTMLElement {
     return { response, data, rawText, contentType, jsonParseError };
   };
 
-  const visibleRows = () => {
-    if (!state.activeSection) return state.rows;
-    return state.rows.filter(row => normalizeValueText(row.sectionName) === state.activeSection);
+  const getSearchResultStyleOption = (item: SearchResultItem): VariantOption | null => {
+    if (!Array.isArray(item.styleOptions) || item.styleOptions.length === 0) return null;
+    return (
+      item.styleOptions.find(
+        option =>
+          makeStyleKey(option.productReference, option.style, option.styleCode) ===
+          item.selectedStyleKey
+      ) || item.styleOptions[0]
+    );
+  };
+
+  const buildBasketItemFromResult = (item: SearchResultItem): BasketItem | null => {
+    const styleOption = getSearchResultStyleOption(item);
+    if (!item.productReference || !styleOption) return null;
+    const versionOption =
+      item.versionOptions.find(option => option.code === item.selectedVersionCode) || null;
+    const versionCode = String(versionOption?.code || item.selectedVersionCode || '').trim();
+    const versionLabel = String(versionOption?.label || '').trim();
+    const scopedReference =
+      String(versionOption?.scopedReference || '').trim() ||
+      getScopedReference(item.productReference, versionCode);
+    return {
+      selectionKey: makeSelectionKey(
+        item.productReference,
+        versionCode,
+        styleOption.style,
+        styleOption.styleCode
+      ),
+      search: String(searchTermEl?.value || '').trim(),
+      productReference: item.productReference,
+      productName: item.productName,
+      versionCode,
+      versionLabel,
+      scopedReference,
+      style: styleOption.style,
+      styleCode: styleOption.styleCode,
+      label: buildBasketLabel({
+        productReference: item.productReference,
+        productName: item.productName,
+        versionLabel,
+        style: styleOption.style,
+        styleCode: styleOption.styleCode,
+      }),
+    };
+  };
+
+  const activeLoadedItems = (): LoadedMeasurementItem[] => {
+    if (!state.activeItemKey) return state.loadedItems.filter(item => item.success);
+    return state.loadedItems.filter(
+      item => item.success && item.selectionKey === state.activeItemKey
+    );
+  };
+
+  const visibleRows = (): VisibleImportedRow[] => {
+    const rows: VisibleImportedRow[] = [];
+    const loaded = activeLoadedItems();
+    loaded.forEach(item => {
+      item.rows.forEach(row => {
+        const sectionName = normalizeSectionName(normalizeValueText(row.sectionName));
+        if (state.activeSection && sectionName !== state.activeSection) return;
+        rows.push({
+          ...row,
+          rowKey: makeRowStorageKey(item.selectionKey, row.id),
+          itemKey: item.selectionKey,
+          itemLabel: item.basketItem.label,
+          productReference: item.productReference,
+        });
+      });
+    });
+    return rows;
+  };
+
+  const allLoadedRows = (): VisibleImportedRow[] => {
+    const rows: VisibleImportedRow[] = [];
+    state.loadedItems
+      .filter(item => item.success)
+      .forEach(item => {
+        item.rows.forEach(row => {
+          rows.push({
+            ...row,
+            rowKey: makeRowStorageKey(item.selectionKey, row.id),
+            itemKey: item.selectionKey,
+            itemLabel: item.basketItem.label,
+            productReference: item.productReference,
+          });
+        });
+      });
+    return rows;
+  };
+
+  const renderItemFilter = () => {
+    itemFilterEl.innerHTML = '<option value="">All Items</option>';
+    state.loadedItems
+      .filter(item => item.success)
+      .forEach(item => {
+        const option = document.createElement('option');
+        option.value = item.selectionKey;
+        option.textContent = item.basketItem.label;
+        if (option.value === state.activeItemKey) option.selected = true;
+        itemFilterEl.appendChild(option);
+      });
   };
 
   const renderSectionFilter = () => {
-    const rowSections = state.rows.map(row =>
+    const rowSections = visibleRows().map(row =>
       normalizeSectionName(normalizeValueText(row.sectionName))
     );
-    const imageSections = Object.keys(state.sectionImageGroups || {});
+    const imageSections = allImageEntries().map(entry => normalizeSectionName(entry.section));
     const sections = Array.from(new Set([...rowSections, ...imageSections].filter(Boolean))).sort(
       (a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' })
     );
@@ -1425,53 +1587,191 @@ function createModal(): HTMLElement {
     });
   };
 
-  const renderVariantFilter = () => {
-    variantFilterEl.innerHTML = '<option value="">Auto Style</option>';
-    state.variantOptions.forEach(item => {
-      const option = document.createElement('option');
-      option.value = makeStyleKey(item.productReference, item.style, item.styleCode);
-      option.textContent = item.label;
-      if (option.value === state.activeVariantUrl) option.selected = true;
-      variantFilterEl.appendChild(option);
-    });
-  };
+  const allImageEntries = (): VisibleImageEntry[] => {
+    const entries: VisibleImageEntry[] = [];
+    activeLoadedItems().forEach(item => {
+      const addEntry = (section: string, candidates: string[]) => {
+        if (!Array.isArray(candidates) || !candidates.length) return;
+        const key = imageKeyFromUrl(candidates[0] || '');
+        if (!key) return;
+        entries.push({
+          itemKey: item.selectionKey,
+          itemLabel: item.basketItem.label,
+          productReference: item.productReference,
+          section,
+          key,
+          selectionImageKey: `${item.selectionKey}::${key}`,
+          candidates,
+        });
+      };
 
-  const allImageEntries = (): Array<{ section: string; key: string; candidates: string[] }> => {
-    const entries: Array<{ section: string; key: string; candidates: string[] }> = [];
-    const addEntry = (section: string, candidates: string[]) => {
-      if (!Array.isArray(candidates) || !candidates.length) return;
-      entries.push({
-        section,
-        key: imageKeyFromUrl(candidates[0] || ''),
-        candidates,
+      Object.entries(item.sectionImageGroups || {}).forEach(([section, groups]) => {
+        (groups || []).forEach(group => addEntry(section, group));
       });
-    };
 
-    Object.entries(state.sectionImageGroups || {}).forEach(([section, groups]) => {
-      (groups || []).forEach(group => addEntry(section, group));
+      if (!Object.keys(item.sectionImageGroups || {}).length) {
+        (item.imageCandidateGroups || []).forEach(group => {
+          addEntry(normalizeSectionName(sectionFromImageName(group[0] || '')) || 'General', group);
+        });
+      }
     });
-
-    if (entries.length) return entries;
-
-    (state.imageCandidateGroups || []).forEach(group => {
-      addEntry(normalizeSectionName(sectionFromImageName(group[0] || '')) || 'General', group);
-    });
-
-    return entries;
+    return state.activeSection
+      ? entries.filter(entry => entry.section === state.activeSection)
+      : entries;
   };
 
-  const visibleImageEntries = (): Array<{ section: string; key: string; candidates: string[] }> => {
-    const entries = allImageEntries();
-    if (!state.activeSection) return entries;
-    return entries.filter(entry => entry.section === state.activeSection);
+  const selectedImageEntries = (): VisibleImageEntry[] =>
+    allImageEntries().filter(entry => state.selectedImageKeys.includes(entry.selectionImageKey));
+
+  const renderSearchResults = () => {
+    searchResultsWrap.innerHTML = '';
+    if (!state.searchResults.length) {
+      const empty = document.createElement('div');
+      empty.className = 'cw-result-card';
+      empty.textContent = 'No discovery results yet.';
+      searchResultsWrap.appendChild(empty);
+      resultsMeta.textContent = 'Run a search to discover items and options.';
+      return;
+    }
+
+    resultsMeta.textContent = `${state.searchResults.length} candidate item${state.searchResults.length === 1 ? '' : 's'} found.`;
+
+    state.searchResults.forEach(item => {
+      const card = document.createElement('div');
+      card.className = `cw-result-card${item.selected ? ' is-selected' : ''}`;
+
+      const top = document.createElement('div');
+      top.className = 'cw-result-top';
+      const copy = document.createElement('div');
+      copy.style.minWidth = '0';
+      const title = document.createElement('p');
+      title.className = 'cw-result-title';
+      title.textContent = `${item.productReference}${item.productName ? ` - ${item.productName}` : ''}`;
+      const subtitle = document.createElement('p');
+      subtitle.className = 'cw-result-subtitle';
+      subtitle.textContent = item.configParsed
+        ? 'Config parsed from productConfiguration'
+        : 'Using fallback style options';
+      copy.appendChild(title);
+      copy.appendChild(subtitle);
+
+      const meta = document.createElement('div');
+      meta.style.display = 'flex';
+      meta.style.flexDirection = 'column';
+      meta.style.alignItems = 'flex-end';
+      meta.style.gap = '8px';
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.className = 'cw-result-check';
+      checkbox.checked = item.selected;
+      checkbox.addEventListener('change', () => {
+        item.selected = checkbox.checked;
+        renderSearchResults();
+      });
+      const pill = document.createElement('span');
+      pill.className = `cw-result-pill${item.configParsed ? ' is-ok' : ''}`;
+      pill.textContent = item.configParsed ? 'Config' : 'Fallback';
+      meta.appendChild(checkbox);
+      meta.appendChild(pill);
+
+      top.appendChild(copy);
+      top.appendChild(meta);
+      card.appendChild(top);
+
+      const controls = document.createElement('div');
+      controls.className = 'cw-result-controls';
+      const versionWrap = document.createElement('div');
+      const versionLabel = document.createElement('label');
+      versionLabel.textContent = 'Version';
+      const versionSelect = document.createElement('select');
+      versionSelect.className = 'cw-select';
+      versionSelect.innerHTML = '<option value="">Base Reference</option>';
+      item.versionOptions.forEach(option => {
+        const optionEl = document.createElement('option');
+        optionEl.value = option.code;
+        optionEl.textContent = option.label;
+        if (option.code === item.selectedVersionCode) optionEl.selected = true;
+        versionSelect.appendChild(optionEl);
+      });
+      versionSelect.addEventListener('change', () => {
+        item.selectedVersionCode = String(versionSelect.value || '')
+          .trim()
+          .toUpperCase();
+      });
+      versionWrap.appendChild(versionLabel);
+      versionWrap.appendChild(versionSelect);
+
+      const styleWrap = document.createElement('div');
+      const styleLabel = document.createElement('label');
+      styleLabel.textContent = 'Style';
+      const styleSelect = document.createElement('select');
+      styleSelect.className = 'cw-select';
+      item.styleOptions.forEach(option => {
+        const optionEl = document.createElement('option');
+        optionEl.value = makeStyleKey(option.productReference, option.style, option.styleCode);
+        optionEl.textContent = option.label;
+        if (optionEl.value === item.selectedStyleKey) optionEl.selected = true;
+        styleSelect.appendChild(optionEl);
+      });
+      styleSelect.addEventListener('change', () => {
+        item.selectedStyleKey = String(styleSelect.value || '').trim();
+      });
+      styleWrap.appendChild(styleLabel);
+      styleWrap.appendChild(styleSelect);
+
+      controls.appendChild(versionWrap);
+      controls.appendChild(styleWrap);
+      card.appendChild(controls);
+      searchResultsWrap.appendChild(card);
+    });
   };
 
-  const selectedImageEntries = (): Array<{ section: string; key: string; candidates: string[] }> =>
-    allImageEntries().filter(entry => state.selectedImageKeys.includes(entry.key));
+  const renderBasket = () => {
+    basketWrap.innerHTML = '';
+    if (!state.basket.length) {
+      const empty = document.createElement('div');
+      empty.className = 'cw-basket-card';
+      empty.textContent =
+        'No selected items yet. Search for products, tick them, then click Add Selected.';
+      basketWrap.appendChild(empty);
+      basketMeta.textContent = 'No selected items yet.';
+      return;
+    }
+
+    basketMeta.textContent = `${state.basket.length} item${state.basket.length === 1 ? '' : 's'} queued for loading.`;
+    state.basket.forEach(item => {
+      const card = document.createElement('div');
+      card.className = 'cw-basket-card';
+      const row = document.createElement('div');
+      row.className = 'cw-basket-row';
+      const copy = document.createElement('div');
+      copy.className = 'cw-basket-copy';
+      const title = document.createElement('p');
+      title.className = 'cw-basket-title';
+      title.textContent = item.label;
+      const meta = document.createElement('p');
+      meta.className = 'cw-basket-meta';
+      meta.textContent = item.scopedReference || item.productReference;
+      copy.appendChild(title);
+      copy.appendChild(meta);
+      const removeBtn = document.createElement('button');
+      removeBtn.type = 'button';
+      removeBtn.className = 'cw-btn';
+      removeBtn.textContent = 'Remove';
+      removeBtn.addEventListener('click', () => {
+        state.basket = state.basket.filter(entry => entry.selectionKey !== item.selectionKey);
+        renderBasket();
+      });
+      row.appendChild(copy);
+      row.appendChild(removeBtn);
+      card.appendChild(row);
+      basketWrap.appendChild(card);
+    });
+  };
 
   const setVisibleImageSelection = (selected: boolean) => {
-    const visibleKeys = visibleImageEntries()
-      .map(entry => entry.key)
+    const visibleKeys = allImageEntries()
+      .map(entry => entry.selectionImageKey)
       .filter(Boolean);
     const selectedSet = new Set(state.selectedImageKeys);
     visibleKeys.forEach(key => {
@@ -1483,7 +1783,7 @@ function createModal(): HTMLElement {
     });
     state.selectedImageKeys = Array.from(selectedSet);
     imagesWrap.querySelectorAll<HTMLElement>('.cw-image-card').forEach(card => {
-      const key = String(card.dataset.imageKey || '');
+      const key = String(card.dataset.selectionImageKey || '');
       const toggle = card.querySelector<HTMLElement>('.cw-image-toggle');
       const toggleInput = card.querySelector<HTMLInputElement>('.cw-image-toggle-input');
       if (!key || !toggle || !visibleKeys.includes(key)) return;
@@ -1509,28 +1809,40 @@ function createModal(): HTMLElement {
 
   const renderRows = () => {
     rowsContainer.innerHTML = '';
-    const scopeLabel = getCurrentScopeLabel();
     const filteredRows = visibleRows();
 
     if (!filteredRows.length) {
       const empty = document.createElement('div');
       empty.className = 'cw-measure-row';
-      empty.textContent = state.rows.length
-        ? 'No measurements in this section filter.'
+      empty.textContent = state.loadedItems.length
+        ? 'No measurements in this item/section filter.'
         : 'No measurement rows available yet.';
       rowsContainer.appendChild(empty);
       return;
     }
 
+    let lastItemKey = '';
     filteredRows.forEach(row => {
+      if (!state.activeItemKey && row.itemKey !== lastItemKey) {
+        lastItemKey = row.itemKey;
+        const groupEl = document.createElement('div');
+        groupEl.className = 'cw-measure-group';
+        groupEl.textContent = row.itemLabel;
+        rowsContainer.appendChild(groupEl);
+      }
+
       const rowEl = document.createElement('div');
       rowEl.className = 'cw-measure-row';
-      if (state.armedRowId === row.id) {
+      if (state.armedRowKey === row.rowKey) {
         rowEl.classList.add('armed');
       }
 
       const sourceEl = document.createElement('div');
-      sourceEl.textContent = row.sourceLabel;
+      if (state.activeItemKey) {
+        sourceEl.textContent = row.sourceLabel;
+      } else {
+        sourceEl.innerHTML = `<strong>${row.sourceLabel}</strong><div style="font-size:11px;color:#64748b;margin-top:2px;">${row.itemLabel}</div>`;
+      }
 
       const sectionEl = document.createElement('div');
       sectionEl.textContent = row.sectionName || '-';
@@ -1545,9 +1857,9 @@ function createModal(): HTMLElement {
       input.className = 'cw-measure-input';
       const guessedLabel = guessMosLabel(row.sourceLabel, row.sectionName || '');
       input.placeholder = guessedLabel ? `Suggested: ${guessedLabel}` : 'MOS label (A1, A2, A3...)';
-      input.value = state.rowTargetLabels[row.id] || guessedLabel;
+      input.value = state.rowTargetLabels[row.rowKey] || guessedLabel;
       input.addEventListener('input', () => {
-        state.rowTargetLabels[row.id] = String(input.value || '').trim();
+        state.rowTargetLabels[row.rowKey] = String(input.value || '').trim();
       });
 
       const actionWrap = document.createElement('div');
@@ -1562,19 +1874,25 @@ function createModal(): HTMLElement {
       applyBtn.addEventListener('click', () => {
         const targetLabel = resolveRowTargetLabel(row, String(input.value || '').trim());
         if (!targetLabel) return;
-        applyMeasurement(scopeLabel, targetLabel, row.value, row.sourceLabel, lockedEl.checked);
+        applyMeasurement(
+          getCurrentScopeLabel(),
+          targetLabel,
+          row.value,
+          row.sourceLabel,
+          lockedEl.checked
+        );
       });
 
       const drawBtn = document.createElement('button');
       drawBtn.type = 'button';
-      drawBtn.className = `cw-btn${state.armedRowId === row.id ? ' cw-btn-primary' : ''}`;
-      drawBtn.textContent = state.armedRowId === row.id ? 'Armed' : 'Draw Next';
+      drawBtn.className = `cw-btn${state.armedRowKey === row.rowKey ? ' cw-btn-primary' : ''}`;
+      drawBtn.textContent = state.armedRowKey === row.rowKey ? 'Armed' : 'Draw Next';
       drawBtn.addEventListener('click', () => {
-        state.armedRowId = state.armedRowId === row.id ? '' : row.id;
+        state.armedRowKey = state.armedRowKey === row.rowKey ? '' : row.rowKey;
         renderRows();
-        if (state.armedRowId) {
+        if (state.armedRowKey) {
           setStatus(
-            `Armed ${row.sourceLabel}. Draw the next measurement in ${scopeLabel}; value ${row.value} will apply automatically.`,
+            `Armed ${row.itemLabel} / ${row.sourceLabel}. Draw the next measurement in ${getCurrentScopeLabel()}; value ${row.value} will apply automatically.`,
             'info'
           );
         }
@@ -1596,21 +1914,21 @@ function createModal(): HTMLElement {
   const seedImportedGuideForView = (
     scopeLabel: string,
     sectionName: string,
-    rows: ImportedRow[],
+    rows: VisibleImportedRow[],
     lockByDefault: boolean
   ): number => {
     const w = window as any;
     if (!w.cwImportedMeasurementsByImage) w.cwImportedMeasurementsByImage = {};
     if (!w.cwGuideRolesByImage) w.cwGuideRolesByImage = {};
 
-    const scopeKeys = buildCwScopeCandidates(scopeLabel);
+    const scopeKey = getCanonicalCwScopeKey(scopeLabel);
     const roles: string[] = [];
     const seenRoles = new Set<string>();
     const now = new Date().toISOString();
 
     rows.forEach(row => {
       const guessed = guessMosLabel(row.sourceLabel, row.sectionName || sectionName || '');
-      const configured = String(state.rowTargetLabels[row.id] || '').trim();
+      const configured = String(state.rowTargetLabels[row.rowKey] || '').trim();
       const targetLabel = normalizeGuideLabel(configured || guessed || row.sourceLabel);
       const value = String(row.value || '').trim();
       if (!targetLabel || !/^[A-Z](?:\d+)?$/.test(targetLabel) || !value) return;
@@ -1620,26 +1938,23 @@ function createModal(): HTMLElement {
         roles.push(targetLabel);
       }
 
-      scopeKeys.forEach(key => {
-        if (!w.cwImportedMeasurementsByImage[key]) {
-          w.cwImportedMeasurementsByImage[key] = {};
-        }
-        w.cwImportedMeasurementsByImage[key][targetLabel] = {
-          source: 'cw',
-          sourceLabel: row.sourceLabel,
-          value,
-          locked: lockByDefault,
-          pending: true,
-          autoApplyOnDraw: true,
-          sectionName: normalizeSectionName(row.sectionName || sectionName || ''),
-          updatedAt: now,
-        };
-      });
+      if (!w.cwImportedMeasurementsByImage[scopeKey]) {
+        w.cwImportedMeasurementsByImage[scopeKey] = {};
+      }
+      w.cwImportedMeasurementsByImage[scopeKey][targetLabel] = {
+        source: 'cw',
+        sourceLabel: row.sourceLabel,
+        value,
+        locked: lockByDefault,
+        pending: true,
+        autoApplyOnDraw: true,
+        sectionName: normalizeSectionName(row.sectionName || sectionName || ''),
+        bindingScopeKey: scopeKey,
+        updatedAt: now,
+      };
     });
 
-    scopeKeys.forEach(key => {
-      w.cwGuideRolesByImage[key] = [...roles];
-    });
+    w.cwGuideRolesByImage[scopeKey] = [...roles];
 
     return roles.length;
   };
@@ -1671,15 +1986,16 @@ function createModal(): HTMLElement {
 
   const renderImages = () => {
     imagesWrap.innerHTML = '';
-    const baseUrl = (body.querySelector('#cwBaseUrl') as HTMLInputElement).value.trim();
-    const username = (body.querySelector('#cwUsername') as HTMLInputElement).value.trim();
-    const password = (body.querySelector('#cwPassword') as HTMLInputElement).value;
-    const entries = visibleImageEntries().slice(0, 16);
+    const baseUrl = String(baseUrlEl?.value || '').trim();
+    const username = String(usernameEl?.value || '').trim();
+    const password = String(passwordEl?.value || '');
+    const entries = allImageEntries().slice(0, 24);
 
     entries.forEach(entry => {
       const group = entry.candidates;
-      const direct = group.find(url => state.imageUrls.includes(url)) || '';
-      const isSelected = state.selectedImageKeys.includes(entry.key);
+      const loadedItem = state.loadedItems.find(item => item.selectionKey === entry.itemKey);
+      const direct = group.find(url => loadedItem?.imageUrls.includes(url)) || '';
+      const isSelected = state.selectedImageKeys.includes(entry.selectionImageKey);
       const card = document.createElement('div');
       card.className = 'cw-image-card';
       card.tabIndex = 0;
@@ -1697,14 +2013,14 @@ function createModal(): HTMLElement {
       toggle.appendChild(toggleInput);
       toggle.appendChild(toggleText);
       updateImageCardState(card, toggle, toggleInput, isSelected);
-      card.dataset.imageKey = entry.key;
+      card.dataset.selectionImageKey = entry.selectionImageKey;
 
       const setSelectedState = (nextSelected: boolean) => {
         const selectedKeys = new Set(state.selectedImageKeys);
         if (!nextSelected) {
-          selectedKeys.delete(entry.key);
+          selectedKeys.delete(entry.selectionImageKey);
         } else {
-          selectedKeys.add(entry.key);
+          selectedKeys.add(entry.selectionImageKey);
         }
         state.selectedImageKeys = Array.from(selectedKeys);
         updateImageCardState(card, toggle, toggleInput, nextSelected);
@@ -1729,12 +2045,16 @@ function createModal(): HTMLElement {
 
       const meta = document.createElement('div');
       meta.className = 'cw-image-meta';
+      const itemEl = document.createElement('div');
+      itemEl.className = 'cw-image-item';
+      itemEl.textContent = entry.itemLabel;
       const sectionEl = document.createElement('div');
       sectionEl.className = 'cw-image-section';
       sectionEl.textContent = entry.section || 'General';
       const nameEl = document.createElement('div');
       nameEl.className = 'cw-image-name';
       nameEl.textContent = fileStemFromUrl(group[0] || '');
+      meta.appendChild(itemEl);
       meta.appendChild(sectionEl);
       meta.appendChild(nameEl);
 
@@ -1767,6 +2087,27 @@ function createModal(): HTMLElement {
       card.appendChild(toggle);
       card.appendChild(meta);
       imagesWrap.appendChild(card);
+    });
+  };
+
+  const renderLoadedItems = () => {
+    loadedItemsWrap.innerHTML = '';
+    if (!state.loadedItems.length) {
+      const empty = document.createElement('div');
+      empty.className = 'cw-loaded-item';
+      empty.textContent = 'Load selected basket items to preview measurements and photos here.';
+      loadedItemsWrap.appendChild(empty);
+      loadedMeta.textContent = 'No measurements loaded yet.';
+      return;
+    }
+
+    const loadedCount = state.loadedItems.filter(item => item.success).length;
+    loadedMeta.textContent = `${loadedCount}/${state.loadedItems.length} loaded item${state.loadedItems.length === 1 ? '' : 's'}.`;
+    state.loadedItems.forEach(item => {
+      const card = document.createElement('div');
+      card.className = 'cw-loaded-item';
+      card.innerHTML = `<strong>${item.basketItem.label}</strong><br /><small>${item.rows.length} rows, ${Math.max(Object.keys(item.sectionImageGroups || {}).length, item.imageCandidateGroups.length)} photo groups. ${item.loadMessage}</small>`;
+      loadedItemsWrap.appendChild(card);
     });
   };
 
@@ -1964,10 +2305,78 @@ function createModal(): HTMLElement {
     };
   };
 
+  const integrateLoadedItems = (items: any[]) => {
+    const nextLoaded = new Map(state.loadedItems.map(item => [item.selectionKey, item]));
+    const nextSelectedImageKeys = new Set(state.selectedImageKeys);
+
+    items.forEach(item => {
+      const payload = item?.data || {};
+      const basketItem = item?.basketItem as BasketItem;
+      const rows = extractRows(payload).map(row => ({
+        ...row,
+        sectionName: classifyMeasurementSection(
+          row.sourceLabel,
+          row.sectionName || row.sourceLabel
+        ),
+      }));
+      const imageCandidates = extractImageUrls(payload, String(baseUrlEl?.value || '').trim());
+      const imageCandidateGroups = groupImageCandidates(imageCandidates);
+      const sectionImageGroups = mergeSectionImageGroups(
+        collectSectionImageGroups(payload, String(baseUrlEl?.value || '').trim()),
+        imageCandidateGroups
+      );
+      const imageUrls = Array.isArray(imageCandidates)
+        ? imageCandidates.filter(url => !isHttpUrl(url))
+        : [];
+      const loadedItem: LoadedMeasurementItem = {
+        selectionKey: String(item?.selectionKey || basketItem?.selectionKey || '').trim(),
+        basketItem,
+        productReference: String(
+          basketItem?.productReference || payload?.product?.reference || ''
+        ).trim(),
+        productName: String(
+          basketItem?.productName ||
+            payload?.product?.translations?.[0]?.name ||
+            payload?.product?.translations?.[0]?.slug ||
+            ''
+        ).trim(),
+        rows,
+        imageUrls,
+        imageCandidateGroups,
+        sectionImageGroups,
+        rawData: payload,
+        loadMessage: String(item?.message || payload?.message || payload?.code || 'Loaded').trim(),
+        success: item?.success !== false,
+      };
+      nextLoaded.set(loadedItem.selectionKey, loadedItem);
+      const allGroups = Object.values(sectionImageGroups).flat().length
+        ? Object.values(sectionImageGroups).flat()
+        : imageCandidateGroups;
+      allGroups.forEach(group => {
+        const imageKey = imageKeyFromUrl(group[0] || '');
+        if (imageKey) nextSelectedImageKeys.add(`${loadedItem.selectionKey}::${imageKey}`);
+      });
+    });
+
+    state.loadedItems = Array.from(nextLoaded.values());
+    state.selectedImageKeys = Array.from(nextSelectedImageKeys);
+    if (!state.activeItemKey && state.loadedItems[0]?.selectionKey) {
+      state.activeItemKey = state.loadedItems[0].selectionKey;
+    }
+  };
+
+  const syncUi = () => {
+    renderSearchResults();
+    renderBasket();
+    renderLoadedItems();
+    renderItemFilter();
+    renderSectionFilter();
+    renderImages();
+    renderRows();
+  };
+
   const runSearch = async () => {
-    const baseUrl = String(baseUrlEl?.value || '').trim();
     const search = String(searchTermEl?.value || '').trim();
-    const activeStyleKey = String(variantFilterEl.value || state.activeVariantUrl || '').trim();
 
     if (!search) {
       setStatus('Enter a product search term.', 'bad');
@@ -1975,12 +2384,13 @@ function createModal(): HTMLElement {
     }
 
     setProbeButtonsDisabled(true);
-    setStatus('Searching CW product measurements...');
+    setStatus('Searching CW products and configuration options...');
 
     try {
       const { response, data, rawText, contentType, jsonParseError } = await requestSearchPayload(
         search,
-        activeStyleKey
+        '',
+        { phase: 'discover' }
       );
       const probeReport = {
         at: new Date().toISOString(),
@@ -1996,78 +2406,46 @@ function createModal(): HTMLElement {
         probeModeApplied: data?.probeModeApplied || data?.probeMode || null,
         responseProfile: data?.responseProfile || null,
         compactDiagnostics: data?.responseCompactDiagnostics || null,
-        product: data?.product || null,
+        product: null,
         summary: data?.summary || null,
-        referenceCandidates: data?.referenceCandidates || [],
-        referenceCandidateOrigins: data?.referenceCandidateOrigins || [],
-        styleOptions: data?.styleOptions || [],
-        selectedTuples: data?.selectedTuples || [],
-        attemptPlanMode: data?.attemptPlanMode || null,
-        tupleSource: data?.tupleSource || null,
-        qcMeasurementAttempts: data?.qcMeasurementAttempts || [],
+        results: data?.results || [],
       } as Record<string, unknown>;
       if (probeModeAvailable && probeEnabledEl?.checked) {
         lastProbeReport = probeReport;
         persistUiState();
         renderProbeReport();
       }
-      const variantOptions = buildVariantOptions(data);
-      const preferredOption =
-        variantOptions.find(item => /signature|cnrp_sp/i.test(item.label)) || variantOptions[0];
-      const preferredVariantUrl =
-        makeStyleKey(
-          preferredOption?.productReference || data?.product?.reference || '',
-          preferredOption?.style || '',
-          preferredOption?.styleCode || ''
-        ) || '';
-      const activeVariantUrl = activeStyleKey || state.activeVariantUrl || preferredVariantUrl;
-      const payloadForRows = buildPayloadForVariant(data, activeVariantUrl);
-
-      const rows = extractRows(payloadForRows).map(row => ({
-        ...row,
-        sectionName: classifyMeasurementSection(
-          row.sourceLabel,
-          row.sectionName || row.sourceLabel
-        ),
-      }));
-      const imageCandidates = extractImageUrls(payloadForRows, baseUrl);
-      const imageCandidateGroups = groupImageCandidates(imageCandidates);
-      const sectionImageGroups = mergeSectionImageGroups(
-        collectSectionImageGroups(payloadForRows, baseUrl),
-        imageCandidateGroups
-      );
-      const imageUrls = await resolveWorkingImageUrls(imageCandidates);
-      const allImageKeys = (
-        Object.values(sectionImageGroups).flat().length
-          ? Object.values(sectionImageGroups).flat()
-          : imageCandidateGroups
-      )
-        .map(group => imageKeyFromUrl(group[0] || ''))
-        .filter(Boolean);
-      state = {
-        rows,
-        imageUrls,
-        imageCandidateGroups,
-        sectionImageGroups,
-        variantOptions,
-        activeVariantUrl,
-        productReference: String(data?.product?.reference || ''),
-        productName: String(
-          data?.product?.translations?.[0]?.name || data?.product?.translations?.[0]?.slug || ''
-        ),
-        activeSection: '',
-        armedRowId: '',
-        selectedImageKeys: Array.from(new Set(allImageKeys)),
-        rowTargetLabels: {},
-      };
-
-      renderVariantFilter();
-      renderImages();
-      renderSectionFilter();
-      renderRows();
+      const results = Array.isArray(data?.results) ? data.results : [];
+      state.searchResults = results.map((item: any) => {
+        const styleOptions = Array.isArray(item?.styleOptions) ? item.styleOptions : [];
+        const firstStyle = styleOptions[0] || null;
+        return {
+          id: item?.id || null,
+          productReference: String(item?.productReference || item?.product?.reference || '').trim(),
+          productName: String(
+            item?.productName || item?.product?.translations?.[0]?.name || ''
+          ).trim(),
+          status: item?.status || item?.product?.status || null,
+          translations: Array.isArray(item?.translations) ? item.translations : [],
+          configParsed: item?.configParsed === true,
+          versionOptions: Array.isArray(item?.versionOptions) ? item.versionOptions : [],
+          styleOptions,
+          derivedScopedReferences: Array.isArray(item?.derivedScopedReferences)
+            ? item.derivedScopedReferences
+            : [],
+          selected: false,
+          selectedVersionCode: '',
+          selectedStyleKey: firstStyle
+            ? makeStyleKey(firstStyle.productReference, firstStyle.style, firstStyle.styleCode)
+            : '',
+        } as SearchResultItem;
+      });
+      state.armedRowKey = '';
+      state.activeSection = '';
+      syncUi();
       setStatus(
         response.ok
-          ? `Loaded ${rows.length} measurements across ${Math.max(Object.keys(sectionImageGroups).length, 1)} sections and ${imageUrls.length}/${imageCandidates.length} reachable photos for ${state.productReference || 'product'}${state.productName ? ` (${state.productName})` : ''}. Click photos to include or skip them before importing.`
+          ? `Found ${state.searchResults.length} candidate item${state.searchResults.length === 1 ? '' : 's'}. Tick the ones you want, add them to the basket, then load selected.`
           : `Search failed: ${String(data?.message || data?.code || response.status)}`,
         response.ok ? 'ok' : 'bad'
       );
@@ -2086,6 +2464,76 @@ function createModal(): HTMLElement {
       );
     } finally {
       setProbeButtonsDisabled(false);
+    }
+  };
+
+  const addSelectedToBasket = () => {
+    const selectedResults = state.searchResults.filter(item => item.selected);
+    if (!selectedResults.length) {
+      setStatus('Select at least one search result before adding to the basket.', 'bad');
+      return;
+    }
+
+    const basketByKey = new Map(state.basket.map(item => [item.selectionKey, item]));
+    selectedResults.forEach(item => {
+      const basketItem = buildBasketItemFromResult(item);
+      if (basketItem) basketByKey.set(basketItem.selectionKey, basketItem);
+    });
+    state.basket = Array.from(basketByKey.values());
+    renderBasket();
+    setStatus(
+      `Added ${selectedResults.length} item selection${selectedResults.length === 1 ? '' : 's'} to the basket.`,
+      'ok'
+    );
+  };
+
+  const loadSelectedBasketItems = async () => {
+    const selectedResults = state.searchResults.filter(item => item.selected);
+    const basketByKey = new Map(state.basket.map(item => [item.selectionKey, item]));
+    selectedResults.forEach(item => {
+      const basketItem = buildBasketItemFromResult(item);
+      if (basketItem) {
+        basketByKey.set(basketItem.selectionKey, basketItem);
+      }
+    });
+    const nextBasket = Array.from(basketByKey.values());
+
+    if (!nextBasket.length) {
+      setStatus('Select at least one item or add something to the basket before loading.', 'bad');
+      return;
+    }
+
+    state.basket = nextBasket;
+    renderBasket();
+
+    searchBtn.disabled = true;
+    addSelectedBtn.disabled = true;
+    loadSelectedBtn.disabled = true;
+    setStatus(`Loading ${nextBasket.length} basket item${nextBasket.length === 1 ? '' : 's'}...`);
+    try {
+      const { response, data } = await requestSearchPayload(
+        String(searchTermEl?.value || '').trim(),
+        '',
+        { phase: 'load-selected', selectedItems: nextBasket }
+      );
+      const items = Array.isArray(data?.items) ? data.items : [];
+      integrateLoadedItems(items);
+      syncUi();
+      setStatus(
+        response.ok
+          ? `Loaded ${Number(data?.summary?.loadedCount || items.length)} item${Number(data?.summary?.loadedCount || items.length) === 1 ? '' : 's'} into the measurement workspace.`
+          : `Load failed: ${String(data?.message || data?.code || response.status)}`,
+        response.ok ? 'ok' : 'bad'
+      );
+    } catch (error) {
+      setStatus(
+        `Load selected failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        'bad'
+      );
+    } finally {
+      searchBtn.disabled = false;
+      addSelectedBtn.disabled = false;
+      loadSelectedBtn.disabled = false;
     }
   };
 
@@ -2581,9 +3029,18 @@ function createModal(): HTMLElement {
     });
   }
 
-  variantFilterEl.addEventListener('change', () => {
-    state.activeVariantUrl = String(variantFilterEl.value || '').trim();
-    void runSearch();
+  addSelectedBtn.addEventListener('click', addSelectedToBasket);
+  loadSelectedBtn.addEventListener('click', () => {
+    void loadSelectedBasketItems();
+  });
+
+  itemFilterEl.addEventListener('change', () => {
+    state.activeItemKey = String(itemFilterEl.value || '').trim();
+    state.activeSection = '';
+    renderItemFilter();
+    renderSectionFilter();
+    renderImages();
+    renderRows();
   });
 
   sectionFilterEl.addEventListener('change', () => {
@@ -2654,13 +3111,14 @@ function createModal(): HTMLElement {
       for (const entry of selectedEntries) {
         const section = entry.section;
         const group = entry.candidates;
+        const loadedItem = state.loadedItems.find(item => item.selectionKey === entry.itemKey);
 
         // Always prefer proxied data URL for canvas import to avoid cross-origin
         // Fabric.js loading failures on remote hosts without CORS headers.
         // eslint-disable-next-line no-await-in-loop
         let resolvedUrl = await fetchProxyImageDataUrl(group, baseUrl, username, password);
         if (!resolvedUrl) {
-          const fallbackDirect = group.find(url => state.imageUrls.includes(url)) || '';
+          const fallbackDirect = group.find(url => loadedItem?.imageUrls.includes(url)) || '';
           if (!isHttpUrl(fallbackDirect)) {
             resolvedUrl = fallbackDirect;
           }
@@ -2669,26 +3127,66 @@ function createModal(): HTMLElement {
 
         const sectionSlug = slugify(section) || 'section';
         const imageSlug = slugify(makeViewIdFromUrl(group[0] || '')) || 'photo';
-        const seed = `${state.productReference || 'cw'}-${sectionSlug}-${imageSlug}`;
+        const seed = `${slugify(entry.itemKey) || 'cw'}-${sectionSlug}-${imageSlug}`;
         const viewId = nextUniqueViewId(seed);
         const fileName = `${viewId}.jpg`;
+        const addImageToSidebarFn = (window as any).addImageToSidebar;
+        const addImageToGalleryCompatFn = (window as any).addImageToGalleryCompat;
+        const registryEnabled =
+          Boolean(imageRegistry?.registerImage) &&
+          (typeof imageRegistry?.isEnabled === 'function'
+            ? Boolean(imageRegistry.isEnabled())
+            : true);
 
-        if (imageRegistry?.registerImage) {
+        if (registryEnabled && imageRegistry?.registerImage) {
+          console.log('[CW Import] register via imageRegistry', { viewId, fileName });
           await imageRegistry.registerImage(viewId, resolvedUrl, fileName, { source: 'cw-import' });
+        } else if (
+          typeof addImageToSidebarFn === 'function' &&
+          addImageToSidebarFn.__galleryHooked
+        ) {
+          console.log('[CW Import] register via hooked addImageToSidebar', {
+            viewId,
+            fileName,
+            mode: 'sidebar-hook',
+          });
+          addImageToSidebarFn(resolvedUrl, viewId, fileName);
         } else {
+          console.log('[CW Import] register via projectManager fallback', {
+            viewId,
+            fileName,
+            hasCompatGallery: typeof addImageToGalleryCompatFn === 'function',
+            hasSidebarFn: typeof addImageToSidebarFn === 'function',
+          });
           await projectManager.addImage(viewId, resolvedUrl, { refreshBackground: false });
-          if (typeof (window as any).addImageToSidebar === 'function') {
-            (window as any).addImageToSidebar(resolvedUrl, viewId, fileName);
+          if (typeof addImageToGalleryCompatFn === 'function') {
+            addImageToGalleryCompatFn({
+              src: resolvedUrl,
+              url: resolvedUrl,
+              name: fileName,
+              label: viewId,
+              filename: fileName,
+            });
+          } else if (typeof addImageToSidebarFn === 'function') {
+            addImageToSidebarFn(resolvedUrl, viewId, fileName);
           }
         }
         if (!firstImportedViewId) {
           firstImportedViewId = viewId;
         }
-        const sectionRows = state.rows.filter(
-          row =>
-            normalizeSectionName(String(row.sectionName || '').trim()) ===
-            normalizeSectionName(section)
-        );
+        const sectionRows = (loadedItem?.rows || [])
+          .filter(
+            row =>
+              normalizeSectionName(String(row.sectionName || '').trim()) ===
+              normalizeSectionName(section)
+          )
+          .map(row => ({
+            ...row,
+            rowKey: makeRowStorageKey(entry.itemKey, row.id),
+            itemKey: entry.itemKey,
+            itemLabel: entry.itemLabel,
+            productReference: entry.productReference,
+          }));
         const seededCount = seedImportedGuideForView(
           viewId,
           section,
@@ -2704,6 +3202,18 @@ function createModal(): HTMLElement {
       if (imported === 0) {
         setStatus('Could not resolve any importable photos for the selected images.', 'bad');
         return;
+      }
+
+      if (typeof (window as any).ensureImageListObserver === 'function') {
+        (window as any).ensureImageListObserver();
+      } else {
+        (window as any).__pendingImageListObserverInit = true;
+      }
+      if (typeof (window as any).updatePills === 'function') {
+        (window as any).updatePills();
+      }
+      if (typeof (window as any).updateActivePill === 'function') {
+        (window as any).updateActivePill();
       }
 
       await enableGuideWorkflowDefaults(firstImportedViewId);
@@ -2727,17 +3237,17 @@ function createModal(): HTMLElement {
     const imageLabel = String(detail?.imageLabel || '').trim();
     if (!strokeLabel || !imageLabel) return;
 
-    if (state.armedRowId) {
-      const row = state.rows.find(item => item.id === state.armedRowId);
+    if (state.armedRowKey) {
+      const row = allLoadedRows().find(item => item.rowKey === state.armedRowKey);
       if (!row) {
-        state.armedRowId = '';
+        state.armedRowKey = '';
         renderRows();
         return;
       }
 
       const metadata = (window as any).app?.metadataManager;
       let targetLabel = strokeLabel;
-      const configuredLabel = String(state.rowTargetLabels[row.id] || '').trim();
+      const configuredLabel = String(state.rowTargetLabels[row.rowKey] || '').trim();
       const desiredLabel = resolveRowTargetLabel(row, configuredLabel, strokeLabel);
       if (metadata?.renameStrokeLabel && desiredLabel && desiredLabel !== strokeLabel) {
         const rename = metadata.renameStrokeLabel(imageLabel, strokeLabel, desiredLabel);
@@ -2753,7 +3263,7 @@ function createModal(): HTMLElement {
         row.sourceLabel,
         lockedEl.checked
       );
-      state.armedRowId = '';
+      state.armedRowKey = '';
       renderRows();
       setStatus(
         ok
@@ -2795,6 +3305,7 @@ function createModal(): HTMLElement {
   };
 
   renderProbeReport();
+  syncUi();
 
   closeBtn.addEventListener('click', close);
   overlay.addEventListener('click', event => {

@@ -362,6 +362,7 @@ export function initScrollSelectSystem() {
       }
     }
 
+    window.updatePills = updatePills;
     window.updateActivePill = updateActivePill;
 
     // Track which image container is centered in the sidebar and switch to that image

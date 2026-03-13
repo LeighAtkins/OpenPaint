@@ -320,20 +320,20 @@
     }
 
     // Trigger mini-stepper update if function exists
-    if (typeof updatePills === 'function') {
+    if (typeof window.updatePills === 'function') {
       setTimeout(() => {
         try {
-          updatePills();
+          window.updatePills();
           console.log('[Gallery] Updated mini-stepper pills');
         } catch (e) {
           console.warn('[Gallery] Error updating pills:', e);
         }
       }, 100);
     }
-    if (typeof updateActivePill === 'function') {
+    if (typeof window.updateActivePill === 'function') {
       setTimeout(() => {
         try {
-          updateActivePill();
+          window.updateActivePill();
           console.log('[Gallery] Updated active pill');
         } catch (e) {
           console.warn('[Gallery] Error updating active pill:', e);

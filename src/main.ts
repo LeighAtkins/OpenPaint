@@ -54,6 +54,7 @@ declare global {
     showStatusMessage?: any;
     hideStatusMessage?: any;
     updateImageListPadding?: any;
+    updatePills?: any;
     syncSelectionToCenteredThumbnail?: any;
     updateActivePill?: any;
     scrollToSelectEnabled?: any;
