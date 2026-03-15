@@ -1,4 +1,4 @@
-import { getCwCredentials } from './_shared.js';
+import { getCwCredentials } from './shared.js';
 
 export default function handler(req, res) {
   if (req.method !== 'GET') {

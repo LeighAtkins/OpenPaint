@@ -1,5 +1,6 @@
 // Wallet Service — manages coin balance, pet purchases, and equipped pet state
 // Uses the same localStorage token pattern as cloudSaveService
+import { authService } from '@/services/auth/authService';
 
 export interface WalletState {
   balance: number;
@@ -24,6 +25,7 @@ export interface EarnResult {
 }
 
 type WalletListener = (state: WalletState) => void;
+type WalletApiError = Error & { status?: number; code?: string };
 
 class WalletService {
   private state: WalletState = {
@@ -34,6 +36,10 @@ class WalletService {
   };
   private listeners: WalletListener[] = [];
   private loaded = false;
+  private loadPromise: Promise<WalletState> | null = null;
+  private loadRetryTimeout: ReturnType<typeof setTimeout> | null = null;
+  private lastLoadErrorSignature = '';
+  private lastLoadErrorLoggedAt = 0;
 
   /** Read the stored auth session from localStorage (same as cloudSaveService) */
   private getStoredAuth(): { accessToken: string; userId: string } | null {
@@ -62,14 +68,12 @@ class WalletService {
   ): Promise<{ success: boolean; data: T }> {
     const auth = this.getStoredAuth();
     if (!auth) {
-      throw new Error('Not authenticated');
+      const error = new Error('Not authenticated') as WalletApiError;
+      error.code = 'not_authenticated';
+      throw error;
     }
 
-    // In local Vite dev, keep /api so the dev proxy forwards to Express.
-    // In deployed environments, non-/api paths can be rewritten by Vercel.
-    const fetchPath = import.meta.env.DEV ? path : path.replace('/api', '');
-
-    const resp = await fetch(fetchPath, {
+    const resp = await fetch(path, {
       method: options?.method || 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -78,29 +82,80 @@ class WalletService {
       body: options?.body ? JSON.stringify(options.body) : undefined,
     });
 
-    const json = await resp.json();
+    const json = await resp.json().catch(() => null);
     if (!resp.ok || !json.success) {
-      throw new Error(json.message || `API error ${resp.status}`);
+      const error = new Error(json?.message || `API error ${resp.status}`) as WalletApiError;
+      error.status = resp.status;
+      error.code = json?.error?.code;
+      throw error;
     }
     return { success: true, data: json };
   }
 
+  private logLoadError(error: unknown): void {
+    const walletError = error as WalletApiError;
+    const signature = `${walletError?.status || 0}:${walletError?.code || ''}:${walletError?.message || 'unknown'}`;
+    const now = Date.now();
+    if (signature === this.lastLoadErrorSignature && now - this.lastLoadErrorLoggedAt < 10_000) {
+      return;
+    }
+    this.lastLoadErrorSignature = signature;
+    this.lastLoadErrorLoggedAt = now;
+    console.warn('[Wallet] Load failed:', error);
+  }
+
+  private scheduleLoadRetry(delayMs = 1200): void {
+    if (this.loadRetryTimeout || !authService.isAuthenticated()) return;
+    this.loadRetryTimeout = setTimeout(() => {
+      this.loadRetryTimeout = null;
+      void this.loadWallet();
+    }, delayMs);
+  }
+
   /** Load wallet state from server */
   async loadWallet(): Promise<WalletState> {
-    try {
-      const { data } = await this.apiFetch<any>('/api/wallet');
-      this.state = {
-        balance: data.balance ?? 0,
-        equippedPet: data.equippedPet ?? null,
-        unlockedPets: data.unlockedPets ?? [],
-        catalog: data.catalog ?? [],
-      };
-      this.loaded = true;
-      this.notify();
-    } catch (err) {
-      console.warn('[Wallet] Load failed:', err);
+    if (this.loadPromise) {
+      return this.loadPromise;
     }
-    return this.state;
+
+    if (!this.getStoredAuth()) {
+      if (authService.isAuthenticated()) {
+        this.scheduleLoadRetry(400);
+      }
+      return this.state;
+    }
+
+    this.loadPromise = (async () => {
+      try {
+        const { data } = await this.apiFetch<any>('/api/wallet');
+        this.state = {
+          balance: data.balance ?? 0,
+          equippedPet: data.equippedPet ?? null,
+          unlockedPets: data.unlockedPets ?? [],
+          catalog: data.catalog ?? [],
+        };
+        this.loaded = true;
+        if (this.loadRetryTimeout) {
+          clearTimeout(this.loadRetryTimeout);
+          this.loadRetryTimeout = null;
+        }
+        this.notify();
+      } catch (err) {
+        const walletError = err as WalletApiError;
+        this.loaded = false;
+        if (walletError?.code === 'not_authenticated' || walletError?.status === 401) {
+          this.scheduleLoadRetry(500);
+        } else {
+          this.scheduleLoadRetry(1500);
+          this.logLoadError(err);
+        }
+      } finally {
+        this.loadPromise = null;
+      }
+      return this.state;
+    })();
+
+    return this.loadPromise;
   }
 
   /** Earn coins from a qualifying cloud save */
@@ -163,6 +218,11 @@ class WalletService {
   clear(): void {
     this.state = { balance: 0, equippedPet: null, unlockedPets: [], catalog: [] };
     this.loaded = false;
+    if (this.loadRetryTimeout) {
+      clearTimeout(this.loadRetryTimeout);
+      this.loadRetryTimeout = null;
+    }
+    this.loadPromise = null;
     this.notify();
   }
 

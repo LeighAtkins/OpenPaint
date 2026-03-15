@@ -719,7 +719,7 @@ export class MeasurementOverlayManager {
       }
 
       const lineObj = primary.lineObj;
-      const element = primary.element;
+      const _element = primary.element;
 
       this._removeLegacyRoleStrokes(canvas, overlay.viewId, roleToken, lineObj);
       this._ensureInteractiveArrowControls(lineObj);
@@ -868,9 +868,7 @@ export class MeasurementOverlayManager {
     keepStrokeObj: any
   ): void {
     const scopePrefix = `${viewId}::tab:`;
-    const normalizedRole = String(roleToken || '')
-      .trim()
-      .toUpperCase();
+    const normalizedRole = (roleToken || '').trim().toUpperCase();
     if (!normalizedRole) return;
 
     const toRemove = canvas.getObjects().filter((obj: any) => {

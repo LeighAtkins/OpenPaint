@@ -26,8 +26,7 @@ function parseViewBox(svgRoot) {
 function getSvgDimensions(svgRoot) {
   const viewBox = parseViewBox(svgRoot);
   const width = viewBox?.width || parseNumericAttr(svgRoot?.getAttribute('width'), 1600) || 1600;
-  const height =
-    viewBox?.height || parseNumericAttr(svgRoot?.getAttribute('height'), 900) || 900;
+  const height = viewBox?.height || parseNumericAttr(svgRoot?.getAttribute('height'), 900) || 900;
   return {
     minX: viewBox?.minX || 0,
     minY: viewBox?.minY || 0,
@@ -82,24 +81,35 @@ function extractPathPoints(pathData) {
   }
 }
 
-function lineFromElement(el) {
+function segmentFromElement(el) {
   const tagName = String(el?.tagName || '').toLowerCase();
   if (tagName === 'line') {
+    const x1 = parseNumericAttr(el.getAttribute('x1'));
+    const y1 = parseNumericAttr(el.getAttribute('y1'));
+    const x2 = parseNumericAttr(el.getAttribute('x2'));
+    const y2 = parseNumericAttr(el.getAttribute('y2'));
     return {
-      x1: parseNumericAttr(el.getAttribute('x1')),
-      y1: parseNumericAttr(el.getAttribute('y1')),
-      x2: parseNumericAttr(el.getAttribute('x2')),
-      y2: parseNumericAttr(el.getAttribute('y2')),
+      kind: 'line',
+      x1,
+      y1,
+      x2,
+      y2,
+      points: [
+        { x: x1, y: y1 },
+        { x: x2, y: y2 },
+      ],
     };
   }
   if (tagName === 'polyline') {
     const points = parsePoints(el.getAttribute('points') || '');
     if (points.length >= 2) {
       return {
+        kind: 'curve',
         x1: points[0].x,
         y1: points[0].y,
         x2: points[points.length - 1].x,
         y2: points[points.length - 1].y,
+        points,
       };
     }
   }
@@ -107,19 +117,23 @@ function lineFromElement(el) {
     const points = extractPathPoints(el.getAttribute('d') || '');
     if (points.length >= 2) {
       return {
+        kind: 'curve',
         x1: points[0].x,
         y1: points[0].y,
         x2: points[points.length - 1].x,
         y2: points[points.length - 1].y,
+        points,
       };
     }
     const start = extractPathStartPoint(el.getAttribute('d') || '');
     if (start) {
       return {
+        kind: 'line',
         x1: start.x,
         y1: start.y,
         x2: start.x,
         y2: start.y,
+        points: [{ x: start.x, y: start.y }],
       };
     }
   }
@@ -195,7 +209,7 @@ function collectTokenizedMeasurements(svgRoot) {
     if (prefix !== 'm') return;
 
     const lines = Array.from(groupEl.querySelectorAll('line, polyline, path'))
-      .map(lineFromElement)
+      .map(segmentFromElement)
       .filter(Boolean);
     if (lines.length) {
       linesByToken.set(token, lines);
@@ -210,7 +224,7 @@ function collectTokenizedMeasurements(svgRoot) {
 
 function collectMeasurementFromGroup(groupEl, fallbackIndex) {
   const lines = Array.from(groupEl.querySelectorAll('line, polyline, path'))
-    .map(lineFromElement)
+    .map(segmentFromElement)
     .filter(Boolean);
   if (!lines.length) return null;
   const label = getElementLabel(groupEl) || `Measurement ${fallbackIndex}`;
@@ -232,7 +246,7 @@ function collectStandaloneMeasurements(svgRoot, existingLabels) {
   return Array.from(svgRoot.querySelectorAll('line, polyline, path'))
     .map((el, index) => {
       if (el.closest('g')) return null;
-      const line = lineFromElement(el);
+      const line = segmentFromElement(el);
       if (!line) return null;
 
       const cx = (line.x1 + line.x2) / 2;
@@ -248,7 +262,8 @@ function collectStandaloneMeasurements(svgRoot, existingLabels) {
         { node: null, distance: Infinity }
       ).node;
 
-      const preferredLabel = nearestText?.label || getElementLabel(el) || `Measurement ${index + 1}`;
+      const preferredLabel =
+        nearestText?.label || getElementLabel(el) || `Measurement ${index + 1}`;
       const label = existingLabels.has(preferredLabel)
         ? `${preferredLabel} ${index + 1}`
         : preferredLabel;
@@ -310,10 +325,7 @@ export function createCoordinateTransformer(dimensions, canvasSize, bgImage) {
   const sourceMinX = Number(dimensions?.minX) || 0;
   const sourceMinY = Number(dimensions?.minY) || 0;
   const sourceWidth = Math.max(1, Number(dimensions?.width) || Number(canvasSize?.width) || 1);
-  const sourceHeight = Math.max(
-    1,
-    Number(dimensions?.height) || Number(canvasSize?.height) || 1
-  );
+  const sourceHeight = Math.max(1, Number(dimensions?.height) || Number(canvasSize?.height) || 1);
 
   let renderWidth = Number(canvasSize?.width) || sourceWidth;
   let renderHeight = Number(canvasSize?.height) || sourceHeight;

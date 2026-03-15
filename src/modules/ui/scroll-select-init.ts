@@ -40,17 +40,24 @@ export function initScrollSelectSystem() {
 
   let __imageListPaddingResizeTimeout: ReturnType<typeof setTimeout> | null = null;
   window.addEventListener('resize', () => {
+    // Suppress scroll-select during resize to prevent accidental image switching
+    // (e.g. Windows snap resize changes padding → reflows image list → observer fires)
+    (window as any).__imageListProgrammaticScrollUntil = Date.now() + 600;
+
     if (__imageListPaddingResizeTimeout) {
       clearTimeout(__imageListPaddingResizeTimeout);
     }
     __imageListPaddingResizeTimeout = setTimeout(() => {
       __imageListPaddingResizeTimeout = null;
       updateImageListPadding();
+      // Extend suppression briefly after padding settles so the observer
+      // doesn't fire on the reflow caused by the padding change itself.
+      (window as any).__imageListProgrammaticScrollUntil = Date.now() + 300;
     }, 150);
   });
 
   const SCROLL_SELECT_STORAGE_KEY = 'scrollSelectEnabled';
-  const SCROLL_SWITCH_DEBOUNCE_MS = 70;
+  const SCROLL_SWITCH_DEBOUNCE_MS = 40;
 
   function ensureGuideBadgeStyles() {
     if (document.getElementById('miniStepperGuideBadgeStyles')) return;
@@ -118,6 +125,7 @@ export function initScrollSelectSystem() {
 
   function isScrollSelectEnabled(): boolean {
     if (
+      document.hidden ||
       (window.__suppressScrollSelectUntil && Date.now() < window.__suppressScrollSelectUntil) ||
       window.__isLoadingProject ||
       window.__deferredImageHydrationInProgress
@@ -160,37 +168,40 @@ export function initScrollSelectSystem() {
         closest = container;
       }
     });
-    if (closest && closestDistance <= tolerance) {
+    if (!closest) {
+      console.debug('[ScrollSelect] No thumbnail candidates found while scanning list');
+      return null;
+    }
+    const closestInfo = {
+      container: closest,
+      distance: closestDistance,
+      tolerance,
+      center,
+      withinTolerance: closestDistance <= tolerance,
+    };
+    if (closestInfo.withinTolerance) {
       console.debug(
         `[ScrollSelect] Candidate ${closest.dataset.label} within tolerance (${closestDistance.toFixed(1)} <= ${tolerance.toFixed(1)})`
       );
-      return {
-        container: closest,
-        distance: closestDistance,
-        tolerance,
-        center,
-      };
+      return closestInfo;
     }
-    if (closest) {
-      console.debug(
-        `[ScrollSelect] No centered thumbnail (best ${closest.dataset.label} at ${closestDistance.toFixed(1)}px, tolerance ${tolerance.toFixed(1)}px)`
-      );
-    } else {
-      console.debug('[ScrollSelect] No thumbnail candidates found while scanning list');
-    }
-    return null;
+    console.debug(
+      `[ScrollSelect] No centered thumbnail (best ${closest.dataset.label} at ${closestDistance.toFixed(1)}px, tolerance ${tolerance.toFixed(1)}px)`
+    );
+    return closestInfo;
   }
 
-  function syncSelectionToCenteredThumbnail() {
+  function syncSelectionToCenteredThumbnail(options: { allowNearestFallback?: boolean } = {}) {
     if (!isScrollSelectEnabled()) return;
     const imageList = document.getElementById('imageList');
     if (!imageList) return;
     const alignedInfo = getAlignedImageContainer(imageList);
     if (!alignedInfo) return;
+    if (!alignedInfo.withinTolerance && !options.allowNearestFallback) return;
     const { container: aligned, distance, tolerance } = alignedInfo;
     const label = aligned.dataset.label;
     console.debug(
-      `[ScrollSelect] Centered thumbnail ${label} (distance ${distance.toFixed(1)}px / tolerance ${tolerance.toFixed(1)}px)`
+      `[ScrollSelect] ${alignedInfo.withinTolerance ? 'Centered' : 'Nearest'} thumbnail ${label} (distance ${distance.toFixed(1)}px / tolerance ${tolerance.toFixed(1)}px)`
     );
     if (
       label &&
@@ -202,7 +213,7 @@ export function initScrollSelectSystem() {
       window.projectManager.switchView(label);
       setTimeout(() => {
         if (typeof window.updateActivePill === 'function') {
-          window.updateActivePill();
+          window.updateActivePill({ forceCenter: true });
         }
       }, 30);
     }
@@ -300,7 +311,32 @@ export function initScrollSelectSystem() {
       }
     }
 
-    function updateActivePill({ animate = true } = {}) {
+    function centerSidebarImageContainer(label: string, { smooth = false } = {}) {
+      const imageList = document.getElementById('imageList');
+      if (!imageList || !label) return;
+
+      const selectorLabel =
+        typeof CSS !== 'undefined' && typeof CSS.escape === 'function' ? CSS.escape(label) : label;
+      const container = imageList.querySelector<HTMLElement>(
+        `.image-container[data-label="${selectorLabel}"]`
+      );
+      if (!container) return;
+
+      const listRect = imageList.getBoundingClientRect();
+      const containerRect = container.getBoundingClientRect();
+      const delta =
+        containerRect.top - listRect.top + containerRect.height / 2 - listRect.height / 2;
+      if (Math.abs(delta) <= 1) return;
+
+      // Instant/auto scrolls complete immediately — use short suppression
+      window.__imageListProgrammaticScrollUntil = Date.now() + (smooth ? 200 : 30);
+      imageList.scrollBy({
+        top: delta,
+        behavior: smooth ? 'smooth' : 'auto',
+      });
+    }
+
+    function updateActivePill({ animate = true, forceCenter = false } = {}) {
       // Update sidebar active state as well
       if (typeof window.updateActiveImageInSidebar === 'function') {
         window.updateActiveImageInSidebar();
@@ -345,7 +381,7 @@ export function initScrollSelectSystem() {
         const activeLabel = activeButton.dataset.target || '';
         const lastAutoScrollLabel = window.__miniStepperLastAutoScrollLabel || '';
         // Don't keep re-centering the same active pill on every refresh.
-        if (activeLabel && activeLabel === lastAutoScrollLabel) {
+        if (!forceCenter && activeLabel && activeLabel === lastAutoScrollLabel) {
           return;
         }
 
@@ -353,8 +389,10 @@ export function initScrollSelectSystem() {
         const btnRect = activeButton.getBoundingClientRect();
         const delta = btnRect.left - stepperRect.left + btnRect.width / 2 - stepperRect.width / 2;
         if (Math.abs(delta) > 1) {
-          window.__miniStepperProgrammaticScrollUntil = Date.now() + 400;
-          stepper.scrollBy({ left: delta, behavior: 'smooth' });
+          const scrollBehavior = animate ? 'smooth' : 'instant';
+          // Instant scrolls complete immediately, so use a very short suppression
+          window.__miniStepperProgrammaticScrollUntil = Date.now() + (animate ? 150 : 30);
+          stepper.scrollBy({ left: delta, behavior: scrollBehavior as ScrollBehavior });
           window.__miniStepperLastAutoScrollLabel = activeLabel;
         } else if (activeLabel) {
           window.__miniStepperLastAutoScrollLabel = activeLabel;
@@ -403,10 +441,19 @@ export function initScrollSelectSystem() {
 
           if (label && window.projectManager && window.projectManager.currentViewId !== label) {
             console.log(`[ScrollSelect] ${reason} requesting switch to ${label}`);
+            // Prevent switchView from scrolling back (we're already scrolled to the right position)
+            // and from suppressing further scroll-select events
+            (window as any).__scrollSelectDrivenSwitch = true;
             const switchResult = window.projectManager.switchView(label);
             Promise.resolve(switchResult).then(() => {
+              (window as any).__scrollSelectDrivenSwitch = false;
               if (typeof window.updateActivePill === 'function') {
-                setTimeout(() => window.updateActivePill(), 30);
+                // Use animate:false to avoid long suppression windows that block
+                // the next scroll-driven switch
+                setTimeout(
+                  () => window.updateActivePill({ forceCenter: true, animate: false }),
+                  10
+                );
               }
             });
           }
@@ -414,9 +461,11 @@ export function initScrollSelectSystem() {
       };
 
       // Function to find which container is closest to center
-      const findCenteredContainer = () => {
+      const findCenteredContainer = (options: { allowNearestFallback?: boolean } = {}) => {
         const info = getAlignedImageContainer(imageList);
-        return info ? info.container : null;
+        if (!info) return null;
+        if (!info.withinTolerance && !options.allowNearestFallback) return null;
+        return info.container;
       };
 
       // Use IntersectionObserver with a center-focused rootMargin
@@ -431,7 +480,7 @@ export function initScrollSelectSystem() {
           }
 
           const alignedInfo = getAlignedImageContainer(imageList);
-          if (!alignedInfo) return;
+          if (!alignedInfo || !alignedInfo.withinTolerance) return;
           const { container: alignedContainer, distance, tolerance } = alignedInfo;
 
           const matchesObserver = entries.some(
@@ -476,7 +525,7 @@ export function initScrollSelectSystem() {
           return;
         }
 
-        const closest = findCenteredContainer();
+        const closest = findCenteredContainer({ allowNearestFallback: true });
         if (closest && isScrollSelectEnabled()) {
           const label = closest.dataset.label;
           if (label) {
@@ -485,7 +534,7 @@ export function initScrollSelectSystem() {
           }
         }
 
-        syncSelectionToCenteredThumbnail();
+        syncSelectionToCenteredThumbnail({ allowNearestFallback: true });
       };
 
       // Track scroll state for better snap detection
@@ -522,18 +571,16 @@ export function initScrollSelectSystem() {
               const newScrollTop = imageList.scrollTop;
               if (newScrollTop === lastScrollTop) {
                 isScrolling = false;
-                // Scroll has stopped, check for centered container after snap
-                setTimeout(() => {
-                  handleScrollEnd();
-                }, 100); // Allow time for scroll-snap to complete
+                // Scroll has stopped, switch immediately
+                handleScrollEnd();
               } else {
-                // Still scrolling, check again
+                // Still scrolling, check again shortly
                 lastScrollTop = newScrollTop;
                 scrollTimeout = setTimeout(() => {
                   handleScrollEnd();
-                }, 50);
+                }, 30);
               }
-            }, 100);
+            }, 40);
           }
         },
         { passive: true }
@@ -557,9 +604,7 @@ export function initScrollSelectSystem() {
             if (scrollEndTimeout) clearTimeout(scrollEndTimeout);
 
             // Immediately check which image is centered after scroll-snap
-            setTimeout(() => {
-              handleScrollEnd();
-            }, 50); // Small delay to ensure DOM has updated
+            handleScrollEnd();
           },
           { passive: true }
         );
@@ -647,39 +692,51 @@ export function initScrollSelectSystem() {
       ensureImageListObserver();
     }
 
-    // Track which pill is centered and switch to that image
+    // Track which pill is centered via user scroll and switch to that image.
+    // We intentionally avoid IntersectionObserver here because:
+    // 1. The stepper scrolls horizontally but IO rootMargin was vertical → wrong axis
+    // 2. IO fires on layout/visibility changes causing drift on alt-tab
+    // Instead, we only respond to actual user-initiated scroll events.
     function initPillCenteringObserver(stepButtons) {
       if (stepButtons.length === 0) return;
 
       const stepper = document.getElementById('mini-stepper');
       if (!stepper) return;
 
-      // Debounce to avoid rapid switching
-      let switchTimeout = null;
-      const debouncedSwitch = (label, reason = 'mini-stepper') => {
-        if (isImagePanelCollapsed()) return;
-        if (!isScrollSelectEnabled()) return;
-        if (
-          window.__miniStepperProgrammaticScrollUntil &&
-          Date.now() < window.__miniStepperProgrammaticScrollUntil
-        ) {
-          return;
-        }
-        if (switchTimeout) clearTimeout(switchTimeout);
-        switchTimeout = setTimeout(() => {
-          if (!isScrollSelectEnabled()) return;
-          if (
-            window.__miniStepperProgrammaticScrollUntil &&
-            Date.now() < window.__miniStepperProgrammaticScrollUntil
-          ) {
-            return;
-          }
-          if (label && window.projectManager && window.projectManager.currentViewId !== label) {
-            console.log(`[ScrollSelect] ${reason} requesting switch to ${label}`);
-            window.projectManager.switchView(label);
-          }
-        }, 150); // Small delay to avoid rapid switching
-      };
+      // Clean up previous observer if any
+      if (window.__pillCenteringObserver) {
+        window.__pillCenteringObserver.disconnect();
+        window.__pillCenteringObserver = null;
+      }
+
+      // Track user-initiated scrolling vs programmatic/layout scrolling.
+      // Record the last time the user interacted with the stepper; any scroll
+      // event within a generous window of that interaction counts as user-initiated.
+      // This handles quick flick gestures where pointerup fires before scroll events.
+      let lastUserInteraction = 0;
+      const USER_SCROLL_WINDOW_MS = 2000; // momentum scrolling can last a while
+
+      stepper.addEventListener(
+        'pointerdown',
+        () => {
+          lastUserInteraction = Date.now();
+        },
+        { passive: true }
+      );
+      stepper.addEventListener(
+        'touchstart',
+        () => {
+          lastUserInteraction = Date.now();
+        },
+        { passive: true }
+      );
+      stepper.addEventListener(
+        'wheel',
+        () => {
+          lastUserInteraction = Date.now();
+        },
+        { passive: true }
+      );
 
       // Function to find which pill is closest to center
       const findCenteredPill = () => {
@@ -710,83 +767,65 @@ export function initScrollSelectSystem() {
         return null;
       };
 
-      // Use IntersectionObserver with a center-focused rootMargin
-      // This creates a "center zone" that pills must intersect
-      const pillObserver = new IntersectionObserver(
-        entries => {
-          // Find pills that intersect the center zone
-          const centeredPills = entries.filter(entry => entry.intersectionRatio > 0.3);
-
-          if (centeredPills.length > 0) {
-            // Find the one closest to center
-            const centeredPill = centeredPills.reduce((best, current) => {
-              const stepperRect = stepper.getBoundingClientRect();
-              const stepperCenter = stepperRect.left + stepperRect.width / 2;
-              const bestCenter = Math.abs(
-                best.boundingClientRect.left + best.boundingClientRect.width / 2 - stepperCenter
-              );
-              const currentCenter = Math.abs(
-                current.boundingClientRect.left +
-                  current.boundingClientRect.width / 2 -
-                  stepperCenter
-              );
-              return currentCenter < bestCenter ? current : best;
-            });
-
-            const label = centeredPill.target.dataset.target;
-            if (label) {
-              debouncedSwitch(label, 'mini-stepper-observer');
-            }
-          } else {
-            // Fallback: find closest pill if none intersect center zone
-            const closest = findCenteredPill();
-            if (closest) {
-              const label = closest.dataset.target;
-              if (label) {
-                debouncedSwitch(label, 'mini-stepper-fallback');
-              }
-            }
-          }
-        },
-        {
-          root: stepper,
-          rootMargin: '-40% 0px -40% 0px', // Create a center zone (20% top/bottom margin = 60% center zone)
-          threshold: [0.1, 0.3, 0.5, 0.7, 1.0],
-        }
-      );
-
-      // Also listen to scroll events for manual scrolling
+      // Only switch images on scroll when the user recently interacted with the stepper
       let scrollTimeout = null;
+
       stepper.addEventListener(
         'scroll',
         () => {
+          // Ignore programmatic scrolls
           if (
             window.__miniStepperProgrammaticScrollUntil &&
             Date.now() < window.__miniStepperProgrammaticScrollUntil
           ) {
             return;
           }
+
+          // Only respond if user recently interacted with the stepper
+          // (pointer/touch/wheel within the last N ms — covers momentum scrolling)
+          const timeSinceInteraction = Date.now() - lastUserInteraction;
+          if (timeSinceInteraction > USER_SCROLL_WINDOW_MS) return;
+
+          if (!isScrollSelectEnabled()) return;
+          if (isImagePanelCollapsed()) return;
+
           if (scrollTimeout) clearTimeout(scrollTimeout);
+
           scrollTimeout = setTimeout(() => {
+            if (!isScrollSelectEnabled()) return;
+            if (document.hidden) return;
+            if (
+              window.__miniStepperProgrammaticScrollUntil &&
+              Date.now() < window.__miniStepperProgrammaticScrollUntil
+            ) {
+              return;
+            }
             const closest = findCenteredPill();
             if (closest) {
               const label = closest.dataset.target;
-              if (label) {
-                debouncedSwitch(label, 'mini-stepper-scroll');
+              if (label && window.projectManager && window.projectManager.currentViewId !== label) {
+                console.log(`[ScrollSelect] mini-stepper-scroll requesting switch to ${label}`);
+                // Mark as scroll-driven so the resulting updateActivePill
+                // skips re-centering (user is already scrolling the stepper)
+                (window as any).__scrollSelectDrivenSwitch = true;
+                const result = window.projectManager.switchView(label);
+                Promise.resolve(result).then(() => {
+                  (window as any).__scrollSelectDrivenSwitch = false;
+                  // Update visual state without re-centering
+                  if (typeof window.updateActivePill === 'function') {
+                    window.updateActivePill({ forceCenter: false, animate: false });
+                  }
+                });
               }
             }
-          }, 100);
+          }, 50);
         },
         { passive: true }
       );
 
-      // Observe all pills
-      stepButtons.forEach(btn => {
-        pillObserver.observe(btn);
-      });
-
-      // Store observer for cleanup if needed
-      window.__pillCenteringObserver = pillObserver;
+      // No IntersectionObserver — store a stub so cleanup code doesn't break
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      window.__pillCenteringObserver = { disconnect() {} };
     }
 
     function getImageContainers() {
@@ -1025,7 +1064,7 @@ export function initScrollSelectSystem() {
           return;
         }
         btn.dataset.guideState = stateInfo.state;
-        const baseLabel = btn.getAttribute('aria-label') || `Go to ${label}`;
+        const baseLabel = `Go to ${label}`;
         const suffix =
           stateInfo.state === 'locked'
             ? `Guide locked (${stateInfo.code})`
@@ -1191,7 +1230,7 @@ export function initScrollSelectSystem() {
                   const elRect = container.getBoundingClientRect();
                   const delta = elRect.top - listRect.top + elRect.height / 2 - listRect.height / 2;
                   // Suppress scroll-driven switching during this smooth scroll
-                  window.__imageListProgrammaticScrollUntil = Date.now() + 500;
+                  window.__imageListProgrammaticScrollUntil = Date.now() + 200;
                   list.scrollBy({ top: delta, behavior: 'smooth' });
                 }
               }
@@ -1244,9 +1283,21 @@ export function initScrollSelectSystem() {
           if (isImagePanelCollapsed()) {
             return;
           }
+
+          // Skip during suppression (e.g. visibility return, programmatic scrolls)
+          // to prevent observer geometry from overriding the true selection.
+          if (
+            document.hidden ||
+            (window.__suppressScrollSelectUntil &&
+              Date.now() < window.__suppressScrollSelectUntil) ||
+            (window.__imageListProgrammaticScrollUntil &&
+              Date.now() < window.__imageListProgrammaticScrollUntil)
+          ) {
+            return;
+          }
+
           // Find the image container with the highest intersection ratio
           const imageEntries = entries.filter(entry => {
-            // Convert className to string (it might be a DOMTokenList)
             const className =
               typeof entry.target.className === 'string'
                 ? entry.target.className
@@ -1293,24 +1344,13 @@ export function initScrollSelectSystem() {
           }
           lastObservedLabel = label;
 
-          // Update UI
-          stepButtons.forEach(b => {
-            const active = b.dataset.target === label;
-
-            if (active) {
-              b.setAttribute('aria-current', 'true');
-              b.classList.remove(...cfg.inactiveClasses.split(' '));
-              b.classList.add(...cfg.activeClasses.split(' '));
-              b.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-            } else {
-              b.removeAttribute('aria-current');
-              b.classList.remove(...cfg.activeClasses.split(' '));
-              b.classList.add(...cfg.inactiveClasses.split(' '));
-            }
-          });
-
-          const activeButton = stepButtons.find(b => b.dataset.target === label);
-          positionStepperIndicator(activeButton, { animate: true });
+          // Instead of directly manipulating stepper styling and scrolling here,
+          // delegate to updateActivePill which uses projectManager.currentViewId
+          // as the single source of truth. This prevents observer geometry from
+          // drifting the stepper away from the actual selection.
+          if (typeof window.updateActivePill === 'function') {
+            updateActivePill({ forceCenter: false });
+          }
 
           // Dispatch event for external listeners
           window.dispatchEvent(
@@ -1412,6 +1452,27 @@ export function initScrollSelectSystem() {
 
         document.addEventListener('visibilitychange', () => {
           if (!document.hidden) {
+            // Suppress all scroll-driven switching while layout settles
+            const suppressUntil = Date.now() + 1200;
+            window.__suppressScrollSelectUntil = suppressUntil;
+            window.__imageListProgrammaticScrollUntil = suppressUntil;
+            window.__miniStepperProgrammaticScrollUntil = suppressUntil;
+            const currentLabel =
+              window.projectManager?.currentViewId ||
+              window.currentImageLabel ||
+              window.paintApp?.state?.currentImageLabel ||
+              '';
+            if (currentLabel) {
+              window.__miniStepperLastAutoScrollLabel = '';
+              // Snap stepper and sidebar to the current image immediately
+              centerSidebarImageContainer(currentLabel, { smooth: false });
+              updateActivePill({ animate: false, forceCenter: true });
+              // Re-snap after layout settles to handle any reflow drift
+              requestAnimationFrame(() => {
+                window.__miniStepperProgrammaticScrollUntil = suppressUntil;
+                updateActivePill({ animate: false, forceCenter: true });
+              });
+            }
             checkForChanges();
           }
         });

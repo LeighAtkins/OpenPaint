@@ -1,5 +1,5 @@
 import { defineConfig, mergeConfig } from 'vitest/config';
-import viteConfig from './vite.config';
+import viteConfig from './vite.config.ts';
 
 export default mergeConfig(
   viteConfig({ mode: 'test', command: 'serve' }),
@@ -9,7 +9,7 @@ export default mergeConfig(
       environment: 'happy-dom',
       setupFiles: ['./tests/helpers/setup.js'],
       include: ['src/**/*.{test,spec}.{ts,tsx,js}', 'tests/**/*.{test,spec}.{js,ts}'],
-      exclude: ['node_modules', 'dist', 'tests/visual/*.spec.ts'],
+      exclude: ['node_modules', 'dist', 'tests/e2e/**', 'tests/visual/*.spec.ts'],
       coverage: {
         provider: 'v8',
         reporter: ['text', 'json', 'html', 'lcov'],

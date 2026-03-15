@@ -15,6 +15,32 @@ import {
 } from '../utils/viewportRestore.ts';
 
 export function initToolbarController() {
+  const dispatchGuideNextTagChanged = (viewId, tag) => {
+    const normalizedViewId = String(viewId || '').trim();
+    const normalizedTag = String(tag || '')
+      .trim()
+      .toUpperCase();
+    if (!normalizedViewId || !normalizedTag) return false;
+
+    const cacheKey = '__openpaintGuideNextTagByView';
+    const cache = window[cacheKey] && typeof window[cacheKey] === 'object' ? window[cacheKey] : {};
+    if (cache[normalizedViewId] === normalizedTag) {
+      return false;
+    }
+    cache[normalizedViewId] = normalizedTag;
+    window[cacheKey] = cache;
+
+    window.dispatchEvent(
+      new CustomEvent('openpaint:guide-next-tag-changed', {
+        detail: {
+          viewId: normalizedViewId,
+          tag: normalizedTag,
+        },
+      })
+    );
+    return true;
+  };
+
   const runWhenDomReady = callback => {
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', callback, { once: true });
@@ -2449,9 +2475,16 @@ export function initToolbarController() {
           width: splitRect.width,
           height: splitRect.height,
         };
-        let tempViewport = normalizeViewportRecord(
+        const splitViewportSeed = normalizeViewportRecord(
           splitSourceTab?.viewport || splitSnapshot?.viewport || buildViewportRecord()
         );
+        let tempViewport = {
+          ...splitViewportSeed,
+          // Split compare replays into a different workspace geometry, so carry over zoom/rotation
+          // but discard the prior workspace pan before fitting to the split target frame.
+          panX: 0,
+          panY: 0,
+        };
         const storedWorldRect = normalizeWorldRect(stored?.worldRect);
         const splitImageWorldRect = normalizeWorldRect(splitSnapshot?.imageWorldRect);
         const targetWorldRect = storedWorldRect || splitImageWorldRect;
@@ -3061,6 +3094,15 @@ export function initToolbarController() {
       window.app?.metadataManager?.updateStrokeVisibilityControls?.();
       renderTabBar(baseLabel);
       renderMasterOverlay(baseLabel);
+      window.dispatchEvent(
+        new CustomEvent('openpaint:frame-tab-changed', {
+          detail: {
+            viewId: baseLabel,
+            tabId: targetTab.id,
+            scopedViewId: getActiveScopedLabel(baseLabel),
+          },
+        })
+      );
     }
     function createNewTab(label) {
       const baseLabel = toBaseLabel(label) || 'front';
@@ -4194,6 +4236,7 @@ export function initToolbarController() {
         }
 
         nextTagDisplay.textContent = nextTag;
+        dispatchGuideNextTagChanged(currentImageLabel, nextTag);
       }
     }
 
@@ -4291,6 +4334,7 @@ export function initToolbarController() {
       window.manualTagByImage[currentImageLabel] = input;
 
       e.target.textContent = input;
+      dispatchGuideNextTagChanged(currentImageLabel, input);
       console.log('[nextTagDisplay] Updated next tag to:', input, '(manual override)');
     });
 
@@ -5206,8 +5250,10 @@ export function initToolbarController() {
       );
       if (index < 0) return false;
 
-      window.__suppressScrollSelectUntil = Date.now() + 1200;
-      window.__imageListProgrammaticScrollUntil = Date.now() + 1200;
+      if (!window.__scrollSelectDrivenSwitch) {
+        window.__suppressScrollSelectUntil = Date.now() + 400;
+        window.__imageListProgrammaticScrollUntil = Date.now() + 400;
+      }
 
       updateActiveImage(index);
 
@@ -6647,12 +6693,16 @@ export function initToolbarController() {
         if (window.projectManager && typeof window.projectManager.switchView === 'function') {
           window.projectManager.switchView(label);
         }
+        // Immediately highlight before scroll animation
+        container.setAttribute('aria-selected', 'true');
         container.scrollIntoView({
           behavior: 'smooth',
           block: 'center',
           inline: 'center',
         });
-        window.__imageListProgrammaticScrollUntil = Date.now() + 500;
+        if (!window.__scrollSelectDrivenSwitch) {
+          window.__imageListProgrammaticScrollUntil = Date.now() + 400;
+        }
       };
 
       imageList.appendChild(container);
@@ -6684,10 +6734,16 @@ export function initToolbarController() {
         const isFirst = allContainers.length === 1 && allContainers[0] === container;
         if (isFirst && !window.__isLoadingProject && !window.__deferredImageHydrationInProgress) {
           console.log(`[COMPAT] First image "${label}" added, centering and switching to it`);
-          window.__suppressScrollSelectUntil = Date.now() + 1200;
-          window.__imageListProgrammaticScrollUntil = Date.now() + 1000;
+          window.__suppressScrollSelectUntil = Date.now() + 400;
+          window.__imageListProgrammaticScrollUntil = Date.now() + 400;
           container.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
-          if (window.projectManager && typeof window.projectManager.switchView === 'function') {
+          // Only switch if still on this view (don't override a switch that happened
+          // between addImageToSidebar and this deferred timeout).
+          if (
+            window.projectManager &&
+            typeof window.projectManager.switchView === 'function' &&
+            window.projectManager.currentViewId === label
+          ) {
             window.projectManager.switchView(label);
           }
         }
@@ -6824,9 +6880,13 @@ export function initToolbarController() {
             !window.__deferredImageHydrationInProgress
           ) {
             setTimeout(() => {
-              window.__suppressScrollSelectUntil = Date.now() + 1200;
-              window.projectManager.switchView(label, true);
-              console.log('[COMPAT] Forced switch to first image:', label);
+              // Only force-switch if still on the same view (don't override a view
+              // switch that happened between addImageToSidebar and this timeout).
+              if (window.projectManager.currentViewId === label) {
+                window.__suppressScrollSelectUntil = Date.now() + 1200;
+                window.projectManager.switchView(label, true);
+                console.log('[COMPAT] Forced switch to first image:', label);
+              }
             }, 0);
           }
           return index;
@@ -7194,7 +7254,9 @@ export function initToolbarController() {
                   });
 
                   // Temporarily disable scroll-driven switching to prevent fighting
-                  window.__imageListProgrammaticScrollUntil = Date.now() + 500;
+                  if (!window.__scrollSelectDrivenSwitch) {
+                    window.__imageListProgrammaticScrollUntil = Date.now() + 300;
+                  }
                 };
 
                 imageListAfter.appendChild(container);
@@ -7248,7 +7310,7 @@ export function initToolbarController() {
                     );
 
                     // Center the container
-                    window.__imageListProgrammaticScrollUntil = Date.now() + 1000;
+                    window.__imageListProgrammaticScrollUntil = Date.now() + 400;
                     container.scrollIntoView({
                       behavior: 'smooth',
                       block: 'center',
@@ -7519,16 +7581,20 @@ export function initToolbarController() {
             console.log('[INIT] Centering and selecting first image:', firstLabel);
 
             // Center the first container
-            window.__imageListProgrammaticScrollUntil = Date.now() + 1000;
+            window.__imageListProgrammaticScrollUntil = Date.now() + 400;
             firstContainer.scrollIntoView({
               behavior: 'smooth',
               block: 'center',
               inline: 'center',
             });
 
-            // Switch to the first image view
+            // Switch to the first image view (only if no explicit switch has happened)
             setTimeout(() => {
-              if (window.projectManager && typeof window.projectManager.switchView === 'function') {
+              if (
+                window.projectManager &&
+                typeof window.projectManager.switchView === 'function' &&
+                window.projectManager.currentViewId === firstLabel
+              ) {
                 window.projectManager.switchView(firstLabel);
               }
 
@@ -7601,7 +7667,14 @@ export function initToolbarController() {
 
       document.addEventListener('visibilitychange', () => {
         if (!document.hidden) {
+          window.__suppressScrollSelectUntil = Date.now() + 400;
+          window.__imageListProgrammaticScrollUntil = Date.now() + 400;
+          window.__miniStepperProgrammaticScrollUntil = Date.now() + 400;
           syncLegacyListIfChanged();
+          if (typeof window.updateActivePill === 'function') {
+            window.__miniStepperLastAutoScrollLabel = '';
+            window.updateActivePill({ animate: false, forceCenter: true });
+          }
         }
       });
 

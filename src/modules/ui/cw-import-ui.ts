@@ -1,27 +1,27 @@
-type ImportedRow = {
+interface ImportedRow {
   id: string;
   sourceLabel: string;
   value: string;
   sectionName?: string;
   pieces?: string;
   skirtLength?: string;
-};
+}
 
-type VariantOption = {
+interface VariantOption {
   productReference: string;
   style: string;
   styleCode: string;
   label: string;
-};
+}
 
-type VersionOption = {
+interface VersionOption {
   code: string;
   label: string;
   scopedReference?: string;
   isDefault?: boolean;
-};
+}
 
-type SearchResultItem = {
+interface SearchResultItem {
   id: string | null;
   productReference: string;
   productName: string;
@@ -34,9 +34,9 @@ type SearchResultItem = {
   selected: boolean;
   selectedVersionCode: string;
   selectedStyleKey: string;
-};
+}
 
-type BasketItem = {
+interface BasketItem {
   selectionKey: string;
   search: string;
   productReference: string;
@@ -47,9 +47,9 @@ type BasketItem = {
   style: string;
   styleCode: string;
   label: string;
-};
+}
 
-type LoadedMeasurementItem = {
+interface LoadedMeasurementItem {
   selectionKey: string;
   basketItem: BasketItem;
   productReference: string;
@@ -61,7 +61,7 @@ type LoadedMeasurementItem = {
   rawData: any;
   loadMessage: string;
   success: boolean;
-};
+}
 
 type VisibleImportedRow = ImportedRow & {
   rowKey: string;
@@ -70,7 +70,7 @@ type VisibleImportedRow = ImportedRow & {
   productReference: string;
 };
 
-type VisibleImageEntry = {
+interface VisibleImageEntry {
   itemKey: string;
   itemLabel: string;
   productReference: string;
@@ -78,9 +78,9 @@ type VisibleImageEntry = {
   key: string;
   selectionImageKey: string;
   candidates: string[];
-};
+}
 
-type SearchState = {
+interface SearchState {
   searchResults: SearchResultItem[];
   basket: BasketItem[];
   loadedItems: LoadedMeasurementItem[];
@@ -89,10 +89,10 @@ type SearchState = {
   armedRowKey: string;
   selectedImageKeys: string[];
   rowTargetLabels: Record<string, string>;
-};
+}
 
 function makeStyleKey(productReference: string, style: string, styleCode: string): string {
-  return `${String(productReference || '').trim()}||${String(style || '').trim()}||${String(styleCode || '').trim()}`;
+  return `${(productReference || '').trim()}||${(style || '').trim()}||${(styleCode || '').trim()}`;
 }
 
 function parseStyleKey(styleKey: string): {
@@ -100,11 +100,11 @@ function parseStyleKey(styleKey: string): {
   style: string;
   styleCode: string;
 } {
-  const [productReference = '', style = '', styleCode = ''] = String(styleKey || '').split('||');
+  const [productReference = '', style = '', styleCode = ''] = (styleKey || '').split('||');
   return {
-    productReference: String(productReference || '').trim(),
-    style: String(style || '').trim(),
-    styleCode: String(styleCode || '').trim(),
+    productReference: (productReference || '').trim(),
+    style: (style || '').trim(),
+    styleCode: (styleCode || '').trim(),
   };
 }
 
@@ -115,18 +115,16 @@ function makeSelectionKey(
   styleCode: string
 ): string {
   return [
-    String(productReference || '').trim(),
-    String(versionCode || '').trim(),
-    String(style || '').trim(),
-    String(styleCode || '').trim(),
+    (productReference || '').trim(),
+    (versionCode || '').trim(),
+    (style || '').trim(),
+    (styleCode || '').trim(),
   ].join('|');
 }
 
 function getScopedReference(productReference: string, versionCode: string): string {
-  const base = String(productReference || '').trim();
-  const code = String(versionCode || '')
-    .trim()
-    .toUpperCase();
+  const base = (productReference || '').trim();
+  const code = (versionCode || '').trim().toUpperCase();
   if (!base) return '';
   if (!code || code === 'DF') return base;
   return `${base}__${code}`;
@@ -140,17 +138,17 @@ function buildBasketLabel(item: {
   styleCode?: string;
 }): string {
   const segments = [
-    String(item?.productReference || '').trim(),
-    String(item?.productName || '').trim(),
-    String(item?.versionLabel || '').trim(),
-    String(item?.style || '').trim(),
+    (item?.productReference || '').trim(),
+    (item?.productName || '').trim(),
+    (item?.versionLabel || '').trim(),
+    (item?.style || '').trim(),
   ].filter(Boolean);
-  const styleCode = String(item?.styleCode || '').trim();
+  const styleCode = (item?.styleCode || '').trim();
   return `${segments.join(' / ')}${styleCode ? ` (${styleCode})` : ''}` || 'CW Item';
 }
 
 function makeRowStorageKey(itemKey: string, rowId: string): string {
-  return `${String(itemKey || '').trim()}::${String(rowId || '').trim()}`;
+  return `${(itemKey || '').trim()}::${(rowId || '').trim()}`;
 }
 
 const MODAL_ID = 'cwImportModalOverlay';
@@ -167,7 +165,7 @@ const PROBE_TURBO_DEFAULT_CONCURRENCY = 10;
 const PROBE_TURBO_MIN_CONCURRENCY = 4;
 const PROBE_TURBO_MAX_CONCURRENCY = 12;
 
-type CwUiPersistedState = {
+interface CwUiPersistedState {
   baseUrl?: string;
   formId?: string;
   username?: string;
@@ -177,7 +175,7 @@ type CwUiPersistedState = {
   probeTermsPath?: string;
   probeEnabled?: boolean;
   lastProbeReport?: Record<string, unknown> | null;
-};
+}
 
 function readPersistedCwUiState(): CwUiPersistedState {
   try {
@@ -201,7 +199,7 @@ function writePersistedCwUiState(state: CwUiPersistedState): void {
 
 function isCwProbePreviewEnabled(): boolean {
   if (typeof window === 'undefined') return false;
-  const host = String(window.location.hostname || '').toLowerCase();
+  const host = (window.location.hostname || '').toLowerCase();
   const params = new URLSearchParams(window.location.search || '');
   if (params.get('cwProbe') === '1') return true;
   if (host === 'localhost' || host === '127.0.0.1') return true;
@@ -216,7 +214,7 @@ function parseProbeTermsFromExportHtml(html: string): {
   referenceColumnIndex: number;
 } {
   const parser = new DOMParser();
-  const doc = parser.parseFromString(String(html || ''), 'text/html');
+  const doc = parser.parseFromString(html || '', 'text/html');
   const table = doc.querySelector('table.waffle') || doc.querySelector('table');
   if (!table) {
     return { terms: [], totalRows: 0, referenceColumnIndex: -1 };
@@ -229,9 +227,7 @@ function parseProbeTermsFromExportHtml(html: string): {
 
   const rowCells = rows.map(row =>
     Array.from(row.querySelectorAll('th,td')).map(cell =>
-      String(cell.textContent || '')
-        .replace(/\s+/g, ' ')
-        .trim()
+      (cell.textContent || '').replace(/\s+/g, ' ').trim()
     )
   );
 
@@ -243,7 +239,7 @@ function parseProbeTermsFromExportHtml(html: string): {
 
   dataRows.forEach(row => {
     if (referenceColumnIndex < 0) return;
-    const value = String(row[referenceColumnIndex] || '').trim();
+    const value = (row[referenceColumnIndex] || '').trim();
     if (!value || seen.has(value)) return;
     seen.add(value);
     terms.push(value);
@@ -358,13 +354,8 @@ function getStrokeLabels(scopeLabel: string): string[] {
 }
 
 function fileStemFromUrl(url: string): string {
-  const raw = String(url || '')
-    .split('?')[0]
-    .split('#')[0]
-    .split('/')
-    .filter(Boolean)
-    .pop();
-  return String(raw || 'photo').trim() || 'photo';
+  const raw = (url || '').split('?')[0].split('#')[0].split('/').filter(Boolean).pop();
+  return (raw || 'photo').trim() || 'photo';
 }
 
 function setMeasurementLock(scopeLabel: string, strokeLabel: string, locked: boolean): void {
@@ -375,23 +366,20 @@ function setMeasurementLock(scopeLabel: string, strokeLabel: string, locked: boo
 }
 
 function normalizeGuideLabel(value: string): string {
-  return String(value || '')
-    .trim()
-    .toUpperCase()
-    .replace(/\s+/g, '');
+  return (value || '').trim().toUpperCase().replace(/\s+/g, '');
 }
 
 function getCanonicalCwScopeKey(scopeLabel: string): string {
   const metadata = (window as any).app?.metadataManager;
   return typeof metadata?.normalizeImageLabel === 'function'
     ? String(metadata.normalizeImageLabel(scopeLabel) || scopeLabel).trim()
-    : String(scopeLabel || '').trim();
+    : (scopeLabel || '').trim();
 }
 
 function buildLegacyCwScopeCandidates(scopeLabel: string): string[] {
   const canonical = getCanonicalCwScopeKey(scopeLabel);
   const base = canonical.split('::tab:')[0] || canonical;
-  return Array.from(new Set([String(scopeLabel || '').trim(), canonical, base].filter(Boolean)));
+  return Array.from(new Set([(scopeLabel || '').trim(), canonical, base].filter(Boolean)));
 }
 
 function getCwImportedMeasurementEntry(scopeLabel: string, strokeLabel: string): any {
@@ -453,9 +441,15 @@ function markCwImportedMeasurementApplied(
 }
 
 function normalizeValueText(value: unknown): string {
-  return String(value ?? '')
-    .replace(/\s+/g, ' ')
-    .trim();
+  const str =
+    typeof value === 'string'
+      ? value
+      : value === null || value === undefined
+        ? ''
+        : typeof value === 'number' || typeof value === 'boolean'
+          ? String(value)
+          : '';
+  return str.replace(/\s+/g, ' ').trim();
 }
 
 function normalizeSectionName(value: string): string {
@@ -470,7 +464,7 @@ function normalizeSectionName(value: string): string {
 
 function classifyMeasurementSection(sourceLabel: string, sectionName: string): string {
   const normalizedSource = normalizeValueText(sourceLabel);
-  const sourceToken = normalizedSource.toLowerCase();
+  const _sourceToken = normalizedSource.toLowerCase();
   const normalizedSection = normalizeSectionName(sectionName);
 
   if (/^backrest\b/i.test(normalizedSource)) return 'Frame Cover';
@@ -519,7 +513,7 @@ function guessMosLabel(sourceLabel: string, sectionName: string): string {
 }
 
 function decodeHtmlEntitiesLite(value: string): string {
-  return String(value || '')
+  return (value || '')
     .replace(/&amp;/g, '&')
     .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'")
@@ -528,7 +522,7 @@ function decodeHtmlEntitiesLite(value: string): string {
 }
 
 function extractAbsoluteImageUrlsFromString(value: string): string[] {
-  const source = decodeHtmlEntitiesLite(String(value || ''))
+  const source = decodeHtmlEntitiesLite(value || '')
     .replace(/\\\//g, '/')
     .replace(/\u002F/gi, '/')
     .replace(/\u003A/gi, ':')
@@ -550,7 +544,7 @@ function extractAbsoluteImageUrlsFromString(value: string): string[] {
 }
 
 function sectionFromImageName(nameOrPath: string): string {
-  const source = String(nameOrPath || '').toLowerCase();
+  const source = (nameOrPath || '').toLowerCase();
   if (source.includes('_fr_') || source.includes('frame')) return 'Frame Cover';
   if (source.includes('_stcc') || source.includes('seat')) return 'Seat Cushion Cover';
   if (source.includes('_bkcc') || source.includes('back')) return 'Back Cushion Cover';
@@ -583,26 +577,26 @@ function isLikelyMeasurementLabel(label: string): boolean {
 }
 
 function slugify(value: string): string {
-  return String(value || '')
+  return (value || '')
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
 }
 
 function isHttpUrl(value: string): boolean {
-  return /^https?:\/\//i.test(String(value || '').trim());
+  return /^https?:\/\//i.test((value || '').trim());
 }
 
 function isSignedImageUrl(url: string): boolean {
-  const value = String(url || '');
+  const v = url || '';
   return (
-    /[?&]Signature=/i.test(value) &&
-    (/[?&]GoogleAccessId=/i.test(value) || /[?&]X-Goog-Algorithm=/i.test(value))
+    /[?&]Signature=/i.test(v) &&
+    (/[?&]GoogleAccessId=/i.test(v) || /[?&]X-Goog-Algorithm=/i.test(v))
   );
 }
 
 function isKnownBadImageCandidate(url: string): boolean {
-  const value = String(url || '');
+  const value = url || '';
   if (/storage\.cloud\.google\.com/i.test(value)) return true;
   if (/cw-pid-qylyewlgca-uc\.a\.run\.app\/slipcover_details_images/i.test(value)) return true;
   if (/cw-pid-qylyewlgca-uc\.a\.run\.app\/media\/slipcover_details_images/i.test(value))
@@ -624,24 +618,22 @@ function filterPreferredImageCandidates(urls: string[]): string[] {
 }
 
 function isLikelyImagePath(value: string): boolean {
-  const v = String(value || '').trim();
+  const v = (value || '').trim();
   if (!v) return false;
   if (/^https?:\/\//i.test(v)) {
     return /\.(?:png|jpe?g|webp|gif|bmp|svg)(?:\?|$)/i.test(v);
   }
-  return /[\/][^\s]+\.(?:png|jpe?g|webp|gif|bmp|svg)$/i.test(v);
+  return /[/][^\s]+\.(?:png|jpe?g|webp|gif|bmp|svg)$/i.test(v);
 }
 
 function makeAbsoluteCandidates(pathOrUrl: string, baseUrl: string): string[] {
-  const value = String(pathOrUrl || '').trim();
+  const value = (pathOrUrl || '').trim();
   if (!value) return [];
   if (/^https?:\/\//i.test(value)) return [value];
 
   const normalizedPath = value.replace(/^\/+/, '');
   const bases = [
-    String(baseUrl || '')
-      .trim()
-      .replace(/\/+$/, ''),
+    (baseUrl || '').trim().replace(/\/+$/, ''),
     'https://cw-pid-qylyewlgca-uc.a.run.app',
   ].filter(Boolean);
 
@@ -789,7 +781,7 @@ function collectSectionImageGroups(payload: any, baseUrl: string): Record<string
   };
 
   const addImageGroup = (sectionName: string, rawPath: string) => {
-    const path = String(rawPath || '').trim();
+    const path = (rawPath || '').trim();
     if (!path) return;
     const candidates = new Set<string>();
     makeAbsoluteCandidates(path, baseUrl).forEach(url => candidates.add(url));
@@ -815,20 +807,25 @@ function collectSectionImageGroups(payload: any, baseUrl: string): Record<string
     if (typeof node !== 'object') return;
 
     const obj = node as Record<string, unknown>;
+    const toStr = (v: unknown): string => {
+      if (typeof v === 'string') return v;
+      if (typeof v === 'number' || typeof v === 'boolean') return String(v);
+      return '';
+    };
     const derivedSection =
       normalizeSectionName(String(obj?.translations && (obj.translations as any)?.en)) ||
-      normalizeSectionName(String(obj?.component_name || obj?.name || sectionHint));
+      normalizeSectionName(toStr(obj?.component_name) || toStr(obj?.name) || sectionHint);
 
     const sectionFromPath = sectionFromImageName(
-      String(obj?.file_path || obj?.name || obj?.url || '')
+      toStr(obj?.file_path) || toStr(obj?.name) || toStr(obj?.url)
     );
     const sectionName = normalizeSectionName(
       sectionFromPath || derivedSection || sectionHint || 'General'
     );
 
-    const filePath = String(obj?.file_path || '').trim();
-    const url = String(obj?.url || '').trim();
-    const name = String(obj?.name || '').trim();
+    const filePath = toStr(obj?.file_path).trim();
+    const url = toStr(obj?.url).trim();
+    const name = toStr(obj?.name).trim();
     if (filePath && isLikelyImagePath(filePath)) addImageGroup(sectionName, filePath);
     if (url && isLikelyImagePath(url)) addImageGroup(sectionName, url);
     if (!filePath && !url && name && isLikelyImagePath(name)) addImageGroup(sectionName, name);
@@ -878,9 +875,7 @@ function mergeSectionImageGroups(
 }
 
 function imageKeyFromUrl(url: string): string {
-  const clean = String(url || '')
-    .split('?')[0]
-    .split('#')[0];
+  const clean = (url || '').split('?')[0].split('#')[0];
   const parts = clean
     .split('/')
     .filter(Boolean)
@@ -1002,12 +997,8 @@ function extractRowsFromQcNode(node: any, contextSectionName: string, out: Impor
 }
 
 function makeViewIdFromUrl(url: string, fallbackPrefix = 'cw-photo'): string {
-  const raw = String(url || '')
-    .split('?')[0]
-    .split('#')[0]
-    .split('/')
-    .pop();
-  const stem = String(raw || fallbackPrefix).replace(/\.[a-z0-9]+$/i, '');
+  const raw = (url || '').split('?')[0].split('#')[0].split('/').pop();
+  const stem = (raw || fallbackPrefix).replace(/\.[a-z0-9]+$/i, '');
   const slug = stem
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
@@ -1161,6 +1152,7 @@ function createModal(): HTMLElement {
   const body = document.createElement('div');
   body.className = 'cw-import-body';
   body.innerHTML = `
+    <form class="cw-import-form" novalidate>
     <div class="cw-grid">
       <div>
         <label for="cwBaseUrl">CW Base URL</label>
@@ -1254,63 +1246,69 @@ function createModal(): HTMLElement {
       <div class="cw-measure-head"><div>Item / Source Label</div><div>Section</div><div>Value</div><div>Map to Stroke Label</div><div>Actions</div></div>
       <div id="cwRows"></div>
     </div>
+    </form>
   `;
 
-  const searchBtn = body.querySelector('#cwSearchBtn') as HTMLButtonElement;
-  const addSelectedBtn = body.querySelector('#cwAddSelectedBtn') as HTMLButtonElement;
-  const loadSelectedBtn = body.querySelector('#cwLoadSelectedBtn') as HTMLButtonElement;
-  const baseUrlEl = body.querySelector('#cwBaseUrl') as HTMLInputElement;
-  const formIdEl = body.querySelector('#cwFormId') as HTMLInputElement;
-  const usernameEl = body.querySelector('#cwUsername') as HTMLInputElement;
-  const passwordEl = body.querySelector('#cwPassword') as HTMLInputElement;
-  const searchTermEl = body.querySelector('#cwSearchTerm') as HTMLInputElement;
-  const renderedHtmlEl = body.querySelector('#cwRenderedHtml') as HTMLTextAreaElement;
-  const importExactBtn = body.querySelector('#cwImportExactBtn') as HTMLButtonElement;
-  const importPhotosBtn = body.querySelector('#cwImportPhotosBtn') as HTMLButtonElement;
-  const itemFilterEl = body.querySelector('#cwItemFilter') as HTMLSelectElement;
-  const sectionFilterEl = body.querySelector('#cwSectionFilter') as HTMLSelectElement;
-  const selectVisibleImagesBtn = body.querySelector(
+  const searchBtn = body.querySelector<HTMLButtonElement>('#cwSearchBtn')!;
+  const importForm = body.querySelector('.cw-import-form') as HTMLFormElement | null;
+  const addSelectedBtn = body.querySelector<HTMLButtonElement>('#cwAddSelectedBtn')!;
+  const loadSelectedBtn = body.querySelector<HTMLButtonElement>('#cwLoadSelectedBtn')!;
+  const baseUrlEl = body.querySelector<HTMLInputElement>('#cwBaseUrl')!;
+  const formIdEl = body.querySelector<HTMLInputElement>('#cwFormId')!;
+  const usernameEl = body.querySelector<HTMLInputElement>('#cwUsername')!;
+  const passwordEl = body.querySelector<HTMLInputElement>('#cwPassword')!;
+  const searchTermEl = body.querySelector<HTMLInputElement>('#cwSearchTerm')!;
+  const renderedHtmlEl = body.querySelector<HTMLTextAreaElement>('#cwRenderedHtml')!;
+  const importExactBtn = body.querySelector<HTMLButtonElement>('#cwImportExactBtn')!;
+  const importPhotosBtn = body.querySelector<HTMLButtonElement>('#cwImportPhotosBtn')!;
+  const itemFilterEl = body.querySelector<HTMLSelectElement>('#cwItemFilter')!;
+  const sectionFilterEl = body.querySelector<HTMLSelectElement>('#cwSectionFilter')!;
+  const selectVisibleImagesBtn = body.querySelector<HTMLButtonElement>(
     '#cwSelectVisibleImagesBtn'
-  ) as HTMLButtonElement;
-  const clearVisibleImagesBtn = body.querySelector('#cwClearVisibleImagesBtn') as HTMLButtonElement;
-  const searchResultsWrap = body.querySelector('#cwSearchResults') as HTMLDivElement;
-  const basketWrap = body.querySelector('#cwBasket') as HTMLDivElement;
-  const loadedItemsWrap = body.querySelector('#cwLoadedItems') as HTMLDivElement;
-  const resultsMeta = body.querySelector('#cwResultsMeta') as HTMLSpanElement;
-  const basketMeta = body.querySelector('#cwBasketMeta') as HTMLSpanElement;
-  const loadedMeta = body.querySelector('#cwLoadedMeta') as HTMLSpanElement;
-  const rowsContainer = body.querySelector('#cwRows') as HTMLDivElement;
-  const resultMeta = body.querySelector('#cwResultMeta') as HTMLDivElement;
-  const imagesWrap = body.querySelector('#cwResultImages') as HTMLDivElement;
-  const lockedEl = body.querySelector('#cwImportLocked') as HTMLInputElement;
-  const probePanel = body.querySelector('#cwProbePanel') as HTMLDivElement;
-  const probeEnabledEl = body.querySelector('#cwProbeEnabled') as HTMLInputElement;
-  const runProbeBtn = body.querySelector('#cwRunProbeBtn') as HTMLButtonElement;
-  const runBulkProbeBtn = body.querySelector('#cwRunBulkProbeBtn') as HTMLButtonElement;
-  const runStagedProbeBtn = body.querySelector('#cwRunStagedProbeBtn') as HTMLButtonElement;
-  const runTurboStagedProbeBtn = body.querySelector(
+  )!;
+  const clearVisibleImagesBtn = body.querySelector<HTMLButtonElement>('#cwClearVisibleImagesBtn')!;
+  const searchResultsWrap = body.querySelector<HTMLDivElement>('#cwSearchResults')!;
+  const basketWrap = body.querySelector<HTMLDivElement>('#cwBasket')!;
+  const loadedItemsWrap = body.querySelector<HTMLDivElement>('#cwLoadedItems')!;
+  const resultsMeta = body.querySelector<HTMLSpanElement>('#cwResultsMeta')!;
+  const basketMeta = body.querySelector<HTMLSpanElement>('#cwBasketMeta')!;
+  const loadedMeta = body.querySelector<HTMLSpanElement>('#cwLoadedMeta')!;
+  const rowsContainer = body.querySelector<HTMLDivElement>('#cwRows')!;
+  const resultMeta = body.querySelector<HTMLDivElement>('#cwResultMeta')!;
+  const imagesWrap = body.querySelector<HTMLDivElement>('#cwResultImages')!;
+  const lockedEl = body.querySelector<HTMLInputElement>('#cwImportLocked')!;
+  const probePanel = body.querySelector<HTMLDivElement>('#cwProbePanel')!;
+  const probeEnabledEl = body.querySelector<HTMLInputElement>('#cwProbeEnabled')!;
+  const runProbeBtn = body.querySelector<HTMLButtonElement>('#cwRunProbeBtn')!;
+  const runBulkProbeBtn = body.querySelector<HTMLButtonElement>('#cwRunBulkProbeBtn')!;
+  const runStagedProbeBtn = body.querySelector<HTMLButtonElement>('#cwRunStagedProbeBtn')!;
+  const runTurboStagedProbeBtn = body.querySelector<HTMLButtonElement>(
     '#cwRunTurboStagedProbeBtn'
-  ) as HTMLButtonElement;
-  const copyProbeBtn = body.querySelector('#cwCopyProbeBtn') as HTMLButtonElement;
-  const loadProbeTermsBtn = body.querySelector('#cwLoadProbeTermsBtn') as HTMLButtonElement;
-  const probeTermsFileEl = body.querySelector('#cwProbeTermsFile') as HTMLInputElement;
-  const probeTermsPathEl = body.querySelector('#cwProbeTermsPath') as HTMLInputElement;
-  const probeTermsEl = body.querySelector('#cwProbeTerms') as HTMLTextAreaElement;
-  const probeSummary = body.querySelector('#cwProbeSummary') as HTMLDivElement;
-  const probeOutput = body.querySelector('#cwProbeOutput') as HTMLPreElement;
+  )!;
+  const copyProbeBtn = body.querySelector<HTMLButtonElement>('#cwCopyProbeBtn')!;
+  const loadProbeTermsBtn = body.querySelector<HTMLButtonElement>('#cwLoadProbeTermsBtn')!;
+  const probeTermsFileEl = body.querySelector<HTMLInputElement>('#cwProbeTermsFile')!;
+  const probeTermsPathEl = body.querySelector<HTMLInputElement>('#cwProbeTermsPath')!;
+  const probeTermsEl = body.querySelector<HTMLTextAreaElement>('#cwProbeTerms')!;
+  const probeSummary = body.querySelector<HTMLDivElement>('#cwProbeSummary')!;
+  const probeOutput = body.querySelector<HTMLPreElement>('#cwProbeOutput')!;
   const probeModeAvailable = isCwProbePreviewEnabled();
   let lastProbeReport: Record<string, unknown> | null = null;
 
+  importForm?.addEventListener('submit', event => {
+    event.preventDefault();
+  });
+
   const persistUiState = () => {
     writePersistedCwUiState({
-      baseUrl: String(baseUrlEl?.value || '').trim(),
-      formId: String(formIdEl?.value || '').trim(),
-      username: String(usernameEl?.value || '').trim(),
-      password: String(passwordEl?.value || ''),
-      searchTerm: String(searchTermEl?.value || '').trim(),
-      probeTerms: String(probeTermsEl?.value || ''),
-      probeTermsPath: String(probeTermsPathEl?.value || '').trim(),
-      probeEnabled: Boolean(probeEnabledEl?.checked),
+      baseUrl: (baseUrlEl?.value || '').trim(),
+      formId: (formIdEl?.value || '').trim(),
+      username: (usernameEl?.value || '').trim(),
+      password: passwordEl?.value || '',
+      searchTerm: (searchTermEl?.value || '').trim(),
+      probeTerms: probeTermsEl?.value || '',
+      probeTermsPath: (probeTermsPathEl?.value || '').trim(),
+      probeEnabled: probeEnabledEl?.checked ?? false,
       lastProbeReport,
     });
   };
@@ -1405,12 +1403,12 @@ function createModal(): HTMLElement {
     contentType: string;
     jsonParseError: string | null;
   }> => {
-    const baseUrl = String(baseUrlEl?.value || '').trim();
-    const formId = String(formIdEl?.value || '').trim();
-    const username = String(usernameEl?.value || '').trim();
-    const password = String(passwordEl?.value || '');
-    const renderedHtml = String(renderedHtmlEl?.value || '');
-    const activeStyleKey = String(activeStyleKeyOverride || '').trim();
+    const baseUrl = (baseUrlEl?.value || '').trim();
+    const formId = (formIdEl?.value || '').trim();
+    const username = (usernameEl?.value || '').trim();
+    const password = passwordEl?.value || '';
+    const renderedHtml = renderedHtmlEl?.value || '';
+    const activeStyleKey = (activeStyleKeyOverride || '').trim();
     const activeStyle = parseStyleKey(activeStyleKey);
 
     const response = await fetch('/api/integrations/cw/measurements/search', {
@@ -1444,7 +1442,7 @@ function createModal(): HTMLElement {
       }),
     });
     const rawText = await response.text().catch(() => '');
-    const contentType = String(response.headers.get('content-type') || '');
+    const contentType = response.headers.get('content-type') || '';
     let data: any = null;
     let jsonParseError: string | null = null;
     try {
@@ -1481,10 +1479,10 @@ function createModal(): HTMLElement {
     if (!item.productReference || !styleOption) return null;
     const versionOption =
       item.versionOptions.find(option => option.code === item.selectedVersionCode) || null;
-    const versionCode = String(versionOption?.code || item.selectedVersionCode || '').trim();
-    const versionLabel = String(versionOption?.label || '').trim();
+    const versionCode = (versionOption?.code || item.selectedVersionCode || '').trim();
+    const versionLabel = (versionOption?.label || '').trim();
     const scopedReference =
-      String(versionOption?.scopedReference || '').trim() ||
+      (versionOption?.scopedReference || '').trim() ||
       getScopedReference(item.productReference, versionCode);
     return {
       selectionKey: makeSelectionKey(
@@ -1493,7 +1491,7 @@ function createModal(): HTMLElement {
         styleOption.style,
         styleOption.styleCode
       ),
-      search: String(searchTermEl?.value || '').trim(),
+      search: (searchTermEl?.value || '').trim(),
       productReference: item.productReference,
       productName: item.productName,
       versionCode,
@@ -1694,9 +1692,7 @@ function createModal(): HTMLElement {
         versionSelect.appendChild(optionEl);
       });
       versionSelect.addEventListener('change', () => {
-        item.selectedVersionCode = String(versionSelect.value || '')
-          .trim()
-          .toUpperCase();
+        item.selectedVersionCode = (versionSelect.value || '').trim().toUpperCase();
       });
       versionWrap.appendChild(versionLabel);
       versionWrap.appendChild(versionSelect);
@@ -1714,7 +1710,7 @@ function createModal(): HTMLElement {
         styleSelect.appendChild(optionEl);
       });
       styleSelect.addEventListener('change', () => {
-        item.selectedStyleKey = String(styleSelect.value || '').trim();
+        item.selectedStyleKey = (styleSelect.value || '').trim();
       });
       styleWrap.appendChild(styleLabel);
       styleWrap.appendChild(styleSelect);
@@ -1783,7 +1779,7 @@ function createModal(): HTMLElement {
     });
     state.selectedImageKeys = Array.from(selectedSet);
     imagesWrap.querySelectorAll<HTMLElement>('.cw-image-card').forEach(card => {
-      const key = String(card.dataset.selectionImageKey || '');
+      const key = card.dataset.selectionImageKey || '';
       const toggle = card.querySelector<HTMLElement>('.cw-image-toggle');
       const toggleInput = card.querySelector<HTMLInputElement>('.cw-image-toggle-input');
       if (!key || !toggle || !visibleKeys.includes(key)) return;
@@ -1859,7 +1855,7 @@ function createModal(): HTMLElement {
       input.placeholder = guessedLabel ? `Suggested: ${guessedLabel}` : 'MOS label (A1, A2, A3...)';
       input.value = state.rowTargetLabels[row.rowKey] || guessedLabel;
       input.addEventListener('input', () => {
-        state.rowTargetLabels[row.rowKey] = String(input.value || '').trim();
+        state.rowTargetLabels[row.rowKey] = (input.value || '').trim();
       });
 
       const actionWrap = document.createElement('div');
@@ -1872,7 +1868,7 @@ function createModal(): HTMLElement {
       applyBtn.className = 'cw-btn';
       applyBtn.textContent = 'Assign Now';
       applyBtn.addEventListener('click', () => {
-        const targetLabel = resolveRowTargetLabel(row, String(input.value || '').trim());
+        const targetLabel = resolveRowTargetLabel(row, (input.value || '').trim());
         if (!targetLabel) return;
         applyMeasurement(
           getCurrentScopeLabel(),
@@ -1928,9 +1924,9 @@ function createModal(): HTMLElement {
 
     rows.forEach(row => {
       const guessed = guessMosLabel(row.sourceLabel, row.sectionName || sectionName || '');
-      const configured = String(state.rowTargetLabels[row.rowKey] || '').trim();
+      const configured = (state.rowTargetLabels[row.rowKey] || '').trim();
       const targetLabel = normalizeGuideLabel(configured || guessed || row.sourceLabel);
-      const value = String(row.value || '').trim();
+      const value = (row.value || '').trim();
       if (!targetLabel || !/^[A-Z](?:\d+)?$/.test(targetLabel) || !value) return;
 
       if (!seenRoles.has(targetLabel)) {
@@ -1986,9 +1982,9 @@ function createModal(): HTMLElement {
 
   const renderImages = () => {
     imagesWrap.innerHTML = '';
-    const baseUrl = String(baseUrlEl?.value || '').trim();
-    const username = String(usernameEl?.value || '').trim();
-    const password = String(passwordEl?.value || '');
+    const baseUrl = (baseUrlEl?.value || '').trim();
+    const username = (usernameEl?.value || '').trim();
+    const password = passwordEl?.value || '';
     const entries = allImageEntries().slice(0, 24);
 
     entries.forEach(entry => {
@@ -2125,11 +2121,11 @@ function createModal(): HTMLElement {
   };
 
   const getProbeTerms = (): string[] => {
-    const seeded = String(probeTermsEl?.value || '')
+    const seeded = (probeTermsEl?.value || '')
       .split(/\r?\n|,|;/)
       .map(item => item.trim())
       .filter(Boolean);
-    const fallbackSearch = String(searchTermEl?.value || '').trim();
+    const fallbackSearch = (searchTermEl?.value || '').trim();
     return Array.from(new Set(seeded.length ? seeded : fallbackSearch ? [fallbackSearch] : []));
   };
 
@@ -2155,18 +2151,18 @@ function createModal(): HTMLElement {
     averageDurationMs: number;
     finalConcurrency: number;
   }> => {
-    const minConcurrency = Math.max(1, Number(options.minConcurrency || PROBE_MIN_CONCURRENCY));
+    const minConcurrency = Math.max(1, options.minConcurrency || PROBE_MIN_CONCURRENCY);
     const maxConcurrency = Math.max(
       minConcurrency,
-      Number(options.maxConcurrency || PROBE_MAX_CONCURRENCY)
+      options.maxConcurrency || PROBE_MAX_CONCURRENCY
     );
     let concurrency = Math.min(
       maxConcurrency,
-      Math.max(minConcurrency, Number(options.initialConcurrency || PROBE_DEFAULT_CONCURRENCY))
+      Math.max(minConcurrency, options.initialConcurrency || PROBE_DEFAULT_CONCURRENCY)
     );
     const adaptiveConcurrency = options.adaptiveConcurrency !== false;
 
-    const reportEntries: Array<Record<string, unknown>> = new Array(terms.length);
+    const reportEntries = new Array<Record<string, unknown>>(terms.length);
     let transportSuccessCount = 0;
     let measurementHitCount = 0;
     let nonJsonCount = 0;
@@ -2319,10 +2315,10 @@ function createModal(): HTMLElement {
           row.sectionName || row.sourceLabel
         ),
       }));
-      const imageCandidates = extractImageUrls(payload, String(baseUrlEl?.value || '').trim());
+      const imageCandidates = extractImageUrls(payload, (baseUrlEl?.value || '').trim());
       const imageCandidateGroups = groupImageCandidates(imageCandidates);
       const sectionImageGroups = mergeSectionImageGroups(
-        collectSectionImageGroups(payload, String(baseUrlEl?.value || '').trim()),
+        collectSectionImageGroups(payload, (baseUrlEl?.value || '').trim()),
         imageCandidateGroups
       );
       const imageUrls = Array.isArray(imageCandidates)
@@ -2376,7 +2372,7 @@ function createModal(): HTMLElement {
   };
 
   const runSearch = async () => {
-    const search = String(searchTermEl?.value || '').trim();
+    const search = (searchTermEl?.value || '').trim();
 
     if (!search) {
       setStatus('Enter a product search term.', 'bad');
@@ -2512,7 +2508,7 @@ function createModal(): HTMLElement {
     setStatus(`Loading ${nextBasket.length} basket item${nextBasket.length === 1 ? '' : 's'}...`);
     try {
       const { response, data } = await requestSearchPayload(
-        String(searchTermEl?.value || '').trim(),
+        (searchTermEl?.value || '').trim(),
         '',
         { phase: 'load-selected', selectedItems: nextBasket }
       );
@@ -2560,103 +2556,26 @@ function createModal(): HTMLElement {
   }
 
   if (runBulkProbeBtn) {
-    runBulkProbeBtn.addEventListener('click', async () => {
-      if (!probeModeAvailable) return;
-      if (!probeEnabledEl?.checked) {
-        probeEnabledEl.checked = true;
-        persistUiState();
-      }
+    runBulkProbeBtn.addEventListener('click', () => {
+      void (async () => {
+        if (!probeModeAvailable) return;
+        if (!probeEnabledEl?.checked) {
+          probeEnabledEl.checked = true;
+          persistUiState();
+        }
 
-      const terms = getProbeTerms();
+        const terms = getProbeTerms();
 
-      if (!terms.length) {
-        setStatus('Add probe terms (one per line) or set Product search first.', 'bad');
-        return;
-      }
+        if (!terms.length) {
+          setStatus('Add probe terms (one per line) or set Product search first.', 'bad');
+          return;
+        }
 
-      setProbeButtonsDisabled(true);
-      setStatus(`Running bulk probe for ${terms.length} term(s)...`);
+        setProbeButtonsDisabled(true);
+        setStatus(`Running bulk probe for ${terms.length} term(s)...`);
 
-      try {
-        const stage = await runProbeTerms(terms, 'Bulk probe', {
-          initialConcurrency: PROBE_DEFAULT_CONCURRENCY,
-          adaptiveConcurrency: true,
-          minConcurrency: PROBE_MIN_CONCURRENCY,
-          maxConcurrency: PROBE_MAX_CONCURRENCY,
-          probeMode: 'default',
-        });
-
-        lastProbeReport = {
-          at: new Date().toISOString(),
-          mode: 'bulk-probe',
-          totalTerms: terms.length,
-          successCount: stage.transportSuccessCount,
-          transportSuccessCount: stage.transportSuccessCount,
-          measurementHitCount: stage.measurementHitCount,
-          measurementMissCount: stage.measurementMissCount,
-          failureCount: terms.length - stage.transportSuccessCount,
-          nonJsonCount: stage.nonJsonCount,
-          averageDurationMs: stage.averageDurationMs,
-          finalConcurrency: stage.finalConcurrency,
-          terms,
-          entries: stage.entries,
-        };
-        persistUiState();
-        renderProbeReport();
-        setStatus(
-          `Bulk probe complete: transport ${stage.transportSuccessCount}/${terms.length}, QC hits ${stage.measurementHitCount}/${terms.length}, avg ${stage.averageDurationMs}ms.`,
-          stage.measurementHitCount > 0 ? 'ok' : stage.transportSuccessCount > 0 ? 'info' : 'bad'
-        );
-      } finally {
-        setProbeButtonsDisabled(false);
-      }
-    });
-  }
-
-  if (runStagedProbeBtn) {
-    runStagedProbeBtn.addEventListener('click', async () => {
-      if (!probeModeAvailable) return;
-      if (!probeEnabledEl?.checked) {
-        probeEnabledEl.checked = true;
-        persistUiState();
-      }
-
-      const terms = getProbeTerms();
-      if (!terms.length) {
-        setStatus('Add probe terms (one per line) or set Product search first.', 'bad');
-        return;
-      }
-
-      const stagePlan = [
-        { name: 'pilot', size: STAGED_PROBE_BATCH_SIZES[0] },
-        { name: 'medium', size: STAGED_PROBE_BATCH_SIZES[1] },
-      ];
-
-      setProbeButtonsDisabled(true);
-      setStatus(`Running staged probe for ${terms.length} term(s)...`);
-
-      const allEntries: Array<Record<string, unknown>> = [];
-      const stageReports: Array<Record<string, unknown>> = [];
-      let totalTransportSuccess = 0;
-      let totalMeasurementHits = 0;
-      let totalNonJson = 0;
-      let totalDurationMs = 0;
-      let totalDurationSamples = 0;
-      let cursor = 0;
-      let halted = false;
-      let haltReason = '';
-
-      try {
-        for (let stageIndex = 0; stageIndex < stagePlan.length + 1; stageIndex += 1) {
-          const stageName = stageIndex < stagePlan.length ? stagePlan[stageIndex].name : 'full';
-          const stageSize =
-            stageIndex < stagePlan.length
-              ? Math.min(stagePlan[stageIndex].size, Math.max(terms.length - cursor, 0))
-              : Math.max(terms.length - cursor, 0);
-          if (stageSize <= 0) continue;
-
-          const stageTerms = terms.slice(cursor, cursor + stageSize);
-          const stage = await runProbeTerms(stageTerms, `Stage ${stageIndex + 1} (${stageName})`, {
+        try {
+          const stage = await runProbeTerms(terms, 'Bulk probe', {
             initialConcurrency: PROBE_DEFAULT_CONCURRENCY,
             adaptiveConcurrency: true,
             minConcurrency: PROBE_MIN_CONCURRENCY,
@@ -2664,41 +2583,161 @@ function createModal(): HTMLElement {
             probeMode: 'default',
           });
 
-          const failureCount = stageTerms.length - stage.transportSuccessCount;
-          const failureRate = stageTerms.length ? failureCount / stageTerms.length : 0;
-          const measurementHitRate = stageTerms.length
-            ? stage.measurementHitCount / stageTerms.length
-            : 0;
-          const transportSuccessRate = stageTerms.length
-            ? stage.transportSuccessCount / stageTerms.length
-            : 0;
-
-          allEntries.push(...stage.entries);
-          stageReports.push({
-            stageIndex: stageIndex + 1,
-            stage: stageName,
-            startOffset: cursor,
-            termCount: stageTerms.length,
+          lastProbeReport = {
+            at: new Date().toISOString(),
+            mode: 'bulk-probe',
+            totalTerms: terms.length,
             successCount: stage.transportSuccessCount,
             transportSuccessCount: stage.transportSuccessCount,
-            failureCount,
-            transportSuccessRate,
             measurementHitCount: stage.measurementHitCount,
             measurementMissCount: stage.measurementMissCount,
-            measurementHitRate,
+            failureCount: terms.length - stage.transportSuccessCount,
             nonJsonCount: stage.nonJsonCount,
             averageDurationMs: stage.averageDurationMs,
-            failureRate,
             finalConcurrency: stage.finalConcurrency,
-          });
-          totalTransportSuccess += stage.transportSuccessCount;
-          totalMeasurementHits += stage.measurementHitCount;
-          totalNonJson += stage.nonJsonCount;
-          if (stage.averageDurationMs > 0) {
-            totalDurationMs += stage.averageDurationMs * stageTerms.length;
-            totalDurationSamples += stageTerms.length;
+            terms,
+            entries: stage.entries,
+          };
+          persistUiState();
+          renderProbeReport();
+          setStatus(
+            `Bulk probe complete: transport ${stage.transportSuccessCount}/${terms.length}, QC hits ${stage.measurementHitCount}/${terms.length}, avg ${stage.averageDurationMs}ms.`,
+            stage.measurementHitCount > 0 ? 'ok' : stage.transportSuccessCount > 0 ? 'info' : 'bad'
+          );
+        } finally {
+          setProbeButtonsDisabled(false);
+        }
+      })();
+    });
+  }
+
+  if (runStagedProbeBtn) {
+    runStagedProbeBtn.addEventListener('click', () => {
+      void (async () => {
+        if (!probeModeAvailable) return;
+        if (!probeEnabledEl?.checked) {
+          probeEnabledEl.checked = true;
+          persistUiState();
+        }
+
+        const terms = getProbeTerms();
+        if (!terms.length) {
+          setStatus('Add probe terms (one per line) or set Product search first.', 'bad');
+          return;
+        }
+
+        const stagePlan = [
+          { name: 'pilot', size: STAGED_PROBE_BATCH_SIZES[0] },
+          { name: 'medium', size: STAGED_PROBE_BATCH_SIZES[1] },
+        ];
+
+        setProbeButtonsDisabled(true);
+        setStatus(`Running staged probe for ${terms.length} term(s)...`);
+
+        const allEntries: Array<Record<string, unknown>> = [];
+        const stageReports: Array<Record<string, unknown>> = [];
+        let totalTransportSuccess = 0;
+        let totalMeasurementHits = 0;
+        let totalNonJson = 0;
+        let totalDurationMs = 0;
+        let totalDurationSamples = 0;
+        let cursor = 0;
+        let halted = false;
+        let haltReason = '';
+
+        try {
+          for (let stageIndex = 0; stageIndex < stagePlan.length + 1; stageIndex += 1) {
+            const stageName = stageIndex < stagePlan.length ? stagePlan[stageIndex].name : 'full';
+            const stageSize =
+              stageIndex < stagePlan.length
+                ? Math.min(stagePlan[stageIndex].size, Math.max(terms.length - cursor, 0))
+                : Math.max(terms.length - cursor, 0);
+            if (stageSize <= 0) continue;
+
+            const stageTerms = terms.slice(cursor, cursor + stageSize);
+            const stage = await runProbeTerms(
+              stageTerms,
+              `Stage ${stageIndex + 1} (${stageName})`,
+              {
+                initialConcurrency: PROBE_DEFAULT_CONCURRENCY,
+                adaptiveConcurrency: true,
+                minConcurrency: PROBE_MIN_CONCURRENCY,
+                maxConcurrency: PROBE_MAX_CONCURRENCY,
+                probeMode: 'default',
+              }
+            );
+
+            const failureCount = stageTerms.length - stage.transportSuccessCount;
+            const failureRate = stageTerms.length ? failureCount / stageTerms.length : 0;
+            const measurementHitRate = stageTerms.length
+              ? stage.measurementHitCount / stageTerms.length
+              : 0;
+            const transportSuccessRate = stageTerms.length
+              ? stage.transportSuccessCount / stageTerms.length
+              : 0;
+
+            allEntries.push(...stage.entries);
+            stageReports.push({
+              stageIndex: stageIndex + 1,
+              stage: stageName,
+              startOffset: cursor,
+              termCount: stageTerms.length,
+              successCount: stage.transportSuccessCount,
+              transportSuccessCount: stage.transportSuccessCount,
+              failureCount,
+              transportSuccessRate,
+              measurementHitCount: stage.measurementHitCount,
+              measurementMissCount: stage.measurementMissCount,
+              measurementHitRate,
+              nonJsonCount: stage.nonJsonCount,
+              averageDurationMs: stage.averageDurationMs,
+              failureRate,
+              finalConcurrency: stage.finalConcurrency,
+            });
+            totalTransportSuccess += stage.transportSuccessCount;
+            totalMeasurementHits += stage.measurementHitCount;
+            totalNonJson += stage.nonJsonCount;
+            if (stage.averageDurationMs > 0) {
+              totalDurationMs += stage.averageDurationMs * stageTerms.length;
+              totalDurationSamples += stageTerms.length;
+            }
+            cursor += stageTerms.length;
+
+            lastProbeReport = {
+              at: new Date().toISOString(),
+              mode: 'staged-bulk-probe',
+              totalTerms: terms.length,
+              completedTerms: cursor,
+              successCount: totalTransportSuccess,
+              transportSuccessCount: totalTransportSuccess,
+              measurementHitCount: totalMeasurementHits,
+              measurementMissCount: totalTransportSuccess - totalMeasurementHits,
+              failureCount: cursor - totalTransportSuccess,
+              nonJsonCount: totalNonJson,
+              averageDurationMs:
+                totalDurationSamples > 0 ? Math.round(totalDurationMs / totalDurationSamples) : 0,
+              halted,
+              haltReason: haltReason || null,
+              stages: stageReports,
+              entries: allEntries,
+            };
+            persistUiState();
+            renderProbeReport();
+
+            if (stage.nonJsonCount >= STAGED_PROBE_NON_JSON_STOP_COUNT) {
+              halted = true;
+              haltReason = `Stopped after stage ${stageIndex + 1}: ${stage.nonJsonCount} non-JSON responses.`;
+              break;
+            }
+            if (failureRate > STAGED_PROBE_FAILURE_RATE_STOP) {
+              halted = true;
+              haltReason = `Stopped after stage ${stageIndex + 1}: failure rate ${(failureRate * 100).toFixed(1)}%.`;
+              break;
+            }
+            if (cursor < terms.length) {
+              await delay(350);
+            }
           }
-          cursor += stageTerms.length;
 
           lastProbeReport = {
             at: new Date().toISOString(),
@@ -2721,151 +2760,153 @@ function createModal(): HTMLElement {
           persistUiState();
           renderProbeReport();
 
-          if (stage.nonJsonCount >= STAGED_PROBE_NON_JSON_STOP_COUNT) {
-            halted = true;
-            haltReason = `Stopped after stage ${stageIndex + 1}: ${stage.nonJsonCount} non-JSON responses.`;
-            break;
+          if (halted) {
+            setStatus(
+              `Staged probe halted at ${cursor}/${terms.length}. ${haltReason}`,
+              cursor > 0 ? 'info' : 'bad'
+            );
+          } else {
+            const averageDurationMs =
+              totalDurationSamples > 0 ? Math.round(totalDurationMs / totalDurationSamples) : 0;
+            setStatus(
+              `Staged probe complete: transport ${totalTransportSuccess}/${terms.length}, QC hits ${totalMeasurementHits}/${terms.length}, avg ${averageDurationMs}ms.`,
+              totalMeasurementHits > 0 ? 'ok' : totalTransportSuccess > 0 ? 'info' : 'bad'
+            );
           }
-          if (failureRate > STAGED_PROBE_FAILURE_RATE_STOP) {
-            halted = true;
-            haltReason = `Stopped after stage ${stageIndex + 1}: failure rate ${(failureRate * 100).toFixed(1)}%.`;
-            break;
-          }
-          if (cursor < terms.length) {
-            await delay(350);
-          }
+        } finally {
+          setProbeButtonsDisabled(false);
         }
-
-        lastProbeReport = {
-          at: new Date().toISOString(),
-          mode: 'staged-bulk-probe',
-          totalTerms: terms.length,
-          completedTerms: cursor,
-          successCount: totalTransportSuccess,
-          transportSuccessCount: totalTransportSuccess,
-          measurementHitCount: totalMeasurementHits,
-          measurementMissCount: totalTransportSuccess - totalMeasurementHits,
-          failureCount: cursor - totalTransportSuccess,
-          nonJsonCount: totalNonJson,
-          averageDurationMs:
-            totalDurationSamples > 0 ? Math.round(totalDurationMs / totalDurationSamples) : 0,
-          halted,
-          haltReason: haltReason || null,
-          stages: stageReports,
-          entries: allEntries,
-        };
-        persistUiState();
-        renderProbeReport();
-
-        if (halted) {
-          setStatus(
-            `Staged probe halted at ${cursor}/${terms.length}. ${haltReason}`,
-            cursor > 0 ? 'info' : 'bad'
-          );
-        } else {
-          const averageDurationMs =
-            totalDurationSamples > 0 ? Math.round(totalDurationMs / totalDurationSamples) : 0;
-          setStatus(
-            `Staged probe complete: transport ${totalTransportSuccess}/${terms.length}, QC hits ${totalMeasurementHits}/${terms.length}, avg ${averageDurationMs}ms.`,
-            totalMeasurementHits > 0 ? 'ok' : totalTransportSuccess > 0 ? 'info' : 'bad'
-          );
-        }
-      } finally {
-        setProbeButtonsDisabled(false);
-      }
+      })();
     });
   }
 
   if (runTurboStagedProbeBtn) {
-    runTurboStagedProbeBtn.addEventListener('click', async () => {
-      if (!probeModeAvailable) return;
-      if (!probeEnabledEl?.checked) {
-        probeEnabledEl.checked = true;
-        persistUiState();
-      }
+    runTurboStagedProbeBtn.addEventListener('click', () => {
+      void (async () => {
+        if (!probeModeAvailable) return;
+        if (!probeEnabledEl?.checked) {
+          probeEnabledEl.checked = true;
+          persistUiState();
+        }
 
-      const terms = getProbeTerms();
-      if (!terms.length) {
-        setStatus('Add probe terms (one per line) or set Product search first.', 'bad');
-        return;
-      }
+        const terms = getProbeTerms();
+        if (!terms.length) {
+          setStatus('Add probe terms (one per line) or set Product search first.', 'bad');
+          return;
+        }
 
-      const stagePlan = [
-        { name: 'pilot', size: STAGED_PROBE_BATCH_SIZES[0] },
-        { name: 'medium', size: STAGED_PROBE_BATCH_SIZES[1] },
-      ];
+        const stagePlan = [
+          { name: 'pilot', size: STAGED_PROBE_BATCH_SIZES[0] },
+          { name: 'medium', size: STAGED_PROBE_BATCH_SIZES[1] },
+        ];
 
-      setProbeButtonsDisabled(true);
-      setStatus(`Running turbo staged probe for ${terms.length} term(s)...`);
+        setProbeButtonsDisabled(true);
+        setStatus(`Running turbo staged probe for ${terms.length} term(s)...`);
 
-      const allEntries: Array<Record<string, unknown>> = [];
-      const stageReports: Array<Record<string, unknown>> = [];
-      let totalTransportSuccess = 0;
-      let totalMeasurementHits = 0;
-      let totalNonJson = 0;
-      let totalDurationMs = 0;
-      let totalDurationSamples = 0;
-      let cursor = 0;
-      let halted = false;
-      let haltReason = '';
+        const allEntries: Array<Record<string, unknown>> = [];
+        const stageReports: Array<Record<string, unknown>> = [];
+        let totalTransportSuccess = 0;
+        let totalMeasurementHits = 0;
+        let totalNonJson = 0;
+        let totalDurationMs = 0;
+        let totalDurationSamples = 0;
+        let cursor = 0;
+        let halted = false;
+        let haltReason = '';
 
-      try {
-        for (let stageIndex = 0; stageIndex < stagePlan.length + 1; stageIndex += 1) {
-          const stageName = stageIndex < stagePlan.length ? stagePlan[stageIndex].name : 'full';
-          const stageSize =
-            stageIndex < stagePlan.length
-              ? Math.min(stagePlan[stageIndex].size, Math.max(terms.length - cursor, 0))
-              : Math.max(terms.length - cursor, 0);
-          if (stageSize <= 0) continue;
+        try {
+          for (let stageIndex = 0; stageIndex < stagePlan.length + 1; stageIndex += 1) {
+            const stageName = stageIndex < stagePlan.length ? stagePlan[stageIndex].name : 'full';
+            const stageSize =
+              stageIndex < stagePlan.length
+                ? Math.min(stagePlan[stageIndex].size, Math.max(terms.length - cursor, 0))
+                : Math.max(terms.length - cursor, 0);
+            if (stageSize <= 0) continue;
 
-          const stageTerms = terms.slice(cursor, cursor + stageSize);
-          const stage = await runProbeTerms(
-            stageTerms,
-            `Turbo Stage ${stageIndex + 1} (${stageName})`,
-            {
-              initialConcurrency: PROBE_TURBO_DEFAULT_CONCURRENCY,
-              adaptiveConcurrency: true,
-              minConcurrency: PROBE_TURBO_MIN_CONCURRENCY,
-              maxConcurrency: PROBE_TURBO_MAX_CONCURRENCY,
-              probeMode: 'turbo',
+            const stageTerms = terms.slice(cursor, cursor + stageSize);
+            const stage = await runProbeTerms(
+              stageTerms,
+              `Turbo Stage ${stageIndex + 1} (${stageName})`,
+              {
+                initialConcurrency: PROBE_TURBO_DEFAULT_CONCURRENCY,
+                adaptiveConcurrency: true,
+                minConcurrency: PROBE_TURBO_MIN_CONCURRENCY,
+                maxConcurrency: PROBE_TURBO_MAX_CONCURRENCY,
+                probeMode: 'turbo',
+              }
+            );
+
+            const failureCount = stageTerms.length - stage.transportSuccessCount;
+            const failureRate = stageTerms.length ? failureCount / stageTerms.length : 0;
+            const measurementHitRate = stageTerms.length
+              ? stage.measurementHitCount / stageTerms.length
+              : 0;
+            const transportSuccessRate = stageTerms.length
+              ? stage.transportSuccessCount / stageTerms.length
+              : 0;
+
+            allEntries.push(...stage.entries);
+            stageReports.push({
+              stageIndex: stageIndex + 1,
+              stage: stageName,
+              startOffset: cursor,
+              termCount: stageTerms.length,
+              successCount: stage.transportSuccessCount,
+              transportSuccessCount: stage.transportSuccessCount,
+              failureCount,
+              transportSuccessRate,
+              measurementHitCount: stage.measurementHitCount,
+              measurementMissCount: stage.measurementMissCount,
+              measurementHitRate,
+              nonJsonCount: stage.nonJsonCount,
+              averageDurationMs: stage.averageDurationMs,
+              failureRate,
+              finalConcurrency: stage.finalConcurrency,
+            });
+            totalTransportSuccess += stage.transportSuccessCount;
+            totalMeasurementHits += stage.measurementHitCount;
+            totalNonJson += stage.nonJsonCount;
+            if (stage.averageDurationMs > 0) {
+              totalDurationMs += stage.averageDurationMs * stageTerms.length;
+              totalDurationSamples += stageTerms.length;
             }
-          );
+            cursor += stageTerms.length;
 
-          const failureCount = stageTerms.length - stage.transportSuccessCount;
-          const failureRate = stageTerms.length ? failureCount / stageTerms.length : 0;
-          const measurementHitRate = stageTerms.length
-            ? stage.measurementHitCount / stageTerms.length
-            : 0;
-          const transportSuccessRate = stageTerms.length
-            ? stage.transportSuccessCount / stageTerms.length
-            : 0;
+            lastProbeReport = {
+              at: new Date().toISOString(),
+              mode: 'turbo-staged-bulk-probe',
+              totalTerms: terms.length,
+              completedTerms: cursor,
+              successCount: totalTransportSuccess,
+              transportSuccessCount: totalTransportSuccess,
+              measurementHitCount: totalMeasurementHits,
+              measurementMissCount: totalTransportSuccess - totalMeasurementHits,
+              failureCount: cursor - totalTransportSuccess,
+              nonJsonCount: totalNonJson,
+              averageDurationMs:
+                totalDurationSamples > 0 ? Math.round(totalDurationMs / totalDurationSamples) : 0,
+              halted,
+              haltReason: haltReason || null,
+              stages: stageReports,
+              entries: allEntries,
+            };
+            persistUiState();
+            renderProbeReport();
 
-          allEntries.push(...stage.entries);
-          stageReports.push({
-            stageIndex: stageIndex + 1,
-            stage: stageName,
-            startOffset: cursor,
-            termCount: stageTerms.length,
-            successCount: stage.transportSuccessCount,
-            transportSuccessCount: stage.transportSuccessCount,
-            failureCount,
-            transportSuccessRate,
-            measurementHitCount: stage.measurementHitCount,
-            measurementMissCount: stage.measurementMissCount,
-            measurementHitRate,
-            nonJsonCount: stage.nonJsonCount,
-            averageDurationMs: stage.averageDurationMs,
-            failureRate,
-            finalConcurrency: stage.finalConcurrency,
-          });
-          totalTransportSuccess += stage.transportSuccessCount;
-          totalMeasurementHits += stage.measurementHitCount;
-          totalNonJson += stage.nonJsonCount;
-          if (stage.averageDurationMs > 0) {
-            totalDurationMs += stage.averageDurationMs * stageTerms.length;
-            totalDurationSamples += stageTerms.length;
+            if (stage.nonJsonCount >= STAGED_PROBE_NON_JSON_STOP_COUNT) {
+              halted = true;
+              haltReason = `Stopped after turbo stage ${stageIndex + 1}: ${stage.nonJsonCount} non-JSON responses.`;
+              break;
+            }
+            if (failureRate > STAGED_PROBE_FAILURE_RATE_STOP) {
+              halted = true;
+              haltReason = `Stopped after turbo stage ${stageIndex + 1}: failure rate ${(failureRate * 100).toFixed(1)}%.`;
+              break;
+            }
+            if (cursor < terms.length) {
+              await delay(180);
+            }
           }
-          cursor += stageTerms.length;
 
           lastProbeReport = {
             at: new Date().toISOString(),
@@ -2888,144 +2929,115 @@ function createModal(): HTMLElement {
           persistUiState();
           renderProbeReport();
 
-          if (stage.nonJsonCount >= STAGED_PROBE_NON_JSON_STOP_COUNT) {
-            halted = true;
-            haltReason = `Stopped after turbo stage ${stageIndex + 1}: ${stage.nonJsonCount} non-JSON responses.`;
-            break;
+          if (halted) {
+            setStatus(
+              `Turbo staged probe halted at ${cursor}/${terms.length}. ${haltReason}`,
+              cursor > 0 ? 'info' : 'bad'
+            );
+          } else {
+            const averageDurationMs =
+              totalDurationSamples > 0 ? Math.round(totalDurationMs / totalDurationSamples) : 0;
+            setStatus(
+              `Turbo staged probe complete: transport ${totalTransportSuccess}/${terms.length}, QC hits ${totalMeasurementHits}/${terms.length}, avg ${averageDurationMs}ms.`,
+              totalMeasurementHits > 0 ? 'ok' : totalTransportSuccess > 0 ? 'info' : 'bad'
+            );
           }
-          if (failureRate > STAGED_PROBE_FAILURE_RATE_STOP) {
-            halted = true;
-            haltReason = `Stopped after turbo stage ${stageIndex + 1}: failure rate ${(failureRate * 100).toFixed(1)}%.`;
-            break;
-          }
-          if (cursor < terms.length) {
-            await delay(180);
-          }
+        } finally {
+          setProbeButtonsDisabled(false);
         }
-
-        lastProbeReport = {
-          at: new Date().toISOString(),
-          mode: 'turbo-staged-bulk-probe',
-          totalTerms: terms.length,
-          completedTerms: cursor,
-          successCount: totalTransportSuccess,
-          transportSuccessCount: totalTransportSuccess,
-          measurementHitCount: totalMeasurementHits,
-          measurementMissCount: totalTransportSuccess - totalMeasurementHits,
-          failureCount: cursor - totalTransportSuccess,
-          nonJsonCount: totalNonJson,
-          averageDurationMs:
-            totalDurationSamples > 0 ? Math.round(totalDurationMs / totalDurationSamples) : 0,
-          halted,
-          haltReason: haltReason || null,
-          stages: stageReports,
-          entries: allEntries,
-        };
-        persistUiState();
-        renderProbeReport();
-
-        if (halted) {
-          setStatus(
-            `Turbo staged probe halted at ${cursor}/${terms.length}. ${haltReason}`,
-            cursor > 0 ? 'info' : 'bad'
-          );
-        } else {
-          const averageDurationMs =
-            totalDurationSamples > 0 ? Math.round(totalDurationMs / totalDurationSamples) : 0;
-          setStatus(
-            `Turbo staged probe complete: transport ${totalTransportSuccess}/${terms.length}, QC hits ${totalMeasurementHits}/${terms.length}, avg ${averageDurationMs}ms.`,
-            totalMeasurementHits > 0 ? 'ok' : totalTransportSuccess > 0 ? 'info' : 'bad'
-          );
-        }
-      } finally {
-        setProbeButtonsDisabled(false);
-      }
+      })();
     });
   }
 
   if (copyProbeBtn) {
-    copyProbeBtn.addEventListener('click', async () => {
-      if (!lastProbeReport) {
-        setStatus('No probe report to copy yet.', 'bad');
-        return;
-      }
-      const text = JSON.stringify(lastProbeReport, null, 2);
-      try {
-        await navigator.clipboard.writeText(text);
-        setStatus('Probe report copied to clipboard.', 'ok');
-      } catch {
-        probeOutput.textContent = text;
-        setStatus('Clipboard write failed; probe report is shown in panel.', 'bad');
-      }
+    copyProbeBtn.addEventListener('click', () => {
+      void (async () => {
+        if (!lastProbeReport) {
+          setStatus('No probe report to copy yet.', 'bad');
+          return;
+        }
+        const text = JSON.stringify(lastProbeReport, null, 2);
+        try {
+          await navigator.clipboard.writeText(text);
+          setStatus('Probe report copied to clipboard.', 'ok');
+        } catch {
+          probeOutput.textContent = text;
+          setStatus('Clipboard write failed; probe report is shown in panel.', 'bad');
+        }
+      })();
     });
   }
 
   if (loadProbeTermsBtn) {
-    loadProbeTermsBtn.addEventListener('click', async () => {
-      const selectedFile = probeTermsFileEl?.files?.[0] || null;
-      const filePath = String(probeTermsPathEl?.value || '').trim();
-      if (!selectedFile && !filePath) {
-        setStatus('Choose an export HTML file or provide a server file path.', 'bad');
-        return;
-      }
-      loadProbeTermsBtn.disabled = true;
-      setStatus('Loading probe terms from export file...');
-      try {
-        if (selectedFile) {
-          const html = await selectedFile.text();
-          const parsed = parseProbeTermsFromExportHtml(html);
-          probeTermsEl.value = parsed.terms.join('\n');
-          if (!String(searchTermEl?.value || '').trim() && parsed.terms[0]) {
-            searchTermEl.value = parsed.terms[0];
+    loadProbeTermsBtn.addEventListener('click', () => {
+      void (async () => {
+        const selectedFile = probeTermsFileEl?.files?.[0] || null;
+        const filePath = (probeTermsPathEl?.value || '').trim();
+        if (!selectedFile && !filePath) {
+          setStatus('Choose an export HTML file or provide a server file path.', 'bad');
+          return;
+        }
+        loadProbeTermsBtn.disabled = true;
+        setStatus('Loading probe terms from export file...');
+        try {
+          if (selectedFile) {
+            const html = await selectedFile.text();
+            const parsed = parseProbeTermsFromExportHtml(html);
+            probeTermsEl.value = parsed.terms.join('\n');
+            if (!(searchTermEl?.value || '').trim() && parsed.terms[0]) {
+              searchTermEl.value = parsed.terms[0];
+            }
+            persistUiState();
+            setStatus(
+              `Loaded ${parsed.terms.length} terms from ${selectedFile.name} (${parsed.totalRows} rows scanned).`,
+              'ok'
+            );
+            return;
+          }
+
+          const response = await fetch('/api/integrations/cw/measurements/probe-terms', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ filePath }),
+          });
+          const text = await response.text();
+          let data: any = null;
+          try {
+            data = text ? JSON.parse(text) : null;
+          } catch {
+            setStatus(
+              'Failed to load terms from server path. Use file upload above on hosted environments.',
+              'bad'
+            );
+            return;
+          }
+          if (!response.ok || !data?.success) {
+            setStatus(
+              `Failed to load terms: ${String(data?.message || data?.code || response.status)}`,
+              'bad'
+            );
+            return;
+          }
+          const terms = Array.isArray(data?.terms)
+            ? (data.terms as unknown[])
+                .map(item => (typeof item === 'string' ? item.trim() : ''))
+                .filter(Boolean)
+            : [];
+          probeTermsEl.value = terms.join('\n');
+          if (!(searchTermEl?.value || '').trim() && terms[0]) {
+            searchTermEl.value = terms[0];
           }
           persistUiState();
+          setStatus(`Loaded ${terms.length} terms from server file path.`, 'ok');
+        } catch (error) {
           setStatus(
-            `Loaded ${parsed.terms.length} terms from ${selectedFile.name} (${parsed.totalRows} rows scanned).`,
-            'ok'
-          );
-          return;
-        }
-
-        const response = await fetch('/api/integrations/cw/measurements/probe-terms', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ filePath }),
-        });
-        const text = await response.text();
-        let data: any = null;
-        try {
-          data = text ? JSON.parse(text) : null;
-        } catch {
-          setStatus(
-            'Failed to load terms from server path. Use file upload above on hosted environments.',
+            `Failed to load terms: ${error instanceof Error ? error.message : 'Unknown error'}`,
             'bad'
           );
-          return;
+        } finally {
+          loadProbeTermsBtn.disabled = false;
         }
-        if (!response.ok || !data?.success) {
-          setStatus(
-            `Failed to load terms: ${String(data?.message || data?.code || response.status)}`,
-            'bad'
-          );
-          return;
-        }
-        const terms = Array.isArray(data?.terms)
-          ? data.terms.map((item: unknown) => String(item || '').trim()).filter(Boolean)
-          : [];
-        probeTermsEl.value = terms.join('\n');
-        if (!String(searchTermEl?.value || '').trim() && terms[0]) {
-          searchTermEl.value = terms[0];
-        }
-        persistUiState();
-        setStatus(`Loaded ${terms.length} terms from server file path.`, 'ok');
-      } catch (error) {
-        setStatus(
-          `Failed to load terms: ${error instanceof Error ? error.message : 'Unknown error'}`,
-          'bad'
-        );
-      } finally {
-        loadProbeTermsBtn.disabled = false;
-      }
+      })();
     });
   }
 
@@ -3035,7 +3047,7 @@ function createModal(): HTMLElement {
   });
 
   itemFilterEl.addEventListener('change', () => {
-    state.activeItemKey = String(itemFilterEl.value || '').trim();
+    state.activeItemKey = (itemFilterEl.value || '').trim();
     state.activeSection = '';
     renderItemFilter();
     renderSectionFilter();
@@ -3044,7 +3056,7 @@ function createModal(): HTMLElement {
   });
 
   sectionFilterEl.addEventListener('change', () => {
-    state.activeSection = normalizeSectionName(String(sectionFilterEl.value || '').trim());
+    state.activeSection = normalizeSectionName((sectionFilterEl.value || '').trim());
     renderImages();
     renderRows();
   });
@@ -3085,150 +3097,154 @@ function createModal(): HTMLElement {
     );
   });
 
-  importPhotosBtn.addEventListener('click', async () => {
-    const selectedEntries = selectedImageEntries();
-    if (!selectedEntries.length) {
-      setStatus('Select at least one photo to import.', 'bad');
-      return;
-    }
-
-    const imageRegistry = (window as any).imageRegistry;
-    const projectManager = (window as any).app?.projectManager;
-    if (!projectManager) {
-      setStatus('Project manager not available.', 'bad');
-      return;
-    }
-
-    importPhotosBtn.disabled = true;
-    let imported = 0;
-    let seededViews = 0;
-    let firstImportedViewId = '';
-    try {
-      const baseUrl = String(baseUrlEl?.value || '').trim();
-      const username = String(usernameEl?.value || '').trim();
-      const password = String(passwordEl?.value || '');
-
-      for (const entry of selectedEntries) {
-        const section = entry.section;
-        const group = entry.candidates;
-        const loadedItem = state.loadedItems.find(item => item.selectionKey === entry.itemKey);
-
-        // Always prefer proxied data URL for canvas import to avoid cross-origin
-        // Fabric.js loading failures on remote hosts without CORS headers.
-        // eslint-disable-next-line no-await-in-loop
-        let resolvedUrl = await fetchProxyImageDataUrl(group, baseUrl, username, password);
-        if (!resolvedUrl) {
-          const fallbackDirect = group.find(url => loadedItem?.imageUrls.includes(url)) || '';
-          if (!isHttpUrl(fallbackDirect)) {
-            resolvedUrl = fallbackDirect;
-          }
-        }
-        if (!resolvedUrl) continue;
-
-        const sectionSlug = slugify(section) || 'section';
-        const imageSlug = slugify(makeViewIdFromUrl(group[0] || '')) || 'photo';
-        const seed = `${slugify(entry.itemKey) || 'cw'}-${sectionSlug}-${imageSlug}`;
-        const viewId = nextUniqueViewId(seed);
-        const fileName = `${viewId}.jpg`;
-        const addImageToSidebarFn = (window as any).addImageToSidebar;
-        const addImageToGalleryCompatFn = (window as any).addImageToGalleryCompat;
-        const registryEnabled =
-          Boolean(imageRegistry?.registerImage) &&
-          (typeof imageRegistry?.isEnabled === 'function'
-            ? Boolean(imageRegistry.isEnabled())
-            : true);
-
-        if (registryEnabled && imageRegistry?.registerImage) {
-          console.log('[CW Import] register via imageRegistry', { viewId, fileName });
-          await imageRegistry.registerImage(viewId, resolvedUrl, fileName, { source: 'cw-import' });
-        } else if (
-          typeof addImageToSidebarFn === 'function' &&
-          addImageToSidebarFn.__galleryHooked
-        ) {
-          console.log('[CW Import] register via hooked addImageToSidebar', {
-            viewId,
-            fileName,
-            mode: 'sidebar-hook',
-          });
-          addImageToSidebarFn(resolvedUrl, viewId, fileName);
-        } else {
-          console.log('[CW Import] register via projectManager fallback', {
-            viewId,
-            fileName,
-            hasCompatGallery: typeof addImageToGalleryCompatFn === 'function',
-            hasSidebarFn: typeof addImageToSidebarFn === 'function',
-          });
-          await projectManager.addImage(viewId, resolvedUrl, { refreshBackground: false });
-          if (typeof addImageToGalleryCompatFn === 'function') {
-            addImageToGalleryCompatFn({
-              src: resolvedUrl,
-              url: resolvedUrl,
-              name: fileName,
-              label: viewId,
-              filename: fileName,
-            });
-          } else if (typeof addImageToSidebarFn === 'function') {
-            addImageToSidebarFn(resolvedUrl, viewId, fileName);
-          }
-        }
-        if (!firstImportedViewId) {
-          firstImportedViewId = viewId;
-        }
-        const sectionRows = (loadedItem?.rows || [])
-          .filter(
-            row =>
-              normalizeSectionName(String(row.sectionName || '').trim()) ===
-              normalizeSectionName(section)
-          )
-          .map(row => ({
-            ...row,
-            rowKey: makeRowStorageKey(entry.itemKey, row.id),
-            itemKey: entry.itemKey,
-            itemLabel: entry.itemLabel,
-            productReference: entry.productReference,
-          }));
-        const seededCount = seedImportedGuideForView(
-          viewId,
-          section,
-          sectionRows,
-          lockedEl.checked
-        );
-        if (seededCount > 0) {
-          seededViews += 1;
-        }
-        imported += 1;
-      }
-
-      if (imported === 0) {
-        setStatus('Could not resolve any importable photos for the selected images.', 'bad');
+  importPhotosBtn.addEventListener('click', () => {
+    void (async () => {
+      const selectedEntries = selectedImageEntries();
+      if (!selectedEntries.length) {
+        setStatus('Select at least one photo to import.', 'bad');
         return;
       }
 
-      if (typeof (window as any).ensureImageListObserver === 'function') {
-        (window as any).ensureImageListObserver();
-      } else {
-        (window as any).__pendingImageListObserverInit = true;
-      }
-      if (typeof (window as any).updatePills === 'function') {
-        (window as any).updatePills();
-      }
-      if (typeof (window as any).updateActivePill === 'function') {
-        (window as any).updateActivePill();
+      const imageRegistry = (window as any).imageRegistry;
+      const projectManager = (window as any).app?.projectManager;
+      if (!projectManager) {
+        setStatus('Project manager not available.', 'bad');
+        return;
       }
 
-      await enableGuideWorkflowDefaults(firstImportedViewId);
-      setStatus(
-        `Imported ${imported} selected photo${imported === 1 ? '' : 's'} into project views, seeded ${seededViews} guide${seededViews === 1 ? '' : 's'}, and switched units to cm.`,
-        'ok'
-      );
-    } catch (error) {
-      setStatus(
-        `Photo import partially completed (${imported}): ${error instanceof Error ? error.message : 'Unknown error'}`,
-        'bad'
-      );
-    } finally {
-      importPhotosBtn.disabled = false;
-    }
+      importPhotosBtn.disabled = true;
+      let imported = 0;
+      let seededViews = 0;
+      let firstImportedViewId = '';
+      try {
+        const baseUrl = (baseUrlEl?.value || '').trim();
+        const username = (usernameEl?.value || '').trim();
+        const password = passwordEl?.value || '';
+
+        for (const entry of selectedEntries) {
+          const section = entry.section;
+          const group = entry.candidates;
+          const loadedItem = state.loadedItems.find(item => item.selectionKey === entry.itemKey);
+
+          // Always prefer proxied data URL for canvas import to avoid cross-origin
+          // Fabric.js loading failures on remote hosts without CORS headers.
+          // eslint-disable-next-line no-await-in-loop
+          let resolvedUrl = await fetchProxyImageDataUrl(group, baseUrl, username, password);
+          if (!resolvedUrl) {
+            const fallbackDirect = group.find(url => loadedItem?.imageUrls.includes(url)) || '';
+            if (!isHttpUrl(fallbackDirect)) {
+              resolvedUrl = fallbackDirect;
+            }
+          }
+          if (!resolvedUrl) continue;
+
+          const sectionSlug = slugify(section) || 'section';
+          const imageSlug = slugify(makeViewIdFromUrl(group[0] || '')) || 'photo';
+          const seed = `${slugify(entry.itemKey) || 'cw'}-${sectionSlug}-${imageSlug}`;
+          const viewId = nextUniqueViewId(seed);
+          const fileName = `${viewId}.jpg`;
+          const addImageToSidebarFn = (window as any).addImageToSidebar;
+          const addImageToGalleryCompatFn = (window as any).addImageToGalleryCompat;
+          const registryEnabled =
+            Boolean(imageRegistry?.registerImage) &&
+            (typeof imageRegistry?.isEnabled === 'function'
+              ? Boolean(imageRegistry.isEnabled())
+              : true);
+
+          if (registryEnabled && imageRegistry?.registerImage) {
+            console.log('[CW Import] register via imageRegistry', { viewId, fileName });
+            await imageRegistry.registerImage(viewId, resolvedUrl, fileName, {
+              source: 'cw-import',
+            });
+          } else if (
+            typeof addImageToSidebarFn === 'function' &&
+            addImageToSidebarFn.__galleryHooked
+          ) {
+            console.log('[CW Import] register via hooked addImageToSidebar', {
+              viewId,
+              fileName,
+              mode: 'sidebar-hook',
+            });
+            addImageToSidebarFn(resolvedUrl, viewId, fileName);
+          } else {
+            console.log('[CW Import] register via projectManager fallback', {
+              viewId,
+              fileName,
+              hasCompatGallery: typeof addImageToGalleryCompatFn === 'function',
+              hasSidebarFn: typeof addImageToSidebarFn === 'function',
+            });
+            await projectManager.addImage(viewId, resolvedUrl, { refreshBackground: false });
+            if (typeof addImageToGalleryCompatFn === 'function') {
+              addImageToGalleryCompatFn({
+                src: resolvedUrl,
+                url: resolvedUrl,
+                name: fileName,
+                label: viewId,
+                filename: fileName,
+              });
+            } else if (typeof addImageToSidebarFn === 'function') {
+              addImageToSidebarFn(resolvedUrl, viewId, fileName);
+            }
+          }
+          if (!firstImportedViewId) {
+            firstImportedViewId = viewId;
+          }
+          const sectionRows = (loadedItem?.rows || [])
+            .filter(
+              row =>
+                normalizeSectionName((row.sectionName || '').trim()) ===
+                normalizeSectionName(section)
+            )
+            .map(row => ({
+              ...row,
+              rowKey: makeRowStorageKey(entry.itemKey, row.id),
+              itemKey: entry.itemKey,
+              itemLabel: entry.itemLabel,
+              productReference: entry.productReference,
+            }));
+          const seededCount = seedImportedGuideForView(
+            viewId,
+            section,
+            sectionRows,
+            lockedEl.checked
+          );
+          if (seededCount > 0) {
+            seededViews += 1;
+          }
+          imported += 1;
+        }
+
+        if (imported === 0) {
+          setStatus('Could not resolve any importable photos for the selected images.', 'bad');
+          return;
+        }
+
+        if (typeof (window as any).ensureImageListObserver === 'function') {
+          (window as any).ensureImageListObserver();
+        } else {
+          (window as any).__pendingImageListObserverInit = true;
+        }
+        if (typeof (window as any).updatePills === 'function') {
+          (window as any).updatePills();
+        }
+        if (typeof (window as any).updateActivePill === 'function') {
+          (window as any).updateActivePill();
+        }
+
+        await enableGuideWorkflowDefaults(firstImportedViewId);
+        setStatus(
+          `Imported ${imported} selected photo${imported === 1 ? '' : 's'} into project views, seeded ${seededViews} guide${seededViews === 1 ? '' : 's'}, and switched units to cm.`,
+          'ok'
+        );
+      } catch (error) {
+        setStatus(
+          `Photo import partially completed (${imported}): ${error instanceof Error ? error.message : 'Unknown error'}`,
+          'bad'
+        );
+      } finally {
+        importPhotosBtn.disabled = false;
+      }
+    })();
   });
 
   window.addEventListener('openpaint:stroke-created', event => {
@@ -3247,7 +3263,7 @@ function createModal(): HTMLElement {
 
       const metadata = (window as any).app?.metadataManager;
       let targetLabel = strokeLabel;
-      const configuredLabel = String(state.rowTargetLabels[row.rowKey] || '').trim();
+      const configuredLabel = (state.rowTargetLabels[row.rowKey] || '').trim();
       const desiredLabel = resolveRowTargetLabel(row, configuredLabel, strokeLabel);
       if (metadata?.renameStrokeLabel && desiredLabel && desiredLabel !== strokeLabel) {
         const rename = metadata.renameStrokeLabel(imageLabel, strokeLabel, desiredLabel);
@@ -3335,7 +3351,7 @@ function applyMeasurement(
   const measurementSystem = (window as any).app?.measurementSystem;
   const exactCmValue = parseImportedCentimeterValue(value);
   const explicitCmInput =
-    exactCmValue !== null ? `${exactCmValue} cm` : `${String(value || '').trim()} cm`;
+    exactCmValue !== null ? `${exactCmValue} cm` : `${(value || '').trim()} cm`;
 
   let parsed = false;
   if (measurementSystem?.parseMeasurementInput && measurementSystem?.setMeasurement) {
@@ -3362,7 +3378,7 @@ function applyMeasurement(
 
   if (!parsed) {
     (window as any).app?.projectManager?.showStatusMessage?.(
-      `Could not parse measurement value \"${value}\" for ${strokeLabel}`,
+      `Could not parse measurement value "${value}" for ${strokeLabel}`,
       'error'
     );
     return false;
@@ -3395,9 +3411,7 @@ function openModal(): void {
 }
 
 function parseImportedCentimeterValue(value: string): number | null {
-  const normalized = String(value || '')
-    .trim()
-    .replace(/,/g, '');
+  const normalized = (value || '').trim().replace(/,/g, '');
   if (!normalized) return null;
   const parsed = Number.parseFloat(normalized);
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;

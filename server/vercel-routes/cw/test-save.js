@@ -4,7 +4,7 @@ import {
   fetchCwMeasurementsTable,
   readJsonBody,
   submitCwMeasureForm,
-} from '../_shared.js';
+} from './shared.js';
 
 function extractMeasurementState(upstreamBody) {
   const formConfirmed =

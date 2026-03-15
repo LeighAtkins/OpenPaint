@@ -446,7 +446,9 @@ function createGenerateDialog(
     }
   });
 
-  const destroy = () => {};
+  const destroy = () => {
+    /* noop */
+  };
 
   return { overlay, destroy };
 }

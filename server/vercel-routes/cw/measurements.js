@@ -8,7 +8,7 @@ import {
   fetchCwMeasurementsTable,
   mapOrderImagesToMeasurementItems,
   readJsonBody,
-} from '../_shared.js';
+} from './shared.js';
 
 const mtTokenCache = new Map();
 const FALLBACK_STYLE_CODES = [

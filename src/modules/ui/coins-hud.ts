@@ -87,10 +87,26 @@ export function initCoinsHud(): void {
     if (!hudEl) return;
     if (user) {
       hudEl.style.display = 'inline-flex';
-      walletService.loadWallet();
+      void walletService.loadWallet();
     } else {
       hudEl.style.display = 'none';
       walletService.clear();
+    }
+  });
+
+  const refreshWalletIfVisible = () => {
+    if (!hudEl || hudEl.style.display === 'none' || !authService.isAuthenticated()) {
+      return;
+    }
+    if (!walletService.isLoaded()) {
+      void walletService.loadWallet();
+    }
+  };
+
+  window.addEventListener('focus', refreshWalletIfVisible);
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+      refreshWalletIfVisible();
     }
   });
 

@@ -386,6 +386,17 @@ export class ProjectManager {
 
     console.log(`Switching to view: ${viewId}`);
 
+    if (
+      document.getElementById('main-canvas-wrapper')?.classList.contains('guide-split-active') ===
+      true
+    ) {
+      window.dispatchEvent(
+        new CustomEvent('openpaint:guide-split-transition-start', {
+          detail: { viewId, previousViewId: this.currentViewId, source: 'switch-view' },
+        })
+      );
+    }
+
     // 1. Save current state (skip during project load to avoid clobbering loaded data)
     if (
       !this.isLoadingProject &&
@@ -435,9 +446,13 @@ export class ProjectManager {
       window.app.measurementOverlayManager.unmountView(previousViewId);
     }
 
-    // 4. Discard selection so control anchors don't persist across views, then clear
+    // 4. Discard selection so control anchors don't persist across views
     this.canvasManager.fabricCanvas?.discardActiveObject();
-    this.canvasManager.clear();
+    // Only clear canvas eagerly when there's no canvasData to load (loadFromJSON clears internally).
+    // Skipping the early clear prevents a visible white flash in split mode.
+    if (!view.canvasData) {
+      this.canvasManager.clear();
+    }
 
     if (window.ensureCaptureTabsForLabel) {
       window.ensureCaptureTabsForLabel(viewId);
@@ -465,6 +480,14 @@ export class ProjectManager {
           .map(obj => {
             if (!obj || typeof obj !== 'object') return obj;
             if (obj.customData?.layerType === 'mos-overlay') {
+              return null;
+            }
+            // Filter guide-scoped objects that may have leaked into canvas data
+            const objImageLabel = obj.customData?.imageLabel || obj.imageLabel || '';
+            if (typeof objImageLabel === 'string' && objImageLabel.startsWith('__guide__:')) {
+              return null;
+            }
+            if (obj.customData?.guideReferenceOnly === true) {
               return null;
             }
             if (obj.strokeMetadata) {
@@ -592,6 +615,8 @@ export class ProjectManager {
             console.log(`[Load] Recreating tags for ${Object.keys(strokes).length} strokes`);
 
             Object.entries(strokes).forEach(([strokeLabel, strokeObj]) => {
+              // Skip guide-scoped strokes that shouldn't appear on the primary canvas
+              if (typeof strokeLabel === 'string' && strokeLabel.startsWith('__guide__:')) return;
               const isLabelVisible = labelVisibility[strokeLabel] !== false;
               if (isLabelVisible) {
                 window.app.tagManager.createTag(strokeLabel, activeScope, strokeObj);
@@ -635,7 +660,8 @@ export class ProjectManager {
 
     this.syncLegacyImageListSelection(viewId);
     if (window.imageGallery?.syncToLabel) {
-      window.imageGallery.syncToLabel(viewId, { scroll: true, smooth: false });
+      const skipGalleryScroll = !!window.__scrollSelectDrivenSwitch;
+      window.imageGallery.syncToLabel(viewId, { scroll: !skipGalleryScroll, smooth: false });
     }
 
     const liveRotation = this.canvasManager?.getRotationDegrees?.();
@@ -649,6 +675,17 @@ export class ProjectManager {
         detail: { viewId, previousViewId, source: 'switch-view' },
       })
     );
+
+    // After all event handlers have fired, sweep for stale tags from other views
+    // that may have been created by async listeners during the switch.
+    if (window.app?.tagManager?.removeStaleTagsForScope) {
+      const sweepScope = window.app.metadataManager?.normalizeImageLabel?.(viewId) || viewId;
+      requestAnimationFrame(() => {
+        if (this.currentViewId === viewId) {
+          window.app.tagManager.removeStaleTagsForScope(sweepScope);
+        }
+      });
+    }
 
     this.isSwitchingView = false;
     if (this.pendingSwitchViewId) {
@@ -718,8 +755,10 @@ export class ProjectManager {
       }
     });
 
-    if (activeContainer && options.scroll !== false) {
-      window.__imageListProgrammaticScrollUntil = Date.now() + 1000;
+    if (activeContainer && options.scroll !== false && !window.__scrollSelectDrivenSwitch) {
+      // Use short suppression for instant scrolls to allow rapid sequential switching
+      const suppressMs = options.smooth === true ? 400 : 80;
+      window.__imageListProgrammaticScrollUntil = Date.now() + suppressMs;
       activeContainer.scrollIntoView({
         behavior: options.smooth === true ? 'smooth' : 'auto',
         block: 'center',
@@ -735,10 +774,18 @@ export class ProjectManager {
       const isGuideSplitActive =
         document.getElementById('main-canvas-wrapper')?.classList.contains('guide-split-active') ===
         true;
+      const backgroundWorldRect = this.canvasManager.getBackgroundWorldRect?.() || null;
       this.views[this.currentViewId].canvasData = json;
       this.views[this.currentViewId].rotation = this.canvasManager.getRotationDegrees();
       this.views[this.currentViewId].backgroundRotation =
         this.canvasManager.getBackgroundImageRotationDegrees();
+      if (backgroundWorldRect) {
+        this.views[this.currentViewId].backgroundWorldRect = JSON.parse(
+          JSON.stringify(backgroundWorldRect)
+        );
+      } else {
+        delete this.views[this.currentViewId].backgroundWorldRect;
+      }
       if (!isGuideSplitActive) {
         this.views[this.currentViewId].viewport = this.canvasManager.getViewportState();
       }
@@ -785,9 +832,17 @@ export class ProjectManager {
 
   stripMosOverlayObjects(canvasJson) {
     if (!canvasJson?.objects || !Array.isArray(canvasJson.objects)) return;
-    canvasJson.objects = canvasJson.objects.filter(
-      obj => obj?.customData?.layerType !== 'mos-overlay'
-    );
+    canvasJson.objects = canvasJson.objects.filter(obj => {
+      // Strip MOS overlay objects
+      if (obj?.customData?.layerType === 'mos-overlay') return false;
+      // Strip guide-scoped objects that may have leaked onto the primary canvas
+      const imageLabel = obj?.customData?.imageLabel || obj?.imageLabel || '';
+      if (typeof imageLabel === 'string' && imageLabel.startsWith('__guide__:')) return false;
+      const metaLabel = obj?.strokeMetadata?.imageLabel || '';
+      if (typeof metaLabel === 'string' && metaLabel.startsWith('__guide__:')) return false;
+      if (obj?.customData?.guideReferenceOnly === true) return false;
+      return true;
+    });
   }
 
   // Serialize measurements for a view (deep copy)
@@ -1164,37 +1219,63 @@ export class ProjectManager {
           let scale = 1;
           const backgroundRotation =
             Number(this.views?.[this.currentViewId]?.backgroundRotation) || 0;
+          const savedBackgroundWorldRect = this.views?.[this.currentViewId]?.backgroundWorldRect;
+          const savedWorldLeft = Number(savedBackgroundWorldRect?.left);
+          const savedWorldTop = Number(savedBackgroundWorldRect?.top);
+          const savedWorldWidth = Number(savedBackgroundWorldRect?.width);
+          const savedWorldHeight = Number(savedBackgroundWorldRect?.height);
+          const hasSavedBackgroundWorldRect =
+            Number.isFinite(savedWorldLeft) &&
+            Number.isFinite(savedWorldTop) &&
+            Number.isFinite(savedWorldWidth) &&
+            Number.isFinite(savedWorldHeight) &&
+            savedWorldWidth > 0 &&
+            savedWorldHeight > 0 &&
+            Boolean(
+              this.views?.[this.currentViewId]?.canvasData ||
+              this.views?.[this.currentViewId]?.viewport ||
+              this.views?.[this.currentViewId]?.tabs
+            );
 
           // Center based on frame center
           let left = frameLeft + frameWidth / 2;
           let top = frameTop + frameHeight / 2;
 
-          switch (fitMode) {
-            case 'fit-width':
-              scale = frameWidth / imgWidth;
-              console.log(`[Image Fit Width] Scale: ${scale.toFixed(3)}`);
-              break;
+          if (hasSavedBackgroundWorldRect) {
+            left = savedWorldLeft + savedWorldWidth / 2;
+            top = savedWorldTop + savedWorldHeight / 2;
+            scale = savedWorldWidth / imgWidth;
+            console.log(
+              `[Image Restore World Rect] Scale: ${scale.toFixed(3)} at (${left}, ${top})`
+            );
+          } else {
+            switch (fitMode) {
+              case 'fit-width':
+                scale = frameWidth / imgWidth;
+                console.log(`[Image Fit Width] Scale: ${scale.toFixed(3)}`);
+                break;
 
-            case 'fit-height':
-              scale = frameHeight / imgHeight;
-              console.log(`[Image Fit Height] Scale: ${scale.toFixed(3)}`);
-              break;
+              case 'fit-height':
+                scale = frameHeight / imgHeight;
+                console.log(`[Image Fit Height] Scale: ${scale.toFixed(3)}`);
+                break;
 
-            case 'fit-canvas':
-              scale = Math.min(frameWidth / imgWidth, frameHeight / imgHeight);
-              console.log(`[Image Fit Canvas] Scale: ${scale.toFixed(3)}`);
-              break;
+              case 'fit-canvas':
+                scale = Math.min(frameWidth / imgWidth, frameHeight / imgHeight);
+                console.log(`[Image Fit Canvas] Scale: ${scale.toFixed(3)}`);
+                break;
 
-            case 'actual-size':
-              scale = 1;
-              console.log(`[Image Actual Size] Scale: 1.000`);
-              break;
+              case 'actual-size':
+                scale = 1;
+                console.log(`[Image Actual Size] Scale: 1.000`);
+                break;
 
-            default:
-              // Default to fit canvas (frame)
-              scale = Math.min(frameWidth / imgWidth, frameHeight / imgHeight);
-              console.log(`[Image Default] Scale: ${scale.toFixed(3)}`);
-              break;
+              default:
+                // Default to fit canvas (frame)
+                scale = Math.min(frameWidth / imgWidth, frameHeight / imgHeight);
+                console.log(`[Image Default] Scale: ${scale.toFixed(3)}`);
+                break;
+            }
           }
 
           img.set({
@@ -2016,9 +2097,9 @@ export class ProjectManager {
       // Fix invalid textBaseline values (common in old saved data)
       if (sanitized.textBaseline && !validTextBaselines.includes(sanitized.textBaseline)) {
         console.warn(
-          `[Sanitize] Invalid textBaseline "${sanitized.textBaseline}", replacing with "alphabetic"`
+          `[Sanitize] Invalid textBaseline "${sanitized.textBaseline}", replacing with "middle"`
         );
-        sanitized.textBaseline = 'alphabetic';
+        sanitized.textBaseline = 'middle';
         sanitizedCount++;
       }
 
@@ -3073,6 +3154,7 @@ export class ProjectManager {
 
       this.showStatusMessage('Project loaded successfully', 'success');
       console.log('[Load] Project load complete');
+      window.dispatchEvent(new Event('openpaint:project-loaded'));
 
       // Re-enable interactions once deferred hydration is complete.
       window.__isLoadingProject = false;

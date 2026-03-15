@@ -5,6 +5,7 @@
 
 import { FabricControls } from './utils/FabricControls.js';
 import { PathUtils } from './utils/PathUtils.js';
+import { fitViewportToWorldRect, normalizeViewportRecord } from './utils/viewportRestore.ts';
 
 declare const fabric: typeof import('fabric');
 
@@ -2324,6 +2325,96 @@ export class CanvasManager {
     return 'fit-canvas';
   }
 
+  getBackgroundWorldRect(): FrameState | null {
+    const backgroundImage = this.fabricCanvas?.backgroundImage;
+    if (!backgroundImage) {
+      return null;
+    }
+
+    const centerX = Number(backgroundImage.left);
+    const centerY = Number(backgroundImage.top);
+    const width =
+      (Number(backgroundImage.width) || Number(backgroundImage?._element?.naturalWidth) || 0) *
+      (Number(backgroundImage.scaleX) || 1);
+    const height =
+      (Number(backgroundImage.height) || Number(backgroundImage?._element?.naturalHeight) || 0) *
+      (Number(backgroundImage.scaleY) || 1);
+
+    if (!Number.isFinite(centerX) || !Number.isFinite(centerY) || !width || !height) {
+      return null;
+    }
+
+    return {
+      left: centerX - width / 2,
+      top: centerY - height / 2,
+      width,
+      height,
+    };
+  }
+
+  shouldFitBackgroundWithViewportOnResize(): boolean {
+    if (!this.fabricCanvas?.backgroundImage) {
+      return false;
+    }
+
+    if (!this.enableFloatingLayoutMode || this.containerId !== 'main-canvas-wrapper') {
+      return false;
+    }
+
+    return this.getStoredBackgroundFitMode() !== 'actual-size';
+  }
+
+  fitViewportToBackgroundPlacementFrame(
+    backgroundWorldRect: FrameState,
+    targetFrame: FrameState,
+    viewportSeed?: {
+      zoom?: number;
+      panX?: number;
+      panY?: number;
+      rotation?: number;
+    }
+  ): boolean {
+    if (!this.fabricCanvas) {
+      return false;
+    }
+
+    const nextViewport = fitViewportToWorldRect(
+      backgroundWorldRect,
+      normalizeViewportRecord({
+        zoom:
+          Number(viewportSeed?.zoom) > 0
+            ? Number(viewportSeed?.zoom)
+            : this.zoomLevel || this.fabricCanvas.getZoom() || 1,
+        panX: Number.isFinite(Number(viewportSeed?.panX)) ? Number(viewportSeed.panX) : this.panX,
+        panY: Number.isFinite(Number(viewportSeed?.panY)) ? Number(viewportSeed.panY) : this.panY,
+        rotation: Number.isFinite(Number(viewportSeed?.rotation))
+          ? Number(viewportSeed.rotation)
+          : this.rotateViewport
+            ? this.rotationDegrees
+            : 0,
+      }),
+      targetFrame,
+      {
+        canvasRect: {
+          left: 0,
+          top: 0,
+          width: Number(this.fabricCanvas.width) || 0,
+          height: Number(this.fabricCanvas.height) || 0,
+        },
+        center: this.getRotationCenter(),
+      }
+    );
+
+    if (!nextViewport) {
+      return false;
+    }
+
+    this.zoomLevel = Number.isFinite(nextViewport.zoom) ? nextViewport.zoom : zoomLevel;
+    this.panX = Number.isFinite(nextViewport.panX) ? nextViewport.panX : 0;
+    this.panY = Number.isFinite(nextViewport.panY) ? nextViewport.panY : 0;
+    return true;
+  }
+
   refitBackgroundImageToPlacementFrame(): boolean {
     if (!this.fabricCanvas?.backgroundImage) {
       return false;
@@ -2391,7 +2482,7 @@ export class CanvasManager {
    * Apply resize with debouncing and smooth transitions
    */
   applyResize(width?: number, height?: number): void {
-    if (!this.fabricCanvas) {
+    if (!this.fabricCanvas || !this.fabricCanvas.lowerCanvasEl) {
       return;
     }
 
@@ -2440,12 +2531,10 @@ export class CanvasManager {
     }
 
     const currentSplitActive = this.isGuideSplitActive();
-    const isPrimaryFloatingCanvas =
-      this.enableFloatingLayoutMode && this.containerId === 'main-canvas-wrapper';
-    const shouldRefitBackgroundOnResize =
-      sizeChanged &&
-      !!this.fabricCanvas.backgroundImage &&
-      !isPrimaryFloatingCanvas;
+    const shouldRefitBackgroundOnResize = sizeChanged && !!this.fabricCanvas.backgroundImage;
+    const backgroundWorldRectBeforeResize = shouldRefitBackgroundOnResize
+      ? this.getBackgroundWorldRect()
+      : null;
 
     // Update Fabric.js canvas dimensions
     this.fabricCanvas.setWidth(targetWidth);
@@ -2489,16 +2578,51 @@ export class CanvasManager {
     }
 
     this.updateCaptureFrameOnResize(targetWidth, targetHeight);
-    const didRefitBackground = shouldRefitBackgroundOnResize
-      ? this.refitBackgroundImageToPlacementFrame()
-      : false;
+    const safeZoom = Number.isFinite(oldZoom) && oldZoom > 0 ? oldZoom : this.zoomLevel || 1;
+    const splitLayoutChanged =
+      this.lastGuideSplitActive === null
+        ? currentSplitActive
+        : this.lastGuideSplitActive !== currentSplitActive;
+    const viewportFitSeed = {
+      zoom: safeZoom,
+      panX: splitLayoutChanged ? 0 : this.panX,
+      panY: splitLayoutChanged ? 0 : this.panY,
+      rotation: this.rotateViewport ? this.rotationDegrees : 0,
+    };
+    // Skip viewport fit when entering/exiting split — the capture frame position is stale
+    // during the transition and will be corrected by the split layout sync immediately after.
+    const didFitBackgroundViewport =
+      shouldRefitBackgroundOnResize &&
+      !!backgroundWorldRectBeforeResize &&
+      !splitLayoutChanged &&
+      this.shouldFitBackgroundWithViewportOnResize()
+        ? this.fitViewportToBackgroundPlacementFrame(
+            backgroundWorldRectBeforeResize,
+            this.getBackgroundPlacementFrame(),
+            viewportFitSeed
+          )
+        : false;
+    // When guide-split is active, skip direct background repositioning — the split
+    // layout sync handles it via viewport transforms so vectors stay in sync.
+    const didRefitBackground =
+      !didFitBackgroundViewport &&
+      !splitLayoutChanged &&
+      !currentSplitActive &&
+      shouldRefitBackgroundOnResize
+        ? this.refitBackgroundImageToPlacementFrame()
+        : false;
 
     // Store old size before updating
     const oldCanvasWidth = this.lastCanvasSize.width || targetWidth;
     const oldCanvasHeight = this.lastCanvasSize.height || targetHeight;
 
     let centerWorldPoint = null;
-    if (!didRefitBackground && oldCanvasWidth > 0 && oldCanvasHeight > 0) {
+    if (
+      !didFitBackgroundViewport &&
+      !didRefitBackground &&
+      oldCanvasWidth > 0 &&
+      oldCanvasHeight > 0
+    ) {
       try {
         const inverse = fabric.util.invertTransform(oldVpt);
         centerWorldPoint = fabric.util.transformPoint(
@@ -2518,26 +2642,29 @@ export class CanvasManager {
         `[CanvasManager] Canvas resize: ${oldCanvasWidth}x${oldCanvasHeight} -> ${targetWidth}x${targetHeight}`
       );
 
-      const safeZoom = Number.isFinite(oldZoom) && oldZoom > 0 ? oldZoom : this.zoomLevel || 1;
-      this.zoomLevel = safeZoom;
+      if (!didFitBackgroundViewport) {
+        this.zoomLevel = safeZoom;
 
-      if (didRefitBackground) {
-        this.panX = 0;
-        this.panY = 0;
-      } else if (centerWorldPoint) {
-        const angleRadians = this.rotateViewport ? (this.rotationDegrees * Math.PI) / 180 : 0;
-        const cos = Math.cos(angleRadians);
-        const sin = Math.sin(angleRadians);
-        const rotationCenter = this.getRotationCenter();
-        const base = [safeZoom * cos, safeZoom * sin, -safeZoom * sin, safeZoom * cos, 0, 0];
-        const translateToOrigin = [1, 0, 0, 1, -rotationCenter.x, -rotationCenter.y];
-        const translateBack = [1, 0, 0, 1, rotationCenter.x, rotationCenter.y];
-        let transform = fabric.util.multiplyTransformMatrices(base, translateToOrigin);
-        transform = fabric.util.multiplyTransformMatrices(translateBack, transform);
+        if (didRefitBackground) {
+          // Only zero pan after a true background refit. Viewport-fit resizing keeps the
+          // existing world rect intact so vectors stay locked to the image.
+          this.panX = 0;
+          this.panY = 0;
+        } else if (centerWorldPoint) {
+          const angleRadians = this.rotateViewport ? (this.rotationDegrees * Math.PI) / 180 : 0;
+          const cos = Math.cos(angleRadians);
+          const sin = Math.sin(angleRadians);
+          const rotationCenter = this.getRotationCenter();
+          const base = [safeZoom * cos, safeZoom * sin, -safeZoom * sin, safeZoom * cos, 0, 0];
+          const translateToOrigin = [1, 0, 0, 1, -rotationCenter.x, -rotationCenter.y];
+          const translateBack = [1, 0, 0, 1, rotationCenter.x, rotationCenter.y];
+          let transform = fabric.util.multiplyTransformMatrices(base, translateToOrigin);
+          transform = fabric.util.multiplyTransformMatrices(translateBack, transform);
 
-        const mappedCenter = fabric.util.transformPoint(centerWorldPoint, transform);
-        this.panX = targetWidth / 2 - mappedCenter.x;
-        this.panY = targetHeight / 2 - mappedCenter.y;
+          const mappedCenter = fabric.util.transformPoint(centerWorldPoint, transform);
+          this.panX = targetWidth / 2 - mappedCenter.x;
+          this.panY = targetHeight / 2 - mappedCenter.y;
+        }
       }
 
       this.applyViewportTransform();
@@ -3236,12 +3363,21 @@ export class CanvasManager {
   }
 
   clear(): void {
-    if (!this.fabricCanvas) return;
+    if (!this.fabricCanvas || !this.fabricCanvas.lowerCanvasEl) return;
     this.fabricCanvas.clear();
     this.fabricCanvas.setBackgroundColor(
       '#ffffff',
       this.fabricCanvas.renderAll.bind(this.fabricCanvas)
     );
+    this.applyViewportTransform();
+  }
+
+  /** Reset viewport to identity (zoom 1, no pan/rotation). Used when tearing down reusable canvases. */
+  resetViewport(): void {
+    this.panX = 0;
+    this.panY = 0;
+    this.zoomLevel = 1;
+    this.rotationDegrees = 0;
     this.applyViewportTransform();
   }
 

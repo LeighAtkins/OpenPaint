@@ -428,6 +428,102 @@ function safePdfText(value) {
   return String(value || '').replace(/[^\x20-\x7E]/g, ' ');
 }
 
+function getGuideModelLinkStateForExport(metadata) {
+  const source = metadata && typeof metadata === 'object' ? metadata : {};
+  const selections = Array.isArray(source.measurementGuideModelSelections)
+    ? source.measurementGuideModelSelections
+        .map(item => {
+          const code = String(item?.code || '')
+            .trim()
+            .toUpperCase();
+          const variant = String(item?.variant || 'front')
+            .trim()
+            .toLowerCase();
+          if (!code) return null;
+          return {
+            id:
+              typeof item?.id === 'string' && item.id.trim()
+                ? item.id.trim()
+                : `${code}::${variant}`,
+            code,
+            variant: variant === 'back' || variant === 'side' ? variant : 'front',
+          };
+        })
+        .filter(Boolean)
+    : [];
+  const selectionMap = new Map(selections.map(item => [item.id, item]));
+  const linksByScope =
+    source.measurementGuideModelLinksByScope &&
+    typeof source.measurementGuideModelLinksByScope === 'object'
+      ? source.measurementGuideModelLinksByScope
+      : {};
+  const linksByImage =
+    source.measurementGuideModelLinksByImage &&
+    typeof source.measurementGuideModelLinksByImage === 'object'
+      ? source.measurementGuideModelLinksByImage
+      : {};
+
+  return { selectionMap, linksByScope, linksByImage };
+}
+
+function resolveGuideSelectionForTarget(target, guideState) {
+  if (!target || !guideState) return null;
+  const scopeCandidates = [
+    String(target.scopeKey || '').trim(),
+    String(target.viewId || '').trim(),
+  ].filter(Boolean);
+
+  const selectionId = scopeCandidates
+    .map(scope => guideState.linksByScope?.[scope] || guideState.linksByImage?.[scope] || '')
+    .find(Boolean);
+  if (!selectionId) return null;
+  return guideState.selectionMap.get(String(selectionId).trim()) || null;
+}
+
+function formatGuideHint(value) {
+  const text = String(value || '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!text) return '';
+  return text.length > 140 ? `${text.slice(0, 137).trimEnd()}...` : text;
+}
+
+async function fetchGuideModelCards(selections) {
+  if (!Array.isArray(selections) || selections.length === 0) return new Map();
+  const response = await fetch('/api/integrations/cw/guide-models', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ selections }),
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || !payload?.success) {
+    throw new Error(payload?.message || `Guide model lookup failed (${response.status})`);
+  }
+
+  const models = Array.isArray(payload.models) ? payload.models : [];
+  return new Map(
+    models.map(model => {
+      const key = `${String(model?.code || '').toUpperCase()}::${String(model?.variant || 'front').toLowerCase()}`;
+      const rows = Array.isArray(model?.measurements)
+        ? model.measurements
+            .map(item => ({
+              label: item?.unit ? `${item.key} (${item.unit})` : String(item?.key || ''),
+              value: formatGuideHint(item?.hint || ''),
+            }))
+            .filter(row => row.label && row.value)
+        : [];
+      return [
+        key,
+        {
+          title: `${model?.name || model?.code || 'Guide'} - ${model?.viewLabel || 'Guide Checks'}`,
+          rows,
+          description: String(model?.description || '').trim(),
+        },
+      ];
+    })
+  );
+}
+
 function ensurePdfDebugSurface() {
   if (!Array.isArray(window.__pdfVectorDebugLog)) {
     window.__pdfVectorDebugLog = [];
@@ -1302,6 +1398,32 @@ export function initPdfExport() {
       });
     };
 
+    const guideState = getGuideModelLinkStateForExport(metadata);
+    const guideSelections = groupedTargets
+      .flatMap(entry => {
+        const targets =
+          entry.type === 'grouped'
+            ? [entry.mainTarget, ...(entry.relatedTargets || [])]
+            : [entry.target];
+        return targets
+          .map(target => resolveGuideSelectionForTarget(target, guideState))
+          .filter(Boolean);
+      })
+      .filter(Boolean);
+    const uniqueGuideSelections = Array.from(
+      new Map(
+        guideSelections.map(selection => [`${selection.code}::${selection.variant}`, selection])
+      ).values()
+    );
+    let guideCardMap = new Map();
+    if (includeMeasurements && uniqueGuideSelections.length > 0) {
+      try {
+        guideCardMap = await fetchGuideModelCards(uniqueGuideSelections);
+      } catch (error) {
+        console.warn('[PDF] Failed to fetch CW guide model cards:', error);
+      }
+    }
+
     const groups = [];
     for (let i = 0; i < groupedTargets.length; i++) {
       const entry = groupedTargets[i];
@@ -1317,6 +1439,17 @@ export function initPdfExport() {
 
       const relatedFrames = [];
       const relatedMeasurementCards = [];
+      const mainGuideSelection = resolveGuideSelectionForTarget(mainTarget, guideState);
+      const mainGuideKey = mainGuideSelection
+        ? `${mainGuideSelection.code}::${mainGuideSelection.variant}`
+        : '';
+      const mainGuideCard = mainGuideKey ? guideCardMap.get(mainGuideKey) : null;
+      if (mainGuideCard?.rows?.length) {
+        relatedMeasurementCards.push({
+          title: `${formatTargetDisplayName(mainTarget)} Guide Checks`,
+          rows: mainGuideCard.rows,
+        });
+      }
       for (const target of relatedTargets) {
         const src = await captureViewImageDataUrl(target);
         if (!src) continue;
@@ -1326,6 +1459,15 @@ export function initPdfExport() {
           title,
           rows: getTargetMeasurementRows(target),
         });
+        const guideSelection = resolveGuideSelectionForTarget(target, guideState);
+        const guideKey = guideSelection ? `${guideSelection.code}::${guideSelection.variant}` : '';
+        const guideCard = guideKey ? guideCardMap.get(guideKey) : null;
+        if (guideCard?.rows?.length) {
+          relatedMeasurementCards.push({
+            title: `${title} Guide Checks`,
+            rows: guideCard.rows,
+          });
+        }
       }
 
       groups.push({

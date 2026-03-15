@@ -258,16 +258,10 @@ function filterProjectsBySearch(
   projects: Array<{ id: string; name: string; updated_at: string }>,
   search?: string
 ): Array<{ id: string; name: string; updated_at: string }> {
-  const query = String(search || '')
-    .trim()
-    .toLowerCase();
+  const query = (search || '').trim().toLowerCase();
   if (!query) return projects.slice();
 
-  return projects.filter(project =>
-    String(project.name || '')
-      .toLowerCase()
-      .includes(query)
-  );
+  return projects.filter(project => (project.name || '').toLowerCase().includes(query));
 }
 
 async function loadProjectsList(
@@ -310,7 +304,7 @@ async function loadProjectsList(
 
   if (filteredProjects.length === 0) {
     emptyEl.style.display = 'block';
-    emptyEl.textContent = String(search || '').trim()
+    emptyEl.textContent = (search || '').trim()
       ? 'No projects match your search.'
       : 'No projects found. Save a project to get started!';
     return;
@@ -502,8 +496,8 @@ async function handleCloudSave(): Promise<void> {
     const projectNameInput = document.getElementById('projectName') as HTMLInputElement | null;
     const projectNameFromInput = projectNameInput?.value?.trim() || '';
     const projectNameFromData =
-      String((projectData as Record<string, unknown>)?.projectName || '').trim() ||
-      String((projectData as Record<string, unknown>)?.name || '').trim() ||
+      (((projectData as Record<string, unknown>)?.projectName as string) || '').trim() ||
+      (((projectData as Record<string, unknown>)?.name as string) || '').trim() ||
       '';
     const projectName = projectNameFromInput || projectNameFromData || DEFAULT_PROJECT_NAME;
     if (projectNameInput && projectNameInput.value.trim() !== projectName) {

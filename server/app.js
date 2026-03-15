@@ -2318,15 +2318,32 @@ const PET_CATALOG = [
   { id: 'dog-6', name: 'Siberian Husky', type: 'dog', cost: 100 },
 ];
 
+async function getWalletRequestContext(req, res, operation) {
+  const authResult = await getCloudAuthUser(req, operation);
+  if (authResult.error) {
+    res.status(authResult.error.statusCode).json(authResult.error.body);
+    return null;
+  }
+
+  const userId = authResult.user?.id || null;
+  const supabase = getSupabaseAdmin();
+  if (!userId || !supabase) {
+    res.status(503).json({
+      success: false,
+      message: 'Wallet service unavailable',
+    });
+    return null;
+  }
+
+  return { userId, supabase };
+}
+
 // GET /wallet — returns balance, equipped pet, unlocked pets, catalog
 const handleWalletGet = async (req, res) => {
   try {
-    const authResult = await getCloudAuthUser(req, 'wallet');
-    if (authResult.error) {
-      return res.status(authResult.error.statusCode).json(authResult.error.body);
-    }
-    const userId = authResult.user.id;
-    const supabase = getSupabaseAdmin();
+    const context = await getWalletRequestContext(req, res, 'wallet');
+    if (!context) return;
+    const { userId, supabase } = context;
 
     const { data: wallet } = await supabase
       .from('wallets')
@@ -2367,11 +2384,9 @@ app.get('/api/wallet', handleWalletGet);
 // POST /wallet/earn — earn coins on qualifying cloud save
 const handleWalletEarn = async (req, res) => {
   try {
-    const authResult = await getCloudAuthUser(req, 'wallet_earn');
-    if (authResult.error) {
-      return res.status(authResult.error.statusCode).json(authResult.error.body);
-    }
-    const userId = authResult.user.id;
+    const context = await getWalletRequestContext(req, res, 'wallet_earn');
+    if (!context) return;
+    const { userId, supabase } = context;
     const { projectId, saveTimestamp, projectData, rewardType = 'cloud_save' } = req.body;
 
     if (!projectId || !saveTimestamp) {
@@ -2381,8 +2396,6 @@ const handleWalletEarn = async (req, res) => {
     }
 
     const effectiveRewardType = rewardType === 'pdf_export' ? 'pdf_export' : 'cloud_save';
-
-    const supabase = getSupabaseAdmin();
 
     const { data: wallet } = await supabase
       .from('wallets')
@@ -2549,11 +2562,9 @@ app.post('/api/wallet/earn', handleWalletEarn);
 // POST /wallet/spend — purchase a pet
 const handleWalletSpend = async (req, res) => {
   try {
-    const authResult = await getCloudAuthUser(req, 'wallet_spend');
-    if (authResult.error) {
-      return res.status(authResult.error.statusCode).json(authResult.error.body);
-    }
-    const userId = authResult.user.id;
+    const context = await getWalletRequestContext(req, res, 'wallet_spend');
+    if (!context) return;
+    const { userId, supabase } = context;
     const { petId } = req.body;
 
     if (!petId) {
@@ -2564,8 +2575,6 @@ const handleWalletSpend = async (req, res) => {
     if (!catalogEntry) {
       return res.status(400).json({ success: false, message: 'Invalid petId' });
     }
-
-    const supabase = getSupabaseAdmin();
 
     const { data: existing } = await supabase
       .from('pet_inventory')
@@ -2613,14 +2622,10 @@ app.post('/api/wallet/spend', handleWalletSpend);
 // POST /pets/equip — equip or unequip a pet
 const handlePetEquip = async (req, res) => {
   try {
-    const authResult = await getCloudAuthUser(req, 'pets_equip');
-    if (authResult.error) {
-      return res.status(authResult.error.statusCode).json(authResult.error.body);
-    }
-    const userId = authResult.user.id;
+    const context = await getWalletRequestContext(req, res, 'pets_equip');
+    if (!context) return;
+    const { userId, supabase } = context;
     const { petId } = req.body;
-
-    const supabase = getSupabaseAdmin();
 
     if (petId) {
       const { data: owned } = await supabase

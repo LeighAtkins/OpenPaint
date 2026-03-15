@@ -24,7 +24,7 @@ import {
   createOrUpdateProject,
   getProjectBySlug,
 } from './server/db.js';
-import cwMeasurementsHandler from './api/integrations/cw/measurements/[formId].js';
+import cwMeasurementsHandler from './server/vercel-routes/cw/measurements.js';
 import measurementGuideCodesHandler from './api/measurement-guides/codes.js';
 import measurementGuideSvgHandler from './api/measurement-guides/svg.js';
 import { spawn } from 'child_process';
@@ -36,6 +36,10 @@ const { isR2Configured, createPresignedUploadUrl, getR2PublicUrl } =
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const isVercelDeployment = Boolean(process.env.VERCEL);
+const armAnnotationPagePath = path.join(__dirname, 'arm-annotation.html');
+const armAnnotationDatasetDir = path.join(__dirname, 'arm_annotation_dataset');
+const armAnnotationAnnotationsPath = path.join(armAnnotationDatasetDir, 'annotations.json');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -460,6 +464,9 @@ app.get('/', (req, res) => {
 app.use(express.static('public'));
 // Serve static files from root directory (but index.html is handled by route above)
 app.use(express.static('./'));
+if (!isVercelDeployment) {
+  app.use('/arm_annotation_dataset', express.static(armAnnotationDatasetDir));
+}
 // Serve uploaded files under /uploads
 app.use('/uploads', express.static(uploadDir));
 // Parse JSON request bodies (increase limit for large projects)
@@ -473,24 +480,24 @@ app.all('/api/measurement-guides/svg', (req, res) => measurementGuideSvgHandler(
 // Route handlers
 app.get('/health', (req, res) => res.json({ ok: true, ts: Date.now() }));
 
-app.put('/arm-annotation/annotations.json', (req, res) => {
-  const fs = require('fs');
-  const path = require('path');
-  const filePath = path.join(__dirname, 'public/arm_annotation_dataset/annotations.json');
-  fs.writeFileSync(filePath, JSON.stringify(req.body, null, 2));
-  res.json({ ok: true });
-});
+if (!isVercelDeployment) {
+  app.get('/arm-annotation', (req, res) => {
+    res.sendFile(armAnnotationPagePath);
+  });
 
-app.get('/arm-annotation/annotations.json', (req, res) => {
-  const fs = require('fs');
-  const path = require('path');
-  const filePath = path.join(__dirname, 'public/arm_annotation_dataset/annotations.json');
-  if (fs.existsSync(filePath)) {
-    res.sendFile(filePath);
-  } else {
+  app.put('/arm-annotation/annotations.json', (req, res) => {
+    fs.writeFileSync(armAnnotationAnnotationsPath, JSON.stringify(req.body, null, 2));
+    res.json({ ok: true });
+  });
+
+  app.get('/arm-annotation/annotations.json', (req, res) => {
+    if (fs.existsSync(armAnnotationAnnotationsPath)) {
+      res.sendFile(armAnnotationAnnotationsPath);
+      return;
+    }
     res.json({});
-  }
-});
+  });
+}
 
 app.get('/version', (req, res) => {
   res.json({ commit: process.env.VERCEL_GIT_COMMIT_SHA || null, ts: Date.now() });
@@ -1071,15 +1078,32 @@ const PET_CATALOG = [
   { id: 'dog-6', name: 'Siberian Husky', type: 'dog', cost: 100 },
 ];
 
+async function getWalletRequestContext(req, res, operation) {
+  const authResult = await getCloudAuthUser(req, operation);
+  if (authResult.error) {
+    res.status(authResult.error.statusCode).json(authResult.error.body);
+    return null;
+  }
+
+  const userId = authResult.user?.id || null;
+  const supabase = getSupabaseAdmin();
+  if (!userId || !supabase) {
+    res.status(503).json({
+      success: false,
+      message: 'Wallet service unavailable',
+    });
+    return null;
+  }
+
+  return { userId, supabase };
+}
+
 // GET /api/wallet — returns balance, equipped pet, unlocked pets, catalog
 app.get('/api/wallet', async (req, res) => {
   try {
-    const authResult = await getCloudAuthUser(req, 'wallet');
-    if (authResult.error) {
-      return res.status(authResult.error.statusCode).json(authResult.error.body);
-    }
-    const userId = authResult.user.id;
-    const supabase = getSupabaseAdmin();
+    const context = await getWalletRequestContext(req, res, 'wallet');
+    if (!context) return;
+    const { userId, supabase } = context;
 
     // Auto-create wallet on first access
     const { data: wallet } = await supabase
@@ -1120,11 +1144,9 @@ app.get('/api/wallet', async (req, res) => {
 // POST /api/wallet/earn — earn coins on qualifying cloud save
 app.post('/api/wallet/earn', async (req, res) => {
   try {
-    const authResult = await getCloudAuthUser(req, 'wallet_earn');
-    if (authResult.error) {
-      return res.status(authResult.error.statusCode).json(authResult.error.body);
-    }
-    const userId = authResult.user.id;
+    const context = await getWalletRequestContext(req, res, 'wallet_earn');
+    if (!context) return;
+    const { userId, supabase } = context;
     const { projectId, saveTimestamp, projectData, rewardType = 'cloud_save' } = req.body;
 
     if (!projectId || !saveTimestamp) {
@@ -1134,8 +1156,6 @@ app.post('/api/wallet/earn', async (req, res) => {
     }
 
     const effectiveRewardType = rewardType === 'pdf_export' ? 'pdf_export' : 'cloud_save';
-
-    const supabase = getSupabaseAdmin();
 
     // Auto-create wallet if needed
     const { data: wallet } = await supabase
@@ -1306,11 +1326,9 @@ app.post('/api/wallet/earn', async (req, res) => {
 // POST /api/wallet/spend — purchase a pet
 app.post('/api/wallet/spend', async (req, res) => {
   try {
-    const authResult = await getCloudAuthUser(req, 'wallet_spend');
-    if (authResult.error) {
-      return res.status(authResult.error.statusCode).json(authResult.error.body);
-    }
-    const userId = authResult.user.id;
+    const context = await getWalletRequestContext(req, res, 'wallet_spend');
+    if (!context) return;
+    const { userId, supabase } = context;
     const { petId } = req.body;
 
     if (!petId) {
@@ -1321,8 +1339,6 @@ app.post('/api/wallet/spend', async (req, res) => {
     if (!catalogEntry) {
       return res.status(400).json({ success: false, message: 'Invalid petId' });
     }
-
-    const supabase = getSupabaseAdmin();
 
     // Check not already owned
     const { data: existing } = await supabase
@@ -1373,14 +1389,10 @@ app.post('/api/wallet/spend', async (req, res) => {
 // POST /api/pets/equip — equip or unequip a pet
 app.post('/api/pets/equip', async (req, res) => {
   try {
-    const authResult = await getCloudAuthUser(req, 'pets_equip');
-    if (authResult.error) {
-      return res.status(authResult.error.statusCode).json(authResult.error.body);
-    }
-    const userId = authResult.user.id;
+    const context = await getWalletRequestContext(req, res, 'pets_equip');
+    if (!context) return;
+    const { userId, supabase } = context;
     const { petId } = req.body; // null to unequip
-
-    const supabase = getSupabaseAdmin();
 
     if (petId) {
       // Validate ownership

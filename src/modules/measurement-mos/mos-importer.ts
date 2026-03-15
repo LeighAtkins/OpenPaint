@@ -26,7 +26,6 @@ const MOS_RANGE = 1000;
 
 // Default stroke style matching svgMerge coral palette
 const DEFAULT_STROKE_COLOR = '#DF6868';
-const DEFAULT_STROKE_WIDTH = 1.5;
 const CURVE_CONTROL_POINTS_MAX = 8;
 
 // ---------------------------------------------------------------------------
@@ -586,122 +585,6 @@ function createFabricObjectsForElement(
 // Line controls (mirrors FabricControls.createLineControls pattern)
 // ---------------------------------------------------------------------------
 
-function applyMosLineControls(line: any): void {
-  if (!fabric?.Control) return;
-
-  line.set({
-    hasBorders: false,
-    hasControls: true,
-    cornerSize: 10,
-    transparentCorners: false,
-    cornerColor: '#ffffff',
-    cornerStrokeColor: '#DF6868',
-    lockScalingX: true,
-    lockScalingY: true,
-    lockRotation: true,
-  });
-
-  const positionHandler = (index: 0 | 1) => {
-    return (dim: any, finalMatrix: any, fabricObject: any) => {
-      if (!fabricObject.canvas) return { x: 0, y: 0 };
-      const points = fabricObject.calcLinePoints();
-      const x = index === 0 ? points.x1 : points.x2;
-      const y = index === 0 ? points.y1 : points.y2;
-      return fabric.util.transformPoint(
-        { x, y },
-        fabric.util.multiplyTransformMatrices(
-          fabricObject.canvas.viewportTransform,
-          fabricObject.calcTransformMatrix()
-        )
-      );
-    };
-  };
-
-  const actionHandler = (index: 0 | 1) => {
-    return (eventData: any, transform: any) => {
-      const lineObj = transform.target;
-      const canvasEl = lineObj.canvas;
-      const event = eventData.e || eventData;
-      const pointer = canvasEl.getPointer(event);
-
-      const points = lineObj.calcLinePoints();
-      const matrix = lineObj.calcTransformMatrix();
-      const p1World = fabric.util.transformPoint({ x: points.x1, y: points.y1 }, matrix);
-      const p2World = fabric.util.transformPoint({ x: points.x2, y: points.y2 }, matrix);
-
-      const otherWorld = index === 0 ? p2World : p1World;
-      const center = {
-        x: (pointer.x + otherWorld.x) / 2,
-        y: (pointer.y + otherWorld.y) / 2,
-      };
-
-      const angle = (lineObj.angle || 0) * (Math.PI / 180);
-      const localNew = fabric.util.rotatePoint(pointer, center, -angle);
-      const localOther = fabric.util.rotatePoint(otherWorld, center, -angle);
-
-      if (index === 0) {
-        lineObj.set({
-          x1: localNew.x - center.x,
-          y1: localNew.y - center.y,
-          x2: localOther.x - center.x,
-          y2: localOther.y - center.y,
-          left: center.x,
-          top: center.y,
-        });
-      } else {
-        lineObj.set({
-          x1: localOther.x - center.x,
-          y1: localOther.y - center.y,
-          x2: localNew.x - center.x,
-          y2: localNew.y - center.y,
-          left: center.x,
-          top: center.y,
-        });
-      }
-
-      lineObj.setCoords();
-      lineObj.fire('moving');
-      return true;
-    };
-  };
-
-  const renderCircle = (
-    ctx: CanvasRenderingContext2D,
-    left: number,
-    top: number,
-    _styleOverride: any,
-    fabricObject: any
-  ) => {
-    const size = fabricObject.cornerSize || 10;
-    ctx.save();
-    ctx.fillStyle = fabricObject.cornerColor || '#ffffff';
-    ctx.strokeStyle = fabricObject.cornerStrokeColor || '#DF6868';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(left, top, size / 2, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-    ctx.restore();
-  };
-
-  line.controls = {
-    p1: new fabric.Control({
-      positionHandler: positionHandler(0),
-      actionHandler: actionHandler(0),
-      cursorStyle: 'pointer',
-      actionName: 'modifyLine',
-      render: renderCircle,
-    }),
-    p2: new fabric.Control({
-      positionHandler: positionHandler(1),
-      actionHandler: actionHandler(1),
-      cursorStyle: 'pointer',
-      actionName: 'modifyLine',
-      render: renderCircle,
-    }),
-  };
-}
-
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -953,23 +836,19 @@ function extractRoleTokenFromId(id: string): string | undefined {
 }
 
 function isMeasurementOpId(normalizedId: string): boolean {
-  const value = String(normalizedId || '').trim();
+  const value = (normalizedId || '').trim();
   if (!value) return false;
   return /^[mbc][a-z0-9-]+(?:cm|mm|in)\d*(?:_(?:label|text))?$/i.test(value);
 }
 
 function isMeasurementGroupId(id: string): boolean {
-  const normalized = String(id || '')
-    .replace(/^mos\d+_/, '')
-    .trim();
+  const normalized = (id || '').replace(/^mos\d+_/, '').trim();
   if (!normalized) return false;
   return /^m[a-z0-9-]+(?:cm|mm|in)\d*(?:_(?:label|text))?$/i.test(normalized);
 }
 
 function isLabelGroupId(id: string): boolean {
-  const normalized = String(id || '')
-    .replace(/^mos\d+_/, '')
-    .trim();
+  const normalized = (id || '').replace(/^mos\d+_/, '').trim();
   if (!normalized) return false;
   return /^[bc][a-z0-9-]+(?:cm|mm|in)\d*(?:_(?:label|text))?$/i.test(normalized);
 }

@@ -443,7 +443,7 @@ function updateAuthUI(user: AuthUser | null): void {
 
     if (avatar) {
       const fallbackDataUrl = buildInitialAvatarDataUrl(firstName || fullName || user.email || '?');
-      const avatarUrl = String(user.profile?.avatar_url || '').trim();
+      const avatarUrl = (user.profile?.avatar_url || '').trim();
       avatar.referrerPolicy = 'no-referrer';
       avatar.onerror = () => {
         avatar.onerror = null;

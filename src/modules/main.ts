@@ -1996,15 +1996,16 @@ export class App {
         style.id = 'lineStylePopoverStyles';
         style.textContent = `
           #lineStylePopoverWrap { position: relative; display: inline-flex; }
-          #lineStylePopoverPanel { position: absolute; top: calc(100% + 8px); left: 0; width: 392px; max-width: calc(100vw - 24px); background: #fff; border: 1px solid #d1d5db; border-radius: 12px; box-shadow: 0 18px 40px rgba(2,6,23,0.2); padding: 12px; z-index: 10150; transform-origin: top left; transform: translateY(-6px) scale(0.98); opacity: 0; pointer-events: none; transition: opacity 160ms ease, transform 180ms ease; }
+          #lineStylePopoverPanel { position: fixed; width: 392px; max-width: calc(100vw - 24px); background: rgba(255,255,255,0.97); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(0,0,0,0.08); border-radius: 14px; box-shadow: 0 24px 48px rgba(2,6,23,0.18), 0 2px 8px rgba(2,6,23,0.08); padding: 14px; z-index: 10150; transform-origin: top left; transform: translateY(-4px) scale(0.98); opacity: 0; pointer-events: none; transition: opacity 120ms ease-out, transform 150ms cubic-bezier(0.2,0,0,1); }
           #lineStylePopoverPanel.open { transform: translateY(0) scale(1); opacity: 1; pointer-events: auto; }
           .line-style-panel-grid { display: grid; gap: 10px; }
-          .line-style-row { display: grid; grid-template-columns: 80px 1fr; align-items: center; gap: 8px; }
-          .line-style-title { font-size: 11px; font-weight: 700; letter-spacing: 0.04em; color: #475569; text-transform: uppercase; }
+          .line-style-row { display: grid; grid-template-columns: 72px 1fr; align-items: center; gap: 8px; }
+          .line-style-title { font-size: 10px; font-weight: 700; letter-spacing: 0.06em; color: #64748b; text-transform: uppercase; }
           .line-style-control { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-          .line-style-size-chip { font-size: 11px; color: #334155; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 999px; padding: 2px 8px; min-width: 42px; text-align: center; }
-          .line-style-scope button { border: 1px solid #cbd5e1; background: #f8fafc; color: #334155; border-radius: 999px; padding: 4px 10px; font-size: 11px; }
-          .line-style-scope button.active { background: #1d4ed8; color: #fff; border-color: #1d4ed8; }
+          .line-style-size-chip { font-size: 11px; font-weight: 600; color: #334155; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 999px; padding: 2px 8px; min-width: 42px; text-align: center; font-variant-numeric: tabular-nums; }
+          .line-style-scope button { border: 1px solid #e2e8f0; background: #f8fafc; color: #475569; border-radius: 999px; padding: 4px 12px; font-size: 11px; font-weight: 500; cursor: pointer; transition: all 100ms ease; }
+          .line-style-scope button:hover { background: #f1f5f9; border-color: #cbd5e1; }
+          .line-style-scope button.active { background: #1e40af; color: #fff; border-color: #1e40af; box-shadow: 0 1px 3px rgba(30,64,175,0.3); }
           #lineStylePreviewWrap { width: 100%; height: 58px; background: linear-gradient(180deg,#ffffff,#f8fafc); border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; }
           #lineStylePreviewCanvas { width: 100%; height: 58px; display: block; }
         `;
@@ -2039,18 +2040,24 @@ export class App {
         `;
 
         wrap.appendChild(toggle);
-        wrap.appendChild(panel);
+        document.body.appendChild(panel);
         tbLeft.appendChild(wrap);
 
         toggle.addEventListener('click', e => {
           e.preventDefault();
           const open = !panel.classList.contains('open');
+          if (open) {
+            // Position fixed panel below the toggle button
+            const rect = toggle.getBoundingClientRect();
+            panel.style.top = `${rect.bottom + 8}px`;
+            panel.style.left = `${Math.max(8, Math.min(rect.left, window.innerWidth - 400))}px`;
+          }
           panel.classList.toggle('open', open);
           toggle.setAttribute('aria-expanded', String(open));
         });
 
         document.addEventListener('click', e => {
-          if (!wrap || wrap.contains(e.target as Node)) return;
+          if (!wrap || wrap.contains(e.target as Node) || panel.contains(e.target as Node)) return;
           panel.classList.remove('open');
           toggle.setAttribute('aria-expanded', 'false');
         });

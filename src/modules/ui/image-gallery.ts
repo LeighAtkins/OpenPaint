@@ -697,13 +697,14 @@
     );
     if (index < 0) return false;
 
-    // Suppress scroll-select while we realign the list to avoid auto-switch oscillation
-    window.__suppressScrollSelectUntil = Date.now() + 1200;
-    window.__imageListProgrammaticScrollUntil = Date.now() + 1200;
-
     updateActiveImage(index);
 
     if (options.scroll) {
+      // Suppress scroll-select while we realign the list to avoid auto-switch oscillation.
+      // Use short suppression for instant scrolls to allow rapid sequential switching.
+      const suppressMs = options.smooth === true ? 400 : 80;
+      window.__suppressScrollSelectUntil = Date.now() + suppressMs;
+      window.__imageListProgrammaticScrollUntil = Date.now() + suppressMs;
       const targetThumbnail = imageGallery.querySelector(`[data-image-index="${index}"]`);
       if (targetThumbnail) {
         targetThumbnail.scrollIntoView({

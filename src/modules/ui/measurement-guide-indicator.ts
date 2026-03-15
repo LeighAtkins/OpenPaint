@@ -1,4 +1,5 @@
 import { resolveScopedImageLabel } from './scoped-image-label.js';
+import { fetchGuideRasterUrl, resolveGuideActiveRole } from './measurement-guide-flash.js';
 
 const DRAW_MEASUREMENT_TOOLS = new Set(['line', 'curve']);
 const INDICATOR_ID = 'measurementGuideIndicator';
@@ -20,6 +21,33 @@ interface RoleCacheEntry {
 const guideRoleCache = new Map<string, Promise<RoleCacheEntry>>();
 let refreshTimer: number | null = null;
 let lastRenderKey = '';
+
+function dispatchGuideNextTagChanged(viewId: string, tag: string): boolean {
+  const normalizedViewId = (viewId || '').trim();
+  const normalizedTag = normalizeLabel(tag);
+  if (!normalizedViewId || !normalizedTag) return false;
+
+  const cacheKey = '__openpaintGuideNextTagByView';
+  const cache =
+    (window as any)[cacheKey] && typeof (window as any)[cacheKey] === 'object'
+      ? (window as any)[cacheKey]
+      : {};
+  if (cache[normalizedViewId] === normalizedTag) {
+    return false;
+  }
+  cache[normalizedViewId] = normalizedTag;
+  (window as any)[cacheKey] = cache;
+
+  window.dispatchEvent(
+    new CustomEvent('openpaint:guide-next-tag-changed', {
+      detail: {
+        viewId: normalizedViewId,
+        tag: normalizedTag,
+      },
+    })
+  );
+  return true;
+}
 
 function getWindowPrefs(): any {
   try {
@@ -1131,7 +1159,7 @@ function bindIndicatorWindowControls(root: HTMLElement): void {
 function applyGuideOneTimeSeed(
   viewId: string,
   tag: string,
-  options: { strictScope?: boolean } = {}
+  options: { strictScope?: boolean; dispatchEvent?: boolean } = {}
 ): void {
   const baseView = toBaseViewId(viewId);
   const scoped = getCwScopedViewKey(viewId);
@@ -1165,6 +1193,10 @@ function applyGuideOneTimeSeed(
   const nextTagDisplay = document.getElementById('nextTagDisplay');
   if (nextTagDisplay && document.activeElement !== nextTagDisplay) {
     nextTagDisplay.textContent = normalizedTag;
+  }
+
+  if (options.dispatchEvent !== false) {
+    dispatchGuideNextTagChanged(baseView, normalizedTag);
   }
 }
 
@@ -1253,10 +1285,10 @@ async function renderIndicator(): Promise<void> {
       : guideSeeds[scoped] || guideSeeds[toBaseViewId(viewId)] || ''
   );
 
-  let activeRole = '';
+  let activeRole = resolveGuideActiveRole(viewId, roles);
   const seededRole =
     seeded && (roles.includes(seeded) || /^[A-Z](?:\d+)?$/.test(seeded)) ? seeded : '';
-  if (seededRole) {
+  if (!activeRole && seededRole) {
     activeRole = used.has(normalizeLabel(seededRole))
       ? findNextUnusedRole(roles, used, seededRole)
       : seededRole;
@@ -1279,7 +1311,13 @@ async function renderIndicator(): Promise<void> {
       return `<button type="button" class="measurement-guide-indicator-chip${activeClass}" data-guide-role="${label}">${label}</button>`;
     })
     .join('');
-  const heroUrl = code ? buildGuideUrl(code, activeGuide.variant) : '';
+  const heroUrl = code
+    ? await fetchGuideRasterUrl(code, activeGuide.variant, {
+        mode: 'preview',
+        activeRole,
+        dimInactive: true,
+      })
+    : '';
 
   const activeSize = resolveIndicatorSize(activeTool);
   const unlocked = getIndicatorLayoutUnlocked();
@@ -1290,6 +1328,7 @@ async function renderIndicator(): Promise<void> {
     positionIndicator(root);
     applyGuideOneTimeSeed(viewId, activeRole, {
       strictScope: usingCwGuide && cwGuide.strictScope,
+      dispatchEvent: false,
     });
     root.style.display = 'block';
     return;
@@ -1321,6 +1360,7 @@ async function renderIndicator(): Promise<void> {
   positionIndicator(root);
   applyGuideOneTimeSeed(viewId, activeRole, {
     strictScope: usingCwGuide && cwGuide.strictScope,
+    dispatchEvent: false,
   });
   root.querySelectorAll('[data-guide-role]').forEach(node => {
     node.addEventListener('click', event => {
@@ -1355,6 +1395,10 @@ export function initMeasurementGuideIndicator(): void {
 
   window.addEventListener('toolchange', scheduleRender);
   window.addEventListener('openpaint:stroke-created', scheduleRender as EventListener);
+  window.addEventListener('openpaint:guide-binding-changed', scheduleRender);
+  window.addEventListener('openpaint:guide-split-changed', scheduleRender);
+  window.addEventListener('openpaint:guide-next-tag-changed', scheduleRender as EventListener);
+  window.addEventListener('openpaint:view-switched', scheduleRender as EventListener);
   window.addEventListener('resize', scheduleRender);
   window.addEventListener('keydown', event => {
     const root = document.getElementById(INDICATOR_ID);

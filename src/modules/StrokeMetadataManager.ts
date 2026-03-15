@@ -31,6 +31,7 @@ export class StrokeMetadataManager {
 
   isInViewScope(imageLabel, viewId) {
     if (!imageLabel || !viewId) return false;
+    if (typeof imageLabel === 'string' && imageLabel.startsWith('__guide__:')) return false;
     return imageLabel === viewId || imageLabel.startsWith(`${viewId}::tab:`);
   }
 

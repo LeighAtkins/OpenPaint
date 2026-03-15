@@ -1,5 +1,5 @@
 {
-  "installCommand": "npm install --ignore-scripts",
+  "installCommand": "npm ci --ignore-scripts",
   "buildCommand": "npm run build:vercel",
   "outputDirectory": "dist",
   "rewrites": [
@@ -8,6 +8,8 @@
     { "source": "/api/cloud-projects/:path*", "destination": "/api/[...all]" },
     { "source": "/api/projects/:path*", "destination": "/api/[...all]" },
     { "source": "/api/cloud-assets/:path*", "destination": "/api/[...all]" },
+    { "source": "/api/wallet/:path*", "destination": "/api/[...all]" },
+    { "source": "/api/pets/:path*", "destination": "/api/[...all]" },
     { "source": "/shared/:shareId", "destination": "/api/[...all]" },
     { "source": "/open/:projectId", "destination": "/api/[...all]" },
     { "source": "/production/:shareId", "destination": "/api/[...all]" },
@@ -16,48 +18,27 @@
   ],
   "functions": {
     "api/[...all].js": {
-      "includeFiles": "{server/**,app.js,index.html,shared.html,shared.js,public/**}"
+      "includeFiles": "{server/**,app.js,index.html,shared.html,shared.js,css/**,src/**,public/assets/**,public/css/**,public/favicon.ico}"
     },
-    "api/integrations/cw/health.js": {
-      "includeFiles": "api/integrations/cw/**"
+    "api/integrations/cw/[action].js": {
+      "includeFiles": "server/**"
     },
-    "api/integrations/cw/health.js": {
-      "includeFiles": "api/integrations/cw/**"
-    },
-    "api/integrations/cw/test-save/[formId].js": {
-      "includeFiles": "api/integrations/cw/**"
-    },
-    "api/integrations/cw/measurements/[formId].js": {
-      "includeFiles": "api/integrations/cw/**"
+    "api/integrations/cw/[action]/[formId].js": {
+      "includeFiles": "server/**"
     },
     "api/integrations/cw/images/[formId].js": {
-      "includeFiles": "api/integrations/cw/**"
+      "includeFiles": "server/**"
     },
     "api/integrations/cw/images/[formId]/upload.js": {
-      "includeFiles": "api/integrations/cw/**"
+      "includeFiles": "server/**"
     },
     "api/integrations/cw/images/[formId]/delete.js": {
-      "includeFiles": "api/integrations/cw/**"
+      "includeFiles": "server/**"
     },
     "api/measurement-guides/svg.js": {
       "includeFiles": "server/**"
     },
-    "api/storage/r2/health.js": {
-      "includeFiles": "server/**"
-    },
-    "api/storage/r2/presign-upload.js": {
-      "includeFiles": "server/**"
-    },
-    "api/storage/r2/signed-url.js": {
-      "includeFiles": "server/**"
-    },
-    "api/storage/r2/delete.js": {
-      "includeFiles": "server/**"
-    },
-    "api/storage/r2/copy.js": {
-      "includeFiles": "server/**"
-    },
-    "api/storage/r2/object.js": {
+    "api/storage/r2/[action].js": {
       "includeFiles": "server/**"
     },
     "api/measurements/generate.js": {

@@ -49,6 +49,11 @@ export function initPetsSystem(): void {
     }
   });
 
+  // Wake the pet after a project load so it doesn't appear frozen
+  window.addEventListener('openpaint:project-loaded', () => {
+    petFollowerRenderer.nudge();
+  });
+
   initRedSwatchToyDrag();
 }
 

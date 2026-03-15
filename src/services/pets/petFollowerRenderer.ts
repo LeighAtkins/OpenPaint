@@ -184,8 +184,10 @@ class PetFollowerRenderer {
 
     this.mounted = true;
     (window as any).__petFollowerRenderer = this;
-    this.cursorOnScreen = true;
-    this.lastPointerMoveTime = performance.now();
+    // Start in roam mode so the pet walks around on initial load instead of
+    // immediately falling asleep (the user hasn't moved their mouse yet).
+    this.cursorOnScreen = false;
+    this.lastPointerMoveTime = 0;
     this.tick(performance.now());
   }
 
@@ -218,6 +220,13 @@ class PetFollowerRenderer {
 
   isMounted(): boolean {
     return this.mounted;
+  }
+
+  /** Reset timing so the pet wakes from stale sleep (e.g. after project load). */
+  nudge(): void {
+    if (!this.mounted) return;
+    this.lastPointerMoveTime = performance.now();
+    this.cursorOnScreen = true;
   }
 
   isToyActive(): boolean {
@@ -276,6 +285,11 @@ class PetFollowerRenderer {
 
     if (document.hidden) return;
 
+    // Re-attach overlay if it was removed from the DOM (e.g. during project load)
+    if (this.overlay && !this.overlay.isConnected) {
+      document.body.appendChild(this.overlay);
+    }
+
     this.behaviorMode = this.getBehaviorMode(now);
     if (this.toyState !== 'none') {
       this.behaviorMode = 'follow';
@@ -316,10 +330,14 @@ class PetFollowerRenderer {
       (this.behaviorMode === 'follow' || this.behaviorMode === 'roam') &&
       this.specialAction !== 'wake-stretch';
     if (shouldMove && dist > 2) {
-      const lerp =
+      let lerp =
         this.behaviorMode === 'roam'
           ? this.config.behavior.roamLerp
           : this.config.behavior.followLerp;
+      // Slow the pet down when carrying a toy back — looks more natural
+      if (this.toyState === 'carrying' || this.toyState === 'dropped') {
+        lerp = Math.min(lerp, 0.032);
+      }
       const effectiveLerp = this.specialAction === 'zoomies' ? Math.max(lerp, 0.12) : lerp;
       this.petX += dx * effectiveLerp;
       this.petY += dy * effectiveLerp;

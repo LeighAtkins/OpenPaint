@@ -156,18 +156,34 @@
 /* ── Image container ─────────────────────────────────────────── */
 .image-container {
   position: relative;
-  border-left: 2px solid transparent;
-  transition: all var(--ob-duration-base) var(--ob-ease-standard);
+  border-left: 3px solid transparent;
+  transition: border-color 80ms ease, background-color 80ms ease, box-shadow 120ms ease, transform 80ms ease;
+  will-change: transform;
+  cursor: pointer;
 }
 
 .image-container:hover {
   border-left-color: var(--ob-signal);
-  background-color: var(--ob-paper);
+  background-color: rgba(248, 250, 252, 0.8);
+}
+
+.image-container:active {
+  transform: scale(0.98);
+  transition-duration: 40ms;
 }
 
 .image-container[aria-selected='true'] {
   border-left-color: var(--ob-signal);
   background-color: var(--ob-signal-soft);
+  box-shadow: inset 0 0 0 1px rgba(45, 107, 255, 0.12);
+}
+
+.image-container .pasted-image {
+  transition: opacity 60ms ease;
+}
+
+.image-container:hover .pasted-image {
+  opacity: 0.92;
 }
 
 /* ── Responsive labels ───────────────────────────────────────── */
@@ -1595,6 +1611,30 @@ body:has(#imagePanel:has(#imagePanelContent.hidden)) #mini-stepper {
 .stroke-delete-btn:hover {
   opacity: 1 !important;
   background-color: var(--ob-danger-soft) !important;
+}
+
+/* ── Image list scroll performance ────────────────────────────── */
+#imageList {
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.4) transparent;
+}
+
+#imageList::-webkit-scrollbar {
+  width: 4px;
+}
+
+#imageList::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+#imageList::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.3);
+  border-radius: 4px;
+}
+
+#imageList::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.5);
 }
 
 /* ── Scrollbars ──────────────────────────────────────────────── */

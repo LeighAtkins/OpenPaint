@@ -130,7 +130,10 @@ export class TagManager {
       viewId || window.app?.projectManager?.currentViewId || 'front'
     );
     const keys = Object.keys(this.metadataManager?.vectorStrokesByImage || {});
-    const scopes = keys.filter(key => key === base || String(key).startsWith(`${base}::tab:`));
+    const scopes = keys.filter(key => {
+      if (key.startsWith('__guide__:')) return false;
+      return key === base || key.startsWith(`${base}::tab:`);
+    });
     return scopes.length ? scopes : [base];
   }
 
@@ -230,8 +233,8 @@ export class TagManager {
     const highlightedTagKeys = Array.isArray(source.highlightedTagKeys)
       ? source.highlightedTagKeys.map(value => String(value || '').trim()).filter(Boolean)
       : source.highlightedTagKeys instanceof Set
-        ? Array.from(source.highlightedTagKeys)
-            .map(value => String(value || '').trim())
+        ? Array.from(source.highlightedTagKeys as Set<string>)
+            .map(value => (value || '').trim())
             .filter(Boolean)
         : [];
 
@@ -244,7 +247,7 @@ export class TagManager {
       perTagThemes: Object.entries(
         source.perTagThemes && typeof source.perTagThemes === 'object' ? source.perTagThemes : {}
       ).reduce((acc, [key, value]) => {
-        const normalizedKey = String(key || '').trim();
+        const normalizedKey = (key || '').trim();
         const normalizedTheme = this.normalizeTagTheme(value);
         if (normalizedKey && normalizedTheme) {
           acc[normalizedKey] = normalizedTheme;
@@ -608,8 +611,8 @@ export class TagManager {
         textAlign: 'center',
         originX: 'center',
         originY: 'center',
-        // Use standard baseline to avoid CanvasTextBaseline warnings
-        textBaseline: 'alphabetic',
+        // Centered tags render cleanly with a middle baseline and avoid canvas warnings.
+        textBaseline: 'middle',
         selectable: false, // Will be controlled by group
         evented: true, // Allow editing
         hasControls: false, // Controlled by group
@@ -619,10 +622,10 @@ export class TagManager {
       });
     } catch (e) {
       console.error('TagManager: Error creating text object', e);
-      // Fallback - use alphabetic instead of middle to be consistent
+      // Fallback to the same centered baseline used by the primary tag text.
       tagText = new fabric.Text(strokeLabel, {
         fontSize: this.tagSize,
-        textBaseline: 'alphabetic',
+        textBaseline: 'middle',
       });
     }
     tagText.styles = {};
@@ -1071,7 +1074,7 @@ export class TagManager {
   // Create a manipulatable connector line
   createConnectorObject(x1, y1, x2, y2, tagObj, strokeObj, strokeLabel) {
     const strokeWidth = 2;
-    const snap = (value: number) => Math.round(Number(value) || 0);
+    const snap = (value: number) => Math.round(value || 0);
     return new fabric.Line([x1, y1, x2, y2], {
       x1: snap(x1),
       y1: snap(y1),
@@ -1302,6 +1305,7 @@ export class TagManager {
     const canvas = this.canvas;
     if (!canvas) return;
 
+    // Remove tracked tags
     for (const tagObj of this.tagObjects.values()) {
       if (!tagObj) continue;
       if (tagObj.connectorLine) {
@@ -1309,9 +1313,62 @@ export class TagManager {
       }
       canvas.remove(tagObj);
     }
-
     this.tagObjects.clear();
+
+    // Sweep for orphan tags/connectors that aren't tracked in the Map
+    // (e.g. from stale loadFromJSON, race conditions, or async listeners)
+    const orphans = canvas.getObjects().filter(obj => obj.isTag || obj.isConnectorLine);
+    if (orphans.length > 0) {
+      for (const obj of orphans) {
+        canvas.remove(obj);
+      }
+    }
+
     canvas.requestRenderAll();
+  }
+
+  /**
+   * Remove any tags whose imageLabel doesn't match the current scope.
+   * Catches tags that leaked from a previous view during async view switching.
+   */
+  removeStaleTagsForScope(currentScope: string) {
+    const canvas = this.canvas;
+    if (!canvas || !currentScope) return;
+
+    let removed = 0;
+
+    // Remove tracked tags from wrong scope
+    for (const [key, tagObj] of this.tagObjects.entries()) {
+      if (!tagObj) continue;
+      const il = tagObj.imageLabel || '';
+      if (il.startsWith('__guide__')) continue;
+      if (il && il !== currentScope && !il.startsWith(`${currentScope}::tab:`)) {
+        if (tagObj.connectorLine) canvas.remove(tagObj.connectorLine);
+        canvas.remove(tagObj);
+        this.tagObjects.delete(key);
+        removed++;
+      }
+    }
+
+    // Also sweep for untracked orphans from wrong scope
+    const orphans = canvas.getObjects().filter(obj => {
+      if (!obj.isTag && !obj.isConnectorLine) return false;
+      const il = obj.imageLabel || '';
+      if (il.startsWith('__guide__')) return false;
+      if (il && il !== currentScope && !il.startsWith(`${currentScope}::tab:`)) return true;
+      return false;
+    });
+    for (const obj of orphans) {
+      canvas.remove(obj);
+      removed++;
+    }
+
+    if (removed > 0) {
+      console.log(
+        `[TagManager] Removed ${removed} stale tags not matching scope "${currentScope}"`
+      );
+      canvas.requestRenderAll();
+    }
   }
 
   renameTagLabel(oldLabel, newLabel, imageLabel) {
@@ -1371,7 +1428,7 @@ export class TagManager {
 
     // Update the text
     textObj.set('text', fullText);
-    textObj.set('textBaseline', 'alphabetic');
+    textObj.set('textBaseline', 'middle');
     textObj.styles = {};
 
     // Force text to recalculate dimensions

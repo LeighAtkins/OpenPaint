@@ -1,6 +1,7 @@
 import { parseSvgMeasurements, createCoordinateTransformer } from './svg-measurement-parser.js';
 import { CanvasManager } from '../CanvasManager';
 import { TagManager } from '../TagManager';
+import { PathUtils } from '../utils/PathUtils.js';
 import { IMAGE_PANEL_STATES, setImagePanelState } from './panel-state.js';
 import { resolveScopedImageLabel } from './scoped-image-label.js';
 
@@ -33,7 +34,7 @@ const guideSvgCache = new Map();
 let guideCodeListCache = null;
 let guideViewsByCodeCache = null;
 let guideCodeListPromise = null;
-const GUIDE_RASTER_CACHE_VERSION = 'v3';
+const GUIDE_RASTER_CACHE_VERSION = 'v4';
 const GUIDE_RASTER_MIN_EDGE = 2200;
 const GUIDE_RASTER_MAX_EDGE = 4096;
 const GUIDE_SPLIT_ENABLED_PREF_KEY = 'guideSplitEnabled';
@@ -48,6 +49,10 @@ let guideSplitCaptureOverlayOriginalNextSibling = null;
 let guideSplitCompareCanvasManager = null;
 let guideSplitCompareTagManager = null;
 let guideSplitActiveTempScopeId = '';
+let guideSplitHighlightOverlayObject = null;
+let guideSplitHighlightOverlayKey = '';
+let guideSplitCompareBackgroundVisualKey = '';
+let guideSplitActiveHighlightRoleCanonical = '';
 let guideSplitSyncingWorkspace = false;
 let guideSplitSuppressViewSwitchSync = 0;
 let guideSplitRestoreSnapshot = null;
@@ -57,6 +62,13 @@ let guideSplitLayoutSyncTimeout = null;
 let guideSplitFrameSyncRaf = null;
 let guideSplitFrameSyncToken = 0;
 let guideSplitFrameGhost = null;
+let guideSplitTransitionPending = false;
+let guideSplitCompareLoadPromise = null;
+let guideSplitCompareLoadKey = '';
+let guideSplitCompareLoadToken = 0;
+let _ensureRightViewInFlight = false;
+let _bindingChangedTimeout = null;
+let _lastProcessedGuideNextTagEventKey = '';
 const guideSplitPendingGuideViews = new Map();
 const guideCompareWorkspaceState = {
   open: guideSplitEnabled,
@@ -219,11 +231,11 @@ function runGuideSplitLayoutSync() {
   if (frameEl) {
     frameEl.style.visibility = 'hidden';
   }
-  primaryCanvasManager?.resize?.();
-  if (typeof window.applyCaptureFrameForLabel === 'function') {
-    window.applyCaptureFrameForLabel(getCurrentViewId());
-  }
-  guideSplitCompareCanvasManager?.resize?.();
+  syncGuideSplitPrimaryCaptureFrame(getCurrentViewId());
+  resizeGuideSplitCanvasManagerNow(primaryCanvasManager);
+  resizeGuideSplitCanvasManagerNow(guideSplitCompareCanvasManager);
+  fitGuideSplitCompareBackgroundToFrame();
+  syncGuideSplitHighlightOverlayToBackground();
   if (guideSplitFrameSyncRaf !== null) {
     cancelAnimationFrame(guideSplitFrameSyncRaf);
     guideSplitFrameSyncRaf = null;
@@ -235,7 +247,21 @@ function runGuideSplitLayoutSync() {
       if (typeof window.syncCaptureFrameToActiveTabWorldRect === 'function') {
         window.syncCaptureFrameToActiveTabWorldRect(getCurrentViewId());
       }
+      fitGuideSplitPrimaryBackgroundToFrame();
+      fitGuideSplitCompareBackgroundToFrame();
+      syncGuideSplitHighlightOverlayToBackground();
       syncGuideSplitFrameGhost();
+      if (guideSplitLayoutSyncRaf === null && guideSplitLayoutSyncTimeout === null) {
+        requestAnimationFrame(() => {
+          if (
+            guideSplitEnabled &&
+            guideSplitLayoutSyncRaf === null &&
+            guideSplitLayoutSyncTimeout === null
+          ) {
+            setGuideSplitTransitionPending(false);
+          }
+        });
+      }
       if (frameEl) {
         frameEl.style.visibility = 'hidden';
       }
@@ -255,6 +281,7 @@ function scheduleGuideSplitFrameSync() {
       if (typeof window.syncCaptureFrameToActiveTabWorldRect === 'function') {
         window.syncCaptureFrameToActiveTabWorldRect(getCurrentViewId());
       }
+      syncGuideSplitHighlightOverlayToBackground();
       syncGuideSplitFrameGhost();
       const frameEl = document.getElementById('captureFrame');
       if (frameEl) {
@@ -274,19 +301,31 @@ function scheduleGuideSplitLayoutSync({ settle = false } = {}) {
     guideSplitLayoutSyncTimeout = null;
   }
 
+  window.__guideSplitLayoutSettling = true;
   guideSplitLayoutSyncRaf = requestAnimationFrame(() => {
     guideSplitLayoutSyncRaf = null;
     runGuideSplitLayoutSync();
 
-    if (!settle) return;
+    if (!settle) {
+      window.__guideSplitLayoutSettling = false;
+      return;
+    }
 
     guideSplitLayoutSyncTimeout = window.setTimeout(() => {
       guideSplitLayoutSyncTimeout = null;
       requestAnimationFrame(() => {
         runGuideSplitLayoutSync();
+        window.__guideSplitLayoutSettling = false;
       });
-    }, 120);
+    }, 50);
   });
+}
+
+function invalidateGuideSplitCompareLoad() {
+  guideSplitCompareLoadToken += 1;
+  guideSplitCompareLoadKey = '';
+  guideSplitCompareLoadPromise = null;
+  resetGuideSplitCompareBackgroundVisualKey();
 }
 
 function getGuideSplitImageWorldRect() {
@@ -368,6 +407,106 @@ function restoreGuideSplitSnapshot(viewId) {
   guideSplitRestoreSnapshot = null;
   window.__guideSplitRestoreSnapshot = null;
   return snapshot;
+}
+
+function syncGuideSplitPrimaryCaptureFrame(viewId, { exact = false } = {}) {
+  const normalizedViewId = toBaseViewId(viewId || getCurrentViewId());
+  if (!normalizedViewId) {
+    return false;
+  }
+
+  if (typeof window.getCaptureTabScopedLabel === 'function') {
+    window.currentImageLabel =
+      window.getCaptureTabScopedLabel(normalizedViewId) || normalizedViewId;
+  } else {
+    window.currentImageLabel = normalizedViewId;
+  }
+
+  if (exact && typeof window.restoreCaptureFrameForLabelExact === 'function') {
+    return window.restoreCaptureFrameForLabelExact(normalizedViewId) === true;
+  }
+
+  if (typeof window.applyCaptureFrameForLabel === 'function') {
+    window.applyCaptureFrameForLabel(normalizedViewId);
+    return true;
+  }
+
+  return false;
+}
+
+function fitGuideSplitPrimaryBackgroundToFrame() {
+  const primaryCanvasManager = getPrimaryCanvasManager();
+  const backgroundWorldRect = primaryCanvasManager?.getBackgroundWorldRect?.();
+  const targetFrame = primaryCanvasManager?.getBackgroundPlacementFrame?.();
+  if (
+    !backgroundWorldRect ||
+    !targetFrame ||
+    !primaryCanvasManager?.fitViewportToBackgroundPlacementFrame
+  ) {
+    return false;
+  }
+
+  const didFit = primaryCanvasManager.fitViewportToBackgroundPlacementFrame(
+    backgroundWorldRect,
+    targetFrame,
+    {
+      zoom: primaryCanvasManager.zoomLevel || primaryCanvasManager.fabricCanvas?.getZoom?.() || 1,
+      panX: 0,
+      panY: 0,
+      rotation: primaryCanvasManager.rotateViewport ? primaryCanvasManager.rotationDegrees : 0,
+    }
+  );
+  if (didFit && typeof primaryCanvasManager.applyViewportTransform === 'function') {
+    primaryCanvasManager.applyViewportTransform();
+  }
+  return didFit;
+}
+
+function fitGuideSplitCompareBackgroundToFrame() {
+  if (!guideSplitCompareCanvasManager?.refitBackgroundImageToPlacementFrame) {
+    return false;
+  }
+  const didFit = guideSplitCompareCanvasManager.refitBackgroundImageToPlacementFrame();
+  if (didFit) {
+    guideSplitCompareCanvasManager.applyViewportTransform?.();
+  }
+  return didFit;
+}
+
+function resizeGuideSplitCanvasManagerNow(canvasManager) {
+  if (!canvasManager) {
+    return false;
+  }
+
+  if (
+    typeof canvasManager.getAvailableCanvasSize === 'function' &&
+    typeof canvasManager.applyResize === 'function'
+  ) {
+    const { width, height } = canvasManager.getAvailableCanvasSize();
+    canvasManager.applyResize(width, height);
+    return true;
+  }
+
+  if (typeof canvasManager.resize === 'function') {
+    canvasManager.resize();
+    return true;
+  }
+
+  return false;
+}
+
+function teardownGuideSplitCompareCanvasManager() {
+  if (guideSplitCompareCanvasManager?.resizeObserver?.disconnect) {
+    guideSplitCompareCanvasManager.resizeObserver.disconnect();
+  }
+  try {
+    guideSplitCompareCanvasManager?.fabricCanvas?.dispose?.();
+  } catch (error) {
+    console.warn('[GuideSplit] Failed to dispose compare canvas cleanly', error);
+  }
+  guideSplitCompareCanvasManager = null;
+  guideSplitCompareTagManager = null;
+  window.app?.registerCompareCanvasManager?.(null);
 }
 
 function normalizeFlashSize(value) {
@@ -505,7 +644,19 @@ function toBaseViewId(viewId) {
   return raw;
 }
 
+function getExplicitTabId(viewId) {
+  const raw = String(viewId || '').trim();
+  const marker = '::tab:';
+  const index = raw.indexOf(marker);
+  if (index < 0) return '';
+  return raw.slice(index + marker.length).trim();
+}
+
 function getActiveTabIdForView(viewId) {
+  const explicitTabId = getExplicitTabId(viewId);
+  if (explicitTabId && explicitTabId !== 'master') {
+    return explicitTabId;
+  }
   const baseViewId = toBaseViewId(viewId);
   const state =
     window.captureTabsByLabel && typeof window.captureTabsByLabel === 'object'
@@ -524,7 +675,7 @@ function getActiveTabIdForView(viewId) {
 
 function getFrameScopeIdForView(viewId) {
   const baseViewId = toBaseViewId(viewId);
-  const tabId = getActiveTabIdForView(baseViewId);
+  const tabId = getActiveTabIdForView(viewId);
   if (!tabId) return '';
   return `${baseViewId}::tab:${tabId}`;
 }
@@ -1506,6 +1657,9 @@ function ensureStyles() {
     .guide-split-live-pane {
       border: 0;
     }
+    .guide-split-live-pane.is-transitioning {
+      pointer-events: none;
+    }
     .guide-split-live-pane #captureOverlay {
       position: absolute !important;
       inset: 0 !important;
@@ -2088,9 +2242,75 @@ function parseSvgNumericAttr(raw) {
   return Number.isFinite(num) ? num : 0;
 }
 
+function normalizeGuideRasterMode(options = {}) {
+  const explicitMode = String(options.mode || '')
+    .trim()
+    .toLowerCase();
+  if (explicitMode === 'base' || explicitMode === 'preview' || explicitMode === 'highlight-only') {
+    return explicitMode;
+  }
+  if (options.hideGuideMeasurements !== false) return 'base';
+  if (options.hideGuideMeasurementValues === true) return 'preview';
+  return 'preview';
+}
+
+function isZeroPlaceholderText(value) {
+  const normalized = String(value || '')
+    .replace(/\s+/g, '')
+    .replace(/,/g, '');
+  if (!normalized) return false;
+  return /^0+(?:\.\d+)?$/.test(normalized);
+}
+
+function containsPlaceholderValue(group) {
+  if (!group?.querySelectorAll) return false;
+  return Array.from(group.querySelectorAll('text, tspan')).some(node =>
+    isZeroPlaceholderText(node.textContent || '')
+  );
+}
+
+function getGroupRoleInfo(group) {
+  const rawId = String(group?.getAttribute?.('id') || '').trim();
+  if (!rawId) return null;
+  const normalizedId = rawId.replace(/^mos\d+_/, '').trim();
+  const prefix = normalizedId[0]?.toLowerCase() || '';
+  const token = roleTokenFromElementId(normalizedId);
+  const canonicalToken = canonicalRoleToken(token);
+  return {
+    rawId,
+    normalizedId,
+    prefix,
+    token,
+    canonicalToken,
+  };
+}
+
+function styleGuideGroupForHighlight(group, prefix) {
+  if (!group?.querySelectorAll) return;
+  if (prefix === 'm') {
+    group.querySelectorAll('line, path, polyline').forEach(node => {
+      node.setAttribute('stroke', '#ef4444');
+      node.setAttribute('fill', 'none');
+    });
+    return;
+  }
+
+  if (prefix === 'c') {
+    group.querySelectorAll('rect').forEach(node => {
+      node.setAttribute('fill', '#fff7ed');
+      node.setAttribute('stroke', '#ef4444');
+    });
+    group.querySelectorAll('text, tspan').forEach(node => {
+      node.setAttribute('fill', '#9a3412');
+    });
+  }
+}
+
 function prepareSvgForRaster(svgText, options = {}) {
-  const hideGuideMeasurements = options.hideGuideMeasurements !== false;
-  const hideGuideMeasurementValues = options.hideGuideMeasurementValues === true;
+  const mode = normalizeGuideRasterMode(options);
+  const activeRole = normalizeRoleToken(options.activeRole || '');
+  const activeCanonicalRole = canonicalRoleToken(activeRole);
+  const dimInactive = options.dimInactive !== false;
   const parser = new DOMParser();
   const doc = parser.parseFromString(svgText, 'image/svg+xml');
   const root = doc.querySelector('svg');
@@ -2123,31 +2343,49 @@ function prepareSvgForRaster(svgText, options = {}) {
     root.setAttribute('viewBox', `0 0 ${width} ${height}`);
   }
 
-  if (hideGuideMeasurements) {
-    // Hide original guide measurement + label groups in the raster image so imported
-    // Fabric vectors/tags are the single visible source of truth.
-    const allGroups = Array.from(root.querySelectorAll('g[id]'));
-    allGroups.forEach(group => {
-      const rawId = String(group.getAttribute('id') || '').trim();
-      if (!rawId) return;
-      const normalizedId = rawId.replace(/^mos\d+_/, '').trim();
-      if (/^[mbc][a-z0-9-]+(?:cm|mm|in)\d*(?:_(?:label|text))?$/i.test(normalizedId)) {
+  const allGroups = Array.from(root.querySelectorAll('g'));
+  allGroups.forEach(group => {
+    const info = getGroupRoleInfo(group);
+    const isMeasurementGroup =
+      info && (info.prefix === 'm' || info.prefix === 'b' || info.prefix === 'c');
+    if (!isMeasurementGroup) return;
+
+    const matchesActiveRole =
+      info?.canonicalToken && activeCanonicalRole
+        ? info.canonicalToken === activeCanonicalRole
+        : false;
+    const isPlaceholderGroup = info?.prefix === 'b' || containsPlaceholderValue(group);
+
+    if (mode === 'base') {
+      group.setAttribute('display', 'none');
+      return;
+    }
+
+    if (isPlaceholderGroup) {
+      group.setAttribute('display', 'none');
+      return;
+    }
+
+    if (mode === 'highlight-only') {
+      if (!matchesActiveRole || (info?.prefix !== 'm' && info?.prefix !== 'c')) {
         group.setAttribute('display', 'none');
+        return;
       }
-    });
-  } else if (hideGuideMeasurementValues) {
-    // Keep the designed vector lines/role labels but drop the placeholder measurement
-    // value boxes (the b* groups that still contain 0000.00 text).
-    const allGroups = Array.from(root.querySelectorAll('g[id]'));
-    allGroups.forEach(group => {
-      const rawId = String(group.getAttribute('id') || '').trim();
-      if (!rawId) return;
-      const normalizedId = rawId.replace(/^mos\d+_/, '').trim();
-      if (/^b[a-z0-9-]+(?:cm|mm|in)\d*(?:_(?:label|text))?$/i.test(normalizedId)) {
-        group.setAttribute('display', 'none');
-      }
-    });
-  }
+      group.setAttribute('opacity', '1');
+      styleGuideGroupForHighlight(group, info.prefix);
+      return;
+    }
+
+    if (matchesActiveRole) {
+      group.setAttribute('opacity', '1');
+      styleGuideGroupForHighlight(group, info.prefix);
+      return;
+    }
+
+    if (dimInactive && (info?.prefix === 'm' || info?.prefix === 'c')) {
+      group.setAttribute('opacity', '0.22');
+    }
+  });
 
   root.setAttribute('width', String(width));
   root.setAttribute('height', String(height));
@@ -2196,19 +2434,69 @@ function computeRasterSize(width, height) {
   };
 }
 
-async function fetchGuideRasterUrl(code, view, options = {}) {
-  const hideGuideMeasurements = options.hideGuideMeasurements !== false;
-  const hideGuideMeasurementValues = options.hideGuideMeasurementValues === true;
-  const key = `${GUIDE_RASTER_CACHE_VERSION}::${code}::${view}::measurements:${hideGuideMeasurements ? 'hidden' : 'shown'}::values:${hideGuideMeasurementValues ? 'hidden' : 'shown'}`;
+export function resolveGuideActiveRole(viewId, roles = []) {
+  const normalizedRoles = Array.from(
+    new Set(
+      (Array.isArray(roles) ? roles : []).map(role => normalizeRoleToken(role)).filter(Boolean)
+    )
+  );
+  const roleMap = new Map(
+    normalizedRoles.map(role => [canonicalRoleToken(role), role]).filter(([key]) => !!key)
+  );
+  const normalizeCandidate = value => {
+    const token = normalizeRoleToken(value);
+    if (!token) return '';
+    const canonical = canonicalRoleToken(token);
+    if (roleMap.size) {
+      return roleMap.get(canonical) || '';
+    }
+    return token;
+  };
+
+  const baseViewId = toBaseViewId(String(viewId || '').trim() || getCurrentViewId());
+  const scopedViewId = resolveScopedImageLabel(baseViewId) || baseViewId;
+  const currentViewId = toBaseViewId(getCurrentViewId());
+  const currentScopedViewId = resolveScopedImageLabel(currentViewId) || currentViewId;
+  const seeds = window.guideOneTimeTagByImage || {};
+  const seedCandidates = [
+    seeds[scopedViewId],
+    seeds[baseViewId],
+    seeds[currentScopedViewId],
+    seeds[currentViewId],
+  ];
+
+  for (const candidate of seedCandidates) {
+    const matched = normalizeCandidate(candidate);
+    if (matched) return matched;
+  }
+
+  const nextTag =
+    typeof window.app?.tagManager?.getNextTag === 'function'
+      ? window.app.tagManager.getNextTag(baseViewId)
+      : '';
+  const matchedNextTag = normalizeCandidate(nextTag);
+  if (matchedNextTag) return matchedNextTag;
+
+  const nextTagDisplay = document.getElementById('nextTagDisplay');
+  if (nextTagDisplay) {
+    const matchedDisplay = normalizeCandidate(nextTagDisplay.textContent || '');
+    if (matchedDisplay) return matchedDisplay;
+  }
+
+  return '';
+}
+
+export async function fetchGuideRasterUrl(code, view, options = {}) {
+  const mode = normalizeGuideRasterMode(options);
+  const activeRole = normalizeRoleToken(options.activeRole || '');
+  const dimInactive = options.dimInactive !== false;
+  const key = `${GUIDE_RASTER_CACHE_VERSION}::${code}::${view}::mode:${mode}::role:${activeRole || 'none'}::dim:${dimInactive ? 'yes' : 'no'}`;
   if (guideRasterCache.has(key)) {
     return guideRasterCache.get(key);
   }
 
   const rawSvg = await fetchGuideSvgText(code, view);
-  const prepared = prepareSvgForRaster(rawSvg, {
-    hideGuideMeasurements,
-    hideGuideMeasurementValues,
-  });
+  const prepared = prepareSvgForRaster(rawSvg, { ...options, mode, activeRole, dimInactive });
   const svgBlob = new Blob([prepared.svgText], {
     type: 'image/svg+xml;charset=utf-8',
   });
@@ -2567,51 +2855,112 @@ async function importSvgMeasurements(code, view, imageLabel, options = {}) {
     const imported = [];
     const metadataManager = options.metadataManager || window.app?.metadataManager;
     const tagManager = options.tagManager || window.app?.tagManager || null;
+    const curveMode = String(options.curveMode || 'straight')
+      .trim()
+      .toLowerCase();
+    const referenceOnly = curveMode === 'reference-path';
+
+    const applyReferenceGuideObjectState = object => {
+      if (!object) return;
+      object.__guideSplitReferenceOnly = referenceOnly;
+      if (!referenceOnly) return;
+      object.set?.({
+        visible: false,
+        selectable: false,
+        evented: false,
+        hasControls: false,
+        hasBorders: false,
+        lockMovementX: true,
+        lockMovementY: true,
+        lockRotation: true,
+        hoverCursor: 'default',
+        moveCursor: 'default',
+      });
+    };
 
     for (const measurement of parsed.measurements) {
       for (const line of measurement.lines) {
-        // Transform coordinates from SVG space to canvas space
-        const start = transform(line.x1, line.y1);
-        const end = transform(line.x2, line.y2);
+        const segmentPoints = Array.isArray(line?.points)
+          ? line.points
+              .map(point => ({
+                x: Number(point?.x),
+                y: Number(point?.y),
+              }))
+              .filter(point => Number.isFinite(point.x) && Number.isFinite(point.y))
+          : [];
+        const shouldImportAsPath =
+          curveMode === 'reference-path' && line?.kind === 'curve' && segmentPoints.length >= 2;
 
-        // Create Fabric.js line object
-        const fabricLine = new fabric.Line([start.x, start.y, end.x, end.y], {
-          stroke: '#ef4444', // Red color for guide measurements
-          strokeWidth: 2,
-          strokeDashArray: null,
-          selectable: true,
-          evented: true,
-          originX: 'center',
-          originY: 'center',
-        });
+        let fabricLine = null;
+        if (shouldImportAsPath) {
+          const transformedPoints = segmentPoints.map(point => transform(point.x, point.y));
+          const pathString = PathUtils.createSmoothPath(transformedPoints);
+          if (!pathString) {
+            continue;
+          }
+          fabricLine = new fabric.Path(pathString, {
+            stroke: '#ef4444',
+            strokeWidth: 2,
+            fill: '',
+            strokeDashArray: null,
+            selectable: !referenceOnly,
+            evented: !referenceOnly,
+            objectCaching: false,
+            hasControls: !referenceOnly,
+            hasBorders: false,
+            perPixelTargetFind: !referenceOnly,
+            padding: referenceOnly ? 0 : 8,
+          });
+          fabricLine.customPoints = transformedPoints.map(point => ({ x: point.x, y: point.y }));
+        } else {
+          // Transform coordinates from SVG space to canvas space
+          const start = transform(line.x1, line.y1);
+          const end = transform(line.x2, line.y2);
 
-        // Add arrow settings (triangular arrows on both ends)
-        fabricLine.arrowSettings = {
-          startArrow: true,
-          endArrow: true,
-          arrowSize: 15,
-          arrowStyle: 'triangular',
-          arrowSpread: 1,
-          ghostBaseline: true,
-        };
+          // Create Fabric.js line object
+          fabricLine = new fabric.Line([start.x, start.y, end.x, end.y], {
+            stroke: '#ef4444', // Red color for guide measurements
+            strokeWidth: 2,
+            strokeDashArray: null,
+            selectable: !referenceOnly,
+            evented: !referenceOnly,
+            originX: 'center',
+            originY: 'center',
+          });
+        }
+
+        applyReferenceGuideObjectState(fabricLine);
+
+        if (!referenceOnly) {
+          fabricLine.arrowSettings = {
+            startArrow: true,
+            endArrow: true,
+            arrowSize: 15,
+            arrowStyle: 'triangular',
+            arrowSpread: 1,
+            ghostBaseline: true,
+          };
+        }
 
         // Disable object caching for proper arrow rendering
         fabricLine.objectCaching = false;
 
-        // Apply arrow rendering - patches the _render method to draw arrows
-        if (window.app?.arrowManager) {
+        // Apply arrow rendering for editable imports only. Split compare keeps
+        // the SVG overlay as the visual source of truth for arrow direction.
+        if (!referenceOnly && window.app?.arrowManager) {
           window.app.arrowManager.attachArrowRendering(fabricLine);
           window.app.arrowManager.syncArrowMetadata(fabricLine);
         }
 
         // Add custom metadata
         fabricLine.customData = {
-          type: 'line',
+          type: fabricLine.type === 'path' ? 'curve' : 'line',
           imageLabel,
           strokeLabel: measurement.label,
           source: 'guide-import',
           guideCode: code,
           guideView: view,
+          guideReferenceOnly: referenceOnly,
         };
 
         // Add to canvas
@@ -3655,6 +4004,10 @@ function ensureGuideSplitShell() {
     root.appendChild(guide);
     wrapper.appendChild(root);
   }
+  const livePane = root.querySelector('#guideSplitLivePane');
+  if (livePane) {
+    livePane.classList.toggle('is-transitioning', guideSplitTransitionPending === true);
+  }
   return root;
 }
 
@@ -3664,6 +4017,14 @@ function getPrimaryCanvasManager() {
 
 function getCanvasWrapperElement(canvasManager = getPrimaryCanvasManager()) {
   return canvasManager?.fabricCanvas?.wrapperEl || null;
+}
+
+function setGuideSplitTransitionPending(pending) {
+  guideSplitTransitionPending = pending === true;
+  const livePane = document.getElementById('guideSplitLivePane');
+  if (livePane) {
+    livePane.classList.toggle('is-transitioning', guideSplitTransitionPending);
+  }
 }
 
 function relocateCaptureOverlayIntoSplitPane() {
@@ -3848,6 +4209,329 @@ function parseGuideSplitTempViewId(viewId) {
   };
 }
 
+function setGuideSplitReferenceObjectState(object, visible = true) {
+  if (!object) return;
+  object.__guideSplitReferenceOnly = true;
+  object.set?.({
+    visible,
+    evented: false,
+    selectable: false,
+    hasControls: false,
+    hasBorders: false,
+    lockMovementX: true,
+    lockMovementY: true,
+    lockRotation: true,
+    hoverCursor: 'default',
+    moveCursor: 'default',
+  });
+  object.setCoords?.();
+}
+
+function setGuideSplitReferenceTagState(tagManager, strokeLabel, imageLabel, visible = true) {
+  if (!tagManager?.getTagObject) return;
+  const found = tagManager.getTagObject(strokeLabel, imageLabel);
+  if (!found?.tagObj) return;
+
+  const tagObj = found.tagObj;
+  tagObj.__guideSplitReferenceOnly = true;
+  tagObj.set({
+    visible,
+    evented: false,
+    selectable: false,
+    hasControls: false,
+    hasBorders: false,
+    lockMovementX: true,
+    lockMovementY: true,
+    lockRotation: true,
+    hoverCursor: 'default',
+    moveCursor: 'default',
+  });
+  tagObj._objects?.forEach(child => {
+    child.set?.({
+      evented: false,
+      selectable: false,
+    });
+  });
+
+  if (tagObj.connectorLine) {
+    setGuideSplitReferenceObjectState(tagObj.connectorLine, visible);
+  }
+
+  tagObj.setCoords?.();
+}
+
+function applyGuideSplitTagHighlightVisual(tagObj, highlighted = false) {
+  if (!tagObj) return;
+  const tagManager = guideSplitCompareTagManager || window.app?.tagManager || null;
+  const highlightTheme = tagManager?.getDefaultHighlightTheme?.() || {
+    background: '#fef3c7',
+    border: '#f59e0b',
+    text: '#92400e',
+  };
+  const defaultTheme = tagManager?.getDefaultTagTheme?.() || {
+    background: '#ffffff',
+    border: '#000000',
+    text: '#000000',
+  };
+  const theme = highlighted ? highlightTheme : defaultTheme;
+  const children = Array.isArray(tagObj._objects) ? tagObj._objects : [];
+  const background =
+    children.find(child => String(child?.type || '').toLowerCase() === 'rect') || children[0];
+  const text = children.find(child => /text/i.test(String(child?.type || ''))) || children[1];
+
+  background?.set?.({
+    fill: theme.background,
+    stroke: theme.border,
+  });
+  text?.set?.({
+    fill: theme.text,
+  });
+  tagObj.__guideSplitHighlighted = highlighted === true;
+  tagObj.dirty = true;
+  tagObj.setCoords?.();
+}
+
+function resolveGuideSplitScopeIds(scopeId) {
+  const normalizedScopeId = String(scopeId || '').trim();
+  if (!normalizedScopeId) return [];
+  const metadataManager = window.app?.metadataManager || null;
+  const vectorMap = metadataManager?.vectorStrokesByImage || {};
+  const scopedMatches = Object.keys(vectorMap).filter(
+    key => key === normalizedScopeId || key.startsWith(`${normalizedScopeId}::tab:`)
+  );
+  return scopedMatches.length ? scopedMatches : [normalizedScopeId];
+}
+
+function hasGuideSplitTempScopeData(scopeId) {
+  const scopeIds = resolveGuideSplitScopeIds(scopeId);
+  const metadataManager = window.app?.metadataManager || null;
+  return scopeIds.some(candidateScopeId => {
+    const scopedVectors = metadataManager?.vectorStrokesByImage?.[candidateScopeId];
+    return Boolean(
+      scopedVectors && typeof scopedVectors === 'object' && Object.keys(scopedVectors).length > 0
+    );
+  });
+}
+
+function isGuideSplitCompareCanvasReadyForTempView(viewId) {
+  const parsedGuide = parseGuideSplitTempViewId(viewId);
+  if (!parsedGuide) return false;
+  const tempScopeId = buildGuideSplitTempViewId(parsedGuide);
+  const compareCanvas = guideSplitCompareCanvasManager?.fabricCanvas || null;
+  return Boolean(
+    compareCanvas?.backgroundImage &&
+    guideSplitActiveTempScopeId === tempScopeId &&
+    hasGuideSplitTempScopeData(tempScopeId)
+  );
+}
+
+function loadFabricImage(url) {
+  return new Promise((resolve, reject) => {
+    fabric.Image.fromURL(
+      url,
+      image => {
+        if (image) {
+          resolve(image);
+        } else {
+          reject(new Error('Failed to create Fabric image'));
+        }
+      },
+      {
+        crossOrigin: 'anonymous',
+      }
+    );
+  });
+}
+
+function removeGuideSplitHighlightOverlay(
+  compareCanvas = guideSplitCompareCanvasManager?.fabricCanvas,
+  options = {}
+) {
+  if (compareCanvas && guideSplitHighlightOverlayObject) {
+    compareCanvas.remove(guideSplitHighlightOverlayObject);
+  }
+  guideSplitHighlightOverlayObject = null;
+  guideSplitHighlightOverlayKey = '';
+  if (options.resetRole !== false) {
+    guideSplitActiveHighlightRoleCanonical = '';
+  }
+}
+
+function resetGuideSplitCompareBackgroundVisualKey() {
+  guideSplitCompareBackgroundVisualKey = '';
+}
+
+async function replaceGuideSplitCompareBackgroundImage(imageUrl, compareCanvas) {
+  if (!imageUrl || !compareCanvas) return false;
+  const currentBackground = compareCanvas.backgroundImage || null;
+  const nextBackground = await loadFabricImage(imageUrl);
+
+  nextBackground.set({
+    originX: currentBackground?.originX || 'center',
+    originY: currentBackground?.originY || 'center',
+    left: currentBackground?.left ?? nextBackground.left,
+    top: currentBackground?.top ?? nextBackground.top,
+    angle: currentBackground?.angle || 0,
+    scaleX: currentBackground?.scaleX || 1,
+    scaleY: currentBackground?.scaleY || 1,
+    selectable: false,
+    evented: false,
+    excludeFromExport: true,
+  });
+  nextBackground.openpaintFitMode = currentBackground?.openpaintFitMode || 'fit-canvas';
+  nextBackground.setCoords?.();
+
+  await new Promise(resolve => {
+    compareCanvas.setBackgroundImage(nextBackground, () => {
+      compareCanvas.requestRenderAll?.();
+      resolve();
+    });
+  });
+  return true;
+}
+
+function syncGuideSplitHighlightOverlayToBackground(
+  compareCanvas = guideSplitCompareCanvasManager?.fabricCanvas
+) {
+  const overlay = guideSplitHighlightOverlayObject;
+  const background = compareCanvas?.backgroundImage;
+  if (!overlay || !background) return;
+  overlay.set({
+    originX: background.originX || 'center',
+    originY: background.originY || 'center',
+    left: background.left,
+    top: background.top,
+    angle: background.angle || 0,
+    scaleX: background.scaleX || 1,
+    scaleY: background.scaleY || 1,
+    opacity: 1,
+    selectable: false,
+    evented: false,
+    excludeFromExport: true,
+  });
+  overlay.setCoords?.();
+  if (typeof compareCanvas.moveTo === 'function') {
+    compareCanvas.moveTo(overlay, 0);
+  } else if (typeof overlay.sendToBack === 'function') {
+    overlay.sendToBack();
+  }
+}
+
+function syncGuideSplitReferenceTagHighlights(tempScopeId, activeRole) {
+  const compareTagManager = guideSplitCompareTagManager;
+  const normalizedScopeId = String(tempScopeId || '').trim();
+  const compareCanvas = guideSplitCompareCanvasManager?.fabricCanvas || null;
+  if (!normalizedScopeId) return;
+  const normalizedActiveRole = normalizeRoleToken(activeRole);
+  const activeCanonicalRole = canonicalRoleToken(normalizedActiveRole);
+  guideSplitActiveHighlightRoleCanonical = activeCanonicalRole || '';
+  const scopedVectors =
+    window.app?.metadataManager?.vectorStrokesByImage?.[normalizedScopeId] || {};
+  const tagObjects = (compareCanvas?.getObjects?.() || []).filter(
+    object =>
+      object?.isTag &&
+      (() => {
+        const tagImageLabel = String(object?.imageLabel || '');
+        return (
+          tagImageLabel === normalizedScopeId ||
+          tagImageLabel.startsWith(`${normalizedScopeId}::tab:`)
+        );
+      })()
+  );
+  Object.keys(scopedVectors).forEach(strokeLabel => {
+    const highlighted =
+      !!activeCanonicalRole && canonicalRoleToken(strokeLabel) === activeCanonicalRole;
+    const tagObj =
+      tagObjects.find(object => String(object?.strokeLabel || '') === strokeLabel) || null;
+    const tagImageLabel = String(tagObj?.imageLabel || normalizedScopeId);
+    compareTagManager?.setTagHighlighted?.(strokeLabel, tagImageLabel, highlighted);
+    applyGuideSplitTagHighlightVisual(tagObj, highlighted);
+  });
+  compareCanvas?.requestRenderAll?.();
+}
+
+function refreshGuideSplitTagHighlightsFromUi(tempScopeId = guideSplitActiveTempScopeId) {
+  const normalizedScopeId = String(tempScopeId || '').trim();
+  const compareCanvas = guideSplitCompareCanvasManager?.fabricCanvas || null;
+  if (!normalizedScopeId || !compareCanvas) return;
+  const activeRole = resolveGuideActiveRole(guideCompareWorkspaceState.leftViewId, []);
+  const activeCanonicalRole = canonicalRoleToken(activeRole);
+  const tagObjects = (compareCanvas.getObjects?.() || []).filter(object => {
+    if (!object?.isTag) return false;
+    const tagImageLabel = String(object?.imageLabel || '');
+    return (
+      tagImageLabel === normalizedScopeId || tagImageLabel.startsWith(`${normalizedScopeId}::tab:`)
+    );
+  });
+  tagObjects.forEach(tagObj => {
+    const highlighted =
+      !!activeCanonicalRole &&
+      canonicalRoleToken(String(tagObj?.strokeLabel || '')) === activeCanonicalRole;
+    applyGuideSplitTagHighlightVisual(tagObj, highlighted);
+  });
+  compareCanvas.requestRenderAll?.();
+}
+
+async function updateGuideSplitHighlightOverlay(
+  selection,
+  compareCanvasManager = guideSplitCompareCanvasManager,
+  tempScopeId = guideSplitActiveTempScopeId
+) {
+  const normalizedCode = normalizeCode(selection?.code || '');
+  const normalizedVariant =
+    String(selection?.variant || 'front')
+      .trim()
+      .toLowerCase() || 'front';
+  const compareCanvas = compareCanvasManager?.fabricCanvas || null;
+  if (!normalizedCode || !compareCanvas?.backgroundImage) {
+    removeGuideSplitHighlightOverlay(compareCanvas);
+    return '';
+  }
+
+  const roles = await fetchGuideRoleTokens(normalizedCode, normalizedVariant).catch(() => []);
+  const activeRole = resolveGuideActiveRole(guideCompareWorkspaceState.leftViewId, roles);
+  const visualKey = `${normalizedCode}::${normalizedVariant}::${activeRole || 'none'}`;
+
+  syncGuideSplitReferenceTagHighlights(tempScopeId, activeRole);
+  [120, 350, 700].forEach(delayMs => {
+    window.setTimeout(() => {
+      syncGuideSplitReferenceTagHighlights(tempScopeId, activeRole);
+    }, delayMs);
+  });
+
+  if (!activeRole) {
+    removeGuideSplitHighlightOverlay(compareCanvas);
+    if (guideSplitCompareBackgroundVisualKey === visualKey) {
+      compareCanvas.requestRenderAll?.();
+      return '';
+    }
+    const backgroundUrl = await fetchGuideRasterUrl(normalizedCode, normalizedVariant, {
+      mode: 'preview',
+      dimInactive: false,
+    });
+    await replaceGuideSplitCompareBackgroundImage(backgroundUrl, compareCanvas);
+    guideSplitCompareBackgroundVisualKey = visualKey;
+    compareCanvas.requestRenderAll?.();
+    return '';
+  }
+
+  removeGuideSplitHighlightOverlay(compareCanvas, { resetRole: false });
+  if (guideSplitCompareBackgroundVisualKey === visualKey) {
+    compareCanvas.requestRenderAll?.();
+    return activeRole;
+  }
+
+  const backgroundUrl = await fetchGuideRasterUrl(normalizedCode, normalizedVariant, {
+    mode: 'preview',
+    activeRole,
+    dimInactive: true,
+  });
+  await replaceGuideSplitCompareBackgroundImage(backgroundUrl, compareCanvas);
+  guideSplitCompareBackgroundVisualKey = visualKey;
+  compareCanvas.requestRenderAll?.();
+  return activeRole;
+}
+
 function createGuideSplitCompareTagManager(compareCanvasManager) {
   const metadataManager = window.app?.metadataManager || null;
   if (!compareCanvasManager || !metadataManager) return null;
@@ -3863,19 +4547,60 @@ function createGuideSplitCompareTagManager(compareCanvasManager) {
     tagManager.connectorMatchesLine = primaryTagManager.connectorMatchesLine !== false;
     tagManager.strokeColor = primaryTagManager.strokeColor || tagManager.strokeColor;
   }
+  const originalCreateTag = tagManager.createTag.bind(tagManager);
+  tagManager.createTag = (...args) => {
+    const created = originalCreateTag(...args);
+    setGuideSplitReferenceTagState(tagManager, args[0], args[1], false);
+    const activeRoleFromUi = resolveGuideActiveRole(guideCompareWorkspaceState.leftViewId, []);
+    const activeCanonicalRole = canonicalRoleToken(activeRoleFromUi);
+    applyGuideSplitTagHighlightVisual(
+      created,
+      !!activeCanonicalRole && canonicalRoleToken(args[0]) === activeCanonicalRole
+    );
+    return created;
+  };
+  const originalUpdateTagVisibility = tagManager.updateTagVisibility.bind(tagManager);
+  tagManager.updateTagVisibility = (strokeLabel, imageLabel, _visible) => {
+    originalUpdateTagVisibility(strokeLabel, imageLabel, false);
+    setGuideSplitReferenceTagState(tagManager, strokeLabel, imageLabel, false);
+  };
   return tagManager;
 }
 
 function clearGuideSplitTempScope(scopeId) {
   const targetScopeId = String(scopeId || '').trim();
   if (!targetScopeId) return;
+  const scopeIds = resolveGuideSplitScopeIds(targetScopeId);
+  const compareCanvas = guideSplitCompareCanvasManager?.fabricCanvas || null;
+
+  removeGuideSplitHighlightOverlay();
+  resetGuideSplitCompareBackgroundVisualKey();
 
   if (guideSplitCompareTagManager?.clearTagsForImage) {
-    try {
-      guideSplitCompareTagManager.clearTagsForImage(targetScopeId);
-    } catch (error) {
-      console.warn('[GuideSplit] Failed to clear compare tags', error);
-    }
+    scopeIds.forEach(candidateScopeId => {
+      try {
+        guideSplitCompareTagManager.clearTagsForImage(candidateScopeId);
+      } catch (error) {
+        console.warn('[GuideSplit] Failed to clear compare tags', error);
+      }
+    });
+  }
+
+  if (compareCanvas?.getObjects) {
+    compareCanvas
+      .getObjects()
+      .filter(object => {
+        const objectImageLabel = String(object?.imageLabel || '');
+        return scopeIds.some(
+          candidateScopeId =>
+            objectImageLabel === candidateScopeId ||
+            objectImageLabel.startsWith(`${candidateScopeId}::tab:`)
+        );
+      })
+      .forEach(object => {
+        compareCanvas.remove(object);
+      });
+    compareCanvas.requestRenderAll?.();
   }
 
   const metadataManager = window.app?.metadataManager || null;
@@ -3892,11 +4617,16 @@ function clearGuideSplitTempScope(scopeId) {
   ];
   maps.forEach(map => {
     if (map && typeof map === 'object') {
-      delete map[targetScopeId];
+      scopeIds.forEach(candidateScopeId => {
+        delete map[candidateScopeId];
+      });
     }
   });
 
-  if (guideSplitActiveTempScopeId === targetScopeId) {
+  if (
+    scopeIds.includes(guideSplitActiveTempScopeId) ||
+    guideSplitActiveTempScopeId === targetScopeId
+  ) {
     guideSplitActiveTempScopeId = '';
   }
 }
@@ -3905,63 +4635,79 @@ function seedGuideSplitMeasurementsFromLeft(tempScopeId) {
   const targetScopeId = String(tempScopeId || '').trim();
   const metadataManager = window.app?.metadataManager || null;
   if (!targetScopeId || !metadataManager) return;
+  const resolvedTargetScopeId = resolveGuideSplitScopeIds(targetScopeId)[0] || targetScopeId;
 
-  const leftScopeId =
-    resolveScopedImageLabel(guideCompareWorkspaceState.leftViewId || getCurrentViewId()) ||
-    String(guideCompareWorkspaceState.leftViewId || getCurrentViewId() || '').trim();
-  const leftMeasurements = metadataManager.strokeMeasurements?.[leftScopeId] || {};
-  const leftStrokeVisibility = metadataManager.strokeVisibilityByImage?.[leftScopeId] || {};
-  const leftLabelVisibility = metadataManager.strokeLabelVisibility?.[leftScopeId] || {};
-  const rightVectors = metadataManager.vectorStrokesByImage?.[targetScopeId] || {};
+  const leftBaseScopeId = String(
+    guideCompareWorkspaceState.leftViewId || getCurrentViewId() || ''
+  ).trim();
+  const leftScopedScopeId = resolveScopedImageLabel(leftBaseScopeId) || leftBaseScopeId;
+  const leftMeasurements = {
+    ...(metadataManager.strokeMeasurements?.[leftBaseScopeId] || {}),
+    ...(metadataManager.strokeMeasurements?.[leftScopedScopeId] || {}),
+  };
+  const leftStrokeVisibility = {
+    ...(metadataManager.strokeVisibilityByImage?.[leftBaseScopeId] || {}),
+    ...(metadataManager.strokeVisibilityByImage?.[leftScopedScopeId] || {}),
+  };
+  const leftLabelVisibility = {
+    ...(metadataManager.strokeLabelVisibility?.[leftBaseScopeId] || {}),
+    ...(metadataManager.strokeLabelVisibility?.[leftScopedScopeId] || {}),
+  };
+  const rightVectors = metadataManager.vectorStrokesByImage?.[resolvedTargetScopeId] || {};
 
-  metadataManager.strokeMeasurements[targetScopeId] =
-    metadataManager.strokeMeasurements[targetScopeId] || {};
-  metadataManager.strokeVisibilityByImage[targetScopeId] =
-    metadataManager.strokeVisibilityByImage[targetScopeId] || {};
-  metadataManager.strokeLabelVisibility[targetScopeId] =
-    metadataManager.strokeLabelVisibility[targetScopeId] || {};
+  metadataManager.strokeMeasurements[resolvedTargetScopeId] =
+    metadataManager.strokeMeasurements[resolvedTargetScopeId] || {};
+  metadataManager.strokeVisibilityByImage[resolvedTargetScopeId] =
+    metadataManager.strokeVisibilityByImage[resolvedTargetScopeId] || {};
+  metadataManager.strokeLabelVisibility[resolvedTargetScopeId] =
+    metadataManager.strokeLabelVisibility[resolvedTargetScopeId] || {};
 
   const pendingLabels = [];
   Object.entries(rightVectors).forEach(([strokeLabel, strokeObj]) => {
     if (leftMeasurements[strokeLabel] !== undefined) {
-      metadataManager.strokeMeasurements[targetScopeId][strokeLabel] = cloneGuideSplitValue(
+      metadataManager.strokeMeasurements[resolvedTargetScopeId][strokeLabel] = cloneGuideSplitValue(
         leftMeasurements[strokeLabel]
       );
     }
 
     if (Object.prototype.hasOwnProperty.call(leftStrokeVisibility, strokeLabel)) {
-      metadataManager.strokeVisibilityByImage[targetScopeId][strokeLabel] =
+      metadataManager.strokeVisibilityByImage[resolvedTargetScopeId][strokeLabel] =
         leftStrokeVisibility[strokeLabel] !== false;
     }
     if (Object.prototype.hasOwnProperty.call(leftLabelVisibility, strokeLabel)) {
-      metadataManager.strokeLabelVisibility[targetScopeId][strokeLabel] =
+      metadataManager.strokeLabelVisibility[resolvedTargetScopeId][strokeLabel] =
         leftLabelVisibility[strokeLabel] !== false;
     }
 
     const strokeVisible =
-      metadataManager.strokeVisibilityByImage[targetScopeId][strokeLabel] !== false;
+      metadataManager.strokeVisibilityByImage[resolvedTargetScopeId][strokeLabel] !== false;
     const labelVisible =
-      metadataManager.strokeLabelVisibility[targetScopeId][strokeLabel] !== false;
-    const effectiveVisible = strokeVisible && labelVisible;
+      metadataManager.strokeLabelVisibility[resolvedTargetScopeId][strokeLabel] !== false;
+    const effectiveVisible =
+      strokeObj?.__guideSplitReferenceOnly === true ? false : strokeVisible && labelVisible;
 
-    strokeObj?.set?.({
-      visible: strokeVisible,
-      evented: strokeVisible,
-      selectable: strokeVisible,
-    });
-    strokeObj?.setCoords?.();
+    if (strokeObj?.__guideSplitReferenceOnly) {
+      setGuideSplitReferenceObjectState(strokeObj, false);
+    } else {
+      strokeObj?.set?.({
+        visible: strokeVisible,
+        evented: strokeVisible,
+        selectable: strokeVisible,
+      });
+      strokeObj?.setCoords?.();
+    }
     pendingLabels.push({ strokeLabel, effectiveVisible });
   });
 
   window.setTimeout(() => {
     pendingLabels.forEach(({ strokeLabel, effectiveVisible }) => {
       if (guideSplitCompareTagManager?.updateTagText) {
-        guideSplitCompareTagManager.updateTagText(strokeLabel, targetScopeId);
+        guideSplitCompareTagManager.updateTagText(strokeLabel, resolvedTargetScopeId);
       }
       if (guideSplitCompareTagManager?.updateTagVisibility) {
         guideSplitCompareTagManager.updateTagVisibility(
           strokeLabel,
-          targetScopeId,
+          resolvedTargetScopeId,
           effectiveVisible
         );
       }
@@ -3982,46 +4728,128 @@ async function loadGuideIntoCompareCanvas(selection, compareCanvasManager) {
     code: normalizedCode,
     variant: normalizedVariant,
   });
-  const imageUrl = await fetchGuideRasterUrl(normalizedCode, normalizedVariant);
-  const guideSvgText = await fetchGuideSvgText(normalizedCode, normalizedVariant);
+  const loadKey = `${tempScopeId}::${compareCanvasManager?.paneId || 'compare'}`;
+  if (guideSplitCompareLoadPromise && guideSplitCompareLoadKey === loadKey) {
+    return guideSplitCompareLoadPromise;
+  }
 
-  compareCanvasManager.fabricCanvas?.discardActiveObject?.();
-  clearGuideSplitTempScope(guideSplitActiveTempScopeId);
-  compareCanvasManager.clear();
-  compareCanvasManager.setViewportState?.({ zoom: 1, panX: 0, panY: 0 });
+  const loadToken = guideSplitCompareLoadToken + 1;
+  guideSplitCompareLoadToken = loadToken;
+  guideSplitCompareLoadKey = loadKey;
 
   const manager = window.app?.projectManager || window.projectManager;
   if (!manager?.setBackgroundImageOnCanvasManager) {
+    if (guideSplitCompareLoadKey === loadKey) {
+      guideSplitCompareLoadKey = '';
+    }
     return false;
   }
 
-  await manager.setBackgroundImageOnCanvasManager(
-    imageUrl,
-    compareCanvasManager,
-    'fit-canvas',
-    tempScopeId || '__guide__'
-  );
-  guideSplitCompareTagManager = createGuideSplitCompareTagManager(compareCanvasManager);
-  await importSvgMeasurements(normalizedCode, normalizedVariant, tempScopeId, {
-    canvasManager: compareCanvasManager,
-    metadataManager: window.app?.metadataManager || null,
-    tagManager: guideSplitCompareTagManager,
-    svgText: guideSvgText,
-    skipStatusMessage: true,
-    syncUi: false,
+  const loadPromise = (async () => {
+    // Clear old guide content immediately so stale tags/SVG don't linger
+    // while the new guide loads over the network.
+    compareCanvasManager.fabricCanvas?.discardActiveObject?.();
+    clearGuideSplitTempScope(guideSplitActiveTempScopeId);
+    // Only clear canvas objects; skip resetViewport to avoid triggering a
+    // layout reflow that can mis-position the main canvas while the new
+    // guide fetches over the network.
+    compareCanvasManager.fabricCanvas?.clear?.();
+
+    const [imageUrl, guideSvgText] = await Promise.all([
+      fetchGuideRasterUrl(normalizedCode, normalizedVariant, {
+        mode: 'preview',
+        dimInactive: false,
+      }),
+      fetchGuideSvgText(normalizedCode, normalizedVariant),
+    ]);
+
+    if (guideSplitCompareLoadToken !== loadToken || !guideSplitEnabled) {
+      return false;
+    }
+
+    if (guideSplitCompareLoadToken !== loadToken || !guideSplitEnabled) {
+      return false;
+    }
+
+    await manager.setBackgroundImageOnCanvasManager(
+      imageUrl,
+      compareCanvasManager,
+      'fit-canvas',
+      tempScopeId || '__guide__'
+    );
+
+    if (guideSplitCompareLoadToken !== loadToken || !guideSplitEnabled) {
+      clearGuideSplitTempScope(tempScopeId);
+      compareCanvasManager.clear();
+      return false;
+    }
+
+    guideSplitCompareTagManager = createGuideSplitCompareTagManager(compareCanvasManager);
+    await importSvgMeasurements(normalizedCode, normalizedVariant, tempScopeId, {
+      canvasManager: compareCanvasManager,
+      metadataManager: window.app?.metadataManager || null,
+      tagManager: guideSplitCompareTagManager,
+      svgText: guideSvgText,
+      curveMode: 'reference-path',
+      skipStatusMessage: true,
+      syncUi: false,
+    });
+
+    if (guideSplitCompareLoadToken !== loadToken || !guideSplitEnabled) {
+      clearGuideSplitTempScope(tempScopeId);
+      compareCanvasManager.clear();
+      return false;
+    }
+
+    seedGuideSplitMeasurementsFromLeft(tempScopeId);
+    await updateGuideSplitHighlightOverlay(
+      {
+        code: normalizedCode,
+        variant: normalizedVariant,
+      },
+      compareCanvasManager,
+      tempScopeId
+    );
+
+    if (guideSplitCompareLoadToken !== loadToken || !guideSplitEnabled) {
+      clearGuideSplitTempScope(tempScopeId);
+      compareCanvasManager.clear();
+      return false;
+    }
+
+    window.setTimeout(() => {
+      if (guideSplitCompareLoadToken !== loadToken || guideSplitActiveTempScopeId !== tempScopeId) {
+        return;
+      }
+      refreshGuideSplitTagHighlightsFromUi(tempScopeId);
+    }, 120);
+    if (!compareCanvasManager.fabricCanvas?.lowerCanvasEl) {
+      return false;
+    }
+    compareCanvasManager.fabricCanvas.selection = true;
+    compareCanvasManager.fabricCanvas.skipTargetFind = false;
+    if (compareCanvasManager.fabricCanvas.upperCanvasEl) {
+      compareCanvasManager.fabricCanvas.upperCanvasEl.style.cursor = '';
+      compareCanvasManager.fabricCanvas.upperCanvasEl.style.pointerEvents = '';
+    }
+    compareCanvasManager.fabricCanvas.defaultCursor = 'default';
+    compareCanvasManager.fabricCanvas.hoverCursor = 'move';
+    fitGuideSplitCompareBackgroundToFrame();
+    compareCanvasManager.fabricCanvas.requestRenderAll?.();
+    guideSplitActiveTempScopeId = tempScopeId;
+    scheduleGuideSplitLayoutSync({ settle: true });
+    return true;
+  })();
+
+  guideSplitCompareLoadPromise = loadPromise;
+  return loadPromise.finally(() => {
+    if (guideSplitCompareLoadPromise === loadPromise) {
+      guideSplitCompareLoadPromise = null;
+    }
+    if (guideSplitCompareLoadKey === loadKey) {
+      guideSplitCompareLoadKey = '';
+    }
   });
-  seedGuideSplitMeasurementsFromLeft(tempScopeId);
-  compareCanvasManager.fabricCanvas.selection = true;
-  compareCanvasManager.fabricCanvas.skipTargetFind = false;
-  if (compareCanvasManager.fabricCanvas.upperCanvasEl) {
-    compareCanvasManager.fabricCanvas.upperCanvasEl.style.cursor = '';
-    compareCanvasManager.fabricCanvas.upperCanvasEl.style.pointerEvents = '';
-  }
-  compareCanvasManager.fabricCanvas.defaultCursor = 'default';
-  compareCanvasManager.fabricCanvas.hoverCursor = 'move';
-  compareCanvasManager.fabricCanvas.requestRenderAll?.();
-  guideSplitActiveTempScopeId = tempScopeId;
-  return true;
 }
 
 function ensureGuideSplitCompareCanvasManager() {
@@ -4068,6 +4896,7 @@ function ensureGuideSplitCompareCanvasManager() {
 
 async function setGuideSplitRightView(viewId, sourceKind = 'project-image') {
   if (sourceKind !== 'bound-guide') {
+    invalidateGuideSplitCompareLoad();
     clearGuideSplitTempScope(guideSplitActiveTempScopeId);
     guideSplitCompareCanvasManager?.clear?.();
     guideCompareWorkspaceState.rightViewId = '';
@@ -4081,6 +4910,7 @@ async function setGuideSplitRightView(viewId, sourceKind = 'project-image') {
   renderGuideSplitPane();
 
   if (!guideCompareWorkspaceState.rightViewId) {
+    invalidateGuideSplitCompareLoad();
     clearGuideSplitTempScope(guideSplitActiveTempScopeId);
     guideSplitCompareCanvasManager?.clear?.();
     return;
@@ -4114,38 +4944,55 @@ async function setGuideSplitRightView(viewId, sourceKind = 'project-image') {
 }
 
 async function ensureGuideSplitDefaultRightView() {
-  const leftViewId = toBaseViewId(guideCompareWorkspaceState.leftViewId || getCurrentViewId());
-  const currentRightViewId = toBaseViewId(guideCompareWorkspaceState.rightViewId || '');
-  const currentRightSourceKind = guideCompareWorkspaceState.rightSourceKind;
-  if (!leftViewId) {
-    guideCompareWorkspaceState.rightViewId = '';
-    renderGuideSplitPane();
-    return '';
-  }
+  if (_ensureRightViewInFlight) return '';
+  _ensureRightViewInFlight = true;
+  try {
+    const leftViewId = toBaseViewId(guideCompareWorkspaceState.leftViewId || getCurrentViewId());
+    const currentRightViewId = toBaseViewId(guideCompareWorkspaceState.rightViewId || '');
+    const currentRightSourceKind = guideCompareWorkspaceState.rightSourceKind;
+    if (!leftViewId) {
+      guideCompareWorkspaceState.rightViewId = '';
+      renderGuideSplitPane();
+      return '';
+    }
 
-  const binding = resolveModelBindingForView(leftViewId);
-  if (binding?.selection?.code) {
-    const guideViewId = buildGuideSplitTempViewId(binding.selection);
-    if (guideViewId) {
-      if (currentRightSourceKind === 'bound-guide' && currentRightViewId === guideViewId) {
-        renderGuideSplitPane();
+    const binding = resolveModelBindingForView(leftViewId);
+    if (binding?.selection?.code) {
+      const guideViewId = buildGuideSplitTempViewId(binding.selection);
+      if (guideViewId) {
+        if (
+          currentRightSourceKind === 'bound-guide' &&
+          currentRightViewId === guideViewId &&
+          isGuideSplitCompareCanvasReadyForTempView(guideViewId)
+        ) {
+          // Re-seed measurements from the (possibly changed) left view
+          seedGuideSplitMeasurementsFromLeft(guideViewId);
+          void updateGuideSplitHighlightOverlay(parseGuideSplitTempViewId(guideViewId));
+          renderGuideSplitPane();
+          return guideViewId;
+        }
+        await setGuideSplitRightView(guideViewId, 'bound-guide');
         return guideViewId;
       }
-      await setGuideSplitRightView(guideViewId, 'bound-guide');
-      return guideViewId;
     }
-  }
 
-  guideCompareWorkspaceState.rightViewId = '';
-  guideCompareWorkspaceState.rightSourceKind = 'bound-guide';
-  renderGuideSplitPane();
-  return '';
+    invalidateGuideSplitCompareLoad();
+    guideCompareWorkspaceState.rightViewId = '';
+    guideCompareWorkspaceState.rightSourceKind = 'bound-guide';
+    renderGuideSplitPane();
+    return '';
+  } finally {
+    _ensureRightViewInFlight = false;
+  }
 }
 
 function setGuideSplitEnabled(enabled) {
   const next = enabled === true;
   guideSplitEnabled = next;
   guideCompareWorkspaceState.open = next;
+  if (!next) {
+    invalidateGuideSplitCompareLoad();
+  }
   if (next && !guideCompareWorkspaceState.leftViewId) {
     guideCompareWorkspaceState.leftViewId = toBaseViewId(getCurrentViewId());
   }
@@ -4185,9 +5032,11 @@ async function applyGuideSplitLayout() {
 
   if (guideSplitEnabled) {
     captureGuideSplitPanelSnapshot();
+    setGuideSplitTransitionPending(true);
     const splitRoot = ensureGuideSplitShell();
     if (!splitRoot) return;
     const frameEl = document.getElementById('captureFrame');
+    const leftViewId = toBaseViewId(guideCompareWorkspaceState.leftViewId || getCurrentViewId());
     const liveCanvasHost = splitRoot.querySelector('#guideSplitLiveCanvasHost');
     if (liveCanvasHost) {
       Array.from(wrapper.childNodes)
@@ -4211,24 +5060,25 @@ async function applyGuideSplitLayout() {
     if (primaryCanvasManager?.enforceFloatingLayout) {
       primaryCanvasManager.enforceFloatingLayout();
     }
-    primaryCanvasManager?.resize?.();
+    syncGuideSplitPrimaryCaptureFrame(leftViewId);
+    resizeGuideSplitCanvasManagerNow(primaryCanvasManager);
     await ensureGuideSplitDefaultRightView();
     renderGuideSplitPane();
-    guideSplitCompareCanvasManager?.resize?.();
-    scheduleGuideSplitFrameSync();
+    resizeGuideSplitCanvasManagerNow(guideSplitCompareCanvasManager);
+    scheduleGuideSplitLayoutSync({ settle: true });
   } else {
     const splitRoot = wrapper.querySelector('#guideSplitRoot');
     const liveCanvasHost = splitRoot?.querySelector('#guideSplitLiveCanvasHost');
     const stayViewId = toBaseViewId(getCurrentViewId());
+    setGuideSplitTransitionPending(false);
+    invalidateGuideSplitCompareLoad();
     clearGuideSplitTempScope(guideSplitActiveTempScopeId);
     guideSplitCompareCanvasManager?.clear?.();
-    if (guideSplitSyncingWorkspace !== true && stayViewId && primaryCanvasManager) {
-      const manager = window.app?.projectManager || window.projectManager;
-      if (manager?.saveCurrentViewState) {
-        manager.saveCurrentViewState();
-      }
-      guideCompareWorkspaceState.leftViewId = stayViewId;
-    }
+    guideSplitCompareCanvasManager?.resetViewport?.();
+    teardownGuideSplitCompareCanvasManager();
+    const shouldSaveViewState =
+      guideSplitSyncingWorkspace !== true && stayViewId && primaryCanvasManager;
+    guideCompareWorkspaceState.leftViewId = stayViewId || guideCompareWorkspaceState.leftViewId;
     guideSplitSyncingWorkspace = true;
     if (liveCanvasHost) {
       Array.from(liveCanvasHost.childNodes).forEach(node => {
@@ -4244,21 +5094,19 @@ async function applyGuideSplitLayout() {
     guideSplitLastSyncKey = '';
     refreshGuideSplitInteractionGuards();
     requestAnimationFrame(() => {
+      // Defer saveCurrentViewState until after DOM is restored
+      if (shouldSaveViewState) {
+        const manager = window.app?.projectManager || window.projectManager;
+        if (manager?.saveCurrentViewState) {
+          manager.saveCurrentViewState();
+        }
+      }
       const restoreViewId = stayViewId || getCurrentViewId();
       restoreGuideSplitSnapshot(restoreViewId);
-      if (typeof window.getCaptureTabScopedLabel === 'function') {
-        window.currentImageLabel = window.getCaptureTabScopedLabel(restoreViewId) || restoreViewId;
-      }
-      primaryCanvasManager?.resize?.();
-      if (typeof window.restoreCaptureFrameForLabelExact === 'function') {
-        window.restoreCaptureFrameForLabelExact(restoreViewId);
-      } else if (typeof window.applyCaptureFrameForLabel === 'function') {
-        window.applyCaptureFrameForLabel(restoreViewId);
-      }
+      syncGuideSplitPrimaryCaptureFrame(restoreViewId, { exact: true });
+      resizeGuideSplitCanvasManagerNow(primaryCanvasManager);
       requestAnimationFrame(() => {
-        if (typeof window.restoreCaptureFrameForLabelExact === 'function') {
-          window.restoreCaptureFrameForLabelExact(restoreViewId);
-        }
+        syncGuideSplitPrimaryCaptureFrame(restoreViewId, { exact: true });
         if (typeof window.syncCaptureTabCanvasVisibility === 'function') {
           window.syncCaptureTabCanvasVisibility(restoreViewId);
         }
@@ -4374,6 +5222,8 @@ async function syncGuideSplitToActiveView() {
   if (!guideSplitEnabled || guideSplitSyncingWorkspace || guideSplitSuppressViewSwitchSync > 0) {
     return;
   }
+  if (window.__guideSplitLayoutSettling) return;
+  if (_ensureRightViewInFlight) return;
   const wrapper = document.getElementById('main-canvas-wrapper');
   if (wrapper && !wrapper.classList.contains('guide-split-active')) {
     guideSplitLastSyncKey = '';
@@ -4386,24 +5236,61 @@ async function syncGuideSplitToActiveView() {
     return;
   }
 
+  let needsLayoutSync = false;
+  let shouldRefreshBoundGuide = false;
+
   if (guideCompareWorkspaceState.activePane === 'left') {
     const nextLeftViewId = toBaseViewId(getCurrentViewId());
     const leftChanged = guideCompareWorkspaceState.leftViewId !== nextLeftViewId;
     guideCompareWorkspaceState.leftViewId = nextLeftViewId;
     if (leftChanged) {
+      needsLayoutSync = true;
+      setGuideSplitTransitionPending(true);
       captureGuideSplitRestoreSnapshot(nextLeftViewId);
     }
-    if (
+    if (guideCompareWorkspaceState.rightSourceKind === 'bound-guide') {
+      const binding = resolveModelBindingForView(nextLeftViewId);
+      const expectedRightViewId = binding?.selection
+        ? buildGuideSplitTempViewId(binding.selection)
+        : '';
+      const currentRightViewId = String(guideCompareWorkspaceState.rightViewId || '').trim();
+      const compareReady = currentRightViewId
+        ? isGuideSplitCompareCanvasReadyForTempView(currentRightViewId)
+        : false;
+      shouldRefreshBoundGuide =
+        leftChanged ||
+        !currentRightViewId ||
+        currentRightViewId === guideCompareWorkspaceState.leftViewId ||
+        currentRightViewId !== expectedRightViewId ||
+        !compareReady;
+    } else if (
       guideCompareWorkspaceState.rightViewId === guideCompareWorkspaceState.leftViewId ||
-      !guideCompareWorkspaceState.rightViewId ||
-      (guideCompareWorkspaceState.rightSourceKind === 'bound-guide' && leftChanged)
+      !guideCompareWorkspaceState.rightViewId
     ) {
       await ensureGuideSplitDefaultRightView();
+      needsLayoutSync = true;
+    }
+  }
+
+  if (guideCompareWorkspaceState.rightSourceKind === 'bound-guide' && shouldRefreshBoundGuide) {
+    await ensureGuideSplitDefaultRightView();
+    needsLayoutSync = true;
+  }
+
+  if (guideCompareWorkspaceState.rightSourceKind === 'bound-guide') {
+    const parsedGuide = parseGuideSplitTempViewId(guideCompareWorkspaceState.rightViewId);
+    if (
+      parsedGuide &&
+      isGuideSplitCompareCanvasReadyForTempView(guideCompareWorkspaceState.rightViewId)
+    ) {
+      void updateGuideSplitHighlightOverlay(parsedGuide);
     }
   }
 
   renderGuideSplitPane();
-  scheduleGuideSplitLayoutSync({ settle: false });
+  if (needsLayoutSync) {
+    scheduleGuideSplitLayoutSync({ settle: false });
+  }
 }
 
 function availableViewsForCode(code, viewsByCode) {
@@ -5600,7 +6487,10 @@ function showGuideGallery(options = {}) {
           const selection = upsertModelSelection(code, variant);
           if (!selection) return;
           selectedModelIds.add(selection.id);
-          if (!bindPreviewModelCode) {
+          // In bind mode, newly queued models should become the active bind candidate.
+          // Otherwise subsequent frame bindings can silently reuse the previous code
+          // while only changing the variant.
+          if (galleryMode === 'bind' || !bindPreviewModelCode) {
             bindPreviewModelCode = code;
           }
         } else {
@@ -5745,10 +6635,38 @@ export function initMeasurementGuideFlash() {
   window.addEventListener('openpaint:guide-binding-changed', () => {
     if (guideSplitEnabled) {
       if (guideCompareWorkspaceState.rightSourceKind === 'bound-guide') {
-        void ensureGuideSplitDefaultRightView();
+        clearTimeout(_bindingChangedTimeout);
+        _bindingChangedTimeout = setTimeout(() => {
+          void ensureGuideSplitDefaultRightView();
+        }, 100);
       } else {
         renderGuideSplitPane();
       }
+    }
+  });
+
+  window.addEventListener('openpaint:guide-next-tag-changed', event => {
+    if (!guideSplitEnabled || guideCompareWorkspaceState.rightSourceKind !== 'bound-guide') {
+      return;
+    }
+    const eventViewId = toBaseViewId(event?.detail?.viewId || '');
+    const eventTag = normalizeRoleToken(event?.detail?.tag || '');
+    const eventKey = `${eventViewId || guideCompareWorkspaceState.leftViewId || ''}::${eventTag || 'none'}::${guideCompareWorkspaceState.rightViewId || ''}`;
+    if (eventKey === _lastProcessedGuideNextTagEventKey) {
+      return;
+    }
+    _lastProcessedGuideNextTagEventKey = eventKey;
+    const parsedGuide = parseGuideSplitTempViewId(guideCompareWorkspaceState.rightViewId);
+    if (!parsedGuide) return;
+    void updateGuideSplitHighlightOverlay(parsedGuide);
+    window.setTimeout(() => {
+      refreshGuideSplitTagHighlightsFromUi();
+    }, 80);
+  });
+
+  window.addEventListener('openpaint:guide-split-transition-start', () => {
+    if (guideSplitEnabled) {
+      setGuideSplitTransitionPending(true);
     }
   });
 
@@ -5765,6 +6683,13 @@ export function initMeasurementGuideFlash() {
     } else {
       renderGuideSplitPane();
     }
+  });
+
+  window.addEventListener('openpaint:frame-tab-changed', () => {
+    if (!guideSplitEnabled || guideSplitSyncingWorkspace || guideSplitSuppressViewSwitchSync > 0) {
+      return;
+    }
+    void syncGuideSplitToActiveView();
   });
 
   window.addEventListener('resize', () => {
@@ -5840,6 +6765,8 @@ export function initMeasurementGuideFlash() {
     return guideSplitEnabled;
   };
   window.getGuideCompareWorkspaceState = () => ({ ...guideCompareWorkspaceState });
+  window.__prepareGuideSvgForRaster = (svgText, options = {}) =>
+    prepareSvgForRaster(svgText, options);
   window.dispatchEvent(new Event('openpaint:guide-split-changed'));
 }
 
