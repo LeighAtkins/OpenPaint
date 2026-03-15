@@ -23,6 +23,12 @@ vitest.config.d.ts
 # Uploads (ephemeral)
 uploads/
 
+# Ignore agent tools and binaries
+.agent/
+
+# Ignore test outputs and images
+output/
+
 # Logs
 logs/
 *.log

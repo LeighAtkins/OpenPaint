@@ -643,6 +643,10 @@ export class ProjectManager {
         });
       });
     } else {
+      // Clear stale tags from previous view when switching to a view with no saved data
+      if (window.app?.tagManager?.clearAllTags) {
+        window.app.tagManager.clearAllTags();
+      }
       // Clear metadata for this view if no saved data
       if (window.app?.metadataManager) {
         window.app.metadataManager.clearImageMetadata(viewId);
@@ -680,6 +684,9 @@ export class ProjectManager {
     // that may have been created by async listeners during the switch.
     if (window.app?.tagManager?.removeStaleTagsForScope) {
       const sweepScope = window.app.metadataManager?.normalizeImageLabel?.(viewId) || viewId;
+      // Sweep synchronously to avoid 1-frame tag crossover flicker
+      window.app.tagManager.removeStaleTagsForScope(sweepScope);
+      // Also sweep after RAF in case async handlers recreated stale tags
       requestAnimationFrame(() => {
         if (this.currentViewId === viewId) {
           window.app.tagManager.removeStaleTagsForScope(sweepScope);

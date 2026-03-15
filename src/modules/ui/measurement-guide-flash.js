@@ -231,6 +231,11 @@ function runGuideSplitLayoutSync() {
   if (frameEl) {
     frameEl.style.visibility = 'hidden';
   }
+  // Hide primary canvas during settle to prevent viewport flicker
+  const primaryCanvasEl = primaryCanvasManager?.fabricCanvas?.wrapperEl;
+  if (primaryCanvasEl) {
+    primaryCanvasEl.style.opacity = '0';
+  }
   syncGuideSplitPrimaryCaptureFrame(getCurrentViewId());
   resizeGuideSplitCanvasManagerNow(primaryCanvasManager);
   resizeGuideSplitCanvasManagerNow(guideSplitCompareCanvasManager);
@@ -243,14 +248,25 @@ function runGuideSplitLayoutSync() {
   guideSplitFrameSyncRaf = requestAnimationFrame(() => {
     guideSplitFrameSyncRaf = requestAnimationFrame(() => {
       guideSplitFrameSyncRaf = null;
-      if (!guideSplitEnabled || syncToken !== guideSplitFrameSyncToken) return;
+      if (!guideSplitEnabled || syncToken !== guideSplitFrameSyncToken) {
+        // Restore canvas visibility if we bail out early
+        if (primaryCanvasEl) {
+          primaryCanvasEl.style.opacity = '';
+        }
+        return;
+      }
+      fitGuideSplitPrimaryBackgroundToFrame();
+      // Reposition capture frame AFTER viewport is settled, so frame matches viewport
       if (typeof window.syncCaptureFrameToActiveTabWorldRect === 'function') {
         window.syncCaptureFrameToActiveTabWorldRect(getCurrentViewId());
       }
-      fitGuideSplitPrimaryBackgroundToFrame();
       fitGuideSplitCompareBackgroundToFrame();
       syncGuideSplitHighlightOverlayToBackground();
       syncGuideSplitFrameGhost();
+      // Restore canvas visibility now that layout is settled
+      if (primaryCanvasEl) {
+        primaryCanvasEl.style.opacity = '';
+      }
       if (guideSplitLayoutSyncRaf === null && guideSplitLayoutSyncTimeout === null) {
         requestAnimationFrame(() => {
           if (
@@ -5060,8 +5076,8 @@ async function applyGuideSplitLayout() {
     if (primaryCanvasManager?.enforceFloatingLayout) {
       primaryCanvasManager.enforceFloatingLayout();
     }
-    syncGuideSplitPrimaryCaptureFrame(leftViewId);
     resizeGuideSplitCanvasManagerNow(primaryCanvasManager);
+    syncGuideSplitPrimaryCaptureFrame(leftViewId);
     await ensureGuideSplitDefaultRightView();
     renderGuideSplitPane();
     resizeGuideSplitCanvasManagerNow(guideSplitCompareCanvasManager);
@@ -5069,15 +5085,14 @@ async function applyGuideSplitLayout() {
   } else {
     const splitRoot = wrapper.querySelector('#guideSplitRoot');
     const liveCanvasHost = splitRoot?.querySelector('#guideSplitLiveCanvasHost');
-    const stayViewId = toBaseViewId(getCurrentViewId());
+    const _exitManager = window.app?.projectManager || window.projectManager;
+    const stayViewId = toBaseViewId(_exitManager?.currentViewId || getCurrentViewId());
     setGuideSplitTransitionPending(false);
     invalidateGuideSplitCompareLoad();
     clearGuideSplitTempScope(guideSplitActiveTempScopeId);
     guideSplitCompareCanvasManager?.clear?.();
     guideSplitCompareCanvasManager?.resetViewport?.();
     teardownGuideSplitCompareCanvasManager();
-    const shouldSaveViewState =
-      guideSplitSyncingWorkspace !== true && stayViewId && primaryCanvasManager;
     guideCompareWorkspaceState.leftViewId = stayViewId || guideCompareWorkspaceState.leftViewId;
     guideSplitSyncingWorkspace = true;
     if (liveCanvasHost) {
@@ -5094,28 +5109,45 @@ async function applyGuideSplitLayout() {
     guideSplitLastSyncKey = '';
     refreshGuideSplitInteractionGuards();
     requestAnimationFrame(() => {
-      // Defer saveCurrentViewState until after DOM is restored
-      if (shouldSaveViewState) {
-        const manager = window.app?.projectManager || window.projectManager;
-        if (manager?.saveCurrentViewState) {
-          manager.saveCurrentViewState();
-        }
-      }
       const restoreViewId = stayViewId || getCurrentViewId();
       restoreGuideSplitSnapshot(restoreViewId);
       syncGuideSplitPrimaryCaptureFrame(restoreViewId, { exact: true });
       resizeGuideSplitCanvasManagerNow(primaryCanvasManager);
-      requestAnimationFrame(() => {
-        syncGuideSplitPrimaryCaptureFrame(restoreViewId, { exact: true });
-        if (typeof window.syncCaptureTabCanvasVisibility === 'function') {
-          window.syncCaptureTabCanvasVisibility(restoreViewId);
-        }
-        const frameEl = document.getElementById('captureFrame');
-        if (frameEl) {
-          frameEl.style.visibility = '';
-        }
-        guideSplitSyncingWorkspace = false;
-      });
+
+      // Force a full view reload from saved view data to restore canvas objects.
+      // Do NOT save current view state first — the split mode canvas is in a
+      // modified/corrupted state and saving it would clobber the good data.
+      const manager = window.app?.projectManager || window.projectManager;
+      if (manager?.switchView) {
+        window.__suspendSaveCurrentView = true;
+        manager.switchView(restoreViewId, true).then(() => {
+          window.__suspendSaveCurrentView = false;
+          requestAnimationFrame(() => {
+            syncGuideSplitPrimaryCaptureFrame(restoreViewId, { exact: true });
+            if (typeof window.syncCaptureTabCanvasVisibility === 'function') {
+              window.syncCaptureTabCanvasVisibility(restoreViewId);
+            }
+            const frameEl = document.getElementById('captureFrame');
+            if (frameEl) {
+              frameEl.style.visibility = '';
+            }
+            guideSplitSyncingWorkspace = false;
+          });
+        });
+      } else {
+        // Fallback: no project manager available
+        requestAnimationFrame(() => {
+          syncGuideSplitPrimaryCaptureFrame(restoreViewId, { exact: true });
+          if (typeof window.syncCaptureTabCanvasVisibility === 'function') {
+            window.syncCaptureTabCanvasVisibility(restoreViewId);
+          }
+          const frameEl = document.getElementById('captureFrame');
+          if (frameEl) {
+            frameEl.style.visibility = '';
+          }
+          guideSplitSyncingWorkspace = false;
+        });
+      }
     });
   }
 }
@@ -6678,11 +6710,13 @@ export function initMeasurementGuideFlash() {
     if (!nextViewId) return;
 
     guideCompareWorkspaceState.leftViewId = nextViewId;
+    captureGuideSplitRestoreSnapshot(nextViewId);
     if (guideCompareWorkspaceState.rightSourceKind === 'bound-guide') {
       void ensureGuideSplitDefaultRightView();
     } else {
       renderGuideSplitPane();
     }
+    scheduleGuideSplitLayoutSync({ settle: false });
   });
 
   window.addEventListener('openpaint:frame-tab-changed', () => {

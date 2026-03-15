@@ -2487,7 +2487,8 @@ export function initToolbarController() {
         };
         const storedWorldRect = normalizeWorldRect(stored?.worldRect);
         const splitImageWorldRect = normalizeWorldRect(splitSnapshot?.imageWorldRect);
-        const targetWorldRect = storedWorldRect || splitImageWorldRect;
+        const liveBackgroundWorldRect = getCurrentBackgroundWorldRect();
+        const targetWorldRect = storedWorldRect || splitImageWorldRect || liveBackgroundWorldRect;
 
         if (splitTargetRect.width > 0 && splitTargetRect.height > 0) {
           if (targetWorldRect) {
