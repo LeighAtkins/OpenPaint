@@ -185,7 +185,11 @@ export class ProjectManager {
     canvasManager.clear();
 
     if (typeof view.rotation === 'number') {
-      canvasManager.setRotationDegrees(view.rotation);
+      if (canvasManager.isGuideSplitActive()) {
+        canvasManager.rotationDegrees = ((view.rotation % 360) + 360) % 360;
+      } else {
+        canvasManager.setRotationDegrees(view.rotation);
+      }
       this.updateThumbnailRotation(viewId, view.rotation);
     }
 
@@ -336,7 +340,11 @@ export class ProjectManager {
         await this.setBackgroundImage(view.image);
       }
       if (typeof view.rotation === 'number') {
-        this.canvasManager.setRotationDegrees(view.rotation);
+        if (this.canvasManager.isGuideSplitActive()) {
+          this.canvasManager.rotationDegrees = ((view.rotation % 360) + 360) % 360;
+        } else {
+          this.canvasManager.setRotationDegrees(view.rotation);
+        }
         this.updateThumbnailRotation(viewId, view.rotation);
       }
 
@@ -436,8 +444,14 @@ export class ProjectManager {
     }
 
     // Apply rotation for the new view
+    // During split mode, only store the rotation value without triggering
+    // applyViewportTransform — the split layout sync handles viewport.
     if (typeof view.rotation === 'number') {
-      this.canvasManager.setRotationDegrees(view.rotation);
+      if (this.canvasManager.isGuideSplitActive()) {
+        this.canvasManager.rotationDegrees = ((view.rotation % 360) + 360) % 360;
+      } else {
+        this.canvasManager.setRotationDegrees(view.rotation);
+      }
       this.updateThumbnailRotation(viewId, view.rotation);
     }
 
@@ -511,6 +525,22 @@ export class ProjectManager {
       if (sanitizedData.backgroundImage && view.image) {
         delete sanitizedData.backgroundImage;
         console.log(`[Load] Removed serialized background image for ${viewId}`);
+      }
+
+      // Strip viewportTransform from canvas JSON when guide-split is active.
+      // The saved viewport was captured at full canvas width; restoring it into a
+      // half-width split canvas produces a wrong zoom (e.g. 2× too high). The split
+      // layout sync pipeline will set the correct viewport after load.
+      const isGuideSplitActiveNow =
+        document.getElementById('main-canvas-wrapper')?.classList.contains('guide-split-active') ===
+        true;
+      if (isGuideSplitActiveNow) {
+        delete sanitizedData.viewportTransform;
+        // Also strip canvas dimensions — the saved JSON has full-width values (e.g. 1920)
+        // which Fabric.js restores, causing a brief render at the wrong size before the
+        // split layout sync resizes to the split half-width (e.g. 960).
+        delete sanitizedData.width;
+        delete sanitizedData.height;
       }
 
       await new Promise(resolve => {
@@ -686,12 +716,27 @@ export class ProjectManager {
       const sweepScope = window.app.metadataManager?.normalizeImageLabel?.(viewId) || viewId;
       // Sweep synchronously to avoid 1-frame tag crossover flicker
       window.app.tagManager.removeStaleTagsForScope(sweepScope);
-      // Also sweep after RAF in case async handlers recreated stale tags
+      // Sweep after RAF in case async handlers recreated stale tags
       requestAnimationFrame(() => {
         if (this.currentViewId === viewId) {
           window.app.tagManager.removeStaleTagsForScope(sweepScope);
         }
       });
+      // Sweep again after double-RAF + delay to catch tags created by
+      // guide split layout sync (which uses a double-RAF chain internally)
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          if (this.currentViewId === viewId) {
+            window.app.tagManager.removeStaleTagsForScope(sweepScope);
+          }
+        });
+      });
+      // Final safety sweep after all async layout has settled
+      setTimeout(() => {
+        if (this.currentViewId === viewId && window.app?.tagManager?.removeStaleTagsForScope) {
+          window.app.tagManager.removeStaleTagsForScope(sweepScope);
+        }
+      }, 200);
     }
 
     this.isSwitchingView = false;
@@ -728,6 +773,18 @@ export class ProjectManager {
 
   restoreViewportForView(viewId) {
     if (!viewId) return;
+
+    // When guide-split is active, skip direct viewport restore — the split layout
+    // sync pipeline (runGuideSplitLayoutSync → fitGuideSplitPrimaryBackgroundToFrame)
+    // will set the correct viewport after resizing the canvas to split half-width.
+    // Calling applyCaptureFrameForLabel here would compute a wrong zoom because the
+    // capture overlay is still at full width before the split resize happens.
+    const isGuideSplitActive =
+      document.getElementById('main-canvas-wrapper')?.classList.contains('guide-split-active') ===
+      true;
+    if (isGuideSplitActive) {
+      return;
+    }
 
     if (
       window.captureTabsByLabel?.[viewId] &&
@@ -786,12 +843,18 @@ export class ProjectManager {
       this.views[this.currentViewId].rotation = this.canvasManager.getRotationDegrees();
       this.views[this.currentViewId].backgroundRotation =
         this.canvasManager.getBackgroundImageRotationDegrees();
-      if (backgroundWorldRect) {
-        this.views[this.currentViewId].backgroundWorldRect = JSON.parse(
-          JSON.stringify(backgroundWorldRect)
-        );
-      } else {
-        delete this.views[this.currentViewId].backgroundWorldRect;
+      // In split mode, setBackgroundImage re-centers the background at the split
+      // canvas width (960px instead of 1920px).  Saving that transient position would
+      // overwrite the authoritative full-width world rect, causing vectors drawn at the
+      // original position to appear misaligned on subsequent loads.
+      if (!isGuideSplitActive) {
+        if (backgroundWorldRect) {
+          this.views[this.currentViewId].backgroundWorldRect = JSON.parse(
+            JSON.stringify(backgroundWorldRect)
+          );
+        } else {
+          delete this.views[this.currentViewId].backgroundWorldRect;
+        }
       }
       if (!isGuideSplitActive) {
         this.views[this.currentViewId].viewport = this.canvasManager.getViewportState();
@@ -1185,12 +1248,23 @@ export class ProjectManager {
             return resolve();
           }
 
-          const placementFrame = this.canvasManager.getBackgroundPlacementFrame?.() || {
-            width: canvas.width,
-            height: canvas.height,
-            left: 0,
-            top: 0,
-          };
+          // In split mode, the canvas is half-width (960px) but vectors were drawn
+          // relative to a full-width background position.  Use full window dimensions
+          // for placement so the background lands at the same world-space position
+          // vectors expect.  The split viewport (fitGuideSplitPrimaryBackgroundToFrame)
+          // will zoom/pan to show it correctly in the half-width pane.
+          const isSplitActive =
+            document
+              .getElementById('main-canvas-wrapper')
+              ?.classList.contains('guide-split-active') === true;
+          const placementFrame = isSplitActive
+            ? { width: window.innerWidth, height: canvas.height, left: 0, top: 0 }
+            : this.canvasManager.getBackgroundPlacementFrame?.() || {
+                width: canvas.width,
+                height: canvas.height,
+                left: 0,
+                top: 0,
+              };
           let frameWidth = placementFrame.width;
           let frameHeight = placementFrame.height;
           let frameLeft = placementFrame.left;
@@ -1199,7 +1273,7 @@ export class ProjectManager {
           // If frame is not laid out yet, fallback to canvas dimensions
           if (!frameWidth || !frameHeight) {
             console.warn('[Image Debug] Capture frame size invalid, using canvas size');
-            frameWidth = canvas.width;
+            frameWidth = isSplitActive ? window.innerWidth : canvas.width;
             frameHeight = canvas.height;
             frameLeft = 0;
             frameTop = 0;
