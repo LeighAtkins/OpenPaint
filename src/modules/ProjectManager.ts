@@ -522,7 +522,14 @@ export class ProjectManager {
       // Background images are restored separately via setBackgroundImage().
       // Keeping Fabric's serialized background image here causes duplicate async loads
       // and can race with the manual restore path during cloud project hydration.
-      if (sanitizedData.backgroundImage && view.image) {
+      // EXCEPTION: In split mode, keep the serialized background so loadFromJSON restores
+      // it at its saved world position.  The background must stay aligned with vectors in
+      // the JSON — if we strip it and call setBackgroundImage later, the image gets
+      // re-centered for the split canvas size (960px) instead of the original position.
+      const isGuideSplitForBgStrip =
+        document.getElementById('main-canvas-wrapper')?.classList.contains('guide-split-active') ===
+        true;
+      if (sanitizedData.backgroundImage && view.image && !isGuideSplitForBgStrip) {
         delete sanitizedData.backgroundImage;
         console.log(`[Load] Removed serialized background image for ${viewId}`);
       }
@@ -1248,23 +1255,12 @@ export class ProjectManager {
             return resolve();
           }
 
-          // In split mode, the canvas is half-width (960px) but vectors were drawn
-          // relative to a full-width background position.  Use full window dimensions
-          // for placement so the background lands at the same world-space position
-          // vectors expect.  The split viewport (fitGuideSplitPrimaryBackgroundToFrame)
-          // will zoom/pan to show it correctly in the half-width pane.
-          const isSplitActive =
-            document
-              .getElementById('main-canvas-wrapper')
-              ?.classList.contains('guide-split-active') === true;
-          const placementFrame = isSplitActive
-            ? { width: window.innerWidth, height: canvas.height, left: 0, top: 0 }
-            : this.canvasManager.getBackgroundPlacementFrame?.() || {
-                width: canvas.width,
-                height: canvas.height,
-                left: 0,
-                top: 0,
-              };
+          const placementFrame = this.canvasManager.getBackgroundPlacementFrame?.() || {
+            width: canvas.width,
+            height: canvas.height,
+            left: 0,
+            top: 0,
+          };
           let frameWidth = placementFrame.width;
           let frameHeight = placementFrame.height;
           let frameLeft = placementFrame.left;
@@ -1273,7 +1269,7 @@ export class ProjectManager {
           // If frame is not laid out yet, fallback to canvas dimensions
           if (!frameWidth || !frameHeight) {
             console.warn('[Image Debug] Capture frame size invalid, using canvas size');
-            frameWidth = isSplitActive ? window.innerWidth : canvas.width;
+            frameWidth = canvas.width;
             frameHeight = canvas.height;
             frameLeft = 0;
             frameTop = 0;
