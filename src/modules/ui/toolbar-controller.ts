@@ -1802,7 +1802,17 @@ export function initToolbarController() {
 
       const tagManager = window.app?.tagManager;
       const metadataManager = window.app?.metadataManager;
-      if (tagManager && metadataManager) {
+      // Only create missing tags if the resolved label matches the current view.
+      // During async layout sync (e.g. guide split double-RAF), this function can
+      // run after a view switch has started but before the sweep has caught up,
+      // which would recreate stale tags from a previous view's metadata.
+      const currentViewBase = toBaseLabel(
+        window.app?.projectManager?.currentViewId || getActiveLabel()
+      );
+      const resolvedBase = toBaseLabel(resolved);
+      const canCreateTags =
+        tagManager && metadataManager && resolvedBase && resolvedBase === currentViewBase;
+      if (canCreateTags) {
         Object.entries(metadataManager.vectorStrokesByImage || {}).forEach(
           ([scopeKey, strokes]) => {
             if (!isLabelInViewScope(scopeKey, resolved)) return;
@@ -1957,9 +1967,16 @@ export function initToolbarController() {
       const projectManager = window.projectManager || window.app?.projectManager;
       const activeViewId = projectManager?.currentViewId || null;
       const targetRotation = resolveViewportRotation(record, activeViewId);
+      const splitActive = isGuideSplitWorkspaceActive();
 
-      if (canvasManager?.setRotationDegrees) {
+      // In split mode, skip canvas viewport writes — the split layout sync
+      // (fitGuideSplitPrimaryBackgroundToFrame) is the sole viewport authority.
+      // But still update metadata (rotation storage, thumbnail, record mutation).
+      if (!splitActive && canvasManager?.setRotationDegrees) {
         canvasManager.setRotationDegrees(targetRotation);
+      } else if (splitActive && canvasManager) {
+        // Store rotation without triggering applyViewportTransform
+        canvasManager.rotationDegrees = ((targetRotation % 360) + 360) % 360;
       }
 
       if (activeViewId && projectManager?.views?.[activeViewId]) {
@@ -1972,7 +1989,7 @@ export function initToolbarController() {
       if (typeof record === 'object') {
         record.rotation = targetRotation;
       }
-      if (canvasManager?.setViewportState) {
+      if (!splitActive && canvasManager?.setViewportState) {
         canvasManager.setViewportState({
           zoom: record.zoom,
           panX: record.panX,
@@ -2487,8 +2504,7 @@ export function initToolbarController() {
         };
         const storedWorldRect = normalizeWorldRect(stored?.worldRect);
         const splitImageWorldRect = normalizeWorldRect(splitSnapshot?.imageWorldRect);
-        const liveBackgroundWorldRect = getCurrentBackgroundWorldRect();
-        const targetWorldRect = storedWorldRect || splitImageWorldRect || liveBackgroundWorldRect;
+        const targetWorldRect = storedWorldRect || splitImageWorldRect;
 
         if (splitTargetRect.width > 0 && splitTargetRect.height > 0) {
           if (targetWorldRect) {
@@ -2506,7 +2522,21 @@ export function initToolbarController() {
             };
           }
           suspendCaptureTabViewportTracking();
-          applyViewportRecord(tempViewport);
+          // Never apply viewport in the split path — the split layout sync's
+          // fitGuideSplitPrimaryBackgroundToFrame (double-RAF) is the authoritative
+          // viewport setter.  Applying here uses stale geometry (full-width vs
+          // half-width) producing a ~2× wrong zoom that's visible for 1-2 frames
+          // before the double-RAF corrects it.
+        }
+
+        // Persist the resolved worldRect so syncCaptureFrameToActiveTabWorldRect
+        // (which runs later in the split layout sync) finds it instead of falling
+        // back to the full background rect.
+        if (targetWorldRect && !activeTab.captureFrame?.worldRect) {
+          activeTab.captureFrame = {
+            ...(activeTab.captureFrame || {}),
+            worldRect: targetWorldRect,
+          };
         }
 
         if (targetWorldRect) {
@@ -2656,11 +2686,35 @@ export function initToolbarController() {
     }
     function syncCaptureFrameToActiveTabWorldRect(label) {
       const resolved = label || getActiveLabel();
-      replayCaptureFrameForLabelFromWorldRect(resolved, {
+      const result = replayCaptureFrameForLabelFromWorldRect(resolved, {
         viewport: buildViewportRecord(),
         skipFit: true,
         applyViewport: false,
       });
+      // If the active tab has no stored worldRect (e.g. freshly switched view),
+      // fall back to the current background worldRect so the capture frame
+      // doesn't persist from the previous image.
+      if (!result) {
+        const bgWorldRect = getCurrentBackgroundWorldRect();
+        if (bgWorldRect) {
+          // Persist the fallback worldRect to the tab so future sync calls
+          // use it consistently instead of re-deriving from the BG each time.
+          ensureCaptureTabsForLabel(resolved);
+          const activeTab = getActiveTab(resolved);
+          if (activeTab && !activeTab.captureFrame?.worldRect) {
+            activeTab.captureFrame = {
+              ...(activeTab.captureFrame || {}),
+              worldRect: bgWorldRect,
+            };
+          }
+          replayCaptureFrameForLabelFromWorldRect(resolved, {
+            worldRect: bgWorldRect,
+            viewport: buildViewportRecord(),
+            skipFit: true,
+            applyViewport: false,
+          });
+        }
+      }
     }
     function getCanvasClientRect() {
       const canvasEl =

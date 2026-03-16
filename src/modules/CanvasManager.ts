@@ -1542,6 +1542,13 @@ export class CanvasManager {
     this.resizeObserver = new ResizeObserver((entries: ResizeObserverEntry[]) => {
       for (const entry of entries) {
         if (entry.target === wrapper) {
+          // When guide-split is active, the split layout sync pipeline manages canvas
+          // dimensions and viewport directly via resizeGuideSplitCanvasManagerNow.
+          // Letting the ResizeObserver also trigger resize() creates a feedback loop
+          // where dimensions and viewport oscillate between split and full-width values.
+          if (this.isGuideSplitActive()) {
+            continue;
+          }
           // Debounce the resize call
           if (this.resizeTimeout) clearTimeout(this.resizeTimeout);
           this.resizeTimeout = setTimeout(() => {
@@ -2591,10 +2598,16 @@ export class CanvasManager {
     };
     // Skip viewport fit when entering/exiting split — the capture frame position is stale
     // during the transition and will be corrected by the split layout sync immediately after.
+    // Also skip when split is already active — the split layout sync pipeline
+    // (fitGuideSplitPrimaryBackgroundToFrame) owns viewport positioning in split mode.
+    // Without this guard, the ResizeObserver triggers applyResize which recomputes zoom
+    // based on canvas dimensions that may not match the split half-width, causing a
+    // zoom oscillation (e.g. 0.815 ↔ 1.649, exactly 2×).
     const didFitBackgroundViewport =
       shouldRefitBackgroundOnResize &&
       !!backgroundWorldRectBeforeResize &&
       !splitLayoutChanged &&
+      !currentSplitActive &&
       this.shouldFitBackgroundWithViewportOnResize()
         ? this.fitViewportToBackgroundPlacementFrame(
             backgroundWorldRectBeforeResize,
@@ -2642,32 +2655,39 @@ export class CanvasManager {
         `[CanvasManager] Canvas resize: ${oldCanvasWidth}x${oldCanvasHeight} -> ${targetWidth}x${targetHeight}`
       );
 
-      if (!didFitBackgroundViewport) {
-        this.zoomLevel = safeZoom;
+      // When guide-split is active, the split layout sync pipeline owns the viewport
+      // (zoom, panX, panY). Do NOT recompute or apply viewport here — doing so causes
+      // the ResizeObserver feedback loop where applyResize computes a wrong zoom (based
+      // on full canvas width instead of split half-width), then the split sync corrects
+      // it, then ResizeObserver fires again, creating a ~900ms oscillation.
+      if (!currentSplitActive) {
+        if (!didFitBackgroundViewport) {
+          this.zoomLevel = safeZoom;
 
-        if (didRefitBackground) {
-          // Only zero pan after a true background refit. Viewport-fit resizing keeps the
-          // existing world rect intact so vectors stay locked to the image.
-          this.panX = 0;
-          this.panY = 0;
-        } else if (centerWorldPoint) {
-          const angleRadians = this.rotateViewport ? (this.rotationDegrees * Math.PI) / 180 : 0;
-          const cos = Math.cos(angleRadians);
-          const sin = Math.sin(angleRadians);
-          const rotationCenter = this.getRotationCenter();
-          const base = [safeZoom * cos, safeZoom * sin, -safeZoom * sin, safeZoom * cos, 0, 0];
-          const translateToOrigin = [1, 0, 0, 1, -rotationCenter.x, -rotationCenter.y];
-          const translateBack = [1, 0, 0, 1, rotationCenter.x, rotationCenter.y];
-          let transform = fabric.util.multiplyTransformMatrices(base, translateToOrigin);
-          transform = fabric.util.multiplyTransformMatrices(translateBack, transform);
+          if (didRefitBackground) {
+            // Only zero pan after a true background refit. Viewport-fit resizing keeps the
+            // existing world rect intact so vectors stay locked to the image.
+            this.panX = 0;
+            this.panY = 0;
+          } else if (centerWorldPoint) {
+            const angleRadians = this.rotateViewport ? (this.rotationDegrees * Math.PI) / 180 : 0;
+            const cos = Math.cos(angleRadians);
+            const sin = Math.sin(angleRadians);
+            const rotationCenter = this.getRotationCenter();
+            const base = [safeZoom * cos, safeZoom * sin, -safeZoom * sin, safeZoom * cos, 0, 0];
+            const translateToOrigin = [1, 0, 0, 1, -rotationCenter.x, -rotationCenter.y];
+            const translateBack = [1, 0, 0, 1, rotationCenter.x, rotationCenter.y];
+            let transform = fabric.util.multiplyTransformMatrices(base, translateToOrigin);
+            transform = fabric.util.multiplyTransformMatrices(translateBack, transform);
 
-          const mappedCenter = fabric.util.transformPoint(centerWorldPoint, transform);
-          this.panX = targetWidth / 2 - mappedCenter.x;
-          this.panY = targetHeight / 2 - mappedCenter.y;
+            const mappedCenter = fabric.util.transformPoint(centerWorldPoint, transform);
+            this.panX = targetWidth / 2 - mappedCenter.x;
+            this.panY = targetHeight / 2 - mappedCenter.y;
+          }
         }
-      }
 
-      this.applyViewportTransform();
+        this.applyViewportTransform();
+      }
     }
 
     // Redraw canvas

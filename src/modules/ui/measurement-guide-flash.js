@@ -5028,6 +5028,22 @@ function setGuideSplitEnabled(enabled) {
     guideCompareWorkspaceState.leftViewId = toBaseViewId(getCurrentViewId());
   }
   if (next) {
+    // Snapshot every view's backgroundWorldRect BEFORE the canvas shrinks to
+    // half-width.  This is the last moment the BG is at its authoritative
+    // full-width position; once split layout activates, setBackgroundImage
+    // would re-center at the split canvas dimensions, losing the original.
+    const pm = window.app?.projectManager || window.projectManager;
+    const cm = pm?.canvasManager;
+    if (pm && cm) {
+      // Save current view's BG rect (it's the one on canvas right now)
+      const currentRect = cm.getBackgroundWorldRect?.();
+      if (currentRect && pm.views?.[pm.currentViewId]) {
+        pm.views[pm.currentViewId].backgroundWorldRect = JSON.parse(JSON.stringify(currentRect));
+      }
+      // For other views, preserve any existing rect — they were captured on
+      // their last full-width save.  Only populate if missing and there's
+      // canvasData (i.e. vectors exist that depend on the BG position).
+    }
     if (typeof window.saveCurrentCaptureFrameForLabel === 'function') {
       window.saveCurrentCaptureFrameForLabel(
         guideCompareWorkspaceState.leftViewId || getCurrentViewId()
@@ -6731,7 +6747,7 @@ export function initMeasurementGuideFlash() {
     } else {
       renderGuideSplitPane();
     }
-    scheduleGuideSplitLayoutSync({ settle: false });
+    scheduleGuideSplitLayoutSync({ settle: true });
   });
 
   window.addEventListener('openpaint:frame-tab-changed', () => {

@@ -1421,7 +1421,138 @@ function scoreProductNode(node, searchTerm) {
   return scoreFromHaystack(haystack, termNorm, termTokens);
 }
 
+async function handleLoadSelected({ res, body, startedAt }) {
+  const selectedItems = Array.isArray(body?.selectedItems) ? body.selectedItems : [];
+  if (!selectedItems.length) {
+    return res.status(400).json({
+      success: false,
+      code: 'CW_NO_ITEMS_SELECTED',
+      message: 'No items to load',
+    });
+  }
+
+  const override = {
+    baseUrl: body?.baseUrl,
+    username: body?.username,
+    password: body?.password,
+  };
+  const pidBaseUrl = String(
+    body?.pidBaseUrl || process.env.CW_PID_BASE_URL || 'https://cw-pid-qylyewlgca-uc.a.run.app'
+  )
+    .trim()
+    .replace(/\/+$/, '');
+
+  // Get auth
+  const session = await createCwSession(override);
+  const tokenResult = await fetchMtAccessTokenViaCwGraphql({ override });
+  const mtAccessToken = tokenResult?.accessToken || '';
+
+  const results = [];
+  for (const item of selectedItems) {
+    const productRef = String(item?.productReference || '').trim();
+    const scopedRef = String(item?.scopedReference || '').trim();
+    const style = String(item?.style || '').trim();
+    const styleCode = String(item?.styleCode || '').trim();
+    // Use scopedReference for the QC lookup (includes version suffix like IK-KD-2__STD)
+    const lookupRef = scopedRef || productRef;
+
+    if (!lookupRef) {
+      results.push({
+        selectionKey: item?.selectionKey || '',
+        basketItem: item,
+        data: null,
+        success: false,
+        message: 'Missing product reference',
+      });
+      continue;
+    }
+
+    try {
+      const qcResult = await fetchMtProductQcMeasurements({
+        session,
+        mtApiBaseUrl: pidBaseUrl,
+        productReference: lookupRef,
+        style,
+        styleCode,
+        mtAccessToken,
+      });
+
+      const qcData = qcResult.body?.content || qcResult.body || null;
+      const ok = qcResult.ok && qcData && typeof qcData === 'object' && !qcData.detail;
+
+      results.push({
+        selectionKey: item?.selectionKey || '',
+        basketItem: item,
+        data: ok
+          ? {
+              product: {
+                reference: lookupRef,
+                name: item?.productName || productRef,
+              },
+              qcMeasurements: { data: qcData },
+              measurements: qcData?.product_components || [],
+              images: extractQcImages(qcData, pidBaseUrl),
+            }
+          : null,
+        success: Boolean(ok),
+        message: ok
+          ? 'Loaded'
+          : String(
+              qcData?.detail || qcData?.content || qcResult.rawText || 'QC lookup failed'
+            ).slice(0, 200),
+      });
+    } catch (error) {
+      results.push({
+        selectionKey: item?.selectionKey || '',
+        basketItem: item,
+        data: null,
+        success: false,
+        message: String(error?.message || error).slice(0, 200),
+      });
+    }
+  }
+
+  const loadedCount = results.filter(r => r.success).length;
+  return res.status(200).json({
+    success: true,
+    code: 'CW_LOAD_SELECTED_OK',
+    items: results,
+    summary: {
+      requestedCount: selectedItems.length,
+      loadedCount,
+      failedCount: selectedItems.length - loadedCount,
+    },
+    durationMs: Date.now() - startedAt,
+  });
+}
+
+/** Extract image URLs from QC measurement data. */
+function extractQcImages(qcData, pidBaseUrl) {
+  if (!qcData || typeof qcData !== 'object') return [];
+  const images = [];
+  const baseUrl = String(pidBaseUrl || '').replace(/\/+$/, '');
+  const components = Array.isArray(qcData.product_components) ? qcData.product_components : [];
+  components.forEach(comp => {
+    const detailImages = Array.isArray(comp?.slipcover_details_images)
+      ? comp.slipcover_details_images
+      : [];
+    detailImages.forEach(img => {
+      const filePath = String(img?.file_path || '').trim();
+      if (filePath) {
+        images.push(`${baseUrl}/media/${filePath}`);
+      }
+    });
+  });
+  return images;
+}
+
 async function handleProductSearch({ req, res, body, startedAt }) {
+  // Handle load-selected phase: fetch QC measurements for each basket item
+  const phase = String(body?.phase || '').trim();
+  if (phase === 'load-selected') {
+    return handleLoadSelected({ res, body, startedAt });
+  }
+
   const searchTerm = String(body?.search || body?.query || '').trim();
   const inferredSearchTuple = parseSearchReferenceTuple(searchTerm);
   const manualHintReferences = getManualReferenceHints(searchTerm);
@@ -1584,6 +1715,34 @@ async function handleProductSearch({ req, res, body, startedAt }) {
   }
 }`;
 
+  // CW protocol queries for style/measurement discovery.
+  // Step 1: fetch all MT model names, filter locally by reference.
+  const gqlMtModelNamesQuery = `query { mtModelNamesList { id modelName label modelData } }`;
+  // Step 2: fetch measurements for a specific reference + model name.
+  const gqlMtMeasurementsQuery = `query mtProductInitializedMeasurements($reference: String!, $name: String!) {
+  mtProductInitializedMeasurements(reference: $reference, name: $name) {
+    reference
+    name
+    measurementId
+    measurementData
+    enabled
+  }
+}`;
+  // Step 3: fetch product detail with combinationTemplate optionGroups
+  // (styles, fabrics, accessories). Each optionGroup has a JSON `data` field
+  // whose parsed `content[]` array contains `{ code, name: { _translateable: { UN } } }`.
+  const gqlProductDetailQuery = `query ProductDetail($id: ID!) {
+  product(id: $id) {
+    id
+    reference
+    combinationTemplate {
+      id
+      name
+      optionGroups { id name data }
+    }
+  }
+}`;
+
   const graphqlDiscoveryAttempts = [];
   const graphqlStartedAt = Date.now();
   const fullTermVariants = Array.from(
@@ -1708,6 +1867,67 @@ async function handleProductSearch({ req, res, body, startedAt }) {
     .map(node => ({ node, score: scoreProductNode(node, searchTerm) }))
     .sort((a, b) => b.score - a.score);
 
+  // Build a results array for the client UI (each item = one discovered product).
+  // styleOptions are only populated for the top-ranked product after QC lookup.
+  // Only include EN products, deduplicated by reference (keeps highest-scored).
+  const buildResultsFromRanked = (ranked, topStyleOptions = [], topVersionOptions = []) => {
+    const seenReferences = new Set();
+    return ranked
+      .map((item, index) => {
+        const node = item.node || {};
+        const allTranslations = Array.isArray(node.translations?.edges)
+          ? node.translations.edges.map(edge => edge?.node).filter(Boolean)
+          : [];
+        const enTranslations = allTranslations.filter(
+          t => String(t.lang || '').toLowerCase() === 'en'
+        );
+        return { node, enTranslations, allTranslations, index };
+      })
+      .filter(entry => {
+        // Skip products with translations but none in EN (DE-only entries)
+        if (entry.allTranslations.length > 0 && entry.enTranslations.length === 0) return false;
+        // Deduplicate by reference (ranked is already sorted by score,
+        // so the first occurrence of a reference is the best match)
+        const ref = String(entry.node.reference || '')
+          .trim()
+          .toLowerCase();
+        if (ref && seenReferences.has(ref)) return false;
+        if (ref) seenReferences.add(ref);
+        return true;
+      })
+      .map(entry => {
+        const translations =
+          entry.enTranslations.length > 0 ? entry.enTranslations : entry.allTranslations;
+        const ref = String(entry.node.reference || '').trim();
+        // Attach styleOptions to every result — rebind productReference per result
+        const resultStyleOptions = topStyleOptions.map(opt => ({
+          ...opt,
+          productReference: ref || opt.productReference,
+        }));
+        // Attach versionOptions — rebind scopedReference per result
+        const resultVersionOptions = topVersionOptions.map(opt => ({
+          ...opt,
+          scopedReference: `${ref}__${opt.code}`,
+        }));
+        // Derive all scoped references (ref__version for each version option)
+        const derivedScoped =
+          resultVersionOptions.length > 0
+            ? resultVersionOptions.map(v => v.scopedReference)
+            : [ref];
+        return {
+          id: entry.node.id || null,
+          productReference: ref,
+          productName: String(translations[0]?.name || ref || '').trim(),
+          status: entry.node.status || null,
+          translations,
+          styleOptions: resultStyleOptions,
+          versionOptions: resultVersionOptions,
+          derivedScopedReferences: derivedScoped,
+          configParsed: true,
+        };
+      });
+  };
+
   if (rankedProducts.length > 0) {
     const sessionStartedAt = Date.now();
     const session = await createCwSession(override);
@@ -1718,6 +1938,150 @@ async function handleProductSearch({ req, res, body, startedAt }) {
     const productReference = String(selectedNode?.reference || '').trim();
     const dashboardEditUrl = `${String(override.baseUrl || 'https://cw40.comfort-works.com').replace(/\/+$/, '')}/dashboard/#/products/edit/${encodeURIComponent(productId)}`;
     const productMeasurementsInfoUrl = `${pidBaseUrl}/product-measurements/${encodeURIComponent(measurementProductId)}`;
+
+    // ── CW Protocol: discover styles + versions via product groups + MT models ──
+    let gqlVariantStyleOptions = [];
+    let gqlVersionOptions = [];
+    let gqlProductGroups = null;
+    let gqlMtModels = null;
+    try {
+      // Step 1: Fetch MT model names and filter locally by reference
+      const modelNamesResult = await cwGraphqlRequest({
+        override,
+        operationName: null,
+        query: gqlMtModelNamesQuery,
+        variables: {},
+      });
+      const allModels = Array.isArray(modelNamesResult?.body?.data?.mtModelNamesList)
+        ? modelNamesResult.body.data.mtModelNamesList
+        : [];
+      const refLower = productReference.toLowerCase();
+      gqlMtModels = allModels.filter(m => {
+        const name = String(m?.modelName || '').toLowerCase();
+        const label = String(m?.label || '').toLowerCase();
+        const data = String(m?.modelData || '').toLowerCase();
+        return name.includes(refLower) || label.includes(refLower) || data.includes(refLower);
+      });
+
+      // Step 3: Fetch product detail with combinationTemplate optionGroups
+      const detailResult = await cwGraphqlRequest({
+        override,
+        operationName: 'ProductDetail',
+        query: gqlProductDetailQuery,
+        variables: { id: productId },
+      });
+      const productData = detailResult?.body?.data?.product || null;
+      const optionGroups = productData?.combinationTemplate?.optionGroups || [];
+      // Parse each optionGroup's JSON `data` field into a usable object
+      const parsedGroups = optionGroups.map(g => {
+        let parsed = {};
+        try {
+          parsed = JSON.parse(g.data);
+        } catch {
+          /* ignore */
+        }
+        return { id: g.id, rawName: g.name, ...parsed };
+      });
+      gqlProductGroups = parsedGroups;
+
+      // Find the style group (name contains "style")
+      const styleGroup = parsedGroups.find(g => {
+        const rawName = String(g.rawName || '').toLowerCase();
+        const displayName = String(
+          g.name?._translateable?.UN || g.name?._translateable?.en || ''
+        ).toLowerCase();
+        return rawName.includes('style') || displayName.includes('style');
+      });
+      if (styleGroup && Array.isArray(styleGroup.content)) {
+        const seenCodes = new Set();
+        styleGroup.content.forEach(item => {
+          const code = String(item?.code || '').trim();
+          const translatable = item?.name?._translateable || {};
+          const name = String(translatable.UN || translatable.en || '').trim();
+          if (!code || seenCodes.has(code.toLowerCase())) return;
+          seenCodes.add(code.toLowerCase());
+          gqlVariantStyleOptions.push({
+            productReference,
+            style: name || code,
+            styleCode: code,
+            label: `${productReference} - ${name || code} (${code})`,
+          });
+        });
+      }
+
+      // Extract version options from ALL non-style, non-fabric, non-accessory groups.
+      // These are groups like "Sofa Version" (STD/PTD), "Orientation" (L/R), "Manufacturer" (PB/MG).
+      // Multiple version dimensions are cross-multiplied: ref__dim1__dim2 for measurement lookup.
+      const skipPatterns = [
+        'style',
+        'fabric',
+        'smart',
+        'accessori',
+        'usb',
+        'add-on',
+        'add on',
+        'upgrade',
+      ];
+      const versionGroups = parsedGroups.filter(g => {
+        const rawName = String(g.rawName || '').toLowerCase();
+        const displayName = String(
+          g.name?._translateable?.UN || g.name?._translateable?.en || ''
+        ).toLowerCase();
+        const combined = rawName + ' ' + displayName;
+        return (
+          !skipPatterns.some(p => combined.includes(p)) &&
+          Array.isArray(g.content) &&
+          g.content.length > 0
+        );
+      });
+
+      // Parse each version group's content into { code, label } arrays (skip DF placeholders)
+      const versionDimensions = versionGroups
+        .map(g => {
+          const groupName = String(
+            g.name?._translateable?.UN || g.name?._translateable?.en || g.rawName || ''
+          ).trim();
+          return {
+            groupName,
+            options: (g.content || [])
+              .map(item => {
+                const code = String(item?.code || '').trim();
+                if (!code || code.toUpperCase() === 'DF') return null;
+                const translatable = item?.name?._translateable || {};
+                const label = String(translatable.UN || translatable.en || '').trim();
+                return { code, label: label || code };
+              })
+              .filter(Boolean),
+          };
+        })
+        .filter(d => d.options.length > 0);
+
+      // Cross-multiply all dimensions into flat version options
+      if (versionDimensions.length > 0) {
+        // Start with a single empty combo, then multiply by each dimension
+        let combos = [{ codes: [], labels: [] }];
+        for (const dim of versionDimensions) {
+          const next = [];
+          for (const combo of combos) {
+            for (const opt of dim.options) {
+              next.push({
+                codes: [...combo.codes, opt.code],
+                labels: [...combo.labels, opt.label],
+              });
+            }
+          }
+          combos = next;
+        }
+        combos.forEach(combo => {
+          const code = combo.codes.join('__');
+          const label = combo.labels.join(' / ');
+          const scopedRef = `${productReference}__${combo.codes.join('__')}`;
+          gqlVersionOptions.push({ code, label, scopedReference: scopedRef });
+        });
+      }
+    } catch {
+      // Non-critical — style/version discovery is best-effort
+    }
 
     if (isTurboProbe && productReference) {
       const turboFastPathStartedAt = Date.now();
@@ -1940,6 +2304,23 @@ async function handleProductSearch({ req, res, body, startedAt }) {
             tokenFetchAttempts: autoTokenResult?.attempts || null,
             mtUsernameUsed: mtUsername || null,
           },
+          cwProtocol: {
+            mtModelsFound: Array.isArray(gqlMtModels) ? gqlMtModels.length : 0,
+            mtModels: (gqlMtModels || []).slice(0, 5).map(m => ({
+              id: m.id,
+              modelName: m.modelName,
+              label: m.label,
+            })),
+            optionGroupsFound: Array.isArray(gqlProductGroups) ? gqlProductGroups.length : 0,
+            productGroups: (gqlProductGroups || []).map(g => ({
+              name: g.name,
+              contentCount: Array.isArray(g.content) ? g.content.length : 0,
+              subgroupCount: Array.isArray(g.subgroup) ? g.subgroup.length : 0,
+            })),
+            gqlStyleOptionsCount: gqlVariantStyleOptions.length,
+            gqlVersionOptionsCount: gqlVersionOptions.length,
+            gqlVersionOptions: gqlVersionOptions,
+          },
           qcMeasurementAttempts: fastAttempts,
           measurementDetails: [],
           candidates: rankedProducts.slice(0, 8).map(item => ({
@@ -1956,6 +2337,11 @@ async function handleProductSearch({ req, res, body, startedAt }) {
           },
           upstreamBody: null,
           upstreamSnippet: null,
+          results: buildResultsFromRanked(
+            rankedProducts.slice(0, 8),
+            fastStyleOptions,
+            gqlVersionOptions
+          ),
           durationMs: Date.now() - startedAt,
         };
 
@@ -2612,7 +2998,14 @@ async function handleProductSearch({ req, res, body, startedAt }) {
         });
       });
     });
-    const styleOptions = Array.from(styleOptionMap.values());
+    let styleOptions = Array.from(styleOptionMap.values());
+
+    // When no styles were discovered from QC or product pages, use styles
+    // from the GraphQL product detail query (variant attributes). Fall back
+    // to common defaults only as a last resort.
+    if (styleOptions.length === 0 && gqlVariantStyleOptions.length > 0) {
+      styleOptions = gqlVariantStyleOptions;
+    }
 
     const existingDetailUrls = new Set(detailResults.map(item => String(item.url || '').trim()));
     const extraDetailUrls = new Set();
@@ -2825,6 +3218,23 @@ async function handleProductSearch({ req, res, body, startedAt }) {
         tokenFetchAttempts: autoTokenResult?.attempts || null,
         mtUsernameUsed: mtUsername || null,
       },
+      cwProtocol: {
+        mtModelsFound: Array.isArray(gqlMtModels) ? gqlMtModels.length : 0,
+        mtModels: (gqlMtModels || []).slice(0, 5).map(m => ({
+          id: m.id,
+          modelName: m.modelName,
+          label: m.label,
+        })),
+        optionGroupsFound: Array.isArray(gqlProductGroups) ? gqlProductGroups.length : 0,
+        optionGroups: (gqlProductGroups || []).map(g => ({
+          name: g.rawName || g.name,
+          displayName: g.name?._translateable?.UN || null,
+          contentCount: Array.isArray(g.content) ? g.content.length : 0,
+        })),
+        gqlStyleOptionsCount: gqlVariantStyleOptions.length,
+        gqlVersionOptionsCount: gqlVersionOptions.length,
+        gqlVersionOptions: gqlVersionOptions,
+      },
       qcMeasurementAttempts,
       measurementDetails: isTurboProbe ? [] : detailResults,
       candidates: rankedProducts.slice(0, isTurboProbe ? 8 : rankedProducts.length).map(item => ({
@@ -2852,6 +3262,11 @@ async function handleProductSearch({ req, res, body, startedAt }) {
         : infoResult.body
           ? null
           : infoResult.rawText.slice(0, 5000),
+      results: buildResultsFromRanked(
+        rankedProducts.slice(0, isTurboProbe ? 8 : rankedProducts.length),
+        styleOptions,
+        gqlVersionOptions
+      ),
       durationMs: Date.now() - startedAt,
     };
 
@@ -3047,6 +3462,17 @@ async function handleProductSearch({ req, res, body, startedAt }) {
         matches,
         candidates,
         crawl,
+        results: matches.map(match => ({
+          id: null,
+          productReference: String(match.reference || '').trim(),
+          productName: String(match.label || match.lineProductName || match.reference || '').trim(),
+          status: null,
+          translations: [],
+          styleOptions: [],
+          versionOptions: [],
+          derivedScopedReferences: [],
+          configParsed: false,
+        })),
         durationMs: Date.now() - startedAt,
       };
       return res.status(200).json(
@@ -3165,6 +3591,34 @@ async function handleProductSearch({ req, res, body, startedAt }) {
     measurementCandidates: measurementCandidates.slice(0, 60),
     upstreamBody: detail.body,
     upstreamSnippet: detail.body ? null : detail.rawText.slice(0, 5000),
+    results:
+      candidates.length > 0
+        ? candidates
+            .map(c => ({
+              id: null,
+              productReference: String(searchTerm || '').trim(),
+              productName: String(searchTerm || '').trim(),
+              status: null,
+              translations: [],
+              styleOptions: [],
+              versionOptions: [],
+              derivedScopedReferences: [],
+              configParsed: false,
+            }))
+            .slice(0, 1)
+        : [
+            {
+              id: null,
+              productReference: String(searchTerm || '').trim(),
+              productName: String(searchTerm || '').trim(),
+              status: null,
+              translations: [],
+              styleOptions: [],
+              versionOptions: [],
+              derivedScopedReferences: [],
+              configParsed: false,
+            },
+          ],
     durationMs: Date.now() - startedAt,
   };
   return res.status(detail.ok ? 200 : 502).json(

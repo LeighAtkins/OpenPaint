@@ -522,14 +522,7 @@ export class ProjectManager {
       // Background images are restored separately via setBackgroundImage().
       // Keeping Fabric's serialized background image here causes duplicate async loads
       // and can race with the manual restore path during cloud project hydration.
-      // EXCEPTION: In split mode, keep the serialized background so loadFromJSON restores
-      // it at its saved world position.  The background must stay aligned with vectors in
-      // the JSON — if we strip it and call setBackgroundImage later, the image gets
-      // re-centered for the split canvas size (960px) instead of the original position.
-      const isGuideSplitForBgStrip =
-        document.getElementById('main-canvas-wrapper')?.classList.contains('guide-split-active') ===
-        true;
-      if (sanitizedData.backgroundImage && view.image && !isGuideSplitForBgStrip) {
+      if (sanitizedData.backgroundImage && view.image) {
         delete sanitizedData.backgroundImage;
         console.log(`[Load] Removed serialized background image for ${viewId}`);
       }
@@ -850,18 +843,19 @@ export class ProjectManager {
       this.views[this.currentViewId].rotation = this.canvasManager.getRotationDegrees();
       this.views[this.currentViewId].backgroundRotation =
         this.canvasManager.getBackgroundImageRotationDegrees();
-      // In split mode, setBackgroundImage re-centers the background at the split
-      // canvas width (960px instead of 1920px).  Saving that transient position would
-      // overwrite the authoritative full-width world rect, causing vectors drawn at the
-      // original position to appear misaligned on subsequent loads.
-      if (!isGuideSplitActive) {
-        if (backgroundWorldRect) {
-          this.views[this.currentViewId].backgroundWorldRect = JSON.parse(
-            JSON.stringify(backgroundWorldRect)
-          );
-        } else {
-          delete this.views[this.currentViewId].backgroundWorldRect;
-        }
+      // Save backgroundWorldRect so setBackgroundImage can restore the exact
+      // position on the next visit.  In split mode, setBackgroundImage already
+      // uses the saved rect (or originalCanvasSize as fallback) to place the BG
+      // at the full-width position, so saving it here is safe and ensures
+      // consistent positioning across view switches.
+      if (backgroundWorldRect) {
+        this.views[this.currentViewId].backgroundWorldRect = JSON.parse(
+          JSON.stringify(backgroundWorldRect)
+        );
+      } else if (!isGuideSplitActive) {
+        // Only delete the rect outside split mode — in split mode, preserve
+        // whatever was saved earlier (e.g. from the pre-split snapshot).
+        delete this.views[this.currentViewId].backgroundWorldRect;
       }
       if (!isGuideSplitActive) {
         this.views[this.currentViewId].viewport = this.canvasManager.getViewportState();
@@ -1317,6 +1311,29 @@ export class ProjectManager {
           // Center based on frame center
           let left = frameLeft + frameWidth / 2;
           let top = frameTop + frameHeight / 2;
+
+          // In split mode, the canvas is half-width so the frame center is wrong
+          // for vectors drawn at the original full-width position.  Use the
+          // pre-split canvas dimensions (originalCanvasSize) to place the
+          // background CENTER where it would have been in full-width mode.
+          // The scale stays frame-based (it matches the original since the capture
+          // frame preserves the same aspect-ratio fitting).  The split viewport
+          // transform (fitGuideSplitPrimaryBackgroundToFrame) then pan/zooms to
+          // show it correctly in the half-width pane.
+          const isGuideSplitActiveForPlacement =
+            document
+              .getElementById('main-canvas-wrapper')
+              ?.classList.contains('guide-split-active') === true;
+          if (isGuideSplitActiveForPlacement && !hasSavedBackgroundWorldRect) {
+            const origSize = this.canvasManager?.originalCanvasSize;
+            if (origSize && origSize.width > 0 && origSize.height > 0) {
+              left = origSize.width / 2;
+              top = origSize.height / 2;
+              console.log(
+                `[Image Debug] Split mode: using originalCanvasSize center (${left}, ${top}) instead of frame center`
+              );
+            }
+          }
 
           if (hasSavedBackgroundWorldRect) {
             left = savedWorldLeft + savedWorldWidth / 2;
