@@ -231,16 +231,23 @@ function runGuideSplitLayoutSync() {
   if (frameEl) {
     frameEl.style.visibility = 'hidden';
   }
-  // Hide primary canvas during settle to prevent viewport flicker
-  const primaryCanvasEl = primaryCanvasManager?.fabricCanvas?.wrapperEl;
-  if (primaryCanvasEl) {
-    primaryCanvasEl.style.opacity = '0';
-  }
   syncGuideSplitPrimaryCaptureFrame(getCurrentViewId());
   resizeGuideSplitCanvasManagerNow(primaryCanvasManager);
   resizeGuideSplitCanvasManagerNow(guideSplitCompareCanvasManager);
+  // Fit primary background immediately (not just in double-RAF) so vectors render
+  // at the correct viewport right away.  The double-RAF will refine after DOM settles.
+  fitGuideSplitPrimaryBackgroundToFrame();
   fitGuideSplitCompareBackgroundToFrame();
+  // Sync capture frame immediately after the viewport fit so it uses the correct
+  // zoom/pan.  Without this, the capture frame stays at the position computed by
+  // applyCaptureFrameForLabel (which ran before canvas resize) until the double-RAF
+  // corrects it 2 frames later — visible as a shifted capture window on images with
+  // stored tab state (second+ visits).
+  if (typeof window.syncCaptureFrameToActiveTabWorldRect === 'function') {
+    window.syncCaptureFrameToActiveTabWorldRect(getCurrentViewId());
+  }
   syncGuideSplitHighlightOverlayToBackground();
+  syncGuideSplitFrameGhost();
   if (guideSplitFrameSyncRaf !== null) {
     cancelAnimationFrame(guideSplitFrameSyncRaf);
     guideSplitFrameSyncRaf = null;
@@ -249,24 +256,19 @@ function runGuideSplitLayoutSync() {
     guideSplitFrameSyncRaf = requestAnimationFrame(() => {
       guideSplitFrameSyncRaf = null;
       if (!guideSplitEnabled || syncToken !== guideSplitFrameSyncToken) {
-        // Restore canvas visibility if we bail out early
-        if (primaryCanvasEl) {
-          primaryCanvasEl.style.opacity = '';
-        }
         return;
       }
       fitGuideSplitPrimaryBackgroundToFrame();
-      // Reposition capture frame AFTER viewport is settled, so frame matches viewport
+      fitGuideSplitCompareBackgroundToFrame();
+      // Sync capture frame AFTER viewport fit so it uses the correct zoom/pan.
+      // Previously this ran before fitGuideSplitPrimaryBackgroundToFrame, causing
+      // the capture frame (and ghost) to be positioned at the stale viewport.
       if (typeof window.syncCaptureFrameToActiveTabWorldRect === 'function') {
         window.syncCaptureFrameToActiveTabWorldRect(getCurrentViewId());
       }
-      fitGuideSplitCompareBackgroundToFrame();
       syncGuideSplitHighlightOverlayToBackground();
       syncGuideSplitFrameGhost();
-      // Restore canvas visibility now that layout is settled
-      if (primaryCanvasEl) {
-        primaryCanvasEl.style.opacity = '';
-      }
+      // (Opacity mask removed — viewport changes are now prevented at source)
       if (guideSplitLayoutSyncRaf === null && guideSplitLayoutSyncTimeout === null) {
         requestAnimationFrame(() => {
           if (
@@ -453,20 +455,33 @@ function syncGuideSplitPrimaryCaptureFrame(viewId, { exact = false } = {}) {
 function fitGuideSplitPrimaryBackgroundToFrame() {
   const primaryCanvasManager = getPrimaryCanvasManager();
   const backgroundWorldRect = primaryCanvasManager?.getBackgroundWorldRect?.();
-  const targetFrame = primaryCanvasManager?.getBackgroundPlacementFrame?.();
   if (
     !backgroundWorldRect ||
-    !targetFrame ||
-    !primaryCanvasManager?.fitViewportToBackgroundPlacementFrame
+    !primaryCanvasManager?.fitViewportToBackgroundPlacementFrame ||
+    !primaryCanvasManager?.fabricCanvas
   ) {
     return false;
   }
+
+  // Use the canvas dimensions directly as the target frame — NOT
+  // getBackgroundPlacementFrame() which reads captureFrame.getBoundingClientRect().
+  // In split mode, syncCaptureFrameToActiveTabWorldRect repositions the capture frame
+  // based on the current viewport before this function runs, creating a feedback loop
+  // where each fit shrinks the target, compounding the zoom down to near-zero.
+  const canvasWidth = Number(primaryCanvasManager.fabricCanvas.width) || 0;
+  const canvasHeight = Number(primaryCanvasManager.fabricCanvas.height) || 0;
+  if (!canvasWidth || !canvasHeight) {
+    return false;
+  }
+  const targetFrame = { left: 0, top: 0, width: canvasWidth, height: canvasHeight };
 
   const didFit = primaryCanvasManager.fitViewportToBackgroundPlacementFrame(
     backgroundWorldRect,
     targetFrame,
     {
-      zoom: primaryCanvasManager.zoomLevel || primaryCanvasManager.fabricCanvas?.getZoom?.() || 1,
+      // Seed zoom must be 1 — fitViewportToWorldRect multiplies the seed by fitScale,
+      // so passing the current zoomLevel causes compounding shrink on repeated calls.
+      zoom: 1,
       panX: 0,
       panY: 0,
       rotation: primaryCanvasManager.rotateViewport ? primaryCanvasManager.rotationDegrees : 0,
