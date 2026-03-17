@@ -502,11 +502,13 @@ function guessMosLabel(sourceLabel: string, sectionName: string): string {
   if (normalizedSource === 'back width') return 'L1';
 
   if (normalizedSection === 'Seat Cushion Cover' || normalizedSection === 'Back Cushion Cover') {
+    if (normalizedSource === 'width') return 'A';
     if (normalizedSource === 'width (top)') return 'A';
     if (normalizedSource === 'width (bottom)') return 'B';
+    if (normalizedSource === 'height') return 'B';
     if (normalizedSource === 'height (middle)') return 'C';
     if (normalizedSource === 'height (right)') return 'D';
-    if (normalizedSource === 'thickness') return 'E';
+    if (normalizedSource === 'thickness') return 'D';
   }
 
   return '';
@@ -1153,29 +1155,34 @@ function createModal(): HTMLElement {
   body.className = 'cw-import-body';
   body.innerHTML = `
     <form class="cw-import-form" novalidate>
-    <div class="cw-grid">
-      <div>
-        <label for="cwBaseUrl">CW Base URL</label>
-        <input id="cwBaseUrl" value="https://cw40.comfort-works.com" />
+    <details id="cwLoginDetails" class="cw-login-details">
+      <summary style="cursor:pointer;font-size:13px;font-weight:600;color:#475569;padding:6px 0;user-select:none;">CW Connection Settings</summary>
+      <div class="cw-grid" style="margin-top:8px;">
+        <div>
+          <label for="cwBaseUrl">CW Base URL</label>
+          <input id="cwBaseUrl" value="https://cw40.comfort-works.com" />
+        </div>
+        <div>
+          <label for="cwFormId">Form ID (optional)</label>
+          <input id="cwFormId" />
+        </div>
+        <div>
+          <label for="cwUsername">CW Username</label>
+          <input id="cwUsername" autocomplete="off" />
+        </div>
+        <div>
+          <label for="cwPassword">CW Password</label>
+          <input id="cwPassword" type="password" autocomplete="off" />
+        </div>
       </div>
-      <div>
-        <label for="cwFormId">Form ID (optional)</label>
-        <input id="cwFormId" />
-      </div>
-      <div>
-        <label for="cwUsername">CW Username</label>
-        <input id="cwUsername" autocomplete="off" />
-      </div>
-      <div>
-        <label for="cwPassword">CW Password</label>
-        <input id="cwPassword" type="password" autocomplete="off" />
-      </div>
+    </details>
+    <div class="cw-grid" style="margin-top:4px;">
       <div class="cw-grid-full">
         <label for="cwSearchTerm">Product search (name or code)</label>
         <input id="cwSearchTerm" placeholder="PB Comfort Roll Arm Sofa Slipcover" />
       </div>
-      <div class="cw-grid-full">
-        <label for="cwRenderedHtml">Rendered PID HTML (optional, helps include all sections like frame/seat/back cushions)</label>
+      <div class="cw-grid-full" id="cwRenderedHtmlWrap" style="display:none;">
+        <label for="cwRenderedHtml">Rendered PID HTML (optional)</label>
         <textarea id="cwRenderedHtml" class="cw-rendered-html" placeholder="Paste expanded measurements HTML when needed"></textarea>
       </div>
     </div>
@@ -1327,6 +1334,11 @@ function createModal(): HTMLElement {
   }
   if (persisted.lastProbeReport && typeof persisted.lastProbeReport === 'object') {
     lastProbeReport = persisted.lastProbeReport;
+  }
+  // Auto-collapse login settings when credentials are already saved
+  const loginDetails = body.querySelector<HTMLDetailsElement>('#cwLoginDetails');
+  if (loginDetails && persisted.username && persisted.password) {
+    loginDetails.open = false;
   }
 
   [baseUrlEl, formIdEl, usernameEl, passwordEl, searchTermEl, probeTermsPathEl].forEach(el => {
@@ -2055,16 +2067,22 @@ function createModal(): HTMLElement {
       meta.appendChild(nameEl);
 
       if (!direct) {
+        const img = document.createElement('img');
+        img.alt = 'cw-product';
+        img.style.minHeight = '60px';
+        img.style.background = '#f0f0f0';
+        card.appendChild(img);
+        card.appendChild(toggle);
+        card.appendChild(meta);
+        imagesWrap.appendChild(card);
         void (async () => {
           const dataUrl = await fetchProxyImageDataUrl(group, baseUrl, username, password);
-          if (!dataUrl) return;
-          const img = document.createElement('img');
-          img.src = dataUrl;
-          img.alt = 'cw-product';
-          card.appendChild(img);
-          card.appendChild(toggle);
-          card.appendChild(meta);
-          imagesWrap.appendChild(card);
+          if (dataUrl) {
+            img.src = dataUrl;
+          } else {
+            img.style.opacity = '0.4';
+            img.alt = 'Image unavailable';
+          }
         })();
         return;
       }
@@ -2107,9 +2125,21 @@ function createModal(): HTMLElement {
     });
   };
 
+  let statusTimerId: ReturnType<typeof setInterval> | null = null;
   const setStatus = (message: string, kind: 'info' | 'ok' | 'bad' = 'info') => {
+    if (statusTimerId) {
+      clearInterval(statusTimerId);
+      statusTimerId = null;
+    }
     resultMeta.textContent = message;
     resultMeta.style.color = kind === 'ok' ? '#166534' : kind === 'bad' ? '#b91c1c' : '#334155';
+    if (kind === 'info') {
+      const start = Date.now();
+      statusTimerId = setInterval(() => {
+        const elapsed = Math.round((Date.now() - start) / 1000);
+        resultMeta.textContent = `${message} (${elapsed}s)`;
+      }, 1000);
+    }
   };
 
   const setProbeButtonsDisabled = (disabled: boolean) => {
@@ -2321,9 +2351,7 @@ function createModal(): HTMLElement {
         collectSectionImageGroups(payload, (baseUrlEl?.value || '').trim()),
         imageCandidateGroups
       );
-      const imageUrls = Array.isArray(imageCandidates)
-        ? imageCandidates.filter(url => !isHttpUrl(url))
-        : [];
+      const imageUrls = Array.isArray(imageCandidates) ? imageCandidates : [];
       const loadedItem: LoadedMeasurementItem = {
         selectionKey: String(item?.selectionKey || basketItem?.selectionKey || '').trim(),
         basketItem,
@@ -2445,6 +2473,10 @@ function createModal(): HTMLElement {
           : `Search failed: ${String(data?.message || data?.code || response.status)}`,
         response.ok ? 'ok' : 'bad'
       );
+      if (response.ok) {
+        const loginDetails = body.querySelector<HTMLDetailsElement>('#cwLoginDetails');
+        if (loginDetails) loginDetails.open = false;
+      }
     } catch (error) {
       if (probeModeAvailable && probeEnabledEl?.checked) {
         lastProbeReport = {
@@ -3156,22 +3188,22 @@ function createModal(): HTMLElement {
             await imageRegistry.registerImage(viewId, resolvedUrl, fileName, {
               source: 'cw-import',
             });
-          } else if (
-            typeof addImageToSidebarFn === 'function' &&
-            addImageToSidebarFn.__galleryHooked
-          ) {
-            console.log('[CW Import] register via hooked addImageToSidebar', {
+          } else if (typeof addImageToSidebarFn === 'function') {
+            // addImageToSidebar (both __galleryHooked and __isCompat) handles
+            // gallery AND #imageList sidebar, so prefer it over addImageToGalleryCompat
+            // which only populates the gallery.
+            console.log('[CW Import] register via addImageToSidebar', {
               viewId,
               fileName,
-              mode: 'sidebar-hook',
+              hooked: Boolean(addImageToSidebarFn.__galleryHooked),
+              compat: Boolean(addImageToSidebarFn.__isCompat),
             });
+            await projectManager.addImage(viewId, resolvedUrl, { refreshBackground: false });
             addImageToSidebarFn(resolvedUrl, viewId, fileName);
           } else {
             console.log('[CW Import] register via projectManager fallback', {
               viewId,
               fileName,
-              hasCompatGallery: typeof addImageToGalleryCompatFn === 'function',
-              hasSidebarFn: typeof addImageToSidebarFn === 'function',
             });
             await projectManager.addImage(viewId, resolvedUrl, { refreshBackground: false });
             if (typeof addImageToGalleryCompatFn === 'function') {
@@ -3182,8 +3214,6 @@ function createModal(): HTMLElement {
                 label: viewId,
                 filename: fileName,
               });
-            } else if (typeof addImageToSidebarFn === 'function') {
-              addImageToSidebarFn(resolvedUrl, viewId, fileName);
             }
           }
           if (!firstImportedViewId) {

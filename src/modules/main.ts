@@ -1305,6 +1305,7 @@ export class App {
           if (wrapper) wrapper.classList.toggle('shape-open');
         } else {
           // Clicking the button itself: select line tool and close menu
+          leaveEraserBrushSize();
           this.toolManager.selectTool('line');
           updateDrawingToggleLabels('Straight Line');
           if (wrapper) wrapper.classList.remove('shape-open');
@@ -1327,6 +1328,7 @@ export class App {
           preferredTextWrapper = wrapper;
         }
         void (async () => {
+          leaveEraserBrushSize();
           const fontSize = getCurrentTextSize();
           const tool = await this.toolManager.ensureTool('text');
           if (tool?.setFontSize) {
@@ -1378,6 +1380,7 @@ export class App {
     // Shape button click - activate shape tool and store previous tool
     shapeModeToggles.forEach(toggle => {
       toggle.addEventListener('click', () => {
+        leaveEraserBrushSize();
         // Store previous tool name for returning after drawing
         const currentToolName = this.toolManager.activeToolName || 'line';
         this.toolManager.previousToolName = currentToolName;
@@ -1461,6 +1464,7 @@ export class App {
     const selectShapeOption = async (btn: HTMLElement) => {
       const shape = btn.getAttribute('data-shape-option');
       if (!shape) return;
+      leaveEraserBrushSize();
       const shapeTool = await this.toolManager.ensureTool('shape');
       if (!shapeTool?.setShapeType) return;
       this.toolManager.previousToolName = this.toolManager.activeToolName || 'line';
@@ -1478,20 +1482,46 @@ export class App {
       });
     });
 
+    // Eraser brush size: save/restore normal size when entering/leaving eraser
+    const ERASER_DEFAULT_SIZE = 30;
+    let preEraserBrushSize = 0; // 0 = not in eraser mode
+
+    const enterEraserBrushSize = () => {
+      const bs = document.getElementById('brushSize') as HTMLInputElement | null;
+      if (!bs) return;
+      preEraserBrushSize = parseInt(bs.value, 10) || 2;
+      bs.value = String(ERASER_DEFAULT_SIZE);
+      bs.dispatchEvent(new Event('input', { bubbles: true }));
+    };
+
+    const leaveEraserBrushSize = () => {
+      if (!preEraserBrushSize) return;
+      const bs = document.getElementById('brushSize') as HTMLInputElement | null;
+      if (!bs) return;
+      bs.value = String(preEraserBrushSize);
+      bs.dispatchEvent(new Event('input', { bubbles: true }));
+      preEraserBrushSize = 0;
+    };
+
     drawingModeOptions.forEach(btn => {
       btn.addEventListener('click', () => {
         const mode = btn.getAttribute('data-drawing-mode');
         if (!mode) return;
+        const wasEraser = preEraserBrushSize > 0;
         if (mode === 'curve') {
+          if (wasEraser) leaveEraserBrushSize();
           this.toolManager.selectTool('curve');
           updateDrawingToggleLabels('Curved Line');
         } else if (mode === 'privacy') {
+          if (!wasEraser) enterEraserBrushSize();
           this.toolManager.selectTool('privacy');
           updateDrawingToggleLabels('Eraser Tool');
         } else if (mode === 'select') {
+          if (wasEraser) leaveEraserBrushSize();
           this.toolManager.selectTool('select');
           updateDrawingToggleLabels('Select');
         } else {
+          if (wasEraser) leaveEraserBrushSize();
           this.toolManager.selectTool('line');
           updateDrawingToggleLabels('Straight Line');
         }
@@ -2031,7 +2061,6 @@ export class App {
         panel.setAttribute('aria-label', 'Line style controls');
         panel.innerHTML = `
           <div class="line-style-panel-grid">
-            <div class="line-style-row"><span class="line-style-title">Stroke</span><div id="lineStyleStrokeRow" class="line-style-control"></div></div>
             <div class="line-style-row"><span class="line-style-title">Arrow</span><div id="lineStyleArrowStyleRow" class="line-style-control"></div></div>
             <div class="line-style-row"><span class="line-style-title">Pattern</span><div id="lineStylePatternRow" class="line-style-control"></div></div>
             <div class="line-style-row line-style-scope"><span class="line-style-title">Scope</span><div class="line-style-control"><button type="button" data-scope="selection" class="active">Selection</button><button type="button" data-scope="image">Image</button><button type="button" data-scope="project">Project</button></div></div>
@@ -2065,10 +2094,9 @@ export class App {
 
       const panel = document.getElementById('lineStylePopoverPanel');
       if (!panel) return;
-      const strokeRow = document.getElementById('lineStyleStrokeRow');
       const arrowStyleRow = document.getElementById('lineStyleArrowStyleRow');
       const patternRow = document.getElementById('lineStylePatternRow');
-      if (!strokeRow || !arrowStyleRow || !patternRow) return;
+      if (!arrowStyleRow || !patternRow) return;
 
       if (arrowStartBtn.parentElement !== tbLeft) {
         tbLeft.insertBefore(arrowStartBtn, wrap);
@@ -2091,7 +2119,13 @@ export class App {
         arrowOptionsMenu.setAttribute('aria-hidden', 'true');
       }
 
-      strokeRow.appendChild(brushSizeSelect);
+      // Keep brushSize in #tbLeft (before the Line Style wrapper) instead of
+      // moving it into the popover panel — users need it always visible.
+      if (brushSizeSelect && wrap && tbLeft) {
+        if (brushSizeSelect.parentElement !== tbLeft) {
+          tbLeft.insertBefore(brushSizeSelect, wrap);
+        }
+      }
       patternRow.appendChild(dottedBtn);
 
       const arrowStyleTop = document.getElementById('arrowStyleTop') as HTMLSelectElement | null;
@@ -2707,12 +2741,14 @@ export class App {
           }
         } else if (currentToolName === 'curve') {
           // Curved Line -> Eraser Tool
+          enterEraserBrushSize();
           this.toolManager.selectTool('privacy');
           if (drawingModeToggle) {
             this.updateToggleLabel(drawingModeToggle, 'Eraser Tool');
           }
         } else if (currentToolName === 'privacy') {
           // Eraser Tool -> Select
+          leaveEraserBrushSize();
           this.toolManager.selectTool('select');
           if (drawingModeToggle) {
             this.updateToggleLabel(drawingModeToggle, 'Select');

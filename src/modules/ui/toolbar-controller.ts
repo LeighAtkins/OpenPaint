@@ -1423,6 +1423,18 @@ export function initToolbarController() {
         toolbarWrap.classList.add('toolbar-stable');
       }
     }, 100);
+
+    // Track toolbar height so body padding and side panels stay in sync when wrapping
+    if (topToolbar && typeof ResizeObserver !== 'undefined') {
+      const updateToolbarHeight = () => {
+        const h = topToolbar.offsetHeight;
+        if (h > 0) {
+          document.documentElement.style.setProperty('--toolbar-height', `${h}px`);
+        }
+      };
+      updateToolbarHeight();
+      new ResizeObserver(updateToolbarHeight).observe(topToolbar);
+    }
   }
 
   // Smart label system for responsive button text
@@ -4957,7 +4969,7 @@ export function initToolbarController() {
         }
 
         // Only handle keyboard navigation if image panel is visible
-        if (!document.getElementById('imagePanel').classList.contains('hidden')) {
+        if (!document.getElementById('imagePanel')?.classList.contains('hidden')) {
           if (e.key === 'ArrowLeft') {
             e.preventDefault();
             navigateToImage(currentImageIndex - 1);
@@ -6840,9 +6852,10 @@ export function initToolbarController() {
         console.warn('[COMPAT] No original addImageToSidebar function available');
       }
 
-      if (!didCallOriginal) {
-        ensureLegacyImageContainer(imageUrl, label);
-      }
+      // Always ensure #imageList has a container for this label, even if the
+      // original function ran — it may add to a different UI element (gallery)
+      // while the sidebar stays empty.
+      ensureLegacyImageContainer(imageUrl, label);
 
       // Ensure legacy originalImages mapping stays in sync
       if (label && imageUrl) {

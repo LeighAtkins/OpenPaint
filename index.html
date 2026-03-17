@@ -242,7 +242,7 @@
         backdrop-filter: blur(12px);
         -webkit-backdrop-filter: blur(12px);
         border-bottom: var(--ob-border-width) solid var(--ob-border-color);
-        height: 48px;
+        min-height: 48px;
       }
 
       .toolbar-wrap {
@@ -251,9 +251,10 @@
         margin: 0;
         padding: 0;
         display: flex;
-        align-items: center;
+        align-items: flex-start;
         justify-content: flex-start;
-        height: 48px;
+        min-height: 48px;
+        flex-wrap: wrap;
       }
 
       #tbLeft,
@@ -262,24 +263,25 @@
         position: relative;
         display: flex;
         align-items: center;
-        flex-shrink: 0;
-        /* Prevent shrinking that causes layout shifts */
         min-width: 0;
-        /* Allow flex items to shrink below content size if needed */
       }
 
       #tbLeft {
-        flex: 0 0 auto;
-        justify-content: flex-start;
+        flex: 1 1 auto;
+        justify-content: center;
+        flex-wrap: wrap;
+        row-gap: 4px;
       }
 
       #tbCenter {
         flex: 0 0 auto;
+        flex-shrink: 0;
         justify-content: center;
       }
 
       #tbRight {
         flex: 0 0 auto;
+        flex-shrink: 0;
         justify-content: flex-end;
         overflow: visible;
         margin-left: auto;
@@ -465,6 +467,45 @@
 
       .group-gap > *:last-child {
         margin-right: 0;
+      }
+
+      /* Desktop compact: tighten spacing when toolbar overflows */
+      [data-toolbar-mode='compact'] .toolbar-wrap {
+        overflow-x: auto;
+        overflow-y: hidden;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(148, 163, 184, 0.3) transparent;
+      }
+
+      [data-toolbar-mode='compact'] .toolbar-wrap::-webkit-scrollbar {
+        height: 3px;
+      }
+
+      [data-toolbar-mode='compact'] .toolbar-wrap::-webkit-scrollbar-thumb {
+        background: rgba(148, 163, 184, 0.4);
+        border-radius: 2px;
+      }
+
+      [data-toolbar-mode='compact'] .group-gap > * {
+        margin-right: 4px;
+      }
+
+      [data-toolbar-mode='compact'] .toolbar-wrap .tbtn {
+        padding: 0 8px;
+      }
+
+      [data-toolbar-mode='compact'] .toolbar-wrap .color-swatches {
+        gap: 5px;
+      }
+
+      [data-toolbar-mode='compact'] .toolbar-wrap .color-swatches button {
+        width: 18px;
+        height: 18px;
+      }
+
+      [data-toolbar-mode='compact'] .toolbar-wrap .tinput {
+        padding: 0 6px;
+        max-width: 120px;
       }
 
       /* Ensure all toolbar buttons have consistent sizing */
@@ -2530,7 +2571,7 @@
 
   <body
     class="h-screen overflow-hidden"
-    style="padding-top: 48px; background-color: var(--ob-paper); font-family: var(--ob-font-sans);"
+    style="padding-top: var(--toolbar-height, 48px); background-color: var(--ob-paper); font-family: var(--ob-font-sans);"
     data-heic-worker-url="https://openpaint-heic-converter.sofapaint-api.workers.dev"
   >
     <!-- Top Toolbar -->
@@ -3303,7 +3344,7 @@
         max-height: 100%;
         height: calc(100% - 128px) !important;
         position: fixed !important;
-        top: 48px !important;
+        top: var(--toolbar-height, 48px) !important;
         left: 0 !important;
       "
     >
@@ -3503,7 +3544,7 @@
         max-height: 100%;
         height: calc(100% - 128px) !important;
         position: fixed !important;
-        top: 48px !important;
+        top: var(--toolbar-height, 48px) !important;
         right: 0 !important;
       "
     >
