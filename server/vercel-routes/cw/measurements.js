@@ -65,6 +65,9 @@ const TURBO_QC_SUCCESS_TARGET = 1;
 const TURBO_FASTPATH_STYLE_PAIRS = [
   { style: 'Original', styleCode: 'SHRT_SP' },
   { style: 'Signature', styleCode: 'CNRP_SP' },
+  { style: 'Classic', styleCode: 'CNRP_PM' },
+  { style: 'Minimalist', styleCode: 'LSKT_SP' },
+  { style: 'Urban', styleCode: 'VELC_SP' },
   { style: 'Original', styleCode: 'SP' },
   { style: 'Signature', styleCode: 'SP' },
 ];
@@ -89,6 +92,15 @@ const MANUAL_REFERENCE_HINTS = new Map([
   ['IK-ME-6', ['IK-ME-6']],
   ['IK-MA-25B', ['IK-MA-25B__L', 'IK-MA-25B__R']],
   ['MJ-SLM-1', ['MJ-SLM-1__MJ-CC', 'MJ-SLM-1__CW-CC']],
+  ['WE-VBK-1', ['WE-VBK-1__STD', 'WE-VBK-1__EXD', 'WE-VBK-1__SV', 'WE-VBK-1__LV']],
+  ['WE-VBK-2', ['WE-VBK-2__STD', 'WE-VBK-2__EXD', 'WE-VBK-2__SV', 'WE-VBK-2__LV']],
+  ['WE-KSK-1', ['WE-KSK-1__STD', 'WE-KSK-1__EXD', 'WE-KSK-1__SV', 'WE-KSK-1__LV']],
+  ['WE-KSK-2', ['WE-KSK-2__STD', 'WE-KSK-2__EXD', 'WE-KSK-2__SV', 'WE-KSK-2__LV']],
+  ['WE-VBA-1', ['WE-VBA-1__STD', 'WE-VBA-1__EXD', 'WE-VBA-1__SV', 'WE-VBA-1__LV']],
+  ['IK-KD-3', ['IK-KD-3']],
+  ['IK-KD-3B', ['IK-KD-3B']],
+  ['IK-KD-362', ['IK-KD-362']],
+  ['IK-KD-35', ['IK-KD-35']],
 ]);
 
 function normalizeManualReferenceHintKey(value) {
@@ -145,7 +157,17 @@ function buildWeReferenceFamily(reference) {
   if (!isWeReferenceFamily(base)) return [];
   return Array.from(
     new Set(
-      [`${base}__STD`, `${base}__EXD`].map(value => String(value || '').trim()).filter(Boolean)
+      [
+        `${base}__STD`,
+        `${base}__EXD`,
+        `${base}__SV`,
+        `${base}__LV`,
+        `${base}__L`,
+        `${base}__R`,
+        `${base}__PTD`,
+      ]
+        .map(value => String(value || '').trim())
+        .filter(Boolean)
     )
   );
 }
@@ -1537,6 +1559,12 @@ function extractQcImages(qcData, pidBaseUrl) {
       ? comp.slipcover_details_images
       : [];
     detailImages.forEach(img => {
+      // Prefer signed GCS URL when available (these actually work)
+      const signedUrl = String(img?.url || '').trim();
+      if (signedUrl && /^https?:\/\/storage\.googleapis\.com\//i.test(signedUrl)) {
+        images.push(signedUrl);
+        return;
+      }
       const filePath = String(img?.file_path || '').trim();
       if (filePath) {
         images.push(`${baseUrl}/media/${filePath}`);
@@ -2092,6 +2120,8 @@ async function handleProductSearch({ req, res, body, startedAt }) {
             ...manualHintReferences,
             ...manualHintReferenceBases,
             productReference,
+            // Include scoped references discovered from product version options (e.g. WE-HY-82__STD)
+            ...gqlVersionOptions.map(v => v.scopedReference),
           ]
             .map(value => String(value || '').trim())
             .filter(Boolean)
@@ -2113,6 +2143,8 @@ async function handleProductSearch({ req, res, body, startedAt }) {
       if (providedStyle || providedStyleCode) {
         pushFastPair(providedStyle, providedStyleCode);
       }
+      // Include styles discovered from product option groups (e.g. Urban/VELC_SP)
+      gqlVariantStyleOptions.forEach(opt => pushFastPair(opt.style, opt.styleCode));
       TURBO_FASTPATH_STYLE_PAIRS.forEach(pair => pushFastPair(pair.style, pair.styleCode));
 
       const fastAttempts = [];
@@ -2198,7 +2230,7 @@ async function handleProductSearch({ req, res, body, startedAt }) {
               productReference: referenceCandidate,
               style: actualStyle,
               styleCode: actualStyleCode || null,
-              data: {
+              data: attempt?.body?.content || {
                 product_reference: attempt?.body?.content?.product_reference || referenceCandidate,
                 style_name: actualStyle,
                 style_code: actualStyleCode || null,
@@ -2213,6 +2245,15 @@ async function handleProductSearch({ req, res, body, startedAt }) {
       stageTimings.turboFastPathMs = Date.now() - turboFastPathStartedAt;
 
       if (fastMeasurements.length > 0) {
+        // Extract images from QC content for turbo fast path
+        const turboImages = [];
+        fastMeasurements.forEach(item => {
+          if (item.data) {
+            extractQcImages(item.data, pidBaseUrl).forEach(url => {
+              if (!turboImages.includes(url)) turboImages.push(url);
+            });
+          }
+        });
         const fastStyleOptions = fastMeasurements.map(item => ({
           productReference: item.productReference,
           style: item.style,
@@ -2249,7 +2290,7 @@ async function handleProductSearch({ req, res, body, startedAt }) {
             tupleSource: 'none',
             attemptPlanMode: 'turbo-fast-path',
             fetchedMeasurementDetailCount: 0,
-            imageCount: 0,
+            imageCount: turboImages.length,
             referenceCandidateCount: fastReferenceCandidates.length,
             scopedReferenceCount: fastReferenceCandidates.filter(ref => String(ref).includes('__'))
               .length,
@@ -2272,7 +2313,7 @@ async function handleProductSearch({ req, res, body, startedAt }) {
           },
           manualReferenceHints: manualHintDiagnostics,
           timings: buildTimings(),
-          images: [],
+          images: turboImages,
           qcMeasurements: fastMeasurements[0],
           qcMeasurementsByStyle: fastMeasurements,
           styleOptions: fastStyleOptions,

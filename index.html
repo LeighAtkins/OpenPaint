@@ -2579,7 +2579,7 @@
       <div class="toolbar-wrap smart-label-scope" id="toolbarWrap">
         <div id="tbLeft" class="group-gap smart-label-scope">
           <!-- Pre-populated toolbar content to prevent flash -->
-          <button id="paste" class="tbtn" title="Upload Images" aria-label="Upload Images">
+          <button id="paste" class="tbtn" title="Upload Images — or paste with Ctrl+V / Cmd+V" aria-label="Upload Images">
             <span class="label-long">Upload Images</span><span class="label-short">Upload</span>
           </button>
           <button id="clear" class="tbtn">Clear</button>
@@ -2587,7 +2587,7 @@
             <button
               id="drawingModeToggle"
               class="tbtn straight-mode"
-              title="Drawing Mode"
+              title="Drawing Mode (D) — Lines, curves, eraser"
               aria-label="Drawing Mode"
               aria-pressed="true"
             >
@@ -2602,7 +2602,7 @@
             </div>
           </div>
           <div id="textModeWrapper" class="shape-toggle text-mode-toggle">
-            <button id="textModeToggle" class="tbtn" title="Text Tool" aria-label="Text Tool">
+            <button id="textModeToggle" class="tbtn" title="Text Tool (T) — Add text annotations" aria-label="Text Tool">
               <span class="label-long">Text</span><span class="label-short">Text</span>
               <span class="shape-icon handdrawn" aria-hidden="true">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -2632,7 +2632,7 @@
             <button
               id="shapeModeToggle"
               class="tbtn"
-              title="Shapes"
+              title="Shapes (S) — Rectangles, circles, stars"
               aria-label="Shapes"
               aria-pressed="false"
             >
@@ -2802,8 +2802,9 @@
               ></line>
             </svg>
           </button>
-          <button id="undoBtn" class="tbtn icon-btn" title="Undo (Ctrl+Z)" aria-label="Undo">↺</button>
-          <button id="redoBtn" class="tbtn icon-btn" title="Redo (Ctrl+Y)" aria-label="Redo">↻</button>
+          <button id="undoBtn" class="tbtn icon-btn" title="Undo (Ctrl+Z / Cmd+Z)" aria-label="Undo">↺</button>
+          <button id="redoBtn" class="tbtn icon-btn" title="Redo (Ctrl+Y / Cmd+Y)" aria-label="Redo">↻</button>
+          <button id="shortcutHelpBtn" class="tbtn icon-btn" title="Keyboard shortcuts (?)" aria-label="Keyboard shortcuts" style="font-size:14px;opacity:0.7;">?</button>
         </div>
         <div id="tbCenter" class="group-gap"></div>
         <div id="tbRight" class="group-gap smart-label-scope">
@@ -2818,7 +2819,7 @@
           <button id="loadProject" title="Open project" class="tbtn" aria-label="Open project">
             <span class="label-long">Open</span><span class="label-short">Open</span>
           </button>
-          <button id="saveProjectTop" class="tbtn" title="Save project" aria-label="Save project">
+          <button id="saveProjectTop" class="tbtn" title="Save project (Ctrl+S / Cmd+S)" aria-label="Save project">
             <span class="label-long">Save</span><span class="label-short">Save</span>
           </button>
         </div>
@@ -2872,7 +2873,10 @@
       <div id="frame-content" class="min-h-screen flex items-center justify-center">
         <div class="text-center p-8">
           <h1 class="text-4xl font-bold text-slate-800 mb-4">OpenPaint Frame Capture</h1>
-          <p class="text-slate-600">Images will appear here as you add them to your project</p>
+          <p class="text-slate-600" style="max-width:420px;margin:0 auto;line-height:1.6;">
+            Drag &amp; drop images, paste from clipboard (Ctrl+V), or click <strong>Upload</strong> to get started.<br>
+            <span style="font-size:0.85em;opacity:0.7;">Quick start: Upload → Draw → Measure → Save</span>
+          </p>
         </div>
       </div>
     </div>
@@ -4117,6 +4121,83 @@
         </div>
       </div>
     </dialog>
+
+    <!-- Keyboard Shortcuts Dialog -->
+    <dialog id="shortcutHelpDialog" style="
+      border:none;border-radius:12px;padding:0;max-width:420px;width:90vw;
+      box-shadow:0 25px 60px rgba(0,0,0,.25);background:var(--ob-paper,#fff);
+    ">
+      <div style="padding:24px 28px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <h2 style="margin:0;font-size:18px;font-weight:600;color:var(--ob-text-primary,#1e293b);">Keyboard Shortcuts</h2>
+          <button id="shortcutHelpClose" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--ob-text-secondary,#64748b);padding:4px 8px;">✕</button>
+        </div>
+        <table style="width:100%;border-collapse:collapse;font-size:14px;">
+          <tbody>
+            <tr><td style="padding:6px 0;color:var(--ob-text-secondary,#64748b);">Draw mode</td><td style="padding:6px 0;text-align:right;font-weight:600;">D</td></tr>
+            <tr><td style="padding:6px 0;color:var(--ob-text-secondary,#64748b);">Text tool</td><td style="padding:6px 0;text-align:right;font-weight:600;">T</td></tr>
+            <tr><td style="padding:6px 0;color:var(--ob-text-secondary,#64748b);">Shapes</td><td style="padding:6px 0;text-align:right;font-weight:600;">S</td></tr>
+            <tr><td style="padding:6px 0;color:var(--ob-text-secondary,#64748b);">Select mode</td><td style="padding:6px 0;text-align:right;font-weight:600;">V</td></tr>
+            <tr><td style="padding:6px 0;color:var(--ob-text-secondary,#64748b);">Lock/unlock frame</td><td style="padding:6px 0;text-align:right;font-weight:600;">L</td></tr>
+            <tr style="border-top:1px solid var(--ob-border-color,#e2e8f0);"><td style="padding:6px 0;color:var(--ob-text-secondary,#64748b);">Undo</td><td style="padding:6px 0;text-align:right;font-weight:600;">Ctrl/Cmd + Z</td></tr>
+            <tr><td style="padding:6px 0;color:var(--ob-text-secondary,#64748b);">Redo</td><td style="padding:6px 0;text-align:right;font-weight:600;">Ctrl/Cmd + Y</td></tr>
+            <tr><td style="padding:6px 0;color:var(--ob-text-secondary,#64748b);">Paste image</td><td style="padding:6px 0;text-align:right;font-weight:600;">Ctrl/Cmd + V</td></tr>
+            <tr><td style="padding:6px 0;color:var(--ob-text-secondary,#64748b);">Save project</td><td style="padding:6px 0;text-align:right;font-weight:600;">Ctrl/Cmd + S</td></tr>
+            <tr style="border-top:1px solid var(--ob-border-color,#e2e8f0);"><td style="padding:6px 0;color:var(--ob-text-secondary,#64748b);">Previous/Next image</td><td style="padding:6px 0;text-align:right;font-weight:600;">← →</td></tr>
+            <tr><td style="padding:6px 0;color:var(--ob-text-secondary,#64748b);">This help</td><td style="padding:6px 0;text-align:right;font-weight:600;">?</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </dialog>
+
+    <!-- Welcome Overlay for First-Time Users -->
+    <div id="welcomeOverlay" style="
+      display:none;position:fixed;inset:0;z-index:10000;
+      background:rgba(15,23,42,.55);backdrop-filter:blur(4px);
+      cursor:pointer;
+    ">
+      <div style="
+        position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+        background:var(--ob-paper,#fff);border-radius:16px;padding:36px 40px;
+        max-width:480px;width:90vw;box-shadow:0 30px 80px rgba(0,0,0,.3);
+        cursor:default;
+      ">
+        <h1 style="margin:0 0 8px;font-size:24px;font-weight:700;color:var(--ob-text-primary,#1e293b);">Welcome to OpenPaint</h1>
+        <p style="margin:0 0 20px;color:var(--ob-text-secondary,#64748b);font-size:14px;line-height:1.5;">
+          Create measurement documents and annotated images in a few clicks.
+        </p>
+        <div style="display:flex;flex-direction:column;gap:12px;font-size:14px;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <span style="flex-shrink:0;width:32px;height:32px;border-radius:8px;background:var(--ob-signal-soft,#e0e7ff);display:flex;align-items:center;justify-content:center;font-size:16px;">📷</span>
+            <span><strong>Upload</strong> — Drag &amp; drop images, paste (Ctrl+V), or click Upload</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <span style="flex-shrink:0;width:32px;height:32px;border-radius:8px;background:var(--ob-signal-soft,#e0e7ff);display:flex;align-items:center;justify-content:center;font-size:16px;">✏️</span>
+            <span><strong>Draw</strong> — Use the toolbar to draw lines, shapes, and text</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <span style="flex-shrink:0;width:32px;height:32px;border-radius:8px;background:var(--ob-signal-soft,#e0e7ff);display:flex;align-items:center;justify-content:center;font-size:16px;">📏</span>
+            <span><strong>Measure</strong> — Add measurements with automatic labels</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <span style="flex-shrink:0;width:32px;height:32px;border-radius:8px;background:var(--ob-signal-soft,#e0e7ff);display:flex;align-items:center;justify-content:center;font-size:16px;">📦</span>
+            <span><strong>Search products</strong> — Import measurement guides from CW</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <span style="flex-shrink:0;width:32px;height:32px;border-radius:8px;background:var(--ob-signal-soft,#e0e7ff);display:flex;align-items:center;justify-content:center;font-size:16px;">💾</span>
+            <span><strong>Save</strong> — Save your project as a ZIP file</span>
+          </div>
+        </div>
+        <div style="margin-top:24px;text-align:center;">
+          <button id="welcomeDismiss" style="
+            background:var(--ob-signal,#2d6bff);color:#fff;border:none;
+            border-radius:8px;padding:10px 32px;font-size:15px;font-weight:600;
+            cursor:pointer;
+          ">Get Started</button>
+          <p style="margin:10px 0 0;font-size:12px;color:var(--ob-text-secondary,#94a3b8);">Press <strong>?</strong> anytime for keyboard shortcuts</p>
+        </div>
+      </div>
+    </div>
 
     <!-- Load AI Integration Module -->
 

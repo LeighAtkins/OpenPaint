@@ -34,8 +34,8 @@
   cursor: pointer;
   font-size: var(--ob-text-meta);
   font-weight: var(--ob-weight-semibold);
-  width: 18px;
-  height: 18px;
+  width: 24px;
+  height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -211,16 +211,16 @@
   display: inline-block;
   background-color: var(--ob-signal-soft);
   color: var(--ob-signal);
-  font-size: 10px;
+  font-size: 12px;
   font-weight: var(--ob-weight-medium);
-  padding: 2px 6px;
+  padding: 3px 8px;
   border-radius: var(--ob-radius-chip);
   line-height: 1;
   border: var(--ob-border-width) solid var(--ob-border-color);
 }
 
 .no-tags {
-  font-size: 10px;
+  font-size: 12px;
   color: var(--ob-text-secondary);
   font-style: italic;
 }
@@ -1918,4 +1918,19 @@ textarea:focus-visible,
 .step,
 .stroke-measurement {
   font-variant-numeric: tabular-nums;
+}
+
+/* ── Search pulse animation ──────────────────────────────────── */
+@keyframes searchingPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+.searching-pulse {
+  animation: searchingPulse 1.2s ease-in-out infinite;
+}
+
+/* ── Shortcut dialog backdrop ────────────────────────────────── */
+#shortcutHelpDialog::backdrop {
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(2px);
 }

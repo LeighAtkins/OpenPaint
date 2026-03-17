@@ -3071,9 +3071,77 @@ function startApp(): void {
   });
 }
 
+function initWelcomeOverlay(): void {
+  const overlay = document.getElementById('welcomeOverlay');
+  if (!overlay) return;
+
+  if (!localStorage.getItem('openpaint:welcomed')) {
+    overlay.style.display = 'block';
+  }
+
+  const dismiss = () => {
+    overlay.style.display = 'none';
+    localStorage.setItem('openpaint:welcomed', '1');
+  };
+
+  document.getElementById('welcomeDismiss')?.addEventListener('click', dismiss);
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) dismiss();
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && overlay.style.display === 'block') dismiss();
+  });
+}
+
+function initShortcutHelp(): void {
+  const dialog = document.getElementById('shortcutHelpDialog') as HTMLDialogElement | null;
+  if (!dialog) return;
+
+  const toggle = () => {
+    if (dialog.open) {
+      dialog.close();
+    } else {
+      dialog.showModal();
+    }
+  };
+
+  document.getElementById('shortcutHelpBtn')?.addEventListener('click', toggle);
+  document.getElementById('shortcutHelpClose')?.addEventListener('click', () => dialog.close());
+
+  document.addEventListener('keydown', e => {
+    const target = e.target as HTMLElement;
+    const isTyping =
+      target?.tagName === 'INPUT' ||
+      target?.tagName === 'TEXTAREA' ||
+      target?.tagName === 'SELECT' ||
+      target?.isContentEditable;
+    if (isTyping) return;
+
+    if (e.key === '?') {
+      e.preventDefault();
+      toggle();
+    }
+  });
+
+  // Close on backdrop click
+  dialog.addEventListener('click', e => {
+    if (e.target === dialog) dialog.close();
+  });
+}
+
 // Start the app when DOM is ready, or immediately if it already fired.
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', startApp, { once: true });
+  document.addEventListener(
+    'DOMContentLoaded',
+    () => {
+      startApp();
+      initWelcomeOverlay();
+      initShortcutHelp();
+    },
+    { once: true }
+  );
 } else {
   startApp();
+  initWelcomeOverlay();
+  initShortcutHelp();
 }

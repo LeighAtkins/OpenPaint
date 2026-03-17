@@ -1286,6 +1286,11 @@ async function renderIndicator(): Promise<void> {
   );
 
   let activeRole = resolveGuideActiveRole(viewId, roles);
+  // If the resolved role is already used (e.g. seed from a just-drawn stroke),
+  // advance to the next unused role from that position instead of sticking on it.
+  if (activeRole && used.has(normalizeLabel(activeRole))) {
+    activeRole = findNextUnusedRole(roles, used, activeRole);
+  }
   const seededRole =
     seeded && (roles.includes(seeded) || /^[A-Z](?:\d+)?$/.test(seeded)) ? seeded : '';
   if (!activeRole && seededRole) {
@@ -1294,7 +1299,7 @@ async function renderIndicator(): Promise<void> {
       : seededRole;
   }
   if (!activeRole) {
-    activeRole = roles.find(role => !used.has(normalizeLabel(role))) || '';
+    activeRole = findNextUnusedRole(roles, used, roles[0] || '');
   }
   if (!activeRole) {
     activeRole = getFallbackNextLabel(viewId);

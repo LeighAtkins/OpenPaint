@@ -89,6 +89,7 @@ interface SearchState {
   armedRowKey: string;
   selectedImageKeys: string[];
   rowTargetLabels: Record<string, string>;
+  discoveryImageUrls: string[];
 }
 
 function makeStyleKey(productReference: string, style: string, styleCode: string): string {
@@ -270,7 +271,16 @@ function ensureStyles(): void {
     .cw-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
     .cw-btn { border: 1px solid #cbd5e1; border-radius: 8px; background: #fff; color: #334155; padding: 7px 10px; font-size: 12px; cursor: pointer; }
     .cw-btn-primary { border-color: #0f172a; background: #0f172a; color: #fff; }
-    .cw-note { margin-top: 8px; font-size: 12px; color: #64748b; }
+    .cw-note { margin-top: 8px; font-size: 12px; color: #64748b; display: none; }
+    .cw-flow-steps { margin-top: 8px; display: flex; gap: 4px; align-items: center; font-size: 12px; color: #94a3b8; }
+    .cw-flow-step { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 999px; background: #f1f5f9; font-weight: 600; transition: all 150ms ease; }
+    .cw-flow-step.is-active { background: #0f172a; color: #fff; }
+    .cw-flow-step.is-done { background: #dcfce7; color: #166534; }
+    .cw-flow-arrow { font-size: 10px; color: #cbd5e1; }
+    .cw-section-collapsible { display: none; }
+    .cw-section-collapsible.has-content { display: block; }
+    .cw-discovery-preview { margin-top: 8px; display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; }
+    .cw-discovery-thumb { width: 56px; height: 42px; object-fit: cover; border-radius: 6px; border: 1px solid #e2e8f0; background: #f0f0f0; flex-shrink: 0; }
     .cw-result-meta { margin-top: 12px; font-size: 12px; color: #334155; }
     .cw-discovery-grid { margin-top: 12px; display: grid; gap: 10px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .cw-result-card, .cw-basket-card { position: relative; border: 1px solid #d7dee8; border-radius: 14px; padding: 12px; background:
@@ -1188,7 +1198,6 @@ function createModal(): HTMLElement {
     </div>
     <div class="cw-row">
       <button type="button" class="cw-btn cw-btn-primary" id="cwSearchBtn">Search</button>
-      <button type="button" class="cw-btn" id="cwAddSelectedBtn">Add Selected</button>
       <button type="button" class="cw-btn" id="cwLoadSelectedBtn">Load Selected</button>
       <button type="button" class="cw-btn" id="cwImportExactBtn">Import Matching Labels</button>
       <button type="button" class="cw-btn" id="cwImportPhotosBtn">Import Photos to Project</button>
@@ -1200,23 +1209,30 @@ function createModal(): HTMLElement {
       </span>
       <label><input type="checkbox" id="cwImportLocked" checked /> Locked by default</label>
     </div>
-    <div class="cw-note">Search finds candidate items, Add Selected builds a basket, and Load Selected fetches only the checked item/style combinations. Guide mode still works: click Draw Next, then draw the next measurement stroke.</div>
-    <div class="cw-result-meta" id="cwResultMeta">No search yet.</div>
+    <div class="cw-flow-steps" id="cwFlowSteps">
+      <span class="cw-flow-step is-active" id="cwStep1">1. Search</span>
+      <span class="cw-flow-arrow">→</span>
+      <span class="cw-flow-step" id="cwStep2">2. Review</span>
+      <span class="cw-flow-arrow">→</span>
+      <span class="cw-flow-step" id="cwStep3">3. Import</span>
+    </div>
+    <div class="cw-note">Search auto-loads measurements and photos. Use Import Matching Labels to apply measurements, or Import Photos to add images to your project.</div>
+    <div class="cw-result-meta" id="cwResultMeta">Enter a product name or code and click Search.</div>
     <div class="cw-section-label">
       <span>Search Results</span>
-      <span id="cwResultsMeta">Run a search to discover items and options.</span>
+      <span id="cwResultsMeta"></span>
     </div>
     <div class="cw-discovery-grid" id="cwSearchResults"></div>
-    <div class="cw-section-label">
-      <span>Basket</span>
-      <span id="cwBasketMeta">No selected items yet.</span>
+    <div class="cw-section-collapsible" id="cwBasketSection" style="display:none">
+      <div class="cw-basket-wrap" id="cwBasket"></div>
     </div>
-    <div class="cw-basket-wrap" id="cwBasket"></div>
-    <div class="cw-section-label">
-      <span>Loaded Items</span>
-      <span id="cwLoadedMeta">No measurements loaded yet.</span>
+    <div class="cw-section-collapsible" id="cwLoadedSection">
+      <div class="cw-section-label">
+        <span>Loaded Items &amp; Photos</span>
+        <span id="cwLoadedMeta"></span>
+      </div>
+      <div class="cw-loaded-summary" id="cwLoadedItems"></div>
     </div>
-    <div class="cw-loaded-summary" id="cwLoadedItems"></div>
     <div class="cw-probe-panel" id="cwProbePanel" style="display:none;">
       <div class="cw-row" style="margin-top:0;">
         <label style="margin:0;"><input type="checkbox" id="cwProbeEnabled" /> Enable probe diagnostics</label>
@@ -1258,7 +1274,7 @@ function createModal(): HTMLElement {
 
   const searchBtn = body.querySelector<HTMLButtonElement>('#cwSearchBtn')!;
   const importForm = body.querySelector('.cw-import-form') as HTMLFormElement | null;
-  const addSelectedBtn = body.querySelector<HTMLButtonElement>('#cwAddSelectedBtn')!;
+  const addSelectedBtn = body.querySelector<HTMLButtonElement>('#cwAddSelectedBtn');
   const loadSelectedBtn = body.querySelector<HTMLButtonElement>('#cwLoadSelectedBtn')!;
   const baseUrlEl = body.querySelector<HTMLInputElement>('#cwBaseUrl')!;
   const formIdEl = body.querySelector<HTMLInputElement>('#cwFormId')!;
@@ -1278,8 +1294,15 @@ function createModal(): HTMLElement {
   const basketWrap = body.querySelector<HTMLDivElement>('#cwBasket')!;
   const loadedItemsWrap = body.querySelector<HTMLDivElement>('#cwLoadedItems')!;
   const resultsMeta = body.querySelector<HTMLSpanElement>('#cwResultsMeta')!;
-  const basketMeta = body.querySelector<HTMLSpanElement>('#cwBasketMeta')!;
+  const basketMeta = body.querySelector<HTMLSpanElement>('#cwBasketMeta');
   const loadedMeta = body.querySelector<HTMLSpanElement>('#cwLoadedMeta')!;
+  const _basketSection = body.querySelector<HTMLDivElement>('#cwBasketSection')!;
+  const loadedSection = body.querySelector<HTMLDivElement>('#cwLoadedSection')!;
+  const flowSteps = [
+    body.querySelector<HTMLSpanElement>('#cwStep1')!,
+    body.querySelector<HTMLSpanElement>('#cwStep2')!,
+    body.querySelector<HTMLSpanElement>('#cwStep3')!,
+  ].filter(Boolean);
   const rowsContainer = body.querySelector<HTMLDivElement>('#cwRows')!;
   const resultMeta = body.querySelector<HTMLDivElement>('#cwResultMeta')!;
   const imagesWrap = body.querySelector<HTMLDivElement>('#cwResultImages')!;
@@ -1361,6 +1384,31 @@ function createModal(): HTMLElement {
     armedRowKey: '',
     selectedImageKeys: [],
     rowTargetLabels: {},
+    discoveryImageUrls: [],
+  };
+
+  const updateFlowSteps = () => {
+    const hasResults = state.searchResults.length > 0;
+    const hasLoaded = state.loadedItems.length > 0;
+    const hasImages = allImageEntries().length > 0;
+
+    flowSteps.forEach(el => {
+      el.className = 'cw-flow-step';
+    });
+
+    if (hasImages || hasLoaded) {
+      flowSteps[0]?.classList.add('is-done');
+      flowSteps[1]?.classList.add('is-done');
+      flowSteps[2]?.classList.add('is-active');
+    } else if (hasResults) {
+      flowSteps[0]?.classList.add('is-done');
+      flowSteps[1]?.classList.add('is-active');
+    } else {
+      flowSteps[0]?.classList.add('is-active');
+    }
+
+    // Toggle collapsible sections
+    loadedSection.classList.toggle('has-content', hasLoaded || hasImages);
   };
 
   const renderProbeReport = () => {
@@ -1646,6 +1694,25 @@ function createModal(): HTMLElement {
 
     resultsMeta.textContent = `${state.searchResults.length} candidate item${state.searchResults.length === 1 ? '' : 's'} found.`;
 
+    // Show discovery image preview strip
+    if (state.discoveryImageUrls.length > 0) {
+      const previewStrip = document.createElement('div');
+      previewStrip.className = 'cw-discovery-preview';
+      previewStrip.style.gridColumn = '1 / -1';
+      state.discoveryImageUrls.forEach(url => {
+        const thumb = document.createElement('img');
+        thumb.className = 'cw-discovery-thumb';
+        thumb.src = url;
+        thumb.alt = 'Product preview';
+        thumb.loading = 'lazy';
+        thumb.addEventListener('error', () => {
+          thumb.style.display = 'none';
+        });
+        previewStrip.appendChild(thumb);
+      });
+      searchResultsWrap.appendChild(previewStrip);
+    }
+
     state.searchResults.forEach(item => {
       const card = document.createElement('div');
       card.className = `cw-result-card${item.selected ? ' is-selected' : ''}`;
@@ -1737,16 +1804,12 @@ function createModal(): HTMLElement {
   const renderBasket = () => {
     basketWrap.innerHTML = '';
     if (!state.basket.length) {
-      const empty = document.createElement('div');
-      empty.className = 'cw-basket-card';
-      empty.textContent =
-        'No selected items yet. Search for products, tick them, then click Add Selected.';
-      basketWrap.appendChild(empty);
-      basketMeta.textContent = 'No selected items yet.';
+      if (basketMeta) basketMeta.textContent = '';
       return;
     }
 
-    basketMeta.textContent = `${state.basket.length} item${state.basket.length === 1 ? '' : 's'} queued for loading.`;
+    if (basketMeta)
+      basketMeta.textContent = `${state.basket.length} item${state.basket.length === 1 ? '' : 's'} queued — click Load Selected.`;
     state.basket.forEach(item => {
       const card = document.createElement('div');
       card.className = 'cw-basket-card';
@@ -2107,11 +2170,7 @@ function createModal(): HTMLElement {
   const renderLoadedItems = () => {
     loadedItemsWrap.innerHTML = '';
     if (!state.loadedItems.length) {
-      const empty = document.createElement('div');
-      empty.className = 'cw-loaded-item';
-      empty.textContent = 'Load selected basket items to preview measurements and photos here.';
-      loadedItemsWrap.appendChild(empty);
-      loadedMeta.textContent = 'No measurements loaded yet.';
+      loadedMeta.textContent = '';
       return;
     }
 
@@ -2397,6 +2456,7 @@ function createModal(): HTMLElement {
     renderSectionFilter();
     renderImages();
     renderRows();
+    updateFlowSteps();
   };
 
   const runSearch = async () => {
@@ -2407,14 +2467,27 @@ function createModal(): HTMLElement {
       return;
     }
 
+    // Suffix hint: detect if user typed a variant suffix
+    if (/__[A-Z]{1,4}$/i.test(search)) {
+      const base = search.replace(/__[A-Za-z0-9._-]+$/, '');
+      if (base) {
+        setStatus(
+          `Tip: just type the base reference (e.g. ${base}) — variants are auto-detected`,
+          'info'
+        );
+        await new Promise(r => setTimeout(r, 1800));
+      }
+    }
+
     setProbeButtonsDisabled(true);
     setStatus('Searching CW products and configuration options...');
+    resultMeta.classList.add('searching-pulse');
 
     try {
       const { response, data, rawText, contentType, jsonParseError } = await requestSearchPayload(
         search,
         '',
-        { phase: 'discover' }
+        { phase: 'discover', probeMode: 'turbo' }
       );
       const probeReport = {
         at: new Date().toISOString(),
@@ -2466,13 +2539,83 @@ function createModal(): HTMLElement {
       });
       state.armedRowKey = '';
       state.activeSection = '';
+      // Extract discovery image URLs for preview thumbnails
+      const baseUrl = (baseUrlEl?.value || '').trim();
+      state.discoveryImageUrls = extractImageUrls(data, baseUrl)
+        .filter(url => /storage\.googleapis\.com/i.test(url) && /Signature=/i.test(url))
+        .slice(0, 8);
+
+      // Auto-integrate: if turbo discover returned QC data with measurements,
+      // create loaded items directly — no need for a separate load-selected call
+      let autoIntegratedCount = 0;
+      if (
+        response.ok &&
+        data?.qcMeasurements?.data &&
+        typeof data.qcMeasurements.data === 'object'
+      ) {
+        const qcData = data.qcMeasurements.data;
+        const ref = String(qcData.product_reference || data?.product?.reference || search).trim();
+        const styleName = String(qcData.style_name || '').trim();
+        const styleCode = String(qcData.style_code || '').trim();
+        const syntheticBasketItem: BasketItem = {
+          selectionKey: ref,
+          search,
+          productReference: ref,
+          productName: String(
+            state.searchResults.find(r => r.productReference === ref)?.productName ||
+              data?.product?.reference ||
+              ref
+          ).trim(),
+          scopedReference: ref,
+          versionCode: '',
+          versionLabel: '',
+          style: styleName,
+          styleCode,
+          label: `${ref} - ${styleName}${styleCode ? ` (${styleCode})` : ''}`,
+        };
+        // Build payload shaped like load-selected response item
+        const syntheticLoadedItem = {
+          selectionKey: ref,
+          basketItem: syntheticBasketItem,
+          data: {
+            product: { reference: ref, name: syntheticBasketItem.productName },
+            qcMeasurements: { data: qcData },
+            measurements: qcData?.product_components || [],
+            images: data.images || [],
+          },
+          success: true,
+          message: 'Loaded from discovery',
+        };
+        integrateLoadedItems([syntheticLoadedItem]);
+        // Also add to basket so the UI flow is consistent
+        if (!state.basket.find(b => b.selectionKey === ref)) {
+          state.basket.push(syntheticBasketItem);
+        }
+        autoIntegratedCount = 1;
+      }
+
       syncUi();
-      setStatus(
-        response.ok
-          ? `Found ${state.searchResults.length} candidate item${state.searchResults.length === 1 ? '' : 's'}. Tick the ones you want, add them to the basket, then load selected.`
-          : `Search failed: ${String(data?.message || data?.code || response.status)}`,
-        response.ok ? 'ok' : 'bad'
-      );
+      if (response.ok && autoIntegratedCount > 0) {
+        const imageCount = allImageEntries().length;
+        const rowCount = state.loadedItems[0]?.rows?.length || 0;
+        setStatus(
+          `Found ${state.searchResults.length} item${state.searchResults.length === 1 ? '' : 's'} — loaded ${rowCount} measurement${rowCount === 1 ? '' : 's'} and ${imageCount} photo${imageCount === 1 ? '' : 's'}. Select images and click Import Photos, or use guide mode.`,
+          'ok'
+        );
+        // Auto-scroll to images
+        if (imagesWrap.children.length > 0) {
+          requestAnimationFrame(() =>
+            imagesWrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+          );
+        }
+      } else {
+        setStatus(
+          response.ok
+            ? `Found ${state.searchResults.length} candidate item${state.searchResults.length === 1 ? '' : 's'}${state.discoveryImageUrls.length ? ` with ${state.discoveryImageUrls.length} preview photo${state.discoveryImageUrls.length === 1 ? '' : 's'}` : ''}. Tick items and click Add Selected → Load Selected.`
+            : `Search failed: ${String(data?.message || data?.code || response.status)}`,
+          response.ok ? 'ok' : 'bad'
+        );
+      }
       if (response.ok) {
         const loginDetails = body.querySelector<HTMLDetailsElement>('#cwLoginDetails');
         if (loginDetails) loginDetails.open = false;
@@ -2491,6 +2634,7 @@ function createModal(): HTMLElement {
         'bad'
       );
     } finally {
+      resultMeta.classList.remove('searching-pulse');
       setProbeButtonsDisabled(false);
     }
   };
@@ -2535,7 +2679,7 @@ function createModal(): HTMLElement {
     renderBasket();
 
     searchBtn.disabled = true;
-    addSelectedBtn.disabled = true;
+    if (addSelectedBtn) addSelectedBtn.disabled = true;
     loadSelectedBtn.disabled = true;
     setStatus(`Loading ${nextBasket.length} basket item${nextBasket.length === 1 ? '' : 's'}...`);
     try {
@@ -2549,10 +2693,16 @@ function createModal(): HTMLElement {
       syncUi();
       setStatus(
         response.ok
-          ? `Loaded ${Number(data?.summary?.loadedCount || items.length)} item${Number(data?.summary?.loadedCount || items.length) === 1 ? '' : 's'} into the measurement workspace.`
+          ? `Loaded ${Number(data?.summary?.loadedCount || items.length)} item${Number(data?.summary?.loadedCount || items.length) === 1 ? '' : 's'} with photos. Select images below and click Import Photos.`
           : `Load failed: ${String(data?.message || data?.code || response.status)}`,
         response.ok ? 'ok' : 'bad'
       );
+      // Auto-scroll to images if any were loaded
+      if (response.ok && imagesWrap.children.length > 0) {
+        requestAnimationFrame(() =>
+          imagesWrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+        );
+      }
     } catch (error) {
       setStatus(
         `Load selected failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -2560,7 +2710,7 @@ function createModal(): HTMLElement {
       );
     } finally {
       searchBtn.disabled = false;
-      addSelectedBtn.disabled = false;
+      if (addSelectedBtn) addSelectedBtn.disabled = false;
       loadSelectedBtn.disabled = false;
     }
   };
@@ -3073,7 +3223,7 @@ function createModal(): HTMLElement {
     });
   }
 
-  addSelectedBtn.addEventListener('click', addSelectedToBasket);
+  if (addSelectedBtn) addSelectedBtn.addEventListener('click', addSelectedToBasket);
   loadSelectedBtn.addEventListener('click', () => {
     void loadSelectedBasketItems();
   });
@@ -3463,18 +3613,24 @@ function resolveRowTargetLabel(
 
 function attachToolbarButton(): void {
   if (document.getElementById('cwImportBtn')) return;
-  const target =
-    document.getElementById('tbRight') || document.getElementById('canvasControlsContent');
-  if (!target) return;
 
   const btn = document.createElement('button');
   btn.type = 'button';
   btn.className = 'tbtn';
   btn.id = 'cwImportBtn';
-  btn.title = 'Import CW/PID measurements';
-  btn.textContent = 'CW Import';
+  btn.title = 'Search products & import measurements';
+  btn.innerHTML = '<span class="label-long">CW Import</span><span class="label-short">CW</span>';
   btn.addEventListener('click', openModal);
-  target.appendChild(btn);
+
+  // Insert at the start of #tbRight so it's visible before auth/cloud buttons
+  const tbRight = document.getElementById('tbRight');
+  if (tbRight && tbRight.firstChild) {
+    tbRight.insertBefore(btn, tbRight.firstChild);
+    return;
+  }
+  // Fallback: append to whatever target exists
+  const target = tbRight || document.getElementById('canvasControlsContent');
+  if (target) target.appendChild(btn);
 }
 
 export function initCwImportUI(): void {
