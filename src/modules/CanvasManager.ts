@@ -2635,6 +2635,7 @@ export class CanvasManager {
       !hasAuthoritativeCaptureTabState &&
       !splitLayoutChanged &&
       !currentSplitActive &&
+      !window.__isLoadingProject &&
       this.shouldFitBackgroundWithViewportOnResize()
         ? this.fitViewportToBackgroundPlacementFrame(
             backgroundWorldRectBeforeResize,
@@ -3703,6 +3704,7 @@ export class CanvasManager {
   // Also restores custom controls for lines, curves, and arrows
   loadFromJSON(json: any, callback?: () => void): void {
     if (!this.fabricCanvas) {
+      callback?.();
       return;
     }
     this.fabricCanvas.loadFromJSON(

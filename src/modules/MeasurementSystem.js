@@ -175,6 +175,7 @@ export class MeasurementSystem {
     if (!raw) return null;
 
     let totalInches = null;
+    let exactCmInput = null;
     const normalizedUnit = unit === 'inch' ? 'inches' : unit;
     const hasExplicitInchMarker = /(?:"|in|inch|inches)\s*$/i.test(raw);
     const hasFractionToken = /\d+\s*\/\s*\d+/.test(raw);
@@ -184,6 +185,7 @@ export class MeasurementSystem {
       const cm = parseFloat(cmMatch[1]);
       if (Number.isFinite(cm) && cm >= 0) {
         totalInches = cm / MeasurementSystem.INCHES_TO_CM;
+        exactCmInput = cm;
       }
     }
 
@@ -225,8 +227,12 @@ export class MeasurementSystem {
     if (totalInches === null) {
       const plainNumber = parseFloat(raw);
       if (Number.isFinite(plainNumber) && plainNumber >= 0) {
-        totalInches =
-          normalizedUnit === 'cm' ? plainNumber / MeasurementSystem.INCHES_TO_CM : plainNumber;
+        if (normalizedUnit === 'cm') {
+          totalInches = plainNumber / MeasurementSystem.INCHES_TO_CM;
+          exactCmInput = plainNumber;
+        } else {
+          totalInches = plainNumber;
+        }
       }
     }
 
@@ -236,7 +242,10 @@ export class MeasurementSystem {
 
     const inchWhole = Math.floor(totalInches);
     const inchFraction = this.findClosestFraction(totalInches - inchWhole);
-    const cm = this.convertToCm(inchWhole, inchFraction);
+    // When the input was a CM value, preserve the exact value instead of
+    // recalculating from the fraction-rounded inches (avoids rounding error
+    // e.g. 129 cm → 50 13/16" → 129.06 cm).
+    const cm = exactCmInput !== null ? exactCmInput : this.convertToCm(inchWhole, inchFraction);
     return {
       inchWhole,
       inchFraction,

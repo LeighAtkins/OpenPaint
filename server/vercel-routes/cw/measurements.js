@@ -4,9 +4,12 @@ import {
   buildMeasureSavePayloadFromTable,
   createCwSession,
   cwGraphqlRequest,
+  cwPublicGraphqlRequest,
+  escapeGraphqlString,
   fetchOrderImagesByFormId,
   fetchCwMeasurementsTable,
   mapOrderImagesToMeasurementItems,
+  parseProductConfiguration,
   readJsonBody,
 } from './shared.js';
 
@@ -58,6 +61,10 @@ const SEARCH_TURBO_LIMITS = {
   qcMeasurementsByStyle: 4,
   graphqlDiscoveryAttempts: 6,
 };
+const DISCOVERY_REFERENCE_PAGE_SIZE = 12;
+const DISCOVERY_NAME_PAGE_SIZE = 24;
+const DISCOVERY_MAX_RESULTS = 36;
+const DISCOVERY_MAX_PAGES_PER_VARIANT = 4;
 const TURBO_MAX_ATTEMPTS_PER_REFERENCE = 2;
 const TURBO_MAX_ATTEMPTS_PER_SCOPED_REFERENCE = 1;
 const TURBO_MAX_QC_ATTEMPTS = 12;
@@ -92,6 +99,7 @@ const MANUAL_REFERENCE_HINTS = new Map([
   ['IK-ME-6', ['IK-ME-6']],
   ['IK-MA-25B', ['IK-MA-25B__L', 'IK-MA-25B__R']],
   ['MJ-SLM-1', ['MJ-SLM-1__MJ-CC', 'MJ-SLM-1__CW-CC']],
+  ['MJ-SLM-3P', ['MJ-SLM-3P__MJ-CC', 'MJ-SLM-3P__CW-CC']],
   ['WE-VBK-1', ['WE-VBK-1__STD', 'WE-VBK-1__EXD', 'WE-VBK-1__SV', 'WE-VBK-1__LV']],
   ['WE-VBK-2', ['WE-VBK-2__STD', 'WE-VBK-2__EXD', 'WE-VBK-2__SV', 'WE-VBK-2__LV']],
   ['WE-KSK-1', ['WE-KSK-1__STD', 'WE-KSK-1__EXD', 'WE-KSK-1__SV', 'WE-KSK-1__LV']],
@@ -1432,7 +1440,7 @@ function parseRenderedMeasurementsHtml(htmlText) {
   };
 }
 
-function scoreProductNode(node, searchTerm) {
+export function scoreProductNode(node, searchTerm, options = {}) {
   const termNorm = normalizeText(searchTerm);
   const termTokens = tokenize(searchTerm);
   const translationNames = (node?.translations?.edges || [])
@@ -1440,7 +1448,849 @@ function scoreProductNode(node, searchTerm) {
     .filter(Boolean)
     .join(' ');
   const haystack = `${String(node?.reference || '')} ${translationNames}`;
-  return scoreFromHaystack(haystack, termNorm, termTokens);
+  let score = scoreFromHaystack(haystack, termNorm, termTokens);
+
+  const requestedReferenceRaw = String(
+    options?.productReference || options?.product_reference || ''
+  ).trim();
+  if (!requestedReferenceRaw) {
+    return score;
+  }
+
+  const requestedReference = requestedReferenceRaw.toLowerCase();
+  const requestedReferenceBase = stripScopedReferenceSuffix(requestedReferenceRaw).toLowerCase();
+  const nodeReferenceRaw = String(node?.reference || '').trim();
+  const nodeReference = nodeReferenceRaw.toLowerCase();
+  const nodeReferenceBase = stripScopedReferenceSuffix(nodeReferenceRaw).toLowerCase();
+
+  if (requestedReference && nodeReference === requestedReference) {
+    score += 1000;
+  } else if (requestedReferenceBase && nodeReferenceBase === requestedReferenceBase) {
+    score += 700;
+  }
+
+  return score;
+}
+
+export function looksLikeReferenceSearchTerm(value) {
+  const raw = String(value || '').trim();
+  if (!/^[A-Z0-9][A-Z0-9-_]{2,}$/i.test(raw)) return false;
+  if (/^[A-Za-z]+$/.test(raw)) return false;
+  return /[\d_-]/.test(raw);
+}
+
+export function getDiscoveryQueryMode(value) {
+  return looksLikeReferenceSearchTerm(value) ? 'reference' : 'name';
+}
+
+function normalizeProductTranslations(node) {
+  const raw = Array.isArray(node?.translations?.edges) ? node.translations.edges : [];
+  return raw.map(edge => edge?.node).filter(Boolean);
+}
+
+function getProductDisplayName(node) {
+  const translations = normalizeProductTranslations(node);
+  return String(
+    translations[0]?.name || translations[0]?.slug || node?.productName || node?.name || ''
+  ).trim();
+}
+
+function buildFallbackDiscoveryStyleOptions(productReference) {
+  const seen = new Set();
+  return TURBO_FASTPATH_STYLE_PAIRS.map(pair => {
+    const style = String(pair?.style || '').trim();
+    const styleCode = String(pair?.styleCode || '').trim();
+    const key = `${style.toLowerCase()}|${styleCode.toLowerCase()}`;
+    if (!style && !styleCode) return null;
+    if (seen.has(key)) return null;
+    seen.add(key);
+    return {
+      productReference: String(productReference || '').trim(),
+      style,
+      styleCode,
+      label: `${productReference || 'Reference'} - ${style || 'Style'}${styleCode ? ` (${styleCode})` : ''}`,
+    };
+  }).filter(Boolean);
+}
+
+function getDiscoveryTermVariants(searchTerm, queryMode) {
+  const raw = String(searchTerm || '').trim();
+  if (!raw) return [];
+  if (queryMode === 'reference') {
+    return Array.from(new Set(buildSearchTermVariants(raw))).slice(0, 6);
+  }
+  const wordy = raw.replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim();
+  return Array.from(new Set([raw, wordy].filter(Boolean))).slice(0, 3);
+}
+
+function buildPublicDiscoveryQuery({ first, after = '', reference = '', translationsName = '' }) {
+  return `{
+  products(first: ${Math.max(1, Math.min(first, DISCOVERY_MAX_RESULTS))}, after: ${escapeGraphqlString(
+    after
+  )}, reference_Icontains: ${escapeGraphqlString(
+    reference
+  )}, translations_Name_Icontains: ${escapeGraphqlString(
+    translationsName
+  )}, translations_Lang: "en", sort: ["id"]) {
+    edges {
+      cursor
+      node {
+        id
+        reference
+        status
+        translations {
+          edges {
+            node {
+              name
+              slug
+              lang
+            }
+          }
+        }
+      }
+    }
+    totalCount
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}`;
+}
+
+function buildAuthenticatedDiscoveryQuery() {
+  return `query ProductList($first: Int, $after: String = "", $before: String = "", $last: Int, $reference: String, $translations__name: String, $lang: String = "en", $sortBy: [String] = ["id"]) {
+  products(first: $first, after: $after, before: $before, last: $last, reference_Icontains: $reference, translations_Name_Icontains: $translations__name, translations_Lang: $lang, sort: $sortBy) {
+    edges {
+      cursor
+      node {
+        id
+        reference
+        status
+        translations {
+          edges {
+            node {
+              name
+              slug
+              lang
+            }
+          }
+        }
+      }
+    }
+    totalCount
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}`;
+}
+
+export function buildPublicNameFastPathQuery(searchTerm) {
+  return `{
+  products(first: 1, translations_Name_Icontains: ${escapeGraphqlString(
+    searchTerm
+  )}, translations_Lang: "en") {
+    edges {
+      node {
+        id
+        reference
+        status
+        translations(lang: "en") {
+          edges {
+            node {
+              name
+              slug
+              lang
+            }
+          }
+        }
+        productConfiguration(manualOrder: true)
+      }
+    }
+  }
+}`;
+}
+
+function collectDiscoveryNodes(productNodesByKey, nodes = []) {
+  nodes.forEach(node => {
+    const key = String(node?.id || node?.reference || '').trim();
+    if (key && !productNodesByKey.has(key)) {
+      productNodesByKey.set(key, node);
+    }
+  });
+}
+
+async function fetchPublicProductDetailsByReference(baseUrl, reference) {
+  const normalizedReference = String(reference || '').trim();
+  if (!normalizedReference) return null;
+  const query = `{
+  products(first: 1, reference: ${escapeGraphqlString(normalizedReference)}) {
+    edges {
+      node {
+        id
+        reference
+        status
+        translations(lang: "en") {
+          edges {
+            node {
+              name
+              slug
+              lang
+            }
+          }
+        }
+        productConfiguration(manualOrder: true)
+      }
+    }
+  }
+}`;
+  const result = await cwPublicGraphqlRequest({
+    baseUrl,
+    operationName: 'null',
+    query,
+  });
+  const node = result?.body?.data?.products?.edges?.[0]?.node || null;
+  return {
+    ok: Boolean(result?.ok && node),
+    status: result?.status || null,
+    node,
+    result,
+  };
+}
+
+async function fetchPublicTopProductByName(baseUrl, searchTerm) {
+  const normalizedSearch = String(searchTerm || '').trim();
+  if (!normalizedSearch) return null;
+  const result = await cwPublicGraphqlRequest({
+    baseUrl,
+    operationName: 'null',
+    query: buildPublicNameFastPathQuery(normalizedSearch),
+  });
+  const node = result?.body?.data?.products?.edges?.[0]?.node || null;
+  return {
+    ok: Boolean(result?.ok && node),
+    status: result?.status || null,
+    node,
+    result,
+  };
+}
+
+async function discoverPublicProducts({
+  baseUrl,
+  searchTerm,
+  limit = DISCOVERY_REFERENCE_PAGE_SIZE,
+}) {
+  const search = String(searchTerm || '').trim();
+  if (!search) return { attempts: [], nodes: [], queryMode: 'name', totalMatchesSeen: 0 };
+
+  const attempts = [];
+  const productNodesByKey = new Map();
+  const queryMode = getDiscoveryQueryMode(search);
+  const exactVariants =
+    queryMode === 'reference'
+      ? Array.from(new Set([search, search.toUpperCase(), search.toLowerCase()]))
+      : [];
+  let totalMatchesSeen = 0;
+
+  // Run exact reference lookups in parallel (individual timeouts are non-fatal)
+  const exactResults =
+    exactVariants.length > 0
+      ? await Promise.all(
+          exactVariants.map(async reference => {
+            try {
+              const detail = await fetchPublicProductDetailsByReference(baseUrl, reference);
+              return { reference, detail };
+            } catch {
+              return { reference, detail: { ok: false, status: null, node: null, timedOut: true } };
+            }
+          })
+        )
+      : [];
+  for (const { reference, detail } of exactResults) {
+    attempts.push({
+      strategy: 'public-reference-exact',
+      termVariant: reference,
+      status: detail?.status || null,
+      ok: Boolean(detail?.ok),
+      nodeCount: detail?.node ? 1 : 0,
+    });
+    if (detail?.node) {
+      const key = String(detail.node?.id || detail.node?.reference || '').trim();
+      if (key) productNodesByKey.set(key, detail.node);
+    }
+  }
+
+  // For exact reference matches with results, run one fast contains search
+  // in parallel instead of iterating all term variants sequentially
+  const termVariants = getDiscoveryTermVariants(search, queryMode);
+  const hasExactMatch = productNodesByKey.size > 0 && queryMode === 'reference';
+  const containsVariants = hasExactMatch
+    ? termVariants.slice(0, 2) // Limit to 2 variants for exact matches (fast path)
+    : termVariants;
+
+  // Run the first page of each contains variant in parallel (individual timeouts are non-fatal)
+  const firstPageResults = await Promise.all(
+    containsVariants.map(async termVariant => {
+      const first =
+        queryMode === 'name'
+          ? Math.max(limit, DISCOVERY_NAME_PAGE_SIZE)
+          : Math.min(limit, DISCOVERY_REFERENCE_PAGE_SIZE);
+      try {
+        const result = await cwPublicGraphqlRequest({
+          baseUrl,
+          operationName: 'null',
+          query: buildPublicDiscoveryQuery({
+            first,
+            after: '',
+            reference: queryMode === 'reference' ? termVariant : '',
+            translationsName: queryMode === 'name' ? termVariant : '',
+          }),
+        });
+        return { termVariant, result };
+      } catch {
+        return { termVariant, result: { ok: false, status: null, body: null } };
+      }
+    })
+  );
+
+  for (const { termVariant, result } of firstPageResults) {
+    const productData = result?.body?.data?.products;
+    const edges = Array.isArray(productData?.edges) ? productData.edges : [];
+    const nodes = edges.map(edge => edge?.node).filter(Boolean);
+    const totalCount = Number(productData?.totalCount || 0);
+    const hasNextPage = productData?.pageInfo?.hasNextPage === true;
+    const after = String(productData?.pageInfo?.endCursor || '').trim();
+    totalMatchesSeen = Math.max(
+      totalMatchesSeen,
+      totalCount,
+      productNodesByKey.size + nodes.length
+    );
+    attempts.push({
+      strategy: queryMode === 'name' ? 'public-name' : 'public-reference-contains',
+      termVariant,
+      page: 1,
+      status: result?.status || null,
+      ok: Boolean(result?.ok),
+      nodeCount: nodes.length,
+      totalCount,
+    });
+    collectDiscoveryNodes(productNodesByKey, nodes);
+
+    // Only fetch additional pages if not an exact match fast-path and there are more results
+    if (!hasExactMatch && hasNextPage && after && nodes.length) {
+      let pageCursor = after;
+      for (
+        let page = 1;
+        page < DISCOVERY_MAX_PAGES_PER_VARIANT && productNodesByKey.size < DISCOVERY_MAX_RESULTS;
+        page += 1
+      ) {
+        const first =
+          queryMode === 'name'
+            ? Math.max(limit, DISCOVERY_NAME_PAGE_SIZE)
+            : Math.min(limit, DISCOVERY_REFERENCE_PAGE_SIZE);
+        let pageResult;
+        try {
+          pageResult = await cwPublicGraphqlRequest({
+            baseUrl,
+            operationName: 'null',
+            query: buildPublicDiscoveryQuery({
+              first,
+              after: pageCursor,
+              reference: queryMode === 'reference' ? termVariant : '',
+              translationsName: queryMode === 'name' ? termVariant : '',
+            }),
+          });
+        } catch {
+          break; // Stop pagination on timeout
+        }
+        const pageProductData = pageResult?.body?.data?.products;
+        const pageEdges = Array.isArray(pageProductData?.edges) ? pageProductData.edges : [];
+        const pageNodes = pageEdges.map(edge => edge?.node).filter(Boolean);
+        const pageTotalCount = Number(pageProductData?.totalCount || 0);
+        const pageHasNext = pageProductData?.pageInfo?.hasNextPage === true;
+        pageCursor = String(pageProductData?.pageInfo?.endCursor || '').trim();
+        totalMatchesSeen = Math.max(
+          totalMatchesSeen,
+          pageTotalCount,
+          productNodesByKey.size + pageNodes.length
+        );
+        attempts.push({
+          strategy: queryMode === 'name' ? 'public-name' : 'public-reference-contains',
+          termVariant,
+          page: page + 1,
+          status: pageResult?.status || null,
+          ok: Boolean(pageResult?.ok),
+          nodeCount: pageNodes.length,
+          totalCount: pageTotalCount,
+        });
+        collectDiscoveryNodes(productNodesByKey, pageNodes);
+        if (!pageHasNext || !pageCursor || !pageNodes.length) break;
+      }
+    }
+  }
+
+  return {
+    attempts,
+    nodes: Array.from(productNodesByKey.values()),
+    queryMode,
+    totalMatchesSeen: Math.max(totalMatchesSeen, productNodesByKey.size),
+  };
+}
+
+async function discoverAuthenticatedProducts({
+  baseUrl,
+  username,
+  password,
+  searchTerm,
+  queryMode,
+}) {
+  const search = String(searchTerm || '').trim();
+  if (!search || !username || !password) {
+    return { attempts: [], nodes: [], totalMatchesSeen: 0 };
+  }
+
+  const attempts = [];
+  const productNodesByKey = new Map();
+  const query = buildAuthenticatedDiscoveryQuery();
+  const termVariants = getDiscoveryTermVariants(search, queryMode);
+  let totalMatchesSeen = 0;
+
+  for (const termVariant of termVariants) {
+    let after = '';
+    for (
+      let page = 0;
+      page < DISCOVERY_MAX_PAGES_PER_VARIANT && productNodesByKey.size < DISCOVERY_MAX_RESULTS;
+      page += 1
+    ) {
+      const first = queryMode === 'name' ? DISCOVERY_NAME_PAGE_SIZE : DISCOVERY_REFERENCE_PAGE_SIZE;
+      const result = await cwGraphqlRequest({
+        override: {
+          baseUrl,
+          username,
+          password,
+        },
+        operationName: 'ProductList',
+        query,
+        variables: {
+          after,
+          before: '',
+          lang: 'en',
+          sortBy: ['id'],
+          first,
+          reference: queryMode === 'reference' ? termVariant : '',
+          translations__name: queryMode === 'name' ? termVariant : '',
+        },
+      });
+      const productData = result?.body?.data?.products;
+      const edges = Array.isArray(productData?.edges) ? productData.edges : [];
+      const nodes = edges.map(edge => edge?.node).filter(Boolean);
+      const totalCount = Number(productData?.totalCount || 0);
+      const hasNextPage = productData?.pageInfo?.hasNextPage === true;
+      after = String(productData?.pageInfo?.endCursor || '').trim();
+      totalMatchesSeen = Math.max(
+        totalMatchesSeen,
+        totalCount,
+        productNodesByKey.size + nodes.length
+      );
+      attempts.push({
+        strategy:
+          queryMode === 'name' ? 'authenticated-name-fallback' : 'authenticated-reference-fallback',
+        termVariant,
+        page: page + 1,
+        status: result?.status || null,
+        ok: Boolean(result?.ok),
+        nodeCount: nodes.length,
+        totalCount,
+      });
+      collectDiscoveryNodes(productNodesByKey, nodes);
+      if (!hasNextPage || !after || !nodes.length) break;
+    }
+  }
+
+  return {
+    attempts,
+    nodes: Array.from(productNodesByKey.values()),
+    totalMatchesSeen: Math.max(totalMatchesSeen, productNodesByKey.size),
+  };
+}
+
+export function buildDiscoveredProductResult({ node, fallbackNode = null, score = 0 }) {
+  const primaryNode = node || fallbackNode;
+  const reference = String(primaryNode?.reference || fallbackNode?.reference || '').trim();
+  if (!primaryNode || !reference) return null;
+
+  const parsedConfig = parseProductConfiguration({
+    productConfiguration: primaryNode?.productConfiguration || null,
+    productReference: reference,
+    productName: getProductDisplayName(primaryNode),
+  });
+  const styleOptions = parsedConfig.styleOptions.length
+    ? parsedConfig.styleOptions
+    : buildFallbackDiscoveryStyleOptions(reference);
+
+  return {
+    id: String(primaryNode?.id || fallbackNode?.id || '').trim() || null,
+    productReference: reference,
+    productName: getProductDisplayName(primaryNode),
+    status: primaryNode?.status || fallbackNode?.status || null,
+    translations: normalizeProductTranslations(primaryNode),
+    configParsed: Boolean(parsedConfig.parsed),
+    versionOptions: parsedConfig.versionOptions,
+    styleOptions,
+    derivedScopedReferences: parsedConfig.derivedScopedReferences,
+    product: {
+      id: String(primaryNode?.id || fallbackNode?.id || '').trim() || null,
+      reference,
+      status: primaryNode?.status || fallbackNode?.status || null,
+      translations: normalizeProductTranslations(primaryNode),
+    },
+    score: Number(score || 0),
+  };
+}
+
+async function enrichDiscoveredProductsWithConfig({ baseUrl, rankedNodes = [] }) {
+  // Fetch product details in parallel instead of sequentially
+  const tasks = rankedNodes.map(async rankedNode => {
+    const node = rankedNode?.node || rankedNode;
+    const reference = String(node?.reference || '').trim();
+    if (!reference) return null;
+    try {
+      const detail = await fetchPublicProductDetailsByReference(baseUrl, reference);
+      return buildDiscoveredProductResult({
+        node: detail?.node || null,
+        fallbackNode: node,
+        score: Number(rankedNode?.score || 0),
+      });
+    } catch {
+      return buildDiscoveredProductResult({
+        node: null,
+        fallbackNode: node,
+        score: Number(rankedNode?.score || 0),
+      });
+    }
+  });
+  const results = await Promise.all(tasks);
+  return results.filter(Boolean);
+}
+
+function addDefaultStyleKey(item) {
+  return {
+    ...item,
+    defaultStyleKey:
+      item.styleOptions[0]?.style || item.styleOptions[0]?.styleCode
+        ? makeSelectionKey({
+            productReference: item.productReference,
+            versionCode: '',
+            style: item.styleOptions[0]?.style || '',
+            styleCode: item.styleOptions[0]?.styleCode || '',
+          })
+        : '',
+  };
+}
+
+function buildProductSearchDiscoverResponse({
+  searchTerm,
+  queryMode,
+  rankedNodes = [],
+  results = [],
+  attempts = [],
+  totalMatchesSeen = 0,
+  searchStrategy = 'legacy-discovery',
+  startedAt,
+}) {
+  return {
+    success: results.length > 0,
+    code: results.length ? 'CW_PRODUCT_DISCOVERY_OK' : 'CW_PRODUCT_DISCOVERY_NOT_FOUND',
+    phase: 'discover',
+    search: searchTerm,
+    results: results.map(addDefaultStyleKey),
+    summary: {
+      candidateCount: rankedNodes.length,
+      resultCount: results.length,
+      exactReferenceSearch: queryMode === 'reference',
+      queryMode,
+      searchStrategy,
+      totalMatchesSeen: Math.max(totalMatchesSeen, rankedNodes.length),
+      returnedMatches: results.length,
+      configurationParsedCount: results.filter(item => item.configParsed).length,
+    },
+    discovery: {
+      searchStrategy,
+      graphqlDiscoveryAttempts: attempts,
+    },
+    durationMs: Date.now() - startedAt,
+  };
+}
+
+function makeSelectionKey({ productReference, versionCode = '', style = '', styleCode = '' } = {}) {
+  return [
+    String(productReference || '').trim(),
+    String(versionCode || '').trim(),
+    String(style || '').trim(),
+    String(styleCode || '').trim(),
+  ].join('|');
+}
+
+function normalizeSelectedItemSelection(item = {}) {
+  const productReference = String(item?.productReference || '').trim();
+  const versionCode = String(item?.versionCode || '')
+    .trim()
+    .toUpperCase();
+  const style = String(item?.style || '').trim();
+  const styleCode = String(item?.styleCode || item?.style_code || '')
+    .trim()
+    .toUpperCase();
+  const scopedReference =
+    String(item?.scopedReference || '').trim() ||
+    (productReference && versionCode ? `${productReference}__${versionCode}` : productReference);
+  return {
+    selectionKey:
+      String(item?.selectionKey || '').trim() ||
+      makeSelectionKey({ productReference, versionCode, style, styleCode }),
+    search: String(item?.search || productReference || scopedReference || '').trim(),
+    productReference,
+    scopedReference,
+    productName: String(item?.productName || '').trim(),
+    versionCode,
+    versionLabel: String(item?.versionLabel || '').trim(),
+    style,
+    styleCode,
+  };
+}
+
+export function buildLoadSelectedSearchBody(body = {}, selection = {}) {
+  const selectedReference =
+    String(selection?.scopedReference || selection?.productReference || '').trim() || '';
+  const fallbackSearch = String(selection?.search || '').trim();
+  const resolvedSearch = selectedReference || fallbackSearch;
+  const { phase: _phase, selectedItems: _si, ...rest } = body;
+  return {
+    ...rest,
+    search: resolvedSearch,
+    query: resolvedSearch,
+    productReference: selectedReference || String(body?.productReference || '').trim(),
+    style: String(selection?.style || body?.style || '').trim(),
+    styleCode: String(
+      selection?.styleCode || selection?.style_code || body?.styleCode || body?.style_code || ''
+    )
+      .trim()
+      .toUpperCase(),
+  };
+}
+
+async function runLegacySearchPayload({ req, body, startedAt }) {
+  let statusCode = 200;
+  let payload = null;
+  const res = {
+    status(code) {
+      statusCode = code;
+      return this;
+    },
+    json(nextPayload) {
+      payload = nextPayload;
+      return nextPayload;
+    },
+  };
+  await handleProductSearch({ req, res, body, startedAt });
+  return {
+    statusCode,
+    payload,
+  };
+}
+
+async function handleProductSearchDiscover({ req, res, body, startedAt }) {
+  const searchTerm = String(body?.search || body?.query || '').trim();
+  const manualHintNoneTerm = isManualReferenceHintNoneTerm(searchTerm);
+  const queryMode = getDiscoveryQueryMode(searchTerm);
+  if (!searchTerm) {
+    return res.status(400).json({
+      success: false,
+      code: 'CW_SEARCH_REQUIRED',
+      phase: 'discover',
+      message: 'search is required',
+    });
+  }
+  if (manualHintNoneTerm) {
+    return res.status(404).json({
+      success: false,
+      code: 'CW_PRODUCT_DISCOVERY_NOT_FOUND',
+      phase: 'discover',
+      message: 'No valid product measurement reference is known for this term',
+      search: searchTerm,
+      results: [],
+    });
+  }
+
+  const baseUrl = String(req.query?.baseUrl || body?.baseUrl || 'https://cw40.comfort-works.com')
+    .trim()
+    .replace(/\/+$/, '');
+  const fastPathAttempts = [];
+  const publicDiscoveryPromise = discoverPublicProducts({
+    baseUrl,
+    searchTerm,
+    limit: queryMode === 'name' ? DISCOVERY_NAME_PAGE_SIZE : DISCOVERY_REFERENCE_PAGE_SIZE,
+  });
+
+  let fastPath = null;
+  let fastPathNode = null;
+  let fastPathResult = null;
+  if (queryMode === 'name') {
+    try {
+      fastPath = await fetchPublicTopProductByName(baseUrl, searchTerm);
+    } catch {
+      fastPath = { ok: false, status: null, node: null };
+    }
+    fastPathNode = fastPath?.node || null;
+    fastPathResult = fastPathNode
+      ? buildDiscoveredProductResult({
+          node: fastPathNode,
+          score: scoreProductNode(fastPathNode, searchTerm),
+        })
+      : null;
+
+    fastPathAttempts.push({
+      strategy: 'public-name-fast-path',
+      termVariant: searchTerm,
+      status: fastPath?.status || null,
+      ok: Boolean(fastPath?.ok),
+      nodeCount: fastPathNode ? 1 : 0,
+      configParsed: Boolean(fastPathResult?.configParsed),
+    });
+  }
+
+  const publicDiscovery = await publicDiscoveryPromise;
+
+  let productNodes = publicDiscovery.nodes;
+  if (fastPathNode) {
+    const nodesByKey = new Map();
+    collectDiscoveryNodes(nodesByKey, productNodes);
+    collectDiscoveryNodes(nodesByKey, [fastPathNode]);
+    productNodes = Array.from(nodesByKey.values());
+  }
+  let attempts = [...fastPathAttempts, ...publicDiscovery.attempts];
+  let totalMatchesSeen = Number(publicDiscovery.totalMatchesSeen || productNodes.length || 0);
+
+  const fallbackUsername = String(
+    req.query?.username || body?.username || body?.email || ''
+  ).trim();
+  const fallbackPassword = String(req.query?.password || body?.password || '').trim();
+
+  if (!productNodes.length && fallbackUsername && fallbackPassword) {
+    const fallback = await discoverAuthenticatedProducts({
+      baseUrl,
+      username: fallbackUsername,
+      password: fallbackPassword,
+      searchTerm,
+      queryMode,
+    });
+    productNodes = fallback.nodes;
+    attempts = [...attempts, ...fallback.attempts];
+    totalMatchesSeen = Math.max(totalMatchesSeen, Number(fallback.totalMatchesSeen || 0));
+  }
+
+  const rankedNodes = productNodes
+    .map(node => ({ node, score: scoreProductNode(node, searchTerm) }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, queryMode === 'name' ? DISCOVERY_MAX_RESULTS : 8);
+
+  // Separate nodes that already have productConfiguration (from exact lookups)
+  // from those that need enrichment (from contains/name searches)
+  const preEnrichedResults = [];
+  const needsEnrichmentNodes = [];
+  for (const ranked of rankedNodes) {
+    const node = ranked.node;
+    if (node?.productConfiguration) {
+      const result = buildDiscoveredProductResult({
+        node,
+        fallbackNode: node,
+        score: ranked.score,
+      });
+      if (result) preEnrichedResults.push(result);
+    } else {
+      needsEnrichmentNodes.push(ranked);
+    }
+  }
+
+  const enrichedResults =
+    needsEnrichmentNodes.length > 0
+      ? await enrichDiscoveredProductsWithConfig({ baseUrl, rankedNodes: needsEnrichmentNodes })
+      : [];
+
+  let results = [...preEnrichedResults, ...enrichedResults].sort(
+    (a, b) => (b.score || 0) - (a.score || 0)
+  );
+  let searchStrategy = fastPathNode ? 'name-fast-path+legacy-discovery' : 'legacy-discovery';
+
+  if (!results.length && fastPathResult?.configParsed) {
+    results = [fastPathResult];
+    searchStrategy = 'name-fast-path-fallback';
+  }
+
+  return res.status(results.length ? 200 : 404).json(
+    buildProductSearchDiscoverResponse({
+      searchTerm,
+      queryMode,
+      rankedNodes,
+      results,
+      attempts,
+      totalMatchesSeen,
+      searchStrategy,
+      startedAt,
+    })
+  );
+}
+
+async function handleProductSearchLoadSelected({ req, res, body, startedAt }) {
+  const selectedItems = Array.isArray(body?.selectedItems) ? body.selectedItems : [];
+  if (!selectedItems.length) {
+    return res.status(400).json({
+      success: false,
+      code: 'CW_SELECTED_ITEMS_REQUIRED',
+      phase: 'load-selected',
+      message: 'selectedItems are required',
+      items: [],
+    });
+  }
+
+  const results = [];
+  for (const rawItem of selectedItems) {
+    const selection = normalizeSelectedItemSelection(rawItem);
+    const legacy = await runLegacySearchPayload({
+      req,
+      startedAt,
+      body: buildLoadSelectedSearchBody(body, selection),
+    });
+    const payload = legacy.payload || {};
+    results.push({
+      selectionKey: selection.selectionKey,
+      basketItem: selection,
+      success: legacy.statusCode >= 200 && legacy.statusCode < 300 && payload?.success !== false,
+      statusCode: legacy.statusCode,
+      code: payload?.code || null,
+      message: payload?.message || null,
+      product: payload?.product || null,
+      data: payload,
+    });
+  }
+
+  const loadedCount = results.filter(item => item.success).length;
+  return res.status(loadedCount > 0 ? 200 : 502).json({
+    success: loadedCount > 0,
+    code:
+      loadedCount === results.length
+        ? 'CW_SELECTED_ITEMS_LOAD_OK'
+        : 'CW_SELECTED_ITEMS_LOAD_PARTIAL',
+    phase: 'load-selected',
+    items: results,
+    summary: {
+      selectedCount: selectedItems.length,
+      loadedCount,
+      failedCount: results.length - loadedCount,
+    },
+    durationMs: Date.now() - startedAt,
+  });
 }
 
 async function handleLoadSelected({ res, body, startedAt }) {
@@ -1892,7 +2742,12 @@ async function handleProductSearch({ req, res, body, startedAt }) {
   const productNodes = Array.from(productNodesByKey.values());
   stageTimings.graphqlMs = Date.now() - graphqlStartedAt;
   const rankedProducts = productNodes
-    .map(node => ({ node, score: scoreProductNode(node, searchTerm) }))
+    .map(node => ({
+      node,
+      score: scoreProductNode(node, searchTerm, {
+        productReference: providedProductReference,
+      }),
+    }))
     .sort((a, b) => b.score - a.score);
 
   // Build a results array for the client UI (each item = one discovered product).
@@ -2113,7 +2968,10 @@ async function handleProductSearch({ req, res, body, startedAt }) {
 
     if (isTurboProbe && productReference) {
       const turboFastPathStartedAt = Date.now();
-      const fastReferenceCandidates = Array.from(
+      // Prioritize scoped references (with __) before base references so the
+      // fast path finds versioned products quickly instead of exhausting style
+      // pairs against the base reference first.
+      const fastReferenceCandidatesUnsorted = Array.from(
         new Set(
           [
             providedProductReference,
@@ -2127,6 +2985,10 @@ async function handleProductSearch({ req, res, body, startedAt }) {
             .filter(Boolean)
         )
       );
+      const fastReferenceCandidates = [
+        ...fastReferenceCandidatesUnsorted.filter(ref => ref.includes('__')),
+        ...fastReferenceCandidatesUnsorted.filter(ref => !ref.includes('__')),
+      ];
 
       const fastStylePairs = [];
       const fastPairSeen = new Set();
@@ -3786,6 +4648,15 @@ export default async function handler(req, res) {
     }
 
     if (formId === 'search') {
+      const phase = String(body?.phase || '')
+        .trim()
+        .toLowerCase();
+      if (phase === 'discover') {
+        return await handleProductSearchDiscover({ req, res, body, startedAt });
+      }
+      if (phase === 'load-selected') {
+        return await handleProductSearchLoadSelected({ req, res, body, startedAt });
+      }
       return await handleProductSearch({ req, res, body, startedAt });
     }
 

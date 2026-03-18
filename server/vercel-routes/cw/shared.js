@@ -124,6 +124,225 @@ export function getCwCredentials(override = {}) {
   return { baseUrl, username, password };
 }
 
+export function escapeGraphqlString(value) {
+  return JSON.stringify(String(value || ''));
+}
+
+function getTranslateableValue(source, preferredLangs = ['en', 'UN']) {
+  if (!source) return '';
+  if (typeof source === 'string') return String(source).trim();
+  const translateable = source?._translateable;
+  if (translateable && typeof translateable === 'object') {
+    for (const lang of preferredLangs) {
+      const value = String(translateable?.[lang] || '').trim();
+      if (value) return value;
+    }
+    for (const value of Object.values(translateable)) {
+      const next = String(value || '').trim();
+      if (next) return next;
+    }
+  }
+  return '';
+}
+
+function looksLikePlaceholderOption(label, code) {
+  const labelNorm = String(label || '')
+    .trim()
+    .toLowerCase();
+  const codeNorm = String(code || '')
+    .trim()
+    .toUpperCase();
+  if (!labelNorm && !codeNorm) return true;
+  if (codeNorm === 'DF') return true;
+  return (
+    labelNorm === 'please select one' ||
+    labelNorm === 'please select' ||
+    labelNorm === 'select an option'
+  );
+}
+
+function classifyConfigurationGroup(group = {}) {
+  const labelPool = [
+    getTranslateableValue(group?.name),
+    getTranslateableValue(group?.popupTitle),
+    getTranslateableValue(group?.popupContent),
+    String(group?.printing?.field || '').trim(),
+    String(group?.group_name || '').trim(),
+  ]
+    .join(' ')
+    .toLowerCase();
+
+  const options = Array.isArray(group?.content) ? group.content : [];
+  const optionLabels = options
+    .map(option => getTranslateableValue(option?.name))
+    .join(' ')
+    .toLowerCase();
+  const optionCodes = options
+    .map(option =>
+      String(option?.pg_code || option?.code || '')
+        .trim()
+        .toUpperCase()
+    )
+    .filter(Boolean)
+    .join(' ');
+
+  if (
+    /style/.test(labelPool) ||
+    /signature|original/.test(optionLabels) ||
+    /\b(?:CNRP|SHRT|LSKT|MLTP|VELC|BKPT|SDPT|ELAS|SP|SI|PC|PM|WR)\b/.test(optionCodes)
+  ) {
+    return 'style';
+  }
+
+  if (
+    /version|sofa type|sofa version|my sofa is/.test(labelPool) ||
+    /leather version|standard version/.test(optionLabels)
+  ) {
+    return 'version';
+  }
+
+  if (/fabric/.test(labelPool)) return 'fabric';
+  return 'other';
+}
+
+export function parseProductConfiguration({
+  productConfiguration,
+  productReference = '',
+  productName = '',
+} = {}) {
+  let parsed = null;
+  if (productConfiguration && typeof productConfiguration === 'object') {
+    parsed = productConfiguration;
+  } else if (typeof productConfiguration === 'string') {
+    try {
+      parsed = JSON.parse(productConfiguration);
+    } catch {
+      parsed = null;
+    }
+  }
+
+  const normalizedReference = String(productReference || parsed?.reference || '').trim();
+  const normalizedName = String(productName || '').trim();
+  if (!parsed || typeof parsed !== 'object') {
+    return {
+      productReference: normalizedReference,
+      productName: normalizedName,
+      raw: productConfiguration || null,
+      parsed: false,
+      versionOptions: [],
+      styleOptions: [],
+      derivedScopedReferences: [],
+    };
+  }
+
+  const versionOptionMap = new Map();
+  const styleOptionMap = new Map();
+  const groups = Array.isArray(parsed?.groups) ? parsed.groups : [];
+
+  groups.forEach(group => {
+    const groupKind = classifyConfigurationGroup(group);
+    const content = Array.isArray(group?.content) ? group.content : [];
+
+    if (groupKind === 'version') {
+      content.forEach(option => {
+        const label = getTranslateableValue(option?.name);
+        const code = String(option?.code || option?.pg_code || '')
+          .trim()
+          .toUpperCase();
+        if (looksLikePlaceholderOption(label, code)) return;
+        const scopedReference =
+          normalizedReference && code ? `${normalizedReference}__${code}` : normalizedReference;
+        const key = `${code}|${scopedReference}`;
+        if (versionOptionMap.has(key)) return;
+        versionOptionMap.set(key, {
+          code,
+          label: label || code || 'Default',
+          scopedReference,
+          isDefault: false,
+        });
+      });
+    }
+
+    if (groupKind === 'style') {
+      content.forEach(option => {
+        const style = getTranslateableValue(option?.name);
+        const styleCode = String(option?.pg_code || option?.code || '')
+          .trim()
+          .toUpperCase();
+        if (looksLikePlaceholderOption(style, styleCode)) return;
+        const key = `${style.toLowerCase()}|${styleCode.toLowerCase()}`;
+        if (styleOptionMap.has(key)) return;
+        styleOptionMap.set(key, {
+          productReference: normalizedReference,
+          style: style || styleCode || 'Style',
+          styleCode,
+          label: `${normalizedReference || 'Reference'} - ${style || styleCode || 'Style'}${styleCode ? ` (${styleCode})` : ''}`,
+        });
+      });
+    }
+  });
+
+  return {
+    productReference: normalizedReference,
+    productName: normalizedName,
+    raw: parsed,
+    parsed: true,
+    versionOptions: Array.from(versionOptionMap.values()),
+    styleOptions: Array.from(styleOptionMap.values()),
+    derivedScopedReferences: Array.from(
+      new Set(
+        Array.from(versionOptionMap.values())
+          .map(option => String(option?.scopedReference || '').trim())
+          .filter(Boolean)
+      )
+    ),
+  };
+}
+
+export async function cwPublicGraphqlRequest({
+  baseUrl,
+  operationName = 'null',
+  query,
+  variables = null,
+}) {
+  const targetBase = String(baseUrl || process.env.CW_BASE_URL || 'https://cw40.comfort-works.com')
+    .trim()
+    .replace(/\/+$/, '');
+  const params = new URLSearchParams();
+  params.set('operationName', String(operationName || 'null'));
+  params.set('query', String(query || '').trim());
+  if (variables && typeof variables === 'object' && Object.keys(variables).length > 0) {
+    params.set('variables', JSON.stringify(variables));
+  }
+  const targetUrl = `${targetBase}/api/?${params.toString()}`;
+  const response = await fetchWithTimeout(
+    targetUrl,
+    {
+      method: 'GET',
+      headers: {
+        accept: 'application/json, text/plain, */*',
+        'user-agent': 'OpenPaint-CW-Vercel/1.0',
+      },
+    },
+    { label: 'cwPublicGraphqlRequest' }
+  );
+
+  const rawText = await response.text().catch(() => '');
+  let body = null;
+  try {
+    body = rawText ? JSON.parse(rawText) : null;
+  } catch {
+    body = rawText;
+  }
+  const gqlErrors = Array.isArray(body?.errors) ? body.errors : [];
+  return {
+    ok: response.ok && gqlErrors.length === 0,
+    status: response.status,
+    targetUrl,
+    body,
+  };
+}
+
 export async function createCwSession(override = {}) {
   const creds = getCwCredentials(override);
   if (!creds.username || !creds.password) {

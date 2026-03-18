@@ -66,7 +66,7 @@
       }
 
       // Only handle keyboard navigation if image panel is visible
-      if (!document.getElementById('imagePanel').classList.contains('hidden')) {
+      if (!document.getElementById('imagePanel')?.classList.contains('hidden')) {
         if (e.key === 'ArrowLeft') {
           e.preventDefault();
           navigateToImage(currentImageIndex - 1);

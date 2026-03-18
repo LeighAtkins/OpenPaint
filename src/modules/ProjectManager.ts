@@ -315,30 +315,131 @@ export class ProjectManager {
       return;
     }
     this.isSwitchingView = true;
-    if (!this.views[viewId]) {
-      console.warn(`View ${viewId} does not exist.`);
-      this.isSwitchingView = false;
-      return;
-    }
-
-    // During project hydration the archive data is authoritative. Avoid pulling stale sidebar
-    // DOM state back into the freshly restored view map before the load completes.
-    if (
-      !this.isLoadingProject &&
-      !window.__isLoadingProject &&
-      !this.isHydratingDeferredViews &&
-      !window.__deferredImageHydrationInProgress
-    ) {
-      this.syncViewImageFromDom(viewId);
-    }
-
-    // If already on this view, don't clear everything (unless forced)
-    if (this.currentViewId === viewId && !force) {
-      console.log(`Already on view: ${viewId}, refreshing image only`);
-      const view = this.views[viewId];
-      if (view.image) {
-        await this.setBackgroundImage(view.image);
+    try {
+      if (!this.views[viewId]) {
+        console.warn(`View ${viewId} does not exist.`);
+        return;
       }
+
+      // During project hydration the archive data is authoritative. Avoid pulling stale sidebar
+      // DOM state back into the freshly restored view map before the load completes.
+      if (
+        !this.isLoadingProject &&
+        !window.__isLoadingProject &&
+        !this.isHydratingDeferredViews &&
+        !window.__deferredImageHydrationInProgress
+      ) {
+        this.syncViewImageFromDom(viewId);
+      }
+
+      // If already on this view, don't clear everything (unless forced)
+      if (this.currentViewId === viewId && !force) {
+        console.log(`Already on view: ${viewId}, refreshing image only`);
+        const view = this.views[viewId];
+        if (view.image) {
+          await this.setBackgroundImage(view.image);
+        }
+        if (typeof view.rotation === 'number') {
+          if (this.canvasManager.isGuideSplitActive()) {
+            this.canvasManager.rotationDegrees = ((view.rotation % 360) + 360) % 360;
+          } else {
+            this.canvasManager.setRotationDegrees(view.rotation);
+          }
+          this.updateThumbnailRotation(viewId, view.rotation);
+        }
+
+        // Update global currentImageLabel and next tag display
+        window.currentImageLabel =
+          (typeof window.getCaptureTabScopedLabel === 'function' &&
+            window.getCaptureTabScopedLabel(viewId)) ||
+          viewId;
+        if (window.updateNextTagDisplay) {
+          window.updateNextTagDisplay();
+        }
+
+        if (window.ensureCaptureTabsForLabel) {
+          window.ensureCaptureTabsForLabel(viewId);
+        }
+        if (window.applyCaptureFrameForLabel) {
+          window.applyCaptureFrameForLabel(viewId);
+        }
+        if (window.renderCaptureTabUI) {
+          window.renderCaptureTabUI(viewId);
+        }
+        this.syncLegacyImageListSelection(viewId);
+        if (window.imageGallery?.syncToLabel) {
+          window.imageGallery.syncToLabel(viewId, { scroll: true, smooth: false });
+        }
+
+        const liveRotation = this.canvasManager?.getRotationDegrees?.();
+        if (typeof liveRotation === 'number') {
+          view.rotation = liveRotation;
+          this.updateThumbnailRotation(viewId, liveRotation);
+        }
+
+        window.dispatchEvent(
+          new CustomEvent('openpaint:view-switched', {
+            detail: { viewId, previousViewId: viewId, source: 'switch-view-refresh' },
+          })
+        );
+
+        return;
+      }
+
+      console.log(`Switching to view: ${viewId}`);
+
+      if (
+        document.getElementById('main-canvas-wrapper')?.classList.contains('guide-split-active') ===
+        true
+      ) {
+        window.dispatchEvent(
+          new CustomEvent('openpaint:guide-split-transition-start', {
+            detail: { viewId, previousViewId: this.currentViewId, source: 'switch-view' },
+          })
+        );
+      }
+
+      // 1. Save current state (skip during project load to avoid clobbering loaded data)
+      if (
+        !this.isLoadingProject &&
+        !this.suspendSave &&
+        !window.__isLoadingProject &&
+        !window.__suspendSaveCurrentView
+      ) {
+        if (window.captureTabsSyncActive) {
+          window.captureTabsSyncActive(this.currentViewId);
+        }
+        this.saveCurrentViewState();
+      } else {
+        console.log('[Load] Skipping saveCurrentViewState during project load');
+      }
+
+      // 2. Clear history for the new view (or we could maintain separate history stacks per view)
+      this.historyManager.clear();
+
+      // 3. Switch context
+      const previousViewId = this.currentViewId;
+      this.currentViewId = viewId;
+      const view = this.views[viewId];
+
+      // Update global currentImageLabel for tag prediction system
+      window.currentImageLabel =
+        (typeof window.getCaptureTabScopedLabel === 'function' &&
+          window.getCaptureTabScopedLabel(viewId)) ||
+        viewId;
+
+      // Update next tag display to start from A1 (or A) for the new image
+      if (window.updateNextTagDisplay) {
+        window.updateNextTagDisplay();
+      }
+
+      if (window.app?.tagManager?.syncTagSizeFromMetadata) {
+        window.app.tagManager.syncTagSizeFromMetadata(viewId);
+      }
+
+      // Apply rotation for the new view
+      // During split mode, only store the rotation value without triggering
+      // applyViewportTransform — the split layout sync handles viewport.
       if (typeof view.rotation === 'number') {
         if (this.canvasManager.isGuideSplitActive()) {
           this.canvasManager.rotationDegrees = ((view.rotation % 360) + 360) % 360;
@@ -348,403 +449,313 @@ export class ProjectManager {
         this.updateThumbnailRotation(viewId, view.rotation);
       }
 
-      // Update global currentImageLabel and next tag display
-      window.currentImageLabel =
-        (typeof window.getCaptureTabScopedLabel === 'function' &&
-          window.getCaptureTabScopedLabel(viewId)) ||
-        viewId;
-      if (window.updateNextTagDisplay) {
-        window.updateNextTagDisplay();
+      // 3b. Unmount MOS overlays for the old view
+      if (window.app?.measurementOverlayManager) {
+        window.app.measurementOverlayManager.unmountView(previousViewId);
+      }
+
+      // 4. Discard selection so control anchors don't persist across views
+      this.canvasManager.fabricCanvas?.discardActiveObject();
+      // Only clear canvas eagerly when there's no canvasData to load (loadFromJSON clears internally).
+      // Skipping the early clear prevents a visible white flash in split mode.
+      if (!view.canvasData) {
+        this.canvasManager.clear();
       }
 
       if (window.ensureCaptureTabsForLabel) {
         window.ensureCaptureTabsForLabel(viewId);
       }
-      if (window.applyCaptureFrameForLabel) {
-        window.applyCaptureFrameForLabel(viewId);
-      }
       if (window.renderCaptureTabUI) {
         window.renderCaptureTabUI(viewId);
       }
+      if (window.applyCaptureFrameForLabel) {
+        window.applyCaptureFrameForLabel(viewId);
+      }
+
+      // 5. Load background image if exists
+      if (view.image) {
+        await this.setBackgroundImage(view.image, view.fitMode || 'fit-canvas');
+      }
+
+      // 6. Restore canvas objects (strokes/text)
+      if (view.canvasData) {
+        console.log(`[switchView] Restoring canvas objects for ${viewId}:`, {
+          hasCanvasData: true,
+          objectCount: view.canvasData?.objects?.length || 0,
+          force,
+          suspendSave: window.__suspendSaveCurrentView,
+        });
+        // Sanitize canvas data and fix image URLs before loading
+        let sanitizedData = this.sanitizeCanvasJSON(view.canvasData);
+
+        // Filter out objects that belong to a different view (prevents cross-view stroke bleed)
+        if (sanitizedData?.objects && Array.isArray(sanitizedData.objects)) {
+          sanitizedData.objects = sanitizedData.objects
+            .map(obj => {
+              if (!obj || typeof obj !== 'object') return obj;
+              if (obj.customData?.layerType === 'mos-overlay') {
+                return null;
+              }
+              // Filter guide-scoped objects that may have leaked into canvas data
+              const objImageLabel = obj.customData?.imageLabel || obj.imageLabel || '';
+              if (typeof objImageLabel === 'string' && objImageLabel.startsWith('__guide__:')) {
+                return null;
+              }
+              if (obj.customData?.guideReferenceOnly === true) {
+                return null;
+              }
+              if (obj.strokeMetadata) {
+                if (!obj.strokeMetadata.imageLabel) {
+                  obj.strokeMetadata.imageLabel = viewId;
+                } else if (
+                  obj.strokeMetadata.imageLabel !== viewId &&
+                  !obj.strokeMetadata.imageLabel.startsWith(`${viewId}::tab:`)
+                ) {
+                  return null;
+                }
+              }
+              return obj;
+            })
+            .filter(Boolean);
+        }
+
+        // Background images are restored separately via setBackgroundImage().
+        // Keeping Fabric's serialized background image here causes duplicate async loads
+        // and can race with the manual restore path during cloud project hydration.
+        if (sanitizedData.backgroundImage && view.image) {
+          delete sanitizedData.backgroundImage;
+          console.log(`[Load] Removed serialized background image for ${viewId}`);
+        }
+
+        // Strip viewportTransform from canvas JSON when guide-split is active.
+        // The saved viewport was captured at full canvas width; restoring it into a
+        // half-width split canvas produces a wrong zoom (e.g. 2× too high). The split
+        // layout sync pipeline will set the correct viewport after load.
+        const isGuideSplitActiveNow =
+          document
+            .getElementById('main-canvas-wrapper')
+            ?.classList.contains('guide-split-active') === true;
+        if (isGuideSplitActiveNow) {
+          delete sanitizedData.viewportTransform;
+          // Also strip canvas dimensions — the saved JSON has full-width values (e.g. 1920)
+          // which Fabric.js restores, causing a brief render at the wrong size before the
+          // split layout sync resizes to the split half-width (e.g. 960).
+          delete sanitizedData.width;
+          delete sanitizedData.height;
+        }
+
+        console.log(
+          `[switchView] Calling loadFromJSON with ${sanitizedData?.objects?.length || 0} objects`
+        );
+        await new Promise(resolve => {
+          this.canvasManager.loadFromJSON(sanitizedData, async () => {
+            console.log(
+              `[switchView] loadFromJSON callback - objects on canvas:`,
+              this.canvasManager.fabricCanvas?.getObjects()?.length
+            );
+            // Restore metadata for this view
+            if (view.metadata && window.app?.metadataManager) {
+              const scopedVectors = view.metadata.vectorStrokesByImage || {};
+              const scopedVisibility = view.metadata.strokeVisibilityByImage || {};
+              const scopedLabelVisibility = view.metadata.strokeLabelVisibility || {};
+
+              Object.entries(scopedVectors).forEach(([key, value]) => {
+                window.app.metadataManager.vectorStrokesByImage[key] = value || {};
+              });
+              Object.entries(scopedVisibility).forEach(([key, value]) => {
+                window.app.metadataManager.strokeVisibilityByImage[key] = value || {};
+              });
+              Object.entries(scopedLabelVisibility).forEach(([key, value]) => {
+                window.app.metadataManager.strokeLabelVisibility[key] = value || {};
+              });
+
+              // Deserialize measurements with validation
+              this.deserializeMeasurements(viewId, view.metadata.strokeMeasurements || {});
+            }
+
+            // After loading, update history initial state
+            this.historyManager.saveState();
+
+            // Rebuild metadata from canvas objects to ensure live references
+            if (window.app?.metadataManager) {
+              window.app.metadataManager.rebuildMetadataFromCanvas(
+                viewId,
+                this.canvasManager.fabricCanvas
+              );
+            }
+
+            // Recreate custom controls for lines and curves
+            const ControlsApi = window.FabricControls || FabricControls;
+
+            const objects = this.canvasManager.fabricCanvas.getObjects();
+            objects.forEach(obj => {
+              if (obj.type === 'line' && obj.strokeMetadata) {
+                ControlsApi.createLineControls(obj);
+              } else if (obj.type === 'path' && obj.customPoints) {
+                ControlsApi.createCurveControls(obj);
+              } else if (
+                (obj.type === 'i-text' || obj.type === 'text') &&
+                obj.strokeMetadata?.type === 'text'
+              ) {
+                // Reattach event handlers for text elements loaded from JSON
+                obj.on('editing:exited', () => {
+                  if (window.app?.historyManager) {
+                    window.app.historyManager.saveState();
+                  }
+                });
+              }
+            });
+
+            // Recreate tags for all strokes with visible labels
+            if (window.app?.tagManager && window.app?.metadataManager) {
+              // Clear all tags to avoid collisions between views (e.g., multiple A1 labels)
+              if (typeof window.app.tagManager.clearAllTags === 'function') {
+                window.app.tagManager.clearAllTags();
+              }
+
+              // Only fall back to the dominant object scope when the saved active tab is missing
+              // or points at master. Real projects can intentionally keep a different active frame
+              // than the one containing most drawn objects.
+              if (typeof window.setActiveCaptureTab === 'function') {
+                const canvasObjs = this.canvasManager.fabricCanvas?.getObjects() || [];
+                const tabCounts: Record<string, number> = {};
+                canvasObjs.forEach(obj => {
+                  const lbl =
+                    (obj as { strokeMetadata?: { imageLabel?: string }; imageLabel?: string })
+                      ?.strokeMetadata?.imageLabel || (obj as { imageLabel?: string })?.imageLabel;
+                  if (lbl && typeof lbl === 'string' && lbl.includes('::tab:')) {
+                    const tid = lbl.split('::tab:')[1];
+                    tabCounts[tid] = (tabCounts[tid] || 0) + 1;
+                  }
+                });
+                const topEntry = Object.entries(tabCounts).sort((a, b) => b[1] - a[1])[0];
+                if (topEntry) {
+                  const dominantTabId = topEntry[0];
+                  const curState = window.captureTabsByLabel?.[viewId];
+                  const activeTabId = String(curState?.activeTabId || '').trim();
+                  const activeTab = curState?.tabs?.find?.(tab => tab.id === activeTabId) || null;
+                  const shouldRepairActiveTab =
+                    !!curState &&
+                    (!activeTab ||
+                      activeTab.type === 'master' ||
+                      !curState.tabs?.some?.(tab => tab.id === activeTabId));
+                  if (shouldRepairActiveTab && activeTabId !== dominantTabId) {
+                    window.setActiveCaptureTab(viewId, dominantTabId, { skipSave: true });
+                  }
+                }
+              }
+
+              const activeScope =
+                window.app.metadataManager.normalizeImageLabel?.(viewId) || viewId;
+              const strokes = window.app.metadataManager.vectorStrokesByImage[activeScope] || {};
+              const labelVisibility =
+                window.app.metadataManager.strokeLabelVisibility[activeScope] || {};
+
+              console.log(`[Load] Recreating tags for ${Object.keys(strokes).length} strokes`);
+
+              Object.entries(strokes).forEach(([strokeLabel, strokeObj]) => {
+                // Skip guide-scoped strokes that shouldn't appear on the primary canvas
+                if (typeof strokeLabel === 'string' && strokeLabel.startsWith('__guide__:')) return;
+                const isLabelVisible = labelVisibility[strokeLabel] !== false;
+                if (isLabelVisible) {
+                  window.app.tagManager.createTag(strokeLabel, activeScope, strokeObj);
+                }
+              });
+
+              // Ensure tab-scoped visibility is applied immediately after load.
+              if (typeof window.syncCaptureTabCanvasVisibility === 'function') {
+                window.syncCaptureTabCanvasVisibility(viewId);
+              }
+            }
+
+            // Ensure background image is re-applied after JSON load (JSON can clear it)
+            if (view.image) {
+              const canvas = this.canvasManager?.fabricCanvas;
+              const currentBgSrc = canvas?.backgroundImage?.src;
+              if (!currentBgSrc || currentBgSrc !== view.image) {
+                console.log('[Load] Reapplying background image after JSON load:', viewId);
+                await this.setBackgroundImage(view.image, view.fitMode || 'fit-canvas');
+              }
+            }
+
+            resolve();
+          });
+        });
+      } else {
+        // Clear stale tags from previous view when switching to a view with no saved data
+        if (window.app?.tagManager?.clearAllTags) {
+          window.app.tagManager.clearAllTags();
+        }
+        // Clear metadata for this view if no saved data
+        if (window.app?.metadataManager) {
+          window.app.metadataManager.clearImageMetadata(viewId);
+        }
+
+        this.historyManager.saveState();
+      }
+
+      this.restoreViewportForView(viewId);
+
+      // Mount MOS overlays for the new view
+      if (window.app?.measurementOverlayManager) {
+        window.app.measurementOverlayManager.mountView(viewId);
+      }
+
       this.syncLegacyImageListSelection(viewId);
       if (window.imageGallery?.syncToLabel) {
-        window.imageGallery.syncToLabel(viewId, { scroll: true, smooth: false });
+        const skipGalleryScroll = !!window.__scrollSelectDrivenSwitch;
+        window.imageGallery.syncToLabel(viewId, { scroll: !skipGalleryScroll, smooth: false });
       }
 
       const liveRotation = this.canvasManager?.getRotationDegrees?.();
-      if (typeof liveRotation === 'number') {
-        view.rotation = liveRotation;
+      if (typeof liveRotation === 'number' && this.views[viewId]) {
+        this.views[viewId].rotation = liveRotation;
         this.updateThumbnailRotation(viewId, liveRotation);
       }
 
       window.dispatchEvent(
         new CustomEvent('openpaint:view-switched', {
-          detail: { viewId, previousViewId: viewId, source: 'switch-view-refresh' },
+          detail: { viewId, previousViewId, source: 'switch-view' },
         })
       );
 
+      // After all event handlers have fired, sweep for stale tags from other views
+      // that may have been created by async listeners during the switch.
+      if (window.app?.tagManager?.removeStaleTagsForScope) {
+        const sweepScope = window.app.metadataManager?.normalizeImageLabel?.(viewId) || viewId;
+        // Sweep synchronously to avoid 1-frame tag crossover flicker
+        window.app.tagManager.removeStaleTagsForScope(sweepScope);
+        // Sweep after RAF in case async handlers recreated stale tags
+        requestAnimationFrame(() => {
+          if (this.currentViewId === viewId) {
+            window.app.tagManager.removeStaleTagsForScope(sweepScope);
+          }
+        });
+        // Sweep again after double-RAF + delay to catch tags created by
+        // guide split layout sync (which uses a double-RAF chain internally)
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            if (this.currentViewId === viewId) {
+              window.app.tagManager.removeStaleTagsForScope(sweepScope);
+            }
+          });
+        });
+        // Final safety sweep after all async layout has settled
+        setTimeout(() => {
+          if (this.currentViewId === viewId && window.app?.tagManager?.removeStaleTagsForScope) {
+            window.app.tagManager.removeStaleTagsForScope(sweepScope);
+          }
+        }, 200);
+      }
+    } catch (err) {
+      console.error('[ProjectManager] switchView error:', err);
+    } finally {
       this.isSwitchingView = false;
       if (this.pendingSwitchViewId) {
         const nextView = this.pendingSwitchViewId;
         this.pendingSwitchViewId = null;
         this.switchView(nextView, true);
       }
-      return;
-    }
-
-    console.log(`Switching to view: ${viewId}`);
-
-    if (
-      document.getElementById('main-canvas-wrapper')?.classList.contains('guide-split-active') ===
-      true
-    ) {
-      window.dispatchEvent(
-        new CustomEvent('openpaint:guide-split-transition-start', {
-          detail: { viewId, previousViewId: this.currentViewId, source: 'switch-view' },
-        })
-      );
-    }
-
-    // 1. Save current state (skip during project load to avoid clobbering loaded data)
-    if (
-      !this.isLoadingProject &&
-      !this.suspendSave &&
-      !window.__isLoadingProject &&
-      !window.__suspendSaveCurrentView
-    ) {
-      if (window.captureTabsSyncActive) {
-        window.captureTabsSyncActive(this.currentViewId);
-      }
-      this.saveCurrentViewState();
-    } else {
-      console.log('[Load] Skipping saveCurrentViewState during project load');
-    }
-
-    // 2. Clear history for the new view (or we could maintain separate history stacks per view)
-    this.historyManager.clear();
-
-    // 3. Switch context
-    const previousViewId = this.currentViewId;
-    this.currentViewId = viewId;
-    const view = this.views[viewId];
-
-    // Update global currentImageLabel for tag prediction system
-    window.currentImageLabel =
-      (typeof window.getCaptureTabScopedLabel === 'function' &&
-        window.getCaptureTabScopedLabel(viewId)) ||
-      viewId;
-
-    // Update next tag display to start from A1 (or A) for the new image
-    if (window.updateNextTagDisplay) {
-      window.updateNextTagDisplay();
-    }
-
-    if (window.app?.tagManager?.syncTagSizeFromMetadata) {
-      window.app.tagManager.syncTagSizeFromMetadata(viewId);
-    }
-
-    // Apply rotation for the new view
-    // During split mode, only store the rotation value without triggering
-    // applyViewportTransform — the split layout sync handles viewport.
-    if (typeof view.rotation === 'number') {
-      if (this.canvasManager.isGuideSplitActive()) {
-        this.canvasManager.rotationDegrees = ((view.rotation % 360) + 360) % 360;
-      } else {
-        this.canvasManager.setRotationDegrees(view.rotation);
-      }
-      this.updateThumbnailRotation(viewId, view.rotation);
-    }
-
-    // 3b. Unmount MOS overlays for the old view
-    if (window.app?.measurementOverlayManager) {
-      window.app.measurementOverlayManager.unmountView(previousViewId);
-    }
-
-    // 4. Discard selection so control anchors don't persist across views
-    this.canvasManager.fabricCanvas?.discardActiveObject();
-    // Only clear canvas eagerly when there's no canvasData to load (loadFromJSON clears internally).
-    // Skipping the early clear prevents a visible white flash in split mode.
-    if (!view.canvasData) {
-      this.canvasManager.clear();
-    }
-
-    if (window.ensureCaptureTabsForLabel) {
-      window.ensureCaptureTabsForLabel(viewId);
-    }
-    if (window.renderCaptureTabUI) {
-      window.renderCaptureTabUI(viewId);
-    }
-    if (window.applyCaptureFrameForLabel) {
-      window.applyCaptureFrameForLabel(viewId);
-    }
-
-    // 5. Load background image if exists
-    if (view.image) {
-      await this.setBackgroundImage(view.image, view.fitMode || 'fit-canvas');
-    }
-
-    // 6. Restore canvas objects (strokes/text)
-    if (view.canvasData) {
-      // Sanitize canvas data and fix image URLs before loading
-      let sanitizedData = this.sanitizeCanvasJSON(view.canvasData);
-
-      // Filter out objects that belong to a different view (prevents cross-view stroke bleed)
-      if (sanitizedData?.objects && Array.isArray(sanitizedData.objects)) {
-        sanitizedData.objects = sanitizedData.objects
-          .map(obj => {
-            if (!obj || typeof obj !== 'object') return obj;
-            if (obj.customData?.layerType === 'mos-overlay') {
-              return null;
-            }
-            // Filter guide-scoped objects that may have leaked into canvas data
-            const objImageLabel = obj.customData?.imageLabel || obj.imageLabel || '';
-            if (typeof objImageLabel === 'string' && objImageLabel.startsWith('__guide__:')) {
-              return null;
-            }
-            if (obj.customData?.guideReferenceOnly === true) {
-              return null;
-            }
-            if (obj.strokeMetadata) {
-              if (!obj.strokeMetadata.imageLabel) {
-                obj.strokeMetadata.imageLabel = viewId;
-              } else if (
-                obj.strokeMetadata.imageLabel !== viewId &&
-                !obj.strokeMetadata.imageLabel.startsWith(`${viewId}::tab:`)
-              ) {
-                return null;
-              }
-            }
-            return obj;
-          })
-          .filter(Boolean);
-      }
-
-      // Background images are restored separately via setBackgroundImage().
-      // Keeping Fabric's serialized background image here causes duplicate async loads
-      // and can race with the manual restore path during cloud project hydration.
-      if (sanitizedData.backgroundImage && view.image) {
-        delete sanitizedData.backgroundImage;
-        console.log(`[Load] Removed serialized background image for ${viewId}`);
-      }
-
-      // Strip viewportTransform from canvas JSON when guide-split is active.
-      // The saved viewport was captured at full canvas width; restoring it into a
-      // half-width split canvas produces a wrong zoom (e.g. 2× too high). The split
-      // layout sync pipeline will set the correct viewport after load.
-      const isGuideSplitActiveNow =
-        document.getElementById('main-canvas-wrapper')?.classList.contains('guide-split-active') ===
-        true;
-      if (isGuideSplitActiveNow) {
-        delete sanitizedData.viewportTransform;
-        // Also strip canvas dimensions — the saved JSON has full-width values (e.g. 1920)
-        // which Fabric.js restores, causing a brief render at the wrong size before the
-        // split layout sync resizes to the split half-width (e.g. 960).
-        delete sanitizedData.width;
-        delete sanitizedData.height;
-      }
-
-      await new Promise(resolve => {
-        this.canvasManager.loadFromJSON(sanitizedData, async () => {
-          // Restore metadata for this view
-          if (view.metadata && window.app?.metadataManager) {
-            const scopedVectors = view.metadata.vectorStrokesByImage || {};
-            const scopedVisibility = view.metadata.strokeVisibilityByImage || {};
-            const scopedLabelVisibility = view.metadata.strokeLabelVisibility || {};
-
-            Object.entries(scopedVectors).forEach(([key, value]) => {
-              window.app.metadataManager.vectorStrokesByImage[key] = value || {};
-            });
-            Object.entries(scopedVisibility).forEach(([key, value]) => {
-              window.app.metadataManager.strokeVisibilityByImage[key] = value || {};
-            });
-            Object.entries(scopedLabelVisibility).forEach(([key, value]) => {
-              window.app.metadataManager.strokeLabelVisibility[key] = value || {};
-            });
-
-            // Deserialize measurements with validation
-            this.deserializeMeasurements(viewId, view.metadata.strokeMeasurements || {});
-          }
-
-          // After loading, update history initial state
-          this.historyManager.saveState();
-
-          // Rebuild metadata from canvas objects to ensure live references
-          if (window.app?.metadataManager) {
-            window.app.metadataManager.rebuildMetadataFromCanvas(
-              viewId,
-              this.canvasManager.fabricCanvas
-            );
-          }
-
-          // Recreate custom controls for lines and curves
-          const ControlsApi = window.FabricControls || FabricControls;
-
-          const objects = this.canvasManager.fabricCanvas.getObjects();
-          objects.forEach(obj => {
-            if (obj.type === 'line' && obj.strokeMetadata) {
-              ControlsApi.createLineControls(obj);
-            } else if (obj.type === 'path' && obj.customPoints) {
-              ControlsApi.createCurveControls(obj);
-            } else if (
-              (obj.type === 'i-text' || obj.type === 'text') &&
-              obj.strokeMetadata?.type === 'text'
-            ) {
-              // Reattach event handlers for text elements loaded from JSON
-              obj.on('editing:exited', () => {
-                if (window.app?.historyManager) {
-                  window.app.historyManager.saveState();
-                }
-              });
-            }
-          });
-
-          // Recreate tags for all strokes with visible labels
-          if (window.app?.tagManager && window.app?.metadataManager) {
-            // Clear all tags to avoid collisions between views (e.g., multiple A1 labels)
-            if (typeof window.app.tagManager.clearAllTags === 'function') {
-              window.app.tagManager.clearAllTags();
-            }
-
-            // Only fall back to the dominant object scope when the saved active tab is missing
-            // or points at master. Real projects can intentionally keep a different active frame
-            // than the one containing most drawn objects.
-            if (typeof window.setActiveCaptureTab === 'function') {
-              const canvasObjs = this.canvasManager.fabricCanvas?.getObjects() || [];
-              const tabCounts: Record<string, number> = {};
-              canvasObjs.forEach(obj => {
-                const lbl =
-                  (obj as { strokeMetadata?: { imageLabel?: string }; imageLabel?: string })
-                    ?.strokeMetadata?.imageLabel || (obj as { imageLabel?: string })?.imageLabel;
-                if (lbl && typeof lbl === 'string' && lbl.includes('::tab:')) {
-                  const tid = lbl.split('::tab:')[1];
-                  tabCounts[tid] = (tabCounts[tid] || 0) + 1;
-                }
-              });
-              const topEntry = Object.entries(tabCounts).sort((a, b) => b[1] - a[1])[0];
-              if (topEntry) {
-                const dominantTabId = topEntry[0];
-                const curState = window.captureTabsByLabel?.[viewId];
-                const activeTabId = String(curState?.activeTabId || '').trim();
-                const activeTab = curState?.tabs?.find?.(tab => tab.id === activeTabId) || null;
-                const shouldRepairActiveTab =
-                  !!curState &&
-                  (!activeTab ||
-                    activeTab.type === 'master' ||
-                    !curState.tabs?.some?.(tab => tab.id === activeTabId));
-                if (shouldRepairActiveTab && activeTabId !== dominantTabId) {
-                  window.setActiveCaptureTab(viewId, dominantTabId, { skipSave: true });
-                }
-              }
-            }
-
-            const activeScope = window.app.metadataManager.normalizeImageLabel?.(viewId) || viewId;
-            const strokes = window.app.metadataManager.vectorStrokesByImage[activeScope] || {};
-            const labelVisibility =
-              window.app.metadataManager.strokeLabelVisibility[activeScope] || {};
-
-            console.log(`[Load] Recreating tags for ${Object.keys(strokes).length} strokes`);
-
-            Object.entries(strokes).forEach(([strokeLabel, strokeObj]) => {
-              // Skip guide-scoped strokes that shouldn't appear on the primary canvas
-              if (typeof strokeLabel === 'string' && strokeLabel.startsWith('__guide__:')) return;
-              const isLabelVisible = labelVisibility[strokeLabel] !== false;
-              if (isLabelVisible) {
-                window.app.tagManager.createTag(strokeLabel, activeScope, strokeObj);
-              }
-            });
-
-            // Ensure tab-scoped visibility is applied immediately after load.
-            if (typeof window.syncCaptureTabCanvasVisibility === 'function') {
-              window.syncCaptureTabCanvasVisibility(viewId);
-            }
-          }
-
-          // Ensure background image is re-applied after JSON load (JSON can clear it)
-          if (view.image) {
-            const canvas = this.canvasManager?.fabricCanvas;
-            const currentBgSrc = canvas?.backgroundImage?.src;
-            if (!currentBgSrc || currentBgSrc !== view.image) {
-              console.log('[Load] Reapplying background image after JSON load:', viewId);
-              await this.setBackgroundImage(view.image, view.fitMode || 'fit-canvas');
-            }
-          }
-
-          resolve();
-        });
-      });
-    } else {
-      // Clear stale tags from previous view when switching to a view with no saved data
-      if (window.app?.tagManager?.clearAllTags) {
-        window.app.tagManager.clearAllTags();
-      }
-      // Clear metadata for this view if no saved data
-      if (window.app?.metadataManager) {
-        window.app.metadataManager.clearImageMetadata(viewId);
-      }
-
-      this.historyManager.saveState();
-    }
-
-    this.restoreViewportForView(viewId);
-    await this.reconcileBackgroundPlacementForView(viewId);
-
-    // Mount MOS overlays for the new view
-    if (window.app?.measurementOverlayManager) {
-      window.app.measurementOverlayManager.mountView(viewId);
-    }
-
-    this.syncLegacyImageListSelection(viewId);
-    if (window.imageGallery?.syncToLabel) {
-      const skipGalleryScroll = !!window.__scrollSelectDrivenSwitch;
-      window.imageGallery.syncToLabel(viewId, { scroll: !skipGalleryScroll, smooth: false });
-    }
-
-    const liveRotation = this.canvasManager?.getRotationDegrees?.();
-    if (typeof liveRotation === 'number' && this.views[viewId]) {
-      this.views[viewId].rotation = liveRotation;
-      this.updateThumbnailRotation(viewId, liveRotation);
-    }
-
-    window.dispatchEvent(
-      new CustomEvent('openpaint:view-switched', {
-        detail: { viewId, previousViewId, source: 'switch-view' },
-      })
-    );
-
-    // After all event handlers have fired, sweep for stale tags from other views
-    // that may have been created by async listeners during the switch.
-    if (window.app?.tagManager?.removeStaleTagsForScope) {
-      const sweepScope = window.app.metadataManager?.normalizeImageLabel?.(viewId) || viewId;
-      // Sweep synchronously to avoid 1-frame tag crossover flicker
-      window.app.tagManager.removeStaleTagsForScope(sweepScope);
-      // Sweep after RAF in case async handlers recreated stale tags
-      requestAnimationFrame(() => {
-        if (this.currentViewId === viewId) {
-          window.app.tagManager.removeStaleTagsForScope(sweepScope);
-        }
-      });
-      // Sweep again after double-RAF + delay to catch tags created by
-      // guide split layout sync (which uses a double-RAF chain internally)
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          if (this.currentViewId === viewId) {
-            window.app.tagManager.removeStaleTagsForScope(sweepScope);
-          }
-        });
-      });
-      // Final safety sweep after all async layout has settled
-      setTimeout(() => {
-        if (this.currentViewId === viewId && window.app?.tagManager?.removeStaleTagsForScope) {
-          window.app.tagManager.removeStaleTagsForScope(sweepScope);
-        }
-      }, 200);
-    }
-
-    this.isSwitchingView = false;
-    if (this.pendingSwitchViewId) {
-      const nextView = this.pendingSwitchViewId;
-      this.pendingSwitchViewId = null;
-      this.switchView(nextView, true);
     }
   }
 
@@ -787,6 +798,8 @@ export class ProjectManager {
       return;
     }
 
+    // Capture-tab path — handles cross-resolution correctly via geometry-aware
+    // fitViewportToWorldRect (which uses current canvas center/dimensions).
     if (
       window.captureTabsByLabel?.[viewId] &&
       typeof window.applyCaptureFrameForLabel === 'function'
@@ -795,8 +808,32 @@ export class ProjectManager {
       return;
     }
 
+    // No-capture-tab fallback: check for resolution mismatch
     const view = this.views?.[viewId];
     if (view?.viewport) {
+      const savedW = Number(view.viewport.savedCanvasWidth) || 0;
+      const savedH = Number(view.viewport.savedCanvasHeight) || 0;
+      const currentW = Number(this.canvasManager.fabricCanvas?.width) || 0;
+      const currentH = Number(this.canvasManager.fabricCanvas?.height) || 0;
+      const dimensionsDiffer =
+        savedW > 0 &&
+        savedH > 0 &&
+        (Math.abs(savedW - currentW) > 2 || Math.abs(savedH - currentH) > 2);
+
+      if (dimensionsDiffer) {
+        const bgRect = this.canvasManager.getBackgroundWorldRect?.();
+        const placementFrame = this.canvasManager.getBackgroundPlacementFrame?.();
+        if (bgRect && placementFrame) {
+          this.canvasManager.fitViewportToBackgroundPlacementFrame(
+            bgRect,
+            placementFrame,
+            view.viewport
+          );
+          this.canvasManager.applyViewportTransform();
+          return;
+        }
+      }
+
       this.canvasManager.setViewportState(view.viewport);
     }
   }
@@ -914,6 +951,9 @@ export class ProjectManager {
 
   saveCurrentViewState(options?: { skipViewport?: boolean }) {
     const json = this.canvasManager.toJSON();
+    console.log(
+      `[saveCurrentViewState] Saving ${this.currentViewId} with ${json?.objects?.length || 0} objects`
+    );
     this.stripMosOverlayObjects(json);
     if (this.views[this.currentViewId]) {
       const skipViewport = options?.skipViewport === true;
@@ -1325,9 +1365,15 @@ export class ProjectManager {
     console.log(`[Image Debug] Fit mode: ${fitMode}`);
 
     return new Promise(resolve => {
+      const timeout = setTimeout(() => {
+        console.error('[Image Debug] setBackgroundImage timed out for:', url?.substring?.(0, 80));
+        resolve();
+      }, 10000);
+
       fabric.Image.fromURL(
         url,
         img => {
+          clearTimeout(timeout);
           const canvas = this.canvasManager.fabricCanvas;
           if (!canvas) {
             console.log('[Image Debug] ❌ No canvas available');
@@ -2585,9 +2631,24 @@ export class ProjectManager {
 
       // Persist per-image viewport (zoom/pan) so framing is restored on load
       if (viewId === this.currentViewId) {
-        entry.viewport = this.canvasManager.getViewportState();
+        entry.viewport = {
+          ...this.canvasManager.getViewportState(),
+          savedCanvasWidth: this.canvasManager.fabricCanvas?.width || 0,
+          savedCanvasHeight: this.canvasManager.fabricCanvas?.height || 0,
+        };
       } else if (view.viewport) {
         entry.viewport = deepClone(view.viewport);
+      }
+
+      // Persist backgroundWorldRect so the background image is placed at the
+      // exact same world-space position on reload (even if window size changed)
+      if (viewId === this.currentViewId) {
+        const liveWorldRect = this.canvasManager.getBackgroundWorldRect?.();
+        if (liveWorldRect) {
+          entry.backgroundWorldRect = JSON.parse(JSON.stringify(liveWorldRect));
+        }
+      } else if (view.backgroundWorldRect) {
+        entry.backgroundWorldRect = deepClone(view.backgroundWorldRect);
       }
 
       viewEntries[viewId] = entry;

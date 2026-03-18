@@ -1790,7 +1790,13 @@ export function initToolbarController() {
       const canvas = window.app?.canvasManager?.fabricCanvas;
       if (!canvas || !state || !activeTab) return;
 
-      const getObjectScopeLabel = obj => obj?.strokeMetadata?.imageLabel || obj?.imageLabel || null;
+      const getObjectScopeLabel = obj => {
+        // For tag objects (groups), prefer scopedLabel if it exists (includes ::tab: for multi-frame support)
+        if ((obj?.isTag || obj?.isTagGroup) && obj?.scopedLabel) {
+          return obj.scopedLabel;
+        }
+        return obj?.strokeMetadata?.imageLabel || obj?.imageLabel || obj?.scopedLabel || null;
+      };
       const getObjectStrokeLabel = obj =>
         obj?.strokeLabel ||
         obj?.strokeMetadata?.strokeLabel ||

@@ -201,6 +201,7 @@ function restoreGuideSplitPanelSnapshot() {
     } else {
       elementsBody.classList.remove('hidden');
       elementsBody.style.removeProperty('display');
+      elementsBody.style.setProperty('display', snapshot?.elementsBodyDisplay || '', 'important');
     }
   }
   if (imagePanelContent) {
@@ -210,6 +211,11 @@ function restoreGuideSplitPanelSnapshot() {
     } else {
       imagePanelContent.classList.remove('hidden');
       imagePanelContent.style.removeProperty('display');
+      imagePanelContent.style.setProperty(
+        'display',
+        snapshot?.imagePanelContentDisplay || '',
+        'important'
+      );
     }
   }
   if (strokeToggleIcon instanceof HTMLElement) {
@@ -5028,11 +5034,16 @@ function setGuideSplitEnabled(enabled) {
     guideCompareWorkspaceState.leftViewId = toBaseViewId(getCurrentViewId());
   }
   if (next) {
+    // Save current canvas state BEFORE entering split mode so vectors can be restored
+    const pm = window.app?.projectManager || window.projectManager;
+    if (pm && typeof pm.saveCurrentViewState === 'function') {
+      pm.saveCurrentViewState();
+    }
+
     // Snapshot every view's backgroundWorldRect BEFORE the canvas shrinks to
     // half-width.  This is the last moment the BG is at its authoritative
     // full-width position; once split layout activates, setBackgroundImage
     // would re-center at the split canvas dimensions, losing the original.
-    const pm = window.app?.projectManager || window.projectManager;
     const cm = pm?.canvasManager;
     if (pm && cm) {
       // Save current view's BG rect (it's the one on canvas right now)

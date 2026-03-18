@@ -1618,18 +1618,18 @@
       /* Vertical overflow remains visible for dropdown menus */
 
       /* STEP 2: CSS variants - Use data-toolbar-mode to control label display */
-      /* 
+      /*
          * Toolbar Label Sizing System:
-         * 
+         *
          * This system uses a global data-toolbar-mode attribute on <html> to control
          * toolbar label display, preventing flicker and pop-in during page load.
-         * 
+         *
          * How it works:
          * 1. Early script (in <head>) sets data-toolbar-mode='full' or 'compact' based on viewport width
          * 2. CSS reads this attribute to show/hide .label-long and .label-short spans
          * 3. JS fallback recalculates after fonts load and on window resize
          * 4. ResizeObserver is disabled for toolbar containers to prevent flicker loops
-         * 
+         *
          * Benefits:
          * - No DOM rewrites (only attribute changes)
          * - CSS handles display immediately (no JS delay)
@@ -4134,17 +4134,23 @@
         </div>
         <table style="width:100%;border-collapse:collapse;font-size:14px;">
           <tbody>
-            <tr><td style="padding:6px 0;color:var(--ob-text-secondary,#64748b);">Draw mode</td><td style="padding:6px 0;text-align:right;font-weight:600;">D</td></tr>
+            <tr><td style="padding:6px 0;color:var(--ob-text-secondary,#64748b);">Draw mode (line)</td><td style="padding:6px 0;text-align:right;font-weight:600;">D</td></tr>
             <tr><td style="padding:6px 0;color:var(--ob-text-secondary,#64748b);">Text tool</td><td style="padding:6px 0;text-align:right;font-weight:600;">T</td></tr>
             <tr><td style="padding:6px 0;color:var(--ob-text-secondary,#64748b);">Shapes</td><td style="padding:6px 0;text-align:right;font-weight:600;">S</td></tr>
-            <tr><td style="padding:6px 0;color:var(--ob-text-secondary,#64748b);">Select mode</td><td style="padding:6px 0;text-align:right;font-weight:600;">V</td></tr>
+            <tr><td style="padding:6px 0;color:var(--ob-text-secondary,#64748b);">Select mode</td><td style="padding:6px 0;text-align:right;font-weight:600;">M</td></tr>
+            <tr><td style="padding:6px 0;color:var(--ob-text-secondary,#64748b);">Cycle tools</td><td style="padding:6px 0;text-align:right;font-weight:600;">Tab</td></tr>
             <tr><td style="padding:6px 0;color:var(--ob-text-secondary,#64748b);">Lock/unlock frame</td><td style="padding:6px 0;text-align:right;font-weight:600;">L</td></tr>
+            <tr style="border-top:1px solid var(--ob-border-color,#e2e8f0);"><td style="padding:6px 0;color:var(--ob-text-secondary,#64748b);">Toggle split workspace</td><td style="padding:6px 0;text-align:right;font-weight:600;">\</td></tr>
+            <tr><td style="padding:6px 0;color:var(--ob-text-secondary,#64748b);">Cycle guide in split</td><td style="padding:6px 0;text-align:right;font-weight:600;">Shift + \</td></tr>
+            <tr><td style="padding:6px 0;color:var(--ob-text-secondary,#64748b);">Guide gallery</td><td style="padding:6px 0;text-align:right;font-weight:600;">Alt + \</td></tr>
+            <tr style="border-top:1px solid var(--ob-border-color,#e2e8f0);"><td style="padding:6px 0;color:var(--ob-text-secondary,#64748b);">Resize frame</td><td style="padding:6px 0;text-align:right;font-weight:600;">+ / −</td></tr>
+            <tr><td style="padding:6px 0;color:var(--ob-text-secondary,#64748b);">Previous / Next image</td><td style="padding:6px 0;text-align:right;font-weight:600;">← →</td></tr>
             <tr style="border-top:1px solid var(--ob-border-color,#e2e8f0);"><td style="padding:6px 0;color:var(--ob-text-secondary,#64748b);">Undo</td><td style="padding:6px 0;text-align:right;font-weight:600;">Ctrl/Cmd + Z</td></tr>
             <tr><td style="padding:6px 0;color:var(--ob-text-secondary,#64748b);">Redo</td><td style="padding:6px 0;text-align:right;font-weight:600;">Ctrl/Cmd + Y</td></tr>
             <tr><td style="padding:6px 0;color:var(--ob-text-secondary,#64748b);">Paste image</td><td style="padding:6px 0;text-align:right;font-weight:600;">Ctrl/Cmd + V</td></tr>
-            <tr><td style="padding:6px 0;color:var(--ob-text-secondary,#64748b);">Save project</td><td style="padding:6px 0;text-align:right;font-weight:600;">Ctrl/Cmd + S</td></tr>
-            <tr style="border-top:1px solid var(--ob-border-color,#e2e8f0);"><td style="padding:6px 0;color:var(--ob-text-secondary,#64748b);">Previous/Next image</td><td style="padding:6px 0;text-align:right;font-weight:600;">← →</td></tr>
-            <tr><td style="padding:6px 0;color:var(--ob-text-secondary,#64748b);">This help</td><td style="padding:6px 0;text-align:right;font-weight:600;">?</td></tr>
+            <tr><td style="padding:6px 0;color:var(--ob-text-secondary,#64748b);">Delete selected</td><td style="padding:6px 0;text-align:right;font-weight:600;">Delete / Backspace</td></tr>
+            <tr style="border-top:1px solid var(--ob-border-color,#e2e8f0);"><td style="padding:6px 0;color:var(--ob-text-secondary,#64748b);">Pixel Pets <span style="font-size:11px;color:#94a3b8;">(needs sign in)</span></td><td style="padding:6px 0;text-align:right;font-weight:600;">Ctrl/Cmd + Shift + P</td></tr>
+            <tr><td style="padding:6px 0;color:var(--ob-text-secondary,#64748b);">This help</td><td style="padding:6px 0;text-align:right;font-weight:600;">? / H</td></tr>
           </tbody>
         </table>
       </div>

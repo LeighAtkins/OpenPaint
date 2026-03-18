@@ -372,15 +372,15 @@ async function openMeasurementRelationsEditor() {
         <button id="addRelationCheck" type="button" style="margin-top:8px;border:1px solid #E7EAEE;background:#fff;border-radius:12px;padding:8px 14px;font-size:12px;cursor:pointer;font-weight:600;font-family:'Instrument Sans','Inter',sans-serif;color:#0B0D10;">+ Add check</button>
       </section>
 
-      <section class="relations-section">
-        <h3 style="margin:0 0 8px;font-size:16px;color:#151A20;font-weight:600;">Cross-image Connections</h3>
+      <details class="relations-section">
+        <summary style="cursor:pointer;font-size:16px;color:#151A20;font-weight:600;margin:0 0 8px;list-style:revert;">Cross-image Connections</summary>
         <p style="margin:0 0 8px;font-size:12px;color:#3E4752;">Link specific measurements across images to verify they connect at the same point.</p>
         <table class="relations-table">
           <thead><tr><th>From</th><th>To</th><th>Note</th><th>Status</th><th></th></tr></thead>
           <tbody id="relationsConnectionsBody"></tbody>
         </table>
         <button id="addRelationConnection" type="button" style="margin-top:8px;border:1px solid #E7EAEE;background:#fff;border-radius:12px;padding:8px 14px;font-size:12px;cursor:pointer;font-weight:600;font-family:'Instrument Sans','Inter',sans-serif;color:#0B0D10;">+ Add connection</button>
-      </section>
+      </details>
 
       <div style="margin-top:16px;display:flex;justify-content:flex-end;gap:10px;">
         <button id="saveRelations" type="button" style="border:none;background:#0B0D10;color:#fff;border-radius:12px;padding:10px 20px;font-weight:600;cursor:pointer;font-family:'Instrument Sans','Inter',sans-serif;font-size:14px;">Save tags</button>

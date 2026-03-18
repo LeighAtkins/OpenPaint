@@ -21,6 +21,12 @@ interface RoleCacheEntry {
 const guideRoleCache = new Map<string, Promise<RoleCacheEntry>>();
 let refreshTimer: number | null = null;
 let lastRenderKey = '';
+let manualChipOverride = false;
+let renderPending = false;
+let lastRenderTime = 0;
+const MIN_RENDER_INTERVAL = 100; // ms
+let lastStrokeCreatedTime = 0;
+const STROKE_ADVANCE_WINDOW = 500; // Only auto-advance within 500ms of stroke creation
 
 function dispatchGuideNextTagChanged(viewId: string, tag: string): boolean {
   const normalizedViewId = (viewId || '').trim();
@@ -1159,7 +1165,7 @@ function bindIndicatorWindowControls(root: HTMLElement): void {
 function applyGuideOneTimeSeed(
   viewId: string,
   tag: string,
-  options: { strictScope?: boolean; dispatchEvent?: boolean } = {}
+  options: { strictScope?: boolean; dispatchEvent?: boolean; isChipClick?: boolean } = {}
 ): void {
   const baseView = toBaseViewId(viewId);
   const scoped = getCwScopedViewKey(viewId);
@@ -1174,24 +1180,38 @@ function applyGuideOneTimeSeed(
     : Array.from(new Set([baseView, scoped, activeView, activeScoped].filter(Boolean)));
 
   (window as any).guideOneTimeTagByImage = (window as any).guideOneTimeTagByImage || {};
-  keys.forEach(key => {
-    (window as any).guideOneTimeTagByImage[key] = normalizedTag;
-  });
-
   (window as any).labelsByImage = (window as any).labelsByImage || {};
-  keys.forEach(key => {
-    (window as any).labelsByImage[key] = normalizedTag;
-  });
-
   (window as any).manualTagByImage = (window as any).manualTagByImage || {};
-  keys.forEach(key => {
-    delete (window as any).manualTagByImage[key];
-  });
+
+  if (options.isChipClick) {
+    // Explicit chip click — override everything
+    keys.forEach(key => {
+      (window as any).guideOneTimeTagByImage[key] = normalizedTag;
+      (window as any).labelsByImage[key] = normalizedTag;
+      delete (window as any).manualTagByImage[key];
+    });
+  } else {
+    // Passive render — don't interfere when user typed a tag or chip sequence is active
+    keys.forEach(key => {
+      if (!(window as any).manualTagByImage[key]) {
+        (window as any).guideOneTimeTagByImage[key] = normalizedTag;
+        (window as any).labelsByImage[key] = normalizedTag;
+      }
+    });
+  }
 
   (window as any).currentImageLabel = scoped;
 
   const nextTagDisplay = document.getElementById('nextTagDisplay');
-  if (nextTagDisplay && document.activeElement !== nextTagDisplay) {
+  // Don't overwrite nextTagDisplay when a manual override is active (unless this is a chip click)
+  const hasManualOverride =
+    !options.isChipClick &&
+    keys.some(
+      key =>
+        (window as any).manualTagByImage?.[key] &&
+        normalizeLabel((window as any).manualTagByImage[key]) !== normalizedTag
+    );
+  if (nextTagDisplay && document.activeElement !== nextTagDisplay && !hasManualOverride) {
     nextTagDisplay.textContent = normalizedTag;
   }
 
@@ -1247,100 +1267,124 @@ function findNextUnusedRole(roles: string[], used: Set<string>, startRole: strin
 }
 
 async function renderIndicator(): Promise<void> {
-  const root = ensureRoot();
-  ensureHeaderToggle();
-  const viewId = getCurrentViewId();
-  const activeTool = getActiveToolName();
-  const showForTool = DRAW_MEASUREMENT_TOOLS.has(activeTool);
-  if (!showForTool || !isIndicatorEnabled() || isGuideOverlayVisible()) {
-    hideIndicator();
-    return;
-  }
+  try {
+    const root = ensureRoot();
+    ensureHeaderToggle();
+    const viewId = getCurrentViewId();
+    const activeTool = getActiveToolName();
+    const showForTool = DRAW_MEASUREMENT_TOOLS.has(activeTool);
+    if (!showForTool || !isIndicatorEnabled() || isGuideOverlayVisible()) {
+      hideIndicator();
+      return;
+    }
 
-  const activeGuide = resolveActiveGuideSelection(viewId);
-  const code = activeGuide.code;
-  const cwGuide = code
-    ? { roles: [], strictScope: false, scopeKey: getCwScopedViewKey(viewId) }
-    : getCwGuideScopeInfo(viewId);
-  const usingCwGuide = !code && cwGuide.roles.length > 0;
-  if (!code && !usingCwGuide) {
-    hideIndicator();
-    return;
-  }
+    const activeGuide = resolveActiveGuideSelection(viewId);
+    const code = activeGuide.code;
+    const cwGuide = code
+      ? { roles: [], strictScope: false, scopeKey: getCwScopedViewKey(viewId) }
+      : getCwGuideScopeInfo(viewId);
+    const usingCwGuide = !code && cwGuide.roles.length > 0;
+    if (!code && !usingCwGuide) {
+      hideIndicator();
+      return;
+    }
 
-  const { roles, ok: guideOk } = code
-    ? await getGuideRoles(code, activeGuide.variant)
-    : { roles: cwGuide.roles, ok: true };
-  if (!guideOk || !roles.length) {
-    hideIndicator();
-    return;
-  }
-  const used = getUsedStrokeLabels(viewId);
+    const { roles, ok: guideOk } = code
+      ? await getGuideRoles(code, activeGuide.variant)
+      : { roles: cwGuide.roles, ok: true };
+    if (!guideOk || !roles.length) {
+      hideIndicator();
+      return;
+    }
+    const used = getUsedStrokeLabels(viewId);
 
-  const scoped = getCwScopedViewKey(viewId);
-  const guideSeeds = (window as any).guideOneTimeTagByImage || {};
-  const seeded = normalizeLabel(
-    usingCwGuide && cwGuide.strictScope
-      ? guideSeeds[cwGuide.scopeKey] || ''
-      : guideSeeds[scoped] || guideSeeds[toBaseViewId(viewId)] || ''
-  );
+    const scoped = getCwScopedViewKey(viewId);
+    const guideSeeds = (window as any).guideOneTimeTagByImage || {};
+    const seeded = normalizeLabel(
+      usingCwGuide && cwGuide.strictScope
+        ? guideSeeds[cwGuide.scopeKey] || ''
+        : guideSeeds[scoped] || guideSeeds[toBaseViewId(viewId)] || ''
+    );
 
-  let activeRole = resolveGuideActiveRole(viewId, roles);
-  // If the resolved role is already used (e.g. seed from a just-drawn stroke),
-  // advance to the next unused role from that position instead of sticking on it.
-  if (activeRole && used.has(normalizeLabel(activeRole))) {
-    activeRole = findNextUnusedRole(roles, used, activeRole);
-  }
-  const seededRole =
-    seeded && (roles.includes(seeded) || /^[A-Z](?:\d+)?$/.test(seeded)) ? seeded : '';
-  if (!activeRole && seededRole) {
-    activeRole = used.has(normalizeLabel(seededRole))
-      ? findNextUnusedRole(roles, used, seededRole)
-      : seededRole;
-  }
-  if (!activeRole) {
-    activeRole = findNextUnusedRole(roles, used, roles[0] || '');
-  }
-  if (!activeRole) {
-    activeRole = getFallbackNextLabel(viewId);
-  }
-  if (!activeRole) {
-    hideIndicator();
-    return;
-  }
+    // Check if the user has a manual tag sequence active (from chip click + draw, or typed tag)
+    const manualTags = (window as any).manualTagByImage || {};
+    const manualTag = normalizeLabel(manualTags[scoped] || manualTags[toBaseViewId(viewId)] || '');
 
-  const chips = buildRoleChips(roles, activeRole);
-  const chipHtml = chips
-    .map(label => {
-      const activeClass = label === activeRole ? ' active' : '';
-      return `<button type="button" class="measurement-guide-indicator-chip${activeClass}" data-guide-role="${label}">${label}</button>`;
-    })
-    .join('');
-  const heroUrl = code
-    ? await fetchGuideRasterUrl(code, activeGuide.variant, {
-        mode: 'preview',
-        activeRole,
-        dimInactive: true,
+    let activeRole = resolveGuideActiveRole(viewId, roles);
+    // If the resolved role is already used (e.g. seed from a just-drawn stroke),
+    // advance to the next unused role from that position instead of sticking on it.
+    // Only auto-advance when:
+    // 1. User didn't explicitly click a chip (manualChipOverride)
+    // 2. A stroke was just created (within STROKE_ADVANCE_WINDOW)
+    const timeSinceStroke = Date.now() - lastStrokeCreatedTime;
+    const isStrokeCreatedRecently = timeSinceStroke < STROKE_ADVANCE_WINDOW;
+    const skipAutoAdvance = manualChipOverride || !isStrokeCreatedRecently;
+    manualChipOverride = false;
+    if (activeRole && !skipAutoAdvance && used.has(normalizeLabel(activeRole))) {
+      activeRole = findNextUnusedRole(roles, used, activeRole);
+    }
+
+    // If a manual tag sequence is active (e.g., G2 after drawing G1), try to show it
+    // or advance from its position in the roles list
+    if (!activeRole && manualTag) {
+      if (roles.includes(manualTag) && !used.has(manualTag)) {
+        activeRole = manualTag;
+      } else {
+        // Find next unused role starting from the manual tag's position
+        activeRole = findNextUnusedRole(roles, used, manualTag);
+      }
+    }
+
+    const seededRole =
+      seeded && (roles.includes(seeded) || /^[A-Z](?:\d+)?$/.test(seeded)) ? seeded : '';
+    if (!activeRole && seededRole) {
+      activeRole = used.has(normalizeLabel(seededRole))
+        ? findNextUnusedRole(roles, used, seededRole)
+        : seededRole;
+    }
+    if (!activeRole) {
+      activeRole = findNextUnusedRole(roles, used, roles[0] || '');
+    }
+    if (!activeRole) {
+      activeRole = getFallbackNextLabel(viewId);
+    }
+    if (!activeRole) {
+      hideIndicator();
+      return;
+    }
+
+    const chips = buildRoleChips(roles, activeRole);
+    const chipHtml = chips
+      .map(label => {
+        const activeClass = label === activeRole ? ' active' : '';
+        return `<button type="button" class="measurement-guide-indicator-chip${activeClass}" data-guide-role="${label}">${label}</button>`;
       })
-    : '';
+      .join('');
+    const heroUrl = code
+      ? await fetchGuideRasterUrl(code, activeGuide.variant, {
+          mode: 'preview',
+          activeRole,
+          dimInactive: true,
+        })
+      : '';
 
-  const activeSize = resolveIndicatorSize(activeTool);
-  const unlocked = getIndicatorLayoutUnlocked();
-  const breadcrumb = usingCwGuide ? 'Bound: CW Import' : getBindingBreadcrumb(viewId);
-  const renderKey = `${viewId}|${code || 'cw'}|${activeGuide.variant}|${activeRole}|${chips.join(',')}|${activeSize}|${unlocked ? 'u' : 'l'}|${breadcrumb}`;
-  if (renderKey === lastRenderKey) {
-    applyIndicatorPreset(root, activeSize);
-    positionIndicator(root);
-    applyGuideOneTimeSeed(viewId, activeRole, {
-      strictScope: usingCwGuide && cwGuide.strictScope,
-      dispatchEvent: false,
-    });
-    root.style.display = 'block';
-    return;
-  }
-  lastRenderKey = renderKey;
+    const activeSize = resolveIndicatorSize(activeTool);
+    const unlocked = getIndicatorLayoutUnlocked();
+    const breadcrumb = usingCwGuide ? 'Bound: CW Import' : getBindingBreadcrumb(viewId);
+    const renderKey = `${viewId}|${code || 'cw'}|${activeGuide.variant}|${activeRole}|${chips.join(',')}|${activeSize}|${unlocked ? 'u' : 'l'}|${breadcrumb}`;
+    if (renderKey === lastRenderKey) {
+      applyIndicatorPreset(root, activeSize);
+      positionIndicator(root);
+      applyGuideOneTimeSeed(viewId, activeRole, {
+        strictScope: usingCwGuide && cwGuide.strictScope,
+        dispatchEvent: false,
+      });
+      root.style.display = 'block';
+      return;
+    }
+    lastRenderKey = renderKey;
 
-  root.innerHTML = `
+    root.innerHTML = `
     <div class="measurement-guide-indicator-head">
       <span>Mini Guide</span>
       <strong>${activeRole}</strong>
@@ -1361,29 +1405,52 @@ async function renderIndicator(): Promise<void> {
     </div>
     <div class="measurement-guide-indicator-track">${chipHtml}</div>
   `;
-  applyIndicatorPreset(root, activeSize);
-  positionIndicator(root);
-  applyGuideOneTimeSeed(viewId, activeRole, {
-    strictScope: usingCwGuide && cwGuide.strictScope,
-    dispatchEvent: false,
-  });
-  root.querySelectorAll('[data-guide-role]').forEach(node => {
-    node.addEventListener('click', event => {
-      event.preventDefault();
-      event.stopPropagation();
-      const role = (event.currentTarget as HTMLElement | null)?.dataset.guideRole || '';
-      if (!role) return;
-      applyGuideOneTimeSeed(viewId, role, {
-        strictScope: usingCwGuide && cwGuide.strictScope,
-      });
-      scheduleRender();
+    applyIndicatorPreset(root, activeSize);
+    positionIndicator(root);
+    applyGuideOneTimeSeed(viewId, activeRole, {
+      strictScope: usingCwGuide && cwGuide.strictScope,
+      dispatchEvent: false,
     });
-  });
-  bindIndicatorWindowControls(root);
-  root.style.display = 'block';
+    root.querySelectorAll('[data-guide-role]').forEach(node => {
+      node.addEventListener('click', event => {
+        event.preventDefault();
+        event.stopPropagation();
+        const role = (event.currentTarget as HTMLElement | null)?.dataset.guideRole || '';
+        if (!role) return;
+        manualChipOverride = true;
+        applyGuideOneTimeSeed(viewId, role, {
+          strictScope: usingCwGuide && cwGuide.strictScope,
+          isChipClick: true,
+          dispatchEvent: false,
+        });
+        scheduleRender();
+      });
+    });
+    bindIndicatorWindowControls(root);
+    root.style.display = 'block';
+  } catch (error) {
+    console.error('[measurement-guide-indicator] Render error:', error);
+    hideIndicator();
+  }
 }
 
 function scheduleRender(): void {
+  if (renderPending) return;
+
+  const now = Date.now();
+  const timeSinceLastRender = now - lastRenderTime;
+
+  if (timeSinceLastRender < MIN_RENDER_INTERVAL) {
+    renderPending = true;
+    setTimeout(() => {
+      renderPending = false;
+      lastRenderTime = Date.now();
+      void renderIndicator();
+    }, MIN_RENDER_INTERVAL - timeSinceLastRender);
+    return;
+  }
+
+  lastRenderTime = now;
   void renderIndicator();
 }
 
@@ -1399,7 +1466,10 @@ export function initMeasurementGuideIndicator(): void {
   };
 
   window.addEventListener('toolchange', scheduleRender);
-  window.addEventListener('openpaint:stroke-created', scheduleRender as EventListener);
+  window.addEventListener('openpaint:stroke-created', (() => {
+    lastStrokeCreatedTime = Date.now();
+    scheduleRender();
+  }) as EventListener);
   window.addEventListener('openpaint:guide-binding-changed', scheduleRender);
   window.addEventListener('openpaint:guide-split-changed', scheduleRender);
   window.addEventListener('openpaint:guide-next-tag-changed', scheduleRender as EventListener);

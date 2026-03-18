@@ -219,10 +219,23 @@ export class App {
       // Setup UI bindings
       this.setupUI();
 
-      // Touch event support for mobile devices
+      // Touch event support for mobile devices — only intercept canvas touches.
+      // Let buttons, overlays, dialogs, and other UI handle their own events.
+      const isCanvasTouch = (target: EventTarget | null): boolean => {
+        if (!(target instanceof HTMLElement)) return false;
+        // Allow normal behaviour for interactive UI elements and overlays
+        if (target.closest('button, a, input, select, textarea, dialog, [role="button"], label'))
+          return false;
+        if (target.closest('#welcomeOverlay, #shortcutHelpDialog, #helpOverlay')) return false;
+        // Only intercept touches on the canvas area
+        const canvas = document.querySelector('.canvas-container');
+        return canvas ? canvas.contains(target) : false;
+      };
+
       document.addEventListener(
         'touchstart',
         e => {
+          if (!isCanvasTouch(e.target)) return;
           e.preventDefault();
           if (e.touches.length === 1) {
             const touch = e.touches[0];
@@ -235,6 +248,7 @@ export class App {
       document.addEventListener(
         'touchmove',
         e => {
+          if (!isCanvasTouch(e.target)) return;
           e.preventDefault();
           if (e.touches.length === 1) {
             const touch = e.touches[0];
@@ -247,6 +261,7 @@ export class App {
       document.addEventListener(
         'touchend',
         e => {
+          if (!isCanvasTouch(e.target)) return;
           if (e.touches.length === 1) {
             const touch = e.touches[0];
             this.canvasManager.handleTouchEnd(touch);
@@ -1445,6 +1460,20 @@ export class App {
 
       wrapper.addEventListener('mouseenter', showMenu);
       wrapper.addEventListener('mouseleave', scheduleHide);
+
+      // Touch support: tap the toggle button to open/close menu on mobile
+      const toggleBtn = wrapper.querySelector<HTMLElement>('.tbtn');
+      if (toggleBtn) {
+        toggleBtn.addEventListener('touchend', (e: TouchEvent) => {
+          // Only handle single-tap on the toggle button itself
+          if (e.target !== toggleBtn && !toggleBtn.contains(e.target as Node)) return;
+          if (wrapper.classList.contains('shape-open')) {
+            wrapper.classList.remove('shape-open');
+          } else {
+            showMenu();
+          }
+        });
+      }
     };
 
     shapeModeWrappers.forEach(wrapper => bindShapeMenu(wrapper, () => true));
@@ -1965,6 +1994,8 @@ export class App {
       }
       setLineStyleIcon(normalizedStyle);
       this.updateDashSplitHandleForSelection();
+      // Notify line style preview to re-render
+      window.dispatchEvent(new CustomEvent('dash-style-changed'));
     };
 
     if (dashStyleSelect) {
@@ -2226,7 +2257,7 @@ export class App {
             ? uiArrowSettings.endArrow
             : previewArrowState.endArrow;
         const width = Math.max(1, parseBrushWidth(brushSizeSelect.value));
-        const arrowStyle = lineStyleArrowStyle?.value || arrowStyleTop?.value || 'hand-2';
+        const arrowStyle = lineStyleArrowStyle?.value || arrowStyleTop?.value || 'triangular';
         const arrowSize = Number(lineStyleArrowSize?.value || arrowSizeTop?.value || '15') || 15;
         const style = this.currentDashSettings.style || 'solid';
         const pattern = this.getDashPatternForStyle(style);
@@ -2300,6 +2331,7 @@ export class App {
         'arrow-settings-updated',
         handleArrowSettingsUpdated as EventListener
       );
+      window.addEventListener('dash-style-changed', syncPreview);
       (document.getElementById('colorPicker') as HTMLInputElement | null)?.addEventListener(
         'change',
         syncPreview
@@ -2835,10 +2867,41 @@ export class App {
         return;
       }
 
-      // Handle help menu toggle
-      if (e.key === 'h' || e.key === 'H') {
-        e.preventDefault();
-        this.toggleHelpMenu();
+      // Tool shortcuts: D=draw (line), T=text, S=shapes, M=select
+      // Skip tool shortcuts when modifier keys are held (e.g. Ctrl+V for paste)
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      switch (e.key) {
+        case 'd':
+        case 'D':
+          e.preventDefault();
+          this.toolManager.selectTool('line');
+          return;
+        case 't':
+        case 'T':
+          e.preventDefault();
+          this.toolManager.selectTool('text');
+          return;
+        case 's':
+        case 'S':
+          e.preventDefault();
+          this.toolManager.selectTool('shape');
+          return;
+        case 'm':
+        case 'M':
+          e.preventDefault();
+          this.toolManager.selectTool('select');
+          return;
+        case 'h':
+        case 'H': {
+          // Open the unified shortcut help dialog (same as ?)
+          e.preventDefault();
+          const dialog = document.getElementById('shortcutHelpDialog') as HTMLDialogElement | null;
+          if (dialog) {
+            if (dialog.open) dialog.close();
+            else dialog.showModal();
+          }
+          return;
+        }
       }
     });
   }
@@ -2928,127 +2991,6 @@ export class App {
     }
 
     document.body.appendChild(helpHint);
-  }
-
-  createHelpMenu(): void {
-    const helpOverlay = document.createElement('div');
-    helpOverlay.id = 'helpOverlay';
-    helpOverlay.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            z-index: 10000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        `;
-
-    const helpMenu = document.createElement('div');
-    helpMenu.style.cssText = `
-            background: white;
-            border-radius: 12px;
-            padding: 30px;
-            max-width: 500px;
-            max-height: 80vh;
-            overflow-y: auto;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-        `;
-
-    helpMenu.innerHTML = `
-            <h2 style="margin-top: 0; margin-bottom: 20px; color: #333; font-size: 24px; font-weight: 600;">Keyboard Shortcuts</h2>
-            
-            <div style="margin-bottom: 20px;">
-                <h3 style="color: #555; font-size: 16px; margin-bottom: 10px; font-weight: 600;">Drawing Tools</h3>
-                <div style="display: grid; grid-template-columns: auto 1fr; gap: 8px 16px; font-size: 14px;">
-                    <kbd>Tab</kbd><span>Cycle through drawing modes (Line → Curve → Eraser → Select)</span>
-                </div>
-            </div>
-            
-            <div style="margin-bottom: 20px;">
-                <h3 style="color: #555; font-size: 16px; margin-bottom: 10px; font-weight: 600;">Capture Frame</h3>
-                <div style="display: grid; grid-template-columns: auto 1fr; gap: 8px 16px; font-size: 14px;">
-                    <kbd>+</kbd><span>Increase capture frame size</span>
-                    <kbd>-</kbd><span>Decrease capture frame size</span>
-                </div>
-            </div>
-            
-            <div style="margin-bottom: 20px;">
-                <h3 style="color: #555; font-size: 16px; margin-bottom: 10px; font-weight: 600;">General</h3>
-                <div style="display: grid; grid-template-columns: auto 1fr; gap: 8px 16px; font-size: 14px;">
-                    <kbd>H</kbd><span>Show/hide this help menu</span>
-                    <kbd>Ctrl+Shift+P</kbd><span>Open pixel pets menu</span>
-                </div>
-            </div>
-            
-            <div style="text-align: center; margin-top: 25px;">
-                <button id="closeHelp" style="
-                    background: #3b82f6;
-                    color: white;
-                    border: none;
-                    padding: 10px 20px;
-                    border-radius: 6px;
-                    font-size: 14px;
-                    font-weight: 500;
-                    cursor: pointer;
-                    transition: background 0.2s;
-                ">Close</button>
-            </div>
-        `;
-
-    // Style all kbd elements
-    const kbdElements = helpMenu.querySelectorAll<HTMLElement>('kbd');
-    kbdElements.forEach(kbd => {
-      kbd.style.cssText = `
-                background: #f3f4f6;
-                border: 1px solid #d1d5db;
-                border-radius: 4px;
-                padding: 2px 6px;
-                font-size: 12px;
-                font-weight: bold;
-                color: #374151;
-                font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-            `;
-    });
-
-    helpOverlay.appendChild(helpMenu);
-    document.body.appendChild(helpOverlay);
-
-    // Close help menu handlers
-    const closeBtn = helpMenu.querySelector<HTMLButtonElement>('#closeHelp');
-    if (closeBtn) {
-      closeBtn.addEventListener('click', () => {
-        document.body.removeChild(helpOverlay);
-      });
-    }
-
-    // Close on overlay click
-    helpOverlay.addEventListener('click', (e: MouseEvent) => {
-      if (e.target === helpOverlay) {
-        document.body.removeChild(helpOverlay);
-      }
-    });
-
-    // Close on Escape key
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        document.body.removeChild(helpOverlay);
-        document.removeEventListener('keydown', handleEscape);
-      }
-    };
-    document.addEventListener('keydown', handleEscape);
-  }
-
-  toggleHelpMenu(): void {
-    const existingOverlay = document.getElementById('helpOverlay');
-    if (existingOverlay) {
-      document.body.removeChild(existingOverlay);
-    } else {
-      this.createHelpMenu();
-    }
   }
 }
 

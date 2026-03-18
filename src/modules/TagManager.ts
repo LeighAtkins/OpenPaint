@@ -718,6 +718,7 @@ export class TagManager {
       selectable: false,
       evented: true,
       excludeFromExport: true, // Don't save tag backgrounds to canvas JSON
+      isTagBackground: true,
     });
 
     // Update text color based on background style
@@ -726,6 +727,13 @@ export class TagManager {
     // Group tag text and background
     // Position group at stroke center + offset
     const initialOffset = strokeObject?.tagOffset || { x: 20, y: -10 };
+
+    // For multi-frame support: set both imageLabel (base) and scopedLabel (with ::tab:)
+    const baseImageLabel = imageLabel.includes('::tab:')
+      ? imageLabel.split('::tab:')[0]
+      : imageLabel;
+    const scopedLabel = imageLabel; // Full scope (includes ::tab: if present)
+
     const tagGroup = new fabric.Group([background, tagText], {
       left: centerX + initialOffset.x,
       top: centerY + initialOffset.y,
@@ -741,8 +749,10 @@ export class TagManager {
       excludeFromExport: true, // Don't serialize tags - they're recreated from stroke metadata
       // Custom properties
       isTag: true,
+      isTagGroup: true, // Mark as a tag group for filtering
       strokeLabel: strokeLabel,
-      imageLabel: imageLabel,
+      imageLabel: baseImageLabel, // Base view label (e.g., "cushion")
+      scopedLabel: scopedLabel, // Full scope including tab (e.g., "cushion::tab:abc123")
       connectedStroke: strokeObject,
       tagOffset: { x: initialOffset.x, y: initialOffset.y }, // Default offset
     });

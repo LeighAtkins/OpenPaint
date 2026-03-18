@@ -409,17 +409,13 @@ export class StrokeMetadataManager {
       delete oneTimeGuideTags[currentBaseScope];
       window.guideOneTimeTagByImage = oneTimeGuideTags;
 
+      // Clear any stale manual override so the guide regains control after this draw
       window.labelsByImage = window.labelsByImage || {};
-      delete window.labelsByImage[imageLabel];
-      delete window.labelsByImage[baseImageLabel];
-      delete window.labelsByImage[currentScope];
-      delete window.labelsByImage[currentBaseScope];
-
       window.manualTagByImage = window.manualTagByImage || {};
-      delete window.manualTagByImage[imageLabel];
-      delete window.manualTagByImage[baseImageLabel];
-      delete window.manualTagByImage[currentScope];
-      delete window.manualTagByImage[currentBaseScope];
+      for (const key of [imageLabel, baseImageLabel, currentScope, currentBaseScope]) {
+        delete window.labelsByImage[key];
+        delete window.manualTagByImage[key];
+      }
 
       this.updateTagPredictionAfterUse(imageLabel, seededGuideTag);
       return seededGuideTag;
@@ -511,8 +507,20 @@ export class StrokeMetadataManager {
     }
   }
 
+  _updatingTagPrediction = false;
+
   // Update tag prediction after a tag is used
   updateTagPredictionAfterUse(imageLabel, usedTag) {
+    if (this._updatingTagPrediction) return;
+    this._updatingTagPrediction = true;
+    try {
+      this._doUpdateTagPrediction(imageLabel, usedTag);
+    } finally {
+      this._updatingTagPrediction = false;
+    }
+  }
+
+  _doUpdateTagPrediction(imageLabel, usedTag) {
     imageLabel = this.normalizeImageLabel(imageLabel);
     // Ensure lineStrokesByImage is updated for tag prediction
     window.lineStrokesByImage = window.lineStrokesByImage || {};
@@ -1589,7 +1597,10 @@ export class StrokeMetadataManager {
 
       const inchWhole = Math.floor(totalInches);
       const inchFraction = this.findClosestFraction(totalInches - inchWhole);
-      const finalCm = totalInches * 2.54;
+      // When the user entered a CM value directly, preserve it instead of
+      // recalculating from the fraction-rounded inches (which introduces
+      // rounding error, e.g. 129 cm → 50 13/16" → 129.06 cm).
+      const finalCm = totalCm !== null && Number.isFinite(totalCm) ? totalCm : totalInches * 2.54;
 
       if (!this.strokeMeasurements[imageLabel]) {
         this.strokeMeasurements[imageLabel] = {};

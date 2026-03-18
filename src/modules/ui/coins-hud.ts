@@ -4,6 +4,7 @@
 import { isAuthEnabled } from '@/utils/env';
 import { authService } from '@/services/auth/authService';
 import { walletService } from '@/services/wallet/walletService';
+import { togglePetsMenu } from './pets-menu';
 
 let hudEl: HTMLElement | null = null;
 let balanceEl: HTMLElement | null = null;
@@ -43,7 +44,7 @@ function createHud(): HTMLElement {
     font-size: 13px;
     font-weight: 600;
     color: #b8860b;
-    cursor: default;
+    cursor: pointer;
     user-select: none;
     transition: transform 0.2s ease;
     margin-right: 4px;
@@ -55,6 +56,9 @@ function createHud(): HTMLElement {
   balanceEl = document.createElement('span');
   balanceEl.textContent = '0';
   pill.appendChild(balanceEl);
+
+  pill.title = 'Pixel Pets (Ctrl+Shift+P)';
+  pill.addEventListener('click', () => togglePetsMenu());
 
   return pill;
 }

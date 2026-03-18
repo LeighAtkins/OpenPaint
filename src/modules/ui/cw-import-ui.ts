@@ -19,6 +19,7 @@ interface VersionOption {
   label: string;
   scopedReference?: string;
   isDefault?: boolean;
+  confirmed?: boolean | null;
 }
 
 interface SearchResultItem {
@@ -1202,6 +1203,7 @@ function createModal(): HTMLElement {
       <button type="button" class="cw-btn" id="cwImportExactBtn">Import Matching Labels</button>
       <button type="button" class="cw-btn" id="cwImportPhotosBtn">Import Photos to Project</button>
       <select id="cwItemFilter" class="cw-section-select"><option value="">All Items</option></select>
+      <button type="button" class="cw-btn" id="cwClearBasketBtn" title="Clear basket and loaded items">Clear</button>
       <select id="cwSectionFilter" class="cw-section-select"><option value="">All Sections</option></select>
       <span class="cw-image-actions">
         <button type="button" class="cw-btn" id="cwSelectVisibleImagesBtn">Select Visible</button>
@@ -1681,6 +1683,61 @@ function createModal(): HTMLElement {
   const selectedImageEntries = (): VisibleImageEntry[] =>
     allImageEntries().filter(entry => state.selectedImageKeys.includes(entry.selectionImageKey));
 
+  /** Re-fetch data for a single search result item after version/style change. */
+  const reloadSearchResultItem = async (item: SearchResultItem) => {
+    const basketItem = buildBasketItemFromResult(item);
+    if (!basketItem) return;
+    // Select the item so it ends up in the basket flow
+    item.selected = true;
+    // Update or add to basket
+    const existingIdx = state.basket.findIndex(
+      b => b.productReference === basketItem.productReference
+    );
+    if (existingIdx >= 0) {
+      state.basket[existingIdx] = basketItem;
+    } else {
+      state.basket.push(basketItem);
+    }
+    renderBasket();
+    setStatus(`Loading ${basketItem.scopedReference || basketItem.productReference}...`);
+    try {
+      const { response, data } = await requestSearchPayload(
+        (searchTermEl?.value || '').trim(),
+        '',
+        { phase: 'load-selected', selectedItems: [basketItem] }
+      );
+      const items = Array.isArray(data?.items) ? data.items : [];
+      integrateLoadedItems(items);
+      // Set the active item to the newly loaded one
+      if (basketItem.selectionKey) {
+        state.activeItemKey = basketItem.selectionKey;
+      }
+      syncUi();
+      if (response.ok) {
+        const imageCount = allImageEntries().length;
+        const rowCount =
+          state.loadedItems.find(li => li.selectionKey === basketItem.selectionKey)?.rows?.length ||
+          0;
+        setStatus(
+          `Loaded ${basketItem.scopedReference || basketItem.productReference} — ${rowCount} measurement${rowCount === 1 ? '' : 's'} and ${imageCount} photo${imageCount === 1 ? '' : 's'}.`,
+          'ok'
+        );
+        if (imagesWrap.children.length > 0) {
+          requestAnimationFrame(() =>
+            imagesWrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+          );
+        }
+      } else {
+        setStatus(
+          `Load failed for ${basketItem.scopedReference || basketItem.productReference}: ${String(data?.message || data?.code || response.status)}`,
+          'bad'
+        );
+      }
+    } catch (error) {
+      setStatus(`Load failed: ${error instanceof Error ? error.message : 'Unknown error'}`, 'bad');
+    }
+  };
+
   const renderSearchResults = () => {
     searchResultsWrap.innerHTML = '';
     if (!state.searchResults.length) {
@@ -1766,12 +1823,17 @@ function createModal(): HTMLElement {
       item.versionOptions.forEach(option => {
         const optionEl = document.createElement('option');
         optionEl.value = option.code;
-        optionEl.textContent = option.label;
+        const suffix =
+          option.confirmed === true ? ' \u2713' : option.confirmed === false ? ' (not found)' : '';
+        optionEl.textContent = `${option.label}${suffix}`;
+        if (option.confirmed === false) optionEl.disabled = true;
         if (option.code === item.selectedVersionCode) optionEl.selected = true;
         versionSelect.appendChild(optionEl);
       });
       versionSelect.addEventListener('change', () => {
         item.selectedVersionCode = (versionSelect.value || '').trim().toUpperCase();
+        // Auto-reload with the new version to fetch version-specific images
+        void reloadSearchResultItem(item);
       });
       versionWrap.appendChild(versionLabel);
       versionWrap.appendChild(versionSelect);
@@ -1790,6 +1852,8 @@ function createModal(): HTMLElement {
       });
       styleSelect.addEventListener('change', () => {
         item.selectedStyleKey = (styleSelect.value || '').trim();
+        // Auto-reload with the new style to fetch style-specific images
+        void reloadSearchResultItem(item);
       });
       styleWrap.appendChild(styleLabel);
       styleWrap.appendChild(styleSelect);
@@ -1945,13 +2009,17 @@ function createModal(): HTMLElement {
       applyBtn.addEventListener('click', () => {
         const targetLabel = resolveRowTargetLabel(row, (input.value || '').trim());
         if (!targetLabel) return;
-        applyMeasurement(
+        const applied = applyMeasurement(
           getCurrentScopeLabel(),
           targetLabel,
           row.value,
           row.sourceLabel,
           lockedEl.checked
         );
+        if (applied) {
+          // Seed the next tag to the assigned label so the guide/next-tag stay in sync
+          seedNextTagAfterAssign(getCurrentScopeLabel(), targetLabel);
+        }
       });
 
       const drawBtn = document.createElement('button');
@@ -2394,9 +2462,27 @@ function createModal(): HTMLElement {
     const nextLoaded = new Map(state.loadedItems.map(item => [item.selectionKey, item]));
     const nextSelectedImageKeys = new Set(state.selectedImageKeys);
 
+    let newestSelectionKey = '';
     items.forEach(item => {
       const payload = item?.data || {};
-      const basketItem = item?.basketItem as BasketItem;
+      const serverBasketItem = item?.basketItem as BasketItem;
+      // Merge with client-side basket item to preserve label and other client-only fields
+      const clientBasketItem = state.basket.find(
+        b => b.selectionKey === (serverBasketItem?.selectionKey || item?.selectionKey)
+      );
+      const basketItem: BasketItem = {
+        ...(clientBasketItem || ({} as BasketItem)),
+        ...serverBasketItem,
+      };
+      if (!basketItem.label) {
+        basketItem.label = buildBasketLabel({
+          productReference: basketItem.productReference || '',
+          productName: basketItem.productName || '',
+          versionLabel: basketItem.versionLabel || '',
+          style: basketItem.style || '',
+          styleCode: basketItem.styleCode || '',
+        });
+      }
       const rows = extractRows(payload).map(row => ({
         ...row,
         sectionName: classifyMeasurementSection(
@@ -2432,6 +2518,9 @@ function createModal(): HTMLElement {
         success: item?.success !== false,
       };
       nextLoaded.set(loadedItem.selectionKey, loadedItem);
+      if (loadedItem.success && loadedItem.selectionKey) {
+        newestSelectionKey = loadedItem.selectionKey;
+      }
       const allGroups = Object.values(sectionImageGroups).flat().length
         ? Object.values(sectionImageGroups).flat()
         : imageCandidateGroups;
@@ -2443,7 +2532,10 @@ function createModal(): HTMLElement {
 
     state.loadedItems = Array.from(nextLoaded.values());
     state.selectedImageKeys = Array.from(nextSelectedImageKeys);
-    if (!state.activeItemKey && state.loadedItems[0]?.selectionKey) {
+    // Auto-select the most recently loaded item so it's visible immediately
+    if (newestSelectionKey) {
+      state.activeItemKey = newestSelectionKey;
+    } else if (!state.activeItemKey && state.loadedItems[0]?.selectionKey) {
       state.activeItemKey = state.loadedItems[0].selectionKey;
     }
   };
@@ -2537,6 +2629,33 @@ function createModal(): HTMLElement {
             : '',
         } as SearchResultItem;
       });
+      // Annotate version options with confirmed status from QC measurement attempts
+      const qcAttempts: Array<{ productReference?: string; ok?: boolean }> = Array.isArray(
+        data?.qcMeasurementAttempts
+      )
+        ? data.qcMeasurementAttempts
+        : [];
+      if (qcAttempts.length > 0) {
+        const attemptByRef = new Map(
+          qcAttempts.map(a => [String(a.productReference || '').trim(), Boolean(a.ok)])
+        );
+        state.searchResults.forEach(item => {
+          item.versionOptions.forEach(opt => {
+            const scopedRef = opt.scopedReference || `${item.productReference}__${opt.code}`;
+            if (attemptByRef.has(scopedRef)) {
+              opt.confirmed = attemptByRef.get(scopedRef) ?? null;
+            }
+          });
+          // Auto-select the confirmed version if none selected yet
+          if (!item.selectedVersionCode) {
+            const confirmedVersion = item.versionOptions.find(opt => opt.confirmed === true);
+            if (confirmedVersion) {
+              item.selectedVersionCode = confirmedVersion.code;
+            }
+          }
+        });
+      }
+
       state.armedRowKey = '';
       state.activeSection = '';
       // Extract discovery image URLs for preview thumbnails
@@ -3237,6 +3356,20 @@ function createModal(): HTMLElement {
     renderRows();
   });
 
+  const clearBasketBtn = body.querySelector<HTMLButtonElement>('#cwClearBasketBtn');
+  clearBasketBtn?.addEventListener('click', () => {
+    state.basket = [];
+    state.loadedItems = [];
+    state.activeItemKey = '';
+    state.activeSection = '';
+    state.selectedImageKeys = [];
+    state.searchResults.forEach(item => {
+      item.selected = false;
+    });
+    syncUi();
+    setStatus('Cleared basket and loaded items.', 'info');
+  });
+
   sectionFilterEl.addEventListener('change', () => {
     state.activeSection = normalizeSectionName((sectionFilterEl.value || '').trim());
     renderImages();
@@ -3582,6 +3715,23 @@ function applyMeasurement(
 
   metadata.updateStrokeVisibilityControls?.();
   return true;
+}
+
+/** After "Assign Now", mark the label as used so the guide advances past it. */
+function seedNextTagAfterAssign(scopeLabel: string, assignedLabel: string): void {
+  const w = window as any;
+  const metadata = w.app?.metadataManager;
+  if (!metadata) return;
+  const normalized = metadata.normalizeImageLabel
+    ? metadata.normalizeImageLabel(scopeLabel)
+    : scopeLabel;
+
+  // Clear any manual override so the guide takes back control
+  if (w.manualTagByImage) delete w.manualTagByImage[normalized];
+  if (w.labelsByImage) delete w.labelsByImage[normalized];
+
+  // Record as used — guide will auto-advance to the next unused role
+  metadata.updateTagPredictionAfterUse?.(normalized, assignedLabel);
 }
 
 function openModal(): void {

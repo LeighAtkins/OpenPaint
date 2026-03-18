@@ -11,7 +11,7 @@ export class ArrowManager {
       startArrow: true,
       endArrow: true,
       arrowSize: 10,
-      arrowStyle: 'hand-2',
+      arrowStyle: 'triangular',
       arrowSpread: 1,
       ghostBaseline: true,
       dimensionOffset: 18,
@@ -456,7 +456,7 @@ export class ArrowManager {
         startArrow: false,
         endArrow: false,
         arrowSize: 15,
-        arrowStyle: 'hand-2',
+        arrowStyle: 'triangular',
         arrowSpread: 1,
         ghostBaseline: true,
       };

@@ -354,9 +354,30 @@ async function settleCaptureContext(viewId, tabId) {
       ? window.getCaptureTabScopeForTab(viewId, tabId)
       : viewId;
 
+  console.log(
+    `[PDF settleCaptureContext] Syncing visibility for viewId=${viewId}, tabId=${tabId}, scopedLabel=${scopedLabel}`
+  );
+
   if (typeof window.syncCaptureTabCanvasVisibility === 'function') {
     try {
       window.syncCaptureTabCanvasVisibility(viewId);
+
+      // Log tag visibility after sync
+      const tagManager = window.app?.tagManager;
+      if (tagManager) {
+        const canvas = window.app?.canvasManager?.fabricCanvas;
+        const tags = canvas
+          ?.getObjects()
+          ?.filter(obj => obj.isTagText || obj.isTagBackground || obj.isTagGroup);
+        console.log(
+          `[PDF] After syncVisibility: ${tags?.length || 0} tag objects on canvas`,
+          tags?.map(t => ({
+            visible: t.visible,
+            scopedLabel: t.scopedLabel,
+            imageLabel: t.imageLabel,
+          }))
+        );
+      }
     } catch (error) {
       logVectorDebugSnapshot('settleCaptureContext:sync-visibility-error', {
         viewId,
@@ -474,7 +495,15 @@ function getPdfPageTargets(viewIds) {
     const state = ensureTabs ? ensureTabs(viewId) : states[viewId];
     const normalTabs = (state?.tabs || []).filter(tab => tab.type !== 'master');
 
+    console.log(`[PDF Export] View ${viewId}:`, {
+      hasState: !!state,
+      totalTabs: state?.tabs?.length || 0,
+      normalTabs: normalTabs.length,
+      tabNames: normalTabs.map(t => t.name || t.id),
+    });
+
     if (!normalTabs.length) {
+      console.log(`[PDF Export] No tabs found for ${viewId}, using default Frame 1`);
       targets.push({
         viewId,
         viewIndex,
@@ -502,6 +531,15 @@ function getPdfPageTargets(viewIds) {
       });
     });
   });
+
+  console.log(
+    `[PDF Export] Total targets created: ${targets.length}`,
+    targets.map(t => ({
+      viewId: t.viewId,
+      tabName: t.tabName,
+      scopeKey: t.scopeKey,
+    }))
+  );
 
   return targets;
 }
@@ -1523,6 +1561,24 @@ export function initPdfExport() {
           ...measuredStrokes,
         ])
       ).sort((a, b) => a.localeCompare(b));
+
+      // Fallback: if scoped query found nothing and this is a tab target,
+      // try the base viewId to pick up measurements stored at view level
+      if (!strokes.length && target.tabId) {
+        const baseKey = toBaseViewId(target.scopeKey);
+        const baseMeasurements = getScopedMeasurements(baseKey, { includeBase: true });
+        const baseStrokes = Array.from(
+          new Set([
+            ...getScopedStrokeLabels(baseKey, { includeBase: true }),
+            ...Object.keys(baseMeasurements),
+          ])
+        ).sort((a, b) => a.localeCompare(b));
+        return baseStrokes.map(strokeLabel => {
+          const m = baseMeasurements[strokeLabel] || {};
+          return { label: strokeLabel, value: formatExportMeasurement(m, currentUnit) };
+        });
+      }
+
       return strokes.map(strokeLabel => {
         const m = measurements[strokeLabel] || {};
         const value = formatExportMeasurement(m, currentUnit);
@@ -1646,57 +1702,8 @@ export function initPdfExport() {
       });
     }
 
-    if (includeMeasurements && typeof window.evaluateMeasurementRelations === 'function') {
-      try {
-        const relations = window.evaluateMeasurementRelations() || {};
-        const relationChecks = Array.isArray(relations.checks) ? relations.checks : [];
-        const relationConnections = Array.isArray(relations.connections)
-          ? relations.connections
-          : [];
-        if (relationChecks.length || relationConnections.length) {
-          const relationRows = relationChecks.map(check => {
-            const status = String(check?.status || 'pending').toUpperCase();
-            const formula = check?.formula || check?.id || 'Formula Check';
-            const reason = check?.reason ? ` - ${check.reason}` : '';
-            return {
-              label: formula,
-              value: `${status}${reason}`,
-            };
-          });
-          const connectionRows = relationConnections.map(connection => {
-            const from = connection?.fromDisplay || connection?.fromKey || '-';
-            const to = connection?.toDisplay || connection?.toKey || '-';
-            const status = String(connection?.status || 'pending').toUpperCase();
-            const reason = connection?.reason ? ` - ${connection.reason}` : '';
-            return {
-              label: `${from} <-> ${to}`,
-              value: `${status}${reason}`,
-            };
-          });
-
-          groups.push({
-            title: 'Measurement Validation Summary',
-            subtitle: 'Formula checks and cross-image connections',
-            mainImage: {
-              title: 'Validation Overview',
-              src:
-                groups[0]?.mainImage?.src ||
-                'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI5NjAiIGhlaWdodD0iNTQwIj48cmVjdCB3aWR0aD0iOTYwIiBoZWlnaHQ9IjU0MCIgZmlsbD0iI0YxRjVGOSIgcng9IjE2Ii8+PHRleHQgeD0iNDgwIiB5PSIyODAiIGZvbnQtc2l6ZT0iMzYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiM0NzU1NjkiIGZvbnQtZmFtaWx5PSJBcmlhbCI+TWVhc3VyZW1lbnQgVmFsaWRhdGlvbiBTdW1tYXJ5PC90ZXh0Pjwvc3ZnPg==',
-            },
-            mainMeasurements: relationRows,
-            relatedFrames: [],
-            relatedMeasurementCards: [
-              {
-                title: 'Cross-image Connections',
-                rows: connectionRows,
-              },
-            ],
-          });
-        }
-      } catch (error) {
-        console.warn('[PDF] Failed to append relation summary page in modern renderer:', error);
-      }
-    }
+    // Cross-image connections / measurement validation summary page removed —
+    // the fail/pass statuses were not actionable in the PDF output.
 
     progressText.textContent = 'Rendering modern PDF\u2026';
     progressBar.style.width = '92%';
