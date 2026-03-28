@@ -2371,6 +2371,30 @@ export class CanvasManager {
     return this.getStoredBackgroundFitMode() !== 'actual-size';
   }
 
+  hasAuthoritativeCaptureTabState(): boolean {
+    const projectManager = window.app?.projectManager || window.projectManager;
+    const currentViewId = String(projectManager?.currentViewId || '').trim();
+    if (!currentViewId) {
+      return false;
+    }
+
+    const liveTabState = window.captureTabsByLabel?.[currentViewId];
+    const savedTabState = projectManager?.views?.[currentViewId]?.tabs;
+    const tabState =
+      liveTabState && Array.isArray(liveTabState.tabs)
+        ? liveTabState
+        : savedTabState && Array.isArray(savedTabState.tabs)
+          ? savedTabState
+          : null;
+    const activeTabId = tabState?.activeTabId || null;
+    const activeTab = tabState?.tabs?.find?.(tab => tab.id === activeTabId) || null;
+    return Boolean(
+      activeTab &&
+      activeTab.type !== 'master' &&
+      (activeTab.viewport || activeTab?.captureFrame?.worldRect)
+    );
+  }
+
   fitViewportToBackgroundPlacementFrame(
     backgroundWorldRect: FrameState,
     targetFrame: FrameState,
@@ -2539,6 +2563,8 @@ export class CanvasManager {
 
     const currentSplitActive = this.isGuideSplitActive();
     const shouldRefitBackgroundOnResize = sizeChanged && !!this.fabricCanvas.backgroundImage;
+    const hasAuthoritativeCaptureTabState =
+      !currentSplitActive && this.hasAuthoritativeCaptureTabState();
     const backgroundWorldRectBeforeResize = shouldRefitBackgroundOnResize
       ? this.getBackgroundWorldRect()
       : null;
@@ -2606,6 +2632,7 @@ export class CanvasManager {
     const didFitBackgroundViewport =
       shouldRefitBackgroundOnResize &&
       !!backgroundWorldRectBeforeResize &&
+      !hasAuthoritativeCaptureTabState &&
       !splitLayoutChanged &&
       !currentSplitActive &&
       this.shouldFitBackgroundWithViewportOnResize()
@@ -2619,6 +2646,7 @@ export class CanvasManager {
     // layout sync handles it via viewport transforms so vectors stay in sync.
     const didRefitBackground =
       !didFitBackgroundViewport &&
+      !hasAuthoritativeCaptureTabState &&
       !splitLayoutChanged &&
       !currentSplitActive &&
       shouldRefitBackgroundOnResize

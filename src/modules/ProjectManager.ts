@@ -686,6 +686,7 @@ export class ProjectManager {
     }
 
     this.restoreViewportForView(viewId);
+    await this.reconcileBackgroundPlacementForView(viewId);
 
     // Mount MOS overlays for the new view
     if (window.app?.measurementOverlayManager) {
@@ -800,6 +801,53 @@ export class ProjectManager {
     }
   }
 
+  async reconcileBackgroundPlacementForView(viewId, options = {}) {
+    if (!viewId || this.currentViewId !== viewId) return false;
+
+    const view = this.views?.[viewId];
+    if (!view?.image) return false;
+
+    const isGuideSplitActive =
+      document.getElementById('main-canvas-wrapper')?.classList.contains('guide-split-active') ===
+      true;
+    if (isGuideSplitActive) {
+      return false;
+    }
+
+    const liveTabState = window.captureTabsByLabel?.[viewId];
+    const savedTabState = view?.tabs;
+    const tabState =
+      liveTabState && Array.isArray(liveTabState.tabs)
+        ? liveTabState
+        : savedTabState && Array.isArray(savedTabState.tabs)
+          ? savedTabState
+          : null;
+    const activeTabId = tabState?.activeTabId || null;
+    const activeTab = tabState?.tabs?.find?.(tab => tab.id === activeTabId) || null;
+    const hasAuthoritativeActiveTabState =
+      activeTab?.type !== 'master' &&
+      (Boolean(activeTab?.viewport) || Boolean(activeTab?.captureFrame?.worldRect));
+    if (hasAuthoritativeActiveTabState) {
+      return false;
+    }
+
+    if (options?.waitForLayout !== false) {
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      if (this.currentViewId !== viewId) return false;
+    }
+
+    if (window.applyCaptureFrameForLabel) {
+      window.applyCaptureFrameForLabel(viewId);
+    }
+
+    await new Promise(resolve => setTimeout(resolve, Number(options?.settleMs) || 0));
+    if (this.currentViewId !== viewId) return false;
+
+    await this.setBackgroundImage(view.image, view.fitMode || 'fit-canvas');
+    this.canvasManager?.fabricCanvas?.requestRenderAll?.();
+    return true;
+  }
+
   syncLegacyImageListSelection(viewId, options = {}) {
     const imageList = document.getElementById('imageList');
     if (!imageList || !viewId) return;
@@ -831,31 +879,68 @@ export class ProjectManager {
     }
   }
 
-  saveCurrentViewState() {
+  inferBackgroundWorldRectFromSerializedBackground(backgroundImageData) {
+    if (!backgroundImageData || typeof backgroundImageData !== 'object') {
+      return null;
+    }
+
+    const left = Number(backgroundImageData.left);
+    const top = Number(backgroundImageData.top);
+    const width =
+      (Number(backgroundImageData.width) || Number(backgroundImageData.naturalWidth) || 0) *
+      (Number(backgroundImageData.scaleX) || 1);
+    const height =
+      (Number(backgroundImageData.height) || Number(backgroundImageData.naturalHeight) || 0) *
+      (Number(backgroundImageData.scaleY) || 1);
+
+    if (
+      !Number.isFinite(left) ||
+      !Number.isFinite(top) ||
+      !Number.isFinite(width) ||
+      !Number.isFinite(height) ||
+      width <= 0 ||
+      height <= 0
+    ) {
+      return null;
+    }
+
+    return {
+      left: left - width / 2,
+      top: top - height / 2,
+      width,
+      height,
+    };
+  }
+
+  saveCurrentViewState(options?: { skipViewport?: boolean }) {
     const json = this.canvasManager.toJSON();
     this.stripMosOverlayObjects(json);
     if (this.views[this.currentViewId]) {
+      const skipViewport = options?.skipViewport === true;
       const isGuideSplitActive =
+        skipViewport ||
         document.getElementById('main-canvas-wrapper')?.classList.contains('guide-split-active') ===
-        true;
-      const backgroundWorldRect = this.canvasManager.getBackgroundWorldRect?.() || null;
+          true;
       this.views[this.currentViewId].canvasData = json;
       this.views[this.currentViewId].rotation = this.canvasManager.getRotationDegrees();
       this.views[this.currentViewId].backgroundRotation =
         this.canvasManager.getBackgroundImageRotationDegrees();
-      // Save backgroundWorldRect so setBackgroundImage can restore the exact
-      // position on the next visit.  In split mode, setBackgroundImage already
-      // uses the saved rect (or originalCanvasSize as fallback) to place the BG
-      // at the full-width position, so saving it here is safe and ensures
-      // consistent positioning across view switches.
-      if (backgroundWorldRect) {
-        this.views[this.currentViewId].backgroundWorldRect = JSON.parse(
-          JSON.stringify(backgroundWorldRect)
-        );
-      } else if (!isGuideSplitActive) {
-        // Only delete the rect outside split mode — in split mode, preserve
-        // whatever was saved earlier (e.g. from the pre-split snapshot).
-        delete this.views[this.currentViewId].backgroundWorldRect;
+      if (!skipViewport) {
+        // Save backgroundWorldRect so setBackgroundImage can restore the exact
+        // position on the next visit.  In split mode, setBackgroundImage already
+        // uses the saved rect (or originalCanvasSize as fallback) to place the BG
+        // at the full-width position, so saving it here is safe and ensures
+        // consistent positioning across view switches.
+        const backgroundWorldRect = this.canvasManager.getBackgroundWorldRect?.() || null;
+        if (backgroundWorldRect) {
+          this.views[this.currentViewId].backgroundWorldRect = JSON.parse(
+            JSON.stringify(backgroundWorldRect)
+          );
+        } else if (!isGuideSplitActive) {
+          // Only delete the rect outside split mode — in split mode, preserve
+          // whatever was saved earlier (e.g. from the pre-split snapshot).
+          delete this.views[this.currentViewId].backgroundWorldRect;
+        }
       }
       if (!isGuideSplitActive) {
         this.views[this.currentViewId].viewport = this.canvasManager.getViewportState();
@@ -1288,20 +1373,53 @@ export class ProjectManager {
           );
 
           let scale = 1;
+          const normalizeWorldRect = rectLike => {
+            const left = Number(rectLike?.left);
+            const top = Number(rectLike?.top);
+            const width = Number(rectLike?.width);
+            const height = Number(rectLike?.height);
+            if (
+              !Number.isFinite(left) ||
+              !Number.isFinite(top) ||
+              !Number.isFinite(width) ||
+              !Number.isFinite(height) ||
+              width <= 0 ||
+              height <= 0
+            ) {
+              return null;
+            }
+            return { left, top, width, height };
+          };
+          const rectsDifferMaterially = (a, b) => {
+            if (!a || !b) return false;
+            const epsilon = 1;
+            return (
+              Math.abs(a.left - b.left) > epsilon ||
+              Math.abs(a.top - b.top) > epsilon ||
+              Math.abs(a.width - b.width) > epsilon ||
+              Math.abs(a.height - b.height) > epsilon
+            );
+          };
           const backgroundRotation =
             Number(this.views?.[this.currentViewId]?.backgroundRotation) || 0;
-          const savedBackgroundWorldRect = this.views?.[this.currentViewId]?.backgroundWorldRect;
-          const savedWorldLeft = Number(savedBackgroundWorldRect?.left);
-          const savedWorldTop = Number(savedBackgroundWorldRect?.top);
-          const savedWorldWidth = Number(savedBackgroundWorldRect?.width);
-          const savedWorldHeight = Number(savedBackgroundWorldRect?.height);
+          const normalizedBackgroundRotation = ((backgroundRotation % 360) + 360) % 360;
+          const rotationRadians = (normalizedBackgroundRotation * Math.PI) / 180;
+          const rotationCos = Math.abs(Math.cos(rotationRadians));
+          const rotationSin = Math.abs(Math.sin(rotationRadians));
+          const rotatedWidthBasis = imgWidth * rotationCos + imgHeight * rotationSin;
+          const rotatedHeightBasis = imgWidth * rotationSin + imgHeight * rotationCos;
+          const savedBackgroundWorldRect = normalizeWorldRect(
+            this.views?.[this.currentViewId]?.backgroundWorldRect
+          );
+          const preferredRestoreWorldRect = savedBackgroundWorldRect;
+          const tabState = this.views?.[this.currentViewId]?.tabs || null;
+          const activeTabId = tabState?.activeTabId || null;
+          const activeTab = tabState?.tabs?.find?.(tab => tab.id === activeTabId) || null;
+          const hasAuthoritativeActiveTabState =
+            activeTab?.type !== 'master' &&
+            (Boolean(activeTab?.viewport) || Boolean(activeTab?.captureFrame?.worldRect));
           const hasSavedBackgroundWorldRect =
-            Number.isFinite(savedWorldLeft) &&
-            Number.isFinite(savedWorldTop) &&
-            Number.isFinite(savedWorldWidth) &&
-            Number.isFinite(savedWorldHeight) &&
-            savedWorldWidth > 0 &&
-            savedWorldHeight > 0 &&
+            Boolean(preferredRestoreWorldRect) &&
             Boolean(
               this.views?.[this.currentViewId]?.canvasData ||
               this.views?.[this.currentViewId]?.viewport ||
@@ -1324,6 +1442,11 @@ export class ProjectManager {
             document
               .getElementById('main-canvas-wrapper')
               ?.classList.contains('guide-split-active') === true;
+          const shouldUseSavedBackgroundWorldRect =
+            Boolean(preferredRestoreWorldRect) &&
+            (fitMode === 'actual-size' ||
+              isGuideSplitActiveForPlacement ||
+              hasAuthoritativeActiveTabState);
           if (isGuideSplitActiveForPlacement && !hasSavedBackgroundWorldRect) {
             const origSize = this.canvasManager?.originalCanvasSize;
             if (origSize && origSize.width > 0 && origSize.height > 0) {
@@ -1335,27 +1458,44 @@ export class ProjectManager {
             }
           }
 
-          if (hasSavedBackgroundWorldRect) {
-            left = savedWorldLeft + savedWorldWidth / 2;
-            top = savedWorldTop + savedWorldHeight / 2;
-            scale = savedWorldWidth / imgWidth;
+          if (hasSavedBackgroundWorldRect && shouldUseSavedBackgroundWorldRect) {
+            left = preferredRestoreWorldRect.left + preferredRestoreWorldRect.width / 2;
+            top = preferredRestoreWorldRect.top + preferredRestoreWorldRect.height / 2;
+            const scaleFromWidth = preferredRestoreWorldRect.width / rotatedWidthBasis;
+            const scaleFromHeight = preferredRestoreWorldRect.height / rotatedHeightBasis;
+            scale =
+              Number.isFinite(scaleFromWidth) &&
+              Number.isFinite(scaleFromHeight) &&
+              scaleFromWidth > 0 &&
+              scaleFromHeight > 0
+                ? (scaleFromWidth + scaleFromHeight) / 2
+                : preferredRestoreWorldRect.width / imgWidth;
             console.log(
-              `[Image Restore World Rect] Scale: ${scale.toFixed(3)} at (${left}, ${top})`
+              `[Image Restore World Rect] Scale: ${scale.toFixed(3)} at (${left}, ${top})`,
+              {
+                source: 'view-background-world-rect',
+                savedBackgroundWorldRect,
+                normalizedBackgroundRotation,
+                rotatedWidthBasis,
+                rotatedHeightBasis,
+                scaleFromWidth,
+                scaleFromHeight,
+              }
             );
           } else {
             switch (fitMode) {
               case 'fit-width':
-                scale = frameWidth / imgWidth;
+                scale = frameWidth / rotatedWidthBasis;
                 console.log(`[Image Fit Width] Scale: ${scale.toFixed(3)}`);
                 break;
 
               case 'fit-height':
-                scale = frameHeight / imgHeight;
+                scale = frameHeight / rotatedHeightBasis;
                 console.log(`[Image Fit Height] Scale: ${scale.toFixed(3)}`);
                 break;
 
               case 'fit-canvas':
-                scale = Math.min(frameWidth / imgWidth, frameHeight / imgHeight);
+                scale = Math.min(frameWidth / rotatedWidthBasis, frameHeight / rotatedHeightBasis);
                 console.log(`[Image Fit Canvas] Scale: ${scale.toFixed(3)}`);
                 break;
 
@@ -1366,7 +1506,7 @@ export class ProjectManager {
 
               default:
                 // Default to fit canvas (frame)
-                scale = Math.min(frameWidth / imgWidth, frameHeight / imgHeight);
+                scale = Math.min(frameWidth / rotatedWidthBasis, frameHeight / rotatedHeightBasis);
                 console.log(`[Image Default] Scale: ${scale.toFixed(3)}`);
                 break;
             }
@@ -2318,6 +2458,7 @@ export class ProjectManager {
         fitMode: typeof view.fitMode === 'string' ? view.fitMode : 'fit-canvas',
         metadata: {},
         tabs: null,
+        backgroundWorldRect: null,
       };
 
       if (viewId === this.currentViewId && fabricCanvas) {
@@ -2414,6 +2555,21 @@ export class ProjectManager {
       };
 
       entry.tabs = deepClone(window.captureTabsByLabel?.[viewId] || view.tabs || legacyEntry.tabs);
+      const serializedBackgroundWorldRect = this.inferBackgroundWorldRectFromSerializedBackground(
+        entry.canvasJSON?.backgroundImage
+      );
+      if (viewId === this.currentViewId) {
+        entry.backgroundWorldRect = deepClone(
+          this.canvasManager?.getBackgroundWorldRect?.() ||
+            view.backgroundWorldRect ||
+            serializedBackgroundWorldRect ||
+            null
+        );
+      } else {
+        entry.backgroundWorldRect = deepClone(
+          view.backgroundWorldRect || serializedBackgroundWorldRect || null
+        );
+      }
 
       if (viewId === this.currentViewId) {
         const liveRotation = this.canvasManager?.getRotationDegrees?.();
@@ -3111,6 +3267,9 @@ export class ProjectManager {
       for (const viewId of orderedViewIds) {
         this.updateProjectLoadOverlay(`Restoring view ${viewId}...`);
         const viewData = projectData.views[viewId];
+        const inferredBackgroundWorldRect = this.inferBackgroundWorldRectFromSerializedBackground(
+          viewData?.canvasJSON?.backgroundImage
+        );
 
         this.views[viewId] = {
           id: viewId,
@@ -3125,6 +3284,7 @@ export class ProjectManager {
           metadata: viewData.metadata || {},
           tabs: viewData.tabs || null,
           viewport: viewData.viewport || null,
+          backgroundWorldRect: viewData.backgroundWorldRect || inferredBackgroundWorldRect || null,
         };
 
         const hasImageReference = Boolean(
@@ -3170,16 +3330,21 @@ export class ProjectManager {
               this.canvasManager.resize();
             }
             const current = this.views[targetView];
-            const canvas = this.canvasManager?.fabricCanvas;
-            const hasBg = Boolean(canvas?.backgroundImage);
-
-            if (!hasBg && current?.image && this.currentViewId === targetView) {
-              await this.setBackgroundImage(current.image, current.fitMode || 'fit-canvas');
-            }
 
             if (window.applyCaptureFrameForLabel) {
               window.applyCaptureFrameForLabel(targetView);
             }
+
+            // Re-apply the first view background after resize/frame restoration.
+            // On initial project load the first background can be placed using
+            // stale pre-layout frame geometry, which leaves the image offset
+            // even though the correct frame is applied a moment later.
+            if (current?.image && this.currentViewId === targetView) {
+              await this.reconcileBackgroundPlacementForView(targetView, {
+                waitForLayout: false,
+              });
+            }
+
             this.canvasManager?.fabricCanvas?.requestRenderAll?.();
             debugFirstViewState('after-stabilize-pass');
           });
@@ -3188,16 +3353,14 @@ export class ProjectManager {
         const lateRefresh = () => {
           const current = this.views[targetView];
           if (!current?.image || this.currentViewId !== targetView) return;
-          const canvas = this.canvasManager?.fabricCanvas;
-          const hasBg = !!canvas?.backgroundImage;
-          if (!hasBg) {
-            this.setBackgroundImage(current.image, current.fitMode || 'fit-canvas').then(() => {
-              if (window.applyCaptureFrameForLabel) {
-                window.applyCaptureFrameForLabel(targetView);
-              }
-              debugFirstViewState('late-refresh');
-            });
-          }
+          this.reconcileBackgroundPlacementForView(targetView, {
+            waitForLayout: false,
+          }).then(() => {
+            if (window.applyCaptureFrameForLabel) {
+              window.applyCaptureFrameForLabel(targetView);
+            }
+            debugFirstViewState('late-refresh');
+          });
         };
         setTimeout(lateRefresh, 450);
 
@@ -3212,6 +3375,26 @@ export class ProjectManager {
         setTimeout(() => syncGalleryToView(0), 100);
         setTimeout(() => this.syncLegacyImageListSelection(targetView, { scroll: true }), 120);
       }
+
+      const reconcileInitialTargetViewLayout = async stage => {
+        if (!targetView || this.currentViewId !== targetView) return;
+        const current = this.views[targetView];
+        if (!current?.image) return;
+
+        await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
+        if (window.applyCaptureFrameForLabel) {
+          window.applyCaptureFrameForLabel(targetView);
+        }
+
+        await new Promise(resolve => setTimeout(resolve, 0));
+        await this.reconcileBackgroundPlacementForView(targetView, {
+          waitForLayout: false,
+        });
+        debugFirstViewState(stage);
+      };
+
+      await reconcileInitialTargetViewLayout('before-complete-reconcile');
 
       const hydrateDeferredImages = async () => {
         try {

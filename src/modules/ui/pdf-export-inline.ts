@@ -183,6 +183,168 @@ async function waitForCanvasRenderStability(canvas, options = {}) {
   }
 }
 
+function isRenderableTagStrokeObject(strokeObject) {
+  return Boolean(strokeObject && typeof strokeObject.getBoundingRect === 'function');
+}
+
+function getCanvasObjectScopeLabel(obj) {
+  return (
+    obj?.imageLabel ||
+    obj?.strokeMetadata?.imageLabel ||
+    obj?.customData?.imageLabel ||
+    obj?.imageLabelNormalized ||
+    ''
+  );
+}
+
+function getCaptureTargetScopes(viewId, tabId) {
+  const scopedLabel =
+    tabId && typeof window.getCaptureTabScopeForTab === 'function'
+      ? window.getCaptureTabScopeForTab(viewId, tabId)
+      : viewId;
+  const scopes = new Set([scopedLabel]);
+
+  if (viewId && tabId) {
+    const state = window.captureTabsByLabel?.[viewId];
+    const primaryTab = (state?.tabs || []).find(tab => tab?.type !== 'master');
+    if (primaryTab?.id === tabId) {
+      scopes.add(viewId);
+    }
+  }
+
+  return Array.from(scopes).filter(Boolean);
+}
+
+function getExpectedVisibleTagCountForScopes(scopes) {
+  const metadataManager = window.app?.metadataManager;
+  if (!metadataManager) return 0;
+
+  let count = 0;
+  scopes.forEach(scope => {
+    const strokes = metadataManager.vectorStrokesByImage?.[scope] || {};
+    const labelVisibility = metadataManager.strokeLabelVisibility?.[scope] || {};
+    Object.entries(strokes).forEach(([strokeLabel, strokeObj]) => {
+      if (labelVisibility?.[strokeLabel] === false) return;
+      if (!isRenderableTagStrokeObject(strokeObj)) return;
+      count += 1;
+    });
+  });
+
+  return count;
+}
+
+function countVisibleCanvasTagsForScopes(canvas, scopes) {
+  if (!canvas?.getObjects) return 0;
+  const allowedScopes = new Set(scopes);
+  return canvas
+    .getObjects()
+    .filter(
+      obj =>
+        obj?.isTag === true &&
+        obj?.visible !== false &&
+        allowedScopes.has(getCanvasObjectScopeLabel(obj))
+    ).length;
+}
+
+function recreateMissingScopedTags(scopes) {
+  const tagManager = window.app?.tagManager;
+  const metadataManager = window.app?.metadataManager;
+  if (!tagManager || !metadataManager || typeof tagManager.createTag !== 'function') {
+    return 0;
+  }
+
+  let created = 0;
+  scopes.forEach(scope => {
+    const strokes = metadataManager.vectorStrokesByImage?.[scope] || {};
+    const labelVisibility = metadataManager.strokeLabelVisibility?.[scope] || {};
+    Object.entries(strokes).forEach(([strokeLabel, strokeObj]) => {
+      if (labelVisibility?.[strokeLabel] === false) return;
+      if (!isRenderableTagStrokeObject(strokeObj)) return;
+      const existing =
+        typeof tagManager.getTagObject === 'function'
+          ? tagManager.getTagObject(strokeLabel, scope)
+          : null;
+      if (!existing) {
+        const createdTag = tagManager.createTag(strokeLabel, scope, strokeObj);
+        if (createdTag) {
+          created += 1;
+        }
+      }
+    });
+  });
+
+  return created;
+}
+
+async function ensureCaptureTargetTagsVisible(viewId, tabId, canvas) {
+  if (!canvas) return;
+
+  const scopes = getCaptureTargetScopes(viewId, tabId);
+  const expectedVisibleTagCount = getExpectedVisibleTagCountForScopes(scopes);
+  if (expectedVisibleTagCount <= 0) {
+    return;
+  }
+
+  const maxAttempts = 6;
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    recreateMissingScopedTags(scopes);
+
+    if (typeof window.syncCaptureTabCanvasVisibility === 'function') {
+      try {
+        window.syncCaptureTabCanvasVisibility(viewId);
+      } catch (error) {
+        logVectorDebugSnapshot('ensureCaptureTargetTagsVisible:sync-visibility-error', {
+          viewId,
+          tabId: tabId || null,
+          attempt,
+          error: String(error?.message || error),
+        });
+      }
+    }
+
+    window.currentImageLabel = scopes[0] || viewId;
+    canvas.requestRenderAll?.();
+    await waitForCanvasRenderStability(canvas, {
+      visiblePasses: 2 + Math.min(attempt, 2),
+      hiddenPasses: 5 + attempt,
+      timeoutVisibleMs: 120 + attempt * 30,
+      timeoutHiddenMs: 800 + attempt * 80,
+    });
+
+    const visibleTagCount = countVisibleCanvasTagsForScopes(canvas, scopes);
+    if (visibleTagCount >= expectedVisibleTagCount) {
+      logVectorDebugSnapshot('ensureCaptureTargetTagsVisible:ready', {
+        viewId,
+        tabId: tabId || null,
+        scopes,
+        attempt,
+        expectedVisibleTagCount,
+        visibleTagCount,
+      });
+      return;
+    }
+
+    logVectorDebugSnapshot('ensureCaptureTargetTagsVisible:retry', {
+      viewId,
+      tabId: tabId || null,
+      scopes,
+      attempt,
+      expectedVisibleTagCount,
+      visibleTagCount,
+    });
+
+    await sleep(60 + attempt * 40);
+  }
+
+  logVectorDebugSnapshot('ensureCaptureTargetTagsVisible:timeout', {
+    viewId,
+    tabId: tabId || null,
+    scopes,
+    expectedVisibleTagCount,
+    visibleTagCount: countVisibleCanvasTagsForScopes(canvas, scopes),
+  });
+}
+
 async function settleCaptureContext(viewId, tabId) {
   const canvas = window.app?.canvasManager?.fabricCanvas;
   if (!canvas) return;
@@ -221,6 +383,7 @@ async function settleCaptureContext(viewId, tabId) {
   }
 
   await waitForCanvasRenderStability(canvas);
+  await ensureCaptureTargetTagsVisible(viewId, tabId, canvas);
 }
 
 function getScopedMeasurements(scopeKey, options = {}) {
