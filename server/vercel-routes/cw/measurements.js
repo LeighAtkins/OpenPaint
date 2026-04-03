@@ -83,6 +83,7 @@ const DEFAULT_FETCH_TIMEOUT_MS =
   Number.parseInt(process.env.CW_FETCH_TIMEOUT_MS || '', 10) || 12000;
 const MANUAL_REFERENCE_HINT_NONE_TERMS = new Set(['IK-MD-3']);
 const MANUAL_REFERENCE_HINTS = new Map([
+  ['BA-AE-122', ['BA-AE-122__L__2S-3B']],
   ['MD2', ['MD2__L', 'MD2__R']],
   ['MD1', ['MD1__L', 'MD1__R']],
   ['HY2', ['HY2__34cm', 'HY2__43cm']],
@@ -100,6 +101,7 @@ const MANUAL_REFERENCE_HINTS = new Map([
   ['IK-MA-25B', ['IK-MA-25B__L', 'IK-MA-25B__R']],
   ['MJ-SLM-1', ['MJ-SLM-1__MJ-CC', 'MJ-SLM-1__CW-CC']],
   ['MJ-SLM-3P', ['MJ-SLM-3P__MJ-CC', 'MJ-SLM-3P__CW-CC']],
+  ['MJ-OWA-2-2007', ['MJ-OWA-2-2007__DF', 'MJ-OWA-2-2007__MJ-CC', 'MJ-OWA-2-2007__CW-CC']],
   ['WE-VBK-1', ['WE-VBK-1__STD', 'WE-VBK-1__EXD', 'WE-VBK-1__SV', 'WE-VBK-1__LV']],
   ['WE-VBK-2', ['WE-VBK-2__STD', 'WE-VBK-2__EXD', 'WE-VBK-2__SV', 'WE-VBK-2__LV']],
   ['WE-KSK-1', ['WE-KSK-1__STD', 'WE-KSK-1__EXD', 'WE-KSK-1__SV', 'WE-KSK-1__LV']],
@@ -109,6 +111,9 @@ const MANUAL_REFERENCE_HINTS = new Map([
   ['IK-KD-3B', ['IK-KD-3B']],
   ['IK-KD-362', ['IK-KD-362']],
   ['IK-KD-35', ['IK-KD-35']],
+  ['PB-CRA-69M__L', ['PB-CRA-69M__L__BE', 'PB-CRA-69M__L__KE']],
+  ['PB-PRA-73M__L', ['PB-PRA-73M__L__BE', 'PB-PRA-73M__L__KE']],
+  ['PB-BSC-69M__L', ['PB-BSC-69M__L__PB', 'PB-BSC-69M__L__MG']],
 ]);
 
 function normalizeManualReferenceHintKey(value) {
@@ -121,6 +126,12 @@ function stripScopedReferenceSuffix(value) {
   return String(value || '')
     .trim()
     .replace(/__[A-Za-z0-9._-]+$/i, '');
+}
+
+function stripAllScopedReferenceSuffixes(value) {
+  return String(value || '')
+    .trim()
+    .replace(/(?:__[A-Za-z0-9._-]+)+$/i, '');
 }
 
 function parseSearchReferenceTuple(searchTerm) {
@@ -180,7 +191,7 @@ function buildWeReferenceFamily(reference) {
   );
 }
 
-function getManualReferenceHints(searchTerm) {
+export function getManualReferenceHints(searchTerm) {
   const key = normalizeManualReferenceHintKey(searchTerm);
   const raw = MANUAL_REFERENCE_HINTS.get(key);
   if (!Array.isArray(raw) || !raw.length) return [];
@@ -203,6 +214,21 @@ function normalizeProbeMode(body = {}, query = {}) {
     requestedProbeMode,
     isTurboProbe,
   };
+}
+
+function looksLikePlaceholderChoice(label, code = '') {
+  const labelNorm = String(label || '')
+    .trim()
+    .toLowerCase();
+  const codeNorm = String(code || '')
+    .trim()
+    .toUpperCase();
+  if (!labelNorm && !codeNorm) return true;
+  return (
+    labelNorm === 'please select one' ||
+    labelNorm === 'please select' ||
+    labelNorm === 'select an option'
+  );
 }
 
 function buildSearchResponse(payload, options = {}) {
@@ -1459,14 +1485,23 @@ export function scoreProductNode(node, searchTerm, options = {}) {
 
   const requestedReference = requestedReferenceRaw.toLowerCase();
   const requestedReferenceBase = stripScopedReferenceSuffix(requestedReferenceRaw).toLowerCase();
+  const requestedReferenceRoot =
+    stripAllScopedReferenceSuffixes(requestedReferenceRaw).toLowerCase();
   const nodeReferenceRaw = String(node?.reference || '').trim();
   const nodeReference = nodeReferenceRaw.toLowerCase();
   const nodeReferenceBase = stripScopedReferenceSuffix(nodeReferenceRaw).toLowerCase();
+  const nodeReferenceRoot = stripAllScopedReferenceSuffixes(nodeReferenceRaw).toLowerCase();
 
   if (requestedReference && nodeReference === requestedReference) {
     score += 1000;
+  } else if (requestedReference && nodeReference.startsWith(`${requestedReference}__`)) {
+    score += 850;
   } else if (requestedReferenceBase && nodeReferenceBase === requestedReferenceBase) {
     score += 700;
+  } else if (requestedReferenceBase && nodeReference === requestedReferenceBase) {
+    score += 600;
+  } else if (requestedReferenceRoot && nodeReferenceRoot === requestedReferenceRoot) {
+    score += 500;
   }
 
   return score;
@@ -1681,6 +1716,7 @@ async function discoverPublicProducts({
   baseUrl,
   searchTerm,
   limit = DISCOVERY_REFERENCE_PAGE_SIZE,
+  seedReferences = [],
 }) {
   const search = String(searchTerm || '').trim();
   if (!search) return { attempts: [], nodes: [], queryMode: 'name', totalMatchesSeen: 0 };
@@ -1690,7 +1726,16 @@ async function discoverPublicProducts({
   const queryMode = getDiscoveryQueryMode(search);
   const exactVariants =
     queryMode === 'reference'
-      ? Array.from(new Set([search, search.toUpperCase(), search.toLowerCase()]))
+      ? Array.from(
+          new Set(
+            [
+              search,
+              search.toUpperCase(),
+              search.toLowerCase(),
+              ...seedReferences.map(value => String(value || '').trim()),
+            ].filter(Boolean)
+          )
+        )
       : [];
   let totalMatchesSeen = 0;
 
@@ -1845,6 +1890,7 @@ async function discoverAuthenticatedProducts({
   password,
   searchTerm,
   queryMode,
+  seedReferences = [],
 }) {
   const search = String(searchTerm || '').trim();
   if (!search || !username || !password) {
@@ -1854,7 +1900,14 @@ async function discoverAuthenticatedProducts({
   const attempts = [];
   const productNodesByKey = new Map();
   const query = buildAuthenticatedDiscoveryQuery();
-  const termVariants = getDiscoveryTermVariants(search, queryMode);
+  const termVariants = Array.from(
+    new Set([
+      ...getDiscoveryTermVariants(search, queryMode),
+      ...(queryMode === 'reference'
+        ? seedReferences.map(value => String(value || '').trim()).filter(Boolean)
+        : []),
+    ])
+  );
   let totalMatchesSeen = 0;
 
   for (const termVariant of termVariants) {
@@ -2102,6 +2155,7 @@ async function runLegacySearchPayload({ req, body, startedAt }) {
 
 async function handleProductSearchDiscover({ req, res, body, startedAt }) {
   const searchTerm = String(body?.search || body?.query || '').trim();
+  const manualHintReferences = getManualReferenceHints(searchTerm);
   const manualHintNoneTerm = isManualReferenceHintNoneTerm(searchTerm);
   const queryMode = getDiscoveryQueryMode(searchTerm);
   if (!searchTerm) {
@@ -2131,6 +2185,7 @@ async function handleProductSearchDiscover({ req, res, body, startedAt }) {
     baseUrl,
     searchTerm,
     limit: queryMode === 'name' ? DISCOVERY_NAME_PAGE_SIZE : DISCOVERY_REFERENCE_PAGE_SIZE,
+    seedReferences: manualHintReferences,
   });
 
   let fastPath = null;
@@ -2184,6 +2239,7 @@ async function handleProductSearchDiscover({ req, res, body, startedAt }) {
       password: fallbackPassword,
       searchTerm,
       queryMode,
+      seedReferences: manualHintReferences,
     });
     productNodes = fallback.nodes;
     attempts = [...attempts, ...fallback.attempts];
@@ -2929,9 +2985,9 @@ async function handleProductSearch({ req, res, body, startedAt }) {
             options: (g.content || [])
               .map(item => {
                 const code = String(item?.code || '').trim();
-                if (!code || code.toUpperCase() === 'DF') return null;
                 const translatable = item?.name?._translateable || {};
                 const label = String(translatable.UN || translatable.en || '').trim();
+                if (!code || looksLikePlaceholderChoice(label, code)) return null;
                 return { code, label: label || code };
               })
               .filter(Boolean),

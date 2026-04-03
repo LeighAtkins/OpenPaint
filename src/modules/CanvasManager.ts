@@ -1447,6 +1447,8 @@ export class CanvasManager {
       if (strokePanel && imagePanel && mainLayout && canvasWrapper) {
         console.log('[CanvasManager] Enforcing Floating Layout (Full Screen Canvas)');
         const splitActive = canvasWrapper.classList.contains('guide-split-active');
+        const measurementSplitActive =
+          splitActive && window.isMeasurementSplitWorkspaceActive?.() === true;
 
         // 1. Main Layout: Relative container, block display (not flex)
         mainLayout.style.setProperty('position', 'relative', 'important');
@@ -1474,47 +1476,59 @@ export class CanvasManager {
           canvasWrapper.style.removeProperty('background');
         }
 
-        // Move panels to body to ensure they can float above everything (escape main-layout stacking context)
-        if (strokePanel.parentNode !== document.body) {
-          document.body.appendChild(strokePanel);
-        }
-        if (imagePanel.parentNode !== document.body) {
-          document.body.appendChild(imagePanel);
-        }
+        if (measurementSplitActive) {
+          strokePanel.style.setProperty('display', 'none', 'important');
+          strokePanel.style.setProperty('visibility', 'hidden', 'important');
+          strokePanel.style.setProperty('opacity', '0', 'important');
+          strokePanel.style.setProperty('pointer-events', 'none', 'important');
 
-        if (splitActive) {
-          strokePanel.style.setProperty('display', 'flex', 'important');
-          strokePanel.style.setProperty('visibility', 'visible', 'important');
-          strokePanel.style.setProperty('opacity', '1', 'important');
-          strokePanel.style.removeProperty('pointer-events');
-
-          imagePanel.style.setProperty('display', 'flex', 'important');
-          imagePanel.style.setProperty('visibility', 'visible', 'important');
-          imagePanel.style.setProperty('opacity', '1', 'important');
-          imagePanel.style.removeProperty('pointer-events');
+          imagePanel.style.setProperty('display', 'none', 'important');
+          imagePanel.style.setProperty('visibility', 'hidden', 'important');
+          imagePanel.style.setProperty('opacity', '0', 'important');
+          imagePanel.style.setProperty('pointer-events', 'none', 'important');
         } else {
-          // 3. Panels: restore the normal floating sidebars for the standard workspace.
-          strokePanel.style.setProperty('position', 'fixed', 'important'); // Use fixed to stay on screen
-          strokePanel.style.setProperty('left', '0', 'important');
-          strokePanel.style.setProperty('top', '48px', 'important'); // Account for toolbar
-          strokePanel.style.setProperty('height', 'calc(100% - 128px)', 'important'); // Full height minus toolbar and stepper
-          strokePanel.style.setProperty('z-index', '2000', 'important');
-          strokePanel.style.setProperty('opacity', '1', 'important');
-          strokePanel.style.setProperty('visibility', 'visible', 'important');
-          strokePanel.style.setProperty('display', 'flex', 'important');
-          strokePanel.style.setProperty('flex-direction', 'column', 'important');
-          strokePanel.style.removeProperty('pointer-events');
+          // Move panels to body to ensure they can float above everything (escape main-layout stacking context)
+          if (strokePanel.parentNode !== document.body) {
+            document.body.appendChild(strokePanel);
+          }
+          if (imagePanel.parentNode !== document.body) {
+            document.body.appendChild(imagePanel);
+          }
 
-          imagePanel.style.setProperty('position', 'fixed', 'important'); // Use fixed to stay on screen
-          imagePanel.style.setProperty('right', '0', 'important');
-          imagePanel.style.setProperty('top', '48px', 'important'); // Account for toolbar
-          imagePanel.style.setProperty('height', 'calc(100% - 128px)', 'important'); // Full height minus toolbar and stepper
-          imagePanel.style.setProperty('z-index', '2000', 'important');
-          imagePanel.style.setProperty('opacity', '1', 'important');
-          imagePanel.style.setProperty('visibility', 'visible', 'important');
-          imagePanel.style.setProperty('display', 'flex', 'important');
-          imagePanel.style.setProperty('flex-direction', 'column', 'important');
-          imagePanel.style.removeProperty('pointer-events');
+          if (splitActive) {
+            strokePanel.style.setProperty('display', 'flex', 'important');
+            strokePanel.style.setProperty('visibility', 'visible', 'important');
+            strokePanel.style.setProperty('opacity', '1', 'important');
+            strokePanel.style.removeProperty('pointer-events');
+
+            imagePanel.style.setProperty('display', 'flex', 'important');
+            imagePanel.style.setProperty('visibility', 'visible', 'important');
+            imagePanel.style.setProperty('opacity', '1', 'important');
+            imagePanel.style.removeProperty('pointer-events');
+          } else {
+            // 3. Panels: restore the normal floating sidebars for the standard workspace.
+            strokePanel.style.setProperty('position', 'fixed', 'important'); // Use fixed to stay on screen
+            strokePanel.style.setProperty('left', '0', 'important');
+            strokePanel.style.setProperty('top', '48px', 'important'); // Account for toolbar
+            strokePanel.style.setProperty('height', 'calc(100% - 128px)', 'important'); // Full height minus toolbar and stepper
+            strokePanel.style.setProperty('z-index', '2000', 'important');
+            strokePanel.style.setProperty('opacity', '1', 'important');
+            strokePanel.style.setProperty('visibility', 'visible', 'important');
+            strokePanel.style.setProperty('display', 'flex', 'important');
+            strokePanel.style.setProperty('flex-direction', 'column', 'important');
+            strokePanel.style.removeProperty('pointer-events');
+
+            imagePanel.style.setProperty('position', 'fixed', 'important'); // Use fixed to stay on screen
+            imagePanel.style.setProperty('right', '0', 'important');
+            imagePanel.style.setProperty('top', '48px', 'important'); // Account for toolbar
+            imagePanel.style.setProperty('height', 'calc(100% - 128px)', 'important'); // Full height minus toolbar and stepper
+            imagePanel.style.setProperty('z-index', '2000', 'important');
+            imagePanel.style.setProperty('opacity', '1', 'important');
+            imagePanel.style.setProperty('visibility', 'visible', 'important');
+            imagePanel.style.setProperty('display', 'flex', 'important');
+            imagePanel.style.setProperty('flex-direction', 'column', 'important');
+            imagePanel.style.removeProperty('pointer-events');
+          }
         }
 
         // Force resize to update canvas dimensions

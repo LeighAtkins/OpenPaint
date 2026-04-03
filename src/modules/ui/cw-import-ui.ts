@@ -1,3 +1,8 @@
+import {
+  openMeasurementSplitWorkspace,
+  shouldAllowMeasurementSplitEdit,
+} from './measurement-split-workspace';
+
 interface ImportedRow {
   id: string;
   sourceLabel: string;
@@ -200,13 +205,8 @@ function writePersistedCwUiState(state: CwUiPersistedState): void {
 }
 
 function isCwProbePreviewEnabled(): boolean {
-  if (typeof window === 'undefined') return false;
-  const host = (window.location.hostname || '').toLowerCase();
-  const params = new URLSearchParams(window.location.search || '');
-  if (params.get('cwProbe') === '1') return true;
-  if (host === 'localhost' || host === '127.0.0.1') return true;
-  if (host === 'sofapaint.vercel.app') return false;
-  if (host.endsWith('.vercel.app')) return true;
+  // Probe diagnostics are kept in the codebase for internal debugging,
+  // but the panel should not be exposed in the app UI.
   return false;
 }
 
@@ -331,6 +331,12 @@ function ensureStyles(): void {
     .cw-measure-row { display: grid; grid-template-columns: 160px 120px 1fr 180px 180px; gap: 8px; align-items: center; padding: 8px; border-bottom: 1px solid #f1f5f9; font-size: 12px; }
     .cw-measure-row:last-child { border-bottom: none; }
     .cw-measure-row.armed { background: #eff6ff; }
+    .cw-split-measure-wrap { margin-top: 0; width: 100%; height: 100%; min-width: 0; min-height: 0; flex: 1 1 auto; display: flex; flex-direction: column; border-radius: 18px; border: 1px solid rgba(203, 213, 225, 0.85); background: rgba(255,255,255,0.98); box-shadow: 0 16px 36px rgba(15, 23, 42, 0.08); overflow: hidden; }
+    .cw-split-measure-wrap .cw-measure-head { position: sticky; top: 0; z-index: 2; padding: 12px 14px; background: linear-gradient(180deg, #f8fafc 0%, #eef4ff 100%); border-bottom-color: rgba(203, 213, 225, 0.9); }
+    .cw-split-rows { width: 100%; flex: 1 1 auto; min-width: 0; min-height: 0; overflow: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; padding-bottom: 18px; }
+    .cw-split-measure-wrap .cw-measure-group { padding: 10px 14px 4px; }
+    .cw-split-measure-wrap .cw-measure-row { padding: 12px 14px; font-size: 13px; }
+    .cw-split-measure-wrap .cw-measure-input { min-height: 40px; font-size: 13px; }
     .cw-measure-group { padding: 10px 8px; background: linear-gradient(180deg, #ffffff, #f8fafc); border-bottom: 1px solid #e2e8f0; font-size: 11px; font-weight: 700; color: #0f172a; letter-spacing: 0.03em; text-transform: uppercase; }
     .cw-measure-val { color: #0f172a; font-weight: 600; }
     .cw-measure-input { width: 100%; border: 1px solid #cbd5e1; border-radius: 6px; padding: 6px 8px; font-size: 12px; }
@@ -1942,8 +1948,26 @@ function createModal(): HTMLElement {
     }
   };
 
-  const renderRows = () => {
-    rowsContainer.innerHTML = '';
+  const buildMeasureHeadMarkup = (): string =>
+    '<div class="cw-measure-head"><div>Item / Source Label</div><div>Section</div><div>Value</div><div>Map to Stroke Label</div><div>Actions</div></div>';
+
+  let measurementWorkspacePaneSyncRaf: number | null = null;
+  let measurementWorkspacePaneRetryTimer: ReturnType<typeof setTimeout> | null = null;
+  let measurementWorkspaceScrollTop = 0;
+  let measurementWorkspaceScrollLeft = 0;
+
+  const renderRowsInto = (
+    targetRowsContainer: HTMLDivElement,
+    options: { preserveScroll?: boolean; scrollTop?: number; scrollLeft?: number } = {}
+  ) => {
+    const preserveScroll = options.preserveScroll === true;
+    const previousScrollTop = preserveScroll
+      ? (options.scrollTop ?? targetRowsContainer.scrollTop)
+      : 0;
+    const previousScrollLeft = preserveScroll
+      ? (options.scrollLeft ?? targetRowsContainer.scrollLeft)
+      : 0;
+    targetRowsContainer.innerHTML = '';
     const filteredRows = visibleRows();
 
     if (!filteredRows.length) {
@@ -1952,7 +1976,11 @@ function createModal(): HTMLElement {
       empty.textContent = state.loadedItems.length
         ? 'No measurements in this item/section filter.'
         : 'No measurement rows available yet.';
-      rowsContainer.appendChild(empty);
+      targetRowsContainer.appendChild(empty);
+      if (preserveScroll) {
+        targetRowsContainer.scrollTop = previousScrollTop;
+        targetRowsContainer.scrollLeft = previousScrollLeft;
+      }
       return;
     }
 
@@ -1963,7 +1991,7 @@ function createModal(): HTMLElement {
         const groupEl = document.createElement('div');
         groupEl.className = 'cw-measure-group';
         groupEl.textContent = row.itemLabel;
-        rowsContainer.appendChild(groupEl);
+        targetRowsContainer.appendChild(groupEl);
       }
 
       const rowEl = document.createElement('div');
@@ -2046,8 +2074,102 @@ function createModal(): HTMLElement {
       rowEl.appendChild(valueEl);
       rowEl.appendChild(selectWrap);
       rowEl.appendChild(actionWrap);
-      rowsContainer.appendChild(rowEl);
+      targetRowsContainer.appendChild(rowEl);
     });
+
+    if (preserveScroll) {
+      targetRowsContainer.scrollTop = previousScrollTop;
+      targetRowsContainer.scrollLeft = previousScrollLeft;
+    }
+  };
+
+  const ensureMeasurementWorkspacePaneShell = (host: HTMLDivElement): HTMLDivElement | null => {
+    let splitRows = host.querySelector<HTMLDivElement>('#cwSplitRows');
+    if (splitRows) {
+      if (splitRows.dataset.scrollSyncBound !== 'true') {
+        splitRows.addEventListener(
+          'scroll',
+          () => {
+            measurementWorkspaceScrollTop = splitRows?.scrollTop || 0;
+            measurementWorkspaceScrollLeft = splitRows?.scrollLeft || 0;
+          },
+          { passive: true }
+        );
+        splitRows.dataset.scrollSyncBound = 'true';
+      }
+      return splitRows;
+    }
+
+    host.innerHTML = `
+      <div class="cw-measure-wrap cw-split-measure-wrap">
+        ${buildMeasureHeadMarkup()}
+        <div id="cwSplitRows" class="cw-split-rows"></div>
+      </div>
+    `;
+
+    splitRows = host.querySelector<HTMLDivElement>('#cwSplitRows');
+    if (splitRows) {
+      splitRows.addEventListener(
+        'scroll',
+        () => {
+          measurementWorkspaceScrollTop = splitRows?.scrollTop || 0;
+          measurementWorkspaceScrollLeft = splitRows?.scrollLeft || 0;
+        },
+        { passive: true }
+      );
+      splitRows.dataset.scrollSyncBound = 'true';
+      splitRows.scrollTop = measurementWorkspaceScrollTop;
+      splitRows.scrollLeft = measurementWorkspaceScrollLeft;
+    }
+    return splitRows;
+  };
+
+  const syncMeasurementWorkspacePane = () => {
+    const host = document.getElementById(
+      'guideSplitMeasurementEditorHost'
+    ) as HTMLDivElement | null;
+    const workspaceActive = (window as any).isMeasurementSplitWorkspaceActive?.() === true;
+    if (!host || !workspaceActive) return;
+
+    const splitRows = ensureMeasurementWorkspacePaneShell(host);
+    if (splitRows) {
+      renderRowsInto(splitRows, {
+        preserveScroll: true,
+        scrollTop: measurementWorkspaceScrollTop,
+        scrollLeft: measurementWorkspaceScrollLeft,
+      });
+      splitRows.scrollTop = measurementWorkspaceScrollTop;
+      splitRows.scrollLeft = measurementWorkspaceScrollLeft;
+    }
+  };
+
+  (window as any).renderCwMeasurementWorkspacePane = syncMeasurementWorkspacePane;
+
+  const scheduleMeasurementWorkspacePaneSync = () => {
+    if (measurementWorkspacePaneSyncRaf !== null) {
+      window.cancelAnimationFrame(measurementWorkspacePaneSyncRaf);
+      measurementWorkspacePaneSyncRaf = null;
+    }
+    if (measurementWorkspacePaneRetryTimer) {
+      clearTimeout(measurementWorkspacePaneRetryTimer);
+      measurementWorkspacePaneRetryTimer = null;
+    }
+
+    measurementWorkspacePaneSyncRaf = window.requestAnimationFrame(() => {
+      measurementWorkspacePaneSyncRaf = null;
+      syncMeasurementWorkspacePane();
+      if (!document.getElementById('guideSplitMeasurementEditorHost')) {
+        measurementWorkspacePaneRetryTimer = setTimeout(() => {
+          measurementWorkspacePaneRetryTimer = null;
+          syncMeasurementWorkspacePane();
+        }, 120);
+      }
+    });
+  };
+
+  const renderRows = () => {
+    renderRowsInto(rowsContainer);
+    syncMeasurementWorkspacePane();
   };
 
   const seedImportedGuideForView = (
@@ -2550,6 +2672,16 @@ function createModal(): HTMLElement {
     renderRows();
     updateFlowSteps();
   };
+
+  window.addEventListener('openpaint:measurement-split-workspace-change', () => {
+    scheduleMeasurementWorkspacePaneSync();
+  });
+  window.addEventListener('openpaint:guide-split-changed', () => {
+    scheduleMeasurementWorkspacePaneSync();
+  });
+  window.addEventListener('openpaint:guide-split-pane-rendered', () => {
+    scheduleMeasurementWorkspacePaneSync();
+  });
 
   const runSearch = async () => {
     const search = (searchTermEl?.value || '').trim();
@@ -3545,6 +3677,9 @@ function createModal(): HTMLElement {
         }
 
         await enableGuideWorkflowDefaults(firstImportedViewId);
+        if (firstImportedViewId) {
+          openMeasurementSplitWorkspace(firstImportedViewId);
+        }
         setStatus(
           `Imported ${imported} selected photo${imported === 1 ? '' : 's'} into project views, seeded ${seededViews} guide${seededViews === 1 ? '' : 's'}, and switched units to cm.`,
           'ok'
@@ -3785,11 +3920,11 @@ function attachToolbarButton(): void {
 
 export function initCwImportUI(): void {
   ensureStyles();
-  if (!(window as any).isCwMeasurementLocked) {
-    (window as any).isCwMeasurementLocked = (scopeLabel: string, strokeLabel: string) => {
-      return Boolean((window as any).cwMeasurementLocksByImage?.[scopeLabel]?.[strokeLabel]);
-    };
-  }
+  (window as any).isCwMeasurementLocked = (scopeLabel: string, strokeLabel: string) => {
+    const locked = Boolean((window as any).cwMeasurementLocksByImage?.[scopeLabel]?.[strokeLabel]);
+    if (!locked) return false;
+    return !shouldAllowMeasurementSplitEdit(scopeLabel, strokeLabel);
+  };
   if (!(window as any).setCwMeasurementLock) {
     (window as any).setCwMeasurementLock = setMeasurementLock;
   }

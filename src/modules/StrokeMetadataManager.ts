@@ -704,6 +704,9 @@ export class StrokeMetadataManager {
   isStrokePanelOpen() {
     const strokePanel = document.getElementById('strokePanel');
     const elementsBody = document.getElementById('elementsBody');
+    if (window.isMeasurementSplitWorkspaceActive?.() === true) {
+      return Boolean(strokePanel && elementsBody);
+    }
 
     const panelMinimized =
       strokePanel &&
@@ -772,6 +775,22 @@ export class StrokeMetadataManager {
       return;
     }
 
+    const measurementSplitActive = window.isMeasurementSplitWorkspaceActive?.() === true;
+    controlsContainer.dataset.measurementSplit = measurementSplitActive ? 'true' : 'false';
+    if (measurementSplitActive) {
+      const strokePanel = document.getElementById('strokePanel');
+      const elementsBody = document.getElementById('elementsBody');
+      if (strokePanel) {
+        strokePanel.classList.remove('minimized', 'collapsed');
+        strokePanel.setAttribute('aria-expanded', 'true');
+      }
+      if (elementsBody) {
+        elementsBody.classList.remove('hidden');
+        elementsBody.style.display = 'flex';
+        elementsBody.style.maxHeight = 'none';
+      }
+    }
+
     if (!this.isStrokePanelOpen()) {
       this._pendingStrokeControlsRefresh = true;
       this.ensureStrokePanelRefreshObserver();
@@ -829,6 +848,7 @@ export class StrokeMetadataManager {
       strokesList.style.setProperty('padding-bottom', '70px', 'important');
       strokesList.innerHTML = '';
     }
+    strokesList.classList.toggle('measurement-split-strokes-list', measurementSplitActive);
 
     // Add text elements header
     const textHeader = document.createElement('h4');
@@ -851,6 +871,9 @@ export class StrokeMetadataManager {
       textElements.forEach((textObj, index) => {
         const textItem = document.createElement('div');
         textItem.className = 'stroke-visibility-item group';
+        if (measurementSplitActive) {
+          textItem.classList.add('measurement-split-row');
+        }
         textItem.style.position = 'relative';
         textItem.style.marginBottom = '4px';
 
@@ -985,6 +1008,9 @@ export class StrokeMetadataManager {
       shapeElements.forEach((shapeObj, index) => {
         const shapeItem = document.createElement('div');
         shapeItem.className = 'stroke-visibility-item group';
+        if (measurementSplitActive) {
+          shapeItem.classList.add('measurement-split-row');
+        }
         shapeItem.style.position = 'relative';
         shapeItem.style.marginBottom = '4px';
 
@@ -1104,6 +1130,9 @@ export class StrokeMetadataManager {
     Object.entries(strokes).forEach(([strokeLabel, strokeObj]) => {
       const strokeItem = document.createElement('div');
       strokeItem.className = 'stroke-visibility-item group';
+      if (measurementSplitActive) {
+        strokeItem.classList.add('measurement-split-row');
+      }
       strokeItem.dataset.stroke = strokeLabel;
       strokeItem.dataset.selected = 'false';
       strokeItem.dataset.editMode = 'false';

@@ -153,12 +153,21 @@ function looksLikePlaceholderOption(label, code) {
     .trim()
     .toUpperCase();
   if (!labelNorm && !codeNorm) return true;
-  if (codeNorm === 'DF') return true;
   return (
     labelNorm === 'please select one' ||
     labelNorm === 'please select' ||
     labelNorm === 'select an option'
   );
+}
+
+function looksLikeVersionCode(code) {
+  const normalized = String(code || '')
+    .trim()
+    .toUpperCase();
+  if (!normalized) return false;
+  if (/^(?:DF|STD|EXD|SV|LV|PB|MG|PTD|L|R)$/.test(normalized)) return true;
+  if (/^[A-Z0-9]{1,6}(?:-[A-Z0-9]{1,6})+$/.test(normalized)) return true;
+  return false;
 }
 
 function classifyConfigurationGroup(group = {}) {
@@ -185,18 +194,25 @@ function classifyConfigurationGroup(group = {}) {
     )
     .filter(Boolean)
     .join(' ');
+  const hasStyleCode = /\b(?:CNRP|SHRT|LSKT|MLTP|VELC|BKPT|SDPT|ELAS|SP|SI|PC|PM|WR)\b/.test(
+    optionCodes
+  );
+  const hasVersionCode = options.some(option =>
+    looksLikeVersionCode(option?.pg_code || option?.code || '')
+  );
 
   if (
     /style/.test(labelPool) ||
-    /signature|original/.test(optionLabels) ||
-    /\b(?:CNRP|SHRT|LSKT|MLTP|VELC|BKPT|SDPT|ELAS|SP|SI|PC|PM|WR)\b/.test(optionCodes)
+    (hasVersionCode ? /signature/.test(optionLabels) : /signature|original/.test(optionLabels)) ||
+    hasStyleCode
   ) {
     return 'style';
   }
 
   if (
     /version|sofa type|sofa version|my sofa is/.test(labelPool) ||
-    /leather version|standard version/.test(optionLabels)
+    /leather version|standard version/.test(optionLabels) ||
+    hasVersionCode
   ) {
     return 'version';
   }
@@ -235,7 +251,7 @@ export function parseProductConfiguration({
     };
   }
 
-  const versionOptionMap = new Map();
+  const versionDimensions = [];
   const styleOptionMap = new Map();
   const groups = Array.isArray(parsed?.groups) ? parsed.groups : [];
 
@@ -244,23 +260,28 @@ export function parseProductConfiguration({
     const content = Array.isArray(group?.content) ? group.content : [];
 
     if (groupKind === 'version') {
+      const dimensionOptions = [];
+      const dimensionSeen = new Set();
       content.forEach(option => {
         const label = getTranslateableValue(option?.name);
         const code = String(option?.code || option?.pg_code || '')
           .trim()
           .toUpperCase();
         if (looksLikePlaceholderOption(label, code)) return;
-        const scopedReference =
-          normalizedReference && code ? `${normalizedReference}__${code}` : normalizedReference;
-        const key = `${code}|${scopedReference}`;
-        if (versionOptionMap.has(key)) return;
-        versionOptionMap.set(key, {
+        const key = `${code}|${String(label || code || '')
+          .trim()
+          .toLowerCase()}`;
+        if (dimensionSeen.has(key)) return;
+        dimensionSeen.add(key);
+        dimensionOptions.push({
           code,
           label: label || code || 'Default',
-          scopedReference,
           isDefault: false,
         });
       });
+      if (dimensionOptions.length) {
+        versionDimensions.push(dimensionOptions);
+      }
     }
 
     if (groupKind === 'style') {
@@ -281,6 +302,38 @@ export function parseProductConfiguration({
       });
     }
   });
+
+  const versionOptionMap = new Map();
+  if (versionDimensions.length > 0) {
+    let combinations = [{ codes: [], labels: [] }];
+    versionDimensions.forEach(dimension => {
+      const next = [];
+      combinations.forEach(combo => {
+        dimension.forEach(option => {
+          next.push({
+            codes: [...combo.codes, option.code],
+            labels: [...combo.labels, option.label],
+          });
+        });
+      });
+      combinations = next;
+    });
+
+    combinations.forEach(combo => {
+      const code = combo.codes.filter(Boolean).join('__');
+      if (!code) return;
+      const scopedReference =
+        normalizedReference && code ? `${normalizedReference}__${code}` : normalizedReference;
+      const key = `${code}|${scopedReference}`;
+      if (versionOptionMap.has(key)) return;
+      versionOptionMap.set(key, {
+        code,
+        label: combo.labels.filter(Boolean).join(' / ') || code || 'Default',
+        scopedReference,
+        isDefault: false,
+      });
+    });
+  }
 
   return {
     productReference: normalizedReference,

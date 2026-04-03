@@ -93,6 +93,7 @@ import { initScrollSelectSystem } from './modules/ui/scroll-select-init.js';
 import { initSofaTypePicker } from './modules/ui/sofa-type-picker.js';
 import { initMeasurementGuideFlash } from './modules/ui/measurement-guide-flash.js';
 import { initMeasurementGuideIndicator } from './modules/ui/measurement-guide-indicator';
+import { initMeasurementSplitWorkspace } from './modules/ui/measurement-split-workspace';
 import { initProjectNaming } from './modules/ui/project-naming.js';
 import { initMeasurementRelations } from './modules/ui/measurement-relations.js';
 import { initStatusMessageHandler } from './modules/ui/status-message-handler';
@@ -171,6 +172,7 @@ async function bootstrap(): Promise<void> {
   initSofaTypePicker();
 
   // Quick boss-key style SVG guide flash (hold backtick)
+  initMeasurementSplitWorkspace();
   initMeasurementGuideFlash();
   initMeasurementGuideIndicator();
 
