@@ -1925,6 +1925,32 @@ export function initToolbarController() {
     function normalizeWorldRect(worldRect) {
       return normalizeSharedWorldRect(worldRect);
     }
+    function computeRectIntersectionArea(a, b) {
+      const rectA = normalizeWorldRect(a);
+      const rectB = normalizeWorldRect(b);
+      if (!rectA || !rectB) return 0;
+      const left = Math.max(rectA.left, rectB.left);
+      const top = Math.max(rectA.top, rectB.top);
+      const right = Math.min(rectA.left + rectA.width, rectB.left + rectB.width);
+      const bottom = Math.min(rectA.top + rectA.height, rectB.top + rectB.height);
+      const width = Math.max(0, right - left);
+      const height = Math.max(0, bottom - top);
+      return width * height;
+    }
+    function selectUsableWorldRect(candidate, fallback) {
+      const normalizedCandidate = normalizeWorldRect(candidate);
+      const normalizedFallback = normalizeWorldRect(fallback);
+      if (!normalizedCandidate) {
+        return normalizedFallback;
+      }
+      if (!normalizedFallback) {
+        return normalizedCandidate;
+      }
+      const candidateArea = Math.max(1, normalizedCandidate.width * normalizedCandidate.height);
+      const overlapRatio =
+        computeRectIntersectionArea(normalizedCandidate, normalizedFallback) / candidateArea;
+      return overlapRatio >= 0.72 ? normalizedCandidate : normalizedFallback;
+    }
     function fitViewportToWorldRect(worldRect, viewport, targetRect) {
       return fitSharedViewportToWorldRect(worldRect, viewport, targetRect, getViewportGeometry());
     }
@@ -2037,7 +2063,10 @@ export function initToolbarController() {
       const activeTab = getActiveTab(resolved);
       const sourceTab = options?.sourceTab || activeTab;
       const sourceCaptureFrame = sourceTab?.captureFrame || activeTab?.captureFrame || null;
-      const worldRect = normalizeWorldRect(options?.worldRect || sourceCaptureFrame?.worldRect);
+      const worldRect = selectUsableWorldRect(
+        options?.worldRect || sourceCaptureFrame?.worldRect,
+        getCurrentBackgroundWorldRect()
+      );
       if (!activeTab || !worldRect) return false;
 
       const borderColor = activeTab.type === 'master' ? '#0f172a' : activeTab.color || '#22c55e';
@@ -2093,8 +2122,8 @@ export function initToolbarController() {
       return `tab-${Date.now()}-${captureTabIdCounter}`;
     }
     function createDefaultTabState(label) {
-      const frameRect = getCaptureFrameRectPixels();
-      const viewport = buildViewportRecord();
+      const frameRect = buildCaptureFrameRecord(resolveCaptureFrameRect(null));
+      const viewport = normalizeViewportRecord(null);
       const defaultTabId = createTabId();
       const masterTabId = 'master';
       return {
@@ -2520,8 +2549,8 @@ export function initToolbarController() {
           panX: 0,
           panY: 0,
         };
-        const storedWorldRect = normalizeWorldRect(stored?.worldRect);
         const splitImageWorldRect = normalizeWorldRect(splitSnapshot?.imageWorldRect);
+        const storedWorldRect = selectUsableWorldRect(stored?.worldRect, splitImageWorldRect);
         const targetWorldRect = storedWorldRect || splitImageWorldRect;
 
         if (splitTargetRect.width > 0 && splitTargetRect.height > 0) {
@@ -2558,13 +2587,10 @@ export function initToolbarController() {
         }
 
         if (targetWorldRect) {
-          const mappedRect = mapWorldRectToViewport(targetWorldRect, tempViewport);
-          if (mappedRect) {
-            writeCaptureFrameFromViewportRect(
-              mappedRect,
-              activeTab.type === 'master' ? '#0f172a' : activeTab.color || '#22c55e'
-            );
-          }
+          writeCaptureFrameFromViewportRect(
+            splitTargetRect,
+            activeTab.type === 'master' ? '#0f172a' : activeTab.color || '#22c55e'
+          );
         } else {
           captureFrame.style.left = `${Math.round(splitRect.left)}px`;
           captureFrame.style.top = `${Math.round(splitRect.top)}px`;
@@ -2581,8 +2607,8 @@ export function initToolbarController() {
 
       const applyCenteredFrameAndViewport = (stored, borderColor) => {
         const rect = resolveCaptureFrameRect(stored);
-        const storedWorldRect = normalizeWorldRect(stored?.worldRect);
-        const fallbackWorldRect = storedWorldRect ? null : resolveViewRestoreWorldRect(resolved);
+        const fallbackWorldRect = resolveViewRestoreWorldRect(resolved);
+        const storedWorldRect = selectUsableWorldRect(stored?.worldRect, fallbackWorldRect);
         const targetWorldRect = storedWorldRect || fallbackWorldRect;
         const baseViewport = normalizeViewportRecord(activeTab.viewport || buildViewportRecord());
         let nextViewport = baseViewport;
@@ -2602,22 +2628,28 @@ export function initToolbarController() {
         });
 
         if (targetWorldRect) {
-          const replayed = replayCaptureFrameForLabelFromWorldRect(resolved, {
-            sourceTab: activeTab,
-            worldRect: targetWorldRect,
-            viewport: baseViewport,
-            targetRect: rect,
-            renderOverlay: false,
-          });
-          if (replayed) {
-            if (!storedWorldRect && targetWorldRect) {
-              activeTab.captureFrame = {
-                ...(stored || {}),
-                worldRect: targetWorldRect,
+          const targetRect = storedWorldRect
+            ? rect
+            : buildCenteredRectFromSize(rect.width, rect.height);
+          const viewportSeed = storedWorldRect
+            ? baseViewport
+            : {
+                ...normalizeViewportRecord(null),
+                rotation: resolveViewportRotation(activeTab.viewport, resolved),
               };
-            }
-            return;
-          }
+          const nextViewport = fitViewportToWorldRect(targetWorldRect, viewportSeed, targetRect);
+          activeTab.viewport = normalizeViewportRecord(nextViewport);
+          activeTab.captureFrame = {
+            ...(stored || {}),
+            ...buildCaptureFrameRecord(targetRect),
+            worldRect: targetWorldRect,
+          };
+
+          writeCaptureFrameFromViewportRect(targetRect, borderColor);
+
+          suspendCaptureTabViewportTracking();
+          applyViewportRecord(activeTab.viewport);
+          return;
         } else if (centerDeltaX !== 0 || centerDeltaY !== 0) {
           nextViewport = {
             ...baseViewport,
@@ -2704,7 +2736,24 @@ export function initToolbarController() {
     }
     function syncCaptureFrameToActiveTabWorldRect(label) {
       const resolved = label || getActiveLabel();
+      if (isGuideSplitWorkspaceActive()) {
+        applyCaptureFrameForLabel(resolved);
+        return;
+      }
+      const activeTab = getActiveTab(resolved);
+      const bgWorldRect = getCurrentBackgroundWorldRect();
+      const syncedWorldRect = selectUsableWorldRect(
+        activeTab?.captureFrame?.worldRect,
+        bgWorldRect
+      );
+      if (activeTab && syncedWorldRect) {
+        activeTab.captureFrame = {
+          ...(activeTab.captureFrame || {}),
+          worldRect: syncedWorldRect,
+        };
+      }
       const result = replayCaptureFrameForLabelFromWorldRect(resolved, {
+        worldRect: syncedWorldRect,
         viewport: buildViewportRecord(),
         skipFit: true,
         applyViewport: false,
@@ -2713,12 +2762,9 @@ export function initToolbarController() {
       // fall back to the current background worldRect so the capture frame
       // doesn't persist from the previous image.
       if (!result) {
-        const bgWorldRect = getCurrentBackgroundWorldRect();
         if (bgWorldRect) {
           // Persist the fallback worldRect to the tab so future sync calls
           // use it consistently instead of re-deriving from the BG each time.
-          ensureCaptureTabsForLabel(resolved);
-          const activeTab = getActiveTab(resolved);
           if (activeTab && !activeTab.captureFrame?.worldRect) {
             activeTab.captureFrame = {
               ...(activeTab.captureFrame || {}),
@@ -3965,6 +4011,44 @@ export function initToolbarController() {
       return fallback;
     };
 
+    const normalizePredictedTag = value =>
+      String(value || '')
+        .trim()
+        .toUpperCase();
+
+    const getTagScopeCandidates = scopeLabel => {
+      const normalized = String(scopeLabel || '').trim();
+      const base = normalized.split('::tab:')[0] || normalized;
+      return Array.from(new Set([normalized, base].filter(Boolean)));
+    };
+
+    const readScopedPredictedTag = (store, scopeLabel) => {
+      if (!store || typeof store !== 'object') return '';
+      for (const key of getTagScopeCandidates(scopeLabel)) {
+        const value = normalizePredictedTag(store[key]);
+        if (value) return value;
+      }
+      return '';
+    };
+
+    const getGuideSeedTag = scopeLabel =>
+      readScopedPredictedTag(window.guideOneTimeTagByImage, scopeLabel);
+
+    const getExplicitNextTagOverride = scopeLabel => {
+      const manualTag = readScopedPredictedTag(window.manualTagByImage, scopeLabel);
+      if (manualTag) {
+        return { tag: manualTag, source: 'manualTagByImage' };
+      }
+
+      const guideSeedTag = getGuideSeedTag(scopeLabel);
+      const labelTag = readScopedPredictedTag(window.labelsByImage, scopeLabel);
+      if (labelTag && (!guideSeedTag || labelTag !== guideSeedTag)) {
+        return { tag: labelTag, source: 'labelsByImage' };
+      }
+
+      return null;
+    };
+
     // Helper function to find next available letter (A, B, C...)
     function findNextAvailableLetter() {
       const currentImageLabel = resolveTagScopeLabel();
@@ -4037,12 +4121,23 @@ export function initToolbarController() {
       }
     };
 
+    const applyTagMode = nextMode => {
+      if (nextMode !== 'letters' && nextMode !== 'letters+numbers') {
+        return tagMode;
+      }
+      tagMode = nextMode;
+      window.tagMode = tagMode;
+      if (window.app?.tagManager) {
+        window.app.tagManager.tagMode = tagMode;
+      }
+      syncTagModeToggleLabel();
+      return tagMode;
+    };
+
     if (tagModeToggle) {
       tagModeToggle.addEventListener('click', () => {
         const oldMode = tagMode;
-        tagMode = tagMode === 'letters' ? 'letters+numbers' : 'letters';
-        window.tagMode = tagMode;
-        syncTagModeToggleLabel();
+        applyTagMode(tagMode === 'letters' ? 'letters+numbers' : 'letters');
 
         // Automatically set the next appropriate tag when switching modes
         const currentImageLabel = resolveTagScopeLabel();
@@ -4052,11 +4147,15 @@ export function initToolbarController() {
           // Switching to letters only - find next available letter
           const nextLetter = findNextAvailableLetter();
           window.labelsByImage[currentImageLabel] = nextLetter;
+          window.manualTagByImage = window.manualTagByImage || {};
+          window.manualTagByImage[currentImageLabel] = nextLetter;
           console.log(`[tagModeToggle] Switched to letters mode, next tag: ${nextLetter}`);
         } else {
           // Switching to letters+numbers - find next available letter+number
           const nextLetterNumber = findNextAvailableLetterNumber();
           window.labelsByImage[currentImageLabel] = nextLetterNumber;
+          window.manualTagByImage = window.manualTagByImage || {};
+          window.manualTagByImage[currentImageLabel] = nextLetterNumber;
           console.log(
             `[tagModeToggle] Switched to letters+numbers mode, next tag: ${nextLetterNumber}`
           );
@@ -4072,11 +4171,33 @@ export function initToolbarController() {
     function calculateNextTag() {
       console.log('[calculateNextTag] Called with tagMode:', tagMode);
       const currentImageLabel = resolveTagScopeLabel();
+      const explicitOverride = getExplicitNextTagOverride(currentImageLabel);
+      if (explicitOverride) {
+        console.log(
+          `[calculateNextTag] Using ${explicitOverride.source} (manual override):`,
+          explicitOverride.tag
+        );
+        return explicitOverride.tag;
+      }
+
+      const guideSeedTag = getGuideSeedTag(currentImageLabel);
+      if (guideSeedTag) {
+        console.log('[calculateNextTag] Using guideOneTimeTagByImage seed:', guideSeedTag);
+        return guideSeedTag;
+      }
 
       // First, check if there are any existing tags
-      const strokesObj =
+      const vectorStrokes =
         window.app?.metadataManager?.vectorStrokesByImage?.[currentImageLabel] || {};
-      const existingTags = Object.keys(strokesObj);
+      const lineTags = Array.isArray(window.lineStrokesByImage?.[currentImageLabel])
+        ? window.lineStrokesByImage[currentImageLabel]
+        : [];
+      const existingTags = Array.from(
+        new Set([
+          ...Object.keys(vectorStrokes),
+          ...lineTags.map(normalizePredictedTag).filter(Boolean),
+        ])
+      );
 
       console.log(
         '[calculateNextTag] Current image:',
@@ -4084,20 +4205,6 @@ export function initToolbarController() {
         'existing tags:',
         existingTags
       );
-
-      // Priority 1: Check if user manually set the next tag via labelsByImage
-      if (window.labelsByImage && window.labelsByImage[currentImageLabel]) {
-        const manualTag = window.labelsByImage[currentImageLabel];
-        console.log('[calculateNextTag] Using labelsByImage (manual override):', manualTag);
-        return manualTag;
-      }
-
-      // Priority 2: Check if we're in a manual tag sequence (manualTagByImage)
-      if (window.manualTagByImage && window.manualTagByImage[currentImageLabel]) {
-        const manualTag = window.manualTagByImage[currentImageLabel];
-        console.log('[calculateNextTag] Using manualTagByImage (manual sequence):', manualTag);
-        return manualTag;
-      }
 
       // If no tags exist, default to the beginning.
       // Keep manual overrides intact so first-stroke custom seeds (for example C1) still work.
@@ -4293,19 +4400,25 @@ export function initToolbarController() {
       if (nextTagDisplay) {
         const currentImageLabel = resolveTagScopeLabel();
 
-        // Priority: 1) labelsByImage (immediate next), 2) manualTagByImage (manual sequence), 3) calculateNextTag (gap-filling)
+        // Priority: 1) explicit manual overrides, 2) guide seed, 3) calculateNextTag (gap-filling)
         let nextTag;
-        if (window.labelsByImage && window.labelsByImage[currentImageLabel]) {
-          nextTag = window.labelsByImage[currentImageLabel];
-          console.log('[updateNextTagDisplay] Using labelsByImage:', nextTag);
-        } else if (window.manualTagByImage && window.manualTagByImage[currentImageLabel]) {
-          // We're in a manual sequence - use the manual flag value
-          nextTag = window.manualTagByImage[currentImageLabel];
-          console.log('[updateNextTagDisplay] Using manualTagByImage:', nextTag);
+        const explicitOverride = getExplicitNextTagOverride(currentImageLabel);
+        if (explicitOverride) {
+          nextTag = explicitOverride.tag;
+          console.log(`[updateNextTagDisplay] Using ${explicitOverride.source}:`, nextTag);
         } else {
-          // Normal gap-filling mode
+          const guideSeedTag = getGuideSeedTag(currentImageLabel);
+          if (guideSeedTag) {
+            nextTag = guideSeedTag;
+            console.log('[updateNextTagDisplay] Using guideOneTimeTagByImage:', nextTag);
+          }
+        }
+
+        if (!nextTag) {
           nextTag = calculateNextTag();
           console.log('[updateNextTagDisplay] Using calculateNextTag (gap-filling):', nextTag);
+        } else {
+          nextTag = normalizePredictedTag(nextTag);
         }
 
         nextTagDisplay.textContent = nextTag;
@@ -4320,6 +4433,14 @@ export function initToolbarController() {
     window.updateNextTagDisplay = updateNextTagDisplay;
     window.calculateNextTag = calculateNextTag;
     window.calculateNextTagFrom = calculateNextTagFrom;
+    window.setTagMode = (nextMode, options = {}) => {
+      const previousMode = tagMode;
+      const appliedMode = applyTagMode(nextMode);
+      if (options?.updateDisplay !== false && appliedMode !== previousMode) {
+        updateNextTagDisplay();
+      }
+      return appliedMode;
+    };
     console.log(
       '[index.html] Made calculateNextTag available globally:',
       typeof window.calculateNextTag
@@ -4388,13 +4509,9 @@ export function initToolbarController() {
       }
 
       if (isLetterOnly && tagMode !== 'letters') {
-        tagMode = 'letters';
-        window.tagMode = tagMode;
-        syncTagModeToggleLabel();
+        applyTagMode('letters');
       } else if (isLetterNumber && tagMode !== 'letters+numbers') {
-        tagMode = 'letters+numbers';
-        window.tagMode = tagMode;
-        syncTagModeToggleLabel();
+        applyTagMode('letters+numbers');
       }
 
       // Ensure labelsByImage exists, then set the next tag seed

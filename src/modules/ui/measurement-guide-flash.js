@@ -66,6 +66,7 @@ let guideSplitTransitionPending = false;
 let guideSplitCompareLoadPromise = null;
 let guideSplitCompareLoadKey = '';
 let guideSplitCompareLoadToken = 0;
+let guideSplitLayoutRetryTimeout = null;
 let _ensureRightViewInFlight = false;
 let _bindingChangedTimeout = null;
 let _lastProcessedGuideNextTagEventKey = '';
@@ -284,6 +285,21 @@ function cleanupGuideSplitPanelVisibility() {
 
 function runGuideSplitLayoutSync() {
   if (!guideSplitEnabled) return;
+  const liveHost = document.getElementById('guideSplitLiveCanvasHost');
+  const compareHost = document.getElementById('guideSplitCompareCanvasHost');
+  const measurementHost = document.getElementById('guideSplitMeasurementEditorHost');
+  const activeHost =
+    getGuideSplitWorkspaceMode() === 'measurement-edit' ? measurementHost : compareHost;
+  if (!isGuideSplitHostLayoutReady(liveHost) || !isGuideSplitHostLayoutReady(activeHost, false)) {
+    if (guideSplitLayoutRetryTimeout !== null) {
+      clearTimeout(guideSplitLayoutRetryTimeout);
+    }
+    guideSplitLayoutRetryTimeout = window.setTimeout(() => {
+      guideSplitLayoutRetryTimeout = null;
+      scheduleGuideSplitLayoutSync({ settle: true });
+    }, 40);
+    return;
+  }
   const primaryCanvasManager = getPrimaryCanvasManager();
   const frameEl = document.getElementById('captureFrame');
   const syncToken = guideSplitFrameSyncToken + 1;
@@ -377,6 +393,10 @@ function scheduleGuideSplitLayoutSync({ settle = false } = {}) {
   if (guideSplitLayoutSyncTimeout !== null) {
     clearTimeout(guideSplitLayoutSyncTimeout);
     guideSplitLayoutSyncTimeout = null;
+  }
+  if (guideSplitLayoutRetryTimeout !== null) {
+    clearTimeout(guideSplitLayoutRetryTimeout);
+    guideSplitLayoutRetryTimeout = null;
   }
 
   window.__guideSplitLayoutSettling = true;
@@ -584,6 +604,19 @@ function resizeGuideSplitCanvasManagerNow(canvasManager) {
   }
 
   return false;
+}
+
+function isGuideSplitHostLayoutReady(host, required = true) {
+  if (!required) {
+    return true;
+  }
+  if (!host || !host.isConnected) {
+    return false;
+  }
+  const rect = host.getBoundingClientRect?.();
+  const width = Number(rect?.width || host.clientWidth || 0);
+  const height = Number(rect?.height || host.clientHeight || 0);
+  return width >= 180 && height >= 140;
 }
 
 function teardownGuideSplitCompareCanvasManager() {
@@ -1754,9 +1787,11 @@ function ensureStyles() {
     }
     .guide-split-live-pane {
       border: 0;
+      transition: opacity 90ms ease;
     }
     .guide-split-live-pane.is-transitioning {
       pointer-events: none;
+      opacity: 0;
     }
     .guide-split-live-pane #captureOverlay {
       position: absolute !important;
@@ -5219,11 +5254,23 @@ function setGuideSplitEnabled(enabled) {
   guideSplitEnabled = next;
   guideCompareWorkspaceState.open = next;
   if (!next) {
-    window.resetMeasurementSplitWorkspace?.();
+    window.suspendMeasurementSplitWorkspace?.();
     invalidateGuideSplitCompareLoad();
   }
   if (next && !guideCompareWorkspaceState.leftViewId) {
     guideCompareWorkspaceState.leftViewId = toBaseViewId(getCurrentViewId());
+  }
+  if (next && isMeasurementSplitMode()) {
+    const measurementWorkspaceState = window.getMeasurementSplitWorkspaceState?.() || null;
+    const activeMeasurementViewId = toBaseViewId(
+      measurementWorkspaceState?.activeImportedViewId || getCurrentViewId()
+    );
+    if (activeMeasurementViewId) {
+      guideCompareWorkspaceState.leftViewId = activeMeasurementViewId;
+    }
+    window.resumeMeasurementSplitWorkspace?.(
+      activeMeasurementViewId || guideCompareWorkspaceState.leftViewId || getCurrentViewId()
+    );
   }
   guideCompareWorkspaceState.activePane = isMeasurementSplitMode() ? 'right' : 'left';
   if (next) {
@@ -5312,13 +5359,20 @@ async function applyGuideSplitLayout() {
     if (primaryCanvasManager?.enforceFloatingLayout) {
       primaryCanvasManager.enforceFloatingLayout();
     }
-    resizeGuideSplitCanvasManagerNow(primaryCanvasManager);
+    if (isGuideSplitHostLayoutReady(liveCanvasHost)) {
+      resizeGuideSplitCanvasManagerNow(primaryCanvasManager);
+    }
     syncGuideSplitPrimaryCaptureFrame(leftViewId);
     renderGuideSplitPane();
     if (!isMeasurementSplitMode()) {
       await ensureGuideSplitDefaultRightView();
       renderGuideSplitPane();
-      resizeGuideSplitCanvasManagerNow(guideSplitCompareCanvasManager);
+      const compareHost = document.getElementById('guideSplitCompareCanvasHost');
+      if (
+        isGuideSplitHostLayoutReady(compareHost, Boolean(guideCompareWorkspaceState.rightViewId))
+      ) {
+        resizeGuideSplitCanvasManagerNow(guideSplitCompareCanvasManager);
+      }
     }
     scheduleGuideSplitLayoutSync({ settle: true });
   } else {
@@ -5357,10 +5411,13 @@ async function applyGuideSplitLayout() {
       syncGuideSplitPrimaryCaptureFrame(restoreViewId, { exact: true });
       resizeGuideSplitCanvasManagerNow(primaryCanvasManager);
 
-      // Force a full view reload from saved view data to restore canvas objects.
-      // Do NOT save current view state first — the split mode canvas is in a
-      // modified/corrupted state and saving it would clobber the good data.
+      // Save canvas objects (strokes/metadata) drawn during split mode, but NOT
+      // viewport state which is modified by the split layout.  Then force a full
+      // view reload to restore the correct viewport/background positioning.
       const manager = window.app?.projectManager || window.projectManager;
+      if (manager?.saveCurrentViewState) {
+        manager.saveCurrentViewState({ skipViewport: true });
+      }
       if (manager?.switchView) {
         window.__suspendSaveCurrentView = true;
         manager.switchView(restoreViewId, true).then(() => {
@@ -5408,7 +5465,15 @@ function renderGuideSplitPane() {
   const measurementWorkspaceState = window.getMeasurementSplitWorkspaceState?.() || null;
   const binding = resolveModelBindingForView(leftViewId);
   const stateKey = `${workspaceMode}::${leftViewId}::${rightViewId || '-'}::${measurementWorkspaceState?.activeImportedViewId || '-'}::${guideCompareWorkspaceState.activePane}::${guideCompareWorkspaceState.rightSourceKind}`;
-  if (stateKey === guideSplitLastSyncKey) return;
+  const missingMeasurementHost =
+    workspaceMode === 'measurement-edit' && !pane.querySelector('#guideSplitMeasurementEditorHost');
+  const missingCompareHost =
+    workspaceMode !== 'measurement-edit' &&
+    Boolean(rightViewId) &&
+    !pane.querySelector('#guideSplitCompareCanvasHost');
+  if (stateKey === guideSplitLastSyncKey && !missingMeasurementHost && !missingCompareHost) {
+    return;
+  }
   guideSplitLastSyncKey = stateKey;
 
   syncGuideSplitWorkspaceModeUi();
@@ -7000,6 +7065,7 @@ export function initMeasurementGuideFlash() {
     guideCompareWorkspaceState.leftViewId = nextViewId;
     captureGuideSplitRestoreSnapshot(nextViewId);
     if (isMeasurementSplitMode()) {
+      window.resumeMeasurementSplitWorkspace?.(nextViewId);
       renderGuideSplitPane();
     } else if (guideCompareWorkspaceState.rightSourceKind === 'bound-guide') {
       void ensureGuideSplitDefaultRightView();

@@ -25,6 +25,8 @@ declare global {
     openMeasurementSplitWorkspace?: (viewId: string) => boolean;
     closeMeasurementSplitWorkspace?: () => boolean;
     resetMeasurementSplitWorkspace?: () => void;
+    suspendMeasurementSplitWorkspace?: () => boolean;
+    resumeMeasurementSplitWorkspace?: (viewId?: string) => boolean;
     mountMeasurementSplitStrokePanel?: () => boolean;
     restoreMeasurementSplitStrokePanel?: () => boolean;
     isMeasurementSplitWorkspaceActive?: () => boolean;
@@ -348,21 +350,50 @@ export function resetMeasurementSplitWorkspace(): void {
   dispatchWorkspaceChange();
 }
 
-export function openMeasurementSplitWorkspace(viewId: string): boolean {
+export function suspendMeasurementSplitWorkspace(): boolean {
+  const hadWorkspaceState =
+    workspaceState.activeMode === 'measurement-edit' || workspaceState.lockOverrideActive;
+  workspaceState.lockOverrideActive = false;
+  teardownMountSyncObserver();
+  restoreMeasurementSplitStrokePanel();
+  dispatchWorkspaceChange();
+  return hadWorkspaceState;
+}
+
+export function resumeMeasurementSplitWorkspace(viewId = ''): boolean {
   const nextViewId =
     getCanonicalScopeLabel(viewId) ||
+    getCanonicalScopeLabel(workspaceState.activeImportedViewId) ||
     getCanonicalScopeLabel((window as any).app?.projectManager?.currentViewId || '') ||
     String(viewId || '').trim();
+
+  if (!nextViewId) {
+    return false;
+  }
 
   workspaceState.activeMode = 'measurement-edit';
   workspaceState.activeImportedViewId = nextViewId;
   workspaceState.lockOverrideActive = true;
   dispatchWorkspaceChange();
   sanitizeActiveCanvasTextBaselines();
+  return true;
+}
+
+export function openMeasurementSplitWorkspace(viewId: string): boolean {
+  const nextViewId =
+    getCanonicalScopeLabel(viewId) ||
+    getCanonicalScopeLabel((window as any).app?.projectManager?.currentViewId || '') ||
+    String(viewId || '').trim();
+
+  resumeMeasurementSplitWorkspace(nextViewId);
 
   if (!getGuideSplitEnabled(nextViewId)) {
     window.setGuideSplitEnabled?.(true);
   }
+
+  // Fire a second sync after split mode is enabled so late-mounted hosts
+  // rebuild their measurement row pane on reopen/import cycles.
+  dispatchWorkspaceChange();
 
   return true;
 }
@@ -373,7 +404,7 @@ export function closeMeasurementSplitWorkspace(): boolean {
     window.setGuideSplitEnabled?.(false);
     return true;
   }
-  resetMeasurementSplitWorkspace();
+  suspendMeasurementSplitWorkspace();
   return true;
 }
 
@@ -385,8 +416,20 @@ export function initMeasurementSplitWorkspace(): void {
   window.openMeasurementSplitWorkspace = openMeasurementSplitWorkspace;
   window.closeMeasurementSplitWorkspace = closeMeasurementSplitWorkspace;
   window.resetMeasurementSplitWorkspace = resetMeasurementSplitWorkspace;
+  window.suspendMeasurementSplitWorkspace = suspendMeasurementSplitWorkspace;
+  window.resumeMeasurementSplitWorkspace = resumeMeasurementSplitWorkspace;
   window.mountMeasurementSplitStrokePanel = mountMeasurementSplitStrokePanel;
   window.restoreMeasurementSplitStrokePanel = restoreMeasurementSplitStrokePanel;
   window.isMeasurementSplitWorkspaceActive = isMeasurementSplitWorkspaceActive;
   window.shouldAllowMeasurementSplitEdit = shouldAllowMeasurementSplitEdit;
+
+  window.addEventListener('openpaint:view-switched', event => {
+    if (workspaceState.activeMode !== 'measurement-edit') return;
+    const nextViewId =
+      getCanonicalScopeLabel((event as CustomEvent)?.detail?.viewId || '') ||
+      getCanonicalScopeLabel((window as any).app?.projectManager?.currentViewId || '');
+    if (!nextViewId || nextViewId === workspaceState.activeImportedViewId) return;
+    workspaceState.activeImportedViewId = nextViewId;
+    dispatchWorkspaceChange();
+  });
 }

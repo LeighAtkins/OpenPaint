@@ -124,11 +124,17 @@ export function initScrollSelectSystem() {
   }
 
   function isScrollSelectEnabled(): boolean {
+    const splitWrapper = document.getElementById('main-canvas-wrapper');
+    const splitActive = splitWrapper?.classList.contains('guide-split-active') === true;
+    const measurementSplitActive =
+      document.body?.classList.contains('measurement-split-workspace-active') === true;
     if (
       document.hidden ||
       (window.__suppressScrollSelectUntil && Date.now() < window.__suppressScrollSelectUntil) ||
       window.__isLoadingProject ||
-      window.__deferredImageHydrationInProgress
+      window.__deferredImageHydrationInProgress ||
+      splitActive ||
+      measurementSplitActive
     ) {
       return false;
     }

@@ -2310,28 +2310,7 @@ async function handleProductSearchLoadSelected({ req, res, body, startedAt }) {
     });
   }
 
-  const results = [];
-  for (const rawItem of selectedItems) {
-    const selection = normalizeSelectedItemSelection(rawItem);
-    const legacy = await runLegacySearchPayload({
-      req,
-      startedAt,
-      body: buildLoadSelectedSearchBody(body, selection),
-    });
-    const payload = legacy.payload || {};
-    results.push({
-      selectionKey: selection.selectionKey,
-      basketItem: selection,
-      success: legacy.statusCode >= 200 && legacy.statusCode < 300 && payload?.success !== false,
-      statusCode: legacy.statusCode,
-      code: payload?.code || null,
-      message: payload?.message || null,
-      product: payload?.product || null,
-      data: payload,
-    });
-  }
-
-  const loadedCount = results.filter(item => item.success).length;
+  const { results, loadedCount } = await loadSelectedQcItems({ body });
   return res.status(loadedCount > 0 ? 200 : 502).json({
     success: loadedCount > 0,
     code:
@@ -2349,14 +2328,13 @@ async function handleProductSearchLoadSelected({ req, res, body, startedAt }) {
   });
 }
 
-async function handleLoadSelected({ res, body, startedAt }) {
+async function loadSelectedQcItems({ body = {} }) {
   const selectedItems = Array.isArray(body?.selectedItems) ? body.selectedItems : [];
   if (!selectedItems.length) {
-    return res.status(400).json({
-      success: false,
-      code: 'CW_NO_ITEMS_SELECTED',
-      message: 'No items to load',
-    });
+    return {
+      results: [],
+      loadedCount: 0,
+    };
   }
 
   const override = {
@@ -2369,28 +2347,48 @@ async function handleLoadSelected({ res, body, startedAt }) {
   )
     .trim()
     .replace(/\/+$/, '');
+  const bucketName = String(
+    body?.bucketName ||
+      process.env.CW_PID_STORAGE_BUCKET ||
+      process.env.PID_STORAGE ||
+      'pid-storage'
+  ).trim();
 
-  // Get auth
   const session = await createCwSession(override);
   const tokenResult = await fetchMtAccessTokenViaCwGraphql({ override });
   const mtAccessToken = tokenResult?.accessToken || '';
-
   const results = [];
-  for (const item of selectedItems) {
-    const productRef = String(item?.productReference || '').trim();
-    const scopedRef = String(item?.scopedReference || '').trim();
-    const style = String(item?.style || '').trim();
-    const styleCode = String(item?.styleCode || '').trim();
-    // Use scopedReference for the QC lookup (includes version suffix like IK-KD-2__STD)
+
+  for (const rawItem of selectedItems) {
+    const selection = normalizeSelectedItemSelection(rawItem);
+    const productRef = String(selection?.productReference || '').trim();
+    const scopedRef = String(selection?.scopedReference || '').trim();
+    const style = String(selection?.style || '').trim();
+    const styleCode = String(selection?.styleCode || '').trim();
     const lookupRef = scopedRef || productRef;
+    const product = {
+      reference: lookupRef,
+      name: selection?.productName || productRef || lookupRef,
+    };
 
     if (!lookupRef) {
       results.push({
-        selectionKey: item?.selectionKey || '',
-        basketItem: item,
-        data: null,
+        selectionKey: selection.selectionKey,
+        basketItem: selection,
         success: false,
+        statusCode: 400,
+        code: 'CW_PRODUCT_REFERENCE_REQUIRED',
         message: 'Missing product reference',
+        product,
+        data: {
+          success: false,
+          code: 'CW_PRODUCT_REFERENCE_REQUIRED',
+          message: 'Missing product reference',
+          product,
+          qcMeasurements: null,
+          measurements: [],
+          images: [],
+        },
       });
       continue;
     }
@@ -2402,45 +2400,85 @@ async function handleLoadSelected({ res, body, startedAt }) {
         productReference: lookupRef,
         style,
         styleCode,
+        bucketName,
         mtAccessToken,
       });
 
       const qcData = qcResult.body?.content || qcResult.body || null;
       const ok = qcResult.ok && qcData && typeof qcData === 'object' && !qcData.detail;
+      const images = ok ? extractQcImages(qcData, pidBaseUrl) : [];
+      const code = ok
+        ? 'CW_PRODUCT_MEASUREMENTS_LOOKUP_OK'
+        : String(qcResult.body?.code || 'CW_PRODUCT_MEASUREMENTS_LOOKUP_FAILED').trim();
+      const message = ok
+        ? null
+        : String(qcData?.detail || qcData?.content || qcResult.rawText || 'QC lookup failed').slice(
+            0,
+            200
+          );
 
       results.push({
-        selectionKey: item?.selectionKey || '',
-        basketItem: item,
-        data: ok
-          ? {
-              product: {
-                reference: lookupRef,
-                name: item?.productName || productRef,
-              },
-              qcMeasurements: { data: qcData },
-              measurements: qcData?.product_components || [],
-              images: extractQcImages(qcData, pidBaseUrl),
-            }
-          : null,
+        selectionKey: selection.selectionKey,
+        basketItem: selection,
         success: Boolean(ok),
-        message: ok
-          ? 'Loaded'
-          : String(
-              qcData?.detail || qcData?.content || qcResult.rawText || 'QC lookup failed'
-            ).slice(0, 200),
+        statusCode: qcResult.status,
+        code,
+        message,
+        product,
+        data: {
+          success: Boolean(ok),
+          code,
+          message,
+          product,
+          qcMeasurements: ok ? { data: qcData } : null,
+          measurements: ok ? qcData?.product_components || [] : [],
+          images,
+          summary: {
+            qcMeasurementsFound: Boolean(ok),
+            imageCount: images.length,
+          },
+        },
       });
     } catch (error) {
+      const message = String(error?.message || error).slice(0, 200);
       results.push({
-        selectionKey: item?.selectionKey || '',
-        basketItem: item,
-        data: null,
+        selectionKey: selection.selectionKey,
+        basketItem: selection,
         success: false,
-        message: String(error?.message || error).slice(0, 200),
+        statusCode: 500,
+        code: 'CW_PRODUCT_MEASUREMENTS_LOOKUP_FAILED',
+        message,
+        product,
+        data: {
+          success: false,
+          code: 'CW_PRODUCT_MEASUREMENTS_LOOKUP_FAILED',
+          message,
+          product,
+          qcMeasurements: null,
+          measurements: [],
+          images: [],
+        },
       });
     }
   }
 
-  const loadedCount = results.filter(r => r.success).length;
+  return {
+    results,
+    loadedCount: results.filter(item => item.success).length,
+  };
+}
+
+async function handleLoadSelected({ res, body, startedAt }) {
+  const selectedItems = Array.isArray(body?.selectedItems) ? body.selectedItems : [];
+  if (!selectedItems.length) {
+    return res.status(400).json({
+      success: false,
+      code: 'CW_NO_ITEMS_SELECTED',
+      message: 'No items to load',
+    });
+  }
+
+  const { results, loadedCount } = await loadSelectedQcItems({ body });
   return res.status(200).json({
     success: true,
     code: 'CW_LOAD_SELECTED_OK',
@@ -2458,22 +2496,22 @@ async function handleLoadSelected({ res, body, startedAt }) {
 function extractQcImages(qcData, pidBaseUrl) {
   if (!qcData || typeof qcData !== 'object') return [];
   const images = [];
-  const baseUrl = String(pidBaseUrl || '').replace(/\/+$/, '');
   const components = Array.isArray(qcData.product_components) ? qcData.product_components : [];
   components.forEach(comp => {
     const detailImages = Array.isArray(comp?.slipcover_details_images)
       ? comp.slipcover_details_images
       : [];
     detailImages.forEach(img => {
-      // Prefer signed GCS URL when available (these actually work)
-      const signedUrl = String(img?.url || '').trim();
-      if (signedUrl && /^https?:\/\/storage\.googleapis\.com\//i.test(signedUrl)) {
-        images.push(signedUrl);
+      // Prefer any upstream absolute image URL first, especially signed GCS URLs.
+      const absoluteUrl = String(img?.url || '').trim();
+      if (absoluteUrl && /^https?:\/\//i.test(absoluteUrl)) {
+        images.push(absoluteUrl);
         return;
       }
       const filePath = String(img?.file_path || '').trim();
       if (filePath) {
-        images.push(`${baseUrl}/media/${filePath}`);
+        const cleanedPath = filePath.replace(/^\/+/, '');
+        images.push(`https://storage.googleapis.com/pid-storage/${cleanedPath}`);
       }
     });
   });

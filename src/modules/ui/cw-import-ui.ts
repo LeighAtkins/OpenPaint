@@ -96,6 +96,13 @@ interface SearchState {
   selectedImageKeys: string[];
   rowTargetLabels: Record<string, string>;
   discoveryImageUrls: string[];
+  importedViewMetaByScope: Record<
+    string,
+    {
+      itemKey: string;
+      sectionName: string;
+    }
+  >;
 }
 
 function makeStyleKey(productReference: string, style: string, styleCode: string): string {
@@ -304,7 +311,12 @@ function ensureStyles(): void {
     .cw-basket-title { margin: 0; font-size: 12px; font-weight: 700; color: #0f172a; }
     .cw-basket-meta { margin: 3px 0 0; font-size: 11px; color: #64748b; }
     .cw-loaded-summary { margin-top: 10px; display: grid; gap: 8px; }
-    .cw-loaded-item { border: 1px solid #dbe4ee; border-radius: 12px; padding: 10px 12px; background: linear-gradient(180deg, rgba(248, 250, 252, 0.92), rgba(255, 255, 255, 0.98)); }
+    .cw-loaded-item { border: 1px solid #dbe4ee; border-radius: 12px; padding: 10px 12px; background: linear-gradient(180deg, rgba(248, 250, 252, 0.92), rgba(255, 255, 255, 0.98)); transition: border-color 120ms ease, box-shadow 120ms ease, transform 120ms ease, opacity 120ms ease; }
+    .cw-loaded-item.is-clickable { cursor: pointer; }
+    .cw-loaded-item.is-clickable:hover { transform: translateY(-1px); border-color: #94a3b8; box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08); }
+    .cw-loaded-item.is-active { border-color: #0f172a; box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.08), 0 12px 24px rgba(15, 23, 42, 0.1); }
+    .cw-loaded-item.is-disabled { opacity: 0.6; }
+    .cw-loaded-item.is-all-items { background: linear-gradient(180deg, rgba(241, 245, 249, 0.96), rgba(255, 255, 255, 0.98)); }
     .cw-loaded-item strong { color: #0f172a; }
     .cw-loaded-item small { color: #64748b; }
     .cw-probe-panel { margin-top: 12px; border: 1px solid #cbd5e1; border-radius: 10px; padding: 10px; background: #f8fafc; }
@@ -330,7 +342,8 @@ function ensureStyles(): void {
     .cw-measure-head { display: grid; grid-template-columns: 160px 120px 1fr 180px 180px; gap: 8px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; padding: 8px; font-size: 11px; font-weight: 600; color: #475569; }
     .cw-measure-row { display: grid; grid-template-columns: 160px 120px 1fr 180px 180px; gap: 8px; align-items: center; padding: 8px; border-bottom: 1px solid #f1f5f9; font-size: 12px; }
     .cw-measure-row:last-child { border-bottom: none; }
-    .cw-measure-row.armed { background: #eff6ff; }
+    .cw-measure-row.armed { background: #dbeafe; box-shadow: inset 3px 0 0 #2563eb; }
+    .cw-measure-row.ready { background: #f8fafc; box-shadow: inset 3px 0 0 #94a3b8; }
     .cw-split-measure-wrap { margin-top: 0; width: 100%; height: 100%; min-width: 0; min-height: 0; flex: 1 1 auto; display: flex; flex-direction: column; border-radius: 18px; border: 1px solid rgba(203, 213, 225, 0.85); background: rgba(255,255,255,0.98); box-shadow: 0 16px 36px rgba(15, 23, 42, 0.08); overflow: hidden; }
     .cw-split-measure-wrap .cw-measure-head { position: sticky; top: 0; z-index: 2; padding: 12px 14px; background: linear-gradient(180deg, #f8fafc 0%, #eef4ff 100%); border-bottom-color: rgba(203, 213, 225, 0.9); }
     .cw-split-rows { width: 100%; flex: 1 1 auto; min-width: 0; min-height: 0; overflow: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; padding-bottom: 18px; }
@@ -597,8 +610,11 @@ function isLikelyMeasurementLabel(label: string): boolean {
 
 function slugify(value: string): string {
   return (value || '')
+    .replace(/\b(?:undefined|null)\b/gi, ' ')
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(?:^|-)undefined(?:-|$)/g, '-')
+    .replace(/(?:^|-)null(?:-|$)/g, '-')
     .replace(/^-+|-+$/g, '');
 }
 
@@ -614,12 +630,24 @@ function isSignedImageUrl(url: string): boolean {
   );
 }
 
+function shouldUseDirectImageUrl(url: string): boolean {
+  const value = (url || '').trim();
+  if (!value) return false;
+  if (/^(?:data|blob):/i.test(value)) return true;
+  if (isSignedImageUrl(value)) return true;
+  return false;
+}
+
 function isKnownBadImageCandidate(url: string): boolean {
   const value = url || '';
   if (/storage\.cloud\.google\.com/i.test(value)) return true;
   if (/cw-pid-qylyewlgca-uc\.a\.run\.app\/slipcover_details_images/i.test(value)) return true;
   if (/cw-pid-qylyewlgca-uc\.a\.run\.app\/media\/slipcover_details_images/i.test(value))
     return true;
+  if (/cw-pid-qylyewlgca-uc\.a\.run\.app\/uploads\/slipcover_details_images/i.test(value))
+    return true;
+  if (/comfort-works\.com\/media\/slipcover_details_images/i.test(value)) return true;
+  if (/comfort-works\.com\/uploads\/slipcover_details_images/i.test(value)) return true;
   if (/cw40\.comfort-works\.com\/slipcover_details_images/i.test(value)) return true;
   return false;
 }
@@ -629,6 +657,14 @@ function filterPreferredImageCandidates(urls: string[]): string[] {
   const signed = unique.filter(isSignedImageUrl);
   if (signed.length) {
     return signed;
+  }
+  const storage = unique.filter(url => /https?:\/\/storage\.googleapis\.com\//i.test(url || ''));
+  if (storage.length) {
+    const rest = unique.filter(
+      url =>
+        !/https?:\/\/storage\.googleapis\.com\//i.test(url || '') && !isKnownBadImageCandidate(url)
+    );
+    return [...storage, ...rest];
   }
   const preferred = unique.filter(url => !isKnownBadImageCandidate(url));
   if (preferred.length) return preferred;
@@ -657,6 +693,9 @@ function makeAbsoluteCandidates(pathOrUrl: string, baseUrl: string): string[] {
   ].filter(Boolean);
 
   const urls = new Set<string>();
+  if (/^slipcover_details_images\//i.test(normalizedPath)) {
+    urls.add(`https://storage.googleapis.com/pid-storage/${normalizedPath}`);
+  }
   bases.forEach(base => {
     urls.add(`${base}/${normalizedPath}`);
     urls.add(`${base}/media/${normalizedPath}`);
@@ -1017,11 +1056,10 @@ function extractRowsFromQcNode(node: any, contextSectionName: string, out: Impor
 
 function makeViewIdFromUrl(url: string, fallbackPrefix = 'cw-photo'): string {
   const raw = (url || '').split('?')[0].split('#')[0].split('/').pop();
-  const stem = (raw || fallbackPrefix).replace(/\.[a-z0-9]+$/i, '');
-  const slug = stem
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
+  const stem = (raw || fallbackPrefix)
+    .replace(/\.[a-z0-9]+$/i, '')
+    .replace(/\b(?:undefined|null)\b/gi, ' ');
+  const slug = slugify(stem);
   return slug || fallbackPrefix;
 }
 
@@ -1393,6 +1431,7 @@ function createModal(): HTMLElement {
     selectedImageKeys: [],
     rowTargetLabels: {},
     discoveryImageUrls: [],
+    importedViewMetaByScope: {},
   };
 
   const updateFlowSteps = () => {
@@ -1619,6 +1658,18 @@ function createModal(): HTMLElement {
         });
       });
     return rows;
+  };
+
+  const setActiveLoadedItem = (selectionKey: string, options: { resetSection?: boolean } = {}) => {
+    state.activeItemKey = String(selectionKey || '').trim();
+    if (options.resetSection !== false) {
+      state.activeSection = '';
+    }
+    renderLoadedItems();
+    renderItemFilter();
+    renderSectionFilter();
+    renderImages();
+    renderRows();
   };
 
   const renderItemFilter = () => {
@@ -1956,6 +2007,258 @@ function createModal(): HTMLElement {
   let measurementWorkspaceScrollTop = 0;
   let measurementWorkspaceScrollLeft = 0;
 
+  const getWorkspaceTagScopeKeys = (scopeLabel: string): string[] => {
+    const canonical = getCanonicalCwScopeKey(scopeLabel);
+    const base = canonical.split('::tab:')[0] || canonical;
+    return Array.from(new Set([(scopeLabel || '').trim(), canonical, base].filter(Boolean)));
+  };
+
+  const getWorkspaceSiblingScopeKeys = (scopeLabel: string): string[] => {
+    const canonicalScope = getCanonicalCwScopeKey(scopeLabel);
+    const scopeMeta = state.importedViewMetaByScope[canonicalScope];
+    if (!scopeMeta) {
+      return [canonicalScope].filter(Boolean);
+    }
+
+    return Array.from(
+      new Set(
+        Object.entries(state.importedViewMetaByScope)
+          .filter(
+            ([, meta]) =>
+              meta.itemKey === scopeMeta.itemKey && meta.sectionName === scopeMeta.sectionName
+          )
+          .map(([candidateScope]) => candidateScope)
+          .concat(canonicalScope)
+          .filter(Boolean)
+      )
+    );
+  };
+
+  const inferWorkspaceTagMode = (label: string): 'letters' | 'letters+numbers' | '' => {
+    const normalized = normalizeGuideLabel(label);
+    if (!normalized) return '';
+    if (/^[A-Z]$/.test(normalized)) return 'letters';
+    if (/^[A-Z]\d+$/.test(normalized)) return 'letters+numbers';
+    return '';
+  };
+
+  const syncWorkspaceTagMode = (targetLabel: string): void => {
+    const nextMode = inferWorkspaceTagMode(targetLabel);
+    if (!nextMode) return;
+
+    const w = window as any;
+    if (typeof w.setTagMode === 'function') {
+      w.setTagMode(nextMode, { updateDisplay: false });
+      return;
+    }
+
+    w.tagMode = nextMode;
+    if (w.app?.tagManager) {
+      w.app.tagManager.tagMode = nextMode;
+    }
+    const tagModeToggle = document.getElementById('tagModeToggle');
+    if (tagModeToggle) {
+      tagModeToggle.textContent = nextMode === 'letters' ? 'Letters Only' : 'Letters + Numbers';
+    }
+  };
+
+  const readWorkspaceNextTag = (scopeLabel: string): string => {
+    const displayTag = normalizeGuideLabel(
+      document.getElementById('nextTagDisplay')?.textContent || ''
+    );
+    if (displayTag) return displayTag;
+
+    const calculated =
+      typeof (window as any).calculateNextTag === 'function'
+        ? normalizeGuideLabel((window as any).calculateNextTag())
+        : '';
+    if (calculated) return calculated;
+
+    const w = window as any;
+    for (const key of getWorkspaceTagScopeKeys(scopeLabel)) {
+      const seeded =
+        normalizeGuideLabel(w.manualTagByImage?.[key] || '') ||
+        normalizeGuideLabel(w.guideOneTimeTagByImage?.[key] || '') ||
+        normalizeGuideLabel(w.labelsByImage?.[key] || '');
+      if (seeded) return seeded;
+    }
+
+    return '';
+  };
+
+  const seedWorkspaceNextDrawLabel = (scopeLabel: string, targetLabel: string): void => {
+    const normalizedTargetLabel = normalizeGuideLabel(targetLabel);
+    if (!normalizedTargetLabel) return;
+
+    const w = window as any;
+    syncWorkspaceTagMode(normalizedTargetLabel);
+    w.guideOneTimeTagByImage = w.guideOneTimeTagByImage || {};
+    w.labelsByImage = w.labelsByImage || {};
+    w.manualTagByImage = w.manualTagByImage || {};
+
+    const keys = getWorkspaceTagScopeKeys(scopeLabel);
+    keys.forEach(key => {
+      w.guideOneTimeTagByImage[key] = normalizedTargetLabel;
+      w.labelsByImage[key] = normalizedTargetLabel;
+      delete w.manualTagByImage[key];
+    });
+    w.currentImageLabel = getCanonicalCwScopeKey(scopeLabel);
+    w.updateNextTagDisplay?.();
+  };
+
+  const clearWorkspaceNextDrawLabel = (scopeLabel: string): void => {
+    const w = window as any;
+    const keys = getWorkspaceTagScopeKeys(scopeLabel);
+    keys.forEach(key => {
+      if (w.guideOneTimeTagByImage) delete w.guideOneTimeTagByImage[key];
+      if (!w.manualTagByImage?.[key] && w.labelsByImage) delete w.labelsByImage[key];
+    });
+    w.updateNextTagDisplay?.();
+  };
+
+  const toggleArmedMeasurementRow = (
+    row: VisibleImportedRow,
+    configuredLabel: string,
+    options: { allowToggleOff?: boolean } = {}
+  ): { armed: boolean; targetLabel: string } => {
+    const targetLabel = resolveRowTargetLabel(row, configuredLabel);
+    if (!targetLabel) {
+      return { armed: false, targetLabel: '' };
+    }
+
+    const allowToggleOff = options.allowToggleOff !== false;
+    if (allowToggleOff && state.armedRowKey === row.rowKey) {
+      state.armedRowKey = '';
+      clearWorkspaceNextDrawLabel(getCurrentScopeLabel());
+      renderRows();
+      return { armed: false, targetLabel };
+    }
+
+    state.armedRowKey = row.rowKey;
+    seedWorkspaceNextDrawLabel(getCurrentScopeLabel(), targetLabel);
+    renderRows();
+    return { armed: true, targetLabel };
+  };
+
+  const armNextMeasurementRow = (afterRowKey: string): { armed: boolean; rowKey: string } => {
+    const rows = visibleRows();
+    const currentIndex = rows.findIndex(row => row.rowKey === afterRowKey);
+    if (currentIndex < 0 || currentIndex >= rows.length - 1) {
+      state.armedRowKey = '';
+      clearWorkspaceNextDrawLabel(getCurrentScopeLabel());
+      renderRows();
+      return { armed: false, rowKey: '' };
+    }
+
+    const nextRow = rows[currentIndex + 1];
+    const result = toggleArmedMeasurementRow(nextRow, state.rowTargetLabels[nextRow.rowKey] || '', {
+      allowToggleOff: false,
+    });
+    return { armed: result.armed, rowKey: nextRow.rowKey };
+  };
+
+  const hasWorkspaceManualTagOverride = (scopeLabel: string): boolean => {
+    const manualTags = ((window as any).manualTagByImage || {}) as Record<string, string>;
+    return getWorkspaceTagScopeKeys(scopeLabel).some(key =>
+      normalizeGuideLabel(manualTags[key] || '')
+    );
+  };
+
+  const getWorkspaceUsedLabels = (scopeLabel: string): Set<string> => {
+    const metadata = (window as any).app?.metadataManager;
+    const used = new Set<string>();
+
+    getWorkspaceSiblingScopeKeys(scopeLabel).forEach(siblingScope => {
+      const canonicalScope =
+        typeof metadata?.normalizeImageLabel === 'function'
+          ? String(metadata.normalizeImageLabel(siblingScope) || siblingScope).trim()
+          : String(siblingScope || '').trim();
+
+      Object.keys(metadata?.vectorStrokesByImage?.[canonicalScope] || {}).forEach(label => {
+        const normalized = normalizeGuideLabel(label);
+        if (normalized) used.add(normalized);
+      });
+
+      getWorkspaceTagScopeKeys(siblingScope).forEach(key => {
+        const lineStrokes = Array.isArray((window as any).lineStrokesByImage?.[key])
+          ? (window as any).lineStrokesByImage[key]
+          : [];
+        lineStrokes.forEach((label: string) => {
+          const normalized = normalizeGuideLabel(label);
+          if (normalized) used.add(normalized);
+        });
+      });
+    });
+
+    return used;
+  };
+
+  const getRowsForWorkspaceScope = (scopeLabel: string): VisibleImportedRow[] => {
+    const activeRows = visibleRows();
+    const sectionName = normalizeSectionName(sectionFromImageName(scopeLabel));
+    if (!sectionName) {
+      return activeRows;
+    }
+
+    const sectionRows = activeRows.filter(
+      row => normalizeSectionName(normalizeValueText(row.sectionName)) === sectionName
+    );
+    return sectionRows.length ? sectionRows : activeRows;
+  };
+
+  const findNextWorkspaceGuideRow = (
+    scopeLabel: string
+  ): { row: VisibleImportedRow; targetLabel: string } | null => {
+    const usedLabels = getWorkspaceUsedLabels(scopeLabel);
+    const candidateRows = getRowsForWorkspaceScope(scopeLabel);
+
+    for (const row of candidateRows) {
+      const configuredLabel = (state.rowTargetLabels[row.rowKey] || '').trim();
+      const targetLabel = resolveRowTargetLabel(row, configuredLabel);
+      if (!targetLabel || usedLabels.has(targetLabel)) continue;
+      return { row, targetLabel };
+    }
+
+    return null;
+  };
+
+  const syncWorkspaceGuideSeed = (
+    scopeLabel: string,
+    options: { render?: boolean; arm?: boolean } = {}
+  ): { rowKey: string; targetLabel: string; armed: boolean } | null => {
+    if (!scopeLabel || hasWorkspaceManualTagOverride(scopeLabel)) {
+      return null;
+    }
+
+    const nextRow = findNextWorkspaceGuideRow(scopeLabel);
+    if (!nextRow) {
+      if (!state.armedRowKey) {
+        clearWorkspaceNextDrawLabel(scopeLabel);
+      }
+      if (options.render) {
+        renderRows();
+      }
+      return null;
+    }
+
+    if (options.arm) {
+      state.armedRowKey = nextRow.row.rowKey;
+    } else if (!state.armedRowKey) {
+      state.armedRowKey = '';
+    }
+
+    seedWorkspaceNextDrawLabel(scopeLabel, nextRow.targetLabel);
+    if (options.render) {
+      renderRows();
+    }
+
+    return {
+      rowKey: nextRow.row.rowKey,
+      targetLabel: nextRow.targetLabel,
+      armed: options.arm === true,
+    };
+  };
+
   const renderRowsInto = (
     targetRowsContainer: HTMLDivElement,
     options: { preserveScroll?: boolean; scrollTop?: number; scrollLeft?: number } = {}
@@ -1985,6 +2288,10 @@ function createModal(): HTMLElement {
     }
 
     let lastItemKey = '';
+    const currentScopeLabel = getCurrentScopeLabel();
+    const readyTag = readWorkspaceNextTag(currentScopeLabel);
+    const nextReadyRow = !state.armedRowKey ? findNextWorkspaceGuideRow(currentScopeLabel) : null;
+    const readyRowKey = nextReadyRow?.row.rowKey || '';
     filteredRows.forEach(row => {
       if (!state.activeItemKey && row.itemKey !== lastItemKey) {
         lastItemKey = row.itemKey;
@@ -1996,8 +2303,18 @@ function createModal(): HTMLElement {
 
       const rowEl = document.createElement('div');
       rowEl.className = 'cw-measure-row';
+      const guessedLabel = guessMosLabel(row.sourceLabel, row.sectionName || '');
+      const configuredTargetLabel = state.rowTargetLabels[row.rowKey] || guessedLabel;
+      const resolvedTargetLabel = resolveRowTargetLabel(row, configuredTargetLabel);
+      const isReadyRow =
+        !state.armedRowKey &&
+        row.rowKey === readyRowKey &&
+        Boolean(resolvedTargetLabel) &&
+        resolvedTargetLabel === readyTag;
       if (state.armedRowKey === row.rowKey) {
         rowEl.classList.add('armed');
+      } else if (isReadyRow) {
+        rowEl.classList.add('ready');
       }
 
       const sourceEl = document.createElement('div');
@@ -2018,9 +2335,8 @@ function createModal(): HTMLElement {
       const input = document.createElement('input');
       input.type = 'text';
       input.className = 'cw-measure-input';
-      const guessedLabel = guessMosLabel(row.sourceLabel, row.sectionName || '');
       input.placeholder = guessedLabel ? `Suggested: ${guessedLabel}` : 'MOS label (A1, A2, A3...)';
-      input.value = state.rowTargetLabels[row.rowKey] || guessedLabel;
+      input.value = configuredTargetLabel;
       input.addEventListener('input', () => {
         state.rowTargetLabels[row.rowKey] = (input.value || '').trim();
       });
@@ -2052,14 +2368,26 @@ function createModal(): HTMLElement {
 
       const drawBtn = document.createElement('button');
       drawBtn.type = 'button';
-      drawBtn.className = `cw-btn${state.armedRowKey === row.rowKey ? ' cw-btn-primary' : ''}`;
-      drawBtn.textContent = state.armedRowKey === row.rowKey ? 'Armed' : 'Draw Next';
+      drawBtn.className = `cw-btn${state.armedRowKey === row.rowKey || isReadyRow ? ' cw-btn-primary' : ''}`;
+      drawBtn.textContent =
+        state.armedRowKey === row.rowKey ? 'Armed' : isReadyRow ? 'Ready' : 'Draw Next';
       drawBtn.addEventListener('click', () => {
-        state.armedRowKey = state.armedRowKey === row.rowKey ? '' : row.rowKey;
-        renderRows();
-        if (state.armedRowKey) {
+        const result = toggleArmedMeasurementRow(row, input.value || '', { allowToggleOff: true });
+        if (result.armed) {
           setStatus(
-            `Armed ${row.itemLabel} / ${row.sourceLabel}. Draw the next measurement in ${getCurrentScopeLabel()}; value ${row.value} will apply automatically.`,
+            `Armed ${row.itemLabel} / ${row.sourceLabel} as ${result.targetLabel}. Draw the next measurement in ${getCurrentScopeLabel()}; value ${row.value} will apply automatically.`,
+            'info'
+          );
+        }
+      });
+
+      rowEl.addEventListener('click', event => {
+        const target = event.target as HTMLElement | null;
+        if (target?.closest('button, input, textarea, select, label')) return;
+        const result = toggleArmedMeasurementRow(row, input.value || '', { allowToggleOff: false });
+        if (result.armed) {
+          setStatus(
+            `Armed ${row.itemLabel} / ${row.sourceLabel} as ${result.targetLabel}. Draw the next measurement in ${getCurrentScopeLabel()}; value ${row.value} will apply automatically.`,
             'info'
           );
         }
@@ -2131,6 +2459,11 @@ function createModal(): HTMLElement {
     const workspaceActive = (window as any).isMeasurementSplitWorkspaceActive?.() === true;
     if (!host || !workspaceActive) return;
 
+    const workspaceState = (window as any).getMeasurementSplitWorkspaceState?.() || null;
+    const workspaceScope =
+      String(workspaceState?.activeImportedViewId || '').trim() || getCurrentScopeLabel();
+    syncWorkspaceGuideSeed(workspaceScope);
+
     const splitRows = ensureMeasurementWorkspacePaneShell(host);
     if (splitRows) {
       renderRowsInto(splitRows, {
@@ -2145,7 +2478,7 @@ function createModal(): HTMLElement {
 
   (window as any).renderCwMeasurementWorkspacePane = syncMeasurementWorkspacePane;
 
-  const scheduleMeasurementWorkspacePaneSync = () => {
+  const scheduleMeasurementWorkspacePaneSync = (attempt = 0) => {
     if (measurementWorkspacePaneSyncRaf !== null) {
       window.cancelAnimationFrame(measurementWorkspacePaneSyncRaf);
       measurementWorkspacePaneSyncRaf = null;
@@ -2158,11 +2491,18 @@ function createModal(): HTMLElement {
     measurementWorkspacePaneSyncRaf = window.requestAnimationFrame(() => {
       measurementWorkspacePaneSyncRaf = null;
       syncMeasurementWorkspacePane();
-      if (!document.getElementById('guideSplitMeasurementEditorHost')) {
-        measurementWorkspacePaneRetryTimer = setTimeout(() => {
-          measurementWorkspacePaneRetryTimer = null;
-          syncMeasurementWorkspacePane();
-        }, 120);
+      const shouldRetry =
+        (window as any).isMeasurementSplitWorkspaceActive?.() === true &&
+        !document.getElementById('guideSplitMeasurementEditorHost') &&
+        attempt < 6;
+      if (shouldRetry) {
+        measurementWorkspacePaneRetryTimer = setTimeout(
+          () => {
+            measurementWorkspacePaneRetryTimer = null;
+            scheduleMeasurementWorkspacePaneSync(attempt + 1);
+          },
+          120 + attempt * 80
+        );
       }
     });
   };
@@ -2255,7 +2595,9 @@ function createModal(): HTMLElement {
     entries.forEach(entry => {
       const group = entry.candidates;
       const loadedItem = state.loadedItems.find(item => item.selectionKey === entry.itemKey);
-      const direct = group.find(url => loadedItem?.imageUrls.includes(url)) || '';
+      const direct =
+        group.find(url => loadedItem?.imageUrls.includes(url) && shouldUseDirectImageUrl(url)) ||
+        '';
       const isSelected = state.selectedImageKeys.includes(entry.selectionImageKey);
       const card = document.createElement('div');
       card.className = 'cw-image-card';
@@ -2364,13 +2706,77 @@ function createModal(): HTMLElement {
       return;
     }
 
-    const loadedCount = state.loadedItems.filter(item => item.success).length;
+    const successfulItems = state.loadedItems.filter(item => item.success);
+    const loadedCount = successfulItems.length;
     loadedMeta.textContent = `${loadedCount}/${state.loadedItems.length} loaded item${state.loadedItems.length === 1 ? '' : 's'}.`;
-    state.loadedItems.forEach(item => {
+    const appendLoadedCard = (
+      label: string,
+      meta: string,
+      options: {
+        selectionKey?: string;
+        active?: boolean;
+        clickable?: boolean;
+        disabled?: boolean;
+        allItems?: boolean;
+      } = {}
+    ) => {
       const card = document.createElement('div');
       card.className = 'cw-loaded-item';
-      card.innerHTML = `<strong>${item.basketItem.label}</strong><br /><small>${item.rows.length} rows, ${Math.max(Object.keys(item.sectionImageGroups || {}).length, item.imageCandidateGroups.length)} photo groups. ${item.loadMessage}</small>`;
+      if (options.clickable) card.classList.add('is-clickable');
+      if (options.active) card.classList.add('is-active');
+      if (options.disabled) card.classList.add('is-disabled');
+      if (options.allItems) card.classList.add('is-all-items');
+      card.innerHTML = `<strong>${label}</strong><br /><small>${meta}</small>`;
+      if (options.clickable) {
+        card.tabIndex = 0;
+        card.setAttribute('role', 'button');
+        card.setAttribute('aria-pressed', options.active ? 'true' : 'false');
+        const activate = () => {
+          setActiveLoadedItem(options.selectionKey || '');
+        };
+        card.addEventListener('click', activate);
+        card.addEventListener('keydown', event => {
+          if (event.key !== 'Enter' && event.key !== ' ') return;
+          event.preventDefault();
+          activate();
+        });
+      }
       loadedItemsWrap.appendChild(card);
+    };
+
+    if (successfulItems.length > 1) {
+      const totalRows = successfulItems.reduce((sum, item) => sum + item.rows.length, 0);
+      const totalPhotoGroups = successfulItems.reduce(
+        (sum, item) =>
+          sum +
+          Math.max(
+            Object.keys(item.sectionImageGroups || {}).length,
+            item.imageCandidateGroups.length
+          ),
+        0
+      );
+      appendLoadedCard(
+        'All loaded items',
+        `${totalRows} rows, ${totalPhotoGroups} photo groups. Preview everything together.`,
+        {
+          active: !state.activeItemKey,
+          clickable: true,
+          allItems: true,
+        }
+      );
+    }
+
+    state.loadedItems.forEach(item => {
+      appendLoadedCard(
+        item.basketItem.label,
+        `${item.rows.length} rows, ${Math.max(Object.keys(item.sectionImageGroups || {}).length, item.imageCandidateGroups.length)} photo groups. ${item.loadMessage}`,
+        {
+          selectionKey: item.selectionKey,
+          active: item.success && item.selectionKey === state.activeItemKey,
+          clickable: item.success,
+          disabled: !item.success,
+        }
+      );
     });
   };
 
@@ -2680,6 +3086,18 @@ function createModal(): HTMLElement {
     scheduleMeasurementWorkspacePaneSync();
   });
   window.addEventListener('openpaint:guide-split-pane-rendered', () => {
+    scheduleMeasurementWorkspacePaneSync();
+  });
+  window.addEventListener('openpaint:guide-next-tag-changed', () => {
+    renderRows();
+    scheduleMeasurementWorkspacePaneSync();
+  });
+  window.addEventListener('openpaint:view-switched', () => {
+    syncWorkspaceGuideSeed(getCurrentScopeLabel(), { render: true });
+    scheduleMeasurementWorkspacePaneSync();
+  });
+  window.addEventListener('openpaint:frame-tab-changed', () => {
+    syncWorkspaceGuideSeed(getCurrentScopeLabel(), { render: true });
     scheduleMeasurementWorkspacePaneSync();
   });
 
@@ -3480,12 +3898,7 @@ function createModal(): HTMLElement {
   });
 
   itemFilterEl.addEventListener('change', () => {
-    state.activeItemKey = (itemFilterEl.value || '').trim();
-    state.activeSection = '';
-    renderItemFilter();
-    renderSectionFilter();
-    renderImages();
-    renderRows();
+    setActiveLoadedItem((itemFilterEl.value || '').trim());
   });
 
   const clearBasketBtn = body.querySelector<HTMLButtonElement>('#cwClearBasketBtn');
@@ -3495,6 +3908,7 @@ function createModal(): HTMLElement {
     state.activeItemKey = '';
     state.activeSection = '';
     state.selectedImageKeys = [];
+    state.importedViewMetaByScope = {};
     state.searchResults.forEach(item => {
       item.selected = false;
     });
@@ -3578,7 +3992,10 @@ function createModal(): HTMLElement {
           // eslint-disable-next-line no-await-in-loop
           let resolvedUrl = await fetchProxyImageDataUrl(group, baseUrl, username, password);
           if (!resolvedUrl) {
-            const fallbackDirect = group.find(url => loadedItem?.imageUrls.includes(url)) || '';
+            const fallbackDirect =
+              group.find(
+                url => loadedItem?.imageUrls.includes(url) && shouldUseDirectImageUrl(url)
+              ) || '';
             if (!isHttpUrl(fallbackDirect)) {
               resolvedUrl = fallbackDirect;
             }
@@ -3653,6 +4070,10 @@ function createModal(): HTMLElement {
             sectionRows,
             lockedEl.checked
           );
+          state.importedViewMetaByScope[getCanonicalCwScopeKey(viewId)] = {
+            itemKey: entry.itemKey,
+            sectionName: normalizeSectionName(section),
+          };
           if (seededCount > 0) {
             seededViews += 1;
           }
@@ -3679,6 +4100,7 @@ function createModal(): HTMLElement {
         await enableGuideWorkflowDefaults(firstImportedViewId);
         if (firstImportedViewId) {
           openMeasurementSplitWorkspace(firstImportedViewId);
+          syncWorkspaceGuideSeed(firstImportedViewId);
         }
         setStatus(
           `Imported ${imported} selected photo${imported === 1 ? '' : 's'} into project views, seeded ${seededViews} guide${seededViews === 1 ? '' : 's'}, and switched units to cm.`,
@@ -3702,6 +4124,7 @@ function createModal(): HTMLElement {
     if (!strokeLabel || !imageLabel) return;
 
     if (state.armedRowKey) {
+      const armedRowKey = state.armedRowKey;
       const row = allLoadedRows().find(item => item.rowKey === state.armedRowKey);
       if (!row) {
         state.armedRowKey = '';
@@ -3727,11 +4150,16 @@ function createModal(): HTMLElement {
         row.sourceLabel,
         lockedEl.checked
       );
-      state.armedRowKey = '';
-      renderRows();
+      const nextArmResult = ok ? armNextMeasurementRow(armedRowKey) : { armed: false, rowKey: '' };
+      if (!ok) {
+        state.armedRowKey = '';
+        renderRows();
+      }
       setStatus(
         ok
-          ? `Applied ${row.sourceLabel} (${row.value}) to ${targetLabel}.`
+          ? nextArmResult.armed
+            ? `Applied ${row.sourceLabel} (${row.value}) to ${targetLabel}. Armed the next row.`
+            : `Applied ${row.sourceLabel} (${row.value}) to ${targetLabel}.`
           : `Failed to apply ${row.sourceLabel} to ${targetLabel}.`,
         ok ? 'ok' : 'bad'
       );
@@ -3752,6 +4180,7 @@ function createModal(): HTMLElement {
     );
     if (ok) {
       markCwImportedMeasurementApplied(imageLabel, strokeLabel, seeded);
+      syncWorkspaceGuideSeed(imageLabel, { render: true });
       setStatus(
         `Applied CW guide value ${seeded.value} to ${normalizeGuideLabel(strokeLabel)}.`,
         'ok'

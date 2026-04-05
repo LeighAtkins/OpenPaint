@@ -382,12 +382,11 @@ export class StrokeMetadataManager {
     imageLabel = this.normalizeImageLabel(imageLabel);
     const baseImageLabel =
       typeof imageLabel === 'string' ? imageLabel.split('::tab:')[0] || imageLabel : imageLabel;
-    const resolvedMode =
-      mode === 'letters' || mode === 'letters+numbers'
-        ? mode
-        : window.tagMode === 'letters' || window.tagMode === 'letters+numbers'
-          ? window.tagMode
-          : 'letters+numbers';
+    const inferTagMode = tag => {
+      if (/^[A-Z]$/.test(tag || '')) return 'letters';
+      if (/^[A-Z]\d+$/.test(tag || '')) return 'letters+numbers';
+      return '';
+    };
 
     const oneTimeGuideTags = window.guideOneTimeTagByImage || {};
     const currentScope =
@@ -401,6 +400,14 @@ export class StrokeMetadataManager {
       oneTimeGuideTags[baseImageLabel] ||
       oneTimeGuideTags[currentScope] ||
       oneTimeGuideTags[currentBaseScope];
+    const seededMode = inferTagMode(seededGuideTag);
+    const resolvedMode =
+      seededMode ||
+      (mode === 'letters' || mode === 'letters+numbers'
+        ? mode
+        : window.tagMode === 'letters' || window.tagMode === 'letters+numbers'
+          ? window.tagMode
+          : 'letters+numbers');
     const seededLetterOnly = /^[A-Z]$/.test(seededGuideTag || '');
     if (seededGuideTag && (this.isValidTag(seededGuideTag, resolvedMode) || seededLetterOnly)) {
       delete oneTimeGuideTags[imageLabel];

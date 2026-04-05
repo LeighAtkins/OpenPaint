@@ -961,6 +961,14 @@ export class ProjectManager {
         skipViewport ||
         document.getElementById('main-canvas-wrapper')?.classList.contains('guide-split-active') ===
           true;
+      if (skipViewport) {
+        // Split mode mutates Fabric's serialized viewport/canvas size for the
+        // half-width pane. Preserve object data, but never persist that transient
+        // transform back into the view JSON we restore after closing split mode.
+        delete json.viewportTransform;
+        delete json.width;
+        delete json.height;
+      }
       this.views[this.currentViewId].canvasData = json;
       this.views[this.currentViewId].rotation = this.canvasManager.getRotationDegrees();
       this.views[this.currentViewId].backgroundRotation =
@@ -2837,40 +2845,33 @@ export class ProjectManager {
       throw new Error(`Image fetch failed for ${viewId}: ${fetchResponse.status}`);
     }
 
-    const blob = await fetchResponse.blob();
-    const ext = this.inferImageExtension(blob, sourceUrl);
+    let blob = await fetchResponse.blob();
+
+    // Detect actual image type from magic bytes if blob.type is missing/wrong
+    const contentType = await this.detectImageMimeType(blob);
+    if (contentType && contentType !== blob.type) {
+      blob = new Blob([blob], { type: contentType });
+    }
+
+    const ext = this.inferImageExtension(blob, viewId);
     const safeViewId = sanitizeFilenamePart(viewId, 'view');
     const objectKey = `projects/views/${safeViewId}/${Date.now()}.${ext}`;
 
-    const presignResponse = await fetch('/api/storage/r2/presign-upload', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        key: objectKey,
-        contentType: blob.type || 'application/octet-stream',
-      }),
-    });
+    const uploadResponse = await fetch(
+      `/api/storage/r2/upload?key=${encodeURIComponent(objectKey)}`,
+      {
+        method: 'PUT',
+        headers: {
+          'Content-Type': blob.type || 'image/png',
+          'X-Cache-Control': 'public, max-age=31536000, immutable',
+        },
+        body: blob,
+      }
+    );
 
-    const presignBody = await presignResponse.json().catch(() => ({}));
-    if (!presignResponse.ok || !presignBody?.success || !presignBody?.uploadUrl) {
-      throw new Error(
-        presignBody?.message || `Failed to create R2 upload URL (${presignResponse.status})`
-      );
-    }
-
-    const uploadResponse = await fetch(presignBody.uploadUrl, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': blob.type || 'application/octet-stream',
-        'Cache-Control': 'public, max-age=31536000, immutable',
-      },
-      body: blob,
-    });
-
-    if (!uploadResponse.ok) {
-      throw new Error(`R2 upload failed (${uploadResponse.status})`);
+    const uploadBody = await uploadResponse.json().catch(() => ({}));
+    if (!uploadResponse.ok || !uploadBody?.success) {
+      throw new Error(uploadBody?.message || `R2 upload failed (${uploadResponse.status})`);
     }
 
     return objectKey;
@@ -2928,6 +2929,10 @@ export class ProjectManager {
       }
       const blob = await response.blob();
       const objectUrl = URL.createObjectURL(blob);
+      if (blob.size === 0) {
+        console.warn('[Load] R2 image blob is empty!', { objectKey });
+        return null;
+      }
       this.remoteImageObjectUrlCache.set(objectKey, objectUrl);
       this.loadedProjectObjectUrls.push(objectUrl);
       return objectUrl;
@@ -2937,7 +2942,49 @@ export class ProjectManager {
     }
   }
 
-  revokeLoadedProjectObjectUrls() {
+  async detectImageMimeType(blob: Blob): Promise<string> {
+    try {
+      const header = new Uint8Array(await blob.slice(0, 12).arrayBuffer());
+      // PNG: 89 50 4E 47
+      if (header[0] === 0x89 && header[1] === 0x50 && header[2] === 0x4e && header[3] === 0x47) {
+        return 'image/png';
+      }
+      // JPEG: FF D8 FF
+      if (header[0] === 0xff && header[1] === 0xd8 && header[2] === 0xff) {
+        return 'image/jpeg';
+      }
+      // WebP: RIFF....WEBP
+      if (
+        header[0] === 0x52 &&
+        header[1] === 0x49 &&
+        header[2] === 0x46 &&
+        header[3] === 0x46 &&
+        header[8] === 0x57 &&
+        header[9] === 0x45 &&
+        header[10] === 0x42 &&
+        header[11] === 0x50
+      ) {
+        return 'image/webp';
+      }
+      // GIF: GIF87a or GIF89a
+      if (header[0] === 0x47 && header[1] === 0x49 && header[2] === 0x46) {
+        return 'image/gif';
+      }
+      // BMP: BM
+      if (header[0] === 0x42 && header[1] === 0x4d) {
+        return 'image/bmp';
+      }
+    } catch {
+      // ignore
+    }
+    // If blob.type is already an image type, trust it
+    if (blob.type && blob.type.startsWith('image/')) {
+      return blob.type;
+    }
+    return 'image/png'; // safe default for a drawing app
+  }
+
+  revokeLoadedProjectObjectUrls(): void {
     (this.loadedProjectObjectUrls || []).forEach(url => {
       try {
         URL.revokeObjectURL(url);

@@ -1,5 +1,6 @@
 import { resolveScopedImageLabel } from './scoped-image-label.js';
 import { fetchGuideRasterUrl, resolveGuideActiveRole } from './measurement-guide-flash.js';
+import { showRewardAchievement } from './reward-achievement';
 
 const DRAW_MEASUREMENT_TOOLS = new Set(['line', 'curve']);
 const INDICATOR_ID = 'measurementGuideIndicator';
@@ -27,6 +28,7 @@ let lastRenderTime = 0;
 const MIN_RENDER_INTERVAL = 100; // ms
 let lastStrokeCreatedTime = 0;
 const STROKE_ADVANCE_WINDOW = 500; // Only auto-advance within 500ms of stroke creation
+let allDoneAchievementFiredForView = '';
 
 function dispatchGuideNextTagChanged(viewId: string, tag: string): boolean {
   const normalizedViewId = (viewId || '').trim();
@@ -53,6 +55,13 @@ function dispatchGuideNextTagChanged(viewId: string, tag: string): boolean {
     })
   );
   return true;
+}
+
+function isMeasurementSplitWorkspaceActive(): boolean {
+  if ((window as any).isMeasurementSplitWorkspaceActive?.() === true) {
+    return true;
+  }
+  return document.body.classList.contains('measurement-split-workspace-active');
 }
 
 function getWindowPrefs(): any {
@@ -698,6 +707,9 @@ function ensureStyles(): void {
       pointer-events: auto;
       transition: width 160ms ease, height 160ms ease, left 140ms ease, top 140ms ease;
     }
+    body.measurement-split-workspace-active .measurement-guide-indicator {
+      display: none !important;
+    }
     .measurement-guide-indicator.is-unlocked .measurement-guide-indicator-head {
       cursor: move;
     }
@@ -1273,7 +1285,12 @@ async function renderIndicator(): Promise<void> {
     const viewId = getCurrentViewId();
     const activeTool = getActiveToolName();
     const showForTool = DRAW_MEASUREMENT_TOOLS.has(activeTool);
-    if (!showForTool || !isIndicatorEnabled() || isGuideOverlayVisible()) {
+    if (
+      !showForTool ||
+      !isIndicatorEnabled() ||
+      isGuideOverlayVisible() ||
+      isMeasurementSplitWorkspaceActive()
+    ) {
       hideIndicator();
       return;
     }
@@ -1346,6 +1363,15 @@ async function renderIndicator(): Promise<void> {
       activeRole = findNextUnusedRole(roles, used, roles[0] || '');
     }
     if (!activeRole) {
+      const completedAllGuideRoles = roles.every(role => used.has(normalizeLabel(role)));
+      if (completedAllGuideRoles) {
+        if (allDoneAchievementFiredForView !== viewId) {
+          allDoneAchievementFiredForView = viewId;
+          showRewardAchievement('All measurements completed! 5 gems awarded.');
+        }
+        hideIndicator();
+        return;
+      }
       activeRole = getFallbackNextLabel(viewId);
     }
     if (!activeRole) {
